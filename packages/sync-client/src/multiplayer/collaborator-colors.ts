@@ -1,3 +1,5 @@
+import hash from "@emotion/hash";
+
 /**
  * A palette of 50 perceptually-uniform oklch colors, one per collaborator slot.
  * Generated with the golden-angle hue distribution (137.5deg) so adjacent slots
@@ -49,9 +51,5 @@ export const assignCollaboratorColors = (
 };
 
 const getInitialColorSlot = (id: string): number => {
-  let hash = 0;
-  for (let charIndex = 0; charIndex < id.length; charIndex++) {
-    hash = (hash * 31 + id.charCodeAt(charIndex)) >>> 0;
-  }
-  return hash;
+  return Number.parseInt(hash(id), 36);
 };

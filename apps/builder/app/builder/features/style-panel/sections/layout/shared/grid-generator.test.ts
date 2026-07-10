@@ -1,37 +1,7 @@
 import { describe, test, expect } from "vitest";
-import type { WebstudioData } from "@webstudio-is/sdk";
 import { __testing__ } from "./grid-generator";
-import { createDefaultPages } from "@webstudio-is/project-build";
 
-const { gridPresets, computeFillGridData, applyFillGridItems } = __testing__;
-
-const makeIdGenerator = () => {
-  let counter = 0;
-  return () => `id-${++counter}`;
-};
-
-const createEmptyData = (parentId: string): WebstudioData => ({
-  pages: createDefaultPages({ rootInstanceId: parentId }),
-  assets: new Map(),
-  dataSources: new Map(),
-  resources: new Map(),
-  props: new Map(),
-  breakpoints: new Map(),
-  instances: new Map([
-    [
-      parentId,
-      {
-        type: "instance" as const,
-        id: parentId,
-        component: "Box",
-        children: [] as Array<{ type: "id"; value: string }>,
-      },
-    ],
-  ]),
-  styleSources: new Map(),
-  styleSourceSelections: new Map(),
-  styles: new Map(),
-});
+const { gridPresets, computeFillGridItemsCount } = __testing__;
 
 describe("gridPresets", () => {
   test("each preset has required fields", () => {
@@ -116,212 +86,44 @@ describe("gridPresets", () => {
   });
 });
 
-describe("computeFillGridData", () => {
-  test("returns items for each empty cell", () => {
-    const items = computeFillGridData({
+describe("computeFillGridItemsCount", () => {
+  test("returns count for each empty cell", () => {
+    const itemsCount = computeFillGridItemsCount({
       totalCells: 6,
       existingChildCount: 0,
-      generateId: makeIdGenerator(),
     });
-    expect(items.length).toBe(6);
+    expect(itemsCount).toBe(6);
   });
 
   test("subtracts existing children", () => {
-    const items = computeFillGridData({
+    const itemsCount = computeFillGridItemsCount({
       totalCells: 6,
       existingChildCount: 4,
-      generateId: makeIdGenerator(),
     });
-    expect(items.length).toBe(2);
+    expect(itemsCount).toBe(2);
   });
 
-  test("returns empty array when grid is already full", () => {
-    const items = computeFillGridData({
+  test("returns zero when grid is already full", () => {
+    const itemsCount = computeFillGridItemsCount({
       totalCells: 4,
       existingChildCount: 4,
-      generateId: makeIdGenerator(),
     });
-    expect(items.length).toBe(0);
+    expect(itemsCount).toBe(0);
   });
 
-  test("returns empty array when grid has more children than cells", () => {
-    const items = computeFillGridData({
+  test("returns zero when grid has more children than cells", () => {
+    const itemsCount = computeFillGridItemsCount({
       totalCells: 4,
       existingChildCount: 7,
-      generateId: makeIdGenerator(),
     });
-    expect(items.length).toBe(0);
-  });
-
-  test("each item has unique instanceId and styleSourceId", () => {
-    const items = computeFillGridData({
-      totalCells: 9,
-      existingChildCount: 0,
-      generateId: makeIdGenerator(),
-    });
-    const instanceIds = items.map((item) => item.instanceId);
-    const styleSourceIds = items.map((item) => item.styleSourceId);
-    const allIds = [...instanceIds, ...styleSourceIds];
-    expect(new Set(allIds).size).toBe(allIds.length);
+    expect(itemsCount).toBe(0);
   });
 
   test("single cell grid with no children returns one item", () => {
-    const items = computeFillGridData({
+    const itemsCount = computeFillGridItemsCount({
       totalCells: 1,
       existingChildCount: 0,
-      generateId: makeIdGenerator(),
     });
-    expect(items.length).toBe(1);
-  });
-});
-
-describe("applyFillGridItems", () => {
-  test("creates Box instances in the data", () => {
-    const data = createEmptyData("grid-1");
-    const items = computeFillGridData({
-      totalCells: 3,
-      existingChildCount: 0,
-      generateId: makeIdGenerator(),
-    });
-    applyFillGridItems(data, items, "bp-1", "grid-1");
-
-    expect(data.instances.size).toBe(4); // parent + 3 children
-    for (const item of items) {
-      const instance = data.instances.get(item.instanceId);
-      expect(instance).toBeDefined();
-      expect(instance?.component).toBe("Box");
-      expect(instance?.children).toEqual([]);
-    }
-  });
-
-  test("appends children to parent instance", () => {
-    const data = createEmptyData("grid-1");
-    const items = computeFillGridData({
-      totalCells: 2,
-      existingChildCount: 0,
-      generateId: makeIdGenerator(),
-    });
-    applyFillGridItems(data, items, "bp-1", "grid-1");
-
-    const parent = data.instances.get("grid-1");
-    expect(parent?.children.length).toBe(2);
-    expect(parent?.children[0]).toEqual({
-      type: "id",
-      value: items[0].instanceId,
-    });
-    expect(parent?.children[1]).toEqual({
-      type: "id",
-      value: items[1].instanceId,
-    });
-  });
-
-  test("preserves existing children when appending", () => {
-    const data = createEmptyData("grid-1");
-    const parent = data.instances.get("grid-1")!;
-    parent.children.push({ type: "id", value: "existing-child" });
-
-    const items = computeFillGridData({
-      totalCells: 3,
-      existingChildCount: 1,
-      generateId: makeIdGenerator(),
-    });
-    applyFillGridItems(data, items, "bp-1", "grid-1");
-
-    expect(parent.children.length).toBe(3);
-    expect(parent.children[0]).toEqual({
-      type: "id",
-      value: "existing-child",
-    });
-  });
-
-  test("creates local style sources for each item", () => {
-    const data = createEmptyData("grid-1");
-    const items = computeFillGridData({
-      totalCells: 2,
-      existingChildCount: 0,
-      generateId: makeIdGenerator(),
-    });
-    applyFillGridItems(data, items, "bp-1", "grid-1");
-
-    expect(data.styleSources.size).toBe(2);
-    for (const item of items) {
-      const source = data.styleSources.get(item.styleSourceId);
-      expect(source).toEqual({ type: "local", id: item.styleSourceId });
-    }
-  });
-
-  test("links style sources to instances via selections", () => {
-    const data = createEmptyData("grid-1");
-    const items = computeFillGridData({
-      totalCells: 2,
-      existingChildCount: 0,
-      generateId: makeIdGenerator(),
-    });
-    applyFillGridItems(data, items, "bp-1", "grid-1");
-
-    expect(data.styleSourceSelections.size).toBe(2);
-    for (const item of items) {
-      const selection = data.styleSourceSelections.get(item.instanceId);
-      expect(selection).toEqual({
-        instanceId: item.instanceId,
-        values: [item.styleSourceId],
-      });
-    }
-  });
-
-  test("sets display flex and flex-direction column on each item", () => {
-    const data = createEmptyData("grid-1");
-    const items = computeFillGridData({
-      totalCells: 2,
-      existingChildCount: 0,
-      generateId: makeIdGenerator(),
-    });
-    applyFillGridItems(data, items, "bp-1", "grid-1");
-
-    expect(data.styles.size).toBe(4);
-    const styleValues = Array.from(data.styles.values()) as Array<{
-      breakpointId: string;
-      property: string;
-      value: { type: string; value: string };
-    }>;
-    for (const style of styleValues) {
-      expect(style.breakpointId).toBe("bp-1");
-    }
-    const displayStyles = styleValues.filter((s) => s.property === "display");
-    const directionStyles = styleValues.filter(
-      (s) => s.property === "flexDirection"
-    );
-    expect(displayStyles).toHaveLength(2);
-    expect(directionStyles).toHaveLength(2);
-    for (const style of displayStyles) {
-      expect(style.value).toEqual({ type: "keyword", value: "flex" });
-    }
-    for (const style of directionStyles) {
-      expect(style.value).toEqual({ type: "keyword", value: "column" });
-    }
-  });
-
-  test("does nothing when parent instance is missing", () => {
-    const data = createEmptyData("grid-1");
-    const items = computeFillGridData({
-      totalCells: 2,
-      existingChildCount: 0,
-      generateId: makeIdGenerator(),
-    });
-    applyFillGridItems(data, items, "bp-1", "nonexistent");
-
-    // No new instances or styles should be created
-    expect(data.instances.size).toBe(1); // only original parent
-    expect(data.styleSources.size).toBe(0);
-    expect(data.styles.size).toBe(0);
-  });
-
-  test("handles empty items array", () => {
-    const data = createEmptyData("grid-1");
-    applyFillGridItems(data, [], "bp-1", "grid-1");
-
-    const parent = data.instances.get("grid-1");
-    expect(parent?.children.length).toBe(0);
-    expect(data.styleSources.size).toBe(0);
+    expect(itemsCount).toBe(1);
   });
 });

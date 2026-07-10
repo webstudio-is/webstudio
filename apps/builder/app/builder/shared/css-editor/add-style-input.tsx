@@ -297,6 +297,7 @@ export const AddStyleInput = forwardRef<
         <ComboboxAnchor>
           <InputField
             {...inputProps}
+            aria-label="Add styles"
             onFocus={onFocus}
             onBlur={handleBlur}
             inputRef={forwardedRef}

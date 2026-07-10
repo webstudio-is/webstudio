@@ -11,15 +11,14 @@ import {
   useResetActionIndex,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   DeleteCssVariableDialog,
   RenameCssVariableDialog,
   $cssVariableInstancesByVariable,
   $cssVariableDefinitionsByVariable,
   $unusedCssVariables,
+  deleteCssVariable,
 } from "~/builder/shared/css-variable-utils";
-import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-data";
 import { InstanceList, showInstance } from "../shared/instance-list";
 import {
   $commandContent,
@@ -181,7 +180,7 @@ export const CssVariablesGroup = ({
           focusCommandPanel();
         }}
         onConfirm={(property) => {
-          deleteProperty(property as CssProperty);
+          deleteCssVariable(property);
           toast.success(`CSS variable "${variableDialog?.property}" deleted`);
           setVariableDialog(undefined);
         }}

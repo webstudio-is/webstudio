@@ -139,7 +139,8 @@ export const importProject = async (
   if (parsedData.success === false) {
     importing.stop(
       `${invalidProjectBundleMessage} Invalid fields: ${formatZodIssues(
-        parsedData.error.issues
+        parsedData.error.issues,
+        data
       )}`,
       2
     );

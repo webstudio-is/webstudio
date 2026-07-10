@@ -6,7 +6,7 @@ import {
   loadBuildById,
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/index.server";
-import { buildPatchTransaction } from "@webstudio-is/protocol";
+import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { assertApiProjectPermit } from "./api-permits.server";

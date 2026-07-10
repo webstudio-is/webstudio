@@ -13,7 +13,7 @@
     "@prisma/client": "^5.12.1",
     "@webstudio-is/tsconfig": "workspace:*",
     "prisma": "5.12.1",
-    "zod": "^3.24.2"
+    "zod": "^4.4.3"
   },
   "exports": {
     "types": "./lib/prisma.d.ts",
@@ -28,7 +28,7 @@
     "umzug": "^3.2.1"
   },
   "peerDependencies": {
-    "zod": "^3.19.1"
+    "zod": "^4.4.3"
   },
   "sideEffects": false
 }

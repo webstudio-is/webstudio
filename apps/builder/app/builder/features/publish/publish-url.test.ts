@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   compilePathnamePattern,
   tokenizePathnamePattern,
-} from "~/builder/shared/url-pattern";
+} from "@webstudio-is/project-build/runtime/url-pattern";
 import { getPublishUrl } from "./publish-url";
 
 describe("getPublishUrl", () => {

@@ -1,28 +1,22 @@
 import {
-  detachSharedSlotChildrenMutable,
-  detachSharedSlotContentMutable,
   reparentInstance,
   wrapInstance,
   toggleInstanceShow,
   unwrapInstance,
-  unwrapInstanceMutable,
   canUnwrapInstance,
-  canConvertInstance,
   convertInstance,
-  setInstanceLabelMutable,
 } from "./mutation";
-import { reparentInstanceMutable, deleteSelectedInstance } from "./mutation";
+import { deleteSelectedInstance } from "./mutation";
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
 import {
-  $,
-  ws,
-  expression,
-  renderData,
-  ResourceValue,
-} from "@webstudio-is/template";
+  canConvertInstance,
+  reparentInstanceMutable,
+} from "@webstudio-is/project-build/runtime/instances";
+import { $, ws, expression, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
@@ -41,8 +35,7 @@ import {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import { deleteInstanceMutable } from "./mutation";
-import type { InstancePath } from "../nano-states";
+import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
 import { $registeredComponentMetas } from "../nano-states";
 import {
   $instances,
@@ -51,7 +44,7 @@ import {
   $props,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
-import { $selectedInstanceSelector, getInstancePath } from "../nano-states";
+import { $selectedInstanceSelector } from "../nano-states";
 import { selectInstance } from "../nano-states";
 import { $selectedPageId } from "../nano-states/pages";
 import {
@@ -59,7 +52,10 @@ import {
   expectSlotsShareFragment,
   getSlotFragmentId,
 } from "../slot-test-utils";
-import type { DroppableTarget, InstanceSelector } from "./tree";
+import type {
+  DroppableTarget,
+  InstanceSelector,
+} from "@webstudio-is/project-build/runtime/tree";
 
 enableMapSet();
 registerContainers();
@@ -70,6 +66,18 @@ const defaultMetasMap = new Map(
   Object.entries({ ...defaultMetas, ...coreMetas })
 );
 $registeredComponentMetas.set(defaultMetasMap);
+
+const reparentTestInstanceMutable = (
+  data: Omit<WebstudioData, "pages">,
+  sourceInstanceSelector: InstanceSelector,
+  dropTarget: DroppableTarget
+) =>
+  reparentInstanceMutable({
+    data,
+    sourceInstanceSelector,
+    dropTarget,
+    createId: builderRuntimeContext.createId,
+  });
 
 const createFakeComponentMetas = (
   itemMeta: Partial<WsComponentMeta>,
@@ -127,7 +135,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["text", "box", "body"], {
+    reparentTestInstanceMutable(data, ["text", "box", "body"], {
       parentSelector: ["body"],
       position: 1,
     });
@@ -152,7 +160,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["text", "box", "body"], {
+    reparentTestInstanceMutable(data, ["text", "box", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -206,7 +214,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["body"],
       position: 1,
     });
@@ -230,7 +238,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["body"],
       position: 2,
     });
@@ -253,7 +261,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["slot", "body"],
       position: "end",
     });
@@ -282,7 +290,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["slot", "body"],
       position: "end",
     });
@@ -310,7 +318,7 @@ describe("reparent instance", () => {
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["slot", "body"],
       position: "end",
     });
@@ -346,7 +354,7 @@ describe("reparent instance", () => {
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["slot1", "body"],
       position: "end",
     });
@@ -377,7 +385,7 @@ describe("reparent instance", () => {
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["slot1", "body"],
       position: "end",
     });
@@ -418,7 +426,7 @@ describe("reparent instance", () => {
     data.instances.set("heading", createInstance("heading", "Heading", []));
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["slot1", "body"],
       position: "end",
     });
@@ -455,7 +463,7 @@ describe("reparent instance", () => {
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["text", "body"], {
+    reparentTestInstanceMutable(data, ["text", "body"], {
       parentSelector: ["slot1", "body"],
       position: "end",
     });
@@ -492,7 +500,7 @@ describe("reparent instance", () => {
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box1", "slot1", "body"], {
+    reparentTestInstanceMutable(data, ["box1", "slot1", "body"], {
       parentSelector: ["slot2", "body"],
       position: 3,
     });
@@ -531,7 +539,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "slot1", "body"], {
+    reparentTestInstanceMutable(data, ["box", "slot1", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -571,7 +579,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "sourceSlot1", "body"], {
+    reparentTestInstanceMutable(data, ["box", "sourceSlot1", "body"], {
       parentSelector: ["targetSlot1", "body"],
       position: "end",
     });
@@ -618,7 +626,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["box", "fragment", "slot1", "body"], {
+    reparentTestInstanceMutable(data, ["box", "fragment", "slot1", "body"], {
       parentSelector: ["slot2", "body"],
       position: "end",
     });
@@ -663,7 +671,7 @@ describe("reparent instance", () => {
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box1", "fragment", "slot1", "body"], {
+    reparentTestInstanceMutable(data, ["box1", "fragment", "slot1", "body"], {
       parentSelector: ["slot2", "body"],
       position: 3,
     });
@@ -702,10 +710,14 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["heading", "fragment", "slot1", "body"], {
-      parentSelector: ["div", "fragment", "slot1", "body"],
-      position: "end",
-    });
+    reparentTestInstanceMutable(
+      data,
+      ["heading", "fragment", "slot1", "body"],
+      {
+        parentSelector: ["div", "fragment", "slot1", "body"],
+        position: "end",
+      }
+    );
 
     expect(data.instances.get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
@@ -744,7 +756,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(
+    reparentTestInstanceMutable(
       data,
       ["heading", "div", "fragment", "slot1", "body"],
       {
@@ -786,7 +798,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["slot1", "body"],
       position: "end",
     });
@@ -827,7 +839,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "body"], {
+    reparentTestInstanceMutable(data, ["box", "body"], {
       parentSelector: ["div", "fragment", "slot1", "body"],
       position: "end",
     });
@@ -880,7 +892,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(
+    reparentTestInstanceMutable(
       data,
       ["box", "sourceFragment", "sourceSlot1", "body"],
       {
@@ -938,7 +950,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(
+    reparentTestInstanceMutable(
       data,
       ["box", "sourceFragment", "sourceSlot1", "body"],
       {
@@ -999,7 +1011,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(
+    reparentTestInstanceMutable(
       data,
       ["box", "sourceFragment", "sourceSlot1", "body"],
       {
@@ -1188,7 +1200,7 @@ describe("reparent instance", () => {
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     for (let index = 0; index < 20; index += 1) {
       const operation = operations[Math.floor(random() * operations.length)]();
-      reparentInstanceMutable(
+      reparentTestInstanceMutable(
         operation.data,
         operation.sourceSelector,
         operation.dropTarget
@@ -1218,7 +1230,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["heading", "slot2", "body"], {
+    reparentTestInstanceMutable(data, ["heading", "slot2", "body"], {
       parentSelector: ["slot2", "body"],
       position: 0,
     });
@@ -1233,7 +1245,7 @@ describe("reparent instance", () => {
     ]);
     expectSlotTreeIntegrity(data.instances);
 
-    const movedSelector = reparentInstanceMutable(
+    const movedSelector = reparentTestInstanceMutable(
       data,
       ["box", "fragment", "slot2", "body"],
       {
@@ -1256,13 +1268,6 @@ describe("reparent instance", () => {
 
     const movedId = data.instances.get("outside")?.children[0]?.value;
     expect(movedId).toBe(movedSelector?.[0]);
-    deleteInstanceMutable(
-      data,
-      getInstancePath([movedId ?? "", "outside", "body"], data.instances)
-    );
-
-    expectSlotTreeIntegrity(data.instances);
-    expect(data.instances.get("outside")?.children).toEqual([]);
   });
 
   test("reparent nested shared slot child outside removes it from all slot occurrences", () => {
@@ -1288,10 +1293,14 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "div", "fragment", "slot1", "body"], {
-      parentSelector: ["body"],
-      position: "end",
-    });
+    reparentTestInstanceMutable(
+      data,
+      ["box", "div", "fragment", "slot1", "body"],
+      {
+        parentSelector: ["body"],
+        position: "end",
+      }
+    );
 
     const fragmentId = expectSlotsShareFragment(data.instances, [
       "slot1",
@@ -1381,7 +1390,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["card", "fragment", "slot1", "body"], {
+    reparentTestInstanceMutable(data, ["card", "fragment", "slot1", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -1460,7 +1469,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["box", "fragment", "slot1", "body"], {
+    reparentTestInstanceMutable(data, ["box", "fragment", "slot1", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -1497,7 +1506,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["div", "fragment", "slot1", "body"], {
+    reparentTestInstanceMutable(data, ["div", "fragment", "slot1", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -1520,7 +1529,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(data, ["slot", "body"], {
+    reparentTestInstanceMutable(data, ["slot", "body"], {
       parentSelector: ["fragment", "slot", "body"],
       position: "end",
     });
@@ -1544,7 +1553,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstanceMutable(
+    reparentTestInstanceMutable(
       data,
       ["box", "collection[0]", "collection", "body"],
       { parentSelector: ["body"], position: "end" }
@@ -1569,7 +1578,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["child", "parent", "body"], {
+    reparentTestInstanceMutable(data, ["child", "parent", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -1651,7 +1660,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["child", "parent", "body"], {
+    reparentTestInstanceMutable(data, ["child", "parent", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -1758,7 +1767,7 @@ describe("reparent instance", () => {
     $project.set({ id: "projectId" } as Project);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    reparentInstanceMutable(data, ["child", "source", "body"], {
+    reparentTestInstanceMutable(data, ["child", "source", "body"], {
       parentSelector: ["target", "body"],
       position: "end",
     });
@@ -1780,7 +1789,7 @@ describe("reparent instance", () => {
     $registeredComponentMetas.set(
       new Map(Object.entries({ ...defaultMetas, ...radixMetas }))
     );
-    reparentInstanceMutable(data, ["trigger", "tooltip", "body"], {
+    reparentTestInstanceMutable(data, ["trigger", "tooltip", "body"], {
       parentSelector: ["tooltip", "body"],
       position: "end",
     });
@@ -1851,464 +1860,6 @@ const parentScopedVariable: DataSource = {
   name: "Parent Variable",
   value: { type: "string", value: "value" },
 };
-
-describe("set instance label", () => {
-  test("renames all linked canonical slot occurrences", () => {
-    const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1" ws:label="Old Slot">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot3">
-          <$.Fragment ws:id="otherFragment">
-            <$.Box ws:id="otherBox"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-
-    setInstanceLabelMutable(instances, "slot1", "Navigation");
-
-    expect(instances.get("slot1")?.label).toBe("Navigation");
-    expect(instances.get("slot2")?.label).toBe("Navigation");
-    expect(instances.get("slot3")?.label).toBeUndefined();
-  });
-
-  test("renames all linked legacy slot occurrences", () => {
-    const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-        </$.Slot>
-      </$.Body>
-    );
-
-    setInstanceLabelMutable(instances, "slot1", "Navigation");
-
-    expect(instances.get("slot1")?.label).toBe("Navigation");
-    expect(instances.get("slot2")?.label).toBe("Navigation");
-  });
-
-  test("renames only selected non-slot instance", () => {
-    const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box1"></$.Box>
-        <$.Box ws:id="box2"></$.Box>
-      </$.Body>
-    );
-
-    setInstanceLabelMutable(instances, "box1", "Card");
-
-    expect(instances.get("box1")?.label).toBe("Card");
-    expect(instances.get("box2")?.label).toBeUndefined();
-  });
-});
-
-describe("delete instance", () => {
-  test("delete instance with its children", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId">
-          <$.Box ws:id="sectionId"></$.Box>
-        </$.Box>
-        <$.Box ws:id="divId"></$.Box>
-      </$.Body>
-    );
-    expect(data.instances.size).toEqual(4);
-    expect(data.instances.get("bodyId")?.children.length).toEqual(2);
-    deleteInstanceMutable(
-      data,
-      // clone to make sure data is mutated instead of instance path
-      structuredClone(getInstancePath(["boxId", "bodyId"], data.instances))
-    );
-    expect(data.instances.size).toEqual(2);
-    expect(data.instances.get("bodyId")?.children.length).toEqual(1);
-  });
-
-  test("delete instance from collection", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <ws.collection ws:id="collectionId">
-          <$.Box ws:id="boxId"></$.Box>
-        </ws.collection>
-      </$.Body>
-    );
-    expect(data.instances.size).toEqual(3);
-    expect(data.instances.get("collectionId")?.children.length).toEqual(1);
-    deleteInstanceMutable(
-      data,
-      getInstancePath(
-        ["boxId", "collectionId[0]", "collectionId", "bodyId"],
-        data.instances
-      )
-    );
-    expect(data.instances.size).toEqual(2);
-    expect(data.instances.get("collectionId")?.children.length).toEqual(0);
-  });
-
-  test("delete instance from collection item", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <ws.collection ws:id="collectionId">
-          <$.Box ws:id="boxId">
-            <$.Text ws:id="textId"></$.Text>
-          </$.Box>
-        </ws.collection>
-      </$.Body>
-    );
-    expect(data.instances.size).toEqual(4);
-    expect(data.instances.get("boxId")?.children.length).toEqual(1);
-    deleteInstanceMutable(
-      data,
-      getInstancePath(
-        ["textId", "boxId", "collectionId[0]", "collectionId", "bodyId"],
-        data.instances
-      )
-    );
-    expect(data.instances.size).toEqual(3);
-    expect(data.instances.get("boxId")?.children.length).toEqual(0);
-  });
-
-  test("delete resource bound to variable", () => {
-    const myResource = new ResourceValue("My Resource", {
-      url: expression`""`,
-      method: "get",
-      searchParams: [],
-      headers: [],
-    });
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" vars={expression`${myResource}`}></$.Box>
-      </$.Body>
-    );
-    expect(data.resources.size).toEqual(1);
-    expect(data.dataSources.size).toEqual(1);
-    deleteInstanceMutable(
-      data,
-      getInstancePath(["boxId", "bodyId"], data.instances)
-    );
-    expect(data.resources.size).toEqual(0);
-    expect(data.dataSources.size).toEqual(0);
-  });
-
-  test("delete resource bound to prop", () => {
-    const myResource = new ResourceValue("My Resource", {
-      url: expression`""`,
-      method: "get",
-      searchParams: [],
-      headers: [],
-    });
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Box ws:id="boxId" action={myResource}></$.Box>
-      </$.Body>
-    );
-    expect(data.resources.size).toEqual(1);
-    expect(data.props.size).toEqual(1);
-    deleteInstanceMutable(
-      data,
-      getInstancePath(["boxId", "bodyId"], data.instances)
-    );
-    expect(data.resources.size).toEqual(0);
-    expect(data.props.size).toEqual(0);
-  });
-
-  test("delete unknown instance (just in case)", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Invalid ws:id="invalidId"></$.Invalid>
-      </$.Body>
-    );
-    expect(data.instances.size).toEqual(2);
-    deleteInstanceMutable(
-      data,
-      getInstancePath(["invalidId", "bodyId"], data.instances)
-    );
-    expect(data.instances.size).toEqual(1);
-  });
-
-  test("delete slot fragment along with last child", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slotId">
-          <$.Fragment ws:id="fragmentId">
-            <$.Box ws:id="boxId"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-    expect(data.instances.size).toEqual(4);
-    expect(data.instances.get("fragmentId")?.children.length).toEqual(1);
-    deleteInstanceMutable(
-      data,
-      getInstancePath(
-        ["boxId", "fragmentId", "slotId", "bodyId"],
-        data.instances
-      )
-    );
-    expect(data.instances.size).toEqual(2);
-    expect(data.instances.get("slotId")?.children.length).toEqual(0);
-  });
-
-  test("delete shared slot content from all slot occurrences", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-
-    deleteInstanceMutable(
-      data,
-      getInstancePath(["div", "fragment", "slot1", "bodyId"], data.instances)
-    );
-
-    expect(data.instances.get("slot1")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("fragment")?.children).toEqual([]);
-    expect(data.instances.has("div")).toEqual(false);
-  });
-
-  test("delete legacy shared slot content from all slot occurrences", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slot1">
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Box ws:id="box"></$.Box>
-          <$.Heading ws:id="heading"></$.Heading>
-        </$.Slot>
-      </$.Body>
-    );
-
-    deleteInstanceMutable(
-      data,
-      getInstancePath(["box", "slot1", "bodyId"], data.instances)
-    );
-
-    const fragmentId = expectSlotsShareFragment(data.instances, [
-      "slot1",
-      "slot2",
-    ]);
-    expect(data.instances.get("slot1")?.children).toEqual([
-      { type: "id", value: fragmentId },
-    ]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: fragmentId },
-    ]);
-    expect(data.instances.get(fragmentId ?? "")?.children).toEqual([
-      { type: "id", value: "heading" },
-    ]);
-    expect(data.instances.has("box")).toBe(false);
-  });
-
-  test("delete nested shared slot content from all slot occurrences", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
-            </ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <ws.element ws:tag="div" ws:id="div">
-              <$.Box ws:id="box"></$.Box>
-            </ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-
-    deleteInstanceMutable(
-      data,
-      getInstancePath(
-        ["box", "div", "fragment", "slot1", "bodyId"],
-        data.instances
-      )
-    );
-
-    expect(data.instances.get("slot1")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("fragment")?.children).toEqual([
-      { type: "id", value: "div" },
-    ]);
-    expect(data.instances.get("div")?.children).toEqual([]);
-    expect(data.instances.has("box")).toEqual(false);
-  });
-
-  test("delete shared slot content preserves shared siblings", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-
-    deleteInstanceMutable(
-      data,
-      getInstancePath(["box", "fragment", "slot1", "bodyId"], data.instances)
-    );
-
-    expect(data.instances.get("slot1")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("fragment")?.children).toEqual([
-      { type: "id", value: "heading" },
-    ]);
-    expect(data.instances.has("box")).toEqual(false);
-  });
-
-  test("delete last direct shared slot child preserves shared siblings", () => {
-    const data = renderData(
-      <$.Body ws:id="bodyId">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-            <$.Heading ws:id="heading"></$.Heading>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-
-    deleteInstanceMutable(
-      data,
-      getInstancePath(
-        ["heading", "fragment", "slot1", "bodyId"],
-        data.instances
-      )
-    );
-
-    expect(data.instances.get("slot1")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("fragment")?.children).toEqual([
-      { type: "id", value: "box" },
-    ]);
-    expect(data.instances.has("heading")).toEqual(false);
-  });
-});
-
-describe("detach shared slot content", () => {
-  test("detachSharedSlotChildrenMutable clones shared fragment for selected slot", () => {
-    const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-    $project.set({ id: "projectId" } as Project);
-
-    detachSharedSlotChildrenMutable(data, "slot1");
-
-    const slot1FragmentId = data.instances.get("slot1")?.children[0]?.value;
-    expect(slot1FragmentId).toBeDefined();
-    expect(slot1FragmentId).not.toBe("fragment");
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-  });
-
-  test("detachSharedSlotContentMutable returns remapped selected path", () => {
-    const data = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          <$.Fragment ws:id="fragment">
-            <$.Box ws:id="box"></$.Box>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-    $project.set({ id: "projectId" } as Project);
-    const instancePath =
-      getInstancePath(["box", "fragment", "slot1", "body"], data.instances) ??
-      [];
-
-    const detachedPath = detachSharedSlotContentMutable(data, instancePath);
-
-    expect(detachedPath[0].instance.id).not.toBe("box");
-    expect(detachedPath[1].instance.id).not.toBe("fragment");
-    expect(detachedPath[2].instance.id).toBe("slot1");
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-  });
-});
 
 describe("wrap in", () => {
   test("wrap instance in link", () => {
@@ -2695,228 +2246,24 @@ describe("toggleInstanceShow", () => {
       expect(showProp.value).toBe(true);
     }
   });
+
+  test("preserves non-boolean show prop", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box" ws:show={expression`isVisible`}></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    toggleInstanceShow("box");
+
+    expect($props.get()).toEqual(props);
+  });
 });
 
 describe("unwrap instance", () => {
-  test("unwraps instance and moves children to parent", () => {
-    const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="parent">
-          <$.Box ws:id="wrapper">
-            <$.Box ws:id="child1"></$.Box>
-            <$.Box ws:id="child2"></$.Box>
-          </$.Box>
-        </$.Box>
-      </$.Body>
-    );
-
-    const selectedItem = {
-      instanceSelector: ["wrapper", "parent", "body"],
-      instance: instances.get("wrapper")!,
-    };
-    const parentItem = {
-      instanceSelector: ["parent", "body"],
-      instance: instances.get("parent")!,
-    };
-
-    const result = unwrapInstanceMutable({
-      instances,
-      props,
-      metas: defaultMetasMap,
-      selectedItem,
-      parentItem,
-    });
-
-    expect(result.success).toBe(true);
-    expect(instances.has("parent")).toBe(false);
-    const bodyInstance = instances.get("body")!;
-    expect(bodyInstance.children).toEqual([{ type: "id", value: "wrapper" }]);
-  });
-
-  test("fails to unwrap textual instance", () => {
-    const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box">
-          <$.Paragraph ws:id="paragraph">
-            <$.Bold ws:id="bold">text</$.Bold>
-          </$.Paragraph>
-        </$.Box>
-      </$.Body>
-    );
-
-    const selectedItem = {
-      instanceSelector: ["bold", "paragraph", "box", "body"],
-      instance: instances.get("bold")!,
-    };
-    const parentItem = {
-      instanceSelector: ["paragraph", "box", "body"],
-      instance: instances.get("paragraph")!,
-    };
-
-    const result = unwrapInstanceMutable({
-      instances,
-      props,
-      metas: defaultMetasMap,
-      selectedItem,
-      parentItem,
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("Cannot unwrap textual instance");
-  });
-
-  test("fails to unwrap if content model is violated", () => {
-    const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="outerBox">
-          <$.Form ws:id="form">
-            <$.Box ws:id="innerBox">
-              <$.Form ws:id="nestedForm"></$.Form>
-            </$.Box>
-          </$.Form>
-        </$.Box>
-      </$.Body>
-    );
-
-    const selectedItem = {
-      instanceSelector: ["form", "outerBox", "body"],
-      instance: instances.get("form")!,
-    };
-    const parentItem = {
-      instanceSelector: ["outerBox", "body"],
-      instance: instances.get("outerBox")!,
-    };
-
-    const result = unwrapInstanceMutable({
-      instances,
-      props,
-      metas: defaultMetasMap,
-      selectedItem,
-      parentItem,
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("Cannot unwrap instance");
-  });
-
-  test("unwrapping replaces parent with selected in grandparent", () => {
-    const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="parent">
-          <$.Box ws:id="child"></$.Box>
-        </$.Box>
-      </$.Body>
-    );
-
-    const selectedItem = {
-      instanceSelector: ["child", "parent", "body"],
-      instance: instances.get("child")!,
-    };
-    const parentItem = {
-      instanceSelector: ["parent", "body"],
-      instance: instances.get("parent")!,
-    };
-
-    const result = unwrapInstanceMutable({
-      instances,
-      props,
-      metas: defaultMetasMap,
-      selectedItem,
-      parentItem,
-    });
-
-    expect(result.success).toBe(true);
-    expect(instances.has("parent")).toBe(false);
-    expect(instances.has("child")).toBe(true);
-    const bodyInstance = instances.get("body")!;
-    expect(bodyInstance.children).toEqual([{ type: "id", value: "child" }]);
-  });
-
-  test("unwrapping removes selected from parent and moves it to grandparent", () => {
-    const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="parent">
-          <$.Image ws:id="image"></$.Image>
-          <$.Link ws:id="link"></$.Link>
-        </$.Box>
-      </$.Body>
-    );
-
-    const selectedItem = {
-      instanceSelector: ["image", "parent", "body"],
-      instance: instances.get("image")!,
-    };
-    const parentItem = {
-      instanceSelector: ["parent", "body"],
-      instance: instances.get("parent")!,
-    };
-
-    const result = unwrapInstanceMutable({
-      instances,
-      props,
-      metas: defaultMetasMap,
-      selectedItem,
-      parentItem,
-    });
-
-    expect(result.success).toBe(true);
-    expect(instances.has("parent")).toBe(true); // Parent still exists
-    expect(instances.has("image")).toBe(true);
-    expect(instances.has("link")).toBe(true);
-
-    const bodyInstance = instances.get("body")!;
-    expect(bodyInstance.children).toEqual([
-      { type: "id", value: "parent" },
-      { type: "id", value: "image" },
-    ]);
-
-    const parentInstance = instances.get("parent")!;
-    expect(parentInstance.children).toEqual([{ type: "id", value: "link" }]);
-  });
-
-  test("unwraps direct slot child out of shared slot content", () => {
-    const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <$.Slot ws:id="slot1">
-          <$.Fragment ws:id="fragment">
-            <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-        <$.Slot ws:id="slot2">
-          {/* same ids */}
-          <$.Fragment ws:id="fragment">
-            <ws.element ws:tag="div" ws:id="div"></ws.element>
-          </$.Fragment>
-        </$.Slot>
-      </$.Body>
-    );
-
-    const result = unwrapInstanceMutable({
-      instances,
-      props,
-      metas: defaultMetasMap,
-      selectedItem: {
-        instanceSelector: ["div", "fragment", "slot1", "body"],
-        instance: instances.get("div")!,
-      },
-      parentItem: {
-        instanceSelector: ["slot1", "body"],
-        instance: instances.get("slot1")!,
-      },
-    });
-
-    expect(result.success).toBe(true);
-    expect(instances.get("body")?.children).toEqual([
-      { type: "id", value: "div" },
-      { type: "id", value: "slot2" },
-    ]);
-    expect(instances.has("slot1")).toBe(false);
-    expect(instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(instances.get("fragment")?.children).toEqual([]);
-  });
-
   test("unwrap command skips hidden slot fragment", () => {
     const { instances, props } = renderData(
       <$.Body ws:id="body">
@@ -3383,41 +2730,6 @@ describe("canUnwrapInstance", () => {
     // Should be able to unwrap the link from the div
     expect(canUnwrapInstance(instancePath)).toBe(true);
   });
-
-  test("unwrapInstanceMutable works for Body > div > a scenario", () => {
-    const { instances, props } = renderData(
-      <$.Body ws:id="body">
-        <ws.element ws:tag="div" ws:id="div">
-          <ws.element ws:tag="a" ws:id="link">
-            Link text
-          </ws.element>
-        </ws.element>
-      </$.Body>
-    );
-
-    const result = unwrapInstanceMutable({
-      instances,
-      props,
-      metas: defaultMetasMap,
-      selectedItem: {
-        instanceSelector: ["link", "div", "body"],
-        instance: instances.get("link")!,
-      },
-      parentItem: {
-        instanceSelector: ["div", "body"],
-        instance: instances.get("div")!,
-      },
-    });
-
-    expect(result.success).toBe(true);
-
-    // Verify the link is now a direct child of body
-    const body = instances.get("body")!;
-    expect(body.children).toContainEqual({ type: "id", value: "link" });
-
-    // Verify the div was deleted since it has no more children
-    expect(instances.has("div")).toBe(false);
-  });
 });
 
 describe("canConvertInstance", () => {
@@ -3428,15 +2740,15 @@ describe("canConvertInstance", () => {
       </ws.element>
     );
 
-    const result = canConvertInstance(
-      "box",
-      ["box", "body"],
-      elementComponent,
-      "div",
+    const result = canConvertInstance({
+      instanceId: "box",
+      instanceSelector: ["box", "body"],
+      component: elementComponent,
+      tag: "div",
       instances,
       props,
-      defaultMetasMap
-    );
+      metas: defaultMetasMap,
+    });
 
     expect(result).toBe(true);
   });
@@ -3446,15 +2758,15 @@ describe("canConvertInstance", () => {
       <ws.element ws:tag="body" ws:id="body"></ws.element>
     );
 
-    const result = canConvertInstance(
-      "nonexistent",
-      ["nonexistent", "body"],
-      elementComponent,
-      "div",
+    const result = canConvertInstance({
+      instanceId: "nonexistent",
+      instanceSelector: ["nonexistent", "body"],
+      component: elementComponent,
+      tag: "div",
       instances,
       props,
-      defaultMetasMap
-    );
+      metas: defaultMetasMap,
+    });
 
     expect(result).toBe(false);
   });
@@ -3466,15 +2778,14 @@ describe("canConvertInstance", () => {
       </ws.element>
     );
 
-    const result = canConvertInstance(
-      "box",
-      ["box", "body"],
-      "@webstudio-is/sdk-components-react:Heading",
-      undefined,
+    const result = canConvertInstance({
+      instanceId: "box",
+      instanceSelector: ["box", "body"],
+      component: "@webstudio-is/sdk-components-react:Heading",
       instances,
       props,
-      defaultMetasMap
-    );
+      metas: defaultMetasMap,
+    });
 
     expect(result).toBe(true);
   });
@@ -3486,15 +2797,14 @@ describe("canConvertInstance", () => {
       </ws.element>
     );
 
-    const result = canConvertInstance(
-      "box",
-      ["box", "body"],
-      "@webstudio-is/sdk-components-react:Heading",
-      undefined,
+    const result = canConvertInstance({
+      instanceId: "box",
+      instanceSelector: ["box", "body"],
+      component: "@webstudio-is/sdk-components-react:Heading",
       instances,
       props,
-      defaultMetasMap
-    );
+      metas: defaultMetasMap,
+    });
 
     expect(result).toBe(true);
   });

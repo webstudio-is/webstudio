@@ -16,93 +16,35 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
+import { type Folder, getFolderById } from "@webstudio-is/sdk";
 import {
-  type Folder,
-  folder,
-  type Pages,
-  ROOT_FOLDER_ID,
-  findParentFolderByChildId,
-  getFolderById,
-} from "@webstudio-is/sdk";
-import {
-  createFolderValue,
-  isSlugAvailable,
+  folderSettingsDefaultValues,
+  getFolderSettingsValues,
+  getNewFolderSettingsValues,
+  nameToSlug,
+  validateFolderSettings,
+  type FolderSettingsFieldErrors,
+  type FolderSettingsValues,
 } from "@webstudio-is/project-build/runtime/pages";
-import { nanoid } from "nanoid";
 import { useState, type FocusEventHandler } from "react";
-import slugify from "slugify";
-import { z } from "zod";
 import { useIds } from "~/shared/form-utils";
 import { $pages } from "~/shared/sync/data-stores";
 import { $isDesignMode } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { Form } from "./form";
-import {
-  insertFolderMutable,
-  updateFolderFieldsMutable,
-} from "~/shared/page-utils/tree";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { copyFolder } from "~/shared/copy-paste/copy-paste";
 import { PageItemActionsDropdown } from "./page-item-actions";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
-const folderValues = folder.pick({ name: true, slug: true }).extend({
-  parentFolderId: z.string(),
-});
-
-type Values = z.infer<typeof folderValues>;
+type Values = FolderSettingsValues;
 
 type FieldName = keyof Values;
 
-type Errors = {
-  [fieldName in FieldName]?: string[];
-};
-
-const fieldDefaultValues = {
-  name: "Untitled",
-  slug: "untitled",
-  parentFolderId: ROOT_FOLDER_ID,
-} satisfies Values;
+type Errors = FolderSettingsFieldErrors;
 
 const emptyUnsavedValues: Partial<Values> = {};
 
-const fieldNames = Object.keys(fieldDefaultValues) as Array<FieldName>;
-
-const validateValues = (
-  pages: undefined | Pages,
-  values: Values,
-  folderId?: Folder["id"]
-): Errors => {
-  const parsedResult = folderValues.safeParse(values);
-  const errors: Errors = {};
-  if (parsedResult.success === false) {
-    return parsedResult.error.formErrors.fieldErrors;
-  }
-  if (pages !== undefined && values.slug !== undefined) {
-    if (
-      isSlugAvailable(
-        values.slug,
-        pages.folders,
-        values.parentFolderId,
-        folderId
-      ) === false
-    ) {
-      errors.slug = errors.slug ?? [];
-      errors.slug.push(`Slug "${values.slug}" is already in use`);
-    }
-  }
-  return errors;
-};
-
-const toFormValues = (folderId: Folder["id"], pages: Pages): Values => {
-  const { folders } = pages;
-  const folder = folders.get(folderId);
-  const parentFolder = findParentFolderByChildId(folderId, folders);
-  return {
-    name: folder?.name ?? "",
-    slug: folder?.slug ?? "",
-    parentFolderId: parentFolder?.id ?? pages.rootFolderId,
-  };
-};
+const fieldNames = Object.keys(folderSettingsDefaultValues) as Array<FieldName>;
 
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
@@ -196,14 +138,6 @@ const FormFields = ({
   );
 };
 
-const nameToSlug = (name: string) => {
-  if (name === "") {
-    return "";
-  }
-
-  return slugify(name, { lower: true, strict: true });
-};
-
 export const newFolderId = "new-folder";
 
 export const NewFolderSettings = ({
@@ -218,19 +152,18 @@ export const NewFolderSettings = ({
   const pages = useStore($pages);
   const isDesignMode = useStore($isDesignMode);
 
-  const [values, setValues] = useState<Values>({
-    ...fieldDefaultValues,
-    parentFolderId: pages?.rootFolderId ?? fieldDefaultValues.parentFolderId,
-    slug: nameToSlug(fieldDefaultValues.name),
-  });
+  const [values, setValues] = useState<Values>(() =>
+    getNewFolderSettingsValues(pages)
+  );
 
-  const errors = validateValues(pages, values);
+  const errors = validateFolderSettings({ pages, values });
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
-      const folderId = nanoid();
-      createFolder(folderId, values);
-      onSuccess(folderId);
+      const folderId = createFolder(values);
+      if (folderId !== undefined) {
+        onSuccess(folderId);
+      }
     }
   };
 
@@ -297,33 +230,25 @@ export const NewFolderSettings = ({
   );
 };
 
-const createFolder = (folderId: Folder["id"], values: Values) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    insertFolderMutable({
-      pages,
-      folder: createFolderValue({
-        folderId,
-        name: values.name,
-        slug: values.slug,
-      }),
+const createFolder = (values: Values) => {
+  const result = executeRuntimeMutation({
+    id: "folders.create",
+    input: {
+      name: values.name,
+      slug: values.slug,
       parentFolderId: values.parentFolderId,
-    });
+    },
   });
+  return result?.result.folderId as string | undefined;
 };
 
 const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    const folder = getFolderById(pages, folderId);
-    if (folder === undefined || folderId === pages.rootFolderId) {
-      return;
-    }
-    updateFolderFieldsMutable({ folder, folderId, pages, values });
+  executeRuntimeMutation({
+    id: "folders.update",
+    input: {
+      folderId,
+      values,
+    },
   });
 };
 
@@ -368,11 +293,13 @@ export const FolderSettings = ({
   };
 
   const values: Values = {
-    ...(pages ? toFormValues(folderId, pages) : fieldDefaultValues),
+    ...(pages
+      ? getFolderSettingsValues({ folderId, pages })
+      : folderSettingsDefaultValues),
     ...unsavedValues,
   };
 
-  errors = validateValues(pages, values, folderId);
+  errors = validateFolderSettings({ pages, values, folderId });
 
   if (folder === undefined) {
     return null;

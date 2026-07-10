@@ -1,18 +1,16 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
-import type { Instance } from "@webstudio-is/sdk";
 import { InputField } from "@webstudio-is/design-system";
-import { $instances } from "~/shared/sync/data-stores";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { HorizontalLayout, Label, Row } from "./shared";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { setInstanceLabelMutable } from "~/shared/instance-utils/mutation";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
-const saveLabel = (label: string, selectedInstance: Instance) => {
-  serverSyncStore.createTransaction([$instances], (instances) => {
-    setInstanceLabelMutable(instances, selectedInstance.id, label.trim());
+const saveLabel = (label: string, instanceId: string) => {
+  executeRuntimeMutation({
+    id: "instances.setLabel",
+    input: { instanceId, label },
   });
 };
 
@@ -21,7 +19,7 @@ export const SettingsSection = () => {
   const id = useId();
   const localValue = useDraftValue(
     selectedInstance?.label ?? "",
-    (value) => selectedInstance && saveLabel(value, selectedInstance),
+    (value) => selectedInstance && saveLabel(value, selectedInstance.id),
     { autoSave: false }
   );
 

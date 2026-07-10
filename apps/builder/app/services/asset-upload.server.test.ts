@@ -2,12 +2,7 @@
 
 import { afterEach, expect, test, vi } from "vitest";
 import { RESIZABLE_IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
-import {
-  getAssetInfoFallback,
-  getBrowserAssetFormat,
-  getBrowserUploadBody,
-  parseAssetType,
-} from "./asset-upload.server";
+import { getBrowserUploadBody } from "./asset-upload.server";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -72,62 +67,4 @@ test("reports browser URL image fetch failures", async () => {
   ).rejects.toThrow(
     "An error occurred while fetching the image at https://example.com/image.png: not found"
   );
-});
-
-test("preserves browser asset format detection", () => {
-  expect(
-    getBrowserAssetFormat({
-      contentType: "application/font-woff",
-      name: "font.woff",
-    })
-  ).toBeUndefined();
-  expect(
-    getBrowserAssetFormat({
-      contentType: "application/octet-stream",
-      name: "video.mp4",
-    })
-  ).toBe("mp4");
-  expect(() =>
-    getBrowserAssetFormat({
-      contentType: "script/javascript",
-      name: "script.unknown",
-    })
-  ).toThrow('MIME type "script/*" is not allowed');
-});
-
-test("accepts only stored asset types for API uploads", () => {
-  expect(parseAssetType("image")).toBe("image");
-  expect(parseAssetType("font")).toBe("font");
-  expect(parseAssetType("file")).toBe("file");
-  expect(parseAssetType("video")).toBeUndefined();
-  expect(parseAssetType(null)).toBeUndefined();
-});
-
-test("uses image metadata fallback only when complete", () => {
-  expect(
-    getAssetInfoFallback({
-      format: "png",
-      searchParams: new URLSearchParams({
-        width: "10",
-        height: "20",
-      }),
-    })
-  ).toEqual({ width: 10, height: 20, format: "png" });
-  expect(
-    getAssetInfoFallback({
-      format: undefined,
-      searchParams: new URLSearchParams({
-        width: "10",
-        height: "20",
-      }),
-    })
-  ).toBeUndefined();
-  expect(
-    getAssetInfoFallback({
-      format: "png",
-      searchParams: new URLSearchParams({
-        width: "10",
-      }),
-    })
-  ).toBeUndefined();
 });

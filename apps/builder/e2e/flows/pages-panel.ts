@@ -45,8 +45,7 @@ export const fillAllowedPageSettings = async ({
     () => undefined
   );
 
-  const metadataGroup = getCustomMetadataGroup(page);
-  const save = waitForChangeToBeSaved({ page });
+  let save = waitForChangeToBeSaved({ page });
   for (const field of [
     { label: "Page name", value: name },
     { label: "Path", value: path },
@@ -65,18 +64,47 @@ export const fillAllowedPageSettings = async ({
   const socialImageInput = page.getByPlaceholder("https://www.url.com").first();
   await socialImageInput.fill(socialImage);
   await socialImageInput.blur();
-  await metadataGroup
-    .getByLabel("Property", { exact: true })
-    .first()
-    .fill(metadata.property);
-  await metadataGroup.getByLabel("Property", { exact: true }).first().blur();
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+
+  await fillCustomMetadata({ page, metadata });
+};
+
+export const fillCustomMetadata = async ({
+  page,
+  metadata,
+}: {
+  page: Page;
+  metadata: {
+    property: string;
+    content: string;
+  };
+}) => {
+  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
+    () => undefined
+  );
+  const metadataGroup = getCustomMetadataGroup(page);
+  let save = waitForChangeToBeSaved({ page });
   await metadataGroup
     .getByLabel("Content", { exact: true })
     .first()
     .fill(metadata.content);
-  await metadataGroup.getByLabel("Content", { exact: true }).first().blur();
   await save;
   await waitForSyncStatus({ page, status: "idle" });
+
+  save = waitForChangeToBeSaved({ page });
+  await metadataGroup
+    .getByLabel("Property", { exact: true })
+    .first()
+    .fill(metadata.property);
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+
+  await expectCustomMetadataValue({
+    page,
+    property: metadata.property,
+    content: metadata.content,
+  });
 };
 
 export const openPagesPanel = async ({ page }: { page: Page }) => {
@@ -263,21 +291,23 @@ export const expectCustomMetadataValue = async ({
   content: string;
 }) => {
   const metadata = getCustomMetadataGroup(page);
-  if (
-    (await metadata
-      .getByLabel("Property", { exact: true })
-      .first()
-      .inputValue()) !== property
-  ) {
-    throw new Error("Expected edited custom metadata property to persist");
+  const actualProperty = await metadata
+    .getByLabel("Property", { exact: true })
+    .first()
+    .inputValue();
+  if (actualProperty !== property) {
+    throw new Error(
+      `Expected edited custom metadata property to persist. Expected "${property}", received "${actualProperty}".`
+    );
   }
-  if (
-    (await metadata
-      .getByLabel("Content", { exact: true })
-      .first()
-      .inputValue()) !== content
-  ) {
-    throw new Error("Expected edited custom metadata content to persist");
+  const actualContent = await metadata
+    .getByLabel("Content", { exact: true })
+    .first()
+    .inputValue();
+  if (actualContent !== content) {
+    throw new Error(
+      `Expected edited custom metadata content to persist. Expected "${content}", received "${actualContent}".`
+    );
   }
 };
 

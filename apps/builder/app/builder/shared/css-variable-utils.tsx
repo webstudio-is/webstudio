@@ -20,20 +20,16 @@ import {
   $styleSourceSelections,
   $props,
 } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   findCssVariableUsagesByInstance,
   getCssVariableDefinitionsByVariable,
   getDefinedCssVariableNames,
   getReferencedCssVariables,
-  performCssVariableRename,
-  renameCssVariableMutable,
-  updateVarReferencesInProps,
+  getUnusedCssVariableNames,
   validateCssVariableNameWithStyles,
 } from "@webstudio-is/project-build/runtime/styles";
 import { type CssVariableNameError } from "@webstudio-is/project-build/runtime/styles";
-
-export { performCssVariableRename, updateVarReferencesInProps };
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const $isDeleteUnusedCssVariablesDialogOpen = atom(false);
 
@@ -93,13 +89,10 @@ export const $referencedCssVariables = computed(
 export const $unusedCssVariables = computed(
   [$cssVariableDefinitionsByVariable, $referencedCssVariables],
   (definitionsByVariable, referencedVariables) => {
-    const unusedVariables = new Set<string>();
-    for (const varName of definitionsByVariable.keys()) {
-      if (!referencedVariables.has(varName)) {
-        unusedVariables.add(varName);
-      }
-    }
-    return unusedVariables;
+    return getUnusedCssVariableNames({
+      definitionsByVariable,
+      referencedVariables,
+    });
   }
 );
 
@@ -122,16 +115,25 @@ export const renameCssVariable = (
     return validationError;
   }
 
-  serverSyncStore.createTransaction([$styles, $props], (styles, props) => {
-    renameCssVariableMutable({
-      styles,
-      props,
-      oldProperty,
-      newProperty,
-    });
+  executeRuntimeMutation({
+    id: "cssVariables.rename",
+    input: {
+      oldName: oldProperty,
+      newName: newProperty,
+    },
   });
 
   return;
+};
+
+export const deleteCssVariable = (property: string) => {
+  executeRuntimeMutation({
+    id: "cssVariables.delete",
+    input: {
+      names: [property],
+      force: true,
+    },
+  });
 };
 
 export const deleteUnusedCssVariables = () => {
@@ -141,19 +143,12 @@ export const deleteUnusedCssVariables = () => {
     return 0;
   }
 
-  // Delete all unused variable declarations
-  serverSyncStore.createTransaction([$styles], (styles) => {
-    const keysToDelete: string[] = [];
-
-    for (const [key, styleDecl] of styles) {
-      if (unusedVariables.has(styleDecl.property)) {
-        keysToDelete.push(key);
-      }
-    }
-
-    for (const key of keysToDelete) {
-      styles.delete(key);
-    }
+  executeRuntimeMutation({
+    id: "cssVariables.delete",
+    input: {
+      names: Array.from(unusedVariables),
+      force: true,
+    },
   });
 
   return unusedVariables.size;

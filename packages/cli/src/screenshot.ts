@@ -496,6 +496,7 @@ export const captureScreenshot = async (
     output?: string;
     width: number;
     height: number;
+    fullPage?: boolean;
     browser: ScreenshotBrowser;
     browserPath?: string;
     waitUntil?: ScreenshotWaitUntil;
@@ -517,6 +518,7 @@ export const captureScreenshot = async (
     output,
     width: options.width,
     height: options.height,
+    fullPage: options.fullPage,
     url: options.url,
     uid: dependencies.getuid(),
     waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
@@ -536,6 +538,7 @@ export const captureScreenshot = async (
       width: options.width,
       height: options.height,
     },
+    fullPage: options.fullPage === true,
     elapsedMs: dependencies.now() - startedAt,
     warnings: [] as string[],
   };
@@ -547,6 +550,7 @@ export const captureScreenshotWithBrowserInstall = async (
     output?: string;
     width: number;
     height: number;
+    fullPage?: boolean;
     browser: ScreenshotBrowser;
     browserPath?: string;
     waitUntil?: ScreenshotWaitUntil;

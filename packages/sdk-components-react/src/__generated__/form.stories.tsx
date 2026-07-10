@@ -1,38 +1,32 @@
 import { useVariableState } from "@webstudio-is/react-sdk/runtime";
-import {
-  Box as Box,
-  Form as Form,
-  Label as Label,
-  Input as Input,
-  Button as Button,
-} from "../components";
+import { Box as Box, Form as Form } from "../components";
 
 const Component = () => {
   let [formState, set$formState] = useVariableState<any>("initial");
   return (
-    <Box className={"w-box"}>
+    <Box className={`w-box`}>
       <Form
         state={formState}
         onStateChange={(state: any) => {
           formState = state;
           set$formState(formState);
         }}
-        className={"w-webhook-form"}
+        className={`w-webhook-form`}
       >
         {(formState === "initial" || formState === "error") && (
-          <Box className={"w-box"}>
-            <Label className={"w-input-label"}>{"Name"}</Label>
-            <Input name={"name"} className={"w-text-input"} />
-            <Label className={"w-input-label"}>{"Email"}</Label>
-            <Input name={"email"} className={"w-text-input"} />
-            <Button className={"w-button"}>{"Submit"}</Button>
-          </Box>
+          <div className={`w-element`}>
+            <label className={`w-element w-element-1`}>{"Name"}</label>
+            <input name={"name"} className={`w-element w-element-2`} />
+            <label className={`w-element w-element-3`}>{"Email"}</label>
+            <input name={"email"} className={`w-element w-element-4`} />
+            <button className={`w-element`}>{"Submit"}</button>
+          </div>
         )}
         {formState === "success" && (
-          <Box className={"w-box"}>{"Thank you for getting in touch!"}</Box>
+          <div className={`w-element`}>{"Thank you for getting in touch!"}</div>
         )}
         {formState === "error" && (
-          <Box className={"w-box"}>{"Sorry, something went wrong."}</Box>
+          <div className={`w-element`}>{"Sorry, something went wrong."}</div>
         )}
       </Form>
     </Box>
@@ -40,7 +34,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Form",
+  title: "Components/Form",
 };
 
 const Story = {
@@ -49,96 +43,18 @@ const Story = {
       <>
         <style>
           {`
-@media all {
-  :where(div.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+@layer presets {
+  div.w-box {
+    box-sizing: border-box
   }
-  :where(address.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  form.w-webhook-form {
+    box-sizing: border-box
   }
-  :where(article.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(aside.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(figure.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(footer.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(header.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(main.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(nav.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(section.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(button.w-button) {
+  button.w-element {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
@@ -146,41 +62,38 @@ const Story = {
     text-transform: none;
     margin: 0
   }
-  :where(form.w-webhook-form) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  div.w-element {
+    box-sizing: border-box
   }
-  :where(input.w-text-input) {
+  input.w-element {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
     border-left-style: solid;
-    display: block;
     margin: 0
   }
-  :where(label.w-input-label) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
+  label.w-element {
+    box-sizing: border-box
+  }
+}
+@media all {
+  .w-element-1 {
+    display: block
+  }
+  .w-element-2 {
+    display: block
+  }
+  .w-element-3 {
+    display: block
+  }
+  .w-element-4 {
     display: block
   }
 }
-
       `}
         </style>
         <Component />

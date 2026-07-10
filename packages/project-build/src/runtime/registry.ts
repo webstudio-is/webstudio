@@ -1,322 +1,1473 @@
-import type { RuntimeOperationId } from "../contracts/builder-runtime";
 import type { BuilderState } from "../state/builder-state";
-import type { BuilderRuntimeContext } from "./context";
+import {
+  builderNamespaces,
+  type BuilderNamespace,
+} from "../contracts/namespaces";
+import type { BuilderApiCapability } from "../contracts/permissions";
+import {
+  getInputSchemaMetadata,
+  isHiddenPublicApiInputField,
+} from "../contracts/input-schema";
+import { instanceFilterInput, type InputJsonSchema } from "@webstudio-is/sdk";
+import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
+import { z } from "zod";
 import * as assets from "./assets";
+import * as components from "./components";
 import * as data from "./data";
+import * as instanceDuplicate from "./instance-duplicate";
 import * as instances from "./instances";
+import * as migrations from "./migrations";
 import * as pageCopy from "./page-copy";
 import * as pages from "./pages";
 import * as projectSettings from "./project-settings";
 import * as props from "./props";
 import * as styles from "./styles";
 
-export type BuilderRuntimeOperation<Input = unknown, Result = unknown> = {
-  id: RuntimeOperationId;
+export type BuilderRuntimeOperation<
+  Id extends string = string,
+  Input = unknown,
+  Result = unknown,
+> = {
+  id: Id;
+  command: string;
+  client: string;
+  permit?: BuilderApiCapability;
+  kind: "read" | "mutation";
+  inputSchema: z.ZodTypeAny;
+  inputJsonSchema: InputJsonSchema;
+  readNamespaces: readonly BuilderNamespace[];
+  writeNamespaces: readonly BuilderNamespace[];
+  invalidatesNamespaces: readonly BuilderNamespace[];
+  retryOnConflict: boolean;
+  requiresAssets: boolean;
+  requiresConfirm: boolean;
   execute: (args: {
     state: BuilderState;
-    input: Input;
+    input: unknown;
     context: BuilderRuntimeContext;
-  }) => Result;
+  }) => Result | Promise<Result>;
+  readonly __input?: Input;
+  readonly __result?: Result;
 };
 
-const runtimeOperation = <Input, Result>(
-  id: RuntimeOperationId,
-  execute: BuilderRuntimeOperation<Input, Result>["execute"]
-): BuilderRuntimeOperation<Input, Result> => ({ id, execute });
+type RuntimeOperationPublicApi = {
+  command: string;
+  client: string;
+  permit?: BuilderApiCapability;
+};
+
+type RuntimeOperationContractInput =
+  | {
+      kind: "read";
+      readNamespaces: readonly BuilderNamespace[];
+      requiresAssets?: boolean;
+    }
+  | {
+      kind: "mutation";
+      readNamespaces: readonly BuilderNamespace[];
+      writeNamespaces: readonly BuilderNamespace[];
+      invalidatesNamespaces?: readonly BuilderNamespace[];
+      retryOnConflict?: boolean;
+      requiresAssets?: boolean;
+      requiresConfirm?: boolean;
+    };
+
+const runtimeOperation = <
+  Id extends string,
+  Schema extends z.ZodTypeAny,
+  Result,
+>(
+  id: Id,
+  publicApi: RuntimeOperationPublicApi,
+  contract: RuntimeOperationContractInput,
+  inputSchema: Schema,
+  execute: (args: {
+    state: BuilderState;
+    input: z.output<Schema>;
+    context: BuilderRuntimeContext;
+  }) => Result | Promise<Result>
+): BuilderRuntimeOperation<Id, z.input<Schema>, Result> => {
+  const writeNamespaces =
+    contract.kind === "mutation" ? contract.writeNamespaces : [];
+  return {
+    id,
+    ...publicApi,
+    kind: contract.kind,
+    inputSchema,
+    inputJsonSchema: getInputSchemaMetadata(inputSchema, {
+      isHiddenField: isHiddenPublicApiInputField,
+    }).inputJsonSchema,
+    readNamespaces: contract.readNamespaces,
+    writeNamespaces,
+    invalidatesNamespaces:
+      contract.kind === "mutation"
+        ? (contract.invalidatesNamespaces ?? contract.writeNamespaces)
+        : [],
+    retryOnConflict:
+      contract.kind === "mutation"
+        ? (contract.retryOnConflict ?? false)
+        : false,
+    requiresAssets:
+      contract.requiresAssets ??
+      (contract.readNamespaces.includes("assets") ||
+        writeNamespaces.includes("assets")),
+    requiresConfirm:
+      contract.kind === "mutation"
+        ? (contract.requiresConfirm ?? false)
+        : false,
+    execute: ({ state, input, context }) =>
+      execute({ state, input: inputSchema.parse(input ?? {}), context }),
+  };
+};
+
+const api = (
+  command: string,
+  client: string,
+  permit?: BuilderApiCapability
+): RuntimeOperationPublicApi => ({ command, client, permit });
+
+const readContract = (
+  readNamespaces: readonly BuilderNamespace[],
+  options: { requiresAssets?: boolean } = {}
+): RuntimeOperationContractInput => ({
+  kind: "read",
+  readNamespaces,
+  ...options,
+});
+
+const mutationContract = (input: {
+  readNamespaces: readonly BuilderNamespace[];
+  writeNamespaces: readonly BuilderNamespace[];
+  invalidatesNamespaces?: readonly BuilderNamespace[];
+  retryOnConflict?: boolean;
+  requiresAssets?: boolean;
+  requiresConfirm?: boolean;
+}): RuntimeOperationContractInput => ({ kind: "mutation", ...input });
+
+const pageNamespaces = ["pages", "instances"] as const;
+const instanceReadNamespaces = ["pages", "instances", "props"] as const;
+const styleNamespaces = [
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
+] as const;
+const dataNamespaces = ["dataSources", "resources"] as const;
+const treeMutationNamespaces = [
+  "pages",
+  "instances",
+  "props",
+  ...dataNamespaces,
+  ...styleNamespaces,
+] as const;
+const assetUsageNamespaces = [
+  "assets",
+  "pages",
+  "props",
+  "styles",
+  "resources",
+  "dataSources",
+] as const;
+const pageCopyNamespaces = [
+  "pages",
+  "assets",
+  "dataSources",
+  "resources",
+  "instances",
+  "props",
+  "breakpoints",
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
+] as const;
+
+const emptyInput = z.object({});
+const pageListInput = z.object({ includeFolders: z.boolean().optional() });
+const pageGetInput = z.object({ pageId: z.string() });
+const pageGetByPathInput = z.object({ path: z.string() });
+const folderListInput = z.object({ includePages: z.boolean().optional() });
+const instanceListInput = instanceFilterInput.extend({
+  pageId: z.string().optional(),
+  pagePath: z.string().optional(),
+  rootInstanceId: z.string().optional(),
+  maxDepth: z.number().int().nonnegative().optional(),
+  topLevelOnly: z.boolean().optional(),
+  labelContains: z.string().optional(),
+});
+const instanceInspectInput = z.object({
+  instanceId: z.string(),
+  include: z
+    .array(z.enum(["props", "styles", "bindings", "children", "sources"]))
+    .optional(),
+  childDepth: z.number().int().optional(),
+});
+const textListInput = z.object({
+  pageId: z.string().optional(),
+  pagePath: z.string().optional(),
+  instanceId: z.string().optional(),
+  mode: z.enum(["text", "expression", "all"]).optional(),
+  contains: z.string().optional(),
+  maxValueLength: z.number().int().nonnegative().optional(),
+});
+const styleDeclarationsListInput = z.object({
+  instanceIds: z.array(z.string()).optional(),
+  pageId: z.string().optional(),
+  pagePath: z.string().optional(),
+  breakpoint: z.string().optional(),
+  state: z.string().optional(),
+  property: z.string().optional(),
+  propertyFilter: z.string().optional(),
+  includeTokens: z.boolean().optional(),
+});
+const designTokenListInput = z.object({
+  filter: z.string().optional(),
+  withUsage: z.boolean().optional(),
+  sort: z.enum(["name", "usage"]).optional(),
+});
+const cssVariableListInput = z.object({
+  filter: z.string().optional(),
+  withUsage: z.boolean().optional(),
+});
+const scopedInstanceListInput = z.object({
+  scopeInstanceId: z.string().optional(),
+});
+const assetListInput = z.object({
+  type: z.enum(["image", "font"]).optional(),
+  sort: z.enum(["name", "size", "createdAt", "usage"]).optional(),
+  withUsage: z.boolean().optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).optional(),
+});
+const assetUsageInput = z.object({ assetId: z.string() });
 
 export const builderRuntimeOperations = [
-  runtimeOperation("pages.list", ({ state, input }) =>
-    pages.listPages(state, input as Parameters<typeof pages.listPages>[1])
+  runtimeOperation(
+    "pages.list",
+    api("list-pages", "listPages"),
+    readContract(["pages"]),
+    pageListInput,
+    ({ state, input }) => pages.listPages(state, input)
   ),
-  runtimeOperation("pages.get", ({ state, input }) =>
-    pages.getPage(state, input as Parameters<typeof pages.getPage>[1])
+  runtimeOperation(
+    "pages.get",
+    api("get-page", "getPage"),
+    readContract(pageNamespaces),
+    pageGetInput,
+    ({ state, input }) => pages.getPage(state, input)
   ),
-  runtimeOperation("pages.getByPath", ({ state, input }) =>
-    pages.getPageByPath(
-      state,
-      input as Parameters<typeof pages.getPageByPath>[1]
-    )
+  runtimeOperation(
+    "pages.getByPath",
+    api("get-page-by-path", "getPageByPath"),
+    readContract(pageNamespaces),
+    pageGetByPathInput,
+    ({ state, input }) => pages.getPageByPath(state, input)
   ),
-  runtimeOperation("pages.create", ({ state, input, context }) =>
-    pages.createPage(state, pages.pageCreateInput.parse(input), context)
+  runtimeOperation(
+    "pages.create",
+    api("create-page", "createPage"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: pageNamespaces,
+    }),
+    pages.pageCreateInput,
+    ({ state, input, context }) => pages.createPage(state, input, context)
   ),
-  runtimeOperation("pages.update", ({ state, input }) =>
-    pages.updatePage(state, pages.pageUpdateInput.parse(input))
+  runtimeOperation(
+    "pages.update",
+    api("update-page", "updatePage"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pages.pageUpdateInput,
+    ({ state, input }) => pages.updatePage(state, input)
   ),
-  runtimeOperation("projectSettings.get", ({ state }) =>
-    projectSettings.getProjectSettings(state)
+  runtimeOperation(
+    "pages.updateSettings",
+    api("update-page-settings", "updatePageSettings"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pages.pageSettingsUpdateInput,
+    ({ state, input }) => pages.updatePageSettings(state, input)
   ),
-  runtimeOperation("projectSettings.update", ({ state, input }) =>
-    projectSettings.updateProjectSettings(
-      state,
-      projectSettings.projectSettingsUpdateInput.parse(input)
-    )
+  runtimeOperation(
+    "pages.updateMarketplace",
+    api("update-page-marketplace", "updatePageMarketplace"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pages.pageMarketplaceUpdateInput,
+    ({ state, input }) => pages.updatePageMarketplace(state, input)
   ),
-  runtimeOperation("redirects.list", ({ state }) =>
-    projectSettings.listRedirects(state)
+  runtimeOperation(
+    "pages.savePathInHistory",
+    api("save-page-path-history", "savePagePathInHistory"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pages.pageSavePathInHistoryInput,
+    ({ state, input }) => pages.savePagePathInHistory(state, input)
   ),
-  runtimeOperation("redirects.create", ({ state, input }) =>
-    projectSettings.createRedirect(
-      state,
-      projectSettings.redirectCreateInput.parse(input)
-    )
+  runtimeOperation(
+    "pages.setHome",
+    api("set-home-page", "setHomePage"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pages.pageSetHomeInput,
+    ({ state, input }) => pages.setHomePage(state, input)
   ),
-  runtimeOperation("redirects.update", ({ state, input }) =>
-    projectSettings.updateRedirect(
-      state,
-      projectSettings.redirectUpdateInput.parse(input)
-    )
+  runtimeOperation(
+    "projectSettings.get",
+    api("get-project-settings", "getProjectSettings"),
+    readContract(["pages"]),
+    emptyInput,
+    ({ state }) => projectSettings.getProjectSettings(state)
   ),
-  runtimeOperation("redirects.delete", ({ state, input }) =>
-    projectSettings.deleteRedirect(
-      state,
-      projectSettings.redirectDeleteInput.parse(input)
-    )
+  runtimeOperation(
+    "projectSettings.update",
+    api("update-project-settings", "updateProjectSettings"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    projectSettings.projectSettingsUpdateInput,
+    ({ state, input }) => projectSettings.updateProjectSettings(state, input)
   ),
-  runtimeOperation("breakpoints.list", ({ state }) =>
-    projectSettings.listBreakpoints(state)
+  runtimeOperation(
+    "projectSettings.getMarketplaceProduct",
+    api("get-marketplace-product", "getMarketplaceProduct"),
+    readContract(["marketplaceProduct"]),
+    emptyInput,
+    ({ state }) => projectSettings.getMarketplaceProduct(state)
   ),
-  runtimeOperation("breakpoints.create", ({ state, input }) =>
-    projectSettings.createBreakpoint(
-      state,
-      projectSettings.breakpointCreateInput.parse(input)
-    )
+  runtimeOperation(
+    "projectSettings.updateMarketplaceProduct",
+    api("update-marketplace-product", "updateMarketplaceProduct"),
+    mutationContract({
+      readNamespaces: ["marketplaceProduct"],
+      writeNamespaces: ["marketplaceProduct"],
+      retryOnConflict: true,
+    }),
+    projectSettings.marketplaceProductUpdateInput,
+    ({ state, input }) => projectSettings.updateMarketplaceProduct(state, input)
   ),
-  runtimeOperation("breakpoints.update", ({ state, input }) =>
-    projectSettings.updateBreakpoint(
-      state,
-      projectSettings.breakpointUpdateInput.parse(input)
-    )
+  runtimeOperation(
+    "redirects.list",
+    api("list-redirects", "listRedirects"),
+    readContract(["pages"]),
+    emptyInput,
+    ({ state }) => projectSettings.listRedirects(state)
   ),
-  runtimeOperation("breakpoints.delete", ({ state, input }) =>
-    projectSettings.deleteBreakpoint(
-      state,
-      projectSettings.breakpointDeleteInput.parse(input)
-    )
+  runtimeOperation(
+    "redirects.create",
+    api("create-redirect", "createRedirect"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    projectSettings.redirectCreateInput,
+    ({ state, input }) => projectSettings.createRedirect(state, input)
   ),
-  runtimeOperation("pages.delete", ({ state, input }) =>
-    pages.deletePage(state, pages.pageDeleteInput.parse(input))
+  runtimeOperation(
+    "redirects.update",
+    api("update-redirect", "updateRedirect"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    projectSettings.redirectUpdateInput,
+    ({ state, input }) => projectSettings.updateRedirect(state, input)
   ),
-  runtimeOperation("pages.duplicate", ({ state, input, context }) =>
-    pageCopy.duplicatePage(
-      state,
-      pageCopy.pageDuplicateInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "redirects.delete",
+    api("delete-redirect", "deleteRedirect"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    projectSettings.redirectDeleteInput,
+    ({ state, input }) => projectSettings.deleteRedirect(state, input)
   ),
-  runtimeOperation("pageTemplates.list", ({ state }) =>
-    pageCopy.listPageTemplates(state)
+  runtimeOperation(
+    "redirects.setAll",
+    api("set-redirects", "setRedirects"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    projectSettings.redirectSetAllInput,
+    ({ state, input }) => projectSettings.setRedirects(state, input)
   ),
-  runtimeOperation("pageTemplates.createPage", ({ state, input, context }) =>
-    pageCopy.createPageFromTemplate(
-      state,
-      pageCopy.pageTemplateCreatePageInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "breakpoints.list",
+    api("list-breakpoints", "listBreakpoints"),
+    readContract(["breakpoints"]),
+    emptyInput,
+    ({ state }) => projectSettings.listBreakpoints(state)
   ),
-  runtimeOperation("folders.list", ({ state, input }) =>
-    pages.listFolders(state, input as Parameters<typeof pages.listFolders>[1])
+  runtimeOperation(
+    "breakpoints.create",
+    api("create-breakpoint", "createBreakpoint"),
+    mutationContract({
+      readNamespaces: ["breakpoints"],
+      writeNamespaces: ["breakpoints"],
+      retryOnConflict: true,
+    }),
+    projectSettings.breakpointCreateInput,
+    ({ state, input, context }) =>
+      projectSettings.createBreakpoint(state, input, context)
   ),
-  runtimeOperation("folders.create", ({ state, input, context }) =>
-    pages.createFolder(state, pages.folderCreateInput.parse(input), context)
+  runtimeOperation(
+    "breakpoints.update",
+    api("update-breakpoint", "updateBreakpoint"),
+    mutationContract({
+      readNamespaces: ["breakpoints"],
+      writeNamespaces: ["breakpoints"],
+      retryOnConflict: true,
+    }),
+    projectSettings.breakpointUpdateInput,
+    ({ state, input }) => projectSettings.updateBreakpoint(state, input)
   ),
-  runtimeOperation("folders.update", ({ state, input }) =>
-    pages.updateFolder(state, pages.folderUpdateInput.parse(input))
+  runtimeOperation(
+    "breakpoints.delete",
+    api("delete-breakpoint", "deleteBreakpoint"),
+    mutationContract({
+      readNamespaces: ["breakpoints", "styles"],
+      writeNamespaces: ["breakpoints", "styles"],
+      retryOnConflict: true,
+    }),
+    projectSettings.breakpointDeleteInput,
+    ({ state, input }) => projectSettings.deleteBreakpoint(state, input)
   ),
-  runtimeOperation("folders.delete", ({ state, input }) =>
-    pages.deleteFolder(state, pages.folderDeleteInput.parse(input))
+  runtimeOperation(
+    "pages.delete",
+    api("delete-page", "deletePage"),
+    mutationContract({
+      readNamespaces: treeMutationNamespaces,
+      writeNamespaces: treeMutationNamespaces,
+    }),
+    pages.pageDeleteInput,
+    ({ state, input }) => pages.deletePage(state, input)
   ),
-  runtimeOperation("instances.list", ({ state, input }) =>
-    instances.listInstances(
-      state,
-      input as Parameters<typeof instances.listInstances>[1]
-    )
+  runtimeOperation(
+    "pages.duplicate",
+    api("duplicate-page", "duplicatePage"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.pageDuplicateInput,
+    ({ state, input, context }) => pageCopy.duplicatePage(state, input, context)
   ),
-  runtimeOperation("instances.inspect", ({ state, input }) =>
-    instances.inspectInstance(
-      state,
-      input as Parameters<typeof instances.inspectInstance>[1]
-    )
+  runtimeOperation(
+    "pages.copy",
+    api("copy-page", "copyPage"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.pageCopyInput,
+    ({ state, input, context }) => pageCopy.copyPage(state, input, context)
   ),
-  runtimeOperation("instances.append", ({ state, input, context }) =>
-    instances.appendInstances(
-      state,
-      instances.appendInstancesInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "pageTemplates.list",
+    api("list-page-templates", "listPageTemplates"),
+    readContract(["pages"]),
+    emptyInput,
+    ({ state }) => pageCopy.listPageTemplates(state)
   ),
-  runtimeOperation("instances.move", ({ state, input }) =>
-    instances.moveInstances(state, instances.moveInstancesInput.parse(input))
+  runtimeOperation(
+    "pageTemplates.create",
+    api("create-page-template", "createPageTemplate"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.pageTemplateCreateInput,
+    ({ state, input, context }) =>
+      pageCopy.createPageTemplate(state, input, context)
   ),
-  runtimeOperation("instances.clone", ({ state, input, context }) =>
-    instances.cloneInstance(
-      state,
-      instances.cloneInstanceInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "pageTemplates.update",
+    api("update-page-template", "updatePageTemplate"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+      retryOnConflict: true,
+    }),
+    pageCopy.pageTemplateUpdateInput,
+    ({ state, input }) => pageCopy.updatePageTemplate(state, input)
   ),
-  runtimeOperation("instances.delete", ({ state, input }) =>
-    instances.deleteInstances(
-      state,
-      instances.deleteInstancesInput.parse(input)
-    )
+  runtimeOperation(
+    "pageTemplates.delete",
+    api("delete-page-template", "deletePageTemplate"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.pageTemplateDeleteInput,
+    ({ state, input }) => pageCopy.deletePageTemplate(state, input)
   ),
-  runtimeOperation("instances.updateProps", ({ state, input, context }) =>
-    props.updateProps(state, props.propUpdatesInput.parse(input), context)
+  runtimeOperation(
+    "pageTemplates.duplicate",
+    api("duplicate-page-template", "duplicatePageTemplate"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.pageTemplateDuplicateInput,
+    ({ state, input, context }) =>
+      pageCopy.duplicatePageTemplate(state, input, context)
   ),
-  runtimeOperation("instances.deleteProps", ({ state, input }) =>
-    props.deleteProps(state, props.propDeletionsInput.parse(input))
+  runtimeOperation(
+    "pageTemplates.reorder",
+    api("reorder-page-template", "reorderPageTemplate"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pageCopy.pageTemplateReorderInput,
+    ({ state, input }) => pageCopy.reorderPageTemplates(state, input)
   ),
-  runtimeOperation("instances.bindProps", ({ state, input, context }) =>
-    props.bindProps(state, props.propBindingsInput.parse(input), context)
+  runtimeOperation(
+    "pageTemplates.createPage",
+    api("create-page-from-template", "createPageFromTemplate"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.pageTemplateCreatePageInput,
+    ({ state, input, context }) =>
+      pageCopy.createPageFromTemplate(state, input, context)
   ),
-  runtimeOperation("instances.listTexts", ({ state, input }) =>
-    instances.listTextInstances(
-      state,
-      input as Parameters<typeof instances.listTextInstances>[1]
-    )
+  runtimeOperation(
+    "folders.list",
+    api("list-folders", "listFolders"),
+    readContract(["pages"]),
+    folderListInput,
+    ({ state, input }) => pages.listFolders(state, input)
   ),
-  runtimeOperation("instances.updateText", ({ state, input }) =>
-    instances.updateTextInstance(
-      state,
-      instances.updateTextInstanceInput.parse(input)
-    )
+  runtimeOperation(
+    "folders.create",
+    api("create-folder", "createFolder"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+    }),
+    pages.folderCreateInput,
+    ({ state, input, context }) => pages.createFolder(state, input, context)
   ),
-  runtimeOperation("styles.getDeclarations", ({ state, input }) =>
-    styles.getStyleDeclarations(
-      state,
-      input as Parameters<typeof styles.getStyleDeclarations>[1]
-    )
+  runtimeOperation(
+    "folders.update",
+    api("update-folder", "updateFolder"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pages.folderUpdateInput,
+    ({ state, input }) => pages.updateFolder(state, input)
   ),
-  runtimeOperation("styles.updateDeclarations", ({ state, input, context }) =>
-    styles.updateStyleDeclarations(
-      state,
-      styles.styleUpdateDeclarationsInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "folders.delete",
+    api("delete-folder", "deleteFolder"),
+    mutationContract({
+      readNamespaces: treeMutationNamespaces,
+      writeNamespaces: treeMutationNamespaces,
+    }),
+    pages.folderDeleteInput,
+    ({ state, input }) => pages.deleteFolder(state, input)
   ),
-  runtimeOperation("styles.deleteDeclarations", ({ state, input }) =>
-    styles.deleteStyleDeclarations(
-      state,
-      styles.styleDeleteDeclarationsInput.parse(input)
-    )
+  runtimeOperation(
+    "folders.duplicate",
+    api("duplicate-folder", "duplicateFolder"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.folderDuplicateInput,
+    ({ state, input, context }) =>
+      pageCopy.duplicateFolder(state, input, context)
   ),
-  runtimeOperation("styles.replaceValues", ({ state, input }) =>
-    styles.replaceStyleValues(state, styles.styleReplaceInput.parse(input))
+  runtimeOperation(
+    "pageClipboard.paste",
+    api("paste-page-clipboard-item", "pastePageClipboardItem"),
+    mutationContract({
+      readNamespaces: pageCopyNamespaces,
+      writeNamespaces: pageCopyNamespaces,
+    }),
+    pageCopy.pageClipboardPasteInput,
+    ({ state, input, context }) =>
+      pageCopy.pastePageClipboardItem(state, input, context)
   ),
-  runtimeOperation("designTokens.list", ({ state, input }) =>
-    styles.listDesignTokens(
-      state,
-      input as Parameters<typeof styles.listDesignTokens>[1]
-    )
+  runtimeOperation(
+    "pageTree.move",
+    api("move-page-tree-item", "movePageTreeItem"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    pages.pageTreeMoveInput,
+    ({ state, input }) => pages.movePageTreeItem(state, input)
   ),
-  runtimeOperation("designTokens.create", ({ state, input, context }) =>
-    styles.createDesignTokens(
-      state,
-      styles.designTokenCreateManyInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "pageTree.reparentOrphans",
+    api("reparent-page-tree-orphans", "reparentPageTreeOrphans"),
+    mutationContract({
+      readNamespaces: ["pages"],
+      writeNamespaces: ["pages"],
+      retryOnConflict: true,
+    }),
+    emptyInput,
+    ({ state }) => pages.reparentOrphans(state)
   ),
-  runtimeOperation("designTokens.updateStyles", ({ state, input }) =>
-    styles.updateDesignTokenStyles(
-      state,
-      styles.designTokenStyleUpdatesInput.parse(input)
-    )
+  runtimeOperation(
+    "instances.list",
+    api("list-instances", "listInstances"),
+    readContract(instanceReadNamespaces),
+    instanceListInput,
+    ({ state, input }) => instances.listInstances(state, input)
   ),
-  runtimeOperation("designTokens.deleteStyles", ({ state, input }) =>
-    styles.deleteDesignTokenStyles(
-      state,
-      styles.designTokenStyleDeletionsInput.parse(input)
-    )
+  runtimeOperation(
+    "instances.inspect",
+    api("inspect-instance", "inspectInstance"),
+    readContract([
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+    ]),
+    instanceInspectInput,
+    ({ state, input }) => instances.inspectInstance(state, input)
   ),
-  runtimeOperation("designTokens.attach", ({ state, input }) =>
-    styles.attachDesignToken(state, styles.designTokenAttachInput.parse(input))
+  runtimeOperation(
+    "instances.insertComponent",
+    api("insert-component", "insertComponent"),
+    mutationContract({
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertNamespaces,
+    }),
+    components.insertComponentInput,
+    ({ state, input, context }) =>
+      components.insertComponent(state, input, context)
   ),
-  runtimeOperation("designTokens.detach", ({ state, input }) =>
-    styles.detachDesignToken(state, styles.designTokenDetachInput.parse(input))
+  runtimeOperation(
+    "instances.insertFragment",
+    api("insert-fragment", "insertFragment"),
+    mutationContract({
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertNamespaces,
+    }),
+    components.insertFragmentInput,
+    ({ state, input, context }) =>
+      components.insertFragment(state, input, context)
   ),
-  runtimeOperation("designTokens.extract", ({ state, input, context }) =>
-    styles.extractDesignToken(
-      state,
-      styles.designTokenExtractInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "instances.move",
+    api("move-instance", "moveInstance"),
+    mutationContract({
+      readNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+      writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+    }),
+    instances.moveInstancesInput,
+    ({ state, input }) => instances.moveInstances(state, input)
   ),
-  runtimeOperation("cssVariables.list", ({ state, input }) =>
-    styles.listCssVariables(
-      state,
-      input as Parameters<typeof styles.listCssVariables>[1]
-    )
+  runtimeOperation(
+    "instances.reparent",
+    api("reparent-instance", "reparentInstance"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+        "assets",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+        "assets",
+      ],
+    }),
+    instances.reparentInstanceInput,
+    ({ state, input, context }) =>
+      instances.reparentInstance(state, input, context)
   ),
-  runtimeOperation("cssVariables.define", ({ state, input, context }) =>
-    styles.defineCssVariables(
-      state,
-      styles.cssVariableDefineInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "instances.fillGrid",
+    api("fill-grid", "fillGrid"),
+    mutationContract({
+      readNamespaces: treeMutationNamespaces,
+      writeNamespaces: [
+        "instances",
+        "styleSourceSelections",
+        "styleSources",
+        "styles",
+      ],
+    }),
+    instances.fillGridInput,
+    ({ state, input, context }) => instances.fillGrid(state, input, context)
   ),
-  runtimeOperation("cssVariables.delete", ({ state, input }) =>
-    styles.deleteCssVariables(state, styles.cssVariableDeleteInput.parse(input))
+  runtimeOperation(
+    "instances.wrap",
+    api("wrap-instance", "wrapInstance"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["instances"],
+    }),
+    instances.wrapInstanceInput,
+    ({ state, input, context }) => instances.wrapInstance(state, input, context)
   ),
-  runtimeOperation("cssVariables.rewriteRefs", ({ state, input }) =>
-    styles.rewriteCssVariableRefs(
-      state,
-      styles.cssVariableRewriteRefsInput.parse(input)
-    )
+  runtimeOperation(
+    "instances.convert",
+    api("convert-instance", "convertInstance"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        "dataSources",
+        "resources",
+        "styleSourceSelections",
+        "styleSources",
+        "styles",
+        "breakpoints",
+        "assets",
+      ],
+      writeNamespaces: [
+        "instances",
+        "props",
+        "dataSources",
+        "resources",
+        "styleSourceSelections",
+        "styleSources",
+        "styles",
+        "breakpoints",
+        "assets",
+      ],
+    }),
+    instances.convertInstanceInput,
+    ({ state, input, context }) =>
+      instances.convertInstance(state, input, context)
   ),
-  runtimeOperation("variables.list", ({ state, input }) =>
-    data.listDataVariables(
-      state,
-      input as Parameters<typeof data.listDataVariables>[1]
-    )
+  runtimeOperation(
+    "instances.unwrap",
+    api("unwrap-instance", "unwrapInstance"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["instances"],
+    }),
+    instances.unwrapInstanceInput,
+    ({ state, input, context }) =>
+      instances.unwrapInstance(state, input, context)
   ),
-  runtimeOperation("variables.create", ({ state, input, context }) =>
-    data.createDataVariable(
-      state,
-      data.dataVariableCreateInput.parse(input),
-      context
-    )
+  runtimeOperation(
+    "instances.clone",
+    api("clone-instance", "cloneInstance"),
+    mutationContract({
+      readNamespaces: treeMutationNamespaces,
+      writeNamespaces: treeMutationNamespaces,
+    }),
+    instances.cloneInstanceInput,
+    ({ state, input, context }) =>
+      instances.cloneInstance(state, input, context)
   ),
-  runtimeOperation("variables.update", ({ state, input }) =>
-    data.updateDataVariable(state, data.dataVariableUpdateInput.parse(input))
+  runtimeOperation(
+    "instances.duplicateAfterItself",
+    api("duplicate-instance", "duplicateInstance"),
+    mutationContract({
+      readNamespaces: instanceDuplicate.instanceDuplicateNamespaces,
+      writeNamespaces: instanceDuplicate.instanceDuplicateNamespaces,
+    }),
+    instanceDuplicate.duplicateInstanceAfterItselfInput,
+    ({ state, input, context }) =>
+      instanceDuplicate.duplicateInstanceAfterItself(state, input, context)
   ),
-  runtimeOperation("variables.delete", ({ state, input }) =>
-    data.deleteDataVariable(state, data.dataVariableDeleteInput.parse(input))
+  runtimeOperation(
+    "instances.delete",
+    api("delete-instance", "deleteInstance"),
+    mutationContract({
+      readNamespaces: treeMutationNamespaces,
+      writeNamespaces: treeMutationNamespaces,
+    }),
+    instances.deleteInstancesInput,
+    ({ state, input }) => instances.deleteInstances(state, input)
   ),
-  runtimeOperation("resources.list", ({ state, input }) =>
-    data.listResources(state, input as Parameters<typeof data.listResources>[1])
+  runtimeOperation(
+    "instances.deleteBySelector",
+    api("delete-instance-by-selector", "deleteInstanceBySelector"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+        "assets",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+        "assets",
+      ],
+    }),
+    instances.deleteInstanceBySelectorInput,
+    ({ state, input, context }) =>
+      instances.deleteInstanceBySelector(state, input, context)
   ),
-  runtimeOperation("resources.create", ({ state, input, context }) =>
-    data.createResource(state, data.resourceCreateInput.parse(input), context)
+  runtimeOperation(
+    "instances.updateProps",
+    api("update-props", "updateProps", "edit"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["props"],
+    }),
+    props.propUpdatesInput,
+    ({ state, input, context }) => props.updateProps(state, input, context)
   ),
-  runtimeOperation("resources.update", ({ state, input }) =>
-    data.updateResource(state, data.resourceUpdateInput.parse(input))
+  runtimeOperation(
+    "instances.deleteProps",
+    api("delete-props", "deleteProps", "edit"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["props", "resources"],
+    }),
+    props.propDeletionsInput,
+    ({ state, input }) => props.deleteProps(state, input)
   ),
-  runtimeOperation("resources.delete", ({ state, input }) =>
-    data.deleteResource(state, data.resourceDeleteInput.parse(input))
+  runtimeOperation(
+    "instances.bindProps",
+    api("bind-props", "bindProps"),
+    mutationContract({
+      readNamespaces: ["instances", "props", ...dataNamespaces],
+      writeNamespaces: ["props"],
+    }),
+    props.propBindingsInput,
+    ({ state, input, context }) => props.bindProps(state, input, context)
   ),
-  runtimeOperation("assets.list", ({ state, input }) =>
-    assets.listAssets(state, input as Parameters<typeof assets.listAssets>[1])
+  runtimeOperation(
+    "instances.listTexts",
+    api("list-texts", "listTexts"),
+    readContract(["pages", "instances"]),
+    textListInput,
+    ({ state, input }) => instances.listTextInstances(state, input)
   ),
-  runtimeOperation("assets.findUsage", ({ state, input }) =>
-    assets.findAssetUsage(
-      state,
-      input as Parameters<typeof assets.findAssetUsage>[1]
-    )
+  runtimeOperation(
+    "instances.updateText",
+    api("update-text", "updateText", "edit"),
+    mutationContract({
+      readNamespaces: ["instances"],
+      writeNamespaces: ["instances"],
+      retryOnConflict: true,
+    }),
+    instances.updateTextInstanceInput,
+    ({ state, input }) => instances.updateTextInstance(state, input)
   ),
-  runtimeOperation("assets.replace", ({ state, input }) =>
-    assets.replaceAsset(state, assets.assetReplaceInput.parse(input))
+  runtimeOperation(
+    "instances.setTextContent",
+    api("set-text-content", "setTextContent", "edit"),
+    mutationContract({
+      readNamespaces: ["instances"],
+      writeNamespaces: ["instances"],
+      retryOnConflict: true,
+    }),
+    instances.setTextContentInput,
+    ({ state, input }) => instances.setTextContent(state, input)
   ),
-  runtimeOperation("assets.delete", ({ state, input }) =>
-    assets.deleteAssets(state, assets.assetDeleteInput.parse(input))
+  runtimeOperation(
+    "instances.updateTextTree",
+    api("update-text-tree", "updateTextTree", "edit"),
+    mutationContract({
+      readNamespaces: ["instances"],
+      writeNamespaces: ["instances"],
+      retryOnConflict: true,
+    }),
+    instances.updateTextTreeInput,
+    ({ state, input, context }) =>
+      instances.updateTextTree(state, input, context)
+  ),
+  runtimeOperation(
+    "instances.setTag",
+    api("set-instance-tag", "setInstanceTag", "edit"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["instances", "props"],
+      retryOnConflict: true,
+    }),
+    instances.setInstanceTagInput,
+    ({ state, input }) => instances.setInstanceTag(state, input)
+  ),
+  runtimeOperation(
+    "instances.setLabel",
+    api("set-instance-label", "setInstanceLabel", "edit"),
+    mutationContract({
+      readNamespaces: ["instances"],
+      writeNamespaces: ["instances"],
+      retryOnConflict: true,
+    }),
+    instances.setInstanceLabelInput,
+    ({ state, input }) => instances.setInstanceLabel(state, input)
+  ),
+  runtimeOperation(
+    "styles.getDeclarations",
+    api("get-styles", "getStyleDeclarations"),
+    readContract(["instances", ...styleNamespaces, "breakpoints"]),
+    styleDeclarationsListInput,
+    ({ state, input }) => styles.getStyleDeclarations(state, input)
+  ),
+  runtimeOperation(
+    "styles.updateDeclarations",
+    api("update-styles", "updateStyleDeclarations"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    }),
+    styles.styleUpdateDeclarationsInput,
+    ({ state, input, context }) =>
+      styles.updateStyleDeclarations(state, input, context)
+  ),
+  runtimeOperation(
+    "styles.deleteDeclarations",
+    api("delete-styles", "deleteStyleDeclarations"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles"],
+    }),
+    styles.styleDeleteDeclarationsInput,
+    ({ state, input }) => styles.deleteStyleDeclarations(state, input)
+  ),
+  runtimeOperation(
+    "styles.updateSelectedDeclarations",
+    api("update-selected-styles", "updateSelectedStyleDeclarations"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    }),
+    styles.selectedStyleUpdateDeclarationsInput,
+    ({ state, input }) => styles.updateSelectedStyleDeclarations(state, input)
+  ),
+  runtimeOperation(
+    "styles.deleteSelectedDeclarations",
+    api("delete-selected-styles", "deleteSelectedStyleDeclarations"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles"],
+    }),
+    styles.selectedStyleDeleteDeclarationsInput,
+    ({ state, input }) => styles.deleteSelectedStyleDeclarations(state, input)
+  ),
+  runtimeOperation(
+    "styles.replaceValues",
+    api("replace-styles", "replaceStyleValues"),
+    mutationContract({
+      readNamespaces: ["pages", "instances", ...styleNamespaces],
+      writeNamespaces: ["styles"],
+    }),
+    styles.styleReplaceInput,
+    ({ state, input }) => styles.replaceStyleValues(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.list",
+    api("list-design-tokens", "listDesignTokens"),
+    readContract(styleNamespaces),
+    designTokenListInput,
+    ({ state, input }) => styles.listDesignTokens(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.create",
+    api("create-design-token", "createDesignTokens"),
+    mutationContract({
+      readNamespaces: [...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styleSources", "styles"],
+    }),
+    styles.designTokenCreateManyInput,
+    ({ state, input, context }) =>
+      styles.createDesignTokens(state, input, context)
+  ),
+  runtimeOperation(
+    "designTokens.createAttached",
+    api("create-attached-design-token", "createAttachedDesignTokens"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styleSources", "styles", "styleSourceSelections"],
+    }),
+    styles.designTokenCreateAttachedInput,
+    ({ state, input, context }) =>
+      styles.createAttachedDesignTokens(state, input, context)
+  ),
+  runtimeOperation(
+    "designTokens.updateStyles",
+    api("update-design-token-styles", "updateDesignTokenStyles"),
+    mutationContract({
+      readNamespaces: [...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles", "styleSources"],
+    }),
+    styles.designTokenStyleUpdatesInput,
+    ({ state, input }) => styles.updateDesignTokenStyles(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.deleteStyles",
+    api("delete-design-token-styles", "deleteDesignTokenStyles"),
+    mutationContract({
+      readNamespaces: [...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles"],
+    }),
+    styles.designTokenStyleDeletionsInput,
+    ({ state, input }) => styles.deleteDesignTokenStyles(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.attach",
+    api("attach-design-token", "attachDesignToken"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces],
+      writeNamespaces: ["styleSourceSelections"],
+    }),
+    styles.designTokenAttachInput,
+    ({ state, input }) => styles.attachDesignToken(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.detach",
+    api("detach-design-token", "detachDesignToken"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces],
+      writeNamespaces: ["styleSourceSelections"],
+    }),
+    styles.designTokenDetachInput,
+    ({ state, input }) => styles.detachDesignToken(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.extract",
+    api("extract-design-token", "extractDesignToken"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces],
+      writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    }),
+    styles.designTokenExtractInput,
+    ({ state, input, context }) =>
+      styles.extractDesignToken(state, input, context)
+  ),
+  runtimeOperation(
+    "styleSources.rename",
+    api("rename-style-source", "renameStyleSource"),
+    mutationContract({
+      readNamespaces: ["styleSources"],
+      writeNamespaces: ["styleSources"],
+    }),
+    styles.styleSourceRenameInput,
+    ({ state, input }) => styles.renameStyleSource(state, input)
+  ),
+  runtimeOperation(
+    "styleSources.delete",
+    api("delete-style-source", "deleteStyleSources"),
+    mutationContract({
+      readNamespaces: styleNamespaces,
+      writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    }),
+    styles.styleSourceDeleteInput,
+    ({ state, input }) => styles.deleteStyleSources(state, input)
+  ),
+  runtimeOperation(
+    "styleSources.setLock",
+    api("set-style-source-lock", "setStyleSourceLock"),
+    mutationContract({
+      readNamespaces: ["styleSources"],
+      writeNamespaces: ["styleSources"],
+    }),
+    styles.styleSourceLockInput,
+    ({ state, input }) => styles.setStyleSourceLock(state, input)
+  ),
+  runtimeOperation(
+    "styleSources.reorder",
+    api("reorder-style-sources", "reorderStyleSources"),
+    mutationContract({
+      readNamespaces: ["instances", "styleSources", "styleSourceSelections"],
+      writeNamespaces: ["styleSourceSelections"],
+    }),
+    styles.styleSourceReorderInput,
+    ({ state, input }) => styles.reorderStyleSources(state, input)
+  ),
+  runtimeOperation(
+    "styleSources.clearStyles",
+    api("clear-style-source-styles", "clearStyleSourceStyles"),
+    mutationContract({
+      readNamespaces: ["styles", "styleSources"],
+      writeNamespaces: ["styles"],
+    }),
+    styles.styleSourceClearStylesInput,
+    ({ state, input }) => styles.clearStyleSourceStyles(state, input)
+  ),
+  runtimeOperation(
+    "styleSources.duplicate",
+    api("duplicate-style-source", "duplicateStyleSource"),
+    mutationContract({
+      readNamespaces: ["instances", ...styleNamespaces],
+      writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    }),
+    styles.styleSourceDuplicateInput,
+    ({ state, input, context }) =>
+      styles.duplicateStyleSource(state, input, context)
+  ),
+  runtimeOperation(
+    "styleSources.convertLocalToToken",
+    api(
+      "convert-local-style-source-to-token",
+      "convertLocalStyleSourceToToken"
+    ),
+    mutationContract({
+      readNamespaces: ["instances", "styleSources", "styleSourceSelections"],
+      writeNamespaces: ["styleSources", "styleSourceSelections"],
+    }),
+    styles.styleSourceConvertLocalToTokenInput,
+    ({ state, input, context }) =>
+      styles.convertLocalStyleSourceToToken(state, input, context)
+  ),
+  runtimeOperation(
+    "cssVariables.list",
+    api("list-css-variables", "listCssVariables"),
+    readContract([...styleNamespaces, "props"]),
+    cssVariableListInput,
+    ({ state, input }) => styles.listCssVariables(state, input)
+  ),
+  runtimeOperation(
+    "cssVariables.define",
+    api("define-css-variable", "defineCssVariables"),
+    mutationContract({
+      readNamespaces: ["pages", ...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    }),
+    styles.cssVariableDefineInput,
+    ({ state, input, context }) =>
+      styles.defineCssVariables(state, input, context)
+  ),
+  runtimeOperation(
+    "cssVariables.delete",
+    api("delete-css-variable", "deleteCssVariables"),
+    mutationContract({
+      readNamespaces: [...styleNamespaces, "props"],
+      writeNamespaces: ["styles"],
+      requiresConfirm: true,
+    }),
+    styles.cssVariableDeleteInput,
+    ({ state, input }) => styles.deleteCssVariables(state, input)
+  ),
+  runtimeOperation(
+    "cssVariables.rewriteRefs",
+    api("rewrite-css-variable-refs", "rewriteCssVariableRefs"),
+    mutationContract({
+      readNamespaces: [...styleNamespaces, "props"],
+      writeNamespaces: ["styles", "props"],
+    }),
+    styles.cssVariableRewriteRefsInput,
+    ({ state, input }) => styles.rewriteCssVariableRefs(state, input)
+  ),
+  runtimeOperation(
+    "cssVariables.rename",
+    api("rename-css-variable", "renameCssVariable"),
+    mutationContract({
+      readNamespaces: [...styleNamespaces, "props"],
+      writeNamespaces: ["styles", "props"],
+    }),
+    styles.cssVariableRenameInput,
+    ({ state, input }) => styles.renameCssVariable(state, input)
+  ),
+  runtimeOperation(
+    "variables.list",
+    api("list-variables", "listVariables"),
+    readContract(["dataSources"]),
+    scopedInstanceListInput,
+    ({ state, input }) => data.listDataVariables(state, input)
+  ),
+  runtimeOperation(
+    "variables.create",
+    api("create-variable", "createVariable"),
+    mutationContract({
+      readNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+      writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+    }),
+    data.dataVariableCreateInput,
+    ({ state, input, context }) =>
+      data.createDataVariable(state, input, context)
+  ),
+  runtimeOperation(
+    "variables.update",
+    api("update-variable", "updateVariable"),
+    mutationContract({
+      readNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+      writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+      retryOnConflict: true,
+    }),
+    data.dataVariableUpdateInput,
+    ({ state, input }) => data.updateDataVariable(state, input)
+  ),
+  runtimeOperation(
+    "variables.delete",
+    api("delete-variable", "deleteVariable"),
+    mutationContract({
+      readNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+      writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+    }),
+    data.dataVariableDeleteInput,
+    ({ state, input }) => data.deleteDataVariable(state, input)
+  ),
+  runtimeOperation(
+    "variables.deleteUnused",
+    api("delete-unused-variables", "deleteUnusedVariables"),
+    mutationContract({
+      readNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+      writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+    }),
+    data.dataVariableDeleteUnusedInput,
+    ({ state, input }) => data.deleteUnusedDataVariables(state, input)
+  ),
+  runtimeOperation(
+    "resources.list",
+    api("list-resources", "listResources"),
+    readContract(dataNamespaces),
+    scopedInstanceListInput,
+    ({ state, input }) => data.listResources(state, input)
+  ),
+  runtimeOperation(
+    "resources.create",
+    api("create-resource", "createResource"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+    }),
+    data.resourceCreateInput,
+    ({ state, input, context }) => data.createResource(state, input, context)
+  ),
+  runtimeOperation(
+    "resources.update",
+    api("update-resource", "updateResource"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+    }),
+    data.resourceUpdateInput,
+    ({ state, input }) => data.updateResource(state, input)
+  ),
+  runtimeOperation(
+    "resources.upsert",
+    api("upsert-resource", "upsertResource"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+    }),
+    data.resourceUpsertInput,
+    ({ state, input, context }) => data.upsertResource(state, input, context)
+  ),
+  runtimeOperation(
+    "resources.upsertProp",
+    api("upsert-resource-prop", "upsertResourceProp"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+    }),
+    data.resourcePropUpsertInput,
+    ({ state, input, context }) =>
+      data.upsertResourceProp(state, input, context)
+  ),
+  runtimeOperation(
+    "resources.delete",
+    api("delete-resource", "deleteResource"),
+    mutationContract({
+      readNamespaces: [...dataNamespaces, "props"],
+      writeNamespaces: [...dataNamespaces, "props"],
+    }),
+    data.resourceDeleteInput,
+    ({ state, input }) => data.deleteResource(state, input)
+  ),
+  runtimeOperation(
+    "assets.list",
+    api("list-assets", "listAssets"),
+    readContract(assetUsageNamespaces, { requiresAssets: true }),
+    assetListInput,
+    ({ state, input }) => assets.listAssets(state, input)
+  ),
+  runtimeOperation(
+    "assets.findUsage",
+    api("find-asset-usage", "findAssetUsage"),
+    readContract(assetUsageNamespaces, { requiresAssets: true }),
+    assetUsageInput,
+    ({ state, input }) => assets.findAssetUsage(state, input)
+  ),
+  runtimeOperation(
+    "assets.update",
+    api("update-asset", "updateAsset"),
+    mutationContract({
+      readNamespaces: ["assets"],
+      writeNamespaces: ["assets"],
+      requiresAssets: true,
+    }),
+    assets.assetUpdateInput,
+    ({ state, input }) => assets.updateAsset(state, input)
+  ),
+  runtimeOperation(
+    "assets.add",
+    api("add-asset", "addAsset"),
+    mutationContract({
+      readNamespaces: ["assets"],
+      writeNamespaces: ["assets"],
+      retryOnConflict: true,
+    }),
+    assets.assetAddInput,
+    ({ state, input }) => assets.addAsset(state, input)
+  ),
+  runtimeOperation(
+    "assets.replace",
+    api("replace-asset", "replaceAsset"),
+    mutationContract({
+      readNamespaces: assetUsageNamespaces,
+      writeNamespaces: ["pages", "props", "styles", "assets"],
+      requiresAssets: true,
+    }),
+    assets.assetReplaceInput,
+    ({ state, input }) => assets.replaceAsset(state, input)
+  ),
+  runtimeOperation(
+    "assets.delete",
+    api("delete-asset", "deleteAssets"),
+    mutationContract({
+      readNamespaces: assetUsageNamespaces,
+      writeNamespaces: ["assets"],
+      requiresAssets: true,
+    }),
+    assets.assetDeleteInput,
+    ({ state, input }) => assets.deleteAssets(state, input)
   ),
 ] as const satisfies readonly BuilderRuntimeOperation[];
+
+const internalBuilderRuntimeOperations = [
+  runtimeOperation(
+    "system.migrateLoadedData",
+    api("migrate-loaded-data", "migrateLoadedData"),
+    mutationContract({
+      readNamespaces: builderNamespaces,
+      writeNamespaces: builderNamespaces,
+      retryOnConflict: true,
+    }),
+    migrations.migrateLoadedDataInput,
+    ({ state }) => migrations.migrateLoadedData(state)
+  ),
+] as const satisfies readonly BuilderRuntimeOperation[];
+
+const allBuilderRuntimeOperations = [
+  ...builderRuntimeOperations,
+  ...internalBuilderRuntimeOperations,
+] as const satisfies readonly BuilderRuntimeOperation[];
+
+export type BuilderRuntimeOperationId =
+  (typeof allBuilderRuntimeOperations)[number]["id"];
+
+export type BuilderRuntimeOperationInput<Id extends string> = Id extends unknown
+  ? Extract<
+      (typeof allBuilderRuntimeOperations)[number],
+      { id: Id }
+    > extends BuilderRuntimeOperation<Id, infer Input, unknown>
+    ? Input
+    : never
+  : never;
+
+export type BuilderRuntimeOperationResult<Id extends string> =
+  Id extends unknown
+    ? Extract<
+        (typeof allBuilderRuntimeOperations)[number],
+        { id: Id }
+      > extends BuilderRuntimeOperation<Id, unknown, infer Result>
+      ? Result
+      : never
+    : never;
 
 const builderRuntimeOperationById: ReadonlyMap<
   string,
   BuilderRuntimeOperation
 > = new Map(
-  builderRuntimeOperations.map((operation) => [operation.id, operation])
+  allBuilderRuntimeOperations.map((operation) => [operation.id, operation])
 );
 
 export const getBuilderRuntimeOperation = (id: string) => {
@@ -327,17 +1478,20 @@ export const getBuilderRuntimeOperation = (id: string) => {
   return operation;
 };
 
+export const getBuilderRuntimeOperationInputSchema = (id: string) =>
+  getBuilderRuntimeOperation(id).inputSchema;
+
 export const executeBuilderRuntimeOperation = <Result = unknown>({
   id,
   state,
   input,
-  context,
+  context = builderRuntimeContext,
 }: {
   id: string;
   state: BuilderState;
   input: unknown;
-  context: BuilderRuntimeContext;
-}): Result => {
+  context?: BuilderRuntimeContext;
+}): Result | Promise<Result> => {
   return getBuilderRuntimeOperation(id).execute({
     state,
     input,

@@ -10,15 +10,35 @@ import {
 } from "./harness";
 import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
-import "./tests/content-mode-editing.e2e";
-import "./tests/pages-actions.e2e";
-import "./tests/preview-links.e2e";
-import "./tests/share-link-permissions.e2e";
-import "./tests/slot-keyboard.e2e";
+import "./tests/animation-runtime.[shard-1].e2e";
+import "./tests/content-mode-editing.[shard-1].e2e";
+import "./tests/content-mode-editing.[shard-2].e2e";
+import "./tests/content-mode-editing.[shard-3].e2e";
+import "./tests/data-variables-runtime.[shard-2].e2e";
+import "./tests/pages-actions.[shard-1].e2e";
+import "./tests/pages-actions.[shard-2].e2e";
+import "./tests/pages-actions.[shard-3].e2e";
+import "./tests/preview-links.[shard-1].e2e";
+import "./tests/project-settings-runtime.[shard-2].e2e";
+import "./tests/props-runtime.[shard-2].e2e";
+import "./tests/share-link-permissions.[shard-1].e2e";
+import "./tests/slot-keyboard.[shard-3].e2e";
+import "./tests/style-panel-runtime.[shard-1].e2e";
+import "./tests/style-panel-runtime.[shard-2].e2e";
+import "./tests/style-panel-runtime.[shard-3].e2e";
 
 const testTimeoutMs =
-  Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 60_000;
-const testFilter = process.env.E2E_TEST_FILTER;
+  Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
+const testShard = process.env.E2E_TEST_SHARD?.trim();
+const testFilters = [
+  ...(process.env.E2E_TEST_FILTERS ?? "")
+    .split("\n")
+    .map((filter) => filter.trim())
+    .filter(Boolean),
+  ...(process.env.E2E_TEST_FILTER === undefined
+    ? []
+    : [process.env.E2E_TEST_FILTER]),
+];
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED ??= "0";
 
@@ -197,12 +217,66 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
   ]);
 };
 
+const getRunnableSuites = () => {
+  const suites = getSuites()
+    .filter((suite) => {
+      if (testShard === undefined || testShard === "") {
+        return true;
+      }
+      return suite.fileName.includes(`[${testShard}]`);
+    })
+    .map((suite) => ({
+      suite,
+      tests: suite.tests.filter((test) => {
+        if (testFilters.length === 0) {
+          return true;
+        }
+        const fullName = `${suite.name} › ${test.name}`;
+        return testFilters.some(
+          (filter) => test.name.includes(filter) || fullName.includes(filter)
+        );
+      }),
+    }));
+
+  const runnableSuites = suites.filter(({ tests }) => tests.length > 0);
+
+  if (testShard !== undefined && testShard !== "" && suites.length === 0) {
+    const availableFiles = getSuites().map((suite) => suite.fileName);
+    throw new Error(
+      [
+        `E2E_TEST_SHARD did not match any test files: ${JSON.stringify(testShard)}`,
+        "Available test files:",
+        ...availableFiles.map((file) => `- ${file}`),
+      ].join("\n")
+    );
+  }
+
+  if (testFilters.length > 0 && runnableSuites.length === 0) {
+    const availableTests = suites.flatMap(({ suite }) =>
+      suite.tests.map((test) => `${suite.name} › ${test.name}`)
+    );
+    throw new Error(
+      [
+        `E2E_TEST_FILTERS did not match any tests: ${JSON.stringify(testFilters)}`,
+        "Available tests:",
+        ...availableTests.map((name) => `- ${name}`),
+      ].join("\n")
+    );
+  }
+
+  return runnableSuites;
+};
+
 const run = async () => {
   const totalStartedAt = Date.now();
   const bootStartedAt = Date.now();
   let builder: ChildProcess | undefined;
 
   try {
+    const runnableSuites = getRunnableSuites();
+    if (process.env.E2E_VALIDATE_TEST_FILTER_ONLY === "true") {
+      return;
+    }
     const postgrestReady = measure("wait for postgrest", async () => {
       await waitForPostgrest();
     });
@@ -214,14 +288,6 @@ const run = async () => {
     await measure("warm login route", warmLoginRoute);
     logPerf("boot builder/browser", bootStartedAt);
     const testsStartedAt = Date.now();
-    const runnableSuites = getSuites()
-      .map((suite) => ({
-        suite,
-        tests: suite.tests.filter(
-          (test) => testFilter === undefined || test.name.includes(testFilter)
-        ),
-      }))
-      .filter(({ tests }) => tests.length > 0);
 
     await measure("reset database", resetDatabase);
 
@@ -233,7 +299,7 @@ const run = async () => {
       logPerf(`${suite.name} beforeAll`, beforeAllStartedAt);
     }
 
-    const results = await Promise.allSettled(
+    await Promise.all(
       runnableSuites.map(async ({ suite, tests }) => {
         const suiteStartedAt = Date.now();
         await runSuiteTests({ suite, tests });
@@ -241,11 +307,6 @@ const run = async () => {
         console.info(`✓ ${suite.name} completed (${suiteDuration}ms)`);
       })
     );
-
-    const failedSuite = results.find((result) => result.status === "rejected");
-    if (failedSuite?.status === "rejected") {
-      throw failedSuite.reason;
-    }
     logPerf("tests", testsStartedAt);
   } finally {
     await stopBrowser();

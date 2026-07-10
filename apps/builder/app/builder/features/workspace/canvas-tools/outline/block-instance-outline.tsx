@@ -1,5 +1,4 @@
-import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
-import { updateInstanceData } from "~/shared/instance-utils/data";
+import { deleteInstanceBySelector } from "~/shared/instance-utils/mutation";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
@@ -28,17 +27,18 @@ import {
   $hoveredInstanceSelector,
   $isContentMode,
   $modifierKeys,
-  findBlockSelector,
-  findTemplates,
   type BlockChildOutline,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import type { InstanceSelector } from "~/shared/instance-utils/tree";
-import { canDeleteInstanceInContentMode } from "~/shared/instance-utils/data";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import {
+  canDeleteInstanceInContentMode,
+  findBlockSelector,
+  findBlockTemplates,
+} from "@webstudio-is/project-build/runtime/block";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { getInstancePath } from "~/shared/nano-states";
 import { insertTemplateAt } from "./block-utils";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";
@@ -77,7 +77,7 @@ export const TemplatesMenu = ({
   const instances = useStore($instances);
   const modifierKeys = useStore($modifierKeys);
 
-  const blockInstanceSelector = findBlockSelector(anchor, instances);
+  const blockInstanceSelector = findBlockSelector({ anchor, instances });
 
   const handleValueChangeComplete = useEffectEvent((value: string) => {
     const templateSelector = JSON.parse(value) as InstanceSelector;
@@ -251,7 +251,10 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
-  const blockInstanceSelector = findBlockSelector(outline.selector, instances);
+  const blockInstanceSelector = findBlockSelector({
+    anchor: outline.selector,
+    instances,
+  });
 
   if (blockInstanceSelector === undefined) {
     return;
@@ -263,7 +266,7 @@ export const BlockChildHoveredInstanceOutline = () => {
     return;
   }
 
-  const templates = findTemplates(outline.selector, instances);
+  const templates = findBlockTemplates({ anchor: outline.selector, instances });
 
   if (templates === undefined) {
     return;
@@ -377,12 +380,7 @@ export const BlockChildHoveredInstanceOutline = () => {
                 return;
               }
 
-              updateInstanceData((data) => {
-                deleteInstanceMutable(
-                  data,
-                  getInstancePath(outline.selector, data.instances)
-                );
-              });
+              deleteInstanceBySelector(outline.selector);
 
               setButtonOutline(undefined);
               $blockChildOutline.set(undefined);

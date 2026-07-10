@@ -33,7 +33,6 @@ import {
 } from "~/shared/nano-states";
 import { $props } from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   $selectedInstance,
   $selectedInstanceKey,
@@ -48,8 +47,7 @@ import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
 } from "../shared";
-import { applyBuilderPatchPayloadMutable } from "~/shared/instance-utils/data";
-import { createPropUpsertPayload } from "@webstudio-is/project-build/runtime/props";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 type Item = {
   name: string;
@@ -406,14 +404,11 @@ export const PropsSectionContainer = ({
     props: propsByInstanceId.get(instance.id) ?? [],
 
     updateProp: (update) => {
-      serverSyncStore.createTransaction([$props], (props) => {
-        applyBuilderPatchPayloadMutable(
-          { props },
-          createPropUpsertPayload({
-            props: props.values(),
-            nextProps: [update],
-          }).payload
-        );
+      executeRuntimeMutation({
+        id: "instances.updateProps",
+        input: {
+          updates: [update],
+        },
       });
     },
   });

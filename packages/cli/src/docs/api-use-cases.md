@@ -47,18 +47,19 @@ Commands:
 
 Commands:
 
-- webstudio schema api --json
-- webstudio man api --json
+- webstudio schema api
+- webstudio schema mcp
+- webstudio man --json
 - webstudio man llm --json
-- webstudio man mcp --json
 - MCP tool: meta.index {}
 - MCP tool: meta.guide {"brief":"Create a pricing page"}
 - MCP tool: meta.get_more_tools {"brief":"update-styles"}
 
 Notes:
 
-- Use `tools/list` for machine-readable MCP tool schemas.
-- Use `resources/list` and `resources/read` for longer MCP resources such as `webstudio://project/tools` and `webstudio://project/guide`.
+- Use `webstudio schema mcp` for a tiny machine-readable MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` or focused `meta.get_more_tools` calls only when exact input schemas are needed.
+- Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Use `resources/list` and `resources/read` for overview resources and read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused discovery is insufficient.
+- From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 
 ## Inspect and refresh MCP session cache
 
@@ -80,20 +81,30 @@ Commands:
 
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: preview.status {}
-- MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
-- MCP tool: screenshot.diff {"baselinePath":"before.png","currentPath":"current.png","outputDir":".webstudio/screenshots"}
+- MCP tool: preview.stop {}
+- MCP tool: screenshot {"path":"/","output":".webstudio/screenshots/home-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/home-before.png","currentPath":".webstudio/screenshots/home-current.png","outputDir":".webstudio/screenshots/diff"}
+- MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/pricing-before.png","currentPath":".webstudio/screenshots/pricing-current.png","outputDir":".webstudio/screenshots/diff"}
 - MCP tool: vision.install-ocr {"confirm":true}
 
 Notes:
 
-- Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see what was actually built.
+- Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see the production-like generated site.
+- For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
+- After MCP mutations, path screenshots regenerate/restart preview as needed before capture; when preview is fresh, repeated path screenshots reuse the running server.
+- Do not call `preview.start` through one-shot `webstudio mcp single-op-call`: it is long-lived. From a shell, use `webstudio mcp run` with preview.start, screenshot, and preview.stop in one shared process, or use a real long-running MCP client.
+- From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
+- Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
-- For a fresh checkout, copied fixture, or newly generated app, run npm install or pnpm install in the generated project before preview.start or webstudio preview.
-- If preview fails with a missing generated-app command/package such as react-router or vite, install the generated app dependencies and retry.
-- When a baseline exists, use screenshot.diff to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
+- Preview isolates generated app dependencies under `.webstudio/preview` by linking to the CLI package dependency tree.
+- Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
+- If preview fails with a missing generated-app command/package such as react-router, react-router-serve, or vite, install dependencies for the CLI package and retry.
+- When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
 - If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.
 - Compare the PNG, OCR text evidence, and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
-- Root CLI equivalent: webstudio preview --template ssg, then webstudio screenshot <url> --output current.png.
+- Root CLI equivalent: webstudio preview, then webstudio screenshot <url> --output current.png.
 
 ## List pages
 
@@ -118,6 +129,12 @@ Commands:
 Commands:
 
 - MCP tool: create-page {"name":"Pricing","path":"/pricing"}
+- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"\"Pricing\"","meta":{"description":"\"Plans for teams\""}}
+
+Notes:
+
+- `name` and `path` are plain values.
+- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Update page settings/metadata
 
@@ -128,7 +145,7 @@ Commands:
 
 Notes:
 
-- Page title and metadata text fields are expression-backed. For fixed text, send a quoted JavaScript string literal expression such as `"\"Pricing\""`.
+- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Read project settings
 
@@ -140,7 +157,19 @@ Commands:
 
 Commands:
 
-- MCP tool: update-project-settings {"settings":"project-settings.json contents"}
+- MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}
+
+## Read marketplace product
+
+Commands:
+
+- MCP tool: get-marketplace-product {}
+
+## Update marketplace product
+
+Commands:
+
+- MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
 
 ## List redirects
 
@@ -152,20 +181,26 @@ Commands:
 
 Commands:
 
-- MCP tool: create-redirect {"oldPath":"/old","newPath":"/new","status":301}
+- MCP tool: create-redirect {"old":"/old","new":"/new","status":301}
 
 ## Update redirect
 
 Commands:
 
-- MCP tool: update-redirect {"oldPath":"/old","newPath":"/newer","status":302}
-- MCP tool: update-redirect {"oldPath":"/old","status":null}
+- MCP tool: update-redirect {"old":"/old","values":{"new":"/newer","status":302}}
+- MCP tool: update-redirect {"old":"/old","values":{"status":null}}
 
 ## Delete redirect
 
 Commands:
 
-- MCP tool: delete-redirect {"oldPath":"/old"}
+- MCP tool: delete-redirect {"old":"/old"}
+
+## Set redirects
+
+Commands:
+
+- MCP tool: set-redirects {"redirects":[{"old":"/old","new":"/new","status":"301"}]}
 
 ## List breakpoints
 
@@ -177,21 +212,21 @@ Commands:
 
 Commands:
 
-- MCP tool: create-breakpoint {"breakpointId":"tablet","label":"Tablet","maxWidth":991}
+- MCP tool: create-breakpoint {"label":"Tablet","maxWidth":991}
 
 ## Update breakpoint
 
 Commands:
 
-- MCP tool: update-breakpoint {"breakpointId":"tablet","label":"Tablet","maxWidth":1023}
-- MCP tool: update-breakpoint {"breakpointId":"tablet","condition":null,"minWidth":768}
-- MCP tool: update-breakpoint {"breakpointId":"tablet","minWidth":null,"maxWidth":null,"condition":"(hover: hover)"}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"label":"Tablet","maxWidth":1023}}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"condition":null,"minWidth":768}}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"minWidth":null,"maxWidth":null,"condition":"(hover: hover)"}}
 
 ## Delete breakpoint
 
 Commands:
 
-- MCP tool: delete-breakpoint {"breakpointId":"tablet","confirm":true}
+- MCP tool: delete-breakpoint {"breakpointId":"tablet"}
 
 ## Duplicate page
 
@@ -204,6 +239,36 @@ Commands:
 Commands:
 
 - MCP tool: list-page-templates {}
+
+## Create page template
+
+Commands:
+
+- MCP tool: create-page-template {"name":"Landing Template","title":"\"Landing\""}
+
+## Update page template
+
+Commands:
+
+- MCP tool: update-page-template {"templateId":"<templateId>","values":{"name":"Article Template","meta":{"description":"\"Reusable article layout\""}}}
+
+## Delete page template
+
+Commands:
+
+- MCP tool: delete-page-template {"templateId":"<templateId>"}
+
+## Duplicate page template
+
+Commands:
+
+- MCP tool: duplicate-page-template {"templateId":"<templateId>"}
+
+## Reorder page template
+
+Commands:
+
+- MCP tool: reorder-page-template {"sourceTemplateId":"<sourceTemplateId>","targetTemplateId":"<targetTemplateId>","position":"before"}
 
 ## Create page from template
 
@@ -233,7 +298,7 @@ Commands:
 
 Commands:
 
-- MCP tool: update-folder {"folderId":"<folderId>","name":"Blog","slug":"blog"}
+- MCP tool: update-folder {"folderId":"<folderId>","values":{"name":"Blog","slug":"blog"}}
 
 ## Delete folder
 
@@ -253,11 +318,28 @@ Commands:
 
 - MCP tool: inspect-instance {"instanceId":"<instanceId>","include":["props","styles","children"]}
 
-## Append/prepend/replace child elements
+## Insert authored JSX or one component template
 
 Commands:
 
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px;`}><ws.element ws:tag=\"h2\">Product OS</ws.element><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
+- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
+
+Notes:
+
+- Use MCP `insert-fragment` as the default way to author styled component trees. It converts JSX to a structured fragment before mutation.
+- MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
+- In `insert-fragment` JSX, use `ws:style={css\`...\`}`for Webstudio-native CSS, or use React-style object syntax such as`style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
+- Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
+- Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
+- Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
+- Plain prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
+- Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`.
+- Webstudio applies a registered template automatically when using `insert-component`, so composed components such as Switch include required child parts and styles.
+- Use `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get` to discover known registry items, component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
+- Component/template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. They are for Builder/MCP discovery, not a published shadcn install registry yet.
+- Known components with `contentModel.category: "none"` are not standalone-insertable; insert their root component template instead so required providers/parents are included.
+- Unknown component ids fall back to a single-element instance when no template exists.
 
 ## Move elements
 
@@ -269,13 +351,13 @@ Commands:
 
 Commands:
 
-- MCP tool: clone-instance {"sourceInstanceId":"<instanceId>","parentInstanceId":"<targetParentId>"}
+- MCP tool: clone-instance {"sourceInstanceId":"<instanceId>","targetParentInstanceId":"<targetParentId>"}
 
 ## Delete element subtree
 
 Commands:
 
-- MCP tool: delete-instance {"instanceId":"<instanceId>"}
+- MCP tool: delete-instance {"instanceIds":["<instanceId>"]}
 
 ## List text/expression children
 
@@ -314,14 +396,14 @@ Commands:
 
 Notes:
 
-- Use this only when the prop should remain dynamic: expression, parameter, resource, or action binding.
+- Use this only when the prop should remain dynamic: expression, resource, action, or an existing scoped runtime context value such as `system`.
 - For a fixed string value, use `update-props` with `type:"string"` and a direct `value` instead.
 
 ## Read styles
 
 Commands:
 
-- MCP tool: get-styles {"instanceId":"<instanceId>","includeTokens":true}
+- MCP tool: get-styles {"instanceIds":["<instanceId>"],"includeTokens":true}
 
 ## Update local styles
 
@@ -339,7 +421,7 @@ Commands:
 
 Commands:
 
-- MCP tool: replace-styles {"replacements":"replace.json contents"}
+- MCP tool: replace-styles {"property":"color","fromValue":{"type":"keyword","value":"red"},"toValue":{"type":"keyword","value":"blue"}}
 
 ## List design tokens
 
@@ -357,31 +439,31 @@ Commands:
 
 Commands:
 
-- MCP tool: update-design-token-styles {"styleSourceId":"<tokenId>","updates":"styles.json contents"}
+- MCP tool: update-design-token-styles {"designTokenId":"<tokenId>","updates":"styles.json contents"}
 
 ## Delete design token styles
 
 Commands:
 
-- MCP tool: delete-design-token-styles {"styleSourceId":"<tokenId>","deletions":"styles.json contents"}
+- MCP tool: delete-design-token-styles {"designTokenId":"<tokenId>","deletions":"styles.json contents"}
 
 ## Attach design token to instances
 
 Commands:
 
-- MCP tool: attach-design-token {"styleSourceId":"<tokenId>","instanceIds":"instances.json contents"}
+- MCP tool: attach-design-token {"designTokenId":"<tokenId>","instanceIds":"instances.json contents"}
 
 ## Detach design token from instances
 
 Commands:
 
-- MCP tool: detach-design-token {"styleSourceId":"<tokenId>","instanceIds":"instances.json contents"}
+- MCP tool: detach-design-token {"designTokenId":"<tokenId>","instanceIds":"instances.json contents"}
 
 ## Extract design token from local styles
 
 Commands:
 
-- MCP tool: extract-design-token {"token":"token.json contents"}
+- MCP tool: extract-design-token {"instanceIds":["<instanceId>"],"name":"Brand Primary","removeLocalProps":["color"]}
 
 ## List CSS variables
 
@@ -393,55 +475,85 @@ Commands:
 
 Commands:
 
-- MCP tool: define-css-variable {"variables":"vars.json contents"}
+- MCP tool: define-css-variable {"vars":"vars.json contents"}
 
 ## Delete CSS variables
 
 Commands:
 
-- MCP tool: delete-css-variable {"names":"names.json contents","confirm":true}
+- MCP tool: delete-css-variable {"names":"names.json contents","force":true}
 
 ## Rewrite CSS variable references
 
 Commands:
 
-- MCP tool: rewrite-css-variable-refs {"variables":"variables.json contents"}
+- MCP tool: rewrite-css-variable-refs {"map":"variables.json contents"}
 
 ## List data variables
 
 Commands:
 
 - MCP tool: list-variables {}
+- MCP tool: list-variables {"scopeInstanceId":"<instanceId>"}
+
+Notes:
+
+- Data variables live in the internal `dataSources` namespace.
+- For raw `snapshot`, request the public `variables` namespace rather than the internal `dataSources` name. Raw patch payloads still use `dataSources` when applying direct changes.
+- Scope variables to the instance where they should become available. Descendants can use them in expressions, and nested variables with the same name mask outer variables.
 
 ## Create data variable
 
 Commands:
 
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"count","value":{"type":"number","value":3}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"featured","value":{"type":"boolean","value":true}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
+
+Notes:
+
+- Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
+- Parameters are internal scoped runtime values provided by pages, collections, or components. They are not a public authoring surface: do not create, update, or delete parameter records. Use data variables/resources for user-authored data, and reference documented context values such as `system` only where they are already in scope.
 
 ## Update data variable
 
 Commands:
 
-- MCP tool: update-variable {"variableId":"<variableId>","value":{"type":"json","value":{"count":1}}}
+- MCP tool: update-variable {"dataSourceId":"<variableId>","values":{"value":{"type":"json","value":{"count":1}}}}
 
 ## Delete data variable
 
 Commands:
 
-- MCP tool: delete-variable {"variableId":"<variableId>"}
+- MCP tool: delete-variable {"dataSourceId":"<variableId>"}
 
 ## List resources
 
 Commands:
 
 - MCP tool: list-resources {}
+- MCP tool: list-resources {"scopeInstanceId":"<instanceId>"}
 
 ## Create resource
 
 Commands:
 
-- MCP tool: create-resource {"name":"Posts","method":"get","url":"\"https://api.example.com/posts\""}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts?tag=\" + filters.tag","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"page","value":"String(filters.page ?? 1)"}],"headers":[{"name":"Authorization","value":"\"Bearer \" + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
+
+Notes:
+
+- Resource `url`, header values, search parameter values, and body are expressions. Literal URLs are JSON strings such as `"https://api.example.com/posts"`.
+- Search parameter values, header values, and body expressions can read scoped variables and documented runtime context values such as `system` when they are available at the resource scope.
+- Add `scopeInstanceId` and `dataSourceName` when the resource result should be exposed as a scoped read data variable. Scoped resources are generated into the page resource `data` map and may be loaded during page rendering. Use this for read-oriented resources such as GET CMS/API data.
+- For submit/write/action resources, create the resource without `scopeInstanceId`, then bind a component prop such as a Form `action` with `bind-props` and `binding.type: "resource"`. Prop-bound resources are generated into the page resource `action` map instead of the read `data` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and other explicit action flows.
+- Resource `method` can be `get`, `post`, `put`, or `delete`. Use GET for read data, POST for creates/GraphQL/webhooks/form submissions, PUT for full updates or replacements, and DELETE for deletion actions.
+- Optional `control` values are `graphql` and `system`. Use `graphql` for GraphQL-style requests, usually POST with a query body. Use `system` for built-in resources such as `"/$resources/sitemap.xml"`, `"/$resources/current-date"`, and `"/$resources/assets"` and when the resource should use the built-in `system` parameter. System fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`.
 
 ## Update resource
 
@@ -465,13 +577,13 @@ Commands:
 
 Commands:
 
-- MCP tool: upload-asset {"asset":"asset.json contents","assetsDir":".webstudio/assets"}
+- MCP tool: upload-asset {"asset":{"name":"image.png","type":"image","format":"png","meta":{"width":1200,"height":630}},"assetsDir":".webstudio/assets"}
 
 ## Upload asset batch
 
 Commands:
 
-- MCP tool: upload-assets {"assets":"assets.json contents","assetsDir":".webstudio/assets"}
+- MCP tool: upload-assets {"assets":[{"name":"image.png","type":"image","format":"png","meta":{"width":1200,"height":630}}],"assetsDir":".webstudio/assets"}
 
 ## Find asset usage
 
@@ -483,13 +595,13 @@ Commands:
 
 Commands:
 
-- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>","confirm":true}
+- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>"}
 
 ## Delete assets
 
 Commands:
 
-- MCP tool: delete-asset {"assetId":"<assetId>","confirm":true}
+- MCP tool: delete-asset {"assetIdsOrPrefixes":["<assetId>"],"force":true}
 
 ## Publish project
 
@@ -561,8 +673,8 @@ Notes:
 
 Commands:
 
-- MCP tool: snapshot {"include":["marketplaceProduct"]}
-- MCP tool: apply-patch {"baseVersion":"<version>","transactions":"patch.json contents"}
+- MCP tool: get-marketplace-product {}
+- MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
 
 Patch namespaces:
 
@@ -593,9 +705,9 @@ Commands:
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
-- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>","confirm":true}
-- MCP tool: replace-styles {"replacements":"replace.json contents"}
-- MCP tool: rewrite-css-variable-refs {"variables":"variables.json contents"}
+- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>"}
+- MCP tool: replace-styles {"property":"color","fromValue":{"type":"keyword","value":"red"},"toValue":{"type":"keyword","value":"blue"}}
+- MCP tool: rewrite-css-variable-refs {"map":"variables.json contents"}
 
 Notes:
 
@@ -609,11 +721,11 @@ Commands:
 - MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: list-breakpoints {}
-- MCP tool: update-breakpoint {"breakpointId":"tablet","maxWidth":1023}
-- MCP tool: get-styles {"instanceId":"<instanceId>","includeTokens":true}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"maxWidth":1023}}
+- MCP tool: get-styles {"instanceIds":["<instanceId>"],"includeTokens":true}
 - MCP tool: update-styles {"updates":"styles.json contents"}
-- MCP tool: attach-design-token {"styleSourceId":"<tokenId>","instanceIds":"instances.json contents"}
-- MCP tool: update-project-settings {"settings":"project-settings.json contents"}
+- MCP tool: attach-design-token {"designTokenId":"<tokenId>","instanceIds":"instances.json contents"}
+- MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}
 
 Notes:
 
@@ -624,23 +736,29 @@ Notes:
 Commands:
 
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
-- MCP tool: create-resource {"name":"Posts","method":"get","url":"\"https://api.example.com/posts\""}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.collection>{/_ collection content _/}</ws.collection>"}
 
 Notes:
 
 - Use this for CMS sections, blog listings, Ghost/headless CMS pages, n8n-style integrations, and API URLs built from variables.
+- For read data, expose GET resources as scoped data variables with `scopeInstanceId`/`dataSourceName` and read the loaded result from the resource result wrapper, usually `.data`.
+- For writes, webhooks, GraphQL submissions, and deletes, prefer unscoped resources bound to Form `action` props so they become action resources instead of auto-loaded read resources.
+- Use direct props for fixed values and prop bindings only when a prop must read a data variable, resource, action, or documented runtime context value such as `system`.
 
 ## Support dynamic runtime behavior
 
 Commands:
 
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
-- MCP tool: create-resource {"name":"Seats","method":"get","url":"\"https://api.example.com/seats\""}
+- MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"\"https://api.example.com/seats\"","headers":[]}}
 - MCP tool: snapshot {"include":["instances","props","resources"]}
 - MCP tool: apply-patch {"baseVersion":"<version>","transactions":"patch.json contents"}
 
@@ -655,7 +773,7 @@ Commands:
 
 - MCP tool: create-page {"name":"Account","path":"/account"}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
-- MCP tool: create-resource {"name":"Session","method":"get","url":"\"https://api.example.com/session\""}
+- MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"\"https://api.example.com/session\"","headers":[]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"user","value":{"type":"json","value":{}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
@@ -670,11 +788,12 @@ Commands:
 
 - MCP tool: create-page {"name":"Landing","path":"/landing"}
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
-- MCP tool: define-css-variable {"variables":"vars.json contents"}
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
+- MCP tool: define-css-variable {"vars":"vars.json contents"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\"><ws.element ws:tag=\"p\">Section copy</ws.element></ws.element>"}
 - MCP tool: update-styles {"updates":"styles.json contents"}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 
 Notes:
 
@@ -708,33 +827,6 @@ Suggested commands:
 - audit-accessibility
 - find-prop-usage
 
-## Save and manage page templates
-
-Missing:
-CLI can list page templates and create pages from existing templates, but cannot save a page as a template or update/delete templates semantically.
-
-Current fallback:
-Use MCP snapshot and apply-patch only when the template data model is understood.
-
-Suggested commands:
-
-- create-page-template
-- update-page-template
-- delete-page-template
-
-## Semantic marketplace metadata
-
-Missing:
-Marketplace metadata is only available through MCP snapshot/apply-patch, not dedicated semantic commands.
-
-Current fallback:
-Use MCP snapshot --include marketplaceProduct and apply-patch.
-
-Suggested commands:
-
-- get-marketplace
-- update-marketplace
-
 ## Provider-specific authenticated pages
 
 Missing:
@@ -753,7 +845,7 @@ Missing:
 CLI can manipulate props/resources/embeds, but has no semantic workflow for converting script-generated UI into editable Webstudio structures.
 
 Current fallback:
-Use MCP append-instance, props, resources, and raw patch where necessary.
+Use MCP props, resources, and raw patch where necessary.
 
 Suggested commands:
 

@@ -1,5 +1,14 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { apiCommandMetadata, cliCommandMetadata } from "./api-command-metadata";
+import {
+  apiCommandMetadata,
+  cliCommandMetadata,
+  topLevelCliCommandMetadata,
+} from "./api-command-metadata";
+import {
+  listProjectSessionMcpResources,
+  listProjectSessionMcpTools,
+} from "@webstudio-is/project-build/mcp";
+import { publicApiOperations } from "@webstudio-is/protocol";
 import { schema } from "./schema";
 
 afterEach(() => {
@@ -15,21 +24,7 @@ test("prints api command schema as json", () => {
   expect(output.projectScope).toContain("single project");
   expect(
     output.topLevelCommands.map((command: { name: string }) => command.name)
-  ).toEqual([
-    "init",
-    "link",
-    "sync",
-    "import",
-    "build",
-    "preview",
-    "screenshot",
-    "permissions",
-    "publish",
-    "domains",
-    "schema",
-    "man",
-    "mcp",
-  ]);
+  ).toEqual(topLevelCliCommandMetadata.map(({ command }) => command));
   expect(
     output.topLevelCommands.map((command: { name: string }) => command.name)
   ).not.toEqual(expect.arrayContaining(["publish deploy", "domains list"]));
@@ -77,40 +72,32 @@ test("prints api command schema as json", () => {
   expect(output.mcp.toolCount).toBe(apiCommandMetadata.length);
   expect(output.mcp.discovery).toContain("meta.get_more_tools");
   expect(output.mcp.resources).toContain("webstudio://project/tools");
-  expect(output.mcp.argumentExamples["update-styles"]).toEqual([
-    {
-      updates: [
-        {
-          instanceId: "instance-id",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-        },
-      ],
-    },
-  ]);
+  expect(output.mcp.resources).toContain("webstudio://project/components");
+  expect(output.mcp.capabilities).toEqual(
+    expect.arrayContaining([expect.stringContaining("Instances/components")])
+  );
+  expect(output.mcp.boundary).toContain("MCP-level");
+  expect(output.mcp).not.toHaveProperty("commands");
+  expect(output.mcp).not.toHaveProperty("argumentExamples");
   for (const command of output.commands) {
     expect(command).not.toHaveProperty("trpcPath");
   }
   expect(output.useCases).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
-        useCase: "List breakpoints",
-        commands: ["MCP tool: list-breakpoints {}"],
+        useCase: "Check token permissions",
+        commands: ["webstudio permissions --json"],
       }),
       expect.objectContaining({
-        useCase: "Create page from template",
-        commands: [
-          'MCP tool: create-page-from-template {"templateId":"<templateId>","name":"Landing","path":"/landing"}',
-        ],
+        useCase: "Publish project",
+        commands: ["webstudio publish deploy --target production --json"],
       }),
-      expect.objectContaining({
-        useCase: "Discover CLI/API capabilities",
-        commands: expect.arrayContaining(["webstudio man mcp --json"]),
-      }),
-      expect.objectContaining({
-        useCase: "Manage marketplace metadata",
-        patchNamespaces: ["marketplaceProduct"],
-      }),
+    ])
+  );
+  expect(output.useCases).not.toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ useCase: "List breakpoints" }),
+      expect.objectContaining({ useCase: "Create page from template" }),
     ])
   );
   expect(output.patch.namespaces).toContain("dataSources");
@@ -118,13 +105,201 @@ test("prints api command schema as json", () => {
   expect(output.session.resultMetadata).toContain("meta.session");
 });
 
-test("requires json output", () => {
+test("prints api command schema as json by default", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "api", json: false });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  expect(output.name).toBe("webstudio-cli");
+  expect(output.requiredOutputMode).toContain("always JSON");
+});
+
+test("prints tiny mcp tool overview as json by default", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "mcp", json: true });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  const expectedTools = listProjectSessionMcpTools(publicApiOperations, {
+    includeImport: true,
+    includeScreenshot: true,
+    includeScreenshotDiff: true,
+    includeInstallOcr: true,
+    includePreview: true,
+  });
+
+  expect(output.name).toBe("webstudio-mcp");
+  expect(output.detail).toBe("overview");
+  expect(output).not.toHaveProperty("callCommand");
+  expect(output.singleOpCallCommand).toContain("webstudio mcp single-op-call");
+  expect(output.usage).toContain("--detail summary");
+  expect(output.discovery).toContain(
+    `webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'`
+  );
+  expect(output.discovery).toEqual(
+    expect.arrayContaining([
+      "webstudio mcp single-op-call meta.index",
+      expect.stringContaining("components.coverage-plan"),
+    ])
+  );
+  expect(output.resources).toEqual(listProjectSessionMcpResources());
+  expect(output.toolCount).toBe(expectedTools.length);
+  expect(output.tools).toEqual(expectedTools.map((tool) => tool.name));
+  expect(output.tools).toContain("insert-fragment");
+  expect(output.tools).toContain("insert-component");
+  expect(output.tools).not.toContain("append-instance");
+});
+
+test("prints mcp tool summary when requested", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "mcp", json: true, detail: "summary" });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+
+  expect(output.detail).toBe("summary");
+  expect(output.tools).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: "meta.index",
+        requiredInputFields: [],
+      }),
+      expect.objectContaining({
+        name: "insert-fragment",
+        operationId: "instances.insertFragment",
+        method: "mutation",
+      }),
+      expect.objectContaining({
+        name: "screenshot.diff",
+        examples: expect.arrayContaining([
+          expect.objectContaining({ baselinePath: "baseline.png" }),
+        ]),
+      }),
+    ])
+  );
+  expect(output.tools).not.toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: "append-instance",
+      }),
+    ])
+  );
+  expect(output.tools).not.toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        inputSchema: expect.any(Object),
+      }),
+      expect.objectContaining({
+        annotations: expect.any(Object),
+      }),
+    ])
+  );
+});
+
+test("prints full mcp tool input schemas when requested", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "mcp", json: true, detail: "full" });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+
+  expect(output.detail).toBe("full");
+  expect(output.tools).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: "meta.index",
+        inputSchema: expect.objectContaining({ type: "object" }),
+      }),
+      expect.objectContaining({
+        name: "insert-component",
+        inputSchema: expect.objectContaining({
+          type: "object",
+        }),
+      }),
+    ])
+  );
+  const insertFragmentTool = output.tools.find(
+    (tool: { name: string }) => tool.name === "insert-fragment"
+  );
+  expect(insertFragmentTool.inputSchema.required).toEqual([
+    "parentInstanceId",
+    "fragment",
+  ]);
+  expect(Object.keys(insertFragmentTool.inputSchema.properties)).toEqual([
+    "parentInstanceId",
+    "fragment",
+    "mode",
+    "insertIndex",
+  ]);
+  const fragmentSchema = insertFragmentTool.inputSchema.properties.fragment;
+  expect(fragmentSchema.type).toBe("string");
+  const jsxDescription = fragmentSchema.description;
+  expect(jsxDescription).toContain("not React aliases className or htmlFor");
+  expect(jsxDescription).toContain("Use ws:style");
+  expect(jsxDescription).toContain("style={{ padding: 24 }}");
+  expect(jsxDescription).toContain("include required child/part components");
+  expect(jsxDescription).toContain("same parent structure");
+  expect(jsxDescription).toContain("use insert-component");
+  expect(insertFragmentTool.inputSchema.properties).not.toHaveProperty(
+    "source"
+  );
+});
+
+test("prints focused mcp tool schema with tool option", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "mcp", json: true, tool: "insert-fragment" });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+
+  expect(output.detail).toBe("full");
+  expect(output.focusedToolNames).toEqual(["insert-fragment"]);
+  expect(output.toolCount).toBe(1);
+  expect(output.tools).toEqual([
+    expect.objectContaining({
+      name: "insert-fragment",
+      inputSchema: expect.objectContaining({ type: "object" }),
+    }),
+  ]);
+});
+
+test("prints focused mcp tool schema when topic is a tool name", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "insert-fragment", json: true });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+
+  expect(output.detail).toBe("full");
+  expect(output.focusedToolNames).toEqual(["insert-fragment"]);
+  expect(output.tools).toEqual([
+    expect.objectContaining({
+      name: "insert-fragment",
+      inputSchema: expect.objectContaining({
+        required: ["parentInstanceId", "fragment"],
+      }),
+    }),
+  ]);
+});
+
+test("prints mcp tool overview as json without json flag", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "mcp", json: false });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  expect(output.name).toBe("webstudio-mcp");
+  expect(output.detail).toBe("overview");
+});
+
+test("reports unknown schema topics with available topics", () => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 
-  expect(() => schema({ topic: "api", json: false })).toThrow(
+  expect(() => schema({ topic: "widgets", json: true })).toThrow(
     "Handled CLI error"
   );
   expect(console.error).toHaveBeenCalledWith(
-    "schema currently requires --json."
+    'Unknown MCP tool "widgets". Use webstudio schema mcp for tool names, or webstudio meta.get_more_tools \'{"tools":["insert-fragment"]}\' for focused discovery.'
   );
 });

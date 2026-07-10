@@ -1,10 +1,9 @@
 import type { Asset } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
-import { $assets, $pages, $props, $styles } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { $assets } from "~/shared/sync/data-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
-import { replaceAssetMutable } from "@webstudio-is/project-build/runtime/assets";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { uploadAssets } from "./upload-assets";
 
 /**
@@ -36,27 +35,10 @@ export const replaceAsset = async (
 
   await waitForAsset(newAssetId);
 
-  serverSyncStore.createTransaction(
-    [$pages, $props, $styles, $assets],
-    (pages, props, styles, assets) => {
-      const updatedNewAsset = assets.get(newAssetId);
-      if (updatedNewAsset) {
-        updatedNewAsset.description = oldAsset.description;
-      }
-
-      replaceAssetMutable({
-        pages,
-        props: props.values(),
-        styles: styles.values(),
-        replacement: {
-          fromAssetId: oldAssetId,
-          toAssetId: newAssetId,
-        },
-      });
-
-      assets.delete(oldAssetId);
-    }
-  );
+  executeRuntimeMutation({
+    id: "assets.replace",
+    input: { fromAssetId: oldAssetId, toAssetId: newAssetId },
+  });
 
   onNextTransactionComplete(() => {
     invalidateAssets();

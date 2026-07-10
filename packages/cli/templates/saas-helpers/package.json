@@ -1,6 +1,6 @@
 {
   "dependencies": {
     "worktop": "0.8.0-next.18",
-    "zod": "^3.24.2"
+    "zod": "^4.4.3"
   }
 }

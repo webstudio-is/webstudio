@@ -6,7 +6,6 @@ import {
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   $textEditorContextMenuCommand,
-  findTemplates,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { applyScale } from "./outline";
@@ -15,7 +14,8 @@ import { TemplatesMenu } from "./outline/block-instance-outline";
 import { insertTemplateAt } from "./outline/block-utils";
 import { useCallback, useEffect, useState } from "react";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import type { InstanceSelector } from "~/shared/instance-utils/tree";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import { findBlockTemplates } from "@webstudio-is/project-build/runtime/block";
 import type { Instance } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 
@@ -197,10 +197,10 @@ export const TextEditorContextMenu = () => {
     return;
   }
 
-  const templates = findTemplates(
-    textEditingInstanceSelector.selector,
-    instances
-  );
+  const templates = findBlockTemplates({
+    anchor: textEditingInstanceSelector.selector,
+    instances,
+  });
 
   if (templates === undefined) {
     return;

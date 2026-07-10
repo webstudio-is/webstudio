@@ -61,8 +61,35 @@ export const createLocalAssetDataReader =
       getLocalAssetPath(asset.name, assetsDirectory)
     )) as ArrayBufferView<ArrayBuffer>;
 
+export const createLocalUploadAssetInput = <Asset extends { name: string }>({
+  asset,
+  assetsDir,
+  readFile,
+}: {
+  asset: Asset;
+  assetsDir?: string;
+  readFile: (path: string) => Promise<unknown>;
+}) => ({
+  asset,
+  readAssetData: createLocalAssetDataReader(readFile, assetsDir),
+});
+
+export const createLocalUploadAssetsInput = <Asset extends { name: string }>({
+  assets,
+  assetsDir,
+  readFile,
+}: {
+  assets: Asset[];
+  assetsDir?: string;
+  readFile: (path: string) => Promise<unknown>;
+}) => ({
+  assets,
+  readAssetData: createLocalAssetDataReader(readFile, assetsDir),
+});
+
 const downloadUrlToFile = async (url: string, filePath: string) => {
   const tempFilePath = `${filePath}.tmp`;
+  let writableStream: ReturnType<typeof createWriteStream> | undefined;
 
   if (await isFileExists(filePath)) {
     return;
@@ -79,7 +106,7 @@ const downloadUrlToFile = async (url: string, filePath: string) => {
       throw new Error(`Failed to fetch ${url}: response body is empty`);
     }
 
-    const writableStream = createWriteStream(tempFilePath);
+    writableStream = createWriteStream(tempFilePath);
     await pipeline(
       response.body as unknown as NodeJS.ReadableStream,
       writableStream
@@ -87,6 +114,12 @@ const downloadUrlToFile = async (url: string, filePath: string) => {
 
     await rename(tempFilePath, filePath);
   } catch (error) {
+    if (writableStream !== undefined && writableStream.closed === false) {
+      writableStream.destroy();
+      await new Promise<void>((resolve) => {
+        writableStream?.once("close", resolve);
+      });
+    }
     await rm(tempFilePath, { force: true });
     throw error;
   }

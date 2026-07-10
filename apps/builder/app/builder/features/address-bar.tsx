@@ -32,7 +32,7 @@ import {
   isPathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
-} from "~/builder/shared/url-pattern";
+} from "@webstudio-is/project-build/runtime/url-pattern";
 import {
   $selectedPage,
   $selectedPagePath,

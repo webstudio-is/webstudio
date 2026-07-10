@@ -21,7 +21,6 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
-  findTreeInstanceIds,
   collectionComponent,
   descendantComponent,
   blockComponent,
@@ -53,7 +52,6 @@ import {
   getIndexedInstanceId,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
-  findBlockSelector,
   $selectedPageHash,
 } from "~/shared/nano-states";
 import { $props } from "~/shared/sync/data-stores";
@@ -62,14 +60,15 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
-} from "~/shared/instance-utils/tree";
+} from "@webstudio-is/project-build/runtime/tree";
+import { findBlockSelector } from "@webstudio-is/project-build/runtime/block";
 import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { TextEditor } from "../text-editor";
 import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { $currentSystem } from "~/shared/system";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
@@ -80,7 +79,7 @@ import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
-import { richTextPlaceholders } from "~/shared/content-model";
+import { richTextPlaceholders } from "@webstudio-is/project-build/runtime/content-model";
 
 const computeComponentKey = (props: Record<string, unknown>) => {
   const assetId = props.$webstudio$canvasOnly$assetId;
@@ -469,7 +468,7 @@ const getEditableComponentPlaceholder = (
     return;
   }
   const isContentBlockChild =
-    undefined !== findBlockSelector(instanceSelector, instances);
+    undefined !== findBlockSelector({ anchor: instanceSelector, instances });
   // The paragraph contains only an "editing" placeholder within the content block.
   if (tag === "p" && isContentBlockChild && mode === "editing") {
     return "Write something or press '/' for commands...";
@@ -650,17 +649,14 @@ export const WebstudioComponentCanvas = forwardRef<
         />
       }
       onChange={(instancesList) => {
-        serverSyncStore.createTransaction([$instances], (instances) => {
-          const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
-          for (const updatedInstance of instancesList) {
-            instances.set(updatedInstance.id, updatedInstance);
-            // exclude reused instances
-            deletedTreeIds.delete(updatedInstance.id);
-          }
-          for (const instanceId of deletedTreeIds) {
-            instances.delete(instanceId);
-          }
+        const result = executeRuntimeMutation({
+          id: "instances.updateTextTree",
+          input: {
+            rootInstanceId: instance.id,
+            instances: instancesList,
+          },
         });
+        return result?.result.idMap;
       }}
       onSelectInstance={(instanceId) => {
         const instances = $instances.get();

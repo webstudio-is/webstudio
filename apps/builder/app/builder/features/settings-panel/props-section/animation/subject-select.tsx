@@ -8,10 +8,9 @@ import {
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { getInstanceStyleDecl } from "~/builder/features/style-panel/shared/model";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { toValue } from "@webstudio-is/css-engine";
 import type { AnimationAction } from "@webstudio-is/sdk";
-import { setListedCssProperty } from "./set-css-property";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const initSubjects = () => {
@@ -132,23 +131,23 @@ export const SubjectSelect = ({
           subjectItem.isTimelineExists === false &&
           newValue.subject !== undefined
         ) {
-          updateWebstudioData(
-            ({ breakpoints, styleSources, styleSourceSelections, styles }) => {
-              if (newValue.subject === undefined) {
-                return;
-              }
-
-              setListedCssProperty(
-                breakpoints,
-                styleSources,
-                styleSourceSelections,
-                styles
-              )(subjectItem.instanceId, "view-timeline-name", {
-                type: "unparsed",
-                value: newValue.subject,
-              });
-            }
-          );
+          executeRuntimeMutation({
+            id: "styles.updateDeclarations",
+            input: {
+              updates: [
+                {
+                  instanceId: subjectItem.instanceId,
+                  property: "viewTimelineName",
+                  listed: true,
+                  createLocalIfMissing: true,
+                  value: {
+                    type: "unparsed",
+                    value: newValue.subject,
+                  },
+                },
+              ],
+            },
+          });
 
           // Wait styles to be applied
           requestAnimationFrame(() => {

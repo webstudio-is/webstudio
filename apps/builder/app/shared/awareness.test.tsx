@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { $awareness, startPointerTracking, __testing__ } from "./awareness";
 
 const { $pointerPosition, getUserAwareness } = __testing__;
-import { findPageAndSelectorByInstanceId } from "./instance-utils/lookup";
+import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime/lookup";
 import { selectInstance, selectInstances } from "./nano-states/instances";
 import { $selectedPageId } from "./nano-states";
 import { $user } from "./nano-states/misc";

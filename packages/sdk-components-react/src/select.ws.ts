@@ -14,6 +14,10 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   presetStyle,
+  contentModel: {
+    category: "instance",
+    children: ["Option"],
+  },
   initialProps: [
     "id",
     "class",

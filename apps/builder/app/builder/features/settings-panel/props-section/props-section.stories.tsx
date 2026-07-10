@@ -387,10 +387,16 @@ const startingProps: Prop[] = [
 export const PropsSection = () => {
   const [props, setProps] = useState(startingProps);
 
-  const handleUpdate = (prop: Prop) => {
+  const handleUpdate: Parameters<typeof usePropsLogic>[0]["updateProp"] = (
+    update
+  ) => {
     setProps((current) => {
-      const exists = current.find((item) => item.id === prop.id) !== undefined;
-      return exists
+      const existing = current.find(
+        (item) =>
+          item.instanceId === update.instanceId && item.name === update.name
+      );
+      const prop = { ...update, id: existing?.id ?? unique() } as Prop;
+      return existing
         ? current.map((item) => (item.id === prop.id ? prop : item))
         : [...current, prop];
     });

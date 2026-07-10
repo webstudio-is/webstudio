@@ -449,7 +449,7 @@ const formatDate = (
 
 type TimeDateTime = ComponentProps<"time">["dateTime"];
 
-type TimeProps = {
+type TimeProps = Omit<ComponentProps<"time">, "dateTime"> & {
   datetime?: TimeDateTime;
   language?: Language;
   country?: Country;

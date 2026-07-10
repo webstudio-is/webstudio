@@ -15,6 +15,13 @@ export const printPerfSummary = () => {
   for (const { phase, duration } of metrics) {
     console.info(`[e2e:perf:summary] phase="${phase}" duration=${duration}ms`);
   }
+  console.info("[e2e:perf:slowest] begin");
+  for (const { phase, duration } of [...metrics]
+    .sort((left, right) => right.duration - left.duration)
+    .slice(0, 30)) {
+    console.info(`[e2e:perf:slowest] phase="${phase}" duration=${duration}ms`);
+  }
+  console.info("[e2e:perf:slowest] end");
   console.info("[e2e:perf:summary] end");
 };
 

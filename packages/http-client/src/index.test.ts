@@ -12,7 +12,6 @@ import {
 } from "@webstudio-is/protocol/fixtures";
 import {
   applyBuildPatch,
-  appendInstance,
   attachDesignToken,
   bindProps,
   cloneInstance,
@@ -50,10 +49,13 @@ import {
   getPage,
   getPageByPath,
   getBuildPatchSummary,
+  getMarketplaceProduct,
   getProjectPermissions,
   getProjectSettings,
   getStyleDeclarations,
   inspectInstance,
+  insertComponent,
+  insertFragment,
   importProjectBundle,
   importProjectBundleWithAssets,
   listAssets,
@@ -210,6 +212,11 @@ test("formats api compatibility update messages", () => {
 
 test("extracts api error codes", () => {
   expect(getApiErrorCode({ data: { code: "CONFLICT" } })).toBe("CONFLICT");
+  expect(
+    getApiErrorCode({
+      data: { code: "NOT_FOUND", webstudioCode: "PROJECT_NOT_PUBLISHED" },
+    })
+  ).toBe("PROJECT_NOT_PUBLISHED");
   expect(
     getApiErrorCode({ data: { code: "SOME_PRIVATE_CODE" } })
   ).toBeUndefined();
@@ -419,6 +426,7 @@ test("wraps project api trpc calls in named functions", async () => {
       values: { title: "Pricing" },
     });
     await getProjectSettings(params);
+    await getMarketplaceProduct(params);
     await updateProjectSettings({
       ...params,
       meta: { siteName: "Acme", faviconAssetId: null },
@@ -443,7 +451,6 @@ test("wraps project api trpc calls in named functions", async () => {
     await listBreakpoints(params);
     await createBreakpoint({
       ...params,
-      id: "tablet",
       label: "Tablet",
       maxWidth: 991,
     });
@@ -542,10 +549,26 @@ test("wraps project api trpc calls in named functions", async () => {
       resourceId: "resource-id",
       force: true,
     });
-    await appendInstance({
+    await insertComponent({
       ...params,
       parentInstanceId: "parent-id",
-      children: [{ tag: "div", text: "Hello" }],
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
+    });
+    await insertFragment({
+      ...params,
+      parentInstanceId: "parent-id",
+      fragment: {
+        children: [],
+        instances: [],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        props: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
     });
     await moveInstance({
       ...params,
@@ -780,6 +803,7 @@ test("wraps project api trpc calls in named functions", async () => {
     expectBodyRequest("/trpc/api.pages.create", '"name":"Pricing"'),
     expectBodyRequest("/trpc/api.pages.update", '"title":"Pricing"'),
     expectRequest("/trpc/api.projectSettings.get"),
+    expectRequest("/trpc/api.projectSettings.getMarketplaceProduct"),
     expectBodyRequest("/trpc/api.projectSettings.update", '"siteName":"Acme"'),
     expectRequest("/trpc/api.redirects.list"),
     expectBodyRequest("/trpc/api.redirects.create", '"old":"/old"'),
@@ -819,8 +843,12 @@ test("wraps project api trpc calls in named functions", async () => {
     ),
     expectBodyRequest("/trpc/api.resources.delete", '"force":true'),
     expectBodyRequest(
-      "/trpc/api.instances.append",
-      '"parentInstanceId":"parent-id"'
+      "/trpc/api.instances.insertComponent",
+      '"component":"@webstudio-is/sdk-components-react-radix:Switch"'
+    ),
+    expectBodyRequest(
+      "/trpc/api.instances.insertFragment",
+      '"fragment":{"children":[]'
     ),
     expectBodyRequest("/trpc/api.instances.move", '"instanceId":"instance-id"'),
     expectBodyRequest(
@@ -1002,7 +1030,7 @@ test("uploads assets as binary requests", async () => {
   expect(fetch).toHaveBeenCalledOnce();
   const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
   expect(url.href).toBe(
-    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&assetId=asset-id&width=10&height=20&format=png"
+    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&width=10&height=20&format=png"
   );
   expect(init.method).toBe("POST");
   expect(init.body).toBe(file);
@@ -1183,11 +1211,17 @@ test("uploads project asset descriptors with local data readers", async () => {
       readAssetData: async () => new Uint8Array([1, 2, 3]),
     })
   ).resolves.toEqual({ uploaded: [uploadedAsset] });
+
+  const calls = fetch.mock.calls as unknown as Array<[URL]>;
+  for (const [request] of calls) {
+    const url = new URL(request.toString());
+    expect(url.searchParams.has("assetId")).toBe(false);
+  }
 });
 
 test("normalizes synced project bundles for local storage", () => {
   const bundle = createPublishedProjectBundleFixture({
-    bundleVersion: undefined,
+    bundleVersion: "bundle-old",
   });
 
   expect(toLocalProjectBundle(bundle)).toMatchObject({
@@ -1291,6 +1325,7 @@ test("imports project bundle with assets and retries missing asset uploads", asy
   const asset = createImageAssetFixture({ name: "image.png" });
   const bundle = createPublishedProjectBundleFixture({ assets: [asset] });
   const calls: string[] = [];
+  const uploadUrls: string[] = [];
   const uploadOffsets = new Map<string, number>();
   let importAttempts = 0;
   let uploadAttempts = 0;
@@ -1313,9 +1348,19 @@ test("imports project bundle with assets and retries missing asset uploads", asy
       url.pathname === "/rest/assets/image.png"
     ) {
       uploadAttempts += 1;
+      uploadUrls.push(url.href);
       await readRequestBody(request);
       response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify({ ok: true }));
+      response.end(
+        JSON.stringify({
+          uploadedAssets: [
+            createImageAssetFixture({
+              id: `server-generated-asset-${uploadAttempts}`,
+              name: "image.png",
+            }),
+          ],
+        })
+      );
       return;
     }
 
@@ -1409,6 +1454,9 @@ test("imports project bundle with assets and retries missing asset uploads", asy
   expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
   expect(importAttempts).toBe(2);
   expect(uploadAttempts).toBe(2);
+  expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
+    true
+  );
   expect(uploadOffsets.size).toBe(2);
   expect(importAttemptMessages).toEqual(["attempt", "attempt"]);
   expect(missingAssetMessages).toEqual(["image.png"]);

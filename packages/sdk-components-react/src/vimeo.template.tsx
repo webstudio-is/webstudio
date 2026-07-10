@@ -1,5 +1,6 @@
 import { PlayIcon, SpinnerIcon } from "@webstudio-is/icons/svg";
 import { type TemplateMeta, $, css, ws } from "@webstudio-is/template";
+import { iconEmbedStyle } from "./shared/icon-embed-style";
 
 export const meta: TemplateMeta = {
   category: "media",
@@ -39,7 +40,11 @@ export const meta: TemplateMeta = {
           margin-left: -35px;
         `}
       >
-        <$.HtmlEmbed ws:label="Spinner SVG" code={SpinnerIcon} />
+        <$.HtmlEmbed
+          ws:label="Spinner SVG"
+          ws:style={iconEmbedStyle}
+          code={SpinnerIcon}
+        />
       </$.VimeoSpinner>
       <$.VimeoPlayButton
         ws:style={css`
@@ -73,7 +78,11 @@ export const meta: TemplateMeta = {
           `}
           aria-hidden={true}
         >
-          <$.HtmlEmbed ws:label="Play SVG" code={PlayIcon} />
+          <$.HtmlEmbed
+            ws:label="Play SVG"
+            ws:style={iconEmbedStyle}
+            code={PlayIcon}
+          />
         </ws.element>
       </$.VimeoPlayButton>
     </$.Vimeo>

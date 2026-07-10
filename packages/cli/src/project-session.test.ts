@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state/adapters";
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
 import {
+  createLocalProjectBundleFromSessionSnapshot,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
 } from "./project-session";
@@ -122,6 +123,93 @@ describe("cli project session storage", () => {
       )
     ).resolves.toEqual({ revision: expect.any(String) });
   });
+});
+
+test("creates preview bundle from project session snapshot", () => {
+  const state = createBuilderStateFromSnapshot({
+    pages: {
+      homePageId: "home",
+      rootFolderId: "root",
+      meta: { siteName: "Session Site" },
+      pages: new Map([
+        [
+          "home",
+          {
+            id: "home",
+            name: "Home",
+            path: "",
+            title: "Home",
+            rootInstanceId: "body",
+            meta: {},
+          },
+        ],
+        [
+          "design-system",
+          {
+            id: "design-system",
+            name: "Design System",
+            path: "/design-system",
+            title: "Design System",
+            rootInstanceId: "design-system-body",
+            meta: {},
+          },
+        ],
+      ]),
+      folders: new Map([
+        [
+          "root",
+          {
+            id: "root",
+            name: "Root",
+            slug: "",
+            children: ["home", "design-system"],
+          },
+        ],
+      ]),
+    },
+    instances: [
+      [
+        "body",
+        { type: "instance", id: "body", component: "Body", children: [] },
+      ],
+      [
+        "design-system-body",
+        {
+          type: "instance",
+          id: "design-system-body",
+          component: "Body",
+          children: [],
+        },
+      ],
+    ],
+  });
+
+  const bundle = createLocalProjectBundleFromSessionSnapshot(
+    {
+      projectId: "project",
+      buildId: "build",
+      version: 7,
+      state,
+      freshness: createBuilderStateFreshness({ state, version: 7 }),
+      compatibilityVersion: "test",
+      compatibility: {
+        sessionVersion: "test",
+        runtimeContractVersion: "test-runtime",
+        projectSchemaVersion: "test-schema",
+      },
+    },
+    { origin: "https://assets.example.com" }
+  );
+
+  expect(bundle.origin).toBe("https://assets.example.com");
+  expect(bundle.projectTitle).toBe("Session Site");
+  expect(bundle.page.id).toBe("home");
+  expect(bundle.pages.map((page) => page.path)).toEqual(["", "/design-system"]);
+  expect(bundle.build.pages.pages).toEqual(bundle.pages);
+  expect(bundle.build.instances.map(([id]) => id)).toEqual([
+    "body",
+    "design-system-body",
+  ]);
 });
 
 describe("cli project session transport", () => {

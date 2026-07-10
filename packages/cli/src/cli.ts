@@ -1,5 +1,7 @@
-import { exit, argv } from "node:process";
+import { exit, argv, stdout } from "node:process";
 import { hideBin } from "yargs/helpers";
+import { listProjectSessionMcpTools } from "@webstudio-is/project-build/mcp";
+import { publicApiOperations } from "@webstudio-is/protocol";
 import { GLOBAL_CONFIG_FILE } from "./config";
 import { createFileIfNotExists } from "./fs-utils";
 import { link, linkOptions } from "./commands/link";
@@ -15,6 +17,7 @@ import {
   cliCommandGroupMetadata,
   cliCommandMetadata,
   getApiCommandOptions,
+  topLevelCliCommandMetadata,
   type CliCommandMetadata,
 } from "./commands/api-command-metadata";
 import { schema, schemaOptions } from "./commands/schema";
@@ -62,6 +65,104 @@ const registerApiCommand = (
   );
 };
 
+const topLevelCommandNames: ReadonlySet<string> = new Set(
+  topLevelCliCommandMetadata.map((command) => command.command)
+);
+
+const mcpOnlyToolNames = new Set(
+  listProjectSessionMcpTools(publicApiOperations)
+    .map((tool) => tool.name)
+    .filter((name) => topLevelCommandNames.has(name) === false)
+);
+
+export const getTopLevelMcpToolHint = (args: readonly string[]) => {
+  const tool = args.find(
+    (arg) =>
+      /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/i.test(arg) ||
+      mcpOnlyToolNames.has(arg)
+  );
+  if (tool === undefined) {
+    return;
+  }
+  return [
+    "",
+    `It looks like "${tool}" is an MCP tool.`,
+    `Use the shell shortcut when unambiguous: webstudio ${tool}`,
+    `Or use the explicit MCP form: webstudio mcp single-op-call ${tool}`,
+    `Inside the Webstudio monorepo use: node packages/cli/local.js ${tool}`,
+    `Explicit monorepo form: node packages/cli/local.js mcp single-op-call ${tool}`,
+  ].join("\n");
+};
+
+const normalizeMcpShortcutArgs = (tool: string, args: readonly string[]) => {
+  const optionIndex = args.findIndex((arg) => arg.startsWith("-"));
+  const inputArgs =
+    optionIndex === -1 ? args : args.slice(0, Math.max(0, optionIndex));
+  const optionArgs = optionIndex === -1 ? [] : args.slice(optionIndex);
+  if (
+    tool === "workflow.next" &&
+    inputArgs.length === 1 &&
+    inputArgs[0]?.startsWith("{") === false &&
+    inputArgs[0]?.startsWith("[") === false
+  ) {
+    const goal = inputArgs[0].replace(/^goal-/, "");
+    return [JSON.stringify({ goal }), ...optionArgs];
+  }
+  if (inputArgs.length <= 1 || inputArgs.length % 2 !== 0) {
+    return args;
+  }
+  const input: Record<string, string> = {};
+  for (let index = 0; index < inputArgs.length; index += 2) {
+    const key = inputArgs[index];
+    const value = inputArgs[index + 1];
+    if (
+      key === undefined ||
+      value === undefined ||
+      key.startsWith("-") ||
+      key.startsWith("{") ||
+      key.startsWith("[")
+    ) {
+      return args;
+    }
+    input[key] = value;
+  }
+  return [JSON.stringify(input), ...optionArgs];
+};
+
+export const getTopLevelMcpToolForwardArgs = (args: readonly string[]) => {
+  const [tool, ...rest] = args;
+  if (tool === undefined) {
+    return;
+  }
+  if (
+    /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/i.test(tool) ||
+    mcpOnlyToolNames.has(tool)
+  ) {
+    return [
+      "mcp",
+      "single-op-call",
+      tool,
+      ...normalizeMcpShortcutArgs(tool, rest),
+    ];
+  }
+};
+
+export const rootCliEpilogue = [
+  "Project editing / LLM quick start:",
+  "  webstudio man project-editing",
+  "  webstudio meta.index",
+  '  webstudio meta.get_more_tools \'{"tools":["insert-fragment"]}\'',
+  '  webstudio insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<$.Box ws:style={css`padding: 32px;`}><$.Heading>Title</$.Heading></$.Box>"}\' --dry-run',
+  "",
+  "Equivalent explicit MCP form:",
+  "  webstudio mcp single-op-call meta.index",
+  '  webstudio mcp single-op-call meta.get_more_tools \'{"tools":["insert-fragment"]}\'',
+  '  webstudio mcp single-op-call insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<$.Box ws:style={css`padding: 32px;`}><$.Heading>Title</$.Heading></$.Box>"}\' --dry-run',
+  "",
+  "Inside the Webstudio monorepo, use: node packages/cli/local.js ...",
+  "MCP tool shortcuts are forwarded to mcp single-op-call for shell-driven agents.",
+].join("\n");
+
 export const registerCommands = (cmd: CommonYargsArgv) => {
   cmd.command(
     ["build"],
@@ -84,13 +185,8 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   cmd.command(
     ["preview"],
-    "Run the generated project dev server for visual verification",
-    (yargs: CommonYargsArgv) => {
-      return previewOptions(yargs).demandOption(
-        "template",
-        "Please specify a template to use for the preview"
-      );
-    },
+    "Build and run the generated project production preview server for visual verification",
+    previewOptions,
     preview
   );
   cmd.command(
@@ -131,25 +227,44 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   cmd.command(
     ["mcp"],
-    "Run an MCP server over stdio for the configured project",
+    "Run an MCP server over stdio, or call MCP tools from the shell",
     mcpOptions,
     mcp
   );
   cmd.command(["$0", "init"], "Setup the project", initOptions, initFlow);
 };
 
+export const handleOutputStreamError = (
+  error: NodeJS.ErrnoException,
+  exitProcess: typeof exit = exit
+) => {
+  if (error.code === "EPIPE") {
+    exitProcess(0);
+    return;
+  }
+  throw error;
+};
+
+export const installOutputStreamErrorHandler = () => {
+  stdout.on("error", handleOutputStreamError);
+};
+
 export const main = async () => {
+  installOutputStreamErrorHandler();
   try {
     await createFileIfNotExists(GLOBAL_CONFIG_FILE, "{}");
 
-    const cmd: CommonYargsArgv = makeCLI(hideBin(argv))
+    const rawArgs = hideBin(argv);
+    const forwardedArgs = getTopLevelMcpToolForwardArgs(rawArgs);
+    const cmd: CommonYargsArgv = makeCLI(forwardedArgs ?? rawArgs)
       .strict()
       .fail(function (msg, err, yargs) {
         if (err) {
           throw err; // preserve stack
         }
 
-        console.error(msg);
+        const hint = getTopLevelMcpToolHint(hideBin(argv));
+        console.error(`${msg}${hint ?? ""}`);
 
         console.error(yargs.help());
 
@@ -168,7 +283,8 @@ export const main = async () => {
       .scriptName("webstudio")
       .usage(
         `Webstudio CLI (${packageJson.version}) sets up, syncs, builds, publishes, and exposes MCP automation for the configured project.`
-      );
+      )
+      .epilogue(rootCliEpilogue);
 
     cmd.version(packageJson.version).alias("v", "version");
     registerCommands(cmd);

@@ -155,6 +155,42 @@ const expectConnection = (extra = {}) =>
     ...extra,
   });
 
+const connectionFieldNames = new Set([
+  "origin",
+  "authToken",
+  "projectId",
+  "headers",
+]);
+
+const cliAdapterInputFieldsByCommand: Partial<
+  Record<Parameters<typeof apiCommand>[0]["command"], readonly string[]>
+> = {
+  "upload-asset": ["readAssetData"],
+  "upload-assets": ["readAssetData"],
+};
+
+const expectCallUsesDocumentedInputFields = (
+  call: ReturnType<typeof vi.fn>,
+  command: Parameters<typeof apiCommand>[0]["command"]
+) => {
+  const operation = getPublicApiOperation(command);
+  const actual = call.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+  const inputFields = Object.keys(actual).filter(
+    (key) => connectionFieldNames.has(key) === false
+  );
+  const allowedFields = new Set([
+    ...operation.inputFields,
+    ...(cliAdapterInputFieldsByCommand[command] ?? []),
+  ]);
+  const unknownFields = inputFields.filter(
+    (field) => !allowedFields.has(field)
+  );
+  expect(unknownFields).toEqual([]);
+  for (const field of operation.requiredInputFields) {
+    expect(inputFields).toContain(field);
+  }
+};
+
 const expectCommandCall = async ({
   options,
   call,
@@ -174,6 +210,7 @@ const expectCommandCall = async ({
   await apiCommand({ ...options, json: true }, dependencies);
 
   expect(call).toHaveBeenCalledWith(expectConnection(connection));
+  expectCallUsesDocumentedInputFields(call, options.command);
   expectJsonOutput(options.command);
 };
 
@@ -238,6 +275,27 @@ test("requires json output flag", async () => {
   expect(console.error).toHaveBeenCalledWith(
     "whoami currently requires --json."
   );
+});
+
+test("explains mcp-only editing commands should use shortcut or single-op-call", async () => {
+  mockConfig();
+
+  await expect(
+    apiCommand(
+      {
+        command: "insert-fragment",
+        json: true,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expectJsonErrorOutput({
+    command: "insert-fragment",
+    code: "API_COMMAND_FAILED",
+    message:
+      "insert-fragment is an MCP project-editing tool, not a high-level CLI API command. Use the MCP shortcut, for example: webstudio insert-fragment '{...}', or the explicit form: webstudio mcp single-op-call insert-fragment '{...}'.",
+  });
 });
 
 test("documents every executable api command", () => {
@@ -394,7 +452,6 @@ test("passes dry-run to local-capable mutations", async () => {
     "folders.create",
     {
       projectId: "project-1",
-      folderId: undefined,
       name: "Draft",
       slug: "draft",
       parentFolderId: undefined,
@@ -484,6 +541,41 @@ test("maps api not found errors to not found json", async () => {
   });
 });
 
+test("explains missing Builder API access instead of leaking token ownership errors", async () => {
+  mockConfig();
+  createCliProjectSession.mockImplementationOnce(() => ({
+    initialize: vi.fn(async () => {
+      throw Object.assign(
+        new Error("Project owner can't be found for token token-1"),
+        { data: { code: "INTERNAL_SERVER_ERROR" } }
+      );
+    }),
+    refresh: vi.fn(),
+    executeServerOperation: vi.fn(),
+    read: vi.fn(),
+    mutate: vi.fn(),
+    snapshot: undefined,
+    markStale: vi.fn(),
+  }));
+
+  await expect(
+    apiCommand(
+      {
+        command: "list-pages",
+        json: true,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expectJsonErrorOutput({
+    command: "list-pages",
+    code: "UNAUTHORIZED",
+    message:
+      "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`.",
+  });
+});
+
 test("splits comma-separated include values", async () => {
   mockConfig();
 
@@ -514,7 +606,6 @@ test("creates folder with settings", async () => {
     },
     call: apiCalls.createFolder,
     connection: {
-      folderId: undefined,
       name: "Blog",
       slug: "blog",
       parentFolderId: "root-folder",
@@ -555,7 +646,6 @@ test("creates page with settings", async () => {
     },
     call: apiCalls.createPage,
     connection: {
-      pageId: undefined,
       name: "Pricing",
       path: "/pricing",
       title: "Pricing",
@@ -628,6 +718,36 @@ test("updates project settings from input file", async () => {
   });
 });
 
+test("gets marketplace product", async () => {
+  await expectCommandCall({
+    options: { command: "get-marketplace-product" },
+    call: apiCalls.getMarketplaceProduct,
+    connection: {},
+  });
+});
+
+test("updates marketplace product from input file", async () => {
+  const input = {
+    category: "pageTemplates",
+    name: "Acme Template",
+    thumbnailAssetId: "asset-id",
+    author: "Acme Studio",
+    email: "hello@example.com",
+    website: "https://example.com",
+    issues: "",
+    description: "Reusable template project for Acme landing pages.",
+  };
+  await expectCommandCall({
+    options: {
+      command: "update-marketplace-product",
+      input: "marketplace-product.json",
+    },
+    inputJson: input,
+    call: apiCalls.updateMarketplaceProduct,
+    connection: input,
+  });
+});
+
 test("creates redirect", async () => {
   await expectCommandCall({
     options: {
@@ -689,17 +809,27 @@ test("deletes redirect", async () => {
   });
 });
 
+test("sets redirects from input file", async () => {
+  const input = {
+    redirects: [{ old: "/old", new: "/new", status: "301" }],
+  };
+  await expectCommandCall({
+    options: { command: "set-redirects", input: "redirects.json" },
+    inputJson: input,
+    call: apiCalls.setRedirects,
+    connection: input,
+  });
+});
+
 test("creates breakpoint", async () => {
   await expectCommandCall({
     options: {
       command: "create-breakpoint",
-      breakpoint: "tablet",
       label: "Tablet",
       maxWidth: 991,
     },
     call: apiCalls.createBreakpoint,
     connection: {
-      id: "tablet",
       label: "Tablet",
       minWidth: undefined,
       maxWidth: 991,
@@ -820,6 +950,86 @@ test("lists page templates", async () => {
   });
 });
 
+test("creates page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-page-template",
+      name: "Landing Template",
+      title: '"Landing"',
+      description: '"Reusable landing layout"',
+    },
+    call: apiCalls.createPageTemplate,
+    connection: {
+      name: "Landing Template",
+      title: '"Landing"',
+      meta: { description: '"Reusable landing layout"' },
+    },
+  });
+});
+
+test("updates page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-page-template",
+      template: "template-1",
+      name: "Article Template",
+      description: '"Reusable article layout"',
+    },
+    call: apiCalls.updatePageTemplate,
+    connection: {
+      templateId: "template-1",
+      values: {
+        name: "Article Template",
+        title: undefined,
+        meta: { description: '"Reusable article layout"' },
+      },
+    },
+  });
+});
+
+test("deletes page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-page-template",
+      template: "template-1",
+      confirm: true,
+    },
+    call: apiCalls.deletePageTemplate,
+    connection: { templateId: "template-1" },
+  });
+});
+
+test("duplicates page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "duplicate-page-template",
+      template: "template-1",
+    },
+    call: apiCalls.duplicatePageTemplate,
+    connection: {
+      projectId: "project-1",
+      templateId: "template-1",
+    },
+  });
+});
+
+test("reorders page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "reorder-page-template",
+      sourceTemplate: "template-1",
+      targetTemplate: "template-2",
+      position: "before",
+    },
+    call: apiCalls.reorderPageTemplate,
+    connection: {
+      sourceTemplateId: "template-1",
+      targetTemplateId: "template-2",
+      position: "before",
+    },
+  });
+});
+
 test("creates page from template", async () => {
   await expectCommandCall({
     options: {
@@ -831,6 +1041,7 @@ test("creates page from template", async () => {
     },
     call: apiCalls.createPageFromTemplate,
     connection: {
+      projectId: "project-1",
       templateId: "template-1",
       name: "Landing",
       path: "/landing",
@@ -901,21 +1112,21 @@ test("inspects instance details", async () => {
   });
 });
 
-test("appends instances from input file", async () => {
+test("inserts component with registered template", async () => {
   await expectCommandCall({
     options: {
-      command: "append-instance",
+      command: "insert-component",
       parent: "parent-id",
-      input: "children.json",
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
       mode: "prepend",
+      insertIndex: 1,
     },
-    call: apiCalls.appendInstance,
-    inputJson: [{ tag: "div", label: "Hero", text: "Hello" }],
+    call: apiCalls.insertComponent,
     connection: {
       parentInstanceId: "parent-id",
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
       mode: "prepend",
-      insertIndex: undefined,
-      children: [{ tag: "div", label: "Hero", text: "Hello" }],
+      insertIndex: 1,
     },
   });
 });
@@ -1095,7 +1306,6 @@ test("creates variable with parsed value", async () => {
     },
     call: apiCalls.createVariable,
     connection: {
-      dataSourceId: undefined,
       scopeInstanceId: "body-id",
       name: "items",
       value: { type: "string[]", value: ["a", "b"] },
@@ -1152,7 +1362,6 @@ test("creates resource from options and exposes data source", async () => {
     },
     call: apiCalls.createResource,
     connection: {
-      resourceId: undefined,
       resource: {
         name: "Posts",
         method: "get",
@@ -1160,7 +1369,6 @@ test("creates resource from options and exposes data source", async () => {
         body: undefined,
         headers: [],
       },
-      dataSourceId: undefined,
       scopeInstanceId: "body-id",
       dataSourceName: "posts",
     },

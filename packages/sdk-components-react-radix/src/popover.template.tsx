@@ -6,7 +6,7 @@ import {
   type TemplateMeta,
 } from "@webstudio-is/template";
 import { radix } from "./shared/proxy";
-import { getButtonStyle } from "./shared/styles";
+import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
 import {
   borderRadius,
   borderWidth,
@@ -85,7 +85,11 @@ export const meta: TemplateMeta = {
             }
           `}
         >
-          <$.HtmlEmbed ws:label="Close Icon" code={LargeXIcon} />
+          <$.HtmlEmbed
+            ws:label="Close Icon"
+            ws:style={iconEmbedStyle}
+            code={LargeXIcon}
+          />
         </radix.PopoverClose>
       </radix.PopoverContent>
     </radix.Popover>

@@ -14,24 +14,23 @@ import {
   InputField,
   toast,
 } from "@webstudio-is/design-system";
-import type { Instance, StyleSource } from "@webstudio-is/sdk";
+import type { StyleSource } from "@webstudio-is/sdk";
 import type { RenameStyleSourceError } from "@webstudio-is/project-build/runtime/styles";
 import {
   $selectedStyleSources,
   $selectedStyleState,
 } from "~/shared/nano-states";
-import { $styleSources } from "~/shared/sync/data-stores";
-import { $styleSourceSelections, $styles } from "~/shared/sync/data-stores";
 import {
-  deleteStyleSourceMutable,
-  deleteStyleSourcesMutable,
+  $styleSourceSelections,
+  $styleSources,
+} from "~/shared/sync/data-stores";
+import {
   findUnusedTokens,
-  renameStyleSourceMutable,
-  toggleStyleSourceLockMutable,
-  validateAndRenameStyleSource,
+  getStyleSourceUsages,
+  validateStyleSourceName,
 } from "@webstudio-is/project-build/runtime/styles";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/nano-states";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const $isDeleteUnusedTokensDialogOpen = atom(false);
 
@@ -41,20 +40,8 @@ export const openDeleteUnusedTokensDialog = () => {
 
 export const $styleSourceUsages = computed(
   $styleSourceSelections,
-  (styleSourceSelections) => {
-    const styleSourceUsages = new Map<StyleSource["id"], Set<Instance["id"]>>();
-    for (const { instanceId, values } of styleSourceSelections.values()) {
-      for (const styleSourceId of values) {
-        let usages = styleSourceUsages.get(styleSourceId);
-        if (usages === undefined) {
-          usages = new Set();
-          styleSourceUsages.set(styleSourceId, usages);
-        }
-        usages.add(instanceId);
-      }
-    }
-    return styleSourceUsages;
-  }
+  (styleSourceSelections) =>
+    getStyleSourceUsages(styleSourceSelections.values())
 );
 
 export const deselectMatchingStyleSource = (
@@ -73,17 +60,10 @@ export const deselectMatchingStyleSource = (
 };
 
 export const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
-  serverSyncStore.createTransaction(
-    [$styleSources, $styleSourceSelections, $styles],
-    (styleSources, styleSourceSelections, styles) => {
-      deleteStyleSourceMutable({
-        styleSourceId,
-        styleSources,
-        styleSourceSelections,
-        styles,
-      });
-    }
-  );
+  executeRuntimeMutation({
+    id: "styleSources.delete",
+    input: { styleSourceIds: [styleSourceId] },
+  });
   // reset selected style source if necessary
   deselectMatchingStyleSource(styleSourceId);
 };
@@ -97,17 +77,10 @@ export const deleteUnusedTokens = () => {
     return 0;
   }
 
-  serverSyncStore.createTransaction(
-    [$styleSources, $styleSourceSelections, $styles],
-    (styleSources, styleSourceSelections, styles) => {
-      deleteStyleSourcesMutable({
-        styleSourceIds: unusedTokenIds,
-        styleSources,
-        styleSourceSelections,
-        styles,
-      });
-    }
-  );
+  executeRuntimeMutation({
+    id: "styleSources.delete",
+    input: { styleSourceIds: unusedTokenIds },
+  });
 
   return unusedTokenIds.length;
 };
@@ -117,7 +90,7 @@ export const renameStyleSource = (
   name: string
 ): RenameStyleSourceError | undefined => {
   const styleSources = $styleSources.get();
-  const validationError = validateAndRenameStyleSource({
+  const validationError = validateStyleSourceName({
     id,
     name,
     styleSources,
@@ -125,8 +98,12 @@ export const renameStyleSource = (
   if (validationError) {
     return validationError;
   }
-  serverSyncStore.createTransaction([$styleSources], (styleSources) => {
-    renameStyleSourceMutable({ id, name, styleSources });
+  executeRuntimeMutation({
+    id: "styleSources.rename",
+    input: {
+      styleSourceId: id,
+      name,
+    },
   });
 };
 
@@ -134,8 +111,12 @@ export const setStyleSourceLocked = (
   id: StyleSource["id"],
   locked: boolean
 ) => {
-  serverSyncStore.createTransaction([$styleSources], (styleSources) => {
-    toggleStyleSourceLockMutable({ id, locked, styleSources });
+  executeRuntimeMutation({
+    id: "styleSources.setLock",
+    input: {
+      styleSourceId: id,
+      locked,
+    },
   });
 };
 

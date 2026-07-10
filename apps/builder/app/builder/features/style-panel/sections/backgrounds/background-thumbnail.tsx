@@ -15,7 +15,7 @@ import {
   getComputedRepeatedItem,
   getRepeatedStyleItem,
 } from "../../shared/repeated-style";
-import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { formatAssetName } from "@webstudio-is/project-build/runtime/assets";
 import { parseAnyGradient, isSolidLinearGradient } from "./gradient-utils";
 
 export const repeatedProperties = [

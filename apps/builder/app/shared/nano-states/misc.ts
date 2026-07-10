@@ -25,7 +25,7 @@ import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { type InstanceSelector } from "../instance-utils/tree";
+import { type InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
 import { $selectedInstance, $selectedInstanceSelector } from "./instances";
 import { getPermissions } from "../permissions";
@@ -126,6 +126,8 @@ export type UploadingFileData = Simplify<
   {
     // common props
     assetId: string;
+    fingerprintId: string;
+    uploadName: string;
     type: AssetType;
     objectURL: string;
   } & (

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { javascript } from "@codemirror/lang-javascript";
@@ -33,7 +32,7 @@ import {
   Label,
   Link,
   PanelBanner,
-  ProBadge,
+  ProChip,
   ScrollArea,
   Select,
   Switch,
@@ -44,11 +43,9 @@ import {
 } from "@webstudio-is/design-system";
 import {
   type DataSource,
-  transpileExpression,
   SYSTEM_VARIABLE_ID,
   resourceRequest,
 } from "@webstudio-is/sdk";
-import { hasExpressionDiagnostics } from "~/shared/expression-validation";
 import {
   ExpressionEditor,
   formatValue,
@@ -70,15 +67,19 @@ import {
   EditorDialogControl,
   foldGutterExtension,
 } from "~/shared/code-editor-base";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
+  createDataVariableValueFromInput,
+  createResourceValueFromFormData,
   findUnsetVariableNames,
-  rebindTreeVariablesMutable,
+  parseDataVariableJsonExpression,
+  validateDataVariableJsonValue,
+  validateDataVariableNumberValue,
+  validateDataVariableStringArrayValue,
 } from "@webstudio-is/project-build/runtime/data";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
   GraphqlResourceForm,
-  parseResource,
   ResourceForm,
   SystemResourceForm,
   useResourceScope,
@@ -178,6 +179,7 @@ type VariableType =
   | "string"
   | "number"
   | "boolean"
+  | "string[]"
   | "json"
   | "resource"
   | "graphql-resource"
@@ -213,6 +215,11 @@ const TypeField = ({
       description: "A boolean is a true/false switch.",
     },
     {
+      value: "string[]",
+      label: "String Array",
+      description: "A list of text values.",
+    },
+    {
       value: "json",
       label: "JSON",
       description: "Any JSON value",
@@ -222,7 +229,7 @@ const TypeField = ({
       label: (
         <Flex direction="row" gap="2" align="center">
           Resource
-          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          {allowDynamicData === false && <ProChip>Pro</ProChip>}
         </Flex>
       ),
       description:
@@ -233,7 +240,7 @@ const TypeField = ({
       label: (
         <Flex direction="row" gap="2" align="center">
           GraphQL
-          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          {allowDynamicData === false && <ProChip>Pro</ProChip>}
         </Flex>
       ),
       description:
@@ -244,7 +251,7 @@ const TypeField = ({
       label: (
         <Flex direction="row" gap="2" align="center">
           System Resource
-          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          {allowDynamicData === false && <ProChip>Pro</ProChip>}
         </Flex>
       ),
       description: "A System Resource is a configuration for Webstudio data.",
@@ -290,12 +297,12 @@ const ParameterForm = forwardRef<
       }
       const scopeInstanceId = variable.scopeInstanceId;
       const name = z.string().parse(formData.get("name"));
-      updateWebstudioData((data) => {
-        data.dataSources.set(variable.id, { ...variable, name });
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
-        });
+      executeRuntimeMutation({
+        id: "variables.update",
+        input: {
+          dataSourceId: variable.id,
+          values: { scopeInstanceId, name },
+        },
       });
     },
   }));
@@ -305,7 +312,7 @@ ParameterForm.displayName = "ParameterForm";
 
 type ValueVariableType = Extract<
   VariableType,
-  "string" | "number" | "boolean" | "json"
+  "string" | "number" | "boolean" | "string[]" | "json"
 >;
 
 const saveVariable = (
@@ -313,7 +320,6 @@ const saveVariable = (
   type: ValueVariableType,
   formData: FormData
 ) => {
-  const dataSourceId = variable?.id ?? nanoid();
   // preserve existing instance scope when edit
   const scopeInstanceId =
     variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
@@ -322,36 +328,29 @@ const saveVariable = (
   }
   const name = z.string().parse(formData.get("name"));
   const value = z.string().nullable().parse(formData.get("value"));
-  let variableValue: Extract<DataSource, { type: "variable" }>["value"];
-  if (type === "string") {
-    variableValue = { type: "string", value: value ?? "" };
-  } else if (type === "number") {
-    variableValue = { type: "number", value: Number(value || 0) };
-  } else if (type === "boolean") {
-    variableValue = { type: "boolean", value: value != null };
+  const variableValue = createDataVariableValueFromInput({ type, value });
+  if (variable === undefined) {
+    executeRuntimeMutation({
+      id: "variables.create",
+      input: {
+        scopeInstanceId,
+        name,
+        value: variableValue,
+      },
+    });
   } else {
-    variableValue = {
-      type: "json",
-      value: value ? parseJsonValue(value) : undefined,
-    };
+    executeRuntimeMutation({
+      id: "variables.update",
+      input: {
+        dataSourceId: variable.id,
+        values: {
+          scopeInstanceId,
+          name,
+          value: variableValue,
+        },
+      },
+    });
   }
-  updateWebstudioData((data) => {
-    // cleanup resource when value variable is set
-    if (variable?.type === "resource") {
-      data.resources.delete(variable.resourceId);
-    }
-    data.dataSources.set(dataSourceId, {
-      id: dataSourceId,
-      scopeInstanceId,
-      name,
-      type: "variable",
-      value: variableValue,
-    });
-    rebindTreeVariablesMutable({
-      startingInstanceId: scopeInstanceId,
-      ...data,
-    });
-  });
 };
 
 const useValuePanelRef = ({
@@ -413,14 +412,6 @@ const StringForm = forwardRef<
 });
 StringForm.displayName = "StringForm";
 
-const validateNumberValue = (value: string | number) => {
-  if (typeof value === "string" && value.length === 0) {
-    return "Value expects a number";
-  }
-  const number = Number(value);
-  return Number.isNaN(number) ? "Invalid number" : "";
-};
-
 const NumberForm = forwardRef<
   undefined | PanelApi,
   {
@@ -436,7 +427,7 @@ const NumberForm = forwardRef<
   const [valueError, setValueError] = useState("");
   const valueRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    valueRef.current?.setCustomValidity(validateNumberValue(value));
+    valueRef.current?.setCustomValidity(validateDataVariableNumberValue(value));
     setValueError("");
   }, [value]);
   useValuePanelRef({ ref, variable, type: "number" });
@@ -494,21 +485,6 @@ const BooleanForm = forwardRef<
 });
 BooleanForm.displayName = "BooleanForm";
 
-const validateJsonValue = (expression: string) => {
-  // prevent saving with any message including unset variable
-  return hasExpressionDiagnostics({ expression }) ? "error" : "";
-};
-
-const parseJsonValue = (expression: string) => {
-  try {
-    expression = transpileExpression({ expression, executable: true });
-    // wrap with parentheses to treat {} as object instead of block
-    return eval(`(${expression})`);
-  } catch {
-    // empty block
-  }
-};
-
 const JsonForm = forwardRef<
   undefined | PanelApi,
   {
@@ -521,7 +497,7 @@ const JsonForm = forwardRef<
   const [valueError, setValueError] = useState("");
   const valueRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    valueRef.current?.setCustomValidity(validateJsonValue(value));
+    valueRef.current?.setCustomValidity(validateDataVariableJsonValue(value));
     setValueError("");
   }, [value]);
   useValuePanelRef({ ref, variable, type: "json" });
@@ -551,6 +527,51 @@ const JsonForm = forwardRef<
   );
 });
 JsonForm.displayName = "JsonForm";
+
+const StringArrayForm = forwardRef<
+  undefined | PanelApi,
+  {
+    variable?: DataSource;
+    value: unknown;
+    onChange: (value: unknown) => void;
+  }
+>(({ variable, value: unknownValue, onChange }, ref) => {
+  const value = typeof unknownValue === "string" ? unknownValue : "[]";
+  const [valueError, setValueError] = useState("");
+  const valueRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    valueRef.current?.setCustomValidity(
+      validateDataVariableStringArrayValue(value)
+    );
+    setValueError("");
+  }, [value]);
+  useValuePanelRef({ ref, variable, type: "string[]" });
+  return (
+    <>
+      <input
+        ref={valueRef}
+        style={{ display: "none" }}
+        name="value"
+        data-color={valueError ? "error" : undefined}
+        value={value}
+        onChange={() => {}}
+        onInvalid={(event) =>
+          setValueError(event.currentTarget.validationMessage)
+        }
+      />
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Label>Value</Label>
+        <ExpressionEditor
+          color={valueError ? "error" : undefined}
+          value={value}
+          onChange={onChange}
+          onChangeComplete={() => valueRef.current?.checkValidity()}
+        />
+      </Flex>
+    </>
+  );
+});
+StringArrayForm.displayName = "StringArrayForm";
 
 const VariablePanelForm = forwardRef<
   undefined | PanelApi,
@@ -637,6 +658,14 @@ const VariablePanelForm = forwardRef<
               onChange={onValueChange}
             />
           )}
+          {variableType === "string[]" && (
+            <StringArrayForm
+              ref={ref}
+              variable={variable}
+              value={value}
+              onChange={onValueChange}
+            />
+          )}
           {variableType === "resource" && (
             <ResourceForm ref={ref} variable={variable} />
           )}
@@ -684,7 +713,7 @@ const VariablePreview = ({
   if (variableType === "string" || variableType === "boolean") {
     computedValue = variableValue;
   } else if (variableType === "json") {
-    computedValue = parseJsonValue(String(variableValue));
+    computedValue = parseDataVariableJsonExpression(String(variableValue));
   } else if (variableType === "number") {
     computedValue = Number(variableValue);
     if (Number.isNaN(computedValue)) {
@@ -764,7 +793,10 @@ const VariablePopoverContent = ({
   const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
   const [value, setValue] = useState<unknown>(() => {
     if (variable?.type === "variable") {
-      if (variable.value.type === "json") {
+      if (
+        variable.value.type === "json" ||
+        variable.value.type === "string[]"
+      ) {
         return formatValue(variable.value.value);
       }
       return variable.value.value;
@@ -788,7 +820,12 @@ const VariablePopoverContent = ({
     }
     if (variable?.type === "variable") {
       const type = variable.value.type;
-      if (type === "string" || type === "number" || type === "boolean") {
+      if (
+        type === "string" ||
+        type === "number" ||
+        type === "boolean" ||
+        type === "string[]"
+      ) {
         return type;
       }
       return "json";
@@ -812,6 +849,9 @@ const VariablePopoverContent = ({
         // empty string gives an error
         return prev || "{}";
       }
+      if (variableType === "string[]") {
+        return "[]";
+      }
       return prev;
     });
   };
@@ -820,7 +860,7 @@ const VariablePopoverContent = ({
 
   const reloadData = () => {
     const formData = new FormData(formRef.current ?? undefined);
-    const resource = parseResource({
+    const resource = createResourceValueFromFormData({
       id: variable?.id ?? "new",
       formData,
     });
@@ -834,7 +874,7 @@ const VariablePopoverContent = ({
 
   const copyAsCurl = () => {
     const formData = new FormData(formRef.current ?? undefined);
-    const resource = parseResource({
+    const resource = createResourceValueFromFormData({
       id: variable?.id ?? "new",
       formData,
     });

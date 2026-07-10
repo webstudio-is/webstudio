@@ -11,15 +11,15 @@ import {
 
 const Component = () => {
   return (
-    <Box className={"w-box"}>
-      <Collapsible className={"w-collapsible"}>
+    <Box className={`w-box`}>
+      <Collapsible className={`w-collapsible`}>
         <CollapsibleTrigger>
-          <Button className={"w-button w-button-1"}>
+          <Button className={`w-button w-button-1`}>
             {"Click to toggle content"}
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className={"w-collapsible-content"}>
-          <Text className={"w-text"}>{"Collapsible Content"}</Text>
+        <CollapsibleContent className={`w-collapsible-content`}>
+          <Text className={`w-text`}>{"Collapsible Content"}</Text>
         </CollapsibleContent>
       </Collapsible>
     </Box>
@@ -27,7 +27,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Collapsible",
+  title: "Components/Collapsible",
 };
 
 const Story = {
@@ -36,96 +36,15 @@ const Story = {
       <>
         <style>
           {`
-@media all {
-  :where(div.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+@layer presets {
+  div.w-box {
+    box-sizing: border-box
   }
-  :where(address.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(article.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(aside.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(figure.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(footer.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(header.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(main.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(nav.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(section.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(button.w-button) {
+  button.w-button {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
@@ -133,30 +52,15 @@ const Story = {
     text-transform: none;
     margin: 0
   }
-  :where(div.w-text) {
+  div.w-text {
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
     min-height: 1em
   }
-  :where(div.w-collapsible) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  div.w-collapsible {
+    box-sizing: border-box
   }
-  :where(div.w-collapsible-content) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  div.w-collapsible-content {
+    box-sizing: border-box
   }
 }
 @media all {
@@ -164,7 +68,7 @@ const Story = {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 1);
+    background-color: rgb(255 255 255 / 1);
     border-top-left-radius: 0.375rem;
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
@@ -177,7 +81,7 @@ const Story = {
     padding-right: 1rem;
     padding-bottom: 0.5rem;
     padding-left: 1rem;
-    border: 1px solid rgba(226, 232, 240, 1)
+    border: 1px solid rgb(226 232 240 / 1)
   }
   .w-button-1:disabled {
     pointer-events: none;
@@ -185,12 +89,12 @@ const Story = {
   }
   .w-button-1:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 1), 0 0 0 calc(2px + 2px) rgb(148,163,184);
     outline: 2px solid transparent
   }
   .w-button-1:hover {
-    background-color: rgba(241, 245, 249, 1);
-    color: rgba(15, 23, 42, 1)
+    background-color: rgb(241 245 249 / 1);
+    color: rgb(15 23 42 / 1)
   }
 }
       `}

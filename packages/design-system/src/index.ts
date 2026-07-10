@@ -48,6 +48,8 @@ export * from "./components/nested-icon-label";
 export * from "./components/text-area";
 export * from "./components/radio";
 export * from "./components/checkbox";
+export * from "./components/chip";
+export * from "./components/pro-chip";
 export * from "./components/component-card";
 export * from "./components/input-field";
 export * from "./components/nested-input-button";
@@ -77,7 +79,6 @@ export {
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
 export * from "./components/avatar";
-export * from "./components/pro-badge";
 
 // No need to align
 

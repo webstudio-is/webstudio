@@ -35,6 +35,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
+  deprecated: true,
   icon: BracesIcon,
   contentModel: {
     category: "instance",

@@ -42,9 +42,26 @@ const IconButtonsWrapper = styled(Flex, {
   display: "none",
 });
 
+const SuffixWrapper = styled(Flex, {
+  position: "absolute",
+  right: 0,
+  top: 0,
+  bottom: 0,
+  paddingRight: sharedPaddingRight,
+  pointerEvents: "none",
+});
+
 const FakeIconButtonsWrapper = styled(Flex, {
   paddingLeft: theme.spacing[5],
   display: "none",
+  variants: {
+    hasSuffix: {
+      true: {
+        display: "flex",
+        visibility: "hidden",
+      },
+    },
+  },
 });
 
 /**
@@ -69,6 +86,9 @@ const ItemButton = styled("button", {
   "&:focus-visible, &[data-focused=true], &[data-state=open]": {
     [`& ${FakeIconButtonsWrapper}`]: {
       display: "flex",
+    },
+    [`& ${SuffixWrapper}`]: {
+      display: "none",
     },
     [`~ ${IconButtonsWrapper}`]: {
       display: "flex",
@@ -95,6 +115,7 @@ type Props = ComponentProps<typeof ItemButton> & {
   draggable?: boolean;
   label: React.ReactElement;
   thumbnail?: React.ReactElement;
+  suffix?: React.ReactElement;
   buttons?: React.ReactElement;
   // to support Radix trigger asChild
   "data-state"?: "open";
@@ -120,6 +141,9 @@ const ItemWrapper = styled("div", {
     [`& ${FakeIconButtonsWrapper}`]: {
       display: "flex",
     },
+    [`& ${SuffixWrapper}`]: {
+      display: "none",
+    },
   },
 });
 
@@ -133,6 +157,7 @@ export const CssValueListItem = forwardRef(
     {
       label,
       thumbnail,
+      suffix,
       buttons,
       focused,
       state,
@@ -151,15 +176,17 @@ export const CssValueListItem = forwardRef(
         Children.count(buttons.props.children) || 1
       : 0;
 
+    const fakeButtonsCount = Math.max(buttonsCount, suffix ? 1 : 0);
+
     const fakeButtons = useMemo(
       () => (
         <>
-          {Array.from(new Array(buttonsCount), (_v, index) => (
+          {Array.from(new Array(fakeButtonsCount), (_v, index) => (
             <FakeSmallButton key={index} />
           ))}
         </>
       ),
-      [buttonsCount]
+      [fakeButtonsCount]
     );
 
     return (
@@ -200,10 +227,20 @@ export const CssValueListItem = forwardRef(
                 // Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>
                 // Real buttons will be placed on top of fake buttons
               }
-              <FakeIconButtonsWrapper shrink={false} gap={2}>
+              <FakeIconButtonsWrapper
+                shrink={false}
+                gap={2}
+                hasSuffix={suffix !== undefined}
+              >
                 {fakeButtons}
               </FakeIconButtonsWrapper>
             </ItemButton>
+
+            {suffix && (
+              <SuffixWrapper gap={2} align="center">
+                {suffix}
+              </SuffixWrapper>
+            )}
 
             {
               // Real buttons are placed above ItemButton to avoid <button> cannot appear as a descendant of <button> warning

@@ -36,10 +36,10 @@ import {
   decodeDataSourceVariable,
   getExpressionIdentifiers,
 } from "@webstudio-is/sdk";
-import { getExpressionErrorMessages } from "~/shared/expression-validation";
+import { getExpressionErrorMessages } from "@webstudio-is/project-build/runtime/expression-validation";
 import { $dataSourceVariables, $isDesignMode } from "~/shared/nano-states";
 import {
-  computeExpression,
+  computeExpressionWithinScope,
   encodeDataVariableName,
 } from "@webstudio-is/project-build/runtime/data";
 import {
@@ -49,51 +49,10 @@ import {
 } from "./expression-editor";
 import { normalizeEditorValue } from "~/shared/code-editor-base";
 
-/**
- * Check if a value is a primitive that can be safely stringified.
- * Allows: string, number, boolean, null, undefined
- * Rejects: object, array, function, symbol
- */
-export const isPrimitiveValue = (value: unknown): boolean => {
-  if (value === null || value === undefined) {
-    return true;
-  }
-  const type = typeof value;
-  return type === "string" || type === "number" || type === "boolean";
-};
-
-/**
- * Generate a validation error message for non-primitive values.
- * @param label - The control label (e.g., "Title", "URL")
- * @returns Error message or undefined if value is valid
- */
-export const validatePrimitiveValue = (
-  value: unknown,
-  label: string
-): string | undefined => {
-  if (!isPrimitiveValue(value)) {
-    return `${label} expects a primitive value (string, number, boolean, null, or undefined), not an object, array, or function`;
-  }
-};
-
 export const evaluateExpressionWithinScope = (
   expression: string,
   scope: Record<string, unknown>
-) => {
-  if (expression.trim() === "") {
-    return;
-  }
-
-  const variables = new Map<string, unknown>();
-  for (const [name, value] of Object.entries(scope)) {
-    const decodedName = decodeDataSourceVariable(name);
-    if (decodedName) {
-      variables.set(decodedName, value);
-    }
-  }
-
-  return computeExpression(expression, variables);
-};
+) => computeExpressionWithinScope(expression, scope);
 
 const BindingPanel = ({
   scope,

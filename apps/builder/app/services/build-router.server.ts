@@ -20,6 +20,7 @@ import { normalizePatchRequest } from "~/shared/sync/patch/patch-normalize.serve
 import { loadById } from "@webstudio-is/project/index.server";
 import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/runtime/jsx";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import {
@@ -28,7 +29,7 @@ import {
   publishedProjectBundle,
 } from "@webstudio-is/protocol";
 import {
-  loadPublishedProjectBundleByBuildId,
+  loadProjectBundleByBuildId,
   loadPublishedProjectBundleByProjectId,
 } from "~/shared/db";
 import {
@@ -186,6 +187,19 @@ export const loadBuilderDataByProjectId = async (
 };
 
 export const buildRouter = router({
+  createJsxFragment: procedure
+    .input(z.object({ projectId: z.string(), source: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const canView = await authorizeProject.hasProjectPermit(
+        { projectId: input.projectId, permit: "view" },
+        ctx
+      );
+      if (canView === false) {
+        throw new AuthorizationError("You don't have access to this project");
+      }
+      return await parseWebstudioJsxFragment(input.source);
+    }),
+
   loadData: procedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -195,7 +209,7 @@ export const buildRouter = router({
   loadProjectBundleByBuildId: procedure
     .input(z.object({ buildId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await loadPublishedProjectBundleByBuildId(input.buildId, ctx);
+      return await loadProjectBundleByBuildId(input.buildId, ctx);
     }),
 
   loadProjectBundleByProjectId: procedure

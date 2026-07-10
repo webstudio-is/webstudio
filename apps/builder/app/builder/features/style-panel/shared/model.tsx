@@ -37,11 +37,9 @@ import {
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
-import {
-  $selectedInstancePathWithRoot,
-  type InstancePath,
-} from "~/shared/nano-states";
-import type { InstanceSelector } from "~/shared/instance-utils/tree";
+import { $selectedInstancePathWithRoot } from "~/shared/nano-states";
+import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
 
 const propertyNameCollator = new Intl.Collator();
 

@@ -1,11 +1,9 @@
 import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   findClosestInsertable,
-  insertInstanceChildrenMutable,
+  insertWebstudioFragmentAt,
 } from "../../instance-utils/insert";
-import { insertWebstudioFragmentCopy } from "@webstudio-is/project-build/runtime/fragment";
-import { updateWebstudioData } from "../../instance-utils/data";
-import { $project } from "~/shared/sync/data-stores";
+import { $project, $styleSources } from "~/shared/sync/data-stores";
 import {
   type WfData,
   wfData,
@@ -13,19 +11,22 @@ import {
   type WfNode,
   type WfStyle,
   type WfAsset,
-} from "./schema";
-import { addInstanceAndProperties } from "./instances-properties";
-import { addStyles } from "./styles";
+} from "@webstudio-is/project-build/runtime/webflow/schema";
+import { addInstanceAndProperties } from "@webstudio-is/project-build/runtime/webflow/instances-properties";
+import { addStyles } from "@webstudio-is/project-build/runtime/webflow/styles";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
-import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import type { Plugin } from "../copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
 
 const { toast } = builderApi;
 
-const toWebstudioFragment = async (wfData: WfData) => {
+const toWebstudioFragment = async (
+  wfData: WfData,
+  createId = builderRuntimeContext.createId
+) => {
   const fragment: WebstudioFragment = {
     children: [],
     instances: [],
@@ -56,7 +57,7 @@ const toWebstudioFragment = async (wfData: WfData) => {
   // False value used to skip a node.
   const doneNodes = new Map<WfNode["_id"], Instance["id"] | false>();
   for (const wfNode of wfNodes.values()) {
-    addInstanceAndProperties(wfNode, doneNodes, wfNodes, fragment);
+    addInstanceAndProperties(wfNode, doneNodes, wfNodes, fragment, createId);
   }
 
   /**
@@ -79,6 +80,11 @@ const toWebstudioFragment = async (wfData: WfData) => {
     doneNodes,
     fragment,
     generateStyleSourceId,
+    createId,
+    existingStyleSourceIds: new Set($styleSources.get().keys()),
+    onInvalidStyleValue: (message) => {
+      toast.error(message);
+    },
   });
   // First node should be always the root node in theory, if not
   // we need to find a node that is not a child of any other node.
@@ -184,35 +190,11 @@ const handlePasteWebflow = async (clipboardData: string) => {
     return false;
   }
 
-  updateWebstudioData((data) => {
-    const { newInstanceIds } = insertWebstudioFragmentCopy({
-      data,
-      fragment,
-      availableVariables: findAvailableVariables({
-        ...data,
-        startingInstanceId: insertable.parentSelector[0],
-      }),
-      projectId: project.id,
-      onBreakpointLimitMerge: () => {
-        toast.warn(breakpointPasteLimitWarning);
-      },
-    });
-
-    const children = fragment.children
-      .map((child) => {
-        if (child.type === "id") {
-          const value = newInstanceIds.get(child.value);
-          if (value) {
-            return { type: "id" as const, value };
-          }
-        }
-      })
-      .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
-
-    insertInstanceChildrenMutable(data, children, insertable);
+  return insertWebstudioFragmentAt(fragment, insertable, undefined, {
+    onBreakpointLimitMerge: () => {
+      toast.warn(breakpointPasteLimitWarning);
+    },
   });
-
-  return true;
 };
 
 export const webflow: Plugin = {

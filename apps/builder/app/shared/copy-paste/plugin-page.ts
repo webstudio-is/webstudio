@@ -1,10 +1,11 @@
-import { getWebstudioData } from "../instance-utils/data";
-import { updateWebstudioData } from "../instance-utils/data";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "../instance-utils/data";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
   type WebstudioFragment,
-  webstudioFragment,
   findPageByIdOrPath,
   findParentFolderByChildId,
   type Folder,
@@ -18,12 +19,11 @@ import {
   createFolderCopyData,
   createPageCopyData,
   createTemplateCopyData,
-  insertFolderCopyFromDataMutable,
-  insertPageCopyFromFragmentsMutable,
-  insertTemplateCopyFromFragmentsMutable,
-  type FolderCopyData,
-  type PageCopyData,
-  type TemplateCopyData,
+  pageClipboardItemInput,
+  type FolderClipboardData,
+  type PageClipboardData,
+  type PageClipboardItem,
+  type TemplateClipboardData,
 } from "@webstudio-is/project-build/runtime/page-copy";
 import { $selectedPage } from "../nano-states";
 import { getPageActionTarget } from "../page-action-target";
@@ -32,48 +32,13 @@ import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime
 
 const version = "@webstudio/page/v0.1";
 
-type PageData = PageCopyData & { type: "page" };
+const clipboard = z.object({ [version]: pageClipboardItemInput });
 
-type TemplateData = TemplateCopyData & { type: "template" };
-
-type FolderData = Omit<FolderCopyData, "children"> & {
-  type: "folder";
-  children: Array<PageData | FolderData>;
-};
-
-const pageData: z.ZodType<PageData> = z.object({
-  type: z.literal("page"),
-  page: z.custom<Page>(),
-  rootFragment: webstudioFragment,
-  bodyFragment: webstudioFragment,
-});
-
-const templateData: z.ZodType<TemplateData> = z.object({
-  type: z.literal("template"),
-  template: z.custom<PageTemplate>(),
-  rootFragment: webstudioFragment,
-  bodyFragment: webstudioFragment,
-});
-
-const folderData: z.ZodType<FolderData> = z.lazy(() =>
-  z.object({
-    type: z.literal("folder"),
-    folder: z.custom<Folder>(),
-    children: z.array(z.union([pageData, folderData])),
-  })
-);
-
-const clipboardItem = z.union([pageData, templateData, folderData]);
-
-type ClipboardItem = z.infer<typeof clipboardItem>;
-
-const clipboard = z.object({ [version]: clipboardItem });
-
-const stringify = (data: ClipboardItem) => {
+const stringify = (data: PageClipboardItem) => {
   return JSON.stringify({ [version]: data });
 };
 
-const parse = (clipboardData: string): ClipboardItem | undefined => {
+const parse = (clipboardData: string): PageClipboardItem | undefined => {
   try {
     const data = clipboard.parse(JSON.parse(clipboardData));
     return data[version];
@@ -116,17 +81,23 @@ const mergeWebstudioFragments = (
   } satisfies WebstudioFragment;
 };
 
-const addPageType = (data: PageCopyData): PageData => ({
+const addPageType = (
+  data: ReturnType<typeof createPageCopyData>
+): PageClipboardData => ({
   ...data,
   type: "page",
 });
 
-const addTemplateType = (data: TemplateCopyData): TemplateData => ({
+const addTemplateType = (
+  data: ReturnType<typeof createTemplateCopyData>
+): TemplateClipboardData => ({
   ...data,
   type: "template",
 });
 
-const addFolderType = (data: FolderCopyData): FolderData => ({
+const addFolderType = (
+  data: NonNullable<ReturnType<typeof createFolderCopyData>>
+): FolderClipboardData => ({
   type: "folder",
   folder: data.folder,
   children: data.children.map((child) =>
@@ -137,7 +108,7 @@ const addFolderType = (data: FolderCopyData): FolderData => ({
 const getPageCopyData = (
   data: ReturnType<typeof getWebstudioData>,
   pageId: Page["id"]
-): PageData | undefined => {
+): PageClipboardData | undefined => {
   const page = findPageByIdOrPath(pageId, data.pages);
   if (page === undefined) {
     return;
@@ -159,8 +130,8 @@ const handleCopyPage = () => {
 };
 
 const collectPageLikeItems = (
-  item: ClipboardItem
-): Array<PageData | TemplateData> => {
+  item: PageClipboardItem
+): Array<PageClipboardData | TemplateClipboardData> => {
   if (item.type === "page" || item.type === "template") {
     return [item];
   }
@@ -230,39 +201,19 @@ export const handlePastePage = async (
         ? await builderApi.showTokenConflictDialog(conflicts)
         : "theirs";
 
-    let newId: Page["id"] | Folder["id"] | undefined;
-    const onBreakpointLimitMerge = () => {
-      toast.warn(breakpointPasteLimitWarning);
-    };
-    updateWebstudioData((data) => {
-      if (item.type === "page") {
-        newId = insertPageCopyFromFragmentsMutable({
-          source: item,
-          target: { data, folderId },
-          projectId,
-          conflictResolution,
-          onBreakpointLimitMerge,
-        });
-        return;
-      }
-      if (item.type === "template") {
-        newId = insertTemplateCopyFromFragmentsMutable({
-          source: item,
-          target: { data },
-          projectId,
-          conflictResolution,
-          onBreakpointLimitMerge,
-        });
-        return;
-      }
-      newId = insertFolderCopyFromDataMutable({
-        source: item,
-        target: { data, parentFolderId: folderId },
+    const result = executeRuntimeMutation({
+      id: "pageClipboard.paste",
+      input: {
+        item,
+        targetFolderId: folderId,
         projectId,
         conflictResolution,
-        onBreakpointLimitMerge,
-      });
+      },
     });
+    if (result?.result.didReachBreakpointLimit) {
+      toast.warn(breakpointPasteLimitWarning);
+    }
+    const newId = result?.result.id;
     if (newId) {
       toast.success(
         item.type === "page"

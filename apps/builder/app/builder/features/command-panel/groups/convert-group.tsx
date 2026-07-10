@@ -21,7 +21,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
-import { canConvertInstance } from "~/shared/instance-utils/mutation";
+import { canConvertInstance } from "@webstudio-is/project-build/runtime/instances";
 import {
   $commandContent,
   $isCommandPanelOpen,
@@ -70,15 +70,14 @@ const $convertOptions = computed(
       }
 
       if (
-        canConvertInstance(
-          selectedItem.instance.id,
-          selectedItem.instanceSelector,
-          componentName,
-          undefined,
+        canConvertInstance({
+          instanceId: selectedItem.instance.id,
+          instanceSelector: selectedItem.instanceSelector,
+          component: componentName,
           instances,
           props,
-          metas
-        )
+          metas,
+        })
       ) {
         const label = getInstanceLabel({ component: componentName });
         convertOptions.push({
@@ -93,15 +92,15 @@ const $convertOptions = computed(
     // Test all valid HTML tags (for Element component)
     for (const tag of tags) {
       if (
-        canConvertInstance(
-          selectedItem.instance.id,
-          selectedItem.instanceSelector,
-          elementComponent,
+        canConvertInstance({
+          instanceId: selectedItem.instance.id,
+          instanceSelector: selectedItem.instanceSelector,
+          component: elementComponent,
           tag,
           instances,
           props,
-          metas
-        )
+          metas,
+        })
       ) {
         const label = getInstanceLabel({ component: elementComponent, tag });
         convertOptions.push({

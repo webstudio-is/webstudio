@@ -1,4 +1,6 @@
 import { readCliDoc } from "../docs";
+import { listProjectSessionMcpTools } from "@webstudio-is/project-build/mcp";
+import { publicApiOperations } from "@webstudio-is/protocol";
 
 const apiUseCasesMarkdown = readCliDoc("api-use-cases");
 
@@ -72,7 +74,7 @@ const [useCasesMarkdown, knownGapsMarkdown = ""] = apiUseCasesMarkdown.split(
   "\n# Known CLI Gaps\n"
 );
 
-export const useCaseScenarios = getHeadingBlocks(useCasesMarkdown).map(
+const documentedUseCaseScenarios = getHeadingBlocks(useCasesMarkdown).map(
   ({ title, body }) => {
     const notes = getSectionList(body, "Notes");
     const patchNamespaces = getSectionList(body, "Patch namespaces");
@@ -84,6 +86,23 @@ export const useCaseScenarios = getHeadingBlocks(useCasesMarkdown).map(
     };
   }
 ) satisfies UseCaseScenario[];
+
+const generatedMcpOperationScenario = {
+  useCase: "Generated MCP operation catalog",
+  commands: listProjectSessionMcpTools(publicApiOperations).map(
+    ({ name }) => `MCP tool: ${name} {}`
+  ),
+  notes: [
+    "Generated from the public operation catalog so MCP-only operation docs cannot drift from implementation.",
+  ],
+} satisfies UseCaseScenario;
+
+export const useCaseScenarios = documentedUseCaseScenarios;
+
+export const useCaseCoverageScenarios = [
+  ...documentedUseCaseScenarios,
+  generatedMcpOperationScenario,
+] satisfies UseCaseScenario[];
 
 export const knownCliGaps = getHeadingBlocks(knownGapsMarkdown).map(
   ({ title, body }) => ({

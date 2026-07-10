@@ -1,20 +1,14 @@
 import { atom, computed } from "nanostores";
-import {
-  findPageByIdOrPath,
-  getPagePath,
-  isPage,
-  type Page,
-  type System,
-} from "@webstudio-is/sdk";
+import { getPagePath, isPage, type Page, type System } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
-} from "~/builder/shared/url-pattern";
+} from "@webstudio-is/project-build/runtime/url-pattern";
 import { $selectedPage } from "./nano-states/pages";
 import { $pages } from "./sync/data-stores";
 import { $publishedOrigin } from "./nano-states/misc";
-import { serverSyncStore } from "./sync/sync-stores";
+import { executeRuntimeMutation } from "./instance-utils/data";
 
 export const $systemDataByPage = atom(
   new Map<Page["id"], Pick<System, "search" | "params">>()
@@ -84,18 +78,12 @@ const compilePath = (pattern: string, params: System["params"]) => {
  * and drop paths in the end when exceeded 20
  */
 const savePathInHistory = (pageId: string, path: string) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    const page = findPageByIdOrPath(pageId, pages);
-    if (page === undefined) {
-      return;
-    }
-    const pagePath = getPagePath(page.id, pages);
-    const history = Array.from(page.history ?? []);
-    history.unshift(path || pagePath);
-    page.history = Array.from(new Set(history)).slice(0, 20);
+  executeRuntimeMutation({
+    id: "pages.savePathInHistory",
+    input: {
+      pageId,
+      path,
+    },
   });
 };
 

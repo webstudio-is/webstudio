@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { getRequiredPermitForBuildPatchTransaction } from "./build-patch-permissions";
 import type { BuildPatchTransaction } from "./build-patch-core";
-import type { ContentModeCapabilities } from "../content-mode-permissions";
+import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime/content-mode-permissions";
 
 const transaction = (
   namespace: string,

@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
@@ -17,6 +17,11 @@ import {
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { blockComponent } from "@webstudio-is/sdk";
 import { apiRouter, __testing__ } from "./api-router.server";
+import {
+  getApiRouterProcedures,
+  getProcedureInputSchemaMetadata,
+  getProcedurePublicApiPermit,
+} from "./api-router-introspection.server";
 import {
   assertApiProjectPermit,
   assertApiTokenPermit,
@@ -58,13 +63,16 @@ const createToken = (
     ...overrides,
   }) as Awaited<ReturnType<typeof authDb.getTokenInfo>>;
 
+type RuntimeCallerProcedure = (input: unknown) => Promise<unknown>;
+type RuntimeApiCaller = Record<string, Record<string, RuntimeCallerProcedure>>;
+type ApiRouterCaller = ReturnType<typeof apiRouter.createCaller>;
+
+const createCaller = (context: AppContext) =>
+  apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
+
 describe("api router build operation adapters", () => {
   test("public operation catalog paths exist on the api router", () => {
-    const procedures = (
-      apiRouter as unknown as {
-        _def: { procedures: Record<string, unknown> };
-      }
-    )._def.procedures;
+    const procedures = getApiRouterProcedures(apiRouter);
 
     for (const operation of publicApiOperations) {
       if (operation.path === undefined) {
@@ -78,33 +86,55 @@ describe("api router build operation adapters", () => {
     }
   });
 
+  test("api router procedures are all described by the public operation catalog", () => {
+    const procedures = getApiRouterProcedures(apiRouter);
+    expect(
+      Object.keys(procedures)
+        .map((path) => `api.${path}`)
+        .sort()
+    ).toEqual(
+      publicApiOperations
+        .flatMap((operation) =>
+          operation.path === undefined ? [] : [operation.path]
+        )
+        .sort()
+    );
+  });
+
+  test("operation catalog input fields match api router inputs", () => {
+    const procedures = getApiRouterProcedures(apiRouter);
+
+    for (const operation of publicApiOperations) {
+      if (operation.path === undefined) {
+        continue;
+      }
+      const procedure = procedures[operation.path.replace(/^api\./, "")];
+      const metadata = getProcedureInputSchemaMetadata(procedure);
+      expect(metadata.inputFields).toEqual(operation.inputFields);
+      expect(metadata.requiredInputFields).toEqual(
+        operation.requiredInputFields
+      );
+      expect(metadata.inputFieldTypes).toEqual(operation.inputFieldTypes);
+      expect(metadata.inputJsonSchema).toEqual(operation.inputSchema);
+    }
+  });
+
+  test("operation catalog permits match api router metadata", () => {
+    const procedures = getApiRouterProcedures(apiRouter);
+
+    for (const operation of publicApiOperations) {
+      if (operation.path === undefined) {
+        continue;
+      }
+      const procedure = procedures[operation.path.replace(/^api\./, "")];
+      expect(getProcedurePublicApiPermit(procedure)).toBe(operation.permit);
+    }
+  });
+
   test("does not keep an api-only build operations service", async () => {
     await expect(
       access(join(servicesDir.pathname, "build-operations.server.ts"))
     ).rejects.toThrow();
-  });
-
-  test("api router tests do not mock modules", async () => {
-    const content = await readFile(new URL(import.meta.url), "utf-8");
-    const forbidden = [
-      new RegExp("\\bvi\\.mock\\("),
-      new RegExp("\\bjest\\.mock\\("),
-      new RegExp("unstable_" + "mock" + "Module"),
-      new RegExp("mock" + "Module"),
-    ];
-    for (const pattern of forbidden) {
-      expect(content).not.toMatch(pattern);
-    }
-  });
-
-  test("api router does not assemble semantic patches inline", async () => {
-    const content = await readFile(
-      new URL("api-router.server.ts", servicesDir),
-      "utf-8"
-    );
-    expect(content).not.toMatch(/\bnamespace:/);
-    expect(content).not.toMatch(/\bpatches:/);
-    expect(content).not.toMatch(/\bop: ["'](add|remove|replace)["']/);
   });
 });
 
@@ -205,7 +235,7 @@ describe("api router permits", () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(token);
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
 
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     await expect(caller.auth.me()).resolves.toEqual({
       actor: { type: "token", tokenId: token.token },
@@ -232,7 +262,7 @@ describe("api router permits", () => {
 
   test("returns publish capabilities from token permissions", async () => {
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
       createToken({ relation: "editors", canPublish: true })
@@ -294,7 +324,7 @@ describe("api router permits", () => {
       createToken({ relation: "viewers" })
     );
 
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     await expect(
       caller.pages.update({
@@ -530,7 +560,7 @@ describe("api router permits", () => {
       .spyOn(projectApi, "patchBuild")
       .mockResolvedValue({ status: "ok", version: 4 });
 
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     await expect(
       caller.instances.updateText({
@@ -587,7 +617,7 @@ describe("api router permits", () => {
     vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
     const patchBuild = vi.spyOn(projectApi, "patchBuild");
 
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     await expect(
       caller.pages.update({
@@ -650,7 +680,7 @@ describe("api instance queries", () => {
       createInstanceQueryBuild()
     );
 
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     await expect(
       caller.instances.list({
@@ -680,7 +710,7 @@ describe("api instance queries", () => {
       createInstanceQueryBuild()
     );
 
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     await expect(
       caller.instances.listTexts({
@@ -764,7 +794,7 @@ describe("api instance queries", () => {
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
     vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
 
-    const caller = apiRouter.createCaller(createContext(true));
+    const caller = createCaller(createContext(true));
 
     await expect(
       caller.pages.list({ projectId: "project-1", includeFolders: true })

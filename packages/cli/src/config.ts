@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { readdirSync } from "node:fs";
 import envPaths from "env-paths";
 import { z } from "zod";
 
@@ -23,6 +24,7 @@ export const jsonToLocalConfig = (json: unknown) => {
 };
 
 const zGlobalConfig = z.record(
+  z.string(),
   z
     .union([
       z.object({
@@ -97,3 +99,14 @@ export const INTERNAL_TEMPLATES = [
     expand: ["react-router", "react-router-cloudflare"],
   },
 ];
+
+const templateRoot = new URL(
+  /* @vite-ignore */ "../templates",
+  import.meta.url
+);
+
+export const getAvailableTemplateNames = () =>
+  readdirSync(templateRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();

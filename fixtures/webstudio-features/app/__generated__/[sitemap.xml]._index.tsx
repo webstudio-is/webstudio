@@ -53,7 +53,7 @@ const Page = (_props: { system: any }) => {
             path: "/olegs-test",
             lastModified: "2024-05-07",
           },
-        ] ?? {}
+        ]
       ).map(([_key, url]: any) => {
         const index = Array.isArray([
           {

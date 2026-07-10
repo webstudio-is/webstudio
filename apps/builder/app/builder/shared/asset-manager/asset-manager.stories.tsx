@@ -26,7 +26,7 @@ const createMockAssets = (): Asset[] => {
       type: "file" as const, // Use "file" type to show icons instead of trying to load images
       format: ext,
       size: 1024 * (index + 1),
-      meta: { width: 0, height: 0 },
+      meta: {},
       createdAt: new Date().toISOString(),
       projectId: "mock-project",
       description: `Example ${ext.toUpperCase()} file`,

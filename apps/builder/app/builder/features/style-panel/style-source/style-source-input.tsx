@@ -11,7 +11,6 @@
  * - Local source can only be disabled, nothing else should be possible
  */
 
-import { nanoid } from "nanoid";
 import { useFocusWithin } from "@react-aria/interactions";
 import { useStore } from "@nanostores/react";
 import {
@@ -314,7 +313,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onDuplicateItem?: (id: Item["id"]) => void;
   onToggleLockItem?: (id: Item["id"], locked: boolean) => void;
   onConvertToToken?: (id: Item["id"]) => void;
-  onCreateItem?: (id: Item["id"], label: string) => void;
+  onCreateItem?: (label: string) => void;
   onChangeItem?: (item: Item) => void;
   onSelectItem?: (item: ItemSelector) => void;
   onEditItem?: (id?: Item["id"]) => void;
@@ -402,7 +401,7 @@ export const StyleSourceInput = (
     onItemSelect(item) {
       setLabel("");
       if (item.id === newItemId) {
-        props.onCreateItem?.(nanoid(), item.label);
+        props.onCreateItem?.(item.label);
       } else {
         props.onSelectAutocompleteItem?.(item);
       }

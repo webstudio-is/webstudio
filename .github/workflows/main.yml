@@ -78,6 +78,18 @@ jobs:
         run: |
           pnpm lint
 
+      - name: Package boundaries
+        run: |
+          pnpm check:package-boundaries
+
+      - name: Generated API contracts
+        run: |
+          pnpm check:generated-api
+
+      - name: Generated CLI docs
+        run: |
+          pnpm check:generated-docs
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
@@ -158,6 +170,7 @@ jobs:
             }
 
   builder-e2e:
+    name: builder-e2e (${{ matrix.shard }})
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
     if: |
       github.event_name == 'push' ||
@@ -167,6 +180,16 @@ jobs:
     timeout-minutes: 40
 
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Builder e2e shards are assigned by filename tags, for example
+        # `pages-actions.[shard-3].e2e.ts`. Use one of these shard names in
+        # each e2e filename. If one workflow module gets too slow, split it
+        # into same-base files with different shard tags, such as
+        # `pages-actions.[shard-1].e2e.ts` and
+        # `pages-actions.[shard-2].e2e.ts`.
+        shard: [shard-1, shard-2, shard-3]
 
     environment:
       name: development
@@ -200,20 +223,21 @@ jobs:
           key: builder-e2e-playwright-${{ runner.os }}-${{ hashFiles('apps/builder/package.json', 'pnpm-lock.yaml') }}
 
       - name: Run builder e2e
+        env:
+          E2E_TEST_SHARD: ${{ matrix.shard }}
         run: |
-          set +e
-          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
-          status="$?"
-          set -e
-          if [ "$status" -eq 0 ]; then
-            exit 0
-          fi
+          run_builder_e2e() {
+            E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder
+          }
 
-          echo "::warning::Builder e2e failed on the first attempt. Restarting services and retrying once."
-          docker compose $BUILDER_E2E_COMPOSE_ARGS logs || true
-          docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans || true
+          run_builder_e2e_keep_logs() {
+            E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder
+          }
 
-          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
+          run_builder_e2e || {
+            echo "::warning::Builder e2e shard ${E2E_TEST_SHARD} failed; retrying once"
+            run_builder_e2e_keep_logs
+          }
 
       - name: Print e2e service logs
         if: failure()

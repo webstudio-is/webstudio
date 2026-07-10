@@ -25,7 +25,7 @@ const axisName = z.enum([
   "YTFI",
 ]);
 
-const variationAxes = z.record(
+const variationAxes = z.partialRecord(
   axisName,
   z.object({
     name: z.string(),

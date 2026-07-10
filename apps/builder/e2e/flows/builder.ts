@@ -116,13 +116,17 @@ export const openProjectBuilder = async ({
   projectId,
   authToken,
   mode,
+  features,
 }: {
   page: Page;
   projectId: string;
   authToken?: string;
   mode?: "content" | "preview";
+  features?: string[];
 }): Promise<Frame> => {
-  await page.goto(getProjectBuilderUrl({ projectId, authToken, mode }));
+  await page.goto(
+    getProjectBuilderUrl({ projectId, authToken, mode, features })
+  );
   await page
     .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
     .catch(() => undefined);

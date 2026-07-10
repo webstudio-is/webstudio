@@ -2,9 +2,10 @@
   "type": "module",
   "scripts": {
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
-    "fixtures:link": "pnpm cli link --link https://p-d845c167-ea07-4875-b08d-83e97c09dcce-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
-    "fixtures:sync": "pnpm cli sync --buildId a2e8de30-03d5-4514-a3a6-406b3266a3af && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "pnpm cli build --template cloudflare --template saas-helpers --template internal && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
+    "cli:local": "node ../../packages/cli/local.js",
+    "fixtures:link": "pnpm cli:local link --link https://p-d845c167-ea07-4875-b08d-83e97c09dcce-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
+    "fixtures:sync": "pnpm cli:local sync --buildId a2e8de30-03d5-4514-a3a6-406b3266a3af && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "pnpm cli:local build --template cloudflare --template saas-helpers --template internal && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
     "build": "remix vite:build",
     "dev": "remix vite:dev",
     "typecheck": "tsgo --noEmit",
@@ -45,7 +46,7 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "webstudio": "workspace:*",
     "worktop": "0.8.0-next.18",
-    "zod": "^3.24.2"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",

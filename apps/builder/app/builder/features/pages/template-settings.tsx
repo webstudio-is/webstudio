@@ -1,12 +1,7 @@
-import { nanoid } from "nanoid";
-import { z } from "zod";
 import { useState, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type PageTemplate,
-  pageName,
-  pageTitle,
-  elementComponent,
   type Page,
   type Pages,
   isLiteralExpression,
@@ -18,124 +13,92 @@ import {
   TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
 import { $isContentMode, $isDesignMode } from "~/shared/nano-states";
-import { $instances, $pages } from "~/shared/sync/data-stores";
-import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { selectInstance } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
+import { isContentModePagePath } from "@webstudio-is/project-build/runtime/content-mode-permissions";
+import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime/registry";
+import {
+  nameToPath,
+  pageSettingsDefaultValues,
+  pageTemplateSettingsInput,
+  validatePageSettings,
+  type PageSettingsErrors,
+  type PageSettingsValues,
+} from "@webstudio-is/project-build/runtime/pages";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   $pageRootScope,
   duplicateTemplate,
   instantiateTemplate,
-  nameToPath,
 } from "./page-utils";
 import {
-  fieldDefaultValues,
   canEditPagePathInMode,
   addContentModePathError,
-  validateValues,
   updatePage,
   FormFields,
   PageSettingsPanel,
-  type Values,
 } from "./page-settings/page-settings";
-import type { Errors, OnChange } from "./page-settings/shared";
+import type { OnChange } from "./page-settings/shared";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { copyTemplate } from "~/shared/copy-paste/copy-paste";
 import { PageItemActionsDropdown } from "./page-item-actions";
 
-const templateValues = z.object({
-  name: pageName,
-  title: pageTitle,
-});
-
-const validateTemplateValues = (values: Values): Errors => {
-  const result = templateValues.safeParse(values);
+const validateTemplateValues = (
+  values: PageSettingsValues
+): PageSettingsErrors => {
+  const result = pageTemplateSettingsInput.safeParse(values);
   if (result.success) {
     return {};
   }
-  return result.error.formErrors.fieldErrors;
+  return result.error.flatten().fieldErrors;
 };
 
-const templateFieldDefaultValues: Values = {
-  ...fieldDefaultValues,
+const templateFieldDefaultValues: PageSettingsValues = {
+  ...pageSettingsDefaultValues,
   name: "Untitled Template",
   path: "",
   excludePageFromSearch: "false",
 };
 
-const emptyUnsavedValues: Partial<Values> = {};
+const emptyUnsavedValues: Partial<PageSettingsValues> = {};
 
-const createTemplate = (templateId: PageTemplate["id"], values: Values) => {
-  serverSyncStore.createTransaction(
-    [$pages, $instances],
-    (pages, instances) => {
-      if (pages === undefined) {
-        return;
-      }
-      const rootInstanceId = nanoid();
-      pages.pageTemplates ??= new Map();
-      pages.pageTemplates.set(templateId, {
-        id: templateId,
-        name: values.name,
-        title: values.title,
-        rootInstanceId,
-        meta: {
-          description: values.description,
-          excludePageFromSearch: values.excludePageFromSearch,
-          language: values.language,
-          socialImageUrl: values.socialImageUrl,
-          socialImageAssetId: values.socialImageAssetId,
-          custom: values.customMetas,
-        },
-      });
-      instances.set(rootInstanceId, {
-        type: "instance",
-        id: rootInstanceId,
-        component: elementComponent,
-        tag: "body",
-        children: [],
-      });
-      selectInstance(undefined);
-    }
-  );
-};
+const getTemplateMetaFromValues = (
+  values: Partial<PageSettingsValues>
+): BuilderRuntimeOperationInput<"pageTemplates.create">["meta"] => ({
+  description: values.description,
+  excludePageFromSearch:
+    values.excludePageFromSearch === undefined
+      ? undefined
+      : values.excludePageFromSearch === "true",
+  language: values.language,
+  socialImageUrl: values.socialImageUrl,
+  socialImageAssetId: values.socialImageAssetId,
+  custom: values.customMetas,
+});
+
+const createTemplate = (values: PageSettingsValues) =>
+  executeRuntimeMutation({
+    id: "pageTemplates.create",
+    input: {
+      name: values.name,
+      title: values.title,
+      meta: getTemplateMetaFromValues(values),
+    },
+  })?.result.templateId;
 
 const updateTemplate = (
   templateId: PageTemplate["id"],
-  values: Partial<Values>
+  values: Partial<PageSettingsValues>
 ) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    const template = pages.pageTemplates?.get(templateId);
-    if (template === undefined) {
-      return;
-    }
-    if (values.name !== undefined) {
-      template.name = values.name;
-    }
-    if (values.title !== undefined) {
-      template.title = values.title;
-    }
-    if (values.description !== undefined) {
-      template.meta.description = values.description;
-    }
-    if (values.excludePageFromSearch !== undefined) {
-      template.meta.excludePageFromSearch = values.excludePageFromSearch;
-    }
-    if (values.language !== undefined) {
-      template.meta.language = values.language;
-    }
-    if (values.socialImageUrl !== undefined) {
-      template.meta.socialImageUrl = values.socialImageUrl;
-    }
-    if (values.socialImageAssetId !== undefined) {
-      template.meta.socialImageAssetId = values.socialImageAssetId;
-    }
-    if (values.customMetas !== undefined) {
-      template.meta.custom = values.customMetas;
-    }
+  executeRuntimeMutation({
+    id: "pageTemplates.update",
+    input: {
+      templateId,
+      values: {
+        name: values.name,
+        title: values.title,
+        meta: getTemplateMetaFromValues(values),
+      },
+    },
   });
 };
 
@@ -144,14 +107,17 @@ export const NewTemplateSettings = ({
 }: {
   onSuccess: (templateId: PageTemplate["id"]) => void;
 }) => {
-  const [values, setValues] = useState<Values>(templateFieldDefaultValues);
+  const [values, setValues] = useState<PageSettingsValues>(
+    templateFieldDefaultValues
+  );
   const errors = validateTemplateValues(values);
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
-      const templateId = nanoid();
-      createTemplate(templateId, values);
-      onSuccess(templateId);
+      const templateId = createTemplate(values);
+      if (templateId !== undefined) {
+        onSuccess(templateId);
+      }
     }
   };
 
@@ -215,9 +181,9 @@ export const TemplateSettings = ({
   const pages = useStore($pages);
   const template = pages?.pageTemplates?.get(templateId);
 
-  let errors: Errors = {};
+  let errors: PageSettingsErrors = {};
   const { value: unsavedValues, set: setUnsavedValues } = useDraftValue<
-    Partial<Values>
+    Partial<PageSettingsValues>
   >(
     emptyUnsavedValues,
     (values) => {
@@ -236,7 +202,7 @@ export const TemplateSettings = ({
     }));
   };
 
-  const values: Values = {
+  const values: PageSettingsValues = {
     ...(template
       ? {
           ...templateFieldDefaultValues,
@@ -338,8 +304,8 @@ const TemplateFormFields = ({
   onChange,
 }: {
   autoSelect?: boolean;
-  errors: Errors;
-  values: Values;
+  errors: PageSettingsErrors;
+  values: PageSettingsValues;
   onChange: OnChange;
 }) => (
   <FormFields
@@ -362,29 +328,32 @@ const TemplateFormFields = ({
 const toFormValuesFromTemplate = (
   template: PageTemplate,
   pages: Pages | undefined
-): Values => ({
-  ...fieldDefaultValues,
+): PageSettingsValues => ({
+  ...pageSettingsDefaultValues,
   name: template.name,
-  parentFolderId: pages?.rootFolderId ?? fieldDefaultValues.parentFolderId,
+  parentFolderId:
+    pages?.rootFolderId ?? pageSettingsDefaultValues.parentFolderId,
   path: nameToPath(pages, template.name),
   title: template.title,
-  description: template.meta.description ?? fieldDefaultValues.description,
+  description:
+    template.meta.description ?? pageSettingsDefaultValues.description,
   excludePageFromSearch:
     template.meta.excludePageFromSearch ??
-    fieldDefaultValues.excludePageFromSearch,
-  language: template.meta.language ?? fieldDefaultValues.language,
+    pageSettingsDefaultValues.excludePageFromSearch,
+  language: template.meta.language ?? pageSettingsDefaultValues.language,
   socialImageUrl:
-    template.meta.socialImageUrl ?? fieldDefaultValues.socialImageUrl,
+    template.meta.socialImageUrl ?? pageSettingsDefaultValues.socialImageUrl,
   socialImageAssetId:
-    template.meta.socialImageAssetId ?? fieldDefaultValues.socialImageAssetId,
-  customMetas: template.meta.custom ?? fieldDefaultValues.customMetas,
+    template.meta.socialImageAssetId ??
+    pageSettingsDefaultValues.socialImageAssetId,
+  customMetas: template.meta.custom ?? pageSettingsDefaultValues.customMetas,
 });
 
 const getEditorCreatePageValues = (
-  initialValues: Values,
-  values: Values
-): Partial<Values> => {
-  const allowedValues: Partial<Values> = {
+  initialValues: PageSettingsValues,
+  values: PageSettingsValues
+): Partial<PageSettingsValues> => {
+  const allowedValues: Partial<PageSettingsValues> = {
     name: values.name,
   };
 
@@ -429,17 +398,22 @@ export const CreatePageFromTemplateSettings = ({
   const template = pages?.pageTemplates?.get(templateId);
   const { variableValues } = useStore($pageRootScope);
 
-  const [initialValues] = useState<Values>(() =>
+  const [initialValues] = useState<PageSettingsValues>(() =>
     template
       ? toFormValuesFromTemplate(template, pages)
       : {
-          ...fieldDefaultValues,
-          path: nameToPath(pages, fieldDefaultValues.name),
+          ...pageSettingsDefaultValues,
+          path: nameToPath(pages, pageSettingsDefaultValues.name),
         }
   );
-  const [values, setValues] = useState<Values>(initialValues);
+  const [values, setValues] = useState<PageSettingsValues>(initialValues);
 
-  const errors = validateValues(pages, undefined, values, variableValues);
+  const errors = validatePageSettings({
+    pages,
+    pageId: undefined,
+    values,
+    variableValues,
+  });
   addContentModePathError({ errors, isContentMode, path: values.path });
 
   const handleSubmit = () => {

@@ -13,6 +13,7 @@ export E2E_MIGRATIONS_TIMEOUT_SECONDS="${E2E_MIGRATIONS_TIMEOUT_SECONDS:-300}"
 export E2E_INSTALL_PLAYWRIGHT="${E2E_INSTALL_PLAYWRIGHT:-auto}"
 export E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS="${E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS:-300}"
 export E2E_RUN_TESTS="${E2E_RUN_TESTS:-true}"
+export E2E_START_POSTGREST="${E2E_START_POSTGREST:-$E2E_RUN_TESTS}"
 export E2E_BUILDER_BUILD_TIMEOUT_SECONDS="${E2E_BUILDER_BUILD_TIMEOUT_SECONDS:-600}"
 export E2E_TEST_COMMAND_TIMEOUT_SECONDS="${E2E_TEST_COMMAND_TIMEOUT_SECONDS:-900}"
 export E2E_WRITE_SCHEMA_SNAPSHOT="${E2E_WRITE_SCHEMA_SNAPSHOT:-false}"
@@ -33,6 +34,8 @@ run_step() {
   shift 2
 
   echo "▶ $name"
+  local started_at
+  started_at="$(date +%s)"
   "$@" &
   local pid="$!"
   local timeout_at
@@ -51,13 +54,22 @@ run_step() {
   local status=0
   wait "$pid" || status="$?"
   if [ "$status" -ne 0 ]; then
+    local duration
+    duration="$(($(date +%s) - started_at))"
+    echo "✗ $name (${duration}s)" >&2
     return "$status"
   fi
-  echo "✓ $name"
+  local duration
+  duration="$(($(date +%s) - started_at))"
+  echo "✓ $name (${duration}s)"
 }
 
 bootstrap_database() {
-  builder_backend_bootstrap "$E2E_DB_BOOTSTRAP"
+  if [ "$E2E_DB_BOOTSTRAP" = "if-empty" ]; then
+    builder_backend_bootstrap_if_empty
+  else
+    builder_backend_bootstrap "$E2E_DB_BOOTSTRAP"
+  fi
 
   if [ "$E2E_WRITE_SCHEMA_SNAPSHOT" = "true" ]; then
     builder_backend_write_schema_snapshot
@@ -65,9 +77,24 @@ bootstrap_database() {
 }
 
 install_playwright_chromium() {
+  chromium_executable_exists() {
+    pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec node -e '
+      const { chromium } = require("playwright");
+      const { existsSync } = require("node:fs");
+      process.exit(existsSync(chromium.executablePath()) ? 0 : 1);
+    ' >/dev/null 2>&1
+  }
+
   case "$E2E_INSTALL_PLAYWRIGHT" in
-    true | auto)
+    true)
       pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec playwright install --with-deps chromium
+      ;;
+    auto)
+      if chromium_executable_exists; then
+        echo "Skipping Playwright Chromium install; cached executable already exists"
+      else
+        pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec playwright install --with-deps chromium
+      fi
       ;;
     false)
       echo "Skipping Playwright Chromium install"
@@ -90,6 +117,21 @@ run_builder_e2e_tests() {
   )
 }
 
+validate_test_filter() {
+  if [ "${E2E_TEST_FILTER:-}" = "" ] && [ "${E2E_TEST_FILTERS:-}" = "" ] && [ "${E2E_TEST_SHARD:-}" = "" ]; then
+    return
+  fi
+  (
+    cd "$ROOT_DIR/apps/builder"
+    E2E_VALIDATE_TEST_FILTER_ONLY=true pnpm exec tsx --env-file .env --env-file-if-exists .env.development --conditions=webstudio ./e2e/run.ts
+  )
+}
+
+if [ "$E2E_RUN_TESTS" = "true" ]; then
+  run_step "validate e2e test filter" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
+    validate_test_filter
+fi
+
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db
 
@@ -102,12 +144,14 @@ run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
 run_step "bootstrap database schema" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
   bootstrap_database
 
+if [ "$E2E_START_POSTGREST" = "true" ]; then
+  run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
+    builder_backend_start_postgrest
+fi
+
 if [ "$E2E_RUN_TESTS" = "true" ]; then
   run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
     install_playwright_chromium
-
-  run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
-    builder_backend_start_postgrest
 
   if [ "${E2E_BUILDER_URL:-}" = "" ]; then
     run_step "build builder app" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \

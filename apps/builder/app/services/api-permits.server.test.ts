@@ -1,6 +1,15 @@
 import { expect, test } from "vitest";
 import { TRPCError } from "@trpc/server";
-import { getTokenPermits, loadApiToken } from "./api-permits.server";
+import {
+  assertApiProjectPermit,
+  getTokenPermits,
+  loadApiToken,
+} from "./api-permits.server";
+
+// @ts-expect-error Builder API project operations do not accept workspace-owner-only permit.
+const ownerOnlyApiProjectPermit: Parameters<typeof assertApiProjectPermit>[2] =
+  "own";
+void ownerOnlyApiProjectPermit;
 
 const createContext = ({
   allowAdditionalPermissions = true,

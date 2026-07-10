@@ -4,7 +4,13 @@ import {
   apiCommandMetadata,
   cliCommandMetadata,
 } from "./commands/api-command-metadata";
-import { registerCommands } from "./cli";
+import {
+  getTopLevelMcpToolForwardArgs,
+  getTopLevelMcpToolHint,
+  handleOutputStreamError,
+  registerCommands,
+  rootCliEpilogue,
+} from "./cli";
 import type { CommonYargsArgv } from "./commands/yargs-types";
 
 type CommandBuilder = (yargs: CommonYargsArgv) => CommonYargsArgv;
@@ -65,12 +71,23 @@ const runGroupBuilder = (
 const commandNames = (commands: { command: string }[]) =>
   commands.map((command) => command.command);
 
+const getExpectedGroupActions = (group: string) =>
+  cliCommandMetadata
+    .map(({ cliCommand }) => cliCommand.split(" "))
+    .filter(([commandGroup, action, extra]) => {
+      return (
+        commandGroup === group && action !== undefined && extra === undefined
+      );
+    })
+    .map(([, action]) => action);
+
 const getHelpOutput = async (args: string[]) => {
   let output = "";
   const yargs = makeCLI(args)
     .scriptName("webstudio")
     .exitProcess(false)
     .wrap(null)
+    .epilogue(rootCliEpilogue)
     .fail((message, error) => {
       throw error ?? new Error(message);
     });
@@ -83,6 +100,107 @@ const getHelpOutput = async (args: string[]) => {
 };
 
 describe("registerCommands", () => {
+  test("exits successfully on broken pipe output errors", () => {
+    const exitProcess = vi.fn((code?: number) => {
+      throw new Error(`exit ${code}`);
+    }) as never;
+    const error = Object.assign(new Error("write EPIPE"), { code: "EPIPE" });
+
+    expect(() => handleOutputStreamError(error, exitProcess)).toThrow("exit 0");
+
+    expect(exitProcess).toHaveBeenCalledWith(0);
+  });
+
+  test("rethrows non broken pipe output errors", () => {
+    const exitProcess = vi.fn() as never;
+    const error = Object.assign(new Error("write failed"), { code: "EIO" });
+
+    expect(() => handleOutputStreamError(error, exitProcess)).toThrow(error);
+
+    expect(exitProcess).not.toHaveBeenCalled();
+  });
+
+  test("forwards top-level mcp tool shortcuts to single-op-call", () => {
+    expect(getTopLevelMcpToolForwardArgs(["meta.index"])).toEqual([
+      "mcp",
+      "single-op-call",
+      "meta.index",
+    ]);
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "insert-fragment",
+        '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
+        "--dry-run",
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "insert-fragment",
+      '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
+      "--dry-run",
+    ]);
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "workflow.next",
+        "goal",
+        "design-system-page",
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "workflow.next",
+      '{"goal":"design-system-page"}',
+    ]);
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "workflow.next",
+        "goal-design-system-page",
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "workflow.next",
+      '{"goal":"design-system-page"}',
+    ]);
+    expect(getTopLevelMcpToolForwardArgs(["permissions"])).toBeUndefined();
+    expect(getTopLevelMcpToolForwardArgs(["unknown-command"])).toBeUndefined();
+  });
+
+  test("suggests mcp single-op-call for top-level dotted tool names", () => {
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "webstudio meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "webstudio mcp single-op-call meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "node packages/cli/local.js meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "node packages/cli/local.js mcp single-op-call meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["insert-fragment"])).toContain(
+      "webstudio mcp single-op-call insert-fragment"
+    );
+    expect(getTopLevelMcpToolHint(["permissions"])).toBeUndefined();
+    expect(getTopLevelMcpToolHint(["unknown-command"])).toBeUndefined();
+  });
+
+  test("root help points low-context agents to mcp meta.index first", async () => {
+    const output = await getHelpOutput(["--help"]);
+
+    expect(output).toContain("Project editing / LLM quick start");
+    expect(output).toContain("webstudio man project-editing");
+    expect(output).toContain("webstudio meta.index");
+    expect(output).toContain("webstudio insert-fragment");
+    expect(output).toContain("webstudio mcp single-op-call meta.index");
+    expect(output).toContain(
+      "webstudio mcp single-op-call meta.get_more_tools"
+    );
+    expect(output).toContain("insert-fragment");
+    expect(output).toContain("node packages/cli/local.js");
+  });
+
   test("registers high-level API commands and mcp command", () => {
     const { yargs, commands } = createYargs();
 
@@ -105,25 +223,14 @@ describe("registerCommands", () => {
     );
 
     const publish = runGroupBuilder(commands, "publish");
-    expect(publish.childCommands).toEqual([
-      "deploy",
-      "list",
-      "status",
-      "unpublish",
-    ]);
+    expect(publish.childCommands).toEqual(getExpectedGroupActions("publish"));
     expect(publish.demandCommand).toHaveBeenCalledWith(
       1,
       "Specify a publish command."
     );
 
     const domains = runGroupBuilder(commands, "domains");
-    expect(domains.childCommands).toEqual([
-      "list",
-      "create",
-      "update",
-      "delete",
-      "verify",
-    ]);
+    expect(domains.childCommands).toEqual(getExpectedGroupActions("domains"));
     expect(domains.demandCommand).toHaveBeenCalledWith(
       1,
       "Specify a domains command."
@@ -147,6 +254,9 @@ describe("registerCommands", () => {
     expect(rootHelp).toContain("webstudio import");
     expect(rootHelp).toContain("webstudio publish");
     expect(rootHelp).toContain("webstudio domains");
+    expect(rootHelp).toContain("webstudio schema [topic]");
+    expect(rootHelp).toContain("webstudio mcp");
+    expect(rootHelp).toContain("call MCP tools from the shell");
     expect(rootHelp).not.toContain("webstudio publish deploy");
     expect(rootHelp).not.toContain("webstudio domains list");
 

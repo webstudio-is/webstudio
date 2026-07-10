@@ -11,6 +11,7 @@ import {
   getAllPages,
   getExpressionIdentifiers,
   getStyleDeclKey,
+  isLiteralExpression,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -28,9 +29,10 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import { z } from "zod";
-import deepEqual from "fast-deep-equal";
+import { produceWithPatches } from "immer";
 import {
   createJsonStringifyProxy,
+  isLocalResource,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
@@ -38,11 +40,21 @@ import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
 } from "../contracts/patch";
+import { createBuilderPatchPayloadFromImmerPatches } from "../state/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
-import { getNamedExpressionErrors } from "./expression-validation";
+import {
+  getNamedExpressionErrors,
+  hasExpressionDiagnostics,
+} from "./expression-validation";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
+import {
+  createPropUpsertPayload,
+  createValidatedPropValueFromInput,
+  findProp,
+} from "./props";
 
 const getRequiredDataSources = (state: Pick<BuilderState, "dataSources">) => {
   if (state.dataSources === undefined) {
@@ -168,7 +180,7 @@ export const listDataVariables = (
 export const dataVariableValueInput = dataSourceVariableValue;
 
 export const dataVariableCreateInput = z.object({
-  dataSourceId: z.string().optional(),
+  dataSourceId: runtimeGeneratedIdInput,
   scopeInstanceId: z.string(),
   name: z.string().min(1),
   value: dataVariableValueInput,
@@ -187,7 +199,11 @@ export const dataVariableDeleteInput = z.object({
   dataSourceId: z.string(),
 });
 
+export const dataVariableDeleteUnusedInput = z.object({});
+
 type DataVariable = Extract<DataSource, { type: "variable" }>;
+type DataVariableValue = DataVariable["value"];
+export type DataVariableValueType = DataVariableValue["type"];
 
 export type DataVariableNameError = {
   type: "required" | "duplicate";
@@ -225,6 +241,76 @@ export const validateDataVariableNameWithSources = ({
       };
     }
   }
+};
+
+export const validateDataVariableNumberValue = (value: string | number) => {
+  if (typeof value === "string" && value.length === 0) {
+    return "Value expects a number";
+  }
+  const number = Number(value);
+  return Number.isNaN(number) ? "Invalid number" : "";
+};
+
+export const getDataVariableJsonExpressionErrors = (expression: string) => {
+  return getNamedExpressionErrors("value", expression);
+};
+
+export const validateDataVariableJsonValue = (expression: string) => {
+  return getDataVariableJsonExpressionErrors(expression).length > 0 ||
+    hasExpressionDiagnostics({ expression })
+    ? "error"
+    : "";
+};
+
+export const parseDataVariableJsonExpression = (expression: string) => {
+  try {
+    const executableExpression = transpileExpression({
+      expression,
+      executable: true,
+    });
+    return eval(`(${executableExpression})`);
+  } catch {
+    return undefined;
+  }
+};
+
+export const validateDataVariableStringArrayValue = (expression: string) => {
+  const expressionError = validateDataVariableJsonValue(expression);
+  if (expressionError) {
+    return expressionError;
+  }
+  const value = parseDataVariableJsonExpression(expression);
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+    ? ""
+    : "Value expects a JSON array of strings";
+};
+
+export const createDataVariableValueFromInput = ({
+  type,
+  value,
+}: {
+  type: DataVariableValueType;
+  value: string | null;
+}): DataVariableValue => {
+  if (type === "string") {
+    return { type: "string", value: value ?? "" };
+  }
+  if (type === "number") {
+    return { type: "number", value: Number(value || 0) };
+  }
+  if (type === "boolean") {
+    return { type: "boolean", value: value !== null };
+  }
+  if (type === "string[]") {
+    return dataSourceVariableValue.parse({
+      type: "string[]",
+      value: value === null ? [] : parseDataVariableJsonExpression(value),
+    });
+  }
+  return {
+    type: "json",
+    value: value ? parseDataVariableJsonExpression(value) : undefined,
+  };
 };
 
 const allowedJsChars = /[A-Za-z_]/;
@@ -361,6 +447,7 @@ export const replaceDataSourcesInExpression = (
 ) => {
   return transpileExpression({
     expression,
+    executable: true,
     replaceVariable: (identifier) => {
       const dataSourceId = decodeDataSourceVariable(identifier);
       if (dataSourceId === undefined) {
@@ -400,13 +487,30 @@ export const computeExpression = (
   }
 };
 
+export const computeExpressionWithinScope = (
+  expression: string,
+  scope: Record<string, unknown>
+) => {
+  if (expression.trim() === "") {
+    return;
+  }
+  const variables = new Map<DataSource["name"], unknown>();
+  for (const [name, value] of Object.entries(scope)) {
+    const decodedName = decodeDataSourceVariable(name);
+    if (decodedName !== undefined) {
+      variables.set(decodedName, value);
+    }
+  }
+  return computeExpression(expression, variables);
+};
+
 const getParentInstanceById = (instances: Instances) => {
   const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
   for (const instance of instances.values()) {
     if (instance.component === "Slot") {
       continue;
     }
-    for (const child of instance.children) {
+    for (const child of instance.children ?? []) {
       if (child.type === "id") {
         parentInstanceById.set(child.value, instance.id);
       }
@@ -833,6 +937,18 @@ export const deleteVariableMutable = (
   if (dataSource.type === "resource") {
     data.resources.delete(dataSource.resourceId);
   }
+  if (data.pages !== undefined) {
+    for (const page of data.pages.pages.values()) {
+      if (page.systemDataSourceId === variableId) {
+        delete page.systemDataSourceId;
+      }
+    }
+    for (const template of data.pages.pageTemplates?.values() ?? []) {
+      if (template.systemDataSourceId === variableId) {
+        delete template.systemDataSourceId;
+      }
+    }
+  }
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   unsetNameById.set(dataSource.id, dataSource.name);
   const startingInstanceId = dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID;
@@ -866,39 +982,46 @@ export const deleteVariableMutable = (
   });
 };
 
-const valuesEqual = (left: unknown, right: unknown) => deepEqual(left, right);
-
-const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
-  new Map<Key, Value>(
-    Array.from(map, ([key, value]) => [key, structuredClone(value)])
-  );
-
-const createMapPatchPayload = <
-  Namespace extends BuilderPatchChange["namespace"],
-  Key extends string,
-  Value,
->(
-  namespace: Namespace,
-  before: Map<Key, Value>,
-  after: Map<Key, Value>
-): BuilderPatchChange => {
-  const patches: BuilderPatchChange["patches"] = [];
-  for (const [key, value] of before) {
-    const nextValue = after.get(key);
-    if (nextValue === undefined) {
-      patches.push({ op: "remove", path: [key] });
-      continue;
-    }
-    if (valuesEqual(value, nextValue) === false) {
-      patches.push({ op: "replace", path: [key], value: nextValue });
-    }
+export const createTreeVariableRebindPayload = ({
+  startingInstanceId,
+  startingInstanceIds,
+  pages,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: Pick<
+  BuilderState,
+  "pages" | "instances" | "props" | "dataSources" | "resources"
+> & {
+  startingInstanceId?: Instance["id"];
+  startingInstanceIds?: Instance["id"][];
+}) => {
+  if (
+    instances === undefined ||
+    props === undefined ||
+    dataSources === undefined ||
+    resources === undefined
+  ) {
+    return [];
   }
-  for (const [key, value] of after) {
-    if (before.has(key) === false) {
-      patches.push({ op: "add", path: [key], value });
-    }
+  if (dataSources.size === 0) {
+    return [];
   }
-  return { namespace, patches };
+  const instanceIds =
+    startingInstanceIds ??
+    (startingInstanceId === undefined ? [] : [startingInstanceId]);
+  return produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      for (const instanceId of instanceIds) {
+        rebindTreeVariablesMutable({
+          startingInstanceId: instanceId,
+          ...draft,
+        });
+      }
+    }
+  ).payload;
 };
 
 export const createDataVariableDeletePayload = ({
@@ -928,30 +1051,92 @@ export const createDataVariableDeletePayload = ({
     return { payload: [] };
   }
 
-  const beforePages = pages === undefined ? undefined : structuredClone(pages);
-  const nextData = {
-    pages: beforePages === undefined ? undefined : structuredClone(beforePages),
-    instances: cloneMap(instances),
-    props: cloneMap(props),
-    dataSources: cloneMap(dataSources),
-    resources: cloneMap(resources),
-  };
-  deleteVariableMutable(nextData, variableId);
-  const payload = compactBuilderPatchPayload([
-    beforePages === undefined || valuesEqual(beforePages, nextData.pages)
-      ? { namespace: "pages" as const, patches: [] }
-      : {
-          namespace: "pages" as const,
-          patches: [
-            { op: "replace" as const, path: [], value: nextData.pages },
-          ],
-        },
-    createMapPatchPayload("instances", instances, nextData.instances),
-    createMapPatchPayload("props", props, nextData.props),
-    createMapPatchPayload("dataSources", dataSources, nextData.dataSources),
-    createMapPatchPayload("resources", resources, nextData.resources),
-  ]);
+  const { payload } = produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      deleteVariableMutable(draft, variableId);
+    }
+  );
   return { payload, deletedVariable };
+};
+
+export const findUnusedDataVariableIds = ({
+  pages,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: {
+  pages: undefined | Pages;
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+  resources: Resources;
+}) => {
+  const usedVariables = findVariableUsagesByInstance({
+    startingInstanceId: ROOT_INSTANCE_ID,
+    pages,
+    instances,
+    props,
+    dataSources,
+    resources,
+  });
+  const variableIds: DataSource["id"][] = [];
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type !== "variable") {
+      continue;
+    }
+    const usages = usedVariables.get(dataSource.id);
+    if (usages === undefined || usages.size === 0) {
+      variableIds.push(dataSource.id);
+    }
+  }
+  return variableIds;
+};
+
+export const createUnusedDataVariablesDeletePayload = ({
+  pages,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: Pick<BuilderState, "instances" | "props" | "dataSources" | "resources"> & {
+  pages?: Pages;
+}): {
+  payload: BuilderPatchChange[];
+  deletedVariableIds: DataSource["id"][];
+} => {
+  if (
+    instances === undefined ||
+    props === undefined ||
+    dataSources === undefined ||
+    resources === undefined
+  ) {
+    return { payload: [], deletedVariableIds: [] };
+  }
+  const deletedVariableIds = findUnusedDataVariableIds({
+    pages,
+    instances,
+    props,
+    dataSources,
+    resources,
+  });
+  if (deletedVariableIds.length === 0) {
+    return { payload: [], deletedVariableIds };
+  }
+
+  const { payload } = produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      for (const variableId of deletedVariableIds) {
+        deleteVariableMutable(draft, variableId);
+      }
+    }
+  );
+  return {
+    payload,
+    deletedVariableIds,
+  };
 };
 
 const createDataVariableValue = ({
@@ -985,15 +1170,16 @@ export const createDataVariableCreatePayload = ({
   value: DataVariable["value"];
   dataSources: Iterable<DataSource>;
 }) => {
+  const dataSourceList = Array.from(dataSources);
   const errors = [];
-  for (const dataSource of dataSources) {
+  for (const dataSource of dataSourceList) {
     if (dataSource.id === dataSourceId) {
       errors.push({ type: "duplicate-id" as const, dataSourceId });
       break;
     }
   }
   const nameError = validateDataVariableNameWithSources({
-    dataSources,
+    dataSources: dataSourceList,
     name,
     variableId: dataSourceId,
     scopeInstanceId,
@@ -1024,6 +1210,49 @@ export const createDataVariableCreatePayload = ({
     ],
     errors,
   };
+};
+
+const createDataVariableUpsertPayload = ({
+  pages,
+  instances,
+  props,
+  dataSources,
+  resources,
+  variable,
+}: Pick<
+  BuilderState,
+  "pages" | "instances" | "props" | "dataSources" | "resources"
+> & {
+  variable: DataVariable;
+}) => {
+  if (
+    instances === undefined ||
+    props === undefined ||
+    dataSources === undefined ||
+    resources === undefined
+  ) {
+    return [];
+  }
+  if (variable.scopeInstanceId === undefined) {
+    return [];
+  }
+  const scopeInstanceId = variable.scopeInstanceId;
+  return produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      if (variable.type === "variable") {
+        const previous = draft.dataSources.get(variable.id);
+        if (previous?.type === "resource") {
+          draft.resources.delete(previous.resourceId);
+        }
+      }
+      draft.dataSources.set(variable.id, variable);
+      rebindTreeVariablesMutable({
+        startingInstanceId: scopeInstanceId,
+        ...draft,
+      });
+    }
+  ).payload;
 };
 
 export const createDataVariableUpdatePayload = ({
@@ -1061,12 +1290,15 @@ export const createDataVariableUpdatePayload = ({
 };
 
 export const createDataVariable = (
-  state: Pick<BuilderState, "dataSources">,
+  state: Pick<
+    BuilderState,
+    "pages" | "instances" | "props" | "dataSources" | "resources"
+  >,
   input: z.infer<typeof dataVariableCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const dataSources = getRequiredDataSources(state);
-  const dataSourceId = input.dataSourceId ?? context.createId();
+  const dataSourceId = context.createId();
   const { payload, errors } = createDataVariableCreatePayload({
     dataSourceId,
     scopeInstanceId: input.scopeInstanceId,
@@ -1084,23 +1316,65 @@ export const createDataVariable = (
       "message" in error ? error.message : "Invalid variable"
     );
   }
+  const variable = createDataVariableValue({
+    dataSourceId,
+    scopeInstanceId: input.scopeInstanceId,
+    name: input.name,
+    value: input.value,
+  });
   return createRuntimeMutation({
-    payload,
+    payload:
+      createDataVariableUpsertPayload({
+        ...state,
+        variable,
+      }) ?? payload,
     result: { dataSourceId },
-    invalidatesNamespaces: ["dataSources"],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+    ],
   });
 };
 
 export const updateDataVariable = (
-  state: Pick<BuilderState, "dataSources">,
+  state: Pick<
+    BuilderState,
+    "pages" | "instances" | "props" | "dataSources" | "resources"
+  >,
   input: z.infer<typeof dataVariableUpdateInput>
 ) => {
   const dataSources = getRequiredDataSources(state);
-  const variable = findDataVariable(dataSources.values(), input.dataSourceId);
-  if (variable === undefined) {
+  const dataSource = dataSources.get(input.dataSourceId);
+  if (dataSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Variable not found");
   }
-  const { payload, error } = createDataVariableUpdatePayload({
+  if (dataSource.type !== "variable" && input.values.value === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Variable value is required"
+    );
+  }
+  const scopeInstanceId =
+    input.values.scopeInstanceId ?? dataSource.scopeInstanceId;
+  if (scopeInstanceId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Variable scope instance is required"
+    );
+  }
+  const variable =
+    dataSource.type === "variable"
+      ? dataSource
+      : createDataVariableValue({
+          dataSourceId: dataSource.id,
+          scopeInstanceId,
+          name: dataSource.name,
+          value: input.values.value ?? { type: "string", value: "" },
+        });
+  const { error } = createDataVariableUpdatePayload({
     variable,
     values: input.values,
     dataSources: dataSources.values(),
@@ -1108,10 +1382,20 @@ export const updateDataVariable = (
   if (error) {
     return throwBuilderRuntimeError("BAD_REQUEST", error.message);
   }
+  const nextVariable = { ...variable, ...input.values };
   return createRuntimeMutation({
-    payload,
+    payload: createDataVariableUpsertPayload({
+      ...state,
+      variable: nextVariable,
+    }),
     result: { dataSourceId: variable.id },
-    invalidatesNamespaces: ["dataSources"],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+    ],
   });
 };
 
@@ -1146,6 +1430,34 @@ export const deleteDataVariable = (
   });
 };
 
+export const deleteUnusedDataVariables = (
+  state: Pick<
+    BuilderState,
+    "pages" | "instances" | "props" | "dataSources" | "resources"
+  >,
+  _input: z.infer<typeof dataVariableDeleteUnusedInput>
+) => {
+  const { payload, deletedVariableIds } =
+    createUnusedDataVariablesDeletePayload({
+      pages: state.pages,
+      instances: state.instances,
+      props: state.props,
+      dataSources: state.dataSources,
+      resources: state.resources,
+    });
+  return createRuntimeMutation({
+    payload,
+    result: {
+      dataSourceIds: deletedVariableIds,
+      deletedCount: deletedVariableIds.length,
+    },
+    invalidatesNamespaces:
+      deletedVariableIds.length === 0
+        ? []
+        : ["pages", "instances", "props", "dataSources", "resources"],
+  });
+};
+
 export const findResource = (
   resources: Iterable<Resource>,
   resourceId: Resource["id"]
@@ -1176,6 +1488,7 @@ const resourceFieldsInputBase = resource
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
     addExpressionIssues(context, getResourceExpressionErrors(fields));
+    addExpressionIssues(context, getResourceLiteralUrlErrors(fields));
   }
 );
 
@@ -1183,12 +1496,13 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
   .partial()
   .superRefine((fields, context) => {
     addExpressionIssues(context, getResourceExpressionErrors(fields));
+    addExpressionIssues(context, getResourceLiteralUrlErrors(fields));
   });
 
 export const resourceCreateInput = z.object({
-  resourceId: z.string().optional(),
+  resourceId: runtimeGeneratedIdInput,
   resource: resourceFieldsInput,
-  dataSourceId: z.string().optional(),
+  dataSourceId: runtimeGeneratedIdInput,
   scopeInstanceId: z.string().optional(),
   dataSourceName: z.string().optional(),
 });
@@ -1200,10 +1514,76 @@ export const resourceUpdateInput = z.object({
   scopeInstanceId: z.string().optional(),
 });
 
+export const resourceUpsertInput = z.object({
+  resourceId: z.string().optional(),
+  resource: resourceFieldsInput,
+  dataSourceId: z.string().optional(),
+  scopeInstanceId: z.string(),
+  dataSourceName: z.string().optional(),
+});
+
+export const resourcePropUpsertInput = z.object({
+  instanceId: z.string(),
+  propName: z.string(),
+  resourceId: z.string().optional(),
+  resource: resourceFieldsInput,
+  scopeInstanceId: z.string().optional(),
+  dataSourceName: z.string().optional(),
+});
+
 export const resourceDeleteInput = z.object({
   resourceId: z.string(),
   force: z.boolean().optional(),
 });
+
+type ResourceFormData = {
+  get(name: string): unknown;
+  getAll(name: string): unknown[];
+};
+
+export const createResourceFieldsFromFormData = ({
+  control,
+  name,
+  formData,
+}: {
+  control?: string;
+  name?: string;
+  formData: ResourceFormData;
+}): z.infer<typeof resourceFieldsInput> => {
+  const searchParamNames = formData.getAll("search-param-name");
+  const searchParamValues = formData.getAll("search-param-value");
+  const headerNames = formData.getAll("header-name");
+  const headerValues = formData.getAll("header-value");
+  return resourceFieldsInput.parse({
+    control,
+    name: name ?? formData.get("name"),
+    url: formData.get("url"),
+    searchParams: searchParamNames
+      .map((name, index) => ({ name, value: searchParamValues[index] }))
+      .filter((item) => String(item.name).trim()),
+    method: formData.get("method"),
+    headers: headerNames
+      .map((name, index) => ({ name, value: headerValues[index] }))
+      .filter((item) => String(item.name).trim()),
+    body: formData.get("body") || undefined,
+  });
+};
+
+export const createResourceValueFromFormData = ({
+  id,
+  control,
+  name,
+  formData,
+}: {
+  id: Resource["id"];
+  control?: string;
+  name?: string;
+  formData: ResourceFormData;
+}): Resource =>
+  createResourceValue({
+    id,
+    ...createResourceFieldsFromFormData({ control, name, formData }),
+  });
 
 export const createResourceValue = ({
   id,
@@ -1235,6 +1615,56 @@ export const createResourceValue = ({
     body: body || undefined,
   });
 
+export const createResourceFieldsFromResource = (
+  resource: Resource
+): z.infer<typeof resourceFieldsInput> => ({
+  name: resource.name,
+  control: resource.control,
+  url: resource.url,
+  searchParams: resource.searchParams,
+  method: resource.method,
+  headers: resource.headers,
+  body: resource.body,
+});
+
+export const validateResourceUrlExpression = (
+  expression: string,
+  scope: Record<string, unknown>
+) => {
+  const value = computeExpressionWithinScope(expression, scope);
+  if (typeof value !== "string") {
+    return "URL expects a string";
+  }
+  if (value.length === 0) {
+    return "URL is required";
+  }
+  try {
+    new URL(value);
+  } catch {
+    return "URL is invalid";
+  }
+  return "";
+};
+
+export type ResourceBodyInputType = undefined | "text" | "json";
+
+export const validateResourceBodyExpression = (
+  expression: string,
+  bodyType: ResourceBodyInputType,
+  scope: Record<string, unknown>
+) => {
+  if (expression === "") {
+    return "";
+  }
+  const value = computeExpressionWithinScope(expression, scope);
+  if (bodyType === "json") {
+    return typeof value === "object" && value !== null
+      ? ""
+      : "Expected valid JSON object in body";
+  }
+  return typeof value === "string" ? "" : "Expected string in body";
+};
+
 export const getResourceExpressionErrors = (
   fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
 ) => {
@@ -1251,6 +1681,47 @@ export const getResourceExpressionErrors = (
     validate(`searchParams.${index}.value`, searchParam.value);
   }
   return errors;
+};
+
+const getResourceLiteralUrlErrors = (
+  fields: Partial<Pick<Resource, "url">>
+) => {
+  if (fields.url === undefined || isLiteralExpression(fields.url) === false) {
+    return [];
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(fields.url);
+  } catch {
+    return [];
+  }
+  if (typeof value !== "string") {
+    return ["url: URL expects a string"];
+  }
+  if (value.length === 0) {
+    return ["url: URL is required"];
+  }
+  if (isLocalResource(value)) {
+    return [];
+  }
+  try {
+    new URL(value);
+  } catch {
+    return ["url: URL is invalid"];
+  }
+  return [];
+};
+
+const validateResourceFields = (
+  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
+) => {
+  const errors = [
+    ...getResourceExpressionErrors(fields),
+    ...getResourceLiteralUrlErrors(fields),
+  ];
+  if (errors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
+  }
 };
 
 const createResourceDataSource = ({
@@ -1317,134 +1788,15 @@ export const createWebstudioDataFromBuild = ({
   ),
 });
 
-const createMapPatches = <Value>({
-  before,
-  after,
-  getPath,
-}: {
-  before: Map<string, Value>;
-  after: Map<string, Value>;
-  getPath: (id: string) => string[];
-}) => {
-  const patches: BuilderPatchChange["patches"] = [];
-  for (const [id, value] of after) {
-    if (before.has(id) === false) {
-      patches.push({ op: "add", path: getPath(id), value });
-      continue;
-    }
-    if (deepEqual(before.get(id), value) === false) {
-      patches.push({ op: "replace", path: getPath(id), value });
-    }
-  }
-  for (const id of before.keys()) {
-    if (after.has(id) === false) {
-      patches.push({ op: "remove", path: getPath(id) });
-    }
-  }
-  return patches;
-};
-
-export const createWebstudioDataPatchPayload = ({
-  before,
-  after,
-}: {
-  before: WebstudioData;
-  after: WebstudioData;
-}): BuilderPatchChange[] => {
-  const pagesPatches = [
-    ...createMapPatches({
-      before: before.pages.pages,
-      after: after.pages.pages,
-      getPath: (id) => ["pages", id],
-    }),
-    ...createMapPatches({
-      before: before.pages.pageTemplates ?? new Map(),
-      after: after.pages.pageTemplates ?? new Map(),
-      getPath: (id) => ["pageTemplates", id],
-    }),
-    ...createMapPatches({
-      before: before.pages.folders,
-      after: after.pages.folders,
-      getPath: (id) => ["folders", id],
-    }),
-  ];
-
-  const payload: BuilderPatchChange[] = [
-    { namespace: "pages", patches: pagesPatches },
-    {
-      namespace: "assets",
-      patches: createMapPatches({
-        before: before.assets,
-        after: after.assets,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "instances",
-      patches: createMapPatches({
-        before: before.instances,
-        after: after.instances,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "props",
-      patches: createMapPatches({
-        before: before.props,
-        after: after.props,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "dataSources",
-      patches: createMapPatches({
-        before: before.dataSources,
-        after: after.dataSources,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "resources",
-      patches: createMapPatches({
-        before: before.resources,
-        after: after.resources,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "breakpoints",
-      patches: createMapPatches({
-        before: before.breakpoints,
-        after: after.breakpoints,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "styleSourceSelections",
-      patches: createMapPatches({
-        before: before.styleSourceSelections,
-        after: after.styleSourceSelections,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "styleSources",
-      patches: createMapPatches({
-        before: before.styleSources,
-        after: after.styleSources,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "styles",
-      patches: createMapPatches({
-        before: before.styles,
-        after: after.styles,
-        getPath: (id) => [id],
-      }),
-    },
-  ];
-  return compactBuilderPatchPayload(payload);
+export const produceWebstudioDataMutation = <Data extends object>(
+  data: Data,
+  recipe: (draft: Data) => void
+) => {
+  const [nextData, patches] = produceWithPatches(data, recipe);
+  return {
+    data: nextData,
+    payload: createBuilderPatchPayloadFromImmerPatches(patches),
+  };
 };
 
 export const upsertResourceMutable = ({
@@ -1515,15 +1867,15 @@ export const createResourceUpsertPatchPayload = ({
   dataSourceName?: DataSource["name"];
 }) => {
   const before = createWebstudioDataFromBuild({ build });
-  const after = createWebstudioDataFromBuild({ build });
-  upsertResourceMutable({
-    data: after,
-    resource,
-    dataSourceId,
-    scopeInstanceId,
-    dataSourceName,
-  });
-  return createWebstudioDataPatchPayload({ before, after });
+  return produceWebstudioDataMutation(before, (draft) => {
+    upsertResourceMutable({
+      data: draft,
+      resource,
+      dataSourceId,
+      scopeInstanceId,
+      dataSourceName,
+    });
+  }).payload;
 };
 
 export const createResourceCreatePayload = ({
@@ -1794,16 +2146,11 @@ export const createResource = (
   input: z.infer<typeof resourceCreateInput>,
   context: BuilderRuntimeContext
 ) => {
-  const expressionErrors = getResourceExpressionErrors(input.resource);
-  if (expressionErrors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
-  }
+  validateResourceFields(input.resource);
   const build = getRequiredBuildData(state);
-  const resourceId = input.resourceId ?? context.createId();
+  const resourceId = context.createId();
   const dataSourceId =
-    input.scopeInstanceId === undefined
-      ? undefined
-      : (input.dataSourceId ?? context.createId());
+    input.scopeInstanceId === undefined ? undefined : context.createId();
   const resultPayload = createResourceCreatePayload({
     resourceId,
     resource: input.resource,
@@ -1871,10 +2218,7 @@ export const updateResource = (
   >,
   input: z.infer<typeof resourceUpdateInput>
 ) => {
-  const expressionErrors = getResourceExpressionErrors(input.values);
-  if (expressionErrors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
-  }
+  validateResourceFields(input.values);
   const build = getRequiredBuildData(state);
   const resource = findResource(build.resources, input.resourceId);
   if (resource === undefined) {
@@ -1911,6 +2255,166 @@ export const updateResource = (
       dataSourceName: input.dataSourceName ?? dataSource?.name,
     }),
     result: { resourceId: resource.id },
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "breakpoints",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+    ],
+  });
+};
+
+export const upsertResource = (
+  state: Pick<
+    BuilderState,
+    | "pages"
+    | "instances"
+    | "props"
+    | "dataSources"
+    | "resources"
+    | "breakpoints"
+    | "styleSources"
+    | "styleSourceSelections"
+    | "styles"
+  >,
+  input: z.infer<typeof resourceUpsertInput>,
+  context: BuilderRuntimeContext
+) => {
+  validateResourceFields(input.resource);
+  const build = getRequiredBuildData(state);
+  if (
+    input.resourceId !== undefined &&
+    findResource(build.resources, input.resourceId) === undefined
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Resource not found");
+  }
+  if (
+    input.dataSourceId !== undefined &&
+    build.dataSources.some(
+      (dataSource) => dataSource.id === input.dataSourceId
+    ) === false
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Data source not found");
+  }
+
+  const resourceId = input.resourceId ?? context.createId();
+  const dataSourceId = input.dataSourceId ?? context.createId();
+  const resource = createResourceValue({
+    id: resourceId,
+    name: input.resource.name,
+    control: input.resource.control,
+    method: input.resource.method,
+    url: input.resource.url,
+    searchParams: input.resource.searchParams,
+    headers: input.resource.headers,
+    body: input.resource.body,
+  });
+
+  return createRuntimeMutation({
+    payload: createResourceUpsertPatchPayload({
+      build,
+      resource,
+      dataSourceId,
+      scopeInstanceId: input.scopeInstanceId,
+      dataSourceName: input.dataSourceName,
+    }),
+    result: { resourceId, dataSourceId },
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "breakpoints",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+    ],
+  });
+};
+
+export const upsertResourceProp = (
+  state: Pick<
+    BuilderState,
+    | "pages"
+    | "instances"
+    | "props"
+    | "dataSources"
+    | "resources"
+    | "breakpoints"
+    | "styleSources"
+    | "styleSourceSelections"
+    | "styles"
+  >,
+  input: z.infer<typeof resourcePropUpsertInput>,
+  context: BuilderRuntimeContext
+) => {
+  validateResourceFields(input.resource);
+  const build = getRequiredBuildData(state);
+  if (
+    build.instances.some((instance) => instance.id === input.instanceId) ===
+    false
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  if (
+    input.resourceId !== undefined &&
+    findResource(build.resources, input.resourceId) === undefined
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Resource not found");
+  }
+
+  const resourceId = input.resourceId ?? context.createId();
+  const resource = createResourceValue({
+    id: resourceId,
+    name: input.resource.name,
+    control: input.resource.control,
+    method: input.resource.method,
+    url: input.resource.url,
+    searchParams: input.resource.searchParams,
+    headers: input.resource.headers,
+    body: input.resource.body,
+  });
+  const dataSource = build.dataSources.find(
+    (dataSource) =>
+      dataSource.type === "resource" && dataSource.resourceId === resourceId
+  );
+  const existingProp = findProp(build.props, input.instanceId, input.propName);
+  const nextProp = createValidatedPropValueFromInput(
+    {
+      propId: existingProp?.id,
+      instanceId: input.instanceId,
+      name: input.propName,
+      type: "resource",
+      value: resourceId,
+    },
+    context.createId
+  );
+  if (nextProp.success === false) {
+    return throwBuilderRuntimeError("BAD_REQUEST", nextProp.errors.join("\n"));
+  }
+  const { payload: propPayload, propIds } = createPropUpsertPayload({
+    props: build.props,
+    nextProps: [nextProp.prop],
+  });
+  const dataSourceId = dataSource?.id ?? context.createId();
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload([
+      ...createResourceUpsertPatchPayload({
+        build,
+        resource,
+        dataSourceId,
+        scopeInstanceId: input.scopeInstanceId ?? input.instanceId,
+        dataSourceName: input.dataSourceName ?? resource.name,
+      }),
+      ...propPayload,
+    ]),
+    result: { resourceId, dataSourceId, propIds },
     invalidatesNamespaces: [
       "pages",
       "instances",

@@ -2,14 +2,9 @@ import { describe, expect, test } from "vitest";
 import type { Prop, PropMeta } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
-import type { ContentModeCapabilities } from "@webstudio-is/project/content-mode-permissions";
+import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime/content-mode-permissions";
 
-const {
-  isPropVisibleInContentMode,
-  getStartingValue,
-  getDefaultMetaForType,
-  getAndDelete,
-} = __testing__;
+const { isPropVisibleInContentMode, getAndDelete } = __testing__;
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
@@ -134,130 +129,6 @@ describe("isPropVisibleInContentMode", () => {
         })
       )
     ).toBe(false);
-  });
-});
-
-describe("getStartingValue", () => {
-  test("returns defaults for primitive editable prop metas", () => {
-    expect(
-      getStartingValue(
-        {
-          type: "string",
-          control: "text",
-          required: false,
-          defaultValue: "Text",
-        },
-        false
-      )
-    ).toEqual({ type: "string", value: "Text" });
-    expect(
-      getStartingValue(
-        {
-          type: "number",
-          control: "number",
-          required: false,
-          defaultValue: 12,
-        },
-        false
-      )
-    ).toEqual({ type: "number", value: 12 });
-    expect(
-      getStartingValue(
-        {
-          type: "boolean",
-          control: "boolean",
-          required: false,
-        },
-        true
-      )
-    ).toEqual({ type: "boolean", value: true });
-  });
-
-  test("returns defaults for list and action metas", () => {
-    expect(
-      getStartingValue(
-        {
-          type: "string[]",
-          control: "multi-select",
-          required: false,
-          options: ["a", "b"],
-        },
-        false
-      )
-    ).toEqual({ type: "string[]", value: [] });
-    expect(
-      getStartingValue(
-        {
-          type: "action",
-          control: "action",
-          required: false,
-        },
-        false
-      )
-    ).toEqual({ type: "action", value: [] });
-  });
-
-  test("does not create a starting value for file controls", () => {
-    expect(
-      getStartingValue(
-        {
-          type: "string",
-          control: "file",
-          required: false,
-        },
-        false
-      )
-    ).toBeUndefined();
-  });
-});
-
-describe("getDefaultMetaForType", () => {
-  test("returns fallback meta for primitive prop types", () => {
-    expect(getDefaultMetaForType("string")).toEqual({
-      type: "string",
-      control: "text",
-      required: false,
-    });
-    expect(getDefaultMetaForType("number")).toEqual({
-      type: "number",
-      control: "number",
-      required: false,
-    });
-    expect(getDefaultMetaForType("boolean")).toEqual({
-      type: "boolean",
-      control: "boolean",
-      required: false,
-    });
-  });
-
-  test("returns fallback meta for known special prop types", () => {
-    expect(getDefaultMetaForType("asset")).toEqual({
-      type: "string",
-      control: "file",
-      required: false,
-    });
-    expect(getDefaultMetaForType("page")).toEqual({
-      type: "string",
-      control: "url",
-      required: false,
-    });
-    expect(getDefaultMetaForType("action")).toEqual({
-      type: "action",
-      control: "action",
-      required: false,
-    });
-  });
-
-  test("throws for prop types that require explicit metadata", () => {
-    expect(() => getDefaultMetaForType("string[]")).toThrow("must have a meta");
-    expect(() => getDefaultMetaForType("json")).toThrow("must have a meta");
-    expect(() => getDefaultMetaForType("expression")).toThrow(
-      "must have a meta"
-    );
-    expect(() => getDefaultMetaForType("parameter")).toThrow(
-      "must have a meta"
-    );
-    expect(() => getDefaultMetaForType("resource")).toThrow("must have a meta");
   });
 });
 

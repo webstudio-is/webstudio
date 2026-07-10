@@ -41,9 +41,9 @@ The API commands operate on the single project configured by:
 
 {{apiCapabilityIndex}}
 
-### MCP-Only Operations
+### MCP Tool Operations
 
-These are intentionally exposed through `webstudio mcp`, not as top-level shell commands:
+These are MCP tools. From a shell, call them with the shortcut form `webstudio <tool> '<json>'` or with the explicit form `webstudio mcp single-op-call <tool> '<json>'`:
 
 {{mcpOnlyCommandIndex}}
 
@@ -70,7 +70,7 @@ apply-patch accepts either BuildPatchTransaction[] or { "transactions": BuildPat
 Each transaction has:
 
 {
-"id": "unique-client-transaction-id",
+"id": "patch-transaction-label",
 "payload": [
 {
 "namespace": "pages",
@@ -80,6 +80,10 @@ Each transaction has:
 }
 ]
 }
+
+The transaction id is a patch label used for optimistic synchronization. It is
+not a Builder record id. Do not invent ids for pages, instances, props,
+breakpoints, resources, variables, folders, assets, or other project records.
 
 Patch paths are JSON-patch-like paths into Builder store data. Map-like namespaces use ids as the first path item.
 
@@ -97,6 +101,68 @@ Supported namespaces:
 - breakpoints: responsive breakpoints
 - marketplaceProduct: marketplace metadata
 
+## Data Sources
+
+`dataSources` is the internal Builder namespace for variables. Public API, CLI,
+and MCP tools expose it through two user-facing groups:
+
+- data variables: `list-variables`, `create-variable`, `update-variable`, and
+  `delete-variable`
+- data resources: `list-resources`, `create-resource`, `update-resource`, and
+  `delete-resource`
+
+For raw `snapshot`, request the public `variables` namespace rather than the
+internal `dataSources` name. Raw patch payloads still use `dataSources` when
+applying direct changes.
+
+Variables can be scoped to an instance. Expressions under that instance can use
+the variable by name; nested variables with the same name mask outer variables.
+Variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
+Use `string[]` for lists of strings such as tags or selected categories; use
+`json` for objects, arrays with mixed shapes, or nested API filter state.
+Parameters are internal scoped runtime values provided by pages, collections,
+or components. They are not a public authoring surface: do not create, update,
+or delete parameter records. Public tools should preserve existing parameter
+records and may reference documented context values such as `system` in
+expressions where they are already in scope.
+
+Resource request fields are expressions too. Literal URLs must be JSON strings,
+for example `"https://api.example.com/posts"`. Dynamic URLs can combine strings
+and variables, for example `"https://api.example.com/posts?tag=" + filters.tag`.
+Prefer `searchParams` for query parameters that should be encoded separately:
+`[{ "name": "tag", "value": "filters.tag" }]`. Header values and body are also
+expressions, so headers can read variables such as `"Bearer " + auth.token`, and
+GraphQL bodies can return objects such as
+`{ query: "...", variables: { slug: system.params.slug } }`.
+
+Create a resource with `scopeInstanceId`/`--scope-instance` when the fetched
+resource result should be available as a read data variable. Scoped resources
+are generated into the page resource `data` map and may be loaded during page
+rendering. Use this shape for read-oriented resources such as GET CMS/API data.
+Use `dataSourceName` or `--data-source-name` to choose the variable name.
+
+For submit/write/action resources, create the resource without
+`scopeInstanceId`, then bind a component prop such as a Form `action` to the
+resource with `bind-props` and `binding.type: "resource"`. Prop-bound resources
+are generated into the page resource `action` map instead of the read `data`
+map. Use this shape for POST, PUT, DELETE, webhook, and other resources that
+should run only from an explicit form/action flow, not merely because the page
+rendered.
+
+Resource `method` can be `get`, `post`, `put`, or `delete`. Use GET for read
+data. Use POST for creates, GraphQL requests, webhooks, and form submissions.
+Use PUT for full updates/replacements. Use DELETE for deletion actions.
+Optional `control` values are `graphql` and `system`: `graphql` marks a
+GraphQL-style resource, usually POST with a query body; `system` marks a
+resource intended to use the built-in `system` parameter or one of the built-in
+local resource URLs: `"/$resources/sitemap.xml"`,
+`"/$resources/current-date"`, and `"/$resources/assets"`. The system parameter
+fields are `system.origin`, `system.pathname`, `system.params`, and
+`system.search`.
+
+Use prop bindings for dynamic values that read variables or resources; use
+direct props for static values.
+
 Commit raw patch:
 
 MCP tool: apply-patch
@@ -107,7 +173,7 @@ Rename the site:
 
 [
 {
-"id": "tx-site-name",
+"id": "patch-site-name",
 "payload": [
 {
 "namespace": "pages",
@@ -123,7 +189,7 @@ Update page title metadata:
 
 [
 {
-"id": "tx-page-title",
+"id": "patch-page-title",
 "payload": [
 {
 "namespace": "pages",
@@ -139,7 +205,7 @@ Update a text child on an element:
 
 [
 {
-"id": "tx-text",
+"id": "patch-text",
 "payload": [
 {
 "namespace": "instances",
@@ -151,62 +217,12 @@ Update a text child on an element:
 }
 ]
 
-Create a data variable:
-
-[
-{
-"id": "tx-variable",
-"payload": [
-{
-"namespace": "dataSources",
-"patches": [
-{
-"op": "add",
-"path": ["variable-id"],
-"value": {
-"type": "variable",
-"id": "variable-id",
-"scopeInstanceId": "instance-id",
-"name": "headline",
-"value": { "type": "string", "value": "Launch faster" }
-}
-}
-]
-}
-]
-}
-]
-
-Create a design token:
-
-[
-{
-"id": "tx-token",
-"payload": [
-{
-"namespace": "styleSources",
-"patches": [
-{ "op": "add", "path": ["token-id"], "value": { "type": "token", "id": "token-id", "name": "Brand Primary" } }
-]
-},
-{
-"namespace": "styles",
-"patches": [
-{
-"op": "add",
-"path": ["token-id:base:color:"],
-"value": {
-"styleSourceId": "token-id",
-"breakpointId": "base",
-"property": "color",
-"value": { "type": "keyword", "value": "red" }
-}
-}
-]
-}
-]
-}
-]
+Create records with semantic operations such as create-variable,
+create-resource, create-design-token, create-page, create-folder,
+and create-breakpoint. Raw patch rejects generated record
+creation, collection replacement, record replacement with a different `id`, and
+record id field mutations in id-keyed namespaces because Webstudio must generate
+and preserve record ids.
 
 ::doc-section{field="safetyRules"}
 
@@ -214,7 +230,7 @@ Create a design token:
 
 - For MCP apply-patch, read the latest version with MCP snapshot before writing.
 - Reuse ids from MCP snapshot output when updating existing records.
-- Generate new unique ids when adding records.
+- Do not create generated records, replace generated record collections, replace records with different ids, or mutate record id fields with raw patch. Use semantic create operations so Webstudio generates ids.
 - If apply-patch reports a version conflict, read the latest build and regenerate the patch.
 - Prefer semantic MCP read tools for discovery, then use MCP snapshot for exact patch paths.
 

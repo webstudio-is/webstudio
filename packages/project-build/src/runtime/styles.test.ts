@@ -4,6 +4,7 @@ import {
   type Breakpoint,
   getStyleDeclKey,
   type Instance,
+  type Prop,
   type StyleDecl,
   type StyleSource,
   type StyleSources,
@@ -13,7 +14,9 @@ import {
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
+  collectCssVariableReferences,
   createCssVariableDeletePayload,
+  createCssVariableNamesRegex,
   createCssVariableReferenceRewritePayload,
   createCssVariableRootDefinePayload,
   createDesignTokenCreatePayload,
@@ -33,6 +36,7 @@ import {
   createTokenStyleSource,
   cssVariableValueInput,
   designTokenCreateInput,
+  createAttachedDesignTokens,
   createDesignTokens,
   findDesignToken,
   findCssVariableUsagesByInstance,
@@ -41,6 +45,9 @@ import {
   getInstanceIdByStyleSourceId,
   getReferencedCssVariables,
   getStyleSourceInsertionIndex,
+  getUnusedCssVariableNames,
+  performCssVariableRename,
+  renameCssVariable,
   serializeCssVariables,
   createSelectedStyleDeclarationDeletePayload,
   createSelectedStyleDeclarationUpdatePayload,
@@ -49,11 +56,21 @@ import {
   styleUpdateInput,
   defineCssVariables,
   deleteDesignTokenStyles,
+  deleteSelectedStyleDeclarations,
+  deleteStyleSources,
   deleteStyleDeclarations,
+  clearStyleSourceStyles,
+  convertLocalStyleSourceToToken,
+  duplicateStyleSource,
+  renameStyleSource,
+  reorderStyleSources,
+  setStyleSourceLock,
   updateDesignTokenStyles,
+  updateSelectedStyleDeclarations,
   updateStyleDeclarations,
   validateCssVariableNameWithStyles,
   validateStyleSourceName,
+  updateVarReferencesInProps,
 } from "./styles";
 import { createLocalStyleSourceClonePlan } from "./style-utils";
 import {
@@ -68,6 +85,7 @@ import {
   deleteStyleSourcesMutable,
   findDuplicateTokens,
   findUnusedTokens,
+  getStyleSourceUsages,
   getLocalStyleSourceId,
   getLocalStyleSourceIdWithCreated,
   getOrCreateLocalStyleSourceIdMutable,
@@ -81,6 +99,15 @@ import {
   updateStyleDecl,
   validateAndRenameStyleSource,
 } from "./styles";
+
+test("rejects client-supplied design token ids", () => {
+  expect(
+    designTokenCreateInput.safeParse({
+      tokenId: "client-token-id",
+      name: "Primary",
+    }).success
+  ).toBe(false);
+});
 
 const localStyleSource: StyleSource = {
   type: "local",
@@ -275,6 +302,114 @@ describe("local style declaration payloads", () => {
       },
     ]);
   });
+
+  test("coalesces duplicate updates for a new declaration", () => {
+    expect(
+      createStyleDeclarationUpdatePayload({
+        updates: [
+          {
+            instanceId: "box",
+            breakpoint: "base",
+            property: "display",
+            value: { type: "keyword", value: "block" },
+          },
+          {
+            instanceId: "box",
+            breakpoint: "base",
+            property: "display",
+            value: { type: "keyword", value: "grid" },
+          },
+        ],
+        styleSources: new Map(),
+        styleSourceSelections: [],
+        styles: [],
+        createId: () => "local-style-source",
+      })
+    ).toEqual({
+      styleKeys: [displayStyleKey],
+      missingLocalStyleSourceInstanceIds: [],
+      payload: [
+        {
+          namespace: "styleSources",
+          patches: [
+            {
+              op: "add",
+              path: ["local-style-source"],
+              value: localStyleSource,
+            },
+          ],
+        },
+        {
+          namespace: "styleSourceSelections",
+          patches: [
+            {
+              op: "add",
+              path: ["box"],
+              value: { instanceId: "box", values: ["local-style-source"] },
+            },
+          ],
+        },
+        {
+          namespace: "styles",
+          patches: [
+            {
+              op: "add",
+              path: [displayStyleKey],
+              value: {
+                ...displayStyle,
+                value: { type: "keyword", value: "grid" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("coalesces duplicate updates for an existing declaration", () => {
+    expect(
+      createStyleDeclarationUpdatePayload({
+        updates: [
+          {
+            instanceId: "box",
+            breakpoint: "base",
+            property: "display",
+            value: { type: "keyword", value: "block" },
+          },
+          {
+            instanceId: "box",
+            breakpoint: "base",
+            property: "display",
+            value: { type: "keyword", value: "grid" },
+          },
+        ],
+        styleSources: new Map([[localStyleSource.id, localStyleSource]]),
+        styleSourceSelections: [
+          { instanceId: "box", values: [localStyleSource.id] },
+        ],
+        styles: [displayStyle],
+        createId: () => "unused",
+      })
+    ).toEqual({
+      styleKeys: [displayStyleKey],
+      missingLocalStyleSourceInstanceIds: [],
+      payload: [
+        {
+          namespace: "styles",
+          patches: [
+            {
+              op: "replace",
+              path: [displayStyleKey],
+              value: {
+                ...displayStyle,
+                value: { type: "keyword", value: "grid" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
 });
 const createCssVariableStyleDecl = (
   styleSourceId: string,
@@ -352,6 +487,34 @@ describe("css variable usage", () => {
     });
   });
 
+  test("collects css variable references in edge-case strings", () => {
+    const regex = createCssVariableNamesRegex(
+      new Set([
+        "--color",
+        "--color-dark",
+        "--spacing",
+        "--opacity",
+        "--special-$name",
+      ])
+    );
+
+    expect(
+      collectCssVariableReferences(
+        "var(--color) var(--color-dark) var(--color-darker)",
+        regex
+      )
+    ).toEqual(new Set(["--color", "--color-dark"]));
+    expect(
+      collectCssVariableReferences(
+        "calc(100%-var(--spacing)) linear-gradient(red var(--opacity)%)",
+        regex
+      )
+    ).toEqual(new Set(["--spacing", "--opacity"]));
+    expect(collectCssVariableReferences("var(--special-$name)", regex)).toEqual(
+      new Set(["--special-$name"])
+    );
+  });
+
   test("finds css variable definitions and references", () => {
     const styles = [
       createCssVariableStyleDecl("local-1", "--color", "red"),
@@ -379,6 +542,103 @@ describe("css variable usage", () => {
     expect(getReferencedCssVariables({ styles, props })).toEqual(
       new Set(["--color"])
     );
+  });
+
+  test("renames css variables in style definitions, nested values, and embed props", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "local:base:--spacing:",
+        createCssVariableStyleDecl("local", "--spacing", "10px"),
+      ],
+      [
+        "local:base:padding:",
+        {
+          ...createCssVariableStyleDecl("local", "padding", "unused"),
+          value: { type: "var", value: "spacing" },
+        },
+      ],
+      [
+        "local:base:filter:",
+        {
+          ...createCssVariableStyleDecl("local", "filter", "unused"),
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "function",
+                name: "drop-shadow",
+                args: {
+                  type: "tuple",
+                  value: [
+                    { type: "unit", value: 0, unit: "px" },
+                    { type: "var", value: "spacing" },
+                  ],
+                },
+              },
+            ],
+          } as StyleValue,
+        },
+      ],
+      [
+        "local:base:width:",
+        createCssVariableStyleDecl(
+          "local",
+          "width",
+          "calc(100% - var(--spacing))"
+        ),
+      ],
+    ]);
+    const props = new Map<string, Prop>([
+      [
+        "embed-code",
+        {
+          id: "embed-code",
+          instanceId: "embed",
+          name: "code",
+          type: "string",
+          value: ".x{padding:var(--spacing);margin:var(--spacing, 1rem)}",
+        },
+      ],
+    ]);
+
+    const renamedStyles = performCssVariableRename(
+      styles,
+      "--spacing",
+      "--space"
+    );
+    const renamedProps = updateVarReferencesInProps(
+      props,
+      "--spacing",
+      "--space"
+    );
+
+    expect(renamedStyles.has("local:base:--space:")).toBe(true);
+    expect(renamedStyles.get("local:base:padding:")?.value).toEqual({
+      type: "var",
+      value: "space",
+    });
+    expect(renamedStyles.get("local:base:width:")?.value).toEqual({
+      type: "unparsed",
+      value: "calc(100% - var(--space))",
+    });
+    expect(
+      JSON.stringify(renamedStyles.get("local:base:filter:")?.value)
+    ).toContain('"value":"space"');
+    expect(renamedProps.get("embed-code")?.value).toBe(
+      ".x{padding:var(--space);margin:var(--space, 1rem)}"
+    );
+  });
+
+  test("finds unused css variables from definitions and references", () => {
+    expect(
+      getUnusedCssVariableNames({
+        definitionsByVariable: new Map([
+          ["--used", new Set(["box"])],
+          ["--unused", new Set(["box"])],
+        ]),
+        referencedVariables: new Set(["--used"]),
+      })
+    ).toEqual(new Set(["--unused"]));
   });
 
   test("validates css variable names", () => {
@@ -785,7 +1045,6 @@ describe("runtime style operations", () => {
       {
         tokens: [
           {
-            tokenId: "token",
             name: "Primary",
             styles: { color: { type: "keyword", value: "red" } },
           },
@@ -798,8 +1057,8 @@ describe("runtime style operations", () => {
       patches: [
         {
           op: "add",
-          path: ["token:desktop:color:"],
-          value: createStyleDecl("token", "desktop", "color", {
+          path: ["new-id:desktop:color:"],
+          value: createStyleDecl("new-id", "desktop", "color", {
             type: "keyword",
             value: "red",
           }),
@@ -848,6 +1107,333 @@ describe("runtime style operations", () => {
     ]);
   });
 
+  test("creates and attaches design tokens atomically", () => {
+    const mutation = createAttachedDesignTokens(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("box")]),
+        styles: new Map(),
+        styleSources: sources([local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["local"] }],
+        ]),
+      },
+      {
+        tokens: [{ name: "Primary" }],
+        instanceIds: ["box"],
+      },
+      { createId }
+    );
+
+    expect(mutation.result).toEqual({ tokenIds: ["new-id"] });
+    expect(mutation.payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: ["new-id"],
+            value: { type: "token", id: "new-id", name: "Primary" },
+          },
+        ],
+      },
+      {
+        namespace: "styleSourceSelections",
+        patches: [{ op: "add", path: ["box", "values", 0], value: "new-id" }],
+      },
+    ]);
+  });
+
+  test("selected style source declarations use the project base breakpoint when omitted", () => {
+    const instances = toMap([instance("box")]);
+    const styleSources = sources([token("token", "Primary")]);
+    const styleSourceSelections = new Map([
+      ["box", { instanceId: "box", values: ["token"] }],
+    ]);
+
+    const updateMutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances,
+        styles: new Map(),
+        styleSources,
+        styleSourceSelections,
+      },
+      {
+        updates: [
+          {
+            instanceId: "box",
+            styleSourceId: "token",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      }
+    );
+
+    expect(updateMutation.result.styleKeys).toEqual(["token:desktop:color:"]);
+    expect(updateMutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["token:desktop:color:"],
+          value: createStyleDecl("token", "desktop", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        },
+      ],
+    });
+
+    const deleteMutation = deleteSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances,
+        styles: createStyleDeclMap([
+          createStyleDecl("token", "desktop", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        ]),
+        styleSources,
+        styleSourceSelections,
+      },
+      {
+        deletions: [
+          {
+            instanceId: "box",
+            styleSourceId: "token",
+            property: "color",
+          },
+        ],
+      }
+    );
+
+    expect(deleteMutation.result.styleKeys).toEqual(["token:desktop:color:"]);
+    expect(deleteMutation.payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [{ op: "remove", path: ["token:desktop:color:"] }],
+      },
+    ]);
+  });
+
+  test("renames, locks, and deletes style sources", () => {
+    const styleSources = sources([token("token", "Primary")]);
+
+    const renameMutation = renameStyleSource(
+      { styleSources },
+      { styleSourceId: "token", name: "Brand" }
+    );
+
+    expect(renameMutation.payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "replace",
+            path: ["token"],
+            value: token("token", "Brand"),
+          },
+        ],
+      },
+    ]);
+
+    const lockMutation = setStyleSourceLock(
+      { styleSources },
+      { styleSourceId: "token", locked: true }
+    );
+
+    expect(lockMutation.payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "replace",
+            path: ["token"],
+            value: token("token", "Primary", { locked: true }),
+          },
+        ],
+      },
+    ]);
+
+    const deleteMutation = deleteStyleSources(
+      {
+        styles: createStyleDeclMap([
+          createStyleDecl("token", "desktop", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+          createStyleDecl("local", "desktop", "color", {
+            type: "keyword",
+            value: "blue",
+          }),
+        ]),
+        styleSources: sources([token("token", "Primary"), local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["token", "local"] }],
+        ]),
+      },
+      { styleSourceIds: ["token"] }
+    );
+
+    expect(deleteMutation.payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [{ op: "remove", path: ["token"] }],
+      },
+      {
+        namespace: "styleSourceSelections",
+        patches: [{ op: "remove", path: ["box", "values", 0] }],
+      },
+      {
+        namespace: "styles",
+        patches: [{ op: "remove", path: ["token:desktop:color:"] }],
+      },
+    ]);
+  });
+
+  test("duplicates, converts, reorders, and clears style sources", () => {
+    const instances = toMap([instance("box")]);
+    const duplicateMutation = duplicateStyleSource(
+      {
+        instances,
+        styles: createStyleDeclMap([
+          createStyleDecl("token", "desktop", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        ]),
+        styleSources: sources([token("token", "Primary"), local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["token", "local"] }],
+        ]),
+      },
+      { instanceId: "box", styleSourceId: "token" },
+      { createId }
+    );
+
+    expect(duplicateMutation.result.styleSourceId).toEqual("new-id");
+    expect(duplicateMutation.payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: ["new-id"],
+            value: token("new-id", "Primary (copy)"),
+          },
+        ],
+      },
+      {
+        namespace: "styleSourceSelections",
+        patches: [
+          {
+            op: "add",
+            path: ["box", "values", 1],
+            value: "new-id",
+          },
+        ],
+      },
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["new-id:desktop:color:"],
+            value: createStyleDecl("new-id", "desktop", "color", {
+              type: "keyword",
+              value: "red",
+            }),
+          },
+        ],
+      },
+    ]);
+
+    const convertMutation = convertLocalStyleSourceToToken(
+      {
+        instances,
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      { instanceId: "box", styleSourceId: "placeholder", name: "Local Copy" },
+      { createId }
+    );
+
+    expect(convertMutation.result.styleSourceId).toEqual("new-id");
+    expect(convertMutation.payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: ["new-id"],
+            value: token("new-id", "Local Copy"),
+          },
+        ],
+      },
+      {
+        namespace: "styleSourceSelections",
+        patches: [
+          {
+            op: "add",
+            path: ["box"],
+            value: { instanceId: "box", values: ["new-id"] },
+          },
+        ],
+      },
+    ]);
+
+    const reorderMutation = reorderStyleSources(
+      {
+        instances,
+        styleSources: sources([token("token", "Primary"), local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["token", "local"] }],
+        ]),
+      },
+      { instanceId: "box", styleSourceIds: ["local", "token"] }
+    );
+
+    expect(reorderMutation.payload).toEqual([
+      {
+        namespace: "styleSourceSelections",
+        patches: [
+          {
+            op: "replace",
+            path: ["box", "values"],
+            value: ["local", "token"],
+          },
+        ],
+      },
+    ]);
+
+    const clearMutation = clearStyleSourceStyles(
+      {
+        styles: createStyleDeclMap([
+          createStyleDecl("token", "desktop", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+          createStyleDecl("local", "desktop", "color", {
+            type: "keyword",
+            value: "blue",
+          }),
+        ]),
+        styleSources: sources([token("token", "Primary"), local("local")]),
+      },
+      { styleSourceId: "token" }
+    );
+
+    expect(clearMutation.payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [{ op: "remove", path: ["token:desktop:color:"] }],
+      },
+    ]);
+  });
+
   test("define css variables uses the project base breakpoint", () => {
     const mutation = defineCssVariables(
       {
@@ -892,6 +1478,50 @@ describe("runtime style operations", () => {
         },
       ],
     });
+  });
+
+  test("renames css variable definitions and references", () => {
+    const mutation = renameCssVariable(
+      {
+        styles: createStyleDeclMap([
+          createStyleDecl("local", "base", "--old", "red"),
+          createStyleDecl("local", "base", "color", "var(--old)"),
+        ]),
+        props: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      { oldName: "--old", newName: "--new" }
+    );
+
+    expect(mutation.result).toEqual({
+      oldName: "--old",
+      newName: "--new",
+      styleKeys: [
+        "local:base:--old:",
+        "local:base:--new:",
+        "local:base:color:",
+      ],
+      propIds: [],
+    });
+    expect(mutation.payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [
+          { op: "remove", path: ["local:base:--old:"] },
+          {
+            op: "add",
+            path: ["local:base:--new:"],
+            value: createStyleDecl("local", "base", "--new", "red"),
+          },
+          {
+            op: "replace",
+            path: ["local:base:color:"],
+            value: createStyleDecl("local", "base", "color", "var(--new)"),
+          },
+        ],
+      },
+    ]);
   });
 });
 
@@ -1661,7 +2291,7 @@ describe("createStyleDeclarationUpdatePayload", () => {
     });
   });
 
-  test("replaces repeated style keys within the same batch", () => {
+  test("coalesces repeated style keys within the same batch", () => {
     const { payload, styleKeys } = createStyleDeclarationUpdatePayload({
       styleSources: sources([local("local")]),
       styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
@@ -1690,21 +2320,13 @@ describe("createStyleDeclarationUpdatePayload", () => {
             path: ["local:base:color:"],
             value: createStyleDecl("local", "base", "color", {
               type: "keyword",
-              value: "red",
-            }),
-          },
-          {
-            op: "replace",
-            path: ["local:base:color:"],
-            value: createStyleDecl("local", "base", "color", {
-              type: "keyword",
               value: "blue",
             }),
           },
         ],
       },
     ]);
-    expect(styleKeys).toEqual(["local:base:color:", "local:base:color:"]);
+    expect(styleKeys).toEqual(["local:base:color:"]);
   });
 });
 
@@ -2539,6 +3161,18 @@ describe("deleteStyleSourceMutable", () => {
 });
 
 describe("findUnusedTokens", () => {
+  test("builds style source usages from selections", () => {
+    const usages = getStyleSourceUsages([
+      { instanceId: "box-1", values: ["token-1", "token-2"] },
+      { instanceId: "box-2", values: ["token-1"] },
+      { instanceId: "box-3", values: [] },
+    ]);
+
+    expect(usages.get("token-1")).toEqual(new Set(["box-1", "box-2"]));
+    expect(usages.get("token-2")).toEqual(new Set(["box-1"]));
+    expect(usages.has("token-3")).toBe(false);
+  });
+
   test("identifies tokens with no usages", () => {
     const styleSources = sources([
       token("token1", "Used Token"),

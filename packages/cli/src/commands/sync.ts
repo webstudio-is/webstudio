@@ -4,6 +4,7 @@ import { cwd } from "node:process";
 import { spinner } from "@clack/prompts";
 import { type PublishedProjectBundle } from "@webstudio-is/protocol";
 import {
+  getApiErrorCode,
   loadProjectBundleByBuildId,
   loadProjectBundleByProjectId,
   toLocalProjectBundle,
@@ -19,7 +20,7 @@ import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { downloadAssetFiles } from "../asset-files";
 import { resolveApiConnection } from "../api-connection";
 
-type SyncDependencies = {
+export type SyncDependencies = {
   createFileIfNotExists: typeof createFileIfNotExists;
   downloadAssetFiles: typeof downloadAssetFiles;
   isFileExists: typeof isFileExists;
@@ -31,7 +32,7 @@ type SyncDependencies = {
   writeFile: typeof writeFile;
 };
 
-const defaultDependencies: SyncDependencies = {
+export const defaultSyncDependencies: SyncDependencies = {
   createFileIfNotExists,
   downloadAssetFiles,
   isFileExists,
@@ -60,14 +61,40 @@ export const syncOptions = (yargs: CommonYargsArgv) =>
 
 type SyncOptions = Partial<StrictYargsOptionsToInterface<typeof syncOptions>>;
 
+const unpublishedProjectBundleMessage = [
+  "Unable to synchronize project bundle because the project is not published.",
+  "`webstudio sync` downloads the published project bundle.",
+  "For visual verification of current MCP/API edits, use `preview.start` or `webstudio preview --source session` instead.",
+].join("\n");
+
+const isUnpublishedProjectBundleError = (error: unknown) => {
+  return getApiErrorCode(error) === "PROJECT_NOT_PUBLISHED";
+};
+
 export const sync = async (
   options: SyncOptions,
-  dependencies = defaultDependencies
+  dependencies = defaultSyncDependencies
 ) => {
   const syncing = dependencies.spinner();
 
   let project: PublishedProjectBundle | undefined;
   syncing.start(`Synchronizing project bundle`);
+  const handleProjectBundleError = (error: unknown): never => {
+    if (isUnpublishedProjectBundleError(error)) {
+      syncing.stop(unpublishedProjectBundleMessage, 2);
+      throw new HandledCliError();
+    }
+    const compatibilityMessage = stopSpinnerWithError(
+      syncing,
+      error,
+      "Unable to synchronize project bundle",
+      "sync"
+    );
+    if (compatibilityMessage !== undefined) {
+      throw new HandledCliError();
+    }
+    throw error;
+  };
 
   if (
     options.buildId !== undefined &&
@@ -84,16 +111,7 @@ export const sync = async (
       });
       project.origin = options.origin;
     } catch (error) {
-      const compatibilityMessage = stopSpinnerWithError(
-        syncing,
-        error,
-        "Unable to synchronize project bundle",
-        "sync"
-      );
-      if (compatibilityMessage !== undefined) {
-        throw new HandledCliError();
-      }
-      throw error;
+      handleProjectBundleError(error);
     }
   } else {
     let connection: Awaited<ReturnType<typeof resolveApiConnection>>;
@@ -132,23 +150,14 @@ export const sync = async (
             });
       project.origin = origin;
     } catch (error) {
-      // catch errors about unpublished project
-      const compatibilityMessage = stopSpinnerWithError(
-        syncing,
-        error,
-        "Unable to synchronize project bundle",
-        "sync"
-      );
-      if (compatibilityMessage !== undefined) {
-        throw new HandledCliError();
-      }
-
-      throw error;
+      handleProjectBundleError(error);
     }
   }
 
-  // Check that project defined
-  project satisfies PublishedProjectBundle;
+  if (project === undefined) {
+    syncing.stop("Unable to synchronize project bundle", 2);
+    throw new HandledCliError();
+  }
 
   if (project.assets.length > 0) {
     syncing.message(`Downloading ${project.assets.length} asset files`);

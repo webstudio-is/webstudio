@@ -14,13 +14,14 @@ import { ImageControl } from "~/shared/project-settings";
 import { $assets } from "~/shared/sync/data-stores";
 import { Card } from "../../marketplace/card";
 import { ImageInfo } from "../image-info";
-import type { OnChange, Values } from "./shared";
+import type { PageSettingsValues } from "@webstudio-is/project-build/runtime/pages";
+import type { OnChange } from "./shared";
 
 export const MarketplaceSection = ({
   values,
   onChange,
 }: {
-  values: Values;
+  values: PageSettingsValues;
   onChange: OnChange;
 }) => {
   const excludeId = useId();

@@ -35,6 +35,19 @@ export type {
 
 const maxResponsePreviewLength = 500;
 
+type WebstudioFragmentPayload = {
+  children: unknown[];
+  instances: unknown[];
+  assets: unknown[];
+  dataSources: unknown[];
+  resources: unknown[];
+  props: unknown[];
+  breakpoints: unknown[];
+  styleSourceSelections: unknown[];
+  styleSources: unknown[];
+  styles: unknown[];
+};
+
 const getResponsePreview = async (response: Response) => {
   try {
     const text = await response.clone().text();
@@ -141,7 +154,9 @@ export const getApiErrorCode = (error: unknown) => {
   if (typeof data !== "object" || data === null) {
     return;
   }
-  const code = (data as { code?: unknown }).code;
+  const code =
+    (data as { webstudioCode?: unknown }).webstudioCode ??
+    (data as { code?: unknown }).code;
   return typeof code === "string" && isPublicApiRemoteErrorCode(code)
     ? code
     : undefined;
@@ -261,8 +276,12 @@ const projectMutationInput = <
   const operation = getPublicApiOperation(command);
   return projectMutation<Params, Result>(
     getPublicApiOperationPath(command),
-    (params) =>
-      pickInput(params, operation.inputFields as readonly (keyof Params)[])
+    (params) => ({
+      ...pickInput(params, operation.inputFields as readonly (keyof Params)[]),
+      ...(operation.requiresAssets || operation.requiresConfirm
+        ? { confirm: true }
+        : {}),
+    })
   );
 };
 
@@ -282,6 +301,12 @@ const projectConfirmedMutationInput = <
   );
 };
 
+type RuntimeOperationParams = AuthProjectParams & Record<string, unknown>;
+
+const runtimeProjectMutation = <Command extends PublicApiCommand>(
+  command: Command
+) => projectMutationInput<RuntimeOperationParams>(command);
+
 const stagedUploadChunkSize = 3 * 1024 * 1024;
 
 const formatMebibytes = (bytes: number) =>
@@ -296,7 +321,6 @@ type AssetUpload = {
 };
 
 type AssetUploadDescriptor = {
-  id?: string;
   name: string;
   type: Asset["type"];
   format?: string;
@@ -308,29 +332,6 @@ type AssetUploadResult = { uploadedAssets?: Asset[] };
 type AssetUploadBatchResult =
   | { status: "fulfilled"; uploadedAssets: Asset[] }
   | { status: "rejected"; asset: Asset; error: unknown };
-
-const toArrayBuffer = async (data: BinaryAssetData) => {
-  if (data instanceof Blob) {
-    return data.arrayBuffer();
-  }
-  if (ArrayBuffer.isView(data)) {
-    return data.buffer.slice(
-      data.byteOffset,
-      data.byteOffset + data.byteLength
-    );
-  }
-  return data;
-};
-
-const getSha256Hash = async (data: BinaryAssetData) => {
-  const hashBuffer = await crypto.subtle.digest(
-    "SHA-256",
-    await toArrayBuffer(data)
-  );
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-};
 
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -359,7 +360,6 @@ const getAssetUploadUrl = ({
   );
   url.searchParams.set("projectId", projectId);
   url.searchParams.set("type", asset.type);
-  url.searchParams.set("assetId", asset.id);
   if (asset.type === "image") {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
@@ -404,10 +404,7 @@ export const uploadAsset = async (
     throw new Error(result.errors);
   }
   return "uploadedAssets" in result && Array.isArray(result.uploadedAssets)
-    ? result.uploadedAssets.map((asset) => ({
-        ...asset,
-        id: asset.id || upload.asset.id,
-      }))
+    ? result.uploadedAssets
     : [];
 };
 
@@ -422,17 +419,13 @@ export const uploadAssets = async (
       try {
         const uploadedAssets = await retryOnce(async () => {
           const data = await params.readAssetData(asset);
-          const assetWithId = {
-            ...asset,
-            id: asset.id || (await getSha256Hash(data)),
-          };
           return await uploadAsset({
             authToken: params.authToken,
             headers: params.headers,
             origin: params.origin,
             projectId: params.projectId,
             upload: {
-              asset: assetWithId,
+              asset,
               data,
             },
           });
@@ -469,7 +462,7 @@ const toUploadAsset = ({
   projectId: string;
 }): Asset => {
   const base = {
-    id: descriptor.id ?? "",
+    id: "",
     projectId,
     name: descriptor.name,
     filename: descriptor.name,
@@ -607,7 +600,6 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
   const {
     assets,
     build,
-    bundleVersion: synchronizedBundleVersion,
     origin,
     page,
     pages,
@@ -616,7 +608,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     user,
   } = normalizedProject;
   return {
-    bundleVersion: synchronizedBundleVersion ?? currentBundleVersion,
+    bundleVersion: currentBundleVersion,
     build,
     page,
     pages,
@@ -640,11 +632,11 @@ export const checkProjectBuildPermission = async (
 };
 
 const formatSchemaIssues = (
-  issues: Array<{ path: Array<string | number>; message: string }>
+  issues: Array<{ path: PropertyKey[]; message: string }>
 ) =>
   issues
     .map((issue) => {
-      const path = issue.path.join(".");
+      const path = issue.path.map(String).join(".");
       return path === "" ? issue.message : `${path}: ${issue.message}`;
     })
     .join(", ");
@@ -761,7 +753,6 @@ export const getPageByPath = projectQueryInput<
 
 export const createPage = projectMutationInput<
   AuthProjectParams & {
-    pageId?: string;
     name: string;
     path: string;
     title?: string;
@@ -776,6 +767,140 @@ export const updatePage = projectMutationInput<
     values: PageFieldsInput;
   }
 >("update-page");
+
+export const updatePageSettings = runtimeProjectMutation(
+  "update-page-settings"
+);
+
+export const updatePageMarketplace = runtimeProjectMutation(
+  "update-page-marketplace"
+);
+
+export const savePagePathInHistory = runtimeProjectMutation(
+  "save-page-path-history"
+);
+
+export const setHomePage = runtimeProjectMutation("set-home-page");
+
+export const updateMarketplaceProduct = runtimeProjectMutation(
+  "update-marketplace-product"
+);
+
+export const getMarketplaceProduct = projectQueryInput<AuthProjectParams>(
+  "get-marketplace-product"
+);
+
+export const setRedirects = runtimeProjectMutation("set-redirects");
+
+export const copyPage = runtimeProjectMutation("copy-page");
+
+export const createPageTemplate = runtimeProjectMutation(
+  "create-page-template"
+);
+
+export const updatePageTemplate = runtimeProjectMutation(
+  "update-page-template"
+);
+
+export const deletePageTemplate = runtimeProjectMutation(
+  "delete-page-template"
+);
+
+export const duplicatePageTemplate = runtimeProjectMutation(
+  "duplicate-page-template"
+);
+
+export const reorderPageTemplate = runtimeProjectMutation(
+  "reorder-page-template"
+);
+
+export const duplicateFolder = runtimeProjectMutation("duplicate-folder");
+
+export const pastePageClipboardItem = runtimeProjectMutation(
+  "paste-page-clipboard-item"
+);
+
+export const movePageTreeItem = runtimeProjectMutation("move-page-tree-item");
+
+export const reparentPageTreeOrphans = runtimeProjectMutation(
+  "reparent-page-tree-orphans"
+);
+
+export const reparentInstance = runtimeProjectMutation("reparent-instance");
+
+export const fillGrid = runtimeProjectMutation("fill-grid");
+
+export const wrapInstance = runtimeProjectMutation("wrap-instance");
+
+export const convertInstance = runtimeProjectMutation("convert-instance");
+
+export const unwrapInstance = runtimeProjectMutation("unwrap-instance");
+
+export const duplicateInstance = runtimeProjectMutation("duplicate-instance");
+
+export const deleteInstanceBySelector = runtimeProjectMutation(
+  "delete-instance-by-selector"
+);
+
+export const setTextContent = runtimeProjectMutation("set-text-content");
+
+export const updateTextTree = runtimeProjectMutation("update-text-tree");
+
+export const setInstanceTag = runtimeProjectMutation("set-instance-tag");
+
+export const setInstanceLabel = runtimeProjectMutation("set-instance-label");
+
+export const updateSelectedStyleDeclarations = runtimeProjectMutation(
+  "update-selected-styles"
+);
+
+export const deleteSelectedStyleDeclarations = runtimeProjectMutation(
+  "delete-selected-styles"
+);
+
+export const createAttachedDesignTokens = runtimeProjectMutation(
+  "create-attached-design-token"
+);
+
+export const renameStyleSource = runtimeProjectMutation("rename-style-source");
+
+export const deleteStyleSources = runtimeProjectMutation("delete-style-source");
+
+export const setStyleSourceLock = runtimeProjectMutation(
+  "set-style-source-lock"
+);
+
+export const reorderStyleSources = runtimeProjectMutation(
+  "reorder-style-sources"
+);
+
+export const clearStyleSourceStyles = runtimeProjectMutation(
+  "clear-style-source-styles"
+);
+
+export const duplicateStyleSource = runtimeProjectMutation(
+  "duplicate-style-source"
+);
+
+export const convertLocalStyleSourceToToken = runtimeProjectMutation(
+  "convert-local-style-source-to-token"
+);
+
+export const renameCssVariable = runtimeProjectMutation("rename-css-variable");
+
+export const deleteUnusedVariables = runtimeProjectMutation(
+  "delete-unused-variables"
+);
+
+export const upsertResource = runtimeProjectMutation("upsert-resource");
+
+export const upsertResourceProp = runtimeProjectMutation(
+  "upsert-resource-prop"
+);
+
+export const updateAsset = runtimeProjectMutation("update-asset");
+
+export const addAsset = runtimeProjectMutation("add-asset");
 
 type ProjectSettingsInput = {
   meta?: {
@@ -839,13 +964,14 @@ type BreakpointInput = {
   condition?: string;
 };
 
+type BreakpointCreateInput = Omit<BreakpointInput, "id">;
 type BreakpointUpdateInput = Partial<Omit<BreakpointInput, "id">>;
 type NullableBreakpointUpdateInput = {
   [Key in keyof BreakpointUpdateInput]?: BreakpointUpdateInput[Key] | null;
 };
 
 export const createBreakpoint = projectMutationInput<
-  AuthProjectParams & BreakpointInput
+  AuthProjectParams & BreakpointCreateInput
 >("create-breakpoint");
 
 export const updateBreakpoint = projectMutationInput<
@@ -897,7 +1023,6 @@ export const listFolders = projectQueryInput<
 
 export const createFolder = projectMutationInput<
   AuthProjectParams & {
-    folderId?: string;
     name: string;
     slug: string;
     parentFolderId?: string;
@@ -942,20 +1067,23 @@ export const inspectInstance = projectQueryInput<
   }
 >("inspect-instance");
 
-export const appendInstance = projectMutationInput<
+export const insertComponent = projectMutationInput<
   AuthProjectParams & {
     parentInstanceId: string;
+    component: string;
     mode?: "append" | "prepend" | "replace";
     insertIndex?: number;
-    children: Array<{
-      instanceId?: string;
-      component?: string;
-      tag: string;
-      label?: string;
-      text?: string;
-    }>;
   }
->("append-instance");
+>("insert-component");
+
+export const insertFragment = projectMutationInput<
+  AuthProjectParams & {
+    parentInstanceId: string;
+    fragment: WebstudioFragmentPayload;
+    mode?: "append" | "prepend" | "replace";
+    insertIndex?: number;
+  }
+>("insert-fragment");
 
 export const moveInstance = projectMutationInput<
   AuthProjectParams & {
@@ -982,7 +1110,6 @@ export const deleteInstance = projectMutationInput<
 >("delete-instance");
 
 type PropValueInput = {
-  propId?: string;
   instanceId: string;
   name: string;
   type:
@@ -1003,7 +1130,6 @@ type PropValueInput = {
 };
 
 type PropBindingInput = {
-  propId?: string;
   instanceId: string;
   name: string;
   binding:
@@ -1123,7 +1249,6 @@ type DesignTokenStyleInput = {
 export const createDesignTokens = projectMutationInput<
   AuthProjectParams & {
     tokens: Array<{
-      tokenId?: string;
       name: string;
       styles?: Record<string, unknown>;
       declarations?: DesignTokenStyleInput[];
@@ -1211,7 +1336,6 @@ export const listVariables = projectQueryInput<
 
 export const createVariable = projectMutationInput<
   AuthProjectParams & {
-    dataSourceId?: string;
     scopeInstanceId: string;
     name: string;
     value: VariableValueInput;
@@ -1253,9 +1377,7 @@ export const listResources = projectQueryInput<
 
 export const createResource = projectMutationInput<
   AuthProjectParams & {
-    resourceId?: string;
     resource: ResourceFieldsInput;
-    dataSourceId?: string;
     scopeInstanceId?: string;
     dataSourceName?: string;
   }

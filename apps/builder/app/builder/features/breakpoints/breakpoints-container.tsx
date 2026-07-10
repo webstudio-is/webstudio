@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
-import { $breakpoints, $styles } from "~/shared/sync/data-stores";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import {
   $selectedBreakpoint,
   $selectedBreakpointId,
@@ -14,8 +14,8 @@ import { ConfirmationDialog } from "./confirmation-dialog";
 import { $breakpointsMenuView } from "~/shared/breakpoints";
 import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime/breakpoints";
 import { setCanvasWidth } from "../../shared/calc-canvas-width";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import type { Breakpoint } from "@webstudio-is/sdk";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const hideOnMobile = {
   "@media (max-width: 800px)": {
@@ -35,18 +35,12 @@ export const BreakpointsContainer = () => {
     if (breakpointToDelete === undefined) {
       return;
     }
-    serverSyncStore.createTransaction(
-      [$breakpoints, $styles],
-      (breakpoints, styles) => {
-        const breakpointId = breakpointToDelete.id;
-        breakpoints.delete(breakpointId);
-        for (const [styleDeclKey, styleDecl] of styles) {
-          if (styleDecl.breakpointId === breakpointId) {
-            styles.delete(styleDeclKey);
-          }
-        }
-      }
-    );
+    executeRuntimeMutation({
+      id: "breakpoints.delete",
+      input: {
+        breakpointId: breakpointToDelete.id,
+      },
+    });
 
     if (
       breakpointToDelete.id === selectedBreakpoint?.id &&

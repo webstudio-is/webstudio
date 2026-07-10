@@ -5,8 +5,10 @@ import {
   type AuthPermit,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
+import type { BuilderApiCapability } from "@webstudio-is/project-build/contracts/permissions";
 
-type ApiPermit = AuthPermit | "api";
+type ApiPermit = BuilderApiCapability;
+type ProjectApiPermit = Extract<AuthPermit, BuilderApiCapability>;
 
 type ApiToken = Awaited<ReturnType<typeof authDb.getTokenInfo>>;
 
@@ -47,7 +49,7 @@ export const assertApiTokenPermit = async (ctx: AppContext) => {
 export const assertApiProjectPermit = async (
   ctx: AppContext,
   projectId: string,
-  permit: AuthPermit
+  permit: ProjectApiPermit
 ) => {
   const { token, permits } = await assertApiTokenPermit(ctx);
   if (token.projectId !== projectId) {

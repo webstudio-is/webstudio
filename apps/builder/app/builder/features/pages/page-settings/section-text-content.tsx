@@ -2,45 +2,25 @@ import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { Grid, Label, Text, TextArea } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/sdk";
-import { z } from "zod";
 import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
 import { computeExpression } from "@webstudio-is/project-build/runtime/data";
+import type {
+  PageSettingsErrors,
+  PageSettingsValues,
+} from "@webstudio-is/project-build/runtime/pages";
 import { $pageRootScope } from "../page-utils";
-import type { Errors, OnChange, Values } from "./shared";
-
-const textContentValues = z.object({
-  content: z.string().optional(),
-});
-
-export const validateTextContentSection = (
-  values: Values,
-  variableValues: Map<string, unknown>
-): Errors => {
-  if (values.documentType !== "text") {
-    return {};
-  }
-
-  const parsedResult = textContentValues.safeParse({
-    content: computeExpression(values.content, variableValues),
-  });
-
-  if (parsedResult.success === false) {
-    return parsedResult.error.formErrors.fieldErrors;
-  }
-
-  return {};
-};
+import type { OnChange } from "./shared";
 
 export const TextContentSection = ({
   values,
   errors,
   onChange,
 }: {
-  values: Values;
-  errors: Errors;
+  values: PageSettingsValues;
+  errors: PageSettingsErrors;
   onChange: OnChange;
 }) => {
   const { variableValues, scope, aliases } = useStore($pageRootScope);

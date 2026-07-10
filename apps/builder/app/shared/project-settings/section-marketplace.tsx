@@ -20,9 +20,9 @@ import { Image, wsImageLoader } from "@webstudio-is/image";
 import { useState } from "react";
 import {
   type MarketplaceProduct,
-  marketplaceProduct,
   marketplaceCategories,
 } from "@webstudio-is/project-build";
+import { marketplaceProductUpdateInput } from "@webstudio-is/project-build/runtime/project-settings";
 import { ImageControl } from "./image-control";
 import {
   $assets,
@@ -31,9 +31,9 @@ import {
 } from "~/shared/sync/data-stores";
 import { useIds } from "~/shared/form-utils";
 import type { MarketplaceApprovalStatus } from "@webstudio-is/project";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { rightPanelWidth, sectionSpacing } from "./utils";
+import { executeRuntimeMutation } from "../instance-utils/data";
 
 const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
@@ -63,9 +63,9 @@ const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
 };
 
 const validate = (data: MarketplaceProduct) => {
-  const parsedResult = marketplaceProduct.safeParse(data);
+  const parsedResult = marketplaceProductUpdateInput.safeParse(data);
   if (parsedResult.success === false) {
-    return parsedResult.error.formErrors.fieldErrors;
+    return parsedResult.error.flatten().fieldErrors;
   }
 };
 
@@ -160,15 +160,10 @@ export const SectionMarketplace = () => {
       if (errors) {
         return;
       }
-      serverSyncStore.createTransaction(
-        [$marketplaceProduct],
-        (marketplaceProduct) => {
-          if (marketplaceProduct === undefined) {
-            return;
-          }
-          Object.assign(marketplaceProduct, nextData);
-        }
-      );
+      executeRuntimeMutation({
+        id: "projectSettings.updateMarketplaceProduct",
+        input: nextData,
+      });
     };
   };
 

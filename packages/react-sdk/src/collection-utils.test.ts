@@ -45,6 +45,36 @@ test("generateCollectionIterationCode produces correct template", () => {
   return`);
 });
 
+test("generateCollectionIterationCode omits redundant fallback for static arrays", () => {
+  const code = generateCollectionIterationCode({
+    dataExpression: `["a","b"]`,
+    keyVariable: "index",
+    itemVariable: "item",
+  });
+
+  expect(code).toBe(`Object.entries(
+  // @ts-ignore
+  ["a","b"]
+).map(([_key, item]: any) => {
+  const index = Array.isArray(["a","b"]) ? Number(_key) : _key;
+  return`);
+});
+
+test("generateCollectionIterationCode omits redundant fallback for static objects", () => {
+  const code = generateCollectionIterationCode({
+    dataExpression: `({"first":"a"})`,
+    keyVariable: "key",
+    itemVariable: "item",
+  });
+
+  expect(code).toBe(`Object.entries(
+  // @ts-ignore
+  ({"first":"a"})
+).map(([_key, item]: any) => {
+  const key = Array.isArray(({"first":"a"})) ? Number(_key) : _key;
+  return`);
+});
+
 test("generated code works with arrays at runtime", () => {
   // @ts-expect-error - used in eval below
   const data = ["apple", "banana", "orange"];

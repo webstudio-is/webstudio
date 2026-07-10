@@ -12,7 +12,7 @@ import type { Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $selectedPageId, selectInstance } from "~/shared/nano-states";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
+import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime/lookup";
 import {
   closeCommandPanel,
   $commandSearch,

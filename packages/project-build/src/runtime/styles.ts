@@ -26,6 +26,7 @@ import {
 } from "./pages";
 import { getInstanceDepths } from "./instances";
 import { throwBuilderRuntimeError } from "./errors";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 import { serializeStyleDeclarations } from "./style-utils";
 import { createPropValue } from "./props";
@@ -248,6 +249,24 @@ export const styleDeleteDeclarationsInput = z.object({
   deletions: jsonArrayInput(styleDeleteInput),
 });
 
+const selectedStyleUpdateInput = styleUpdateInput
+  .omit({ createLocalIfMissing: true })
+  .extend({
+    styleSourceId: z.string(),
+  });
+
+const selectedStyleDeleteInput = styleDeleteInput.extend({
+  styleSourceId: z.string(),
+});
+
+export const selectedStyleUpdateDeclarationsInput = z.object({
+  updates: jsonArrayInput(selectedStyleUpdateInput),
+});
+
+export const selectedStyleDeleteDeclarationsInput = z.object({
+  deletions: jsonArrayInput(selectedStyleDeleteInput),
+});
+
 export const styleReplaceInput = z.object({
   property: z.string(),
   fromValue: z.unknown(),
@@ -334,7 +353,7 @@ export type CssVariableNameError =
 export const cssVariableValueInput = z.union([z.string(), styleValue]);
 
 export const cssVariableDefineInput = z.object({
-  vars: z.record(cssVariableValueInput),
+  vars: z.record(z.string(), cssVariableValueInput),
   overwrite: z.boolean().optional(),
 });
 
@@ -344,8 +363,13 @@ export const cssVariableDeleteInput = z.object({
 });
 
 export const cssVariableRewriteRefsInput = z.object({
-  map: z.record(z.string()),
+  map: z.record(z.string(), z.string()),
   scopeRegex: z.string().optional(),
+});
+
+export const cssVariableRenameInput = z.object({
+  oldName: z.string(),
+  newName: z.string(),
 });
 
 export const validateCssVariableNameWithStyles = ({
@@ -544,6 +568,22 @@ export const getReferencedCssVariables = ({
   }
 
   return referenced;
+};
+
+export const getUnusedCssVariableNames = ({
+  definitionsByVariable,
+  referencedVariables,
+}: {
+  definitionsByVariable: Iterable<[string, Set<Instance["id"]>]>;
+  referencedVariables: Set<string>;
+}) => {
+  const unusedVariables = new Set<string>();
+  for (const [name] of definitionsByVariable) {
+    if (referencedVariables.has(name) === false) {
+      unusedVariables.add(name);
+    }
+  }
+  return unusedVariables;
 };
 
 const toCssVariableStyleValue = (value: string | StyleValue): StyleValue =>
@@ -769,7 +809,7 @@ export const createCssVariableReferenceRewritePayload = ({
       declaration.value,
       replacements
     );
-    if (JSON.stringify(value) === JSON.stringify(declaration.value)) {
+    if (deepEqual(value, declaration.value)) {
       continue;
     }
     const nextDeclaration = updateStyleDecl(declaration, { value });
@@ -842,7 +882,7 @@ export const performCssVariableRename = (
     const value = rewriteCssVariableReferencesInStyleValue(declaration.value, {
       [oldProperty]: newProperty,
     });
-    if (JSON.stringify(value) !== JSON.stringify(declaration.value)) {
+    if (deepEqual(value, declaration.value) === false) {
       updatedStyles.set(key, { ...declaration, value });
     }
   }
@@ -901,6 +941,87 @@ export const renameCssVariableMutable = ({
   }
 };
 
+export const createCssVariableRenamePayload = ({
+  oldName,
+  newName,
+  styles,
+  props,
+}: {
+  oldName: string;
+  newName: string;
+  styles: Iterable<StyleDecl>;
+  props: Iterable<Prop>;
+}): {
+  payload: BuilderPatchChange[];
+  styleKeys: string[];
+  propIds: string[];
+} => {
+  const replacements = { [oldName]: newName };
+  const stylePatches = [];
+  for (const declaration of styles) {
+    const key = getStyleDeclKey(declaration);
+    const nextValue = rewriteCssVariableReferencesInStyleValue(
+      declaration.value,
+      replacements
+    );
+    const nextDeclaration =
+      declaration.property === oldName
+        ? updateStyleDecl(declaration, {
+            property: newName as StyleDecl["property"],
+            value: nextValue,
+          })
+        : updateStyleDecl(declaration, { value: nextValue });
+    const nextKey = getStyleDeclKey(nextDeclaration);
+    if (declaration.property === oldName) {
+      stylePatches.push({ op: "remove" as const, path: [key] });
+      stylePatches.push({
+        op: "add" as const,
+        path: [nextKey],
+        value: nextDeclaration,
+      });
+      continue;
+    }
+    if (deepEqual(nextValue, declaration.value) === false) {
+      stylePatches.push({
+        op: "replace" as const,
+        path: [key],
+        value: nextDeclaration,
+      });
+    }
+  }
+
+  const propPatches = [];
+  for (const prop of props) {
+    if (prop.type !== "string" || prop.name !== "code" || prop.value === "") {
+      continue;
+    }
+    const value = rewriteCssVariableReferencesInString(
+      prop.value,
+      replacements
+    );
+    if (value !== prop.value) {
+      propPatches.push({
+        op: "replace" as const,
+        path: [prop.id],
+        value: createPropValue({ ...prop, value }),
+      });
+    }
+  }
+
+  const payload: BuilderPatchChange[] = [];
+  if (stylePatches.length > 0) {
+    payload.push({ namespace: "styles", patches: stylePatches });
+  }
+  if (propPatches.length > 0) {
+    payload.push({ namespace: "props", patches: propPatches });
+  }
+  return {
+    payload,
+    styleKeys: stylePatches.map((patch) => String(patch.path[0])),
+    propIds: propPatches.map((patch) => String(patch.path[0])),
+  };
+};
+
 export const serializeCssVariables = ({
   styles,
   props,
@@ -914,15 +1035,18 @@ export const serializeCssVariables = ({
   filter?: string;
   withUsage?: boolean;
 }) => {
+  const styleList = Array.from(styles);
+  const propList = Array.from(props);
+  const styleSourceSelectionList = Array.from(styleSourceSelections);
   const instanceIdByStyleSourceId = getInstanceIdByStyleSourceId(
-    styleSourceSelections
+    styleSourceSelectionList
   );
   const usageCounts =
     withUsage === true
-      ? getCssVariableUsageCounts({ styles, props })
+      ? getCssVariableUsageCounts({ styles: styleList, props: propList })
       : undefined;
   return {
-    vars: Array.from(styles)
+    vars: styleList
       .filter((declaration) => declaration.property.startsWith("--"))
       .filter(
         (declaration) =>
@@ -948,17 +1072,31 @@ export const designTokenStyleInput = z.object({
   breakpoint: z.string().optional(),
   state: z.string().optional(),
 });
+type DesignTokenStyleInput = z.input<typeof designTokenStyleInput>;
 
 export const designTokenCreateInput = z.object({
-  tokenId: z.string().optional(),
+  tokenId: runtimeGeneratedIdInput,
   name: z.string().min(1),
-  styles: z.record(z.unknown()).optional(),
+  styles: z.record(z.string(), z.unknown()).optional(),
   declarations: z.array(designTokenStyleInput).optional(),
 });
 
 export const designTokenCreateManyInput = z.object({
   tokens: jsonArrayInput(designTokenCreateInput),
 });
+
+export const designTokenCreateAttachedInput = z.object({
+  tokens: jsonArrayInput(designTokenCreateInput),
+  instanceIds: z.array(z.string()).min(1),
+  position: z.enum(["before-local", "after-local"]).optional(),
+});
+
+type DesignTokenCreatePayloadInput = Omit<
+  z.infer<typeof designTokenCreateInput>,
+  "tokenId"
+> & {
+  tokenId?: StyleSource["id"];
+};
 
 export const designTokenStyleUpdatesInput = z.object({
   designTokenId: z.string(),
@@ -985,6 +1123,40 @@ export const designTokenExtractInput = z.object({
   instanceIds: z.array(z.string()).min(1),
   name: z.string().min(1),
   removeLocalProps: z.array(z.string()).optional(),
+});
+
+export const styleSourceRenameInput = z.object({
+  styleSourceId: z.string(),
+  name: z.string(),
+});
+
+export const styleSourceDeleteInput = z.object({
+  styleSourceIds: z.array(z.string()).min(1),
+});
+
+export const styleSourceLockInput = z.object({
+  styleSourceId: z.string(),
+  locked: z.boolean(),
+});
+
+export const styleSourceReorderInput = z.object({
+  instanceId: z.string(),
+  styleSourceIds: z.array(z.string()),
+});
+
+export const styleSourceClearStylesInput = z.object({
+  styleSourceId: z.string(),
+});
+
+export const styleSourceDuplicateInput = z.object({
+  instanceId: z.string(),
+  styleSourceId: z.string(),
+});
+
+export const styleSourceConvertLocalToTokenInput = z.object({
+  instanceId: z.string(),
+  styleSourceId: z.string(),
+  name: z.string().min(1).optional(),
 });
 
 export const createTokenStyleSource = ({
@@ -1039,18 +1211,8 @@ export const validateStyleSourceName = ({
 
 export const createDesignTokenStyleInputs = (input: {
   styles?: Record<string, unknown>;
-  declarations?: Array<{
-    property: string;
-    value?: unknown;
-    breakpoint?: string;
-    state?: StyleDecl["state"];
-  }>;
-}): Array<{
-  property: string;
-  value?: unknown;
-  breakpoint?: string;
-  state?: StyleDecl["state"];
-}> => [
+  declarations?: DesignTokenStyleInput[];
+}): DesignTokenStyleInput[] => [
   ...Object.entries(input.styles ?? {}).map(([property, value]) => ({
     property,
     value,
@@ -1705,6 +1867,23 @@ export const findUnusedTokens = ({
   return unusedTokenIds;
 };
 
+export const getStyleSourceUsages = (
+  styleSourceSelections: Iterable<StyleSourceSelection>
+) => {
+  const styleSourceUsages = new Map<StyleSource["id"], Set<Instance["id"]>>();
+  for (const { instanceId, values } of styleSourceSelections) {
+    for (const styleSourceId of values) {
+      let usages = styleSourceUsages.get(styleSourceId);
+      if (usages === undefined) {
+        usages = new Set();
+        styleSourceUsages.set(styleSourceId, usages);
+      }
+      usages.add(instanceId);
+    }
+  }
+  return styleSourceUsages;
+};
+
 export const deleteStyleSourcesMutable = ({
   styleSourceIds,
   styleSources,
@@ -1726,6 +1905,97 @@ export const deleteStyleSourcesMutable = ({
   }
 };
 
+export const createStyleSourceDeletePayload = ({
+  styleSourceIds,
+  styleSources,
+  styleSourceSelections,
+  styles,
+}: {
+  styleSourceIds: StyleSource["id"][];
+  styleSources: StyleSources;
+  styleSourceSelections: StyleSourceSelections;
+  styles: Styles;
+}) => {
+  const styleSourceIdSet = new Set(styleSourceIds);
+  const styleSourcePatches = [];
+  for (const styleSourceId of styleSourceIds) {
+    if (styleSources.has(styleSourceId)) {
+      styleSourcePatches.push({
+        op: "remove" as const,
+        path: [styleSourceId],
+      });
+    }
+  }
+
+  const styleSourceSelectionPatches = [];
+  for (const styleSourceSelection of styleSourceSelections.values()) {
+    const indexes = styleSourceSelection.values
+      .map((styleSourceId, index) =>
+        styleSourceIdSet.has(styleSourceId) ? index : undefined
+      )
+      .filter((index): index is number => index !== undefined)
+      .sort((left, right) => right - left);
+    for (const index of indexes) {
+      styleSourceSelectionPatches.push({
+        op: "remove" as const,
+        path: [styleSourceSelection.instanceId, "values", index],
+      });
+    }
+  }
+
+  const stylePatches = [];
+  for (const [styleDeclKey, styleDecl] of styles) {
+    if (styleSourceIdSet.has(styleDecl.styleSourceId)) {
+      stylePatches.push({
+        op: "remove" as const,
+        path: [styleDeclKey],
+      });
+    }
+  }
+
+  const payload: BuilderPatchChange[] = [];
+  if (styleSourcePatches.length > 0) {
+    payload.push({ namespace: "styleSources", patches: styleSourcePatches });
+  }
+  if (styleSourceSelectionPatches.length > 0) {
+    payload.push({
+      namespace: "styleSourceSelections",
+      patches: styleSourceSelectionPatches,
+    });
+  }
+  if (stylePatches.length > 0) {
+    payload.push({ namespace: "styles", patches: stylePatches });
+  }
+
+  return { payload, styleSourceIds };
+};
+
+export const deleteStyleSources = (
+  state: Pick<
+    BuilderState,
+    "styles" | "styleSources" | "styleSourceSelections"
+  >,
+  input: z.infer<typeof styleSourceDeleteInput>
+) => {
+  const styleState = getRequiredStyleState(state);
+  for (const styleSourceId of input.styleSourceIds) {
+    if (styleState.styleSources.has(styleSourceId) === false) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+    }
+  }
+  const { payload, styleSourceIds } = createStyleSourceDeletePayload({
+    styleSourceIds: input.styleSourceIds,
+    styleSources: styleState.styleSources,
+    styleSourceSelections: styleState.styleSourceSelections,
+    styles: styleState.styles,
+  });
+  return createRuntimeMutation({
+    payload,
+    result: { styleSourceIds },
+    invalidatesNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+  });
+};
+
 export const validateAndRenameStyleSource = ({
   id,
   name,
@@ -1741,6 +2011,46 @@ export const validateAndRenameStyleSource = ({
   }
 };
 
+export const renameStyleSource = (
+  state: Pick<BuilderState, "styleSources">,
+  input: z.infer<typeof styleSourceRenameInput>
+) => {
+  if (state.styleSources === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Style sources namespace is missing"
+    );
+  }
+  const styleSource = state.styleSources.get(input.styleSourceId);
+  if (styleSource?.type !== "token") {
+    return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+  }
+  const error = validateStyleSourceName({
+    id: input.styleSourceId,
+    name: input.name,
+    styleSources: state.styleSources,
+  });
+  if (error !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", error.type);
+  }
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "replace",
+            path: [input.styleSourceId],
+            value: { ...styleSource, name: input.name },
+          },
+        ],
+      },
+    ],
+    result: { styleSourceId: input.styleSourceId },
+    invalidatesNamespaces: ["styleSources"],
+  });
+};
+
 export const renameStyleSourceMutable = ({
   id,
   name,
@@ -1754,6 +2064,270 @@ export const renameStyleSourceMutable = ({
   if (styleSource?.type === "token") {
     styleSource.name = name;
   }
+};
+
+export const setStyleSourceLock = (
+  state: Pick<BuilderState, "styleSources">,
+  input: z.infer<typeof styleSourceLockInput>
+) => {
+  if (state.styleSources === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Style sources namespace is missing"
+    );
+  }
+  const styleSource = state.styleSources.get(input.styleSourceId);
+  if (styleSource?.type !== "token") {
+    return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+  }
+  const nextStyleSource = { ...styleSource };
+  if (input.locked) {
+    nextStyleSource.locked = true;
+  } else {
+    delete nextStyleSource.locked;
+  }
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "replace",
+            path: [input.styleSourceId],
+            value: nextStyleSource,
+          },
+        ],
+      },
+    ],
+    result: { styleSourceId: input.styleSourceId, locked: input.locked },
+    invalidatesNamespaces: ["styleSources"],
+  });
+};
+
+export const reorderStyleSources = (
+  state: Pick<
+    BuilderState,
+    "instances" | "styleSources" | "styleSourceSelections"
+  >,
+  input: z.infer<typeof styleSourceReorderInput>
+) => {
+  const styleState = getRequiredStyleMutationState({
+    ...state,
+    styles: new Map(),
+  });
+  assertStyleInstances(styleState.instances, [input.instanceId]);
+  const styleSourceSelection = styleState.styleSourceSelections.get(
+    input.instanceId
+  );
+  if (styleSourceSelection === undefined) {
+    return throwBuilderRuntimeError(
+      "NOT_FOUND",
+      "Style source selection not found"
+    );
+  }
+  const existingIds = new Set(styleSourceSelection.values);
+  for (const styleSourceId of input.styleSourceIds) {
+    if (existingIds.has(styleSourceId) === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Style source is not attached"
+      );
+    }
+  }
+  if (input.styleSourceIds.length !== styleSourceSelection.values.length) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Style source order is incomplete"
+    );
+  }
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "styleSourceSelections",
+        patches: [
+          {
+            op: "replace",
+            path: [input.instanceId, "values"],
+            value: input.styleSourceIds,
+          },
+        ],
+      },
+    ],
+    result: {
+      instanceId: input.instanceId,
+      styleSourceIds: input.styleSourceIds,
+    },
+    invalidatesNamespaces: ["styleSourceSelections"],
+  });
+};
+
+export const clearStyleSourceStyles = (
+  state: Pick<BuilderState, "styles" | "styleSources">,
+  input: z.infer<typeof styleSourceClearStylesInput>
+) => {
+  if (state.styleSources === undefined || state.styles === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Style namespace is missing"
+    );
+  }
+  if (state.styleSources.has(input.styleSourceId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+  }
+  const styleKeys = [];
+  for (const [styleDeclKey, styleDecl] of state.styles) {
+    if (styleDecl.styleSourceId === input.styleSourceId) {
+      styleKeys.push(styleDeclKey);
+    }
+  }
+  return createRuntimeMutation({
+    payload: createStyleRemovePayload(styleKeys),
+    result: { styleSourceId: input.styleSourceId, styleKeys },
+    invalidatesNamespaces: ["styles"],
+  });
+};
+
+export const duplicateStyleSource = (
+  state: Pick<
+    BuilderState,
+    "instances" | "styles" | "styleSources" | "styleSourceSelections"
+  >,
+  input: z.infer<typeof styleSourceDuplicateInput>,
+  context: { createId: () => string }
+) => {
+  const styleState = getRequiredStyleMutationState(state);
+  assertStyleInstances(styleState.instances, [input.instanceId]);
+  const styleSource = styleState.styleSources.get(input.styleSourceId);
+  if (styleSource?.type !== "token") {
+    return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+  }
+  const styleSourceSelection = styleState.styleSourceSelections.get(
+    input.instanceId
+  );
+  const position =
+    styleSourceSelection?.values.indexOf(input.styleSourceId) ?? -1;
+  if (position === -1) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Style source is not attached"
+    );
+  }
+  const tokenId = context.createId();
+  const nextStyleSource = createTokenStyleSource({
+    id: tokenId,
+    name: `${styleSource.name} (copy)`,
+  });
+  const stylePatches = [];
+  for (const styleDecl of styleState.styles.values()) {
+    if (styleDecl.styleSourceId !== input.styleSourceId) {
+      continue;
+    }
+    const nextStyleDecl = updateStyleDecl(styleDecl, {
+      styleSourceId: tokenId,
+    });
+    stylePatches.push({
+      op: "add" as const,
+      path: [getStyleDeclKey(nextStyleDecl)],
+      value: nextStyleDecl,
+    });
+  }
+  const payload: BuilderPatchChange[] = [
+    {
+      namespace: "styleSources",
+      patches: [
+        {
+          op: "add",
+          path: [tokenId],
+          value: nextStyleSource,
+        },
+      ],
+    },
+    {
+      namespace: "styleSourceSelections",
+      patches: [
+        {
+          op: "add",
+          path: [input.instanceId, "values", position + 1],
+          value: tokenId,
+        },
+      ],
+    },
+  ];
+  if (stylePatches.length > 0) {
+    payload.push({ namespace: "styles", patches: stylePatches });
+  }
+  return createRuntimeMutation({
+    payload,
+    result: { styleSourceId: tokenId },
+    invalidatesNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+  });
+};
+
+export const convertLocalStyleSourceToToken = (
+  state: Pick<
+    BuilderState,
+    "instances" | "styleSources" | "styleSourceSelections"
+  >,
+  input: z.infer<typeof styleSourceConvertLocalToTokenInput>,
+  context: { createId: () => string }
+) => {
+  const styleState = getRequiredStyleMutationState({
+    ...state,
+    styles: new Map(),
+  });
+  assertStyleInstances(styleState.instances, [input.instanceId]);
+  const existingStyleSource = styleState.styleSources.get(input.styleSourceId);
+  const styleSourceId =
+    existingStyleSource === undefined
+      ? context.createId()
+      : input.styleSourceId;
+  if (
+    existingStyleSource !== undefined &&
+    existingStyleSource.type !== "local"
+  ) {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Style source is not local");
+  }
+  const nextStyleSource = createTokenStyleSource({
+    id: styleSourceId,
+    name: input.name ?? "Local (Copy)",
+  });
+  const selection = styleState.styleSourceSelections.get(input.instanceId);
+  const selectionValues = selection?.values ?? [];
+  const payload: BuilderPatchChange[] = [
+    {
+      namespace: "styleSources",
+      patches: [
+        {
+          op: existingStyleSource === undefined ? "add" : "replace",
+          path: [styleSourceId],
+          value: nextStyleSource,
+        },
+      ],
+    },
+  ];
+  if (selectionValues.includes(styleSourceId) === false) {
+    payload.push({
+      namespace: "styleSourceSelections",
+      patches: [
+        selection === undefined
+          ? {
+              op: "add",
+              path: [input.instanceId],
+              value: { instanceId: input.instanceId, values: [styleSourceId] },
+            }
+          : {
+              op: "add",
+              path: [input.instanceId, "values", selectionValues.length],
+              value: styleSourceId,
+            },
+      ],
+    });
+  }
+  return createRuntimeMutation({
+    payload,
+    result: { styleSourceId },
+    invalidatesNamespaces: ["styleSources", "styleSourceSelections"],
+  });
 };
 
 export const toggleStyleSourceLockMutable = ({
@@ -1872,7 +2446,7 @@ export const createDesignTokenCreatePayload = ({
   styleSources,
   createId,
 }: {
-  tokens: Array<z.infer<typeof designTokenCreateInput>>;
+  tokens: DesignTokenCreatePayloadInput[];
   styleSources: StyleSources;
   createId: () => StyleSource["id"];
 }) => {
@@ -2140,8 +2714,15 @@ export const createStyleDeclarationUpdatePayload = ({
   createId: () => StyleSource["id"];
 }) => {
   const payload = [];
-  const stylePatches = [];
-  const styleKeys = new Set(
+  const stylePatches = new Map<
+    string,
+    {
+      op: "add" | "replace";
+      path: [string];
+      value: StyleDecl;
+    }
+  >();
+  const existingStyleKeys = new Set(
     Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
   );
   const styleSourceSelectionByInstanceId = new Map(
@@ -2177,21 +2758,22 @@ export const createStyleDeclarationUpdatePayload = ({
       listed: update.listed,
     });
     const key = getStyleDeclKey(nextStyleDecl);
-    stylePatches.push({
-      op: styleKeys.has(key) ? ("replace" as const) : ("add" as const),
+    stylePatches.set(key, {
+      op: existingStyleKeys.has(key) ? "replace" : "add",
       path: [key],
       value: nextStyleDecl,
     });
-    styleKeys.add(key);
   }
 
-  if (stylePatches.length > 0) {
-    payload.push({ namespace: "styles" as const, patches: stylePatches });
+  const patches = Array.from(stylePatches.values());
+
+  if (patches.length > 0) {
+    payload.push({ namespace: "styles" as const, patches });
   }
 
   return {
     payload,
-    styleKeys: stylePatches.map((patch) => String(patch.path[0])),
+    styleKeys: patches.map((patch) => String(patch.path[0])),
     missingLocalStyleSourceInstanceIds,
   };
 };
@@ -2551,6 +3133,86 @@ export const deleteStyleDeclarations = (
   });
 };
 
+export const updateSelectedStyleDeclarations = (
+  state: Pick<
+    BuilderState,
+    | "breakpoints"
+    | "instances"
+    | "styles"
+    | "styleSources"
+    | "styleSourceSelections"
+  >,
+  input: z.infer<typeof selectedStyleUpdateDeclarationsInput>
+) => {
+  const styleState = getRequiredStyleMutationState(state);
+  assertStyleInstances(
+    styleState.instances,
+    input.updates.map((update) => update.instanceId)
+  );
+  const updates = input.updates.map((update) => {
+    const styleSource = styleState.styleSources.get(update.styleSourceId);
+    if (styleSource === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+    }
+    if (isStyleSourceLocked(styleSource)) {
+      return throwBuilderRuntimeError("BAD_REQUEST", "Style source is locked");
+    }
+    return {
+      ...withDefaultBreakpoint(update, getBaseBreakpointId(state.breakpoints)),
+      styleSource,
+    };
+  });
+  const { payload, styleKeys } = createSelectedStyleDeclarationUpdatePayload({
+    updates,
+    styleSources: styleState.styleSources,
+    styleSourceSelections: styleState.styleSourceSelections.values(),
+    styles: styleState.styles.values(),
+  });
+  return createRuntimeMutation({
+    payload,
+    result: { styleKeys },
+    invalidatesNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+  });
+};
+
+export const deleteSelectedStyleDeclarations = (
+  state: Pick<
+    BuilderState,
+    | "breakpoints"
+    | "instances"
+    | "styles"
+    | "styleSources"
+    | "styleSourceSelections"
+  >,
+  input: z.infer<typeof selectedStyleDeleteDeclarationsInput>
+) => {
+  const styleState = getRequiredStyleMutationState(state);
+  assertStyleInstances(
+    styleState.instances,
+    input.deletions.map((deletion) => deletion.instanceId)
+  );
+  for (const deletion of input.deletions) {
+    const styleSource = styleState.styleSources.get(deletion.styleSourceId);
+    if (styleSource === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+    }
+    if (isStyleSourceLocked(styleSource)) {
+      return throwBuilderRuntimeError("BAD_REQUEST", "Style source is locked");
+    }
+  }
+  const { payload, styleKeys } = createSelectedStyleDeclarationDeletePayload({
+    deletions: input.deletions.map((deletion) =>
+      withDefaultBreakpoint(deletion, getBaseBreakpointId(state.breakpoints))
+    ),
+    styles: styleState.styles.values(),
+  });
+  return createRuntimeMutation({
+    payload,
+    result: { styleKeys },
+    invalidatesNamespaces: ["styles"],
+  });
+};
+
 export const replaceStyleValues = (
   state: Pick<
     BuilderState,
@@ -2755,6 +3417,47 @@ export const rewriteCssVariableRefs = (
   });
 };
 
+export const renameCssVariable = (
+  state: Pick<
+    BuilderState,
+    "styles" | "props" | "styleSources" | "styleSourceSelections"
+  >,
+  input: z.infer<typeof cssVariableRenameInput>
+) => {
+  assertCssVariableName(input.oldName);
+  const styleState = getRequiredStyleState(state);
+  const nameError = validateCssVariableNameWithStyles({
+    name: input.newName,
+    currentProperty: input.oldName,
+    styles: styleState.styles.values(),
+  });
+  if (nameError !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", nameError.message);
+  }
+  if (state.props === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Props namespace is missing"
+    );
+  }
+  const { payload, styleKeys, propIds } = createCssVariableRenamePayload({
+    oldName: input.oldName,
+    newName: input.newName,
+    styles: styleState.styles.values(),
+    props: state.props.values(),
+  });
+  return createRuntimeMutation({
+    payload,
+    result: {
+      oldName: input.oldName,
+      newName: input.newName,
+      styleKeys,
+      propIds,
+    },
+    invalidatesNamespaces: ["styles", "props"],
+  });
+};
+
 const getDesignTokenOrThrow = (
   styleSources: Iterable<StyleSource>,
   tokenId: StyleSource["id"]
@@ -2808,6 +3511,72 @@ export const createDesignTokens = (
     payload,
     result: { tokenIds },
     invalidatesNamespaces: ["styleSources", "styles"],
+  });
+};
+
+export const createAttachedDesignTokens = (
+  state: Pick<
+    BuilderState,
+    | "breakpoints"
+    | "instances"
+    | "styles"
+    | "styleSources"
+    | "styleSourceSelections"
+  >,
+  input: z.infer<typeof designTokenCreateAttachedInput>,
+  context: { createId: () => string }
+) => {
+  const styleState = getRequiredStyleMutationState(state);
+  assertStyleInstances(styleState.instances, input.instanceIds);
+  const nextStyleSources = new Map(styleState.styleSources);
+  const {
+    payload: createPayload,
+    tokenIds,
+    errors,
+  } = createDesignTokenCreatePayload({
+    tokens: input.tokens.map((token) => ({
+      ...token,
+      styles: undefined,
+      declarations: createDesignTokenStyleInputs(token).map((declaration) =>
+        withDefaultBreakpoint(
+          declaration,
+          getBaseBreakpointId(state.breakpoints)
+        )
+      ),
+    })),
+    styleSources: nextStyleSources,
+    createId: context.createId,
+  });
+  const error = errors.at(0);
+  if (error?.type === "duplicate-id") {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      "Design token id already exists"
+    );
+  }
+  if (error?.type === "invalid-name") {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      error.error?.type === "minlength"
+        ? "Design token name is required"
+        : "Design token name already exists"
+    );
+  }
+  return createRuntimeMutation({
+    payload: [
+      ...createPayload,
+      ...tokenIds.flatMap((tokenId) =>
+        createStyleSourceSelectionAttachPayload({
+          instanceIds: input.instanceIds,
+          styleSourceSelections: styleState.styleSourceSelections.values(),
+          styleSources: nextStyleSources,
+          styleSourceId: tokenId,
+          position: input.position,
+        })
+      ),
+    ],
+    result: { tokenIds },
+    invalidatesNamespaces: ["styleSources", "styles", "styleSourceSelections"],
   });
 };
 

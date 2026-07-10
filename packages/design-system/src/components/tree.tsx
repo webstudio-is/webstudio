@@ -230,7 +230,7 @@ export type TreeDropTarget = {
   afterLevel?: number;
 };
 
-const getTreeDropTarget = (
+export const getTreeDropTarget = (
   instruction: null | Instruction
 ): undefined | TreeDropTarget => {
   if (instruction?.type === "make-child") {

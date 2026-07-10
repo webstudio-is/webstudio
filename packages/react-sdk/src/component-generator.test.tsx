@@ -907,7 +907,7 @@ test("generate conditional collection", () => {
     <>
     {Object.entries(
       // @ts-ignore
-      [] ?? {}
+      []
     ).map(([_key, collectionItem]: any) => {
       const index = Array.isArray([]) ? Number(_key) : _key;
       return (
@@ -1444,6 +1444,52 @@ test("render ws:element component with ws:tag", () => {
        <span
        id={"span"} />
        </p>
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("render ws:element component with empty tag as div", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      props: new Map(),
+      dataSources: new Map(),
+      instances: new Map([
+        [
+          "bodyId",
+          {
+            type: "instance",
+            id: "bodyId",
+            component: "Body",
+            children: [{ type: "id", value: "elementId" }],
+          },
+        ],
+        [
+          "elementId",
+          {
+            type: "instance",
+            id: "elementId",
+            component: elementComponent,
+            tag: "",
+            children: [],
+          },
+        ],
+      ]),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <div />
        </Body>
        }
      `)

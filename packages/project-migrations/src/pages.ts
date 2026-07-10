@@ -32,11 +32,7 @@ export type SerializedPages = Omit<
   folders: Folder[];
 };
 
-export const serializedPages: z.ZodType<
-  SerializedPages,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
+export const serializedPages: z.ZodType<SerializedPages, unknown> = z.object({
   meta: projectMeta.optional(),
   compiler: compilerSettings.optional(),
   redirects: z.array(pageRedirect).optional(),
@@ -44,7 +40,7 @@ export const serializedPages: z.ZodType<
   rootFolderId: z.string(),
   pages: z.array(page),
   pageTemplates: z
-    .union([z.array(pageTemplate), z.record(pageTemplate)])
+    .union([z.array(pageTemplate), z.record(z.string(), pageTemplate)])
     .optional(),
   folders: z.array(folder),
 });

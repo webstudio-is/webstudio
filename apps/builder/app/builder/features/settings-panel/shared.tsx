@@ -18,13 +18,14 @@ import {
   showAttribute,
   standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
+import { showAttributeMeta } from "@webstudio-is/project-build/runtime/props";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
-import { getContentModePropNamesByTag } from "@webstudio-is/project/content-mode-permissions";
+import { getContentModePropNamesByTag } from "@webstudio-is/project-build/runtime/content-mode-permissions";
 import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
@@ -51,17 +52,6 @@ import {
   $selectedInstanceKeyWithRoot,
 } from "~/shared/nano-states";
 import { $instanceTags } from "../style-panel/shared/model";
-
-export const showAttributeMeta: PropMeta = {
-  label: "Show",
-  required: false,
-  control: "boolean",
-  type: "boolean",
-  defaultValue: true,
-  // If you are changing it, change the other one too
-  description:
-    "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
-};
 
 export type PropValue =
   | { type: "number"; value: number }

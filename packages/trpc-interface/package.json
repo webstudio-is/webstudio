@@ -10,12 +10,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@webstudio-is/plans": "workspace:*",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
+    "@webstudio-is/plans": "workspace:*",
     "memoize": "^10.0.0",
     "ts-custom-error": "^3.3.1",
-    "zod": "^3.24.2"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@webstudio-is/postgrest": "workspace:*",
@@ -35,6 +35,10 @@
     "./authorize": {
       "webstudio": "./src/authorize/role.ts",
       "import": "./src/authorize/role.ts"
+    },
+    "./authorize/project-permits": {
+      "webstudio": "./src/authorize/project-permits.ts",
+      "import": "./src/authorize/project-permits.ts"
     }
   },
   "license": "AGPL-3.0-or-later",

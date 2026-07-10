@@ -16,7 +16,7 @@ import {
   Flex,
   theme,
   Text,
-  ProBadge,
+  ProChip,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
@@ -163,7 +163,7 @@ export const WorkspaceSelector = ({
     name: workspace.name,
     suffix: workspace.isDowngraded ? (
       <Flex css={{ marginInlineStart: theme.spacing[4], flexShrink: 0 }}>
-        <ProBadge>Suspended</ProBadge>
+        <ProChip>Suspended</ProChip>
       </Flex>
     ) : undefined,
   });

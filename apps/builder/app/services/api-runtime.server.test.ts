@@ -38,25 +38,47 @@ describe("api runtime adapter", () => {
     expect(state.assets?.get("asset-1")).not.toBe(asset);
   });
 
-  test("executes runtime reads and maps runtime errors to public api errors", () => {
+  test("executes runtime reads and maps runtime errors to public api errors", async () => {
     const build = createBuild();
 
-    expect(
+    await expect(
       executeApiRuntimeOperation({
         id: "pages.list",
         build,
         input: { projectId: "project-1" },
       })
-    ).toMatchObject({
+    ).resolves.toMatchObject({
       pages: [expect.objectContaining({ isHome: true })],
     });
 
-    expect(() =>
+    await expect(
       executeApiRuntimeOperation({
         id: "pages.get",
         build,
         input: { pageId: "missing" },
       })
-    ).toThrow("Page not found");
+    ).rejects.toThrow("Page not found");
+  });
+
+  test("awaits async runtime mutations before reading mutation payload", async () => {
+    const mutation = await executeApiRuntimeOperation({
+      id: "instances.insertComponent",
+      build: createBuild(),
+      input: {
+        projectId: "project-1",
+        parentInstanceId: "root-1",
+        component: "Form",
+      },
+    });
+
+    expect(mutation).toMatchObject({
+      payload: expect.arrayContaining([
+        expect.objectContaining({ namespace: "instances" }),
+      ]),
+      result: {
+        rootInstanceIds: expect.arrayContaining([expect.any(String)]),
+        instanceIds: expect.arrayContaining([expect.any(String)]),
+      },
+    });
   });
 });

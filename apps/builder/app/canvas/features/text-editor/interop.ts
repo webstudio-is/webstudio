@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import {
   type TextNode,
   type ElementNode,
@@ -21,6 +20,7 @@ import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
 // Map<nodeKey, instanceId>
 export type Refs = Map<string, string>;
+type CreateId = () => string;
 
 const legacyLexicalFormats = [
   ["bold", "Bold"],
@@ -41,7 +41,8 @@ const $writeUpdates = (
   instanceChildren: Instance["children"],
   instancesList: Instance[],
   refs: Refs,
-  newLinkKeyToInstanceId: Refs
+  newLinkKeyToInstanceId: Refs,
+  createId: CreateId
 ) => {
   const children = node.getChildren();
   for (const child of children) {
@@ -51,7 +52,8 @@ const $writeUpdates = (
         instanceChildren,
         instancesList,
         refs,
-        newLinkKeyToInstanceId
+        newLinkKeyToInstanceId,
+        createId
       );
     }
     if ($isLineBreakNode(child)) {
@@ -59,7 +61,7 @@ const $writeUpdates = (
     }
     if ($isLinkNode(child)) {
       const key = child.getKey();
-      const id = refs.get(key) ?? newLinkKeyToInstanceId.get(key) ?? nanoid();
+      const id = refs.get(key) ?? newLinkKeyToInstanceId.get(key) ?? createId();
       refs.set(key, id);
       instanceChildren.push({
         type: "id",
@@ -71,7 +73,8 @@ const $writeUpdates = (
         childChildren,
         instancesList,
         refs,
-        newLinkKeyToInstanceId
+        newLinkKeyToInstanceId,
+        createId
       );
       instancesList.push({
         type: "instance",
@@ -90,7 +93,7 @@ const $writeUpdates = (
       if ($isSpanNode(child)) {
         // prematurely generate span id to select it right after applying
         const key = `${child.getKey()}:span`;
-        const id = refs.get(key) ?? nanoid();
+        const id = refs.get(key) ?? createId();
         refs.set(key, id);
         const childChildren: Instance["children"] = [];
         instancesList.push({
@@ -107,7 +110,7 @@ const $writeUpdates = (
       for (const [format, tag] of elementLexicalFormats) {
         if (child.hasFormat(format)) {
           const key = `${child.getKey()}:${format}`;
-          const id = refs.get(key) ?? nanoid();
+          const id = refs.get(key) ?? createId();
           refs.set(key, id);
           const childInstance: Instance = {
             type: "instance",
@@ -129,7 +132,8 @@ const $writeUpdates = (
 export const $convertToUpdates = (
   treeRootInstance: Instance,
   refs: Refs,
-  newLinkKeyToInstanceId: Refs
+  newLinkKeyToInstanceId: Refs,
+  createId: CreateId
 ) => {
   const treeRootInstanceChildren: Instance["children"] = [];
   const instancesList: Instance[] = [
@@ -144,7 +148,8 @@ export const $convertToUpdates = (
     treeRootInstanceChildren,
     instancesList,
     refs,
-    newLinkKeyToInstanceId
+    newLinkKeyToInstanceId,
+    createId
   );
   return instancesList;
 };

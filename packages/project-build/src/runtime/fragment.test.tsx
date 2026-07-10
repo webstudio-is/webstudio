@@ -1,6 +1,12 @@
 import {
+  findSafeFragmentPasteTarget,
+  getCommonAncestorSelector,
+  getPasteRootInstanceIds,
+  copyWebstudioFragmentMutable,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
+  mapFragmentChildrenToCopiedChildren,
+  mergeWebstudioFragments,
 } from "./fragment";
 import { describe, expect, test } from "vitest";
 import {
@@ -11,6 +17,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   encodeDataVariableId,
   getStyleDeclKey,
+  portalComponent,
   ROOT_INSTANCE_ID,
   type WebstudioData,
 } from "@webstudio-is/sdk";
@@ -84,6 +91,176 @@ const toCss = (data: WebstudioData) => {
   }
   return sheet.cssText;
 };
+
+test("copies a fragment for a target instance and maps root children", () => {
+  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const fragment = renderTemplate(
+    <$.Box ws:id="boxId">
+      <$.Paragraph ws:id="paragraphId">Hello</$.Paragraph>
+    </$.Box>
+  );
+  const ids = ["boxCopyId", "paragraphCopyId"];
+
+  const { newInstanceIds } = copyWebstudioFragmentMutable({
+    data,
+    fragment,
+    targetInstanceId: "bodyId",
+    projectId: "",
+    createId: () => ids.shift() ?? "missing",
+  });
+
+  expect(
+    mapFragmentChildrenToCopiedChildren({
+      children: fragment.children,
+      newInstanceIds,
+    })
+  ).toEqual([{ type: "id", value: "boxCopyId" }]);
+  expect(data.instances.get("boxCopyId")).toEqual(
+    expect.objectContaining({
+      id: "boxCopyId",
+      children: [{ type: "id", value: "paragraphCopyId" }],
+    })
+  );
+  expect(data.instances.get("paragraphCopyId")).toEqual(
+    expect.objectContaining({
+      id: "paragraphCopyId",
+      children: [{ type: "text", value: "Hello" }],
+    })
+  );
+});
+
+test("merges multiple copied fragments and preserves requested roots", () => {
+  const first = renderTemplate(
+    <$.Box ws:id="box">
+      <$.Text ws:id="text">Hello</$.Text>
+    </$.Box>
+  );
+  const second = renderTemplate(
+    <$.Paragraph ws:id="paragraph">World</$.Paragraph>
+  );
+
+  const fragment = mergeWebstudioFragments(
+    ["box", "paragraph"],
+    [first, second]
+  );
+
+  expect(fragment.children).toEqual([
+    { type: "id", value: "box" },
+    { type: "id", value: "paragraph" },
+  ]);
+  expect(fragment.instances.map((instance) => instance.id)).toEqual([
+    "box",
+    "text",
+    "paragraph",
+  ]);
+});
+
+test("filters multi-root paste ids to unique ids present in fragment roots", () => {
+  const fragment = renderTemplate(
+    <>
+      <$.Box ws:id="box"></$.Box>
+      <$.Paragraph ws:id="paragraph"></$.Paragraph>
+    </>
+  );
+
+  expect(
+    getPasteRootInstanceIds({
+      rootInstanceIds: ["missing", "box", "box", "paragraph"],
+      fragment,
+    })
+  ).toEqual(["box", "paragraph"]);
+});
+
+test("finds common ancestor selector from selected instance selectors", () => {
+  expect(
+    getCommonAncestorSelector([
+      ["child-a", "section", "body"],
+      ["child-b", "section", "body"],
+    ])
+  ).toEqual(["section", "body"]);
+  expect(
+    getCommonAncestorSelector([
+      ["child-a", "section", "body"],
+      ["aside-child", "aside", "body"],
+    ])
+  ).toEqual(["body"]);
+  expect(getCommonAncestorSelector([])).toBeUndefined();
+});
+
+test("prevents pasting a portal fragment into one of its preserved children", () => {
+  const fragment = {
+    children: [{ type: "id" as const, value: "portal" }],
+    instances: [
+      {
+        type: "instance" as const,
+        id: "portal",
+        component: portalComponent,
+        children: [{ type: "id" as const, value: "fragment" }],
+      },
+      {
+        type: "instance" as const,
+        id: "fragment",
+        component: "Fragment",
+        children: [],
+      },
+    ],
+    props: [],
+    dataSources: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
+  };
+  const instances = new Map([
+    [
+      "body",
+      {
+        type: "instance" as const,
+        id: "body",
+        component: "Body",
+        children: [{ type: "id" as const, value: "targetPortal" }],
+      },
+    ],
+    [
+      "targetPortal",
+      {
+        type: "instance" as const,
+        id: "targetPortal",
+        component: portalComponent,
+        children: [{ type: "id" as const, value: "fragment" }],
+      },
+    ],
+    [
+      "fragment",
+      {
+        type: "instance" as const,
+        id: "fragment",
+        component: "Fragment",
+        children: [],
+      },
+    ],
+  ]);
+
+  expect(
+    findSafeFragmentPasteTarget({
+      fragment,
+      instances,
+      insertTarget: {
+        parentSelector: ["targetPortal", "body"],
+        position: "end",
+      },
+    })
+  ).toBeUndefined();
+  expect(
+    findSafeFragmentPasteTarget({
+      fragment,
+      instances,
+      insertTarget: { parentSelector: ["body"], position: "end" },
+    })
+  ).toEqual({ parentSelector: ["body"], position: "end" });
+});
 
 const insertStyles = ({
   data,

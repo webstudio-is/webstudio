@@ -38,7 +38,7 @@
   "scripts": {
     "build": "vite build && esbuild './lib/*' --outdir=./lib --minify --allow-overwrite --banner:js='//! SPDX-License-Identifier: LicenseRef-Webstudio,Inc-Proprietary'",
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts !./src/*.template.tsx !./src/*.test.{ts,tsx}' -e asChild -e modal -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
-    "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
+    "build:stories": "tsx --conditions=webstudio src/generate-stories.ts && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsgo --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run",
@@ -75,6 +75,6 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.37.0",
     "vitest": "^3.1.2",
-    "zod": "^3.24.2"
+    "zod": "^4.4.3"
   }
 }

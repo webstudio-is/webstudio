@@ -1,12 +1,173 @@
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import type {
   Instance,
   Styles,
   StyleDecl,
   StyleSource,
+  StyleSources,
   StyleSourceSelection,
+  StyleSourceSelections,
 } from "@webstudio-is/sdk";
 import { getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderPatchChange } from "../contracts/patch";
+
+export const traverseStyleValue = (
+  value: StyleValue,
+  callback: (value: StyleValue) => void
+) => {
+  callback(value);
+  switch (value.type) {
+    case "var":
+      if (value.fallback) {
+        traverseStyleValue(value.fallback, callback);
+      }
+      return;
+    case "function":
+      traverseStyleValue(value.args, callback);
+      return;
+    case "tuple":
+    case "layers":
+      for (const item of value.value) {
+        traverseStyleValue(item, callback);
+      }
+      return;
+    case "shadow":
+      traverseStyleValue(value.offsetX, callback);
+      traverseStyleValue(value.offsetY, callback);
+      if (value.blur) {
+        traverseStyleValue(value.blur, callback);
+      }
+      if (value.spread) {
+        traverseStyleValue(value.spread, callback);
+      }
+      if (value.color) {
+        traverseStyleValue(value.color, callback);
+      }
+      return;
+    case "color":
+      if (typeof value.alpha === "object") {
+        traverseStyleValue(value.alpha, callback);
+      }
+      return;
+    case "fontFamily":
+    case "image":
+    case "unit":
+    case "keyword":
+    case "unparsed":
+    case "invalid":
+    case "unset":
+    case "rgb":
+    case "guaranteedInvalid":
+      return;
+  }
+  value satisfies never;
+};
+
+export const collectFontFamiliesFromStyleValue = (value: StyleValue) => {
+  const fontFamilies = new Set<string>();
+  traverseStyleValue(value, (item) => {
+    if (item.type === "fontFamily") {
+      for (const fontFamily of item.value) {
+        fontFamilies.add(fontFamily);
+      }
+    }
+  });
+  return fontFamilies;
+};
+
+export const collectFontFamiliesFromStyleDecls = (
+  styles: Iterable<Pick<StyleDecl, "value">>
+) => {
+  const fontFamilies = new Set<string>();
+  for (const styleDecl of styles) {
+    for (const fontFamily of collectFontFamiliesFromStyleValue(
+      styleDecl.value
+    )) {
+      fontFamilies.add(fontFamily);
+    }
+  }
+  return fontFamilies;
+};
+
+const gridPlacementProperties: ReadonlySet<StyleProperty> = new Set([
+  "gridColumnStart",
+  "gridColumnEnd",
+  "gridRowStart",
+  "gridRowEnd",
+]);
+
+export const isAutoGridPlacement = ({
+  styles,
+  styleSources,
+  styleSourceSelections,
+  instanceId,
+}: {
+  styles: Styles;
+  styleSources: StyleSources;
+  styleSourceSelections: StyleSourceSelections;
+  instanceId: Instance["id"];
+}): boolean => {
+  const selection = styleSourceSelections.get(instanceId);
+  if (selection === undefined) {
+    return true;
+  }
+  const localIds = new Set<StyleSource["id"]>();
+  for (const id of selection.values) {
+    if (styleSources.get(id)?.type === "local") {
+      localIds.add(id);
+    }
+  }
+  if (localIds.size === 0) {
+    return true;
+  }
+  for (const styleDecl of styles.values()) {
+    if (localIds.has(styleDecl.styleSourceId) === false) {
+      continue;
+    }
+    if (gridPlacementProperties.has(styleDecl.property) === false) {
+      continue;
+    }
+    if (
+      styleDecl.value.type === "keyword" &&
+      styleDecl.value.value === "auto"
+    ) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+};
+
+export const resetGridChildPlacement = ({
+  styles,
+  styleSources,
+  styleSourceSelections,
+  instanceId,
+}: {
+  styles: Styles;
+  styleSources: StyleSources;
+  styleSourceSelections: StyleSourceSelections;
+  instanceId: Instance["id"];
+}) => {
+  const selection = styleSourceSelections.get(instanceId);
+  if (selection === undefined) {
+    return;
+  }
+  const localIds = new Set<StyleSource["id"]>();
+  for (const id of selection.values) {
+    if (styleSources.get(id)?.type === "local") {
+      localIds.add(id);
+    }
+  }
+  for (const [key, styleDecl] of styles) {
+    if (localIds.has(styleDecl.styleSourceId) === false) {
+      continue;
+    }
+    if (gridPlacementProperties.has(styleDecl.property)) {
+      styles.delete(key);
+    }
+  }
+};
 
 export const serializeStyleDeclarations = ({
   styles,

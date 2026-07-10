@@ -1,73 +1,10 @@
 import { expect, test, describe } from "vitest";
 import {
-  parseAssetName,
-  formatAssetName,
   getImageNameAndType,
   getSha256Hash,
   detectAssetType,
   uploadingFileDataToAsset,
 } from "./asset-utils";
-import type { Asset } from "@webstudio-is/sdk";
-
-describe("parseAssetName", () => {
-  test("parses name with hash and extension", () => {
-    expect(parseAssetName("hello_hash.ext")).toEqual({
-      basename: "hello",
-      hash: "hash",
-      ext: "ext",
-    });
-  });
-
-  test("parses name without hash", () => {
-    expect(parseAssetName("hello.ext")).toEqual({
-      basename: "hello",
-      hash: "",
-      ext: "ext",
-    });
-  });
-
-  test("parses name with multiple underscores", () => {
-    expect(parseAssetName("hello_hash1.ext_hash2")).toEqual({
-      basename: "hello",
-      hash: "hash1",
-      ext: "ext_hash2",
-    });
-  });
-
-  test("parses name with hash but no extension", () => {
-    expect(parseAssetName("hello_hash1_hash2")).toEqual({
-      basename: "hello_hash1",
-      hash: "hash2",
-      ext: "",
-    });
-  });
-});
-
-describe("formatAssetName", () => {
-  test("formats asset with filename", () => {
-    const asset: Pick<Asset, "name" | "filename"> = {
-      name: "uploaded_abc123.jpg",
-      filename: "myimage",
-    };
-    expect(formatAssetName(asset)).toBe("myimage.jpg");
-  });
-
-  test("formats asset without filename", () => {
-    const asset: Pick<Asset, "name" | "filename"> = {
-      name: "uploaded_abc123.jpg",
-      filename: undefined,
-    };
-    expect(formatAssetName(asset)).toBe("uploaded.jpg");
-  });
-
-  test("formats asset with no extension", () => {
-    const asset: Pick<Asset, "name" | "filename"> = {
-      name: "uploaded_abc123",
-      filename: "document",
-    };
-    expect(formatAssetName(asset)).toBe("document.");
-  });
-});
 
 describe("getImageNameAndType", () => {
   test("returns MIME type and filename for valid image", () => {
@@ -201,6 +138,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "font",
       objectURL: "blob:test",
     });
@@ -221,6 +160,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "font",
       objectURL: "blob:test",
     });
@@ -241,6 +182,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "image",
       objectURL: "blob:test",
     });
@@ -261,6 +204,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "video",
       objectURL: "blob:test",
     });
@@ -281,6 +226,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "file",
       objectURL: "blob:test",
     });
@@ -301,6 +248,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "font",
       objectURL: "blob:test",
     });
@@ -321,6 +270,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "file",
       objectURL: "blob:test",
     });

@@ -1,17 +1,25 @@
-import { argv, exit } from "node:process";
 import { parseArgs } from "node:util";
-import { generateStories } from "./generate-stories";
+import { validateRegistry } from "./validate-registry";
 
-const { positionals } = parseArgs({
-  args: argv.slice(2),
-  allowPositionals: true,
-});
+export const runCli = async (args: string[]) => {
+  const { positionals } = parseArgs({
+    args,
+    allowPositionals: true,
+  });
 
-const [command] = positionals;
+  const [command, registry] = positionals;
 
-if (command === "generate-stories") {
-  await generateStories();
-  exit(0);
-}
+  if (command === "generate-stories") {
+    throw Error(
+      "generate-stories must be run from a package-local static entrypoint such as tsx src/generate-stories.ts"
+    );
+    return;
+  }
 
-throw Error(`Unknown command ${command}`);
+  if (command === "validate-registry") {
+    await validateRegistry(registry);
+    return;
+  }
+
+  throw Error(`Unknown command ${command}`);
+};

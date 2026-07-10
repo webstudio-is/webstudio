@@ -2,10 +2,7 @@ import {
   getPublicApiOperation,
   type PublicApiCommand,
 } from "@webstudio-is/protocol";
-import {
-  runtimeOperationContracts,
-  type RuntimeOperationId,
-} from "@webstudio-is/project-build/contracts/builder-runtime";
+import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import type { ProjectSessionEnvelope } from "@webstudio-is/project-build/project-session";
 import { createCliProjectSession } from "./project-session";
@@ -24,23 +21,6 @@ type CreateProjectSession = typeof createCliProjectSession;
 const uniqueNamespaces = (
   namespaces: readonly BuilderNamespace[]
 ): readonly BuilderNamespace[] => [...new Set(namespaces)];
-
-const runtimeOperationIds = new Set<string>(
-  runtimeOperationContracts.map((contract) => contract.id)
-);
-
-const isRuntimeOperationId = (id: string): id is RuntimeOperationId =>
-  runtimeOperationIds.has(id);
-
-const getRuntimeOperationId = (
-  command: ProjectSessionApiCommand
-): RuntimeOperationId | undefined => {
-  const operation = getPublicApiOperation(command);
-  return operation.runtimeOperationId !== undefined &&
-    isRuntimeOperationId(operation.runtimeOperationId)
-    ? operation.runtimeOperationId
-    : undefined;
-};
 
 const getSessionError = (envelope: {
   diagnostics: readonly { level: string; code?: string; message: string }[];
@@ -106,13 +86,17 @@ export const executeProjectSessionApiOperation = async ({
   dryRun?: boolean;
   refresh?: boolean;
 }) => {
-  const runtimeOperationId = getRuntimeOperationId(command);
   const operation = getPublicApiOperation(command);
+  const runtimeOperationId = operation.runtimeOperationId as
+    | RuntimeOperationId
+    | undefined;
   if (
     dryRun === true &&
     (runtimeOperationId === undefined || operation.method !== "mutation")
   ) {
-    throw new Error(`${command} does not support --dry-run.`);
+    throw new Error(
+      `${command} does not support --dry-run. Use --dry-run only with local-capable mutation tools; omit it for read or server-only tools.`
+    );
   }
   const session = createProjectSession({ connection });
   await session.initialize();

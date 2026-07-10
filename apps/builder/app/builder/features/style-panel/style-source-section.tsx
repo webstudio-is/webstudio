@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
-import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { pseudoClassesByTag } from "@webstudio-is/html-data";
 import { isPseudoElement } from "@webstudio-is/css-data";
@@ -8,17 +7,9 @@ import {
   type StyleSource,
   type StyleSourceToken,
   type StyleDecl,
-  getStyleDeclKey,
 } from "@webstudio-is/sdk";
-import { cloneStyles } from "@webstudio-is/project-build/runtime/style-utils";
-import { createTokenStyleSource } from "@webstudio-is/project-build/runtime/styles";
 import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime/styles";
 import { type ItemSource, StyleSourceInput } from "./style-source";
-import {
-  addStyleSourceToInstanceMutable,
-  getOrCreateStyleSourceSelectionMutable,
-  removeStyleSourceFromInstanceMutable,
-} from "@webstudio-is/project-build/runtime/styles";
 import {
   renameStyleSource,
   deleteStyleSource,
@@ -39,7 +30,7 @@ import {
   $styleSources,
   $styles,
 } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";
 import { $instanceTags } from "./shared/model";
@@ -65,28 +56,23 @@ const selectStyleSource = (
   $selectedStyleState.set(state);
 };
 
-const createStyleSource = (id: StyleSource["id"], name: string) => {
+const createStyleSource = (name: string) => {
   const instanceId = $selectedInstance.get()?.id;
   if (instanceId === undefined) {
     return;
   }
-  const newStyleSource = createTokenStyleSource({
-    id,
-    name,
+  const result = executeRuntimeMutation({
+    id: "designTokens.createAttached",
+    input: {
+      tokens: [{ name }],
+      instanceIds: [instanceId],
+    },
   });
-  serverSyncStore.createTransaction(
-    [$styleSources, $styleSourceSelections],
-    (styleSources, styleSourceSelections) => {
-      styleSources.set(newStyleSource.id, newStyleSource);
-      addStyleSourceToInstanceMutable({
-        styleSourceSelections,
-        styleSources,
-        instanceId,
-        styleSourceId: newStyleSource.id,
-      });
-    }
-  );
-  selectStyleSource(newStyleSource.id);
+  const tokenId = result?.result.tokenIds?.[0];
+  if (typeof tokenId !== "string") {
+    return;
+  }
+  selectStyleSource(tokenId);
 };
 
 export const addStyleSourceToInstance = (
@@ -96,17 +82,13 @@ export const addStyleSourceToInstance = (
   if (instanceId === undefined) {
     return;
   }
-  serverSyncStore.createTransaction(
-    [$styleSourceSelections, $styleSources],
-    (styleSourceSelections, styleSources) => {
-      addStyleSourceToInstanceMutable({
-        styleSourceSelections,
-        styleSources,
-        instanceId,
-        styleSourceId: newStyleSourceId,
-      });
-    }
-  );
+  executeRuntimeMutation({
+    id: "designTokens.attach",
+    input: {
+      designTokenId: newStyleSourceId,
+      instanceIds: [instanceId],
+    },
+  });
   selectStyleSource(newStyleSourceId);
 };
 
@@ -115,16 +97,13 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
   if (instanceId === undefined) {
     return;
   }
-  serverSyncStore.createTransaction(
-    [$styleSourceSelections],
-    (styleSourceSelections) => {
-      removeStyleSourceFromInstanceMutable({
-        styleSourceSelections,
-        instanceId,
-        styleSourceId,
-      });
-    }
-  );
+  executeRuntimeMutation({
+    id: "designTokens.detach",
+    input: {
+      designTokenId: styleSourceId,
+      instanceIds: [instanceId],
+    },
+  });
   // reset selected style source if necessary
   deselectMatchingStyleSource(styleSourceId);
 };
@@ -141,35 +120,19 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
   if (styleSource === undefined || styleSource.type === "local") {
     return;
   }
-
-  const newStyleSource = createTokenStyleSource({
-    id: nanoid(),
-    name: `${styleSource.name} (copy)`,
+  const result = executeRuntimeMutation({
+    id: "styleSources.duplicate",
+    input: {
+      instanceId,
+      styleSourceId,
+    },
   });
-  const clonedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>();
-  clonedStyleSourceIds.set(styleSourceId, newStyleSource.id);
-  const clonedStyles = cloneStyles($styles.get(), clonedStyleSourceIds);
-
-  serverSyncStore.createTransaction(
-    [$styleSources, $styles, $styleSourceSelections],
-    (styleSources, styles, styleSourceSelections) => {
-      const styleSourceSelection = styleSourceSelections.get(instanceId);
-      if (styleSourceSelection === undefined) {
-        return;
-      }
-      // put new style source after original one
-      const position = styleSourceSelection.values.indexOf(styleSourceId);
-      styleSourceSelection.values.splice(position + 1, 0, newStyleSource.id);
-      styleSources.set(newStyleSource.id, newStyleSource);
-      for (const styleDecl of clonedStyles) {
-        styles.set(getStyleDeclKey(styleDecl), styleDecl);
-      }
-    }
-  );
-
-  selectStyleSource(newStyleSource.id);
-
-  return newStyleSource.id;
+  const newStyleSourceId = result?.result.styleSourceId;
+  if (typeof newStyleSourceId !== "string") {
+    return;
+  }
+  selectStyleSource(newStyleSourceId);
+  return newStyleSourceId;
 };
 
 const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
@@ -177,25 +140,18 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
   if (instanceId === undefined) {
     return;
   }
-  const newStyleSource = createTokenStyleSource({
-    id: styleSourceId,
-    name: "Local (Copy)",
+  const result = executeRuntimeMutation({
+    id: "styleSources.convertLocalToToken",
+    input: {
+      instanceId,
+      styleSourceId,
+      name: "Local (Copy)",
+    },
   });
-  serverSyncStore.createTransaction(
-    [$styleSources, $styleSourceSelections],
-    (styleSources, styleSourceSelections) => {
-      const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
-        styleSourceSelections,
-        instanceId
-      );
-      // generated local style source was not applied so put last
-      if (styleSourceSelection.values.includes(newStyleSource.id) === false) {
-        styleSourceSelection.values.push(newStyleSource.id);
-      }
-      styleSources.set(newStyleSource.id, newStyleSource);
-    }
-  );
-  selectStyleSource(newStyleSource.id);
+  const tokenId = result?.result.styleSourceId;
+  if (typeof tokenId === "string") {
+    selectStyleSource(tokenId);
+  }
 };
 
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
@@ -203,25 +159,19 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   if (instanceId === undefined) {
     return;
   }
-  serverSyncStore.createTransaction(
-    [$styleSourceSelections],
-    (styleSourceSelections) => {
-      const styleSourceSelection = styleSourceSelections.get(instanceId);
-      if (styleSourceSelection === undefined) {
-        return;
-      }
-      styleSourceSelection.values = styleSourceIds;
-    }
-  );
+  executeRuntimeMutation({
+    id: "styleSources.reorder",
+    input: {
+      instanceId,
+      styleSourceIds,
+    },
+  });
 };
 
 const clearStyles = (styleSourceId: StyleSource["id"]) => {
-  serverSyncStore.createTransaction([$styles], (styles) => {
-    for (const [styleDeclKey, styleDecl] of styles) {
-      if (styleDecl.styleSourceId === styleSourceId) {
-        styles.delete(styleDeclKey);
-      }
-    }
+  executeRuntimeMutation({
+    id: "styleSources.clearStyles",
+    input: { styleSourceId },
   });
 };
 
@@ -484,4 +434,10 @@ export const StyleSourcesSection = () => {
   );
 };
 
-export const __testing__ = { duplicateStyleSource, getComponentStates };
+export const __testing__ = {
+  clearStyles,
+  convertLocalStyleSourceToToken,
+  duplicateStyleSource,
+  getComponentStates,
+  reorderStyleSources,
+};

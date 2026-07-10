@@ -3,10 +3,13 @@ import {
   type ChildProcess,
   type StdioOptions,
 } from "node:child_process";
+import { readdir } from "node:fs/promises";
+import { delimiter, dirname, join, parse } from "node:path";
 
 export type PreviewServerOptions = {
   host: string;
   port: number;
+  cwd?: string;
 };
 
 export type PreviewServerResult = {
@@ -17,13 +20,56 @@ export type PreviewServerResult = {
 export type PreviewServerDependencies = {
   spawn: typeof spawn;
   fetch: typeof fetch;
+  readdir: typeof readdir;
   sleep: (ms: number) => Promise<void>;
+  platform: typeof process.platform;
 };
 
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
   fetch,
+  readdir,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  platform: process.platform,
+};
+
+const processEnv = () => process.env;
+
+const pathKey = () => (process.platform === "win32" ? "Path" : "PATH");
+
+const getAncestorBinPaths = (directory: string) => {
+  const paths: string[] = [];
+  let currentDirectory = directory;
+  while (true) {
+    paths.push(join(currentDirectory, "node_modules", ".bin"));
+    paths.push(
+      join(currentDirectory, "node_modules", ".pnpm", "node_modules", ".bin")
+    );
+    const parentDirectory = dirname(currentDirectory);
+    if (
+      parentDirectory === currentDirectory ||
+      currentDirectory === parse(currentDirectory).root
+    ) {
+      return paths;
+    }
+    currentDirectory = parentDirectory;
+  }
+};
+
+const getPreviewEnv = (
+  cwd: string | undefined,
+  extraEnv: NodeJS.ProcessEnv
+) => {
+  if (cwd === undefined) {
+    return extraEnv;
+  }
+  const key = pathKey();
+  return {
+    ...extraEnv,
+    [key]: [...getAncestorBinPaths(cwd), extraEnv[key]]
+      .filter(Boolean)
+      .join(delimiter),
+  };
 };
 
 export const getPreviewUrl = ({
@@ -33,26 +79,57 @@ export const getPreviewUrl = ({
 }: PreviewServerOptions & { path?: string }) =>
   new URL(path, `http://${host}:${port}`).toString();
 
-export const getPreviewDevArgs = ({ host, port }: PreviewServerOptions) => [
+export const getPreviewBuildArgs = () => ["run", "build"];
+
+export const getPreviewStartArgs = (_options: PreviewServerOptions) => [
   "run",
-  "dev",
-  "--",
-  "--host",
-  host,
-  "--port",
-  String(port),
+  "start",
 ];
 
-export const startPreviewDevServer = (
+export const getPreviewCommand = (
+  platform: typeof process.platform = process.platform
+) => (platform === "win32" ? "npm.cmd" : "npm");
+
+export const runPreviewBuild = async (
+  dependencies = defaultPreviewServerDependencies,
+  cwd?: string
+) => {
+  const buildProcess = dependencies.spawn(
+    getPreviewCommand(dependencies.platform),
+    getPreviewBuildArgs(),
+    {
+      cwd,
+      stdio: "inherit",
+      env: getPreviewEnv(cwd, {
+        ...processEnv(),
+        NODE_ENV: "production",
+      }),
+    }
+  );
+  await waitForPreviewExit(buildProcess);
+};
+
+export const startPreviewServer = (
   options: PreviewServerOptions & { stdio?: StdioOptions },
   dependencies = defaultPreviewServerDependencies
 ): PreviewServerResult => {
-  const process = dependencies.spawn("npm", getPreviewDevArgs(options), {
-    stdio: options.stdio ?? "inherit",
-  });
+  const previewProcess = dependencies.spawn(
+    getPreviewCommand(dependencies.platform),
+    getPreviewStartArgs(options),
+    {
+      cwd: options.cwd,
+      stdio: options.stdio ?? "inherit",
+      env: getPreviewEnv(options.cwd, {
+        ...processEnv(),
+        HOST: options.host,
+        PORT: String(options.port),
+        NODE_ENV: "production",
+      }),
+    }
+  );
   return {
     url: getPreviewUrl(options),
-    process,
+    process: previewProcess,
   };
 };
 
@@ -72,20 +149,27 @@ export type PreviewControllerResult = {
   running: boolean;
 };
 
+type PreviewControllerStartOptions = Partial<PreviewServerOptions> & {
+  restart?: boolean;
+};
+
 export const waitForPreviewReady = async (
   url: string,
   {
     timeoutMs = 30_000,
     intervalMs = 250,
     isRunning,
+    requiredAssetNames = [],
   }: {
     timeoutMs?: number;
     intervalMs?: number;
     isRunning?: () => boolean;
+    requiredAssetNames?: string[];
   } = {},
   dependencies = defaultPreviewServerDependencies
 ) => {
   const deadline = Date.now() + timeoutMs;
+  let sawStaleServer = false;
   while (Date.now() <= deadline) {
     if (isRunning?.() === false) {
       throw new Error(
@@ -102,14 +186,57 @@ export const waitForPreviewReady = async (
         signal: AbortSignal.timeout(attemptTimeoutMs),
       });
       if (response.status < 500) {
-        return;
+        if (requiredAssetNames.length === 0) {
+          return;
+        }
+        const html = await response.text();
+        if (requiredAssetNames.some((name) => html.includes(name))) {
+          return;
+        }
+        sawStaleServer = true;
       }
     } catch {
       // Server is still starting.
     }
     await dependencies.sleep(intervalMs);
   }
+  if (sawStaleServer) {
+    throw new Error(
+      `Preview server at ${url} did not serve the latest build assets. Stop the existing preview server on this port, then retry.`
+    );
+  }
   throw new Error(`Preview server did not become ready at ${url}.`);
+};
+
+const getPreviewCssAssetNames = async (
+  cwd: string | undefined,
+  dependencies = defaultPreviewServerDependencies
+) => {
+  if (cwd === undefined) {
+    return [];
+  }
+  try {
+    return (await dependencies.readdir(join(cwd, "build", "client", "assets")))
+      .filter((name) => name.endsWith(".css"))
+      .sort();
+  } catch {
+    return [];
+  }
+};
+
+const formatPreviewServerStartupError = ({
+  message,
+  output,
+  url,
+}: {
+  message: string;
+  output: string;
+  url: string;
+}) => {
+  const portHint = output.includes("EADDRINUSE")
+    ? `\n\nPort is already in use. Stop the existing preview server for ${url}, or start preview with a different port.`
+    : "";
+  return `${message}\n\nPreview server output:\n${output}${portHint}`;
 };
 
 export const createPreviewController = (
@@ -118,6 +245,11 @@ export const createPreviewController = (
 ) => {
   let server: PreviewServerResult | undefined;
   let currentOptions = defaults;
+  let currentCwd = defaults.cwd;
+  let serverOutput = "";
+  const appendServerOutput = (chunk: unknown) => {
+    serverOutput = `${serverOutput}${String(chunk)}`.slice(-4000);
+  };
   const isRunning = () =>
     server !== undefined &&
     server.process.killed === false &&
@@ -128,33 +260,64 @@ export const createPreviewController = (
     pid: server?.process.pid,
     running: isRunning(),
   });
-  const start = (
-    options: Partial<PreviewServerOptions> = {}
-  ): PreviewControllerResult => {
+  const stop = async () => {
+    if (server === undefined) {
+      return;
+    }
+    const process = server.process;
+    server = undefined;
+    if (
+      process.killed ||
+      process.exitCode !== null ||
+      process.signalCode !== null
+    ) {
+      return;
+    }
+    await new Promise<void>((resolve, reject) => {
+      process.once("error", reject);
+      process.once("exit", () => resolve());
+      if (process.kill() === false) {
+        resolve();
+      }
+    });
+  };
+  const start = async (
+    options: PreviewControllerStartOptions = {}
+  ): Promise<PreviewControllerResult> => {
     const running = isRunning();
     const nextOptions = {
       host: options.host ?? (running ? currentOptions.host : defaults.host),
       port: options.port ?? (running ? currentOptions.port : defaults.port),
+      cwd: options.cwd ?? (running ? currentCwd : defaults.cwd),
     };
     if (running) {
-      if (
-        nextOptions.host !== currentOptions.host ||
-        nextOptions.port !== currentOptions.port
-      ) {
-        throw new Error(
-          `Preview server is already running at ${getPreviewUrl(currentOptions)}. Stop it before starting a different preview server.`
-        );
+      if (options.restart !== true) {
+        if (
+          nextOptions.host !== currentOptions.host ||
+          nextOptions.port !== currentOptions.port ||
+          nextOptions.cwd !== currentCwd
+        ) {
+          throw new Error(
+            `Preview server is already running at ${getPreviewUrl(currentOptions)}. Stop it before starting a different preview server.`
+          );
+        }
+        return getStatus();
       }
-      return getStatus();
+      await stop();
     }
     currentOptions = nextOptions;
-    server = startPreviewDevServer(
+    currentCwd = nextOptions.cwd;
+    await runPreviewBuild(dependencies, currentCwd);
+    serverOutput = "";
+    server = startPreviewServer(
       {
         ...nextOptions,
-        stdio: ["ignore", "ignore", "ignore"],
+        stdio: ["ignore", "pipe", "pipe"],
       },
       dependencies
     );
+    server.process.stdout?.on("data", appendServerOutput);
+    server.process.stderr?.on("data", appendServerOutput);
     server.process.once("exit", () => {
       server = undefined;
     });
@@ -163,11 +326,37 @@ export const createPreviewController = (
   return {
     start,
     async startAndWait(
-      options: Partial<PreviewServerOptions> = {}
+      options: PreviewControllerStartOptions = {}
     ): Promise<PreviewControllerResult> {
-      const result = start(options);
-      await waitForPreviewReady(result.url, { isRunning }, dependencies);
+      const result = await start(options);
+      const requiredAssetNames = await getPreviewCssAssetNames(
+        currentCwd,
+        dependencies
+      );
+      try {
+        await waitForPreviewReady(
+          result.url,
+          { isRunning, requiredAssetNames },
+          dependencies
+        );
+      } catch (error) {
+        const output = serverOutput.trim();
+        if (output !== "" && error instanceof Error) {
+          throw new Error(
+            formatPreviewServerStartupError({
+              message: error.message,
+              output,
+              url: result.url,
+            })
+          );
+        }
+        throw error;
+      }
       return result;
+    },
+    async stop(): Promise<PreviewControllerResult> {
+      await stop();
+      return getStatus();
     },
     status: getStatus,
     resolveUrl(path = "/") {

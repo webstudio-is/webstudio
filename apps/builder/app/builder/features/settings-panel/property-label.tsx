@@ -15,19 +15,13 @@ import {
 import { AlertIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import {
-  applyBuilderPatchPayloadMutable,
-  updateWebstudioData,
-} from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   $authPermit,
   $isContentMode,
   $selectedInstance,
 } from "~/shared/nano-states";
-import {
-  createPropDeletePayload,
-  getPropIdsToDelete,
-} from "@webstudio-is/project-build/runtime/props";
+import { getPropIdsToDelete } from "@webstudio-is/project-build/runtime/props";
 import { $props } from "~/shared/sync/data-stores";
 import {
   $selectedInstanceInitialPropNames,
@@ -78,16 +72,14 @@ export const __testing__ = {
 
 const deleteProp = (name: string) => {
   const instance = $selectedInstance.get();
-  updateWebstudioData((data) => {
-    if (instance === undefined) {
-      return;
-    }
-    const { payload } = createPropDeletePayload({
+  if (instance === undefined) {
+    return;
+  }
+  executeRuntimeMutation({
+    id: "instances.deleteProps",
+    input: {
       deletions: [{ instanceId: instance.id, name }],
-      instances: data.instances,
-      props: data.props.values(),
-    });
-    applyBuilderPatchPayloadMutable(data, payload);
+    },
   });
 };
 

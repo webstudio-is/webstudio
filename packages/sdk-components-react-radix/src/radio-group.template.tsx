@@ -16,6 +16,7 @@ import {
   spacing,
   width,
 } from "./shared/theme";
+import { iconEmbedStyle } from "./shared/styles";
 
 const createRadioGroupItem = ({
   value,
@@ -56,7 +57,11 @@ const createRadioGroupItem = ({
       `}
     >
       <radix.RadioGroupIndicator>
-        <$.HtmlEmbed ws:label="Indicator Icon" code={DotIcon} />
+        <$.HtmlEmbed
+          ws:label="Indicator Icon"
+          ws:style={iconEmbedStyle}
+          code={DotIcon}
+        />
       </radix.RadioGroupIndicator>
     </radix.RadioGroupItem>
     <$.Text>{new PlaceholderValue(label)}</$.Text>

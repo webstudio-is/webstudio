@@ -8,23 +8,11 @@ import {
 } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
-import { type Instances, coreMetas } from "@webstudio-is/sdk";
-import { coreTemplates } from "@webstudio-is/sdk/core-templates";
+import { type Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import * as baseComponents from "@webstudio-is/sdk-components-react/components";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
-import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/templates";
-import * as animationComponents from "@webstudio-is/sdk-components-animation";
-import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
-import * as animationTemplates from "@webstudio-is/sdk-components-animation/templates";
-import { hooks as animationComponentHooks } from "@webstudio-is/sdk-components-animation/hooks";
-import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
-import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
-import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
+import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { $publisher, publish } from "~/shared/pubsub";
 import {
@@ -261,31 +249,9 @@ export const Canvas = () => {
   const isContentMode = useStore($isContentMode);
 
   useMount(() => {
-    registerComponentLibrary({
-      components: {},
-      metas: coreMetas,
-      templates: coreTemplates,
-    });
-    registerComponentLibrary({
-      components: baseComponents,
-      metas: baseComponentMetas,
-      hooks: baseComponentHooks,
-      templates: baseComponentTemplates,
-    });
-    registerComponentLibrary({
-      namespace: "@webstudio-is/sdk-components-react-radix",
-      components: radixComponents,
-      metas: radixComponentMetas,
-      hooks: radixComponentHooks,
-      templates: radixTemplates,
-    });
-    registerComponentLibrary({
-      namespace: "@webstudio-is/sdk-components-animation",
-      components: animationComponents,
-      metas: animationComponentMetas,
-      hooks: animationComponentHooks,
-      templates: animationTemplates,
-    });
+    for (const library of canvasComponentLibraries) {
+      registerComponentLibrary(library);
+    }
   });
 
   useMount(initCanvasApi);

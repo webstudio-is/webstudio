@@ -30,7 +30,9 @@ export const renderControl = ({
     return <TagControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
-  // never render parameter props
+  // Parameters are internal scoped runtime values, not direct user-authored
+  // prop values. Builder can preserve/use them where already in scope, but the
+  // normal props panel must not expose them as editable controls.
   if (prop?.type === "parameter") {
     return;
   }

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { createBasicAuthRoute } from "@webstudio-is/wsauth";
 import type { BuilderState } from "../state/builder-state";
 import {
   breakpointFieldsInput,
@@ -7,15 +8,23 @@ import {
   createRedirect,
   deleteBreakpoint,
   deleteRedirect,
+  getMarketplaceProduct,
   getProjectSettings,
   listBreakpoints,
   listRedirects,
+  marketplaceProductUpdateInput,
+  parseProjectAuthRoutes,
   projectSettingsUpdateInput,
   redirectFieldsInput,
   redirectUpdateFieldsInput,
+  setRedirects,
   updateBreakpoint,
+  updateMarketplaceProduct,
   updateProjectSettings,
   updateRedirect,
+  validateContactEmail,
+  validateProjectAuth,
+  validateProjectAuthRoute,
 } from "./project-settings";
 
 const createState = (): BuilderState =>
@@ -29,6 +38,16 @@ const createState = (): BuilderState =>
       ["base", { id: "base", label: "Base" }],
       ["desktop", { id: "desktop", label: "Desktop", minWidth: 1024 }],
     ]),
+    marketplaceProduct: {
+      category: "pageTemplates",
+      name: "Existing Marketplace Product",
+      thumbnailAssetId: "asset-id",
+      author: "Webstudio",
+      email: "hello@webstudio.is",
+      website: "",
+      issues: "",
+      description: "Existing marketplace product description.",
+    },
     styles: new Map([
       [
         "local:desktop:color",
@@ -53,6 +72,10 @@ const createState = (): BuilderState =>
     ]),
   }) as BuilderState;
 
+const context = {
+  createId: () => "generated-id",
+};
+
 describe("project settings runtime", () => {
   test("exports reusable input contracts for router adapters", () => {
     expect(
@@ -74,11 +97,35 @@ describe("project settings runtime", () => {
     expect(redirectUpdateFieldsInput.parse({ status: null })).toMatchObject({
       status: null,
     });
+    expect(breakpointFieldsInput.parse({ label: "Tablet" })).toEqual({
+      label: "Tablet",
+    });
     expect(
-      breakpointFieldsInput.parse({ id: "tablet", label: "Tablet" })
-    ).toEqual({ id: "tablet", label: "Tablet" });
+      breakpointFieldsInput.safeParse({ id: "tablet", label: "Tablet" }).success
+    ).toBe(false);
+    expect(
+      breakpointFieldsInput.safeParse({ label: "Tablet", minWidth: -1 }).success
+    ).toBe(false);
     expect(breakpointUpdateFieldsInput.parse({ condition: null })).toEqual({
       condition: null,
+    });
+    expect(
+      breakpointUpdateFieldsInput.safeParse({ maxWidth: -1 }).success
+    ).toBe(false);
+    expect(
+      marketplaceProductUpdateInput.parse({
+        category: "sectionTemplates",
+        name: "Marketplace Product",
+        thumbnailAssetId: "asset-id",
+        author: "Webstudio",
+        email: "hello@webstudio.is",
+        website: "",
+        issues: "",
+        description: "Reusable marketplace product description.",
+      })
+    ).toMatchObject({
+      category: "sectionTemplates",
+      name: "Marketplace Product",
     });
   });
 
@@ -116,6 +163,123 @@ describe("project settings runtime", () => {
         },
       ],
     });
+  });
+
+  test("validates contact email through shared project settings helper", () => {
+    expect(validateContactEmail("hello@webstudio.is")).toBeUndefined();
+    expect(
+      validateContactEmail("hello@webstudio.is, support@webstudio.is")
+    ).toBeUndefined();
+    expect(validateContactEmail("")).toBeUndefined();
+    expect(validateContactEmail("not-an-email")).toBe(
+      "Contact email is invalid."
+    );
+    expect(validateContactEmail("hello@webstudio.is", 0)).toBe(
+      "Upgrade to PRO to customize the contact email."
+    );
+    expect(
+      validateContactEmail("hello@webstudio.is, support@webstudio.is", 1)
+    ).toBe("Only 1 emails are allowed.");
+  });
+
+  test("rejects invalid project contact email updates", () => {
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: { contactEmail: "not-an-email" },
+      })
+    ).toThrow("Contact email is invalid.");
+  });
+
+  test("validates serialized project auth config", () => {
+    const auth = JSON.stringify({
+      version: 1,
+      routes: {
+        "/private": {
+          method: "basic",
+          login: "admin",
+          password: "secret",
+        },
+      },
+    });
+    expect(validateProjectAuth(auth)).toBeUndefined();
+    expect(validateProjectAuth("{")).toContain("$: Expected property name");
+    expect(
+      validateProjectAuth(
+        JSON.stringify({
+          version: 1,
+          routes: {
+            private: {
+              method: "basic",
+              login: "admin",
+              password: "secret",
+            },
+          },
+        })
+      )
+    ).toBe('routes."private": Route must start with "/"');
+  });
+
+  test("parses stored auth config into editable routes", () => {
+    expect(
+      parseProjectAuthRoutes(
+        JSON.stringify({
+          version: 1,
+          routes: {
+            "/private": {
+              method: "basic",
+              login: "admin",
+              password: "secret",
+            },
+          },
+        })
+      ).routes
+    ).toEqual([
+      createBasicAuthRoute({
+        route: "/private",
+        login: "admin",
+        password: "secret",
+      }),
+    ]);
+  });
+
+  test("validates project auth route input", () => {
+    const authRoutes = [
+      createBasicAuthRoute({
+        route: "/private",
+        login: "admin",
+        password: "secret",
+      }),
+    ];
+
+    expect(validateProjectAuthRoute("", authRoutes)).toEqual([
+      "Route is required",
+    ]);
+    expect(validateProjectAuthRoute("private", authRoutes)).toEqual([
+      'Route must start with "/"',
+    ]);
+    expect(validateProjectAuthRoute("/private", authRoutes)).toEqual([
+      "This route already requires authentication",
+    ]);
+    expect(validateProjectAuthRoute("/docs/*", authRoutes)).toEqual([]);
+  });
+
+  test("rejects invalid project auth updates", () => {
+    expect(() =>
+      updateProjectSettings(createState(), {
+        meta: {
+          auth: JSON.stringify({
+            version: 1,
+            routes: {
+              private: {
+                method: "basic",
+                login: "admin",
+                password: "secret",
+              },
+            },
+          }),
+        },
+      })
+    ).toThrow('routes."private": Route must start with "/"');
   });
 
   test("creates project meta and compiler settings when missing", () => {
@@ -162,6 +326,41 @@ describe("project settings runtime", () => {
       payload: [],
     });
   });
+
+  test("updates marketplace product through runtime payload", () => {
+    const nextMarketplaceProduct = {
+      category: "sectionTemplates" as const,
+      name: "New Marketplace Product",
+      thumbnailAssetId: "new-asset-id",
+      author: "Webstudio",
+      email: "hello@webstudio.is",
+      website: "https://webstudio.is",
+      issues: "",
+      description: "A reusable section template for marketplace testing.",
+    };
+
+    expect(
+      updateMarketplaceProduct(createState(), nextMarketplaceProduct)
+    ).toEqual({
+      kind: "mutation",
+      invalidatesNamespaces: ["marketplaceProduct"],
+      noop: false,
+      result: { updated: true },
+      payload: [
+        {
+          namespace: "marketplaceProduct",
+          patches: [{ op: "replace", path: [], value: nextMarketplaceProduct }],
+        },
+      ],
+    });
+  });
+
+  test("gets marketplace product", () => {
+    const state = createState();
+    expect(getMarketplaceProduct(state)).toEqual({
+      marketplaceProduct: state.marketplaceProduct,
+    });
+  });
 });
 
 describe("redirect runtime", () => {
@@ -192,6 +391,40 @@ describe("redirect runtime", () => {
         },
       ],
     });
+  });
+
+  test("rejects duplicate redirect sources after normalization", () => {
+    expect(() =>
+      createRedirect(createState(), {
+        old: "/old#fragment",
+        new: "/other",
+      })
+    ).toThrow("Redirect already exists");
+
+    expect(() =>
+      setRedirects(createState(), {
+        redirects: [
+          { old: "/über", new: "/one" },
+          { old: "/%C3%BCber", new: "/two" },
+        ],
+      })
+    ).toThrow('Duplicate redirect source "/%C3%BCber"');
+  });
+
+  test("rejects unsupported redirect source and target param combinations", () => {
+    expect(() =>
+      createRedirect(createState(), {
+        old: "/docs/:slug*",
+        new: "/docs",
+      })
+    ).toThrow("Named splats are not supported");
+
+    expect(() =>
+      createRedirect(createState(), {
+        old: "/docs/:slug",
+        new: "/articles/:id",
+      })
+    ).toThrow("Target route params must match params from the source path");
   });
 
   test("updates redirect and can remove status", () => {
@@ -232,6 +465,37 @@ describe("redirect runtime", () => {
       ],
     });
   });
+
+  test("sets all redirects", () => {
+    expect(
+      setRedirects(createState(), {
+        redirects: [
+          { old: "/first", new: "/target", status: "301" },
+          { old: "/second", new: "/other" },
+        ],
+      })
+    ).toEqual({
+      kind: "mutation",
+      invalidatesNamespaces: ["pages"],
+      noop: false,
+      result: { count: 2 },
+      payload: [
+        {
+          namespace: "pages",
+          patches: [
+            {
+              op: "replace",
+              path: ["redirects"],
+              value: [
+                { old: "/first", new: "/target", status: "301" },
+                { old: "/second", new: "/other" },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
 });
 
 describe("breakpoint runtime", () => {
@@ -246,24 +510,31 @@ describe("breakpoint runtime", () => {
 
   test("creates breakpoint", () => {
     expect(
-      createBreakpoint(createState(), {
-        id: "tablet",
-        label: "Tablet",
-        maxWidth: 991,
-      })
+      createBreakpoint(
+        createState(),
+        {
+          label: "Tablet",
+          maxWidth: 991,
+        },
+        context
+      )
     ).toEqual({
       kind: "mutation",
       invalidatesNamespaces: ["breakpoints"],
       noop: false,
-      result: { breakpointId: "tablet" },
+      result: { breakpointId: "generated-id" },
       payload: [
         {
           namespace: "breakpoints",
           patches: [
             {
               op: "add",
-              path: ["tablet"],
-              value: { id: "tablet", label: "Tablet", maxWidth: 991 },
+              path: ["generated-id"],
+              value: {
+                id: "generated-id",
+                label: "Tablet",
+                maxWidth: 991,
+              },
             },
           ],
         },
@@ -286,20 +557,26 @@ describe("breakpoint runtime", () => {
     }
 
     expect(() =>
-      createBreakpoint(state, {
-        id: "overflow",
-        label: "Overflow",
-        minWidth: 1200,
-      })
+      createBreakpoint(
+        state,
+        {
+          label: "Overflow",
+          minWidth: 1200,
+        },
+        context
+      )
     ).toThrow("Breakpoint limit reached");
   });
 
   test("rejects creating a second base breakpoint", () => {
     expect(() =>
-      createBreakpoint(createState(), {
-        id: "second-base",
-        label: "Second base",
-      })
+      createBreakpoint(
+        createState(),
+        {
+          label: "Second base",
+        },
+        context
+      )
     ).toThrow("Base breakpoint already exists");
   });
 

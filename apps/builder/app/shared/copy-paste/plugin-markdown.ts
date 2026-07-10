@@ -2,7 +2,7 @@ import { gfm, gfmHtml } from "micromark-extension-gfm";
 import { micromark } from "micromark";
 import { insertWebstudioFragmentAt } from "../instance-utils/insert";
 import { denormalizeSrcProps } from "./asset-upload";
-import { generateFragmentFromHtml } from "../html";
+import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
 import type { Plugin } from "./copy-paste";
 import { builderApi } from "../builder-api";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
@@ -31,7 +31,7 @@ const handlePasteMarkdown = async (clipboardData: string) => {
     return false;
   }
   fragment = await denormalizeSrcProps(fragment);
-  return insertWebstudioFragmentAt(fragment, undefined, undefined, {
+  return await insertWebstudioFragmentAt(fragment, undefined, undefined, {
     onBreakpointLimitMerge: () => {
       builderApi.toast.warn(breakpointPasteLimitWarning);
     },

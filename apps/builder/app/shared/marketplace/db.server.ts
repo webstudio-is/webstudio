@@ -47,7 +47,7 @@ export const getItems = async (
     );
 
     if (parsedProduct.success === false) {
-      console.error(parsedProduct.error.formErrors.fieldErrors);
+      console.error(parsedProduct.error.flatten().fieldErrors);
       continue;
     }
 

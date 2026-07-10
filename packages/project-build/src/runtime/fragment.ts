@@ -2,7 +2,6 @@
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
 import { nanoid } from "nanoid";
-import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   type Asset,
   type Breakpoints,
@@ -24,6 +23,7 @@ import {
   portalComponent,
 } from "@webstudio-is/sdk";
 import {
+  findAvailableVariables,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
@@ -40,6 +40,10 @@ import {
   type ConflictResolution,
 } from "./style-copy";
 import { unwrap } from "./unwrap";
+import {
+  collectFontFamiliesFromStyleValue,
+  traverseStyleValue,
+} from "./style-utils";
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;
@@ -48,6 +52,163 @@ export type ContentModeCopyableProp = (input: {
   styleSources: WebstudioData["styleSources"];
   metas: Map<string, WsComponentMeta>;
 }) => boolean;
+
+export type FragmentInsertTarget = {
+  parentSelector: Instance["id"][];
+  position: number | "end" | "after";
+};
+
+const mergeById = <Item extends { id: string }>(items: Item[]) =>
+  Array.from(new Map(items.map((item) => [item.id, item])).values());
+
+const mergeUniqueByJson = <Item>(items: Item[]) =>
+  Array.from(
+    new Map(items.map((item) => [JSON.stringify(item), item])).values()
+  );
+
+export const mergeWebstudioFragments = (
+  rootInstanceIds: Instance["id"][],
+  fragments: WebstudioFragment[]
+): WebstudioFragment => ({
+  children: rootInstanceIds.map((instanceId) => ({
+    type: "id" as const,
+    value: instanceId,
+  })),
+  instances: mergeById(fragments.flatMap((fragment) => fragment.instances)),
+  styleSourceSelections: mergeUniqueByJson(
+    fragments.flatMap((fragment) => fragment.styleSourceSelections)
+  ),
+  styleSources: mergeById(
+    fragments.flatMap((fragment) => fragment.styleSources)
+  ),
+  breakpoints: mergeById(fragments.flatMap((fragment) => fragment.breakpoints)),
+  styles: mergeUniqueByJson(fragments.flatMap((fragment) => fragment.styles)),
+  dataSources: mergeById(fragments.flatMap((fragment) => fragment.dataSources)),
+  resources: mergeById(fragments.flatMap((fragment) => fragment.resources)),
+  props: mergeById(fragments.flatMap((fragment) => fragment.props)),
+  assets: mergeById(fragments.flatMap((fragment) => fragment.assets)),
+});
+
+export const getPasteRootInstanceIds = ({
+  rootInstanceIds,
+  fragment,
+}: {
+  rootInstanceIds: Instance["id"][];
+  fragment: WebstudioFragment;
+}) => {
+  const instanceIds = new Set(
+    fragment.instances.map((instance) => instance.id)
+  );
+  const fragmentRootIds = new Set<Instance["id"]>();
+  for (const child of fragment.children) {
+    if (child.type === "id") {
+      fragmentRootIds.add(child.value);
+    }
+  }
+  const seen = new Set<Instance["id"]>();
+  return rootInstanceIds.filter((instanceId) => {
+    if (
+      instanceIds.has(instanceId) === false ||
+      fragmentRootIds.has(instanceId) === false ||
+      seen.has(instanceId)
+    ) {
+      return false;
+    }
+    seen.add(instanceId);
+    return true;
+  });
+};
+
+export const getCommonAncestorSelector = (
+  instanceSelectors: Instance["id"][][]
+): undefined | Instance["id"][] => {
+  const [firstSelector] = instanceSelectors;
+  if (firstSelector === undefined) {
+    return;
+  }
+  const ancestorSelector: Instance["id"][] = [];
+  for (let index = 1; index <= firstSelector.length; index += 1) {
+    const ancestorId = firstSelector[firstSelector.length - index];
+    if (
+      instanceSelectors.every(
+        (selector) => selector[selector.length - index] === ancestorId
+      )
+    ) {
+      ancestorSelector.unshift(ancestorId);
+      continue;
+    }
+    break;
+  }
+  return ancestorSelector.length > 0 ? ancestorSelector : undefined;
+};
+
+export const getPortalFragmentSelector = (
+  instances: Instances,
+  instanceSelector: Instance["id"][]
+) => {
+  const instance = instances.get(instanceSelector[0]);
+  if (
+    instance?.component !== portalComponent ||
+    instance.children.length === 0 ||
+    instance.children[0].type !== "id"
+  ) {
+    return;
+  }
+  return [instance.children[0].value, ...instanceSelector];
+};
+
+export const findSafeFragmentPasteTarget = ({
+  fragment,
+  instances,
+  insertTarget,
+}: {
+  fragment: WebstudioFragment;
+  instances: Instances;
+  insertTarget: FragmentInsertTarget;
+}): undefined | FragmentInsertTarget => {
+  if (fragment.instances.length === 0) {
+    return;
+  }
+
+  const fragmentInstances: Instances = new Map(
+    fragment.instances.map((instance) => [instance.id, instance])
+  );
+  const copiedRootInstanceIds = new Set<Instance["id"]>();
+  for (const child of fragment.children) {
+    if (child.type !== "id") {
+      continue;
+    }
+    for (const instanceId of findTreeInstanceIdsExcludingSlotDescendants(
+      fragmentInstances,
+      child.value
+    )) {
+      copiedRootInstanceIds.add(instanceId);
+    }
+  }
+
+  const preservedChildIds = new Set<Instance["id"]>();
+  for (const instance of fragment.instances) {
+    for (const child of instance.children) {
+      if (
+        child.type === "id" &&
+        copiedRootInstanceIds.has(child.value) === false
+      ) {
+        preservedChildIds.add(child.value);
+      }
+    }
+  }
+
+  const dropTargetSelector =
+    getPortalFragmentSelector(instances, insertTarget.parentSelector) ??
+    insertTarget.parentSelector;
+  for (const instanceId of dropTargetSelector) {
+    if (preservedChildIds.has(instanceId)) {
+      return;
+    }
+  }
+
+  return insertTarget;
+};
 
 const setDifference = <Item>(current: Set<Item>, other: Set<Item>) => {
   const result = new Set<Item>(current);
@@ -63,55 +224,6 @@ const setUnion = <Item>(current: Set<Item>, other: Set<Item>) => {
     result.add(item);
   }
   return result;
-};
-
-const traverseStyleValue = (
-  value: StyleValue,
-  callback: (value: StyleValue) => void
-) => {
-  if (
-    value.type === "fontFamily" ||
-    value.type === "image" ||
-    value.type === "unit" ||
-    value.type === "keyword" ||
-    value.type === "unparsed" ||
-    value.type === "invalid" ||
-    value.type === "unset" ||
-    value.type === "color" ||
-    value.type === "rgb" ||
-    value.type === "function" ||
-    value.type === "guaranteedInvalid"
-  ) {
-    callback(value);
-    return;
-  }
-  if (value.type === "var") {
-    if (value.fallback) {
-      traverseStyleValue(value.fallback, callback);
-    }
-    return;
-  }
-  if (value.type === "tuple" || value.type === "layers") {
-    for (const item of value.value) {
-      traverseStyleValue(item, callback);
-    }
-    return;
-  }
-  if (value.type === "shadow") {
-    traverseStyleValue(value.offsetX, callback);
-    traverseStyleValue(value.offsetY, callback);
-    if (value.blur) {
-      traverseStyleValue(value.blur, callback);
-    }
-    if (value.spread) {
-      traverseStyleValue(value.spread, callback);
-    }
-    if (value.color) {
-      traverseStyleValue(value.color, callback);
-    }
-    return;
-  }
-  value satisfies never;
 };
 
 export const extractWebstudioFragment = (
@@ -158,29 +270,29 @@ export const extractWebstudioFragment = (
   const fragmentFontFamilies = new Set<string>();
 
   // collect breakpoints and assets from styles
-  const fragmentBreapoints: Breakpoints = new Map();
+  const fragmentBreakpoints: Breakpoints = new Map();
   for (const styleDecl of fragmentStyles) {
     // collect breakpoints
-    if (fragmentBreapoints.has(styleDecl.breakpointId) === false) {
+    if (fragmentBreakpoints.has(styleDecl.breakpointId) === false) {
       const breakpoint = breakpoints.get(styleDecl.breakpointId);
       if (breakpoint) {
-        fragmentBreapoints.set(styleDecl.breakpointId, breakpoint);
+        fragmentBreakpoints.set(styleDecl.breakpointId, breakpoint);
       }
     }
 
-    // collect assets including fonts
+    // collect assets
     traverseStyleValue(styleDecl.value, (value) => {
-      if (value.type === "fontFamily") {
-        for (const fontFamily of value.value) {
-          fragmentFontFamilies.add(fontFamily);
-        }
-      }
       if (value.type === "image") {
         if (value.value.type === "asset") {
           fragmentAssetIds.add(value.value.value);
         }
       }
     });
+    for (const fontFamily of collectFontFamiliesFromStyleValue(
+      styleDecl.value
+    )) {
+      fragmentFontFamilies.add(fontFamily);
+    }
   }
 
   // collect variables scoped to fragment instances
@@ -306,7 +418,7 @@ export const extractWebstudioFragment = (
     instances: fragmentInstances,
     styleSourceSelections: fragmentStyleSourceSelections,
     styleSources: Array.from(fragmentStyleSources.values()),
-    breakpoints: Array.from(fragmentBreapoints.values()),
+    breakpoints: Array.from(fragmentBreakpoints.values()),
     styles: fragmentStyles,
     dataSources: Array.from(fragmentDataSources.values()),
     resources: fragmentResources,
@@ -377,7 +489,7 @@ const insertFragmentBreakpointsMutable = ({
       breakpoints.set(newBreakpoint.id, newBreakpoint);
     }
   }
-  return mergedBreakpointIds;
+  return { mergedBreakpointIds, didMergeBreakpointsDueToLimit };
 };
 
 export const __testing__ = {
@@ -445,14 +557,20 @@ export const insertWebstudioFragmentCopy = ({
    * and those ids are used instead
    */
 
-  const mergedBreakpointIds =
+  const { mergedBreakpointIds, didMergeBreakpointsDueToLimit } =
     contentMode === false
       ? insertFragmentBreakpointsMutable({
           fragment,
           breakpoints,
           onBreakpointLimitMerge,
         })
-      : new Map<StyleDecl["breakpointId"], StyleDecl["breakpointId"]>();
+      : {
+          mergedBreakpointIds: new Map<
+            StyleDecl["breakpointId"],
+            StyleDecl["breakpointId"]
+          >(),
+          didMergeBreakpointsDueToLimit: false,
+        };
 
   insertFragmentAssetsMutable({ fragment, projectId, assets });
 
@@ -754,8 +872,57 @@ export const insertWebstudioFragmentCopy = ({
     });
   }
 
-  return newDataIds;
+  return { ...newDataIds, didMergeBreakpointsDueToLimit };
 };
+
+export const copyWebstudioFragmentMutable = ({
+  data,
+  fragment,
+  targetInstanceId,
+  projectId,
+  conflictResolution,
+  onBreakpointLimitMerge,
+  createId,
+}: {
+  data: Omit<WebstudioData, "pages">;
+  fragment: WebstudioFragment;
+  targetInstanceId: Instance["id"];
+  projectId: string;
+  conflictResolution?: ConflictResolution;
+  onBreakpointLimitMerge?: () => void;
+  createId?: () => string;
+}) =>
+  insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: findAvailableVariables({
+      ...data,
+      startingInstanceId: targetInstanceId,
+    }),
+    projectId,
+    conflictResolution,
+    onBreakpointLimitMerge,
+    createId,
+  });
+
+export const mapFragmentChildrenToCopiedChildren = ({
+  children,
+  newInstanceIds,
+}: {
+  children: Instance["children"];
+  newInstanceIds: Map<Instance["id"], Instance["id"]>;
+}): Instance["children"] =>
+  children.reduce<Instance["children"]>((mappedChildren, child) => {
+    if (child.type !== "id") {
+      mappedChildren.push(child);
+      return mappedChildren;
+    }
+    mappedChildren.push({
+      type: "id",
+      value: newInstanceIds.get(child.value) ?? child.value,
+    });
+    return mappedChildren;
+  }, []);
 export const detectFragmentTokenConflicts = ({
   fragment,
   targetData,

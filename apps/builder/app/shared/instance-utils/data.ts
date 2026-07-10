@@ -2,32 +2,35 @@
 // transaction boundaries. Put generic store reads/writes and content-mode data
 // guards here, not tree-shape mutations.
 import { toast } from "@webstudio-is/design-system";
+import { type WebstudioData, isPageTemplate } from "@webstudio-is/sdk";
 import {
-  type Instances,
-  type WebstudioData,
-  blockTemplateComponent,
-  isPageTemplate,
-} from "@webstudio-is/sdk";
-import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
-import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
-import * as builderStatePatch from "@webstudio-is/project-build/state/patch";
-import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
-import { findBlockSelector } from "../nano-states";
+  executeBuilderRuntimeOperation,
+  type BuilderRuntimeOperationInput,
+  type BuilderRuntimeOperationId,
+  type BuilderRuntimeOperationResult,
+} from "@webstudio-is/project-build/runtime/registry";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
 import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
-import { serverSyncStore } from "../sync/sync-stores";
+import { createTransactionFromBuilderPatchPayload } from "../sync/builder-patch";
 import {
   $assets,
   $breakpoints,
   $dataSources,
   $instances,
   $pages,
+  $project,
   $props,
   $resources,
   $styles,
   $styleSourceSelections,
   $styleSources,
 } from "../sync/data-stores";
-import type { InstanceSelector } from "./tree";
+
+type RuntimeMutationResult<Id extends BuilderRuntimeOperationId> = Extract<
+  BuilderRuntimeOperationResult<Id>,
+  BuilderRuntimeMutation
+>;
 
 export type WebstudioInstanceData = Pick<
   WebstudioData,
@@ -40,161 +43,85 @@ export type WebstudioInstanceData = Pick<
   | "resources"
 >;
 
-type PatchableWebstudioData =
-  | BuilderState
-  | WebstudioData
-  | WebstudioInstanceData;
-
-const getPatchNamespaceData = (
-  data: PatchableWebstudioData,
-  namespace: BuilderPatchChange["namespace"]
-) => {
-  const namespaceData = data[namespace as keyof PatchableWebstudioData];
-  if (namespaceData !== undefined) {
-    return namespaceData;
-  }
-  throw Error(`Cannot apply patch for unavailable namespace "${namespace}"`);
-};
-
-export const applyBuilderPatchPayloadMutable = (
-  data: PatchableWebstudioData,
-  payload: BuilderPatchChange[]
-) => {
-  builderStatePatch.applyBuilderPatchPayloadMutable(
-    (namespace) => getPatchNamespaceData(data, namespace),
-    payload
-  );
-};
-
-export const canDeleteInstanceInContentMode = ({
-  instanceSelector,
-  instances,
-}: {
-  instanceSelector: InstanceSelector;
-  instances: Instances;
-}) => {
-  const blockSelector = findBlockSelector(instanceSelector, instances);
-  if (blockSelector === undefined) {
-    return false;
-  }
-
-  const isDirectBlockChild =
-    instanceSelector.length - blockSelector.length === 1;
-  if (isDirectBlockChild === false) {
-    return false;
-  }
-
+const canCommitWebstudioData = () => {
+  const selectedPage = $selectedPage.get();
   return (
-    instances.get(instanceSelector[0])?.component !== blockTemplateComponent
+    isPageTemplate(selectedPage) === false ||
+    $canOpenPageTemplates.get() === true
   );
 };
 
-export const updateWebstudioData = (
-  mutate: (data: WebstudioData) => void,
-  { validateInstances = true }: { validateInstances?: boolean } = {}
-) => {
-  const selectedPage = $selectedPage.get();
-  if (isPageTemplate(selectedPage) && $canOpenPageTemplates.get() === false) {
-    return;
+export const migrateLoadedWebstudioData = () => {
+  const result = executeRuntimeMutation({
+    id: "system.migrateLoadedData",
+    input: {},
+  });
+  if (result?.result.didBreakCycles === true) {
+    toast.info("Detected and fixed cycles in the instance tree.");
   }
-  serverSyncStore.createTransaction(
-    [
-      $pages,
-      $instances,
-      $props,
-      $breakpoints,
-      $styleSourceSelections,
-      $styleSources,
-      $styles,
-      $dataSources,
-      $resources,
-      $assets,
-    ],
-    (
-      pages,
-      instances,
-      props,
-      breakpoints,
-      styleSourceSelections,
-      styleSources,
-      styles,
-      dataSources,
-      resources,
-      assets
-    ) => {
-      // @todo normalize pages
-      if (pages === undefined) {
-        return;
-      }
-      mutate({
-        pages,
-        instances,
-        props,
-        dataSources,
-        resources,
-        breakpoints,
-        styleSourceSelections,
-        styleSources,
-        styles,
-        assets,
-      });
-
-      if (validateInstances === false) {
-        return;
-      }
-
-      const cycles = findCycles(instances.values());
-
-      // Detect and fix cycles in the instance tree, then report
-      if (cycles.length > 0) {
-        toast.info("Detected and fixed cycles in the instance tree.");
-
-        breakCyclesMutable(
-          instances.values(),
-          (node) => node.component === "Slot"
-        );
-      }
-    }
-  );
 };
 
-export const updateInstanceData = (
-  mutate: (data: WebstudioInstanceData) => void
-) => {
-  const selectedPage = $selectedPage.get();
-  if (isPageTemplate(selectedPage) && $canOpenPageTemplates.get() === false) {
+const createRuntimeMutationArgs = <Id extends BuilderRuntimeOperationId>({
+  id,
+  input,
+}: {
+  id: Id;
+  input: BuilderRuntimeOperationInput<Id>;
+}) => ({
+  id,
+  state: getWebstudioData(),
+  input,
+  context: {
+    createId: builderRuntimeContext.createId,
+    projectId: $project.get()?.id,
+  },
+});
+
+const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
+  result: Mutation
+): Mutation => {
+  createTransactionFromBuilderPatchPayload({
+    data: getWebstudioData(),
+    payload: result.payload,
+  });
+  return result;
+};
+
+export const executeRuntimeMutation = <Id extends BuilderRuntimeOperationId>({
+  id,
+  input,
+}: {
+  id: Id;
+  input: BuilderRuntimeOperationInput<Id>;
+}): RuntimeMutationResult<Id> | undefined => {
+  if (canCommitWebstudioData() === false) {
     return;
   }
-  serverSyncStore.createTransaction(
-    [
-      $instances,
-      $props,
-      $styleSourceSelections,
-      $styleSources,
-      $styles,
-      $dataSources,
-      $resources,
-    ],
-    (
-      instances,
-      props,
-      styleSourceSelections,
-      styleSources,
-      styles,
-      dataSources,
-      resources
-    ) => {
-      mutate({
-        instances,
-        props,
-        styleSourceSelections,
-        styleSources,
-        styles,
-        dataSources,
-        resources,
-      });
-    }
-  );
+  const operationResult = executeBuilderRuntimeOperation<
+    RuntimeMutationResult<Id>
+  >(createRuntimeMutationArgs({ id, input }));
+  if (operationResult instanceof Promise) {
+    throw Error(`Builder runtime operation "${id}" must be synchronous.`);
+  }
+  return commitRuntimeMutation(operationResult);
+};
+
+export const executeRuntimeMutationAsync = async <
+  Id extends BuilderRuntimeOperationId,
+>({
+  id,
+  input,
+}: {
+  id: Id;
+  input: BuilderRuntimeOperationInput<Id>;
+}): Promise<RuntimeMutationResult<Id> | undefined> => {
+  if (canCommitWebstudioData() === false) {
+    return;
+  }
+  const result = await executeBuilderRuntimeOperation<
+    RuntimeMutationResult<Id>
+  >(createRuntimeMutationArgs({ id, input }));
+  return commitRuntimeMutation(result);
 };
 
 export const getWebstudioData = (): WebstudioData => {

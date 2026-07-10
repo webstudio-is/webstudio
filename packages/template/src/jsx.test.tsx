@@ -1,9 +1,11 @@
 import { expect, test } from "vitest";
 import { showAttribute } from "@webstudio-is/react-sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import {
   $,
   ActionValue,
   AssetValue,
+  createProxy,
   expression,
   PageValue,
   Parameter,
@@ -15,6 +17,34 @@ import {
   ws,
 } from "./jsx";
 import { css } from "./css";
+
+const animationActionPropMeta = {
+  required: false,
+  control: "animationAction",
+  type: "animationAction",
+} satisfies NonNullable<WsComponentMeta["props"]>[string];
+
+const viewAnimationAction = {
+  type: "view",
+  animations: [
+    {
+      timing: {
+        fill: "backwards",
+        rangeStart: ["entry", { type: "unit", value: 0, unit: "%" }],
+        rangeEnd: ["entry", { type: "unit", value: 100, unit: "%" }],
+      },
+      keyframes: [
+        {
+          styles: {
+            opacity: { type: "unit", value: 0, unit: "number" },
+          },
+        },
+      ],
+    },
+  ],
+} as const;
+
+const animation = createProxy("@webstudio-is/sdk-components-animation:");
 
 test("render jsx into instances with generated id", () => {
   const { instances } = renderTemplate(
@@ -46,6 +76,62 @@ test("render jsx into instances with generated id", () => {
       children: [],
     },
   ]);
+});
+
+test("uses component metas to convert animation action props", () => {
+  const { props } = renderTemplate(
+    <animation.AnimateChildren
+      action={viewAnimationAction}
+    ></animation.AnimateChildren>,
+    undefined,
+    [],
+    {
+      componentMetas: new Map([
+        [
+          "@webstudio-is/sdk-components-animation:AnimateChildren",
+          {
+            props: {
+              action: animationActionPropMeta,
+            },
+          },
+        ],
+      ]),
+    }
+  );
+
+  expect(props).toEqual([
+    {
+      id: "0:action",
+      instanceId: "0",
+      name: "action",
+      type: "animationAction",
+      value: viewAnimationAction,
+    },
+  ]);
+});
+
+test("reports invalid animation action props from component metas", () => {
+  expect(() =>
+    renderTemplate(
+      <animation.AnimateChildren action="fade"></animation.AnimateChildren>,
+      undefined,
+      [],
+      {
+        componentMetas: new Map([
+          [
+            "@webstudio-is/sdk-components-animation:AnimateChildren",
+            {
+              props: {
+                action: animationActionPropMeta,
+              },
+            },
+          ],
+        ]),
+      }
+    )
+  ).toThrow(
+    'Invalid JSX prop "action". Expected animationAction for @webstudio-is/sdk-components-animation:AnimateChildren.action.'
+  );
 });
 
 test("override generated ids with ws:id prop", () => {
@@ -115,6 +201,26 @@ test("render template children with multiple instances from fragment", () => {
   ]);
 });
 
+test("rejects nested react fragments", () => {
+  expect(() =>
+    renderTemplate(
+      <$.Body>
+        <>
+          <$.Box></$.Box>
+        </>
+      </$.Body>
+    )
+  ).toThrow(
+    "Do not use React fragment shorthand <>...</> inside Webstudio JSX"
+  );
+});
+
+test("rejects raw html tags", () => {
+  expect(() => renderTemplate(<div>Hello</div>)).toThrow(
+    "Do not use raw HTML tag <div> in Webstudio JSX"
+  );
+});
+
 test("render literal props", () => {
   const { props } = renderTemplate(
     <$.Body data-string="string" data-number={0}>
@@ -151,6 +257,24 @@ test("render literal props", () => {
       value: { param: "value" },
     },
   ]);
+});
+
+test("validates json-compatible prop values", () => {
+  expect(() => renderTemplate(<$.Body data-value={NaN}></$.Body>)).toThrow(
+    'Invalid JSX prop "data-value". Do not pass NaN or Infinity. Use a finite number instead.'
+  );
+  expect(() =>
+    renderTemplate(<$.Body data-value={new Date(0)}></$.Body>)
+  ).toThrow(
+    'Invalid JSX prop "data-value". Do not pass Date objects. Use plain JSON-compatible values instead.'
+  );
+  expect(() =>
+    renderTemplate(
+      <$.Body data-config={{ values: [1, Symbol("bad")] }}></$.Body>
+    )
+  ).toThrow(
+    'Invalid JSX prop "data-config" at "values.1". Do not pass Symbol values. Use a string, finite number, or expression instead.'
+  );
 });
 
 test("render defined props", () => {
@@ -244,6 +368,88 @@ test("generate local styles", () => {
   ]);
 });
 
+test("validates local style input", () => {
+  expect(() =>
+    renderTemplate(<$.Body ws:style={"color: red;" as never}></$.Body>)
+  ).toThrow("ws:style must come from css`...`");
+  expect(() =>
+    renderTemplate(<$.Body ws:style={[] as never}></$.Body>)
+  ).toThrow("ws:style must include at least one valid CSS declaration");
+  expect(() => renderTemplate(<$.Body ws:style={css``}></$.Body>)).toThrow(
+    "ws:style must include at least one valid CSS declaration"
+  );
+});
+
+test("generates local styles from react style object", () => {
+  const { props, styleSources, styleSourceSelections, styles } = renderTemplate(
+    <$.Body
+      style={{
+        color: "red",
+        padding: 24,
+        opacity: 0.5,
+      }}
+    ></$.Body>
+  );
+  expect(props).toEqual([]);
+  expect(styleSources).toEqual([{ id: "0:ws:style", type: "local" }]);
+  expect(styleSourceSelections).toEqual([
+    { instanceId: "0", values: ["0:ws:style"] },
+  ]);
+  expect(styles).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        breakpointId: "base",
+        styleSourceId: "0:ws:style",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      }),
+      expect.objectContaining({
+        breakpointId: "base",
+        styleSourceId: "0:ws:style",
+        property: "paddingTop",
+        value: { type: "unit", unit: "px", value: 24 },
+      }),
+      expect.objectContaining({
+        breakpointId: "base",
+        styleSourceId: "0:ws:style",
+        property: "paddingRight",
+        value: { type: "unit", unit: "px", value: 24 },
+      }),
+      expect.objectContaining({
+        breakpointId: "base",
+        styleSourceId: "0:ws:style",
+        property: "paddingBottom",
+        value: { type: "unit", unit: "px", value: 24 },
+      }),
+      expect.objectContaining({
+        breakpointId: "base",
+        styleSourceId: "0:ws:style",
+        property: "paddingLeft",
+        value: { type: "unit", unit: "px", value: 24 },
+      }),
+      expect.objectContaining({
+        breakpointId: "base",
+        styleSourceId: "0:ws:style",
+        property: "opacity",
+        value: { type: "unit", unit: "number", value: 0.5 },
+      }),
+    ])
+  );
+  expect(styles).toHaveLength(6);
+});
+
+test("validates react style object input", () => {
+  expect(() =>
+    renderTemplate(<$.Body style={"color: red;" as never}></$.Body>)
+  ).toThrow("style prop must be a plain object");
+  expect(() =>
+    renderTemplate(<$.Body style={{ padding: Number.NaN }}></$.Body>)
+  ).toThrow('Invalid style prop "padding"');
+  expect(() =>
+    renderTemplate(<$.Body style={{ color: false as never }}></$.Body>)
+  ).toThrow('Invalid style prop "color"');
+});
+
 test("generate local styles with states", () => {
   const { styles } = renderTemplate(
     <$.Body
@@ -309,6 +515,56 @@ test("generate token styles", () => {
       value: { type: "keyword", value: "red" },
     },
   ]);
+});
+
+test("validates token helper input", () => {
+  expect(() =>
+    renderTemplate(
+      <$.Body
+        ws:tokens={[
+          token(
+            "primary",
+            "color: red;" as unknown as Parameters<typeof token>[1]
+          ),
+        ]}
+      ></$.Body>
+    )
+  ).toThrow("token() styles must come from css`...`");
+  expect(() =>
+    renderTemplate(
+      <$.Body
+        ws:tokens={[
+          token(
+            "",
+            css`
+              color: red;
+            `
+          ),
+        ]}
+      ></$.Body>
+    )
+  ).toThrow("token() requires a non-empty string name");
+  expect(() =>
+    renderTemplate(
+      <$.Body
+        ws:tokens={[
+          token("primary", [] as unknown as Parameters<typeof token>[1]),
+        ]}
+      ></$.Body>
+    )
+  ).toThrow("token() styles must include at least one valid CSS declaration");
+  expect(() =>
+    renderTemplate(<$.Body ws:tokens={[token("primary", css``)]}></$.Body>)
+  ).toThrow("token() styles must include at least one valid CSS declaration");
+});
+
+test("validates ws:tokens values", () => {
+  expect(() =>
+    renderTemplate(<$.Body ws:tokens={"primary" as never}></$.Body>)
+  ).toThrow("ws:tokens must be an array of token(...) values");
+  expect(() =>
+    renderTemplate(<$.Body ws:tokens={["primary"] as never}></$.Body>)
+  ).toThrow("ws:tokens must be an array of token(...) values");
 });
 
 test("generate multiple tokens on single instance", () => {
@@ -787,6 +1043,40 @@ test("render resource prop", () => {
   ]);
 });
 
+test("render resource with control and omitted search params", () => {
+  const myResource = new ResourceValue("graphqlResource", {
+    control: "graphql",
+    url: expression`"https://api.example.com/graphql"`,
+    method: "post",
+    headers: [{ name: "Content-Type", value: expression`"application/json"` }],
+    body: expression`({ query: "query { viewer { id } }" })`,
+  });
+  const { props, resources } = renderTemplate(
+    <$.Body ws:id="body" action={myResource}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:action",
+      instanceId: "body",
+      name: "action",
+      type: "resource",
+      value: "resource:0",
+    },
+  ]);
+  expect(resources).toEqual([
+    {
+      id: "resource:0",
+      name: "graphqlResource",
+      control: "graphql",
+      url: `"https://api.example.com/graphql"`,
+      method: "post",
+      searchParams: undefined,
+      headers: [{ name: "Content-Type", value: `"application/json"` }],
+      body: `({ query: "query { viewer { id } }" })`,
+    },
+  ]);
+});
+
 test("render ws:show attribute", () => {
   const { props } = renderTemplate(
     <$.Body ws:id="body" ws:show={true}></$.Body>
@@ -824,6 +1114,11 @@ test("render ws:tag property", () => {
     },
   ]);
   expect(props).toEqual([]);
+});
+
+test("preserves empty ws:tag for schema validation", () => {
+  const { instances } = renderTemplate(<$.Box ws:tag=""></$.Box>);
+  expect(instances[0]?.tag).toEqual("");
 });
 
 test("render ws:element with ws:tag prop", () => {

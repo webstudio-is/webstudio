@@ -9,11 +9,15 @@
   "bin": {
     "webstudio-sdk": "./src/bin.ts"
   },
+  "exports": {
+    "./generate-stories": "./src/generate-stories.ts"
+  },
   "files": [
     "src/*",
     "!*.{test,stories}.*"
   ],
   "scripts": {
+    "test": "vitest run",
     "typecheck": "tsgo --noEmit"
   },
   "license": "AGPL-3.0-or-later",
@@ -21,9 +25,11 @@
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/template": "workspace:^",
-    "change-case": "^5.4.4"
+    "change-case": "^5.4.4",
+    "shadcn": "^4.12.0"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:^"
+    "@webstudio-is/tsconfig": "workspace:^",
+    "vitest": "^3.1.2"
   }
 }

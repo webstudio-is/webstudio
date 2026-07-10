@@ -5,6 +5,7 @@
   "scripts": {
     "build": "vite build && vike prerender",
     "dev": "vite dev",
+    "start": "vite preview",
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {

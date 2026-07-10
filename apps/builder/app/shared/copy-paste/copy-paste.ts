@@ -12,6 +12,7 @@ import {
   handlePastePage,
 } from "./plugin-page";
 import { html } from "./plugin-html";
+import { jsx } from "./plugin-jsx";
 import { markdown } from "./plugin-markdown";
 import { webflow } from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
@@ -145,7 +146,15 @@ const initPlugins = ({
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
-    plugins: [pageText, instanceJson, instanceText, html, markdown, webflow],
+    plugins: [
+      pageText,
+      instanceJson,
+      instanceText,
+      jsx,
+      html,
+      markdown,
+      webflow,
+    ],
     signal,
   });
 };

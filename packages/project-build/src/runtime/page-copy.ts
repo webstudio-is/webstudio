@@ -3,12 +3,13 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
 } from "./fragment";
+import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
   createWebstudioDataFromBuild,
-  createWebstudioDataPatchPayload,
   findAvailableVariables,
+  produceWebstudioDataMutation,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
@@ -18,6 +19,7 @@ import {
   findPageByIdOrPath,
   getFolderById,
   getPagePath,
+  elementComponent,
   type Asset,
   type Folder,
   type DataSource,
@@ -27,14 +29,26 @@ import {
   type WsComponentMeta,
   type WebstudioFragment,
   type WebstudioData,
+  webstudioFragment,
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
-import { getRequiredPages, isPathAvailable } from "./pages";
+import {
+  collectExclusiveInstanceIds,
+  createInstanceCleanupPayload,
+} from "./instances";
+import {
+  getPageExpressionErrors,
+  getRequiredPages,
+  isPathAvailable,
+  pageFieldsInput,
+  pageMetaToPatchValue,
+} from "./pages";
 import { unwrap } from "./unwrap";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 
 type CreateId = () => string;
 
@@ -46,12 +60,57 @@ export const pageDuplicateInput = z.object({
   path: z.string().optional(),
 });
 
+export const pageCopyInput = z.object({
+  projectId: z.string(),
+  sourceData: z.custom<WebstudioData>(),
+  pageId: z.string(),
+  parentFolderId: z.string().optional(),
+  conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
+});
+
+export const folderDuplicateInput = z.object({
+  projectId: z.string(),
+  folderId: z.string(),
+  parentFolderId: z.string().optional(),
+});
+
 export const pageTemplateCreatePageInput = z.object({
   projectId: z.string(),
   templateId: z.string(),
   parentFolderId: z.string().optional(),
   name: z.string().min(1),
   path: z.string(),
+  contentMode: z.boolean().optional(),
+});
+
+const pageTemplateFieldsInput = pageFieldsInput.pick({
+  name: true,
+  title: true,
+  meta: true,
+});
+
+export const pageTemplateCreateInput = pageTemplateFieldsInput.extend({
+  name: z.string().min(1),
+});
+
+export const pageTemplateUpdateInput = z.object({
+  templateId: z.string(),
+  values: pageTemplateFieldsInput,
+});
+
+export const pageTemplateDeleteInput = z.object({
+  templateId: z.string(),
+});
+
+export const pageTemplateDuplicateInput = z.object({
+  projectId: z.string(),
+  templateId: z.string(),
+});
+
+export const pageTemplateReorderInput = z.object({
+  sourceTemplateId: z.string(),
+  targetTemplateId: z.string(),
+  position: z.enum(["before", "after"]),
 });
 
 const contentModePageMetaFields = new Set([
@@ -87,6 +146,19 @@ const getRequiredWebstudioData = (state: BuilderState): WebstudioData => {
   }
   return state as WebstudioData;
 };
+
+const pageCopyInvalidatesNamespaces = [
+  "pages",
+  "assets",
+  "dataSources",
+  "resources",
+  "instances",
+  "props",
+  "breakpoints",
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
+] as const;
 
 const parseCopyNumberSuffix = (value: string) => {
   const { name = value, copyNumber = "0" } =
@@ -542,29 +614,35 @@ export const createPageDuplicatePayload = ({
   createId?: CreateId;
 }) => {
   const before = createWebstudioDataFromBuild({ build, assets });
-  const after = structuredClone(before);
-  const duplicatedPageId = insertPageCopyMutable({
-    source: { data: after, pageId },
-    target: { data: after, folderId: parentFolderId },
-    projectId,
-    createId,
+  let duplicatedPageId: Page["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    duplicatedPageId = insertPageCopyMutable({
+      source: { data: draft, pageId },
+      target: { data: draft, folderId: parentFolderId },
+      projectId,
+      createId,
+    });
+    if (duplicatedPageId === undefined) {
+      return;
+    }
+    const page = draft.pages.pages.get(duplicatedPageId);
+    if (page === undefined) {
+      duplicatedPageId = undefined;
+      return;
+    }
+    if (name !== undefined) {
+      page.name = name;
+    }
+    if (path !== undefined) {
+      page.path = path;
+    }
   });
   if (duplicatedPageId === undefined) {
     return;
   }
-  const page = after.pages.pages.get(duplicatedPageId);
-  if (page === undefined) {
-    return;
-  }
-  if (name !== undefined) {
-    page.name = name;
-  }
-  if (path !== undefined) {
-    page.path = path;
-  }
   return {
     pageId: duplicatedPageId,
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
   };
 };
 
@@ -618,18 +696,342 @@ export const duplicatePage = (
   return createRuntimeMutation({
     payload: duplicate.payload,
     result: { pageId: duplicate.pageId },
-    invalidatesNamespaces: [
-      "pages",
-      "assets",
-      "dataSources",
-      "resources",
-      "instances",
-      "props",
-      "breakpoints",
-      "styles",
-      "styleSources",
-      "styleSourceSelections",
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+  });
+};
+
+export const copyPage = (
+  state: BuilderState,
+  input: z.infer<typeof pageCopyInput>,
+  context: { createId: CreateId }
+) => {
+  const data = getRequiredWebstudioData(state);
+  const parentFolderId = input.parentFolderId ?? data.pages.rootFolderId;
+  if (data.pages.folders.has(parentFolderId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent folder not found");
+  }
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  let pageId: Page["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    pageId = insertPageCopyMutable({
+      source: { data: input.sourceData, pageId: input.pageId },
+      target: { data: draft, folderId: parentFolderId },
+      projectId: input.projectId,
+      conflictResolution: input.conflictResolution,
+      createId: context.createId,
+    });
+  });
+  if (pageId === undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Page could not be copied");
+  }
+  return createRuntimeMutation({
+    payload,
+    result: { pageId },
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+  });
+};
+
+export const duplicateFolder = (
+  state: BuilderState,
+  input: z.infer<typeof folderDuplicateInput>,
+  context: { createId: CreateId }
+) => {
+  const data = getRequiredWebstudioData(state);
+  const parentFolderId =
+    input.parentFolderId ??
+    findParentFolderByChildId(input.folderId, data.pages.folders)?.id;
+  if (parentFolderId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Folder parent folder was not found"
+    );
+  }
+  if (data.pages.folders.has(parentFolderId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent folder not found");
+  }
+  const copyData = createFolderCopyData({ data, folderId: input.folderId });
+  if (copyData === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Folder not found");
+  }
+
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  let folderId: Folder["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    folderId = insertFolderCopyFromDataMutable({
+      source: copyData,
+      target: { data: draft, parentFolderId },
+      projectId: input.projectId,
+      forceFolderCopySuffix: true,
+      createId: context.createId,
+    });
+  });
+  if (folderId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Folder could not be duplicated"
+    );
+  }
+  return createRuntimeMutation({
+    payload,
+    result: { folderId },
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+  });
+};
+
+export const createPageTemplate = (
+  state: BuilderState,
+  input: z.infer<typeof pageTemplateCreateInput>,
+  context: { createId: CreateId }
+) => {
+  const data = getRequiredWebstudioData(state);
+  const expressionErrors = getPageExpressionErrors(input);
+  if (expressionErrors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
+  }
+
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  const templateId = context.createId();
+  const rootInstanceId = context.createId();
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    draft.pages.pageTemplates ??= new Map();
+    draft.pages.pageTemplates.set(templateId, {
+      id: templateId,
+      name: input.name,
+      title: input.title ?? "",
+      rootInstanceId,
+      meta:
+        input.meta === undefined
+          ? {}
+          : (pageMetaToPatchValue(input.meta) as PageTemplate["meta"]),
+    });
+    draft.instances.set(rootInstanceId, {
+      type: "instance",
+      id: rootInstanceId,
+      component: elementComponent,
+      tag: "body",
+      children: [],
+    });
+  });
+  return createRuntimeMutation({
+    payload,
+    result: { templateId, rootInstanceId },
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+  });
+};
+
+export const updatePageTemplate = (
+  state: BuilderState,
+  input: z.infer<typeof pageTemplateUpdateInput>
+) => {
+  const data = getRequiredWebstudioData(state);
+  const template = data.pages.pageTemplates?.get(input.templateId);
+  if (template === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Page template not found");
+  }
+  const expressionErrors = getPageExpressionErrors(input.values);
+  if (expressionErrors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
+  }
+
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    const nextTemplate = draft.pages.pageTemplates?.get(input.templateId);
+    if (nextTemplate === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Page template not found");
+    }
+    if (input.values.name !== undefined) {
+      nextTemplate.name = input.values.name;
+    }
+    if (input.values.title !== undefined) {
+      nextTemplate.title = input.values.title;
+    }
+    if (input.values.meta !== undefined) {
+      for (const [name, value] of Object.entries(
+        pageMetaToPatchValue(input.values.meta)
+      )) {
+        if (value === undefined) {
+          delete nextTemplate.meta[name as keyof PageTemplate["meta"]];
+          continue;
+        }
+        nextTemplate.meta[name as keyof PageTemplate["meta"]] = value as never;
+      }
+    }
+  });
+  return createRuntimeMutation({
+    payload,
+    result: { templateId: input.templateId },
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+  });
+};
+
+export const deletePageTemplate = (
+  state: BuilderState,
+  input: z.infer<typeof pageTemplateDeleteInput>
+) => {
+  const data = getRequiredWebstudioData(state);
+  const template = data.pages.pageTemplates?.get(input.templateId);
+  if (template === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Page template not found");
+  }
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "pages",
+        patches: [{ op: "remove", path: ["pageTemplates", input.templateId] }],
+      },
+      ...createInstanceCleanupPayload({
+        instanceIds: collectExclusiveInstanceIds(data.instances, [
+          template.rootInstanceId,
+        ]),
+        props: data.props.values(),
+        dataSources: data.dataSources.values(),
+        styleSources: data.styleSources.values(),
+        styleSourceSelections: data.styleSourceSelections.values(),
+        styles: data.styles.values(),
+      }),
     ],
+    result: { templateId: input.templateId },
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+  });
+};
+
+export const duplicatePageTemplate = (
+  state: BuilderState,
+  input: z.infer<typeof pageTemplateDuplicateInput>,
+  context: { createId: CreateId }
+) => {
+  const data = getRequiredWebstudioData(state);
+  const template = data.pages.pageTemplates?.get(input.templateId);
+  if (template === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Page template not found");
+  }
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  let templateId: PageTemplate["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    draft.pages.pageTemplates ??= new Map();
+    const copyData = createTemplateCopyData({
+      data: draft,
+      template,
+    });
+    templateId = insertTemplateCopyFromFragmentsMutable({
+      source: {
+        template: copyData.template,
+        bodyFragment: copyData.bodyFragment,
+      },
+      target: { data: draft },
+      projectId: input.projectId,
+      createId: context.createId,
+    });
+  });
+  if (templateId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Page template could not be duplicated"
+    );
+  }
+  return createRuntimeMutation({
+    payload,
+    result: { templateId },
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+  });
+};
+
+export const reorderPageTemplatesMutable = (
+  sourceId: string,
+  targetId: string,
+  position: "before" | "after",
+  data: WebstudioData
+) => {
+  const templates = data.pages.pageTemplates;
+  if (templates === undefined || sourceId === targetId) {
+    return;
+  }
+
+  const orderedTemplates = Array.from(templates.values());
+  const sourceIndex = orderedTemplates.findIndex((t) => t.id === sourceId);
+  if (sourceIndex === -1) {
+    return;
+  }
+
+  const [sourceTemplate] = orderedTemplates.splice(sourceIndex, 1);
+
+  const targetIndex = orderedTemplates.findIndex((t) => t.id === targetId);
+  if (targetIndex === -1) {
+    orderedTemplates.push(sourceTemplate);
+  } else {
+    const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
+    orderedTemplates.splice(insertIndex, 0, sourceTemplate);
+  }
+
+  templates.clear();
+  for (const template of orderedTemplates) {
+    templates.set(template.id, template);
+  }
+};
+
+export const reorderPageTemplates = (
+  state: BuilderState,
+  input: z.infer<typeof pageTemplateReorderInput>
+) => {
+  const data = getRequiredWebstudioData(state);
+  const templates = data.pages.pageTemplates;
+  if (templates?.has(input.sourceTemplateId) !== true) {
+    return throwBuilderRuntimeError(
+      "NOT_FOUND",
+      "Source page template not found"
+    );
+  }
+  if (templates.has(input.targetTemplateId) === false) {
+    return throwBuilderRuntimeError(
+      "NOT_FOUND",
+      "Target page template not found"
+    );
+  }
+
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  const after = structuredClone(before);
+  reorderPageTemplatesMutable(
+    input.sourceTemplateId,
+    input.targetTemplateId,
+    input.position,
+    after
+  );
+  return createRuntimeMutation({
+    payload:
+      input.sourceTemplateId === input.targetTemplateId
+        ? []
+        : [
+            {
+              namespace: "pages",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["pageTemplates"],
+                  value: after.pages.pageTemplates ?? new Map(),
+                },
+              ],
+            },
+          ],
+    result: { templateId: input.sourceTemplateId },
+    invalidatesNamespaces: ["pages"],
   });
 };
 
@@ -680,14 +1082,19 @@ export const createPageFromTemplate = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
-  const pageId = insertPageFromTemplateMutable({
-    templateId: input.templateId,
-    source: { data: after },
-    target: { data: after, folderId: parentFolderId },
-    overrides: { name: input.name, path: input.path },
-    projectId: input.projectId,
-    createId: context.createId,
+  let pageId: Page["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    pageId = insertPageFromTemplateMutable({
+      templateId: input.templateId,
+      source: { data: draft },
+      target: { data: draft, folderId: parentFolderId },
+      overrides: { name: input.name, path: input.path },
+      projectId: input.projectId,
+      metas: componentMetas,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
+      contentMode: input.contentMode,
+      createId: context.createId,
+    });
   });
   if (pageId === undefined) {
     return throwBuilderRuntimeError(
@@ -696,20 +1103,9 @@ export const createPageFromTemplate = (
     );
   }
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { pageId },
-    invalidatesNamespaces: [
-      "pages",
-      "assets",
-      "dataSources",
-      "resources",
-      "instances",
-      "props",
-      "breakpoints",
-      "styles",
-      "styleSources",
-      "styleSourceSelections",
-    ],
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
 };
 
@@ -815,6 +1211,59 @@ export type FolderCopyData = {
   folder: Folder;
   children: Array<PageCopyData | FolderCopyData>;
 };
+
+export type PageClipboardData = PageCopyData & { type: "page" };
+
+export type TemplateClipboardData = TemplateCopyData & { type: "template" };
+
+export type FolderClipboardData = Omit<FolderCopyData, "children"> & {
+  type: "folder";
+  children: Array<PageClipboardData | FolderClipboardData>;
+};
+
+export type PageClipboardItem =
+  | PageClipboardData
+  | TemplateClipboardData
+  | FolderClipboardData;
+
+export const pageClipboardPageInput: z.ZodType<PageClipboardData> = z.object({
+  type: z.literal("page"),
+  page: z.custom<Page>(),
+  rootFragment: webstudioFragment,
+  bodyFragment: webstudioFragment,
+});
+
+export const pageClipboardTemplateInput: z.ZodType<TemplateClipboardData> =
+  z.object({
+    type: z.literal("template"),
+    template: z.custom<PageTemplate>(),
+    rootFragment: webstudioFragment,
+    bodyFragment: webstudioFragment,
+  });
+
+export const pageClipboardFolderInput: z.ZodType<FolderClipboardData> = z.lazy(
+  () =>
+    z.object({
+      type: z.literal("folder"),
+      folder: z.custom<Folder>(),
+      children: z.array(
+        z.union([pageClipboardPageInput, pageClipboardFolderInput])
+      ),
+    })
+);
+
+export const pageClipboardItemInput = z.union([
+  pageClipboardPageInput,
+  pageClipboardTemplateInput,
+  pageClipboardFolderInput,
+]);
+
+export const pageClipboardPasteInput = z.object({
+  projectId: z.string(),
+  targetFolderId: z.string(),
+  item: pageClipboardItemInput,
+  conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
+});
 
 export const createPageCopyData = ({
   data,
@@ -968,6 +1417,71 @@ export const insertFolderCopyFromDataMutable = ({
     forceFolderCopySuffix,
     createId,
     copyContext,
+  });
+};
+
+export const pastePageClipboardItem = (
+  state: BuilderState,
+  input: z.infer<typeof pageClipboardPasteInput>,
+  context: { createId: CreateId }
+) => {
+  const data = getRequiredWebstudioData(state);
+  if (data.pages.folders.has(input.targetFolderId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Target folder not found");
+  }
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  let didReachBreakpointLimit = false;
+  const onBreakpointLimitMerge = () => {
+    didReachBreakpointLimit = true;
+  };
+  let id: Page["id"] | Folder["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    if (input.item.type === "page") {
+      id = insertPageCopyFromFragmentsMutable({
+        source: input.item,
+        target: { data: draft, folderId: input.targetFolderId },
+        projectId: input.projectId,
+        conflictResolution: input.conflictResolution,
+        onBreakpointLimitMerge,
+        createId: context.createId,
+      });
+    } else if (input.item.type === "template") {
+      id = insertTemplateCopyFromFragmentsMutable({
+        source: input.item,
+        target: { data: draft },
+        projectId: input.projectId,
+        conflictResolution: input.conflictResolution,
+        onBreakpointLimitMerge,
+        createId: context.createId,
+      });
+    } else {
+      id = insertFolderCopyFromDataMutable({
+        source: input.item,
+        target: { data: draft, parentFolderId: input.targetFolderId },
+        projectId: input.projectId,
+        conflictResolution: input.conflictResolution,
+        onBreakpointLimitMerge,
+        createId: context.createId,
+      });
+    }
+  });
+  if (id === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Clipboard item was not pasted"
+    );
+  }
+  return createRuntimeMutation({
+    payload,
+    result: {
+      id,
+      type: input.item.type,
+      didReachBreakpointLimit,
+    },
+    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
 };
 

@@ -20,14 +20,14 @@ const entry = <Value extends z.ZodTypeAny>(value: Value) =>
   z.tuple([z.string(), value]);
 
 type SchemaShape<Value extends object> = {
-  [Key in keyof Required<Value>]: z.ZodType<Value[Key], z.ZodTypeDef, unknown>;
+  [Key in keyof Required<Value>]: z.ZodType<Value[Key], unknown>;
 };
 
 export type SerializedBuild = Omit<Build, "marketplaceProduct" | "pages"> & {
   pages: SerializedPages;
 };
 
-const serializedBuildShape: SchemaShape<SerializedBuild> = {
+const serializedBuildShape = {
   id: z.string(),
   projectId: z.string(),
   version: z.number(),
@@ -43,7 +43,7 @@ const serializedBuildShape: SchemaShape<SerializedBuild> = {
   dataSources: z.array(entry(dataSource)),
   resources: z.array(entry(resource)),
   deployment: deployment.optional(),
-};
+} satisfies SchemaShape<SerializedBuild>;
 
 // Canonical project-build schema entrypoint for API-facing serialized builds.
 // API packages compose this schema; they should not copy or maintain it.

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { nanoid } from "nanoid";
 import {
   Box,
   Button,
@@ -14,7 +13,6 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { createSelectedStyleDeclarationUpdatePayload } from "@webstudio-is/project-build/runtime/styles";
 import {
   parseGridTemplateTrackList,
   parseGridAreas,
@@ -30,10 +28,7 @@ import { $gridCellData } from "~/shared/nano-states";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $instances } from "~/shared/sync/data-stores";
-import {
-  applyBuilderPatchPayloadMutable,
-  updateWebstudioData,
-} from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { DEFAULT_GRID_TRACK_COUNT } from "./constants";
 
 /**
@@ -289,78 +284,17 @@ const GridPresetsPicker = ({ onSelect }: GridPresetsPickerProps) => {
 type FillGridInput = {
   totalCells: number;
   existingChildCount: number;
-  generateId: () => string;
 };
 
-type FillGridItem = {
-  instanceId: string;
-  styleSourceId: string;
-};
-
-const computeFillGridData = ({
+const computeFillGridItemsCount = ({
   totalCells,
   existingChildCount,
-  generateId,
-}: FillGridInput): FillGridItem[] => {
+}: FillGridInput) => {
   const cellsToAdd = totalCells - existingChildCount;
   if (cellsToAdd <= 0) {
-    return [];
+    return 0;
   }
-  return Array.from({ length: cellsToAdd }, () => ({
-    instanceId: generateId(),
-    styleSourceId: generateId(),
-  }));
-};
-
-const applyFillGridItems = (
-  data: Parameters<Parameters<typeof updateWebstudioData>[0]>[0],
-  items: FillGridItem[],
-  breakpointId: string,
-  parentInstanceId: string
-) => {
-  const parentInstance = data.instances.get(parentInstanceId);
-  if (parentInstance === undefined) {
-    return;
-  }
-  for (const { instanceId, styleSourceId } of items) {
-    data.instances.set(instanceId, {
-      type: "instance",
-      id: instanceId,
-      component: "Box",
-      children: [],
-    });
-    const styleSource = {
-      type: "local",
-      id: styleSourceId,
-    } as const;
-    applyBuilderPatchPayloadMutable(
-      data,
-      createSelectedStyleDeclarationUpdatePayload({
-        updates: [
-          {
-            instanceId,
-            styleSource,
-            styleSourceId,
-            breakpoint: breakpointId,
-            property: "display",
-            value: { type: "keyword", value: "flex" },
-          },
-          {
-            instanceId,
-            styleSource,
-            styleSourceId,
-            breakpoint: breakpointId,
-            property: "flexDirection",
-            value: { type: "keyword", value: "column" },
-          },
-        ],
-        styleSources: data.styleSources,
-        styleSourceSelections: data.styleSourceSelections.values(),
-        styles: data.styles.values(),
-      }).payload
-    );
-    parentInstance.children.push({ type: "id", value: instanceId });
-  }
+  return cellsToAdd;
 };
 
 const gridGeneratorButtonStyle = css({
@@ -477,16 +411,20 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     if (baseBreakpoint === undefined) {
       return;
     }
-    const items = computeFillGridData({
+    const itemsCount = computeFillGridItemsCount({
       totalCells: columnCount * rowCount,
       existingChildCount,
-      generateId: nanoid,
     });
-    if (items.length === 0) {
+    if (itemsCount === 0) {
       return;
     }
-    updateWebstudioData((data) => {
-      applyFillGridItems(data, items, baseBreakpoint.id, instanceSelector[0]);
+    executeRuntimeMutation({
+      id: "instances.fillGrid",
+      input: {
+        parentInstanceId: instanceSelector[0],
+        totalCells: columnCount * rowCount,
+        breakpointId: baseBreakpoint.id,
+      },
     });
   };
 
@@ -621,6 +559,5 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
 
 export const __testing__ = {
   gridPresets,
-  computeFillGridData,
-  applyFillGridItems,
+  computeFillGridItemsCount,
 };

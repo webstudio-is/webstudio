@@ -7,7 +7,7 @@ import {
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
-} from "@webstudio-is/project/content-mode-permissions";
+} from "@webstudio-is/project-build/runtime/content-mode-permissions";
 import {
   type Breakpoint,
   type Prop,

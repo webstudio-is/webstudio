@@ -2,8 +2,14 @@ import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
-import { buildPatchNamespaces } from "@webstudio-is/protocol";
-import { mcpArgumentExamples } from "@webstudio-is/project-build/mcp";
+import {
+  buildPatchNamespaces,
+  publicApiOperations,
+} from "@webstudio-is/protocol";
+import {
+  listProjectSessionMcpTools,
+  mcpArgumentExamples,
+} from "@webstudio-is/project-build/mcp";
 import { readCliDoc, readCliDocSections, readCliDocTitle } from "../docs";
 import {
   generatedAppDependencyNotes,
@@ -27,8 +33,8 @@ export const manOptions = (yargs: CommonYargsArgv) =>
   yargs
     .positional("topic", {
       type: "string",
-      describe: "Manual topic to print",
-      default: "api",
+      describe: "Manual topic to print: all, api, llm, mcp, or project-editing",
+      default: "all",
     })
     .option("json", {
       type: "boolean",
@@ -36,7 +42,10 @@ export const manOptions = (yargs: CommonYargsArgv) =>
       default: false,
     });
 
-type ManOptions = StrictYargsOptionsToInterface<typeof manOptions> & {
+type ManOptions = Omit<
+  StrictYargsOptionsToInterface<typeof manOptions>,
+  "topic"
+> & {
   topic?: string;
 };
 
@@ -70,14 +79,25 @@ const commandCatalog = cliCommandMetadata.map((command) => ({
   examples: (command.examples ?? []).map(formatApiUseCaseCommand),
 }));
 
-const mcpOnlyCommandCatalog = mcpOnlyApiCommandMetadata.map((command) => ({
-  command: command.command,
-  kind: command.method,
-  permit: command.permit,
-  use: command.description,
-  required: command.requiredOptions ?? ["json"],
-  examples: command.examples ?? [],
-}));
+const mcpVisibleToolNames = new Set(
+  listProjectSessionMcpTools(publicApiOperations).map((tool) => tool.name)
+);
+
+const visibleMcpOnlyApiCommandMetadata = mcpOnlyApiCommandMetadata.filter(
+  (command) => mcpVisibleToolNames.has(command.command)
+);
+
+const mcpOnlyCommandCatalog = visibleMcpOnlyApiCommandMetadata.map(
+  (command) => ({
+    command: command.command,
+    kind: command.method,
+    permit: command.permit,
+    use: command.description,
+    inputFields: command.inputFields,
+    requiredInputFields: command.requiredInputFields,
+    examples: command.examples ?? [],
+  })
+);
 
 const readCommands = commandCatalog
   .filter((command) => command.kind === "query")
@@ -110,10 +130,12 @@ const taskRecipeUseCases = {
     "Update page settings/metadata",
     "Read project settings",
     "Update project settings",
+    "Update marketplace product",
     "List redirects",
     "Create redirect",
     "Update redirect",
     "Delete redirect",
+    "Set redirects",
     "List breakpoints",
     "Create breakpoint",
     "Update breakpoint",
@@ -127,7 +149,7 @@ const taskRecipeUseCases = {
   elements: [
     "List element instances",
     "Inspect one element instance",
-    "Append/prepend/replace child elements",
+    "Insert authored JSX or one component template",
     "Move elements",
     "Clone element subtree",
     "Delete element subtree",
@@ -210,7 +232,6 @@ const taskRecipes = Object.fromEntries(
 ) as Record<keyof typeof taskRecipeUseCases, string[]>;
 
 const inputFileShapes = {
-  "children.json": [{ tag: "div", label: "Hero", text: "Launch faster" }],
   "moves.json": [
     {
       instanceId: "child-id",
@@ -271,6 +292,19 @@ const inputFileShapes = {
     },
     compiler: { atomicStyles: true },
   },
+  "marketplace-product.json": {
+    category: "pageTemplates",
+    name: "Acme Template",
+    thumbnailAssetId: "asset-id",
+    author: "Acme Studio",
+    email: "hello@example.com",
+    website: "https://example.com",
+    issues: "",
+    description: "Reusable template project for Acme landing pages.",
+  },
+  "redirects.json": {
+    redirects: [{ old: "/old", new: "/new", status: "301" }],
+  },
   "asset.json": {
     name: "hero.png",
     type: "image",
@@ -288,7 +322,7 @@ const inputFileShapes = {
   "domain.json": { domain: "www.example.com" },
   "patch.json": [
     {
-      id: "transaction-id",
+      id: "patch-transaction-label",
       payload: [
         {
           namespace: "pages",
@@ -398,26 +432,38 @@ const readFirstUseCases = [
 ] as const;
 
 const apiCommandsByArea = {
-  setupAndDiscovery: ["permissions"],
-  publishAndDomains: [
-    "publish deploy",
-    "publish list",
-    "publish status",
-    "publish unpublish",
-    "domains list",
-    "domains create",
-    "domains update",
-    "domains delete",
-    "domains verify",
-  ],
-} as const;
+  setupAndDiscovery: cliCommandMetadata
+    .filter(({ cliCommand }) => cliCommand === "permissions")
+    .map(({ cliCommand }) => cliCommand),
+  publishAndDomains: cliCommandMetadata
+    .filter(
+      ({ cliCommand }) =>
+        cliCommand.startsWith("publish ") || cliCommand.startsWith("domains ")
+    )
+    .map(({ cliCommand }) => cliCommand),
+  pagesAndSettings: cliCommandMetadata
+    .filter(({ cliCommand }) =>
+      [
+        "get-marketplace-product",
+        "update-marketplace-product",
+        "set-redirects",
+      ].includes(cliCommand)
+    )
+    .map(({ cliCommand }) => cliCommand),
+};
 
 const mcpOnlyCommandIndex = mcpOnlyCommandCatalog
   .map((command) => `- ${command.command}: ${command.use}`)
   .join("\n");
 
-const renderCapabilityCommands = (commands: readonly string[]) =>
-  commands.map((command) => `- ${command}`).join("\n");
+const renderCapabilityCommands = (
+  commands: readonly (string | { cliCommand: string })[]
+) =>
+  commands
+    .map((command) =>
+      typeof command === "string" ? `- ${command}` : `- ${command.cliCommand}`
+    )
+    .join("\n");
 
 const topLevelCapabilityIndex = topLevelCommandCatalog
   .map((command) =>
@@ -471,6 +517,48 @@ const manualReplacements = {
 const apiManual = renderMarkdownTemplate(apiManualMarkdown, manualReplacements);
 const llmManual = renderMarkdownTemplate(llmManualMarkdown, manualReplacements);
 const mcpManual = renderMarkdownTemplate(mcpManualMarkdown, manualReplacements);
+const mcpCapabilitySummary = [
+  "Project discovery and session status",
+  "Pages, folders, redirects, and project settings",
+  "Instances/components, text, props, and bindings",
+  "Styles, design tokens, CSS variables, and breakpoints",
+  "Data variables, resources, assets, publishing, domains, screenshots, and visual diffing",
+];
+const allManual = [
+  "# Webstudio Complete CLI Manual",
+  "",
+  "This is the default `webstudio man` output. It describes the top-level CLI surface and how to discover deeper MCP tools.",
+  "",
+  "Focused topics:",
+  "",
+  "- `webstudio man api`: shell/API workflows and MCP capability index",
+  "- `webstudio man llm --json`: structured LLM guidance",
+  "- `webstudio man mcp`: MCP startup, rules, and JSON argument examples",
+  "",
+  "## Top-Level Commands",
+  "",
+  topLevelCapabilityIndex,
+  "",
+  "## High-Level Shell API Commands",
+  "",
+  renderCapabilityCommands(cliCommandMetadata),
+  "",
+  "## MCP Capabilities",
+  "",
+  "`webstudio mcp` exposes fine-grained Builder project manipulation tools. Use MCP discovery for exact tool schemas and examples:",
+  "",
+  "- `tools/list`",
+  "- `resources/list`",
+  "- `meta.index`",
+  "- `meta.guide`",
+  "- `meta.get_more_tools`",
+  "- `webstudio://project/tools`",
+  "- `webstudio://project/components`",
+  "",
+  ...mcpCapabilitySummary.map((capability) => `- ${capability}`),
+  "",
+  "Builder data manipulation is MCP-level. From a shell, call MCP tools with shortcuts such as `webstudio insert-fragment '<json>'`, or use the explicit form `webstudio mcp single-op-call insert-fragment '<json>'` when you need to make the MCP boundary obvious.",
+].join("\n");
 
 const apiDocSections = readCliDocSections("manual-api");
 const llmDocSections = readCliDocSections("manual-llm");
@@ -491,7 +579,90 @@ const mergeDocSections = <Json extends Record<string, unknown>>(
   return { ...json, ...sections };
 };
 
+const createLlmManualJson = (
+  topic: "llm" | "project-editing",
+  aliasOf?: "llm"
+) =>
+  mergeDocSections(
+    topic,
+    {
+      topic,
+      ...(aliasOf === undefined ? {} : { aliasOf }),
+      title: readCliDocTitle("manual-llm"),
+      discovery: [
+        "webstudio schema api",
+        "webstudio permissions --json",
+        "webstudio mcp",
+        "MCP tool: status",
+        "MCP resource: webstudio://project/tools",
+      ],
+      taskRecipes,
+      useCaseScenarios,
+      knownGaps: knownCliGaps,
+      topLevelCommands: topLevelCommandCatalog,
+      apiCommandsByArea,
+      mcpOnlyCommands: mcpOnlyCommandCatalog,
+      inputFileShapes,
+      mcpArgumentExamples,
+      commands: commandCatalog,
+      readCommands,
+      writeCommands,
+      sessionBehavior: [
+        "Read meta.session.source and meta.session.namespaces to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
+        "Use --refresh before a local-capable command when the cached snapshot may be stale.",
+        "A mutation is durable only when meta.session.committed is true.",
+      ],
+      writes: [
+        "Use MCP tools for fine-grained project edits.",
+        "Use top-level CLI only for link/sync/build/publish/domains/permissions/discovery workflows.",
+      ],
+      commandSurfaceBoundary: [
+        "Top-level webstudio shell commands cover setup, sync/import/build/preview/screenshot, permissions, publish/domains, schema, man, and starting MCP.",
+        "Builder project data manipulation uses MCP tools: pages, instances/components, props, text, styles, tokens, variables, resources, assets, breakpoints, redirects, and raw patches.",
+        "From a shell, MCP tool shortcuts such as webstudio insert-fragment forward to webstudio mcp single-op-call; if a shortcut is ambiguous with a real top-level command, the real top-level command wins.",
+      ],
+      visionVerificationLoop: [...mcpVisionVerificationLoop],
+      screenshotVerification: screenshotVerificationSummary,
+    },
+    llmDocSections
+  );
+
+const llmManualJson = createLlmManualJson("llm");
+
 const topics = {
+  all: {
+    manual: allManual,
+    get json() {
+      return {
+        topic: "all",
+        title: "Webstudio Complete CLI Manual",
+        focusedTopics: ["api", "llm", "mcp"],
+        topLevelCommands: topLevelCommandCatalog,
+        commands: commandCatalog,
+        mcp: {
+          command: "webstudio mcp",
+          toolCount:
+            cliCommandMetadata.length + visibleMcpOnlyApiCommandMetadata.length,
+          discovery: [
+            "tools/list",
+            "resources/list",
+            "meta.index",
+            "meta.guide",
+            "meta.get_more_tools",
+          ],
+          resources: [
+            "webstudio://project/status",
+            "webstudio://project/tools",
+            "webstudio://project/components",
+            "webstudio://project/guide",
+          ],
+          capabilities: mcpCapabilitySummary,
+          boundary:
+            "Builder data manipulation is MCP-level. From a shell, MCP tool shortcuts such as webstudio insert-fragment forward to webstudio mcp single-op-call; use the explicit form when you need to make the MCP boundary obvious.",
+        },
+      };
+    },
+  },
   api: {
     manual: apiManual,
     json: mergeDocSections(
@@ -502,7 +673,7 @@ const topics = {
         workflows: [
           "webstudio init --link <api-share-link> --json",
           "webstudio permissions --json",
-          "webstudio schema api --json",
+          "webstudio schema api",
           "webstudio publish deploy --target production --json",
           "webstudio domains list --json",
           "webstudio mcp",
@@ -537,43 +708,11 @@ const topics = {
   },
   llm: {
     manual: llmManual,
-    json: mergeDocSections(
-      "llm",
-      {
-        topic: "llm",
-        title: readCliDocTitle("manual-llm"),
-        discovery: [
-          "webstudio schema api --json",
-          "webstudio permissions --json",
-          "webstudio mcp",
-          "MCP tool: status",
-          "MCP resource: webstudio://project/tools",
-        ],
-        taskRecipes,
-        useCaseScenarios,
-        knownGaps: knownCliGaps,
-        topLevelCommands: topLevelCommandCatalog,
-        apiCommandsByArea,
-        mcpOnlyCommands: mcpOnlyCommandCatalog,
-        inputFileShapes,
-        mcpArgumentExamples,
-        commands: commandCatalog,
-        readCommands,
-        writeCommands,
-        sessionBehavior: [
-          "Read meta.session.source and meta.session.namespaces to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
-          "Use --refresh before a local-capable command when the cached snapshot may be stale.",
-          "A mutation is durable only when meta.session.committed is true.",
-        ],
-        writes: [
-          "Use MCP tools for fine-grained project edits.",
-          "Use top-level CLI only for link/sync/build/publish/domains/permissions/discovery workflows.",
-        ],
-        visionVerificationLoop: [...mcpVisionVerificationLoop],
-        screenshotVerification: screenshotVerificationSummary,
-      },
-      llmDocSections
-    ),
+    json: llmManualJson,
+  },
+  "project-editing": {
+    manual: llmManual,
+    json: createLlmManualJson("project-editing", "llm"),
   },
   mcp: {
     manual: mcpManual,
@@ -609,7 +748,7 @@ const topics = {
 };
 
 export const man = (options: ManOptions) => {
-  const topic = options.topic ?? "api";
+  const topic = options.topic ?? "all";
   const entry = topics[topic as keyof typeof topics];
   if (entry === undefined) {
     console.info(`Unknown manual topic "${topic}".

@@ -1,32 +1,10 @@
-import { z } from "zod";
 import { InputErrorsTooltip } from "@webstudio-is/design-system";
 import { CustomMetadata } from "../custom-metadata";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
-import type { Errors, OnChange, Values } from "./shared";
-
-const customMetadataValues = z.object({
-  customMetas: z
-    .array(
-      z.object({
-        property: z.string(),
-        content: z.string(),
-      })
-    )
-    .optional(),
-});
-
-export const validateCustomMetadataSection = (
-  values: Values,
-  variableValues: Map<string, unknown>
-): Errors => {
-  const parsedResult = customMetadataValues.safeParse({
-    customMetas: values.customMetas.map((item) => ({
-      property: item.property,
-      content: computeExpression(item.content, variableValues),
-    })),
-  });
-  return parsedResult.success ? {} : parsedResult.error.formErrors.fieldErrors;
-};
+import type {
+  PageSettingsErrors,
+  PageSettingsValues,
+} from "@webstudio-is/project-build/runtime/pages";
+import type { OnChange } from "./shared";
 
 export const CustomMetadataSection = ({
   values,
@@ -35,8 +13,8 @@ export const CustomMetadataSection = ({
   showBindingControls,
   onChange,
 }: {
-  values: Values;
-  errors: Errors;
+  values: PageSettingsValues;
+  errors: PageSettingsErrors;
   disabled?: boolean;
   showBindingControls?: boolean;
   onChange: OnChange;
