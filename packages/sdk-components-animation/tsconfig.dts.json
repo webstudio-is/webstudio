@@ -7,6 +7,7 @@
     "src/hooks.ts"
   ],
   "compilerOptions": {
-    "declarationDir": "lib/types"
+    "declarationDir": "lib/types",
+    "rootDir": "./src"
   }
 }

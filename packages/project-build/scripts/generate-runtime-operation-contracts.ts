@@ -1,7 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { format } from "prettier";
 import { builderRuntimeOperations } from "../src/runtime/registry";
 
 const outputPath = join(
@@ -48,4 +47,4 @@ export const runtimeOperationContractData = ${toSource(contractData)} as const;
 `;
 
 await mkdir(dirname(outputPath), { recursive: true });
-await writeFile(outputPath, await format(source, { parser: "typescript" }));
+await writeFile(outputPath, source);

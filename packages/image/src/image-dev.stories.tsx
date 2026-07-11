@@ -56,7 +56,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 /**
  * All image variants demonstrated together.
  **/
-export const ImageDev = () => (
+export const ImageDev = (): React.JSX.Element => (
   <StorySection title="Image Dev">
     <SectionTitle>Fixed width image</SectionTitle>
     <p>Load images depending on image width and device per pixel ratio.</p>

@@ -8,6 +8,7 @@
     "src/create-link.tsx"
   ],
   "compilerOptions": {
-    "declarationDir": "lib/types"
+    "declarationDir": "lib/types",
+    "rootDir": "./src"
   }
 }

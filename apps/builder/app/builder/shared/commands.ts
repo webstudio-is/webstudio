@@ -68,6 +68,7 @@ import {
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
+import { showDuplicateTokensView } from "../features/command-panel/groups/duplicate-tokens-group";
 import { builderApi } from "~/shared/builder-api";
 import { getSetting, setSetting } from "./client-settings";
 import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
@@ -1171,12 +1172,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       label: "Find duplicate tokens",
       description: "Find tokens with identical styles or names",
       handler: () => {
-        // Import needed to avoid circular dependency
-        import(
-          "~/builder/features/command-panel/groups/duplicate-tokens-group"
-        ).then(({ showDuplicateTokensView }) => {
-          showDuplicateTokensView();
-        });
+        showDuplicateTokensView();
       },
     },
 

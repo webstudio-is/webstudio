@@ -6,13 +6,13 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json && node ./scripts/prepare-dts.mjs",
-    "build:html.css": "tsx ./bin/html.css.ts && prettier --write ./src/__generated__/html.ts",
-    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
-    "build:descriptions": "tsx ./bin/property-value-descriptions.ts && prettier --write ./src/__generated__/property-value-descriptions.ts",
-    "build:property-var-fixtures": "tsx ./bin/property-var-test-fixtures.ts && prettier --write ./src/__generated__/property-var-test-fixtures.ts",
+    "build:html.css": "tsx ./bin/html.css.ts && oxfmt ./src/__generated__/html.ts",
+    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ && oxfmt ./src/__generated__/ && (cd ../css-engine && oxfmt src/__generated__/)",
+    "build:descriptions": "tsx ./bin/property-value-descriptions.ts && oxfmt ./src/__generated__/property-value-descriptions.ts",
+    "build:property-var-fixtures": "tsx ./bin/property-var-test-fixtures.ts && oxfmt ./src/__generated__/property-var-test-fixtures.ts",
     "build:all": "pnpm build:html.css && pnpm build:mdn-data && pnpm build:descriptions && pnpm build:property-var-fixtures",
     "test": "vitest run"
   },
@@ -23,7 +23,7 @@
     "mdn-data": "2.28.0",
     "openai": "^3.2.1",
     "p-retry": "^6.2.1",
-    "typescript": "5.8.2",
+    "typescript": "7.0.2",
     "vitest": "^3.1.2",
     "zod": "^4.4.3"
   },

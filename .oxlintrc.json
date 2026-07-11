@@ -19,6 +19,24 @@
     "unicorn/filename-case": ["error", { "case": "kebabCase" }],
     "unicorn/prefer-node-protocol": "error"
   },
+  "overrides": [
+    {
+      // our useEffectEvent (app/shared/hook-utils/effect-event.ts) is a
+      // stable-callback helper, not React's effect-only useEffectEvent.
+      // oxlint 1.73+ matches the hook by name and forbids calling its result
+      // outside effects, which these files do intentionally.
+      "files": [
+        "apps/builder/app/builder/features/publish/domains.tsx",
+        "apps/builder/app/builder/features/workspace/canvas-tools/outline/block-instance-outline.tsx",
+        "apps/builder/app/canvas/features/text-editor/text-editor.tsx",
+        "apps/builder/app/shared/clone-project.tsx",
+        "apps/builder/app/shared/logout.client.tsx"
+      ],
+      "rules": {
+        "react/rules-of-hooks": "off"
+      }
+    }
+  ],
   "ignorePatterns": [
     "**/*.js",
     "**/*.d.ts",

@@ -4,6 +4,7 @@
   "compilerOptions": {
     "emitDeclarationOnly": true,
     "declaration": true,
-    "outDir": "lib/types"
+    "outDir": "lib/types",
+    "rootDir": "./src"
   }
 }

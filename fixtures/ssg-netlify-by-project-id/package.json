@@ -6,7 +6,7 @@
     "build": "vite build && vike prerender",
     "postbuild": "prettier --write \"dist/**/*.html\" || true",
     "dev": "vite dev",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "cli:local": "node ../../packages/cli/local.js",
     "fixtures:link": "pnpm cli:local link --link https://p-8a7358b1-7de3-459d-b7b1-56dddfb6ce1e-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=f55154e6-36b9-4920-bc81-3095cc88f8ff'",

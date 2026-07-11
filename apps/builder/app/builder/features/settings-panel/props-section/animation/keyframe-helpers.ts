@@ -25,7 +25,7 @@ export const calcOffsets = (
 
   let prev = 0;
 
-  for (let i = 1; i < offsets.length - 1; ) {
+  for (let i = 1; i < offsets.length - 1;) {
     if (offsets[i] !== undefined) {
       prev = i;
       i++;

@@ -26,7 +26,7 @@
   "scripts": {
     "build": "rm -rf lib && esbuild src/index.ts src/pages.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -38,7 +38,7 @@
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
     "esbuild": "^0.25.3",
-    "typescript": "5.8.2",
+    "typescript": "7.0.2",
     "vitest": "^3.1.2"
   }
 }

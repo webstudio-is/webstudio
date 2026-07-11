@@ -6,9 +6,8 @@
     "editor.formatOnPaste": false,
     "editor.formatOnType": false
   },
-  // Disable Prettier for SQL files specifically
-  "prettier.enable": true,
-  "prettier.ignorePath": ".prettierignore",
+  // Format with oxfmt via the oxc extension
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   // Exclude SQL files from auto-formatting
   "files.associations": {
     "*.sql": "sql"

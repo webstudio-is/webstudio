@@ -123,7 +123,7 @@ const expectCanvasInstancePrecedes = async ({
     }
     return Boolean(
       beforeElement.compareDocumentPosition(afterElement) &
-        Node.DOCUMENT_POSITION_FOLLOWING
+      Node.DOCUMENT_POSITION_FOLLOWING
     );
   }, selector(afterSelector));
   if (precedes === false) {
@@ -514,7 +514,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
         }
         return Boolean(
           movedElement.compareDocumentPosition(slotA) &
-            Node.DOCUMENT_POSITION_FOLLOWING
+          Node.DOCUMENT_POSITION_FOLLOWING
         );
       });
     if (movedDivPrecedesSlotA === false) {
@@ -595,7 +595,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
         }
         return Boolean(
           slotA.compareDocumentPosition(movedElement) &
-            Node.DOCUMENT_POSITION_FOLLOWING
+          Node.DOCUMENT_POSITION_FOLLOWING
         );
       }, selector(movedHeadingSelector));
     if (slotAPrecedesMovedHeading === false) {
@@ -742,7 +742,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
         }
         return Boolean(
           movedElement.compareDocumentPosition(slotA) &
-            Node.DOCUMENT_POSITION_FOLLOWING
+          Node.DOCUMENT_POSITION_FOLLOWING
         );
       });
     if (movedDivPrecedesSlotA === false) {
@@ -821,7 +821,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
         }
         return Boolean(
           slotA.compareDocumentPosition(movedElement) &
-            Node.DOCUMENT_POSITION_FOLLOWING
+          Node.DOCUMENT_POSITION_FOLLOWING
         );
       }, selector(movedHeadingSelector));
     if (slotAPrecedesMovedHeading === false) {

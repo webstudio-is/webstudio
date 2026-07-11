@@ -8,6 +8,6 @@ export const supportedExperimentalProperties = [
   "-webkit-overflow-scrolling",
 ] as const;
 
-export const supportedExperimentalPropertySet = new Set<string>(
+export const supportedExperimentalPropertySet: Set<string> = new Set<string>(
   supportedExperimentalProperties
 );

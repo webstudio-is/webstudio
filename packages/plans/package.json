@@ -7,7 +7,7 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

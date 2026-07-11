@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "include": ["src/index.ts", "src/runtime.ts"],
   "compilerOptions": {
-    "declarationDir": "lib/types"
+    "declarationDir": "lib/types",
+    "rootDir": "./src"
   }
 }
