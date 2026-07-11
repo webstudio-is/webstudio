@@ -3,6 +3,7 @@
   "include": ["src/index.ts"],
   "compilerOptions": {
     "noCheck": true,
-    "declarationDir": "lib/types"
+    "declarationDir": "lib/types",
+    "rootDir": "./src"
   }
 }

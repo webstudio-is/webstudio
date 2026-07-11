@@ -87,7 +87,7 @@ const newPropertySyntaxes = customLonghandPropertyNames.filter(
       typeof propertySyntaxesGenerated[property] !== "string")
 );
 
-for (let index = 0; index < newPropertySyntaxes.length; ) {
+for (let index = 0; index < newPropertySyntaxes.length;) {
   const syntaxes = newPropertySyntaxes.slice(index, index + batchSize);
 
   console.info(
@@ -138,7 +138,7 @@ for (let index = 0; index < newPropertySyntaxes.length; ) {
 }
 console.info("\n✅ Properties syntax description generated!\n");
 
-for (let index = 0; index < newPropertiesNames.length; ) {
+for (let index = 0; index < newPropertiesNames.length;) {
   const properties = newPropertiesNames.slice(index, index + batchSize);
 
   console.info(
@@ -255,7 +255,7 @@ const newDeclarationsDescriptionsEntries = Object.entries(
   newDeclarationsDescriptions
 );
 
-for (let index = 0; index < newDeclarationsDescriptionsEntries.length; ) {
+for (let index = 0; index < newDeclarationsDescriptionsEntries.length;) {
   const batch = newDeclarationsDescriptionsEntries.slice(
     index,
     index + batchSize

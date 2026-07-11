@@ -132,6 +132,7 @@ export const TemplatesMenu = ({
           <>
             <DropdownMenuRadioGroup
               value={value !== undefined ? JSON.stringify(value) : value}
+              // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
               onValueChange={handleValueChangeComplete}
             >
               {menuItems?.map((item) => (
@@ -140,6 +141,7 @@ export const TemplatesMenu = ({
                     JSON.stringify(item.value) === JSON.stringify(value)
                   }
                   onPointerEnter={() => {
+                    // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
                     handleValueChange(value);
                   }}
                   onPointerMove={
@@ -152,6 +154,7 @@ export const TemplatesMenu = ({
                   onPointerLeave={
                     preventFocusOnHover
                       ? (e) => {
+                          // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
                           handleValueChange(undefined);
                           e.preventDefault();
                         }

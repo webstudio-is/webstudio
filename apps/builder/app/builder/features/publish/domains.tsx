@@ -369,6 +369,7 @@ const DomainItem = ({
       {status === "UNVERIFIED" && (
         <>
           <Button
+            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleVerify}
             state={isCheckStateInProgress ? "pending" : undefined}
             color="neutral"
@@ -385,6 +386,7 @@ const DomainItem = ({
             <Text color="destructive">{updateStatusError}</Text>
           )}
           <Button
+            // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
             formAction={handleUpdateStatus}
             state={isCheckStateInProgress ? "pending" : undefined}
             color="neutral"
@@ -535,12 +537,15 @@ const DomainItem = ({
             // until they fix that, we'll just refresh the status here on every onClose event
             if (status === "UNVERIFIED") {
               startTransition(async () => {
+                // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
                 await handleVerify();
+                // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
                 await handleUpdateStatus();
               });
               return;
             }
             startTransition(async () => {
+              // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
               await handleUpdateStatus();
             });
           }}

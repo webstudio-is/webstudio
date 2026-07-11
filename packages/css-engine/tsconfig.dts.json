@@ -8,6 +8,7 @@
     "**/*.stories.tsx"
   ],
   "compilerOptions": {
-    "declarationDir": "lib/types"
+    "declarationDir": "lib/types",
+    "rootDir": "./src"
   }
 }

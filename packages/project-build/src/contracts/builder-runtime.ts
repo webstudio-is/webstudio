@@ -28,14 +28,14 @@ export type RuntimeOperationStateContract = {
 export type RuntimeOperationContract = RuntimeOperationStateContract &
   RuntimeOperationPublicApi;
 
-export const runtimeOperationContracts = runtimeOperationContractData.map(
-  (contract) => ({
-    permit: undefined,
-    requiresAssets: false,
-    requiresConfirm: false,
-    ...contract,
-  })
-) satisfies readonly RuntimeOperationContract[];
+export const runtimeOperationContracts: readonly (RuntimeOperationContract & {
+  id: RuntimeOperationId;
+})[] = runtimeOperationContractData.map((contract) => ({
+  permit: undefined,
+  requiresAssets: false,
+  requiresConfirm: false,
+  ...contract,
+}));
 
 export type RuntimeOperationId =
   (typeof runtimeOperationContractData)[number]["id"];

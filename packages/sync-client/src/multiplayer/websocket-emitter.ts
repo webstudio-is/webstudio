@@ -23,16 +23,15 @@ import type {
 } from "@webstudio-is/multiplayer-protocol";
 import { stripRevisePatchesFromTransaction } from "../transaction-utils";
 
-interface MessageCallbacks
-  extends Pick<
-    WebSocketEmitterOptions,
-    | "onAck"
-    | "onApplied"
-    | "onPresence"
-    | "onBroadcast"
-    | "onReload"
-    | "onErrorMessage"
-  > {}
+interface MessageCallbacks extends Pick<
+  WebSocketEmitterOptions,
+  | "onAck"
+  | "onApplied"
+  | "onPresence"
+  | "onBroadcast"
+  | "onReload"
+  | "onErrorMessage"
+> {}
 
 export type WebSocketEmitterOptions = {
   url: string;

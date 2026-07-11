@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {

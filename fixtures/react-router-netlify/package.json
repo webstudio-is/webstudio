@@ -1,12 +1,12 @@
 {
   "name": "webstudio-react-router-netlify",
   "scripts": {
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "cli:local": "node ../../packages/cli/local.js",
     "fixtures:link": "pnpm cli:local link --link https://p-d845c167-ea07-4875-b08d-83e97c09dcce-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
-    "fixtures:sync": "pnpm cli:local sync --buildId f565d527-32e7-4731-bc71-aca9e9574587 && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "pnpm cli:local build --template netlify --template .template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
+    "fixtures:sync": "pnpm cli:local sync --buildId f565d527-32e7-4731-bc71-aca9e9574587 && oxfmt ./.webstudio/",
+    "fixtures:build": "pnpm cli:local build --template netlify --template .template && oxfmt ./app/ ./package.json ./tsconfig.json",
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "npx netlify-cli serve",

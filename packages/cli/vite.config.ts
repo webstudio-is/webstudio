@@ -7,9 +7,8 @@ import { createRequire } from "node:module";
 import pkg from "./package.json";
 
 const require = createRequire(import.meta.url);
-const nodeDecodeNamedCharacterReference = require.resolve(
-  "decode-named-character-reference"
-);
+const nodeDecodeNamedCharacterReference =
+  require.resolve("decode-named-character-reference");
 
 const externalDependencies = new Set(
   Object.keys(pkg.dependencies).filter((name) => {

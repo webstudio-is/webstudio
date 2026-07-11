@@ -73,7 +73,7 @@ export type AppliedMessage = {
   transactionId: string;
   seq: number;
   status: /** Rejected by the service without applying or saving. */
-  | "dropped"
+    | "dropped"
     /** Rejected by persistence authorization. */
     | "rejected"
     /** Could not be persisted after the relay accepted it. */

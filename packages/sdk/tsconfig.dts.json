@@ -9,6 +9,7 @@
     "src/__generated__/normalize.css.ts"
   ],
   "compilerOptions": {
-    "declarationDir": "lib/types"
+    "declarationDir": "lib/types",
+    "rootDir": "./src"
   }
 }

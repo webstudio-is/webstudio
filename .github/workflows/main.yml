@@ -62,17 +62,10 @@ jobs:
         run: |
           pnpm install
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ./node_modules/.cache/prettier/.prettier-cache
-          key: checks-${{ github.sha }}
-          restore-keys: checks-
-
       - run: echo ===SHA USED=== ${{ github.event.pull_request.head.sha || github.sha }} # todo: remove after check whats happening on main
 
       - run: |
-          pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
+          pnpm oxfmt --check
 
       - name: Lint
         run: |

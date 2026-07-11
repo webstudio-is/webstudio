@@ -322,9 +322,9 @@
   },
   "sideEffects": false,
   "scripts": {
-    "generate-docs": "node scripts/generate-docs.mjs",
-    "generate-runtime-operation-contracts": "tsx --import ../../scripts/register-react-global.ts --conditions=webstudio scripts/generate-runtime-operation-contracts.ts",
-    "typecheck": "tsgo --noEmit",
+    "generate-docs": "node scripts/generate-docs.mjs && oxfmt src/docs.generated.ts",
+    "generate-runtime-operation-contracts": "tsx --import ../../scripts/register-react-global.ts --conditions=webstudio scripts/generate-runtime-operation-contracts.ts && oxfmt src/contracts/__generated__/runtime-operation-contracts.ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -364,7 +364,6 @@
   "devDependencies": {
     "@types/papaparse": "^5.5.2",
     "@webstudio-is/tsconfig": "workspace:*",
-    "prettier": "3.5.3",
     "vitest": "^3.1.2"
   }
 }

@@ -23,7 +23,7 @@ import {
 import { schema, schemaOptions } from "./commands/schema";
 import { initFlow, initOptions } from "./commands/init-flow";
 import makeCLI from "yargs";
-import packageJson from "../package.json" assert { type: "json" };
+import packageJson from "../package.json" with { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
 import { isHandledCliError } from "./errors";
 

@@ -6,12 +6,12 @@
     "build": "vite build && vike prerender",
     "postbuild": "prettier --write \"dist/**/*.html\" || true",
     "dev": "vite dev",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "cli:local": "node ../../packages/cli/local.js",
     "fixtures:link": "pnpm cli:local link --link https://p-d845c167-ea07-4875-b08d-83e97c09dcce-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
-    "fixtures:sync": "pnpm cli:local sync --buildId a2e8de30-03d5-4514-a3a6-406b3266a3af && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "rm -rf pages && pnpm cli:local build --template ssg --template internal && prettier --write .",
+    "fixtures:sync": "pnpm cli:local sync --buildId a2e8de30-03d5-4514-a3a6-406b3266a3af && oxfmt ./.webstudio/",
+    "fixtures:build": "rm -rf pages && pnpm cli:local build --template ssg --template internal && oxfmt .",
     "start": "vite preview"
   },
   "engines": {

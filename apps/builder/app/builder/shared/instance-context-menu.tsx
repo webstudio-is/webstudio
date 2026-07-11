@@ -135,7 +135,7 @@ export const MenuItems = () => {
   const show = instanceSelector
     ? Boolean(
         propValues.get(getInstanceKey(instanceSelector))?.get(showAttribute) ??
-          true
+        true
       )
     : true;
 

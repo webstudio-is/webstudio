@@ -3,6 +3,7 @@
   "include": ["src", "../../@types/**/*.d.ts"],
   "exclude": ["**/*.test.ts", "**/*.test.tsx"],
   "compilerOptions": {
-    "declarationDir": "lib/types"
+    "declarationDir": "lib/types",
+    "rootDir": "./src"
   }
 }
