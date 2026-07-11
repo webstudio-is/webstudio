@@ -111,6 +111,15 @@ export default defineConfig(({ mode }) => {
           find: "@supabase/node-fetch",
           replacement: resolve("./app/shared/empty.ts"),
         },
+
+        // rolldown resolves tslib to its CJS build (our resolve.conditions
+        // omit "module") and the generated interop leaves `default`
+        // undefined, crashing the server bundle at boot. Point it at the
+        // ESM build instead.
+        {
+          find: /^tslib$/,
+          replacement: "tslib/tslib.es6.mjs",
+        },
       ],
     },
     ssr: {
