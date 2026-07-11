@@ -94,6 +94,48 @@ describe("project session api adapter", () => {
     );
   });
 
+  test("does not inject project id into strict audit input", async () => {
+    const session = {
+      initialize: vi.fn(async () => undefined),
+      read: vi.fn(async () => ({
+        operationId: "project.audit",
+        projectId: "project-1",
+        source: "local",
+        result: { findings: [] },
+        state: { committed: false, freshness: {} },
+        namespaces: {
+          read: [],
+          write: [],
+          invalidated: [],
+          missing: [],
+        },
+        diagnostics: [],
+      })),
+      mutate: vi.fn(),
+      refresh: vi.fn(),
+      executeServerOperation: vi.fn(),
+    };
+
+    await executeProjectSessionApiOperation({
+      command: "audit",
+      input: { scopes: ["seo"] },
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      createProjectSession: vi.fn(
+        () => session
+      ) as unknown as CreateProjectSession,
+    });
+
+    expect(session.read).toHaveBeenCalledWith(
+      "project.audit",
+      { scopes: ["seo"] },
+      { permit: "view" }
+    );
+  });
+
   test("routes server-only commands through project session transport", async () => {
     const session = {
       initialize: vi.fn(async () => undefined),
@@ -172,7 +214,7 @@ describe("project session api adapter", () => {
       refresh: true,
     });
 
-    expect(session.refresh).toHaveBeenCalledWith(["pages"]);
+    expect(session.refresh).toHaveBeenCalledWith(["pages", "projectSettings"]);
   });
 
   test("explains dry-run is only for local-capable mutations", async () => {

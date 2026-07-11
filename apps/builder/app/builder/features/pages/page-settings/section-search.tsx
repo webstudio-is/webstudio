@@ -21,7 +21,7 @@ import type {
   PageSettingsValues,
 } from "@webstudio-is/project-build/runtime/pages";
 import { useStore } from "@nanostores/react";
-import { $assets, $pages } from "~/shared/sync/data-stores";
+import { $assets, $projectSettings } from "~/shared/sync/data-stores";
 import { $pageRootScope } from "../page-utils";
 import { SearchPreview } from "../search-preview";
 import { usePageUrl, type OnChange } from "./shared";
@@ -96,9 +96,9 @@ export const SearchSection = ({
   const excludePageFromSearchId = useId();
   const { variableValues, scope, aliases } = useStore($pageRootScope);
   const assets = useStore($assets);
-  const pages = useStore($pages);
+  const projectSettings = useStore($projectSettings);
   const pageUrl = usePageUrl(values);
-  const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
+  const faviconAsset = assets.get(projectSettings?.meta.faviconAssetId ?? "");
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
   const title = String(computeExpression(values.title, variableValues));
   const description = String(
@@ -132,7 +132,7 @@ export const SearchSection = ({
               }}
             >
               <SearchPreview
-                siteName={pages?.meta?.siteName ?? ""}
+                siteName={projectSettings?.meta.siteName ?? ""}
                 faviconUrl={faviconUrl}
                 pageUrl={pageUrl}
                 titleLink={title}

@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import makeCLI from "yargs";
 import {
   getPublicApiOperation,
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import { apiCompatibilityHeaders } from "./api";
-import { apiCommand } from "./api-command";
+import { apiCommand, auditCommandOptions } from "./api-command";
+import type { CommonYargsArgv } from "./yargs-types";
 import { apiCommandMetadata } from "./api-command-metadata";
 
 const apiCalls = new Proxy({} as Record<string, ReturnType<typeof vi.fn>>, {
@@ -425,7 +427,7 @@ test("passes refresh to local-capable command session", async () => {
   );
 
   const session = createCliProjectSession.mock.results[0]?.value;
-  expect(session.refresh).toHaveBeenCalledWith(["pages"]);
+  expect(session.refresh).toHaveBeenCalledWith(["pages", "projectSettings"]);
   expect(session.read).toHaveBeenCalledWith(
     "pages.list",
     { projectId: "project-1", includeFolders: undefined },
@@ -470,6 +472,102 @@ test("calls build snapshot for configured project", async () => {
     call: apiCalls.getBuildSnapshot,
     connection: { include: ["pages", "designTokens"], version: 3 },
   });
+});
+
+test("runs a focused project audit", async () => {
+  await expectCommandCall({
+    options: {
+      command: "audit",
+      scopes: ["accessibility", "seo"],
+      severities: ["error", "warning"],
+      pagePath: "/pricing",
+      limit: 25,
+      cursor: "cursor-1",
+      verbose: true,
+    },
+    call: apiCalls.audit,
+    connection: {
+      scopes: ["accessibility", "seo"],
+      severities: ["error", "warning"],
+      pageId: undefined,
+      pagePath: "/pricing",
+      limit: 25,
+      cursor: "cursor-1",
+      verbose: true,
+    },
+  });
+});
+
+test("parses the documented repeated audit scope options", async () => {
+  const parsed = await auditCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).parseAsync([
+    "--scopes",
+    "accessibility",
+    "--scopes",
+    "seo",
+    "--page-path",
+    "/pricing",
+  ]);
+
+  expect(parsed).toMatchObject({
+    scopes: ["accessibility", "seo"],
+    pagePath: "/pricing",
+  });
+});
+
+test("prints a compact project audit without --json", async () => {
+  mockConfig();
+  apiCalls.audit.mockResolvedValueOnce({
+    summary: {
+      total: 1,
+      selectedTotal: 1,
+      bySeverity: { error: 1, warning: 0, info: 0 },
+    },
+    findings: [
+      {
+        severity: "error",
+        scope: "accessibility",
+        ruleId: "missing-alt",
+        message: "Image has no alt prop.",
+        location: { instanceId: "image-1" },
+      },
+    ],
+    skippedCheckCount: 0,
+    manualCheckCount: 3,
+    nextCursor: null,
+  });
+
+  await apiCommand({ command: "audit" }, dependencies);
+
+  expect(console.info).toHaveBeenCalledWith(
+    "Audit: 1 findings (1 errors, 0 warnings, 0 info)"
+  );
+  expect(console.info).toHaveBeenCalledWith(
+    "[ERROR] accessibility/missing-alt: Image has no alt prop. (image-1)"
+  );
+  expect(console.info).toHaveBeenCalledWith("3 manual checks recommended.");
+});
+
+test("labels filtered audit totals without implying hidden findings are returned", async () => {
+  mockConfig();
+  apiCalls.audit.mockResolvedValueOnce({
+    summary: {
+      total: 5,
+      selectedTotal: 1,
+      bySeverity: { error: 1, warning: 3, info: 1 },
+    },
+    findings: [],
+    skippedCheckCount: 0,
+    manualCheckCount: 0,
+    nextCursor: "next",
+  });
+
+  await apiCommand({ command: "audit" }, dependencies);
+
+  expect(console.info).toHaveBeenCalledWith(
+    "Audit: 1 selected findings (5 across all severities) (1 errors, 3 warnings, 1 info)"
+  );
 });
 
 test("applies build patch transactions for configured project", async () => {
@@ -1536,6 +1634,14 @@ test("calls asset list with pagination", async () => {
       cursor: "2",
       limit: 10,
     },
+  });
+});
+
+test("lists fonts with optional system stacks", async () => {
+  await expectCommandCall({
+    options: { command: "list-fonts", includeSystem: false },
+    call: apiCalls.listFonts,
+    connection: { includeSystem: false },
   });
 });
 

@@ -42,8 +42,10 @@ import {
 } from "../contracts/patch";
 import { createBuilderPatchPayloadFromImmerPatches } from "../state/patch";
 import type { BuilderState } from "../state/builder-state";
+import "../state/immer";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { getStaticStringLiteral, replaceTextValue } from "./text-replacement";
 import {
   getNamedExpressionErrors,
   hasExpressionDiagnostics,
@@ -1495,6 +1497,20 @@ const normalizeResourceUrlInput = (value: string) => {
   return value;
 };
 
+const resourceExpressionInput = z
+  .union([
+    z.string(),
+    z.object({ type: z.literal("literal"), value: z.string() }),
+  ])
+  .describe(
+    'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.'
+  );
+
+const resourceExpressionEntryInput = z.object({
+  name: z.string(),
+  value: resourceExpressionInput,
+});
+
 const resourceFieldsInputBase = resource.omit({ id: true }).extend({
   control: z.enum(["system", "graphql"]).optional(),
   url: z.preprocess(
@@ -1502,21 +1518,67 @@ const resourceFieldsInputBase = resource.omit({ id: true }).extend({
       typeof value === "string" ? normalizeResourceUrlInput(value) : value,
     z.string()
   ),
+  searchParams: z.array(resourceExpressionEntryInput).optional(),
+  headers: z.array(resourceExpressionEntryInput),
+  body: resourceExpressionInput.optional(),
 });
 
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
-    addExpressionIssues(context, getResourceExpressionErrors(fields));
-    addExpressionIssues(context, getResourceLiteralUrlErrors(fields));
+    const normalizedFields = normalizeResourceFieldsInput(fields);
+    addExpressionIssues(context, getResourceExpressionErrors(normalizedFields));
+    addExpressionIssues(context, getResourceLiteralUrlErrors(normalizedFields));
   }
 );
 
 export const resourceFieldsUpdateInput = resourceFieldsInputBase
   .partial()
   .superRefine((fields, context) => {
-    addExpressionIssues(context, getResourceExpressionErrors(fields));
-    addExpressionIssues(context, getResourceLiteralUrlErrors(fields));
+    const normalizedFields = normalizeResourceFieldsUpdateInput(fields);
+    addExpressionIssues(context, getResourceExpressionErrors(normalizedFields));
+    addExpressionIssues(context, getResourceLiteralUrlErrors(normalizedFields));
   });
+
+const normalizeResourceExpressionInput = (
+  value: z.infer<typeof resourceExpressionInput>
+) => (typeof value === "string" ? value : JSON.stringify(value.value));
+
+type ResourceFields = Omit<Resource, "id">;
+type ResourceFieldsUpdate = Partial<ResourceFields>;
+
+const normalizeResourceFields = (
+  fields: z.infer<typeof resourceFieldsUpdateInput>
+): ResourceFieldsUpdate => {
+  const { searchParams, headers, body, ...scalarFields } = fields;
+  return {
+    ...scalarFields,
+    ...(fields.searchParams === undefined
+      ? {}
+      : {
+          searchParams: fields.searchParams.map((entry) => ({
+            name: entry.name,
+            value: normalizeResourceExpressionInput(entry.value),
+          })),
+        }),
+    ...(fields.headers === undefined
+      ? {}
+      : {
+          headers: fields.headers.map((entry) => ({
+            name: entry.name,
+            value: normalizeResourceExpressionInput(entry.value),
+          })),
+        }),
+    ...(fields.body === undefined
+      ? {}
+      : { body: normalizeResourceExpressionInput(fields.body) }),
+  };
+};
+
+const normalizeResourceFieldsInput = (
+  fields: z.infer<typeof resourceFieldsInput>
+): ResourceFields => normalizeResourceFields(fields) as ResourceFields;
+
+const normalizeResourceFieldsUpdateInput = normalizeResourceFields;
 
 export const resourceCreateInput = z.object({
   resourceId: runtimeGeneratedIdInput,
@@ -1531,6 +1593,34 @@ export const resourceUpdateInput = z.object({
   values: resourceFieldsUpdateInput,
   dataSourceName: z.string().optional(),
   scopeInstanceId: z.string().optional(),
+});
+
+export const replaceResourceTextInput = z.object({
+  find: z.string().min(1).describe("Fixed resource text to find."),
+  replace: z.string().describe("Replacement fixed resource text."),
+  match: z
+    .enum(["exact", "substring"])
+    .default("exact")
+    .describe(
+      'Use "exact" to replace complete values, or "substring" to replace every literal occurrence in matching values.'
+    ),
+  fields: z
+    .array(z.enum(["name", "url"]))
+    .min(1)
+    .default(["name", "url"])
+    .describe("Resource text fields to replace."),
+  resourceIds: z
+    .array(z.string())
+    .min(1)
+    .optional()
+    .describe("Optional resource ids to limit scope."),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(200)
+    .default(50)
+    .describe("Maximum number of resource fields to change."),
 });
 
 export const resourceUpsertInput = z.object({
@@ -1601,7 +1691,9 @@ export const createResourceValueFromFormData = ({
 }): Resource =>
   createResourceValue({
     id,
-    ...createResourceFieldsFromFormData({ control, name, formData }),
+    ...normalizeResourceFieldsInput(
+      createResourceFieldsFromFormData({ control, name, formData })
+    ),
   });
 
 export const createResourceValue = ({
@@ -1907,7 +1999,7 @@ export const createResourceCreatePayload = ({
   dataSourceName,
 }: {
   resourceId: Resource["id"];
-  resource: z.infer<typeof resourceFieldsInput>;
+  resource: ResourceFields;
   resources: Iterable<Resource>;
   dataSources: Iterable<DataSource>;
   dataSourceId?: DataSource["id"];
@@ -2165,14 +2257,15 @@ export const createResource = (
   input: z.infer<typeof resourceCreateInput>,
   context: BuilderRuntimeContext
 ) => {
-  validateResourceFields(input.resource);
+  const resourceInput = normalizeResourceFieldsInput(input.resource);
+  validateResourceFields(resourceInput);
   const build = getRequiredBuildData(state);
   const resourceId = context.createId();
   const dataSourceId =
     input.scopeInstanceId === undefined ? undefined : context.createId();
   const resultPayload = createResourceCreatePayload({
     resourceId,
-    resource: input.resource,
+    resource: resourceInput,
     resources: build.resources,
     dataSources: build.dataSources,
     dataSourceId,
@@ -2191,13 +2284,13 @@ export const createResource = (
   }
   const resource = createResourceValue({
     id: resourceId,
-    name: input.resource.name,
-    control: input.resource.control,
-    method: input.resource.method,
-    url: input.resource.url,
-    searchParams: input.resource.searchParams,
-    headers: input.resource.headers,
-    body: input.resource.body,
+    name: resourceInput.name,
+    control: resourceInput.control,
+    method: resourceInput.method,
+    url: resourceInput.url,
+    searchParams: resourceInput.searchParams,
+    headers: resourceInput.headers,
+    body: resourceInput.body,
   });
   return createRuntimeMutation({
     payload: createResourceUpsertPatchPayload({
@@ -2237,7 +2330,8 @@ export const updateResource = (
   >,
   input: z.infer<typeof resourceUpdateInput>
 ) => {
-  validateResourceFields(input.values);
+  const values = normalizeResourceFieldsUpdateInput(input.values);
+  validateResourceFields(values);
   const build = getRequiredBuildData(state);
   const resource = findResource(build.resources, input.resourceId);
   if (resource === undefined) {
@@ -2245,7 +2339,7 @@ export const updateResource = (
   }
   const directPayload = createResourceUpdatePayload({
     resource,
-    values: input.values,
+    values,
     dataSources: build.dataSources,
     dataSourceName: input.dataSourceName,
     scopeInstanceId: input.scopeInstanceId,
@@ -2259,7 +2353,7 @@ export const updateResource = (
   }
   const nextResource = createResourceValue({
     ...resource,
-    ...input.values,
+    ...values,
   });
   const dataSource = build.dataSources.find(
     (dataSource) =>
@@ -2288,6 +2382,79 @@ export const updateResource = (
   });
 };
 
+export const replaceResourceText = (
+  state: Pick<BuilderState, "resources">,
+  input: z.infer<typeof replaceResourceTextInput>
+) => {
+  const resourceIds =
+    input.resourceIds === undefined ? undefined : new Set(input.resourceIds);
+  const matches: Array<{
+    resourceId: string;
+    field: "name" | "url";
+    before: string;
+    after: string;
+  }> = [];
+  let matchingFieldCount = 0;
+  for (const resource of getRequiredResources(state).values()) {
+    if (resourceIds !== undefined && resourceIds.has(resource.id) === false) {
+      continue;
+    }
+    const fields: Array<{
+      field: "name" | "url";
+      before: string | undefined;
+    }> = [];
+    if (input.fields.includes("name")) {
+      fields.push({ field: "name", before: resource.name });
+    }
+    if (input.fields.includes("url")) {
+      fields.push({
+        field: "url",
+        before: getStaticStringLiteral(resource.url),
+      });
+    }
+    for (const { field, before } of fields) {
+      if (before === undefined) {
+        continue;
+      }
+      const after = replaceTextValue(before, input);
+      if (after === before) {
+        continue;
+      }
+      matchingFieldCount += 1;
+      if (matches.length >= input.limit) {
+        continue;
+      }
+      if (field === "url") {
+        validateResourceFields({ url: JSON.stringify(after) });
+      }
+      matches.push({ resourceId: resource.id, field, before, after });
+    }
+  }
+  const result = {
+    changedCount: matches.length,
+    matchingFieldCount,
+    truncated: matchingFieldCount > matches.length,
+    matches,
+  };
+  return createRuntimeMutation({
+    payload:
+      matches.length === 0
+        ? []
+        : [
+            {
+              namespace: "resources",
+              patches: matches.map(({ resourceId, field, after }) => ({
+                op: "replace" as const,
+                path: [resourceId, field],
+                value: field === "url" ? JSON.stringify(after) : after,
+              })),
+            },
+          ],
+    result,
+    invalidatesNamespaces: matches.length === 0 ? [] : ["resources"],
+  });
+};
+
 export const upsertResource = (
   state: Pick<
     BuilderState,
@@ -2304,7 +2471,8 @@ export const upsertResource = (
   input: z.infer<typeof resourceUpsertInput>,
   context: BuilderRuntimeContext
 ) => {
-  validateResourceFields(input.resource);
+  const resourceInput = normalizeResourceFieldsInput(input.resource);
+  validateResourceFields(resourceInput);
   const build = getRequiredBuildData(state);
   if (
     input.resourceId !== undefined &&
@@ -2325,13 +2493,13 @@ export const upsertResource = (
   const dataSourceId = input.dataSourceId ?? context.createId();
   const resource = createResourceValue({
     id: resourceId,
-    name: input.resource.name,
-    control: input.resource.control,
-    method: input.resource.method,
-    url: input.resource.url,
-    searchParams: input.resource.searchParams,
-    headers: input.resource.headers,
-    body: input.resource.body,
+    name: resourceInput.name,
+    control: resourceInput.control,
+    method: resourceInput.method,
+    url: resourceInput.url,
+    searchParams: resourceInput.searchParams,
+    headers: resourceInput.headers,
+    body: resourceInput.body,
   });
 
   return createRuntimeMutation({
@@ -2373,7 +2541,8 @@ export const upsertResourceProp = (
   input: z.infer<typeof resourcePropUpsertInput>,
   context: BuilderRuntimeContext
 ) => {
-  validateResourceFields(input.resource);
+  const resourceInput = normalizeResourceFieldsInput(input.resource);
+  validateResourceFields(resourceInput);
   const build = getRequiredBuildData(state);
   if (
     build.instances.some((instance) => instance.id === input.instanceId) ===
@@ -2391,13 +2560,13 @@ export const upsertResourceProp = (
   const resourceId = input.resourceId ?? context.createId();
   const resource = createResourceValue({
     id: resourceId,
-    name: input.resource.name,
-    control: input.resource.control,
-    method: input.resource.method,
-    url: input.resource.url,
-    searchParams: input.resource.searchParams,
-    headers: input.resource.headers,
-    body: input.resource.body,
+    name: resourceInput.name,
+    control: resourceInput.control,
+    method: resourceInput.method,
+    url: resourceInput.url,
+    searchParams: resourceInput.searchParams,
+    headers: resourceInput.headers,
+    body: resourceInput.body,
   });
   const dataSource = build.dataSources.find(
     (dataSource) =>

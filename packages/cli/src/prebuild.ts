@@ -43,7 +43,10 @@ import {
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime/style-utils";
-import { publishedProjectBundle } from "@webstudio-is/protocol";
+import {
+  publishedProjectBundle,
+  type PublishedProjectBundle,
+} from "@webstudio-is/protocol";
 import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
 import { LOCAL_DATA_FILE } from "./config";
 import {
@@ -130,8 +133,12 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   );
 };
 
-const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
-  const { content, module } = createAuthConfigResources(pages);
+const writeWsAuthResources = async (
+  generatedDir: string,
+  pages: Pages,
+  projectSettings?: PublishedProjectBundle["build"]["projectSettings"]
+) => {
+  const { content, module } = createAuthConfigResources(pages, projectSettings);
   await createFolderIfNotExists(dirname(LOCAL_AUTH_FILE));
   await writeFile(LOCAL_AUTH_FILE, content);
   await createFileIfNotExists(
@@ -322,7 +329,11 @@ export const prebuild = async (options: {
   );
   const pages = migratePages(siteData.build.pages);
   const allPages = getAllPages(pages);
-  await writeWsAuthResources(generatedDir, pages);
+  await writeWsAuthResources(
+    generatedDir,
+    pages,
+    siteData.build.projectSettings
+  );
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
   const backgroundImageAssetsByPage: Record<Page["id"], string[]> = {};
@@ -472,7 +483,10 @@ export const prebuild = async (options: {
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,
     assetBaseUrl,
-    atomic: pages.compiler?.atomicStyles ?? true,
+    atomic:
+      siteData.build.projectSettings?.compiler.atomicStyles ??
+      pages.compiler?.atomicStyles ??
+      true,
   });
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
@@ -585,7 +599,7 @@ export const prebuild = async (options: {
       tagsOverrides: framework.tags,
     });
 
-    const projectMeta = pages.meta;
+    const projectMeta = siteData.build.projectSettings?.meta ?? pages.meta;
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;

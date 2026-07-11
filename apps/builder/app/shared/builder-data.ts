@@ -1,6 +1,9 @@
 import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import {
+  type MarketplaceProduct,
+  type ProjectSettings,
+} from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "~/services/trcp-router.server";
@@ -11,6 +14,7 @@ import {
   $dataSources,
   $instances,
   $marketplaceProduct,
+  $projectSettings,
   $pages,
   $props,
   $resources,
@@ -22,6 +26,7 @@ import { nativeClient } from "~/shared/trpc/trpc-client";
 
 export type BuilderData = WebstudioData & {
   marketplaceProduct: undefined | MarketplaceProduct;
+  projectSettings: ProjectSettings;
   project: Project;
 };
 
@@ -39,6 +44,10 @@ export const getBuilderData = (): BuilderData => {
   if (project === undefined) {
     throw Error(`Cannot get webstudio data with empty project`);
   }
+  const projectSettings = $projectSettings.get();
+  if (projectSettings === undefined) {
+    throw Error(`Cannot get webstudio data with empty project settings`);
+  }
   return {
     pages,
     project,
@@ -52,6 +61,7 @@ export const getBuilderData = (): BuilderData => {
     styles: $styles.get(),
     assets: $assets.get(),
     marketplaceProduct: $marketplaceProduct.get(),
+    projectSettings,
   };
 };
 
@@ -76,6 +86,7 @@ export const loadBuilderData = async ({
       { projectId },
       { signal }
     );
+    const pages = migratePages(data.pages);
     return {
       id: data.id,
       version: data.version,
@@ -87,7 +98,7 @@ export const loadBuilderData = async ({
       dataSources: hydrateIdMap(data.dataSources),
       resources: hydrateIdMap(data.resources),
       props: hydrateIdMap(data.props),
-      pages: migratePages(data.pages),
+      pages,
       breakpoints: hydrateIdMap(data.breakpoints),
       styleSources: hydrateIdMap(data.styleSources),
       styleSourceSelections: hydrateMap(
@@ -96,6 +107,7 @@ export const loadBuilderData = async ({
       ),
       styles: hydrateMap(data.styles, (item) => getStyleDeclKey(item)),
       marketplaceProduct: data.marketplaceProduct,
+      projectSettings: data.projectSettings,
     };
   } catch (error) {
     const message =

@@ -36,6 +36,7 @@ const contentModeBuildColumns = [
 
 const namespaceBuildColumns = {
   pages: ["pages"],
+  projectSettings: ["projectSettings"],
   breakpoints: ["breakpoints"],
   instances: ["instances"],
   props: ["props"],

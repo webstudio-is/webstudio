@@ -1,16 +1,13 @@
-import { enableMapSet, enablePatches, produceWithPatches } from "immer";
+import { produceWithPatches } from "immer";
 import { z } from "zod";
 import type { WebstudioData } from "@webstudio-is/sdk";
 import { migrateWebstudioDataMutable } from "@webstudio-is/project-migrations";
 import type { BuilderNamespace } from "../contracts/namespaces";
 import { createBuilderPatchPayloadFromImmerPatches } from "../state/patch";
 import type { BuilderState } from "../state/builder-state";
+import "../state/immer";
 import { breakCyclesMutable, findCycles } from "../shared/graph-utils";
 import { createRuntimeMutation } from "./mutation";
-
-// Migration patch generation uses Immer patches against Map-backed namespaces.
-enableMapSet();
-enablePatches();
 
 const webstudioDataNamespaces = [
   "pages",

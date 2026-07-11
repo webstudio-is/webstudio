@@ -47,6 +47,18 @@ const getRequiredBreakpoints = (state: Pick<BuilderState, "breakpoints">) => {
   return state.breakpoints;
 };
 
+const getRequiredProjectSettings = (
+  state: Pick<BuilderState, "projectSettings">
+) => {
+  if (state.projectSettings === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Project settings namespace is missing"
+    );
+  }
+  return state.projectSettings;
+};
+
 type Settable<T> = {
   [Property in keyof T]?: T[Property] | null;
 };
@@ -195,11 +207,14 @@ const parseCompilerSettings = (input: Record<string, unknown>) => {
   return values;
 };
 
-export const getProjectSettings = (state: Pick<BuilderState, "pages">) => {
+export const getProjectSettings = (
+  state: Pick<BuilderState, "pages" | "projectSettings">
+) => {
   const pages = getRequiredPages(state);
+  const settings = getRequiredProjectSettings(state);
   return {
-    meta: pages.meta ?? {},
-    compiler: pages.compiler ?? {},
+    meta: settings.meta,
+    compiler: settings.compiler,
     redirects: pages.redirects ?? [],
   };
 };
@@ -239,17 +254,17 @@ const pushObjectFieldPatches = ({
 };
 
 export const updateProjectSettings = (
-  state: Pick<BuilderState, "pages">,
+  state: Pick<BuilderState, "projectSettings">,
   input: z.infer<typeof projectSettingsUpdateInput>
 ) => {
-  const pages = getRequiredPages(state);
+  const settings = getRequiredProjectSettings(state);
   const patches: BuilderPatchChange["patches"] = [];
   if (input.meta !== undefined) {
     const values = parseProjectMeta(input.meta);
     pushObjectFieldPatches({
       patches,
       basePath: ["meta"],
-      current: pages.meta,
+      current: settings.meta,
       values,
     });
   }
@@ -258,14 +273,16 @@ export const updateProjectSettings = (
     pushObjectFieldPatches({
       patches,
       basePath: ["compiler"],
-      current: pages.compiler,
+      current: settings.compiler,
       values,
     });
   }
   return createRuntimeMutation({
-    payload: compactBuilderPatchPayload([{ namespace: "pages", patches }]),
+    payload: compactBuilderPatchPayload([
+      { namespace: "projectSettings", patches },
+    ]),
     result: { updated: true },
-    invalidatesNamespaces: ["pages"],
+    invalidatesNamespaces: patches.length === 0 ? [] : ["projectSettings"],
   });
 };
 

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   getInputJsonSchemaMetadata,
   toInputJsonSchemaObject,
+  type Assets,
   type InputJsonSchema,
 } from "@webstudio-is/sdk";
 import { runtimeOperationContracts } from "../contracts/builder-runtime";
@@ -25,13 +26,14 @@ import {
   updateTextInstance,
 } from "./instances";
 import { listDataVariables, listResources } from "./data";
+import { listFonts } from "./fonts";
 import { bindProps, deleteProps, updateProps } from "./props";
-import type { BuilderRuntimeContext } from "./context";
 import type { BuilderState } from "../state/builder-state";
-
-const context: BuilderRuntimeContext = {
-  createId: () => "id",
-};
+import {
+  context,
+  expectRuntimeValidationError,
+  state,
+} from "./runtime.test-fixtures";
 
 const hasDirectInputProperty = (
   schema: InputJsonSchema | undefined,
@@ -58,240 +60,6 @@ const hasDirectInputProperty = (
   );
 };
 
-const state = {
-  pages: {
-    homePageId: "home",
-    rootFolderId: "root",
-    redirects: [{ old: "/old", new: "/new", status: "301" }],
-    pages: new Map([
-      [
-        "home",
-        {
-          id: "home",
-          name: "Home",
-          title: "Home",
-          path: "",
-          rootInstanceId: "body",
-          meta: {},
-        },
-      ],
-      [
-        "post",
-        {
-          id: "post",
-          name: "Post",
-          title: "Post",
-          path: "/post",
-          rootInstanceId: "post-body",
-          meta: {
-            description: "Post description",
-            excludePageFromSearch: "true",
-          },
-        },
-      ],
-    ]),
-    folders: new Map([
-      [
-        "root",
-        {
-          id: "root",
-          name: "Root",
-          slug: "",
-          children: ["home", "blog"],
-        },
-      ],
-      [
-        "blog",
-        {
-          id: "blog",
-          name: "Blog",
-          slug: "blog",
-          children: ["post"],
-        },
-      ],
-    ]),
-  },
-  instances: new Map([
-    [
-      "body",
-      {
-        type: "instance",
-        id: "body",
-        component: "Body",
-        tag: "body",
-        children: [{ type: "id", value: "heading" }],
-      },
-    ],
-    [
-      "heading",
-      {
-        type: "instance",
-        id: "heading",
-        component: "Text",
-        tag: "h1",
-        label: "Hero",
-        children: [{ type: "text", value: "Hello" }],
-      },
-    ],
-  ]),
-  props: new Map([
-    [
-      "prop",
-      {
-        id: "prop",
-        instanceId: "heading",
-        name: "title",
-        type: "string",
-        value: "Heading",
-      },
-    ],
-    [
-      "labelProp",
-      {
-        id: "labelProp",
-        instanceId: "heading",
-        name: "aria-label",
-        type: "string",
-        value: "Heading label",
-      },
-    ],
-    [
-      "resourceProp",
-      {
-        id: "resourceProp",
-        instanceId: "heading",
-        name: "src",
-        type: "resource",
-        value: "resource",
-      },
-    ],
-  ]),
-  styleSources: new Map([
-    ["local", { type: "local", id: "local" }],
-    ["token", { type: "token", id: "token", name: "Brand" }],
-  ]),
-  styleSourceSelections: new Map([
-    ["heading", { instanceId: "heading", values: ["token", "local"] }],
-  ]),
-  styles: new Map([
-    [
-      "local:base::color",
-      {
-        styleSourceId: "local",
-        breakpointId: "base",
-        state: undefined,
-        property: "color",
-        value: { type: "unparsed", value: "var(--brand-color)" },
-      },
-    ],
-    [
-      "local:base::--brand-color",
-      {
-        styleSourceId: "local",
-        breakpointId: "base",
-        state: undefined,
-        property: "--brand-color",
-        value: { type: "keyword", value: "red" },
-      },
-    ],
-    [
-      "token:base::color",
-      {
-        styleSourceId: "token",
-        breakpointId: "base",
-        state: undefined,
-        property: "color",
-        value: { type: "keyword", value: "blue" },
-      },
-    ],
-  ]),
-  dataSources: new Map([
-    [
-      "variable",
-      {
-        id: "variable",
-        type: "variable",
-        name: "Title",
-        scopeInstanceId: "heading",
-        value: { type: "string", value: "Hello" },
-      },
-    ],
-    [
-      "resourceDataSource",
-      {
-        id: "resourceDataSource",
-        type: "resource",
-        name: "Posts",
-        scopeInstanceId: "heading",
-        resourceId: "resource",
-      },
-    ],
-  ]),
-  resources: new Map([
-    [
-      "resource",
-      {
-        id: "resource",
-        name: "Posts",
-        method: "get",
-        url: `"/posts"`,
-        headers: [],
-        searchParams: [],
-      },
-    ],
-  ]),
-  assets: new Map([
-    [
-      "asset",
-      {
-        id: "asset",
-        projectId: "project",
-        name: "asset.png",
-        type: "image",
-        size: 1,
-        format: "png",
-        createdAt: "2026-01-01T00:00:00.000Z",
-        description: null,
-        meta: { width: 100, height: 100 },
-      },
-    ],
-    [
-      "next",
-      {
-        id: "next",
-        projectId: "project",
-        name: "next.png",
-        type: "image",
-        size: 1,
-        format: "png",
-        createdAt: "2026-01-01T00:00:00.000Z",
-        filename: "Hero",
-        description: null,
-        meta: { width: 100, height: 100 },
-      },
-    ],
-  ]),
-  breakpoints: new Map([
-    ["base", { id: "base", label: "Base" }],
-    ["desktop", { id: "desktop", label: "Desktop", minWidth: 1024 }],
-  ]),
-} satisfies BuilderState;
-
-const expectRuntimeValidationError = (operationId: string, input: unknown) => {
-  try {
-    executeBuilderRuntimeOperation({
-      id: operationId,
-      state,
-      input,
-      context,
-    });
-  } catch (error) {
-    expect(error).toMatchObject({ name: "ZodError" });
-    return;
-  }
-  throw new Error(`Expected ${operationId} to reject invalid input`);
-};
-
 const mutationOperationIds = runtimeOperationContracts
   .filter((contract) => contract.kind === "mutation")
   .map((contract) => contract.id);
@@ -306,6 +74,7 @@ test("keeps generated runtime contracts in sync with the registry", () => {
         permit,
         kind,
         inputJsonSchema,
+        outputJsonSchema,
         readNamespaces,
         writeNamespaces,
         invalidatesNamespaces,
@@ -319,6 +88,9 @@ test("keeps generated runtime contracts in sync with the registry", () => {
         permit,
         kind,
         inputSchema: inputJsonSchema,
+        ...(outputJsonSchema === undefined
+          ? {}
+          : { outputSchema: outputJsonSchema }),
         readNamespaces,
         writeNamespaces,
         invalidatesNamespaces,
@@ -328,6 +100,133 @@ test("keeps generated runtime contracts in sync with the registry", () => {
       })
     )
   );
+});
+
+test("tracks public runtime operations without output schemas", () => {
+  expect(
+    builderRuntimeOperations
+      .filter(
+        (operation) =>
+          operation.command !== undefined &&
+          operation.outputSchema === undefined
+      )
+      .map((operation) => operation.id)
+  ).toMatchInlineSnapshot(`
+    [
+      "pages.list",
+      "pages.get",
+      "pages.getByPath",
+      "pages.create",
+      "pages.update",
+      "pages.updateSettings",
+      "pages.updateMarketplace",
+      "pages.savePathInHistory",
+      "pages.setHome",
+      "projectSettings.get",
+      "projectSettings.update",
+      "projectSettings.getMarketplaceProduct",
+      "projectSettings.updateMarketplaceProduct",
+      "redirects.list",
+      "redirects.create",
+      "redirects.update",
+      "redirects.delete",
+      "redirects.setAll",
+      "breakpoints.list",
+      "breakpoints.create",
+      "breakpoints.update",
+      "breakpoints.delete",
+      "pages.delete",
+      "pages.duplicate",
+      "pages.copy",
+      "pageTemplates.list",
+      "pageTemplates.create",
+      "pageTemplates.update",
+      "pageTemplates.delete",
+      "pageTemplates.duplicate",
+      "pageTemplates.reorder",
+      "pageTemplates.createPage",
+      "folders.list",
+      "folders.create",
+      "folders.update",
+      "folders.delete",
+      "folders.duplicate",
+      "pageTransfer.insert",
+      "pageTree.move",
+      "pageTree.reparentOrphans",
+      "instances.list",
+      "instances.inspect",
+      "project.search",
+      "instances.insertComponent",
+      "instances.insertFragment",
+      "instances.move",
+      "instances.reparent",
+      "instances.fillGrid",
+      "instances.wrap",
+      "instances.convert",
+      "instances.unwrap",
+      "instances.clone",
+      "instances.duplicateAfterItself",
+      "instances.delete",
+      "instances.deleteBySelector",
+      "instances.updateProps",
+      "instances.replacePropText",
+      "instances.deleteProps",
+      "instances.bindProps",
+      "instances.listTexts",
+      "instances.updateText",
+      "instances.replaceText",
+      "instances.setTextContent",
+      "instances.updateTextTree",
+      "instances.setTag",
+      "instances.setLabel",
+      "styles.getDeclarations",
+      "styles.updateDeclarations",
+      "styles.deleteDeclarations",
+      "styles.updateSelectedDeclarations",
+      "styles.deleteSelectedDeclarations",
+      "styles.replaceValues",
+      "designTokens.list",
+      "designTokens.create",
+      "designTokens.createAttached",
+      "designTokens.updateStyles",
+      "designTokens.deleteStyles",
+      "designTokens.attach",
+      "designTokens.detach",
+      "designTokens.extract",
+      "styleSources.rename",
+      "styleSources.delete",
+      "styleSources.setLock",
+      "styleSources.reorder",
+      "styleSources.clearStyles",
+      "styleSources.duplicate",
+      "styleSources.convertLocalToToken",
+      "cssVariables.list",
+      "cssVariables.define",
+      "cssVariables.delete",
+      "cssVariables.rewriteRefs",
+      "cssVariables.rename",
+      "variables.list",
+      "variables.create",
+      "variables.update",
+      "variables.delete",
+      "variables.deleteUnused",
+      "resources.list",
+      "resources.create",
+      "resources.update",
+      "resources.replaceText",
+      "resources.upsert",
+      "resources.upsertProp",
+      "resources.delete",
+      "assets.list",
+      "fonts.list",
+      "assets.findUsage",
+      "assets.update",
+      "assets.setImageDescriptions",
+      "assets.add",
+      "assets.replace",
+      "assets.delete",
+    ]
+  `);
 });
 
 describe("builder runtime pages", () => {
@@ -509,6 +408,74 @@ describe("builder runtime read families", () => {
     });
   });
 
+  test("replaces bounded literal text through the public runtime operation", () => {
+    const replaceState = {
+      ...state,
+      instances: new Map<
+        string,
+        NonNullable<BuilderState["instances"]> extends Map<
+          string,
+          infer Instance
+        >
+          ? Instance
+          : never
+      >([
+        ...state.instances,
+        [
+          "subtitle",
+          {
+            type: "instance" as const,
+            id: "subtitle",
+            component: "Text",
+            tag: "p",
+            children: [{ type: "text" as const, value: "Hello from Acme" }],
+          },
+        ],
+      ]),
+    } satisfies BuilderState;
+
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "instances.replaceText",
+        state: replaceState,
+        input: {
+          find: "Hello",
+          replace: "Welcome",
+          match: "substring",
+          limit: 1,
+        },
+        context,
+      })
+    ).toMatchObject({
+      kind: "mutation",
+      result: {
+        changedCount: 1,
+        matchingChildCount: 2,
+        truncated: true,
+        matches: [
+          {
+            instanceId: "heading",
+            childIndex: 0,
+            before: "Hello",
+            after: "Welcome",
+          },
+        ],
+      },
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: ["heading", "children", 0],
+              value: { type: "text", value: "Welcome" },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   test("builds prop mutations", () => {
     expect(
       updateProps(
@@ -558,6 +525,73 @@ describe("builder runtime read families", () => {
     ).toMatchObject({
       result: { propIds: ["resourceProp"] },
       payload: [{ namespace: "props" }, { namespace: "resources" }],
+    });
+  });
+
+  test("replaces bounded static prop text without changing dynamic bindings", () => {
+    const replaceState = {
+      ...state,
+      props: new Map<
+        string,
+        NonNullable<BuilderState["props"]> extends Map<string, infer Prop>
+          ? Prop
+          : never
+      >([
+        ...state.props,
+        [
+          "expression-prop",
+          {
+            id: "expression-prop",
+            instanceId: "heading",
+            name: "title",
+            type: "expression" as const,
+            value: "Heading",
+          },
+        ],
+      ]),
+    } satisfies BuilderState;
+
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "instances.replacePropText",
+        state: replaceState,
+        input: {
+          find: "Heading",
+          replace: "Welcome",
+          match: "exact",
+          names: ["title"],
+          limit: 1,
+        },
+        context,
+      })
+    ).toMatchObject({
+      kind: "mutation",
+      result: {
+        changedCount: 1,
+        matchingPropCount: 1,
+        truncated: false,
+        matches: [
+          {
+            propId: "prop",
+            instanceId: "heading",
+            name: "title",
+            before: "Heading",
+            after: "Welcome",
+          },
+        ],
+      },
+      payload: [
+        {
+          namespace: "props",
+          patches: [
+            {
+              op: "replace",
+              path: ["prop", "value"],
+              value: "Welcome",
+            },
+          ],
+        },
+      ],
     });
   });
 
@@ -613,6 +647,58 @@ describe("builder runtime read families", () => {
     });
     expect(listResources(state)).toMatchObject({
       resources: [{ id: "resource", dataSourceId: "resourceDataSource" }],
+    });
+  });
+
+  test("lists uploaded font families separately from system font stacks", () => {
+    const assets: Assets = new Map(state.assets);
+    assets.set("font", {
+      id: "font",
+      projectId: "project",
+      name: "acme-sans.woff2",
+      type: "font",
+      size: 1,
+      format: "woff2",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: { family: "Acme Sans", style: "normal", weight: 400 },
+    });
+    const fontState = {
+      ...state,
+      assets,
+    } satisfies BuilderState;
+
+    expect(listFonts(fontState, { includeSystem: false })).toEqual({
+      uploaded: [
+        {
+          family: "Acme Sans",
+          source: "uploaded",
+          assets: [
+            {
+              assetId: "font",
+              format: "woff2",
+              style: "normal",
+              weight: 400,
+              variable: false,
+            },
+          ],
+        },
+      ],
+      system: [],
+    });
+
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "fonts.list",
+        state: fontState,
+        input: {},
+        context,
+      })
+    ).toMatchObject({
+      uploaded: [{ family: "Acme Sans" }],
+      system: expect.arrayContaining([
+        expect.objectContaining({ family: "System UI", source: "system" }),
+      ]),
     });
   });
 
@@ -871,6 +957,59 @@ describe("builder runtime read families", () => {
       ]),
     });
 
+    const literalRequestValuesResult = executeBuilderRuntimeOperation({
+      id: "resources.create",
+      state,
+      input: {
+        scopeInstanceId: "heading",
+        resource: {
+          name: "Literal request values",
+          method: "post",
+          url: "https://api.example.com/users",
+          searchParams: [
+            {
+              name: "source",
+              value: { type: "literal", value: "website" },
+            },
+          ],
+          headers: [
+            {
+              name: "Content-Type",
+              value: { type: "literal", value: "application/json" },
+            },
+          ],
+          body: { type: "literal", value: "Plain text body" },
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["literal-resource-id", "literal-data-source-id"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+
+    expect(literalRequestValuesResult).toMatchObject({
+      payload: expect.arrayContaining([
+        {
+          namespace: "resources",
+          patches: expect.arrayContaining([
+            expect.objectContaining({
+              value: expect.objectContaining({
+                url: '"https://api.example.com/users"',
+                searchParams: [{ name: "source", value: '"website"' }],
+                headers: [
+                  { name: "Content-Type", value: '"application/json"' },
+                ],
+                body: '"Plain text body"',
+              }),
+            }),
+          ]),
+        },
+      ]),
+    });
+
     const dynamicUrlResult = executeBuilderRuntimeOperation({
       id: "resources.upsert",
       state,
@@ -895,6 +1034,76 @@ describe("builder runtime read families", () => {
     expect(dynamicUrlResult).toMatchObject({
       kind: "mutation",
       result: { resourceId: "resource-id", dataSourceId: "data-source-id" },
+    });
+  });
+
+  test("replaces bounded fixed resource URLs without changing expressions", () => {
+    const resource = state.resources.get("resource");
+    if (resource === undefined) {
+      throw new Error("Expected test resource");
+    }
+    const replaceState = {
+      ...state,
+      resources: new Map([
+        [
+          "resource",
+          {
+            ...resource,
+            url: '"https://api.old.example.com/posts"',
+          },
+        ],
+        [
+          "dynamic-resource",
+          {
+            ...resource,
+            id: "dynamic-resource",
+            name: "Dynamic posts",
+            url: "apiBase + '/posts'",
+          },
+        ],
+      ]),
+    } satisfies BuilderState;
+
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "resources.replaceText",
+        state: replaceState,
+        input: {
+          find: "/posts",
+          replace: "/articles",
+          match: "substring",
+          fields: ["url"],
+          limit: 1,
+        },
+        context,
+      })
+    ).toMatchObject({
+      kind: "mutation",
+      result: {
+        changedCount: 1,
+        matchingFieldCount: 1,
+        truncated: false,
+        matches: [
+          {
+            resourceId: "resource",
+            field: "url",
+            before: "https://api.old.example.com/posts",
+            after: "https://api.old.example.com/articles",
+          },
+        ],
+      },
+      payload: [
+        {
+          namespace: "resources",
+          patches: [
+            {
+              op: "replace",
+              path: ["resource", "url"],
+              value: '"https://api.old.example.com/articles"',
+            },
+          ],
+        },
+      ],
     });
   });
 
@@ -1191,9 +1400,11 @@ describe("builder runtime registry", () => {
       ["instances.delete", { instanceIds: "heading" }],
       ["instances.deleteBySelector", {}],
       ["instances.updateProps", { updates: {} }],
+      ["instances.replacePropText", {}],
       ["instances.deleteProps", { deletions: {} }],
       ["instances.bindProps", { bindings: {} }],
       ["instances.updateText", {}],
+      ["instances.replaceText", {}],
       ["instances.setTextContent", { operation: "unknown" }],
       ["instances.updateTextTree", {}],
       ["instances.setTag", {}],
@@ -1227,10 +1438,12 @@ describe("builder runtime registry", () => {
       ["variables.deleteUnused", []],
       ["resources.create", {}],
       ["resources.update", {}],
+      ["resources.replaceText", {}],
       ["resources.upsert", {}],
       ["resources.upsertProp", {}],
       ["resources.delete", {}],
       ["assets.update", {}],
+      ["assets.setImageDescriptions", {}],
       ["assets.add", {}],
       ["assets.replace", {}],
       ["assets.delete", { assetIdsOrPrefixes: "asset" }],
@@ -1257,5 +1470,180 @@ describe("builder runtime registry", () => {
         context,
       })
     ).toThrow(/unexpected/);
+  });
+
+  test("does not mutate caller state across representative public mutation surfaces", () => {
+    const inputs = new Map<string, unknown>([
+      ["pages.create", { projectId: "project-1", name: "Docs", path: "/docs" }],
+      [
+        "pages.duplicate",
+        { projectId: "project-1", pageId: "home", parentFolderId: "root" },
+      ],
+      ["pages.update", { pageId: "home", values: { name: "Renamed Home" } }],
+      ["pages.delete", { pageId: "post" }],
+      [
+        "folders.create",
+        { name: "Docs", slug: "docs", parentFolderId: "root" },
+      ],
+      [
+        "pageTemplates.create",
+        {
+          name: "Article Template",
+          title: '"Article Template"',
+          meta: { description: '"Reusable article"' },
+        },
+      ],
+      ["redirects.create", { old: "/legacy", new: "/new" }],
+      ["breakpoints.create", { label: "Tablet", maxWidth: 768 }],
+      [
+        "instances.updateText",
+        { instanceId: "heading", childIndex: 0, text: "Updated" },
+      ],
+      ["instances.delete", { instanceIds: ["heading"] }],
+      [
+        "instances.move",
+        {
+          moves: [
+            { instanceId: "heading", parentInstanceId: "body", insertIndex: 0 },
+          ],
+        },
+      ],
+      [
+        "instances.clone",
+        { sourceInstanceId: "heading", targetParentInstanceId: "body" },
+      ],
+      [
+        "instances.duplicateAfterItself",
+        { sourceInstanceId: "heading", parentInstanceId: "body" },
+      ],
+      ["instances.setLabel", { instanceId: "heading", label: "Updated hero" }],
+      ["instances.setTag", { instanceId: "heading", tag: "h2" }],
+      [
+        "instances.updateProps",
+        {
+          updates: [
+            {
+              instanceId: "heading",
+              name: "title",
+              type: "string",
+              value: "Updated title",
+            },
+          ],
+        },
+      ],
+      [
+        "instances.deleteProps",
+        { deletions: [{ instanceId: "heading", name: "title" }] },
+      ],
+      [
+        "styles.updateDeclarations",
+        {
+          updates: [
+            {
+              instanceId: "heading",
+              property: "color",
+              value: { type: "keyword", value: "green" },
+            },
+          ],
+        },
+      ],
+      [
+        "styles.deleteDeclarations",
+        { deletions: [{ instanceId: "heading", property: "color" }] },
+      ],
+      [
+        "designTokens.create",
+        {
+          tokens: [
+            {
+              name: "Accent",
+              styles: { color: { type: "keyword", value: "green" } },
+            },
+          ],
+        },
+      ],
+      [
+        "variables.create",
+        {
+          scopeInstanceId: "heading",
+          name: "Subtitle",
+          value: { type: "string", value: "Hello" },
+        },
+      ],
+      [
+        "styleSources.rename",
+        { styleSourceId: "token", name: "Updated Brand" },
+      ],
+      ["styleSources.setLock", { styleSourceId: "token", locked: true }],
+      ["styleSources.clearStyles", { styleSourceId: "local" }],
+      [
+        "styleSources.duplicate",
+        { instanceId: "heading", styleSourceId: "token" },
+      ],
+      [
+        "designTokens.attach",
+        { designTokenId: "token", instanceIds: ["heading"] },
+      ],
+      [
+        "designTokens.detach",
+        { designTokenId: "token", instanceIds: ["heading"] },
+      ],
+      [
+        "cssVariables.define",
+        { vars: { "--accent-color": { type: "keyword", value: "green" } } },
+      ],
+      [
+        "cssVariables.rename",
+        { oldName: "--brand-color", newName: "--main-color" },
+      ],
+      ["cssVariables.delete", { names: ["--brand-color"], force: true }],
+      [
+        "variables.update",
+        {
+          dataSourceId: "variable",
+          values: { value: { type: "string", value: "Updated" } },
+        },
+      ],
+      ["variables.delete", { dataSourceId: "variable" }],
+      [
+        "resources.update",
+        { resourceId: "resource", values: { name: "Updated Posts" } },
+      ],
+      [
+        "resources.create",
+        {
+          scopeInstanceId: "heading",
+          resource: {
+            name: "Users",
+            method: "get",
+            url: "https://api.example.com/users",
+            headers: [],
+            searchParams: [],
+          },
+        },
+      ],
+      ["resources.delete", { resourceId: "resource", force: true }],
+      [
+        "assets.update",
+        {
+          assetId: "asset",
+          values: { filename: "Updated", description: "Updated description" },
+        },
+      ],
+      [
+        "assets.setImageDescriptions",
+        {
+          updates: [{ assetId: "asset", description: "Updated description" }],
+        },
+      ],
+      ["assets.delete", { assetIdsOrPrefixes: ["asset"] }],
+      ["assets.replace", { fromAssetId: "asset", toAssetId: "next" }],
+    ]);
+
+    for (const [id, input] of inputs) {
+      const before = structuredClone(state);
+      executeBuilderRuntimeOperation({ id, state, input, context });
+      expect(state).toEqual(before);
+    }
   });
 });

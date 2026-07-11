@@ -86,6 +86,8 @@ type McpScreenshotInput = {
   port?: number;
   viewport: { width: number; height: number };
   fullPage?: boolean;
+  includeImageMetrics?: boolean;
+  includeResourceMetrics?: boolean;
   browser?: CaptureScreenshotInput["browser"];
   browserPath?: string;
   waitUntil?: CaptureScreenshotInput["waitUntil"];
@@ -368,6 +370,8 @@ const createMcpPreviewHandlers = ({
         width: input.viewport.width,
         height: input.viewport.height,
         fullPage: input.fullPage,
+        includeImageMetrics: input.includeImageMetrics,
+        includeResourceMetrics: input.includeResourceMetrics,
         browser: input.browser ?? "auto",
         browserPath: input.browserPath,
         waitUntil: input.waitUntil,
@@ -906,6 +910,7 @@ const createCliMcpHost = async () => {
         fullPage: result.fullPage,
         elapsedMs: result.elapsedMs,
         warnings: result.warnings,
+        layout: result.layout,
       };
     },
     async diffScreenshots(input) {

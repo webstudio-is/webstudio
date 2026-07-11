@@ -21,6 +21,10 @@ test("adapts snapshots without sharing mutable maps", () => {
   expect(state.pages).not.toBe(pages);
   expect(state.pages?.pages).not.toBe(pages.pages);
   expect(state.pages?.folders).not.toBe(pages.folders);
+  expect(state.projectSettings).toEqual({
+    meta: pages.meta ?? {},
+    compiler: pages.compiler ?? {},
+  });
   expect(state.instances).toEqual(new Map(build.instances));
   expect(state.instances).not.toBe(build.instances);
   expect(state.instances?.get("instance-root")).not.toBe(
@@ -58,6 +62,22 @@ test("adapts serialized snapshots with migrated pages", () => {
   expect(state.pages?.pages).toEqual(pages.pages);
   expect(state.pages?.folders).toEqual(pages.folders);
   expect(state.props).toEqual(new Map(build.props));
+  expect(state.projectSettings?.meta).toEqual(pages.meta ?? {});
+});
+
+test("prefers the first-class project settings namespace over legacy pages metadata", () => {
+  const state = createBuilderStateFromSnapshot({
+    pages,
+    projectSettings: {
+      meta: { agentInstructions: "Use components." },
+      compiler: { atomicStyles: false },
+    },
+  });
+
+  expect(state.projectSettings).toEqual({
+    meta: { agentInstructions: "Use components." },
+    compiler: { atomicStyles: false },
+  });
 });
 
 test("adapts array build data snapshots into normalized builder state", () => {

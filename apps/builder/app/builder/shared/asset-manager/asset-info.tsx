@@ -64,7 +64,12 @@ import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
 } from "~/builder/shared/nano-states";
-import { $instances, $pages, $props } from "~/shared/sync/data-stores";
+import {
+  $instances,
+  $pages,
+  $projectSettings,
+  $props,
+} from "~/shared/sync/data-stores";
 import {
   formatAssetName,
   parseAssetName,
@@ -78,9 +83,15 @@ import {
 } from "@webstudio-is/project-build/runtime/assets";
 
 const $usagesByAssetId = computed(
-  [$pages, $props, $styles, $assets],
-  (pages, props, styles, assets) => {
-    return calculateUsagesByAssetId({ pages, props, styles, assets });
+  [$pages, $projectSettings, $props, $styles, $assets],
+  (pages, projectSettings, props, styles, assets) => {
+    return calculateUsagesByAssetId({
+      pages,
+      projectSettings,
+      props,
+      styles,
+      assets,
+    });
   }
 );
 

@@ -18,6 +18,11 @@
       "types": "./lib/types/runtime.d.ts",
       "import": "./lib/runtime.js"
     },
+    "./schema-org": {
+      "webstudio": "./src/schema-org.ts",
+      "types": "./lib/types/schema-org.d.ts",
+      "import": "./lib/schema-org.js"
+    },
     "./link-utils": {
       "webstudio": "./src/link-utils.ts",
       "types": "./lib/types/link-utils.d.ts",
@@ -50,8 +55,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run",
+    "build:schema-org-data": "tsx scripts/schema-org-data.ts && oxfmt src/__generated__/schema-org-data.ts",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && oxfmt src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
@@ -74,6 +80,8 @@
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
+    "papaparse": "^5.5.3",
+    "@types/papaparse": "^5.5.2",
     "vitest": "^3.1.2"
   }
 }

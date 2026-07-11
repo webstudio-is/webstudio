@@ -12,6 +12,7 @@ import type {
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "./shared/marketplace";
+import type { ProjectSettings } from "./shared/project-settings";
 
 export type Build = {
   id: string;
@@ -30,6 +31,7 @@ export type Build = {
   resources: [Resource["id"], Resource][];
   deployment?: Deployment | undefined;
   marketplaceProduct: MarketplaceProduct;
+  projectSettings: ProjectSettings;
 };
 
 export type CompactBuild = {
@@ -49,4 +51,5 @@ export type CompactBuild = {
   instances: Instance[];
   deployment?: Deployment;
   marketplaceProduct: MarketplaceProduct;
+  projectSettings: ProjectSettings;
 };

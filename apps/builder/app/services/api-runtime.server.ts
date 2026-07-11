@@ -2,6 +2,7 @@ import type { CompactBuild } from "@webstudio-is/project-build";
 import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
 import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime/registry";
 import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
 import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
 import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
 import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/state/adapters";
@@ -32,6 +33,11 @@ export const executeApiRuntimeOperation = async <Result>({
       id,
       state: createBuilderRuntimeState(build, assets),
       input,
+      context: {
+        createId: builderRuntimeContext.createId,
+        projectId: build.projectId,
+        projectVersion: build.version,
+      },
     });
   } catch (error) {
     if (error instanceof BuilderRuntimeError) {

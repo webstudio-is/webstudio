@@ -1,4 +1,5 @@
 import type { Patch } from "immer";
+import { isRecord } from "../shared/type-utils";
 import {
   instance,
   instanceChild,
@@ -82,9 +83,6 @@ export const isContentModePagePath = (value: unknown) =>
   isPathnamePattern(value) === false &&
   value.includes(":") === false &&
   value.includes("*") === false;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
 
 const isString = (value: unknown) => typeof value === "string";
 const isOptionalString = (value: unknown) =>

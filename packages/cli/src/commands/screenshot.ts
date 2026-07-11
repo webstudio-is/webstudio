@@ -19,6 +19,12 @@ import {
   chromiumDownloadUrl,
   getNoBrowserFoundMessage,
 } from "../screenshot";
+import {
+  preparePreviewProject,
+  previewDefaultTemplate,
+  validatePreviewServerOptions,
+} from "./preview";
+import { createPreviewController } from "../preview-server";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -28,7 +34,22 @@ export const screenshotOptions = (yargs: CommonYargsArgv) =>
   yargs
     .positional("url", {
       type: "string",
-      describe: "URL to capture",
+      describe: "Absolute URL to capture",
+    })
+    .option("path", {
+      type: "string",
+      describe:
+        "Project route to capture by generating a local production preview, for example /pricing",
+    })
+    .option("host", {
+      type: "string",
+      default: "127.0.0.1",
+      describe: "Host used by the temporary project preview server",
+    })
+    .option("port", {
+      type: "number",
+      default: 5173,
+      describe: "Port used by the temporary project preview server",
     })
     .option("output", {
       type: "string",
@@ -96,6 +117,7 @@ type ScreenshotOptions = StrictYargsOptionsToInterface<
   typeof screenshotOptions
 > & {
   url?: string;
+  path?: string;
   browser?: ScreenshotBrowser;
   waitUntil?: ScreenshotWaitUntil;
   waitForSelector?: string;
@@ -137,10 +159,19 @@ const printScreenshotError = ({
 
 type ScreenshotCommandDependencies = {
   captureScreenshotWithBrowserInstall: typeof captureScreenshotWithBrowserInstall;
+  preparePreviewProject?: typeof preparePreviewProject;
+  createPreviewController?: (
+    defaults: Parameters<typeof createPreviewController>[0]
+  ) => Pick<
+    ReturnType<typeof createPreviewController>,
+    "startAndWait" | "stop" | "resolveUrl"
+  >;
 };
 
 const defaultScreenshotCommandDependencies: ScreenshotCommandDependencies = {
   captureScreenshotWithBrowserInstall,
+  preparePreviewProject,
+  createPreviewController,
 };
 
 export const screenshot = async (
@@ -148,8 +179,20 @@ export const screenshot = async (
   dependencies = defaultScreenshotCommandDependencies
 ) => {
   const options = rawOptions as ScreenshotOptions;
-  if (options.url === undefined || options.url.length === 0) {
-    throw new Error("Please specify a URL to capture.");
+  if (
+    (options.url === undefined || options.url.length === 0) &&
+    (options.path === undefined || options.path.length === 0)
+  ) {
+    throw new Error("Please specify a URL or project --path to capture.");
+  }
+  if (options.url !== undefined && options.path !== undefined) {
+    throw new Error("Specify either a URL or --path, not both.");
+  }
+  if (
+    options.path !== undefined &&
+    (options.path.startsWith("/") === false || options.path.startsWith("//"))
+  ) {
+    throw new Error("--path must start with one slash, for example /pricing.");
   }
   if (isPositiveInteger(options.width) === false) {
     throw new Error("--width must be a positive integer.");
@@ -183,52 +226,85 @@ export const screenshot = async (
   }
 
   try {
-    const result = await dependencies.captureScreenshotWithBrowserInstall({
-      url: options.url,
-      output: options.output,
-      width: options.width,
-      height: options.height,
-      fullPage: options.fullPage,
-      browser: options.browser ?? "auto",
-      browserPath: options.browserPath,
-      waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
-      waitForSelector: options.waitForSelector,
-      waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
-      timeout: options.timeout ?? defaultScreenshotTimeout,
-      isJson: options.json,
-      isMcp: false,
-      isInteractive:
-        process.stdin.isTTY === true && process.stdout.isTTY === true,
-      async confirmInstall(installCommand) {
-        const answer = await confirm({
-          message: `No supported browser was found. Install Chromium now with "${installCommand.label}"?`,
-          initialValue: true,
-        });
-        if (isCancel(answer)) {
-          cancel("Screenshot capture is cancelled.");
-          throw new HandledCliError();
-        }
-        return answer;
-      },
-    });
-
-    if (options.json) {
-      printJson({
-        ok: true,
-        data: {
-          output: result.output,
-          browserPath: result.browser.path,
-          browser: result.browser.browser,
-          viewport: result.viewport,
-          fullPage: result.fullPage,
-          elapsedMs: result.elapsedMs,
-          warnings: result.warnings,
+    const capture = async (url: string) => {
+      const result = await dependencies.captureScreenshotWithBrowserInstall({
+        url,
+        output: options.output,
+        width: options.width,
+        height: options.height,
+        fullPage: options.fullPage,
+        browser: options.browser ?? "auto",
+        browserPath: options.browserPath,
+        waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
+        waitForSelector: options.waitForSelector,
+        waitForTimeout:
+          options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
+        timeout: options.timeout ?? defaultScreenshotTimeout,
+        isJson: options.json,
+        isMcp: false,
+        isInteractive:
+          process.stdin.isTTY === true && process.stdout.isTTY === true,
+        async confirmInstall(installCommand) {
+          const answer = await confirm({
+            message: `No supported browser was found. Install Chromium now with "${installCommand.label}"?`,
+            initialValue: true,
+          });
+          if (isCancel(answer)) {
+            cancel("Screenshot capture is cancelled.");
+            throw new HandledCliError();
+          }
+          return answer;
         },
-        meta: { command: "screenshot" },
       });
+
+      if (options.json) {
+        printJson({
+          ok: true,
+          data: {
+            output: result.output,
+            browserPath: result.browser.path,
+            browser: result.browser.browser,
+            viewport: result.viewport,
+            fullPage: result.fullPage,
+            elapsedMs: result.elapsedMs,
+            warnings: result.warnings,
+          },
+          meta: { command: "screenshot" },
+        });
+        return;
+      }
+      log.success(`Screenshot saved to ${result.output}`);
+    };
+
+    if (options.path === undefined) {
+      await capture(options.url!);
       return;
     }
-    log.success(`Screenshot saved to ${result.output}`);
+
+    const host = options.host ?? "127.0.0.1";
+    const port = options.port ?? 5173;
+    validatePreviewServerOptions({ host, port });
+    const previewProject = await (
+      dependencies.preparePreviewProject ?? preparePreviewProject
+    )({
+      assets: true,
+      template: [...previewDefaultTemplate],
+      generate: true,
+    });
+    const preview = (
+      dependencies.createPreviewController ?? createPreviewController
+    )({ host, port });
+    try {
+      await preview.startAndWait({
+        cwd: previewProject.cwd,
+        host,
+        port,
+        restart: true,
+      });
+      await capture(preview.resolveUrl(options.path));
+    } finally {
+      await preview.stop();
+    }
   } catch (error) {
     if (error instanceof BrowserNotFoundError) {
       printScreenshotError({

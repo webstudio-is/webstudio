@@ -77,6 +77,7 @@ export const serverOnlyRouterOperationMetadata = {
               "resources",
               "variables",
               "breakpoints",
+              "projectSettings",
               "marketplaceProduct",
             ],
           },
@@ -108,6 +109,7 @@ export const serverOnlyRouterOperationMetadata = {
       "resources",
       "assets",
       "breakpoints",
+      "projectSettings",
       "marketplaceProduct",
     ],
     inputSchema: {
@@ -146,6 +148,7 @@ export const serverOnlyRouterOperationMetadata = {
                         "resources",
                         "assets",
                         "breakpoints",
+                        "projectSettings",
                         "marketplaceProduct",
                       ],
                     },

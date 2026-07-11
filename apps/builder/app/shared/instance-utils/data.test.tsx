@@ -15,6 +15,7 @@ import {
   $dataSources,
   $instances,
   $pages,
+  $projectSettings,
   $props,
   $resources,
   $styleSourceSelections,
@@ -52,6 +53,7 @@ const setBaseStores = () => {
   $dataSources.set(new Map());
   $resources.set(new Map());
   $assets.set(new Map());
+  $projectSettings.set({ meta: {}, compiler: {} });
   return { pages };
 };
 
@@ -89,6 +91,7 @@ describe("data store helpers", () => {
     $dataSources.set(new Map());
     $resources.set(new Map());
     $assets.set(new Map());
+    $projectSettings.set({ meta: {}, compiler: {} });
 
     expect(getWebstudioData()).toMatchObject({
       pages,
@@ -916,7 +919,9 @@ describe("data store helpers", () => {
   });
 
   test("executes project settings runtime mutations against builder stores", () => {
-    setBaseStores();
+    const { pages } = setBaseStores();
+    const legacyMeta = pages.meta;
+    const legacyCompiler = pages.compiler;
 
     executeRuntimeMutation({
       id: "projectSettings.update",
@@ -930,16 +935,18 @@ describe("data store helpers", () => {
       },
     });
 
-    expect($pages.get()?.meta).toEqual(
+    expect($projectSettings.get()?.meta).toEqual(
       expect.objectContaining({
         contactEmail: "hello@example.com",
       })
     );
-    expect($pages.get()?.compiler).toEqual(
+    expect($projectSettings.get()?.compiler).toEqual(
       expect.objectContaining({
         atomicStyles: true,
       })
     );
+    expect($pages.get()?.meta).toEqual(legacyMeta);
+    expect($pages.get()?.compiler).toEqual(legacyCompiler);
 
     executeRuntimeMutation({
       id: "projectSettings.update",
@@ -950,7 +957,8 @@ describe("data store helpers", () => {
       },
     });
 
-    expect($pages.get()?.meta).not.toHaveProperty("contactEmail");
+    expect($projectSettings.get()?.meta).not.toHaveProperty("contactEmail");
+    expect($pages.get()?.meta).toEqual(legacyMeta);
   });
 
   test("runtime bridge skips page templates without build access", () => {

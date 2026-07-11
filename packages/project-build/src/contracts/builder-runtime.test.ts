@@ -81,7 +81,7 @@ describe("builder runtime operation contracts", () => {
     expect(
       runtimeOperationContracts.find((contract) => contract.id === "pages.list")
         ?.readNamespaces
-    ).toEqual(["pages"]);
+    ).toEqual(["pages", "projectSettings"]);
   });
 
   test("derives required public input fields without generated ids", () => {

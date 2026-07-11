@@ -435,6 +435,9 @@ const apiCommandsByArea = {
   setupAndDiscovery: cliCommandMetadata
     .filter(({ cliCommand }) => cliCommand === "permissions")
     .map(({ cliCommand }) => cliCommand),
+  projectQuality: cliCommandMetadata
+    .filter(({ cliCommand }) => cliCommand === "audit")
+    .map(({ cliCommand }) => cliCommand),
   publishAndDomains: cliCommandMetadata
     .filter(
       ({ cliCommand }) =>
@@ -609,6 +612,8 @@ const createLlmManualJson = (
       writeCommands,
       sessionBehavior: [
         "Read meta.session.source and meta.session.namespaceCounts to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
+        "For a dry-run mutation, inspect meta.session.transaction for the computed Builder patch; meta.session.version is its base build version.",
+        "Use status with { verbose: true } only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.",
         "Use --refresh before a local-capable command when the cached snapshot may be stale.",
         "A mutation is durable only when meta.session.committed is true.",
       ],

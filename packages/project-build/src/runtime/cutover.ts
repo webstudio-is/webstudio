@@ -106,6 +106,11 @@ export const builderRuntimeCutoverManifests = [
     callers: ["appRouter.api.instances"] as const,
   },
   {
+    family: "project-inspection-read",
+    operationIds: ["project.search", "project.audit"] as const,
+    callers: ["MCP/CLI project search and audit"] as const,
+  },
+  {
     family: "instance-structural-api-mutations",
     operationIds: [
       "instances.move",
@@ -136,6 +141,7 @@ export const builderRuntimeCutoverManifests = [
     family: "text-content-mutations",
     operationIds: [
       "instances.updateText",
+      "instances.replaceText",
       "instances.setTextContent",
       "instances.updateTextTree",
     ] as const,
@@ -148,6 +154,7 @@ export const builderRuntimeCutoverManifests = [
     family: "prop-mutations",
     operationIds: [
       "instances.updateProps",
+      "instances.replacePropText",
       "instances.deleteProps",
       "instances.bindProps",
     ] as const,
@@ -234,6 +241,7 @@ export const builderRuntimeCutoverManifests = [
     operationIds: [
       "resources.create",
       "resources.update",
+      "resources.replaceText",
       "resources.delete",
       "resources.upsert",
       "resources.upsertProp",
@@ -241,11 +249,17 @@ export const builderRuntimeCutoverManifests = [
     callers: ["appRouter.api.resources"] as const,
   },
   {
+    family: "font-read",
+    operationIds: ["fonts.list"] as const,
+    callers: ["MCP/CLI font discovery"] as const,
+  },
+  {
     family: "asset-reference-operations",
     operationIds: [
       "assets.list",
       "assets.findUsage",
       "assets.update",
+      "assets.setImageDescriptions",
       "assets.add",
       "assets.replace",
       "assets.delete",

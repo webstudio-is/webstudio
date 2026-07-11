@@ -5,8 +5,10 @@ import {
   type Prop,
   type PropMeta,
 } from "@webstudio-is/sdk";
+import { validateJsonLd } from "@webstudio-is/sdk/runtime";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
+import { replaceTextValue } from "./text-replacement";
 import { getExpressionErrors } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { validateHtmlEmbedCode } from "./html";
@@ -250,6 +252,36 @@ export const propUpdatesInput = z.object({
     .describe(
       'Atomic batch of direct prop updates. Every item must be valid or the batch is rejected; split unrelated updates into smaller batches if you want easier recovery. For textarea placeholder use { "name": "placeholder", "type": "string", "value": "..." }.'
     ),
+});
+
+export const replacePropTextInput = z.object({
+  find: z.string().min(1).describe("Fixed prop text to find."),
+  replace: z.string().describe("Replacement fixed prop text."),
+  match: z
+    .enum(["exact", "substring"])
+    .default("exact")
+    .describe(
+      'Use "exact" to replace complete prop values, or "substring" to replace every literal occurrence in matching prop values.'
+    ),
+  instanceIds: z
+    .array(z.string())
+    .min(1)
+    .optional()
+    .describe("Optional instance ids to limit the replacement scope."),
+  names: z
+    .array(z.string())
+    .min(1)
+    .optional()
+    .describe(
+      "Optional prop names to limit the replacement scope, such as href or code."
+    ),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(200)
+    .default(50)
+    .describe("Maximum number of prop values to change."),
 });
 
 export type PropValueInput = z.infer<typeof propValueInput>;
@@ -731,6 +763,19 @@ const getHtmlEmbedCodeErrors = (instance: Instance, update: PropValueInput) => {
   return error === undefined ? [] : [error.message];
 };
 
+const getJsonLdCodeErrors = (instance: Instance, update: PropValueInput) => {
+  if (instance.component !== "JsonLd" || update.name !== "code") {
+    return [];
+  }
+  if (update.type !== "string") {
+    return ['JSON-LD code must use prop type "string".'];
+  }
+  const result = validateJsonLd(update.value);
+  return result.diagnostics
+    .filter(({ severity }) => severity === "error")
+    .map(({ path, message }) => `JSON-LD ${path}: ${message}`);
+};
+
 export const updateProps = (
   state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof propUpdatesInput>,
@@ -741,8 +786,12 @@ export const updateProps = (
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
     const htmlEmbedCodeErrors = getHtmlEmbedCodeErrors(instance, update);
-    if (htmlEmbedCodeErrors.length > 0) {
-      return throwPropErrors(htmlEmbedCodeErrors);
+    const codeErrors = [
+      ...htmlEmbedCodeErrors,
+      ...getJsonLdCodeErrors(instance, update),
+    ];
+    if (codeErrors.length > 0) {
+      return throwPropErrors(codeErrors);
     }
     const existing = findProp(props.values(), update.instanceId, update.name);
     const nextProp = createValidatedPropValueFromInput(
@@ -761,6 +810,93 @@ export const updateProps = (
   return createRuntimeMutation({
     payload,
     result: { propIds },
+    invalidatesNamespaces: ["props"],
+  });
+};
+
+export const replacePropText = (
+  state: Pick<BuilderState, "instances" | "props">,
+  input: z.infer<typeof replacePropTextInput>
+) => {
+  const { instances, props } = getRequiredPropState(state);
+  const instanceIds =
+    input.instanceIds === undefined ? undefined : new Set(input.instanceIds);
+  const names = input.names === undefined ? undefined : new Set(input.names);
+  const matches: Array<{
+    propId: string;
+    instanceId: string;
+    name: string;
+    before: string;
+    after: string;
+  }> = [];
+  let matchingPropCount = 0;
+  for (const prop of props.values()) {
+    if (
+      prop.type !== "string" ||
+      (instanceIds !== undefined &&
+        instanceIds.has(prop.instanceId) === false) ||
+      (names !== undefined && names.has(prop.name) === false)
+    ) {
+      continue;
+    }
+    const after = replaceTextValue(prop.value, input);
+    if (after === prop.value) {
+      continue;
+    }
+    matchingPropCount += 1;
+    if (matches.length >= input.limit) {
+      continue;
+    }
+    const instance = instances.get(prop.instanceId);
+    if (instance?.component === "HtmlEmbed" && prop.name === "code") {
+      const error = validateHtmlEmbedCode(after);
+      if (error !== undefined) {
+        return throwPropErrors([error.message]);
+      }
+    }
+    if (instance?.component === "JsonLd" && prop.name === "code") {
+      const result = validateJsonLd(after);
+      if (result.success === false) {
+        return throwPropErrors(
+          result.diagnostics
+            .filter(({ severity }) => severity === "error")
+            .map(({ path, message }) => `JSON-LD ${path}: ${message}`)
+        );
+      }
+    }
+    matches.push({
+      propId: prop.id,
+      instanceId: prop.instanceId,
+      name: prop.name,
+      before: prop.value,
+      after,
+    });
+  }
+  const result = {
+    changedCount: matches.length,
+    matchingPropCount,
+    truncated: matchingPropCount > matches.length,
+    matches,
+  };
+  if (matches.length === 0) {
+    return createRuntimeMutation({
+      payload: [],
+      result,
+      invalidatesNamespaces: [],
+    });
+  }
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "props",
+        patches: matches.map(({ propId, after }) => ({
+          op: "replace" as const,
+          path: [propId, "value"],
+          value: after,
+        })),
+      },
+    ],
+    result,
     invalidatesNamespaces: ["props"],
   });
 };

@@ -197,6 +197,7 @@ model Build {
   resources             String @default("[]")
   instances             String @default("[]")
   marketplaceProduct    String @default("{}")
+  projectSettings       String @default("{\"meta\":{},\"compiler\":{}}")
 
   deployment    String?
   publishStatus PublishStatus @default(PENDING)

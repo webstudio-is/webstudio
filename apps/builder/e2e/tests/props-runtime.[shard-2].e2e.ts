@@ -3,6 +3,11 @@ import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import {
+  resetSelectedProperty,
+  setSelectedBooleanProperty,
+  waitForSelectedBooleanPropertyValue,
+} from "../flows/props-panel";
+import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
 } from "../flows/sync-status";
@@ -18,13 +23,19 @@ const openComponentsPanel = async ({ page }: { page: Page }) => {
 const insertComponentPanelOption = async ({
   page,
   name,
+  component,
 }: {
   page: Page;
   name: string;
+  component?: string;
 }) => {
   const search = page.getByPlaceholder("Find components");
   await search.fill(name);
-  await page.getByRole("option", { name, exact: true }).click();
+  const option =
+    component === undefined
+      ? page.getByRole("option", { name, exact: true })
+      : page.locator(`[data-drag-component="${component}"]`);
+  await option.click();
   await waitForSyncStatus({ page, status: "idle" });
 };
 
@@ -54,6 +65,26 @@ const selectNavigatorItem = async ({
   await item.waitFor({ state: "visible" });
   await item.click();
   await item.click();
+};
+
+const selectFirstNavigatorChild = async ({
+  page,
+  parentLabel,
+}: {
+  page: Page;
+  parentLabel: string;
+}) => {
+  await openNavigatorPanel({ page });
+  const parent = page
+    .locator("[data-navigator-tree] [data-tree-button]")
+    .filter({ hasText: parentLabel })
+    .first();
+  await parent.waitFor({ state: "visible" });
+  await parent.press("ArrowRight");
+  const child = parent.locator("xpath=following::button[@data-tree-button][1]");
+  await child.waitFor({ state: "visible" });
+  await child.click();
+  await child.click();
 };
 
 const updateResourceActionUrl = async ({
@@ -242,6 +273,79 @@ const expectPersistedExpressionProp = async ({
   }
 };
 
+const expectPersistedBooleanProp = async ({
+  projectId,
+  component,
+  name,
+  value,
+}: {
+  projectId: string;
+  component: string;
+  name: string;
+  value: boolean;
+}) => {
+  const build = await loadDevBuild({ projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    id: string;
+    component: string;
+  }>;
+  const props = JSON.parse(build.props) as Array<{
+    instanceId: string;
+    name: string;
+    type: string;
+    value?: unknown;
+  }>;
+  const instanceIds = new Set(
+    instances
+      .filter((instance) => instance.component === component)
+      .map((instance) => instance.id)
+  );
+  const prop = props.find(
+    (prop) =>
+      instanceIds.has(prop.instanceId) &&
+      prop.name === name &&
+      prop.type === "boolean" &&
+      prop.value === value
+  );
+  if (prop === undefined) {
+    throw new Error(
+      `Expected ${component} ${name}=${value} to persist. Props: ${JSON.stringify(props)}`
+    );
+  }
+};
+
+const expectBooleanPropDeleted = async ({
+  projectId,
+  component,
+  name,
+}: {
+  projectId: string;
+  component: string;
+  name: string;
+}) => {
+  const build = await loadDevBuild({ projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    id: string;
+    component: string;
+  }>;
+  const props = JSON.parse(build.props) as Array<{
+    instanceId: string;
+    name: string;
+  }>;
+  const instanceIds = new Set(
+    instances
+      .filter((instance) => instance.component === component)
+      .map((instance) => instance.id)
+  );
+  if (
+    props.some((prop) => instanceIds.has(prop.instanceId) && prop.name === name)
+  ) {
+    throw new Error(
+      `Expected ${component} ${name} prop to be deleted. Props: ${JSON.stringify(props)}`
+    );
+  }
+};
+
 test("Props panel resource action persists after reload", async () => {
   const fixture = await createContentModeProject({
     email: "props-runtime@webstudio.test",
@@ -360,6 +464,114 @@ test("Props panel expression binding persists after reload", async () => {
       text: anchorText,
       name: "href",
       expression,
+    });
+  } finally {
+    await close();
+  }
+});
+
+test("Props panel boolean prop persists after reload", async () => {
+  const fixture = await createContentModeProject({
+    email: "props-boolean-runtime@webstudio.test",
+    title: "Props Boolean Runtime",
+    assetNamePrefix: "props-boolean-runtime-",
+    editorToken: "props-boolean-runtime-editor-token",
+    builderToken: "props-boolean-runtime-builder-token",
+  });
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    await measure("props boolean runtime open builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await waitForCanvasText({ page, text: "Initial content" });
+
+    await measure("props boolean runtime insert checkbox", async () => {
+      await openComponentsPanel({ page });
+      await insertComponentPanelOption({
+        page,
+        name: "Checkbox",
+        component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+      });
+    });
+    await selectFirstNavigatorChild({
+      page,
+      parentLabel: "Checkbox Field",
+    });
+    await page.getByRole("tab", { name: "Settings" }).click();
+
+    await measure("props boolean runtime set checked", async () => {
+      await setSelectedBooleanProperty({
+        page,
+        label: "Checked",
+        checked: true,
+      });
+    });
+    await expectPersistedBooleanProp({
+      projectId: fixture.projectId,
+      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+      name: "checked",
+      value: true,
+    });
+
+    await measure("props boolean runtime reload builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await selectFirstNavigatorChild({
+      page,
+      parentLabel: "Checkbox Field",
+    });
+    await page.getByRole("tab", { name: "Settings" }).click();
+    await waitForSelectedBooleanPropertyValue({
+      page,
+      label: "Checked",
+      checked: true,
+    });
+    await expectPersistedBooleanProp({
+      projectId: fixture.projectId,
+      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+      name: "checked",
+      value: true,
+    });
+
+    await measure("props boolean runtime reset checked", async () => {
+      await resetSelectedProperty({ page, label: "Checked" });
+    });
+    await expectBooleanPropDeleted({
+      projectId: fixture.projectId,
+      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+      name: "checked",
+    });
+
+    await measure("props boolean runtime reload after reset", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await selectFirstNavigatorChild({
+      page,
+      parentLabel: "Checkbox Field",
+    });
+    await page.getByRole("tab", { name: "Settings" }).click();
+    await waitForSelectedBooleanPropertyValue({
+      page,
+      label: "Checked",
+      checked: false,
+    });
+    await expectBooleanPropDeleted({
+      projectId: fixture.projectId,
+      component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+      name: "checked",
     });
   } finally {
     await close();

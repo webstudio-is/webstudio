@@ -21,6 +21,7 @@ import {
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { CompactBuild } from "../types";
+import type { ProjectSettings } from "../shared/project-settings";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import {
@@ -63,6 +64,55 @@ export const assetUpdateInput = z.object({
       message: "At least one asset field is required",
     }),
 });
+
+const imageDescriptionUpdate = z.union([
+  z
+    .object({
+      assetId: z.string(),
+      description: z
+        .string()
+        .trim()
+        .min(1)
+        .describe(
+          "Concise alt description generated after inspecting the rendered image in context."
+        ),
+      decorative: z.literal(false).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      assetId: z.string(),
+      decorative: z
+        .literal(true)
+        .describe(
+          "Mark the image decorative and intentionally store an empty alt description."
+        ),
+    })
+    .strict(),
+]);
+
+export const imageDescriptionsSetInput = z
+  .object({
+    updates: z
+      .array(imageDescriptionUpdate)
+      .min(1)
+      .describe(
+        "Descriptions or decorative decisions for image assets reported by the accessibility audit."
+      ),
+  })
+  .superRefine(({ updates }, context) => {
+    const assetIds = new Set<string>();
+    updates.forEach(({ assetId }, index) => {
+      if (assetIds.has(assetId)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["updates", index, "assetId"],
+          message: "Each image asset may be updated only once.",
+        });
+      }
+      assetIds.add(assetId);
+    });
+  });
 
 export const assetAddInput = z.object({
   asset: assetSchema,
@@ -149,19 +199,21 @@ export const replaceAssetInStyleValueMutable = (
 
 export const replaceAssetMutable = ({
   pages,
+  projectSettings,
   props,
   styles,
   replacement,
 }: {
   pages?: Pages;
+  projectSettings?: ProjectSettings;
   props: Iterable<Prop>;
   styles: Iterable<StyleDecl>;
   replacement: AssetStyleValueReplacement;
 }) => {
+  if (projectSettings?.meta.faviconAssetId === replacement.fromAssetId) {
+    projectSettings.meta.faviconAssetId = replacement.toAssetId;
+  }
   if (pages !== undefined) {
-    if (pages.meta?.faviconAssetId === replacement.fromAssetId) {
-      pages.meta.faviconAssetId = replacement.toAssetId;
-    }
     for (const page of getAllPages(pages)) {
       if (page.meta.socialImageAssetId === replacement.fromAssetId) {
         page.meta.socialImageAssetId = replacement.toAssetId;
@@ -183,11 +235,13 @@ export const replaceAssetMutable = ({
 
 export const calculateUsagesByAssetId = ({
   pages,
+  projectSettings,
   props,
   styles,
   assets,
 }: {
   pages: Pages | undefined;
+  projectSettings?: ProjectSettings;
   props: Props;
   styles: Styles;
   assets: Map<Asset["id"], Asset>;
@@ -206,8 +260,9 @@ export const calculateUsagesByAssetId = ({
     }
   }
 
-  if (pages?.meta?.faviconAssetId) {
-    addUsage(pages.meta.faviconAssetId, { type: "favicon" });
+  const faviconAssetId = projectSettings?.meta.faviconAssetId;
+  if (faviconAssetId) {
+    addUsage(faviconAssetId, { type: "favicon" });
   }
   if (pages) {
     for (const page of getAllPages(pages)) {
@@ -260,7 +315,7 @@ export const calculateUsagesByAssetId = ({
 
 type AssetReferenceBuild = Pick<
   CompactBuild,
-  "pages" | "props" | "styles" | "resources" | "dataSources"
+  "pages" | "projectSettings" | "props" | "styles" | "resources" | "dataSources"
 >;
 
 const getRequiredAssets = (state: Pick<BuilderState, "assets">) => {
@@ -276,11 +331,17 @@ const getRequiredAssets = (state: Pick<BuilderState, "assets">) => {
 const getRequiredAssetReferenceBuild = (
   state: Pick<
     BuilderState,
-    "pages" | "props" | "styles" | "resources" | "dataSources"
+    | "pages"
+    | "projectSettings"
+    | "props"
+    | "styles"
+    | "resources"
+    | "dataSources"
   >
 ): AssetReferenceBuild => {
   if (
     state.pages === undefined ||
+    state.projectSettings === undefined ||
     state.props === undefined ||
     state.styles === undefined ||
     state.resources === undefined ||
@@ -293,6 +354,7 @@ const getRequiredAssetReferenceBuild = (
   }
   return {
     pages: state.pages,
+    projectSettings: state.projectSettings,
     props: Array.from(state.props.values()),
     styles: Array.from(state.styles.values()),
     resources: Array.from(state.resources.values()),
@@ -305,11 +367,12 @@ export const createAssetReplacementPayload = ({
   fromAsset,
   toAsset,
 }: {
-  build: Pick<CompactBuild, "pages" | "props" | "styles">;
+  build: Pick<CompactBuild, "pages" | "projectSettings" | "props" | "styles">;
   fromAsset: Asset;
   toAsset: Asset;
 }) => {
   const pages = structuredClone(build.pages);
+  const projectSettings = structuredClone(build.projectSettings);
   const props = new Map(
     build.props.map((item) => [item.id, structuredClone(item)])
   );
@@ -319,6 +382,7 @@ export const createAssetReplacementPayload = ({
 
   replaceAssetMutable({
     pages,
+    projectSettings,
     props: props.values(),
     styles: styles.values(),
     replacement: {
@@ -331,11 +395,13 @@ export const createAssetReplacementPayload = ({
   });
 
   const pagePatches = [];
-  if (build.pages.meta?.faviconAssetId !== pages.meta?.faviconAssetId) {
-    pagePatches.push({
+  const projectSettingsPatches: BuilderPatchChange["patches"] = [];
+  const previousFaviconAssetId = build.projectSettings.meta.faviconAssetId;
+  if (previousFaviconAssetId !== projectSettings.meta.faviconAssetId) {
+    projectSettingsPatches.push({
       op: "replace" as const,
       path: ["meta", "faviconAssetId"],
-      value: pages.meta?.faviconAssetId,
+      value: projectSettings.meta.faviconAssetId,
     });
   }
   for (const page of getAllPages(build.pages)) {
@@ -391,6 +457,12 @@ export const createAssetReplacementPayload = ({
   }
 
   const payload = [];
+  if (projectSettingsPatches.length > 0) {
+    payload.push({
+      namespace: "projectSettings" as const,
+      patches: projectSettingsPatches,
+    });
+  }
   if (pagePatches.length > 0) {
     payload.push({ namespace: "pages" as const, patches: pagePatches });
   }
@@ -484,6 +556,15 @@ export const addAsset = (
   });
 };
 
+const createAssetDescriptionPatch = (
+  asset: Asset,
+  description: string | null
+): BuilderPatchChange["patches"][number] => ({
+  op: asset.description === undefined ? "add" : "replace",
+  path: [asset.id, "description"],
+  value: description,
+});
+
 export const updateAsset = (
   state: Pick<BuilderState, "assets">,
   input: z.infer<typeof assetUpdateInput>
@@ -519,17 +600,52 @@ export const updateAsset = (
     input.values.description !== undefined &&
     asset.description !== input.values.description
   ) {
-    patches.push({
-      op: asset.description === undefined ? "add" : "replace",
-      path: [asset.id, "description"],
-      value: input.values.description,
-    });
+    patches.push(createAssetDescriptionPatch(asset, input.values.description));
   }
 
   return createRuntimeMutation({
-    payload: [{ namespace: "assets", patches }],
+    payload: patches.length === 0 ? [] : [{ namespace: "assets", patches }],
     result: { assetId: asset.id },
-    invalidatesNamespaces: ["assets"],
+    invalidatesNamespaces: patches.length === 0 ? [] : ["assets"],
+  });
+};
+
+export const setImageDescriptions = (
+  state: Pick<BuilderState, "assets">,
+  input: z.infer<typeof imageDescriptionsSetInput>
+) => {
+  const assets = getRequiredAssets(state);
+  const patches: BuilderPatchChange["patches"] = [];
+  const updated = [];
+
+  for (const update of input.updates) {
+    const asset = findAsset(assets.values(), update.assetId);
+    if (asset === undefined) {
+      return throwBuilderRuntimeError(
+        "NOT_FOUND",
+        `Image asset "${update.assetId}" not found`
+      );
+    }
+    if (asset.type !== "image") {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Asset "${asset.id}" is not an image`
+      );
+    }
+    const description = update.decorative === true ? "" : update.description;
+    if (asset.description !== description) {
+      patches.push(createAssetDescriptionPatch(asset, description));
+      updated.push({
+        assetId: asset.id,
+        decorative: update.decorative === true,
+      });
+    }
+  }
+
+  return createRuntimeMutation({
+    payload: patches.length === 0 ? [] : [{ namespace: "assets", patches }],
+    result: { updated },
+    invalidatesNamespaces: patches.length === 0 ? [] : ["assets"],
   });
 };
 
@@ -587,6 +703,7 @@ const countApiOnlyAssetUsage = (build: AssetReferenceBuild, assetId: string) =>
 const getAssetUsageCounts = (build: AssetReferenceBuild, assets: Asset[]) => {
   const usageMap = calculateUsagesByAssetId({
     pages: build.pages,
+    projectSettings: build.projectSettings,
     props: new Map(build.props.map((item) => [item.id, item])),
     styles: new Map(build.styles.map((item) => [getStyleDeclKey(item), item])),
     assets: new Map(assets.map((asset) => [asset.id, asset])),
@@ -605,6 +722,7 @@ const getAssetUsageCounts = (build: AssetReferenceBuild, assets: Asset[]) => {
 const serializeAssetSummary = (asset: Asset) => ({
   id: asset.id,
   name: asset.name,
+  description: asset.description,
   type: asset.type,
   size: asset.size,
   contentType: asset.format,
@@ -692,6 +810,7 @@ export const createAssetUsageList = ({
   );
   const usageMap = calculateUsagesByAssetId({
     pages: build.pages,
+    projectSettings: build.projectSettings,
     props,
     styles,
     assets: new Map(assets.map((item) => [item.id, item])),
@@ -756,7 +875,13 @@ export const createAssetDeletePayload = (
 export const listAssets = (
   state: Pick<
     BuilderState,
-    "assets" | "pages" | "props" | "styles" | "resources" | "dataSources"
+    | "assets"
+    | "pages"
+    | "projectSettings"
+    | "props"
+    | "styles"
+    | "resources"
+    | "dataSources"
   >,
   input: {
     type?: "image" | "font";
@@ -839,14 +964,26 @@ export const replaceAsset = (
       toAsset,
     }),
     result: { fromAssetId: fromAsset.id, toAssetId: toAsset.id },
-    invalidatesNamespaces: ["pages", "props", "styles", "assets"],
+    invalidatesNamespaces: [
+      "pages",
+      "projectSettings",
+      "props",
+      "styles",
+      "assets",
+    ],
   });
 };
 
 export const deleteAssets = (
   state: Pick<
     BuilderState,
-    "assets" | "pages" | "props" | "styles" | "resources" | "dataSources"
+    | "assets"
+    | "pages"
+    | "projectSettings"
+    | "props"
+    | "styles"
+    | "resources"
+    | "dataSources"
   >,
   input: z.infer<typeof assetDeleteInput>
 ) => {

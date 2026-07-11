@@ -96,6 +96,20 @@ test("detects appeared, disappeared, and changed text", () => {
   ]);
 });
 
+test("excludes ignored top-band text from observed text assertions", () => {
+  const result = analyzeTextRegions({
+    baselineRegions: [],
+    currentRegions: [
+      textBlock({ text: "Browser chrome", x: 0, y: 0, height: 10 }),
+      textBlock({ text: "Page heading", x: 0, y: 20, height: 10 }),
+    ],
+    ignoreTopPixels: 10,
+    includeObservedText: true,
+  });
+
+  expect(result.observedText).toEqual(["Page heading"]);
+});
+
 test("detects font-style geometry changes for matched text", () => {
   const baseline = createPng(120, 60, { r: 255, g: 255, b: 255 });
   const current = createPng(120, 60, { r: 255, g: 255, b: 255 });

@@ -41,6 +41,7 @@ export type PublicApiOperation<Command extends string = string> = Omit<
   requiredInputFields: readonly string[];
   inputFieldTypes: Partial<Record<string, "array">>;
   inputSchema: InputJsonSchema;
+  outputSchema?: InputJsonSchema;
   requiredOptions?: readonly string[];
   examples: readonly string[];
   localCapable: boolean;
@@ -96,6 +97,9 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
     requiredInputFields,
     inputFieldTypes,
     inputSchema,
+    ...(runtimeOperation?.outputSchema === undefined
+      ? {}
+      : { outputSchema: runtimeOperation.outputSchema }),
     requiredOptions:
       "requiredOptions" in documentation
         ? documentation.requiredOptions

@@ -11,36 +11,35 @@ import {
 
 test("exposes public runtime contracts without private metadata", () => {
   expect(publicRuntimeOperationContracts).toEqual(
-    runtimeOperationContracts.map(
-      ({
-        id,
-        command,
-        client,
-        permit,
-        kind,
-        inputSchema,
-        readNamespaces,
-        writeNamespaces,
-        invalidatesNamespaces,
-        retryOnConflict,
-        requiresAssets,
-        requiresConfirm,
-      }) => ({
-        id,
-        command,
-        client,
-        permit,
-        kind,
-        inputSchema,
-        readNamespaces,
-        writeNamespaces,
-        invalidatesNamespaces,
-        retryOnConflict,
-        requiresAssets,
-        requiresConfirm,
-      })
-    )
+    runtimeOperationContracts.map((contract) => ({
+      id: contract.id,
+      command: contract.command,
+      client: contract.client,
+      permit: contract.permit,
+      kind: contract.kind,
+      inputSchema: contract.inputSchema,
+      ...("outputSchema" in contract
+        ? { outputSchema: contract.outputSchema }
+        : {}),
+      readNamespaces: contract.readNamespaces,
+      writeNamespaces: contract.writeNamespaces,
+      invalidatesNamespaces: contract.invalidatesNamespaces,
+      retryOnConflict: contract.retryOnConflict,
+      requiresAssets: contract.requiresAssets,
+      requiresConfirm: contract.requiresConfirm,
+    }))
   );
+});
+
+test("exposes the audit output schema and stable rule ids", () => {
+  const audit = publicRuntimeOperationContracts.find(
+    (contract) => contract.id === "project.audit"
+  );
+  expect(audit?.outputSchema).toBeDefined();
+  const outputSchema = JSON.stringify(audit?.outputSchema);
+  expect(outputSchema).toContain('"missing-aria-reference"');
+  expect(outputSchema).toContain('"contractVersion"');
+  expect(outputSchema).toContain('"const":1');
 });
 
 test("exposes public operation namespaces from builder namespaces", () => {

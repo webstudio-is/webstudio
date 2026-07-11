@@ -9,6 +9,7 @@ import { FileControl } from "./file";
 import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
 import { JsonControl } from "./json";
+import { JsonCodeControl } from "./json-code";
 import { TextContent } from "./text-content";
 import { ResourceControl } from "./resource-control";
 import { TagControl } from "./tag-control";
@@ -48,6 +49,10 @@ export const renderControl = ({
 
   if (meta.control === "json") {
     return <JsonControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (meta.control === "json-code") {
+    return <JsonCodeControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   if (meta.control === "text") {

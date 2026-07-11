@@ -75,3 +75,34 @@ test("does not share mutable missing freshness objects", () => {
   const freshness = createBuilderStateFreshness({ state: {} });
   expect(freshness.pages).not.toBe(freshness.instances);
 });
+
+test("preserves namespace provenance through stale and invalidated states", () => {
+  const freshness = createBuilderStateFreshness({
+    state: { pages },
+    version: 3,
+    source: "remote",
+    loadedAt: "2026-07-10T12:00:00.000Z",
+  });
+
+  expect(freshness.pages).toEqual({
+    status: "fresh",
+    version: 3,
+    source: "remote",
+    loadedAt: "2026-07-10T12:00:00.000Z",
+  });
+  expect(markBuilderStateNamespacesStale(freshness, ["pages"]).pages).toEqual({
+    status: "stale",
+    version: 3,
+    source: "remote",
+    loadedAt: "2026-07-10T12:00:00.000Z",
+  });
+  expect(
+    markBuilderStateNamespacesInvalidated(freshness, ["pages"], "tx-1").pages
+  ).toEqual({
+    status: "invalidated",
+    version: 3,
+    source: "remote",
+    loadedAt: "2026-07-10T12:00:00.000Z",
+    invalidatedBy: "tx-1",
+  });
+});

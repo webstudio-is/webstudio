@@ -23,7 +23,7 @@ import { validateContactEmail } from "@webstudio-is/project-build/runtime/projec
 import { ImageControl } from "./image-control";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import { $permissions } from "~/shared/nano-states";
-import { $pages } from "~/shared/sync/data-stores";
+import { $projectSettings } from "~/shared/sync/data-stores";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/shared/code-editor";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -59,19 +59,21 @@ const saveSetting = <Name extends keyof ProjectMeta>(
 export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
   const { maxContactEmailsPerProject } = useStore($permissions);
   const allowContactEmail = maxContactEmailsPerProject > 0;
-  const pages = useStore($pages);
+  const projectSettings = useStore($projectSettings);
   const project = useStore($project);
   const assets = useStore($assets);
-  const [meta, setMeta] = useState(() => pages?.meta ?? defaultMetaSettings);
+  const [meta, setMeta] = useState(
+    () => projectSettings?.meta ?? defaultMetaSettings
+  );
   const siteNameId = useId();
   const contactEmailId = useId();
 
-  // Update meta when pages data loads (important for dashboard mode)
+  // Update meta when project settings load (important for dashboard mode)
   useEffect(() => {
-    if (pages?.meta) {
-      setMeta(pages.meta);
+    if (projectSettings?.meta) {
+      setMeta(projectSettings.meta);
     }
-  }, [pages?.meta]);
+  }, [projectSettings?.meta]);
 
   const contactEmailError = validateContactEmail(
     meta.contactEmail ?? "",

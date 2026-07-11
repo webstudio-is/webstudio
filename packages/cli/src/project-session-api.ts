@@ -115,7 +115,9 @@ export const executeProjectSessionApiOperation = async ({
       : operation.method === "query"
         ? await session.read(
             runtimeOperationId,
-            withProjectId(input, connection.projectId),
+            command === "audit"
+              ? input
+              : withProjectId(input, connection.projectId),
             { permit: operation.permit }
           )
         : await session.mutate(

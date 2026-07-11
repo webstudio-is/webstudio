@@ -184,3 +184,30 @@ export const replaceCanvasTextAndApplyInlineFormats = async ({
     throw error;
   }
 };
+
+export const removeCanvasInlineLink = async ({
+  page,
+  text,
+}: {
+  page: Page;
+  text: string;
+}) => {
+  const { canvas, editable } = await startCanvasTextEditingByText({
+    page,
+    currentText: text,
+  });
+
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.getByRole("button", { name: "Inline link", exact: true }).click();
+
+  const save = waitForChangeToBeSaved({ page });
+  try {
+    await canvas.locator("body").click({ position: { x: 1, y: 1 } });
+    await editable.waitFor({ state: "hidden", timeout: 1_000 });
+    await waitForCanvasText({ page, text });
+    await save;
+  } catch (error) {
+    await save.catch(() => undefined);
+    throw error;
+  }
+};

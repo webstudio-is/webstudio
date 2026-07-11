@@ -698,6 +698,8 @@ describe("api instance queries", () => {
           tag: "section",
           depth: 1,
           childCount: 1,
+          parentId: "root-1",
+          indexWithinParent: 0,
         },
       ],
     });
@@ -844,7 +846,8 @@ describe("api instance queries", () => {
         {
           id: "token-1",
           name: "Primary",
-          styles: { color: { type: "keyword", value: "red" } },
+          declarationCount: 1,
+          styles: undefined,
           usageCount: 1,
         },
       ],

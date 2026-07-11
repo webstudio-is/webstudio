@@ -4,12 +4,16 @@ import { getAllPages, getPagePath, type Pages } from "@webstudio-is/sdk";
 import { createWsAuthResources } from "@webstudio-is/wsauth";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { PublishedProjectBundle } from "@webstudio-is/protocol";
+import type { ProjectSettings } from "@webstudio-is/project-build";
 
 export const LOCAL_AUTH_FILE = ".webstudio/auth.json";
 
-export const createAuthConfigResources = (pages: Pages) =>
+export const createAuthConfigResources = (
+  pages: Pages,
+  projectSettings?: ProjectSettings
+) =>
   createWsAuthResources({
-    projectContent: pages.meta?.auth,
+    projectContent: projectSettings?.meta.auth ?? pages.meta?.auth,
     pages: getAllPages(pages)
       .filter((page) => page.meta.auth !== undefined)
       .map((page) => ({
@@ -20,7 +24,11 @@ export const createAuthConfigResources = (pages: Pages) =>
 
 export const createAuthConfigContentFromBundle = (
   data: Pick<PublishedProjectBundle, "build">
-) => createAuthConfigResources(migratePages(data.build.pages)).content;
+) =>
+  createAuthConfigResources(
+    migratePages(data.build.pages),
+    data.build.projectSettings
+  ).content;
 
 export const assertAuthConfigMatchesBundle = ({
   authFileContent,

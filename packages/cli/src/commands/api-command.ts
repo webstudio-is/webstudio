@@ -1149,6 +1149,61 @@ export const assetsCommandOptions = (yargs: CommonYargsArgv) =>
       describe: "Maximum number of assets to return",
     });
 
+export const auditCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("scopes", {
+      type: "array",
+      string: true,
+      choices: [
+        "accessibility",
+        "security",
+        "seo",
+        "assets",
+        "styles",
+        "performance",
+      ] as const,
+      describe: "Audit only the selected project-quality scopes",
+    })
+    .option("severities", {
+      type: "array",
+      string: true,
+      choices: ["error", "warning", "info"] as const,
+      describe: "Return only findings with the selected severities",
+    })
+    .option("page-id", {
+      type: "string",
+      describe: "Audit page-owned findings for one page id",
+    })
+    .option("page-path", {
+      type: "string",
+      describe: "Audit page-owned findings for one page path",
+    })
+    .option("limit", {
+      type: "number",
+      describe: "Maximum findings to return, from 1 to 200",
+    })
+    .option("cursor", {
+      type: "string",
+      describe: "Pagination cursor returned by the previous audit call",
+    })
+    .option("verbose", {
+      type: "boolean",
+      describe:
+        "Include full finding evidence, remediation, skipped checks, and manual-check workflows",
+    })
+    .example("$0 audit --json", "Run every project audit")
+    .example(
+      "$0 audit --scopes accessibility --scopes seo --page-path /pricing --json",
+      "Audit accessibility and SEO for one page"
+    );
+
+export const fontsCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("include-system", {
+    type: "boolean",
+    default: true,
+    describe: "Include built-in system font stacks",
+  });
+
 export const uploadAssetCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
     apiCommandOptions(yargs).option("assets-dir", {
@@ -1295,11 +1350,17 @@ type ApiCommandOptions = {
   filter?: string;
   withUsage?: boolean;
   includeStyles?: boolean;
+  includeSystem?: boolean;
   scopeInstance?: string;
   type?: "image" | "font" | "file";
   sort?: "name" | "usage" | "size" | "createdAt";
   cursor?: string;
   limit?: number;
+  scopes?: Array<"accessibility" | "security" | "seo" | "assets" | "styles">;
+  severities?: Array<"error" | "warning" | "info">;
+  pageId?: string;
+  pagePath?: string;
+  verbose?: boolean;
   dryRun?: boolean;
   refresh?: boolean;
 };
@@ -1730,6 +1791,65 @@ type ApiCommandHandler = (
   dependencies: ApiCommandDependencies
 ) => Promise<unknown>;
 
+const printAuditReport = (value: unknown) => {
+  if (typeof value !== "object" || value === null) {
+    console.info("Audit completed.");
+    return;
+  }
+  const result = value as {
+    summary?: {
+      total?: number;
+      selectedTotal?: number;
+      bySeverity?: Record<string, number>;
+    };
+    findings?: Array<{
+      severity?: string;
+      scope?: string;
+      ruleId?: string;
+      message?: string;
+      location?: Record<string, unknown>;
+    }>;
+    skippedChecks?: unknown[];
+    manualChecks?: unknown[];
+    skippedCheckCount?: number;
+    manualCheckCount?: number;
+    nextCursor?: string | null;
+  };
+  const severity = result.summary?.bySeverity ?? {};
+  const total = result.summary?.total ?? 0;
+  const selectedTotal = result.summary?.selectedTotal ?? total;
+  console.info(
+    `Audit: ${
+      selectedTotal === total
+        ? `${total} findings`
+        : `${selectedTotal} selected findings (${total} across all severities)`
+    } ` +
+      `(${severity.error ?? 0} errors, ${severity.warning ?? 0} warnings, ${severity.info ?? 0} info)`
+  );
+  for (const finding of result.findings ?? []) {
+    const location = Object.values(finding.location ?? {})
+      .flatMap((item) => (Array.isArray(item) ? item : [item]))
+      .filter((item) => item !== undefined)
+      .join(" ");
+    console.info(
+      `[${finding.severity?.toUpperCase() ?? "INFO"}] ${finding.scope ?? "audit"}/${finding.ruleId ?? "finding"}: ${finding.message ?? ""}${location === "" ? "" : ` (${location})`}`
+    );
+  }
+  const skippedCheckCount =
+    result.skippedCheckCount ?? result.skippedChecks?.length ?? 0;
+  const manualCheckCount =
+    result.manualCheckCount ?? result.manualChecks?.length ?? 0;
+  if (skippedCheckCount > 0) {
+    console.info(`${skippedCheckCount} checks skipped.`);
+  }
+  if (manualCheckCount > 0) {
+    console.info(`${manualCheckCount} manual checks recommended.`);
+  }
+  if (result.nextCursor != null) {
+    console.info(`More findings: rerun with --cursor '${result.nextCursor}'.`);
+  }
+};
+
 const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   whoami: async (_options, connection, dependencies) =>
     runProjectSessionCommand("whoami", {}, connection, dependencies),
@@ -1749,6 +1869,21 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  audit: async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "audit",
+      {
+        scopes: listOption(options.scopes),
+        severities: listOption(options.severities),
+        pageId: options.pageId,
+        pagePath: options.pagePath,
+        limit: options.limit,
+        cursor: options.cursor,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
   "apply-patch": async (options, connection, dependencies) => {
     const patchInput = await readJsonFile(
       dependencies,
@@ -2714,6 +2849,13 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "list-fonts": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-fonts",
+      { includeSystem: options.includeSystem },
+      connection,
+      dependencies
+    ),
   "upload-asset": async (options, connection, dependencies) => {
     const input = createLocalUploadAssetInput({
       asset: await readInputObject<UploadAssetInput>(dependencies, options),
@@ -2784,7 +2926,7 @@ export const apiCommand = async (
   const start = Date.now();
   let projectId: string | undefined;
   try {
-    if (options.json !== true) {
+    if (options.json !== true && options.command !== "audit") {
       throw new Error(`${options.command} currently requires --json.`);
     }
 
@@ -2814,16 +2956,23 @@ export const apiCommand = async (
     const session = isProjectSessionEnvelope(response)
       ? getProjectSessionMeta(response)
       : undefined;
-    printJson({
-      ok: true,
-      data: isProjectSessionEnvelope(response) ? response.result : response,
-      meta: {
-        command: options.command,
-        projectId: connection.projectId,
-        durationMs: Date.now() - start,
-        ...(session === undefined ? {} : { session }),
-      },
-    });
+    const result = isProjectSessionEnvelope(response)
+      ? response.result
+      : response;
+    if (options.command === "audit" && options.json !== true) {
+      printAuditReport(result);
+    } else {
+      printJson({
+        ok: true,
+        data: result,
+        meta: {
+          command: options.command,
+          projectId: connection.projectId,
+          durationMs: Date.now() - start,
+          ...(session === undefined ? {} : { session }),
+        },
+      });
+    }
   } catch (error) {
     const message = getCliErrorMessage(error);
     if (options.json === true) {

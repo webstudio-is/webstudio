@@ -7,7 +7,7 @@ export const meta: WsComponentMeta = {
   description: "Inserts children into the head of the document",
   contentModel: {
     category: "instance",
-    children: ["HeadLink", "HeadMeta", "HeadTitle"],
+    children: ["HeadLink", "HeadMeta", "HeadTitle", "JsonLd"],
   },
   props,
 };

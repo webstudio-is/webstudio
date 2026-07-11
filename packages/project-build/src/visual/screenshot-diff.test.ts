@@ -2,7 +2,11 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { diffPngFiles } from "./screenshot-diff";
+import {
+  createScreenshotTextAssertions,
+  createScreenshotVisualAssertions,
+  diffPngFiles,
+} from "./screenshot-diff";
 import { createPng, paintRect, writePng } from "./screenshot.test-utils";
 
 let tempDir: string;
@@ -13,6 +17,91 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
+});
+
+test("reports pass/fail expected text assertions from OCR text", () => {
+  expect(
+    createScreenshotTextAssertions(
+      {
+        status: "ok",
+        provider: "tesseract",
+        changes: [],
+        observedText: ["Pricing plans for teams", "Start free"],
+      },
+      ["pricing plans", "Contact sales"]
+    )
+  ).toEqual({
+    passed: false,
+    status: "ok",
+    found: ["Pricing plans for teams", "Start free"],
+    missing: ["Contact sales"],
+    assertions: [
+      {
+        expected: "pricing plans",
+        passed: true,
+        found: ["Pricing plans for teams"],
+      },
+      {
+        expected: "Contact sales",
+        passed: false,
+        found: [],
+      },
+    ],
+  });
+});
+
+test("reports pass/fail visual assertions from diff metrics", () => {
+  expect(
+    createScreenshotVisualAssertions(
+      {
+        mismatchPercentage: 3.5,
+        changedRegionCount: 2,
+        dimensionMismatch: false,
+        overallColorChange: {
+          delta: { r: 0, g: -10, b: 0 },
+          dominantChange: {
+            channel: "green",
+            direction: "decrease",
+            magnitude: 10,
+          },
+        },
+      },
+      {
+        maxMismatchPercentage: 2,
+        minChangedRegions: 1,
+        maxChangedRegions: 2,
+        dominantColorChange: {
+          channel: "green",
+          direction: "decrease",
+          minMagnitude: 5,
+        },
+      }
+    )
+  ).toEqual({
+    passed: false,
+    assertions: [
+      {
+        expected: "mismatchPercentage <= 2",
+        actual: 3.5,
+        passed: false,
+      },
+      {
+        expected: "changedRegionCount >= 1",
+        actual: 2,
+        passed: true,
+      },
+      {
+        expected: "changedRegionCount <= 2",
+        actual: 2,
+        passed: true,
+      },
+      {
+        expected: "dominantColorChange=green:decrease magnitude>=5",
+        actual: "green:decrease magnitude=10",
+        passed: true,
+      },
+    ],
+  });
 });
 
 test("detects pixel differences, regions, color deltas, and writes artifacts", async () => {
@@ -50,6 +139,14 @@ test("detects pixel differences, regions, color deltas, and writes artifacts", a
       }),
     }),
   ]);
+  expect(result.overallColorChange).toEqual({
+    delta: { r: -255, g: -255, b: -255 },
+    dominantChange: {
+      channel: "luminance",
+      direction: "decrease",
+      magnitude: 255,
+    },
+  });
   expect(result.summary).toContain("status: changed");
   expect(result.summary).toContain("pixel_mismatch: 6.00%");
   expect(result.summary).toContain("Region 1");
@@ -91,6 +188,8 @@ test("reports dimension mismatch for different aspect ratios", async () => {
     baselinePath,
     currentPath,
     outputDir: path.join(tempDir, "diff"),
+    expectedText: ["Pricing"],
+    expectedVisual: { maxMismatchPercentage: 0 },
   });
 
   expect(result.dimensionMismatch).toEqual({
@@ -100,7 +199,14 @@ test("reports dimension mismatch for different aspect ratios", async () => {
   expect(result.diffPath).toBeUndefined();
   expect(result.regions).toEqual([]);
   expect(result.textAnalysis.status).toBe("skipped");
+  expect(result.textAssertions).toMatchObject({
+    passed: false,
+    missing: ["Pricing"],
+  });
   expect(result.summary).toContain("status: dimension_mismatch");
+  expect(result.summary).toContain("Text Assertions:");
+  expect(result.visualAssertions).toMatchObject({ passed: false });
+  expect(result.summary).toContain("Visual Assertions:");
 });
 
 test("can ignore a normalized top band", async () => {

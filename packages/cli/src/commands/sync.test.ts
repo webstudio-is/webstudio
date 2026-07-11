@@ -11,6 +11,7 @@ import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import { resolveApiConnection } from "../api-connection";
 import { sync } from "./sync";
 import { apiCompatibilityHeaders } from "./api";
+import { materializeManagedAgents } from "../managed-agents";
 
 const originalCwd = process.cwd();
 let tempDir: string;
@@ -32,6 +33,7 @@ const dependencies = {
   resolveApiConnection,
   spinner: () => indicator,
   writeFile,
+  materializeManagedAgents,
 };
 
 type ProjectBundleFixtureOptions = Parameters<
@@ -80,7 +82,64 @@ test("writes current data version after synchronizing from the API", async () =>
     bundleVersion,
   });
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle synchronized successfully"
+    "Project bundle synchronized successfully (AGENTS.md: unchanged)"
+  );
+});
+
+test("materializes project agent instructions during sync", async () => {
+  loadProjectBundleByBuildId.mockResolvedValue(
+    createProjectBundle({
+      build: {
+        projectSettings: {
+          meta: { agentInstructions: "Use existing design tokens." },
+          compiler: {},
+        },
+      },
+    })
+  );
+
+  await sync(
+    {
+      authToken: "token-1",
+      buildId: "build-1",
+      origin: "https://example.com",
+    },
+    dependencies
+  );
+
+  expect(await readFile("AGENTS.md", "utf8")).toContain(
+    "Use existing design tokens."
+  );
+  expect(indicator.stop).toHaveBeenCalledWith(
+    "Project bundle synchronized successfully (AGENTS.md: created)"
+  );
+});
+
+test("reports a user-owned AGENTS.md conflict without overwriting it", async () => {
+  await writeFile("AGENTS.md", "# User-owned\n", "utf8");
+  loadProjectBundleByBuildId.mockResolvedValue(
+    createProjectBundle({
+      build: {
+        projectSettings: {
+          meta: { agentInstructions: "Use existing design tokens." },
+          compiler: {},
+        },
+      },
+    })
+  );
+
+  await sync(
+    {
+      authToken: "token-1",
+      buildId: "build-1",
+      origin: "https://example.com",
+    },
+    dependencies
+  );
+
+  expect(await readFile("AGENTS.md", "utf8")).toBe("# User-owned\n");
+  expect(indicator.stop).toHaveBeenCalledWith(
+    expect.stringContaining("AGENTS.md blocked by user-owned file")
   );
 });
 

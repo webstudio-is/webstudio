@@ -31,6 +31,7 @@ import {
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state/adapters";
+import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build/shared/project-settings";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "./config";
 import { getStableErrorCode } from "./error-codes";
@@ -57,6 +58,7 @@ type PublicBuildSnapshot = Omit<
   meta?: unknown;
   compiler?: unknown;
   redirects?: unknown;
+  projectSettings?: BuilderBuildDataSnapshot["projectSettings"];
   dataSources?: BuilderBuildDataSnapshot["dataSources"];
   variables?: BuilderBuildDataSnapshot["dataSources"];
 };
@@ -86,6 +88,9 @@ const toPublicApiInclude = (namespaces: readonly BuilderNamespace[]) => [
       }
       if (namespace === "pages") {
         return ["pages", "folders"];
+      }
+      if (namespace === "projectSettings") {
+        return ["projectSettings"];
       }
       return [namespace];
     })
@@ -328,15 +333,22 @@ export const createLocalProjectBundleFromSessionSnapshot = (
   if (pages === undefined) {
     throw new Error("Project session pages namespace is missing.");
   }
-  const serializedPages = serializePages(pages);
-  const homePage = getHomePage(pages);
+  const projectSettings = snapshot.state.projectSettings;
+  const persistedPages = removeLegacyProjectSettingsFromPages(
+    structuredClone(pages)
+  );
+  const serializedPages = serializePages(persistedPages);
+  const homePage = getHomePage(persistedPages);
   return {
     bundleVersion,
     origin: options.origin,
     projectDomain: "local-preview",
-    projectTitle: pages.meta?.siteName ?? "Webstudio Preview",
+    projectTitle:
+      projectSettings?.meta.siteName ??
+      persistedPages.meta?.siteName ??
+      "Webstudio Preview",
     page: homePage,
-    pages: Array.from(pages.pages.values()),
+    pages: Array.from(persistedPages.pages.values()),
     assets: Array.from(snapshot.state.assets?.values() ?? []),
     build: {
       id: snapshot.buildId,
@@ -355,6 +367,8 @@ export const createLocalProjectBundleFromSessionSnapshot = (
       instances: Array.from(snapshot.state.instances?.entries() ?? []),
       dataSources: Array.from(snapshot.state.dataSources?.entries() ?? []),
       resources: Array.from(snapshot.state.resources?.entries() ?? []),
+      marketplaceProduct: snapshot.state.marketplaceProduct,
+      projectSettings,
     },
   };
 };

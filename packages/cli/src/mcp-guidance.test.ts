@@ -34,6 +34,12 @@ test("builds vision loop with optional screenshot diff guidance", () => {
     expect.arrayContaining([expect.stringContaining("vision.install-ocr")])
   );
   expect(visionLoopWithDiff).toEqual(
+    expect.arrayContaining([expect.stringContaining("expectedText")])
+  );
+  expect(visionLoopWithDiff).toEqual(
+    expect.arrayContaining([expect.stringContaining("expectedVisual")])
+  );
+  expect(visionLoopWithDiff).toEqual(
     expect.arrayContaining([
       expect.stringContaining("list-breakpoints"),
       expect.stringContaining("viewport"),

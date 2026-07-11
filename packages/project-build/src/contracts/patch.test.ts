@@ -51,7 +51,9 @@ describe("builder patch contracts", () => {
   test("rejects raw patches that create or replace generated records", () => {
     const generatedRecordNamespaceChanges = builderNamespaces.flatMap(
       (namespace) =>
-        namespace === "pages" || namespace === "marketplaceProduct"
+        namespace === "pages" ||
+        namespace === "projectSettings" ||
+        namespace === "marketplaceProduct"
           ? []
           : [
               {
@@ -250,7 +252,9 @@ describe("builder patch contracts", () => {
   test("rejects raw patches that mutate generated record id fields", () => {
     const generatedRecordNamespaceChanges = builderNamespaces.flatMap(
       (namespace) =>
-        namespace === "pages" || namespace === "marketplaceProduct"
+        namespace === "pages" ||
+        namespace === "projectSettings" ||
+        namespace === "marketplaceProduct"
           ? []
           : [
               {

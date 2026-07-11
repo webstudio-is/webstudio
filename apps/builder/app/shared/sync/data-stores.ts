@@ -17,7 +17,10 @@ import type {
   StyleSourceSelections,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import type {
+  MarketplaceProduct,
+  ProjectSettings,
+} from "@webstudio-is/project-build";
 
 export const $project = atom<Project | undefined>();
 
@@ -58,6 +61,8 @@ export const $styles = atom<Styles>(new Map());
 
 export const $marketplaceProduct = atom<undefined | MarketplaceProduct>();
 
+export const $projectSettings = atom<undefined | ProjectSettings>();
+
 export const $publisherHost = atom<string>("wstd.work");
 
 /**
@@ -77,6 +82,7 @@ const getInitialDataStoreValues = () => ({
   styleSourceSelections: new Map(),
   styles: new Map(),
   marketplaceProduct: undefined,
+  projectSettings: undefined,
   publisherHost: "wstd.work",
 });
 
@@ -98,5 +104,6 @@ export const resetDataStores = () => {
   $styleSourceSelections.set(initial.styleSourceSelections);
   $styles.set(initial.styles);
   $marketplaceProduct.set(initial.marketplaceProduct);
+  $projectSettings.set(initial.projectSettings);
   $publisherHost.set(initial.publisherHost);
 };

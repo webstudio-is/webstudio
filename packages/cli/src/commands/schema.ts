@@ -74,6 +74,9 @@ const cliCommands = cliCommandMetadata.map((command) => ({
   permit: command.permit,
   requiredOptions: command.requiredOptions ?? ["json"],
   inputSchema: command.inputSchema,
+  ...(command.outputSchema === undefined
+    ? {}
+    : { outputSchema: command.outputSchema }),
   examples: (command.examples ?? []).map(formatApiUseCaseCommand),
 }));
 
@@ -101,6 +104,9 @@ const mcpToolSchema = listProjectSessionMcpTools(publicApiOperations, {
   name: tool.name,
   description: tool.description,
   inputSchema: tool.inputSchema,
+  ...(tool.outputSchema === undefined
+    ? {}
+    : { outputSchema: tool.outputSchema }),
   examples: tool.mcpExamples ?? [],
   annotations: tool.annotations,
 }));

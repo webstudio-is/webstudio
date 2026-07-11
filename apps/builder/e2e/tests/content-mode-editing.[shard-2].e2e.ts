@@ -16,11 +16,14 @@ import {
 } from "../flows/canvas-media";
 import {
   pasteCanvasText,
+  removeCanvasInlineLink,
   replaceCanvasText,
   replaceCanvasTextAndApplyInlineFormats,
 } from "../flows/content-editing";
 import {
+  fillSelectedNumberProperty,
   fillSelectedStringProperty,
+  waitForSelectedNumberPropertyValue,
   waitForSelectedStringPropertyValue,
 } from "../flows/props-panel";
 import {
@@ -81,6 +84,63 @@ const getElementTagWithTextCount = async ({
       instance.tag === tag &&
       instanceContainsText(instance.id)
   ).length;
+};
+
+const getElementHrefWithText = async ({
+  projectId,
+  text,
+}: {
+  projectId: string;
+  text: string;
+}) => {
+  const build = await loadDevBuild({ projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    id: string;
+    tag?: string;
+    children?: Array<{ type: string; value?: string }>;
+  }>;
+  const props = JSON.parse(build.props) as Array<{
+    instanceId: string;
+    name: string;
+    type: string;
+    value: unknown;
+  }>;
+  const instancesById = new Map(
+    instances.map((instance) => [instance.id, instance])
+  );
+
+  const instanceContainsText = (instanceId: string): boolean => {
+    const instance = instancesById.get(instanceId);
+    if (instance === undefined) {
+      return false;
+    }
+    return (
+      instance.children?.some((child) => {
+        if (child.type === "text") {
+          return child.value?.includes(text);
+        }
+        return (
+          child.type === "id" &&
+          child.value !== undefined &&
+          instanceContainsText(child.value)
+        );
+      }) ?? false
+    );
+  };
+
+  const link = instances.find(
+    (instance) => instance.tag === "a" && instanceContainsText(instance.id)
+  );
+  if (link === undefined) {
+    throw new Error(`Expected a link containing "${text}"`);
+  }
+  const href = props.find(
+    (prop) => prop.instanceId === link.id && prop.name === "href"
+  );
+  if (href?.type !== "string" || typeof href.value !== "string") {
+    throw new Error(`Expected a static href for link containing "${text}"`);
+  }
+  return href.value;
 };
 
 const undoShortcut = async ({ page }: { page: Page }) => {
@@ -207,6 +267,7 @@ test("Editor can edit text and content props but not design props", async () => 
   const editedImageSrc =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect width='120' height='80' fill='%23dff7e8'/%3E%3C/svg%3E";
   const editedImageAlt = "Edited image alt";
+  const editedImageWidth = 240;
   const editedVideoSrc = "https://example.com/edited-video.mp4";
   const editedContent = "Edited isolated content";
   const { page, close } = await newIsolatedPage();
@@ -299,6 +360,11 @@ test("Editor can edit text and content props but not design props", async () => 
       control: "text",
       value: editedImageAlt,
     });
+    await fillSelectedNumberProperty({
+      page,
+      label: "Width",
+      value: editedImageWidth,
+    });
 
     await selectCanvasVideoSource({
       page,
@@ -353,6 +419,11 @@ test("Editor can edit text and content props but not design props", async () => 
       label: "Alt",
       control: "text",
       value: editedImageAlt,
+    });
+    await waitForSelectedNumberPropertyValue({
+      page,
+      label: "Width",
+      value: editedImageWidth,
     });
 
     await selectCanvasVideoSource({
@@ -414,6 +485,7 @@ test("Editor can paste text while editing canvas content", async () => {
 test("Editor rich text formatting persists after reload", async () => {
   const fixture = getSharedContentModeProject();
   const formattedText = "Rich editor formatted copy";
+  const editedHref = "/rich-text-editor-link";
   const { page, close } = await newIsolatedPage();
 
   try {
@@ -436,7 +508,7 @@ test("Editor rich text formatting persists after reload", async () => {
         page,
         currentText: fixture.shareLinkEditableText,
         text: formattedText,
-        formats: ["Bold", "Italic"],
+        formats: ["Bold", "Italic", "Inline link"],
       });
     });
     await waitForCanvasText({ page, text: formattedText });
@@ -451,9 +523,14 @@ test("Editor rich text formatting persists after reload", async () => {
       tag: "i",
       text: formattedText,
     });
-    if (boldCount !== 1 || italicCount !== 1) {
+    const linkCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "a",
+      text: formattedText,
+    });
+    if (boldCount !== 1 || italicCount !== 1 || linkCount !== 1) {
       throw new Error(
-        `Expected rich text editor to persist one bold and one italic formatted subtree. bold=${boldCount}, italic=${italicCount}`
+        `Expected rich text editor to persist one bold, italic, and inline link subtree. bold=${boldCount}, italic=${italicCount}, link=${linkCount}`
       );
     }
 
@@ -467,6 +544,27 @@ test("Editor rich text formatting persists after reload", async () => {
     });
     await waitForCanvasText({ page, text: formattedText });
 
+    await selectCanvasTextInstanceForProps({
+      page,
+      text: formattedText,
+      propertyLabel: "Href",
+    });
+    await fillSelectedStringProperty({
+      page,
+      label: "Href",
+      control: "url",
+      value: editedHref,
+    });
+    const savedHref = await getElementHrefWithText({
+      projectId: fixture.projectId,
+      text: formattedText,
+    });
+    if (savedHref !== editedHref) {
+      throw new Error(
+        `Expected rich-text link href to be saved as "${editedHref}", received "${savedHref}"`
+      );
+    }
+
     await measure("content mode reload rich text formatting", async () => {
       await openProjectBuilder({
         page,
@@ -476,6 +574,15 @@ test("Editor rich text formatting persists after reload", async () => {
       });
     });
     await waitForCanvasText({ page, text: formattedText });
+    const reloadedHref = await getElementHrefWithText({
+      projectId: fixture.projectId,
+      text: formattedText,
+    });
+    if (reloadedHref !== editedHref) {
+      throw new Error(
+        `Expected reloaded rich-text link href to be "${editedHref}", received "${reloadedHref}"`
+      );
+    }
 
     const reloadedBoldCount = await getElementTagWithTextCount({
       projectId: fixture.projectId,
@@ -487,9 +594,50 @@ test("Editor rich text formatting persists after reload", async () => {
       tag: "i",
       text: formattedText,
     });
-    if (reloadedBoldCount !== 1 || reloadedItalicCount !== 1) {
+    const reloadedLinkCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "a",
+      text: formattedText,
+    });
+    if (
+      reloadedBoldCount !== 1 ||
+      reloadedItalicCount !== 1 ||
+      reloadedLinkCount !== 1
+    ) {
       throw new Error(
-        `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}`
+        `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}, link=${reloadedLinkCount}`
+      );
+    }
+
+    await removeCanvasInlineLink({ page, text: formattedText });
+    const removedLinkCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "a",
+      text: formattedText,
+    });
+    if (removedLinkCount !== 0) {
+      throw new Error(
+        `Expected rich-text link removal to delete the inline link subtree, received ${removedLinkCount} link instances`
+      );
+    }
+
+    await measure("content mode reload rich text link removal", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
+      });
+    });
+    await waitForCanvasText({ page, text: formattedText });
+    const reloadedRemovedLinkCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "a",
+      text: formattedText,
+    });
+    if (reloadedRemovedLinkCount !== 0) {
+      throw new Error(
+        `Expected rich-text link removal to persist after reload, received ${reloadedRemovedLinkCount} link instances`
       );
     }
   } finally {

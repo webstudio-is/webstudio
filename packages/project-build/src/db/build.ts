@@ -23,6 +23,10 @@ import {
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
 import type { MarketplaceProduct } from "../shared//marketplace";
+import {
+  projectSettings,
+  removeLegacyProjectSettingsFromPages,
+} from "../shared/project-settings";
 import { breakCyclesMutable } from "../shared/graph-utils";
 import { createPages } from "../template";
 import { serializeStyles } from "./styles";
@@ -52,13 +56,17 @@ const parseCompactInstanceData = (serialized: string) => {
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
+  const pages = migratePages(parseConfig<unknown>(build.pages));
   return {
     id: build.id,
     projectId: build.projectId,
     version: build.version,
     createdAt: build.createdAt,
     updatedAt: build.updatedAt,
-    pages: migratePages(parseConfig<unknown>(build.pages)),
+    pages: removeLegacyProjectSettingsFromPages(pages),
+    projectSettings: projectSettings.parse(
+      parseConfig<unknown>(build.projectSettings)
+    ),
     breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
     styles: parseCompactData<StyleDecl>(build.styles),
     styleSources: parseCompactData<StyleSource>(build.styleSources),
@@ -204,10 +212,12 @@ export const createBuild = async (
   context: AppContext
 ): Promise<void> => {
   const data = createPages();
+  const pages = removeLegacyProjectSettingsFromPages(data.pages);
   const newBuild = await context.postgrest.client.from("Build").insert({
     id: crypto.randomUUID(),
     projectId: props.projectId,
-    pages: JSON.stringify(serializePages(data.pages)),
+    pages: JSON.stringify(serializePages(pages)),
+    projectSettings: JSON.stringify({ meta: {}, compiler: {} }),
     breakpoints: serializeData<Breakpoint>(data.breakpoints),
     styles: serializeStyles(data.styles),
     styleSources: serializeData<StyleSource>(data.styleSources),

@@ -49,6 +49,10 @@ test("prepares preview by syncing missing data and generating the app template",
     })),
     spinner: vi.fn(),
     writeFile: vi.fn(async () => undefined),
+    materializeManagedAgents: vi.fn(async () => ({
+      path: "/project/AGENTS.md",
+      status: "unchanged" as const,
+    })),
   };
   const accessLocalDataFile = vi.fn(async () => {
     throw Object.assign(new Error("missing"), { code: "ENOENT" });

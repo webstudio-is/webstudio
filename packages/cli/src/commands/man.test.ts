@@ -202,6 +202,7 @@ test("prints api manual as json", () => {
         useCase: "Update project settings",
         commands: [
           'MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}',
+          'MCP tool: update-project-settings {"meta":{"agentInstructions":"Use existing design tokens and keep product copy concise."}}',
         ],
       }),
     ])
@@ -501,8 +502,12 @@ test("prints mcp manual as json", () => {
       expect.stringContaining("viewport"),
     ])
   );
-  expect(output.visionVerificationLoop).toContain(
-    "When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair."
+  expect(output.visionVerificationLoop).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining(
+        "Add expectedText when a specific visible phrase must be present"
+      ),
+    ])
   );
   expect(output.screenshotVerification).toContain("screenshot.diff");
   expect(output.screenshotVerification).toContain("OCR textAnalysis");
@@ -516,6 +521,16 @@ test("prints mcp manual as json", () => {
       outputDir: "visual-diff",
       threshold: 0.1,
       ignoreTopNormalizedY: 0,
+      expectedText: ["Pricing", "Start free"],
+      expectedVisual: {
+        maxMismatchPercentage: 2,
+        maxChangedRegions: 3,
+        dominantColorChange: {
+          channel: "luminance",
+          direction: "increase",
+          minMagnitude: 10,
+        },
+      },
     },
   ]);
   expect(output.mcpArgumentExamples["update-text"]).toEqual([

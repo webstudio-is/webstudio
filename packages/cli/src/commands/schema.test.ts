@@ -72,6 +72,11 @@ test("prints api command schema as json", () => {
       }),
     ])
   );
+  for (const command of output.commands) {
+    expect(command.inputSchema).toEqual(
+      expect.objectContaining({ type: "object" })
+    );
+  }
   expect(output.commands).not.toEqual(
     expect.arrayContaining([
       expect.objectContaining({ name: "apply-patch" }),

@@ -45,6 +45,7 @@ import {
   listInstances,
   deleteInstances,
   moveInstances,
+  replaceTextInput,
   serializeTextNodes,
   setInstanceLabel,
   setInstanceTag,
@@ -60,6 +61,17 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 
 const runtimeContext = { createId: () => "generated" };
+
+test("rejects conflicting page selectors for text replacement", () => {
+  expect(
+    replaceTextInput.safeParse({
+      find: "Old",
+      replace: "New",
+      pageId: "home",
+      pagePath: "/other",
+    }).success
+  ).toBe(false);
+});
 
 const createInstance = (
   id: Instance["id"],
@@ -405,6 +417,57 @@ test("creates instance clone payload with child references and props", () => {
             },
           },
         ],
+      },
+    ],
+  });
+});
+
+test("preserves asset references when cloning instance props", () => {
+  const ids = ["source-copy", "asset-prop-copy"];
+  const result = createInstanceClonePayload({
+    instances: new Map([
+      ["source", createCloneInstance("source")],
+      ["parent", createCloneInstance("parent")],
+    ]),
+    sourceInstanceId: "source",
+    targetParent: createCloneInstance("parent"),
+    insertIndex: 0,
+    props: [
+      {
+        id: "image-src",
+        instanceId: "source",
+        name: "src",
+        type: "asset",
+        value: "hero-image",
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: new Map(),
+    createId: () => ids.shift() ?? "missing",
+  });
+
+  if (result === undefined) {
+    throw new Error(
+      "Expected valid source instance to produce a clone payload"
+    );
+  }
+  const propsPayload = result.payload.find(
+    (item) => item.namespace === "props"
+  );
+  expect(propsPayload).toEqual({
+    namespace: "props",
+    patches: [
+      {
+        op: "add",
+        path: [expect.any(String)],
+        value: {
+          id: expect.any(String),
+          instanceId: "source-copy",
+          name: "src",
+          type: "asset",
+          value: "hero-image",
+        },
       },
     ],
   });
@@ -2152,6 +2215,64 @@ test("updates text editing tree and removes stale descendants", () => {
     "temporary-italic": "new-italic",
   });
   expect(data.instances.has("old-link")).toBe(false);
+});
+
+test("removes props from rich-text descendants removed by text editing", () => {
+  const data = {
+    instances: new Map<Instance["id"], Instance>([
+      [
+        "root",
+        createInstance("root", elementComponent, [
+          { type: "id", value: "link" },
+        ]),
+      ],
+      [
+        "link",
+        createInstance("link", elementComponent, [
+          { type: "text", value: "Read more" },
+        ]),
+      ],
+    ]),
+    props: new Map<Prop["id"], Prop>([
+      [
+        "link-href",
+        {
+          id: "link-href",
+          instanceId: "link",
+          name: "href",
+          type: "string",
+          value: "/read-more",
+        },
+      ],
+    ]),
+    dataSources: new Map<DataSource["id"], DataSource>(),
+    styleSources: new Map<StyleSource["id"], StyleSource>(),
+    styleSourceSelections: new Map<
+      StyleSourceSelection["instanceId"],
+      StyleSourceSelection
+    >(),
+    styles: new Map<string, StyleDecl>(),
+  };
+  const result = updateTextTree(
+    data,
+    {
+      rootInstanceId: "root",
+      instances: [
+        createInstance("root", elementComponent, [
+          { type: "text", value: "Read more" },
+        ]),
+      ],
+    },
+    runtimeContext
+  );
+
+  applyBuilderPatchPayloadMutable(
+    (namespace) => data[namespace as keyof typeof data],
+    result.payload
+  );
+
+  expect(data.instances.has("link")).toBe(false);
+  expect(data.props.has("link-href")).toBe(false);
 });
 
 test("runtime remaps text editing temporary ids before persisting", () => {

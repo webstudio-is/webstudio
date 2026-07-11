@@ -13,9 +13,13 @@ import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {
   projectSessionBusyMessage,
+  serializeProjectSessionDebug,
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
 } from "./project-session";
+import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
+import { isPlainRecord, isRecord } from "./shared/type-utils";
+import { augmentAuditWithRenderedChecks } from "./mcp-rendered-audit";
 import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
@@ -70,6 +74,7 @@ export type PublicMcpOperation<Command extends string = string> = {
   permit: PublicMcpOperationPermit;
   description: string;
   inputSchema: InputJsonSchema;
+  outputSchema?: InputJsonSchema;
   requiredOptions?: readonly string[];
   examples?: readonly string[];
   localCapable: boolean;
@@ -114,6 +119,8 @@ export type ProjectSessionScreenshotInput = {
     height: number;
   };
   fullPage?: boolean;
+  includeImageMetrics?: boolean;
+  includeResourceMetrics?: boolean;
   browser: ScreenshotBrowser;
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
@@ -133,6 +140,32 @@ export type ProjectSessionScreenshotResult = {
   fullPage: boolean;
   elapsedMs: number;
   warnings: readonly string[];
+  layout?: {
+    viewportWidth: number;
+    viewportHeight: number;
+    contentWidth: number;
+    contentHeight: number;
+    horizontalOverflow: boolean;
+    images?: Array<{
+      instanceId?: string;
+      loading: string;
+      complete: boolean;
+      naturalWidth: number;
+      naturalHeight: number;
+      renderedWidth: number;
+      renderedHeight: number;
+      top: number;
+    }>;
+    resources?: Array<{
+      pathname: string;
+      initiatorType: string;
+      transferSize: number;
+      encodedBodySize: number;
+      decodedBodySize: number;
+      duration: number;
+      renderBlockingStatus?: string;
+    }>;
+  };
 };
 
 type McpToolProgress = {
@@ -150,6 +183,8 @@ export type ProjectSessionScreenshotDiffInput = {
   outputDir: string;
   threshold?: number;
   ignoreTopNormalizedY?: number;
+  expectedText?: readonly string[];
+  expectedVisual?: ScreenshotVisualExpectation;
 };
 
 type DiffScreenshots = (
@@ -208,12 +243,6 @@ export type ProjectSessionMcpGuidance = {
   }) => readonly string[];
   getVisionWorkflowSummary: (options: { includeDiff: boolean }) => string;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  isRecord(value) && Array.isArray(value) === false;
 
 const isScreenshotBrowser = (value: unknown): value is ScreenshotBrowser =>
   typeof value === "string" &&
@@ -535,27 +564,58 @@ const parseJsonStringForSchema = (
   return value;
 };
 
+const resolveDiscriminatedInputSchema = (
+  schema: InputJsonSchema | undefined,
+  value: unknown
+) => {
+  if (schema === undefined || isPlainRecord(value) === false) {
+    return schema;
+  }
+  const branches = [...(schema.oneOf ?? []), ...(schema.anyOf ?? [])];
+  for (const branch of branches) {
+    const branchSchema = toInputJsonSchemaObject(branch);
+    const properties = getInputJsonSchemaProperties(branchSchema);
+    const discriminatorEntries = Object.entries(properties ?? {}).filter(
+      ([, propertySchema]) => {
+        const property = toInputJsonSchemaObject(propertySchema);
+        return property !== undefined && "const" in property;
+      }
+    );
+    if (
+      discriminatorEntries.length > 0 &&
+      discriminatorEntries.every(([field, propertySchema]) => {
+        const property = toInputJsonSchemaObject(propertySchema);
+        return property?.const === value[field];
+      })
+    ) {
+      return branchSchema;
+    }
+  }
+  return schema;
+};
+
 const parseStringifiedJsonInputFields = (
   input: unknown,
   schema: InputJsonSchema | undefined
 ): unknown => {
   const parsedInput = parseJsonStringForSchema(input, schema);
+  const resolvedSchema = resolveDiscriminatedInputSchema(schema, parsedInput);
   if (Array.isArray(parsedInput)) {
-    const prefixItems = Array.isArray(schema?.prefixItems)
-      ? schema.prefixItems
+    const prefixItems = Array.isArray(resolvedSchema?.prefixItems)
+      ? resolvedSchema.prefixItems
       : undefined;
     return parsedInput.map((item, index) =>
       parseStringifiedJsonInputFields(
         item,
-        toInputJsonSchemaObject(prefixItems?.[index] ?? schema?.items)
+        toInputJsonSchemaObject(prefixItems?.[index] ?? resolvedSchema?.items)
       )
     );
   }
   if (isPlainRecord(parsedInput) === false) {
     return parsedInput;
   }
-  const properties = getInputJsonSchemaProperties(schema);
-  const additionalProperties = schema?.additionalProperties;
+  const properties = getInputJsonSchemaProperties(resolvedSchema);
+  const additionalProperties = resolvedSchema?.additionalProperties;
   if (properties === undefined && additionalProperties === undefined) {
     return parsedInput;
   }
@@ -755,6 +815,18 @@ const screenshotInputSchema = {
       description:
         "Capture the full page height after layout instead of only the viewport. Use this for long pages and design-system audits.",
     },
+    includeImageMetrics: {
+      type: "boolean",
+      default: false,
+      description:
+        "Include per-image loading state and natural/rendered dimensions. Rendered audit enables this automatically; omit for compact ordinary screenshots.",
+    },
+    includeResourceMetrics: {
+      type: "boolean",
+      default: false,
+      description:
+        "Include sanitized Resource Timing transfer and render-blocking metadata. Rendered audit enables this automatically; omit for compact ordinary screenshots.",
+    },
     browser: {
       type: "string",
       enum: screenshotBrowserChoices,
@@ -809,6 +881,40 @@ const screenshotInputSchema = {
   required: ["viewport"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const statusInputSchema = {
+  ...emptyInputSchema,
+  properties: {
+    verbose: {
+      type: "boolean",
+      description:
+        "Include full namespace arrays, freshness, compatibility details, and diagnostics. Omit for the compact default response.",
+    },
+  },
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const renderedAuditInputProperty = {
+  type: "boolean",
+  description:
+    "Run a rendered responsive pass through this long-lived MCP session. Cannot be combined with cursor pagination.",
+} as const;
+
+const getMcpOperationInputSchema = (
+  operation: PublicMcpOperation,
+  options: { includeRenderedAudit: boolean }
+) => {
+  const schema = getOperationInputSchema(operation);
+  if (operation.command !== "audit" || options.includeRenderedAudit === false) {
+    return schema;
+  }
+  return {
+    ...schema,
+    properties: {
+      ...schema.properties,
+      rendered: renderedAuditInputProperty,
+    },
+  } satisfies InputJsonSchema;
+};
+
 const screenshotDiffInputSchema = {
   ...emptyInputSchema,
   description:
@@ -837,6 +943,57 @@ const screenshotDiffInputSchema = {
       default: 0,
       description:
         "Ignore the top fraction of the image, useful for browser chrome or status bars.",
+    },
+    expectedText: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "Text that OCR must find in the current screenshot. Returns pass/fail assertions plus found and missing text. Requires Tesseract OCR.",
+    },
+    expectedVisual: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        maxMismatchPercentage: {
+          type: "number",
+          minimum: 0,
+          maximum: 100,
+          description: "Fail when changed pixels exceed this percentage.",
+        },
+        minChangedRegions: {
+          type: "integer",
+          minimum: 0,
+          description: "Fail when fewer changed regions are detected.",
+        },
+        maxChangedRegions: {
+          type: "integer",
+          minimum: 0,
+          description: "Fail when more changed regions are detected.",
+        },
+        dominantColorChange: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            channel: {
+              type: "string",
+              enum: ["red", "green", "blue", "luminance"],
+            },
+            direction: {
+              type: "string",
+              enum: ["increase", "decrease"],
+            },
+            minMagnitude: {
+              type: "number",
+              minimum: 0,
+            },
+          },
+          required: ["channel", "direction"],
+          description:
+            "Expected overall dominant color or brightness direction across changed pixels.",
+        },
+      },
+      description:
+        "Quantitative visual assertions derived from pixel-diff evidence.",
     },
   },
   required: ["baselinePath", "currentPath"],
@@ -911,6 +1068,7 @@ export type ProjectSessionMcpTool = {
   name: string;
   description: string;
   inputSchema: ProjectSessionMcpInputSchema;
+  outputSchema?: InputJsonSchema;
   mcpExamples?: readonly unknown[];
   annotations: {
     command: string;
@@ -997,6 +1155,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "preview.start": [{ host: "127.0.0.1", port: 5173, source: "session" }],
   "preview.status": [{}],
   "preview.stop": [{}],
+  status: [{}, { verbose: true }],
   "list-pages": [{ includeFolders: true }],
   "get-page-by-path": [{ path: "/pricing" }],
   "list-instances": [{ pagePath: "/", maxDepth: 3 }],
@@ -1005,6 +1164,16 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       instanceId: "instance-id",
       include: ["props", "styles", "children"],
     },
+  ],
+  "search-project": [
+    { query: "pricing" },
+    { query: "api.example.com", scopes: ["resources"] },
+  ],
+  audit: [
+    {},
+    { scopes: ["accessibility", "seo"] },
+    { pagePath: "/pricing", severities: ["error", "warning"] },
+    { scopes: ["accessibility"], verbose: true },
   ],
   "insert-component": [
     {
@@ -1046,6 +1215,24 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       childIndex: 0,
       text: "user.name",
       mode: "expression",
+    },
+  ],
+  "replace-text": [
+    {
+      find: "Start free",
+      replace: "Get started",
+      match: "exact",
+      pagePath: "/pricing",
+      limit: 20,
+    },
+  ],
+  "replace-prop-text": [
+    {
+      find: "old.example.com",
+      replace: "www.example.com",
+      match: "substring",
+      names: ["href", "code"],
+      limit: 20,
     },
   ],
   "update-page": [
@@ -1137,6 +1324,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
         url: "https://api.example.com/posts",
         searchParams: [
           { name: "tag", value: "filters.tag" },
+          { name: "source", value: { type: "literal", value: "website" } },
           { name: "page", value: "String(filters.page ?? 1)" },
         ],
         headers: [{ name: "Authorization", value: '"Bearer " + auth.token' }],
@@ -1150,7 +1338,12 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
         control: "graphql",
         method: "post",
         url: "https://api.example.com/graphql",
-        headers: [{ name: "Content-Type", value: '"application/json"' }],
+        headers: [
+          {
+            name: "Content-Type",
+            value: { type: "literal", value: "application/json" },
+          },
+        ],
         body: '{ query: "query Post($slug: String!) { post(slug: $slug) { title } }", variables: { slug: system.params.slug } }',
       },
       scopeInstanceId: "body-id",
@@ -1172,6 +1365,31 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       resourceId: "resource-id",
       values: { url: "https://api.example.com/posts" },
+    },
+  ],
+  "update-asset": [
+    {
+      assetId: "asset-id",
+      values: { description: "Team collaborating around a whiteboard" },
+    },
+  ],
+  "set-image-descriptions": [
+    {
+      updates: [
+        {
+          assetId: "hero-asset-id",
+          description: "Team collaborating around a whiteboard",
+        },
+        { assetId: "background-texture-id", decorative: true },
+      ],
+    },
+  ],
+  "replace-resource-text": [
+    {
+      find: "api.old.example.com",
+      replace: "api.example.com",
+      fields: ["url"],
+      limit: 20,
     },
   ],
   "update-styles": [
@@ -1243,6 +1461,16 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       outputDir: "visual-diff",
       threshold: 0.1,
       ignoreTopNormalizedY: 0,
+      expectedText: ["Pricing", "Start free"],
+      expectedVisual: {
+        maxMismatchPercentage: 2,
+        maxChangedRegions: 3,
+        dominantColorChange: {
+          channel: "luminance",
+          direction: "increase",
+          minMagnitude: 10,
+        },
+      },
     },
   ],
   "vision.install-ocr": [{ confirm: true }],
@@ -1592,8 +1820,9 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   }),
   createProjectSessionMcpTool({
     name: "status",
-    description: "Read the current local ProjectSession status and freshness.",
-    inputSchema: emptyInputSchema,
+    description:
+      "Read the current local ProjectSession status. Pass verbose true only when debugging namespace, compatibility, freshness, or diagnostic details.",
+    inputSchema: statusInputSchema,
     annotations: {
       command: "status",
       operationId: "project-session.status",
@@ -1657,7 +1886,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
 const screenshotTool = createProjectSessionMcpTool({
   name: "screenshot",
   description:
-    "Capture a PNG screenshot so a vision-capable AI can inspect what was actually built, compare it with the intent, and iterate.",
+    "Capture a PNG screenshot plus rendered viewport/content dimensions and horizontal-overflow evidence so an AI can inspect what was actually built, compare it with the intent, and iterate.",
   inputSchema: screenshotInputSchema,
   mcpExamples: getMcpExamples("screenshot"),
   annotations: {
@@ -1798,7 +2027,9 @@ type ProjectSessionMcpStructuredContent = {
   ok: true;
   data: unknown;
   meta: {
-    session?: ReturnType<typeof serializeProjectSessionMeta>;
+    session?:
+      | ReturnType<typeof serializeProjectSessionMeta>
+      | ReturnType<typeof serializeProjectSessionDebug>;
   };
 };
 
@@ -1822,7 +2053,7 @@ export type ProjectSessionMcpResource = {
   uri: string;
   name: string;
   description: string;
-  mimeType: "application/json";
+  mimeType: "application/json" | "text/markdown";
 };
 
 type SdkTool = {
@@ -1840,6 +2071,17 @@ type SdkTool = {
 };
 
 export const hiddenMcpOperationCommands = new Set<string>();
+
+const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
+  type: "object",
+  properties: {
+    ok: { type: "boolean", const: true },
+    data: dataSchema,
+    meta: { type: "object", additionalProperties: true },
+  },
+  required: ["ok", "data", "meta"],
+  additionalProperties: false,
+});
 
 export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
@@ -1865,7 +2107,14 @@ export const listProjectSessionMcpTools = (
         inputSchema:
           operation.command === "insert-fragment"
             ? insertFragmentMcpInputSchema
-            : getOperationInputSchema(operation),
+            : getMcpOperationInputSchema(operation, {
+                includeRenderedAudit:
+                  options.includeScreenshot === true &&
+                  options.includePreview === true,
+              }),
+        ...(operation.outputSchema === undefined
+          ? {}
+          : { outputSchema: getMcpOutputSchema(operation.outputSchema) }),
         mcpExamples: getMcpExamples(operation.command),
         annotations: {
           command: operation.command,
@@ -2015,6 +2264,8 @@ const capabilityAreas = [
       "delete-instance",
       "list-texts",
       "update-text",
+      "replace-text",
+      "replace-prop-text",
       "update-props",
       "delete-props",
       "bind-props",
@@ -2056,16 +2307,20 @@ const capabilityAreas = [
       "list-resources",
       "create-resource",
       "update-resource",
+      "replace-resource-text",
       "delete-resource",
     ],
   },
   {
     area: "assets",
-    goal: "Upload, replace, delete, list, and find usage of assets.",
+    goal: "Manage uploaded and system fonts, plus upload, replace, delete, list, and find usage of assets.",
     tools: [
       "list-assets",
+      "list-fonts",
       "upload-asset",
       "upload-assets",
+      "update-asset",
+      "set-image-descriptions",
       "find-asset-usage",
       "replace-asset",
       "delete-asset",
@@ -3672,6 +3927,10 @@ const getComponentDetails = (component: string) => {
   const meta = componentMetas.get(component);
   const stateUsage = getComponentStateUsage(meta?.states);
   const animationUsage = getAnimationComponentGuidance(component);
+  const jsonLdUsage =
+    component === "JsonLd"
+      ? 'Prefer placing JsonLd inside HeadSlot. Insert it with insert-component using the HeadSlot instance as parentInstanceId and component "JsonLd". Set its code prop with update-props using type "string" and a compact JSON object or array string. Fixed values with structurally invalid JSON-LD are rejected. Run audit with the seo scope after editing to find unknown, superseded, unsupported, or incompatible Schema.org terms; vocabulary findings are warnings because custom vocabularies remain valid.'
+      : undefined;
   if (entry === undefined || meta === undefined) {
     return {
       found: false,
@@ -3690,6 +3949,7 @@ const getComponentDetails = (component: string) => {
     states: meta.states ?? [],
     stateUsage,
     animationUsage,
+    jsonLdUsage,
     indexWithinAncestor: meta.indexWithinAncestor,
     usage: [
       entry.standaloneInsertable
@@ -3697,6 +3957,7 @@ const getComponentDetails = (component: string) => {
         : "Do not insert this component standalone. It is a child/part component and must be created by inserting a containing root/template component.",
       stateUsage,
       animationUsage,
+      jsonLdUsage,
     ]
       .filter(Boolean)
       .join(" "),
@@ -3746,6 +4007,8 @@ const getMetaIndex = (
         'Use components.list({"source":"all"}) for shadcn-compatible registry items, templates.list({}) for templates, components.summary for a compact catalog, components.coverage-plan for design-system/all-component tasks, components.coverage-insert-next({"pagePath":"/design-system","parentInstanceId":"root-id"}) for one checkpoint-safe coverage insertion, components.coverage-status({"pagePath":"/design-system"}) to verify progress, components.search({"brief":"radix select"}) to search, and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) or templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for one item. Do not dump or parse webstudio://project/components unless those focused tools are insufficient.',
       guide:
         'Use meta.guide({"brief":"Create a design system page using every component"}) for a goal-specific workflow.',
+      accessibility:
+        "For an accessibility review, read webstudio://project/accessibility-review, run audit with scopes [accessibility], then verify changed routes with preview and screenshots.",
       workflow:
         'Use workflow.next({"goal":"design-system-page"}) for one bounded phase when delegated/non-streaming agents must return progress instead of silently running a broad task.',
       details:
@@ -3776,7 +4039,19 @@ const getMetaGuide = (
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
 ) => {
-  const matches = getMatchingTools(brief, tools).slice(0, 12);
+  const isJsonLdGoal = /json\s*-?\s*ld|structured\s+data/i.test(brief);
+  const matches = isJsonLdGoal
+    ? getExactTools(
+        [
+          "components.get",
+          "list-instances",
+          "insert-component",
+          "update-props",
+          "audit",
+        ],
+        tools
+      )
+    : getMatchingTools(brief, tools).slice(0, 12);
   const canVerifyVisually =
     tools.some((tool) => tool.name === "preview.start") &&
     tools.some((tool) => tool.name === "screenshot");
@@ -3788,6 +4063,14 @@ const getMetaGuide = (
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: [
+      ...(isJsonLdGoal
+        ? [
+            'Call components.get with {"component":"JsonLd"}; do not use update-page custom metadata for JSON-LD.',
+            "Find the page HeadSlot instance with list-instances.",
+            'Insert JsonLd under HeadSlot with insert-component, then set code with update-props using type "string" and a compact JSON object or array string.',
+            'Run audit with {"scopes":["seo"],"pagePath":"<path>"} and fix any JSON-LD finding.',
+          ]
+        : []),
       "Use the fewest discovery calls needed for the immediate action.",
       "Call permissions or status only when the task depends on capabilities or local session freshness.",
       matches.some((tool) => tool.annotations.localCapable)
@@ -3891,7 +4174,11 @@ const designSystemWorkflowPhases: Record<
       "Use ws.element tags or components confirmed by components.get; do not use deprecated $.Box, $.Heading, $.Paragraph, or $.Button.",
       "Return immediately after one dry-run result.",
     ],
-    expectedReturn: ["dry-run diagnostics", "whether the JSX is valid"],
+    expectedReturn: [
+      "dry-run diagnostics",
+      "computed transaction",
+      "whether the JSX is valid",
+    ],
     nextPhase: "commit-section",
   },
   "commit-section": {
@@ -4054,6 +4341,9 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
   description: tool.description,
   inputSchema: tool.inputSchema,
+  ...(tool.outputSchema === undefined
+    ? {}
+    : { outputSchema: tool.outputSchema }),
   annotations: {
     readOnlyHint: isReadOnlyTool(tool),
     destructiveHint: isDestructiveTool(tool),
@@ -4107,16 +4397,27 @@ export const listProjectSessionMcpResources =
         "Concise model-facing guide for discovering and choosing Webstudio MCP tools.",
       mimeType: "application/json",
     },
+    {
+      uri: "webstudio://project/accessibility-review",
+      name: "Webstudio accessibility review",
+      description:
+        "Model-facing workflow for evidence-based accessibility reviews using Webstudio MCP tools and screenshots.",
+      mimeType: "text/markdown",
+    },
   ];
 
 const toCallResult = (
-  envelope: Parameters<typeof serializeProjectSessionMeta>[0]
+  envelope: Parameters<typeof serializeProjectSessionMeta>[0],
+  options: { verboseSession?: boolean } = {}
 ): ProjectSessionMcpToolResult => {
   const structuredContent = {
     ok: true as const,
     data: envelope.result,
     meta: {
-      session: serializeProjectSessionMeta(envelope),
+      session:
+        options.verboseSession === true
+          ? serializeProjectSessionDebug(envelope)
+          : serializeProjectSessionMeta(envelope),
     },
   };
   return {
@@ -4277,6 +4578,8 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     source,
     viewport: { width, height },
     fullPage: input.fullPage === true,
+    includeImageMetrics: input.includeImageMetrics === true,
+    includeResourceMetrics: input.includeResourceMetrics === true,
     browser,
     browserPath:
       typeof input.browserPath === "string" ? input.browserPath : undefined,
@@ -4285,6 +4588,68 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     waitForTimeout,
     timeout,
   };
+};
+
+const isValidScreenshotDiffVisualExpectation = (
+  value: unknown
+): value is ScreenshotVisualExpectation => {
+  if (isRecord(value) === false || Object.keys(value).length === 0) {
+    return false;
+  }
+  const numericFieldValid = (
+    key: "maxMismatchPercentage" | "minChangedRegions" | "maxChangedRegions"
+  ) => {
+    const field = value[key];
+    if (field === undefined) {
+      return true;
+    }
+    if (typeof field !== "number" || Number.isFinite(field) === false) {
+      return false;
+    }
+    if (key === "maxMismatchPercentage") {
+      return field >= 0 && field <= 100;
+    }
+    return Number.isInteger(field) && field >= 0;
+  };
+  if (
+    numericFieldValid("maxMismatchPercentage") === false ||
+    numericFieldValid("minChangedRegions") === false ||
+    numericFieldValid("maxChangedRegions") === false
+  ) {
+    return false;
+  }
+  if (
+    typeof value.minChangedRegions === "number" &&
+    typeof value.maxChangedRegions === "number" &&
+    value.minChangedRegions > value.maxChangedRegions
+  ) {
+    return false;
+  }
+  const dominantColorChange = value.dominantColorChange;
+  if (dominantColorChange !== undefined) {
+    if (
+      isRecord(dominantColorChange) === false ||
+      (dominantColorChange.channel !== "red" &&
+        dominantColorChange.channel !== "green" &&
+        dominantColorChange.channel !== "blue" &&
+        dominantColorChange.channel !== "luminance") ||
+      (dominantColorChange.direction !== "increase" &&
+        dominantColorChange.direction !== "decrease") ||
+      (dominantColorChange.minMagnitude !== undefined &&
+        (typeof dominantColorChange.minMagnitude !== "number" ||
+          Number.isFinite(dominantColorChange.minMagnitude) === false ||
+          dominantColorChange.minMagnitude < 0))
+    ) {
+      return false;
+    }
+  }
+  return Object.keys(value).every(
+    (key) =>
+      key === "maxMismatchPercentage" ||
+      key === "minChangedRegions" ||
+      key === "maxChangedRegions" ||
+      key === "dominantColorChange"
+  );
 };
 
 const getScreenshotDiffInput = (
@@ -4326,6 +4691,28 @@ const getScreenshotDiffInput = (
       "screenshot.diff ignoreTopNormalizedY must be between 0 and 1."
     );
   }
+  const expectedText = input.expectedText;
+  if (
+    expectedText !== undefined &&
+    (Array.isArray(expectedText) === false ||
+      expectedText.length === 0 ||
+      expectedText.some(
+        (value) => typeof value !== "string" || value.trim().length === 0
+      ))
+  ) {
+    throw new Error(
+      "screenshot.diff expectedText must be a non-empty array of non-empty strings."
+    );
+  }
+  const expectedVisual = input.expectedVisual;
+  if (
+    expectedVisual !== undefined &&
+    isValidScreenshotDiffVisualExpectation(expectedVisual) === false
+  ) {
+    throw new Error(
+      "screenshot.diff expectedVisual must include valid maxMismatchPercentage (0-100), minChangedRegions, or maxChangedRegions values."
+    );
+  }
   return {
     baselinePath,
     currentPath,
@@ -4335,6 +4722,8 @@ const getScreenshotDiffInput = (
         : path.dirname(currentPath),
     threshold,
     ignoreTopNormalizedY,
+    expectedText,
+    expectedVisual,
   };
 };
 
@@ -4446,6 +4835,16 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
     session ??= createProjectSession();
     return session;
   };
+  const executeRead = async (command: string, input: unknown) => {
+    if (operationByCommand.has(command as Command) === false) {
+      throw new Error(`Rendered audit requires the ${command} operation.`);
+    }
+    return await executeOperation({
+      command: command as Command,
+      input,
+      dryRun: false,
+    });
+  };
   return {
     listTools,
     listResources: listProjectSessionMcpResources,
@@ -4501,6 +4900,17 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
               uri,
               mimeType: "application/json",
               text: JSON.stringify(getMetaIndex(listTools(), guidance)),
+            },
+          ],
+        };
+      }
+      if (uri === "webstudio://project/accessibility-review") {
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "text/markdown",
+              text: readProjectBuildDoc("accessibility-review"),
             },
           ],
         };
@@ -4642,7 +5052,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (name === "status") {
         const session = getSession();
-        return toCallResult(await session.initialize());
+        return toCallResult(await session.initialize(), {
+          verboseSession: isRecord(input) && input.verbose === true,
+        });
       }
       if (name === "refresh") {
         const session = getSession();
@@ -4701,13 +5113,56 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (operation === undefined) {
         throw new Error(`Unknown MCP tool "${name}".`);
       }
-      const operationInput = getNormalizedOperationInput(operation, input);
+      const isAuditInput = name === "audit" && isRecord(input);
+      if (
+        isAuditInput &&
+        input.rendered !== undefined &&
+        typeof input.rendered !== "boolean"
+      ) {
+        throw new Error("audit input.rendered must be a boolean.");
+      }
+      const isRenderedAudit = isAuditInput && input.rendered === true;
+      if (
+        isRenderedAudit &&
+        (startPreview === undefined || captureScreenshot === undefined)
+      ) {
+        throw new Error(
+          "Rendered audit is unavailable because this MCP host does not provide preview and screenshot capabilities."
+        );
+      }
+      if (isRenderedAudit && typeof input.cursor === "string") {
+        throw new Error(
+          "Rendered audit cannot be combined with cursor pagination. Run the rendered pass once without cursor."
+        );
+      }
+      const operationInput = getNormalizedOperationInput(
+        operation,
+        isAuditInput
+          ? Object.fromEntries(
+              Object.entries(input).filter(([key]) => key !== "rendered")
+            )
+          : input
+      );
       const envelope = await executeOperation({
         command: name as Command,
         input: operationInput,
         dryRun,
       });
-      return toCallResult(envelope);
+      return toCallResult(
+        name === "audit"
+          ? await augmentAuditWithRenderedChecks({
+              envelope,
+              input:
+                isRenderedAudit && isRecord(operationInput)
+                  ? { ...operationInput, rendered: true }
+                  : operationInput,
+              executeRead,
+              startPreview,
+              captureScreenshot,
+              reportProgress: reportToolProgress,
+            })
+          : envelope
+      );
     },
   };
 };

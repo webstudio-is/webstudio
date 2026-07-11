@@ -19,6 +19,7 @@ import { HandledCliError } from "../errors";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { downloadAssetFiles } from "../asset-files";
 import { resolveApiConnection } from "../api-connection";
+import { materializeManagedAgents } from "../managed-agents";
 
 export type SyncDependencies = {
   createFileIfNotExists: typeof createFileIfNotExists;
@@ -30,6 +31,7 @@ export type SyncDependencies = {
   resolveApiConnection: typeof resolveApiConnection;
   spinner: typeof spinner;
   writeFile: typeof writeFile;
+  materializeManagedAgents: typeof materializeManagedAgents;
 };
 
 export const defaultSyncDependencies: SyncDependencies = {
@@ -42,6 +44,7 @@ export const defaultSyncDependencies: SyncDependencies = {
   resolveApiConnection,
   spinner,
   writeFile,
+  materializeManagedAgents,
 };
 
 export const syncOptions = (yargs: CommonYargsArgv) =>
@@ -189,5 +192,16 @@ export const sync = async (
     "utf8"
   );
 
-  syncing.stop("Project bundle synchronized successfully");
+  const agents = await dependencies.materializeManagedAgents({
+    rootDir: cwd(),
+    instructions:
+      project.build.projectSettings?.meta.agentInstructions ??
+      project.build.pages.meta?.agentInstructions,
+  });
+
+  syncing.stop(
+    agents.status === "blocked-by-user-file"
+      ? `Project bundle synchronized; AGENTS.md blocked by user-owned file at ${agents.path}`
+      : `Project bundle synchronized successfully (AGENTS.md: ${agents.status})`
+  );
 };

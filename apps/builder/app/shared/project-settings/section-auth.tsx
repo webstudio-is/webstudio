@@ -28,7 +28,7 @@ import {
 } from "@webstudio-is/wsauth";
 import { validateBasicAuthCredentials } from "@webstudio-is/project-build/runtime/auth";
 import { $permissions } from "~/shared/nano-states";
-import { $pages } from "~/shared/sync/data-stores";
+import { $pages, $projectSettings } from "~/shared/sync/data-stores";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
@@ -50,9 +50,10 @@ const saveAuthRoutes = (authRoutes: WsAuthRoute[]) => {
 export const SectionAuth = () => {
   const { allowAuth } = useStore($permissions);
   const pages = useStore($pages);
+  const projectSettings = useStore($projectSettings);
   const routeRef = useRef<HTMLInputElement>(null);
   const [authRoutes, setAuthRoutes] = useState(() => {
-    return parseProjectAuthRoutes($pages.get()?.meta?.auth).routes;
+    return parseProjectAuthRoutes($projectSettings.get()?.meta.auth).routes;
   });
   const [route, setRoute] = useState("");
   const [login, setLogin] = useState("");
@@ -62,7 +63,7 @@ export const SectionAuth = () => {
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const authContent = pages?.meta?.auth;
+  const authContent = projectSettings?.meta.auth;
   const parseResult = useMemo(() => {
     return parseProjectAuthRoutes(authContent);
   }, [authContent]);

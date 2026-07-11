@@ -9,6 +9,7 @@ import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   selectCanvasImage,
   waitForCanvasImage,
+  waitForCanvasImageCount,
   waitForCanvasImageSourceName,
   waitForCanvasVideoSource,
 } from "../flows/canvas-media";
@@ -17,14 +18,19 @@ import {
   waitForCanvasTextStyleCount,
 } from "../flows/canvas-style";
 import { chooseSelectedAssetProperty } from "../flows/props-panel";
-import { waitForSyncStatus } from "../flows/sync-status";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncStatus,
+} from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import {
   getSharedContentModeProject,
   setupSharedContentModeProject,
+  createContentModeProject,
 } from "../fixtures/content-mode-suite";
 import { newIsolatedPage, test } from "../harness";
 import { measure } from "../perf";
+import { loadDevBuild } from "../db";
 
 test.beforeAll(async () => {
   await setupSharedContentModeProject();
@@ -188,6 +194,13 @@ test("Editor can upload, replace, and delete asset in content mode", async () =>
     let replacementAssetTitle = "";
     await measure("content mode replace asset", async () => {
       await openAssetDetails({ page, filename: uploadedAssetTitle });
+      const assetId = await page.locator("#asset-manager-id").inputValue();
+      if (assetId.length === 0) {
+        throw new Error(
+          "Expected Asset details to expose the uploaded asset id"
+        );
+      }
+      await page.getByText("0 uses", { exact: true }).waitFor();
       replacementAssetTitle = await replaceSelectedAsset({
         page,
         filename: replacementFilename,
@@ -311,6 +324,112 @@ test("Editor can replace image source with asset in content mode", async () => {
     await openAssetsPanel({ page });
     await page.getByTitle(replacementAssetTitle).waitFor();
     await waitForSyncStatus({ page, status: "idle" });
+  } finally {
+    await close();
+  }
+});
+
+test("Builder copy/paste preserves image asset references after reload", async () => {
+  const fixture = await createContentModeProject({
+    email: "asset-copy-e2e@webstudio.test",
+    title: "Asset Copy E2E",
+    assetNamePrefix: "asset-copy-",
+    editorToken: "asset-copy-e2e-editor-token",
+    builderToken: "asset-copy-e2e-builder-token",
+  });
+  const { page, close } = await newIsolatedPage();
+
+  const getImageAssetReferenceCount = async () => {
+    const build = await loadDevBuild({ projectId: fixture.projectId });
+    const props = JSON.parse(build.props) as Array<{
+      name: string;
+      type: string;
+      value: string;
+    }>;
+    const references = props.filter(
+      (prop) =>
+        prop.name === "src" &&
+        prop.type === "asset" &&
+        prop.value === fixture.assetTemplateImageAssetId
+    );
+    return references.length;
+  };
+
+  try {
+    await measure("asset copy open builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
+      });
+    });
+    await waitForCanvasText({ page, text: "Initial content" });
+    const initialAssetReferenceCount = await getImageAssetReferenceCount();
+
+    await measure("asset copy insert template", async () => {
+      await insertTemplateAfterCanvasText({
+        page,
+        anchorText: "Initial content",
+        templateName: fixture.assetTemplateName,
+      });
+    });
+    await waitForCanvasImage({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+    });
+    await measure("asset copy open build mode", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await waitForCanvasImage({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+    });
+    await selectCanvasImage({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+    });
+    await page.keyboard.press("ControlOrMeta+C");
+    const save = waitForChangeToBeSaved({ page });
+    await page.keyboard.press("ControlOrMeta+V");
+    await save;
+    await waitForSyncStatus({ page, status: "idle" });
+    await waitForCanvasImageCount({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+      count: 2,
+    });
+    if (
+      (await getImageAssetReferenceCount()) !==
+      initialAssetReferenceCount + 2
+    ) {
+      throw new Error(
+        "Expected insertion and paste to add two asset references."
+      );
+    }
+
+    await measure("asset copy reload builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await waitForCanvasImageCount({
+      page,
+      alt: fixture.assetTemplateImageAlt,
+      count: 2,
+    });
+    if (
+      (await getImageAssetReferenceCount()) !==
+      initialAssetReferenceCount + 2
+    ) {
+      throw new Error("Expected reload to preserve copied asset references.");
+    }
   } finally {
     await close();
   }

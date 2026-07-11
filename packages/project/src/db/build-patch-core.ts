@@ -29,6 +29,7 @@ import {
 import {
   findCycles,
   type MarketplaceProduct,
+  type ProjectSettings,
   marketplaceProduct,
   parsePages,
   serializePages,
@@ -179,6 +180,7 @@ export const createBuildPatchUpdate = async ({
     styleSourceSelections?: StyleSourceSelections;
     styles?: Styles;
     marketplaceProduct?: MarketplaceProduct;
+    projectSettings?: ProjectSettings;
   } = {};
 
   let previewImageAssetId: string | null | undefined = undefined;
@@ -209,6 +211,19 @@ export const createBuildPatchUpdate = async ({
         if (currentSocialImageAssetId !== newSocialImageAssetId) {
           previewImageAssetId = newSocialImageAssetId || null;
         }
+        continue;
+      }
+
+      if (namespace === "projectSettings") {
+        const projectSettings =
+          buildData.projectSettings ??
+          parseConfig<ProjectSettings>(build.projectSettings);
+        const nextProjectSettings = applyBuildNamespacePatches(
+          "projectSettings",
+          projectSettings,
+          patches
+        );
+        buildData.projectSettings = nextProjectSettings;
         continue;
       }
 
@@ -411,6 +426,12 @@ export const createBuildPatchUpdate = async ({
     const marketplaceProductData = buildData.marketplaceProduct;
     update.marketplaceProduct = serializeConfig<MarketplaceProduct>(
       marketplaceProduct.parse(marketplaceProductData)
+    );
+  }
+
+  if (buildData.projectSettings) {
+    update.projectSettings = serializeConfig<ProjectSettings>(
+      buildData.projectSettings
     );
   }
 

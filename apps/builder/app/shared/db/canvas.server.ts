@@ -74,6 +74,8 @@ const serializeProjectBundle = ({
       dataSources: build.dataSources.map(getPair),
       resources: build.resources.map(getPair),
       instances: build.instances.map(getPair),
+      marketplaceProduct: build.marketplaceProduct,
+      projectSettings: build.projectSettings,
       deployment: build.deployment,
     },
     page,

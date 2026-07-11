@@ -23,6 +23,7 @@ export type PublicRuntimeOperationContract = {
   permit?: PublicApiOperationPermit;
   kind: PublicApiOperationKind;
   inputSchema: InputJsonSchema;
+  outputSchema?: InputJsonSchema;
   readNamespaces: readonly PublicApiOperationNamespace[];
   writeNamespaces: readonly PublicApiOperationNamespace[];
   invalidatesNamespaces: readonly PublicApiOperationNamespace[];
@@ -32,8 +33,8 @@ export type PublicRuntimeOperationContract = {
 };
 
 export const publicRuntimeOperationContracts: readonly PublicRuntimeOperationContract[] =
-  runtimeOperationContracts.map(
-    ({
+  runtimeOperationContracts.map((contract): PublicRuntimeOperationContract => {
+    const {
       id,
       command,
       client,
@@ -46,18 +47,22 @@ export const publicRuntimeOperationContracts: readonly PublicRuntimeOperationCon
       retryOnConflict,
       requiresAssets,
       requiresConfirm,
-    }): PublicRuntimeOperationContract => ({
+    } = contract;
+    return {
       id,
       command,
       client,
       permit,
       kind,
       inputSchema,
+      ...("outputSchema" in contract
+        ? { outputSchema: contract.outputSchema }
+        : {}),
       readNamespaces,
       writeNamespaces,
       invalidatesNamespaces,
       retryOnConflict,
       requiresAssets,
       requiresConfirm,
-    })
-  );
+    };
+  });

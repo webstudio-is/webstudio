@@ -25,7 +25,7 @@ const getPackageName = (id: string) => {
   return id.split("/")[0];
 };
 
-const isExternal = (id: string) => {
+export const isExternal = (id: string) => {
   const packageName = getPackageName(id);
   return (
     id.startsWith("node:") ||

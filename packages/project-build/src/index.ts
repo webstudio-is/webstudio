@@ -5,4 +5,5 @@ export * from "./db/style-source-selections";
 export * from "./db/styles";
 export * from "./shared/pages-utils";
 export * from "./shared/marketplace";
+export * from "./shared/project-settings";
 export * from "./shared/graph-utils";

@@ -1,13 +1,19 @@
 import type { Page } from "playwright";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
-import { selectCanvasTextInstance } from "../flows/canvas-selection";
+import {
+  bindSelectedTextContentToExpression,
+  createGraphqlResourceVariable,
+  createHttpResourceVariable,
+  createSystemResourceVariable,
+  selectContentInstance,
+} from "../flows/data-variables";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loginWithSecret } from "../flows/dashboard";
-import { expectGeneratedAppBuild } from "../flows/generated-app";
+import { expectGeneratedAppToRender } from "../flows/generated-app";
 import { newIsolatedPage, test } from "../harness";
 import { measure } from "../perf";
 import { loadDevBuild } from "../db";
@@ -43,22 +49,6 @@ const getDataVariableRuntimeState = async (fixture: { projectId: string }) => {
     dataSources: JSON.parse(build.dataSources) as DataSourceRecord[],
     resources: JSON.parse(build.resources) as ResourceRecord[],
   };
-};
-
-const selectVariableType = async ({
-  page,
-  next,
-}: {
-  page: Page;
-  next: string;
-}) => {
-  await page
-    .getByText("Type", { exact: true })
-    .locator("xpath=following::button[1]")
-    .click();
-  await page
-    .getByRole("option", { name: new RegExp(`^${next}( Pro)?$`) })
-    .click();
 };
 
 const getVariableForm = (page: Page) =>
@@ -106,17 +96,6 @@ const openNewVariablePanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Add data variable" }).click();
   await page.getByText("New Variable", { exact: true }).waitFor();
-};
-
-const selectContentInstance = async ({ page }: { page: Page }) => {
-  await selectCanvasTextInstance({ page, text: "Initial content" });
-  await page
-    .getByText("No instance selected", { exact: true })
-    .waitFor({ state: "hidden" });
-  await page.getByRole("tab", { name: "Settings" }).click();
-  await page
-    .getByRole("button", { name: "Add data variable" })
-    .waitFor({ state: "visible" });
 };
 
 const createStringVariable = async ({
@@ -175,50 +154,6 @@ const deleteVariable = async ({
   await waitForSyncStatus({ page, status: "idle" });
 };
 
-const bindSelectedTextContentToExpression = async ({
-  page,
-  expression,
-}: {
-  page: Page;
-  expression: string;
-}) => {
-  await page.getByText("Text Content", { exact: true }).waitFor();
-  await page.getByText("Text Content", { exact: true }).hover();
-  await page
-    .getByText("Text Content", { exact: true })
-    .locator("xpath=following::button[@data-variant][1]")
-    .click();
-  const bindingDialog = page.getByRole("dialog", { name: "Binding" });
-  await bindingDialog.waitFor();
-
-  const expressionEditor = bindingDialog.locator(".cm-content").last();
-  await expressionEditor.click();
-  await page.keyboard.press("ControlOrMeta+A");
-  await page.keyboard.type(expression);
-
-  const save = waitForChangeToBeSaved({ page });
-  await page.keyboard.press("ControlOrMeta+Enter");
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-  await page.keyboard.press("Escape");
-};
-
-const createHttpResourceVariable = async ({
-  page,
-  name,
-  url,
-}: {
-  page: Page;
-  name: string;
-  url: string;
-}) => {
-  await openNewVariablePanel({ page });
-  await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "Resource" });
-  await page.getByRole("textbox", { name: "URL" }).fill(url);
-  await closeVariablePanelAndWaitForSave({ page });
-};
-
 const editHttpResourceVariableWithCurl = async ({
   page,
   fixture,
@@ -237,41 +172,6 @@ const editHttpResourceVariableWithCurl = async ({
   await closeVariablePanelAndWaitForSave({ page });
 };
 
-const createGraphqlResourceVariable = async ({
-  page,
-  name,
-  url,
-  query,
-}: {
-  page: Page;
-  name: string;
-  url: string;
-  query: string;
-}) => {
-  await openNewVariablePanel({ page });
-  await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "GraphQL" });
-  await page.getByRole("textbox", { name: "URL" }).fill(url);
-  await page.getByRole("textbox", { name: "Query" }).fill(query);
-  await closeVariablePanelAndWaitForSave({ page });
-};
-
-const createSystemResourceVariable = async ({
-  page,
-  name,
-}: {
-  page: Page;
-  name: string;
-}) => {
-  await openNewVariablePanel({ page });
-  await fillVariableName({ page, name });
-  await selectVariableType({
-    page,
-    next: "System Resource",
-  });
-  await closeVariablePanelAndWaitForSave({ page });
-};
-
 const expectVariableListItem = async ({
   page,
   name,
@@ -281,8 +181,14 @@ const expectVariableListItem = async ({
   name: string;
   badge: "Static variable" | "Dynamic data variable";
 }) => {
-  await page.getByText(name, { exact: true }).waitFor({ state: "visible" });
-  await page.getByLabel(badge).first().waitFor({ state: "visible" });
+  const itemButton = page
+    .getByText(name, { exact: true })
+    .locator("xpath=ancestor::button[@data-id][1]");
+  await itemButton.waitFor({ state: "visible" });
+  await itemButton
+    .locator("xpath=parent::*")
+    .getByLabel(badge)
+    .waitFor({ state: "attached" });
 };
 
 const expectPersistedDataVariables = async ({
@@ -505,11 +411,6 @@ test("Builder-created data variables and resources persist after reload", async 
           name: httpName,
           curl: `curl '${httpCurlUrl}?${httpSearchParamName}=${httpSearchParamValue}' --request POST --header '${httpHeaderName}: ${httpHeaderValue}' --header 'Content-Type: application/json' --data '{"${httpBodyValue}":true}'`,
         });
-        await deleteVariable({
-          page,
-          fixture,
-          name: graphqlName,
-        });
       }
     );
 
@@ -529,7 +430,7 @@ test("Builder-created data variables and resources persist after reload", async 
       graphqlUrl,
       graphqlQuery,
       systemName,
-      deletedName: graphqlName,
+      deletedName: undefined,
     });
 
     await expectVariableListItem({
@@ -542,8 +443,10 @@ test("Builder-created data variables and resources persist after reload", async 
       name: httpName,
       badge: "Dynamic data variable",
     });
-    await page.getByText(graphqlName, { exact: true }).waitFor({
-      state: "hidden",
+    await expectVariableListItem({
+      page,
+      name: graphqlName,
+      badge: "Dynamic data variable",
     });
     await expectVariableListItem({
       page,
@@ -571,8 +474,10 @@ test("Builder-created data variables and resources persist after reload", async 
       name: httpName,
       badge: "Dynamic data variable",
     });
-    await page.getByText(graphqlName, { exact: true }).waitFor({
-      state: "hidden",
+    await expectVariableListItem({
+      page,
+      name: graphqlName,
+      badge: "Dynamic data variable",
     });
     await expectVariableListItem({
       page,
@@ -580,6 +485,38 @@ test("Builder-created data variables and resources persist after reload", async 
       badge: "Dynamic data variable",
     });
 
+    await expectPersistedDataVariables({
+      fixture,
+      staticName,
+      staticValue: editedStaticValue,
+      httpName,
+      httpUrl,
+      httpCurlUrl,
+      httpSearchParamName,
+      httpSearchParamValue,
+      httpHeaderName,
+      httpHeaderValue,
+      httpBodyValue,
+      graphqlName,
+      graphqlUrl,
+      graphqlQuery,
+      systemName,
+      deletedName: undefined,
+    });
+
+    await measure(
+      "data variables runtime delete graphql variable",
+      async () => {
+        await deleteVariable({
+          page,
+          fixture,
+          name: graphqlName,
+        });
+      }
+    );
+    await page.getByText(graphqlName, { exact: true }).waitFor({
+      state: "hidden",
+    });
     await expectPersistedDataVariables({
       fixture,
       staticName,
@@ -654,8 +591,8 @@ test("Text Content can bind to a Builder-created variable and persist after relo
     });
     await waitForCanvasText({ page, text: staticValue });
 
-    await measure("text content binding generated app build", async () => {
-      await expectGeneratedAppBuild({
+    await measure("text content binding generated app renders", async () => {
+      await expectGeneratedAppToRender({
         projectId: fixture.projectId,
         expectedText: staticValue,
       });

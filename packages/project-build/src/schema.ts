@@ -15,6 +15,14 @@ import {
 } from "@webstudio-is/project-migrations/pages";
 import { z } from "zod";
 import type { Build } from "./types";
+import {
+  marketplaceProduct,
+  type MarketplaceProduct,
+} from "./shared/marketplace";
+import {
+  projectSettings,
+  type ProjectSettings,
+} from "./shared/project-settings";
 
 const entry = <Value extends z.ZodTypeAny>(value: Value) =>
   z.tuple([z.string(), value]);
@@ -23,8 +31,13 @@ type SchemaShape<Value extends object> = {
   [Key in keyof Required<Value>]: z.ZodType<Value[Key], unknown>;
 };
 
-export type SerializedBuild = Omit<Build, "marketplaceProduct" | "pages"> & {
+export type SerializedBuild = Omit<
+  Build,
+  "marketplaceProduct" | "pages" | "projectSettings"
+> & {
   pages: SerializedPages;
+  marketplaceProduct?: MarketplaceProduct;
+  projectSettings?: ProjectSettings;
 };
 
 const serializedBuildShape = {
@@ -42,6 +55,8 @@ const serializedBuildShape = {
   instances: z.array(entry(instance)),
   dataSources: z.array(entry(dataSource)),
   resources: z.array(entry(resource)),
+  marketplaceProduct: marketplaceProduct.optional(),
+  projectSettings: projectSettings.optional(),
   deployment: deployment.optional(),
 } satisfies SchemaShape<SerializedBuild>;
 

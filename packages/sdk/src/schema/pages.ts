@@ -216,6 +216,7 @@ export const projectMeta = z.object({
   contactEmail: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
+  agentInstructions: z.string().optional(),
   auth: z.string().optional(),
 });
 export type ProjectMeta = z.infer<typeof projectMeta>;

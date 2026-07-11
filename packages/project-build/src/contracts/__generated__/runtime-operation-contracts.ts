@@ -16,7 +16,7 @@ export const runtimeOperationContractData = [
       },
       required: [],
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "projectSettings"],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
@@ -23916,6 +23916,1277 @@ export const runtimeOperationContractData = [
     retryOnConflict: false,
   },
   {
+    id: "project.search",
+    command: "search-project",
+    client: "searchProject",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          minLength: 1,
+        },
+        scopes: {
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "instances",
+              "text",
+              "props",
+              "resources",
+              "assets",
+              "styles",
+            ],
+          },
+        },
+        pageId: {
+          type: "string",
+        },
+        pagePath: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+    readNamespaces: [
+      "pages",
+      "projectSettings",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "breakpoints",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "project.audit",
+    command: "audit",
+    client: "audit",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        scopes: {
+          description:
+            "Audit scopes. Omit to run all scopes. accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/. security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener. seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. assets info: unused-asset. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder. styles warning: style-on-dom-transparent-component; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens. performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "accessibility",
+              "security",
+              "seo",
+              "assets",
+              "styles",
+              "performance",
+            ],
+          },
+        },
+        pageId: {
+          type: "string",
+        },
+        pagePath: {
+          type: "string",
+        },
+        severities: {
+          description:
+            "Filter returned findings by default rule severity: error, warning, or info. Summary counts remain unfiltered.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+            enum: ["error", "warning", "info"],
+          },
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        cursor: {
+          type: "string",
+          minLength: 1,
+        },
+        verbose: {
+          description:
+            "Include explanations, remediation, evidence, skipped-check details, and manual-check workflows.",
+          type: "boolean",
+        },
+      },
+      additionalProperties: false,
+      required: [],
+    },
+    outputSchema: {
+      oneOf: [
+        {
+          type: "object",
+          properties: {
+            contractVersion: {
+              type: "number",
+              const: 1,
+            },
+            projectVersion: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            scopes: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "accessibility",
+                  "security",
+                  "seo",
+                  "assets",
+                  "styles",
+                  "performance",
+                ],
+              },
+            },
+            pageFilter: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    pageId: {
+                      type: "string",
+                    },
+                    pagePath: {
+                      type: "string",
+                    },
+                    projectWideScopes: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                        enum: [
+                          "accessibility",
+                          "security",
+                          "seo",
+                          "assets",
+                          "styles",
+                          "performance",
+                        ],
+                      },
+                    },
+                  },
+                  required: ["pageId", "pagePath", "projectWideScopes"],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            summary: {
+              type: "object",
+              properties: {
+                total: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                selectedTotal: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                bySeverity: {
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                    enum: ["error", "warning", "info"],
+                  },
+                  additionalProperties: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  required: ["error", "warning", "info"],
+                },
+                byScope: {
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                    enum: [
+                      "accessibility",
+                      "security",
+                      "seo",
+                      "assets",
+                      "styles",
+                      "performance",
+                    ],
+                  },
+                  additionalProperties: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  required: [
+                    "accessibility",
+                    "security",
+                    "seo",
+                    "assets",
+                    "styles",
+                    "performance",
+                  ],
+                },
+              },
+              required: ["total", "selectedTotal", "bySeverity", "byScope"],
+            },
+            skippedCheckCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            manualCheckCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            renderedCheckCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            renderedIssueCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            renderedFailureCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            nextCursor: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            verbose: {
+              type: "boolean",
+              const: false,
+            },
+            findings: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "string",
+                  },
+                  scope: {
+                    type: "string",
+                    enum: [
+                      "accessibility",
+                      "security",
+                      "seo",
+                      "assets",
+                      "styles",
+                      "performance",
+                    ],
+                  },
+                  ruleId: {
+                    type: "string",
+                    enum: [
+                      "missing-alt",
+                      "missing-image-description",
+                      "missing-image-input-alt",
+                      "missing-iframe-title",
+                      "missing-accessible-name",
+                      "missing-form-label",
+                      "invalid-aria-role",
+                      "unsupported-aria-role-property",
+                      "missing-required-aria-role-property",
+                      "role-interactive-not-focusable",
+                      "aria-hidden-focusable",
+                      "positive-tabindex",
+                      "invalid-aria-state",
+                      "invalid-aria-number",
+                      "autoplay-media-with-sound",
+                      "invalid-label-reference",
+                      "missing-page-heading",
+                      "skipped-heading-level",
+                      "missing-main-landmark",
+                      "multiple-main-landmarks",
+                      "duplicate-id",
+                      "missing-aria-reference",
+                      "target-blank-without-noopener",
+                      "non-get-resource-exposed-as-data-source",
+                      "missing-page-description",
+                      "empty-page-description",
+                      "invalid-page-language",
+                      "missing-social-image-asset",
+                      "empty-page-title",
+                      "duplicate-page-title",
+                      "duplicate-page-description",
+                      "invalid-json-ld",
+                      "missing-json-ld-context",
+                      "json-ld-in-custom-metadata",
+                      "unknown-schema-org-type",
+                      "deprecated-schema-org-type",
+                      "unknown-schema-org-property",
+                      "deprecated-schema-org-property",
+                      "unsupported-schema-org-property",
+                      "incompatible-schema-org-value",
+                      "unused-asset",
+                      "unused-design-token",
+                      "unused-css-variable",
+                      "unused-local-style-source",
+                      "unused-breakpoint",
+                      "duplicate-design-token-declarations",
+                      "style-on-dom-transparent-component",
+                      "atomic-css-disabled",
+                    ],
+                  },
+                  severity: {
+                    type: "string",
+                    enum: ["error", "warning", "info"],
+                  },
+                  message: {
+                    type: "string",
+                  },
+                  location: {
+                    type: "object",
+                    properties: {
+                      pageId: {
+                        type: "string",
+                      },
+                      pageIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      pagePath: {
+                        type: "string",
+                      },
+                      pagePaths: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      instanceId: {
+                        type: "string",
+                      },
+                      instanceIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      propName: {
+                        type: "string",
+                      },
+                      assetId: {
+                        type: "string",
+                      },
+                      styleSourceId: {
+                        type: "string",
+                      },
+                      designTokenId: {
+                        type: "string",
+                      },
+                      designTokenIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      cssVariableName: {
+                        type: "string",
+                      },
+                      cssVariableScope: {
+                        type: "string",
+                      },
+                      breakpointId: {
+                        type: "string",
+                      },
+                      resourceId: {
+                        type: "string",
+                      },
+                      dataSourceId: {
+                        type: "string",
+                      },
+                      htmlId: {
+                        type: "string",
+                      },
+                      jsonLdPath: {
+                        type: "string",
+                      },
+                    },
+                    additionalProperties: false,
+                    required: [],
+                  },
+                },
+                required: [
+                  "id",
+                  "scope",
+                  "ruleId",
+                  "severity",
+                  "message",
+                  "location",
+                ],
+              },
+            },
+          },
+          required: [
+            "contractVersion",
+            "projectVersion",
+            "scopes",
+            "pageFilter",
+            "summary",
+            "skippedCheckCount",
+            "manualCheckCount",
+            "renderedCheckCount",
+            "renderedIssueCount",
+            "renderedFailureCount",
+            "nextCursor",
+            "verbose",
+            "findings",
+          ],
+        },
+        {
+          type: "object",
+          properties: {
+            contractVersion: {
+              type: "number",
+              const: 1,
+            },
+            projectVersion: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            scopes: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "accessibility",
+                  "security",
+                  "seo",
+                  "assets",
+                  "styles",
+                  "performance",
+                ],
+              },
+            },
+            pageFilter: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    pageId: {
+                      type: "string",
+                    },
+                    pagePath: {
+                      type: "string",
+                    },
+                    projectWideScopes: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                        enum: [
+                          "accessibility",
+                          "security",
+                          "seo",
+                          "assets",
+                          "styles",
+                          "performance",
+                        ],
+                      },
+                    },
+                  },
+                  required: ["pageId", "pagePath", "projectWideScopes"],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            summary: {
+              type: "object",
+              properties: {
+                total: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                selectedTotal: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                bySeverity: {
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                    enum: ["error", "warning", "info"],
+                  },
+                  additionalProperties: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  required: ["error", "warning", "info"],
+                },
+                byScope: {
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                    enum: [
+                      "accessibility",
+                      "security",
+                      "seo",
+                      "assets",
+                      "styles",
+                      "performance",
+                    ],
+                  },
+                  additionalProperties: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  required: [
+                    "accessibility",
+                    "security",
+                    "seo",
+                    "assets",
+                    "styles",
+                    "performance",
+                  ],
+                },
+              },
+              required: ["total", "selectedTotal", "bySeverity", "byScope"],
+            },
+            skippedCheckCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            manualCheckCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            renderedCheckCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            renderedIssueCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            renderedFailureCount: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            nextCursor: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            verbose: {
+              type: "boolean",
+              const: true,
+            },
+            findings: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "string",
+                  },
+                  scope: {
+                    type: "string",
+                    enum: [
+                      "accessibility",
+                      "security",
+                      "seo",
+                      "assets",
+                      "styles",
+                      "performance",
+                    ],
+                  },
+                  ruleId: {
+                    type: "string",
+                    enum: [
+                      "missing-alt",
+                      "missing-image-description",
+                      "missing-image-input-alt",
+                      "missing-iframe-title",
+                      "missing-accessible-name",
+                      "missing-form-label",
+                      "invalid-aria-role",
+                      "unsupported-aria-role-property",
+                      "missing-required-aria-role-property",
+                      "role-interactive-not-focusable",
+                      "aria-hidden-focusable",
+                      "positive-tabindex",
+                      "invalid-aria-state",
+                      "invalid-aria-number",
+                      "autoplay-media-with-sound",
+                      "invalid-label-reference",
+                      "missing-page-heading",
+                      "skipped-heading-level",
+                      "missing-main-landmark",
+                      "multiple-main-landmarks",
+                      "duplicate-id",
+                      "missing-aria-reference",
+                      "target-blank-without-noopener",
+                      "non-get-resource-exposed-as-data-source",
+                      "missing-page-description",
+                      "empty-page-description",
+                      "invalid-page-language",
+                      "missing-social-image-asset",
+                      "empty-page-title",
+                      "duplicate-page-title",
+                      "duplicate-page-description",
+                      "invalid-json-ld",
+                      "missing-json-ld-context",
+                      "json-ld-in-custom-metadata",
+                      "unknown-schema-org-type",
+                      "deprecated-schema-org-type",
+                      "unknown-schema-org-property",
+                      "deprecated-schema-org-property",
+                      "unsupported-schema-org-property",
+                      "incompatible-schema-org-value",
+                      "unused-asset",
+                      "unused-design-token",
+                      "unused-css-variable",
+                      "unused-local-style-source",
+                      "unused-breakpoint",
+                      "duplicate-design-token-declarations",
+                      "style-on-dom-transparent-component",
+                      "atomic-css-disabled",
+                    ],
+                  },
+                  severity: {
+                    type: "string",
+                    enum: ["error", "warning", "info"],
+                  },
+                  message: {
+                    type: "string",
+                  },
+                  explanation: {
+                    type: "string",
+                  },
+                  remediation: {
+                    type: "string",
+                  },
+                  location: {
+                    type: "object",
+                    properties: {
+                      pageId: {
+                        type: "string",
+                      },
+                      pageIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      pagePath: {
+                        type: "string",
+                      },
+                      pagePaths: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      instanceId: {
+                        type: "string",
+                      },
+                      instanceIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      propName: {
+                        type: "string",
+                      },
+                      assetId: {
+                        type: "string",
+                      },
+                      styleSourceId: {
+                        type: "string",
+                      },
+                      designTokenId: {
+                        type: "string",
+                      },
+                      designTokenIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      cssVariableName: {
+                        type: "string",
+                      },
+                      cssVariableScope: {
+                        type: "string",
+                      },
+                      breakpointId: {
+                        type: "string",
+                      },
+                      resourceId: {
+                        type: "string",
+                      },
+                      dataSourceId: {
+                        type: "string",
+                      },
+                      htmlId: {
+                        type: "string",
+                      },
+                      jsonLdPath: {
+                        type: "string",
+                      },
+                    },
+                    additionalProperties: false,
+                    required: [],
+                  },
+                  evidence: {
+                    type: "object",
+                    propertyNames: {
+                      type: "string",
+                    },
+                    additionalProperties: {},
+                  },
+                  documentationUrl: {
+                    type: "string",
+                    format: "uri",
+                  },
+                },
+                required: [
+                  "id",
+                  "scope",
+                  "ruleId",
+                  "severity",
+                  "message",
+                  "explanation",
+                  "remediation",
+                  "location",
+                  "evidence",
+                ],
+              },
+            },
+            skippedChecks: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  scope: {
+                    type: "string",
+                    enum: [
+                      "accessibility",
+                      "security",
+                      "seo",
+                      "assets",
+                      "styles",
+                      "performance",
+                    ],
+                  },
+                  checkId: {
+                    type: "string",
+                  },
+                  reason: {
+                    type: "string",
+                    enum: [
+                      "dynamic-value",
+                      "missing-build-data",
+                      "unsupported-component",
+                    ],
+                  },
+                  message: {
+                    type: "string",
+                  },
+                  location: {
+                    type: "object",
+                    properties: {
+                      pageId: {
+                        type: "string",
+                      },
+                      pageIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      pagePath: {
+                        type: "string",
+                      },
+                      pagePaths: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      instanceId: {
+                        type: "string",
+                      },
+                      instanceIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      propName: {
+                        type: "string",
+                      },
+                      assetId: {
+                        type: "string",
+                      },
+                      styleSourceId: {
+                        type: "string",
+                      },
+                      designTokenId: {
+                        type: "string",
+                      },
+                      designTokenIds: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                      cssVariableName: {
+                        type: "string",
+                      },
+                      cssVariableScope: {
+                        type: "string",
+                      },
+                      breakpointId: {
+                        type: "string",
+                      },
+                      resourceId: {
+                        type: "string",
+                      },
+                      dataSourceId: {
+                        type: "string",
+                      },
+                      htmlId: {
+                        type: "string",
+                      },
+                      jsonLdPath: {
+                        type: "string",
+                      },
+                    },
+                    additionalProperties: false,
+                    required: [],
+                  },
+                },
+                required: ["scope", "checkId", "reason", "message", "location"],
+              },
+            },
+            manualChecks: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  checkId: {
+                    type: "string",
+                  },
+                  message: {
+                    type: "string",
+                  },
+                  workflow: {
+                    type: "string",
+                  },
+                },
+                required: ["checkId", "message", "workflow"],
+              },
+            },
+            renderedChecks: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  pageId: {
+                    type: "string",
+                  },
+                  pagePath: {
+                    type: "string",
+                  },
+                  viewport: {
+                    type: "object",
+                    properties: {
+                      width: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      height: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                    },
+                    required: ["width", "height"],
+                  },
+                  screenshotPath: {
+                    type: "string",
+                  },
+                  layout: {
+                    type: "object",
+                    properties: {
+                      viewportWidth: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      viewportHeight: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      contentWidth: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      contentHeight: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      horizontalOverflow: {
+                        type: "boolean",
+                      },
+                      images: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            instanceId: {
+                              type: "string",
+                            },
+                            loading: {
+                              type: "string",
+                            },
+                            complete: {
+                              type: "boolean",
+                            },
+                            naturalWidth: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            naturalHeight: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            renderedWidth: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            renderedHeight: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            top: {
+                              type: "number",
+                            },
+                          },
+                          required: [
+                            "loading",
+                            "complete",
+                            "naturalWidth",
+                            "naturalHeight",
+                            "renderedWidth",
+                            "renderedHeight",
+                            "top",
+                          ],
+                        },
+                      },
+                      resources: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            pathname: {
+                              type: "string",
+                            },
+                            initiatorType: {
+                              type: "string",
+                            },
+                            transferSize: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            encodedBodySize: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            decodedBodySize: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            duration: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            renderBlockingStatus: {
+                              type: "string",
+                            },
+                          },
+                          required: [
+                            "pathname",
+                            "initiatorType",
+                            "transferSize",
+                            "encodedBodySize",
+                            "decodedBodySize",
+                            "duration",
+                          ],
+                        },
+                      },
+                    },
+                    required: [
+                      "viewportWidth",
+                      "viewportHeight",
+                      "contentWidth",
+                      "contentHeight",
+                      "horizontalOverflow",
+                      "images",
+                      "resources",
+                    ],
+                  },
+                  issues: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      enum: [
+                        "horizontal-overflow",
+                        "broken-image",
+                        "eager-below-fold-image",
+                        "oversized-image",
+                        "render-blocking-resource",
+                        "legacy-font-format",
+                      ],
+                    },
+                  },
+                  imageIssues: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        kind: {
+                          type: "string",
+                          enum: [
+                            "broken-image",
+                            "eager-below-fold-image",
+                            "oversized-image",
+                          ],
+                        },
+                        instanceId: {
+                          type: "string",
+                        },
+                        loading: {
+                          type: "string",
+                        },
+                        naturalWidth: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        naturalHeight: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        renderedWidth: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        renderedHeight: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        top: {
+                          type: "number",
+                        },
+                      },
+                      required: [
+                        "kind",
+                        "loading",
+                        "naturalWidth",
+                        "naturalHeight",
+                        "renderedWidth",
+                        "renderedHeight",
+                        "top",
+                      ],
+                    },
+                  },
+                  resourceIssues: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        kind: {
+                          type: "string",
+                          enum: [
+                            "render-blocking-resource",
+                            "legacy-font-format",
+                          ],
+                        },
+                        pathname: {
+                          type: "string",
+                        },
+                        initiatorType: {
+                          type: "string",
+                        },
+                        transferSize: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        encodedBodySize: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        decodedBodySize: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        duration: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        renderBlockingStatus: {
+                          type: "string",
+                        },
+                      },
+                      required: [
+                        "kind",
+                        "pathname",
+                        "initiatorType",
+                        "transferSize",
+                        "encodedBodySize",
+                        "decodedBodySize",
+                        "duration",
+                      ],
+                    },
+                  },
+                },
+                required: [
+                  "pageId",
+                  "pagePath",
+                  "viewport",
+                  "screenshotPath",
+                  "layout",
+                  "issues",
+                  "imageIssues",
+                  "resourceIssues",
+                ],
+              },
+            },
+            renderedFailures: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  pageId: {
+                    type: "string",
+                  },
+                  pagePath: {
+                    type: "string",
+                  },
+                  viewport: {
+                    type: "object",
+                    properties: {
+                      width: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      height: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                    },
+                    required: ["width", "height"],
+                  },
+                  message: {
+                    type: "string",
+                  },
+                },
+                required: ["message"],
+              },
+            },
+          },
+          required: [
+            "contractVersion",
+            "projectVersion",
+            "scopes",
+            "pageFilter",
+            "summary",
+            "skippedCheckCount",
+            "manualCheckCount",
+            "renderedCheckCount",
+            "renderedIssueCount",
+            "renderedFailureCount",
+            "nextCursor",
+            "verbose",
+            "findings",
+            "skippedChecks",
+            "manualChecks",
+            "renderedChecks",
+            "renderedFailures",
+          ],
+        },
+      ],
+    },
+    readNamespaces: [
+      "pages",
+      "projectSettings",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "breakpoints",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
     id: "instances.insertComponent",
     command: "insert-component",
     client: "insertComponent",
@@ -30576,6 +31847,63 @@ export const runtimeOperationContractData = [
     retryOnConflict: false,
   },
   {
+    id: "instances.replacePropText",
+    command: "replace-prop-text",
+    client: "replacePropText",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        find: {
+          type: "string",
+          minLength: 1,
+          description: "Fixed prop text to find.",
+        },
+        replace: {
+          type: "string",
+          description: "Replacement fixed prop text.",
+        },
+        match: {
+          default: "exact",
+          description:
+            'Use "exact" to replace complete prop values, or "substring" to replace every literal occurrence in matching prop values.',
+          type: "string",
+          enum: ["exact", "substring"],
+        },
+        instanceIds: {
+          description: "Optional instance ids to limit the replacement scope.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        names: {
+          description:
+            "Optional prop names to limit the replacement scope, such as href or code.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        limit: {
+          default: 50,
+          description: "Maximum number of prop values to change.",
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+      },
+      required: ["find", "replace"],
+    },
+    readNamespaces: ["instances", "props"],
+    writeNamespaces: ["props"],
+    invalidatesNamespaces: ["props"],
+    retryOnConflict: true,
+  },
+  {
     id: "instances.deleteProps",
     command: "delete-props",
     client: "deleteProps",
@@ -30792,6 +32120,52 @@ export const runtimeOperationContractData = [
     retryOnConflict: true,
   },
   {
+    id: "instances.replaceText",
+    command: "replace-text",
+    client: "replaceText",
+    permit: "edit",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        find: {
+          type: "string",
+          minLength: 1,
+          description: "Literal text to find.",
+        },
+        replace: {
+          type: "string",
+          description: "Replacement literal text.",
+        },
+        match: {
+          default: "exact",
+          description:
+            'Use "exact" to replace complete text children, or "substring" to replace every literal occurrence inside matching text children.',
+          type: "string",
+          enum: ["exact", "substring"],
+        },
+        pageId: {
+          type: "string",
+        },
+        pagePath: {
+          type: "string",
+        },
+        limit: {
+          default: 50,
+          description: "Maximum number of text children to replace.",
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+      },
+      required: ["find", "replace"],
+    },
+    readNamespaces: ["pages", "instances"],
+    writeNamespaces: ["instances"],
+    invalidatesNamespaces: ["instances"],
+    retryOnConflict: true,
+  },
+  {
     id: "instances.setTextContent",
     command: "set-text-content",
     client: "setTextContent",
@@ -30941,9 +32315,32 @@ export const runtimeOperationContractData = [
       },
       required: ["rootInstanceId", "instances"],
     },
-    readNamespaces: ["instances"],
-    writeNamespaces: ["instances"],
-    invalidatesNamespaces: ["instances"],
+    readNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+    ],
+    writeNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSourceSelections",
+      "styleSources",
+      "styles",
+    ],
+    invalidatesNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSourceSelections",
+      "styleSources",
+      "styles",
+    ],
     retryOnConflict: true,
   },
   {
@@ -34978,7 +36375,26 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
@@ -34993,14 +36409,52 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
               },
             },
             body: {
-              type: "string",
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      const: "literal",
+                    },
+                    value: {
+                      type: "string",
+                    },
+                  },
+                  required: ["type", "value"],
+                },
+              ],
+              description:
+                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
             },
           },
           required: ["name", "method", "url", "headers"],
@@ -35102,7 +36556,26 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
@@ -35117,14 +36590,52 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
               },
             },
             body: {
-              type: "string",
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      const: "literal",
+                    },
+                    value: {
+                      type: "string",
+                    },
+                  },
+                  required: ["type", "value"],
+                },
+              ],
+              description:
+                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
             },
           },
           required: [],
@@ -35172,6 +36683,63 @@ export const runtimeOperationContractData = [
       "breakpoints",
     ],
     retryOnConflict: false,
+  },
+  {
+    id: "resources.replaceText",
+    command: "replace-resource-text",
+    client: "replaceResourceText",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        find: {
+          type: "string",
+          minLength: 1,
+          description: "Fixed resource text to find.",
+        },
+        replace: {
+          type: "string",
+          description: "Replacement fixed resource text.",
+        },
+        match: {
+          default: "exact",
+          description:
+            'Use "exact" to replace complete values, or "substring" to replace every literal occurrence in matching values.',
+          type: "string",
+          enum: ["exact", "substring"],
+        },
+        fields: {
+          default: ["name", "url"],
+          description: "Resource text fields to replace.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+            enum: ["name", "url"],
+          },
+        },
+        resourceIds: {
+          description: "Optional resource ids to limit scope.",
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        limit: {
+          default: 50,
+          description: "Maximum number of resource fields to change.",
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+      },
+      required: ["find", "replace"],
+    },
+    readNamespaces: ["resources"],
+    writeNamespaces: ["resources"],
+    invalidatesNamespaces: ["resources"],
+    retryOnConflict: true,
   },
   {
     id: "resources.upsert",
@@ -35226,7 +36794,26 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
@@ -35241,14 +36828,52 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
               },
             },
             body: {
-              type: "string",
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      const: "literal",
+                    },
+                    value: {
+                      type: "string",
+                    },
+                  },
+                  required: ["type", "value"],
+                },
+              ],
+              description:
+                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
             },
           },
           required: ["name", "method", "url", "headers"],
@@ -35359,7 +36984,26 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
@@ -35374,14 +37018,52 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   value: {
-                    type: "string",
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
                   },
                 },
                 required: ["name", "value"],
               },
             },
             body: {
-              type: "string",
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      const: "literal",
+                    },
+                    value: {
+                      type: "string",
+                    },
+                  },
+                  required: ["type", "value"],
+                },
+              ],
+              description:
+                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
             },
           },
           required: ["name", "method", "url", "headers"],
@@ -35485,11 +37167,34 @@ export const runtimeOperationContractData = [
     readNamespaces: [
       "assets",
       "pages",
+      "projectSettings",
       "props",
       "styles",
       "resources",
       "dataSources",
     ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "fonts.list",
+    command: "list-fonts",
+    client: "listFonts",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        includeSystem: {
+          default: true,
+          description: "Include built-in system font stacks.",
+          type: "boolean",
+        },
+      },
+      required: [],
+    },
+    readNamespaces: ["assets"],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
@@ -35512,6 +37217,7 @@ export const runtimeOperationContractData = [
     readNamespaces: [
       "assets",
       "pages",
+      "projectSettings",
       "props",
       "styles",
       "resources",
@@ -35554,6 +37260,69 @@ export const runtimeOperationContractData = [
         },
       },
       required: ["assetId", "values"],
+    },
+    readNamespaces: ["assets"],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "assets.setImageDescriptions",
+    command: "set-image-descriptions",
+    client: "setImageDescriptions",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        updates: {
+          minItems: 1,
+          type: "array",
+          items: {
+            anyOf: [
+              {
+                type: "object",
+                properties: {
+                  assetId: {
+                    type: "string",
+                  },
+                  description: {
+                    type: "string",
+                    minLength: 1,
+                    description:
+                      "Concise alt description generated after inspecting the rendered image in context.",
+                  },
+                  decorative: {
+                    type: "boolean",
+                    const: false,
+                  },
+                },
+                required: ["assetId", "description"],
+                additionalProperties: false,
+              },
+              {
+                type: "object",
+                properties: {
+                  assetId: {
+                    type: "string",
+                  },
+                  decorative: {
+                    type: "boolean",
+                    const: true,
+                    description:
+                      "Mark the image decorative and intentionally store an empty alt description.",
+                  },
+                },
+                required: ["assetId", "decorative"],
+                additionalProperties: false,
+              },
+            ],
+          },
+          description:
+            "Descriptions or decorative decisions for image assets reported by the accessibility audit.",
+        },
+      },
+      required: ["updates"],
     },
     readNamespaces: ["assets"],
     writeNamespaces: ["assets"],
@@ -35840,13 +37609,20 @@ export const runtimeOperationContractData = [
     readNamespaces: [
       "assets",
       "pages",
+      "projectSettings",
       "props",
       "styles",
       "resources",
       "dataSources",
     ],
-    writeNamespaces: ["pages", "props", "styles", "assets"],
-    invalidatesNamespaces: ["pages", "props", "styles", "assets"],
+    writeNamespaces: ["pages", "projectSettings", "props", "styles", "assets"],
+    invalidatesNamespaces: [
+      "pages",
+      "projectSettings",
+      "props",
+      "styles",
+      "assets",
+    ],
     retryOnConflict: false,
     requiresAssets: true,
   },
@@ -35874,6 +37650,7 @@ export const runtimeOperationContractData = [
     readNamespaces: [
       "assets",
       "pages",
+      "projectSettings",
       "props",
       "styles",
       "resources",

@@ -49,7 +49,10 @@ export const builderPatchSchema: z.ZodType<BuilderPatch, unknown> = z
 const pageGeneratedRecordPaths = new Set(["pages", "folders", "pageTemplates"]);
 const generatedRecordNamespaces = new Set<BuilderNamespace>(
   builderNamespaces.filter(
-    (namespace) => namespace !== "pages" && namespace !== "marketplaceProduct"
+    (namespace) =>
+      namespace !== "pages" &&
+      namespace !== "projectSettings" &&
+      namespace !== "marketplaceProduct"
   )
 );
 

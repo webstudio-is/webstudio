@@ -78,6 +78,7 @@ import {
   $dataSources,
   $instances,
   $pages,
+  $projectSettings,
   $props,
   $resources,
 } from "~/shared/sync/data-stores";
@@ -323,9 +324,15 @@ const ChangeProjectDomain = ({
 };
 
 const $restrictedFeatures = computed(
-  [$pages, $dataSources, $instances, $permissions],
-  (pages, dataSources, instances, permissions) =>
-    getRestrictedFeatures({ pages, dataSources, instances, permissions })
+  [$pages, $projectSettings, $dataSources, $instances, $permissions],
+  (pages, projectSettings, dataSources, instances, permissions) =>
+    getRestrictedFeatures({
+      pages,
+      projectSettings,
+      dataSources,
+      instances,
+      permissions,
+    })
 );
 
 const usePublishCountdown = (isPublishing: boolean) => {

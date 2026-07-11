@@ -7,6 +7,7 @@ import {
   type Pages,
 } from "@webstudio-is/sdk";
 import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime/lookup";
+import type { ProjectSettings } from "@webstudio-is/project-build";
 
 export type RestrictedFeature =
   | undefined
@@ -24,11 +25,13 @@ export type RestrictedFeaturesPermissions = {
 
 export const getRestrictedFeatures = ({
   pages,
+  projectSettings,
   dataSources,
   instances,
   permissions,
 }: {
   pages: Pages | undefined;
+  projectSettings?: ProjectSettings;
   dataSources: Map<string, DataSource>;
   instances: Map<string, Instance>;
   permissions: RestrictedFeaturesPermissions;
@@ -37,14 +40,15 @@ export const getRestrictedFeatures = ({
   if (pages === undefined) {
     return features;
   }
+  const projectMeta = projectSettings?.meta;
   if (
     permissions.maxContactEmailsPerProject === 0 &&
-    (pages.meta?.contactEmail ?? "").trim()
+    (projectMeta?.contactEmail ?? "").trim()
   ) {
     features.set("Custom contact email", undefined);
   }
   if (permissions.allowAuth === false) {
-    if ((pages.meta?.auth ?? "").trim()) {
+    if ((projectMeta?.auth ?? "").trim()) {
       features.set("Project auth", undefined);
     }
     for (const page of getAllPages(pages)) {
