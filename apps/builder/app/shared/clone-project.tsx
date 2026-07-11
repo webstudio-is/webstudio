@@ -151,6 +151,7 @@ export const CloneProjectDialog = ({
   const { handleSubmit, errors, state } = useCloneProjectWithDialog({
     projectId: id,
     authToken,
+    // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
     onCreate: handleOnCreate,
   });
 

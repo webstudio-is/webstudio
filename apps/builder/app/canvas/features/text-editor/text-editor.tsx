@@ -1761,12 +1761,15 @@ export const TextEditor = ({
       <LinkSanitizePlugin />
       <HistoryPlugin />
 
+      {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <SwitchBlockPlugin onNext={handleNext} />
       <RichTextContentPlugin
         onOpen={handleContextMenuOpen}
         rootInstanceSelector={rootInstanceSelector}
+        // oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback
         onNext={handleNext}
       />
+      {/* oxlint-disable-next-line react-hooks/rules-of-hooks -- our useEffectEvent is a stable callback */}
       <OnChangeOnBlurPlugin onChange={handleChange} />
       <InitCursorPlugin />
       <LinkSelectionPlugin
