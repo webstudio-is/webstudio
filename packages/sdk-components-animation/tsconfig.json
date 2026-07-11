@@ -9,7 +9,7 @@
   "exclude": ["private-src/perf/**/*"],
   "compilerOptions": {
     "target": "ESNext",
-
-    "types": ["react/experimental", "react-dom/experimental", "@types/node"]
+    "types": ["react/experimental", "react-dom/experimental", "@types/node"],
+    "rootDir": "../.."
   }
 }
