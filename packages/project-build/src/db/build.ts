@@ -24,6 +24,7 @@ import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
 import type { MarketplaceProduct } from "../shared//marketplace";
 import {
+  createProjectSettingsFromPages,
   projectSettings,
   removeLegacyProjectSettingsFromPages,
 } from "../shared/project-settings";
@@ -57,6 +58,10 @@ const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
   const pages = migratePages(parseConfig<unknown>(build.pages));
+  const parsedProjectSettings =
+    build.projectSettings === undefined || build.projectSettings === null
+      ? createProjectSettingsFromPages(pages)
+      : projectSettings.parse(parseConfig<unknown>(build.projectSettings));
   return {
     id: build.id,
     projectId: build.projectId,
@@ -64,9 +69,7 @@ const parseCompactBuild = async (
     createdAt: build.createdAt,
     updatedAt: build.updatedAt,
     pages: removeLegacyProjectSettingsFromPages(pages),
-    projectSettings: projectSettings.parse(
-      parseConfig<unknown>(build.projectSettings)
-    ),
+    projectSettings: parsedProjectSettings,
     breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
     styles: parseCompactData<StyleDecl>(build.styles),
     styleSources: parseCompactData<StyleSource>(build.styleSources),

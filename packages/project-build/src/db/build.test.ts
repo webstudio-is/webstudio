@@ -113,6 +113,33 @@ describe("loadBuildById (msw)", () => {
     expect(result.id).toBe("build-1");
     expect(result.projectId).toBe("proj-1");
   });
+
+  test("migrates project settings from legacy pages", async () => {
+    server.use(
+      db.get("Build", () =>
+        json([
+          {
+            ...buildRow,
+            pages: JSON.stringify({
+              ...JSON.parse(buildRow.pages),
+              meta: { siteName: "Legacy site" },
+              compiler: { atomicStyles: false },
+            }),
+            projectSettings: undefined,
+          },
+        ])
+      )
+    );
+
+    const result = await loadBuildById(createContext(), "build-1");
+
+    expect(result.projectSettings).toEqual({
+      meta: { siteName: "Legacy site" },
+      compiler: { atomicStyles: false },
+    });
+    expect(result.pages.meta).toBeUndefined();
+    expect(result.pages.compiler).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
