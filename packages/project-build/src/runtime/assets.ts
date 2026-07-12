@@ -57,7 +57,12 @@ export const assetUpdateInput = z.object({
   assetId: z.string(),
   values: z
     .object({
-      filename: z.string().optional(),
+      filename: z
+        .string()
+        .describe(
+          "Editable display filename. This does not change the immutable uploaded asset name; list-assets returns both name and filename."
+        )
+        .optional(),
       description: z.union([z.string(), z.null()]).optional(),
     })
     .refine((values) => Object.keys(values).length > 0, {
@@ -722,6 +727,7 @@ const getAssetUsageCounts = (build: AssetReferenceBuild, assets: Asset[]) => {
 const serializeAssetSummary = (asset: Asset) => ({
   id: asset.id,
   name: asset.name,
+  filename: asset.filename,
   description: asset.description,
   type: asset.type,
   size: asset.size,

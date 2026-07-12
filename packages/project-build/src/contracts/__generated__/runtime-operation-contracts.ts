@@ -37244,6 +37244,8 @@ export const runtimeOperationContractData = [
           properties: {
             filename: {
               type: "string",
+              description:
+                "Editable display filename. This does not change the immutable uploaded asset name; list-assets returns both name and filename.",
             },
             description: {
               anyOf: [
