@@ -39,6 +39,7 @@ import {
   serializeStyles,
   parseData,
   parseConfig,
+  createProjectSettingsFromPages,
   parseInstanceData,
   serializeConfig,
   serializeData,
@@ -215,9 +216,14 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "projectSettings") {
+        const serializedProjectSettings: string | null | undefined =
+          build.projectSettings;
         const projectSettings =
           buildData.projectSettings ??
-          parseConfig<ProjectSettings>(build.projectSettings);
+          (serializedProjectSettings === undefined ||
+          serializedProjectSettings === null
+            ? createProjectSettingsFromPages(parsePages(build.pages))
+            : parseConfig<ProjectSettings>(serializedProjectSettings));
         const nextProjectSettings = applyBuildNamespacePatches(
           "projectSettings",
           projectSettings,
