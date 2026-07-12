@@ -52,7 +52,6 @@ export default defineConfig(({ mode }) => {
       }),
       {
         name: "request-timing-logger",
-        enforce: "pre",
         configureServer(server) {
           server.middlewares.use((req, res, next) => {
             // Some dev proxies can forward HTTP/2 pseudo-headers such as
@@ -66,26 +65,10 @@ export default defineConfig(({ mode }) => {
                 req.url = path;
               }
             }
-            const method = req.headers[":method"];
-            if (req.method === undefined && typeof method === "string") {
-              req.method = method;
-            }
-            const authority = req.headers[":authority"];
-            if (
-              req.headers.host === undefined &&
-              typeof authority === "string"
-            ) {
-              req.headers.host = authority;
-            }
             for (const header of Object.keys(req.headers)) {
               if (header.startsWith(":")) {
                 delete req.headers[header];
               }
-            }
-            if (req.method === undefined) {
-              res.statusCode = 400;
-              res.end();
-              return;
             }
             // Pre-bundled dep chunks must never be served from a stale browser
             // cache. Vite uses ?v= to bust the cache, but some browsers (or

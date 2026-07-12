@@ -1,8 +1,25 @@
 diff --git a/dist/node/chunks/node.js b/dist/node/chunks/node.js
-index 21f8d7cf6b0c9e9f473b891b9b1de0d7f857179b..8a1ce7a4fa37682dcb823bdf78ec987d8d98c914 100644
+index 21f8d7cf6b0c9e9f473b891b9b1de0d7f857179b..bfdb5db2527feb05071a8a4e86c5c9c04c18d6c1 100644
 --- a/dist/node/chunks/node.js
 +++ b/dist/node/chunks/node.js
-@@ -8567,0 +8568 @@ var require_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-+		req$4.url ??= "/";
-@@ -8576,0 +8578 @@ var require_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-+			req$4.url ??= req$4.originalUrl;
+@@ -8564,14 +8564,16 @@ var require_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+ 	*/
+ 	proto.handle = function handle(req$4, res, out) {
+ 		var index = 0;
+-		var protohost = getProtohost(req$4.url) || "";
+-		var removed = "";
+-		var slashAdded = false;
+-		var stack = this.stack;
+ 		var done = out || finalhandler(req$4, res, {
+ 			env,
+ 			onerror: logerror
+ 		});
++		if (req$4.url === void 0) return done();
++		var protohost = getProtohost(req$4.url) || "";
++		var removed = "";
++		var slashAdded = false;
++		var stack = this.stack;
+ 		req$4.originalUrl = req$4.originalUrl || req$4.url;
+ 		function next(err$2) {
++			if (req$4.url === void 0) return done(err$2);
+ 			if (slashAdded) {
