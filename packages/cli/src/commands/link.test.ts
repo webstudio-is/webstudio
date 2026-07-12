@@ -65,7 +65,7 @@ test("saves global credentials and local project config", async () => {
       token: "token-1",
     },
   });
-  expect(JSON.parse(await readFile(LOCAL_CONFIG_FILE, "utf8"))).toEqual({
-    projectId,
-  });
+  expect(await readFile(LOCAL_CONFIG_FILE, "utf8")).toBe(
+    `${JSON.stringify({ projectId }, undefined, 2)}\n`
+  );
 });

@@ -129,7 +129,7 @@ export const saveShareLink = async (shareLink: string) => {
   await mkdir(dirname(localConfigPath), { recursive: true });
   await writeFile(
     localConfigPath,
-    JSON.stringify(localConfig, null, 2),
+    `${JSON.stringify(localConfig, null, 2)}\n`,
     "utf8"
   );
 
