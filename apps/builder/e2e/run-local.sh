@@ -106,8 +106,9 @@ install_playwright_chromium() {
   esac
 }
 
-build_builder_app() {
+build_e2e_apps() {
   pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder build
+  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/sdk-components-react-router build
 }
 
 run_builder_e2e_tests() {
@@ -154,8 +155,8 @@ if [ "$E2E_RUN_TESTS" = "true" ]; then
     install_playwright_chromium
 
   if [ "${E2E_BUILDER_URL:-}" = "" ]; then
-    run_step "build builder app" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \
-      build_builder_app
+    run_step "build builder and generated preview dependencies" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \
+      build_e2e_apps
   fi
 
   run_step "run builder e2e tests" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \

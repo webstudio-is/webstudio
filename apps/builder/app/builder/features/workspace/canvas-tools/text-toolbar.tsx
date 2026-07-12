@@ -171,7 +171,7 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
         </IconButton>
       </Tooltip>
 
-      {isWithinLink === false && (
+      {(isWithinLink === false || state.isLink) && (
         <Tooltip content="Inline link">
           <IconButton
             aria-label="Inline link"
