@@ -21,6 +21,9 @@ patchedDependencies:
   '@stitches/react@1.3.1-1':
     hash: knml42mpr6mlzseo3d6gjljiq4
     path: patches/@stitches__react@1.3.1-1.patch
+  rolldown-vite@7.3.1:
+    hash: 6tm24ey4eqte7lq3solzd5tpja
+    path: patches/rolldown-vite@7.3.1.patch
 
 importers:
 
@@ -229,7 +232,7 @@ importers:
         version: 66.6.8
       '@vercel/remix':
         specifier: 2.15.3
-        version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0)))(@remix-run/node@2.16.5(typescript@7.0.2))(@remix-run/server-runtime@2.16.5(typescript@7.0.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0)))(@remix-run/node@2.16.5(typescript@7.0.2))(@remix-run/server-runtime@2.16.5(typescript@7.0.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
         version: link:../../packages/asset-uploader
@@ -446,7 +449,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: ^2.16.5
-        version: 2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))
+        version: 2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
@@ -500,7 +503,7 @@ importers:
         version: 7.0.2
       vite:
         specifier: npm:rolldown-vite@^7.3.1
-        version: rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3)
+        version: rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3)
       vitest:
         specifier: ^3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)
@@ -14617,7 +14620,7 @@ snapshots:
       - utf-8-validate
       - yaml
 
-  '@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))':
+  '@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))':
     dependencies:
       '@babel/core': 7.26.10
       '@babel/generator': 7.27.0
@@ -14679,7 +14682,7 @@ snapshots:
     optionalDependencies:
       '@remix-run/serve': 2.16.5(typescript@7.0.2)
       typescript: 7.0.2
-      vite: rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3)
+      vite: rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3)
       wrangler: 3.63.2(@cloudflare/workers-types@4.20240718.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -15705,9 +15708,9 @@ snapshots:
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       ts-morph: 12.0.0
 
-  '@vercel/remix@2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0)))(@remix-run/node@2.16.5(typescript@7.0.2))(@remix-run/server-runtime@2.16.5(typescript@7.0.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@vercel/remix@2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0)))(@remix-run/node@2.16.5(typescript@7.0.2))(@remix-run/server-runtime@2.16.5(typescript@7.0.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@remix-run/dev': 2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))
+      '@remix-run/dev': 2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(tsx@4.19.3)(typescript@7.0.2)(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))
       '@remix-run/node': 2.16.5(typescript@7.0.2)
       '@remix-run/server-runtime': 2.16.5(typescript@7.0.2)
       '@vercel/static-config': 3.0.0
@@ -15753,11 +15756,11 @@ snapshots:
       - vite
     optional: true
 
-  '@vitest/browser@3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(vitest@3.1.2)':
+  '@vitest/browser@3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(vitest@3.1.2)':
     dependencies:
       '@testing-library/dom': 10.4.0
       '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.0)
-      '@vitest/mocker': 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))
+      '@vitest/mocker': 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))
       '@vitest/utils': 3.1.2
       magic-string: 0.30.21
       sirv: 3.0.1
@@ -15808,7 +15811,7 @@ snapshots:
       tinyrainbow: 2.0.0
       vitest: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)
     optionalDependencies:
-      '@vitest/browser': 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(vitest@3.1.2)
+      '@vitest/browser': 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(vitest@3.1.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -15828,14 +15831,14 @@ snapshots:
       msw: 2.13.2(@types/node@22.13.10)(@typescript/typescript6@6.0.2)
       vite: 6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)
 
-  '@vitest/mocker@3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))':
+  '@vitest/mocker@3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))':
     dependencies:
       '@vitest/spy': 3.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.17
     optionalDependencies:
       msw: 2.13.2(@types/node@22.13.10)(typescript@7.0.2)
-      vite: rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3)
+      vite: rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3)
     optional: true
 
   '@vitest/mocker@3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3))':
@@ -19875,7 +19878,7 @@ snapshots:
     dependencies:
       glob: 7.2.3
 
-  rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3):
+  rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3):
     dependencies:
       '@oxc-project/runtime': 0.101.0
       fdir: 6.5.0(picomatch@4.0.5)
@@ -21015,7 +21018,7 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 22.13.10
-      '@vitest/browser': 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(rolldown-vite@7.3.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(vitest@3.1.2)
+      '@vitest/browser': 3.1.2(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(playwright@1.50.1)(rolldown-vite@7.3.1(patch_hash=6tm24ey4eqte7lq3solzd5tpja)(@emnapi/core@1.9.1)(@emnapi/runtime@1.3.1)(@types/node@22.13.10)(esbuild@0.17.6)(jiti@2.4.2)(tsx@4.19.3))(vitest@3.1.2)
       jsdom: 20.0.3
     transitivePeerDependencies:
       - jiti
