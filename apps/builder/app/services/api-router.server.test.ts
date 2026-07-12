@@ -71,6 +71,35 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("allows CLI clients to refresh pages without project settings", async () => {
+    const build = {
+      id: "build-1",
+      projectId: "project-1",
+      version: 1,
+      pages: createDefaultPages({ rootInstanceId: "root" }),
+      projectSettings: { agents: "Project instructions" },
+    } as unknown as Awaited<
+      ReturnType<typeof projectBuild.loadDevBuildByProjectId>
+    >;
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+
+    const caller = createCaller({
+      ...createContext(true),
+      apiClient: { type: "cli", version: "0.276.0" },
+    });
+
+    await expect(
+      caller.build.get({ projectId: "project-1", include: ["pages"] })
+    ).resolves.toMatchObject({
+      projectId: "project-1",
+      buildId: "build-1",
+      version: 1,
+      pages: expect.any(Array),
+    });
+  });
+
   test("public operation catalog paths exist on the api router", () => {
     const procedures = getApiRouterProcedures(apiRouter);
 
