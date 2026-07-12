@@ -149,8 +149,18 @@ export const patchAssetsWithClient = async (
         .from("Asset")
         .update({ filename, description })
         .eq("id", asset.id)
-        .eq("projectId", asset.projectId);
+        .eq("projectId", asset.projectId)
+        .select("filename, description")
+        .single();
       assertPostgrestSuccess(updatedAsset);
+      if (
+        updatedAsset.data?.filename !== (filename ?? null) ||
+        updatedAsset.data?.description !== (description ?? null)
+      ) {
+        throw new Error(
+          `Asset metadata update was not persisted for ${asset.id}`
+        );
+      }
     }
   }
 
