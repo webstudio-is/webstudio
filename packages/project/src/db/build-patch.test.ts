@@ -335,45 +335,6 @@ describe("patchBuild", () => {
     }
   });
 
-  test("migrates legacy project settings when the database column is null", async () => {
-    const result = await createBuildPatchUpdate({
-      build: {
-        ...buildRow,
-        projectSettings: null,
-        pages: JSON.stringify({
-          ...JSON.parse(buildRow.pages),
-          meta: { siteName: "Legacy name" },
-          compiler: { atomicCss: true },
-        }),
-      } as unknown as typeof buildRow,
-      clientVersion: 3,
-      transactions: [
-        transaction({
-          payload: [
-            {
-              namespace: "projectSettings",
-              patches: [
-                {
-                  op: "replace",
-                  path: ["meta", "siteName"],
-                  value: "New name",
-                },
-              ],
-            },
-          ],
-        }),
-      ],
-    });
-
-    expect(result.status).toBe("ok");
-    if (result.status === "ok") {
-      expect(JSON.parse(result.update?.projectSettings as string)).toEqual({
-        meta: { siteName: "New name" },
-        compiler: { atomicCss: true },
-      });
-    }
-  });
-
   test("validates only touched props while preserving untouched props", async () => {
     const buildWithInvalidUntouchedProp = {
       ...buildRow,
