@@ -7,11 +7,6 @@
     "createdAt": "2024-07-29T12:50:07.515+00:00",
     "updatedAt": "2024-07-29T12:50:07.515+00:00",
     "pages": {
-      "meta": {
-        "siteName": "",
-        "faviconAssetId": "",
-        "code": ""
-      },
       "homePageId": "9di_L14CzctvSruIoKVvE",
       "rootFolderId": "root",
       "pages": [
@@ -411,6 +406,14 @@
       ]
     ],
     "resources": [],
+    "projectSettings": {
+      "meta": {
+        "siteName": "",
+        "faviconAssetId": "",
+        "code": ""
+      },
+      "compiler": {}
+    },
     "deployment": {
       "domains": [],
       "projectDomain": "cli-basic-test-d0osr"

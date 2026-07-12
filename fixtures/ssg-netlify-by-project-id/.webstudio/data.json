@@ -7,7 +7,6 @@
     "createdAt": "2026-01-04T10:46:48.415+00:00",
     "updatedAt": "2026-01-04T10:46:48.415+00:00",
     "pages": {
-      "meta": {},
       "homePageId": "Y60VJnVZMU_ifI0GnAR1N",
       "rootFolderId": "root",
       "pages": [
@@ -145,6 +144,10 @@
       ]
     ],
     "resources": [],
+    "projectSettings": {
+      "meta": {},
+      "compiler": {}
+    },
     "deployment": {
       "destination": "saas",
       "domains": ["fixture-client-do-not-touch-wsmel"],
