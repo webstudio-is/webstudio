@@ -45,6 +45,8 @@ For this simple path, do not grep source files, dump full MCP resources, or writ
 
 When authoring JSX for `insert-fragment`, use Webstudio component helpers and Webstudio style syntax. Use `ws:style={css\`...\`}`for Webstudio-native CSS, or use React-style object syntax such as`style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
 
+When the task says another user will edit a page in Content mode, use a Content Block (`ws:block`) around every editable region. Content-mode users can edit text and supported props only in descendants of that block; content outside it is read-only. Put reusable insertable options in the block's `ws:block-template` child. Do not put intended editor content inside that template container: templates are protected source material, while an inserted template copy becomes an editable direct child of the Content Block. Verify this structure before handoff.
+
 Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`. JSX fragments are declarative project data; use the built-in Webstudio helpers instead.
 
 Use Webstudio prop names in JSX: `class`, `for`, `aria-label`, and other HTML/Webstudio names. Do not use React-only aliases such as `className` or `htmlFor`; the runtime rejects them with the Webstudio prop name to use.

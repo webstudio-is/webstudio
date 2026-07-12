@@ -20,6 +20,8 @@ node packages/cli/local.js insert-fragment '{"parentInstanceId":"parent-id","fra
 
 For simple authored/styled sections, run the three commands above. Do not grep source files, dump full MCP resources, or write parser scripts first. Use `list-pages`, `get-page-by-path`, or `list-instances` only when you still need the target `parentInstanceId`.
 
+When building for a Content-mode editor, use a Content Block (`ws:block`) around every region that editor must change. Content-mode text and supported props are editable only in Content Block descendants; content outside is read-only. Keep reusable insertable source options in the block's `ws:block-template` child. Templates themselves are protected; an editor's inserted copy becomes an editable direct child of the Content Block. Verify this structure before handoff.
+
 Run it from the linked Webstudio project root. The startup status line prints that absolute root; use it for local files such as `<project root>/.temp/script.mjs`, screenshots, and generated artifacts.
 
 For experiments, pass `--dry-run` to local-capable mutation calls. Copying a `.webstudio` folder is not an isolated project clone; `.webstudio/config.json` still points to the same remote project, so non-dry-run mutations can commit to that project.

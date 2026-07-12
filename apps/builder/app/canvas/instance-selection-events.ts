@@ -23,6 +23,7 @@ import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime/tree";
+import { isTextEditableInContentMode } from "./shared/content-mode";
 
 type SelectionAnchor = {
   current: undefined | InstanceSelector;
@@ -147,6 +148,17 @@ const handleEdit = (
     );
 
     if (hasExpressionChildren) {
+      editableInstanceSelector = undefined;
+    }
+
+    if (
+      editableInstanceSelector !== undefined &&
+      isTextEditableInContentMode({
+        isContentMode: true,
+        instanceSelector: editableInstanceSelector,
+        instances,
+      }) === false
+    ) {
       editableInstanceSelector = undefined;
     }
   }

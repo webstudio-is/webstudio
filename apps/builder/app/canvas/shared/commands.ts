@@ -5,6 +5,7 @@ import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime/lookup";
 import {
   $allSelectedInstanceSelectors,
+  $isContentMode,
   $registeredComponentMetas,
   $propsIndex,
   $selectedInstanceSelector,
@@ -27,6 +28,7 @@ import {
 import { deleteSelectedInstance } from "~/shared/instance-utils/mutation";
 import { findClosestRichText } from "@webstudio-is/project-build/runtime/content-model";
 import { getDeletablePageActionTarget } from "~/shared/page-action-target";
+import { isTextEditableInContentMode } from "./content-mode";
 
 const deleteSelectedPageOrInstance = () => {
   if (getDeletablePageActionTarget() !== undefined) {
@@ -111,6 +113,16 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           }
 
           editableInstanceSelector = selectors[0];
+        }
+
+        if (
+          isTextEditableInContentMode({
+            isContentMode: $isContentMode.get(),
+            instanceSelector: editableInstanceSelector,
+            instances: $instances.get(),
+          }) === false
+        ) {
+          return;
         }
 
         const element = getElementByInstanceSelector(editableInstanceSelector);
