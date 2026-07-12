@@ -22,7 +22,7 @@ import {
 } from "@webstudio-is/project-migrations/pages";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
-import type { MarketplaceProduct } from "../shared//marketplace";
+import { marketplaceProduct } from "../shared/marketplace";
 import {
   createProjectSettingsFromPages,
   projectSettings,
@@ -54,6 +54,22 @@ const parseCompactInstanceData = (serialized: string) => {
   return instances;
 };
 
+const parseMarketplaceProduct = (serialized: string | null | undefined) => {
+  const value =
+    serialized === undefined || serialized === null
+      ? undefined
+      : parseConfig<unknown>(serialized);
+  if (
+    value === undefined ||
+    (typeof value === "object" &&
+      value !== null &&
+      Object.keys(value).length === 0)
+  ) {
+    return undefined;
+  }
+  return marketplaceProduct.parse(value);
+};
+
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
@@ -81,9 +97,7 @@ const parseCompactBuild = async (
     resources: parseCompactData<Resource>(build.resources),
     instances: parseCompactInstanceData(build.instances),
     deployment: parseDeployment(build.deployment),
-    marketplaceProduct: parseConfig<MarketplaceProduct>(
-      build.marketplaceProduct
-    ),
+    marketplaceProduct: parseMarketplaceProduct(build.marketplaceProduct),
   } satisfies CompactBuild;
 };
 

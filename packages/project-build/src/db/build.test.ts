@@ -112,6 +112,7 @@ describe("loadBuildById (msw)", () => {
     const result = await loadBuildById(createContext(), "build-1");
     expect(result.id).toBe("build-1");
     expect(result.projectId).toBe("proj-1");
+    expect(result.marketplaceProduct).toBeUndefined();
   });
 
   test("migrates project settings from legacy pages", async () => {
