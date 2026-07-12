@@ -579,6 +579,7 @@ export const loadProjectBundleByBuildId = async (
     ...headers,
   }).query("build.loadProjectBundleByBuildId", {
     buildId: params.buildId,
+    bundleVersion: currentBundleVersion,
   });
   return publishedProjectBundle.parse(data);
 };
@@ -590,6 +591,7 @@ export const loadProjectBundleByProjectId = async (
     "build.loadProjectBundleByProjectId",
     {
       projectId: params.projectId,
+      bundleVersion: currentBundleVersion,
     }
   );
   return publishedProjectBundle.parse(data);

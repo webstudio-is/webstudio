@@ -20,3 +20,13 @@ export const removeLegacyProjectSettingsFromPages = (pages: Pages) => {
   pages.compiler = undefined;
   return pages;
 };
+
+export const removeAgentInstructionsFromProjectSettings = (
+  settings: ProjectSettings
+): ProjectSettings => {
+  const { agentInstructions: _agentInstructions, ...meta } = settings.meta;
+  return {
+    ...settings,
+    meta,
+  };
+};
