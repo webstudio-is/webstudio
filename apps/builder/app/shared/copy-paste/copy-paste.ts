@@ -16,6 +16,7 @@ import { jsx } from "./plugin-jsx";
 import { markdown } from "./plugin-markdown";
 import { webflow } from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
+import { readClipboardText } from "../clipboard";
 
 const isTextEditing = (event: ClipboardEvent) => {
   // Text is edited on the Canvas using the default Canvas text editor settings.
@@ -291,14 +292,20 @@ export const copyTemplate = (templateId: string) => {
 };
 
 export const pastePage = async (targetFolderId?: string) => {
-  const text = await navigator.clipboard.readText();
+  const text = await readClipboardText();
+  if (text === undefined) {
+    return false;
+  }
   const result = await handlePastePage(text, targetFolderId);
   reportPasteResult(result);
   return isPasteHandled(result);
 };
 
 export const emitPaste = async () => {
-  const text = await navigator.clipboard.readText();
+  const text = await readClipboardText();
+  if (text === undefined) {
+    return;
+  }
 
   // Create and dispatch a paste event to go through the normal handlePaste flow
   const dataTransfer = new DataTransfer();

@@ -70,6 +70,7 @@ import { showWrapComponentsList } from "../features/command-panel/groups/wrap-gr
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
 import { showDuplicateTokensView } from "../features/command-panel/groups/duplicate-tokens-group";
 import { builderApi } from "~/shared/builder-api";
+import { readClipboardText } from "~/shared/clipboard";
 import { getSetting, setSetting } from "./client-settings";
 import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
@@ -1087,7 +1088,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         ) {
           return;
         }
-        const html = await navigator.clipboard.readText();
+        const html = await readClipboardText();
+        if (html === undefined) {
+          return;
+        }
         const parseResult = generateFragmentFromHtml(html);
         const { skippedSelectors } = parseResult;
         let fragment: WebstudioFragment = parseResult;
