@@ -10,6 +10,7 @@ const {
   assertSingleOpCallToolSupported,
   applyMcpRunOptions,
   createMcpPreviewHandlers,
+  createMcpResourceErrorPayload,
   createMcpRunCheckpointStopPayload,
   createMcpRunErrorPayload,
   createMcpSingleOpCallErrorPayload,
@@ -95,6 +96,18 @@ test("documents MCP stdio startup and discovery tools", () => {
     expect.any(Function),
     expect.any(Function)
   );
+  expect(yargs.command).toHaveBeenCalledWith(
+    ["list-resources"],
+    "List the MCP resources available for the configured project",
+    expect.any(Function),
+    expect.any(Function)
+  );
+  expect(yargs.command).toHaveBeenCalledWith(
+    ["read-resource <uri>"],
+    "Read one MCP resource by URI",
+    expect.any(Function),
+    expect.any(Function)
+  );
   expect(yargs.example).toHaveBeenCalledWith(
     "$0 mcp single-op-call meta.index",
     "Debug one MCP tool without writing a stdio client script"
@@ -102,6 +115,14 @@ test("documents MCP stdio startup and discovery tools", () => {
   expect(yargs.example).toHaveBeenCalledWith(
     "$0 mcp list-tools",
     "Print the concise MCP tool catalog"
+  );
+  expect(yargs.example).toHaveBeenCalledWith(
+    "$0 mcp list-resources",
+    "List available MCP resources"
+  );
+  expect(yargs.example).toHaveBeenCalledWith(
+    "$0 mcp read-resource webstudio://project/guide",
+    "Read the project MCP guide"
   );
   expect(yargs.example).toHaveBeenCalledWith(
     '$0 mcp run \'[{"tool":"components.search","input":{"brief":"button"}}]\'',
@@ -454,6 +475,22 @@ test("formats MCP single-op-call failures as structured JSON payloads", () => {
     meta: {
       elapsedMs: 123,
     },
+  });
+});
+
+test("formats unknown MCP resource failures as structured JSON", () => {
+  expect(
+    createMcpResourceErrorPayload(
+      new Error('Unknown MCP resource "webstudio://project/unknown".'),
+      12
+    )
+  ).toEqual({
+    ok: false,
+    error: {
+      code: "MCP_RESOURCE_FAILED",
+      message: 'Unknown MCP resource "webstudio://project/unknown".',
+    },
+    meta: { elapsedMs: 12 },
   });
 });
 

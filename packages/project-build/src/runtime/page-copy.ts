@@ -960,7 +960,7 @@ export const reorderPageTemplatesMutable = (
   sourceId: string,
   targetId: string,
   position: "before" | "after",
-  data: WebstudioData
+  data: Pick<WebstudioData, "pages">
 ) => {
   const templates = data.pages.pageTemplates;
   if (templates === undefined || sourceId === targetId) {
@@ -993,8 +993,8 @@ export const reorderPageTemplates = (
   state: BuilderState,
   input: z.infer<typeof pageTemplateReorderInput>
 ) => {
-  const data = getRequiredWebstudioData(state);
-  const templates = data.pages.pageTemplates;
+  const pages = getRequiredPages(state);
+  const templates = pages.pageTemplates;
   if (templates?.has(input.sourceTemplateId) !== true) {
     return throwBuilderRuntimeError(
       "NOT_FOUND",
@@ -1008,16 +1008,12 @@ export const reorderPageTemplates = (
     );
   }
 
-  const before = createWebstudioDataFromBuild({
-    build: data,
-    assets: Array.from(data.assets.values()),
-  });
-  const after = structuredClone(before);
+  const after = structuredClone(pages);
   reorderPageTemplatesMutable(
     input.sourceTemplateId,
     input.targetTemplateId,
     input.position,
-    after
+    { pages: after }
   );
   return createRuntimeMutation({
     payload:
@@ -1030,7 +1026,7 @@ export const reorderPageTemplates = (
                 {
                   op: "replace",
                   path: ["pageTemplates"],
-                  value: after.pages.pageTemplates ?? new Map(),
+                  value: after.pageTemplates ?? new Map(),
                 },
               ],
             },

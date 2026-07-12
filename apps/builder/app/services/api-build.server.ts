@@ -102,6 +102,7 @@ export const createBuildSnapshot = ({
     snapshot.rootFolderId = pages.rootFolderId;
     if (include.has("pages")) {
       snapshot.redirects = pages.redirects;
+      snapshot.pageTemplates = pages.pageTemplates;
     }
     add("pages", pages.pages);
     add("folders", pages.folders);

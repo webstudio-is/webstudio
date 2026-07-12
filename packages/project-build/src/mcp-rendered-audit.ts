@@ -18,13 +18,20 @@ type ExecuteRead = (
 ) => Promise<ProjectSessionEnvelope>;
 
 type StartPreview = (
-  input: { source: "session" },
+  input: { source: "session"; port: number },
   progress: { report: (message: string) => void }
 ) => Promise<unknown>;
 
 type CaptureScreenshot = (
   input: ProjectSessionScreenshotInput
 ) => Promise<ProjectSessionScreenshotResult>;
+
+type StopPreview = () => Promise<unknown>;
+
+export const maxRenderedAuditCaptures = 120;
+const renderedAuditScreenshotTimeout = 10_000;
+const renderedAuditPreviewPort = 5177;
+const renderedAuditCaptureConcurrency = 3;
 
 export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
   const widths = new Set([375, 1440]);
@@ -177,6 +184,7 @@ export const augmentAuditWithRenderedChecks = async ({
   input,
   executeRead,
   startPreview,
+  stopPreview,
   captureScreenshot,
   reportProgress,
 }: {
@@ -184,6 +192,7 @@ export const augmentAuditWithRenderedChecks = async ({
   input: unknown;
   executeRead: ExecuteRead;
   startPreview?: StartPreview;
+  stopPreview?: StopPreview;
   captureScreenshot?: CaptureScreenshot;
   reportProgress?: (message: string) => void;
 }): Promise<ProjectSessionEnvelope> => {
@@ -191,6 +200,7 @@ export const augmentAuditWithRenderedChecks = async ({
     isRecord(input) === false ||
     input.rendered !== true ||
     startPreview === undefined ||
+    stopPreview === undefined ||
     captureScreenshot === undefined ||
     isRecord(envelope.result) === false
   ) {
@@ -217,13 +227,9 @@ export const augmentAuditWithRenderedChecks = async ({
   try {
     pagesEnvelope = await executeRead("list-pages", {});
     breakpointsEnvelope = await executeRead("list-breakpoints", {});
-    await startPreview(
-      { source: "session" },
-      { report: (message) => reportProgress?.(message) }
-    );
   } catch (error) {
     failures.push({
-      message: `Rendered audit could not start: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Rendered audit could not prepare: ${error instanceof Error ? error.message : String(error)}`,
     });
     return finish(false);
   }
@@ -237,8 +243,40 @@ export const augmentAuditWithRenderedChecks = async ({
     return finish(false);
   }
 
-  for (const page of pages) {
-    for (const viewport of viewports) {
+  const captureCount = pages.length * viewports.length;
+  if (captureCount > maxRenderedAuditCaptures) {
+    failures.push({
+      message:
+        `Rendered audit requires ${captureCount} screenshots, exceeding the ` +
+        `${maxRenderedAuditCaptures}-screenshot limit. Run it for one page with pagePath or pageId.`,
+    });
+    return finish(false);
+  }
+
+  try {
+    await startPreview(
+      { source: "session", port: renderedAuditPreviewPort },
+      { report: (message) => reportProgress?.(message) }
+    );
+  } catch (error) {
+    failures.push({
+      message: `Rendered audit could not start: ${error instanceof Error ? error.message : String(error)}`,
+    });
+    return finish(false);
+  }
+
+  try {
+    const captures = pages.flatMap((page) =>
+      viewports.map((viewport) => ({ page, viewport }))
+    );
+    let nextCapture = 0;
+    const captureNext = async (): Promise<void> => {
+      const capture = captures[nextCapture];
+      nextCapture += 1;
+      if (capture === undefined) {
+        return;
+      }
+      const { page, viewport } = capture;
       const pagePath = page.path || "/";
       reportProgress?.(
         `tool audit capturing ${pagePath} at ${viewport.width}px`
@@ -252,6 +290,7 @@ export const augmentAuditWithRenderedChecks = async ({
           includeImageMetrics: performanceEnabled,
           includeResourceMetrics: performanceEnabled,
           browser: "auto",
+          timeout: renderedAuditScreenshotTimeout,
         });
         if (screenshot.layout === undefined) {
           failures.push({
@@ -260,7 +299,7 @@ export const augmentAuditWithRenderedChecks = async ({
             viewport,
             message: "Screenshot did not return rendered layout metrics.",
           });
-          continue;
+          return await captureNext();
         }
         const layout: Layout = {
           ...screenshot.layout,
@@ -297,6 +336,21 @@ export const augmentAuditWithRenderedChecks = async ({
           message: error instanceof Error ? error.message : String(error),
         });
       }
+      await captureNext();
+    };
+    await Promise.all(
+      Array.from(
+        { length: Math.min(renderedAuditCaptureConcurrency, captures.length) },
+        captureNext
+      )
+    );
+  } finally {
+    try {
+      await stopPreview();
+    } catch (error) {
+      failures.push({
+        message: `Rendered audit could not stop its preview: ${error instanceof Error ? error.message : String(error)}`,
+      });
     }
   }
   return finish(

@@ -433,6 +433,18 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
       mcpListTools
     )
     .command(
+      ["list-resources"],
+      "List the MCP resources available for the configured project",
+      mcpListResourcesOptions,
+      mcpListResources
+    )
+    .command(
+      ["read-resource <uri>"],
+      "Read one MCP resource by URI",
+      mcpReadResourceOptions,
+      mcpReadResource
+    )
+    .command(
       ["single-op-call <tool> [input]"],
       "Call one MCP tool in a fresh CLI process for debugging",
       mcpSingleOpCallOptions,
@@ -453,6 +465,11 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
       "Debug one MCP tool without writing a stdio client script"
     )
     .example("$0 mcp list-tools", "Print the concise MCP tool catalog")
+    .example("$0 mcp list-resources", "List available MCP resources")
+    .example(
+      "$0 mcp read-resource webstudio://project/guide",
+      "Read the project MCP guide"
+    )
     .example(
       '$0 mcp run \'[{"tool":"components.search","input":{"brief":"button"}}]\'',
       "Run a small multi-step MCP workflow from inline JSON"
@@ -485,6 +502,35 @@ const mcpListToolsOptions = (yargs: CommonYargsArgv) =>
 type McpListToolsOptions = StrictYargsOptionsToInterface<
   typeof mcpListToolsOptions
 >;
+
+const mcpListResourcesOptions = (yargs: CommonYargsArgv) =>
+  yargs.option("json", {
+    type: "boolean",
+    describe: "Accepted for compatibility. MCP resource output is always JSON",
+    default: false,
+  });
+
+type McpListResourcesOptions = StrictYargsOptionsToInterface<
+  typeof mcpListResourcesOptions
+>;
+
+const mcpReadResourceOptions = (yargs: CommonYargsArgv) =>
+  yargs
+    .positional("uri", {
+      type: "string",
+      describe: "MCP resource URI, for example webstudio://project/guide",
+      demandOption: true,
+    })
+    .option("json", {
+      type: "boolean",
+      describe:
+        "Accepted for compatibility. MCP resource output is always JSON",
+      default: false,
+    });
+
+type McpReadResourceOptions = StrictYargsOptionsToInterface<
+  typeof mcpReadResourceOptions
+> & { uri?: string };
 
 const mcpSingleOpCallOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -796,6 +842,14 @@ export const __testing__ = {
   assertPersistedMcpCheckpointAcknowledged,
   clearPersistedMcpCheckpoint,
   createMcpSingleOpCallErrorPayload,
+  createMcpResourceErrorPayload: (error: unknown, elapsedMs: number) => ({
+    ok: false,
+    error: {
+      code: getStableErrorCode(error) ?? "MCP_RESOURCE_FAILED",
+      message: error instanceof Error ? error.message : String(error),
+    },
+    meta: { elapsedMs },
+  }),
   createMcpRunErrorPayload,
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
@@ -1146,6 +1200,38 @@ export const mcpListTools = async (_options: McpListToolsOptions) => {
     )}\n`
   );
   printJson(result.structuredContent);
+};
+
+export const mcpListResources = async (_options: McpListResourcesOptions) => {
+  const startedAt = Date.now();
+  const { host } = await createCliMcpHost();
+  const core = createProjectSessionMcpCore(host);
+  printJson({
+    ok: true,
+    data: { resources: core.listResources() },
+    meta: { elapsedMs: Date.now() - startedAt },
+  });
+};
+
+export const mcpReadResource = async (options: McpReadResourceOptions) => {
+  if (options.uri === undefined || options.uri.trim() === "") {
+    throw new Error("mcp read-resource requires a resource URI.");
+  }
+  const startedAt = Date.now();
+  try {
+    const { host } = await createCliMcpHost();
+    const core = createProjectSessionMcpCore(host);
+    printJson({
+      ok: true,
+      data: await core.readResource({ uri: options.uri }),
+      meta: { elapsedMs: Date.now() - startedAt },
+    });
+  } catch (error) {
+    printJson(
+      __testing__.createMcpResourceErrorPayload(error, Date.now() - startedAt)
+    );
+    throw new HandledCliError();
+  }
 };
 
 export const mcp = async () => {

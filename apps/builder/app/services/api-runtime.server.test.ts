@@ -13,7 +13,14 @@ const createBuild = (): CompactBuild =>
     projectId: "project-1",
     version: 1,
     pages: createDefaultPages({ rootInstanceId: "root-1" }),
-    instances: [{ type: "instance", id: "root-1", component: "Body" }],
+    instances: [
+      {
+        type: "instance",
+        id: "root-1",
+        component: "Body",
+        children: [],
+      },
+    ],
     props: [],
     styles: [],
     styleSources: [],
@@ -58,6 +65,16 @@ describe("api runtime adapter", () => {
         input: { pageId: "missing" },
       })
     ).rejects.toThrow("Page not found");
+  });
+
+  test("strips API transport fields before strict runtime validation", async () => {
+    await expect(
+      executeApiRuntimeOperation({
+        id: "project.search",
+        build: createBuild(),
+        input: { projectId: "project-1", query: "Home" },
+      })
+    ).resolves.toMatchObject({ query: "Home" });
   });
 
   test("awaits async runtime mutations before reading mutation payload", async () => {

@@ -1601,19 +1601,11 @@ export const importProjectBundleWithAssets = async (
 ): Promise<ImportProjectBundleResult> => {
   await checkProjectBuildPermission(params);
 
-  const dataToImport =
+  let dataToImport =
     params.skipAssets === true ? { ...params.data, assets: [] } : params.data;
 
-  if (params.skipAssets !== true) {
-    params.onUploadAssets?.(params.data.assets);
-    await uploadAssets({
-      ...params,
-      assets: params.data.assets,
-      readAssetData: params.readAssetData,
-    });
-  }
-
   const maxRetries = params.maxMissingAssetImportRetries ?? 5;
+  let uploadAttempts = 0;
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     params.onImportAttempt?.();
     try {
@@ -1632,10 +1624,20 @@ export const importProjectBundleWithAssets = async (
         throw error;
       }
 
-      const missingAssets = params.data.assets.filter((asset) =>
+      const missingImportAssets = dataToImport.assets.filter((asset) =>
         assetNames.includes(asset.name)
       );
-      if (missingAssets.length !== assetNames.length) {
+      if (missingImportAssets.length !== assetNames.length) {
+        throw error;
+      }
+
+      const missingAssetIds = new Set(
+        missingImportAssets.map((asset) => asset.id)
+      );
+      const missingAssets = params.data.assets.filter((asset) =>
+        missingAssetIds.has(asset.id)
+      );
+      if (missingAssets.length !== missingImportAssets.length) {
         throw error;
       }
 
@@ -1645,12 +1647,35 @@ export const importProjectBundleWithAssets = async (
         throw error;
       }
 
-      params.onMissingAssets?.(missingAssets);
-      await uploadAssets({
+      if (uploadAttempts === 0) {
+        params.onUploadAssets?.(missingAssets);
+      } else {
+        params.onMissingAssets?.(missingAssets);
+      }
+      const uploadedAssets = await uploadAssets({
         ...params,
         assets: missingAssets,
         readAssetData,
       });
+      if (uploadedAssets.length !== missingAssets.length) {
+        throw new Error(
+          `Expected ${missingAssets.length} uploaded assets, received ${uploadedAssets.length}.`
+        );
+      }
+      const uploadedNamesById = new Map(
+        missingAssets.map((asset, index) => [
+          asset.id,
+          uploadedAssets[index].name,
+        ])
+      );
+      dataToImport = {
+        ...dataToImport,
+        assets: dataToImport.assets.map((asset) => {
+          const name = uploadedNamesById.get(asset.id);
+          return name === undefined ? asset : { ...asset, name };
+        }),
+      };
+      uploadAttempts += 1;
     }
   }
 

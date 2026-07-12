@@ -286,6 +286,18 @@ describe("api build snapshot", () => {
   test("returns page folders and data namespaces when requested", () => {
     const pages = createDefaultPages({ rootInstanceId: "root-1" });
     pages.redirects = [{ old: "/old", new: "/new", status: "301" }];
+    pages.pageTemplates = new Map([
+      [
+        "template-1",
+        {
+          id: "template-1",
+          name: "Landing",
+          title: "Landing",
+          rootInstanceId: "template-root-1",
+          meta: {},
+        },
+      ],
+    ]);
     const build = {
       id: "build-1",
       projectId: "project-1",
@@ -332,6 +344,15 @@ describe("api build snapshot", () => {
           compiler: { atomicStyles: true },
         },
         redirects: [{ old: "/old", new: "/new", status: "301" }],
+        pageTemplates: [
+          {
+            id: "template-1",
+            name: "Landing",
+            title: "Landing",
+            rootInstanceId: "template-root-1",
+            meta: {},
+          },
+        ],
         resources: [{ id: "resource-1" }],
         variables: [{ id: "variable-1" }],
         breakpoints: [{ id: "breakpoint-1" }],

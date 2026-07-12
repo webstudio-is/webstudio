@@ -5124,7 +5124,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       const isRenderedAudit = isAuditInput && input.rendered === true;
       if (
         isRenderedAudit &&
-        (startPreview === undefined || captureScreenshot === undefined)
+        (startPreview === undefined ||
+          stopPreview === undefined ||
+          captureScreenshot === undefined)
       ) {
         throw new Error(
           "Rendered audit is unavailable because this MCP host does not provide preview and screenshot capabilities."
@@ -5158,6 +5160,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
                   : operationInput,
               executeRead,
               startPreview,
+              stopPreview,
               captureScreenshot,
               reportProgress: reportToolProgress,
             })
