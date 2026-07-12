@@ -25,6 +25,7 @@ import {
   completionKeymap,
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
+import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { css } from "@webstudio-is/design-system";
 import {
@@ -44,6 +45,13 @@ const wrapperStyle = css({
     size: {
       default: getCodeEditorCssVars({ minHeight: "160px", maxHeight: "320px" }),
       small: getCodeEditorCssVars({ minHeight: "16px", maxHeight: "120px" }),
+      full: {
+        ...getCodeEditorCssVars({ minHeight: "100%", maxHeight: "100%" }),
+        height: "100%",
+        "& > div": { height: "100%" },
+        "& > div > div:first-child": { height: "100%" },
+        "& .cm-editor, & .cm-scroller": { height: "100%" },
+      },
     },
   },
   defaultVariants: {
@@ -93,6 +101,16 @@ const getMarkdownExtensions = () => [
   keymap.of(closeBracketsKeymap),
 ];
 
+const getJsonExtensions = () => [
+  highlightActiveLine(),
+  highlightSpecialChars(),
+  indentOnInput(),
+  javascript(),
+  bracketMatching(),
+  closeBrackets(),
+  keymap.of(closeBracketsKeymap),
+];
+
 const cssPropertiesLanguage = LRLanguage.define({
   name: "css",
   parser: cssLanguage.configure({ top: "Styles" }).parser,
@@ -118,9 +136,9 @@ const getCssPropertiesExtensions = () => [
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-    lang?: "html" | "markdown" | "css-properties";
+    lang?: "html" | "json" | "markdown" | "css-properties";
     title?: ReactNode;
-    size?: "default" | "small";
+    size?: "default" | "small" | "full";
   }
 >(({ lang, title, size, ...editorContentProps }, ref) => {
   const extensions = useMemo(() => {
@@ -130,6 +148,10 @@ export const CodeEditor = forwardRef<
 
     if (lang === "markdown") {
       return getMarkdownExtensions();
+    }
+
+    if (lang === "json") {
+      return getJsonExtensions();
     }
 
     if (lang === "css-properties") {

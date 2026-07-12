@@ -17,6 +17,7 @@ export type RuntimeOperationStateContract = {
   id: string;
   kind: RuntimeOperationKind;
   inputSchema: InputJsonSchema;
+  outputSchema?: InputJsonSchema;
   readNamespaces: readonly BuilderNamespace[];
   writeNamespaces: readonly BuilderNamespace[];
   invalidatesNamespaces: readonly BuilderNamespace[];

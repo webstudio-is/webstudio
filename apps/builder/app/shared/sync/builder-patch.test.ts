@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { Instance, WebstudioData } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { ProjectSettings } from "@webstudio-is/project-build";
 import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
 import {
   createSyncChangesFromBuilderPatchPayload,
@@ -13,6 +14,7 @@ import {
   $dataSources,
   $instances,
   $pages,
+  $projectSettings,
   $props,
   $resources,
   $styleSourceSelections,
@@ -33,7 +35,9 @@ const createInstance = (
   children,
 });
 
-const createData = (): WebstudioData => ({
+type TestData = WebstudioData & { projectSettings: ProjectSettings };
+
+const createData = (): TestData => ({
   pages: createDefaultPages({ rootInstanceId: "body" }),
   instances: new Map([
     ["body", createInstance("body")],
@@ -48,9 +52,10 @@ const createData = (): WebstudioData => ({
   styleSources: new Map(),
   styles: new Map(),
   assets: new Map(),
+  projectSettings: { meta: {}, compiler: {} },
 });
 
-const setupStores = (data: WebstudioData) => {
+const setupStores = (data: TestData) => {
   serverSyncStore.transactionManager.currentStack = [];
   serverSyncStore.transactionManager.undoneStack = [];
   serverSyncStore.popAll();
@@ -64,6 +69,7 @@ const setupStores = (data: WebstudioData) => {
   $styleSources.set(data.styleSources);
   $styles.set(data.styles);
   $assets.set(data.assets);
+  $projectSettings.set(data.projectSettings);
 };
 
 describe("builder patch sync adapter", () => {
@@ -263,6 +269,36 @@ describe("builder patch sync adapter", () => {
     expect($instances.get().get("existing")?.children).toEqual([
       { type: "id", value: "new" },
     ]);
+  });
+
+  test("commits project settings through sync undo and redo", () => {
+    const data = createData();
+    data.projectSettings.meta.siteName = "Before";
+    setupStores(data);
+
+    createTransactionFromBuilderPatchPayload({
+      data,
+      payload: [
+        {
+          namespace: "projectSettings",
+          patches: [
+            {
+              op: "replace",
+              path: ["meta", "siteName"],
+              value: "After",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect($projectSettings.get()?.meta.siteName).toBe("After");
+
+    serverSyncStore.undo();
+    expect($projectSettings.get()?.meta.siteName).toBe("Before");
+
+    serverSyncStore.redo();
+    expect($projectSettings.get()?.meta.siteName).toBe("After");
   });
 
   test("commits style source selection removals through sync undo and redo", () => {

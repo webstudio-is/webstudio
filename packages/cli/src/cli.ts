@@ -22,6 +22,7 @@ import {
 } from "./commands/api-command-metadata";
 import { schema, schemaOptions } from "./commands/schema";
 import { initFlow, initOptions } from "./commands/init-flow";
+import { registryInspect, registryInspectOptions } from "./commands/registry";
 import makeCLI from "yargs";
 import packageJson from "../package.json" with { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
@@ -190,10 +191,24 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
     preview
   );
   cmd.command(
-    ["screenshot <url>"],
-    "Capture a PNG screenshot of a URL with an installed Chromium-family browser",
+    ["screenshot [url]"],
+    "Capture a PNG screenshot of a URL or local generated project route",
     screenshotOptions,
     screenshot
+  );
+  cmd.command(
+    ["registry"],
+    "Inspect external component registries without installing items",
+    (yargs: CommonYargsArgv) =>
+      yargs
+        .command(
+          ["inspect"],
+          "Inspect one local or remote shadcn registry item",
+          registryInspectOptions,
+          registryInspect
+        )
+        .demandCommand(1, "Specify a registry command."),
+    () => undefined
   );
   const { direct, grouped } = getGroupedCommands(cliCommandMetadata);
   for (const metadata of direct) {

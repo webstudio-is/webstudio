@@ -40,6 +40,7 @@ export const serializeDesignTokens = ({
   styleSourceSelections,
   filter,
   withUsage,
+  includeStyles,
   sort,
 }: {
   styleSources: Iterable<StyleSource> | Map<string, StyleSource>;
@@ -49,9 +50,10 @@ export const serializeDesignTokens = ({
     | Map<string, StyleSourceSelection>;
   filter?: string;
   withUsage?: boolean;
+  includeStyles?: boolean;
   sort?: "name" | "usage";
 }) => {
-  const shouldCountUsage = withUsage === true || sort === "usage";
+  const shouldCountUsage = withUsage !== false || sort === "usage";
   const styleDecls =
     styles instanceof Map ? Array.from(styles.values()) : Array.from(styles);
   const selections =
@@ -68,10 +70,8 @@ export const serializeDesignTokens = ({
       (styleSource) => filter === undefined || styleSource.name.includes(filter)
     )
     .map((styleSource) => {
-      const tokenStyles = Object.fromEntries(
-        styleDecls
-          .filter((style) => style.styleSourceId === styleSource.id)
-          .map((style) => [style.property, style.value])
+      const tokenDecls = styleDecls.filter(
+        (style) => style.styleSourceId === styleSource.id
       );
       const usageCount = selections.filter((selection) =>
         selection.values.includes(styleSource.id)
@@ -79,7 +79,13 @@ export const serializeDesignTokens = ({
       return {
         id: styleSource.id,
         name: styleSource.name,
-        styles: tokenStyles,
+        declarationCount: tokenDecls.length,
+        styles:
+          includeStyles === true
+            ? Object.fromEntries(
+                tokenDecls.map((style) => [style.property, style.value])
+              )
+            : undefined,
         usageCount: shouldCountUsage ? usageCount : undefined,
       };
     });
@@ -185,6 +191,7 @@ export const listDesignTokens = (
   input: {
     filter?: string;
     withUsage?: boolean;
+    includeStyles?: boolean;
     sort?: "name" | "usage";
   } = {}
 ) => serializeDesignTokens({ ...getRequiredStyleState(state), ...input });

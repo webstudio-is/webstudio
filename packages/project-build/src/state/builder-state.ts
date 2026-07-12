@@ -15,6 +15,7 @@ import {
   type BuilderNamespace,
 } from "../contracts/namespaces";
 import type { MarketplaceProduct } from "../shared/marketplace";
+import type { ProjectSettings } from "../shared/project-settings";
 
 export type BuilderStateValueByNamespace = {
   pages: Pages;
@@ -27,6 +28,7 @@ export type BuilderStateValueByNamespace = {
   resources: Resources;
   assets: Assets;
   breakpoints: Breakpoints;
+  projectSettings: ProjectSettings;
   marketplaceProduct: MarketplaceProduct;
 };
 

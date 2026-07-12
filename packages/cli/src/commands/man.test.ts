@@ -202,6 +202,7 @@ test("prints api manual as json", () => {
         useCase: "Update project settings",
         commands: [
           'MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}',
+          'MCP tool: update-project-settings {"meta":{"agentInstructions":"Use existing design tokens and keep product copy concise."}}',
         ],
       }),
     ])
@@ -326,12 +327,11 @@ test("prints llm manual with discovery rules", () => {
   expect(output).toContain(
     "Use `bind-props` only when the prop must stay dynamic"
   );
-  expect(output).toContain('"\\"Pricing | Acme\\""');
   expect(output).toContain(
-    '{"pageId":"page-id","values":{"title":"\\"Pricing | Acme\\"","meta":{"description":"\\"Plans for teams\\""}}}'
+    '{"pageId":"page-id","values":{"title":"Pricing | Acme","meta":{"description":"Plans for teams"}}}'
   );
   expect(output).toContain(
-    '{"resourceId":"resource-id","values":{"url":"\\"https://api.example.com/items\\""}}'
+    '{"resourceId":"resource-id","values":{"url":"https://api.example.com/items"}}'
   );
   expect(output).toContain(
     "Make edits through Webstudio semantic commands/MCP tools"
@@ -427,7 +427,7 @@ test("prints llm manual as json with implementation process", () => {
     "Use direct values for static strings and bindings only for dynamic expressions/resources/actions."
   );
   expect(output.rules).toContain(
-    "For expression-backed fields that need fixed text, encode the fixed text as a quoted JavaScript string literal expression."
+    "Use plain fixed text where documented. Only encode a quoted JavaScript string literal when a field is explicitly documented as an expression-only value."
   );
   expect(output.visionVerificationLoop).toContain(
     getVisionVerificationLoop({ includeDiff: true })[1]
@@ -502,8 +502,12 @@ test("prints mcp manual as json", () => {
       expect.stringContaining("viewport"),
     ])
   );
-  expect(output.visionVerificationLoop).toContain(
-    "When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir for each page/viewport pair."
+  expect(output.visionVerificationLoop).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining(
+        "Add expectedText when a specific visible phrase must be present"
+      ),
+    ])
   );
   expect(output.screenshotVerification).toContain("screenshot.diff");
   expect(output.screenshotVerification).toContain("OCR textAnalysis");
@@ -517,6 +521,16 @@ test("prints mcp manual as json", () => {
       outputDir: "visual-diff",
       threshold: 0.1,
       ignoreTopNormalizedY: 0,
+      expectedText: ["Pricing", "Start free"],
+      expectedVisual: {
+        maxMismatchPercentage: 2,
+        maxChangedRegions: 3,
+        dominantColorChange: {
+          channel: "luminance",
+          direction: "increase",
+          minMagnitude: 10,
+        },
+      },
     },
   ]);
   expect(output.mcpArgumentExamples["update-text"]).toEqual([

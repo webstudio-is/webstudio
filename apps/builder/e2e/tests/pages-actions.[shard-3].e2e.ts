@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import { expectTextHidden } from "../flows/assertions";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
+import { expectGeneratedAppBuild } from "../flows/generated-app";
 import {
   createFolder,
   createPageFromTemplate,
@@ -21,6 +22,7 @@ import { measure } from "../perf";
 import { loadDevBuild } from "../db";
 
 let fixture: SeededContentModeProject;
+let pasteFixture: SeededContentModeProject;
 
 const copiedPageTransferMarker = "@webstudio/page/v0.1";
 
@@ -199,6 +201,13 @@ test.beforeAll(async () => {
     editorToken: "pages-actions-e2e-editor-token",
     builderToken: "pages-actions-e2e-builder-token",
   });
+  pasteFixture = await createContentModeProject({
+    email: "pages-actions-paste-e2e@webstudio.test",
+    title: "Pages Actions Paste E2E",
+    assetNamePrefix: "pages-actions-paste-",
+    editorToken: "pages-actions-paste-e2e-editor-token",
+    builderToken: "pages-actions-paste-e2e-builder-token",
+  });
 });
 
 test("Builder can copy, duplicate, and delete a page from the header menu", async () => {
@@ -238,6 +247,12 @@ test("Builder can copy, duplicate, and delete a page from the header menu", asyn
     });
     await waitForCanvasText({ page, text: "2026" });
     await expectDataResourceCopies(fixture, dataResourceCountsBefore);
+    await measure(
+      "pages actions generated app build for copied resources",
+      async () => {
+        await expectGeneratedAppBuild({ projectId: fixture.projectId });
+      }
+    );
 
     await openPageSettings({ page, pageName });
     const renameSave = waitForChangeToBeSaved({ page });
@@ -467,6 +482,210 @@ test("Builder can copy, duplicate, and delete a page template from actions menus
     await waitForTemplate({ page, templateName: renamedTemplateName });
     await waitForTemplate({ page, templateName: copiedTemplateName });
     await expectTextHidden({ page, text: duplicatedTemplateName });
+  } finally {
+    await close();
+  }
+});
+
+const createInstanceTransfer = ({ id, text }: { id: string; text: string }) =>
+  JSON.stringify({
+    "@webstudio/instance/v0.1": {
+      instanceSelector: [id, "source-body"],
+      children: [{ type: "id", value: id }],
+      instances: [
+        {
+          type: "instance",
+          id,
+          component: "ws:element",
+          tag: "p",
+          children: [{ type: "text", value: text }],
+        },
+      ],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      props: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    },
+  });
+
+const selectPasteBody = async ({ page }: { page: Page }) => {
+  const navigatorTab = page.getByRole("tab", { name: "Navigator" });
+  if ((await navigatorTab.getAttribute("aria-selected")) !== "true") {
+    await navigatorTab.click();
+  }
+  const body = page
+    .locator("[data-navigator-tree] [data-tree-button]")
+    .filter({ hasText: "Body" })
+    .last();
+  await body.dblclick();
+};
+
+const pasteClipboardData = async ({
+  page,
+  data,
+}: {
+  page: Page;
+  data: Record<string, string>;
+}) => {
+  const save = waitForChangeToBeSaved({ page });
+  await page.evaluate((data) => {
+    const clipboardData = new DataTransfer();
+    for (const [mimeType, value] of Object.entries(data)) {
+      clipboardData.setData(mimeType, value);
+    }
+    document.dispatchEvent(
+      new ClipboardEvent("paste", {
+        bubbles: true,
+        cancelable: true,
+        clipboardData,
+      })
+    );
+  }, data);
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const countPastedElements = async ({
+  tag,
+  text,
+}: {
+  tag: string;
+  text: string;
+}) => {
+  const build = await loadDevBuild({ projectId: pasteFixture.projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    component?: string;
+    tag?: string;
+    children?: Array<{ type: string; value?: string }>;
+  }>;
+  return instances.filter(
+    (instance) =>
+      instance.component === "ws:element" &&
+      instance.tag === tag &&
+      instance.children?.some(
+        (child) => child.type === "text" && child.value?.includes(text)
+      )
+  ).length;
+};
+
+const countBuildInstancesWithText = async (text: string) => {
+  const build = await loadDevBuild({ projectId: pasteFixture.projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    id: string;
+    children?: Array<{ type: string; value?: string }>;
+  }>;
+  const instancesById = new Map(
+    instances.map((instance) => [instance.id, instance])
+  );
+  const containsText = (instanceId: string): boolean => {
+    const instance = instancesById.get(instanceId);
+    return (
+      instance?.children?.some(
+        (child) =>
+          (child.type === "text" && child.value?.includes(text)) ||
+          (child.type === "id" &&
+            child.value !== undefined &&
+            containsText(child.value))
+      ) ?? false
+    );
+  };
+  return instances.filter((instance) => containsText(instance.id)).length;
+};
+
+test("Builder runs paste plugins through generic browser paste events", async () => {
+  const { page, close } = await newIsolatedPage();
+  const entries = [
+    [
+      "application/json",
+      createInstanceTransfer({
+        id: "paste-json",
+        text: "Instance JSON paste heading",
+      }),
+      "Instance JSON paste heading",
+      "p",
+    ],
+    [
+      "text/plain",
+      createInstanceTransfer({
+        id: "paste-text",
+        text: "Instance text paste heading",
+      }),
+      "Instance text paste heading",
+      "p",
+    ],
+    [
+      "text/plain",
+      '<ws.element ws:tag="h2">JSX paste heading</ws.element>',
+      "JSX paste heading",
+      "h2",
+    ],
+    [
+      "text/plain",
+      "<section><h2>HTML paste heading</h2></section>",
+      "HTML paste heading",
+      "h2",
+    ],
+    ["text/plain", "## Markdown paste heading", "Markdown paste heading", "h2"],
+    [
+      "application/json",
+      JSON.stringify({
+        type: "@webflow/XscpData",
+        payload: {
+          nodes: [
+            {
+              _id: "webflow-heading",
+              type: "Heading",
+              tag: "h1",
+              children: ["webflow-heading-text"],
+              classes: [],
+            },
+            {
+              _id: "webflow-heading-text",
+              v: "Webflow paste heading",
+              text: true,
+            },
+          ],
+          styles: [],
+          assets: [],
+        },
+      }),
+      "Webflow paste heading",
+      undefined,
+    ],
+  ] as const;
+
+  try {
+    await openProjectBuilder({
+      page,
+      projectId: pasteFixture.projectId,
+      authToken: pasteFixture.builderToken,
+    });
+    await waitForCanvasText({ page, text: "Initial content" });
+
+    for (const [mimeType, value, text, tag] of entries) {
+      await selectPasteBody({ page });
+      await pasteClipboardData({ page, data: { [mimeType]: value } });
+      await waitForCanvasText({ page, text });
+      if (tag === undefined) {
+        const count = await countBuildInstancesWithText(text);
+        if (count === 0) {
+          throw new Error(
+            `Expected generic Webflow paste to persist ${JSON.stringify(text)}`
+          );
+        }
+        continue;
+      }
+      const count = await countPastedElements({ tag, text });
+      if (count !== 1) {
+        throw new Error(
+          `Expected one ${tag} containing ${JSON.stringify(text)}, found ${count}`
+        );
+      }
+    }
   } finally {
     await close();
   }

@@ -13,6 +13,8 @@ export type BrowserScreenshotOptions = {
   width: number;
   height: number;
   fullPage?: boolean;
+  includeImageMetrics?: boolean;
+  includeResourceMetrics?: boolean;
   url: string;
   uid?: number;
   waitUntil: ScreenshotWaitUntil;
@@ -218,27 +220,17 @@ const getPageWebSocketUrl = async ({
   dependencies: BrowserScreenshotDependencies;
   timeout: number;
 }) => {
-  await withDeadline(
-    dependencies.fetch(`http://127.0.0.1:${port}/json/new?about:blank`, {
-      method: "PUT",
-    }),
+  const target = (await withDeadline(
+    dependencies
+      .fetch(`http://127.0.0.1:${port}/json/new?about:blank`, {
+        method: "PUT",
+      })
+      .then((response) => response.json()),
     "Browser page target could not be created",
     timeout
-  );
-  const targets = (await withDeadline(
-    dependencies
-      .fetch(`http://127.0.0.1:${port}/json/list`)
-      .then((response) => response.json()),
-    "Browser targets were not available",
-    timeout
-  )) as Array<{ type?: string; webSocketDebuggerUrl?: string }>;
-  const target = targets.find(
-    (candidate) =>
-      candidate.type === "page" &&
-      typeof candidate.webSocketDebuggerUrl === "string"
-  );
+  )) as { webSocketDebuggerUrl?: string };
   if (target?.webSocketDebuggerUrl === undefined) {
-    throw new Error("Browser did not expose a page target.");
+    throw new Error("Browser did not expose the created page target.");
   }
   return target.webSocketDebuggerUrl;
 };
@@ -337,14 +329,206 @@ const createBrowserLaunchArgs = ({
   "about:blank",
 ];
 
-const getScreenshotCaptureParams = async ({
-  send,
-  fullPage,
-}: {
+type BrowserLayoutMetricsResponse = {
+  cssContentSize?: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  };
+  cssLayoutViewport?: {
+    clientWidth?: number;
+    clientHeight?: number;
+  };
+};
+
+export type BrowserScreenshotLayout = {
+  viewportWidth: number;
+  viewportHeight: number;
+  contentWidth: number;
+  contentHeight: number;
+  horizontalOverflow: boolean;
+  images?: BrowserScreenshotImage[];
+  resources?: BrowserScreenshotResource[];
+};
+
+export type BrowserScreenshotImage = {
+  instanceId?: string;
+  loading: string;
+  complete: boolean;
+  naturalWidth: number;
+  naturalHeight: number;
+  renderedWidth: number;
+  renderedHeight: number;
+  top: number;
+};
+
+export type BrowserScreenshotResource = {
+  pathname: string;
+  initiatorType: string;
+  transferSize: number;
+  encodedBodySize: number;
+  decodedBodySize: number;
+  duration: number;
+  renderBlockingStatus?: string;
+};
+
+const getBrowserScreenshotResources = async (
   send: <Result = unknown>(
     method: string,
     params?: Record<string, unknown>
-  ) => Promise<Result>;
+  ) => Promise<Result>
+): Promise<BrowserScreenshotResource[]> => {
+  const response = await send<{
+    result?: { value?: unknown };
+  }>("Runtime.evaluate", {
+    expression: `performance.getEntriesByType("resource").map((entry) => {
+      let pathname = "";
+      try { pathname = new URL(entry.name).pathname; } catch {}
+      return {
+        pathname,
+        initiatorType: entry.initiatorType || "other",
+        transferSize: entry.transferSize || 0,
+        encodedBodySize: entry.encodedBodySize || 0,
+        decodedBodySize: entry.decodedBodySize || 0,
+        duration: entry.duration || 0,
+        renderBlockingStatus: entry.renderBlockingStatus || undefined,
+      };
+    })`,
+    returnByValue: true,
+  });
+  if (Array.isArray(response.result?.value) === false) {
+    return [];
+  }
+  return response.result.value.flatMap((value) => {
+    if (typeof value !== "object" || value === null) {
+      return [];
+    }
+    const resource = value as Record<string, unknown>;
+    if (
+      typeof resource.pathname !== "string" ||
+      typeof resource.initiatorType !== "string" ||
+      typeof resource.transferSize !== "number" ||
+      typeof resource.encodedBodySize !== "number" ||
+      typeof resource.decodedBodySize !== "number" ||
+      typeof resource.duration !== "number"
+    ) {
+      return [];
+    }
+    return [
+      {
+        pathname: resource.pathname,
+        initiatorType: resource.initiatorType,
+        transferSize: resource.transferSize,
+        encodedBodySize: resource.encodedBodySize,
+        decodedBodySize: resource.decodedBodySize,
+        duration: resource.duration,
+        ...(typeof resource.renderBlockingStatus === "string"
+          ? { renderBlockingStatus: resource.renderBlockingStatus }
+          : {}),
+      },
+    ];
+  });
+};
+
+const getBrowserScreenshotImages = async (
+  send: <Result = unknown>(
+    method: string,
+    params?: Record<string, unknown>
+  ) => Promise<Result>
+): Promise<BrowserScreenshotImage[]> => {
+  const response = await send<{
+    result?: { value?: unknown };
+  }>("Runtime.evaluate", {
+    expression: `Array.from(document.images, (image) => {
+      const rect = image.getBoundingClientRect();
+      return {
+        instanceId: image.getAttribute("data-ws-id") || undefined,
+        loading: image.loading || "eager",
+        complete: image.complete,
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight,
+        renderedWidth: rect.width,
+        renderedHeight: rect.height,
+        top: rect.top + window.scrollY,
+      };
+    })`,
+    returnByValue: true,
+  });
+  if (Array.isArray(response.result?.value) === false) {
+    return [];
+  }
+  return response.result.value.flatMap((value) => {
+    if (typeof value !== "object" || value === null) {
+      return [];
+    }
+    const image = value as Record<string, unknown>;
+    if (
+      typeof image.loading !== "string" ||
+      typeof image.complete !== "boolean" ||
+      typeof image.naturalWidth !== "number" ||
+      typeof image.naturalHeight !== "number" ||
+      typeof image.renderedWidth !== "number" ||
+      typeof image.renderedHeight !== "number" ||
+      typeof image.top !== "number"
+    ) {
+      return [];
+    }
+    return [
+      {
+        ...(typeof image.instanceId === "string"
+          ? { instanceId: image.instanceId }
+          : {}),
+        loading: image.loading,
+        complete: image.complete,
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight,
+        renderedWidth: image.renderedWidth,
+        renderedHeight: image.renderedHeight,
+        top: image.top,
+      },
+    ];
+  });
+};
+
+const getBrowserScreenshotLayout = (
+  metrics: BrowserLayoutMetricsResponse,
+  viewport: { width: number; height: number },
+  images: BrowserScreenshotImage[],
+  resources: BrowserScreenshotResource[]
+): BrowserScreenshotLayout => {
+  const contentWidth = metrics.cssContentSize?.width;
+  const contentHeight = metrics.cssContentSize?.height;
+  const viewportWidth =
+    metrics.cssLayoutViewport?.clientWidth ?? viewport.width;
+  const viewportHeight =
+    metrics.cssLayoutViewport?.clientHeight ?? viewport.height;
+  if (
+    typeof contentWidth !== "number" ||
+    typeof contentHeight !== "number" ||
+    contentWidth <= 0 ||
+    contentHeight <= 0 ||
+    viewportWidth <= 0 ||
+    viewportHeight <= 0
+  ) {
+    throw new Error("Browser did not report valid page layout metrics.");
+  }
+  return {
+    viewportWidth: Math.round(viewportWidth),
+    viewportHeight: Math.round(viewportHeight),
+    contentWidth: Math.ceil(contentWidth),
+    contentHeight: Math.ceil(contentHeight),
+    horizontalOverflow: contentWidth > viewportWidth + 1,
+    images,
+    resources,
+  };
+};
+
+const getScreenshotCaptureParams = async ({
+  metrics,
+  fullPage,
+}: {
+  metrics: BrowserLayoutMetricsResponse;
   fullPage?: boolean;
 }) => {
   if (fullPage !== true) {
@@ -353,14 +537,6 @@ const getScreenshotCaptureParams = async ({
       captureBeyondViewport: false,
     };
   }
-  const metrics = await send<{
-    cssContentSize?: {
-      x?: number;
-      y?: number;
-      width?: number;
-      height?: number;
-    };
-  }>("Page.getLayoutMetrics");
   const { x = 0, y = 0, width, height } = metrics.cssContentSize ?? {};
   if (
     typeof width !== "number" ||
@@ -404,6 +580,7 @@ export const captureBrowserScreenshot = async (
     browserProcess.once("error", () => resolveClosed());
   });
   let cdp: CdpSession | undefined;
+  let layout: BrowserScreenshotLayout | undefined;
   try {
     await Promise.race([
       new Promise<never>((_, reject) => {
@@ -474,8 +651,34 @@ export const captureBrowserScreenshot = async (
         if (options.waitForTimeout > 0) {
           await delay(options.waitForTimeout);
         }
+        const metrics = await send<BrowserLayoutMetricsResponse>(
+          "Page.getLayoutMetrics"
+        );
+        const images =
+          options.includeImageMetrics === true
+            ? await getBrowserScreenshotImages(send)
+            : undefined;
+        const resources =
+          options.includeResourceMetrics === true
+            ? await getBrowserScreenshotResources(send)
+            : undefined;
+        layout = getBrowserScreenshotLayout(
+          metrics,
+          {
+            width: options.width,
+            height: options.height,
+          },
+          images ?? [],
+          resources ?? []
+        );
+        if (images === undefined) {
+          delete layout.images;
+        }
+        if (resources === undefined) {
+          delete layout.resources;
+        }
         const captureParams = await getScreenshotCaptureParams({
-          send,
+          metrics,
           fullPage: options.fullPage,
         });
         const screenshot = await send<{ data: string }>(
@@ -498,4 +701,8 @@ export const captureBrowserScreenshot = async (
     ).catch(() => undefined);
     await dependencies.rm(userDataDir, { recursive: true, force: true });
   }
+  if (layout === undefined) {
+    throw new Error("Browser did not report page layout metrics.");
+  }
+  return layout;
 };

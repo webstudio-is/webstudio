@@ -5,14 +5,23 @@ import type {
   BuilderPatchChange,
 } from "@webstudio-is/project-build/contracts/patch";
 import type { WebstudioData } from "@webstudio-is/sdk";
+import type {
+  MarketplaceProduct,
+  ProjectSettings,
+} from "@webstudio-is/project-build";
 import * as builderStatePatch from "@webstudio-is/project-build/state/patch";
 import { serverSyncStore } from "./sync-stores";
 
+type BuilderPatchData = WebstudioData & {
+  marketplaceProduct?: MarketplaceProduct;
+  projectSettings?: ProjectSettings;
+};
+
 const getNamespaceData = (
-  data: WebstudioData,
+  data: BuilderPatchData,
   namespace: BuilderPatchChange["namespace"]
 ) => {
-  const namespaceData = data[namespace as keyof WebstudioData];
+  const namespaceData = data[namespace];
   if (namespaceData !== undefined) {
     return namespaceData;
   }
@@ -20,7 +29,7 @@ const getNamespaceData = (
 };
 
 const applyBuilderPatchPayloadMutable = (
-  data: WebstudioData,
+  data: BuilderPatchData,
   payload: readonly BuilderPatchChange[]
 ) =>
   builderStatePatch.applyBuilderPatchPayloadMutable(
@@ -91,7 +100,7 @@ export const createSyncChangesFromBuilderPatchPayload = ({
   data,
   payload,
 }: {
-  data: WebstudioData;
+  data: BuilderPatchData;
   payload: BuilderPatchChange[];
 }): Change[] => {
   const payloadForReversePatches = payload.map((change) => ({
@@ -108,7 +117,7 @@ export const createTransactionFromBuilderPatchPayload = ({
   data,
   payload,
 }: {
-  data: WebstudioData;
+  data: BuilderPatchData;
   payload: BuilderPatchChange[];
 }) => {
   serverSyncStore.createTransactionFromChanges(

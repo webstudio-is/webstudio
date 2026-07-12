@@ -30,9 +30,11 @@ import {
 const createState = (): BuilderState =>
   ({
     pages: {
+      redirects: [{ old: "/old", new: "/new", status: "301" }],
+    },
+    projectSettings: {
       meta: { siteName: "Existing site", faviconAssetId: "old-asset" },
       compiler: { atomicStyles: true },
-      redirects: [{ old: "/old", new: "/new", status: "301" }],
     },
     breakpoints: new Map([
       ["base", { id: "base", label: "Base" }],
@@ -129,7 +131,7 @@ describe("project settings runtime", () => {
     });
   });
 
-  test("reads project settings from pages namespace", () => {
+  test("reads project settings from their first-class namespace", () => {
     expect(getProjectSettings(createState())).toEqual({
       meta: { siteName: "Existing site", faviconAssetId: "old-asset" },
       compiler: { atomicStyles: true },
@@ -140,19 +142,28 @@ describe("project settings runtime", () => {
   test("updates project meta and compiler settings", () => {
     expect(
       updateProjectSettings(createState(), {
-        meta: { siteName: "New site", faviconAssetId: null },
+        meta: {
+          siteName: "New site",
+          faviconAssetId: null,
+          agentInstructions: "Use existing design tokens.",
+        },
         compiler: { atomicStyles: false },
       })
     ).toEqual({
       kind: "mutation",
-      invalidatesNamespaces: ["pages"],
+      invalidatesNamespaces: ["projectSettings"],
       noop: false,
       result: { updated: true },
       payload: [
         {
-          namespace: "pages",
+          namespace: "projectSettings",
           patches: [
             { op: "replace", path: ["meta", "siteName"], value: "New site" },
+            {
+              op: "add",
+              path: ["meta", "agentInstructions"],
+              value: "Use existing design tokens.",
+            },
             { op: "remove", path: ["meta", "faviconAssetId"] },
             {
               op: "replace",
@@ -284,11 +295,11 @@ describe("project settings runtime", () => {
 
   test("creates project meta and compiler settings when missing", () => {
     const state = createState();
-    if (state.pages === undefined) {
-      throw new Error("Expected pages");
+    if (state.projectSettings === undefined) {
+      throw new Error("Expected project settings");
     }
-    state.pages.meta = undefined;
-    state.pages.compiler = undefined;
+    state.projectSettings.meta = {};
+    state.projectSettings.compiler = {};
 
     expect(
       updateProjectSettings(state, {
@@ -297,15 +308,19 @@ describe("project settings runtime", () => {
       })
     ).toEqual({
       kind: "mutation",
-      invalidatesNamespaces: ["pages"],
+      invalidatesNamespaces: ["projectSettings"],
       noop: false,
       result: { updated: true },
       payload: [
         {
-          namespace: "pages",
+          namespace: "projectSettings",
           patches: [
-            { op: "add", path: ["meta"], value: { siteName: "New site" } },
-            { op: "add", path: ["compiler"], value: { atomicStyles: true } },
+            { op: "add", path: ["meta", "siteName"], value: "New site" },
+            {
+              op: "add",
+              path: ["compiler", "atomicStyles"],
+              value: true,
+            },
           ],
         },
       ],
@@ -320,7 +335,7 @@ describe("project settings runtime", () => {
       })
     ).toEqual({
       kind: "mutation",
-      invalidatesNamespaces: ["pages"],
+      invalidatesNamespaces: [],
       noop: true,
       result: { updated: true },
       payload: [],

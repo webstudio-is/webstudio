@@ -61,6 +61,21 @@ Notes:
 - Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Use `resources/list` and `resources/read` for overview resources and read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused discovery is insufficient.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 
+## Inspect external shadcn registry items
+
+Commands:
+
+- webstudio registry inspect --source https://example.com/r/registry.json --item button --json
+- webstudio registry inspect --source ./registry.json --item dialog --json
+- webstudio registry inspect --source https://example.com/r/button.json --json
+
+Notes:
+
+- Reads a local or remote registry item without installing files or changing the configured Webstudio project.
+- Returns the item name, description, package and registry dependencies, file paths/targets, available docs, and a read-only compatibility report.
+- The report explicitly says whether installation or editable-component conversion is supported, lists declared requirements and manual steps, and says when arbitrary source code was not analyzed.
+- This is an inspection step only. It does not install files or change the configured project.
+
 ## Understand what MCP can do
 
 Commands:
@@ -73,6 +88,8 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 
 - Inspect the linked project, token permissions, and latest editable build.
 - Read selected project data for audits, migrations, and repair.
+- Search labels, text, props, resource URLs, asset metadata, and styles.
+- Audit accessibility, security, SEO, performance settings, unused assets, ineffective Collection styles, and unused or duplicate style data.
 - Create and edit pages, folders, redirects, breakpoints, and page templates.
 - Create pages from reusable templates.
 - Update page metadata, SEO fields, auth settings, and marketplace metadata.
@@ -93,12 +110,14 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 Commands:
 
 - MCP tool: status {}
+- MCP tool: status {"verbose":true}
 - MCP tool: refresh {"namespaces":["pages","instances","styles"]}
 - MCP tool: reset-session {}
 
 Notes:
 
 - Use status before a task to understand the cached ProjectSession state.
+- Use status with `{"verbose":true}` only when debugging full namespaces, freshness, compatibility, or diagnostics.
 - Use refresh when project data may have changed outside the current MCP session.
 - Use reset-session when local cached state is corrupt or incompatible.
 
@@ -113,6 +132,8 @@ Commands:
 - MCP tool: screenshot {"path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/home-before.png","currentPath":".webstudio/screenshots/home-current.png","outputDir":".webstudio/screenshots/diff"}
+- MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/home-before.png","currentPath":".webstudio/screenshots/home-current.png","outputDir":".webstudio/screenshots/diff","expectedText":["Pricing","Start free"]}
+- MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/home-before.png","currentPath":".webstudio/screenshots/home-current.png","outputDir":".webstudio/screenshots/diff","expectedVisual":{"maxMismatchPercentage":2,"maxChangedRegions":3,"dominantColorChange":{"channel":"luminance","direction":"increase","minMagnitude":10}}}
 - MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/pricing-before.png","currentPath":".webstudio/screenshots/pricing-current.png","outputDir":".webstudio/screenshots/diff"}
 - MCP tool: vision.install-ocr {"confirm":true}
 
@@ -128,10 +149,10 @@ Notes:
 - Preview isolates generated app dependencies under `.webstudio/preview` by linking to the CLI package dependency tree.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
 - If preview fails with a missing generated-app command/package such as react-router, react-router-serve, or vite, install dependencies for the CLI package and retry.
-- When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
+- When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches. Pass expectedText for explicit pass/fail current-screen text assertions with found and missing text. Pass expectedVisual for pass/fail limits on pixel mismatch percentage, changed-region count, or the overall dominant color/brightness direction.
 - If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.
 - Compare the PNG, OCR text evidence, and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
-- Root CLI equivalent: webstudio preview, then webstudio screenshot <url> --output current.png.
+- Root CLI equivalent: `webstudio screenshot --path /pricing --output pricing.png` generates a temporary production preview, captures that route, and stops the server. For repeated captures, keep `webstudio preview` running and pass its absolute URL to `webstudio screenshot`.
 
 ## List pages
 
@@ -156,23 +177,24 @@ Commands:
 Commands:
 
 - MCP tool: create-page {"name":"Pricing","path":"/pricing"}
-- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"\"Pricing\"","meta":{"description":"\"Plans for teams\""}}
+- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"Pricing","meta":{"description":"Plans for teams"}}
 
 Notes:
 
-- `name` and `path` are plain values.
-- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
+- `name`, `path`, page `title`, and metadata text fields accept plain fixed values.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Update page settings/metadata
 
 Commands:
 
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\"","status":"200"}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans","status":"200"}}}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
 
 Notes:
 
-- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
+- Page `title` and metadata text fields accept plain fixed values.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Read project settings
 
@@ -180,11 +202,17 @@ Commands:
 
 - MCP tool: get-project-settings {}
 
+Notes:
+
+- Read `meta.agentInstructions` before making project changes. It contains the project's own guidance for AI agents.
+- Agent instructions are shared project guidance. Do not store credentials or other secrets there.
+
 ## Update project settings
 
 Commands:
 
 - MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}
+- MCP tool: update-project-settings {"meta":{"agentInstructions":"Use existing design tokens and keep product copy concise."}}
 
 ## Read marketplace product
 
@@ -271,13 +299,13 @@ Commands:
 
 Commands:
 
-- MCP tool: create-page-template {"name":"Landing Template","title":"\"Landing\""}
+- MCP tool: create-page-template {"name":"Landing Template","title":"Landing"}
 
 ## Update page template
 
 Commands:
 
-- MCP tool: update-page-template {"templateId":"<templateId>","values":{"name":"Article Template","meta":{"description":"\"Reusable article layout\""}}}
+- MCP tool: update-page-template {"templateId":"<templateId>","values":{"name":"Article Template","meta":{"description":"Reusable article layout"}}}
 
 ## Delete page template
 
@@ -411,15 +439,63 @@ Commands:
 
 - MCP tool: update-text {"instanceId":"<instanceId>","childIndex":0,"text":"Launch faster"}
 
+## Replace bounded literal text
+
+Commands:
+
+- MCP tool: replace-text {"find":"Start free","replace":"Get started","match":"exact","pagePath":"/pricing","limit":20}
+
+Notes:
+
+- This changes only literal text children, never expression children. Scope it to pagePath or pageId and set a limit before a broad replacement.
+
+## Replace bounded static prop text
+
+Commands:
+
+- MCP tool: replace-prop-text {"find":"old.example.com","replace":"www.example.com","match":"substring","names":["href","code"],"limit":20}
+
+Notes:
+
+- This changes only static string props such as href, alt, aria-label, title, and HTML embed code. It never changes expressions, resources, actions, assets, or other dynamic bindings. Use names or instanceIds and a limit to narrow the change.
+
+## Replace bounded resource text
+
+Commands:
+
+- MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}
+
+Notes:
+
+- This changes resource names and fixed URL literals only. It skips dynamic URL expressions, headers, search parameters, request bodies, and GraphQL query code.
+
 ## Update props
 
 Commands:
 
 - MCP tool: update-props {"updates":"props.json contents"}
+- MCP tool: replace-prop-text {"find":"Old label","replace":"New label","names":["aria-label","title"],"limit":20}
 
 Notes:
 
 - Use this for fixed prop values such as `aria-label`, `alt`, `id`, static `href`, and other direct string/number/boolean/json prop values.
+
+## Add JSON-LD structured data
+
+Commands:
+
+- MCP tool: components.get {"component":"JsonLd"}
+- MCP tool: insert-component {"parentInstanceId":"<headSlotInstanceId>","component":"JsonLd"}
+- MCP tool: update-props {"updates":[{"instanceId":"<jsonLdInstanceId>","name":"code","type":"string","value":"{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Acme\"}"}]}
+- MCP tool: audit {"scopes":["seo"],"pagePath":"/"}
+
+Notes:
+
+- Prefer placing `JsonLd` inside `HeadSlot`.
+- Store `code` as a JSON object or array encoded as a compact string. The Builder formats it for editing.
+- The semantic prop update rejects malformed JSON and structurally invalid fixed JSON-LD with a precise JSON path.
+- The SEO audit also warns about a missing top-level `@context`, unknown or superseded Schema.org terms, properties unsupported by the supplied type, and incompatible primitive value types.
+- Schema.org vocabulary findings are warnings because custom vocabularies and extensions remain valid. Dynamic JSON-LD is marked as skipped for rendered validation.
 - Do not use bindings just to set static text.
 
 ## Delete props
@@ -467,7 +543,14 @@ Commands:
 
 Commands:
 
+- MCP tool: list-design-tokens {}
 - MCP tool: list-design-tokens {"withUsage":true}
+- MCP tool: list-design-tokens {"includeStyles":true}
+
+Notes:
+
+- The default response is compact and includes token id, name, declaration count, and optional usage count.
+- Use `includeStyles:true` only when you need the full inline style declarations.
 
 ## Create design tokens
 
@@ -580,15 +663,17 @@ Commands:
 
 Commands:
 
-- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"https://api.example.com/posts","headers":[]}}
 - MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts?tag=\" + filters.tag","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"page","value":"String(filters.page ?? 1)"}],"headers":[{"name":"Authorization","value":"\"Bearer \" + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
-- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
+- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"source","value":{"type":"literal","value":"website"}}],"headers":[{"name":"Authorization","value":"\"Bearer \" + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":{"type":"literal","value":"application/json"}}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"/$resources/current-date","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
 
 Notes:
 
-- Resource `url`, header values, search parameter values, and body are expressions. Literal URLs are JSON strings such as `"https://api.example.com/posts"`.
+- Resource `url` accepts plain fixed URLs and paths such as `https://api.example.com/posts` and `/$resources/current-date`.
+- Resource `url` can also be a JavaScript expression when it is computed, such as `"https://api.example.com/posts?tag=" + filters.tag`.
+- Header values, search parameter values, and body accept expressions for dynamic values. For fixed text, use `{"type":"literal","value":"application/json"}`; Webstudio stores the required string expression for you.
 - Search parameter values, header values, and body expressions can read scoped variables and documented runtime context values such as `system` when they are available at the resource scope.
 - Add `scopeInstanceId` and `dataSourceName` when the resource result should be exposed as a scoped read data variable. Scoped resources are generated into the page resource `data` map and may be loaded during page rendering. Use this for read-oriented resources such as GET CMS/API data.
 - For submit/write/action resources, create the resource without `scopeInstanceId`, then bind a component prop such as a Form `action` with `bind-props` and `binding.type: "resource"`. Prop-bound resources are generated into the page resource `action` map instead of the read `data` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and other explicit action flows.
@@ -599,7 +684,8 @@ Notes:
 
 Commands:
 
-- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
+- MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}
 
 ## Delete resource
 
@@ -612,6 +698,50 @@ Commands:
 Commands:
 
 - MCP tool: list-assets {"withUsage":true}
+
+Notes:
+
+- Image asset descriptions are the default alt text for asset-backed Image components.
+- To generate missing descriptions, inspect the image in its rendered page or asset source, write a concise description of its purpose, and save it on the asset rather than duplicating it on each Image instance.
+
+## Update asset metadata
+
+Commands:
+
+- MCP tool: update-asset {"assetId":"<assetId>","values":{"description":"Team collaborating around a whiteboard"}}
+
+Notes:
+
+- Use an empty description only when the image is intentionally decorative.
+- Updating an image asset description updates the default alt text wherever that asset is used with an asset-backed alt prop.
+
+## Generate missing image descriptions with an agent
+
+Commands:
+
+- MCP tool: audit {"scopes":["accessibility"],"verbose":true}
+- MCP tool: set-image-descriptions {"updates":[{"assetId":"hero-id","description":"Team collaborating around a whiteboard"},{"assetId":"texture-id","decorative":true}]}
+- MCP tool: audit {"scopes":["accessibility"]}
+
+Notes:
+
+- Start from `missing-image-description` findings. Inspect each image in its rendered page context before writing text.
+- The vision-capable agent generates the wording; the CLI validates and stores it but does not contain its own vision model.
+- Use `decorative:true` only when the image adds no information. This intentionally stores an empty description so later audits do not report it as missing.
+- Re-run the accessibility audit after the update. Asset-backed Image components use the saved asset description as their default alt text.
+
+## Manage fonts
+
+Commands:
+
+- MCP tool: list-fonts {"includeSystem":true}
+- MCP tool: list-assets {"type":"font"}
+- MCP tool: upload-asset {"asset":{"name":"acme-sans.woff2","type":"font","format":"woff2","meta":{"family":"Acme Sans","style":"normal","weight":400}},"assetsDir":".webstudio/assets"}
+- MCP tool: update-styles {"updates":"styles.json contents"}
+
+Notes:
+
+- Use `list-fonts` to discover uploaded families and system stacks. Upload/delete fonts through the existing asset tools, then apply a family with a `font-family` style declaration.
 
 ## Upload one asset
 
@@ -724,6 +854,8 @@ Patch namespaces:
 
 Commands:
 
+- MCP tool: search-project {"query":"pricing"}
+- MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}
 - MCP tool: list-instances {"pagePath":"/","maxDepth":5}
 - MCP tool: inspect-instance {"instanceId":"<instanceId>","include":["props","styles","children"]}
 - MCP tool: list-texts {"pagePath":"/"}
@@ -733,7 +865,45 @@ Commands:
 
 Notes:
 
-- Use this for finding elements by label, type, href/resource patterns, HTML snippets, missing accessibility metadata, or asset usage.
+- Use `search-project` for query-driven lookup across labels, text, prop values, resource URLs, asset metadata, and styles. Use `audit` for project health findings.
+
+## Audit project quality
+
+Commands:
+
+- webstudio audit --json
+- webstudio audit --scopes accessibility,seo --json
+- webstudio audit --page-path /pricing --json
+- webstudio audit --scopes accessibility --verbose --json
+- MCP tool: audit {}
+- MCP tool: audit {"scopes":["accessibility","security"],"severities":["error","warning"]}
+- MCP tool: audit {"scopes":["accessibility"],"verbose":true}
+- MCP tool: audit {"rendered":true,"verbose":true}
+
+Notes:
+
+- With no scopes, `audit` checks accessibility, security, SEO, performance settings, unused assets, ineffective Collection styles, non-GET resources exposed as render-time data, and unused or duplicate style data.
+- The `performance` scope reports disabled atomic CSS generation. A rendered audit also measures broken, eager below-fold, and oversized images, browser-marked render-blocking resources, and legacy font formats.
+- Rendered image and resource metrics run only when the selected scopes include `performance`; responsive layout dimensions remain available whenever `rendered:true` is requested.
+- Compact findings include stable ids, severity, message, and location. Use `--verbose` or `{"verbose":true}` for evidence, explanation, suggested remediation, skipped-check details, and manual-check workflows.
+- `summary` counts all findings before severity filtering and pagination.
+- `contractVersion` identifies the audit response contract. Handle a new value before assuming existing fields retain the same meaning.
+- Expression-, resource-, and parameter-backed values that cannot be checked reliably appear in `skippedChecks`; they are not treated as passing or failing.
+- Page filters apply to page-owned accessibility, security, and SEO checks. Asset and style usage remain project-wide to avoid false unused findings.
+- Continue paginated results with `cursor`. Restart the audit if the project version changes.
+- `manualChecks` describes responsive, hierarchy, and contrast checks that require preview screenshots and vision.
+- Focused audits return only manual checks relevant to their selected scopes.
+- In a long-lived MCP session, `{"rendered":true}` reuses preview and screenshot
+  tools to capture every static page at mobile, desktop, and Builder breakpoint
+  edges. Compact output reports rendered check/issue/failure counts; verbose
+  output includes screenshot paths and measured layout dimensions.
+- Rendered checks also report broken images, eager images below the fold, and
+  image sources more than 2x their rendered dimensions in both axes, including
+  Webstudio instance ids and measured dimensions when available.
+- Rendered checks include sanitized Resource Timing evidence and report
+  browser-marked render-blocking resources plus legacy `.ttf`, `.otf`, and
+  `.woff` fonts without applying a universal transfer-size threshold.
+- Fix findings through semantic mutation commands, then rerun `audit` to confirm their deterministic finding ids disappeared.
 
 ## Refactor targeted content
 
@@ -742,23 +912,24 @@ Commands:
 - MCP tool: list-instances {"pagePath":"/"}
 - MCP tool: list-texts {"pagePath":"/"}
 - MCP tool: update-text {"instanceId":"<instanceId>","childIndex":0,"text":"Launch faster"}
+- MCP tool: replace-text {"find":"Old headline","replace":"New headline","match":"exact","pagePath":"/pricing","limit":20}
 - MCP tool: update-props {"updates":"props.json contents"}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
-- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans"}}}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>"}
 - MCP tool: replace-styles {"property":"color","fromValue":{"type":"keyword","value":"red"},"toValue":{"type":"keyword","value":"blue"}}
 - MCP tool: rewrite-css-variable-refs {"map":"variables.json contents"}
 
 Notes:
 
-- Use focused reads first, then mutate only matching instances, props, metadata, resource URLs, assets, or style references.
+- Use focused reads first, then mutate only matching instances, props, metadata, resource URLs, assets, or style references. Use `replace-text` for bounded literal text changes, `replace-prop-text` for bounded static prop text, `replace-resource-text` for fixed resource names/URLs, and `update-text` for one known child or expressions.
 
 ## Optimize existing project
 
 Commands:
 
 - MCP tool: list-pages {"includeFolders":true}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans"}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: list-breakpoints {}
 - MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"maxWidth":1023}}
@@ -778,10 +949,10 @@ Commands:
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
-- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
-- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
-- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"source","value":{"type":"literal","value":"website"}}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":{"type":"literal","value":"application/json"}}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"/$resources/current-date","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.collection>{/_ collection content _/}</ws.collection>"}
 
@@ -798,7 +969,7 @@ Commands:
 
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
-- MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"\"https://api.example.com/seats\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"https://api.example.com/seats","headers":[]}}
 - MCP tool: snapshot {"include":["instances","props","resources"]}
 - MCP tool: apply-patch {"baseVersion":"<version>","transactions":"patch.json contents"}
 
@@ -813,7 +984,7 @@ Commands:
 
 - MCP tool: create-page {"name":"Account","path":"/account"}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
-- MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"\"https://api.example.com/session\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"https://api.example.com/session","headers":[]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"user","value":{"type":"json","value":{}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
@@ -852,20 +1023,6 @@ Notes:
 - Public API and CLI intentionally operate on one configured project at a time. Use an external script to loop over projects.
 
 # Known CLI Gaps
-
-## General project search and audit
-
-Missing:
-No single semantic command searches across instance labels, props, hrefs, resource URLs, HTML embeds, asset references, and missing accessibility metadata.
-
-Current fallback:
-Use focused MCP reads such as list-instances, list-texts, list-assets, find-asset-usage, and snapshot.
-
-Suggested commands:
-
-- search-project
-- audit-accessibility
-- find-prop-usage
 
 ## Provider-specific authenticated pages
 

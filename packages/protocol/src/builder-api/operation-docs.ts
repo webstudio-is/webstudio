@@ -268,15 +268,39 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "list-instances",
-    description: "List element instances in the build tree",
+    description:
+      "List element instances in the build tree, including parent id and index when known",
     examples: ["webstudio list-instances --path / --max-depth 2 --json"],
   },
   {
     command: "inspect-instance",
-    description: "Show details for one element instance",
+    description:
+      "Show details for one element instance, optionally including ancestors",
     requiredOptions: ["instance", "json"],
     examples: [
-      "webstudio inspect-instance --instance instance-id --include props,styles,children --json",
+      "webstudio inspect-instance --instance instance-id --include props,styles,children,ancestors --json",
+    ],
+  },
+  {
+    command: "search-project",
+    description:
+      "Search instance labels, text, props including href and embeds, resource URLs, assets, and styles",
+    examples: [
+      'MCP tool: search-project {"query":"pricing"}',
+      'MCP tool: search-project {"query":"api.example.com","scopes":["resources"]}',
+    ],
+  },
+  {
+    command: "audit",
+    description:
+      "Audit project accessibility, security, SEO, assets, and styles with structured severity, evidence, remediation, skipped checks, and visual follow-ups",
+    examples: [
+      "webstudio audit --json",
+      "webstudio audit --scopes accessibility,seo --json",
+      "webstudio audit --scopes accessibility --verbose --json",
+      "webstudio audit --page-path /pricing --json",
+      'MCP tool: audit {"severities":["error","warning"]}',
+      'MCP tool: audit {"scopes":["accessibility"],"verbose":true}',
     ],
   },
   {
@@ -353,6 +377,30 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "replace-text",
+    description:
+      "Replace bounded literal text children across a page or project; use a separate command instead of an update-text replace mode",
+    examples: [
+      'MCP tool: replace-text {"find":"Start free","replace":"Get started","match":"exact","pagePath":"/pricing","limit":20}',
+    ],
+  },
+  {
+    command: "replace-prop-text",
+    description:
+      "Replace bounded text inside static string props such as href and HTML embed code without changing dynamic bindings",
+    examples: [
+      'MCP tool: replace-prop-text {"find":"old.example.com","replace":"www.example.com","match":"substring","names":["href","code"],"limit":20}',
+    ],
+  },
+  {
+    command: "replace-resource-text",
+    description:
+      "Replace bounded resource names and fixed URLs without changing dynamic request expressions",
+    examples: [
+      'MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}',
+    ],
+  },
+  {
     command: "get-styles",
     description: "List style declarations",
     examples: ["webstudio get-styles --instance instance-id --json"],
@@ -377,8 +425,12 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "list-design-tokens",
-    description: "List reusable style tokens",
-    examples: ["webstudio list-design-tokens --with-usage --json"],
+    description:
+      "List compact reusable style token summaries; include full styles only when explicitly requested",
+    examples: [
+      "webstudio list-design-tokens --with-usage --json",
+      "webstudio list-design-tokens --include-styles --json",
+    ],
   },
   {
     command: "create-design-token",
@@ -593,6 +645,12 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio list-assets --type image --with-usage --json"],
   },
   {
+    command: "list-fonts",
+    description:
+      "List uploaded font families and optional built-in system font stacks",
+    examples: ["webstudio list-fonts --json"],
+  },
+  {
     command: "upload-asset",
     description: "Upload one local asset file from an asset descriptor",
     requiredOptions: ["input", "json"],
@@ -613,6 +671,14 @@ const curatedPublicApiOperationDocumentation = [
     description: "Find where an asset is referenced in the project",
     requiredOptions: ["asset", "json"],
     examples: ["webstudio find-asset-usage --asset asset-id --json"],
+  },
+  {
+    command: "set-image-descriptions",
+    description:
+      "Save agent-generated image descriptions or mark images as decorative",
+    examples: [
+      'MCP/API: set-image-descriptions {"updates":[{"assetId":"hero-id","description":"Team collaborating around a whiteboard"},{"assetId":"texture-id","decorative":true}]}',
+    ],
   },
   {
     command: "replace-asset",

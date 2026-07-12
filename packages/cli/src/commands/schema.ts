@@ -73,6 +73,10 @@ const cliCommands = cliCommandMetadata.map((command) => ({
   method: command.method,
   permit: command.permit,
   requiredOptions: command.requiredOptions ?? ["json"],
+  inputSchema: command.inputSchema,
+  ...(command.outputSchema === undefined
+    ? {}
+    : { outputSchema: command.outputSchema }),
   examples: (command.examples ?? []).map(formatApiUseCaseCommand),
 }));
 
@@ -100,6 +104,9 @@ const mcpToolSchema = listProjectSessionMcpTools(publicApiOperations, {
   name: tool.name,
   description: tool.description,
   inputSchema: tool.inputSchema,
+  ...(tool.outputSchema === undefined
+    ? {}
+    : { outputSchema: tool.outputSchema }),
   examples: tool.mcpExamples ?? [],
   annotations: tool.annotations,
 }));
@@ -258,7 +265,7 @@ const apiSchema = {
     serverOnly:
       "Server-only commands run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
     resultMetadata:
-      "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
+      "Successful command JSON includes compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.",
   },
   useCases: topLevelUseCases,
   patch: {

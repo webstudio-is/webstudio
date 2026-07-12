@@ -1,4 +1,5 @@
-import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
+import { applyPatches, type Patch } from "immer";
+import "./immer";
 import type {
   BuilderPatch,
   BuilderPatchChange,
@@ -7,10 +8,6 @@ import type {
 import { compactBuilderPatchPayload } from "../contracts/patch";
 import type { BuilderState } from "./builder-state";
 import type { BuilderNamespace } from "../contracts/namespaces";
-
-// Runtime patch application uses Immer patches against Map-backed namespaces.
-enableMapSet();
-enablePatches();
 
 export class MissingBuilderStateNamespaceError extends Error {
   constructor(namespace: BuilderNamespace) {

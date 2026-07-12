@@ -42,4 +42,5 @@ export { meta as HeadSlot } from "./head-slot.ws";
 export { meta as HeadLink } from "./head-link.ws";
 export { meta as HeadMeta } from "./head-meta.ws";
 export { meta as HeadTitle } from "./head-title.ws";
+export { meta as JsonLd } from "./json-ld.ws";
 export { meta as Video } from "./video.ws";

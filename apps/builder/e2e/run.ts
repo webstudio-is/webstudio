@@ -1,31 +1,23 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
+import { readdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import {
+  builderUrl,
+  createBrowserScope,
   dashboardUrl,
   getSuites,
   newPage,
   postgrestUrl,
   startBrowser,
   stopBrowser,
+  type BrowserScope,
 } from "./harness";
 import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
-import "./tests/animation-runtime.[shard-1].e2e";
-import "./tests/content-mode-editing.[shard-1].e2e";
-import "./tests/content-mode-editing.[shard-2].e2e";
-import "./tests/content-mode-editing.[shard-3].e2e";
-import "./tests/data-variables-runtime.[shard-2].e2e";
-import "./tests/pages-actions.[shard-1].e2e";
-import "./tests/pages-actions.[shard-2].e2e";
-import "./tests/pages-actions.[shard-3].e2e";
-import "./tests/preview-links.[shard-1].e2e";
-import "./tests/project-settings-runtime.[shard-2].e2e";
-import "./tests/props-runtime.[shard-2].e2e";
-import "./tests/share-link-permissions.[shard-1].e2e";
-import "./tests/slot-keyboard.[shard-3].e2e";
-import "./tests/style-panel-runtime.[shard-1].e2e";
-import "./tests/style-panel-runtime.[shard-2].e2e";
-import "./tests/style-panel-runtime.[shard-3].e2e";
+import { getE2eTestModules } from "./test-modules";
+import { stopChildProcess } from "./process";
+import { runWithTimeout } from "./timeout";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
@@ -39,6 +31,17 @@ const testFilters = [
     ? []
     : [process.env.E2E_TEST_FILTER]),
 ];
+
+// Shard ownership lives in filenames, so adding a test file requires no second
+// registry update and focused shards avoid unrelated fixture setup.
+const testModules = getE2eTestModules(
+  await readdir(fileURLToPath(new URL("./tests", import.meta.url))),
+  testShard
+);
+
+for (const module of testModules) {
+  await import(module);
+}
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED ??= "0";
 
@@ -88,7 +91,7 @@ const waitForPostgrest = async () => {
 
 const waitForBuilder = async (child: ChildProcess) => {
   await Promise.race([
-    waitForHttp(dashboardUrl, 60_000),
+    waitForHttp(builderUrl, 60_000),
     new Promise<never>((_, reject) => {
       child.once("exit", (code, signal) => {
         reject(
@@ -113,27 +116,6 @@ const warmLoginRoute = async () => {
   }
 };
 
-const withTimeout = async <Result>(
-  name: string,
-  timeoutMs: number,
-  task: () => Promise<Result>
-) => {
-  let timeout: NodeJS.Timeout | undefined;
-
-  try {
-    return await Promise.race([
-      task(),
-      new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => {
-          reject(new Error(`Timed out after ${timeoutMs}ms: ${name}`));
-        }, timeoutMs);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timeout);
-  }
-};
-
 const pipeBuilderOutput = (child: ChildProcess) => {
   child.stdout?.on("data", (chunk) => {
     process.stdout.write(`[builder] ${chunk}`);
@@ -146,28 +128,39 @@ const pipeBuilderOutput = (child: ChildProcess) => {
 const runSuiteTests = async ({
   suite,
   tests,
+  browserScope,
+  onTimeout,
 }: {
   suite: ReturnType<typeof getSuites>[number];
   tests: ReturnType<typeof getSuites>[number]["tests"];
+  browserScope: BrowserScope;
+  onTimeout: () => Promise<void>;
 }) => {
   try {
     for (const test of tests) {
       const startedAt = Date.now();
-      await withTimeout(
-        `${suite.name} › ${test.name}`,
-        testTimeoutMs,
-        async () => {
-          await suite.beforeEach?.();
-          await test.run();
-        }
-      );
+      await runWithTimeout({
+        name: `${suite.name} › ${test.name}`,
+        timeoutMs: testTimeoutMs,
+        onTimeout,
+        task: async () =>
+          await browserScope.run(async () => {
+            await suite.beforeEach?.();
+            await test.run();
+          }),
+      });
       const duration = Date.now() - startedAt;
       console.info(`✓ ${suite.name} › ${test.name} (${duration}ms)`);
     }
   } finally {
     const afterAllStartedAt = Date.now();
-    await withTimeout(`${suite.name} afterAll`, testTimeoutMs, async () => {
-      await suite.afterAll?.();
+    await runWithTimeout({
+      name: `${suite.name} afterAll`,
+      timeoutMs: testTimeoutMs,
+      onTimeout,
+      task: async () => {
+        await browserScope.run(async () => await suite.afterAll?.());
+      },
     });
     logPerf(`${suite.name} afterAll`, afterAllStartedAt);
   }
@@ -204,17 +197,10 @@ const startBuilder = async (): Promise<ChildProcess | undefined> => {
 };
 
 const stopBuilder = async (child: ChildProcess | undefined) => {
-  if (child === undefined || child.killed) {
+  if (child === undefined) {
     return;
   }
-
-  child.kill("SIGTERM");
-  await Promise.race([
-    new Promise<void>((resolve) => child.once("exit", () => resolve())),
-    delay(5_000).then(() => {
-      child.kill("SIGKILL");
-    }),
-  ]);
+  await stopChildProcess(child);
 };
 
 const getRunnableSuites = () => {
@@ -271,6 +257,7 @@ const run = async () => {
   const totalStartedAt = Date.now();
   const bootStartedAt = Date.now();
   let builder: ChildProcess | undefined;
+  const browserScopes: BrowserScope[] = [];
 
   try {
     const runnableSuites = getRunnableSuites();
@@ -291,24 +278,50 @@ const run = async () => {
 
     await measure("reset database", resetDatabase);
 
-    for (const { suite } of runnableSuites) {
+    const scopedSuites = await Promise.all(
+      runnableSuites.map(async (runnableSuite) => {
+        const browserScope = await createBrowserScope();
+        browserScopes.push(browserScope);
+        return { ...runnableSuite, browserScope };
+      })
+    );
+    let resetAllBrowserScopesPromise: Promise<void> | undefined;
+    const resetAllBrowserScopes = () => {
+      resetAllBrowserScopesPromise ??= Promise.allSettled(
+        browserScopes.map((scope) => scope.reset())
+      ).then(() => undefined);
+      return resetAllBrowserScopesPromise;
+    };
+
+    for (const { suite, browserScope } of scopedSuites) {
       const beforeAllStartedAt = Date.now();
-      await withTimeout(`${suite.name} beforeAll`, testTimeoutMs, async () => {
-        await suite.beforeAll?.();
+      await runWithTimeout({
+        name: `${suite.name} beforeAll`,
+        timeoutMs: testTimeoutMs,
+        onTimeout: resetAllBrowserScopes,
+        task: async () => {
+          await browserScope.run(async () => await suite.beforeAll?.());
+        },
       });
       logPerf(`${suite.name} beforeAll`, beforeAllStartedAt);
     }
 
     await Promise.all(
-      runnableSuites.map(async ({ suite, tests }) => {
+      scopedSuites.map(async ({ suite, tests, browserScope }) => {
         const suiteStartedAt = Date.now();
-        await runSuiteTests({ suite, tests });
+        await runSuiteTests({
+          suite,
+          tests,
+          browserScope,
+          onTimeout: resetAllBrowserScopes,
+        });
         const suiteDuration = Date.now() - suiteStartedAt;
         console.info(`✓ ${suite.name} completed (${suiteDuration}ms)`);
       })
     );
     logPerf("tests", testsStartedAt);
   } finally {
+    await Promise.allSettled(browserScopes.map((scope) => scope.close()));
     await stopBrowser();
     await stopBuilder(builder);
     logPerf("runner total", totalStartedAt);

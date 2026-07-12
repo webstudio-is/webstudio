@@ -62,13 +62,24 @@ const code = z.object({
   ...common,
   control: z.literal("code"),
   type: z.literal("string"),
-  language: z.union([z.literal("html"), z.literal("markdown")]),
+  language: z.union([
+    z.literal("html"),
+    z.literal("json"),
+    z.literal("markdown"),
+  ]),
   defaultValue: z.string().optional(),
 });
 
 const codeText = z.object({
   ...common,
   control: z.literal("codetext"),
+  type: z.literal("string"),
+  defaultValue: z.string().optional(),
+});
+
+const jsonCode = z.object({
+  ...common,
+  control: z.literal("json-code"),
   type: z.literal("string"),
   defaultValue: z.string().optional(),
 });
@@ -206,6 +217,7 @@ export const propMeta = z.union([
   resource,
   code,
   codeText,
+  jsonCode,
   color,
   boolean,
   radio,

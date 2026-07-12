@@ -207,6 +207,7 @@ BEGIN
     resources,
     instances,
     "marketplaceProduct",
+    "projectSettings",
     "publishStatus",
     "projectId",
     id,
@@ -225,6 +226,7 @@ BEGIN
     resources,
     instances,
     "marketplaceProduct",
+    "projectSettings",
     "publishStatus",
     "projectId",
     extensions.uuid_generate_v4() as id,
@@ -265,6 +267,7 @@ BEGIN
     "dataSources" = '[]'::text,
     resources = '[]'::text,
     "marketplaceProduct" = '{}'::text,
+    "projectSettings" = '{"meta":{},"compiler":{}}'::text,
     "isCleaned" = TRUE
   WHERE deployment IS NOT NULL
   AND id NOT IN (SELECT "buildId" FROM latest_builds)
@@ -436,6 +439,7 @@ CREATE TABLE public."Build" (
     "lastTransactionId" text,
     resources text DEFAULT '[]'::text NOT NULL,
     "marketplaceProduct" text DEFAULT '{}'::text NOT NULL,
+    "projectSettings" text DEFAULT '{"meta":{},"compiler":{}}'::text NOT NULL,
     "isCleaned" boolean DEFAULT false
 );
 
@@ -679,7 +683,8 @@ BEGIN
     "dataSources" = source."dataSources",
     "resources" = source."resources",
     "instances" = source."instances",
-    "marketplaceProduct" = source."marketplaceProduct"
+    "marketplaceProduct" = source."marketplaceProduct",
+    "projectSettings" = source."projectSettings"
   FROM (
     SELECT * FROM "Build"
     WHERE "projectId" = project_id AND "id" = from_build_id

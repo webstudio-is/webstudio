@@ -1,5 +1,6 @@
 import {
   publicApiOperations,
+  type InputJsonSchema,
   type PublicApiOperationMethod,
   type PublicApiOperationPermit,
 } from "@webstudio-is/protocol";
@@ -17,6 +18,8 @@ type ApiCommandMetadata = {
   inputFields: readonly string[];
   requiredInputFields: readonly string[];
   inputFieldTypes: Partial<Record<string, "array">>;
+  inputSchema: InputJsonSchema;
+  outputSchema?: InputJsonSchema;
   requiredOptions?: readonly string[];
   examples: readonly string[];
 };
@@ -77,9 +80,10 @@ export const topLevelCliCommandMetadata = [
   {
     command: "screenshot",
     description:
-      "Capture a PNG screenshot of a URL with an installed Chromium-family browser",
+      "Capture a PNG screenshot of an absolute URL or a generated project route with an installed Chromium-family browser",
     examples: [
       'webstudio screenshot "https://example.com" --output current.png --width 1440 --height 900',
+      "webstudio screenshot --path /pricing --output pricing.png",
     ],
   },
   {
@@ -122,6 +126,7 @@ export const topLevelCliCommandMetadata = [
 const apiCommandOptionsByCommand: Partial<
   Record<ApiCommandName, ApiCommandOptions>
 > = {
+  audit: apiCommand.auditCommandOptions,
   snapshot: apiCommand.snapshotCommandOptions,
   "apply-patch": apiCommand.applyPatchCommandOptions,
   "list-pages": apiCommand.pagesCommandOptions,
@@ -200,6 +205,7 @@ const apiCommandOptionsByCommand: Partial<
   "delete-domain": apiCommand.deleteDomainCommandOptions,
   "verify-domain": apiCommand.verifyDomainCommandOptions,
   "list-assets": apiCommand.assetsCommandOptions,
+  "list-fonts": apiCommand.fontsCommandOptions,
   "upload-asset": apiCommand.uploadAssetCommandOptions,
   "upload-assets": apiCommand.uploadAssetsCommandOptions,
   "find-asset-usage": apiCommand.assetCommandOptions,
@@ -215,11 +221,16 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
   inputFields: operation.inputFields,
   requiredInputFields: operation.requiredInputFields,
   inputFieldTypes: operation.inputFieldTypes,
+  inputSchema: operation.inputSchema,
+  ...(operation.outputSchema === undefined
+    ? {}
+    : { outputSchema: operation.outputSchema }),
   requiredOptions: operation.requiredOptions,
   examples: operation.examples,
 })) satisfies ApiCommandMetadata[];
 
 export const highLevelCliCommands = [
+  { command: "audit", operation: "audit" },
   { command: "permissions", operation: "permissions" },
   {
     command: "get-marketplace-product",

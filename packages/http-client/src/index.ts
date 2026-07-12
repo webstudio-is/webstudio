@@ -579,6 +579,7 @@ export const loadProjectBundleByBuildId = async (
     ...headers,
   }).query("build.loadProjectBundleByBuildId", {
     buildId: params.buildId,
+    bundleVersion: currentBundleVersion,
   });
   return publishedProjectBundle.parse(data);
 };
@@ -590,6 +591,7 @@ export const loadProjectBundleByProjectId = async (
     "build.loadProjectBundleByProjectId",
     {
       projectId: params.projectId,
+      bundleVersion: currentBundleVersion,
     }
   );
   return publishedProjectBundle.parse(data);
@@ -1045,6 +1047,34 @@ export const deleteFolder = projectMutationInput<
     folderId: string;
   }
 >("delete-folder");
+
+export const searchProject = projectQueryInput<
+  AuthProjectParams & Record<string, unknown>
+>("search-project");
+
+export const audit = projectQueryInput<
+  AuthProjectParams & Record<string, unknown>
+>("audit");
+
+export const listFonts = projectQueryInput<
+  AuthProjectParams & Record<string, unknown>
+>("list-fonts");
+
+export const replacePropText = projectMutationInput<
+  AuthProjectParams & Record<string, unknown>
+>("replace-prop-text");
+
+export const replaceText = projectMutationInput<
+  AuthProjectParams & Record<string, unknown>
+>("replace-text");
+
+export const replaceResourceText = projectMutationInput<
+  AuthProjectParams & Record<string, unknown>
+>("replace-resource-text");
+
+export const setImageDescriptions = projectMutationInput<
+  AuthProjectParams & Record<string, unknown>
+>("set-image-descriptions");
 
 export const listInstances = projectQueryInput<
   AuthProjectParams & {

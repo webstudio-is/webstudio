@@ -1,12 +1,78 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { bundleVersion } from "@webstudio-is/protocol";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import { buildRouter, __testing__ } from "./build-router.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
+import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
 
-const { createImportProjectBundleHandler } = __testing__;
+const {
+  assertCliBundleVersion,
+  createImportProjectBundleHandler,
+  prepareProjectBundleForClient,
+} = __testing__;
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe("build router project bundle compatibility", () => {
+  test("requires the current bundle contract from CLI clients", () => {
+    const ctx = { apiClient: { type: "cli" } } as never;
+    let error: unknown;
+    try {
+      assertCliBundleVersion(ctx, undefined);
+    } catch (caught) {
+      error = caught;
+    }
+    expect(getApiCompatibilityPayload(error)).toMatchObject({
+      reason: "clientVersionUnsupported",
+      target: "cli",
+      action: { type: "updateCli" },
+    });
+    expect(() => assertCliBundleVersion(ctx, bundleVersion)).not.toThrow();
+  });
+
+  test("removes agent instructions from non-CLI bundles", async () => {
+    const bundle = createPublishedProjectBundleFixture({
+      build: {
+        projectSettings: {
+          meta: { siteName: "Acme", agentInstructions: "Internal guidance" },
+          compiler: {},
+        },
+      },
+    });
+
+    const result = await prepareProjectBundleForClient(
+      { apiClient: { type: "browser" } } as never,
+      bundle
+    );
+
+    expect(result.build.projectSettings?.meta).toEqual({ siteName: "Acme" });
+    expect(bundle.build.projectSettings?.meta.agentInstructions).toBe(
+      "Internal guidance"
+    );
+  });
+
+  test("keeps agent instructions for authorized CLI bundles", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    const bundle = createPublishedProjectBundleFixture({
+      build: {
+        projectSettings: {
+          meta: { agentInstructions: "Internal guidance" },
+          compiler: {},
+        },
+      },
+    });
+
+    const result = await prepareProjectBundleForClient(
+      { apiClient: { type: "cli" } } as never,
+      bundle
+    );
+
+    expect(result.build.projectSettings?.meta.agentInstructions).toBe(
+      "Internal guidance"
+    );
+  });
 });
 
 describe("build router jsx fragment conversion", () => {

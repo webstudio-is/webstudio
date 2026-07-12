@@ -3333,6 +3333,33 @@ export const JCSpaceBetweenIcon: IconComponent = forwardRef(
 );
 JCSpaceBetweenIcon.displayName = "JCSpaceBetweenIcon";
 
+export const JsonLdIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.75 2.25h-.5C3.56 2.25 3 2.81 3 3.5v2.75C3 7.22 2.22 8 1.25 8 2.22 8 3 8.78 3 9.75v2.75c0 .69.56 1.25 1.25 1.25h.5M11.25 2.25h.5c.69 0 1.25.56 1.25 1.25v2.75c0 .97.78 1.75 1.75 1.75-.97 0-1.75.78-1.75 1.75v2.75c0 .69-.56 1.25-1.25 1.25h-.5M8 5.25l-1.75 4.5M8 5.25l1.75 4.5m-3.5 0h3.5"
+        />
+        <circle cx="8" cy="5.25" r="1" fill="currentColor" />
+        <circle cx="6.25" cy="9.75" r="1" fill="currentColor" />
+        <circle cx="9.75" cy="9.75" r="1" fill="currentColor" />
+      </svg>
+    );
+  }
+);
+JsonLdIcon.displayName = "JsonLdIcon";
+
 export const LabelIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

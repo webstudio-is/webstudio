@@ -346,11 +346,11 @@ For Video Animation, use the registered template via `insert-component` when pos
 
 ## Command Surface Boundary
 
-- Use top-level `webstudio ...` shell commands for setup, sync/import/build/preview/screenshot, permissions, publish/domains, schema, man, and starting MCP.
+- Use top-level `webstudio ...` shell commands for setup, sync/import/build/preview/screenshot, permissions, publish/domains, schema, registry inspection, man, and starting MCP.
 - Use MCP tools for Builder project data manipulation: pages, instances/components, props, text, styles, tokens, variables, resources, assets, breakpoints, redirects, and raw patches.
 - From a shell, call MCP tools with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio insert-fragment '<json>' --dry-run`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 - Inside the Webstudio monorepo, call the local CLI as its own command: `node packages/cli/local.js ...`. Do not wrap the CLI call in `pwd && ...`, command substitution, `pnpm exec webstudio`, `pnpm --filter webstudio exec webstudio`, or a global `webstudio`.
-- For experiments, pass `--dry-run` to local-capable mutation calls. Copying a `.webstudio` folder is not an isolated project clone; `.webstudio/config.json` still points to the same remote project, so non-dry-run mutations can commit to that project.
+- For experiments, pass `--dry-run` to local-capable mutation calls. Read the computed transaction from `meta.session.transaction` and its base build version from `meta.session.version`. Copying a `.webstudio` folder is not an isolated project clone; `.webstudio/config.json` still points to the same remote project, so non-dry-run mutations can commit to that project.
 - For bounded multi-step shell work, run inline JSON with `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'`; this reuses one CLI session without raw JSON-RPC. For large batches, write `{ "calls": [{ "tool": "..." }] }` to a normal JSON file and run `webstudio mcp run .temp/mcp-calls.json`.
 - Use JSON strings for `brief` fields. Never pass boolean flags such as `{"brief":true}`.
 - Treat `webstudio mcp single-op-call` and `webstudio mcp run` stderr lines as progress checkpoints; stdout remains JSON on both success and failure. On failure, parse stdout for `{ "ok": false, "error": { "code": "...", "message": "..." } }` before deciding what to fix.
@@ -367,7 +367,7 @@ For Video Animation, use the registered template via `insert-component` when pos
 Use this process for user requests that change Webstudio content, layout, styles, assets, pages, redirects, resources, or publishing state:
 
 1. Discover capabilities with `webstudio man --json`, `webstudio schema api`, `webstudio schema mcp`, MCP `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.coverage-plan`, `components.search`, `components.get`, `templates.list`, and `templates.get`. From a shell, prefer shortcut calls such as `webstudio meta.index` and `webstudio components.search '{"brief":"button"}'` for these focused tool calls; use `webstudio mcp single-op-call` when you need the explicit MCP form. Read full resources such as `webstudio://project/tools` and `webstudio://project/components` only when needed. Do not write scripts to parse full MCP discovery JSON for normal lookup.
-2. Inspect current project state with semantic reads such as `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, `list-breakpoints`, and `snapshot` only when needed.
+2. Inspect current project state with semantic reads such as `get-project-settings`, `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, `list-breakpoints`, and `snapshot` only when needed. Before changing a project, read `get-project-settings` and follow any non-empty `meta.agentInstructions`. These are shared project instructions, not a place for secrets.
 3. Mutate the Webstudio project with semantic MCP write tools first. Prefer MCP `insert-fragment` for authored/styled sections, use `insert-component` only for one automatic component template, then `update-text`, `update-props`, `update-styles`, `upload-asset`, `create-page`, and page/project settings tools over raw patches.
 4. Use `apply-patch` only when no semantic tool covers the required change, and only after reading the latest snapshot/version.
 5. For visual/design work, regenerate or preview the generated app, capture a screenshot, inspect it with vision, and iterate before final response.
@@ -412,19 +412,19 @@ For responsive page work, use Builder breakpoints as the source of truth:
 
 ## Values vs Bindings
 
-- Use direct value tools for fixed content. For visible text, use `update-text` with plain `text`. For static props such as `aria-label`, `alt`, `id`, `class`, `href`, or button labels stored as props, use `update-props` with the prop's direct type/value.
+- Use direct value tools for fixed content. For one visible text child, use `update-text` with plain `text`. For a bounded multi-instance literal replacement, use `replace-text` with `find`, `replace`, `pagePath` or `pageId`, and `limit`; it does not change expression children. Use `replace-prop-text` for bounded changes inside static string props, optionally limited to prop names or instance ids; it never changes dynamic bindings. For static props such as `aria-label`, `alt`, `id`, `class`, `href`, or button labels stored as props, use `update-props` with the prop's direct type/value.
 - Use `bind-props` only when the prop must stay dynamic: an expression, resource result, action, or existing scoped runtime context such as `system`. Do not use `bind-props` just to set a fixed string.
 - Direct prop string example: `{"updates":[{"instanceId":"button-id","name":"aria-label","type":"string","value":"Open menu"}]}`.
 - Expression binding example: `{"bindings":[{"instanceId":"link-id","name":"href","binding":{"type":"expression","value":"currentPost.url"}}]}`.
-- Page metadata fields such as `title`, `description`, `language`, `redirect`, `status`, and custom meta content store JavaScript expression source. For fixed text, pass a JavaScript string literal expression with JSON quoting, for example `JSON.stringify("Pricing | Acme")` in code or `"\"Pricing | Acme\""` in JSON. For computed values, pass JavaScript expression code such as `pageTitle ?? "Pricing | Acme"`.
-- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"\"Pricing | Acme\"","meta":{"description":"\"Plans for teams\""}}}`.
-- Resource URL, header, search-param, and body fields also store JavaScript expression source. For a fixed URL, use a string literal expression such as `"\"https://api.example.com/items\""`.
-- Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"\"https://api.example.com/items\""}}`.
+- Page metadata fields such as `title`, `description`, `language`, `redirect`, `status`, and custom meta content accept plain fixed text. For computed values, pass JavaScript expression code such as `pageTitle ?? "Pricing | Acme"`.
+- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"Pricing | Acme","meta":{"description":"Plans for teams"}}}`.
+- Resource `url` accepts plain fixed URLs and paths. For computed URLs, pass JavaScript expression code such as `"https://api.example.com/items?tag=" + filters.tag`. Resource header values, search parameter values, and text bodies accept expressions for dynamic values; for fixed text, use `{ "type": "literal", "value": "application/json" }`.
+- Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"https://api.example.com/items"}}`.
 - Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`. Use `string[]` only for arrays where every item is a string; use `json` for objects, mixed arrays, filters, and nested data.
 - Parameters are internal scoped runtime values from pages, collections, or components. They are not a public authoring surface: do not create, update, or delete parameter records. Public tools should preserve existing parameter records and may reference documented context values such as `system` in expressions where they are already in scope.
 - Use scoped resources for read data. A resource created with `scopeInstanceId`/`dataSourceName` becomes a scoped resource data variable, is generated into the page resource `data` map, and may be loaded while rendering the page. Use this for GET CMS/API data and read the loaded resource result from its wrapper, usually `.data`.
 - Use prop-bound resources for actions. A resource created without `scopeInstanceId` and bound to a component prop such as Form `action` with `bind-props` and `binding.type: "resource"` becomes an action resource in the page resource `action` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and anything that should run only from an explicit form/action flow.
-- For dynamic resource query parameters prefer `searchParams`, for example `{"name":"tag","value":"filters.tag"}`. Header values can be expressions such as `"\"Bearer \" + auth.token"`. Body can be an object expression, including GraphQL payloads such as `{ query: "...", variables: { slug: system.params.slug } }`.
+- For dynamic resource query parameters prefer `searchParams`, for example `{"name":"tag","value":"filters.tag"}`. Use `{"type":"literal","value":"website"}` for fixed request text. Header values can be expressions such as `"\"Bearer \" + auth.token"`. Body can be an object expression, including GraphQL payloads such as `{ query: "...", variables: { slug: system.params.slug } }`.
 - Resource methods are `get`, `post`, `put`, and `delete`. Optional resource controls are `graphql` and `system`. Use `control:"graphql"` for GraphQL POST resources with query bodies. Use `control:"system"` for built-in local resource URLs such as `"/$resources/current-date"` and for resources reading the built-in `system` parameter. The built-in system fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`; do not use `system.path`.
 
 ## Pick Read Command
@@ -460,7 +460,7 @@ MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
 - For visual/design work, verify the rendered result with vision before finishing.
 - Do not edit generated files for normal Webstudio content/design requests.
 - Use direct values for static strings and bindings only for dynamic expressions/resources/actions.
-- For expression-backed fields that need fixed text, encode the fixed text as a quoted JavaScript string literal expression.
+- Use plain fixed text where documented. Only encode a quoted JavaScript string literal when a field is explicitly documented as an expression-only value.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
 - Use webstudio schema api for machine-readable top-level command metadata and webstudio schema mcp for MCP tool schemas.
 

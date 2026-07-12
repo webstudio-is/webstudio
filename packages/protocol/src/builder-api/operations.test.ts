@@ -142,6 +142,35 @@ describe("public api operation catalog", () => {
       enum: ["text", "expression"],
       description: expect.stringContaining('There is no "replace" mode.'),
     });
+    const resourceInputSchema =
+      getPublicApiOperation("create-resource").inputSchema?.properties
+        ?.resource;
+    expect(resourceInputSchema).toEqual(
+      expect.objectContaining({ type: "object" })
+    );
+    if (
+      resourceInputSchema === undefined ||
+      typeof resourceInputSchema !== "object"
+    ) {
+      throw Error("Expected create-resource input schema object");
+    }
+    const headerValueSchema = (
+      resourceInputSchema.properties?.headers as
+        | { items?: { properties?: { value?: unknown } } }
+        | undefined
+    )?.items?.properties?.value;
+    expect(headerValueSchema).toMatchObject({
+      anyOf: [
+        { type: "string" },
+        {
+          type: "object",
+          properties: {
+            type: { const: "literal" },
+            value: { type: "string" },
+          },
+        },
+      ],
+    });
     expect(
       getPublicApiOperation("update-styles").inputSchema?.properties?.updates
     ).toMatchObject({

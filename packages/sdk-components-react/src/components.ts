@@ -42,4 +42,5 @@ export { HeadSlot } from "./head-slot";
 export { HeadLink } from "./head-link";
 export { HeadMeta } from "./head-meta";
 export { HeadTitle } from "./head-title";
+export { JsonLd } from "./json-ld";
 export { Video } from "./video";

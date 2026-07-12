@@ -25,6 +25,7 @@ import {
   markBuilderStateNamespacesInvalidated,
   markBuilderStateNamespacesStale,
   type BuilderStateFreshness,
+  type BuilderStateNamespaceSource,
 } from "./state/freshness";
 import { applyBuilderPatchTransactions } from "./state/patch";
 
@@ -131,6 +132,7 @@ export type ProjectSessionEnvelope<Result = unknown> = {
   projectId: string;
   buildId?: string;
   version?: number;
+  /** Where the returned state was materialized, independently of commit state. */
   source: ProjectSessionSource;
   result: Result;
   state: {
@@ -147,6 +149,57 @@ export type ProjectSessionEnvelope<Result = unknown> = {
   diagnostics: ProjectSessionDiagnostic[];
   transaction?: BuilderPatchTransaction;
 };
+
+const getNamespaceCounts = (envelope: ProjectSessionEnvelope) =>
+  Object.fromEntries(
+    Object.entries(envelope.namespaces).map(([name, values]) => [
+      name,
+      values.length,
+    ])
+  ) as Record<keyof ProjectSessionEnvelope["namespaces"], number>;
+
+export const serializeProjectSessionMeta = (
+  envelope: ProjectSessionEnvelope
+) => {
+  const diagnostics = envelope.diagnostics.map(({ level, code, message }) => ({
+    level,
+    code,
+    message,
+  }));
+  const diagnosticErrorCount = diagnostics.filter(
+    (diagnostic) => diagnostic.level === "error"
+  ).length;
+  return {
+    operationId: envelope.operationId,
+    projectId: envelope.projectId,
+    ...(envelope.buildId === undefined ? {} : { buildId: envelope.buildId }),
+    ...(envelope.version === undefined ? {} : { version: envelope.version }),
+    source: envelope.source,
+    committed: envelope.state.committed,
+    namespaceCounts: getNamespaceCounts(envelope),
+    diagnosticCount: diagnostics.length,
+    ...(diagnosticErrorCount === 0 ? {} : { diagnosticErrorCount }),
+    ...(diagnostics.length === 0 ? {} : { diagnostics }),
+    ...(envelope.state.compatibility === undefined
+      ? {}
+      : {
+          compatibilityVersion: envelope.state.compatibility.sessionVersion,
+        }),
+    ...(envelope.source !== "dry-run" || envelope.transaction === undefined
+      ? {}
+      : { transaction: envelope.transaction }),
+  };
+};
+
+export const serializeProjectSessionDebug = (
+  envelope: ProjectSessionEnvelope
+) => ({
+  ...serializeProjectSessionMeta(envelope),
+  namespaces: envelope.namespaces,
+  freshness: envelope.state.freshness,
+  compatibility: envelope.state.compatibility,
+  diagnostics: envelope.diagnostics,
+});
 
 export type ProjectSessionMutationOptions = {
   dryRun?: boolean;
@@ -262,25 +315,37 @@ const getNamespacesNeedingRemote = (
 
 const createFreshness = (
   state: BuilderState,
-  version: number
-): BuilderStateFreshness => createBuilderStateFreshness({ state, version });
+  version: number,
+  loadedAt: string,
+  source: BuilderStateNamespaceSource = "remote"
+): BuilderStateFreshness =>
+  createBuilderStateFreshness({
+    state,
+    version,
+    source,
+    loadedAt,
+  });
 
 const mergeFreshness = ({
   current,
   state,
   namespaces,
   version,
+  loadedAt,
+  source = "remote",
 }: {
   current: BuilderStateFreshness | undefined;
   state: BuilderState;
   namespaces: readonly BuilderNamespace[];
   version: number;
+  loadedAt: string;
+  source?: BuilderStateNamespaceSource;
 }): BuilderStateFreshness => {
   const next =
     current === undefined
       ? createBuilderStateFreshness({ state })
       : { ...current };
-  const fresh = createFreshness(state, version);
+  const fresh = createFreshness(state, version, loadedAt, source);
   for (const namespace of namespaces) {
     next[namespace] = fresh[namespace];
   }
@@ -315,6 +380,7 @@ const mergeSnapshot = ({
       state,
       namespaces,
       version: remote.version,
+      loadedAt: new Date().toISOString(),
     }),
     compatibilityVersion,
     compatibility,
@@ -531,7 +597,10 @@ export class ProjectSession {
         id: operationId,
         state: snapshot.state,
         input,
-        context: this.#options.runtimeContext,
+        context: {
+          ...this.#options.runtimeContext,
+          projectVersion: snapshot.version,
+        },
       });
       return this.createEnvelope({
         source: "local",
@@ -812,7 +881,10 @@ export class ProjectSession {
       id: operationId,
       state: snapshot.state,
       input,
-      context: this.#options.runtimeContext,
+      context: {
+        ...this.#options.runtimeContext,
+        projectVersion: snapshot.version,
+      },
     });
     if (mutation.noop) {
       return this.createEnvelope({
@@ -865,20 +937,30 @@ export class ProjectSession {
     const applied = applyBuilderPatchTransactions(snapshot.state, [
       transaction,
     ]);
+    const loadedAt = new Date().toISOString();
+    const updatedNamespaces = [
+      ...new Set(mutation.payload.map((change) => change.namespace)),
+    ];
     const committedSnapshot: ProjectSessionSnapshot = {
       ...snapshot,
       version: commit.version,
       state: applied.state,
-      freshness: createBuilderStateFreshness({
-        state: applied.state,
-        version: commit.version,
-        invalidatedNamespaces: mutation.invalidatesNamespaces,
-        invalidatedBy: operationId,
-      }),
+      freshness: markBuilderStateNamespacesInvalidated(
+        mergeFreshness({
+          current: snapshot.freshness,
+          state: applied.state,
+          namespaces: updatedNamespaces,
+          version: commit.version,
+          loadedAt,
+          source: "local",
+        }),
+        mutation.invalidatesNamespaces,
+        operationId
+      ),
     };
     await this.saveSnapshot(committedSnapshot);
     return this.createEnvelope({
-      source: "remote",
+      source: "local",
       result: mutation.result,
       committed: true,
       contract: {

@@ -162,6 +162,7 @@ export type Database = {
           lastTransactionId: string | null;
           marketplaceProduct: string;
           pages: string;
+          projectSettings: string;
           projectId: string;
           props: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
@@ -183,6 +184,7 @@ export type Database = {
           lastTransactionId?: string | null;
           marketplaceProduct?: string;
           pages: string;
+          projectSettings?: string;
           projectId: string;
           props?: string;
           publishStatus?: Database["public"]["Enums"]["PublishStatus"];
@@ -204,6 +206,7 @@ export type Database = {
           lastTransactionId?: string | null;
           marketplaceProduct?: string;
           pages?: string;
+          projectSettings?: string;
           projectId?: string;
           props?: string;
           publishStatus?: Database["public"]["Enums"]["PublishStatus"];

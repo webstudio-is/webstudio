@@ -224,7 +224,15 @@ test("formats actionable browser installation guidance", () => {
 
 describe("captureScreenshot", () => {
   test("captures with browser readiness defaults", async () => {
-    const captureBrowserScreenshot = vi.fn(async () => undefined);
+    const captureBrowserScreenshot = vi.fn(async () => ({
+      viewportWidth: 1440,
+      viewportHeight: 900,
+      contentWidth: 1440,
+      contentHeight: 1200,
+      horizontalOverflow: false,
+      images: [],
+      resources: [],
+    }));
     const output = `${tmpdir()}/webstudio-screenshot-123.png`;
     const dependencies = createDependencies({
       which: vi.fn(async (command) =>
@@ -250,6 +258,15 @@ describe("captureScreenshot", () => {
       fullPage: false,
       elapsedMs: 0,
       warnings: [],
+      layout: {
+        viewportWidth: 1440,
+        viewportHeight: 900,
+        contentWidth: 1440,
+        contentHeight: 1200,
+        horizontalOverflow: false,
+        images: [],
+        resources: [],
+      },
     });
     expect(captureBrowserScreenshot).toHaveBeenCalledWith({
       browserPath: "/usr/bin/chromium",
@@ -257,6 +274,8 @@ describe("captureScreenshot", () => {
       width: 1440,
       height: 900,
       fullPage: undefined,
+      includeImageMetrics: undefined,
+      includeResourceMetrics: undefined,
       url: "https://example.com",
       uid: 1000,
       waitUntil: "load",

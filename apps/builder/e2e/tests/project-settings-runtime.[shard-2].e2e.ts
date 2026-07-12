@@ -1,5 +1,6 @@
 import type { Page as PlaywrightPage } from "playwright";
 import type { Page as WebstudioPage } from "@webstudio-is/sdk";
+import { parseProjectAuthRoutes } from "@webstudio-is/project-build/runtime/project-settings";
 import { loadDevBuild, updateProject } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { loginWithSecret } from "../flows/dashboard";
@@ -12,15 +13,15 @@ import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
 } from "../flows/sync-status";
-import { expectGeneratedRedirects } from "../flows/generated-app";
+import {
+  expectGeneratedAppRedirect,
+  expectGeneratedRedirects,
+} from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { newIsolatedPage, test } from "../harness";
 import { measure } from "../perf";
 
 type PersistedPages = {
-  meta?: {
-    siteName?: string;
-  };
   redirects?: Array<{
     old: string;
     new: string;
@@ -29,9 +30,23 @@ type PersistedPages = {
   pages: WebstudioPage[];
 };
 
+type PersistedProjectSettings = {
+  compiler: { atomicStyles?: boolean };
+  meta: { auth?: string | null; siteName?: string };
+};
+
 const getPersistedPages = async ({ projectId }: { projectId: string }) => {
   const build = await loadDevBuild({ projectId });
   return JSON.parse(build.pages) as PersistedPages;
+};
+
+const getPersistedProjectSettings = async ({
+  projectId,
+}: {
+  projectId: string;
+}) => {
+  const build = await loadDevBuild({ projectId });
+  return JSON.parse(build.projectSettings) as PersistedProjectSettings;
 };
 
 const getPersistedPageByName = async ({
@@ -68,6 +83,29 @@ const saveSiteName = async ({
   await waitForSyncStatus({ page, status: "idle" });
 };
 
+const setAtomicStyles = async ({
+  page,
+  checked,
+}: {
+  page: PlaywrightPage;
+  checked: boolean;
+}) => {
+  await page.getByRole("option", { name: "Publish" }).click();
+  const checkbox = page.getByRole("checkbox", {
+    name: "Generate atomic CSS when publishing",
+  });
+  const toggle = async () => {
+    const save = waitForChangeToBeSaved({ page });
+    await checkbox.click();
+    await save;
+    await waitForSyncStatus({ page, status: "idle" });
+  };
+  if ((await checkbox.isChecked()) === checked) {
+    await toggle();
+  }
+  await toggle();
+};
+
 const addRedirect = async ({
   page,
   from,
@@ -88,6 +126,70 @@ const addRedirect = async ({
     .click();
   await page.getByText(from, { exact: true }).waitFor();
   await waitForSyncStatus({ page, status: "idle" });
+};
+
+const addBasicAuth = async ({
+  page,
+  route,
+  login,
+  password,
+}: {
+  page: PlaywrightPage;
+  route: string;
+  login: string;
+  password: string;
+}) => {
+  await page.getByRole("option", { name: "Authentication" }).click();
+  await page.getByPlaceholder("/private or /docs/*").fill(route);
+  await page.getByPlaceholder("Login").fill(login);
+  await page.getByPlaceholder("Password").fill(password);
+  const save = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Add" }).click();
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const deleteBasicAuth = async ({
+  page,
+  route,
+}: {
+  page: PlaywrightPage;
+  route: string;
+}) => {
+  await page.getByText(route, { exact: true }).hover();
+  const save = waitForChangeToBeSaved({ page });
+  await page
+    .getByRole("button", { name: `Delete authentication for ${route}` })
+    .click();
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const expectPersistedBasicAuth = async ({
+  projectId,
+  route,
+  login,
+  exists,
+}: {
+  projectId: string;
+  route: string;
+  login: string;
+  exists: boolean;
+}) => {
+  const settings = await getPersistedProjectSettings({ projectId });
+  const routes = parseProjectAuthRoutes(settings.meta.auth ?? undefined).routes;
+  const authRoute = routes.find((authRoute) => authRoute.route === route);
+  if (exists === false) {
+    if (authRoute !== undefined) {
+      throw new Error(`Expected auth route ${route} to be deleted.`);
+    }
+    return;
+  }
+  if (authRoute?.auth.login !== login) {
+    throw new Error(
+      `Expected auth route ${route} for ${login}. Received ${JSON.stringify(routes)}`
+    );
+  }
 };
 
 const deleteRedirect = async ({
@@ -116,9 +218,10 @@ const expectPersistedProjectSettings = async ({
   redirect?: { from: string; to: string; status?: string };
 }) => {
   const pages = await getPersistedPages({ projectId });
-  if (pages.meta?.siteName !== siteName) {
+  const settings = await getPersistedProjectSettings({ projectId });
+  if (settings.meta.siteName !== siteName) {
     throw new Error(
-      `Expected siteName "${siteName}", received ${JSON.stringify(pages.meta)}.`
+      `Expected siteName "${siteName}", received ${JSON.stringify(settings.meta)}.`
     );
   }
 
@@ -177,6 +280,7 @@ test("Project settings site name and redirects persist after reload", async () =
     await measure("project settings runtime update settings", async () => {
       await openProjectSettings({ page });
       await saveSiteName({ page, siteName });
+      await setAtomicStyles({ page, checked: false });
       await addRedirect({
         page,
         from: redirect.from,
@@ -189,18 +293,23 @@ test("Project settings site name and redirects persist after reload", async () =
       siteName,
       redirect,
     });
-    await measure("project settings runtime generated redirects", async () => {
-      await expectGeneratedRedirects({
-        projectId: fixture.projectId,
-        expectedRedirects: [
-          {
-            old: redirect.from,
-            new: redirect.to,
-            status: "301",
-          },
-        ],
-      });
-    });
+    if (
+      (await getPersistedProjectSettings({ projectId: fixture.projectId }))
+        .compiler.atomicStyles !== false
+    ) {
+      throw new Error("Expected atomic CSS setting to persist as disabled.");
+    }
+    await measure(
+      "project settings runtime generated redirect response",
+      async () => {
+        await expectGeneratedAppRedirect({
+          projectId: fixture.projectId,
+          path: redirect.from,
+          status: 301,
+          location: redirect.to,
+        });
+      }
+    );
 
     await measure("project settings runtime reload with redirect", async () => {
       await openProjectBuilder({
@@ -220,6 +329,19 @@ test("Project settings site name and redirects persist after reload", async () =
     }
     await page.getByRole("option", { name: "Redirects" }).click();
     await page.getByText(redirect.from, { exact: true }).waitFor();
+    await page.getByRole("option", { name: "Publish" }).click();
+    if (
+      await page
+        .getByRole("checkbox", {
+          name: "Generate atomic CSS when publishing",
+        })
+        .isChecked()
+    ) {
+      throw new Error(
+        "Expected atomic CSS setting to remain disabled after reload."
+      );
+    }
+    await page.getByRole("option", { name: "Redirects" }).click();
 
     await measure("project settings runtime delete redirect", async () => {
       await deleteRedirect({ page, from: redirect.from });
@@ -368,6 +490,76 @@ test("Marketplace page settings persist after reload", async () => {
         )}`
       );
     }
+  } finally {
+    await close();
+  }
+});
+
+test("Project authentication routes persist after reload and deletion", async () => {
+  const email = "project-auth-runtime@webstudio.test";
+  const fixture = await createContentModeProject({
+    email,
+    title: "Project Auth Runtime",
+    assetNamePrefix: "project-auth-runtime-",
+    editorToken: "project-auth-runtime-editor-token",
+    builderToken: "project-auth-runtime-builder-token",
+  });
+  const { page, close } = await newIsolatedPage();
+  const route = "/private";
+  const login = "editor";
+  const password = "e2e-secret";
+
+  try {
+    await loginWithSecret({ page, email });
+    await measure("project auth runtime open builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+      await waitForCanvasText({ page, text: "Initial content" });
+    });
+
+    await measure("project auth runtime add route", async () => {
+      await openProjectSettings({ page });
+      await page.getByRole("option", { name: "Authentication" }).click();
+      await page.getByPlaceholder("/private or /docs/*").fill("private");
+      if (
+        (await page.getByRole("button", { name: "Add" }).isDisabled()) === false
+      ) {
+        throw new Error("Expected invalid auth route to disable Add.");
+      }
+      await addBasicAuth({ page, route, login, password });
+    });
+    await expectPersistedBasicAuth({
+      projectId: fixture.projectId,
+      route,
+      login,
+      exists: true,
+    });
+
+    await measure("project auth runtime reload builder", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+      await waitForCanvasText({ page, text: "Initial content" });
+    });
+    await openProjectSettings({ page });
+    await page.getByRole("option", { name: "Authentication" }).click();
+    await page.getByText(route, { exact: true }).waitFor();
+    await page.getByText(login, { exact: true }).waitFor();
+
+    await measure("project auth runtime delete route", async () => {
+      await deleteBasicAuth({ page, route });
+    });
+    await expectPersistedBasicAuth({
+      projectId: fixture.projectId,
+      route,
+      login,
+      exists: false,
+    });
   } finally {
     await close();
   }

@@ -54,6 +54,16 @@ test("prints api command schema as json", () => {
         name: "publish deploy",
         operation: "publish",
         method: "mutation",
+        inputSchema: expect.objectContaining({
+          type: "object",
+          properties: expect.objectContaining({
+            target: expect.objectContaining({
+              enum: expect.arrayContaining(["staging", "production"]),
+            }),
+            domains: expect.objectContaining({ type: "array" }),
+            message: expect.objectContaining({ type: "string" }),
+          }),
+        }),
       }),
       expect.objectContaining({
         name: "domains list",
@@ -62,6 +72,11 @@ test("prints api command schema as json", () => {
       }),
     ])
   );
+  for (const command of output.commands) {
+    expect(command.inputSchema).toEqual(
+      expect.objectContaining({ type: "object" })
+    );
+  }
   expect(output.commands).not.toEqual(
     expect.arrayContaining([
       expect.objectContaining({ name: "apply-patch" }),

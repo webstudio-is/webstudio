@@ -29,7 +29,7 @@ The API commands operate on the single project configured by:
 - Successful mutation commits update the local snapshot only after the remote commit succeeds.
 - Server-only commands run remotely and invalidate/refetch namespaces declared by the operation catalog.
 - Use --refresh on local-capable commands to refresh required namespaces before running.
-- Successful JSON responses include meta.session with operationId, buildId, version, source, committed, compatibility, namespace freshness, and diagnostics.
+- Successful JSON responses include compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.
 
 ## CLI Capability Inventory
 
@@ -78,7 +78,7 @@ Each transaction has:
 "id": "patch-transaction-label",
 "payload": [
 {
-"namespace": "pages",
+"namespace": "projectSettings",
 "patches": [
 { "op": "replace", "path": ["meta", "siteName"], "value": "New Site" }
 ]
@@ -94,7 +94,8 @@ Patch paths are JSON-patch-like paths into Builder store data. Map-like namespac
 
 Supported namespaces:
 
-- pages: site metadata, redirects, page records, folders, compiler settings
+- pages: redirects, page records, and folders
+- projectSettings: project-wide metadata and compiler settings
 - instances: element instances and children, including text/expression children
 - props: element props, bindings, page references, resource bindings
 - styles: CSS declarations keyed by style declaration key
@@ -131,13 +132,16 @@ or delete parameter records. Public tools should preserve existing parameter
 records and may reference documented context values such as `system` in
 expressions where they are already in scope.
 
-Resource request fields are expressions too. Literal URLs must be JSON strings,
-for example `"https://api.example.com/posts"`. Dynamic URLs can combine strings
-and variables, for example `"https://api.example.com/posts?tag=" + filters.tag`.
-Prefer `searchParams` for query parameters that should be encoded separately:
-`[{ "name": "tag", "value": "filters.tag" }]`. Header values and body are also
-expressions, so headers can read variables such as `"Bearer " + auth.token`, and
-GraphQL bodies can return objects such as
+Resource `url` accepts plain fixed URLs and paths, for example
+`https://api.example.com/posts` or `/$resources/current-date`. Dynamic URLs can
+combine strings and variables, for example
+`"https://api.example.com/posts?tag=" + filters.tag`. Prefer `searchParams` for
+query parameters that should be encoded separately:
+`[{ "name": "tag", "value": "filters.tag" }]`. Header values, search parameter
+values, and bodies are expressions for dynamic content. For fixed text, use
+`{ "type": "literal", "value": "application/json" }`; Webstudio stores the
+required string expression. Headers can still read variables such as
+`"Bearer " + auth.token`, and GraphQL bodies can return objects such as
 `{ query: "...", variables: { slug: system.params.slug } }`.
 
 Create a resource with `scopeInstanceId`/`--scope-instance` when the fetched
@@ -181,7 +185,7 @@ Rename the site:
 "id": "patch-site-name",
 "payload": [
 {
-"namespace": "pages",
+"namespace": "projectSettings",
 "patches": [
 { "op": "add", "path": ["meta", "siteName"], "value": "Acme Studio" }
 ]

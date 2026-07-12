@@ -17,6 +17,11 @@
       "import": "./src/schema.ts",
       "default": "./src/schema.ts"
     },
+    "./shared/project-settings": {
+      "webstudio": "./src/shared/project-settings.ts",
+      "import": "./src/shared/project-settings.ts",
+      "default": "./src/shared/project-settings.ts"
+    },
     "./contracts/builder-runtime": {
       "webstudio": "./src/contracts/builder-runtime.ts",
       "import": "./src/contracts/builder-runtime.ts",
@@ -333,6 +338,7 @@
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
+    "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/html-data": "workspace:*",
     "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project": "workspace:*",

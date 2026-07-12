@@ -126,7 +126,18 @@ describe("cli project session storage", () => {
 });
 
 test("creates preview bundle from project session snapshot", () => {
+  const marketplaceProduct = {
+    category: "pageTemplates" as const,
+    name: "Session template",
+    thumbnailAssetId: "asset-1",
+    author: "Webstudio",
+    email: "hello@example.com",
+    website: "https://example.com",
+    issues: "",
+    description: "A reusable project-session template.",
+  };
   const state = createBuilderStateFromSnapshot({
+    marketplaceProduct,
     pages: {
       homePageId: "home",
       rootFolderId: "root",
@@ -210,6 +221,7 @@ test("creates preview bundle from project session snapshot", () => {
     "body",
     "design-system-body",
   ]);
+  expect(bundle.build.marketplaceProduct).toEqual(marketplaceProduct);
 });
 
 describe("cli project session transport", () => {
@@ -221,7 +233,12 @@ describe("cli project session transport", () => {
         authToken: "token",
       },
       getBuildSnapshot: async (input) => {
-        expect(input.include).toEqual(["pages", "folders", "instances"]);
+        expect(input.include).toEqual([
+          "pages",
+          "folders",
+          "instances",
+          "projectSettings",
+        ]);
         return {
           projectId: "project-1",
           buildId: "build-1",
@@ -241,6 +258,10 @@ describe("cli project session transport", () => {
           meta: { siteName: "Acme" },
           compiler: { atomicStyles: true },
           redirects: [{ old: "/old", new: "/new", status: "301" }],
+          projectSettings: {
+            meta: { siteName: "Canonical Acme" },
+            compiler: { atomicStyles: false },
+          },
           folders: [
             {
               id: "root",
@@ -263,12 +284,12 @@ describe("cli project session transport", () => {
 
     const snapshot = await transport.fetchNamespaces({
       projectId: "project-1",
-      namespaces: ["pages", "instances"],
+      namespaces: ["pages", "instances", "projectSettings"],
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
-    expect(snapshot.state.pages?.meta).toEqual({ siteName: "Acme" });
-    expect(snapshot.state.pages?.compiler).toEqual({ atomicStyles: true });
+    expect(snapshot.state.pages?.meta).toBeUndefined();
+    expect(snapshot.state.pages?.compiler).toBeUndefined();
     expect(snapshot.state.pages?.redirects).toEqual([
       { old: "/old", new: "/new", status: "301" },
     ]);
@@ -276,6 +297,10 @@ describe("cli project session transport", () => {
       "home",
     ]);
     expect(snapshot.state.instances?.get("body")?.component).toBe("Body");
+    expect(snapshot.state.projectSettings).toEqual({
+      meta: { siteName: "Canonical Acme" },
+      compiler: { atomicStyles: false },
+    });
   });
 
   test("adapts injected permission reader to project session transport", async () => {

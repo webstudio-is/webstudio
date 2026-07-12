@@ -4,6 +4,7 @@ import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
+import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
@@ -12,6 +13,7 @@ import { builderPatchTransactionSchema } from "./contracts/patch";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
 import { pageExpressionFieldHint } from "./runtime/pages";
+import { imageDescriptionsSetInput } from "./runtime/assets";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
@@ -108,6 +110,75 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     description: "Get page by path",
     inputSchema: getTestInputSchema(z.object({ path: z.string() })),
     readNamespaces: ["pages"],
+  }),
+  publicOperation({
+    command: "audit",
+    id: "project.audit",
+    description: "Audit project quality",
+    inputSchema: getTestInputSchema(
+      z.object({
+        scopes: z
+          .array(
+            z.enum([
+              "accessibility",
+              "security",
+              "seo",
+              "assets",
+              "styles",
+              "performance",
+            ])
+          )
+          .optional(),
+        severities: z.array(z.enum(["error", "warning", "info"])).optional(),
+        pageId: z.string().optional(),
+        pagePath: z.string().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        cursor: z.string().optional(),
+        verbose: z.boolean().optional(),
+      })
+    ),
+    outputSchema: getTestInputSchema(
+      z.discriminatedUnion("verbose", [
+        z.object({
+          contractVersion: z.literal(1),
+          projectVersion: z.number(),
+          verbose: z.literal(false),
+          findings: z.array(z.unknown()),
+          renderedCheckCount: z.number(),
+          renderedIssueCount: z.number(),
+          renderedFailureCount: z.number(),
+        }),
+        z.object({
+          contractVersion: z.literal(1),
+          projectVersion: z.number(),
+          verbose: z.literal(true),
+          findings: z.array(z.unknown()),
+          renderedCheckCount: z.number(),
+          renderedIssueCount: z.number(),
+          renderedFailureCount: z.number(),
+          renderedChecks: z.array(z.unknown()),
+          renderedFailures: z.array(z.unknown()),
+        }),
+      ])
+    ),
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "breakpoints",
+    ],
+  }),
+  publicOperation({
+    command: "list-breakpoints",
+    id: "breakpoints.list",
+    description: "List breakpoints",
+    readNamespaces: ["breakpoints"],
   }),
   publicOperation({
     command: "whoami",
@@ -287,6 +358,17 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     ),
     localCapable: false,
     serverOnly: true,
+  }),
+  publicOperation({
+    command: "set-image-descriptions",
+    id: "assets.setImageDescriptions",
+    method: "mutation",
+    permit: "edit",
+    description: "Save agent-generated image descriptions",
+    inputSchema: getTestInputSchema(imageDescriptionsSetInput),
+    readNamespaces: ["assets"],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
   }),
   publicOperation({
     command: "replace-asset",
@@ -480,6 +562,63 @@ describe("project session mcp adapter", () => {
       "reset-session",
     ]);
     expect(toolNames).toContain("insert-fragment");
+    const imageDescriptionsTool = tools.find(
+      (tool) => tool.name === "set-image-descriptions"
+    );
+    expect(imageDescriptionsTool).toMatchObject({
+      description: expect.stringContaining(
+        "agent-generated image descriptions"
+      ),
+      inputSchema: expect.objectContaining({
+        required: ["updates"],
+      }),
+    });
+    expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
+      "decorative"
+    );
+    expect(
+      getSchemaProperties(
+        tools.find((tool) => tool.name === "audit")?.inputSchema
+      )
+    ).not.toHaveProperty("rendered");
+    const visualTools = listProjectSessionMcpTools(publicMcpOperations, {
+      includeScreenshot: true,
+      includePreview: true,
+    });
+    expect(
+      getSchemaProperties(
+        visualTools.find((tool) => tool.name === "audit")?.inputSchema
+      )
+    ).toHaveProperty("rendered", expect.objectContaining({ type: "boolean" }));
+    expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
+      "rendered image in context"
+    );
+    const auditOutputSchema = tools.find(
+      (tool) => tool.name === "audit"
+    )?.outputSchema;
+    expect(auditOutputSchema).toEqual(
+      expect.objectContaining({
+        type: "object",
+        required: ["ok", "data", "meta"],
+        properties: expect.objectContaining({
+          ok: { type: "boolean", const: true },
+          data: expect.objectContaining({ oneOf: expect.any(Array) }),
+          meta: { type: "object", additionalProperties: true },
+        }),
+      })
+    );
+    expect(() =>
+      ListToolsResultSchema.parse({
+        tools: tools.map(
+          ({ name, description, inputSchema, outputSchema }) => ({
+            name,
+            description,
+            inputSchema,
+            ...(outputSchema === undefined ? {} : { outputSchema }),
+          })
+        ),
+      })
+    ).not.toThrow();
     for (const command of hiddenMcpOperationCommands) {
       expect(toolNames).not.toContain(command);
     }
@@ -801,7 +940,7 @@ describe("project session mcp adapter", () => {
     );
   });
 
-  test("lists MCP resources for project status, tools, and components", () => {
+  test("lists MCP resources for project status, tools, components, and accessibility review", () => {
     expect(listProjectSessionMcpResources()).toEqual([
       expect.objectContaining({ uri: "webstudio://project/status" }),
       expect.objectContaining({ uri: "webstudio://project/tools-overview" }),
@@ -811,6 +950,10 @@ describe("project session mcp adapter", () => {
       }),
       expect.objectContaining({ uri: "webstudio://project/components" }),
       expect.objectContaining({ uri: "webstudio://project/guide" }),
+      expect.objectContaining({
+        uri: "webstudio://project/accessibility-review",
+        mimeType: "text/markdown",
+      }),
     ]);
   });
 
@@ -850,7 +993,490 @@ describe("project session mcp adapter", () => {
         session: expect.objectContaining({
           operationId: "pages.list",
           source: "local",
+          namespaceCounts: {
+            read: 1,
+            write: 0,
+            invalidated: 0,
+            missing: 0,
+          },
+          diagnosticCount: 0,
         }),
+      },
+    });
+    expect(result.structuredContent.meta.session).not.toHaveProperty(
+      "namespaces"
+    );
+    expect(result.structuredContent.meta.session).not.toHaveProperty(
+      "diagnostics"
+    );
+  });
+
+  test("exposes the audit input and structured result through MCP", async () => {
+    const auditResult = {
+      contractVersion: 1,
+      projectVersion: 7,
+      scopes: ["accessibility"],
+      pageFilter: null,
+      summary: {
+        total: 1,
+        bySeverity: { error: 1, warning: 0, info: 0 },
+        byScope: {
+          accessibility: 1,
+          security: 0,
+          seo: 0,
+          assets: 0,
+          styles: 0,
+          performance: 0,
+        },
+      },
+      verbose: false,
+      findings: [{ id: "accessibility/missing-alt/image" }],
+      skippedCheckCount: 0,
+      manualCheckCount: 3,
+      renderedCheckCount: 0,
+      renderedIssueCount: 0,
+      renderedFailureCount: 0,
+      nextCursor: null,
+    };
+    const executeOperation = createExecuteOperation(async () =>
+      createEnvelope({ operationId: "project.audit", result: auditResult })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const result = await adapter.callTool({
+      name: "audit",
+      input: {
+        scopes: ["accessibility"],
+        severities: ["error"],
+        limit: 10,
+      },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith({
+      command: "audit",
+      input: {
+        scopes: ["accessibility"],
+        severities: ["error"],
+        limit: 10,
+      },
+      dryRun: false,
+    });
+    expect(result.structuredContent).toEqual({
+      ok: true,
+      data: auditResult,
+      meta: {
+        session: expect.objectContaining({ operationId: "project.audit" }),
+      },
+    });
+  });
+
+  test("runs rendered responsive checks through the audit tool", async () => {
+    const executeOperation = createExecuteOperation(
+      async ({ command, input }) => {
+        if (command === "list-pages") {
+          return createEnvelope({
+            operationId: "pages.list",
+            result: {
+              pages: [
+                { id: "home", path: "/" },
+                { id: "dynamic", path: "/posts/:slug" },
+              ],
+            },
+          });
+        }
+        if (command === "list-breakpoints") {
+          return createEnvelope({
+            operationId: "breakpoints.list",
+            result: {
+              breakpoints: [
+                { id: "base", label: "Base" },
+                { id: "tablet", label: "Tablet", minWidth: 768 },
+              ],
+            },
+          });
+        }
+        const requestedScopes =
+          typeof input === "object" &&
+          input !== null &&
+          "scopes" in input &&
+          Array.isArray(input.scopes)
+            ? input.scopes
+            : [
+                "accessibility",
+                "security",
+                "seo",
+                "assets",
+                "styles",
+                "performance",
+              ];
+        return createEnvelope({
+          operationId: "project.audit",
+          result: {
+            contractVersion: 1,
+            projectVersion: 7,
+            scopes: requestedScopes,
+            pageFilter: null,
+            summary: {
+              total: 0,
+              bySeverity: { error: 0, warning: 0, info: 0 },
+              byScope: {
+                accessibility: 0,
+                security: 0,
+                seo: 0,
+                assets: 0,
+                styles: 0,
+                performance: 0,
+              },
+            },
+            verbose: true,
+            findings: [],
+            skippedCheckCount: 0,
+            skippedChecks: [],
+            manualCheckCount: 3,
+            manualChecks: [
+              { checkId: "responsive-visual-review" },
+              { checkId: "visual-contrast-review" },
+              { checkId: "visual-hierarchy-review" },
+            ],
+            renderedCheckCount: 0,
+            renderedIssueCount: 0,
+            renderedFailureCount: 0,
+            renderedChecks: [],
+            renderedFailures: [],
+            nextCursor: null,
+          },
+        });
+      }
+    );
+    const startPreview = vi.fn(async () => ({
+      url: "http://127.0.0.1:5173",
+      running: true,
+    }));
+    const captureScreenshot = vi.fn(async (input) => ({
+      output: `/tmp/${input.viewport.width}.png`,
+      browserPath: "/browser",
+      browser: "chromium" as const,
+      viewport: input.viewport,
+      fullPage: true,
+      elapsedMs: 1,
+      warnings: [],
+      layout: {
+        viewportWidth: input.viewport.width,
+        viewportHeight: input.viewport.height,
+        contentWidth:
+          input.viewport.width === 375
+            ? input.viewport.width + 20
+            : input.viewport.width,
+        contentHeight: 1200,
+        horizontalOverflow: input.viewport.width === 375,
+        images:
+          input.viewport.width === 375
+            ? [
+                {
+                  instanceId: "broken",
+                  loading: "eager",
+                  complete: true,
+                  naturalWidth: 0,
+                  naturalHeight: 0,
+                  renderedWidth: 200,
+                  renderedHeight: 100,
+                  top: 100,
+                },
+                {
+                  instanceId: "below-fold",
+                  loading: "eager",
+                  complete: true,
+                  naturalWidth: 800,
+                  naturalHeight: 600,
+                  renderedWidth: 400,
+                  renderedHeight: 300,
+                  top: 900,
+                },
+                {
+                  instanceId: "oversized",
+                  loading: "lazy",
+                  complete: true,
+                  naturalWidth: 2400,
+                  naturalHeight: 1600,
+                  renderedWidth: 600,
+                  renderedHeight: 400,
+                  top: 100,
+                },
+              ]
+            : [],
+        resources:
+          input.viewport.width === 375
+            ? [
+                {
+                  pathname: "/styles.css",
+                  initiatorType: "link",
+                  transferSize: 12000,
+                  encodedBodySize: 11000,
+                  decodedBodySize: 40000,
+                  duration: 25,
+                  renderBlockingStatus: "blocking",
+                },
+                {
+                  pathname: "/fonts/brand.ttf",
+                  initiatorType: "css",
+                  transferSize: 80000,
+                  encodedBodySize: 79000,
+                  decodedBodySize: 79000,
+                  duration: 40,
+                },
+              ]
+            : [],
+      },
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      startPreview,
+      getPreviewStatus: vi.fn(),
+      captureScreenshot,
+    });
+
+    const result = await adapter.callTool({
+      name: "audit",
+      input: { rendered: true, verbose: true },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith({
+      command: "audit",
+      input: { verbose: true },
+      dryRun: false,
+    });
+
+    expect(startPreview).toHaveBeenCalledTimes(1);
+    expect(captureScreenshot).toHaveBeenCalledTimes(4);
+    expect(captureScreenshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/",
+        viewport: { width: 375, height: 812 },
+      })
+    );
+    expect(result.structuredContent.data).toMatchObject({
+      renderedCheckCount: 4,
+      renderedIssueCount: 6,
+      renderedFailureCount: 0,
+      manualCheckCount: 2,
+      renderedChecks: [
+        expect.objectContaining({
+          pageId: "home",
+          viewport: { width: 375, height: 812 },
+          issues: [
+            "horizontal-overflow",
+            "broken-image",
+            "eager-below-fold-image",
+            "oversized-image",
+            "render-blocking-resource",
+            "legacy-font-format",
+          ],
+          resourceIssues: [
+            expect.objectContaining({
+              kind: "render-blocking-resource",
+              pathname: "/styles.css",
+            }),
+            expect.objectContaining({
+              kind: "legacy-font-format",
+              pathname: "/fonts/brand.ttf",
+            }),
+          ],
+          imageIssues: [
+            expect.objectContaining({
+              kind: "broken-image",
+              instanceId: "broken",
+            }),
+            expect.objectContaining({
+              kind: "eager-below-fold-image",
+              instanceId: "below-fold",
+            }),
+            expect.objectContaining({
+              kind: "oversized-image",
+              instanceId: "oversized",
+            }),
+          ],
+        }),
+        expect.any(Object),
+        expect.any(Object),
+        expect.any(Object),
+      ],
+      renderedFailures: [],
+      manualChecks: [
+        { checkId: "visual-contrast-review" },
+        { checkId: "visual-hierarchy-review" },
+      ],
+    });
+
+    captureScreenshot.mockClear();
+    const accessibilityResult = await adapter.callTool({
+      name: "audit",
+      input: {
+        scopes: ["accessibility"],
+        rendered: true,
+        verbose: true,
+      },
+    });
+
+    expect(captureScreenshot).toHaveBeenCalledTimes(4);
+    expect(captureScreenshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        includeImageMetrics: false,
+        includeResourceMetrics: false,
+      })
+    );
+    expect(accessibilityResult.structuredContent.data).toMatchObject({
+      scopes: ["accessibility"],
+      renderedCheckCount: 4,
+      renderedIssueCount: 1,
+      renderedChecks: [
+        expect.objectContaining({
+          issues: ["horizontal-overflow"],
+          imageIssues: [],
+          resourceIssues: [],
+        }),
+        expect.any(Object),
+        expect.any(Object),
+        expect.any(Object),
+      ],
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "audit",
+        input: { rendered: true, cursor: "next" },
+      })
+    ).rejects.toThrow(/cannot be combined with cursor pagination/);
+  });
+
+  test("keeps audit successful when rendered preview cannot start", async () => {
+    const executeOperation = createExecuteOperation(async ({ command }) => {
+      if (command === "list-pages") {
+        return createEnvelope({
+          operationId: "pages.list",
+          result: { pages: [{ id: "home", path: "/" }] },
+        });
+      }
+      if (command === "list-breakpoints") {
+        return createEnvelope({
+          operationId: "breakpoints.list",
+          result: { breakpoints: [] },
+        });
+      }
+      return createEnvelope({
+        operationId: "project.audit",
+        result: {
+          contractVersion: 1,
+          projectVersion: 7,
+          scopes: [],
+          pageFilter: null,
+          summary: {
+            total: 0,
+            bySeverity: { error: 0, warning: 0, info: 0 },
+            byScope: {},
+          },
+          verbose: true,
+          findings: [],
+          skippedCheckCount: 0,
+          skippedChecks: [],
+          manualCheckCount: 3,
+          manualChecks: [{ checkId: "responsive-visual-review" }],
+          renderedCheckCount: 0,
+          renderedIssueCount: 0,
+          renderedFailureCount: 0,
+          renderedChecks: [],
+          renderedFailures: [],
+          nextCursor: null,
+        },
+      });
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      startPreview: vi.fn(async () => {
+        throw new Error("preview build failed");
+      }),
+      getPreviewStatus: vi.fn(),
+      captureScreenshot: vi.fn(),
+    });
+
+    const result = await adapter.callTool({
+      name: "audit",
+      input: { rendered: true, verbose: true },
+    });
+
+    expect(result.structuredContent.data).toMatchObject({
+      renderedCheckCount: 0,
+      renderedIssueCount: 0,
+      renderedFailureCount: 1,
+      renderedFailures: [
+        { message: "Rendered audit could not start: preview build failed" },
+      ],
+      manualCheckCount: 3,
+      manualChecks: [{ checkId: "responsive-visual-review" }],
+    });
+  });
+
+  test("does not advertise or silently accept rendered audit without visual capabilities", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const auditTool = adapter.listTools().find(({ name }) => name === "audit");
+
+    expect(auditTool?.inputSchema.properties).not.toHaveProperty("rendered");
+    await expect(
+      adapter.callTool({ name: "audit", input: { rendered: true } })
+    ).rejects.toThrow(/does not provide preview and screenshot capabilities/);
+  });
+
+  test("returns the computed transaction for dry-run mutations", async () => {
+    const transaction = {
+      id: "dry-run-transaction",
+      payload: [
+        {
+          namespace: "pages" as const,
+          patches: [
+            { op: "add" as const, path: ["pages", "draft"], value: {} },
+          ],
+        },
+      ],
+    };
+    const executeOperation = createExecuteOperation(async () =>
+      createEnvelope({
+        operationId: "folders.create",
+        source: "dry-run",
+        result: { folderId: "draft" },
+        transaction,
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const result = await adapter.callTool({
+      name: "list-pages",
+      input: {},
+      dryRun: true,
+    });
+
+    expect(result.structuredContent).toMatchObject({
+      data: { folderId: "draft" },
+      meta: {
+        session: {
+          source: "dry-run",
+          committed: false,
+          transaction,
+        },
       },
     });
   });
@@ -1348,6 +1974,56 @@ describe("project session mcp adapter", () => {
     });
   });
 
+  test("resolves discriminated input branches before parsing JSON-looking strings", async () => {
+    const operation = publicOperation({
+      command: "update-discriminated-value",
+      id: "test.updateDiscriminatedValue",
+      method: "mutation",
+      permit: "build",
+      description: "Update a discriminated value",
+      inputSchema: getTestInputSchema(
+        z.object({
+          updates: z.array(
+            z.discriminatedUnion("type", [
+              z.object({ type: z.literal("string"), value: z.string() }),
+              z.object({ type: z.literal("json"), value: z.unknown() }),
+            ])
+          ),
+        })
+      ),
+      writeNamespaces: ["props"],
+      invalidatesNamespaces: ["props"],
+    });
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const json = '{"@context":"https://schema.org","@type":1}';
+
+    await adapter.callTool({
+      name: operation.command,
+      input: {
+        updates: [
+          { type: "string", value: json },
+          { type: "json", value: json },
+        ],
+      },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith({
+      command: operation.command,
+      input: {
+        updates: [
+          { type: "string", value: json },
+          { type: "json", value: JSON.parse(json) },
+        ],
+      },
+      dryRun: false,
+    });
+  });
+
   test("parses stringified record values through additionalProperties schemas", async () => {
     const { adapter, executeOperation } = createTestMcpCore({
       operationId: "pages.update",
@@ -1811,6 +2487,31 @@ describe("project session mcp adapter", () => {
         createEnvelope({
           operationId: "project-session.status",
           result: { loaded: true },
+          namespaces: {
+            read: ["pages"],
+            write: [],
+            invalidated: [],
+            missing: ["assets"],
+          },
+          diagnostics: [
+            {
+              level: "warning",
+              code: "STALE_ASSETS",
+              message: "Assets need refreshing.",
+              details: { namespace: "assets" },
+            },
+          ],
+          state: {
+            committed: false,
+            freshness: {
+              pages: {
+                status: "fresh",
+                version: 1,
+                source: "remote",
+                loadedAt: "2026-07-10T12:00:00.000Z",
+              },
+            },
+          },
         })
       ),
       refresh: vi.fn(async () =>
@@ -1843,15 +2544,41 @@ describe("project session mcp adapter", () => {
     });
 
     const status = await adapter.callTool({ name: "status" });
+    const verboseStatus = await adapter.callTool({
+      name: "status",
+      input: { verbose: true },
+    });
     const refresh = await adapter.callTool({
       name: "refresh",
       input: { namespaces: ["pages"] },
     });
-    expect(session.initialize).toHaveBeenCalledTimes(2);
+    expect(session.initialize).toHaveBeenCalledTimes(3);
     const reset = await adapter.callTool({ name: "reset-session" });
 
     expect(status.structuredContent.data).toEqual({ loaded: true });
-    expect(session.initialize).toHaveBeenCalledTimes(2);
+    expect(status.structuredContent.meta.session).not.toHaveProperty(
+      "namespaces"
+    );
+    expect(verboseStatus.structuredContent.meta.session).toMatchObject({
+      namespaces: {
+        read: ["pages"],
+        missing: ["assets"],
+      },
+      diagnostics: [
+        {
+          code: "STALE_ASSETS",
+          details: { namespace: "assets" },
+        },
+      ],
+      freshness: {
+        pages: {
+          status: "fresh",
+          source: "remote",
+          loadedAt: "2026-07-10T12:00:00.000Z",
+        },
+      },
+    });
+    expect(session.initialize).toHaveBeenCalledTimes(3);
     expect(session.refresh).toHaveBeenCalledWith(["pages"]);
     expect(refresh.structuredContent.meta.session).toEqual(
       expect.objectContaining({ operationId: "project-session.refresh" })
@@ -2464,6 +3191,10 @@ describe("project session mcp adapter", () => {
       name: "meta.get_more_tools",
       input: { brief: "get component details" },
     });
+    const jsonLdGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Add JSON-LD structured data to the home page" },
+    });
     const getComponentToolNames = (
       getComponentDetails.structuredContent.data as {
         tools: { name: string }[];
@@ -2485,6 +3216,19 @@ describe("project session mcp adapter", () => {
     if (coverageToolNames.includes("components.coverage-status")) {
       expect(coverageToolNames[0]).toBe("components.coverage-status");
     }
+    expect(jsonLdGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining("do not use update-page custom metadata"),
+          expect.stringContaining("Insert JsonLd under HeadSlot"),
+          expect.stringContaining("Run audit"),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "components.get" }),
+          expect.objectContaining({ name: "audit" }),
+        ]),
+      })
+    );
   });
 
   test("rejects invalid focused discovery input with path-specific messages", async () => {
@@ -2702,6 +3446,10 @@ describe("project session mcp adapter", () => {
     const buttonDetails = await adapter.callTool({
       name: "components.get",
       input: { component: "Button" },
+    });
+    const jsonLdDetails = await adapter.callTool({
+      name: "components.get",
+      input: { component: "JsonLd" },
     });
     const italicDetails = await adapter.callTool({
       name: "components.get",
@@ -3167,6 +3915,20 @@ describe("project session mcp adapter", () => {
         ),
       })
     );
+    expect(jsonLdDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "JsonLd",
+        description: expect.stringContaining("JSON-LD structured data"),
+        jsonLdUsage: expect.stringMatching(/inside HeadSlot.*Schema\.org/),
+        usage: expect.stringContaining("update-props"),
+        props: expect.objectContaining({
+          code: expect.objectContaining({
+            control: "json-code",
+            type: "string",
+          }),
+        }),
+      })
+    );
     expect(selectTemplateDetails.structuredContent.data).toEqual(
       expect.objectContaining({
         found: true,
@@ -3627,6 +4389,7 @@ describe("project session mcp adapter", () => {
     expect(captureScreenshot).toHaveBeenCalledWith(
       {
         url: "https://example.com",
+        baseUrl: undefined,
         path: undefined,
         output: "current.png",
         host: undefined,
@@ -3634,6 +4397,8 @@ describe("project session mcp adapter", () => {
         source: undefined,
         viewport: { width: 1440, height: 900 },
         fullPage: true,
+        includeImageMetrics: false,
+        includeResourceMetrics: false,
         browser: "auto",
         browserPath: undefined,
         waitUntil: "networkidle",
@@ -3945,11 +4710,25 @@ describe("project session mcp adapter", () => {
   });
 
   test("rejects invalid screenshot diff input", async () => {
+    const diffScreenshots = vi.fn(async () => ({
+      totalPixels: 0,
+      differentPixels: 0,
+      mismatchPercentage: 0,
+      summary: "Screenshot diff summary",
+      regions: [],
+      textAnalysis: {
+        status: "ok" as const,
+        provider: "tesseract" as const,
+        changes: [],
+        observedText: ["Pricing"],
+      },
+      warnings: [],
+    }));
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
-      diffScreenshots: diffPngFiles,
+      diffScreenshots,
     });
 
     await expect(
@@ -3968,6 +4747,58 @@ describe("project session mcp adapter", () => {
         },
       })
     ).rejects.toThrow("screenshot.diff threshold must be between 0 and 1.");
+    await adapter.callTool({
+      name: "screenshot.diff",
+      input: {
+        baselinePath: "baseline.png",
+        currentPath: "current.png",
+        expectedText: ["Pricing"],
+        expectedVisual: { maxMismatchPercentage: 2, maxChangedRegions: 3 },
+      },
+    });
+    expect(diffScreenshots).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        expectedText: ["Pricing"],
+        expectedVisual: { maxMismatchPercentage: 2, maxChangedRegions: 3 },
+      })
+    );
+    await expect(
+      adapter.callTool({
+        name: "screenshot.diff",
+        input: {
+          baselinePath: "baseline.png",
+          currentPath: "current.png",
+          expectedText: [],
+        },
+      })
+    ).rejects.toThrow(
+      "screenshot.diff expectedText must be a non-empty array of non-empty strings."
+    );
+    await expect(
+      adapter.callTool({
+        name: "screenshot.diff",
+        input: {
+          baselinePath: "baseline.png",
+          currentPath: "current.png",
+          expectedVisual: { minChangedRegions: 2, maxChangedRegions: 1 },
+        },
+      })
+    ).rejects.toThrow("screenshot.diff expectedVisual must include valid");
+    await expect(
+      adapter.callTool({
+        name: "screenshot.diff",
+        input: {
+          baselinePath: "baseline.png",
+          currentPath: "current.png",
+          expectedVisual: {
+            dominantColorChange: {
+              channel: "purple",
+              direction: "increase",
+            },
+          },
+        },
+      })
+    ).rejects.toThrow("screenshot.diff expectedVisual must include valid");
   });
 
   test("installs OCR only after explicit confirmation", async () => {
@@ -4271,6 +5102,9 @@ describe("project session mcp adapter", () => {
     const guide = await adapter.readResource({
       uri: "webstudio://project/guide",
     });
+    const accessibilityReview = await adapter.readResource({
+      uri: "webstudio://project/accessibility-review",
+    });
     const componentsOverview = await adapter.readResource({
       uri: "webstudio://project/components-overview",
     });
@@ -4325,6 +5159,15 @@ describe("project session mcp adapter", () => {
           ),
         ]),
       })
+    );
+    expect(accessibilityReview.contents[0]).toEqual(
+      expect.objectContaining({
+        mimeType: "text/markdown",
+        text: expect.stringContaining("# Webstudio Accessibility Review"),
+      })
+    );
+    expect(accessibilityReview.contents[0]?.text).toContain(
+      "Community-Access/accessibility-agents"
     );
     const componentOverviewData = JSON.parse(
       componentsOverview.contents[0]?.text ?? "{}"
@@ -4836,6 +5679,64 @@ describe("project session mcp adapter", () => {
             },
             meta: {},
           },
+        })
+      );
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns expected input examples for SDK zod tool errors", async () => {
+    const inputSchema = z.object({
+      email: z.email(),
+      description: z.string().min(10),
+    });
+    const parseResult = inputSchema.safeParse({
+      email: "invalid",
+      description: "short",
+    });
+    if (parseResult.success) {
+      throw new Error("Expected invalid test input");
+    }
+    const server = await createProjectSessionMcpServer({
+      operations: [
+        ...publicMcpOperations,
+        {
+          ...publicMcpOperations[0]!,
+          command: "constrained-input",
+          inputSchema: getTestInputSchema(inputSchema),
+        },
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(async () => {
+        throw parseResult.error;
+      }),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "constrained-input",
+        arguments: { email: "invalid", description: "short" },
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          isError: true,
+          structuredContent: {
+            ok: false,
+            error: {
+              message: expect.stringContaining('"email":"user@example.com"'),
+              code: "MCP_TOOL_FAILED",
+            },
+            meta: {},
+          },
+        })
+      );
+      expect(result.structuredContent).toEqual(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            message: expect.stringContaining('"description":"stringxxxx"'),
+          }),
         })
       );
     } finally {

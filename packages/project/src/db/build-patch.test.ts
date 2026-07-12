@@ -76,6 +76,7 @@ const buildRow = {
   ]),
   deployment: null,
   marketplaceProduct: JSON.stringify({}),
+  projectSettings: JSON.stringify({ meta: {}, compiler: {} }),
 };
 
 const transaction = (
@@ -294,6 +295,43 @@ describe("patchBuild", () => {
           value: { type: "string", value: "" },
         },
       ]);
+    }
+  });
+
+  test("persists project settings without modifying pages storage", async () => {
+    const result = await createBuildPatchUpdate({
+      build: buildRow,
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "projectSettings",
+              patches: [
+                {
+                  op: "add",
+                  path: ["meta", "agentInstructions"],
+                  value: "Use existing components.",
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(result.update).toBeDefined();
+      if (result.update === undefined) {
+        throw new Error("Expected project settings update");
+      }
+      expect(result.update.pages).toBeUndefined();
+      expect(
+        JSON.parse(result.update.projectSettings as string).meta
+      ).toMatchObject({
+        agentInstructions: "Use existing components.",
+      });
     }
   });
 

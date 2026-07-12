@@ -89,6 +89,7 @@ const createBuildRow = (overrides: Record<string, unknown> = {}) => ({
   ]),
   deployment: null,
   marketplaceProduct: JSON.stringify({}),
+  projectSettings: JSON.stringify({ meta: {}, compiler: {} }),
   ...overrides,
 });
 
@@ -284,8 +285,6 @@ describe("api build snapshot", () => {
 
   test("returns page folders and data namespaces when requested", () => {
     const pages = createDefaultPages({ rootInstanceId: "root-1" });
-    pages.meta = { siteName: "Acme" };
-    pages.compiler = { atomicStyles: true };
     pages.redirects = [{ old: "/old", new: "/new", status: "301" }];
     const build = {
       id: "build-1",
@@ -301,6 +300,10 @@ describe("api build snapshot", () => {
       dataSources: [{ id: "variable-1" }],
       breakpoints: [{ id: "breakpoint-1" }],
       marketplaceProduct: { categories: ["template"] },
+      projectSettings: {
+        meta: { siteName: "Acme" },
+        compiler: { atomicStyles: true },
+      },
     } as unknown as SnapshotBuildInput;
 
     expect(
@@ -312,6 +315,7 @@ describe("api build snapshot", () => {
           "resources",
           "variables",
           "breakpoints",
+          "projectSettings",
           "marketplaceProduct",
         ]),
         projectId: "project-1",
@@ -323,8 +327,10 @@ describe("api build snapshot", () => {
         version: 7,
         homePageId: build.pages.homePageId,
         rootFolderId: build.pages.rootFolderId,
-        meta: { siteName: "Acme" },
-        compiler: { atomicStyles: true },
+        projectSettings: {
+          meta: { siteName: "Acme" },
+          compiler: { atomicStyles: true },
+        },
         redirects: [{ old: "/old", new: "/new", status: "301" }],
         resources: [{ id: "resource-1" }],
         variables: [{ id: "variable-1" }],

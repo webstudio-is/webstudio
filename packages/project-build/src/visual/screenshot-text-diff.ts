@@ -67,6 +67,7 @@ export type ScreenshotTextAnalysis = {
   status: "ok" | "unavailable" | "skipped";
   provider: "tesseract";
   changes: readonly ScreenshotTextChange[];
+  observedText?: readonly string[];
 };
 
 type NormalizedTextRegion = OcrTextBlock & {
@@ -109,6 +110,7 @@ export const analyzeScreenshotTextChanges = async ({
   currentImage,
   ignoreTopPixels,
   textChangeMinConfidence = DEFAULT_TEXT_CHANGE_MIN_CONFIDENCE,
+  includeObservedText = false,
 }: {
   baselinePath: string;
   currentPath: string;
@@ -117,8 +119,9 @@ export const analyzeScreenshotTextChanges = async ({
   currentImage: DecodedRgbaImage;
   ignoreTopPixels: number;
   textChangeMinConfidence?: number;
+  includeObservedText?: boolean;
 }): Promise<ScreenshotTextAnalysis> => {
-  if (hasPixelDiff === false) {
+  if (hasPixelDiff === false && includeObservedText === false) {
     return {
       status: "skipped",
       provider: "tesseract",
@@ -138,14 +141,16 @@ export const analyzeScreenshotTextChanges = async ({
     };
   }
 
-  return analyzeTextRegions({
+  const analysis = analyzeTextRegions({
     baselineRegions: baselineOcr.blocks,
     currentRegions: currentOcr.blocks,
     baselineImage,
     currentImage,
     ignoreTopPixels,
     textChangeMinConfidence,
+    includeObservedText,
   });
+  return analysis;
 };
 
 export const analyzeTextRegions = ({
@@ -155,6 +160,7 @@ export const analyzeTextRegions = ({
   currentImage,
   ignoreTopPixels = 0,
   textChangeMinConfidence = DEFAULT_TEXT_CHANGE_MIN_CONFIDENCE,
+  includeObservedText = false,
 }: {
   baselineRegions: readonly OcrTextBlock[];
   currentRegions: readonly OcrTextBlock[];
@@ -162,6 +168,7 @@ export const analyzeTextRegions = ({
   currentImage?: DecodedRgbaImage;
   ignoreTopPixels?: number;
   textChangeMinConfidence?: number;
+  includeObservedText?: boolean;
 }): ScreenshotTextAnalysis => {
   validateTextChangeMinConfidence(textChangeMinConfidence);
 
@@ -306,6 +313,9 @@ export const analyzeTextRegions = ({
           changeLeft(left) - changeLeft(right)
       )
       .slice(0, MAX_TEXT_CHANGES),
+    ...(includeObservedText
+      ? { observedText: current.map((region) => region.text) }
+      : {}),
   };
 };
 

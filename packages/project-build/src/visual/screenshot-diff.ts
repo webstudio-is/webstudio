@@ -50,6 +50,11 @@ export type ScreenshotDiffRegion = {
   };
 };
 
+export type ScreenshotDiffOverallColorChange = {
+  delta: ScreenshotDiffRgb;
+  dominantChange: ScreenshotDiffDominantColorChange;
+};
+
 export type ScreenshotDiffResult = {
   totalPixels: number;
   differentPixels: number;
@@ -63,8 +68,47 @@ export type ScreenshotDiffResult = {
     actual: ScreenshotDiffSize;
   };
   regions: ScreenshotDiffRegion[];
+  overallColorChange?: ScreenshotDiffOverallColorChange;
   textAnalysis: ScreenshotTextAnalysis;
+  textAssertions?: ScreenshotTextAssertionResult;
+  visualAssertions?: ScreenshotVisualAssertionResult;
   warnings: readonly string[];
+};
+
+export type ScreenshotTextAssertion = {
+  expected: string;
+  passed: boolean;
+  found: readonly string[];
+};
+
+export type ScreenshotTextAssertionResult = {
+  passed: boolean;
+  status: ScreenshotTextAnalysis["status"];
+  found: readonly string[];
+  missing: readonly string[];
+  assertions: readonly ScreenshotTextAssertion[];
+};
+
+export type ScreenshotVisualExpectation = {
+  maxMismatchPercentage?: number;
+  minChangedRegions?: number;
+  maxChangedRegions?: number;
+  dominantColorChange?: {
+    channel: Exclude<ScreenshotDiffDominantColorChange["channel"], "none">;
+    direction: Exclude<ScreenshotDiffDominantColorChange["direction"], "none">;
+    minMagnitude?: number;
+  };
+};
+
+export type ScreenshotVisualAssertion = {
+  expected: string;
+  actual: number | string;
+  passed: boolean;
+};
+
+export type ScreenshotVisualAssertionResult = {
+  passed: boolean;
+  assertions: readonly ScreenshotVisualAssertion[];
 };
 
 type ChangeRegion = {
@@ -106,12 +150,16 @@ export const diffPngFiles = async ({
   outputDir,
   threshold = DEFAULT_THRESHOLD,
   ignoreTopNormalizedY = DEFAULT_IGNORE_TOP_NORMALIZED_Y,
+  expectedText,
+  expectedVisual,
 }: {
   baselinePath: string;
   currentPath: string;
   outputDir: string;
   threshold?: number;
   ignoreTopNormalizedY?: number;
+  expectedText?: readonly string[];
+  expectedVisual?: ScreenshotVisualExpectation;
 }): Promise<ScreenshotDiffResult> => {
   const [decodedBaseline, decodedCurrent] = await Promise.all([
     decodePngFile(baselinePath),
@@ -140,6 +188,28 @@ export const diffPngFiles = async ({
         provider: "tesseract",
         changes: [],
       },
+      textAssertions:
+        expectedText === undefined
+          ? undefined
+          : createScreenshotTextAssertions(
+              {
+                status: "skipped",
+                provider: "tesseract",
+                changes: [],
+              },
+              expectedText
+            ),
+      visualAssertions:
+        expectedVisual === undefined
+          ? undefined
+          : createScreenshotVisualAssertions(
+              {
+                mismatchPercentage: 0,
+                changedRegionCount: 0,
+                dimensionMismatch: true,
+              },
+              expectedVisual
+            ),
       warnings: ["dimension_mismatch"],
     });
   }
@@ -157,6 +227,11 @@ export const diffPngFiles = async ({
     baseline,
     current,
     joinGapPixels: DEFAULT_REGION_MERGE_DISTANCE,
+  });
+  const overallColorChange = getOverallColorChange({
+    mask: pixelDiff.mask,
+    baseline,
+    current,
   });
   const totalPixels = baseline.width * baseline.height;
   const artifactPaths = getDiffArtifactPaths({ currentPath, outputDir });
@@ -179,6 +254,7 @@ export const diffPngFiles = async ({
         baselineImage: baseline,
         currentImage: current,
         ignoreTopPixels: Math.ceil(baseline.height * ignoreTopNormalizedY),
+        includeObservedText: expectedText !== undefined,
       })
     : createSkippedTextAnalysis();
 
@@ -191,9 +267,132 @@ export const diffPngFiles = async ({
     diffPath: artifactPaths.diffPath,
     contextDiffPath: artifactPaths.contextDiffPath,
     regions,
+    overallColorChange,
     textAnalysis,
+    textAssertions:
+      expectedText === undefined
+        ? undefined
+        : createScreenshotTextAssertions(textAnalysis, expectedText),
+    visualAssertions:
+      expectedVisual === undefined
+        ? undefined
+        : createScreenshotVisualAssertions(
+            {
+              mismatchPercentage:
+                totalPixels === 0
+                  ? 0
+                  : (pixelDiff.differentPixels / totalPixels) * 100,
+              changedRegionCount: regions.length,
+              dimensionMismatch: false,
+              overallColorChange,
+            },
+            expectedVisual
+          ),
     warnings: getTextAnalysisWarnings({ canAnalyzeText, textAnalysis }),
   });
+};
+
+const normalizeAssertionText = (value: string) =>
+  value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
+export const createScreenshotTextAssertions = (
+  textAnalysis: ScreenshotTextAnalysis,
+  expectedText: readonly string[]
+): ScreenshotTextAssertionResult => {
+  const found = textAnalysis.observedText ?? [];
+  const normalizedObserved = found.map(normalizeAssertionText);
+  const assertions = expectedText.map((expected) => {
+    const normalizedExpected = normalizeAssertionText(expected);
+    const matches = found.filter((_text, index) =>
+      normalizedObserved[index]?.includes(normalizedExpected)
+    );
+    return {
+      expected,
+      passed: textAnalysis.status === "ok" && matches.length > 0,
+      found: matches,
+    };
+  });
+  return {
+    passed: assertions.every((assertion) => assertion.passed),
+    status: textAnalysis.status,
+    found,
+    missing: assertions
+      .filter((assertion) => assertion.passed === false)
+      .map((assertion) => assertion.expected),
+    assertions,
+  };
+};
+
+export const createScreenshotVisualAssertions = (
+  {
+    mismatchPercentage,
+    changedRegionCount,
+    dimensionMismatch,
+    overallColorChange,
+  }: {
+    mismatchPercentage: number;
+    changedRegionCount: number;
+    dimensionMismatch: boolean;
+    overallColorChange?: ScreenshotDiffOverallColorChange;
+  },
+  expectedVisual: ScreenshotVisualExpectation
+): ScreenshotVisualAssertionResult => {
+  const assertions: ScreenshotVisualAssertion[] = [];
+  if (dimensionMismatch) {
+    assertions.push({
+      expected: "matching image dimensions",
+      actual: "dimension_mismatch",
+      passed: false,
+    });
+  }
+  if (expectedVisual.maxMismatchPercentage !== undefined) {
+    assertions.push({
+      expected: `mismatchPercentage <= ${expectedVisual.maxMismatchPercentage}`,
+      actual: mismatchPercentage,
+      passed:
+        dimensionMismatch === false &&
+        mismatchPercentage <= expectedVisual.maxMismatchPercentage,
+    });
+  }
+  if (expectedVisual.minChangedRegions !== undefined) {
+    assertions.push({
+      expected: `changedRegionCount >= ${expectedVisual.minChangedRegions}`,
+      actual: changedRegionCount,
+      passed:
+        dimensionMismatch === false &&
+        changedRegionCount >= expectedVisual.minChangedRegions,
+    });
+  }
+  if (expectedVisual.maxChangedRegions !== undefined) {
+    assertions.push({
+      expected: `changedRegionCount <= ${expectedVisual.maxChangedRegions}`,
+      actual: changedRegionCount,
+      passed:
+        dimensionMismatch === false &&
+        changedRegionCount <= expectedVisual.maxChangedRegions,
+    });
+  }
+  if (expectedVisual.dominantColorChange !== undefined) {
+    const actual = overallColorChange?.dominantChange ?? {
+      channel: "none" as const,
+      direction: "none" as const,
+      magnitude: 0,
+    };
+    const expected = expectedVisual.dominantColorChange;
+    assertions.push({
+      expected: `dominantColorChange=${expected.channel}:${expected.direction}${expected.minMagnitude === undefined ? "" : ` magnitude>=${expected.minMagnitude}`}`,
+      actual: `${actual.channel}:${actual.direction} magnitude=${actual.magnitude}`,
+      passed:
+        dimensionMismatch === false &&
+        actual.channel === expected.channel &&
+        actual.direction === expected.direction &&
+        actual.magnitude >= (expected.minMagnitude ?? 0),
+    });
+  }
+  return {
+    passed: assertions.every((assertion) => assertion.passed),
+    assertions,
+  };
 };
 
 const getTextAnalysisWarnings = ({
@@ -594,6 +793,41 @@ const toDiffRegion = (region: ChangeRegion): ScreenshotDiffRegion => {
   };
 };
 
+const getOverallColorChange = ({
+  mask,
+  baseline,
+  current,
+}: {
+  mask: Uint8Array;
+  baseline: DecodedRgbaImage;
+  current: DecodedRgbaImage;
+}): ScreenshotDiffOverallColorChange | undefined => {
+  let pixelCount = 0;
+  const deltaSum = { r: 0, g: 0, b: 0 };
+  for (let pixelIndex = 0; pixelIndex < mask.length; pixelIndex++) {
+    if (mask[pixelIndex] === 0) {
+      continue;
+    }
+    const offset = pixelIndex * 4;
+    pixelCount += 1;
+    deltaSum.r += current.data[offset] - baseline.data[offset];
+    deltaSum.g += current.data[offset + 1] - baseline.data[offset + 1];
+    deltaSum.b += current.data[offset + 2] - baseline.data[offset + 2];
+  }
+  if (pixelCount === 0) {
+    return;
+  }
+  const delta = {
+    r: roundToOne(deltaSum.r / pixelCount),
+    g: roundToOne(deltaSum.g / pixelCount),
+    b: roundToOne(deltaSum.b / pixelCount),
+  };
+  return {
+    delta,
+    dominantChange: dominantChange(delta, roundToOne(luminance(delta))),
+  };
+};
+
 const getDiffArtifactPaths = ({
   currentPath,
   outputDir,
@@ -800,6 +1034,23 @@ const formatScreenshotDiffSummary = (
     lines.push(
       `- Text ${index + 1}: ${change.kind} confidence=${formatNormalized(change.confidence)}${formatTextChange(change)}`
     );
+  }
+  if (result.textAssertions !== undefined) {
+    lines.push("", "Text Assertions:");
+    lines.push(`- passed: ${result.textAssertions.passed}`);
+    lines.push(`- found: ${result.textAssertions.found.join(", ") || "none"}`);
+    lines.push(
+      `- missing: ${result.textAssertions.missing.join(", ") || "none"}`
+    );
+  }
+  if (result.visualAssertions !== undefined) {
+    lines.push("", "Visual Assertions:");
+    lines.push(`- passed: ${result.visualAssertions.passed}`);
+    for (const assertion of result.visualAssertions.assertions) {
+      lines.push(
+        `- ${assertion.passed ? "passed" : "failed"}: ${assertion.expected}; actual=${assertion.actual}`
+      );
+    }
   }
   if (result.warnings.length > 0) {
     lines.push("", `Warnings: ${result.warnings.join(", ")}`);

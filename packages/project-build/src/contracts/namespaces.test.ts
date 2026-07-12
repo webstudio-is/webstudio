@@ -13,6 +13,7 @@ test("defines the shared builder namespace catalog", () => {
     "resources",
     "assets",
     "breakpoints",
+    "projectSettings",
     "marketplaceProduct",
   ]);
 });

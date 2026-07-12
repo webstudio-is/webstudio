@@ -17,6 +17,7 @@ export type SeededContentModeProject = {
   linkInstanceId: string;
   imageInstanceId: string;
   videoInstanceId: string;
+  assetTemplateImageAssetId: string;
   assetTemplateImageName: string;
   assetTemplateName: string;
   assetTemplateImageAlt: string;
@@ -446,7 +447,7 @@ const createContentModeBuildData = ({
         { type: "text", value: "System resource variable configured" },
         {
           type: "expression",
-          value: encodeDataSourceVariable(dataResourceSystemDataSourceId),
+          value: `${encodeDataSourceVariable(dataResourceSystemDataSourceId)}.data.year`,
         },
       ],
     },
@@ -968,6 +969,7 @@ export const prepareExistingContentModeProject = async ({
     linkInstanceId,
     imageInstanceId,
     videoInstanceId,
+    assetTemplateImageAssetId: seededAssetTemplateImageAssetId,
     assetTemplateImageName: seededAssetTemplateImageName,
     assetTemplateName,
     assetTemplateImageAlt,

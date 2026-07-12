@@ -10,9 +10,13 @@ export type BuilderStateNamespaceStatus =
   | "stale"
   | "invalidated";
 
+export type BuilderStateNamespaceSource = "remote" | "local";
+
 export type BuilderStateNamespaceFreshness = {
   status: BuilderStateNamespaceStatus;
   version?: number;
+  source?: BuilderStateNamespaceSource;
+  loadedAt?: string;
   invalidatedBy?: string;
 };
 
@@ -38,15 +42,23 @@ export const createBuilderStateFreshness = ({
   staleNamespaces = [],
   invalidatedNamespaces = [],
   invalidatedBy,
+  source,
+  loadedAt,
 }: {
   state: BuilderState;
   version?: number;
   staleNamespaces?: readonly BuilderNamespace[];
   invalidatedNamespaces?: readonly BuilderNamespace[];
   invalidatedBy?: string;
+  source?: BuilderStateNamespaceSource;
+  loadedAt?: string;
 }): BuilderStateFreshness => {
   const stale = new Set(staleNamespaces);
   const invalidated = new Set(invalidatedNamespaces);
+  const provenance = {
+    ...(source === undefined ? {} : { source }),
+    ...(loadedAt === undefined ? {} : { loadedAt }),
+  };
   const freshness: BuilderStateFreshness = {};
 
   for (const namespace of builderNamespaces) {
@@ -57,15 +69,15 @@ export const createBuilderStateFreshness = ({
     if (invalidated.has(namespace)) {
       freshness[namespace] =
         invalidatedBy === undefined
-          ? { status: "invalidated", version }
-          : { status: "invalidated", version, invalidatedBy };
+          ? { status: "invalidated", version, ...provenance }
+          : { status: "invalidated", version, ...provenance, invalidatedBy };
       continue;
     }
     if (stale.has(namespace)) {
-      freshness[namespace] = { status: "stale", version };
+      freshness[namespace] = { status: "stale", version, ...provenance };
       continue;
     }
-    freshness[namespace] = { status: "fresh", version };
+    freshness[namespace] = { status: "fresh", version, ...provenance };
   }
 
   return freshness;
@@ -91,7 +103,12 @@ export const markBuilderStateNamespacesStale = (
     if (current.status === "missing") {
       continue;
     }
-    next[namespace] = { status: "stale", version: current.version };
+    next[namespace] = {
+      status: "stale",
+      version: current.version,
+      ...(current.source === undefined ? {} : { source: current.source }),
+      ...(current.loadedAt === undefined ? {} : { loadedAt: current.loadedAt }),
+    };
   }
   return next;
 };
@@ -107,14 +124,13 @@ export const markBuilderStateNamespacesInvalidated = (
     if (current.status === "missing") {
       continue;
     }
-    next[namespace] =
-      invalidatedBy === undefined
-        ? { status: "invalidated", version: current.version }
-        : {
-            status: "invalidated",
-            version: current.version,
-            invalidatedBy,
-          };
+    next[namespace] = {
+      status: "invalidated",
+      version: current.version,
+      ...(current.source === undefined ? {} : { source: current.source }),
+      ...(current.loadedAt === undefined ? {} : { loadedAt: current.loadedAt }),
+      ...(invalidatedBy === undefined ? {} : { invalidatedBy }),
+    };
   }
   return next;
 };

@@ -32,6 +32,7 @@ import {
   createDataVariableUpdatePayload,
   createDataVariableValueFromInput,
   createResourceFieldsFromResource,
+  createResource,
   createResourceCreatePayload,
   createResourceDeletePayload,
   createResourceFieldsFromFormData,
@@ -51,11 +52,13 @@ import {
   getDataVariableJsonExpressionErrors,
   getResourceExpressionErrors,
   rebindTreeVariablesMutable,
+  replaceResourceText,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   resourceCreateInput,
   resourceFieldsInput,
   resourceFieldsUpdateInput,
+  produceWebstudioDataMutation,
   serializeDataVariables,
   serializeResources,
   unsetExpressionVariables,
@@ -70,6 +73,47 @@ import {
   validateResourceBodyExpression,
   validateResourceUrlExpression,
 } from "./data";
+
+test("creates Map-backed patches without mutating caller-owned data", () => {
+  const before = {
+    instances: new Map([
+      [
+        "instance",
+        {
+          id: "instance",
+          children: [{ type: "text", value: "Before" }],
+        },
+      ],
+    ]),
+  };
+  const original = structuredClone(before);
+
+  const result = produceWebstudioDataMutation(before, (draft) => {
+    draft.instances.get("instance")?.children.push({
+      type: "text",
+      value: "After",
+    });
+  });
+
+  expect(before).toEqual(original);
+  expect(result.data).not.toBe(before);
+  expect(result.data.instances.get("instance")?.children).toEqual([
+    { type: "text", value: "Before" },
+    { type: "text", value: "After" },
+  ]);
+  expect(result.payload).toEqual([
+    {
+      namespace: "instances",
+      patches: [
+        {
+          op: "add",
+          path: ["instance", "children", 1],
+          value: { type: "text", value: "After" },
+        },
+      ],
+    },
+  ]);
+});
 
 test("rejects client-supplied ids on data create inputs", () => {
   expect(
@@ -1932,6 +1976,45 @@ describe("createResourceValue", () => {
     });
   });
 
+  test("accepts explicit literal request values without changing expressions", () => {
+    expect(
+      resourceFieldsInput.parse({
+        name: "Users",
+        method: "post",
+        url: "https://example.com/users",
+        searchParams: [
+          { name: "source", value: { type: "literal", value: "homepage" } },
+          { name: "page", value: "filters.page" },
+        ],
+        headers: [
+          {
+            name: "Content-Type",
+            value: { type: "literal", value: "application/json" },
+          },
+          { name: "Authorization", value: '"Bearer " + auth.token' },
+        ],
+        body: { type: "literal", value: "Plain text body" },
+      })
+    ).toMatchObject({
+      url: '"https://example.com/users"',
+      searchParams: [
+        {
+          name: "source",
+          value: { type: "literal", value: "homepage" },
+        },
+        { name: "page", value: "filters.page" },
+      ],
+      headers: [
+        {
+          name: "Content-Type",
+          value: { type: "literal", value: "application/json" },
+        },
+        { name: "Authorization", value: '"Bearer " + auth.token' },
+      ],
+      body: { type: "literal", value: "Plain text body" },
+    });
+  });
+
   test("reject invalid resource controls", () => {
     expect(() =>
       resourceFieldsInput.parse({
@@ -1950,7 +2033,7 @@ describe("createResourceValue", () => {
       resourceFieldsInput.parse({
         name: "Users",
         method: "get",
-        url: "https://example.com/users",
+        url: '"https://example.com/users" +',
         searchParams: [],
         headers: [],
       })
@@ -2209,6 +2292,135 @@ describe("resource patch helpers", () => {
     headers: [],
   };
 
+  const createResourceState = () => ({
+    pages: createDefaultPages({ rootInstanceId: "body" }),
+    instances: new Map(),
+    props: new Map(),
+    dataSources: new Map(),
+    resources: new Map(),
+    breakpoints: new Map(),
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+  });
+
+  test("normalizes literal expressions when creating a resource", () => {
+    const result = createResource(
+      createResourceState(),
+      {
+        resource: resourceFieldsInput.parse({
+          name: "Users",
+          method: "post",
+          url: "https://example.com/users",
+          searchParams: [
+            { name: "status", value: { type: "literal", value: "active" } },
+          ],
+          headers: [
+            {
+              name: "Content-Type",
+              value: { type: "literal", value: "application/json" },
+            },
+          ],
+          body: { type: "literal", value: "request body" },
+        }),
+      },
+      { createId: () => "resource-id" }
+    );
+
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource-id"],
+          value: {
+            id: "resource-id",
+            name: "Users",
+            control: undefined,
+            method: "post",
+            url: '"https://example.com/users"',
+            searchParams: [{ name: "status", value: '"active"' }],
+            headers: [{ name: "Content-Type", value: '"application/json"' }],
+            body: '"request body"',
+          },
+        },
+      ],
+    });
+  });
+
+  test("does not invalidate resources when text replacement finds no matches", () => {
+    const result = replaceResourceText(
+      { resources: new Map([[resource.id, resource]]) },
+      {
+        find: "Not present",
+        replace: "Replacement",
+        match: "substring",
+        fields: ["name", "url"],
+        limit: 100,
+      }
+    );
+
+    expect(result.payload).toEqual([]);
+    expect(result.invalidatesNamespaces).toEqual([]);
+    expect(result.result).toMatchObject({
+      changedCount: 0,
+      matchingFieldCount: 0,
+    });
+  });
+
+  test("replaces selected resource names and literal URLs", () => {
+    const selected: Resource = {
+      ...resource,
+      name: "Old users",
+      url: '"https://example.com/Old-users"',
+    };
+    const ignored: Resource = {
+      ...resource,
+      id: "ignored",
+      name: "Old ignored",
+    };
+    const result = replaceResourceText(
+      {
+        resources: new Map([
+          [selected.id, selected],
+          [ignored.id, ignored],
+        ]),
+      },
+      {
+        resourceIds: [selected.id],
+        find: "Old",
+        replace: "New",
+        match: "substring",
+        fields: ["name", "url"],
+        limit: 100,
+      }
+    );
+
+    expect(result.result).toMatchObject({
+      changedCount: 2,
+      matchingFieldCount: 2,
+      truncated: false,
+    });
+    expect(result.payload).toEqual([
+      {
+        namespace: "resources",
+        patches: [
+          {
+            op: "replace",
+            path: [selected.id, "name"],
+            value: "New users",
+          },
+          {
+            op: "replace",
+            path: [selected.id, "url"],
+            value: '"https://example.com/New-users"',
+          },
+        ],
+      },
+    ]);
+    expect(result.invalidatesNamespaces).toEqual(["resources"]);
+  });
+
   test("upserts resource variables and rebinds expressions", () => {
     const body: Instance = {
       type: "instance",
@@ -2453,12 +2665,12 @@ describe("resource patch helpers", () => {
       {
         scopeInstanceId: "box",
         dataSourceId: "variable-id",
-        resource: {
+        resource: resourceFieldsInput.parse({
           name: "Users",
           method: "get",
-          url: `"https://example.com/users"`,
+          url: "https://example.com/users",
           headers: [],
-        },
+        }),
       },
       { createId: () => "resource-id" }
     );
@@ -2638,12 +2850,12 @@ describe("resource patch helpers", () => {
       {
         instanceId: "box",
         propName: "data",
-        resource: {
+        resource: resourceFieldsInput.parse({
           name: "Users",
           method: "get",
-          url: '"https://example.com/users"',
+          url: "https://example.com/users",
           headers: [],
-        },
+        }),
       },
       { createId: () => ids.shift() ?? "extra-id" }
     );
@@ -2710,6 +2922,62 @@ describe("resource patch helpers", () => {
         values: { url: `"not-a-url"` },
       })
     ).toThrow("url: URL is invalid");
+
+    expect(
+      updateResource(state, {
+        resourceId: "resource",
+        values: resourceFieldsUpdateInput.parse({
+          headers: [
+            {
+              name: "Content-Type",
+              value: { type: "literal", value: "application/json" },
+            },
+          ],
+          body: { type: "literal", value: "Plain text body" },
+        }),
+      }).payload
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "resources",
+          patches: expect.arrayContaining([
+            expect.objectContaining({
+              value: expect.objectContaining({
+                headers: [
+                  { name: "Content-Type", value: '"application/json"' },
+                ],
+                body: '"Plain text body"',
+              }),
+            }),
+          ]),
+        }),
+      ])
+    );
+  });
+
+  test("preserves omitted resource fields during partial updates", () => {
+    const state = createResourceState();
+    state.resources.set("resource", {
+      ...resource,
+      headers: [{ name: "Authorization", value: '"Bearer token"' }],
+      body: '"request body"',
+    });
+
+    const result = updateResource(state, {
+      resourceId: "resource",
+      values: { name: "Renamed" },
+    });
+    const resourcePatch = result.payload
+      .find(({ namespace }) => namespace === "resources")
+      ?.patches.find(({ path }) => path[0] === "resource");
+
+    expect(resourcePatch).toMatchObject({
+      value: {
+        name: "Renamed",
+        headers: [{ name: "Authorization", value: '"Bearer token"' }],
+        body: '"request body"',
+      },
+    });
   });
 
   test("reports resource create id conflicts", () => {

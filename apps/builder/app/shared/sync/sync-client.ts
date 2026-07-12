@@ -26,6 +26,7 @@ import {
   $styleSourceSelections,
   $styles,
   $marketplaceProduct,
+  $projectSettings,
   $publisherHost,
   resetDataStores,
 } from "./data-stores";
@@ -78,6 +79,7 @@ const applyBuilderData = (data: LoadedBuilderData) => {
   $styleSourceSelections.set(data.styleSourceSelections);
   $styles.set(data.styles);
   $marketplaceProduct.set(data.marketplaceProduct);
+  $projectSettings.set(data.projectSettings);
 };
 
 const applyBuilderMetadata = (data: LoadedBuilderData) => {

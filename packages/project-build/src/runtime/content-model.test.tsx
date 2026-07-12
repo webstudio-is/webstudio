@@ -554,6 +554,34 @@ test("support links inside of details", () => {
 });
 
 describe("component content model", () => {
+  test("accepts childless JSON-LD in page flow", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.JsonLd code='{"@context":"https://schema.org"}' />
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeTruthy();
+  });
+
+  test("accepts JSON-LD in Head Slot", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <$.HeadSlot ws:id="headSlotId">
+            <$.JsonLd code='{"@context":"https://schema.org"}' />
+          </$.HeadSlot>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["headSlotId"],
+      })
+    ).toBeTruthy();
+  });
+
   test("restrict children with specific component", () => {
     expect(
       isTreeSatisfyingContentModel({

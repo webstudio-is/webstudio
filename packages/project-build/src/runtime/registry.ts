@@ -14,6 +14,7 @@ import { z } from "zod";
 import * as assets from "./assets";
 import * as components from "./components";
 import * as data from "./data";
+import * as fonts from "./fonts";
 import * as instanceDuplicate from "./instance-duplicate";
 import * as instances from "./instances";
 import * as migrations from "./migrations";
@@ -21,6 +22,8 @@ import * as pageCopy from "./page-copy";
 import * as pages from "./pages";
 import * as projectSettings from "./project-settings";
 import * as props from "./props";
+import * as search from "./search";
+import * as audit from "./audit";
 import * as styles from "./styles";
 
 export type BuilderRuntimeOperation<
@@ -35,6 +38,8 @@ export type BuilderRuntimeOperation<
   kind: "read" | "mutation";
   inputSchema: z.ZodTypeAny;
   inputJsonSchema: InputJsonSchema;
+  outputSchema?: z.ZodTypeAny;
+  outputJsonSchema?: InputJsonSchema;
   readNamespaces: readonly BuilderNamespace[];
   writeNamespaces: readonly BuilderNamespace[];
   invalidatesNamespaces: readonly BuilderNamespace[];
@@ -85,7 +90,8 @@ const runtimeOperation = <
     state: BuilderState;
     input: z.output<Schema>;
     context: BuilderRuntimeContext;
-  }) => Result | Promise<Result>
+  }) => Result | Promise<Result>,
+  outputSchema?: z.ZodTypeAny
 ): BuilderRuntimeOperation<Id, z.input<Schema>, Result> => {
   const writeNamespaces =
     contract.kind === "mutation" ? contract.writeNamespaces : [];
@@ -97,6 +103,11 @@ const runtimeOperation = <
     inputJsonSchema: getInputSchemaMetadata(inputSchema, {
       isHiddenField: isHiddenPublicApiInputField,
     }).inputJsonSchema,
+    outputSchema,
+    outputJsonSchema:
+      outputSchema === undefined
+        ? undefined
+        : getInputSchemaMetadata(outputSchema).inputJsonSchema,
     readNamespaces: contract.readNamespaces,
     writeNamespaces,
     invalidatesNamespaces:
@@ -115,8 +126,20 @@ const runtimeOperation = <
       contract.kind === "mutation"
         ? (contract.requiresConfirm ?? false)
         : false,
-    execute: ({ state, input, context }) =>
-      execute({ state, input: inputSchema.parse(input ?? {}), context }),
+    execute: ({ state, input, context }) => {
+      const result = execute({
+        state,
+        input: inputSchema.parse(input ?? {}),
+        context,
+      });
+      if (outputSchema === undefined) {
+        return result;
+      }
+      if (result instanceof Promise) {
+        return result.then((value) => outputSchema.parse(value) as Result);
+      }
+      return outputSchema.parse(result) as Result;
+    },
   };
 };
 
@@ -162,6 +185,7 @@ const treeMutationNamespaces = [
 const assetUsageNamespaces = [
   "assets",
   "pages",
+  "projectSettings",
   "props",
   "styles",
   "resources",
@@ -196,7 +220,16 @@ const instanceListInput = instanceFilterInput.extend({
 const instanceInspectInput = z.object({
   instanceId: z.string(),
   include: z
-    .array(z.enum(["props", "styles", "bindings", "children", "sources"]))
+    .array(
+      z.enum([
+        "props",
+        "styles",
+        "bindings",
+        "children",
+        "sources",
+        "ancestors",
+      ])
+    )
     .optional(),
   childDepth: z.number().int().optional(),
 });
@@ -220,7 +253,14 @@ const styleDeclarationsListInput = z.object({
 });
 const designTokenListInput = z.object({
   filter: z.string().optional(),
-  withUsage: z.boolean().optional(),
+  withUsage: z
+    .boolean()
+    .optional()
+    .describe("Include usage counts. Defaults to true."),
+  includeStyles: z
+    .boolean()
+    .optional()
+    .describe("Include full inline style declarations for each token."),
   sort: z.enum(["name", "usage"]).optional(),
 });
 const cssVariableListInput = z.object({
@@ -243,7 +283,7 @@ export const builderRuntimeOperations = [
   runtimeOperation(
     "pages.list",
     api("list-pages", "listPages"),
-    readContract(["pages"]),
+    readContract(["pages", "projectSettings"]),
     pageListInput,
     ({ state, input }) => pages.listPages(state, input)
   ),
@@ -659,6 +699,45 @@ export const builderRuntimeOperations = [
     ({ state, input }) => instances.inspectInstance(state, input)
   ),
   runtimeOperation(
+    "project.search",
+    api("search-project", "searchProject"),
+    readContract([
+      "pages",
+      "projectSettings",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "breakpoints",
+    ]),
+    search.projectSearchInput,
+    ({ state, input }) => search.searchProject(state, input)
+  ),
+  runtimeOperation(
+    "project.audit",
+    api("audit", "audit"),
+    readContract([
+      "pages",
+      "projectSettings",
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "resources",
+      "dataSources",
+      "assets",
+      "breakpoints",
+    ]),
+    audit.auditInput,
+    ({ state, input, context }) => audit.audit(state, input, context),
+    audit.auditResult
+  ),
+  runtimeOperation(
     "instances.insertComponent",
     api("insert-component", "insertComponent"),
     mutationContract({
@@ -855,6 +934,17 @@ export const builderRuntimeOperations = [
     ({ state, input, context }) => props.updateProps(state, input, context)
   ),
   runtimeOperation(
+    "instances.replacePropText",
+    api("replace-prop-text", "replacePropText", "edit"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["props"],
+      retryOnConflict: true,
+    }),
+    props.replacePropTextInput,
+    ({ state, input }) => props.replacePropText(state, input)
+  ),
+  runtimeOperation(
     "instances.deleteProps",
     api("delete-props", "deleteProps", "edit"),
     mutationContract({
@@ -893,6 +983,17 @@ export const builderRuntimeOperations = [
     ({ state, input }) => instances.updateTextInstance(state, input)
   ),
   runtimeOperation(
+    "instances.replaceText",
+    api("replace-text", "replaceText", "edit"),
+    mutationContract({
+      readNamespaces: ["pages", "instances"],
+      writeNamespaces: ["instances"],
+      retryOnConflict: true,
+    }),
+    instances.replaceTextInput,
+    ({ state, input }) => instances.replaceText(state, input)
+  ),
+  runtimeOperation(
     "instances.setTextContent",
     api("set-text-content", "setTextContent", "edit"),
     mutationContract({
@@ -907,8 +1008,23 @@ export const builderRuntimeOperations = [
     "instances.updateTextTree",
     api("update-text-tree", "updateTextTree", "edit"),
     mutationContract({
-      readNamespaces: ["instances"],
-      writeNamespaces: ["instances"],
+      readNamespaces: [
+        "instances",
+        "props",
+        "dataSources",
+        "styleSources",
+        "styleSourceSelections",
+        "styles",
+      ],
+      writeNamespaces: [
+        "instances",
+        "props",
+        "dataSources",
+        "resources",
+        "styleSourceSelections",
+        "styleSources",
+        "styles",
+      ],
       retryOnConflict: true,
     }),
     instances.updateTextTreeInput,
@@ -1304,6 +1420,17 @@ export const builderRuntimeOperations = [
     ({ state, input }) => data.updateResource(state, input)
   ),
   runtimeOperation(
+    "resources.replaceText",
+    api("replace-resource-text", "replaceResourceText"),
+    mutationContract({
+      readNamespaces: ["resources"],
+      writeNamespaces: ["resources"],
+      retryOnConflict: true,
+    }),
+    data.replaceResourceTextInput,
+    ({ state, input }) => data.replaceResourceText(state, input)
+  ),
+  runtimeOperation(
     "resources.upsert",
     api("upsert-resource", "upsertResource"),
     mutationContract({
@@ -1370,6 +1497,13 @@ export const builderRuntimeOperations = [
     ({ state, input }) => assets.listAssets(state, input)
   ),
   runtimeOperation(
+    "fonts.list",
+    api("list-fonts", "listFonts"),
+    readContract(["assets"]),
+    fonts.fontListInput,
+    ({ state, input }) => fonts.listFonts(state, input)
+  ),
+  runtimeOperation(
     "assets.findUsage",
     api("find-asset-usage", "findAssetUsage"),
     readContract(assetUsageNamespaces, { requiresAssets: true }),
@@ -1388,6 +1522,17 @@ export const builderRuntimeOperations = [
     ({ state, input }) => assets.updateAsset(state, input)
   ),
   runtimeOperation(
+    "assets.setImageDescriptions",
+    api("set-image-descriptions", "setImageDescriptions"),
+    mutationContract({
+      readNamespaces: ["assets"],
+      writeNamespaces: ["assets"],
+      requiresAssets: true,
+    }),
+    assets.imageDescriptionsSetInput,
+    ({ state, input }) => assets.setImageDescriptions(state, input)
+  ),
+  runtimeOperation(
     "assets.add",
     api("add-asset", "addAsset"),
     mutationContract({
@@ -1403,7 +1548,13 @@ export const builderRuntimeOperations = [
     api("replace-asset", "replaceAsset"),
     mutationContract({
       readNamespaces: assetUsageNamespaces,
-      writeNamespaces: ["pages", "props", "styles", "assets"],
+      writeNamespaces: [
+        "pages",
+        "projectSettings",
+        "props",
+        "styles",
+        "assets",
+      ],
       requiresAssets: true,
     }),
     assets.assetReplaceInput,

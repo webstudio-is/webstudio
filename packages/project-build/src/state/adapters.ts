@@ -24,6 +24,11 @@ import {
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "../shared/marketplace";
+import {
+  createProjectSettingsFromPages,
+  removeLegacyProjectSettingsFromPages,
+  type ProjectSettings,
+} from "../shared/project-settings";
 import type { CompactBuild } from "../types";
 
 type SnapshotValue<Namespace extends BuilderNamespace> =
@@ -54,6 +59,7 @@ export type BuilderBuildDataSnapshot = Partial<{
   assets: Asset[];
   breakpoints: Breakpoint[];
   marketplaceProduct: MarketplaceProduct;
+  projectSettings: ProjectSettings;
 }>;
 
 export type BuilderCompactBuildDataSnapshot = Pick<
@@ -70,6 +76,7 @@ export type BuilderCompactBuildDataSnapshot = Pick<
   | "marketplaceProduct"
 > & {
   assets?: Asset[];
+  projectSettings?: ProjectSettings;
 };
 
 export type BuilderStateStore<Namespace extends BuilderNamespace> = {
@@ -93,6 +100,14 @@ const cloneMap = <Key, Value>(map: Map<Key, Value>) => {
 const mapEntriesById = <Item extends { id: string }>(items: Item[]) =>
   items.map((item) => [item.id, item] as const);
 
+const normalizeProjectSettings = (state: BuilderState) => {
+  if (state.pages === undefined) {
+    return;
+  }
+  state.projectSettings ??= createProjectSettingsFromPages(state.pages);
+  removeLegacyProjectSettingsFromPages(state.pages);
+};
+
 const setClonedBuilderStateValue = <Namespace extends BuilderNamespace>(
   state: BuilderState,
   namespace: Namespace,
@@ -102,8 +117,8 @@ const setClonedBuilderStateValue = <Namespace extends BuilderNamespace>(
     state.pages = migratePages(serializePages(value as Pages));
     return;
   }
-  if (namespace === "marketplaceProduct") {
-    state.marketplaceProduct = structuredClone(value as MarketplaceProduct);
+  if (namespace === "marketplaceProduct" || namespace === "projectSettings") {
+    (state as Record<string, unknown>)[namespace] = structuredClone(value);
     return;
   }
   (state as Record<string, unknown>)[namespace] = cloneMap(
@@ -120,8 +135,8 @@ const setClonedBuilderStateSnapshotValue = <Namespace extends BuilderNamespace>(
     state.pages = migratePages(serializePages(value as Pages));
     return;
   }
-  if (namespace === "marketplaceProduct") {
-    state.marketplaceProduct = structuredClone(value as MarketplaceProduct);
+  if (namespace === "marketplaceProduct" || namespace === "projectSettings") {
+    (state as Record<string, unknown>)[namespace] = structuredClone(value);
     return;
   }
   (state as Record<string, unknown>)[namespace] = cloneMapEntries(
@@ -142,6 +157,8 @@ export const createBuilderStateFromStores = (
     }
   }
 
+  normalizeProjectSettings(state);
+
   return state;
 };
 
@@ -161,6 +178,8 @@ export const createBuilderStateFromSnapshot = (
     }
   }
 
+  normalizeProjectSettings(state);
+
   return state;
 };
 
@@ -173,6 +192,7 @@ export const createBuilderStateFromSerializedSnapshot = (
   if (pages !== undefined) {
     setClonedBuilderStateValue(state, "pages", migratePages(pages));
   }
+  normalizeProjectSettings(state);
 
   return state;
 };
@@ -220,6 +240,9 @@ export const createBuilderStateFromBuildData = (
   if (build.marketplaceProduct !== undefined) {
     snapshot.marketplaceProduct = build.marketplaceProduct;
   }
+  if (build.projectSettings !== undefined) {
+    snapshot.projectSettings = build.projectSettings;
+  }
 
   return createBuilderStateFromSnapshot(snapshot);
 };
@@ -239,6 +262,8 @@ export const createBuilderStateFromCompactBuild = (
     instances: build.instances,
     assets: build.assets,
     marketplaceProduct: build.marketplaceProduct,
+    projectSettings:
+      build.projectSettings ?? createProjectSettingsFromPages(build.pages),
   });
 
 export const createBuilderStateSnapshotFromState = (
@@ -251,7 +276,11 @@ export const createBuilderStateSnapshotFromState = (
     if (value === undefined) {
       continue;
     }
-    if (namespace === "pages" || namespace === "marketplaceProduct") {
+    if (
+      namespace === "pages" ||
+      namespace === "projectSettings" ||
+      namespace === "marketplaceProduct"
+    ) {
       (snapshot as Record<string, unknown>)[namespace] = structuredClone(value);
       continue;
     }

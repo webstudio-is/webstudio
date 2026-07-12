@@ -9,6 +9,12 @@ declare class ScrollTimeline extends AnimationTimeline {
   constructor(options?: ScrollTimelineOptions);
 }
 
+// https://drafts.csswg.org/scroll-animations-1/#dictdef-keyframeanimationoptions
+interface KeyframeAnimationOptions {
+  rangeStart?: string;
+  rangeEnd?: string;
+}
+
 interface ViewTimelineOptions {
   subject?: Element | Document | null;
   axis?: ScrollAxis;

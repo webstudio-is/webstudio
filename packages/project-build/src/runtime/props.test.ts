@@ -20,6 +20,7 @@ import {
   propBindingInput,
   propUpdatesInput,
   propValueInput,
+  replacePropText,
   showAttributeMeta,
   updateProps,
   validatePrimitiveValue,
@@ -41,6 +42,75 @@ const prop = (name: string, overrides: Partial<Prop> = {}): Prop =>
     value: "",
     ...overrides,
   }) as Prop;
+
+test("validates only prop replacements selected by the limit", () => {
+  const jsonLd: Instance = {
+    type: "instance",
+    id: "json-ld",
+    component: "JsonLd",
+    children: [],
+  };
+  const result = replacePropText(
+    {
+      instances: new Map([
+        [image.id, image],
+        [jsonLd.id, jsonLd],
+      ]),
+      props: new Map([
+        ["first", prop("title", { id: "first", value: "old" })],
+        [
+          "second",
+          {
+            id: "second",
+            instanceId: jsonLd.id,
+            name: "code",
+            type: "string",
+            value: '{"name":"old"}',
+          } satisfies Prop,
+        ],
+      ]),
+    },
+    {
+      find: "old",
+      replace: '"',
+      match: "substring",
+      limit: 1,
+    }
+  );
+
+  expect(result).toMatchObject({
+    result: {
+      changedCount: 1,
+      matchingPropCount: 2,
+      truncated: true,
+      matches: [{ propId: "first", before: "old", after: '"' }],
+    },
+  });
+});
+
+test("does not invalidate props when text replacement finds no matches", () => {
+  const result = replacePropText(
+    {
+      instances: new Map([[image.id, image]]),
+      props: new Map([
+        ["title", prop("title", { id: "title", value: "Existing" })],
+      ]),
+    },
+    {
+      find: "Not present",
+      replace: "Replacement",
+      match: "substring",
+      limit: 100,
+    }
+  );
+
+  expect(result.payload).toEqual([]);
+  expect(result.invalidatesNamespaces).toEqual([]);
+  expect(result.result).toMatchObject({
+    changedCount: 0,
+    matchingPropCount: 0,
+  });
+});
 
 test("rejects client-supplied prop ids on prop upsert inputs", () => {
   expect(
@@ -458,6 +528,87 @@ describe("updateProps", () => {
         { createId: () => "code-prop-id" }
       )
     ).toThrow("Entered HTML has a validation error.");
+  });
+
+  test("validates JsonLd code updates", () => {
+    const jsonLd: Instance = {
+      type: "instance",
+      id: "json-ld-id",
+      component: "JsonLd",
+      children: [],
+    };
+    const state = {
+      instances: new Map([[jsonLd.id, jsonLd]]),
+      props: new Map(),
+    };
+
+    expect(() =>
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: jsonLd.id,
+              name: "code",
+              type: "string",
+              value: "not json",
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      )
+    ).toThrow("JSON-LD $: JSON-LD must be a valid JSON object or array.");
+
+    expect(() =>
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: jsonLd.id,
+              name: "code",
+              type: "string",
+              value: '{"@context":"https://schema.org","@type":1}',
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      )
+    ).toThrow('JSON-LD $["@type"]: @type must be a non-empty string');
+
+    expect(() =>
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: jsonLd.id,
+              name: "code",
+              type: "json",
+              value: { "@context": "https://schema.org" },
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      )
+    ).toThrow('JSON-LD code must use prop type "string".');
+
+    expect(() =>
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: jsonLd.id,
+              name: "code",
+              type: "string",
+              value: '{"@context":"https://schema.org"}',
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      )
+    ).not.toThrow();
   });
 
   test("allows non-html code props to use plain strings", () => {

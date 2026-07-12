@@ -8,6 +8,7 @@ import {
   hasProjectSessionPermit,
   projectSessionBusyMessage,
   redactProjectSessionValue,
+  serializeProjectSessionMeta,
 } from "./project-session";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type {
@@ -175,7 +176,7 @@ describe("project session", () => {
 
     expect(result.source).toBe("local");
     expect(result.state.committed).toBe(false);
-    expect(result.namespaces.read).toEqual(["pages"]);
+    expect(result.namespaces.read).toEqual(["pages", "projectSettings"]);
     expect(transport.loadedNamespaces).toEqual([]);
   });
 
@@ -204,7 +205,7 @@ describe("project session", () => {
     const result = await session.read("pages.list", { projectId: "project-1" });
 
     expect(result.source).toBe("local");
-    expect(transport.loadedNamespaces).toEqual([["pages"]]);
+    expect(transport.loadedNamespaces).toEqual([["pages", "projectSettings"]]);
     expect(storage.saved).toHaveLength(1);
   });
 
@@ -291,6 +292,17 @@ describe("project session", () => {
     expect(result.source).toBe("dry-run");
     expect(result.state.committed).toBe(false);
     expect(result.transaction?.payload).toHaveLength(1);
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      diagnosticCount: 1,
+      transaction: result.transaction,
+      diagnostics: [
+        {
+          level: "info",
+          code: "DRY_RUN",
+          message: "Mutation was planned locally and was not committed.",
+        },
+      ],
+    });
     expect(transport.commits).toEqual([]);
     expect(storage.saved).toHaveLength(0);
   });
@@ -306,7 +318,7 @@ describe("project session", () => {
       values: { name: "New Home" },
     });
 
-    expect(result.source).toBe("remote");
+    expect(result.source).toBe("local");
     expect(result.state.committed).toBe(true);
     expect(result.version).toBe(2);
     expect(transport.commits).toHaveLength(1);
@@ -315,6 +327,21 @@ describe("project session", () => {
     expect(
       storage.saved.at(-1)?.state.pages?.pages.get("page-home")?.name
     ).toBe("New Home");
+    expect(storage.saved.at(-1)?.freshness.pages).toMatchObject({
+      status: "invalidated",
+      version: 2,
+      source: "local",
+      loadedAt: expect.any(String),
+      invalidatedBy: "pages.update",
+    });
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      source: "local",
+      committed: true,
+    });
+    expect(storage.saved.at(-1)?.freshness.instances).toEqual({
+      status: "fresh",
+      version: 1,
+    });
   });
 
   test("runs generated-record create mutations on the server", async () => {
@@ -364,7 +391,7 @@ describe("project session", () => {
       dataSourceId: variableId,
     });
 
-    expect(result.source).toBe("remote");
+    expect(result.source).toBe("local");
     expect(result.state.committed).toBe(true);
     expect(transport.commits).toHaveLength(1);
     expect(transport.serverOperations).toEqual([]);
@@ -386,6 +413,40 @@ describe("project session", () => {
         }),
       ])
     );
+  });
+
+  test("distinguishes locally written namespaces from additional invalidations", async () => {
+    const state = createBuilderStateFromSnapshot(build);
+    state.resources?.set("resource", {
+      id: "resource",
+      name: "Users",
+      method: "get",
+      url: '"https://example.com/users"',
+      headers: [],
+    });
+    const storage = createStorage(createPersistedSnapshot({ state }));
+    const transport = createTransport();
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("resources.update", {
+      resourceId: "resource",
+      values: { name: "Customers" },
+    });
+
+    expect(result.source).toBe("local");
+    expect(result.state.committed).toBe(true);
+    expect(storage.saved.at(-1)?.freshness.resources).toMatchObject({
+      status: "invalidated",
+      version: 2,
+      source: "local",
+      invalidatedBy: "resources.update",
+    });
+    expect(storage.saved.at(-1)?.freshness.pages).toMatchObject({
+      status: "invalidated",
+      version: 1,
+      invalidatedBy: "resources.update",
+    });
   });
 
   test("refreshes required namespaces and returns conflict diagnostic", async () => {

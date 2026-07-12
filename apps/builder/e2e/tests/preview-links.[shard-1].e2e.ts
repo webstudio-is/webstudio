@@ -1,5 +1,9 @@
 import type { Locator } from "playwright";
 import { openBuilderUrl, waitForCanvasFrame } from "../flows/builder";
+import {
+  expectGeneratedAppNavigation,
+  expectGeneratedAppToRender,
+} from "../flows/generated-app";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
 import { getProjectBuilderUrl, newIsolatedPage, test } from "../harness";
@@ -399,6 +403,25 @@ test("Preview links expose current page state for components and element anchors
       canvas,
       text: previewLinkText.hashLink,
       active: true,
+    });
+  } finally {
+    await close();
+  }
+});
+
+test("Generated preview renders and navigates linked routes", async () => {
+  const { page, close } = await newIsolatedPage();
+  try {
+    await expectGeneratedAppToRender({
+      projectId: fixture.projectId,
+      path: "/my-page",
+      expectedText: previewLinkText.pageLink,
+    });
+    await expectGeneratedAppNavigation({
+      projectId: fixture.projectId,
+      page,
+      linkText: previewLinkText.pageLink,
+      targetPath: "/my-page",
     });
   } finally {
     await close();

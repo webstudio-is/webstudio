@@ -689,6 +689,15 @@ const createCaptureScreenshotMock = (events: string[]) =>
       fullPage: options.fullPage === true,
       elapsedMs: 1,
       warnings: [],
+      layout: {
+        viewportWidth: options.width,
+        viewportHeight: options.height,
+        contentWidth: options.width + 20,
+        contentHeight: options.height * 2,
+        horizontalOverflow: true,
+        images: [],
+        resources: [],
+      },
     };
   });
 
@@ -737,6 +746,13 @@ test("captures stale path screenshots through the restarted preview server", asy
     )
   ).resolves.toMatchObject({
     output: "screenshot.png",
+    layout: {
+      viewportWidth: 1440,
+      contentWidth: 1460,
+      horizontalOverflow: true,
+      images: [],
+      resources: [],
+    },
   });
 
   expect(captureScreenshot).toHaveBeenCalledWith(

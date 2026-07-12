@@ -24,6 +24,7 @@ describe("getServerSyncState", () => {
       resources: "resources",
       assets: "assets",
       marketplaceProduct: "marketplaceProduct",
+      projectSettings: "projectSettings",
     } as unknown as LoadedBuilderData;
 
     const serverSyncState = getServerSyncState(data);
@@ -41,6 +42,7 @@ describe("getServerSyncState", () => {
         ["dataSources", "dataSources"],
         ["resources", "resources"],
         ["assets", "assets"],
+        ["projectSettings", "projectSettings"],
         ["marketplaceProduct", "marketplaceProduct"],
       ])
     );

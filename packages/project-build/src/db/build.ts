@@ -22,7 +22,12 @@ import {
 } from "@webstudio-is/project-migrations/pages";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
-import type { MarketplaceProduct } from "../shared//marketplace";
+import { marketplaceProduct } from "../shared/marketplace";
+import {
+  createProjectSettingsFromPages,
+  projectSettings,
+  removeLegacyProjectSettingsFromPages,
+} from "../shared/project-settings";
 import { breakCyclesMutable } from "../shared/graph-utils";
 import { createPages } from "../template";
 import { serializeStyles } from "./styles";
@@ -49,16 +54,38 @@ const parseCompactInstanceData = (serialized: string) => {
   return instances;
 };
 
+const parseMarketplaceProduct = (serialized: string | null | undefined) => {
+  const value =
+    serialized === undefined || serialized === null
+      ? undefined
+      : parseConfig<unknown>(serialized);
+  if (
+    value === undefined ||
+    (typeof value === "object" &&
+      value !== null &&
+      Object.keys(value).length === 0)
+  ) {
+    return undefined;
+  }
+  return marketplaceProduct.parse(value);
+};
+
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
+  const pages = migratePages(parseConfig<unknown>(build.pages));
+  const parsedProjectSettings =
+    build.projectSettings === undefined || build.projectSettings === null
+      ? createProjectSettingsFromPages(pages)
+      : projectSettings.parse(parseConfig<unknown>(build.projectSettings));
   return {
     id: build.id,
     projectId: build.projectId,
     version: build.version,
     createdAt: build.createdAt,
     updatedAt: build.updatedAt,
-    pages: migratePages(parseConfig<unknown>(build.pages)),
+    pages: removeLegacyProjectSettingsFromPages(pages),
+    projectSettings: parsedProjectSettings,
     breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
     styles: parseCompactData<StyleDecl>(build.styles),
     styleSources: parseCompactData<StyleSource>(build.styleSources),
@@ -70,9 +97,7 @@ const parseCompactBuild = async (
     resources: parseCompactData<Resource>(build.resources),
     instances: parseCompactInstanceData(build.instances),
     deployment: parseDeployment(build.deployment),
-    marketplaceProduct: parseConfig<MarketplaceProduct>(
-      build.marketplaceProduct
-    ),
+    marketplaceProduct: parseMarketplaceProduct(build.marketplaceProduct),
   } satisfies CompactBuild;
 };
 
@@ -204,10 +229,12 @@ export const createBuild = async (
   context: AppContext
 ): Promise<void> => {
   const data = createPages();
+  const pages = removeLegacyProjectSettingsFromPages(data.pages);
   const newBuild = await context.postgrest.client.from("Build").insert({
     id: crypto.randomUUID(),
     projectId: props.projectId,
-    pages: JSON.stringify(serializePages(data.pages)),
+    pages: JSON.stringify(serializePages(pages)),
+    projectSettings: JSON.stringify({ meta: {}, compiler: {} }),
     breakpoints: serializeData<Breakpoint>(data.breakpoints),
     styles: serializeStyles(data.styles),
     styleSources: serializeData<StyleSource>(data.styleSources),

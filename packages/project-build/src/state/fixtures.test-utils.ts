@@ -3,6 +3,8 @@ import type { BuilderStateSnapshot } from "./adapters";
 export const pages = {
   homePageId: "page-home",
   rootFolderId: "folder-root",
+  meta: {},
+  compiler: {},
   pages: new Map([
     [
       "page-home",

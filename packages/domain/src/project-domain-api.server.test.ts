@@ -104,6 +104,7 @@ const devBuildRow = {
   ]),
   deployment: null,
   marketplaceProduct: JSON.stringify({}),
+  projectSettings: JSON.stringify({ meta: {}, compiler: {} }),
 };
 
 const devBuildHandler = (row: typeof devBuildRow = devBuildRow) =>

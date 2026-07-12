@@ -175,6 +175,23 @@ test("reports non-json api responses", async () => {
   expect(message).toContain("The request may be too large for the API.");
 });
 
+test("sends the bundle contract when loading by project id", async () => {
+  const project = createPublishedProjectBundleFixture();
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await loadProjectBundleByProjectId(apiParams);
+
+  const [url] = fetch.mock.calls[0] as [RequestInfo | URL, RequestInit];
+  expect(decodeURIComponent(String(url))).toContain(
+    `"bundleVersion":"${bundleVersion}"`
+  );
+});
+
 test("creates api client compatibility headers", () => {
   expect(createApiClientHeaders({ name: "cli", version: "1.2.3" })).toEqual({
     "x-webstudio-client": "cli",
@@ -1058,7 +1075,10 @@ test("loads project bundle by build id without auth headers", async () => {
   });
 
   expect(fetch).toHaveBeenCalledOnce();
-  const [_url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+  const [url, init] = fetch.mock.calls[0] as [RequestInfo | URL, RequestInit];
+  expect(decodeURIComponent(String(url))).toContain(
+    `"bundleVersion":"${bundleVersion}"`
+  );
   expect(init.headers).toMatchObject({
     "content-type": "application/json",
   });

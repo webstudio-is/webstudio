@@ -37,6 +37,7 @@ const createBundleBuild = (
       email: "author@example.com",
       description: "Description",
     },
+    projectSettings: { meta: {}, compiler: {} },
     ...overrides,
   };
 };

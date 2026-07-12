@@ -42,6 +42,25 @@ const setCssValue = async ({
   await waitForSyncStatus({ page, status: "idle" });
 };
 
+const resetCssValue = async ({
+  page,
+  property,
+}: {
+  page: Page;
+  property: string;
+}) => {
+  const input = page.getByLabel(property, { exact: true }).first();
+  const labelText = `${property.slice(0, 1).toUpperCase()}${property.slice(1)}`;
+  const control = input.locator(
+    `xpath=ancestor::*[.//*[normalize-space()=${JSON.stringify(labelText)}]][1]`
+  );
+  const label = control.getByText(labelText, { exact: true });
+  await label.waitFor({ state: "visible", timeout: 10_000 });
+  const save = waitForChangeToBeSaved({ page });
+  await label.click({ modifiers: ["Alt"] });
+  await save;
+};
+
 const selectStyleSourceState = async ({
   page,
   state,
@@ -70,6 +89,19 @@ const expectBuildStylesToContain = async ({
   const styles = await readBuildStylesText(fixture);
   if (styles.includes(text) === false) {
     throw new Error(`Expected build styles to contain "${text}".`);
+  }
+};
+
+const expectBuildStylesNotToContain = async ({
+  fixture,
+  text,
+}: {
+  fixture: SeededContentModeProject;
+  text: string;
+}) => {
+  const styles = await readBuildStylesText(fixture);
+  if (styles.includes(text)) {
+    throw new Error(`Expected build styles not to contain "${text}".`);
   }
 };
 
@@ -143,6 +175,15 @@ test("Builder style panel edits representative styles and persists after reload"
       text: `"state":":hover"`,
     });
 
+    await page.getByRole("tab", { name: "Style" }).click();
+    await measure("style panel runtime reset css value", async () => {
+      await resetCssValue({ page, property: "width" });
+    });
+    await expectBuildStylesNotToContain({
+      fixture,
+      text: `"property":"width"`,
+    });
+
     await measure("style panel runtime reload builder", async () => {
       await openProjectBuilder({
         page,
@@ -174,17 +215,15 @@ test("Builder style panel edits representative styles and persists after reload"
       property: "color",
       value: "rgb(34, 85, 255)",
     });
-    await waitForCanvasTextStyle({
-      page,
-      text,
-      property: "width",
-      value: "420px",
-    });
     await waitForHoveredCanvasTextStyle({
       page,
       text,
       property: "color",
       value: "rgb(202, 18, 107)",
+    });
+    await expectBuildStylesNotToContain({
+      fixture,
+      text: `"property":"width"`,
     });
     await expectBuildStylesToContain({
       fixture,

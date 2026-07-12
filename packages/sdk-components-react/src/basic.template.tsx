@@ -85,6 +85,20 @@ export const HtmlEmbed: TemplateMeta = {
   ),
 };
 
+export const JsonLd: TemplateMeta = {
+  category: "general",
+  order: 6,
+  template: (
+    <$.JsonLd
+      code={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "Organization name",
+      })}
+    />
+  ),
+};
+
 export const Image: TemplateMeta = {
   category: "media",
   template: (

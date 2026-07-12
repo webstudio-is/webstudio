@@ -39,7 +39,10 @@ import {
   $selectedInstanceOutlines,
   $hoveredInstanceOutline,
 } from "~/shared/nano-states";
-import { $marketplaceProduct } from "~/shared/sync/data-stores";
+import {
+  $marketplaceProduct,
+  $projectSettings,
+} from "~/shared/sync/data-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import {
   ImmerhinSyncObject,
@@ -96,6 +99,7 @@ const serverSyncStores = {
   dataSources: $dataSources,
   resources: $resources,
   assets: $assets,
+  projectSettings: $projectSettings,
   marketplaceProduct: $marketplaceProduct,
 } as const;
 

@@ -1,5 +1,5 @@
 {
-  "bundleVersion": "bundle-a4rjtk",
+  "bundleVersion": "bundle-u14gh7",
   "build": {
     "id": "1b66ee06-8ea5-4420-9a0e-e0d3a67aca32",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
@@ -7,11 +7,6 @@
     "createdAt": "2026-01-15T16:19:55.574+00:00",
     "updatedAt": "2026-01-15T16:19:55.574+00:00",
     "pages": {
-      "meta": {
-        "siteName": "KittyGuardedZone",
-        "faviconAssetId": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
-        "code": "<script>console.log('KittyGuardedZone')</script>\n"
-      },
       "homePageId": "7Db64ZXgYiRqKSQNR-qTQ",
       "rootFolderId": "root",
       "pages": [
@@ -6885,6 +6880,14 @@
         }
       ]
     ],
+    "projectSettings": {
+      "meta": {
+        "siteName": "KittyGuardedZone",
+        "faviconAssetId": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
+        "code": "<script>console.log('KittyGuardedZone')</script>\n"
+      },
+      "compiler": {}
+    },
     "deployment": {
       "destination": "saas",
       "domains": ["webstudio-fixture-project-a-0su3o"],

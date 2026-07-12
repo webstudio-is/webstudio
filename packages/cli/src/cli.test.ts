@@ -209,11 +209,12 @@ describe("registerCommands", () => {
     expect(commandNames(commands)).toEqual(
       expect.arrayContaining([
         "preview",
-        "screenshot <url>",
+        "screenshot [url]",
         "import",
         "permissions",
         "publish",
         "domains",
+        "registry",
         "mcp",
         "$0",
       ])
@@ -234,6 +235,13 @@ describe("registerCommands", () => {
     expect(domains.demandCommand).toHaveBeenCalledWith(
       1,
       "Specify a domains command."
+    );
+
+    const registry = runGroupBuilder(commands, "registry");
+    expect(registry.childCommands).toEqual(["inspect"]);
+    expect(registry.demandCommand).toHaveBeenCalledWith(
+      1,
+      "Specify a registry command."
     );
 
     for (const { command } of apiCommandMetadata) {
@@ -267,5 +275,13 @@ describe("registerCommands", () => {
     const domainsHelp = await getHelpOutput(["domains", "--help"]);
     expect(domainsHelp).toContain("webstudio domains list");
     expect(domainsHelp).toContain("webstudio domains create");
+  });
+
+  test("documents registry inspection as a read-only nested command", async () => {
+    const output = await getHelpOutput(["registry", "inspect", "--help"]);
+
+    expect(output).toContain("--source");
+    expect(output).toContain("--item");
+    expect(output).toContain("No files are installed");
   });
 });

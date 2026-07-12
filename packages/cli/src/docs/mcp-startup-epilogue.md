@@ -24,7 +24,7 @@ When building for a Content-mode editor, use a Content Block (`ws:block`) around
 
 Run it from the linked Webstudio project root. The startup status line prints that absolute root; use it for local files such as `<project root>/.temp/script.mjs`, screenshots, and generated artifacts.
 
-For experiments, pass `--dry-run` to local-capable mutation calls. Copying a `.webstudio` folder is not an isolated project clone; `.webstudio/config.json` still points to the same remote project, so non-dry-run mutations can commit to that project.
+For experiments, pass `--dry-run` to local-capable mutation calls. Read the computed transaction from `meta.session.transaction` and its base build version from `meta.session.version`. Copying a `.webstudio` folder is not an isolated project clone; `.webstudio/config.json` still points to the same remote project, so non-dry-run mutations can commit to that project.
 
 Startup marks cached ProjectSession data stale so MCP tools read the current Builder dev build.
 

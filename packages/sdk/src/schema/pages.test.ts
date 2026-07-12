@@ -5,6 +5,7 @@ import {
   pageAuth,
   pagePath,
   pages,
+  projectMeta,
   projectNewRedirectPath,
 } from "./pages";
 
@@ -128,6 +129,17 @@ test("supports text document type", () => {
       }),
     }).success
   ).toBe(true);
+});
+
+test("supports project agent instructions", () => {
+  expect(
+    projectMeta.parse({
+      agentInstructions:
+        "Use the existing design tokens and keep copy concise.",
+    })
+  ).toEqual({
+    agentInstructions: "Use the existing design tokens and keep copy concise.",
+  });
 });
 
 test("validates page id matches its record key", () => {

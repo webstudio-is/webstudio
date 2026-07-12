@@ -23,9 +23,11 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { replaceTextValue } from "./text-replacement";
 import { getExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
+import { validatePageSelector } from "./page-selector";
 import {
   createPropClonePatches,
   createPropDeletePayload,
@@ -526,7 +528,7 @@ const getWebstudioDataNamespace = (
   data: WebstudioData,
   namespace: BuilderPatchChange["namespace"]
 ) => {
-  if (namespace === "marketplaceProduct") {
+  if (namespace === "marketplaceProduct" || namespace === "projectSettings") {
     return;
   }
   return data[namespace];
@@ -732,6 +734,28 @@ export const cloneInstanceWithNewIds = ({
       : child
   ),
 });
+
+export const replaceTextInput = z
+  .object({
+    find: z.string().min(1).describe("Literal text to find."),
+    replace: z.string().describe("Replacement literal text."),
+    match: z
+      .enum(["exact", "substring"])
+      .default("exact")
+      .describe(
+        'Use "exact" to replace complete text children, or "substring" to replace every literal occurrence inside matching text children.'
+      ),
+    pageId: z.string().optional(),
+    pagePath: z.string().optional(),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(200)
+      .default(50)
+      .describe("Maximum number of text children to replace."),
+  })
+  .superRefine(validatePageSelector);
 
 export const cloneInstanceSubtree = ({
   instances,
@@ -2987,7 +3011,15 @@ export const deleteInstanceBySelector = (
 };
 
 export const updateTextTree = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<
+    BuilderState,
+    | "instances"
+    | "props"
+    | "dataSources"
+    | "styleSources"
+    | "styleSourceSelections"
+    | "styles"
+  >,
   input: z.infer<typeof updateTextTreeInput>,
   context: BuilderRuntimeContext
 ) => {
@@ -3031,14 +3063,39 @@ export const updateTextTree = (
       `Updated text tree instance "${error.instanceId}" references missing child "${error.childId}"`
     );
   }
+  const removedInstanceIds = new Set(
+    Array.from(findTreeInstanceIds(instances, input.rootInstanceId)).filter(
+      (instanceId) =>
+        remapped.updates.some((instance) => instance.id === instanceId) ===
+        false
+    )
+  );
+  const instancePatches = payload.flatMap((change) =>
+    change.namespace === "instances"
+      ? change.patches.filter(
+          (patch) => patch.op !== "remove" || patch.path.length !== 1
+        )
+      : []
+  );
+  const cleanupPayload = createInstanceCleanupPayload({
+    instanceIds: removedInstanceIds,
+    props: state.props?.values() ?? [],
+    dataSources: state.dataSources?.values() ?? [],
+    styleSources: state.styleSources?.values() ?? [],
+    styleSourceSelections: state.styleSourceSelections?.values() ?? [],
+    styles: state.styles?.values() ?? [],
+  });
   return createRuntimeMutation({
-    payload,
+    payload: compactBuilderPatchPayload([
+      { namespace: "instances", patches: instancePatches },
+      ...cleanupPayload,
+    ]),
     result: {
       rootInstanceId: input.rootInstanceId,
       instanceIds: remapped.updates.map((instance) => instance.id),
       idMap: Object.fromEntries(remapped.idMap),
     },
-    invalidatesNamespaces: ["instances"],
+    invalidatesNamespaces: treeInvalidates,
   });
 };
 
@@ -3102,7 +3159,8 @@ export const cloneInstance = (
 
 export const serializeInstanceSummary = (
   instance: Instance,
-  depth: number
+  depth: number,
+  parent?: { id: Instance["id"]; index: number }
 ) => ({
   id: instance.id,
   component: instance.component,
@@ -3110,7 +3168,50 @@ export const serializeInstanceSummary = (
   label: instance.label,
   childCount: instance.children.length,
   depth,
+  parentId: parent?.id,
+  indexWithinParent: parent?.index,
 });
+
+const getInstanceParents = (instances: Instances) => {
+  const parents = new Map<
+    Instance["id"],
+    { id: Instance["id"]; index: number }
+  >();
+  for (const instance of instances.values()) {
+    for (const [index, child] of instance.children.entries()) {
+      if (child.type === "id") {
+        parents.set(child.value, { id: instance.id, index });
+      }
+    }
+  }
+  return parents;
+};
+
+const getInstanceAncestors = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  const parents = getInstanceParents(instances);
+  const ancestorPath = [];
+  const visited = new Set<Instance["id"]>();
+  let parent = parents.get(instanceId);
+  while (parent !== undefined) {
+    if (visited.has(parent.id)) {
+      break;
+    }
+    visited.add(parent.id);
+    const instance = instances.get(parent.id);
+    if (instance === undefined) {
+      break;
+    }
+    ancestorPath.push({ instance, childIndex: parent.index });
+    parent = parents.get(parent.id);
+  }
+  return ancestorPath.reverse().map(({ instance, childIndex }, depth) => ({
+    ...serializeInstanceSummary(instance, depth, parents.get(instance.id)),
+    childIndex,
+  }));
+};
 
 export const isTextContentChild = (
   child: Instance["children"][number] | undefined
@@ -3325,6 +3426,7 @@ export const listInstances = (
       ? getPageFilteredRootInstanceIds(state, input)
       : [input.rootInstanceId];
   const depths = getInstanceDepths(instances, rootInstanceIds);
+  const parents = getInstanceParents(instances);
   const results = [];
   for (const [instanceId, depth] of depths) {
     const instance = instances.get(instanceId);
@@ -3352,7 +3454,9 @@ export const listInstances = (
     ) {
       continue;
     }
-    results.push(serializeInstanceSummary(instance, depth));
+    results.push(
+      serializeInstanceSummary(instance, depth, parents.get(instance.id))
+    );
   }
   return { instances: results };
 };
@@ -3394,7 +3498,9 @@ export const inspectInstance = (
   >,
   input: {
     instanceId: string;
-    include?: Array<"props" | "styles" | "children" | "bindings" | "sources">;
+    include?: Array<
+      "props" | "styles" | "children" | "bindings" | "sources" | "ancestors"
+    >;
     childDepth?: number;
   }
 ) => {
@@ -3404,11 +3510,16 @@ export const inspectInstance = (
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
   const depths = getInstanceDepths(instances, [input.instanceId]);
+  const parents = getInstanceParents(instances);
   const include = new Set(input.include ?? []);
   const details: Record<string, unknown> = serializeInstanceSummary(
     instance,
-    depths.get(instance.id) ?? 0
+    depths.get(instance.id) ?? 0,
+    parents.get(instance.id)
   );
+  if (include.has("ancestors")) {
+    details.ancestors = getInstanceAncestors(instances, instance.id);
+  }
   if (include.has("props")) {
     details.props = Array.from(state.props?.values() ?? []).filter(
       (prop) => prop.instanceId === instance.id
@@ -3430,7 +3541,11 @@ export const inspectInstance = (
         return depth !== undefined && depth > 0 && depth <= maxDepth;
       })
       .map((child) =>
-        serializeInstanceSummary(child, depths.get(child.id) ?? 0)
+        serializeInstanceSummary(
+          child,
+          depths.get(child.id) ?? 0,
+          parents.get(child.id)
+        )
       );
   }
   if (include.has("bindings")) {
@@ -3495,6 +3610,74 @@ export const updateTextInstance = (
     }),
     result: mutationResult,
     invalidatesNamespaces: ["instances"],
+  });
+};
+
+export const replaceText = (
+  state: Pick<BuilderState, "pages" | "instances">,
+  input: z.infer<typeof replaceTextInput>
+) => {
+  const instances = getRequiredInstances(state);
+  const rootInstanceIds = getPageFilteredRootInstanceIds(state, input);
+  const instanceIds = new Set(
+    getInstanceDepths(instances, rootInstanceIds).keys()
+  );
+  const matches: Array<{
+    instanceId: string;
+    childIndex: number;
+    before: string;
+    after: string;
+  }> = [];
+  let matchingChildCount = 0;
+
+  for (const instance of instances.values()) {
+    if (instanceIds.has(instance.id) === false) {
+      continue;
+    }
+    for (const [childIndex, child] of instance.children.entries()) {
+      if (child.type !== "text") {
+        continue;
+      }
+      const after = replaceTextValue(child.value, input);
+      if (after === child.value) {
+        continue;
+      }
+      matchingChildCount += 1;
+      if (matches.length < input.limit) {
+        matches.push({
+          instanceId: instance.id,
+          childIndex,
+          before: child.value,
+          after,
+        });
+      }
+    }
+  }
+
+  return createRuntimeMutation({
+    payload:
+      matches.length === 0
+        ? []
+        : [
+            {
+              namespace: "instances",
+              patches: matches.map((match) => ({
+                op: "replace" as const,
+                path: [match.instanceId, "children", match.childIndex],
+                value: createTextContentChild({
+                  type: "text",
+                  value: match.after,
+                }),
+              })),
+            },
+          ],
+    result: {
+      changedCount: matches.length,
+      matchingChildCount,
+      truncated: matchingChildCount > matches.length,
+      matches,
+    },
+    invalidatesNamespaces: matches.length === 0 ? [] : ["instances"],
   });
 };
 

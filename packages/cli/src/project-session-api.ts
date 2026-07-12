@@ -4,7 +4,10 @@ import {
 } from "@webstudio-is/protocol";
 import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
-import type { ProjectSessionEnvelope } from "@webstudio-is/project-build/project-session";
+import {
+  serializeProjectSessionMeta,
+  type ProjectSessionEnvelope,
+} from "@webstudio-is/project-build/project-session";
 import { createCliProjectSession } from "./project-session";
 
 export type ProjectSessionApiConnection = {
@@ -59,17 +62,7 @@ export const isProjectSessionEnvelope = (
   "namespaces" in value &&
   "diagnostics" in value;
 
-export const getProjectSessionMeta = (envelope: ProjectSessionEnvelope) => ({
-  operationId: envelope.operationId,
-  projectId: envelope.projectId,
-  buildId: envelope.buildId,
-  version: envelope.version,
-  source: envelope.source,
-  committed: envelope.state.committed,
-  compatibility: envelope.state.compatibility,
-  namespaces: envelope.namespaces,
-  diagnostics: envelope.diagnostics,
-});
+export const getProjectSessionMeta = serializeProjectSessionMeta;
 
 export const executeProjectSessionApiOperation = async ({
   command,
@@ -122,7 +115,9 @@ export const executeProjectSessionApiOperation = async ({
       : operation.method === "query"
         ? await session.read(
             runtimeOperationId,
-            withProjectId(input, connection.projectId),
+            command === "audit"
+              ? input
+              : withProjectId(input, connection.projectId),
             { permit: operation.permit }
           )
         : await session.mutate(

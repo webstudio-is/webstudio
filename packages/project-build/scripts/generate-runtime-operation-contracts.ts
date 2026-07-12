@@ -18,6 +18,7 @@ const contractData = builderRuntimeOperations.map(
     permit,
     kind,
     inputJsonSchema,
+    outputJsonSchema,
     readNamespaces,
     writeNamespaces,
     invalidatesNamespaces,
@@ -31,6 +32,9 @@ const contractData = builderRuntimeOperations.map(
     permit,
     kind,
     inputSchema: inputJsonSchema,
+    ...(outputJsonSchema === undefined
+      ? {}
+      : { outputSchema: outputJsonSchema }),
     readNamespaces,
     writeNamespaces,
     invalidatesNamespaces,

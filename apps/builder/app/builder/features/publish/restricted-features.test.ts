@@ -11,6 +11,7 @@ import {
   getRestrictedFeatures,
   type RestrictedFeaturesPermissions,
 } from "./restricted-features";
+import type { ProjectSettings } from "@webstudio-is/project-build";
 
 const createPage = (page: Partial<Page> & Pick<Page, "id">): Page => ({
   name: page.id,
@@ -64,13 +65,16 @@ const defaultPermissions: RestrictedFeaturesPermissions = {
 
 const getFeatures = ({
   pages,
+  projectSettings,
   permissions,
 }: {
   pages: Pages | undefined;
+  projectSettings?: ProjectSettings;
   permissions: Partial<RestrictedFeaturesPermissions>;
 }) =>
   getRestrictedFeatures({
     pages,
+    projectSettings,
     dataSources: new Map<string, DataSource>(),
     instances: new Map<string, Instance>(),
     permissions: { ...defaultPermissions, ...permissions },
@@ -79,7 +83,9 @@ const getFeatures = ({
 describe("getRestrictedFeatures", () => {
   test("restricts project authentication when auth is not allowed", () => {
     const features = getFeatures({
-      pages: createPages({
+      pages: createPages(),
+      projectSettings: {
+        compiler: {},
         meta: {
           auth: JSON.stringify({
             version: 1,
@@ -92,7 +98,7 @@ describe("getRestrictedFeatures", () => {
             },
           }),
         },
-      }),
+      },
       permissions: { allowAuth: false },
     });
 

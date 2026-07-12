@@ -73,7 +73,9 @@ absorb occasional browser/backend flakes.
 `pnpm e2e:builder:dev` defaults to `E2E_BUILDER_URL=https://127.0.0.1:3000`,
 so it runs against the already-running Vite dev server instead of building and
 serving the production bundle. Override `E2E_BUILDER_URL` when the dev server is
-running on another port.
+running on another port. The E2E harness maps `wstd.dev` and project subdomains
+to loopback for Chromium when this URL is loopback, so focused local runs do not
+require machine-level host-file edits.
 
 The dev backend uses `E2E_DB_BOOTSTRAP=if-empty` and keeps Docker containers
 running. The e2e runner still resets test data before each run.

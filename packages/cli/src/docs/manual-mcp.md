@@ -71,7 +71,7 @@ Rules:
 - Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`. Use `insert-component` when you want one automatic registered component template.
 - The positional input is JSON and defaults to `{}`.
 - Use `--input-file` for large mutation payloads.
-- Use `--dry-run` with local-capable mutation tools when you need a patch plan without committing. Copying a `.webstudio` folder is not an isolated project clone; `.webstudio/config.json` still points to the same remote project, so non-dry-run mutations can commit to that project.
+- Use `--dry-run` with local-capable mutation tools when you need a patch plan without committing. The computed transaction is returned in `meta.session.transaction`, and `meta.session.version` is its base build version. Copying a `.webstudio` folder is not an isolated project clone; `.webstudio/config.json` still points to the same remote project, so non-dry-run mutations can commit to that project.
 - The command prints JSON to stdout for both success and failure. Success uses the same `structuredContent` shape MCP tools return: `{ "ok": true, "data": ..., "meta": ... }`. Failure prints `{ "ok": false, "error": { "code": "...", "message": "..." }, "meta": ... }` and exits nonzero.
 - The command writes sparse progress to stderr, including start, success/failure, elapsed time, and committed status when the tool returns session metadata.
 - Invalid argument types fail loudly with path-specific messages, for example `meta.guide input.brief must be a string when provided`.
@@ -236,12 +236,13 @@ terms, agents can:
 
 Useful resources:
 
-- `webstudio://project/status`: current ProjectSession status
+- `webstudio://project/status`: compact current ProjectSession status
 - `webstudio://project/tools-overview`: small operation overview by capability area
 - `webstudio://project/components-overview`: small component overview with ids, labels, namespaces, and categories
 - `webstudio://project/tools`: full operation catalog; read only when focused metadata is insufficient
 - `webstudio://project/components`: full component catalog with props, states, and content model composition constraints; read only when `components.summary`, `components.find`, and `components.get` are insufficient
 - `webstudio://project/guide`: concise discovery guide
+- `webstudio://project/accessibility-review`: evidence-based LLM accessibility-review workflow using project checks, preview, and screenshots
 
 ## MCP SDK Client Imports
 
@@ -295,7 +296,7 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Operate on the configured project only.
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
-- Use `status` and `refresh` when cached namespaces may be stale.
+- Use `status` and `refresh` when cached namespaces may be stale. Pass `status {"verbose":true}` only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.
 - A mutation is durable only when `meta.session.committed` is true.
 - For visual/design work, verify the rendered result with vision before finishing.
 

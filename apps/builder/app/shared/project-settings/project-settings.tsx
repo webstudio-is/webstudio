@@ -6,7 +6,7 @@ import {
   DialogTitle,
   Grid,
   theme,
-  ScrollArea,
+  ScrollAreaNative,
   Flex,
   List,
   ListItem,
@@ -21,6 +21,7 @@ import {
 import { $isDesignMode } from "~/shared/nano-states";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 import { SectionGeneral } from "./section-general";
+import { SectionAgents } from "./section-agents";
 import { SectionAuth } from "./section-auth";
 import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
@@ -33,6 +34,7 @@ const sections = new Map<
   FunctionComponent<{ projectId?: string }>
 >([
   ["general", SectionGeneral],
+  ["agents", SectionAgents],
   ["redirects", SectionRedirects],
   ["publish", SectionPublish],
   ["marketplace", SectionMarketplace],
@@ -123,19 +125,25 @@ export const ProjectSettingsDialog = ({
                 })}
               </Flex>
             </List>
-            <ScrollArea css={{ width: "100%" }}>
+            <ScrollAreaNative css={{ width: "100%" }}>
               {status === "loading" ? (
                 <Flex justify="center" align="center" css={{ minHeight: 400 }}>
                   <SpinnerIcon size={rawTheme.spacing[15]} />
                 </Flex>
               ) : (
-                <Grid gap={2} css={{ paddingBlock: theme.spacing[5] }}>
+                <Grid
+                  gap={2}
+                  css={{
+                    paddingBlock: theme.spacing[5],
+                    minHeight: currentSection === "agents" ? "100%" : undefined,
+                  }}
+                >
                   {SectionComponent && (
                     <SectionComponent projectId={projectId} />
                   )}
                 </Grid>
               )}
-            </ScrollArea>
+            </ScrollAreaNative>
           </Flex>
           {/* Title is at the end intentionally,
            * to make the close button last in the tab order

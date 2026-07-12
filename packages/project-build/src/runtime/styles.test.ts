@@ -1557,7 +1557,7 @@ describe("runtime style operations", () => {
 });
 
 describe("serializeDesignTokens", () => {
-  test("filters, sorts, includes styles, and counts usage when requested", () => {
+  test("filters, sorts, summarizes styles, and counts usage when requested", () => {
     expect(
       serializeDesignTokens({
         styleSources: sources([
@@ -1589,7 +1589,7 @@ describe("serializeDesignTokens", () => {
         {
           id: "primary",
           name: "Primary",
-          styles: { color: { type: "keyword", value: "red" } },
+          declarationCount: 1,
           usageCount: 2,
         },
       ],
@@ -1610,6 +1610,45 @@ describe("serializeDesignTokens", () => {
         sort: "usage",
       }).tokens.map((item) => item.id)
     ).toEqual(["secondary", "primary"]);
+  });
+
+  test("includes full token styles only when requested", () => {
+    expect(
+      serializeDesignTokens({
+        styleSources: sources([token("primary", "Primary")]),
+        styles: createStyleDeclMap([
+          createStyleDecl("primary", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        ]),
+        styleSourceSelections: [],
+        includeStyles: true,
+      })
+    ).toEqual({
+      tokens: [
+        {
+          id: "primary",
+          name: "Primary",
+          declarationCount: 1,
+          styles: { color: { type: "keyword", value: "red" } },
+          usageCount: 0,
+        },
+      ],
+    });
+  });
+
+  test("includes usage by default and allows omitting it", () => {
+    const input = {
+      styleSources: sources([token("primary", "Primary")]),
+      styles: [],
+      styleSourceSelections: [{ instanceId: "box-1", values: ["primary"] }],
+    };
+    expect(serializeDesignTokens(input).tokens[0]?.usageCount).toBe(1);
+    expect(
+      serializeDesignTokens({ ...input, withUsage: false }).tokens[0]
+        ?.usageCount
+    ).toBeUndefined();
   });
 });
 

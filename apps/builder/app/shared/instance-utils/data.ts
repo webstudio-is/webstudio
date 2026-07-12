@@ -18,7 +18,9 @@ import {
   $breakpoints,
   $dataSources,
   $instances,
+  $marketplaceProduct,
   $pages,
+  $projectSettings,
   $project,
   $props,
   $resources,
@@ -124,11 +126,12 @@ export const executeRuntimeMutationAsync = async <
   return commitRuntimeMutation(result);
 };
 
-export const getWebstudioData = (): WebstudioData => {
+export const getWebstudioData = () => {
   const pages = $pages.get();
   if (pages === undefined) {
     throw Error(`Cannot get webstudio data with empty pages`);
   }
+  const projectSettings = $projectSettings.get() ?? { meta: {}, compiler: {} };
   return {
     pages,
     instances: $instances.get(),
@@ -140,5 +143,7 @@ export const getWebstudioData = (): WebstudioData => {
     styleSources: $styleSources.get(),
     styles: $styles.get(),
     assets: $assets.get(),
+    marketplaceProduct: $marketplaceProduct.get(),
+    projectSettings,
   };
 };
