@@ -30,6 +30,13 @@ export const serializeJsonCode = (value: object) => JSON.stringify(value);
 export const validateJsonCode = (value: unknown) =>
   validateJsonLdWithSchemaOrg(value);
 
+const getJsonCodeError = (
+  result: Extract<ReturnType<typeof validateJsonCode>, { success: false }>
+) => {
+  const [error] = result.diagnostics;
+  return `${error.path} ${error.message}`;
+};
+
 const getJsonCodeWarnings = (
   result: Extract<ReturnType<typeof validateJsonCode>, { success: true }>
 ) => {
@@ -47,23 +54,16 @@ export const getFixedJsonCodeValue = (value: unknown, label: string) => {
   if (result.success) {
     return { success: true as const, value: serializeJsonCode(result.value) };
   }
-  const error = result.diagnostics.find(({ severity }) => severity === "error");
   return {
     success: false as const,
-    message:
-      error === undefined
-        ? `${label} expects a JSON object or array`
-        : `${label}: ${error.path} ${error.message}`,
+    message: `${label}: ${getJsonCodeError(result)}`,
   };
 };
 
 export const validateJsonCodeValue = (value: unknown, label: string) => {
   const result = validateJsonCode(value);
-  const error = result.diagnostics.find(({ severity }) => severity === "error");
-  if (result.success === false || error !== undefined) {
-    return error === undefined
-      ? `${label} expects a JSON object or array`
-      : `${label}: ${error.path} ${error.message}`;
+  if (result.success === false) {
+    return `${label}: ${getJsonCodeError(result)}`;
   }
   const warnings = getJsonCodeWarnings(result).map(
     (message) => `${label}: ${message}`
@@ -75,17 +75,11 @@ export const processJsonCodeValue = (
   value: string
 ): ReturnType<CodeControlBehavior["processValue"]> => {
   const result = validateJsonCode(value);
-  const structuralError = result.diagnostics.find(
-    ({ severity }) => severity === "error"
-  );
-  if (result.success === false || structuralError !== undefined) {
+  if (result.success === false) {
     return {
       success: false,
       issue: {
-        message:
-          structuralError === undefined
-            ? "Enter a JSON object or array."
-            : `${structuralError.path} ${structuralError.message}`,
+        message: getJsonCodeError(result),
         value,
       },
     };
