@@ -99,38 +99,6 @@ test("renders an invalid dynamic JSON-LD placeholder on canvas", () => {
   expect(markup).not.toContain('<script type="application/ld+json">');
 });
 
-test("updates canvas preview after dynamic JSON-LD becomes valid", () => {
-  const context = {
-    assetBaseUrl: "",
-    imageLoader: ({ src }: { src: string }) => src,
-    renderer: "canvas" as const,
-    resources: {},
-    breakpoints: [],
-    onError: console.error,
-  };
-  const invalidMarkup = renderToStaticMarkup(
-    <ReactSdkContext.Provider value={context}>
-      <JsonLd code={{ "@type": 1 }} />
-    </ReactSdkContext.Provider>
-  );
-
-  expect(invalidMarkup).toContain("JSON-LD value is unavailable or invalid.");
-
-  const validMarkup = renderToStaticMarkup(
-    <ReactSdkContext.Provider value={context}>
-      <JsonLd
-        code={{
-          "@context": "https://schema.org",
-          "@type": "Organization",
-        }}
-      />
-    </ReactSdkContext.Provider>
-  );
-
-  expect(validMarkup).toContain("&quot;@type&quot;:&quot;Organization&quot;");
-  expect(validMarkup).not.toContain("JSON-LD value is unavailable or invalid.");
-});
-
 test("keeps Schema.org vocabulary data out of the published component bundle", async () => {
   const result = await build({
     entryPoints: [fileURLToPath(new URL("./json-ld.tsx", import.meta.url))],

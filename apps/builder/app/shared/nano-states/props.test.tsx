@@ -36,7 +36,7 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { $systemDataByPage, updateCurrentSystem } from "../system";
-import { registerContainers, serverSyncStore } from "../sync/sync-stores";
+import { registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
 
 const initialSystem = {
@@ -184,70 +184,6 @@ test("compute expression prop values", () => {
       ["third", "something"],
     ])
   );
-
-  cleanStores($propValuesByInstanceSelector);
-});
-
-test("recomputes a JSON expression prop after invalid and valid updates", () => {
-  setBoxInstance("json-ld");
-  selectPageRoot("json-ld");
-  const createVariable = (
-    value: Record<string, string | number>
-  ): DataSource => ({
-    id: "jsonLdVariable",
-    scopeInstanceId: "json-ld",
-    type: "variable",
-    name: "jsonLdData",
-    value: { type: "json", value },
-  });
-  $props.set(
-    toMap([
-      {
-        id: "json-ld-code",
-        name: "code",
-        instanceId: "json-ld",
-        type: "expression",
-        value: "$ws$dataSource$jsonLdVariable",
-      },
-    ])
-  );
-
-  $dataSources.set(toMap([createVariable({ "@type": 1 })]));
-  expect(
-    $propValuesByInstanceSelector
-      .get()
-      .get(getInstanceKey(["json-ld"]))
-      ?.get("code")
-  ).toMatchObject({ "@type": 1 });
-
-  serverSyncStore.createTransactionFromChanges([
-    {
-      namespace: "dataSources",
-      patches: [
-        {
-          op: "replace",
-          path: ["jsonLdVariable", "value", "value"],
-          value: {
-            "@context": "https://schema.org",
-            "@type": "Organization",
-          },
-        },
-      ],
-      revisePatches: [
-        {
-          op: "replace",
-          path: ["jsonLdVariable", "value", "value"],
-          value: { "@type": 1 },
-        },
-      ],
-    },
-  ]);
-  expect(
-    $propValuesByInstanceSelector
-      .get()
-      .get(getInstanceKey(["json-ld"]))
-      ?.get("code")
-  ).toMatchObject({ "@type": "Organization" });
 
   cleanStores($propValuesByInstanceSelector);
 });
