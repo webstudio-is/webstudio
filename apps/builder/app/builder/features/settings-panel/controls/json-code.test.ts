@@ -3,6 +3,7 @@ import {
   formatJsonCode,
   getFixedJsonCodeValue,
   parseJsonCode,
+  processJsonCodeValue,
   serializeJsonCode,
   validateJsonCode,
   validateJsonCodeValue,
@@ -57,10 +58,41 @@ test.each(["", "invalid", '"text"', "1", "null"])(
   }
 );
 
-test("accepts object, array, and JSON string binding values", () => {
-  expect(validateJsonCodeValue({ a: 1 }, "Code")).toBeUndefined();
-  expect(validateJsonCodeValue([{ a: 1 }], "Code")).toBeUndefined();
-  expect(validateJsonCodeValue('{"a":1}', "Code")).toBeUndefined();
+test("warns when JSON-LD binding values have no top-level context", () => {
+  expect(validateJsonCodeValue({ a: 1 }, "Code")).toBe(
+    "Code: $ JSON-LD has no top-level @context."
+  );
+  expect(validateJsonCodeValue([{ a: 1 }], "Code")).toBe(
+    "Code: $ JSON-LD has no top-level @context."
+  );
+  expect(validateJsonCodeValue('{"a":1}', "Code")).toBe(
+    "Code: $ JSON-LD has no top-level @context."
+  );
+  expect(
+    validateJsonCodeValue(
+      { "@context": "https://schema.org", "@type": "Organization" },
+      "Code"
+    )
+  ).toBeUndefined();
+});
+
+test("surfaces Schema.org warnings for JSON-LD binding values", () => {
+  expect(
+    validateJsonCodeValue(
+      { "@context": "https://schema.org", "@type": "MadeUpType" },
+      "Code"
+    )
+  ).toContain('"MadeUpType" is not a known Schema.org type.');
+});
+
+test("warns about missing context in fixed JSON-LD code", () => {
+  expect(processJsonCodeValue('{"a":1}')).toMatchObject({
+    success: true,
+    issue: {
+      severity: "warning",
+      message: "$ JSON-LD has no top-level @context.",
+    },
+  });
 });
 
 test("rejects non-JSON binding values", () => {

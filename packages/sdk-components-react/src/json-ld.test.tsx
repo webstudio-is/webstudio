@@ -54,7 +54,7 @@ test("omits structurally invalid JSON-LD from published output", () => {
   ).toBe("");
 });
 
-test("renders a real script element on canvas", () => {
+test("renders visible JSON-LD code on canvas", () => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider
       value={{
@@ -66,14 +66,20 @@ test("renders a real script element on canvas", () => {
         onError: console.error,
       }}
     >
-      <JsonLd code='{"a":1}' />
+      <JsonLd code={{ "@context": "https://schema.org", name: "Acme" }} />
     </ReactSdkContext.Provider>
   );
 
-  expect(markup).toBe('<script type="application/ld+json">{"a":1}</script>');
+  expect(markup).toContain("&lt;script");
+  expect(markup).toContain("application/ld+json");
+  expect(markup).toContain(
+    "{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;name&quot;:&quot;Acme&quot;}"
+  );
+  expect(markup).toContain("&lt;/script&gt;");
+  expect(markup).not.toContain('<script type="application/ld+json">');
 });
 
-test("keeps invalid canvas drafts inside the JSON-LD script element", () => {
+test("renders an invalid dynamic JSON-LD placeholder on canvas", () => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider
       value={{
@@ -85,13 +91,12 @@ test("keeps invalid canvas drafts inside the JSON-LD script element", () => {
         onError: console.error,
       }}
     >
-      <JsonLd code={'</script><script data-unsafe="true">unsafe()</script>'} />
+      <JsonLd code={undefined} />
     </ReactSdkContext.Provider>
   );
 
-  expect(markup).toContain("\\u003c/script>");
-  expect(markup).not.toContain("<script data-unsafe");
-  expect(markup.match(/<script/g)).toHaveLength(1);
+  expect(markup).toContain("JSON-LD value is unavailable or invalid.");
+  expect(markup).not.toContain('<script type="application/ld+json">');
 });
 
 test("keeps Schema.org vocabulary data out of the published component bundle", async () => {
