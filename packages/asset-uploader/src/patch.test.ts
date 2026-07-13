@@ -152,6 +152,36 @@ describe("patchAssets (msw)", () => {
     ]);
   });
 
+  test("does not update metadata when adding an existing asset", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+    let updateCount = 0;
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("Asset", () => {
+        updateCount += 1;
+        return json({
+          filename: localAssetRow.filename,
+          description: localAssetRow.description,
+        });
+      })
+    );
+
+    const [asset] = await loadAssetsByProjectWithClient(
+      projectId,
+      testContext.postgrest.client
+    );
+    await patchAssets(
+      { projectId },
+      [{ op: "add", path: [asset.id], value: asset }],
+      createContext()
+    );
+
+    expect(updateCount).toBe(0);
+  });
+
   test("throws when an asset metadata update matches no database row", async () => {
     const projectId = uid();
     const localAssetRow = { ...assetRow, projectId };
