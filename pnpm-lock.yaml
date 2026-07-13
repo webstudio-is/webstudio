@@ -1165,9 +1165,6 @@ importers:
       '@webstudio-is/protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@webstudio-is/sdk-components-registry':
-        specifier: workspace:*
-        version: link:../sdk-components-registry
       '@webstudio-is/sync-client':
         specifier: workspace:*
         version: link:../sync-client
@@ -1319,6 +1316,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../sdk-components-react-router
+      '@webstudio-is/sdk-components-registry':
+        specifier: workspace:*
+        version: link:../sdk-components-registry
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
