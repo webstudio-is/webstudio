@@ -318,8 +318,20 @@ export const expectGeneratedAppNavigation = async ({
         name: linkText,
         exact: true,
       });
-      const ariaCurrent = await activeLink.getAttribute("aria-current");
-      if (ariaCurrent !== "page") {
+      try {
+        await activeLink.waitFor({ state: "visible" });
+        await page.waitForFunction(
+          ({ linkText }) =>
+            Array.from(document.querySelectorAll("a")).some(
+              (link) =>
+                link.textContent?.trim() === linkText &&
+                link.getAttribute("aria-current") === "page"
+            ),
+          { linkText },
+          { timeout: 10_000 }
+        );
+      } catch {
+        const ariaCurrent = await activeLink.getAttribute("aria-current");
         throw new Error(
           `Expected generated preview link ${JSON.stringify(linkText)} to be active after navigating to ${JSON.stringify(targetPath)}. Received aria-current=${JSON.stringify(ariaCurrent)}.`
         );
