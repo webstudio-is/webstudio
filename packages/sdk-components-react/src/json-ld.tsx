@@ -3,7 +3,8 @@ import {
   escapeJsonLdScriptText,
   validateJsonLd,
 } from "@webstudio-is/sdk/runtime";
-import { forwardRef, type ElementRef, useContext } from "react";
+import { forwardRef, type ElementRef, type Ref, useContext } from "react";
+import { XmlNode } from "./xml-node";
 
 export const defaultTag = "script";
 
@@ -19,6 +20,19 @@ export const JsonLd = forwardRef<ElementRef<"script">, { code?: unknown }>(
   ({ code = "" }, ref) => {
     const { renderer } = useContext(ReactSdkContext);
     const serialized = serializeJsonLd(code);
+
+    if (renderer === "canvas") {
+      return (
+        <XmlNode
+          tag={defaultTag}
+          {...{ type: "application/ld+json" }}
+          ref={ref as Ref<HTMLDivElement>}
+        >
+          {serialized ?? "JSON-LD value is unavailable or invalid."}
+        </XmlNode>
+      );
+    }
+
     const content =
       renderer === undefined
         ? serialized
