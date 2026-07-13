@@ -156,6 +156,30 @@ test("exchange transactions between leader and follower", async () => {
   );
 });
 
+test("recreates transaction values in the receiving realm", () => {
+  const store = createFollowerStore();
+  const object = new ImmerhinSyncObject("my-data", store);
+  const foreignValue = Object.assign(Object.create({}), {
+    "@context": "https://schema.org",
+  });
+
+  object.applyTransaction({
+    id: "transaction-id",
+    object: "my-data",
+    payload: [
+      {
+        namespace: "users",
+        patches: [{ op: "add", path: ["jsonLd"], value: foreignValue }],
+        revisePatches: [{ op: "remove", path: ["jsonLd"] }],
+      },
+    ],
+  });
+
+  const receivedValue = store.containers.get("users")?.get().get("jsonLd");
+  expect(receivedValue).toEqual({ "@context": "https://schema.org" });
+  expect(Object.getPrototypeOf(receivedValue)).toBe(Object.prototype);
+});
+
 test("exchange transactions between followers", async () => {
   const emitter = new NanoEventsSyncEmitter();
   const follower1Store = createFollowerStore();

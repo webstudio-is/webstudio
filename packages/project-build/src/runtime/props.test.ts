@@ -601,6 +601,23 @@ describe("updateProps", () => {
             {
               instanceId: jsonLd.id,
               name: "code",
+              type: "expression",
+              value: "jsonLdData",
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      )
+    ).not.toThrow();
+
+    expect(() =>
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: jsonLd.id,
+              name: "code",
               type: "string",
               value: '{"@context":"https://schema.org"}',
             },
