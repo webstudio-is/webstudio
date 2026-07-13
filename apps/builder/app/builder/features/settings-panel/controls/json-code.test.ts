@@ -82,7 +82,7 @@ test("surfaces Schema.org warnings for JSON-LD binding values", () => {
       { "@context": "https://schema.org", "@type": "MadeUpType" },
       "Code"
     )
-  ).toContain("Unknown Schema.org type");
+  ).toContain('"MadeUpType" is not a known Schema.org type.');
 });
 
 test("warns about missing context in fixed JSON-LD code", () => {

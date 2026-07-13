@@ -51,7 +51,6 @@ import {
   formatValue,
 } from "~/builder/shared/expression-editor";
 import {
-  $dataSourceVariables,
   $permissions,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
@@ -340,7 +339,7 @@ const saveVariable = (
       },
     });
   } else {
-    const result = executeRuntimeMutation({
+    executeRuntimeMutation({
       id: "variables.update",
       input: {
         dataSourceId: variable.id,
@@ -351,11 +350,6 @@ const saveVariable = (
         },
       },
     });
-    if (result !== undefined && $dataSourceVariables.get().has(variable.id)) {
-      const dataSourceVariables = new Map($dataSourceVariables.get());
-      dataSourceVariables.delete(variable.id);
-      $dataSourceVariables.set(dataSourceVariables);
-    }
   }
 };
 
