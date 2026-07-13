@@ -6,10 +6,7 @@ import {
   createProjectSessionMcpCore,
   createMcpStdioTransport,
 } from "@webstudio-is/project-build/mcp";
-import {
-  builderNamespaces,
-  type BuilderNamespace,
-} from "@webstudio-is/project-build/contracts/namespaces";
+import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import { diffPngFiles } from "@webstudio-is/project-build/visual/screenshot-diff";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
@@ -30,6 +27,7 @@ import { executeProjectSessionApiOperation } from "../project-session-api";
 import { createPreviewController } from "../preview-server";
 import {
   captureScreenshotWithBrowserInstall,
+  createScreenshotCaptureSession,
   installTesseractForOcr,
 } from "../screenshot";
 import {
@@ -65,12 +63,14 @@ type StartableProjectSession = {
 type McpPreviewController = Pick<
   ReturnType<typeof createPreviewController>,
   "startAndWait" | "status" | "resolveUrl"
->;
+> &
+  Partial<Pick<ReturnType<typeof createPreviewController>, "stop">>;
 
 type McpPreviewInput = {
   host?: string;
   port?: number;
   source?: PreviewSource;
+  imageDomains?: string[];
 };
 
 type CaptureScreenshotInput = Parameters<
@@ -84,6 +84,7 @@ type McpScreenshotInput = {
   output?: string;
   host?: string;
   port?: number;
+  imageDomains?: string[];
   viewport: { width: number; height: number };
   fullPage?: boolean;
   includeImageMetrics?: boolean;
@@ -95,6 +96,9 @@ type McpScreenshotInput = {
   waitForTimeout?: number;
   timeout?: number;
   source?: PreviewSource;
+  format?: "png" | "jpeg" | "webp";
+  quality?: number;
+  scale?: number;
 };
 
 type McpToolProgress = {
@@ -116,11 +120,11 @@ export const prepareMcpProjectSession = async (
   session: StartableProjectSession
 ) => {
   await session.initialize();
-  await session.markStale(builderNamespaces);
 };
 
 const mcpStatusPrefix = "[webstudio mcp]";
 const mcpCheckpointFile = ".webstudio/mcp-checkpoint.json";
+const renderedAuditArtifactDirectory = ".webstudio/audits";
 
 export const formatMcpStatusLine = (message: string) =>
   `${mcpStatusPrefix} ${message}`;
@@ -137,7 +141,7 @@ export const createMcpStatusReporter = (
   sessionReady() {
     write(
       formatMcpStatusLine(
-        "project session initialized; cached namespaces marked stale"
+        "project session initialized; existing local snapshot preserved"
       )
     );
   },
@@ -311,6 +315,7 @@ const prepareDefaultPreviewProject = (
     generate: true,
     source,
     syncIfMissing: true,
+    silent: true,
     prepareSessionDataFile,
   });
 
@@ -331,6 +336,7 @@ const createMcpPreviewHandlers = ({
   preparePreview = prepareDefaultPreviewProject,
   prepareSessionDataFile,
   captureScreenshot = captureScreenshotWithBrowserInstall,
+  createCaptureSession,
 }: {
   preview: McpPreviewController;
   isStale?: () => boolean;
@@ -338,91 +344,191 @@ const createMcpPreviewHandlers = ({
   preparePreview?: typeof prepareDefaultPreviewProject;
   prepareSessionDataFile?: () => Promise<void>;
   captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
-}) => ({
-  async startPreview(input: McpPreviewInput, progress?: McpToolProgress) {
-    validatePreviewServerOptions({
-      host: input.host ?? "127.0.0.1",
-      port: input.port ?? 5173,
-    });
-    progress?.report("tool preview.start preparing generated preview project");
-    const previewProject = await preparePreview(
-      input.source,
-      prepareSessionDataFile
-    );
-    progress?.report("tool preview.start starting production preview server");
-    const result = await preview.startAndWait({
-      ...input,
-      cwd: previewProject.cwd,
-      restart: true,
-    });
-    markFresh();
-    return result;
-  },
-  async captureScreenshot(
+  createCaptureSession?: typeof createScreenshotCaptureSession;
+}) => {
+  let captureSession:
+    | ReturnType<typeof createScreenshotCaptureSession>
+    | undefined;
+  const closeCaptureSession = async () => {
+    await captureSession?.close();
+    captureSession = undefined;
+  };
+  const rejectBuilderUrl = (value: string) => {
+    let url: URL;
+    try {
+      url = new URL(value);
+    } catch {
+      return;
+    }
+    const isProjectHost =
+      url.hostname.startsWith("p-") &&
+      (url.hostname.endsWith(".wstd.dev") ||
+        url.hostname.endsWith(".apps.webstudio.is"));
+    if (
+      isProjectHost &&
+      url.searchParams.has("authToken") &&
+      url.searchParams.has("mode")
+    ) {
+      throw Object.assign(
+        new Error(
+          "This is an authenticated Builder/share URL, not a generated-site preview. Use the share URL with webstudio init --link, then capture a generated route with screenshot { path }, or pass an intentional standalone site URL without Builder authentication parameters."
+        ),
+        { code: "BUILDER_URL_IS_NOT_SITE_PREVIEW" }
+      );
+    }
+  };
+  const resolveScreenshotUrl = async (
     input: McpScreenshotInput,
     progress?: McpToolProgress
-  ) {
-    const captureResolvedScreenshot = async (url: string) => {
+  ) => {
+    if (input.url !== undefined) {
+      rejectBuilderUrl(input.url);
+      return input.url;
+    }
+    if (input.path === undefined) {
+      throw new Error("MCP screenshot requires url or path.");
+    }
+    if (input.baseUrl !== undefined) {
+      rejectBuilderUrl(input.baseUrl);
+      return new URL(input.path, input.baseUrl).toString();
+    }
+    const hasExplicitPreviewTarget =
+      input.host !== undefined || input.port !== undefined;
+    if (
+      preview.status().running === false ||
+      isStale() ||
+      hasExplicitPreviewTarget
+    ) {
+      await closeCaptureSession();
+      validatePreviewServerOptions({
+        host: input.host ?? "127.0.0.1",
+        port: input.port ?? 5173,
+        imageDomains: input.imageDomains,
+      });
+      progress?.report("tool screenshot preparing generated preview project");
+      const previewProject = await preparePreview(
+        input.source,
+        prepareSessionDataFile
+      );
+      progress?.report("tool screenshot starting production preview server");
+      await preview.startAndWait({
+        cwd: previewProject.cwd,
+        buildCacheKey: previewProject.buildCacheKey,
+        host: input.host,
+        port: input.port,
+        imageDomains: input.imageDomains,
+        restart: true,
+      });
+      markFresh();
+    }
+    return preview.resolveUrl(input.path);
+  };
+  const getCaptureOptions = (input: McpScreenshotInput, url: string) => ({
+    url,
+    output: input.output,
+    width: input.viewport.width,
+    height: input.viewport.height,
+    fullPage: input.fullPage,
+    includeImageMetrics: input.includeImageMetrics,
+    includeResourceMetrics: input.includeResourceMetrics,
+    browser: input.browser ?? "auto",
+    browserPath: input.browserPath,
+    waitUntil: input.waitUntil,
+    waitForSelector: input.waitForSelector,
+    waitForTimeout: input.waitForTimeout,
+    timeout: input.timeout,
+    format: input.format,
+    quality: input.quality,
+    scale: input.scale,
+  });
+  return {
+    async startPreview(input: McpPreviewInput, progress?: McpToolProgress) {
+      await closeCaptureSession();
+      validatePreviewServerOptions({
+        host: input.host ?? "127.0.0.1",
+        port: input.port ?? 5173,
+        imageDomains: input.imageDomains,
+      });
+      progress?.report(
+        "tool preview.start preparing generated preview project"
+      );
+      const previewProject = await preparePreview(
+        input.source,
+        prepareSessionDataFile
+      );
+      progress?.report("tool preview.start starting production preview server");
+      const result = await preview.startAndWait({
+        ...input,
+        cwd: previewProject.cwd,
+        buildCacheKey: previewProject.buildCacheKey,
+        restart: true,
+      });
+      markFresh();
+      return result;
+    },
+    async captureScreenshot(
+      input: McpScreenshotInput,
+      progress?: McpToolProgress
+    ) {
+      const url = await resolveScreenshotUrl(input, progress);
       progress?.report(`tool screenshot capturing ${url}`);
+      const captureOptions = getCaptureOptions(input, url);
+      if (input.source === "session" && createCaptureSession !== undefined) {
+        captureSession ??= createCaptureSession();
+        return await captureSession.capture(captureOptions);
+      }
       return await captureScreenshot({
-        url,
-        output: input.output,
-        width: input.viewport.width,
-        height: input.viewport.height,
-        fullPage: input.fullPage,
-        includeImageMetrics: input.includeImageMetrics,
-        includeResourceMetrics: input.includeResourceMetrics,
-        browser: input.browser ?? "auto",
-        browserPath: input.browserPath,
-        waitUntil: input.waitUntil,
-        waitForSelector: input.waitForSelector,
-        waitForTimeout: input.waitForTimeout,
-        timeout: input.timeout,
+        ...captureOptions,
         isJson: false,
         isMcp: true,
         isInteractive: false,
         confirmInstall: async () => false,
       });
-    };
-    let url = input.url;
-    if (url === undefined) {
-      if (input.path === undefined) {
-        throw new Error("MCP screenshot requires url or path.");
+    },
+    async capturePageScreenshots(
+      inputs: readonly McpScreenshotInput[],
+      progress?: McpToolProgress
+    ) {
+      const firstInput = inputs[0];
+      if (firstInput === undefined) {
+        return [];
       }
-      if (input.baseUrl !== undefined) {
-        url = new URL(input.path, input.baseUrl).toString();
-        return await captureResolvedScreenshot(url);
-      }
-      const hasExplicitPreviewTarget =
-        input.host !== undefined || input.port !== undefined;
       if (
-        preview.status().running === false ||
-        isStale() ||
-        hasExplicitPreviewTarget
+        createCaptureSession === undefined ||
+        firstInput.source !== "session" ||
+        inputs.some((input) => input.source !== firstInput.source)
       ) {
-        validatePreviewServerOptions({
-          host: input.host ?? "127.0.0.1",
-          port: input.port ?? 5173,
-        });
-        progress?.report("tool screenshot preparing generated preview project");
-        const previewProject = await preparePreview(
-          input.source,
-          prepareSessionDataFile
+        throw new Error(
+          "Resized screenshot capture requires session preview pages."
         );
-        progress?.report("tool screenshot starting production preview server");
-        await preview.startAndWait({
-          cwd: previewProject.cwd,
-          host: input.host,
-          port: input.port,
-          restart: true,
-        });
-        markFresh();
       }
-      url = preview.resolveUrl(input.path);
-    }
-    return await captureResolvedScreenshot(url);
-  },
-});
+      const urls: string[] = [];
+      for (const input of inputs) {
+        urls.push(await resolveScreenshotUrl(input, progress));
+      }
+      progress?.report(
+        `tool screenshot capturing ${new Set(urls).size} pages across ${inputs.length} viewport widths`
+      );
+      captureSession ??= createCaptureSession();
+      return await captureSession.capturePage(
+        inputs.map((input, index) => {
+          const url = urls[index];
+          if (url === undefined) {
+            throw new Error("Screenshot URL resolution was incomplete.");
+          }
+          return getCaptureOptions(input, url);
+        })
+      );
+    },
+    async stopPreview() {
+      await closeCaptureSession();
+      if (preview.stop === undefined) {
+        throw new Error("Preview controller cannot stop its owned preview.");
+      }
+      return await preview.stop();
+    },
+  };
+};
 
 export const mcpOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -559,12 +665,13 @@ const mcpSingleOpCallOptions = (yargs: CommonYargsArgv) =>
       default: false,
     });
 
-type McpSingleOpCallOptions = StrictYargsOptionsToInterface<
-  typeof mcpSingleOpCallOptions
-> & {
+type McpSingleOpCallOptions = {
   tool?: string;
   input?: string;
-  inputFile?: string;
+  inputFile?: string | undefined;
+  dryRun?: boolean;
+  refresh?: boolean;
+  json?: boolean;
 };
 
 const mcpRunOptions = (yargs: CommonYargsArgv) =>
@@ -740,6 +847,7 @@ const getMcpRunError = (error: unknown) => {
         ? "UNAUTHORIZED"
         : (error.code ?? "MCP_TOOL_FAILED"),
       message: getCliErrorMessage(error),
+      ...(Array.isArray(error.issues) ? { issues: error.issues } : {}),
     };
   }
   const code = isMissingApiAccessError(error)
@@ -747,6 +855,31 @@ const getMcpRunError = (error: unknown) => {
     : (getStableErrorCode(error) ?? "MCP_TOOL_FAILED");
   const message = getCliErrorMessage(error);
   return { code, message };
+};
+
+const validateSingleOpCallInput = (tool: string, input: unknown) => {
+  if (tool !== "audit" || isRecord(input) === false) {
+    return;
+  }
+  const issues: Array<{ path: string[]; message: string }> = [];
+  if (input.pageId !== undefined && input.pagePath !== undefined) {
+    issues.push({
+      path: ["pagePath"],
+      message: "pageId and pagePath are mutually exclusive.",
+    });
+  }
+  if (input.rendered === true && input.cursor !== undefined) {
+    issues.push({
+      path: ["cursor"],
+      message: "cursor cannot be combined with rendered audit.",
+    });
+  }
+  if (issues.length > 0) {
+    throw Object.assign(new Error("Audit input is invalid."), {
+      code: "INVALID_INPUT",
+      issues,
+    });
+  }
 };
 
 const createMcpSingleOpCallErrorPayload = ({
@@ -815,6 +948,23 @@ const reportMcpRunPreflightFailure = ({
   printJson(payload);
 };
 
+const isMcpToolCallFailure = (result: {
+  isError?: boolean;
+  structuredContent: { ok?: boolean };
+}) => result.isError === true || result.structuredContent.ok === false;
+
+const getMcpToolCallError = (result: {
+  isError?: boolean;
+  structuredContent: { ok?: boolean; error?: unknown };
+}) => {
+  if (isMcpToolCallFailure(result) === false) {
+    return;
+  }
+  return isRecord(result.structuredContent.error)
+    ? result.structuredContent.error
+    : { code: "MCP_TOOL_FAILED", message: "MCP tool call failed." };
+};
+
 const assertSingleOpCallToolSupported = (tool: string) => {
   if (tool === "preview.start") {
     throw Object.assign(
@@ -856,6 +1006,9 @@ export const __testing__ = {
   getResultCheckpoint,
   getMcpOperationInput,
   parseMcpSingleOpCallInput,
+  validateSingleOpCallInput,
+  isMcpToolCallFailure,
+  getMcpToolCallError,
   applyMcpRunOptions,
   parseMcpRunCalls,
   parseMcpRunInput,
@@ -888,6 +1041,7 @@ const createCliMcpHost = async () => {
   };
   const previewHandlers = createMcpPreviewHandlers({
     preview,
+    createCaptureSession: createScreenshotCaptureSession,
     isStale: () => isPreviewStale,
     markFresh: () => {
       isPreviewStale = false;
@@ -899,6 +1053,20 @@ const createCliMcpHost = async () => {
         { origin: connection.origin }
       );
     },
+  });
+  const toProjectSessionScreenshotResult = (
+    result: Awaited<ReturnType<typeof previewHandlers.captureScreenshot>>
+  ) => ({
+    output: result.output,
+    browserPath: result.browser.path,
+    browser: result.browser.browser,
+    viewport: result.viewport,
+    fullPage: result.fullPage,
+    elapsedMs: result.elapsedMs,
+    warnings: result.warnings,
+    navigation: result.navigation,
+    layout: result.layout,
+    timings: result.timings,
   });
   const host: CliMcpHost = {
     operations: publicApiOperations,
@@ -951,27 +1119,34 @@ const createCliMcpHost = async () => {
     async getPreviewStatus() {
       return preview.status();
     },
-    async stopPreview() {
-      return preview.stop();
-    },
+    stopPreview: previewHandlers.stopPreview,
     async captureScreenshot(input) {
       const result = await previewHandlers.captureScreenshot(input);
-      return {
-        output: result.output,
-        browserPath: result.browser.path,
-        browser: result.browser.browser,
-        viewport: result.viewport,
-        fullPage: result.fullPage,
-        elapsedMs: result.elapsedMs,
-        warnings: result.warnings,
-        layout: result.layout,
-      };
+      return toProjectSessionScreenshotResult(result);
+    },
+    async capturePageScreenshots(inputs) {
+      const results = await previewHandlers.capturePageScreenshots(inputs);
+      return results.map(toProjectSessionScreenshotResult);
     },
     async diffScreenshots(input) {
       return diffPngFiles(input);
     },
     async installOcr() {
       return installTesseractForOcr();
+    },
+    async storeRenderedAuditArtifacts(manifest) {
+      const directory = path.join(cwd(), renderedAuditArtifactDirectory);
+      await mkdir(directory, { recursive: true });
+      const artifactPath = path.join(
+        directory,
+        `rendered-${manifest.projectId}-${manifest.projectVersion}.json`
+      );
+      await writeFile(
+        artifactPath,
+        JSON.stringify(manifest, undefined, 2),
+        "utf8"
+      );
+      return artifactPath;
     },
     guidance: {
       visualVerificationRule,
@@ -1005,6 +1180,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
   try {
     assertSingleOpCallToolSupported(options.tool);
     const input = await parseMcpSingleOpCallInput(options);
+    validateSingleOpCallInput(options.tool, input);
     const { host } = await createCliMcpHost();
     const core = createProjectSessionMcpCore(host);
     const persistedCheckpoint =
@@ -1012,11 +1188,23 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
         ? await readPersistedMcpCheckpoint()
         : undefined;
     await assertPersistedMcpCheckpointAcknowledged(options.tool);
+    if (options.refresh === true && options.tool !== "refresh") {
+      await core.callTool({ name: "refresh" });
+    }
     const result = await core.callTool({
       name: options.tool,
       input,
       dryRun: options.dryRun,
     });
+    if (isMcpToolCallFailure(result)) {
+      stderr.write(
+        `${formatMcpStatusLine(
+          `single-op-call ${options.tool} failed in ${Date.now() - startedAt}ms`
+        )}\n`
+      );
+      printJson(result.structuredContent);
+      throw new HandledCliError();
+    }
     if (
       options.tool === "checkpoint.ack" &&
       persistedCheckpoint?.nextCommand !== undefined &&
@@ -1039,6 +1227,9 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     );
     printJson(result.structuredContent);
   } catch (error) {
+    if (isHandledCliError(error)) {
+      throw error;
+    }
     const payload = createMcpSingleOpCallErrorPayload({
       error,
       elapsedMs: Date.now() - startedAt,
@@ -1103,6 +1294,10 @@ export const mcpRun = async (options: McpRunOptions) => {
         input: call.input,
         dryRun: call.dryRun,
       });
+      const toolError = getMcpToolCallError(result);
+      if (toolError !== undefined) {
+        throw toolError;
+      }
       const checkpoint = getResultCheckpoint(
         call.tool,
         result.structuredContent

@@ -15,6 +15,7 @@ import {
 import {
   blockComponent,
   collectionComponent,
+  collectionDescription,
   descendantComponent,
   elementComponent,
 } from "./core-metas";
@@ -48,6 +49,7 @@ const collectionItemKey = new Parameter("collectionItemKey");
 const collectionMeta: TemplateMeta = {
   category: "data",
   order: 2,
+  description: collectionDescription,
   template: (
     <ws.collection
       data={["Collection Item 1", "Collection Item 2", "Collection Item 3"]}

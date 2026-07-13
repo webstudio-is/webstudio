@@ -1,3 +1,6 @@
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test, vi } from "vitest";
 import {
   createPreviewController,
@@ -5,6 +8,7 @@ import {
   getPreviewCommand,
   getPreviewStartArgs,
   getPreviewUrl,
+  materializePreviewAssets,
   runPreviewBuild,
   startPreviewServer,
   waitForPreviewReady,
@@ -16,7 +20,11 @@ const createDependencies = (
 ): PreviewServerDependencies => ({
   spawn: vi.fn(),
   fetch: vi.fn(async () => new Response("", { status: 200 })),
+  cp: vi.fn(async () => undefined),
+  mkdir: vi.fn(async () => undefined),
   readdir: vi.fn(async () => []),
+  readFile: vi.fn(async () => "") as never,
+  writeFile: vi.fn(async () => undefined) as never,
   sleep: vi.fn(async () => undefined),
   platform: "linux",
   ...overrides,
@@ -91,6 +99,37 @@ test("runs generated project production build", async () => {
   });
 });
 
+test("materializes downloaded assets into the production client tree", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "webstudio-preview-assets-"));
+  try {
+    await mkdir(join(directory, "public", "assets"), { recursive: true });
+    await writeFile(
+      join(directory, "public", "assets", "image.png"),
+      "downloaded"
+    );
+
+    await materializePreviewAssets(directory);
+
+    await expect(
+      readFile(
+        join(directory, "build", "client", "assets", "image.png"),
+        "utf8"
+      )
+    ).resolves.toBe("downloaded");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("does not fail when the generated preview has no downloaded assets", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "webstudio-preview-assets-"));
+  try {
+    await expect(materializePreviewAssets(directory)).resolves.toBeUndefined();
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("runs generated project production build with the windows npm executable", async () => {
   const process = createPreviewProcess();
   const spawn = vi.fn(() => process);
@@ -130,6 +169,31 @@ test("starts generated project production server with inherited stdio", () => {
       NODE_ENV: "production",
     }),
   });
+});
+
+test("passes explicit external image domains to the preview optimizer", () => {
+  const process = {} as ReturnType<typeof startPreviewServer>["process"];
+  const spawn = vi.fn(() => process);
+
+  startPreviewServer(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "/tmp/preview",
+      imageDomains: ["storage.example.com", "images.example.org"],
+    },
+    createDependencies({ spawn: spawn as never })
+  );
+
+  expect(spawn).toHaveBeenCalledWith(
+    "npm",
+    ["run", "start"],
+    expect.objectContaining({
+      env: expect.objectContaining({
+        DOMAINS: "storage.example.com,images.example.org",
+      }),
+    })
+  );
 });
 
 test("starts generated project production server with the windows npm executable", () => {
@@ -197,6 +261,37 @@ test("preview controller builds once and reuses a running server", async () => {
   });
 });
 
+test("preview controller reuses a matching persisted production build", async () => {
+  const process = createPreviewProcess();
+  const spawn = vi.fn(() => process);
+  const readFile = vi.fn(async () => "cache-key");
+  const writeFile = vi.fn(async () => undefined);
+  const controller = createPreviewController(
+    { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
+    createDependencies({
+      spawn: spawn as never,
+      readFile: readFile as never,
+      writeFile: writeFile as never,
+    })
+  );
+
+  await expect(
+    controller.start({ buildCacheKey: "cache-key" })
+  ).resolves.toMatchObject({ running: true });
+
+  expect(readFile).toHaveBeenCalledWith(
+    "/tmp/preview/.webstudio-preview-build",
+    "utf8"
+  );
+  expect(spawn).toHaveBeenCalledOnce();
+  expect(spawn).toHaveBeenCalledWith(
+    "npm",
+    ["run", "start"],
+    expect.any(Object)
+  );
+  expect(writeFile).not.toHaveBeenCalled();
+});
+
 test("preview controller rejects incompatible start options while running", async () => {
   const process = createPreviewProcess();
   const buildProcess = createPreviewProcess();
@@ -218,6 +313,35 @@ test("preview controller rejects incompatible start options while running", asyn
   );
   await expect(controller.start({ cwd: "/tmp/other-preview" })).rejects.toThrow(
     "Preview server is already running at http://127.0.0.1:5173/"
+  );
+  await expect(
+    controller.start({ imageDomains: ["images.example.com"] })
+  ).rejects.toThrow(
+    "Preview server is already running at http://127.0.0.1:5173/"
+  );
+});
+
+test("preview controller passes image domains to the managed server", async () => {
+  const process = createPreviewProcess();
+  const buildProcess = createPreviewProcess();
+  const spawn = vi
+    .fn()
+    .mockReturnValueOnce(buildProcess)
+    .mockReturnValueOnce(process);
+  resolveProcessExit(buildProcess);
+  const controller = createPreviewController(
+    { host: "127.0.0.1", port: 5173 },
+    createDependencies({ spawn: spawn as never })
+  );
+
+  await controller.start({ imageDomains: ["images.example.com"] });
+
+  expect(spawn).toHaveBeenLastCalledWith(
+    "npm",
+    ["run", "start"],
+    expect.objectContaining({
+      env: expect.objectContaining({ DOMAINS: "images.example.com" }),
+    })
   );
 });
 

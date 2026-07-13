@@ -3,9 +3,12 @@ import {
   type BuilderNamespace,
 } from "./contracts/namespaces";
 import {
+  allowedArrayMethods,
+  allowedStringMethods,
   getInputJsonSchemaMetadata,
   getInputJsonSchemaProperties,
   inputJsonSchemaAcceptsType,
+  parseComponentName,
   toInputJsonSchemaObject,
   type InputJsonSchema,
 } from "@webstudio-is/sdk";
@@ -19,7 +22,10 @@ import {
 } from "./project-session";
 import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
-import { augmentAuditWithRenderedChecks } from "./mcp-rendered-audit";
+import {
+  augmentAuditWithRenderedChecks,
+  type RenderedAuditArtifactManifest,
+} from "./mcp-rendered-audit";
 import {
   defaultScreenshotTimeout,
   defaultScreenshotWaitForTimeout,
@@ -41,7 +47,6 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { parseComponentName } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { readProjectBuildDoc } from "./docs";
 import type { ComponentTemplateRegistry } from "./runtime/component-template";
@@ -113,6 +118,7 @@ export type ProjectSessionScreenshotInput = {
   output?: string;
   host?: string;
   port?: number;
+  imageDomains?: string[];
   source?: "local" | "session";
   viewport: {
     width: number;
@@ -127,6 +133,9 @@ export type ProjectSessionScreenshotInput = {
   waitForSelector?: string;
   waitForTimeout?: number;
   timeout?: number;
+  format?: "png" | "jpeg" | "webp";
+  quality?: number;
+  scale?: number;
 };
 
 export type ProjectSessionScreenshotResult = {
@@ -140,7 +149,41 @@ export type ProjectSessionScreenshotResult = {
   fullPage: boolean;
   elapsedMs: number;
   warnings: readonly string[];
+  timings?: {
+    wallMs: number;
+    targetSetupMs: number;
+    navigationMs: number;
+    readinessMs: number;
+    imageInspectionMs: number;
+    resourceInspectionMs: number;
+    screenshotMs: number;
+    artifactWriteMs: number;
+    targetCleanupMs: number;
+  };
+  navigation?: {
+    requestedUrl: string;
+    finalUrl: string;
+    status?: number;
+    statusText?: string;
+    mimeType?: string;
+    redirects: string[];
+    documentReadyState: string;
+    generatedSiteRootPresent: boolean;
+    layoutStable: boolean;
+  };
   layout?: {
+    navigation?: {
+      requestedUrl: string;
+      finalUrl: string;
+      status?: number;
+      statusText?: string;
+      mimeType?: string;
+      redirects: string[];
+      documentReadyState: string;
+      generatedSiteRootPresent: boolean;
+      layoutStable: boolean;
+    };
+    documentType?: string;
     viewportWidth: number;
     viewportHeight: number;
     contentWidth: number;
@@ -148,10 +191,13 @@ export type ProjectSessionScreenshotResult = {
     horizontalOverflow: boolean;
     images?: Array<{
       instanceId?: string;
+      sourcePathname?: string;
       loading: string;
       complete: boolean;
       naturalWidth: number;
       naturalHeight: number;
+      selectedSourceWidth?: number;
+      selectedSourceHeight?: number;
       renderedWidth: number;
       renderedHeight: number;
       top: number;
@@ -176,6 +222,11 @@ type CaptureScreenshot = (
   input: ProjectSessionScreenshotInput,
   progress?: McpToolProgress
 ) => Promise<ProjectSessionScreenshotResult>;
+
+type CapturePageScreenshots = (
+  inputs: readonly ProjectSessionScreenshotInput[],
+  progress?: McpToolProgress
+) => Promise<ProjectSessionScreenshotResult[]>;
 
 export type ProjectSessionScreenshotDiffInput = {
   baselinePath: string;
@@ -206,6 +257,7 @@ export type ProjectSessionPreviewInput = {
   host?: string;
   port?: number;
   source?: "local" | "session";
+  imageDomains?: string[];
 };
 
 export type ProjectSessionPreviewResult = {
@@ -877,6 +929,12 @@ const screenshotInputSchema = {
       description:
         "Port used when screenshot starts or restarts the generated-site preview for a path.",
     },
+    imageDomains: {
+      type: "array",
+      description:
+        "External image hostnames allowed by the generated preview optimizer, for example storage.example.com.",
+      items: { type: "string" },
+    },
   },
   required: ["viewport"],
 } as const satisfies ProjectSessionMcpInputSchema;
@@ -898,6 +956,39 @@ const renderedAuditInputProperty = {
     "Run a rendered responsive pass through this long-lived MCP session. Cannot be combined with cursor pagination.",
 } as const;
 
+const renderedAuditConfirmationInputProperties = {
+  confirmLargeRun: {
+    type: "boolean",
+    description:
+      "Confirm an audit plan above the unconfirmed capture threshold. Requires the unchanged plan's confirmationToken.",
+  },
+  confirmationToken: {
+    type: "string",
+    description:
+      "Short-lived token returned with a large rendered plan. Use with confirmLargeRun: true.",
+  },
+  imageDomains: {
+    type: "array",
+    description:
+      "External image hostnames allowed by the generated preview optimizer during rendered audit.",
+    items: { type: "string" },
+  },
+  routeExamples: {
+    type: "array",
+    description:
+      'Concrete paths for dynamic pages, identified by page id. For example [{"pageId":"post","path":"/blog/hello"}].',
+    items: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        pageId: { type: "string" },
+        path: { type: "string" },
+      },
+      required: ["pageId", "path"],
+    },
+  },
+} as const;
+
 const getMcpOperationInputSchema = (
   operation: PublicMcpOperation,
   options: { includeRenderedAudit: boolean }
@@ -911,6 +1002,7 @@ const getMcpOperationInputSchema = (
     properties: {
       ...schema.properties,
       rendered: renderedAuditInputProperty,
+      ...renderedAuditConfirmationInputProperties,
     },
   } satisfies InputJsonSchema;
 };
@@ -1032,6 +1124,12 @@ const previewInputSchema = {
       default: "local",
       description:
         "Project data source for generated preview: local uses .webstudio/data.json; session materializes the current ProjectSession snapshot first, which is the right choice after MCP mutations.",
+    },
+    imageDomains: {
+      type: "array",
+      description:
+        "External image hostnames allowed by the generated preview optimizer, for example storage.example.com.",
+      items: { type: "string" },
     },
   },
 } as const satisfies ProjectSessionMcpInputSchema;
@@ -1325,7 +1423,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
         searchParams: [
           { name: "tag", value: "filters.tag" },
           { name: "source", value: { type: "literal", value: "website" } },
-          { name: "page", value: "String(filters.page ?? 1)" },
+          { name: "page", value: "(filters.page ?? 1).toString()" },
         ],
         headers: [{ name: "Authorization", value: '"Bearer " + auth.token' }],
       },
@@ -2023,15 +2121,26 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
   }),
 ];
 
-type ProjectSessionMcpStructuredContent = {
-  ok: true;
-  data: unknown;
-  meta: {
-    session?:
-      | ReturnType<typeof serializeProjectSessionMeta>
-      | ReturnType<typeof serializeProjectSessionDebug>;
-  };
-};
+type ProjectSessionMcpStructuredContent =
+  | {
+      ok: true;
+      data: unknown;
+      meta: {
+        session?:
+          | ReturnType<typeof serializeProjectSessionMeta>
+          | ReturnType<typeof serializeProjectSessionDebug>;
+      };
+    }
+  | {
+      ok: false;
+      data: unknown;
+      error: { code: string; message: string };
+      meta: {
+        session?:
+          | ReturnType<typeof serializeProjectSessionMeta>
+          | ReturnType<typeof serializeProjectSessionDebug>;
+      };
+    };
 
 class ProjectSessionMcpCheckpointError extends Error {
   code = "CHECKPOINT_REQUIRED";
@@ -2073,14 +2182,37 @@ type SdkTool = {
 export const hiddenMcpOperationCommands = new Set<string>();
 
 const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
-  type: "object",
-  properties: {
-    ok: { type: "boolean", const: true },
-    data: dataSchema,
-    meta: { type: "object", additionalProperties: true },
-  },
-  required: ["ok", "data", "meta"],
-  additionalProperties: false,
+  oneOf: [
+    {
+      type: "object",
+      properties: {
+        ok: { type: "boolean", const: true },
+        data: dataSchema,
+        meta: { type: "object", additionalProperties: true },
+      },
+      required: ["ok", "data", "meta"],
+      additionalProperties: false,
+    },
+    {
+      type: "object",
+      properties: {
+        ok: { type: "boolean", const: false },
+        data: dataSchema,
+        error: {
+          type: "object",
+          properties: {
+            code: { type: "string" },
+            message: { type: "string" },
+          },
+          required: ["code", "message"],
+          additionalProperties: true,
+        },
+        meta: { type: "object", additionalProperties: true },
+      },
+      required: ["ok", "error", "meta"],
+      additionalProperties: false,
+    },
+  ],
 });
 
 export const listProjectSessionMcpTools = (
@@ -3004,6 +3136,20 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 };
 
 const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
+const formatExpressionMethods = (methods: ReadonlySet<string>) =>
+  [...methods]
+    .sort((left, right) => left.localeCompare(right))
+    .map((method) => `- \`${method}\``)
+    .join("\n");
+const expressionsGuide = readProjectBuildDoc("expressions")
+  .replace(
+    "{{allowedStringMethods}}",
+    formatExpressionMethods(allowedStringMethods)
+  )
+  .replace(
+    "{{allowedArrayMethods}}",
+    formatExpressionMethods(allowedArrayMethods)
+  );
 const valuesVsBindingsRule =
   "Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, resources, actions, or existing scoped runtime context such as system. Parameters are internal scoped runtime values, not a public create/update/delete surface. Page metadata and fixed resource URLs accept plain strings; use JavaScript expression code only when values are computed. Page and resource updates put changed fields under values.";
 
@@ -3071,6 +3217,9 @@ const animationComponentGuidanceByComponent = new Map<string, string>([
 
 const getAnimationComponentGuidance = (component: string) =>
   animationComponentGuidanceByComponent.get(component);
+
+const collectionComponentUsage =
+  'Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Insert "ws:collection" with insert-component so Webstudio creates and preserves its internal item and itemKey parameters. Bind the Collection data prop to the complete array or object, not the resource response wrapper and not one indexed item; external resource arrays are often nested under the scoped resource result\'s data field or deeper. Collection renders its child structure once per entry. Array iteration exposes the current item; object iteration exposes the current key and value. Bind descendant content and props to that current iteration context. Wrap multiple repeated sibling instances in one Element. For repeated Radix items, bind a stable unique id or slug to each required value prop. Do not create, replace, or delete the internal item/itemKey parameter records directly.';
 
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
@@ -3927,6 +4076,8 @@ const getComponentDetails = (component: string) => {
   const meta = componentMetas.get(component);
   const stateUsage = getComponentStateUsage(meta?.states);
   const animationUsage = getAnimationComponentGuidance(component);
+  const collectionUsage =
+    component === "ws:collection" ? collectionComponentUsage : undefined;
   const jsonLdUsage =
     component === "JsonLd"
       ? 'Prefer placing JsonLd inside HeadSlot. Insert it with insert-component using the HeadSlot instance as parentInstanceId and component "JsonLd". Set its code prop with update-props using type "string" and a compact JSON object or array string. Fixed values with structurally invalid JSON-LD are rejected. Run audit with the seo scope after editing to find unknown, superseded, unsupported, or incompatible Schema.org terms; vocabulary findings are warnings because custom vocabularies remain valid.'
@@ -3949,6 +4100,7 @@ const getComponentDetails = (component: string) => {
     states: meta.states ?? [],
     stateUsage,
     animationUsage,
+    collectionUsage,
     jsonLdUsage,
     indexWithinAncestor: meta.indexWithinAncestor,
     usage: [
@@ -3957,6 +4109,7 @@ const getComponentDetails = (component: string) => {
         : "Do not insert this component standalone. It is a child/part component and must be created by inserting a containing root/template component.",
       stateUsage,
       animationUsage,
+      collectionUsage,
       jsonLdUsage,
     ]
       .filter(Boolean)
@@ -4007,6 +4160,8 @@ const getMetaIndex = (
         'Use components.list({"source":"all"}) for shadcn-compatible registry items, templates.list({}) for templates, components.summary for a compact catalog, components.coverage-plan for design-system/all-component tasks, components.coverage-insert-next({"pagePath":"/design-system","parentInstanceId":"root-id"}) for one checkpoint-safe coverage insertion, components.coverage-status({"pagePath":"/design-system"}) to verify progress, components.search({"brief":"radix select"}) to search, and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) or templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for one item. Do not dump or parse webstudio://project/components unless those focused tools are insufficient.',
       guide:
         'Use meta.guide({"brief":"Create a design system page using every component"}) for a goal-specific workflow.',
+      expressions:
+        "Read webstudio://project/expressions before authoring unfamiliar expressions, Collection item bindings, or dynamic resource fields.",
       accessibility:
         "For an accessibility review, read webstudio://project/accessibility-review, run audit with scopes [accessibility], then verify changed routes with preview and screenshots.",
       workflow:
@@ -4040,6 +4195,14 @@ const getMetaGuide = (
   guidance: ProjectSessionMcpGuidance | undefined
 ) => {
   const isJsonLdGoal = /json\s*-?\s*ld|structured\s+data/i.test(brief);
+  const isCollectionGoal =
+    /collection|repeat(?:ed|ing)?\s+(?:list|item|card|row|content)|render\s+(?:an?\s+)?array|array\s+(?:as|into)\s+(?:a\s+)?(?:list|grid|table|cards?)/i.test(
+      brief
+    );
+  const isExpressionGoal =
+    /\bexpressions?\b|computed\s+(?:text|value|prop|metadata|url)|dynamic\s+(?:text|prop|binding)/i.test(
+      brief
+    );
   const matches = isJsonLdGoal
     ? getExactTools(
         [
@@ -4051,7 +4214,32 @@ const getMetaGuide = (
         ],
         tools
       )
-    : getMatchingTools(brief, tools).slice(0, 12);
+    : isCollectionGoal
+      ? getExactTools(
+          [
+            "components.get",
+            "list-variables",
+            "list-resources",
+            "insert-component",
+            "inspect-instance",
+            "bind-props",
+          ],
+          tools
+        )
+      : isExpressionGoal
+        ? getExactTools(
+            [
+              "list-variables",
+              "list-resources",
+              "list-texts",
+              "inspect-instance",
+              "update-text",
+              "bind-props",
+              "update-resource",
+            ],
+            tools
+          )
+        : getMatchingTools(brief, tools).slice(0, 12);
   const canVerifyVisually =
     tools.some((tool) => tool.name === "preview.start") &&
     tools.some((tool) => tool.name === "screenshot");
@@ -4069,6 +4257,23 @@ const getMetaGuide = (
             "Find the page HeadSlot instance with list-instances.",
             'Insert JsonLd under HeadSlot with insert-component, then set code with update-props using type "string" and a compact JSON object or array string.',
             'Run audit with {"scopes":["seo"],"pagePath":"<path>"} and fix any JSON-LD finding.',
+          ]
+        : []),
+      ...(isCollectionGoal
+        ? [
+            'Call components.get with {"component":"ws:collection"} and use its Collection-specific guidance.',
+            "Find the array or object to repeat. For a scoped resource result, select the complete nested array/object, commonly below the result's data field; do not bind the response wrapper or one indexed item.",
+            'Insert "ws:collection" with insert-component so its internal item and itemKey parameters are created. Do not create or replace those parameter records manually.',
+            "Bind the Collection data prop to the complete iterable. Put the repeated UI under Collection and bind descendant text/props to the generated current-item context; wrap multiple sibling instances in one Element.",
+            "Verify that every array/object entry renders once. For repeated Radix items, bind a stable unique id or slug to required value props.",
+          ]
+        : []),
+      ...(isExpressionGoal
+        ? [
+            "Read webstudio://project/expressions for the supported syntax, method allowlist, scope rules, and encoding examples.",
+            "Read variables, resources, the target instance, and existing bindings before writing an expression; do not guess scoped identifier names.",
+            "Use one expression rather than a statement or function. Use direct values for fixed content and expressions only for runtime-computed values.",
+            "Preview the affected route with representative and empty data; successful syntax validation does not prove the runtime data shape or scope is correct.",
           ]
         : []),
       "Use the fewest discovery calls needed for the immediate action.",
@@ -4398,6 +4603,13 @@ export const listProjectSessionMcpResources =
       mimeType: "application/json",
     },
     {
+      uri: "webstudio://project/expressions",
+      name: "Webstudio expressions",
+      description:
+        "Model-facing reference for expression syntax, scope, supported methods, bindings, Collections, and verification.",
+      mimeType: "text/markdown",
+    },
+    {
       uri: "webstudio://project/accessibility-review",
       name: "Webstudio accessibility review",
       description:
@@ -4408,18 +4620,30 @@ export const listProjectSessionMcpResources =
 
 const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
-  options: { verboseSession?: boolean } = {}
+  options: {
+    verboseSession?: boolean;
+    error?: { code: string; message: string };
+  } = {}
 ): ProjectSessionMcpToolResult => {
-  const structuredContent = {
-    ok: true as const,
-    data: envelope.result,
-    meta: {
-      session:
-        options.verboseSession === true
-          ? serializeProjectSessionDebug(envelope)
-          : serializeProjectSessionMeta(envelope),
-    },
+  const meta = {
+    session:
+      options.verboseSession === true
+        ? serializeProjectSessionDebug(envelope)
+        : serializeProjectSessionMeta(envelope),
   };
+  const structuredContent: ProjectSessionMcpStructuredContent =
+    options.error === undefined
+      ? {
+          ok: true,
+          data: envelope.result,
+          meta,
+        }
+      : {
+          ok: false,
+          data: envelope.result,
+          error: options.error,
+          meta,
+        };
   return {
     content: [
       {
@@ -4428,7 +4652,36 @@ const toCallResult = (
       },
     ],
     structuredContent,
+    ...(options.error === undefined ? {} : { isError: true }),
   };
+};
+
+const getRenderedAuditError = (
+  envelope: Parameters<typeof serializeProjectSessionMeta>[0],
+  rendered: boolean
+) => {
+  if (rendered === false || isRecord(envelope.result) === false) {
+    return undefined;
+  }
+  const failureCount = envelope.result.renderedFailureCount;
+  if (typeof failureCount !== "number" || failureCount === 0) {
+    return undefined;
+  }
+  const checkCount =
+    typeof envelope.result.renderedCheckCount === "number"
+      ? envelope.result.renderedCheckCount
+      : 0;
+  return checkCount === 0
+    ? {
+        code: "RENDERED_AUDIT_FAILED",
+        message:
+          "The static audit completed, but the requested rendered audit completed no rendered checks.",
+      }
+    : {
+        code: "RENDERED_AUDIT_PARTIAL",
+        message:
+          "The static audit completed, but some requested rendered checks failed.",
+      };
 };
 
 const toResourceContent = (
@@ -4556,15 +4809,34 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
   ) {
     throw new Error("screenshot port must be an integer between 1 and 65535.");
   }
+  const imageDomains = input.imageDomains;
+  if (
+    imageDomains !== undefined &&
+    (Array.isArray(imageDomains) === false ||
+      imageDomains.some(
+        (domain) =>
+          typeof domain !== "string" ||
+          /^[a-z0-9.-]+(?::\d+)?$/i.test(domain) === false
+      ))
+  ) {
+    throw new Error(
+      "screenshot imageDomains must contain hostnames without a protocol or path."
+    );
+  }
   if (baseUrl !== undefined) {
     try {
       new URL(baseUrl);
     } catch {
       throw new Error("screenshot baseUrl must be an absolute URL.");
     }
-    if (host !== undefined || port !== undefined || source !== undefined) {
+    if (
+      host !== undefined ||
+      port !== undefined ||
+      source !== undefined ||
+      imageDomains !== undefined
+    ) {
       throw new Error(
-        "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, or source."
+        "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, or imageDomains."
       );
     }
   }
@@ -4575,6 +4847,7 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     output: typeof input.output === "string" ? input.output : undefined,
     host,
     port,
+    imageDomains,
     source,
     viewport: { width, height },
     fullPage: input.fullPage === true,
@@ -4757,10 +5030,25 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   if (source !== undefined && source !== "local" && source !== "session") {
     throw new Error("preview source must be local or session.");
   }
+  const imageDomains = input.imageDomains;
+  if (
+    imageDomains !== undefined &&
+    (Array.isArray(imageDomains) === false ||
+      imageDomains.some(
+        (domain) =>
+          typeof domain !== "string" ||
+          /^[a-z0-9.-]+(?::\d+)?$/i.test(domain) === false
+      ))
+  ) {
+    throw new Error(
+      "preview imageDomains must contain hostnames without a protocol or path."
+    );
+  }
   return {
     host,
     port,
     source,
+    imageDomains,
   };
 };
 
@@ -4789,6 +5077,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   executeOperation,
   importProject,
   captureScreenshot,
+  capturePageScreenshots,
   diffScreenshots,
   installOcr,
   startPreview,
@@ -4796,12 +5085,14 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   stopPreview,
   guidance,
   reportToolProgress,
+  storeRenderedAuditArtifacts,
 }: {
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
   importProject?: ImportProject;
   captureScreenshot?: CaptureScreenshot;
+  capturePageScreenshots?: CapturePageScreenshots;
   diffScreenshots?: DiffScreenshots;
   installOcr?: InstallOcr;
   startPreview?: StartPreview;
@@ -4809,6 +5100,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   stopPreview?: StopPreview;
   guidance?: ProjectSessionMcpGuidance;
   reportToolProgress?: (message: string) => void;
+  storeRenderedAuditArtifacts?: (
+    manifest: RenderedAuditArtifactManifest
+  ) => Promise<string>;
 }) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
@@ -4904,6 +5198,17 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           ],
         };
       }
+      if (uri === "webstudio://project/expressions") {
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "text/markdown",
+              text: expressionsGuide,
+            },
+          ],
+        };
+      }
       if (uri === "webstudio://project/accessibility-review") {
         return {
           contents: [
@@ -4935,10 +5240,12 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       name,
       input = {},
       dryRun = false,
+      signal,
     }: {
       name: string;
       input?: unknown;
       dryRun?: boolean;
+      signal?: AbortSignal;
     }): Promise<ProjectSessionMcpToolResult> {
       name = resolveToolName(name);
       if (name === "checkpoint.ack") {
@@ -5121,7 +5428,80 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       ) {
         throw new Error("audit input.rendered must be a boolean.");
       }
+      if (
+        isAuditInput &&
+        input.routeExamples !== undefined &&
+        (Array.isArray(input.routeExamples) === false ||
+          input.routeExamples.some(
+            (example) =>
+              isRecord(example) === false ||
+              typeof example.pageId !== "string" ||
+              example.pageId.length === 0 ||
+              typeof example.path !== "string" ||
+              /^\/(?!\/)/.test(example.path) === false ||
+              example.path.includes(":") ||
+              example.path.includes("*")
+          ))
+      ) {
+        throw new Error(
+          "audit input.routeExamples must contain { pageId, path } objects with concrete paths beginning with one slash."
+        );
+      }
       const isRenderedAudit = isAuditInput && input.rendered === true;
+      const renderedOnlyInputFields = [
+        "confirmLargeRun",
+        "confirmationToken",
+        "imageDomains",
+        "routeExamples",
+      ] as const;
+      const providedRenderedOnlyInput = renderedOnlyInputFields.find(
+        (field) => isAuditInput && input[field] !== undefined
+      );
+      if (isAuditInput && isRenderedAudit === false) {
+        if (providedRenderedOnlyInput !== undefined) {
+          throw new Error(
+            `audit input.${providedRenderedOnlyInput} requires rendered: true.`
+          );
+        }
+        if (
+          input.rendered !== undefined &&
+          (startPreview === undefined ||
+            stopPreview === undefined ||
+            captureScreenshot === undefined)
+        ) {
+          throw new Error(
+            "Rendered audit options are unavailable because this MCP host does not provide preview and screenshot capabilities."
+          );
+        }
+      }
+      if (
+        isAuditInput &&
+        input.confirmLargeRun !== undefined &&
+        typeof input.confirmLargeRun !== "boolean"
+      ) {
+        throw new Error("audit input.confirmLargeRun must be a boolean.");
+      }
+      if (
+        isAuditInput &&
+        input.confirmationToken !== undefined &&
+        typeof input.confirmationToken !== "string"
+      ) {
+        throw new Error("audit input.confirmationToken must be a string.");
+      }
+      if (
+        isAuditInput &&
+        input.imageDomains !== undefined &&
+        (Array.isArray(input.imageDomains) === false ||
+          input.imageDomains.some(
+            (domain) =>
+              typeof domain !== "string" ||
+              /^[a-z0-9.-]+(?::\d+)?$/i.test(domain) === false
+          ))
+      ) {
+        throw new Error(
+          "audit input.imageDomains must contain hostnames without a protocol or path."
+        );
+      }
       if (
         isRenderedAudit &&
         (startPreview === undefined ||
@@ -5141,7 +5521,14 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         operation,
         isAuditInput
           ? Object.fromEntries(
-              Object.entries(input).filter(([key]) => key !== "rendered")
+              Object.entries(input).filter(
+                ([key]) =>
+                  key !== "rendered" &&
+                  key !== "confirmLargeRun" &&
+                  key !== "confirmationToken" &&
+                  key !== "imageDomains" &&
+                  key !== "routeExamples"
+              )
             )
           : input
       );
@@ -5150,22 +5537,42 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         input: operationInput,
         dryRun,
       });
-      return toCallResult(
-        name === "audit"
-          ? await augmentAuditWithRenderedChecks({
-              envelope,
-              input:
-                isRenderedAudit && isRecord(operationInput)
-                  ? { ...operationInput, rendered: true }
-                  : operationInput,
-              executeRead,
-              startPreview,
-              stopPreview,
-              captureScreenshot,
-              reportProgress: reportToolProgress,
-            })
-          : envelope
-      );
+      if (name === "audit") {
+        const auditedEnvelope = await augmentAuditWithRenderedChecks({
+          envelope,
+          input:
+            isRenderedAudit && isRecord(operationInput)
+              ? {
+                  ...operationInput,
+                  rendered: true,
+                  ...(input.confirmLargeRun === true
+                    ? { confirmLargeRun: true }
+                    : {}),
+                  ...(typeof input.confirmationToken === "string"
+                    ? { confirmationToken: input.confirmationToken }
+                    : {}),
+                  ...(Array.isArray(input.imageDomains)
+                    ? { imageDomains: input.imageDomains }
+                    : {}),
+                  ...(Array.isArray(input.routeExamples)
+                    ? { routeExamples: input.routeExamples }
+                    : {}),
+                }
+              : operationInput,
+          executeRead,
+          startPreview,
+          stopPreview,
+          captureScreenshot,
+          capturePageScreenshots,
+          reportProgress: reportToolProgress,
+          storeRenderedAuditArtifacts,
+          signal,
+        });
+        return toCallResult(auditedEnvelope, {
+          error: getRenderedAuditError(auditedEnvelope, isRenderedAudit),
+        });
+      }
+      return toCallResult(envelope);
     },
   };
 };
@@ -5299,12 +5706,21 @@ const getZodErrorMessage = (
   return `${issues}. Expected input shape example: ${JSON.stringify(example)}`;
 };
 
+const getZodFieldIssues = (error: z.ZodError) =>
+  error.issues.map((issue) => ({
+    path: issue.path.map(String),
+    message: issue.message,
+  }));
+
 const toToolErrorResult = (
   error: unknown,
   getErrorCode: McpErrorCodeResolver | undefined,
   inputSchema?: InputJsonSchema
 ): ProjectSessionMcpErrorResult => {
-  const code = getErrorCode?.(error) ?? "MCP_TOOL_FAILED";
+  const code =
+    error instanceof z.ZodError
+      ? "INVALID_INPUT"
+      : (getErrorCode?.(error) ?? "MCP_TOOL_FAILED");
   const message =
     code === "PROJECT_SESSION_BUSY"
       ? projectSessionBusyMessage
@@ -5318,6 +5734,9 @@ const toToolErrorResult = (
     error: {
       message,
       code,
+      ...(error instanceof z.ZodError
+        ? { issues: getZodFieldIssues(error) }
+        : {}),
     },
     meta: {},
   };
@@ -5336,6 +5755,7 @@ export const createProjectSessionMcpServer = async <
   executeOperation,
   importProject,
   captureScreenshot,
+  capturePageScreenshots,
   diffScreenshots,
   installOcr,
   startPreview,
@@ -5344,6 +5764,7 @@ export const createProjectSessionMcpServer = async <
   guidance,
   getErrorCode,
   reportLog,
+  storeRenderedAuditArtifacts,
   toolHeartbeatIntervalMs = 10_000,
 }: {
   operations: readonly (PublicMcpOperation & { command: Command })[];
@@ -5351,6 +5772,7 @@ export const createProjectSessionMcpServer = async <
   executeOperation: ExecuteMcpOperation<Command>;
   importProject?: ImportProject;
   captureScreenshot?: CaptureScreenshot;
+  capturePageScreenshots?: CapturePageScreenshots;
   diffScreenshots?: DiffScreenshots;
   installOcr?: InstallOcr;
   startPreview?: StartPreview;
@@ -5359,6 +5781,9 @@ export const createProjectSessionMcpServer = async <
   guidance?: ProjectSessionMcpGuidance;
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
+  storeRenderedAuditArtifacts?: (
+    manifest: RenderedAuditArtifactManifest
+  ) => Promise<string>;
   toolHeartbeatIntervalMs?: number;
 }) => {
   const server = new Server(
@@ -5386,12 +5811,14 @@ export const createProjectSessionMcpServer = async <
     executeOperation,
     importProject,
     captureScreenshot,
+    capturePageScreenshots,
     diffScreenshots,
     installOcr,
     startPreview,
     getPreviewStatus,
     stopPreview,
     guidance,
+    storeRenderedAuditArtifacts,
     reportToolProgress: (message) => {
       sendLog("info", message);
     },
@@ -5446,7 +5873,7 @@ export const createProjectSessionMcpServer = async <
     }
   });
 
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
     const name = typeof params.name === "string" ? params.name : "";
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
@@ -5466,6 +5893,7 @@ export const createProjectSessionMcpServer = async <
         name,
         input,
         dryRun,
+        signal: extra.signal,
       });
       sendLog("info", `tool ${name} succeeded in ${Date.now() - startedAt}ms`);
       return result;

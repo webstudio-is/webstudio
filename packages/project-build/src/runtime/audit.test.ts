@@ -115,7 +115,7 @@ describe("project audit and analysis", () => {
     expect(result.summary.selectedTotal).toBe(result.summary.total);
     expect(result.summary.bySeverity.info).toBe(result.summary.total);
     expect(result.findings).toHaveLength(1);
-    expect(result.contractVersion).toBe(1);
+    expect(result.contractVersion).toBe(2);
     expect(result.projectVersion).toBe(7);
     expect(result.nextCursor).not.toBeNull();
     expect(result.findings[0]).toMatchObject({
@@ -202,7 +202,7 @@ describe("project audit and analysis", () => {
     );
 
     expect(compact).toMatchObject({
-      contractVersion: 1,
+      contractVersion: 2,
       verbose: false,
       skippedCheckCount: expect.any(Number),
       manualCheckCount: 0,
@@ -217,7 +217,7 @@ describe("project audit and analysis", () => {
     expect(compact.findings[0]).not.toHaveProperty("evidence");
 
     expect(verbose).toMatchObject({
-      contractVersion: 1,
+      contractVersion: 2,
       verbose: true,
       skippedCheckCount: compact.skippedCheckCount,
       manualCheckCount: compact.manualCheckCount,
@@ -238,6 +238,71 @@ describe("project audit and analysis", () => {
       renderedChecks: [],
       renderedFailures: [],
     });
+  });
+
+  test("includes verbose audit appendices only on the first findings page", () => {
+    const first = audit(
+      state,
+      { limit: 1, verbose: true },
+      { projectVersion: 1 }
+    );
+    expect(first.nextCursor).not.toBeNull();
+    expect(first.manualChecks.length).toBeGreaterThan(0);
+
+    const second = audit(
+      state,
+      { cursor: first.nextCursor ?? undefined, limit: 1, verbose: true },
+      { projectVersion: 1 }
+    );
+
+    expect(second.skippedCheckCount).toBe(first.skippedCheckCount);
+    expect(second.manualCheckCount).toBe(first.manualCheckCount);
+    expect(second.skippedChecks).toEqual([]);
+    expect(second.manualChecks).toEqual([]);
+  });
+
+  test("uses one homepage identity across page aliases and pagination", () => {
+    const inputs = [
+      { pagePath: "" },
+      { pagePath: "/" },
+      { pageId: "home" },
+    ] as const;
+    const firstPages = inputs.map((selector) =>
+      audit(
+        state,
+        { ...selector, scopes: ["assets", "styles"], limit: 1 },
+        { projectVersion: 1 }
+      )
+    );
+
+    for (const result of firstPages) {
+      expect(result.pageFilter).toEqual({
+        pageId: "home",
+        pagePath: "/",
+        projectWideScopes: ["assets", "styles"],
+      });
+      expect(result.nextCursor).not.toBeNull();
+      expect(
+        result.findings.flatMap(({ location }) => [
+          location.pagePath,
+          ...(location.pagePaths ?? []),
+        ])
+      ).not.toContain("");
+    }
+    expect(firstPages[1]).toEqual(firstPages[0]);
+    expect(firstPages[2]).toEqual(firstPages[0]);
+
+    const continued = audit(
+      state,
+      {
+        scopes: ["assets", "styles"],
+        pagePath: firstPages[0].pageFilter?.pagePath,
+        limit: 1,
+        cursor: firstPages[0].nextCursor ?? undefined,
+      },
+      { projectVersion: 1 }
+    );
+    expect(continued.findings[0]?.id).not.toBe(firstPages[0].findings[0]?.id);
   });
 
   test("validates mutually exclusive audit page selectors", () => {
@@ -440,7 +505,7 @@ describe("project audit and analysis", () => {
 
     expect(result.pageFilter).toEqual({
       pageId: "home",
-      pagePath: "",
+      pagePath: "/",
       projectWideScopes: ["assets", "styles"],
     });
     expect(result.findings).toEqual(
@@ -1944,7 +2009,7 @@ describe("project audit and analysis", () => {
           severity: "error",
           location: expect.objectContaining({
             pageId: "home",
-            pagePath: "",
+            pagePath: "/",
           }),
         }),
       ])

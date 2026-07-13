@@ -78,7 +78,7 @@ export const runtimeOperationContractData = [
         },
         title: {
           description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
           type: "string",
         },
         parentFolderId: {
@@ -89,22 +89,22 @@ export const runtimeOperationContractData = [
           properties: {
             description: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             language: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             redirect: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             socialImageUrl: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             socialImageAssetId: {
@@ -117,7 +117,7 @@ export const runtimeOperationContractData = [
                 },
                 {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
               ],
@@ -128,12 +128,12 @@ export const runtimeOperationContractData = [
             },
             content: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             status: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             auth: {
@@ -182,7 +182,7 @@ export const runtimeOperationContractData = [
                   },
                   content: {
                     description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     type: "string",
                   },
                 },
@@ -232,7 +232,7 @@ export const runtimeOperationContractData = [
             },
             title: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             parentFolderId: {
@@ -243,22 +243,22 @@ export const runtimeOperationContractData = [
               properties: {
                 description: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 language: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 redirect: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 socialImageUrl: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 socialImageAssetId: {
@@ -271,7 +271,7 @@ export const runtimeOperationContractData = [
                     },
                     {
                       description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       type: "string",
                     },
                   ],
@@ -282,12 +282,12 @@ export const runtimeOperationContractData = [
                 },
                 content: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 status: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 auth: {
@@ -336,7 +336,7 @@ export const runtimeOperationContractData = [
                       },
                       content: {
                         description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                         type: "string",
                       },
                     },
@@ -1157,7 +1157,7 @@ export const runtimeOperationContractData = [
         },
         title: {
           description:
-            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
           type: "string",
         },
         meta: {
@@ -1165,22 +1165,22 @@ export const runtimeOperationContractData = [
           properties: {
             description: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             language: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             redirect: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             socialImageUrl: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             socialImageAssetId: {
@@ -1193,7 +1193,7 @@ export const runtimeOperationContractData = [
                 },
                 {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
               ],
@@ -1204,12 +1204,12 @@ export const runtimeOperationContractData = [
             },
             content: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             status: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             auth: {
@@ -1258,7 +1258,7 @@ export const runtimeOperationContractData = [
                   },
                   content: {
                     description:
-                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                     type: "string",
                   },
                 },
@@ -1330,7 +1330,7 @@ export const runtimeOperationContractData = [
             },
             title: {
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
             },
             meta: {
@@ -1338,22 +1338,22 @@ export const runtimeOperationContractData = [
               properties: {
                 description: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 language: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 redirect: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 socialImageUrl: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 socialImageAssetId: {
@@ -1366,7 +1366,7 @@ export const runtimeOperationContractData = [
                     },
                     {
                       description:
-                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                       type: "string",
                     },
                   ],
@@ -1377,12 +1377,12 @@ export const runtimeOperationContractData = [
                 },
                 content: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 status: {
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                   type: "string",
                 },
                 auth: {
@@ -1431,7 +1431,7 @@ export const runtimeOperationContractData = [
                       },
                       content: {
                         description:
-                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
                         type: "string",
                       },
                     },
@@ -24041,7 +24041,7 @@ export const runtimeOperationContractData = [
           properties: {
             contractVersion: {
               type: "number",
-              const: 1,
+              const: 2,
             },
             projectVersion: {
               type: "integer",
@@ -24175,6 +24175,237 @@ export const runtimeOperationContractData = [
               type: "integer",
               minimum: 0,
               maximum: 9007199254740991,
+            },
+            renderedPlan: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    version: {
+                      type: "number",
+                      const: 1,
+                    },
+                    pages: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          pageId: {
+                            type: "string",
+                          },
+                          pagePath: {
+                            type: "string",
+                          },
+                        },
+                        required: ["pageId", "pagePath"],
+                      },
+                    },
+                    excludedPages: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          pageId: {
+                            type: "string",
+                          },
+                          pagePath: {
+                            type: "string",
+                          },
+                          reason: {
+                            type: "string",
+                            const: "dynamic-route-needs-example",
+                          },
+                        },
+                        required: ["pageId", "pagePath", "reason"],
+                      },
+                    },
+                    viewports: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          width: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          height: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          purposes: {
+                            minItems: 1,
+                            type: "array",
+                            items: {
+                              type: "string",
+                            },
+                          },
+                        },
+                        required: ["width", "height", "purposes"],
+                      },
+                    },
+                    checks: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                        enum: [
+                          "horizontal-overflow",
+                          "broken-image",
+                          "eager-below-fold-image",
+                          "oversized-image",
+                          "render-blocking-resource",
+                          "legacy-font-format",
+                        ],
+                      },
+                    },
+                    captureCount: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    confirmationToken: {
+                      type: "string",
+                    },
+                    confirmationExpiresAt: {
+                      type: "string",
+                      format: "date-time",
+                      pattern:
+                        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    },
+                  },
+                  required: [
+                    "version",
+                    "pages",
+                    "excludedPages",
+                    "viewports",
+                    "checks",
+                    "captureCount",
+                  ],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            renderedCaptureSummary: {
+              type: "object",
+              properties: {
+                planned: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                passed: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                issues: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                skipped: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                failed: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+              },
+              required: ["planned", "passed", "issues", "skipped", "failed"],
+            },
+            renderedCaptureStatuses: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  pageId: {
+                    type: "string",
+                  },
+                  pagePath: {
+                    type: "string",
+                  },
+                  viewport: {
+                    type: "object",
+                    properties: {
+                      width: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      height: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                    },
+                    required: ["width", "height"],
+                  },
+                  status: {
+                    type: "string",
+                    enum: ["passed", "issues", "skipped", "failed"],
+                  },
+                  screenshotPath: {
+                    type: "string",
+                  },
+                  failureCode: {
+                    type: "string",
+                    enum: [
+                      "RENDERED_AUDIT_PREPARATION_FAILED",
+                      "RENDERED_AUDIT_NO_STATIC_PAGES",
+                      "RENDERED_AUDIT_CAPTURE_LIMIT_EXCEEDED",
+                      "RENDERED_AUDIT_CONFIRMATION_REQUIRED",
+                      "RENDERED_AUDIT_CONFIRMATION_INVALID",
+                      "RENDERED_AUDIT_PREVIEW_START_FAILED",
+                      "RENDERED_AUDIT_LAYOUT_METRICS_MISSING",
+                      "RENDERED_AUDIT_HTTP_ERROR",
+                      "RENDERED_AUDIT_NAVIGATION_EVIDENCE_MISSING",
+                      "RENDERED_AUDIT_ORIGIN_MISMATCH",
+                      "RENDERED_AUDIT_ROUTE_MISMATCH",
+                      "RENDERED_AUDIT_DOCUMENT_NOT_GENERATED_SITE",
+                      "RENDERED_AUDIT_LAYOUT_UNSTABLE",
+                      "RENDERED_AUDIT_SCREENSHOT_FAILED",
+                      "RENDERED_AUDIT_CAPTURE_TIMEOUT",
+                      "RENDERED_AUDIT_PAGE_TIMEOUT",
+                      "RENDERED_AUDIT_OVERALL_TIMEOUT",
+                      "RENDERED_AUDIT_CANCELLED",
+                      "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
+                      "RENDERED_AUDIT_ARTIFACT_WRITE_FAILED",
+                    ],
+                  },
+                },
+                required: ["pageId", "pagePath", "viewport", "status"],
+              },
+            },
+            renderedArtifactManifest: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    version: {
+                      type: "number",
+                      const: 1,
+                    },
+                    path: {
+                      type: "string",
+                    },
+                    screenshotCount: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                  },
+                  required: ["version", "path", "screenshotCount"],
+                },
+                {
+                  type: "null",
+                },
+              ],
             },
             nextCursor: {
               anyOf: [
@@ -24353,6 +24584,57 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
+            renderedFailureSummaries: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  code: {
+                    type: "string",
+                    enum: [
+                      "RENDERED_AUDIT_PREPARATION_FAILED",
+                      "RENDERED_AUDIT_NO_STATIC_PAGES",
+                      "RENDERED_AUDIT_CAPTURE_LIMIT_EXCEEDED",
+                      "RENDERED_AUDIT_CONFIRMATION_REQUIRED",
+                      "RENDERED_AUDIT_CONFIRMATION_INVALID",
+                      "RENDERED_AUDIT_PREVIEW_START_FAILED",
+                      "RENDERED_AUDIT_LAYOUT_METRICS_MISSING",
+                      "RENDERED_AUDIT_HTTP_ERROR",
+                      "RENDERED_AUDIT_NAVIGATION_EVIDENCE_MISSING",
+                      "RENDERED_AUDIT_ORIGIN_MISMATCH",
+                      "RENDERED_AUDIT_ROUTE_MISMATCH",
+                      "RENDERED_AUDIT_DOCUMENT_NOT_GENERATED_SITE",
+                      "RENDERED_AUDIT_LAYOUT_UNSTABLE",
+                      "RENDERED_AUDIT_SCREENSHOT_FAILED",
+                      "RENDERED_AUDIT_CAPTURE_TIMEOUT",
+                      "RENDERED_AUDIT_PAGE_TIMEOUT",
+                      "RENDERED_AUDIT_OVERALL_TIMEOUT",
+                      "RENDERED_AUDIT_CANCELLED",
+                      "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
+                      "RENDERED_AUDIT_ARTIFACT_WRITE_FAILED",
+                    ],
+                  },
+                  phase: {
+                    type: "string",
+                    enum: [
+                      "planning",
+                      "preview-start",
+                      "capture",
+                      "preview-stop",
+                    ],
+                  },
+                  remediation: {
+                    type: "string",
+                  },
+                  count: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["code", "phase", "remediation", "count"],
+              },
+            },
           },
           required: [
             "contractVersion",
@@ -24365,9 +24647,14 @@ export const runtimeOperationContractData = [
             "renderedCheckCount",
             "renderedIssueCount",
             "renderedFailureCount",
+            "renderedPlan",
+            "renderedCaptureSummary",
+            "renderedCaptureStatuses",
+            "renderedArtifactManifest",
             "nextCursor",
             "verbose",
             "findings",
+            "renderedFailureSummaries",
           ],
         },
         {
@@ -24375,7 +24662,7 @@ export const runtimeOperationContractData = [
           properties: {
             contractVersion: {
               type: "number",
-              const: 1,
+              const: 2,
             },
             projectVersion: {
               type: "integer",
@@ -24509,6 +24796,237 @@ export const runtimeOperationContractData = [
               type: "integer",
               minimum: 0,
               maximum: 9007199254740991,
+            },
+            renderedPlan: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    version: {
+                      type: "number",
+                      const: 1,
+                    },
+                    pages: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          pageId: {
+                            type: "string",
+                          },
+                          pagePath: {
+                            type: "string",
+                          },
+                        },
+                        required: ["pageId", "pagePath"],
+                      },
+                    },
+                    excludedPages: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          pageId: {
+                            type: "string",
+                          },
+                          pagePath: {
+                            type: "string",
+                          },
+                          reason: {
+                            type: "string",
+                            const: "dynamic-route-needs-example",
+                          },
+                        },
+                        required: ["pageId", "pagePath", "reason"],
+                      },
+                    },
+                    viewports: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          width: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          height: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          purposes: {
+                            minItems: 1,
+                            type: "array",
+                            items: {
+                              type: "string",
+                            },
+                          },
+                        },
+                        required: ["width", "height", "purposes"],
+                      },
+                    },
+                    checks: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                        enum: [
+                          "horizontal-overflow",
+                          "broken-image",
+                          "eager-below-fold-image",
+                          "oversized-image",
+                          "render-blocking-resource",
+                          "legacy-font-format",
+                        ],
+                      },
+                    },
+                    captureCount: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    confirmationToken: {
+                      type: "string",
+                    },
+                    confirmationExpiresAt: {
+                      type: "string",
+                      format: "date-time",
+                      pattern:
+                        "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    },
+                  },
+                  required: [
+                    "version",
+                    "pages",
+                    "excludedPages",
+                    "viewports",
+                    "checks",
+                    "captureCount",
+                  ],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            renderedCaptureSummary: {
+              type: "object",
+              properties: {
+                planned: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                passed: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                issues: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                skipped: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                failed: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+              },
+              required: ["planned", "passed", "issues", "skipped", "failed"],
+            },
+            renderedCaptureStatuses: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  pageId: {
+                    type: "string",
+                  },
+                  pagePath: {
+                    type: "string",
+                  },
+                  viewport: {
+                    type: "object",
+                    properties: {
+                      width: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                      height: {
+                        type: "integer",
+                        exclusiveMinimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                    },
+                    required: ["width", "height"],
+                  },
+                  status: {
+                    type: "string",
+                    enum: ["passed", "issues", "skipped", "failed"],
+                  },
+                  screenshotPath: {
+                    type: "string",
+                  },
+                  failureCode: {
+                    type: "string",
+                    enum: [
+                      "RENDERED_AUDIT_PREPARATION_FAILED",
+                      "RENDERED_AUDIT_NO_STATIC_PAGES",
+                      "RENDERED_AUDIT_CAPTURE_LIMIT_EXCEEDED",
+                      "RENDERED_AUDIT_CONFIRMATION_REQUIRED",
+                      "RENDERED_AUDIT_CONFIRMATION_INVALID",
+                      "RENDERED_AUDIT_PREVIEW_START_FAILED",
+                      "RENDERED_AUDIT_LAYOUT_METRICS_MISSING",
+                      "RENDERED_AUDIT_HTTP_ERROR",
+                      "RENDERED_AUDIT_NAVIGATION_EVIDENCE_MISSING",
+                      "RENDERED_AUDIT_ORIGIN_MISMATCH",
+                      "RENDERED_AUDIT_ROUTE_MISMATCH",
+                      "RENDERED_AUDIT_DOCUMENT_NOT_GENERATED_SITE",
+                      "RENDERED_AUDIT_LAYOUT_UNSTABLE",
+                      "RENDERED_AUDIT_SCREENSHOT_FAILED",
+                      "RENDERED_AUDIT_CAPTURE_TIMEOUT",
+                      "RENDERED_AUDIT_PAGE_TIMEOUT",
+                      "RENDERED_AUDIT_OVERALL_TIMEOUT",
+                      "RENDERED_AUDIT_CANCELLED",
+                      "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
+                      "RENDERED_AUDIT_ARTIFACT_WRITE_FAILED",
+                    ],
+                  },
+                },
+                required: ["pageId", "pagePath", "viewport", "status"],
+              },
+            },
+            renderedArtifactManifest: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    version: {
+                      type: "number",
+                      const: 1,
+                    },
+                    path: {
+                      type: "string",
+                    },
+                    screenshotCount: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                  },
+                  required: ["version", "path", "screenshotCount"],
+                },
+                {
+                  type: "null",
+                },
+              ],
             },
             nextCursor: {
               anyOf: [
@@ -24865,6 +25383,9 @@ export const runtimeOperationContractData = [
                   layout: {
                     type: "object",
                     properties: {
+                      documentType: {
+                        type: "string",
+                      },
                       viewportWidth: {
                         type: "integer",
                         exclusiveMinimum: 0,
@@ -24896,6 +25417,9 @@ export const runtimeOperationContractData = [
                             instanceId: {
                               type: "string",
                             },
+                            sourcePathname: {
+                              type: "string",
+                            },
                             loading: {
                               type: "string",
                             },
@@ -24907,6 +25431,14 @@ export const runtimeOperationContractData = [
                               minimum: 0,
                             },
                             naturalHeight: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            selectedSourceWidth: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                            selectedSourceHeight: {
                               type: "number",
                               minimum: 0,
                             },
@@ -25015,6 +25547,9 @@ export const runtimeOperationContractData = [
                         instanceId: {
                           type: "string",
                         },
+                        sourcePathname: {
+                          type: "string",
+                        },
                         loading: {
                           type: "string",
                         },
@@ -25023,6 +25558,14 @@ export const runtimeOperationContractData = [
                           minimum: 0,
                         },
                         naturalHeight: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        selectedSourceWidth: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        selectedSourceHeight: {
                           type: "number",
                           minimum: 0,
                         },
@@ -25116,6 +25659,46 @@ export const runtimeOperationContractData = [
               items: {
                 type: "object",
                 properties: {
+                  code: {
+                    type: "string",
+                    enum: [
+                      "RENDERED_AUDIT_PREPARATION_FAILED",
+                      "RENDERED_AUDIT_NO_STATIC_PAGES",
+                      "RENDERED_AUDIT_CAPTURE_LIMIT_EXCEEDED",
+                      "RENDERED_AUDIT_CONFIRMATION_REQUIRED",
+                      "RENDERED_AUDIT_CONFIRMATION_INVALID",
+                      "RENDERED_AUDIT_PREVIEW_START_FAILED",
+                      "RENDERED_AUDIT_LAYOUT_METRICS_MISSING",
+                      "RENDERED_AUDIT_HTTP_ERROR",
+                      "RENDERED_AUDIT_NAVIGATION_EVIDENCE_MISSING",
+                      "RENDERED_AUDIT_ORIGIN_MISMATCH",
+                      "RENDERED_AUDIT_ROUTE_MISMATCH",
+                      "RENDERED_AUDIT_DOCUMENT_NOT_GENERATED_SITE",
+                      "RENDERED_AUDIT_LAYOUT_UNSTABLE",
+                      "RENDERED_AUDIT_SCREENSHOT_FAILED",
+                      "RENDERED_AUDIT_CAPTURE_TIMEOUT",
+                      "RENDERED_AUDIT_PAGE_TIMEOUT",
+                      "RENDERED_AUDIT_OVERALL_TIMEOUT",
+                      "RENDERED_AUDIT_CANCELLED",
+                      "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
+                      "RENDERED_AUDIT_ARTIFACT_WRITE_FAILED",
+                    ],
+                  },
+                  phase: {
+                    type: "string",
+                    enum: [
+                      "planning",
+                      "preview-start",
+                      "capture",
+                      "preview-stop",
+                    ],
+                  },
+                  retryable: {
+                    type: "boolean",
+                  },
+                  remediation: {
+                    type: "string",
+                  },
                   pageId: {
                     type: "string",
                   },
@@ -25138,11 +25721,20 @@ export const runtimeOperationContractData = [
                     },
                     required: ["width", "height"],
                   },
+                  screenshotPath: {
+                    type: "string",
+                  },
                   message: {
                     type: "string",
                   },
                 },
-                required: ["message"],
+                required: [
+                  "code",
+                  "phase",
+                  "retryable",
+                  "remediation",
+                  "message",
+                ],
               },
             },
           },
@@ -25157,6 +25749,10 @@ export const runtimeOperationContractData = [
             "renderedCheckCount",
             "renderedIssueCount",
             "renderedFailureCount",
+            "renderedPlan",
+            "renderedCaptureSummary",
+            "renderedCaptureStatuses",
+            "renderedArtifactManifest",
             "nextCursor",
             "verbose",
             "findings",
@@ -31758,7 +32354,8 @@ export const runtimeOperationContractData = [
                   },
                   value: {
                     type: "string",
-                    description: "JavaScript expression source.",
+                    description:
+                      "One Webstudio JavaScript expression, not a statement or function. Read webstudio://project/expressions for syntax and scope rules.",
                   },
                 },
                 required: ["instanceId", "name", "type", "value"],
@@ -31967,6 +32564,8 @@ export const runtimeOperationContractData = [
                       },
                       value: {
                         type: "string",
+                        description:
+                          "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
                       },
                     },
                     required: ["type", "value"],
@@ -32103,7 +32702,7 @@ export const runtimeOperationContractData = [
         text: {
           type: "string",
           description:
-            "Replacement visible text when mode is text, or JavaScript expression source when mode is expression.",
+            "Replacement visible text when mode is text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules.",
         },
         mode: {
           description:
@@ -32186,7 +32785,8 @@ export const runtimeOperationContractData = [
             },
             text: {
               type: "string",
-              description: "Visible text or JavaScript expression source.",
+              description:
+                "Visible text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules.",
             },
             mode: {
               default: "text",
@@ -36394,7 +36994,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -36428,7 +37028,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -36454,7 +37054,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
           },
           required: ["name", "method", "url", "headers"],
@@ -36575,7 +37175,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -36609,7 +37209,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -36635,7 +37235,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
           },
           required: [],
@@ -36813,7 +37413,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -36847,7 +37447,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -36873,7 +37473,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
           },
           required: ["name", "method", "url", "headers"],
@@ -37003,7 +37603,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -37037,7 +37637,7 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
                   },
                 },
                 required: ["name", "value"],
@@ -37063,7 +37663,7 @@ export const runtimeOperationContractData = [
                 },
               ],
               description:
-                'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.',
+                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
           },
           required: ["name", "method", "url", "headers"],

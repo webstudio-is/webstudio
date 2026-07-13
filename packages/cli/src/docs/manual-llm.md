@@ -412,6 +412,8 @@ For responsive page work, use Builder breakpoints as the source of truth:
 
 ## Values vs Bindings
 
+Before authoring unfamiliar expressions, read `webstudio://project/expressions` with MCP `resources/read` or `webstudio mcp read-resource webstudio://project/expressions`. It documents the supported expression subset, method allowlist, scope, Collection context, and validation limits.
+
 - Use direct value tools for fixed content. For one visible text child, use `update-text` with plain `text`. For a bounded multi-instance literal replacement, use `replace-text` with `find`, `replace`, `pagePath` or `pageId`, and `limit`; it does not change expression children. Use `replace-prop-text` for bounded changes inside static string props, optionally limited to prop names or instance ids; it never changes dynamic bindings. For static props such as `aria-label`, `alt`, `id`, `class`, `href`, or button labels stored as props, use `update-props` with the prop's direct type/value.
 - Use `bind-props` only when the prop must stay dynamic: an expression, resource result, action, or existing scoped runtime context such as `system`. Do not use `bind-props` just to set a fixed string.
 - Direct prop string example: `{"updates":[{"instanceId":"button-id","name":"aria-label","type":"string","value":"Open menu"}]}`.
@@ -426,6 +428,8 @@ For responsive page work, use Builder breakpoints as the source of truth:
 - Use prop-bound resources for actions. A resource created without `scopeInstanceId` and bound to a component prop such as Form `action` with `bind-props` and `binding.type: "resource"` becomes an action resource in the page resource `action` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and anything that should run only from an explicit form/action flow.
 - For dynamic resource query parameters prefer `searchParams`, for example `{"name":"tag","value":"filters.tag"}`. Use `{"type":"literal","value":"website"}` for fixed request text. Header values can be expressions such as `"\"Bearer \" + auth.token"`. Body can be an object expression, including GraphQL payloads such as `{ query: "...", variables: { slug: system.params.slug } }`.
 - Resource methods are `get`, `post`, `put`, and `delete`. Optional resource controls are `graphql` and `system`. Use `control:"graphql"` for GraphQL POST resources with query bodies. Use `control:"system"` for built-in local resource URLs such as `"/$resources/current-date"` and for resources reading the built-in `system` parameter. The built-in system fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`; do not use `system.path`.
+- Whenever an array or object from a resource or data variable should render repeated UI, use Collection. Insert `ws:collection` with `insert-component`, bind its `data` prop to the complete iterable rather than the response wrapper or one indexed item, preserve the generated `item`/`itemKey` parameters, and bind descendants to the current iteration context. Wrap multiple repeated siblings in one Element, and give repeated Radix items stable unique `value` bindings.
+- Expressions are single JavaScript expressions, not statements or functions. Functions, arrow functions, classes, `new`, `this`, `await`, imports, arbitrary calls, increment/decrement, and assignment outside actions are unsupported. Prefer optional chaining, nullish coalescing, ternaries, property/index access, operators, and the documented string/array methods.
 
 ## Pick Read Command
 

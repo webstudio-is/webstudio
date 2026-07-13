@@ -242,6 +242,7 @@ Useful resources:
 - `webstudio://project/tools`: full operation catalog; read only when focused metadata is insufficient
 - `webstudio://project/components`: full component catalog with props, states, and content model composition constraints; read only when `components.summary`, `components.find`, and `components.get` are insufficient
 - `webstudio://project/guide`: concise discovery guide
+- `webstudio://project/expressions`: expression syntax, scope, supported methods, bindings, Collection iteration context, and verification
 - `webstudio://project/accessibility-review`: evidence-based LLM accessibility-review workflow using project checks, preview, and screenshots
 
 ## MCP SDK Client Imports

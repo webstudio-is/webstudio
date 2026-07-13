@@ -140,7 +140,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     outputSchema: getTestInputSchema(
       z.discriminatedUnion("verbose", [
         z.object({
-          contractVersion: z.literal(1),
+          contractVersion: z.literal(2),
           projectVersion: z.number(),
           verbose: z.literal(false),
           findings: z.array(z.unknown()),
@@ -149,7 +149,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
           renderedFailureCount: z.number(),
         }),
         z.object({
-          contractVersion: z.literal(1),
+          contractVersion: z.literal(2),
           projectVersion: z.number(),
           verbose: z.literal(true),
           findings: z.array(z.unknown()),
@@ -598,13 +598,25 @@ describe("project session mcp adapter", () => {
     )?.outputSchema;
     expect(auditOutputSchema).toEqual(
       expect.objectContaining({
-        type: "object",
-        required: ["ok", "data", "meta"],
-        properties: expect.objectContaining({
-          ok: { type: "boolean", const: true },
-          data: expect.objectContaining({ oneOf: expect.any(Array) }),
-          meta: { type: "object", additionalProperties: true },
-        }),
+        oneOf: [
+          expect.objectContaining({
+            required: ["ok", "data", "meta"],
+            properties: expect.objectContaining({
+              ok: { type: "boolean", const: true },
+              data: expect.objectContaining({ oneOf: expect.any(Array) }),
+            }),
+          }),
+          expect.objectContaining({
+            required: ["ok", "error", "meta"],
+            properties: expect.objectContaining({
+              ok: { type: "boolean", const: false },
+              data: expect.objectContaining({ oneOf: expect.any(Array) }),
+              error: expect.objectContaining({
+                required: ["code", "message"],
+              }),
+            }),
+          }),
+        ],
       })
     );
     expect(() =>
@@ -951,6 +963,10 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({ uri: "webstudio://project/components" }),
       expect.objectContaining({ uri: "webstudio://project/guide" }),
       expect.objectContaining({
+        uri: "webstudio://project/expressions",
+        mimeType: "text/markdown",
+      }),
+      expect.objectContaining({
         uri: "webstudio://project/accessibility-review",
         mimeType: "text/markdown",
       }),
@@ -1013,7 +1029,7 @@ describe("project session mcp adapter", () => {
 
   test("exposes the audit input and structured result through MCP", async () => {
     const auditResult = {
-      contractVersion: 1,
+      contractVersion: 2,
       projectVersion: 7,
       scopes: ["accessibility"],
       pageFilter: null,
@@ -1116,7 +1132,7 @@ describe("project session mcp adapter", () => {
         return createEnvelope({
           operationId: "project.audit",
           result: {
-            contractVersion: 1,
+            contractVersion: 2,
             projectVersion: 7,
             scopes: requestedScopes,
             pageFilter: null,
@@ -1168,17 +1184,28 @@ describe("project session mcp adapter", () => {
       fullPage: true,
       elapsedMs: 1,
       warnings: [],
+      navigation: {
+        requestedUrl: `http://127.0.0.1:5177${input.path}`,
+        finalUrl: `http://127.0.0.1:5177${input.path}`,
+        status: 200,
+        statusText: "OK",
+        mimeType: "text/html",
+        redirects: [],
+        documentReadyState: "complete",
+        generatedSiteRootPresent: true,
+        layoutStable: true,
+      },
       layout: {
         viewportWidth: input.viewport.width,
         viewportHeight: input.viewport.height,
         contentWidth:
-          input.viewport.width === 375
+          input.viewport.width === 390
             ? input.viewport.width + 20
             : input.viewport.width,
         contentHeight: 1200,
-        horizontalOverflow: input.viewport.width === 375,
+        horizontalOverflow: input.viewport.width === 390,
         images:
-          input.viewport.width === 375
+          input.viewport.width === 390
             ? [
                 {
                   instanceId: "broken",
@@ -1213,7 +1240,7 @@ describe("project session mcp adapter", () => {
               ]
             : [],
         resources:
-          input.viewport.width === 375
+          input.viewport.width === 390
             ? [
                 {
                   pathname: "/styles.css",
@@ -1259,23 +1286,23 @@ describe("project session mcp adapter", () => {
 
     expect(startPreview).toHaveBeenCalledTimes(1);
     expect(stopPreview).toHaveBeenCalledTimes(1);
-    expect(captureScreenshot).toHaveBeenCalledTimes(4);
+    expect(captureScreenshot).toHaveBeenCalledTimes(2);
     expect(captureScreenshot).toHaveBeenCalledWith(
       expect.objectContaining({
         path: "/",
         timeout: 10_000,
-        viewport: { width: 375, height: 812 },
+        viewport: { width: 390, height: 844 },
       })
     );
     expect(result.structuredContent.data).toMatchObject({
-      renderedCheckCount: 4,
+      renderedCheckCount: 2,
       renderedIssueCount: 6,
       renderedFailureCount: 0,
-      manualCheckCount: 2,
+      manualCheckCount: 3,
       renderedChecks: [
         expect.objectContaining({
           pageId: "home",
-          viewport: { width: 375, height: 812 },
+          viewport: { width: 390, height: 844 },
           issues: [
             "horizontal-overflow",
             "broken-image",
@@ -1310,11 +1337,10 @@ describe("project session mcp adapter", () => {
           ],
         }),
         expect.any(Object),
-        expect.any(Object),
-        expect.any(Object),
       ],
       renderedFailures: [],
       manualChecks: [
+        { checkId: "responsive-visual-review" },
         { checkId: "visual-contrast-review" },
         { checkId: "visual-hierarchy-review" },
       ],
@@ -1330,7 +1356,7 @@ describe("project session mcp adapter", () => {
       },
     });
 
-    expect(captureScreenshot).toHaveBeenCalledTimes(4);
+    expect(captureScreenshot).toHaveBeenCalledTimes(2);
     expect(stopPreview).toHaveBeenCalledTimes(2);
     expect(captureScreenshot).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1340,7 +1366,7 @@ describe("project session mcp adapter", () => {
     );
     expect(accessibilityResult.structuredContent.data).toMatchObject({
       scopes: ["accessibility"],
-      renderedCheckCount: 4,
+      renderedCheckCount: 2,
       renderedIssueCount: 1,
       renderedChecks: [
         expect.objectContaining({
@@ -1348,8 +1374,6 @@ describe("project session mcp adapter", () => {
           imageIssues: [],
           resourceIssues: [],
         }),
-        expect.any(Object),
-        expect.any(Object),
         expect.any(Object),
       ],
     });
@@ -1362,7 +1386,7 @@ describe("project session mcp adapter", () => {
     ).rejects.toThrow(/cannot be combined with cursor pagination/);
   });
 
-  test("keeps audit successful when rendered preview cannot start", async () => {
+  test("returns static audit data with an error when rendered preview cannot start", async () => {
     const executeOperation = createExecuteOperation(async ({ command }) => {
       if (command === "list-pages") {
         return createEnvelope({
@@ -1379,7 +1403,7 @@ describe("project session mcp adapter", () => {
       return createEnvelope({
         operationId: "project.audit",
         result: {
-          contractVersion: 1,
+          contractVersion: 2,
           projectVersion: 7,
           scopes: [],
           pageFilter: null,
@@ -1420,15 +1444,105 @@ describe("project session mcp adapter", () => {
       input: { rendered: true, verbose: true },
     });
 
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      ok: false,
+      error: {
+        code: "RENDERED_AUDIT_FAILED",
+        message: expect.stringContaining("completed no rendered checks"),
+      },
+    });
     expect(result.structuredContent.data).toMatchObject({
       renderedCheckCount: 0,
       renderedIssueCount: 0,
       renderedFailureCount: 1,
       renderedFailures: [
-        { message: "Rendered audit could not start: preview build failed" },
+        {
+          code: "RENDERED_AUDIT_PREVIEW_START_FAILED",
+          phase: "preview-start",
+          retryable: true,
+          remediation: expect.stringContaining("preview.start"),
+          message: "Rendered audit could not start: preview build failed",
+        },
       ],
       manualCheckCount: 3,
       manualChecks: [{ checkId: "responsive-visual-review" }],
+    });
+  });
+
+  test("includes actionable rendered failure summaries in compact output", async () => {
+    const executeOperation = createExecuteOperation(async ({ command }) => {
+      if (command === "list-pages") {
+        return createEnvelope({
+          operationId: "pages.list",
+          result: { pages: [{ id: "home", path: "/" }] },
+        });
+      }
+      if (command === "list-breakpoints") {
+        return createEnvelope({
+          operationId: "breakpoints.list",
+          result: { breakpoints: [] },
+        });
+      }
+      return createEnvelope({
+        operationId: "project.audit",
+        result: {
+          contractVersion: 2,
+          projectVersion: 1,
+          scopes: ["accessibility"],
+          pageFilter: null,
+          summary: {
+            total: 0,
+            selectedTotal: 0,
+            bySeverity: { error: 0, warning: 0, info: 0 },
+            byScope: {
+              accessibility: 0,
+              security: 0,
+              seo: 0,
+              assets: 0,
+              styles: 0,
+              performance: 0,
+            },
+          },
+          skippedCheckCount: 0,
+          manualCheckCount: 1,
+          renderedCheckCount: 0,
+          renderedIssueCount: 0,
+          renderedFailureCount: 0,
+          renderedFailureSummaries: [],
+          nextCursor: null,
+          verbose: false,
+          findings: [],
+        },
+      });
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      startPreview: vi.fn(async () => {
+        throw new Error("preview build failed");
+      }),
+      getPreviewStatus: vi.fn(),
+      stopPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
+    });
+
+    const result = await adapter.callTool({
+      name: "audit",
+      input: { rendered: true },
+    });
+
+    expect(result.structuredContent.data).toMatchObject({
+      renderedFailureCount: 1,
+      renderedFailureSummaries: [
+        {
+          code: "RENDERED_AUDIT_PREVIEW_START_FAILED",
+          phase: "preview-start",
+          remediation: expect.stringContaining("preview.start"),
+          count: 1,
+        },
+      ],
     });
   });
 
@@ -1444,6 +1558,15 @@ describe("project session mcp adapter", () => {
     await expect(
       adapter.callTool({ name: "audit", input: { rendered: true } })
     ).rejects.toThrow(/does not provide preview and screenshot capabilities/);
+    await expect(
+      adapter.callTool({
+        name: "audit",
+        input: { confirmationToken: "not-rendered" },
+      })
+    ).rejects.toThrow(/confirmationToken requires rendered: true/);
+    await expect(
+      adapter.callTool({ name: "audit", input: { rendered: false } })
+    ).rejects.toThrow(/Rendered audit options are unavailable/);
   });
 
   test("returns the computed transaction for dry-run mutations", async () => {
@@ -3204,6 +3327,14 @@ describe("project session mcp adapter", () => {
       name: "meta.guide",
       input: { brief: "Add JSON-LD structured data to the home page" },
     });
+    const collectionGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Render an array of blog posts as repeated cards" },
+    });
+    const expressionGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Bind a dynamic expression to a prop" },
+    });
     const getComponentToolNames = (
       getComponentDetails.structuredContent.data as {
         tools: { name: string }[];
@@ -3235,6 +3366,29 @@ describe("project session mcp adapter", () => {
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "components.get" }),
           expect.objectContaining({ name: "audit" }),
+        ]),
+      })
+    );
+    expect(collectionGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining("complete nested array/object"),
+          expect.stringContaining('Insert "ws:collection"'),
+          expect.stringContaining("current-item context"),
+          expect.stringContaining("stable unique id or slug"),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "components.get" }),
+        ]),
+      })
+    );
+    expect(expressionGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining("webstudio://project/expressions"),
+          expect.stringContaining("do not guess scoped identifier names"),
+          expect.stringContaining("one expression rather than a statement"),
+          expect.stringContaining("successful syntax validation"),
         ]),
       })
     );
@@ -3459,6 +3613,10 @@ describe("project session mcp adapter", () => {
     const jsonLdDetails = await adapter.callTool({
       name: "components.get",
       input: { component: "JsonLd" },
+    });
+    const collectionDetails = await adapter.callTool({
+      name: "components.get",
+      input: { component: "ws:collection" },
     });
     const italicDetails = await adapter.callTool({
       name: "components.get",
@@ -3935,6 +4093,21 @@ describe("project session mcp adapter", () => {
             control: "json-code",
             type: "string",
           }),
+        }),
+      })
+    );
+    expect(collectionDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "ws:collection",
+        description: expect.stringContaining("array or object"),
+        collectionUsage: expect.stringMatching(
+          /complete array or object.*renders its child structure once per entry/
+        ),
+        usage: expect.stringContaining("internal item/itemKey parameter"),
+        props: expect.objectContaining({
+          data: expect.objectContaining({ type: "json", required: true }),
+          item: expect.objectContaining({ type: "string" }),
+          itemKey: expect.objectContaining({ type: "string" }),
         }),
       })
     );
@@ -4663,7 +4836,7 @@ describe("project session mcp adapter", () => {
         },
       })
     ).rejects.toThrow(
-      "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, or source."
+      "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, or imageDomains."
     );
   });
 
@@ -5111,6 +5284,9 @@ describe("project session mcp adapter", () => {
     const guide = await adapter.readResource({
       uri: "webstudio://project/guide",
     });
+    const expressions = await adapter.readResource({
+      uri: "webstudio://project/expressions",
+    });
     const accessibilityReview = await adapter.readResource({
       uri: "webstudio://project/accessibility-review",
     });
@@ -5177,6 +5353,21 @@ describe("project session mcp adapter", () => {
     );
     expect(accessibilityReview.contents[0]?.text).toContain(
       "Community-Access/accessibility-agents"
+    );
+    expect(expressions.contents[0]).toEqual(
+      expect.objectContaining({
+        mimeType: "text/markdown",
+        text: expect.stringContaining("# Webstudio Expressions"),
+      })
+    );
+    expect(expressions.contents[0]?.text).toContain("Supported string methods");
+    expect(expressions.contents[0]?.text).toContain("- `toLowerCase`");
+    expect(expressions.contents[0]?.text).toContain("- `join`");
+    expect(expressions.contents[0]?.text).not.toContain(
+      "{{allowedStringMethods}}"
+    );
+    expect(expressions.contents[0]?.text).toContain(
+      "Collection creates internal current-item and current-key parameters"
     );
     const componentOverviewData = JSON.parse(
       componentsOverview.contents[0]?.text ?? "{}"
@@ -5401,6 +5592,92 @@ describe("project session mcp adapter", () => {
     } finally {
       await client.close();
       await server.close();
+    }
+  });
+
+  test("returns schema-valid rendered failures and stores their artifact manifest through the server", async () => {
+    const storeRenderedAuditArtifacts = vi.fn(async () => "/manifest.json");
+    const executeOperation = createExecuteOperation(async ({ command }) => {
+      if (command === "list-pages") {
+        return createEnvelope({
+          operationId: "pages.list",
+          result: { pages: [{ id: "home", path: "/" }] },
+        });
+      }
+      if (command === "list-breakpoints") {
+        return createEnvelope({
+          operationId: "breakpoints.list",
+          result: { breakpoints: [] },
+        });
+      }
+      return createEnvelope({
+        operationId: "project.audit",
+        result: {
+          contractVersion: 2,
+          projectVersion: 7,
+          scopes: ["accessibility"],
+          pageFilter: null,
+          summary: {
+            total: 0,
+            bySeverity: { error: 0, warning: 0, info: 0 },
+            byScope: { accessibility: 0 },
+          },
+          verbose: true,
+          findings: [],
+          skippedCheckCount: 0,
+          skippedChecks: [],
+          manualCheckCount: 1,
+          manualChecks: [{ checkId: "responsive-visual-review" }],
+          renderedCheckCount: 0,
+          renderedIssueCount: 0,
+          renderedFailureCount: 0,
+          renderedChecks: [],
+          renderedFailures: [],
+          nextCursor: null,
+        },
+      });
+    });
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      startPreview: vi.fn(async () => {
+        throw new Error("preview build failed");
+      }),
+      getPreviewStatus: vi.fn(),
+      stopPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
+      storeRenderedAuditArtifacts,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "audit",
+        arguments: { rendered: true, verbose: true },
+      });
+
+      expect(result).toMatchObject({
+        isError: true,
+        structuredContent: {
+          ok: false,
+          error: { code: "RENDERED_AUDIT_FAILED" },
+          data: { renderedFailureCount: 1 },
+        },
+      });
+      expect(storeRenderedAuditArtifacts).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId: "project-1",
+          projectVersion: 1,
+          failures: [
+            expect.objectContaining({
+              code: "RENDERED_AUDIT_PREVIEW_START_FAILED",
+            }),
+          ],
+        })
+      );
+    } finally {
+      await close();
     }
   });
 
@@ -5738,7 +6015,17 @@ describe("project session mcp adapter", () => {
             ok: false,
             error: {
               message: expect.stringContaining('"email":"user@example.com"'),
-              code: "MCP_TOOL_FAILED",
+              code: "INVALID_INPUT",
+              issues: expect.arrayContaining([
+                expect.objectContaining({
+                  path: ["email"],
+                  message: expect.any(String),
+                }),
+                expect.objectContaining({
+                  path: ["description"],
+                  message: expect.any(String),
+                }),
+              ]),
             },
             meta: {},
           },

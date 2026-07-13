@@ -23,6 +23,7 @@ import {
 import { schema, schemaOptions } from "./commands/schema";
 import { initFlow, initOptions } from "./commands/init-flow";
 import { registryInspect, registryInspectOptions } from "./commands/registry";
+import { audit, auditOptions } from "./commands/audit";
 import makeCLI from "yargs";
 import packageJson from "../package.json" with { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
@@ -66,9 +67,10 @@ const registerApiCommand = (
   );
 };
 
-const topLevelCommandNames: ReadonlySet<string> = new Set(
-  topLevelCliCommandMetadata.map((command) => command.command)
-);
+const topLevelCommandNames: ReadonlySet<string> = new Set([
+  ...topLevelCliCommandMetadata.map((command) => command.command),
+  "audit",
+]);
 
 const mcpOnlyToolNames = new Set(
   listProjectSessionMcpTools(publicApiOperations)
@@ -135,6 +137,9 @@ export const getTopLevelMcpToolForwardArgs = (args: readonly string[]) => {
   if (tool === undefined) {
     return;
   }
+  if (tool === "screenshot" && rest[0]?.trimStart().startsWith("{")) {
+    return ["mcp", "single-op-call", tool, ...rest];
+  }
   if (
     /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/i.test(tool) ||
     mcpOnlyToolNames.has(tool)
@@ -197,6 +202,12 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
     screenshot
   );
   cmd.command(
+    ["audit"],
+    "Audit project accessibility, SEO, security, assets, styles, and performance",
+    auditOptions,
+    audit
+  );
+  cmd.command(
     ["registry"],
     "Inspect external component registries without installing items",
     (yargs: CommonYargsArgv) =>
@@ -212,6 +223,9 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   const { direct, grouped } = getGroupedCommands(cliCommandMetadata);
   for (const metadata of direct) {
+    if (metadata.operation === "audit") {
+      continue;
+    }
     registerApiCommand(cmd, metadata.cliCommand, metadata);
   }
   for (const [group, commands] of grouped) {

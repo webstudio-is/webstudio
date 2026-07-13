@@ -1503,7 +1503,7 @@ const resourceExpressionInput = z
     z.object({ type: z.literal("literal"), value: z.string() }),
   ])
   .describe(
-    'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.'
+    'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.'
   );
 
 const resourceExpressionEntryInput = z.object({

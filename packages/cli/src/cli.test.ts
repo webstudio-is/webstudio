@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { describe, expect, test, vi } from "vitest";
 import makeCLI from "yargs";
 import {
@@ -163,7 +164,25 @@ describe("registerCommands", () => {
       '{"goal":"design-system-page"}',
     ]);
     expect(getTopLevelMcpToolForwardArgs(["permissions"])).toBeUndefined();
+    expect(getTopLevelMcpToolForwardArgs(["audit"])).toBeUndefined();
     expect(getTopLevelMcpToolForwardArgs(["unknown-command"])).toBeUndefined();
+  });
+
+  test("forwards screenshot JSON input without treating it as a URL", () => {
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "screenshot",
+        '{"path":"/pricing","viewport":{"width":1440,"height":900}}',
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "screenshot",
+      '{"path":"/pricing","viewport":{"width":1440,"height":900}}',
+    ]);
+    expect(
+      getTopLevelMcpToolForwardArgs(["screenshot", "https://example.com"])
+    ).toBeUndefined();
   });
 
   test("suggests mcp single-op-call for top-level dotted tool names", () => {
@@ -210,6 +229,7 @@ describe("registerCommands", () => {
       expect.arrayContaining([
         "preview",
         "screenshot [url]",
+        "audit",
         "import",
         "permissions",
         "publish",
@@ -275,6 +295,43 @@ describe("registerCommands", () => {
     const domainsHelp = await getHelpOutput(["domains", "--help"]);
     expect(domainsHelp).toContain("webstudio domains list");
     expect(domainsHelp).toContain("webstudio domains create");
+  });
+
+  test("shows audit-specific flags and examples", async () => {
+    const output = await getHelpOutput(["audit", "--help"]);
+
+    expect(output).toContain("webstudio audit");
+    expect(output).toContain("--scopes");
+    expect(output).toContain("--severities");
+    expect(output).toContain("--page-path");
+    expect(output).toContain("--page-id");
+    expect(output).toContain("--limit");
+    expect(output).toContain("--cursor");
+    expect(output).toContain("--verbose");
+    expect(output).toContain("--rendered");
+    expect(output).toContain("--route-example");
+    expect(output).toContain("--image-domain");
+    expect(output).toContain("--confirm-large-run");
+    expect(output).not.toContain("single-op-call <tool>");
+  });
+
+  test("keeps every documented audit CLI example compatible with audit help", async () => {
+    const docs = await readFile(
+      new URL("./docs/api-use-cases.md", import.meta.url),
+      "utf8"
+    );
+    const commands = docs
+      .split("\n")
+      .filter((line) => line.startsWith("- webstudio audit "))
+      .map((line) => line.slice("- webstudio ".length).trim());
+
+    expect(commands.length).toBeGreaterThan(0);
+    for (const command of commands) {
+      const args = command.split(/\s+/).filter((arg) => arg !== "--json");
+      const output = await getHelpOutput([...args, "--help"]);
+      expect(output).toContain("webstudio audit");
+      expect(output).not.toContain("single-op-call <tool>");
+    }
   });
 
   test("documents registry inspection as a read-only nested command", async () => {

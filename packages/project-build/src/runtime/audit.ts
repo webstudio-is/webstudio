@@ -26,7 +26,26 @@ export const auditScope = z.enum([
 ]);
 
 export const auditSeverity = z.enum(["error", "warning", "info"]);
-export const auditContractVersion = 1 as const;
+export const auditContractVersion = 2 as const;
+export const renderedAuditManifestVersion = 1 as const;
+const getAuditPagePath = (...args: Parameters<typeof getSerializedPagePath>) =>
+  getSerializedPagePath(...args) || "/";
+
+const canonicalizeAuditMatchPagePaths = (
+  match: Record<string, unknown>
+): Record<string, unknown> => ({
+  ...match,
+  ...(typeof match.pagePath === "string"
+    ? { pagePath: match.pagePath || "/" }
+    : {}),
+  ...(Array.isArray(match.pagePaths)
+    ? {
+        pagePaths: match.pagePaths.map((pagePath) =>
+          typeof pagePath === "string" ? pagePath || "/" : pagePath
+        ),
+      }
+    : {}),
+});
 
 export const auditRuleId = z.enum([
   "missing-alt",
@@ -196,6 +215,7 @@ export const renderedAuditCheck = z.object({
   }),
   screenshotPath: z.string(),
   layout: z.object({
+    documentType: z.string().optional(),
     viewportWidth: z.number().int().positive(),
     viewportHeight: z.number().int().positive(),
     contentWidth: z.number().int().positive(),
@@ -204,10 +224,13 @@ export const renderedAuditCheck = z.object({
     images: z.array(
       z.object({
         instanceId: z.string().optional(),
+        sourcePathname: z.string().optional(),
         loading: z.string(),
         complete: z.boolean(),
         naturalWidth: z.number().nonnegative(),
         naturalHeight: z.number().nonnegative(),
+        selectedSourceWidth: z.number().nonnegative().optional(),
+        selectedSourceHeight: z.number().nonnegative().optional(),
         renderedWidth: z.number().nonnegative(),
         renderedHeight: z.number().nonnegative(),
         top: z.number(),
@@ -243,9 +266,12 @@ export const renderedAuditCheck = z.object({
         "oversized-image",
       ]),
       instanceId: z.string().optional(),
+      sourcePathname: z.string().optional(),
       loading: z.string(),
       naturalWidth: z.number().nonnegative(),
       naturalHeight: z.number().nonnegative(),
+      selectedSourceWidth: z.number().nonnegative().optional(),
+      selectedSourceHeight: z.number().nonnegative().optional(),
       renderedWidth: z.number().nonnegative(),
       renderedHeight: z.number().nonnegative(),
       top: z.number(),
@@ -266,6 +292,31 @@ export const renderedAuditCheck = z.object({
 });
 
 export const renderedAuditFailure = z.object({
+  code: z.enum([
+    "RENDERED_AUDIT_PREPARATION_FAILED",
+    "RENDERED_AUDIT_NO_STATIC_PAGES",
+    "RENDERED_AUDIT_CAPTURE_LIMIT_EXCEEDED",
+    "RENDERED_AUDIT_CONFIRMATION_REQUIRED",
+    "RENDERED_AUDIT_CONFIRMATION_INVALID",
+    "RENDERED_AUDIT_PREVIEW_START_FAILED",
+    "RENDERED_AUDIT_LAYOUT_METRICS_MISSING",
+    "RENDERED_AUDIT_HTTP_ERROR",
+    "RENDERED_AUDIT_NAVIGATION_EVIDENCE_MISSING",
+    "RENDERED_AUDIT_ORIGIN_MISMATCH",
+    "RENDERED_AUDIT_ROUTE_MISMATCH",
+    "RENDERED_AUDIT_DOCUMENT_NOT_GENERATED_SITE",
+    "RENDERED_AUDIT_LAYOUT_UNSTABLE",
+    "RENDERED_AUDIT_SCREENSHOT_FAILED",
+    "RENDERED_AUDIT_CAPTURE_TIMEOUT",
+    "RENDERED_AUDIT_PAGE_TIMEOUT",
+    "RENDERED_AUDIT_OVERALL_TIMEOUT",
+    "RENDERED_AUDIT_CANCELLED",
+    "RENDERED_AUDIT_PREVIEW_STOP_FAILED",
+    "RENDERED_AUDIT_ARTIFACT_WRITE_FAILED",
+  ]),
+  phase: z.enum(["planning", "preview-start", "capture", "preview-stop"]),
+  retryable: z.boolean(),
+  remediation: z.string(),
   pageId: z.string().optional(),
   pagePath: z.string().optional(),
   viewport: z
@@ -274,7 +325,74 @@ export const renderedAuditFailure = z.object({
       height: z.number().int().positive(),
     })
     .optional(),
+  screenshotPath: z.string().optional(),
   message: z.string(),
+});
+
+export const renderedAuditCaptureStatus = z.object({
+  pageId: z.string(),
+  pagePath: z.string(),
+  viewport: z.object({
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+  }),
+  status: z.enum(["passed", "issues", "skipped", "failed"]),
+  screenshotPath: z.string().optional(),
+  failureCode: renderedAuditFailure.shape.code.optional(),
+});
+
+export const renderedAuditCaptureSummary = z.object({
+  planned: z.number().int().nonnegative(),
+  passed: z.number().int().nonnegative(),
+  issues: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+});
+
+export const renderedAuditArtifactManifestSummary = z.object({
+  version: z.literal(renderedAuditManifestVersion),
+  path: z.string(),
+  screenshotCount: z.number().int().nonnegative(),
+});
+
+export const renderedAuditFailureSummary = renderedAuditFailure
+  .pick({
+    code: true,
+    phase: true,
+    remediation: true,
+  })
+  .extend({ count: z.number().int().positive() });
+
+export const renderedAuditPlan = z.object({
+  version: z.literal(1),
+  pages: z.array(z.object({ pageId: z.string(), pagePath: z.string() })),
+  excludedPages: z.array(
+    z.object({
+      pageId: z.string(),
+      pagePath: z.string(),
+      reason: z.literal("dynamic-route-needs-example"),
+    })
+  ),
+  viewports: z.array(
+    z.object({
+      width: z.number().int().positive(),
+      height: z.number().int().positive(),
+      purposes: z.array(z.string()).min(1),
+    })
+  ),
+  checks: z.array(
+    z.enum([
+      "horizontal-overflow",
+      "broken-image",
+      "eager-below-fold-image",
+      "oversized-image",
+      "render-blocking-resource",
+      "legacy-font-format",
+    ])
+  ),
+  captureCount: z.number().int().nonnegative(),
+  confirmationToken: z.string().optional(),
+  confirmationExpiresAt: z.string().datetime().optional(),
 });
 
 const auditResultBase = z.object({
@@ -294,12 +412,17 @@ const auditResultBase = z.object({
   renderedCheckCount: z.number().int().nonnegative(),
   renderedIssueCount: z.number().int().nonnegative(),
   renderedFailureCount: z.number().int().nonnegative(),
+  renderedPlan: renderedAuditPlan.nullable(),
+  renderedCaptureSummary: renderedAuditCaptureSummary,
+  renderedCaptureStatuses: z.array(renderedAuditCaptureStatus),
+  renderedArtifactManifest: renderedAuditArtifactManifestSummary.nullable(),
   nextCursor: z.string().nullable(),
 });
 
 export const compactAuditResult = auditResultBase.extend({
   verbose: z.literal(false),
   findings: z.array(compactAuditFinding),
+  renderedFailureSummaries: z.array(renderedAuditFailureSummary),
 });
 
 export const verboseAuditResult = auditResultBase.extend({
@@ -908,7 +1031,7 @@ const getSkippedChecks = (
           message: `${field} is expression-backed and cannot be audited statically.`,
           location: {
             pageId: page.id,
-            pagePath: getSerializedPagePath(pages, page),
+            pagePath: getAuditPagePath(pages, page),
           },
         });
       }
@@ -958,20 +1081,34 @@ export function audit(
   }
   const scopes = input.scopes ?? auditScope.options;
   const selectedSeverities = input.severities ?? auditSeverity.options;
+  let selectedPage: ReturnType<typeof findSerializedPageByInput> | undefined;
+  let normalizedInput = input;
+  if (input.pageId !== undefined || input.pagePath !== undefined) {
+    const pages = getSerializedPages(state);
+    selectedPage = findSerializedPageByInput(pages, input);
+    if (selectedPage === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
+    }
+    normalizedInput = {
+      ...input,
+      pageId: selectedPage.id,
+      pagePath: undefined,
+    };
+  }
   const cursorSignature = JSON.stringify({
     scopes: [...scopes].sort(),
     severities: [...selectedSeverities].sort(),
-    pageId: input.pageId,
-    pagePath: input.pagePath,
+    pageId: selectedPage?.id,
     verbose: input.verbose === true,
   });
   const raw = analyzeProject(state, {
     scopes,
-    pageId: input.pageId,
-    pagePath: input.pagePath,
+    pageId: normalizedInput.pageId,
+    pagePath: normalizedInput.pagePath,
     limit: Number.MAX_SAFE_INTEGER,
   });
   const allFindings = raw.matches
+    .map(canonicalizeAuditMatchPagePaths)
     .map(normalizeAuditFinding)
     .sort(
       (left, right) =>
@@ -1024,22 +1161,18 @@ export function audit(
     ])
   ) as AuditSummary["byScope"];
   let pageFilter: AuditResult["pageFilter"] = null;
-  if (input.pageId !== undefined || input.pagePath !== undefined) {
+  if (selectedPage !== undefined) {
     const pages = getSerializedPages(state);
-    const page = findSerializedPageByInput(pages, input);
-    if (page === undefined) {
-      return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
-    }
     pageFilter = {
-      pageId: page.id,
-      pagePath: getSerializedPagePath(pages, page),
+      pageId: selectedPage.id,
+      pagePath: getAuditPagePath(pages, selectedPage),
       projectWideScopes: scopes.filter(
         (scope) =>
           scope === "assets" || scope === "styles" || scope === "performance"
       ),
     };
   }
-  const skippedChecks = getSkippedChecks(state, input, scopes);
+  const skippedChecks = getSkippedChecks(state, normalizedInput, scopes);
   const manualChecks = [
     ...(scopes.some((scope) =>
       ["accessibility", "styles", "performance"].includes(scope)
@@ -1050,7 +1183,7 @@ export function audit(
             message:
               "Check responsive layout, overflow, clipping, and text wrapping at project breakpoints.",
             workflow:
-              "Preview the project and capture screenshots at desktop and every breakpoint edge. Treat screenshot.layout.horizontalOverflow as deterministic overflow evidence, then inspect clipping and text wrapping with vision.",
+              "Preview the project and capture a familiar device viewport inside every breakpoint range. Treat screenshot.layout.horizontalOverflow as deterministic overflow evidence, then inspect clipping and text wrapping with vision.",
           },
         ]
       : []),
@@ -1090,6 +1223,17 @@ export function audit(
     renderedCheckCount: 0,
     renderedIssueCount: 0,
     renderedFailureCount: 0,
+    renderedFailureSummaries: [],
+    renderedPlan: null,
+    renderedCaptureSummary: {
+      planned: 0,
+      passed: 0,
+      issues: 0,
+      skipped: 0,
+      failed: 0,
+    },
+    renderedCaptureStatuses: [],
+    renderedArtifactManifest: null,
     nextCursor:
       offset + limit < findings.length
         ? encodeCursor(context.projectVersion, offset + limit, cursorSignature)
@@ -1100,8 +1244,8 @@ export function audit(
       ...resultBase,
       verbose: true,
       findings: paginatedFindings,
-      skippedChecks,
-      manualChecks,
+      skippedChecks: offset === 0 ? skippedChecks : [],
+      manualChecks: offset === 0 ? manualChecks : [],
       renderedChecks: [],
       renderedFailures: [],
     });

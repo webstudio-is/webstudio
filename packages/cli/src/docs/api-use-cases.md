@@ -56,11 +56,13 @@ Commands:
 - MCP tool: meta.get_more_tools {"brief":"update-styles"}
 - webstudio mcp list-resources
 - webstudio mcp read-resource webstudio://project/guide
+- webstudio mcp read-resource webstudio://project/expressions
 
 Notes:
 
 - Use `webstudio schema mcp` for a tiny machine-readable MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` or focused `meta.get_more_tools` calls only when exact input schemas are needed.
 - Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Protocol clients can use `resources/list` and `resources/read`; shell agents can use `webstudio mcp list-resources` and `webstudio mcp read-resource <uri>`. Read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused tools are insufficient.
+- Read `webstudio://project/expressions` before authoring unfamiliar computed text, prop bindings, resource expressions, actions, or Collection item bindings.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 
 ## Inspect external shadcn registry items
@@ -148,9 +150,9 @@ Notes:
 - From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
 - Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
-- Preview isolates generated app dependencies under `.webstudio/preview` by linking to the CLI package dependency tree.
+- Preview installs generated app dependencies under `.webstudio/preview` and reuses them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-- If preview fails with a missing generated-app command/package such as react-router, react-router-serve, or vite, install dependencies for the CLI package and retry.
+- If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 - When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches. Pass expectedText for explicit pass/fail current-screen text assertions with found and missing text. Pass expectedVisual for pass/fail limits on pixel mismatch percentage, changed-region count, or the overall dominant color/brightness direction.
 - If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.
 - Compare the PNG, OCR text evidence, and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
@@ -874,9 +876,12 @@ Notes:
 Commands:
 
 - webstudio audit --json
-- webstudio audit --scopes accessibility,seo --json
+- webstudio audit --scopes accessibility --scopes seo --json
 - webstudio audit --page-path /pricing --json
 - webstudio audit --scopes accessibility --verbose --json
+- webstudio audit --rendered --page-path /pricing --json
+- webstudio audit --rendered --route-example post=/blog/hello --json
+- webstudio audit --rendered --image-domain images.example.com --json
 - MCP tool: audit {}
 - MCP tool: audit {"scopes":["accessibility","security"],"severities":["error","warning"]}
 - MCP tool: audit {"scopes":["accessibility"],"verbose":true}
@@ -893,12 +898,21 @@ Notes:
 - Expression-, resource-, and parameter-backed values that cannot be checked reliably appear in `skippedChecks`; they are not treated as passing or failing.
 - Page filters apply to page-owned accessibility, security, and SEO checks. Asset and style usage remain project-wide to avoid false unused findings.
 - Continue paginated results with `cursor`. Restart the audit if the project version changes.
+- Verbose skipped-check and manual-check details are included on the first findings page only; their total counts remain available on every page.
 - `manualChecks` describes responsive, hierarchy, and contrast checks that require preview screenshots and vision.
 - Focused audits return only manual checks relevant to their selected scopes.
 - In a long-lived MCP session, `{"rendered":true}` reuses preview and screenshot
   tools to capture every static page at mobile, desktop, and Builder breakpoint
   edges. Compact output reports rendered check/issue/failure counts; verbose
   output includes screenshot paths and measured layout dimensions.
+- Dynamic route templates are skipped unless `--route-example <pageId>=<path>`
+  (or MCP `routeExamples`) supplies a concrete path. The path must not contain
+  unresolved `:` or `*` parameters.
+- Plans above 120 captures return a short-lived confirmation token. Review the
+  unchanged plan, then rerun with `--confirm-large-run` and
+  `--confirmation-token`.
+- Detailed rendered evidence is stored in a versioned manifest under
+  `.webstudio/audits`; compact output includes its path and screenshot count.
 - Rendered checks also report broken images, eager images below the fold, and
   image sources more than 2x their rendered dimensions in both axes, including
   Webstudio instance ids and measured dimensions when available.
@@ -964,6 +978,25 @@ Notes:
 - For read data, expose GET resources as scoped data variables with `scopeInstanceId`/`dataSourceName` and read the loaded result from the resource result wrapper, usually `.data`.
 - For writes, webhooks, GraphQL submissions, and deletes, prefer unscoped resources bound to Form `action` props so they become action resources instead of auto-loaded read resources.
 - Use direct props for fixed values and prop bindings only when a prop must read a data variable, resource, action, or documented runtime context value such as `system`.
+
+## Render an array or object as repeated content
+
+Commands:
+
+- MCP tool: components.get {"component":"ws:collection"}
+- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"ws:collection"}
+- MCP tool: inspect-instance {"instanceId":"<collectionId>","include":["props","bindings","children"]}
+- MCP tool: bind-props {"bindings":[{"instanceId":"<collectionId>","name":"data","binding":{"type":"expression","value":"posts.data"}}]}
+
+Notes:
+
+- Use Collection whenever an array or object from a resource or data variable should render a list, grid, cards, table rows, options, tabs, or other repeated UI.
+- Bind the Collection `data` prop to the complete array or object. Do not bind the resource response wrapper or one indexed item. External resource arrays are commonly nested under the scoped resource result's `data` field or deeper.
+- Insert Collection with `insert-component` so Webstudio creates its internal current-item and current-key parameters. Preserve those generated parameters; they are scoped runtime context, not public records to create, replace, or delete.
+- Collection renders its child structure once for every entry. Bind descendant text and props to the current item. Array iteration exposes the item; object iteration exposes its key and value.
+- Wrap multiple repeated sibling instances in one Element inside Collection.
+- For repeated Radix items such as accordion items, tabs, or menu options, bind a stable unique id or slug to every required `value` prop.
+- See the [Collection documentation](https://docs.webstudio.is/university/core-components/collection) for the equivalent Builder workflow.
 
 ## Support dynamic runtime behavior
 

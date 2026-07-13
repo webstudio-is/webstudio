@@ -1261,7 +1261,7 @@ export const deleteAssetCommandOptions = (yargs: CommonYargsArgv) =>
     "Required. Confirm deleting asset records"
   );
 
-type ApiCommandOptions = {
+export type ApiCommandOptions = {
   command: ApiCommandName;
   json?: boolean;
   include?: string[];
@@ -1356,7 +1356,9 @@ type ApiCommandOptions = {
   sort?: "name" | "usage" | "size" | "createdAt";
   cursor?: string;
   limit?: number;
-  scopes?: Array<"accessibility" | "security" | "seo" | "assets" | "styles">;
+  scopes?: Array<
+    "accessibility" | "security" | "seo" | "assets" | "styles" | "performance"
+  >;
   severities?: Array<"error" | "warning" | "info">;
   pageId?: string;
   pagePath?: string;
