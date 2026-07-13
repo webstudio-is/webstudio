@@ -106,6 +106,22 @@ const parseOperationInput = <Schema extends z.ZodTypeAny>(
   throw result.error;
 };
 
+const bindExpressionInput = (
+  state: BuilderState,
+  instanceId: string,
+  expression: string
+) => {
+  if (state.instances === undefined || state.dataSources === undefined) {
+    return expression;
+  }
+  return data.bindExpressionToInstanceScope({
+    expression,
+    instanceId,
+    instances: state.instances,
+    dataSources: state.dataSources,
+  });
+};
+
 const runtimeOperation = <
   Id extends string,
   Schema extends z.ZodTypeAny,
@@ -956,11 +972,29 @@ export const builderRuntimeOperations = [
     "instances.updateProps",
     api("update-props", "updateProps", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props"],
+      readNamespaces: ["instances", "props", "dataSources"],
       writeNamespaces: ["props"],
     }),
     props.propUpdatesInput,
-    ({ state, input, context }) => props.updateProps(state, input, context)
+    ({ state, input, context }) =>
+      props.updateProps(
+        state,
+        {
+          updates: input.updates.map((update) =>
+            update.type === "expression"
+              ? {
+                  ...update,
+                  value: bindExpressionInput(
+                    state,
+                    update.instanceId,
+                    update.value
+                  ),
+                }
+              : update
+          ),
+        },
+        context
+      )
   ),
   runtimeOperation(
     "instances.replacePropText",
@@ -991,7 +1025,28 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["props"],
     }),
     props.propBindingsInput,
-    ({ state, input, context }) => props.bindProps(state, input, context)
+    ({ state, input, context }) =>
+      props.bindProps(
+        state,
+        {
+          bindings: input.bindings.map((binding) =>
+            binding.binding.type === "expression"
+              ? {
+                  ...binding,
+                  binding: {
+                    ...binding.binding,
+                    value: bindExpressionInput(
+                      state,
+                      binding.instanceId,
+                      binding.binding.value
+                    ),
+                  },
+                }
+              : binding
+          ),
+        },
+        context
+      )
   ),
   runtimeOperation(
     "instances.listTexts",
@@ -1004,12 +1059,21 @@ export const builderRuntimeOperations = [
     "instances.updateText",
     api("update-text", "updateText", "edit"),
     mutationContract({
-      readNamespaces: ["instances"],
+      readNamespaces: ["instances", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.updateTextInstanceInput,
-    ({ state, input }) => instances.updateTextInstance(state, input)
+    ({ state, input }) =>
+      instances.updateTextInstance(
+        state,
+        input.mode === "expression"
+          ? {
+              ...input,
+              text: bindExpressionInput(state, input.instanceId, input.text),
+            }
+          : input
+      )
   ),
   runtimeOperation(
     "instances.replaceText",
@@ -1026,12 +1090,21 @@ export const builderRuntimeOperations = [
     "instances.setTextContent",
     api("set-text-content", "setTextContent", "edit"),
     mutationContract({
-      readNamespaces: ["instances"],
+      readNamespaces: ["instances", "dataSources"],
       writeNamespaces: ["instances"],
       retryOnConflict: true,
     }),
     instances.setTextContentInput,
-    ({ state, input }) => instances.setTextContent(state, input)
+    ({ state, input }) =>
+      instances.setTextContent(
+        state,
+        input.operation === "set" && input.mode === "expression"
+          ? {
+              ...input,
+              text: bindExpressionInput(state, input.instanceId, input.text),
+            }
+          : input
+      )
   ),
   runtimeOperation(
     "instances.updateTextTree",

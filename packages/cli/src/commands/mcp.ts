@@ -350,8 +350,11 @@ const createMcpPreviewHandlers = ({
     | ReturnType<typeof createScreenshotCaptureSession>
     | undefined;
   const closeCaptureSession = async () => {
-    await captureSession?.close();
-    captureSession = undefined;
+    try {
+      await captureSession?.close();
+    } finally {
+      captureSession = undefined;
+    }
   };
   const rejectBuilderUrl = (value: string) => {
     let url: URL;
@@ -521,11 +524,34 @@ const createMcpPreviewHandlers = ({
       );
     },
     async stopPreview() {
-      await closeCaptureSession();
-      if (preview.stop === undefined) {
-        throw new Error("Preview controller cannot stop its owned preview.");
+      const errors: unknown[] = [];
+      try {
+        await closeCaptureSession();
+      } catch (error) {
+        errors.push(error);
       }
-      return await preview.stop();
+      let result;
+      try {
+        if (preview.stop === undefined) {
+          throw new Error("Preview controller cannot stop its owned preview.");
+        }
+        result = await preview.stop();
+      } catch (error) {
+        errors.push(error);
+      }
+      if (errors.length === 1) {
+        throw errors[0];
+      }
+      if (errors.length > 1) {
+        throw new AggregateError(
+          errors,
+          "Could not clean up screenshot capture or stop the owned preview."
+        );
+      }
+      if (result === undefined) {
+        throw new Error("Preview controller did not return its stopped state.");
+      }
+      return result;
     },
   };
 };
@@ -672,6 +698,7 @@ type McpSingleOpCallOptions = {
   dryRun?: boolean;
   refresh?: boolean;
   json?: boolean;
+  printSuccess?: (data: unknown) => void;
 };
 
 const mcpRunOptions = (yargs: CommonYargsArgv) =>
@@ -1225,7 +1252,11 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
         `single-op-call ${options.tool} succeeded in ${Date.now() - startedAt}ms${committed}`
       )}\n`
     );
-    printJson(result.structuredContent);
+    if (options.printSuccess === undefined) {
+      printJson(result.structuredContent);
+    } else {
+      options.printSuccess(result.structuredContent.data);
+    }
   } catch (error) {
     if (isHandledCliError(error)) {
       throw error;

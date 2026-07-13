@@ -206,6 +206,15 @@ export const manualAuditCheck = z.object({
   workflow: z.string(),
 });
 
+export const renderedAuditIssueKind = z.enum([
+  "horizontal-overflow",
+  "broken-image",
+  "eager-below-fold-image",
+  "oversized-image",
+  "render-blocking-resource",
+  "legacy-font-format",
+]);
+
 export const renderedAuditCheck = z.object({
   pageId: z.string(),
   pagePath: z.string(),
@@ -248,16 +257,7 @@ export const renderedAuditCheck = z.object({
       })
     ),
   }),
-  issues: z.array(
-    z.enum([
-      "horizontal-overflow",
-      "broken-image",
-      "eager-below-fold-image",
-      "oversized-image",
-      "render-blocking-resource",
-      "legacy-font-format",
-    ])
-  ),
+  issues: z.array(renderedAuditIssueKind),
   imageIssues: z.array(
     z.object({
       kind: z.enum([
@@ -363,6 +363,13 @@ export const renderedAuditFailureSummary = renderedAuditFailure
   })
   .extend({ count: z.number().int().positive() });
 
+export const renderedAuditIssueSummary = z.object({
+  kind: renderedAuditIssueKind,
+  count: z.number().int().positive(),
+  captureCount: z.number().int().positive(),
+  pagePaths: z.array(z.string()).max(5),
+});
+
 export const renderedAuditPlan = z.object({
   version: z.literal(1),
   pages: z.array(z.object({ pageId: z.string(), pagePath: z.string() })),
@@ -422,6 +429,7 @@ const auditResultBase = z.object({
 export const compactAuditResult = auditResultBase.extend({
   verbose: z.literal(false),
   findings: z.array(compactAuditFinding),
+  renderedIssueSummaries: z.array(renderedAuditIssueSummary),
   renderedFailureSummaries: z.array(renderedAuditFailureSummary),
 });
 
@@ -1222,6 +1230,7 @@ export function audit(
     manualCheckCount: manualChecks.length,
     renderedCheckCount: 0,
     renderedIssueCount: 0,
+    renderedIssueSummaries: [],
     renderedFailureCount: 0,
     renderedFailureSummaries: [],
     renderedPlan: null,

@@ -25,8 +25,10 @@ value is not dynamic.
 - An inner variable with the same name masks the outer variable.
 - A scoped resource result is a variable. Read its payload from its result
   wrapper, usually `resourceName.data`; APIs may nest the desired value deeper.
-- Collection creates internal current-item and current-key parameters. They are
-  available only to Collection descendants. Preserve those generated parameters.
+- Collection creates internal `collectionItem` and `collectionItemKey`
+  parameters. They are available only to that Collection's descendants.
+  Preserve those generated parameters and do not reuse encoded parameter ids
+  copied from another Collection.
 - Array Collection iteration exposes the current item. Object iteration exposes
   the current key and value.
 - The built-in `system` context is available only where supplied by the runtime.
@@ -82,9 +84,10 @@ inside actions. Use an explicit assignment there rather than `++` or `--`.
 Whenever an array or object should render repeated UI, insert `ws:collection`
 with `insert-component` and bind its `data` prop to the complete iterable. Do
 not bind the response wrapper or one indexed item. Collection renders its child
-structure once per entry; bind descendants to the generated current-item
-context. See `components.get {"component":"ws:collection"}` for the complete
-workflow.
+structure once per entry. Bind descendants with expressions such as
+`collectionItem.name`; for object iteration, `collectionItemKey` contains the
+current key. See `components.get {"component":"ws:collection"}` for the
+complete workflow.
 
 ## Verification
 

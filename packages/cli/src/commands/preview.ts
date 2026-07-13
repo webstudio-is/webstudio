@@ -12,7 +12,7 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import { chdir, cwd } from "node:process";
 import { promisify } from "node:util";
@@ -153,8 +153,10 @@ const localPreviewFiles = [
   ".webstudio/auth.json",
 ];
 
-const cliPackageRoot = fileURLToPath(new URL("../../", import.meta.url));
-const cliNodeModules = join(cliPackageRoot, "node_modules");
+export const getNodeModulesSearchPaths = (moduleUrl: string) =>
+  createRequire(moduleUrl).resolve.paths("webstudio-preview") ?? [];
+
+const cliNodeModulesCandidates = getNodeModulesSearchPaths(import.meta.url);
 const execFileAsync = promisify(execFile);
 const dependencyMarker = ".webstudio-preview-dependencies";
 const developmentCliVersion = "0.0.0-webstudio-version";
@@ -249,13 +251,15 @@ export const ensurePreviewDependencies = async (
     // Continue with the CLI dependency tree or an isolated install.
   }
 
-  if (await hasRequiredDependencies(cliNodeModules)) {
-    await operations.symlink(
-      cliNodeModules,
-      previewNodeModules,
-      operations.platform === "win32" ? "junction" : "dir"
-    );
-    return;
+  for (const cliNodeModules of cliNodeModulesCandidates) {
+    if (await hasRequiredDependencies(cliNodeModules)) {
+      await operations.symlink(
+        cliNodeModules,
+        previewNodeModules,
+        operations.platform === "win32" ? "junction" : "dir"
+      );
+      return;
+    }
   }
 
   try {

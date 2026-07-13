@@ -278,32 +278,64 @@ const getPageWebSocketUrl = async ({
   };
 };
 
-const waitForLifecycleEvent = async (
+type NavigationResult = {
+  errorText?: string;
+  frameId?: string;
+  loaderId?: string;
+};
+
+const navigateAndWaitForLifecycle = async (
   cdp: CdpSession,
   waitUntil: ScreenshotWaitUntil,
-  timeout: number
+  timeout: number,
+  navigate: () => Promise<NavigationResult>
 ) => {
-  if (waitUntil === "commit") {
-    return;
-  }
   const expected = lifecycleEventByWaitUntil[waitUntil];
-  await withDeadline(
-    new Promise<void>((resolveLifecycle) => {
-      const dispose = cdp.on("Page.lifecycleEvent", (params) => {
-        if (
-          typeof params === "object" &&
-          params !== null &&
-          "name" in params &&
-          params.name === expected
-        ) {
-          dispose();
-          resolveLifecycle();
-        }
-      });
-    }),
-    `Page did not reach ${waitUntil}`,
-    timeout
-  );
+  let navigation: NavigationResult | undefined;
+  const pendingEvents: unknown[] = [];
+  let resolveLifecycle: () => void = () => undefined;
+  const lifecycle = new Promise<void>((resolve) => {
+    resolveLifecycle = resolve;
+  });
+  const matchesNavigation = (params: unknown) => {
+    if (
+      navigation?.frameId === undefined ||
+      typeof params !== "object" ||
+      params === null ||
+      !("name" in params) ||
+      params.name !== expected ||
+      !("frameId" in params) ||
+      params.frameId !== navigation.frameId
+    ) {
+      return false;
+    }
+    return (
+      navigation.loaderId === undefined ||
+      ("loaderId" in params && params.loaderId === navigation.loaderId)
+    );
+  };
+  const dispose = cdp.on("Page.lifecycleEvent", (params) => {
+    if (navigation === undefined) {
+      pendingEvents.push(params);
+      return;
+    }
+    if (matchesNavigation(params)) {
+      resolveLifecycle();
+    }
+  });
+  try {
+    navigation = await navigate();
+    if (navigation.errorText !== undefined || waitUntil === "commit") {
+      return navigation;
+    }
+    if (pendingEvents.some(matchesNavigation)) {
+      resolveLifecycle();
+    }
+    await withDeadline(lifecycle, `Page did not reach ${waitUntil}`, timeout);
+    return navigation;
+  } finally {
+    dispose();
+  }
 };
 
 const waitForSelector = async (
@@ -1014,22 +1046,23 @@ const capturePageWithBrowserRuntime = async (
             redirectsByFrame.clear();
             documentResponsesByFrame.clear();
             const navigationStartedAt = Date.now();
-            const lifecycle = waitForLifecycleEvent(
+            const navigation = await navigateAndWaitForLifecycle(
               cdp,
               options.waitUntil,
-              options.timeout
+              options.timeout,
+              async () =>
+                await send<NavigationResult>(
+                  "Page.navigate",
+                  { url: options.url },
+                  options.timeout
+                )
             );
-            const navigation = await send<{
-              errorText?: string;
-              frameId?: string;
-            }>("Page.navigate", { url: options.url }, options.timeout);
             if (navigation.errorText !== undefined) {
               throw new Error(
                 `Browser navigation failed: ${navigation.errorText}`
               );
             }
             navigationFrameId = navigation.frameId;
-            await lifecycle;
             navigationMs = Date.now() - navigationStartedAt;
             previousUrl = options.url;
           } else {

@@ -1061,6 +1061,37 @@ test("reuses and closes one browser capture session for session screenshots", as
   expect(preview.stop).toHaveBeenCalledOnce();
 });
 
+test("stops the owned preview when browser capture cleanup fails", async () => {
+  const preview = {
+    status: vi.fn(() => ({ url: "http://127.0.0.1:3000/", running: true })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+    stop: vi.fn(async () => ({ url: "", running: false })),
+  };
+  const cleanupError = new Error("browser cleanup failed");
+  const createCaptureSession = vi.fn(() => ({
+    capture: createCaptureScreenshotMock([]),
+    capturePage: vi.fn(async () => []),
+    close: vi.fn(async () => {
+      throw cleanupError;
+    }),
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession,
+  });
+
+  await handlers.captureScreenshot({
+    path: "/one",
+    source: "session",
+    viewport: { width: 1440, height: 900 },
+  });
+
+  await expect(handlers.stopPreview()).rejects.toBe(cleanupError);
+  expect(preview.stop).toHaveBeenCalledOnce();
+});
+
 test("captures one session page across multiple viewports through resize", async () => {
   const preview = {
     status: vi.fn(() => ({ url: "http://127.0.0.1:3000/", running: true })),

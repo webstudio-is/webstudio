@@ -476,7 +476,9 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT" }),
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
     ]);
-    expect(transport.loadedNamespaces).toEqual([["instances", "props"]]);
+    expect(transport.loadedNamespaces).toEqual([
+      ["instances", "props", "dataSources"],
+    ]);
   });
 
   test("retries retry-safe mutations once after conflict refresh", async () => {

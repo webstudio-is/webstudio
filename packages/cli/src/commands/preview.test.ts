@@ -8,6 +8,7 @@ import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixt
 import {
   ensurePreviewDependencies,
   buildPreparedPreview,
+  getNodeModulesSearchPaths,
   getPreviewBuildCacheKey,
   getPreviewProjectDir,
   preparePreviewProject,
@@ -34,6 +35,14 @@ test("rejects empty preview host", async () => {
 
 test("defaults preview generation to the app template", () => {
   expect(previewDefaultTemplate).toEqual(["defaults", "react-router"]);
+});
+
+test("uses Node module search paths to discover installed dependencies", () => {
+  expect(
+    getNodeModulesSearchPaths(
+      "file:///tmp/app/node_modules/webstudio/lib/cli.js"
+    )
+  ).toContain("/tmp/app/node_modules");
 });
 
 test("builds only uncached prepared previews and records the cache key", async () => {
@@ -257,7 +266,15 @@ test("revalidates dependencies when reusing a cached preview build", async () =>
 
 test("links local workspace preview dependencies without asking npm for placeholder versions", async () => {
   const symlink = vi.fn(async () => undefined);
-  const access = vi.fn(async () => undefined);
+  const cliNodeModules = getNodeModulesSearchPaths(import.meta.url).find(
+    (path) => path.endsWith("/packages/cli/node_modules")
+  );
+  expect(cliNodeModules).toBeDefined();
+  const access = vi.fn(async (path: string) => {
+    if (path.startsWith(cliNodeModules!) === false) {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }
+  });
   const execFile = vi.fn(async () => ({ stdout: "", stderr: "" }));
 
   await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
@@ -275,7 +292,7 @@ test("links local workspace preview dependencies without asking npm for placehol
   });
 
   expect(symlink).toHaveBeenCalledWith(
-    expect.stringContaining("packages/cli/node_modules"),
+    cliNodeModules,
     "/tmp/project/.webstudio/preview/node_modules",
     "dir"
   );
@@ -299,7 +316,15 @@ test("does not relink generated preview dependencies when already present", asyn
 
 test("uses junctions for generated preview dependencies on windows", async () => {
   const symlink = vi.fn(async () => undefined);
-  const access = vi.fn(async () => undefined);
+  const cliNodeModules = getNodeModulesSearchPaths(import.meta.url).find(
+    (path) => path.endsWith("/packages/cli/node_modules")
+  );
+  expect(cliNodeModules).toBeDefined();
+  const access = vi.fn(async (path: string) => {
+    if (path.startsWith(cliNodeModules!) === false) {
+      throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    }
+  });
 
   await ensurePreviewDependencies("C:/project/.webstudio/preview", {
     access,
@@ -312,7 +337,7 @@ test("uses junctions for generated preview dependencies on windows", async () =>
   });
 
   expect(symlink).toHaveBeenCalledWith(
-    expect.stringContaining("packages/cli/node_modules"),
+    cliNodeModules,
     "C:/project/.webstudio/preview/node_modules",
     "junction"
   );

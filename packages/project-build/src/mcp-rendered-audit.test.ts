@@ -493,6 +493,58 @@ describe("rendered audit evidence", () => {
     ).not.toHaveProperty("failureCode");
   });
 
+  test("summarizes rendered issue kinds in compact results", () => {
+    const result = mergeRenderedAudit({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: {
+          scopes: ["performance"],
+          manualCheckCount: 0,
+          verbose: false,
+        },
+      } as never,
+      input: { rendered: true },
+      checks: [
+        {
+          pageId: "home",
+          pagePath: "/",
+          viewport: { width: 390, height: 844 },
+          issues: ["oversized-image", "oversized-image", "broken-image"],
+        },
+        {
+          pageId: "home",
+          pagePath: "/",
+          viewport: { width: 1440, height: 900 },
+          issues: ["oversized-image"],
+        },
+      ] as never,
+      failures: [],
+    });
+
+    expect(result.result).toMatchObject({
+      renderedIssueCount: 4,
+      renderedIssueSummaries: [
+        {
+          kind: "oversized-image",
+          count: 3,
+          captureCount: 2,
+          pagePaths: ["/"],
+        },
+        {
+          kind: "broken-image",
+          count: 1,
+          captureCount: 1,
+          pagePaths: ["/"],
+        },
+      ],
+    });
+  });
+
   test("classifies broken, eager below-fold, and oversized images once", () => {
     expect(
       getRenderedImageIssues({

@@ -42,6 +42,7 @@ class FakeWebSocket {
   readonly finalUrl?: string;
   readonly subframeStatus?: number;
   readonly readinessWidths?: number[];
+  readonly lifecycleFrames: string[];
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
   private currentUrl = "about:blank";
@@ -50,12 +51,14 @@ class FakeWebSocket {
     status = 200,
     finalUrl?: string,
     subframeStatus?: number,
-    readinessWidths?: number[]
+    readinessWidths?: number[],
+    lifecycleFrames = ["main"]
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
     this.subframeStatus = subframeStatus;
     this.readinessWidths = readinessWidths;
+    this.lifecycleFrames = lifecycleFrames;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -237,7 +240,11 @@ class FakeWebSocket {
       return;
     }
     setTimeout(() => {
-      respond(message.method === "Page.navigate" ? { frameId: "main" } : {});
+      respond(
+        message.method === "Page.navigate"
+          ? { frameId: "main", loaderId: "main-loader" }
+          : {}
+      );
       if (message.method === "Page.navigate") {
         const requestedUrl = String(message.params?.url);
         this.currentUrl = this.finalUrl ?? requestedUrl;
@@ -285,12 +292,19 @@ class FakeWebSocket {
             }),
           });
         }
-        this.emit("message", {
-          data: JSON.stringify({
-            method: "Page.lifecycleEvent",
-            params: { name: "networkIdle" },
-          }),
-        });
+        for (const frameId of this.lifecycleFrames) {
+          this.emit("message", {
+            data: JSON.stringify({
+              method: "Page.lifecycleEvent",
+              params: {
+                name: "networkIdle",
+                frameId,
+                loaderId:
+                  frameId === "main" ? "main-loader" : `${frameId}-loader`,
+              },
+            }),
+          });
+        }
       }
     }, 0);
   };
@@ -470,6 +484,28 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
     recursive: true,
     force: true,
   });
+});
+
+test("ignores lifecycle readiness from child frames", async () => {
+  const socket = new FakeWebSocket(200, undefined, undefined, undefined, [
+    "child",
+  ]);
+
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "networkidle",
+        waitForTimeout: 0,
+        timeout: 10,
+      },
+      createDependencies({ socket })
+    )
+  ).rejects.toThrow("Page did not reach networkidle");
 });
 
 test("reuses one browser process across screenshot captures", async () => {

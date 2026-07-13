@@ -494,6 +494,53 @@ test("waits until the latest preview build asset is served", async () => {
   expect(sleep).toHaveBeenCalledWith(5);
 });
 
+test("requires the exact generated project even when build assets match", async () => {
+  const fetch = vi.fn(
+    async () =>
+      new Response(
+        '<html data-ws-project="other-project"><link rel="stylesheet" href="/assets/index-new.css" /></html>',
+        { status: 200 }
+      )
+  );
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/",
+      {
+        timeoutMs: 1,
+        intervalMs: 5,
+        requiredAssetNames: ["index-new.css"],
+        requiredProjectId: "expected-project",
+      },
+      createDependencies({ fetch })
+    )
+  ).rejects.toThrow(
+    "Preview server at http://127.0.0.1:5173/ did not serve the expected generated project."
+  );
+});
+
+test("accepts the generated preview with the expected project marker", async () => {
+  const fetch = vi.fn(
+    async () =>
+      new Response(
+        '<html data-ws-project="expected-project"><link rel="stylesheet" href="/assets/index-new.css" /></html>',
+        { status: 200 }
+      )
+  );
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/",
+      {
+        timeoutMs: 1000,
+        requiredAssetNames: ["index-new.css"],
+        requiredProjectId: "expected-project",
+      },
+      createDependencies({ fetch })
+    )
+  ).resolves.toBeUndefined();
+});
+
 test("rejects stale preview servers that serve a previous build", async () => {
   const fetch = vi.fn(
     async () =>
@@ -542,6 +589,40 @@ test("preview controller waits when starting through startAndWait", async () => 
     method: "GET",
     signal: expect.any(AbortSignal),
   });
+});
+
+test("preview controller derives and verifies the generated project identity", async () => {
+  const process = createPreviewProcess();
+  const buildProcess = createPreviewProcess();
+  const readFile = vi.fn(async () =>
+    JSON.stringify({ build: { projectId: "expected-project" } })
+  );
+  const fetch = vi.fn(
+    async () =>
+      new Response('<html data-ws-project="expected-project"></html>', {
+        status: 200,
+      })
+  );
+  resolveProcessExit(buildProcess);
+  const controller = createPreviewController(
+    { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
+    createDependencies({
+      spawn: vi
+        .fn()
+        .mockReturnValueOnce(buildProcess)
+        .mockReturnValueOnce(process) as never,
+      readFile: readFile as never,
+      fetch,
+    })
+  );
+
+  await expect(controller.startAndWait()).resolves.toMatchObject({
+    running: true,
+  });
+  expect(readFile).toHaveBeenCalledWith(
+    "/tmp/preview/.webstudio/data.json",
+    "utf8"
+  );
 });
 
 test("preview controller fails immediately when the dev server exits before readiness", async () => {

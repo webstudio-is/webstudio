@@ -219,6 +219,36 @@ const areStringArraysEqual = (
 
 export const previewBuildCacheMarker = ".webstudio-preview-build";
 
+const getPreviewProjectId = async (
+  cwd: string | undefined,
+  dependencies = defaultPreviewServerDependencies
+) => {
+  if (cwd === undefined) {
+    return undefined;
+  }
+  try {
+    const data = JSON.parse(
+      await dependencies.readFile(join(cwd, ".webstudio", "data.json"), "utf8")
+    ) as { build?: { projectId?: unknown } };
+    if (typeof data.build?.projectId !== "string") {
+      throw new Error("projectId is missing");
+    }
+    return data.build.projectId;
+  } catch (error) {
+    throw new Error(
+      `Could not identify the generated preview project in ${join(cwd, ".webstudio", "data.json")}.`,
+      { cause: error }
+    );
+  }
+};
+
+const hasProjectMarker = (html: string, projectId: string) => {
+  const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(
+    `data-ws-project\\s*=\\s*(["'])${escapedProjectId}\\1`
+  ).test(html);
+};
+
 export const waitForPreviewReady = async (
   url: string,
   {
@@ -226,16 +256,19 @@ export const waitForPreviewReady = async (
     intervalMs = 250,
     isRunning,
     requiredAssetNames = [],
+    requiredProjectId,
   }: {
     timeoutMs?: number;
     intervalMs?: number;
     isRunning?: () => boolean;
     requiredAssetNames?: string[];
+    requiredProjectId?: string;
   } = {},
   dependencies = defaultPreviewServerDependencies
 ) => {
   const deadline = Date.now() + timeoutMs;
   let sawStaleServer = false;
+  let sawUnexpectedProject = false;
   while (Date.now() <= deadline) {
     if (isRunning?.() === false) {
       throw new Error(
@@ -252,19 +285,34 @@ export const waitForPreviewReady = async (
         signal: AbortSignal.timeout(attemptTimeoutMs),
       });
       if (response.status < 500) {
-        if (requiredAssetNames.length === 0) {
+        if (
+          requiredAssetNames.length === 0 &&
+          requiredProjectId === undefined
+        ) {
           return;
         }
         const html = await response.text();
-        if (requiredAssetNames.some((name) => html.includes(name))) {
+        const servesExpectedProject =
+          requiredProjectId === undefined ||
+          hasProjectMarker(html, requiredProjectId);
+        const servesLatestAssets =
+          requiredAssetNames.length === 0 ||
+          requiredAssetNames.some((name) => html.includes(name));
+        if (servesExpectedProject && servesLatestAssets) {
           return;
         }
-        sawStaleServer = true;
+        sawUnexpectedProject ||= servesExpectedProject === false;
+        sawStaleServer ||= servesLatestAssets === false;
       }
     } catch {
       // Server is still starting.
     }
     await dependencies.sleep(intervalMs);
+  }
+  if (sawUnexpectedProject) {
+    throw new Error(
+      `Preview server at ${url} did not serve the expected generated project. Stop the existing preview server on this port, then retry.`
+    );
   }
   if (sawStaleServer) {
     throw new Error(
@@ -422,6 +470,11 @@ export const createPreviewController = (
     async startAndWait(
       options: PreviewControllerStartOptions = {}
     ): Promise<PreviewControllerResult> {
+      const nextCwd = options.cwd ?? (isRunning() ? currentCwd : defaults.cwd);
+      const requiredProjectId = await getPreviewProjectId(
+        nextCwd,
+        dependencies
+      );
       const result = await start(options);
       const requiredAssetNames = await getPreviewCssAssetNames(
         currentCwd,
@@ -430,7 +483,7 @@ export const createPreviewController = (
       try {
         await waitForPreviewReady(
           result.url,
-          { isRunning, requiredAssetNames },
+          { isRunning, requiredAssetNames, requiredProjectId },
           dependencies
         );
       } catch (error) {

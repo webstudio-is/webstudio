@@ -648,6 +648,37 @@ const mergeRenderedAudit = ({
     }
   );
   const isVerbose = input.verbose === true;
+  const renderedIssueSummaries = Array.from(
+    checks
+      .reduce((summaries, check) => {
+        for (const kind of new Set(check.issues)) {
+          const summary = summaries.get(kind) ?? {
+            kind,
+            count: 0,
+            captureCount: 0,
+            pagePaths: new Set<string>(),
+          };
+          summary.captureCount += 1;
+          summary.pagePaths.add(check.pagePath);
+          summaries.set(kind, summary);
+        }
+        for (const kind of check.issues) {
+          const summary = summaries.get(kind);
+          if (summary !== undefined) {
+            summary.count += 1;
+          }
+        }
+        return summaries;
+      }, new Map<RenderedAuditCheck["issues"][number], { kind: RenderedAuditCheck["issues"][number]; count: number; captureCount: number; pagePaths: Set<string> }>())
+      .values(),
+    ({ pagePaths, ...summary }) => ({
+      ...summary,
+      pagePaths: Array.from(pagePaths).sort().slice(0, 5),
+    })
+  ).sort(
+    (left, right) =>
+      right.count - left.count || left.kind.localeCompare(right.kind)
+  );
   const renderedFailureSummaries = Array.from(
     failures
       .reduce((summaries, failure) => {
@@ -684,7 +715,7 @@ const mergeRenderedAudit = ({
             renderedFailures: orderedFailures,
             manualChecks: manualChecks ?? [],
           }
-        : { renderedFailureSummaries }),
+        : { renderedIssueSummaries, renderedFailureSummaries }),
     },
   };
 };

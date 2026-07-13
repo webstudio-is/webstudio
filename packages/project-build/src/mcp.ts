@@ -3219,7 +3219,7 @@ const getAnimationComponentGuidance = (component: string) =>
   animationComponentGuidanceByComponent.get(component);
 
 const collectionComponentUsage =
-  'Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Insert "ws:collection" with insert-component so Webstudio creates and preserves its internal item and itemKey parameters. Bind the Collection data prop to the complete array or object, not the resource response wrapper and not one indexed item; external resource arrays are often nested under the scoped resource result\'s data field or deeper. Collection renders its child structure once per entry. Array iteration exposes the current item; object iteration exposes the current key and value. Bind descendant content and props to that current iteration context. Wrap multiple repeated sibling instances in one Element. For repeated Radix items, bind a stable unique id or slug to each required value prop. Do not create, replace, or delete the internal item/itemKey parameter records directly.';
+  'Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Insert "ws:collection" with insert-component so Webstudio creates and preserves its internal item and itemKey parameters. Bind the Collection data prop to the complete array or object, not the resource response wrapper and not one indexed item; external resource arrays are often nested under the scoped resource result\'s data field or deeper. Collection renders its child structure once per entry. Array iteration exposes the current item as `collectionItem`; object iteration exposes the current value as `collectionItem` and key as `collectionItemKey`. Bind descendant content and props with expressions such as `collectionItem.name`; do not reuse encoded parameter ids from another Collection. Wrap multiple repeated sibling instances in one Element. For repeated Radix items, bind a stable unique id or slug to each required value prop. Do not create, replace, or delete the internal item/itemKey parameter records directly.';
 
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
@@ -4667,6 +4667,20 @@ const getRenderedAuditError = (
   if (typeof failureCount !== "number" || failureCount === 0) {
     return undefined;
   }
+  const failures = Array.isArray(envelope.result.renderedFailures)
+    ? envelope.result.renderedFailures
+    : envelope.result.renderedFailureSummaries;
+  const confirmationRequired =
+    Array.isArray(failures) &&
+    failures.length > 0 &&
+    failures.every(
+      (failure) =>
+        isRecord(failure) &&
+        failure.code === "RENDERED_AUDIT_CONFIRMATION_REQUIRED"
+    );
+  if (confirmationRequired) {
+    return undefined;
+  }
   const checkCount =
     typeof envelope.result.renderedCheckCount === "number"
       ? envelope.result.renderedCheckCount
@@ -5461,16 +5475,6 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         if (providedRenderedOnlyInput !== undefined) {
           throw new Error(
             `audit input.${providedRenderedOnlyInput} requires rendered: true.`
-          );
-        }
-        if (
-          input.rendered !== undefined &&
-          (startPreview === undefined ||
-            stopPreview === undefined ||
-            captureScreenshot === undefined)
-        ) {
-          throw new Error(
-            "Rendered audit options are unavailable because this MCP host does not provide preview and screenshot capabilities."
           );
         }
       }

@@ -64,4 +64,56 @@ describe("audit CLI input", () => {
       json: true,
     });
   });
+
+  test("prints rendered audits as a concise report unless --json is set", async () => {
+    const apiCommand = vi.fn();
+    const mcpSingleOpCall = vi.fn(async (options) => {
+      options.printSuccess?.({
+        summary: { total: 0 },
+        findings: [],
+        renderedCheckCount: 2,
+        renderedIssueCount: 1,
+        renderedIssueSummaries: [
+          {
+            kind: "oversized-image",
+            count: 1,
+            captureCount: 1,
+            pagePaths: ["/"],
+          },
+        ],
+        renderedFailureCount: 0,
+        renderedPlan: {
+          captureCount: 121,
+          confirmationToken: "confirmation-token",
+        },
+      });
+    });
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+    await audit(
+      { rendered: true, json: false },
+      { apiCommand, mcpSingleOpCall }
+    );
+
+    expect(mcpSingleOpCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "audit",
+        json: false,
+        printSuccess: expect.any(Function),
+      })
+    );
+    expect(info).toHaveBeenCalledWith(
+      "Audit: 0 findings (0 errors, 0 warnings, 0 info)"
+    );
+    expect(info).toHaveBeenCalledWith(
+      "Rendered: 2 checks, 1 issues, 0 failures."
+    );
+    expect(info).toHaveBeenCalledWith(
+      "  oversized-image: 1 occurrences across 1 captures (/)."
+    );
+    expect(info).toHaveBeenCalledWith(
+      "Retry with --confirm-large-run --confirmation-token 'confirmation-token'."
+    );
+    info.mockRestore();
+  });
 });

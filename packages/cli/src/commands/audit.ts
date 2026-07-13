@@ -1,6 +1,7 @@
 import {
   apiCommand,
   auditCommandOptions,
+  printAuditReport,
   type ApiCommandOptions,
 } from "./api-command";
 import { mcpSingleOpCall } from "./mcp";
@@ -106,6 +107,7 @@ export const audit = async (
     input: JSON.stringify(getRenderedAuditToolInput(options)),
     dryRun: options.dryRun,
     refresh: options.refresh,
-    json: true,
+    json: options.json,
+    ...(options.json === true ? {} : { printSuccess: printAuditReport }),
   });
 };

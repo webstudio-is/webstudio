@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import {
+  collectionComponent,
   elementComponent,
+  encodeDataVariableId,
   getStyleDeclKey,
   type Instance,
   type Page,
@@ -185,6 +187,37 @@ test("inserts ws.element component with tag", async () => {
       tag: "section",
     })
   );
+});
+
+test("keeps Collection item expressions linked to each inserted parameter", () => {
+  for (let insertion = 0; insertion < 2; insertion += 1) {
+    const parent = createParent();
+    const mutation = insertComponent(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        component: collectionComponent,
+      },
+      { createId: createIdFactory() }
+    );
+    const props = getAddedValues<{
+      name: string;
+      type: string;
+      value: string;
+    }>(mutation, "props");
+    const itemParameterId = props.find(
+      (prop) => prop.name === "item" && prop.type === "parameter"
+    )?.value;
+    const expressions = getAddedValues<Instance>(mutation, "instances").flatMap(
+      (instance) =>
+        instance.children.flatMap((child) =>
+          child.type === "expression" ? [child.value] : []
+        )
+    );
+
+    expect(itemParameterId).toBeDefined();
+    expect(expressions).toContain(encodeDataVariableId(itemParameterId ?? ""));
+  }
 });
 
 test("inserts fragment into page template", async () => {

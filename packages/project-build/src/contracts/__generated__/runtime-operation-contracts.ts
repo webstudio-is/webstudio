@@ -24584,6 +24584,43 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
+            renderedIssueSummaries: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  kind: {
+                    type: "string",
+                    enum: [
+                      "horizontal-overflow",
+                      "broken-image",
+                      "eager-below-fold-image",
+                      "oversized-image",
+                      "render-blocking-resource",
+                      "legacy-font-format",
+                    ],
+                  },
+                  count: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  captureCount: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  pagePaths: {
+                    maxItems: 5,
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                },
+                required: ["kind", "count", "captureCount", "pagePaths"],
+              },
+            },
             renderedFailureSummaries: {
               type: "array",
               items: {
@@ -24654,6 +24691,7 @@ export const runtimeOperationContractData = [
             "nextCursor",
             "verbose",
             "findings",
+            "renderedIssueSummaries",
             "renderedFailureSummaries",
           ],
         },
@@ -32438,7 +32476,7 @@ export const runtimeOperationContractData = [
       },
       required: ["updates"],
     },
-    readNamespaces: ["instances", "props"],
+    readNamespaces: ["instances", "props", "dataSources"],
     writeNamespaces: ["props"],
     invalidatesNamespaces: ["props"],
     retryOnConflict: false,
@@ -32713,7 +32751,7 @@ export const runtimeOperationContractData = [
       },
       required: ["instanceId", "childIndex", "text"],
     },
-    readNamespaces: ["instances"],
+    readNamespaces: ["instances", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
@@ -32814,7 +32852,7 @@ export const runtimeOperationContractData = [
         },
       ],
     },
-    readNamespaces: ["instances"],
+    readNamespaces: ["instances", "dataSources"],
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,

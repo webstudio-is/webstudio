@@ -1,5 +1,5 @@
-import ts from "typescript";
-import { expect, test } from "vitest";
+import { API, type Snapshot } from "typescript/unstable/sync";
+import { afterAll, beforeAll, expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import {
   createScope,
@@ -26,45 +26,54 @@ import {
   generateWebstudioComponent,
 } from "./component-generator";
 
-const isValidJSX = (code: string): boolean => {
-  // Create a "virtual" TypeScript program
-  const compilerHost = ts.createCompilerHost({});
-  const fileName = "virtual.tsx";
-
-  compilerHost.getSourceFile = (filename) => {
-    if (filename === fileName) {
-      return ts.createSourceFile(
-        filename,
-        code,
-        ts.ScriptTarget.Latest,
-        true,
-        ts.ScriptKind.TSX
-      );
-    }
-    return;
-  };
-
-  const program = ts.createProgram(
-    [fileName],
-    {
-      jsx: ts.JsxEmit.React,
-      strict: true,
+const virtualRoot = "/component-generator-test";
+const virtualConfig = `${virtualRoot}/tsconfig.json`;
+const virtualFile = `${virtualRoot}/virtual.tsx`;
+let virtualCode = "";
+const typeScriptApi = new API({
+  cwd: virtualRoot,
+  fs: {
+    readFile(fileName) {
+      if (fileName === virtualConfig) {
+        return JSON.stringify({
+          compilerOptions: { jsx: "preserve", strict: true },
+          files: [virtualFile],
+        });
+      }
+      if (fileName === virtualFile) {
+        return virtualCode;
+      }
     },
-    compilerHost
-  );
+    fileExists(fileName) {
+      return fileName === virtualConfig || fileName === virtualFile;
+    },
+    directoryExists(directoryName) {
+      return directoryName === virtualRoot;
+    },
+  },
+});
+let typeScriptSnapshot: Snapshot;
 
-  const sourceFile = program.getSourceFile(fileName);
+beforeAll(() => {
+  typeScriptSnapshot = typeScriptApi.updateSnapshot({
+    openProjects: [virtualConfig],
+  });
+});
 
-  if (!sourceFile) {
-    return false;
-  }
+afterAll(() => {
+  typeScriptSnapshot.dispose();
+  typeScriptApi.close();
+});
 
-  const diagnostics = [
-    ...program.getSyntacticDiagnostics(sourceFile),
-    // ...program.getSemanticDiagnostics(sourceFile),
-  ];
-
-  return diagnostics.length === 0;
+const isValidJSX = (code: string): boolean => {
+  virtualCode = code;
+  const previousSnapshot = typeScriptSnapshot;
+  typeScriptSnapshot = typeScriptApi.updateSnapshot({
+    fileChanges: { changed: [virtualFile] },
+  });
+  previousSnapshot.dispose();
+  const project = typeScriptSnapshot.getProject(virtualConfig);
+  return project?.program.getSyntacticDiagnostics(virtualFile).length === 0;
 };
 
 const validateJSX = (code: string) => {

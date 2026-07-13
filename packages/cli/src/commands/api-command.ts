@@ -1793,7 +1793,7 @@ type ApiCommandHandler = (
   dependencies: ApiCommandDependencies
 ) => Promise<unknown>;
 
-const printAuditReport = (value: unknown) => {
+export const printAuditReport = (value: unknown) => {
   if (typeof value !== "object" || value === null) {
     console.info("Audit completed.");
     return;
@@ -1815,6 +1815,20 @@ const printAuditReport = (value: unknown) => {
     manualChecks?: unknown[];
     skippedCheckCount?: number;
     manualCheckCount?: number;
+    renderedCheckCount?: number;
+    renderedIssueCount?: number;
+    renderedIssueSummaries?: Array<{
+      kind?: string;
+      count?: number;
+      captureCount?: number;
+      pagePaths?: string[];
+    }>;
+    renderedFailureCount?: number;
+    renderedPlan?: {
+      captureCount?: number;
+      confirmationToken?: string;
+      confirmationExpiresAt?: string;
+    } | null;
     nextCursor?: string | null;
   };
   const severity = result.summary?.bySeverity ?? {};
@@ -1846,6 +1860,30 @@ const printAuditReport = (value: unknown) => {
   }
   if (manualCheckCount > 0) {
     console.info(`${manualCheckCount} manual checks recommended.`);
+  }
+  if (result.renderedCheckCount !== undefined) {
+    console.info(
+      `Rendered: ${result.renderedCheckCount} checks, ${result.renderedIssueCount ?? 0} issues, ${result.renderedFailureCount ?? 0} failures.`
+    );
+    for (const summary of result.renderedIssueSummaries ?? []) {
+      const pages = summary.pagePaths?.join(", ");
+      console.info(
+        `  ${summary.kind ?? "rendered-issue"}: ${summary.count ?? 0} occurrences across ${summary.captureCount ?? 0} captures${pages === undefined || pages === "" ? "" : ` (${pages})`}.`
+      );
+    }
+  }
+  if (result.renderedPlan?.confirmationToken !== undefined) {
+    console.info(
+      `Rendered plan: ${result.renderedPlan.captureCount ?? 0} captures require confirmation.`
+    );
+    console.info(
+      `Retry with --confirm-large-run --confirmation-token '${result.renderedPlan.confirmationToken}'.`
+    );
+    if (result.renderedPlan.confirmationExpiresAt !== undefined) {
+      console.info(
+        `Confirmation expires at ${result.renderedPlan.confirmationExpiresAt}.`
+      );
+    }
   }
   if (result.nextCursor != null) {
     console.info(`More findings: rerun with --cursor '${result.nextCursor}'.`);

@@ -608,6 +608,43 @@ export const findAvailableVariables = ({
   return availableVariables;
 };
 
+export const bindExpressionToInstanceScope = ({
+  expression,
+  instanceId,
+  instances,
+  dataSources,
+}: {
+  expression: string;
+  instanceId: Instance["id"];
+  instances: Instances;
+  dataSources: DataSources;
+}) => {
+  const maskedIdByName = findMaskedVariablesByInstanceId({
+    startingInstanceId: instanceId,
+    parentInstanceById: getParentInstanceById(instances),
+    instances,
+    dataSources,
+  });
+  const boundExpression = restoreExpressionVariables({
+    expression,
+    maskedIdByName,
+  });
+  const availableDataSourceIds = new Set(maskedIdByName.values());
+  for (const identifier of getExpressionIdentifiers(boundExpression)) {
+    const dataSourceId = decodeDataVariableId(identifier);
+    if (
+      dataSourceId !== undefined &&
+      availableDataSourceIds.has(dataSourceId) === false
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Expression references data source "${dataSourceId}", which is not available to instance "${instanceId}". Read the target instance and its current Collection subtree again, then use an in-scope variable name or parameter from that subtree.`
+      );
+    }
+  }
+  return boundExpression;
+};
+
 const traverseExpressions = ({
   startingInstanceId,
   pages,

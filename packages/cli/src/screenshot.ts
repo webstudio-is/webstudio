@@ -721,11 +721,14 @@ export const createScreenshotCaptureSession = (
       });
     },
     async close() {
-      browserSession ??= await browserSessionPromise;
-      await browserSession?.close();
-      browserSession = undefined;
-      browserSessionPromise = undefined;
-      browserPromise = undefined;
+      try {
+        browserSession ??= await browserSessionPromise?.catch(() => undefined);
+        await browserSession?.close();
+      } finally {
+        browserSession = undefined;
+        browserSessionPromise = undefined;
+        browserPromise = undefined;
+      }
     },
   };
 };

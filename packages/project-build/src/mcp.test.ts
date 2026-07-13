@@ -1566,7 +1566,82 @@ describe("project session mcp adapter", () => {
     ).rejects.toThrow(/confirmationToken requires rendered: true/);
     await expect(
       adapter.callTool({ name: "audit", input: { rendered: false } })
-    ).rejects.toThrow(/Rendered audit options are unavailable/);
+    ).resolves.toMatchObject({
+      structuredContent: { ok: true },
+    });
+  });
+
+  test("returns a large rendered audit confirmation plan as a successful result", async () => {
+    const executeOperation = createExecuteOperation(async ({ command }) => {
+      if (command === "list-pages") {
+        return createEnvelope({
+          operationId: "pages.list",
+          result: {
+            pages: Array.from({ length: 121 }, (_, index) => ({
+              id: `page-${index}`,
+              path: `/page-${index}`,
+            })),
+          },
+        });
+      }
+      if (command === "list-breakpoints") {
+        return createEnvelope({
+          operationId: "breakpoints.list",
+          result: { breakpoints: [] },
+        });
+      }
+      return createEnvelope({
+        operationId: "project.audit",
+        result: {
+          contractVersion: 2,
+          projectVersion: 7,
+          scopes: [],
+          pageFilter: null,
+          summary: {
+            total: 0,
+            bySeverity: { error: 0, warning: 0, info: 0 },
+            byScope: {},
+          },
+          verbose: false,
+          findings: [],
+          skippedCheckCount: 0,
+          manualCheckCount: 0,
+          renderedCheckCount: 0,
+          renderedIssueCount: 0,
+          renderedFailureCount: 0,
+          nextCursor: null,
+        },
+      });
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(),
+      stopPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
+    });
+
+    const result = await adapter.callTool({
+      name: "audit",
+      input: { rendered: true },
+    });
+
+    expect(result.isError).not.toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      ok: true,
+      data: {
+        renderedPlan: {
+          captureCount: 121,
+          confirmationToken: expect.any(String),
+        },
+        renderedFailureCount: 1,
+        renderedFailureSummaries: [
+          { code: "RENDERED_AUDIT_CONFIRMATION_REQUIRED", count: 1 },
+        ],
+      },
+    });
   });
 
   test("returns the computed transaction for dry-run mutations", async () => {
@@ -5367,7 +5442,7 @@ describe("project session mcp adapter", () => {
       "{{allowedStringMethods}}"
     );
     expect(expressions.contents[0]?.text).toContain(
-      "Collection creates internal current-item and current-key parameters"
+      "Collection creates internal `collectionItem` and `collectionItemKey`"
     );
     const componentOverviewData = JSON.parse(
       componentsOverview.contents[0]?.text ?? "{}"
