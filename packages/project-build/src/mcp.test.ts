@@ -1156,6 +1156,10 @@ describe("project session mcp adapter", () => {
       url: "http://127.0.0.1:5173",
       running: true,
     }));
+    const stopPreview = vi.fn(async () => ({
+      url: "http://127.0.0.1:5173",
+      running: false,
+    }));
     const captureScreenshot = vi.fn(async (input) => ({
       output: `/tmp/${input.viewport.width}.png`,
       browserPath: "/browser",
@@ -1238,6 +1242,7 @@ describe("project session mcp adapter", () => {
       executeOperation,
       startPreview,
       getPreviewStatus: vi.fn(),
+      stopPreview,
       captureScreenshot,
     });
 
@@ -1253,10 +1258,12 @@ describe("project session mcp adapter", () => {
     });
 
     expect(startPreview).toHaveBeenCalledTimes(1);
+    expect(stopPreview).toHaveBeenCalledTimes(1);
     expect(captureScreenshot).toHaveBeenCalledTimes(4);
     expect(captureScreenshot).toHaveBeenCalledWith(
       expect.objectContaining({
         path: "/",
+        timeout: 10_000,
         viewport: { width: 375, height: 812 },
       })
     );
@@ -1324,6 +1331,7 @@ describe("project session mcp adapter", () => {
     });
 
     expect(captureScreenshot).toHaveBeenCalledTimes(4);
+    expect(stopPreview).toHaveBeenCalledTimes(2);
     expect(captureScreenshot).toHaveBeenCalledWith(
       expect.objectContaining({
         includeImageMetrics: false,
@@ -1403,6 +1411,7 @@ describe("project session mcp adapter", () => {
         throw new Error("preview build failed");
       }),
       getPreviewStatus: vi.fn(),
+      stopPreview: vi.fn(),
       captureScreenshot: vi.fn(),
     });
 
@@ -5217,6 +5226,9 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    await expect(
+      adapter.readResource({ uri: "webstudio://project/unknown" })
+    ).rejects.toThrow('Unknown MCP resource "webstudio://project/unknown".');
   });
 
   test("connects through the official MCP SDK and exposes discovery", async () => {

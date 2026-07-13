@@ -77,6 +77,35 @@ type RuntimeOperationContractInput =
       requiresConfirm?: boolean;
     };
 
+const parseOperationInput = <Schema extends z.ZodTypeAny>(
+  schema: Schema,
+  input: unknown
+): z.infer<Schema> => {
+  const result = schema.safeParse(input ?? {});
+  if (result.success) {
+    return result.data;
+  }
+  const hasUnknownTransportField = result.error.issues.some(
+    (issue) =>
+      issue.code === "unrecognized_keys" &&
+      issue.keys.some((key) => key === "projectId" || key === "confirm")
+  );
+  if (
+    hasUnknownTransportField &&
+    typeof input === "object" &&
+    input !== null &&
+    Array.isArray(input) === false
+  ) {
+    const {
+      projectId: _projectId,
+      confirm: _confirm,
+      ...operationInput
+    } = input as Record<string, unknown>;
+    return schema.parse(operationInput);
+  }
+  throw result.error;
+};
+
 const runtimeOperation = <
   Id extends string,
   Schema extends z.ZodTypeAny,
@@ -129,7 +158,7 @@ const runtimeOperation = <
     execute: ({ state, input, context }) => {
       const result = execute({
         state,
-        input: inputSchema.parse(input ?? {}),
+        input: parseOperationInput(inputSchema, input),
         context,
       });
       if (outputSchema === undefined) {

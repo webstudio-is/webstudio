@@ -14,6 +14,7 @@ import {
   type CssStyleMap,
 } from "@webstudio-is/css-engine";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { readClipboardText } from "~/shared/clipboard";
 
 export const copyAttribute = "data-declaration";
 
@@ -34,8 +35,11 @@ export const CssEditorContextMenu = ({
 }) => {
   const lastClickedProperty = useRef<string>();
 
-  const handlePaste = () => {
-    navigator.clipboard.readText().then(onPaste);
+  const handlePaste = async () => {
+    const text = await readClipboardText();
+    if (text !== undefined) {
+      onPaste(text);
+    }
   };
 
   // Gets all currently visible declarations based on what's in the search or filters.

@@ -1,5 +1,5 @@
 import { applyPatches, type Patch } from "immer";
-import "./immer";
+import { enableImmerPatchPlugins } from "./immer";
 import type {
   BuilderPatch,
   BuilderPatchChange,
@@ -8,6 +8,10 @@ import type {
 import { compactBuilderPatchPayload } from "../contracts/patch";
 import type { BuilderState } from "./builder-state";
 import type { BuilderNamespace } from "../contracts/namespaces";
+
+// Keep initialization attached to the patch implementation. A bare side-effect
+// import can be removed because project-build declares sideEffects: false.
+enableImmerPatchPlugins();
 
 export class MissingBuilderStateNamespaceError extends Error {
   constructor(namespace: BuilderNamespace) {

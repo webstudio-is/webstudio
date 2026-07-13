@@ -46,6 +46,7 @@ import { newViewAnimations } from "./new-view-animations";
 import { AnimationPanelContent } from "./animation-panel-content";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { z } from "zod";
+import { readClipboardText } from "~/shared/clipboard";
 
 const newAnimationsPerType: {
   scroll: ScrollAnimation[];
@@ -116,9 +117,11 @@ const AnimationContextMenu = ({
 
   const pasteAnimations = () => {
     const index = lastClickedAnimationIndex.current;
-    navigator.clipboard
-      .readText()
+    readClipboardText()
       .then((text) => {
+        if (text === undefined) {
+          return;
+        }
         if (action.type === "scroll") {
           const animations = parseScrollAnimations(text);
           const newAction = structuredClone(action);

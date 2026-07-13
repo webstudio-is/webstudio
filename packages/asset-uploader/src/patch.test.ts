@@ -7,7 +7,10 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { patchAssetsWithClient } from "./asset-patch-core";
+import {
+  loadAssetsByProjectWithClient,
+  patchAssetsWithClient,
+} from "./asset-patch-core";
 import { patchAssets } from "./patch";
 import type { Patch } from "immer";
 
@@ -73,7 +76,9 @@ describe("patchAssets (msw)", () => {
 
   test("updates asset description via patch", async () => {
     const projectId = uid();
-    const localAssetRow = { ...assetRow, projectId };
+    let localAssetRow: Omit<typeof assetRow, "description"> & {
+      description: string | null;
+    } = { ...assetRow, projectId };
     let updatedDescription: string | undefined;
 
     server.use(
@@ -82,7 +87,14 @@ describe("patchAssets (msw)", () => {
       db.patch("Asset", async ({ request }) => {
         const body = (await request.json()) as { description?: string };
         updatedDescription = body.description ?? undefined;
-        return json({ id: "asset-1" });
+        localAssetRow = {
+          ...localAssetRow,
+          description: body.description ?? localAssetRow.description,
+        };
+        return json({
+          filename: localAssetRow.filename,
+          description: localAssetRow.description,
+        });
       })
     );
 
@@ -100,7 +112,7 @@ describe("patchAssets (msw)", () => {
 
   test("updates asset filename via patch", async () => {
     const projectId = uid();
-    const localAssetRow = { ...assetRow, projectId };
+    let localAssetRow = { ...assetRow, projectId };
     let updatedFilename: string | undefined;
 
     server.use(
@@ -109,7 +121,14 @@ describe("patchAssets (msw)", () => {
       db.patch("Asset", async ({ request }) => {
         const body = (await request.json()) as { filename?: string };
         updatedFilename = body.filename;
-        return json({ id: "asset-1" });
+        localAssetRow = {
+          ...localAssetRow,
+          filename: body.filename ?? localAssetRow.filename,
+        };
+        return json({
+          filename: localAssetRow.filename,
+          description: localAssetRow.description,
+        });
       })
     );
 
@@ -123,6 +142,77 @@ describe("patchAssets (msw)", () => {
 
     await patchAssets({ projectId }, patches, createContext());
     expect(updatedFilename).toBe("renamed-photo.jpg");
+    await expect(
+      loadAssetsByProjectWithClient(projectId, testContext.postgrest.client)
+    ).resolves.toEqual([
+      expect.objectContaining({
+        id: "asset-1",
+        filename: "renamed-photo.jpg",
+      }),
+    ]);
+  });
+
+  test("does not update metadata when adding an existing asset", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+    let updateCount = 0;
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("Asset", () => {
+        updateCount += 1;
+        return json({
+          filename: localAssetRow.filename,
+          description: localAssetRow.description,
+        });
+      })
+    );
+
+    const [asset] = await loadAssetsByProjectWithClient(
+      projectId,
+      testContext.postgrest.client
+    );
+    await patchAssets(
+      { projectId },
+      [{ op: "add", path: [asset.id], value: asset }],
+      createContext()
+    );
+
+    expect(updateCount).toBe(0);
+  });
+
+  test("throws when an asset metadata update matches no database row", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("Asset", () =>
+        json(
+          {
+            code: "PGRST116",
+            message: "The result contains 0 rows",
+          },
+          { status: 406 }
+        )
+      )
+    );
+
+    await expect(
+      patchAssets(
+        { projectId },
+        [
+          {
+            op: "replace",
+            path: ["asset-1", "filename"],
+            value: "renamed-photo.jpg",
+          },
+        ],
+        createContext()
+      )
+    ).rejects.toThrow();
   });
 
   test("adds new asset when patch inserts an entry", async () => {

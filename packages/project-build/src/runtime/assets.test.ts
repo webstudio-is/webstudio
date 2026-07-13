@@ -273,6 +273,24 @@ describe("asset runtime operations", () => {
     });
   });
 
+  test("lists editable filenames separately from immutable asset names", () => {
+    const asset = imageAsset("renamed");
+    asset.name = "uploaded_hash.png";
+    asset.filename = "campaign-hero.png";
+
+    expect(
+      listAssets({ ...state, assets: new Map([[asset.id, asset]]) })
+    ).toMatchObject({
+      items: [
+        {
+          id: "renamed",
+          name: "uploaded_hash.png",
+          filename: "campaign-hero.png",
+        },
+      ],
+    });
+  });
+
   test("paginates assets and rejects invalid cursors", () => {
     expect(listAssets(state, { cursor: "1", limit: 1 })).toMatchObject({
       items: [{ id: "next" }],

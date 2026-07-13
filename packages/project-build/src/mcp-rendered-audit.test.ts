@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
+  augmentAuditWithRenderedChecks,
   getRenderedAuditViewports,
   getRenderedImageIssues,
   getRenderedResourceIssues,
@@ -89,5 +90,63 @@ describe("rendered audit evidence", () => {
         ],
       }).map(({ kind }) => kind)
     ).toEqual(["render-blocking-resource", "legacy-font-format"]);
+  });
+
+  test("rejects project-wide capture plans above the bounded limit", async () => {
+    const startPreview = vi.fn();
+    const stopPreview = vi.fn();
+    const captureScreenshot = vi.fn();
+    const result = await augmentAuditWithRenderedChecks({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: {
+          scopes: ["accessibility"],
+          manualCheckCount: 1,
+        },
+      } as never,
+      input: { rendered: true, verbose: true },
+      executeRead: async (command) =>
+        ({
+          operationId:
+            command === "list-pages" ? "pages.list" : "breakpoints.list",
+          source: "remote",
+          projectId: "project",
+          buildId: "build",
+          version: 1,
+          committed: false,
+          result:
+            command === "list-pages"
+              ? {
+                  pages: Array.from({ length: 61 }, (_, index) => ({
+                    id: `page-${index}`,
+                    path: `/page-${index}`,
+                  })),
+                }
+              : { breakpoints: [] },
+        }) as never,
+      startPreview,
+      stopPreview,
+      captureScreenshot,
+    });
+
+    expect(result.result).toMatchObject({
+      renderedCheckCount: 0,
+      renderedFailureCount: 1,
+      renderedFailures: [
+        {
+          message: expect.stringContaining(
+            "122 screenshots, exceeding the 120-screenshot limit"
+          ),
+        },
+      ],
+    });
+    expect(startPreview).not.toHaveBeenCalled();
+    expect(stopPreview).not.toHaveBeenCalled();
+    expect(captureScreenshot).not.toHaveBeenCalled();
   });
 });

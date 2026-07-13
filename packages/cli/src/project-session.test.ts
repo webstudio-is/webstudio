@@ -253,6 +253,15 @@ describe("cli project session transport", () => {
               meta: {},
             },
           ],
+          pageTemplates: [
+            {
+              id: "template-1",
+              name: "Landing",
+              title: "Landing",
+              rootInstanceId: "template-body",
+              meta: {},
+            },
+          ],
           homePageId: "home",
           rootFolderId: "root",
           meta: { siteName: "Acme" },
@@ -288,6 +297,9 @@ describe("cli project session transport", () => {
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
+    expect(snapshot.state.pages?.pageTemplates?.get("template-1")?.name).toBe(
+      "Landing"
+    );
     expect(snapshot.state.pages?.meta).toBeUndefined();
     expect(snapshot.state.pages?.compiler).toBeUndefined();
     expect(snapshot.state.pages?.redirects).toEqual([

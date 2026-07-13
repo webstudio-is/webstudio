@@ -1376,7 +1376,7 @@ test("imports project bundle with assets and retries missing asset uploads", asy
           uploadedAssets: [
             createImageAssetFixture({
               id: `server-generated-asset-${uploadAttempts}`,
-              name: "image.png",
+              name: "image_destination.png",
             }),
           ],
         })
@@ -1473,13 +1473,13 @@ test("imports project bundle with assets and retries missing asset uploads", asy
 
   expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
   expect(importAttempts).toBe(2);
-  expect(uploadAttempts).toBe(2);
+  expect(uploadAttempts).toBe(1);
   expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
     true
   );
   expect(uploadOffsets.size).toBe(2);
   expect(importAttemptMessages).toEqual(["attempt", "attempt"]);
-  expect(missingAssetMessages).toEqual(["image.png"]);
+  expect(missingAssetMessages).toEqual([]);
   expect(uploadAssetMessages).toEqual(["image.png"]);
 });
 

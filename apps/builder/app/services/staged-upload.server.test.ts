@@ -29,6 +29,7 @@ describe("staged upload server", () => {
 
     expect(server.options.path).toBe(stagedUploadPath);
     expect(server.options.maxSize).toBe(maxProjectBundleSize);
+    expect(server.options.relativeLocation).toBe(true);
     expect(server.options.allowedHeaders).toContain(
       stagedUploadProjectIdHeader
     );

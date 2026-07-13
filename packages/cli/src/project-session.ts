@@ -54,6 +54,7 @@ type PublicBuildSnapshot = Omit<
   homePageId?: string;
   rootFolderId?: string;
   pages?: unknown;
+  pageTemplates?: unknown;
   folders?: unknown;
   meta?: unknown;
   compiler?: unknown;
@@ -105,6 +106,7 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
     homePageId: snapshot.homePageId,
     rootFolderId: snapshot.rootFolderId,
     pages: snapshot.pages,
+    pageTemplates: snapshot.pageTemplates,
     folders: snapshot.folders,
     meta: snapshot.meta,
     compiler: snapshot.compiler,

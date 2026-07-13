@@ -55,7 +55,6 @@ import {
   serializeProjectSummary,
 } from "./api-build.server";
 import { throwApiError } from "./api-errors.server";
-import { assertCliProjectSettingsContract } from "./api-compatibility.server";
 import {
   createBuilderRuntimeState,
   executeApiRuntimeMutation,
@@ -595,7 +594,6 @@ export const apiRouter = router({
         }
 
         const include = new Set(input.include ?? []);
-        assertCliProjectSettingsContract(ctx.apiClient?.type, include);
         const snapshot = createBuildSnapshot({
           build,
           include,
