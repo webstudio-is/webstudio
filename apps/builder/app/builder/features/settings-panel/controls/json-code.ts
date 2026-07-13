@@ -1,5 +1,8 @@
 import { createElement } from "react";
-import { parseJsonLd } from "@webstudio-is/sdk/runtime";
+import {
+  hasTopLevelJsonLdContext,
+  parseJsonLd,
+} from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
 import type { ControlProps } from "../shared";
 import { CodeControl, type CodeControlBehavior, type CodeIssue } from "./code";
@@ -27,6 +30,18 @@ export const serializeJsonCode = (value: object) => JSON.stringify(value);
 export const validateJsonCode = (value: unknown) =>
   validateJsonLdWithSchemaOrg(value);
 
+const getJsonCodeWarnings = (
+  result: Extract<ReturnType<typeof validateJsonCode>, { success: true }>
+) => {
+  const warnings = result.diagnostics
+    .filter(({ severity }) => severity === "warning")
+    .map(({ path, message }) => `${path} ${message}`);
+  if (hasTopLevelJsonLdContext(result.value) === false) {
+    warnings.unshift("$ JSON-LD has no top-level @context.");
+  }
+  return warnings;
+};
+
 export const getFixedJsonCodeValue = (value: unknown, label: string) => {
   const result = validateJsonCode(value);
   if (result.success) {
@@ -43,11 +58,20 @@ export const getFixedJsonCodeValue = (value: unknown, label: string) => {
 };
 
 export const validateJsonCodeValue = (value: unknown, label: string) => {
-  const result = getFixedJsonCodeValue(value, label);
-  return result.success ? undefined : result.message;
+  const result = validateJsonCode(value);
+  const error = result.diagnostics.find(({ severity }) => severity === "error");
+  if (result.success === false || error !== undefined) {
+    return error === undefined
+      ? `${label} expects a JSON object or array`
+      : `${label}: ${error.path} ${error.message}`;
+  }
+  const warnings = getJsonCodeWarnings(result).map(
+    (message) => `${label}: ${message}`
+  );
+  return warnings.length === 0 ? undefined : warnings.join("\n");
 };
 
-const processJsonCodeValue = (
+export const processJsonCodeValue = (
   value: string
 ): ReturnType<CodeControlBehavior["processValue"]> => {
   const result = validateJsonCode(value);
@@ -66,17 +90,13 @@ const processJsonCodeValue = (
       },
     };
   }
-  const warnings = result.diagnostics.filter(
-    ({ severity }) => severity === "warning"
-  );
+  const warnings = getJsonCodeWarnings(result);
   const issue: CodeIssue | undefined =
     warnings.length === 0
       ? undefined
       : {
           severity: "warning",
-          message: warnings
-            .map(({ path, message }) => `${path} ${message}`)
-            .join("\n"),
+          message: warnings.join("\n"),
           value,
         };
   return {
