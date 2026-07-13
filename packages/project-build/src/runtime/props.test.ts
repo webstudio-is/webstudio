@@ -593,6 +593,40 @@ describe("updateProps", () => {
       )
     ).toThrow('JSON-LD code must use prop type "string".');
 
+    expect(
+      updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: jsonLd.id,
+              name: "code",
+              type: "expression",
+              value: "jsonLdData",
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "props",
+        patches: [
+          {
+            op: "add",
+            path: ["code-prop-id"],
+            value: {
+              id: "code-prop-id",
+              instanceId: jsonLd.id,
+              name: "code",
+              type: "expression",
+              value: "jsonLdData",
+            },
+          },
+        ],
+      },
+    ]);
+
     expect(() =>
       updateProps(
         state,

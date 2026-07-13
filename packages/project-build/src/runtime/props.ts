@@ -13,6 +13,7 @@ import { getExpressionErrors } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { validateHtmlEmbedCode } from "./html";
 import { createRuntimeMutation } from "./mutation";
+import { isDynamicPropType } from "./accessibility-analysis";
 
 export const showAttributeMeta: PropMeta = {
   label: "Show",
@@ -765,6 +766,9 @@ const getHtmlEmbedCodeErrors = (instance: Instance, update: PropValueInput) => {
 
 const getJsonLdCodeErrors = (instance: Instance, update: PropValueInput) => {
   if (instance.component !== "JsonLd" || update.name !== "code") {
+    return [];
+  }
+  if (isDynamicPropType(update.type)) {
     return [];
   }
   if (update.type !== "string") {
