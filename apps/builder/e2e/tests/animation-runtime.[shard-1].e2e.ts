@@ -3,6 +3,7 @@ import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { expectGeneratedAppBuild } from "../flows/generated-app";
+import { openNavigatorPanel } from "../flows/navigator";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -55,17 +56,6 @@ const wrapSelectedInstance = async ({
   await selectCommandPanelItem({ page, text: option });
   await save;
   await waitForSyncStatus({ page, status: "idle" });
-};
-
-const openNavigatorPanel = async ({ page }: { page: Page }) => {
-  const tab = page.getByRole("tab", { name: "Navigator" });
-  if ((await tab.getAttribute("aria-selected")) !== "true") {
-    await tab.click();
-  }
-  await page.locator("[data-navigator-tree]").waitFor({
-    state: "visible",
-    timeout: 10_000,
-  });
 };
 
 const selectNavigatorItem = async ({

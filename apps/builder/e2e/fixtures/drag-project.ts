@@ -1,6 +1,7 @@
-import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
-import { loginAndCreateBlankProject } from "../flows/dashboard";
-import { newPage } from "../harness";
+import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
+import type { Instance } from "@webstudio-is/sdk";
+import { loadDevBuild } from "../db";
+import { createSeededBuilderProject } from "./builder-project";
 
 export const dragIds = {
   body: "drag-body",
@@ -13,32 +14,12 @@ export const dragIds = {
   folder: "drag-folder",
 } as const;
 
-type Pages = {
-  homePageId: string;
-  rootFolderId?: string;
-  pages: Array<{
-    id: string;
-    name: string;
-    path: string;
-    title: string;
-    meta: Record<string, unknown>;
-    rootInstanceId: string;
-  }>;
-  folders?: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    children: string[];
-  }>;
-};
-
-type Child = { type: "id" | "text"; value: string };
 const element = (
   id: string,
   tag: string,
-  children: Child[],
+  children: Instance["children"],
   label?: string
-) => ({
+): Instance => ({
   type: "instance",
   id,
   component: "ws:element",
@@ -48,11 +29,9 @@ const element = (
 });
 
 const seedBuild = (serializedPages: string) => {
-  const pages = JSON.parse(serializedPages) as Pages;
+  const pages = JSON.parse(serializedPages) as SerializedPages;
   const home = pages.pages.find(({ id }) => id === pages.homePageId);
-  const root = pages.folders?.find(
-    ({ id }) => id === (pages.rootFolderId ?? "root")
-  );
+  const root = pages.folders.find(({ id }) => id === pages.rootFolderId);
   if (home === undefined || root === undefined) {
     throw new Error("Expected the blank project home page and root folder");
   }
@@ -78,7 +57,7 @@ const seedBuild = (serializedPages: string) => {
       rootInstanceId: betaBody,
     }
   );
-  pages.folders?.push({
+  pages.folders.push({
     id: dragIds.folder,
     name: "Group",
     slug: "group",
@@ -130,36 +109,29 @@ const seedBuild = (serializedPages: string) => {
 };
 
 export const createDragProject = async (name: string) => {
-  const page = await newPage();
-  try {
-    const projectId = await loginAndCreateBlankProject({
-      page,
-      email: `drag-${name}@webstudio.test`,
-      title: `Drag ${name}`,
-    });
-    const build = await loadDevBuild({ projectId });
-    await updateBuild(build.id, { version: 0, ...seedBuild(build.pages) });
-    const builderToken = `${projectId}-drag-builder`;
-    await insertAuthorizationToken({
-      token: builderToken,
-      projectId,
-      name: "Drag E2E builder token",
-      relation: "builders",
-    });
-    return { projectId, builderToken };
-  } finally {
-    await page.close();
-  }
+  return await createSeededBuilderProject({
+    email: `drag-${name}@webstudio.test`,
+    title: `Drag ${name}`,
+    builderToken: `drag-${name}-builder-token`,
+    createBuildUpdate: (build) => seedBuild(build.pages),
+  });
 };
 
-export const loadChildIds = async (projectId: string, parentId: string) => {
+export const loadInstances = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    id: string;
-    children: Child[];
-  }>;
-  return instances
+  return JSON.parse(build.instances) as Instance[];
+};
+
+export const getChildIds = (instances: Instance[], parentId: string) =>
+  instances
     .find(({ id }) => id === parentId)
     ?.children.filter(({ type }) => type === "id")
     .map(({ value }) => value);
+
+export const loadChildIds = async (projectId: string, parentId: string) =>
+  getChildIds(await loadInstances(projectId), parentId);
+
+export const loadPages = async (projectId: string) => {
+  const build = await loadDevBuild({ projectId });
+  return JSON.parse(build.pages) as SerializedPages;
 };

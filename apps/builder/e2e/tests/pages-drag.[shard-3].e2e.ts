@@ -1,5 +1,10 @@
-import { createDragProject } from "../fixtures/drag-project";
-import { openProjectBuilder, waitForCanvasFrame } from "../flows/builder";
+import assert from "node:assert/strict";
+import {
+  createDragProject,
+  dragIds,
+  loadPages,
+} from "../fixtures/drag-project";
+import { openProjectBuilder } from "../flows/builder";
 import { dragTreeRow, getTreeRowByButton } from "../flows/drag";
 import { openPagesPanel } from "../flows/pages-panel";
 import { newIsolatedPage, test } from "../harness";
@@ -35,29 +40,11 @@ test("Pages panel pointer drag reorders and nests pages", async () => {
       "inside"
     );
 
-    await page.reload();
-    await waitForCanvasFrame({ page });
-    await openPagesPanel({ page });
-    await page
-      .getByRole("group", { name: "Folder Group", exact: true })
-      .locator("[data-tree-button]")
-      .click();
-    await page
-      .getByRole("group", { name: "Page Alpha", exact: true })
-      .waitFor();
-
-    const labels = await page
-      .locator(
-        '[role="group"][aria-label^="Page "], [role="group"][aria-label^="Folder "]'
-      )
-      .evaluateAll((rows) => rows.map((row) => row.getAttribute("aria-label")));
-    const beta = labels.indexOf("Page Beta");
-    if (
-      labels.slice(beta, beta + 3).join() !==
-      "Page Beta,Folder Group,Page Alpha"
-    ) {
-      throw new Error("Pages drag result did not persist");
-    }
+    const pages = await loadPages(fixture.projectId);
+    const root = pages.folders.find(({ id }) => id === pages.rootFolderId);
+    const folder = pages.folders.find(({ id }) => id === dragIds.folder);
+    assert.deepEqual(root?.children.slice(-2), [dragIds.beta, dragIds.folder]);
+    assert.deepEqual(folder?.children, [dragIds.alpha]);
   } finally {
     await close();
   }

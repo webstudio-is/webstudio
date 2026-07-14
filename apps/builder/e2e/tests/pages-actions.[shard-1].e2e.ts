@@ -5,6 +5,7 @@ import {
   waitForCanvasTextHidden,
 } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
+import { openNavigatorPanel } from "../flows/navigator";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -127,17 +128,6 @@ const insertComponentPanelOption = async ({
   await searchComponentsPanel({ page, text: name });
   await page.getByRole("option", { name, exact: true }).click();
   await waitForSyncStatus({ page, status: "idle" });
-};
-
-const openNavigatorPanel = async ({ page }: { page: Page }) => {
-  const tab = page.getByRole("tab", { name: "Navigator" });
-  if ((await tab.getAttribute("aria-selected")) !== "true") {
-    await tab.click();
-  }
-  await page.locator("[data-navigator-tree]").waitFor({
-    state: "visible",
-    timeout: 10_000,
-  });
 };
 
 const getNavigatorButtonSummary = async ({

@@ -16,8 +16,8 @@ const dragPointer = async ({
   beforeAttempt,
 }: {
   page: Page;
-  source: () => Promise<Bounds | null>;
-  target: () => Promise<Bounds | null>;
+  source: Locator;
+  target: Locator;
   targetPoint?: (bounds: Bounds) => { x: number; y: number };
   ready: () => Promise<boolean>;
   attempts?: number;
@@ -25,7 +25,7 @@ const dragPointer = async ({
 }) => {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     await beforeAttempt?.();
-    const bounds = await source();
+    const bounds = await source.boundingBox();
     if (bounds === null) {
       throw new Error("Expected visible drag source");
     }
@@ -41,7 +41,7 @@ const dragPointer = async ({
       const deadline = Date.now() + 10_000;
       let jiggle = 0;
       while (Date.now() < deadline) {
-        const before = await target();
+        const before = await target.boundingBox();
         if (before === null) {
           throw new Error("Expected visible drag target");
         }
@@ -49,7 +49,7 @@ const dragPointer = async ({
         jiggle = jiggle === 0 ? 1 : 0;
         await page.mouse.move(to.x + jiggle, to.y, { steps: 3 });
         await page.waitForTimeout(120);
-        const after = await target();
+        const after = await target.boundingBox();
         if (
           after?.y === before.y &&
           after.height === before.height &&
@@ -70,14 +70,10 @@ const dragPointer = async ({
 };
 
 const dragAndSave = async (page: Page, drag: () => Promise<void>) => {
-  const saved = waitForChangeToBeSaved({ page, timeout: 30_000 });
-  try {
-    await drag();
-  } catch (error) {
-    await saved.catch(() => undefined);
-    throw error;
-  }
-  await saved;
+  await Promise.all([
+    waitForChangeToBeSaved({ page, timeout: 30_000 }),
+    drag(),
+  ]);
 };
 
 export const getTreeRowByButton = (rowButton: Locator) =>
@@ -92,8 +88,8 @@ export const dragTreeRow = async (
   await dragAndSave(page, () =>
     dragPointer({
       page,
-      source: () => source.boundingBox(),
-      target: () => target.boundingBox(),
+      source,
+      target,
       targetPoint: ({ x, y, width, height }) => ({
         x: x + width / 2,
         y: y + height * (position === "above" ? 0.1 : 0.5),
@@ -112,10 +108,10 @@ const waitForCanvas = (canvas: Frame) =>
 export const ensureInteractiveCanvas = async (
   page: Page,
   canvas: Frame,
-  selector: string
+  target: Locator
 ) => {
   await waitForCanvas(canvas);
-  await canvas.locator(selector).first().click();
+  await target.click();
   await page.locator("[data-ws-outline]").first().waitFor();
 };
 
@@ -123,14 +119,13 @@ export const dragToCanvas = async (
   page: Page,
   canvas: Frame,
   source: Locator,
-  targetSelector: string
+  target: Locator
 ) => {
-  const target = canvas.locator(targetSelector).first();
   await dragAndSave(page, () =>
     dragPointer({
       page,
-      source: () => source.boundingBox(),
-      target: () => target.boundingBox(),
+      source,
+      target,
       ready: () =>
         page
           .locator("[data-placement-indicator]")
