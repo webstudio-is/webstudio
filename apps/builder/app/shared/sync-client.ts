@@ -85,9 +85,12 @@ export class ImmerhinSyncObject implements SyncObject {
     }
   }
   applyTransaction(transaction: Transaction<Change[]>) {
+    // Immer cannot handle values whose prototypes come from another realm.
+    // Recreate received patches with the current realm's classes before applying them.
+    const receivedPayload = structuredClone(transaction.payload);
     const payload = this.transformOnReceive
-      ? this.transformOnReceive(transaction.payload)
-      : transaction.payload;
+      ? this.transformOnReceive(receivedPayload)
+      : receivedPayload;
     this.store.addTransaction(transaction.id, payload, "remote");
   }
   revertTransaction(transaction: RevertedTransaction) {

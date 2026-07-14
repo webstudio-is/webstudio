@@ -682,45 +682,45 @@ export const collectExclusiveInstanceIds = (
   rootInstanceIds: Iterable<Instance["id"]>
 ) => {
   const roots = new Set(rootInstanceIds);
-  const referenceCounts = new Map<Instance["id"], number>();
-  for (const instance of instances.values()) {
-    for (const child of instance.children) {
-      if (child.type !== "id") {
-        continue;
-      }
-      referenceCounts.set(
-        child.value,
-        (referenceCounts.get(child.value) ?? 0) + 1
-      );
+  const candidateIds = new Set<Instance["id"]>();
+  for (const rootInstanceId of roots) {
+    for (const instanceId of collectInstanceIds(instances, rootInstanceId)) {
+      candidateIds.add(instanceId);
     }
   }
-  const instanceIds = new Set<Instance["id"]>();
-  const visit = (instanceId: Instance["id"]) => {
-    if (instanceIds.has(instanceId)) {
+
+  const preservedIds = new Set<Instance["id"]>();
+  const preserve = (instanceId: Instance["id"]) => {
+    if (roots.has(instanceId) || preservedIds.has(instanceId)) {
       return;
     }
     const instance = instances.get(instanceId);
     if (instance === undefined) {
       return;
     }
-    instanceIds.add(instanceId);
+    preservedIds.add(instanceId);
     for (const child of instance.children) {
-      if (child.type !== "id") {
-        continue;
+      if (child.type === "id") {
+        preserve(child.value);
       }
-      if (
-        roots.has(child.value) === false &&
-        (referenceCounts.get(child.value) ?? 0) > 1
-      ) {
-        continue;
-      }
-      visit(child.value);
     }
   };
-  for (const rootInstanceId of roots) {
-    visit(rootInstanceId);
+
+  for (const instance of instances.values()) {
+    if (candidateIds.has(instance.id)) {
+      continue;
+    }
+    for (const child of instance.children) {
+      if (child.type === "id" && candidateIds.has(child.value)) {
+        preserve(child.value);
+      }
+    }
   }
-  return instanceIds;
+
+  for (const preservedId of preservedIds) {
+    candidateIds.delete(preservedId);
+  }
+  return candidateIds;
 };
 
 export const cloneInstanceWithNewIds = ({
@@ -1162,6 +1162,7 @@ export const createInstanceDeletePayload = ({
   styles: Iterable<StyleDecl>;
 }) => {
   const parentRemovalPatches = [];
+  const deleteRootIds = new Set<Instance["id"]>();
   const deletedInstanceIds = new Set<Instance["id"]>();
   const errors: Array<
     | { type: "page-root"; instanceId: Instance["id"] }
@@ -1191,9 +1192,14 @@ export const createInstanceDeletePayload = ({
         number,
       ],
     });
-    for (const descendantId of collectInstanceIds(instances, instanceId)) {
-      deletedInstanceIds.add(descendantId);
-    }
+    deleteRootIds.add(instanceId);
+  }
+
+  for (const descendantId of collectExclusiveInstanceIds(
+    instances,
+    deleteRootIds
+  )) {
+    deletedInstanceIds.add(descendantId);
   }
 
   const payload = createInstanceCleanupPayload({

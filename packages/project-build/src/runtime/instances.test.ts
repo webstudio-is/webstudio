@@ -332,6 +332,30 @@ test("collects multiple requested roots even when one root references another", 
     collectExclusiveInstanceIds(instances, ["first-root", "second-root"])
   ).toEqual(new Set(["first-root", "second-root", "child"]));
 });
+
+test("collects shared descendants when all owners are requested", () => {
+  const instances = new Map<Instance["id"], Instance>([
+    [
+      "first-root",
+      createInstance("first-root", [{ type: "id", value: "shared-child" }]),
+    ],
+    [
+      "second-root",
+      createInstance("second-root", [{ type: "id", value: "shared-child" }]),
+    ],
+    [
+      "shared-child",
+      createInstance("shared-child", [{ type: "id", value: "shared-leaf" }]),
+    ],
+    ["shared-leaf", createInstance("shared-leaf")],
+  ]);
+
+  expect(
+    collectExclusiveInstanceIds(instances, ["first-root", "second-root"])
+  ).toEqual(
+    new Set(["first-root", "shared-child", "shared-leaf", "second-root"])
+  );
+});
 const createCloneInstance = (
   id: Instance["id"],
   children: Instance["children"] = []
@@ -2393,6 +2417,59 @@ test("creates instance delete payload with cleanup", () => {
     ],
   });
   expect(result.payload.every(({ patches }) => patches.length > 0)).toBe(true);
+});
+
+test("preserves shared Slot content when deleting one copied Slot", () => {
+  const instances = new Map([
+    [
+      "parent",
+      createInstance("parent", elementComponent, [
+        { type: "id", value: "slot" },
+        { type: "id", value: "slot-copy" },
+      ]),
+    ],
+    [
+      "slot",
+      createInstance("slot", "Slot", [
+        { type: "id", value: "shared-fragment" },
+      ]),
+    ],
+    [
+      "slot-copy",
+      createInstance("slot-copy", "Slot", [
+        { type: "id", value: "shared-fragment" },
+      ]),
+    ],
+    [
+      "shared-fragment",
+      createInstance("shared-fragment", elementComponent, [
+        { type: "id", value: "content" },
+      ]),
+    ],
+    ["content", createInstance("content", elementComponent)],
+  ]);
+
+  const result = createInstanceDeletePayload({
+    instances,
+    instanceIds: ["slot"],
+    props: [],
+    dataSources: [],
+    styleSources: [],
+    styleSourceSelections: [],
+    styles: [],
+  });
+
+  expect(result.errors).toEqual([]);
+  expect(result.instanceIds).toEqual(["slot"]);
+  expect(result.payload).toEqual([
+    {
+      namespace: "instances",
+      patches: [
+        { op: "remove", path: ["parent", "children", 0] },
+        { op: "remove", path: ["slot"] },
+      ],
+    },
+  ]);
 });
 
 test("omits empty instance cleanup namespaces", () => {
