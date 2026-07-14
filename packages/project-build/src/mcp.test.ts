@@ -562,6 +562,7 @@ describe("project session mcp adapter", () => {
       "reset-session",
     ]);
     expect(toolNames).toContain("insert-fragment");
+    expect(toolNames).not.toContain("copy-page");
     const imageDescriptionsTool = tools.find(
       (tool) => tool.name === "set-image-descriptions"
     );
@@ -4475,6 +4476,90 @@ describe("project session mcp adapter", () => {
     ).rejects.toThrow("CHECKPOINT_REQUIRED");
   });
 
+  test("keeps coverage reads active during a dry-run insertion", async () => {
+    const instances = [
+      { id: "body", component: "ws:element", depth: 0 },
+      {
+        id: "switch",
+        component: "@webstudio-is/sdk-components-react-radix:Switch",
+        depth: 1,
+      },
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, dryRun }) => {
+        if (command === "list-instances") {
+          if (dryRun) {
+            throw new Error("read operations do not accept dryRun");
+          }
+          return createEnvelope({
+            operationId: "instances.list",
+            result: { instances },
+          });
+        }
+        if (command === "insert-component") {
+          expect(dryRun).toBe(true);
+          return createEnvelope({
+            operationId: "components.insert",
+            result: {
+              rootInstanceIds: ["inserted"],
+              instanceIds: ["inserted"],
+              parentInstanceId: "root",
+            },
+            state: { committed: false, freshness: {} },
+            version: 1,
+          });
+        }
+        throw new Error(`Unexpected command ${command}`);
+      }
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "components.coverage-insert-next",
+        input: {
+          pagePath: "/design-system",
+          parentInstanceId: "root",
+          component: "@webstudio-is/sdk-components-react-radix:Select",
+        },
+        dryRun: true,
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        structuredContent: expect.objectContaining({
+          data: expect.objectContaining({ committed: false }),
+        }),
+      })
+    );
+    expect(executeOperation).toHaveBeenNthCalledWith(1, {
+      command: "list-instances",
+      input: {
+        pageId: undefined,
+        pagePath: "/design-system",
+      },
+      dryRun: false,
+    });
+    expect(executeOperation).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        command: "insert-component",
+        dryRun: true,
+      })
+    );
+    expect(executeOperation).toHaveBeenNthCalledWith(3, {
+      command: "list-instances",
+      input: {
+        pageId: undefined,
+        pagePath: "/design-system",
+      },
+      dryRun: false,
+    });
+  });
+
   test("inserts uncovered non-standalone coverage parts under compatible parents", async () => {
     const isTestRecord = (value: unknown): value is Record<string, unknown> =>
       typeof value === "object" &&
@@ -5545,6 +5630,13 @@ describe("project session mcp adapter", () => {
             }),
           }),
           expect.objectContaining({
+            name: "components.coverage-status",
+            annotations: expect.objectContaining({
+              readOnlyHint: true,
+              destructiveHint: false,
+            }),
+          }),
+          expect.objectContaining({
             name: "refresh",
             annotations: expect.objectContaining({
               readOnlyHint: false,
@@ -5884,6 +5976,14 @@ describe("project session mcp adapter", () => {
             name: "preview.status",
             annotations: expect.objectContaining({
               readOnlyHint: true,
+              destructiveHint: false,
+              openWorldHint: true,
+            }),
+          }),
+          expect.objectContaining({
+            name: "preview.stop",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
               destructiveHint: false,
               openWorldHint: true,
             }),

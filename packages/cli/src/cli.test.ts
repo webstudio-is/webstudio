@@ -165,7 +165,27 @@ describe("registerCommands", () => {
     ]);
     expect(getTopLevelMcpToolForwardArgs(["permissions"])).toBeUndefined();
     expect(getTopLevelMcpToolForwardArgs(["audit"])).toBeUndefined();
+    for (const command of [
+      "get-marketplace-product",
+      "update-marketplace-product",
+      "set-redirects",
+    ]) {
+      expect(
+        getTopLevelMcpToolForwardArgs([command, "--help"])
+      ).toBeUndefined();
+    }
     expect(getTopLevelMcpToolForwardArgs(["unknown-command"])).toBeUndefined();
+  });
+
+  test.each([
+    "get-marketplace-product",
+    "update-marketplace-product",
+    "set-redirects",
+  ])("shows registered top-level help for %s", async (command) => {
+    const output = await getHelpOutput([command, "--help"]);
+
+    expect(output).toContain(`webstudio ${command}`);
+    expect(output).not.toContain("single-op-call <tool>");
   });
 
   test("forwards screenshot JSON input without treating it as a URL", () => {
@@ -228,6 +248,7 @@ describe("registerCommands", () => {
     expect(commandNames(commands)).toEqual(
       expect.arrayContaining([
         "preview",
+        "connect [client]",
         "screenshot [url]",
         "audit",
         "import",

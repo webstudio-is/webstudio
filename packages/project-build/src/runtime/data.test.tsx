@@ -138,6 +138,28 @@ test("rejects client-supplied ids on data create inputs", () => {
   ).toBe(false);
 });
 
+test("requires a scope for explicit render-time resource exposure", () => {
+  const result = resourceCreateInput.safeParse({
+    resource: {
+      name: "Submit",
+      method: "post",
+      url: '"https://api.example.com/submit"',
+      headers: [],
+    },
+    exposeAsDataSource: true,
+  });
+
+  expect(result.success).toBe(false);
+  if (result.success === false) {
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: ["scopeInstanceId"],
+        message: "scopeInstanceId is required when exposeAsDataSource is true.",
+      })
+    );
+  }
+});
+
 test("encode data variable name when necessary", () => {
   expect(encodeDataVariableName("formState")).toEqual("formState");
   expect(encodeDataVariableName("Collection Item")).toEqual(
@@ -2346,6 +2368,133 @@ describe("resource patch helpers", () => {
         },
       ],
     });
+    expect(result.payload).not.toContainEqual(
+      expect.objectContaining({ namespace: "dataSources" })
+    );
+  });
+
+  test("exposes scoped GET resources as render data by default", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    const ids = ["resource-id", "data-source-id"];
+
+    const result = createResource(
+      state,
+      {
+        resource: resourceFieldsInput.parse({
+          name: "Users",
+          method: "get",
+          url: "https://example.com/users",
+          headers: [],
+        }),
+        scopeInstanceId: "body",
+      },
+      { createId: () => ids.shift() ?? "unexpected-id" }
+    );
+
+    expect(result.result).toMatchObject({
+      resourceId: "resource-id",
+      dataSourceId: "data-source-id",
+      warnings: [],
+    });
+    expect(result.payload).toContainEqual(
+      expect.objectContaining({ namespace: "dataSources" })
+    );
+  });
+
+  test("warns when a write resource is explicitly exposed as render data", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    const ids = ["resource-id", "data-source-id"];
+
+    const result = createResource(
+      state,
+      {
+        resource: resourceFieldsInput.parse({
+          name: "Submit",
+          method: "post",
+          url: "https://example.com/submit",
+          headers: [],
+        }),
+        scopeInstanceId: "body",
+        exposeAsDataSource: true,
+      },
+      { createId: () => ids.shift() ?? "unexpected-id" }
+    );
+
+    expect(result.result).toMatchObject({
+      dataSourceId: "data-source-id",
+      warnings: [
+        "The POST resource is explicitly exposed as render-time data and may execute while rendering the page.",
+      ],
+    });
+    expect(result.payload).toContainEqual(
+      expect.objectContaining({ namespace: "dataSources" })
+    );
+  });
+
+  test.each(["post", "put", "delete"] as const)(
+    "does not expose scoped %s resources as render data by default",
+    (method) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [],
+      });
+
+      const result = createResource(
+        state,
+        {
+          resource: resourceFieldsInput.parse({
+            name: "Write action",
+            method,
+            url: "https://example.com/action",
+            headers: [],
+          }),
+          scopeInstanceId: "body",
+        },
+        { createId: () => "resource-id" }
+      );
+
+      expect(result.result).toMatchObject({
+        resourceId: "resource-id",
+        dataSourceId: undefined,
+        warnings: [],
+      });
+      expect(result.payload).not.toContainEqual(
+        expect.objectContaining({ namespace: "dataSources" })
+      );
+    }
+  );
+
+  test("rejects render-time exposure at an unknown scope instance", () => {
+    expect(() =>
+      createResource(
+        createResourceState(),
+        {
+          resource: resourceFieldsInput.parse({
+            name: "Users",
+            method: "get",
+            url: "https://example.com/users",
+            headers: [],
+          }),
+          scopeInstanceId: "missing",
+        },
+        { createId: () => "resource-id" }
+      )
+    ).toThrow("Scope instance not found");
   });
 
   test("does not invalidate resources when text replacement finds no matches", () => {
@@ -2917,25 +3066,33 @@ describe("resource patch helpers", () => {
     };
 
     expect(() =>
-      updateResource(state, {
-        resourceId: "resource",
-        values: { url: `"not-a-url"` },
-      })
+      updateResource(
+        state,
+        {
+          resourceId: "resource",
+          values: { url: `"not-a-url"` },
+        },
+        { createId: () => "unused-id" }
+      )
     ).toThrow("url: URL is invalid");
 
     expect(
-      updateResource(state, {
-        resourceId: "resource",
-        values: resourceFieldsUpdateInput.parse({
-          headers: [
-            {
-              name: "Content-Type",
-              value: { type: "literal", value: "application/json" },
-            },
-          ],
-          body: { type: "literal", value: "Plain text body" },
-        }),
-      }).payload
+      updateResource(
+        state,
+        {
+          resourceId: "resource",
+          values: resourceFieldsUpdateInput.parse({
+            headers: [
+              {
+                name: "Content-Type",
+                value: { type: "literal", value: "application/json" },
+              },
+            ],
+            body: { type: "literal", value: "Plain text body" },
+          }),
+        },
+        { createId: () => "unused-id" }
+      ).payload
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -2963,10 +3120,14 @@ describe("resource patch helpers", () => {
       body: '"request body"',
     });
 
-    const result = updateResource(state, {
-      resourceId: "resource",
-      values: { name: "Renamed" },
-    });
+    const result = updateResource(
+      state,
+      {
+        resourceId: "resource",
+        values: { name: "Renamed" },
+      },
+      { createId: () => "unused-id" }
+    );
     const resourcePatch = result.payload
       .find(({ namespace }) => namespace === "resources")
       ?.patches.find(({ path }) => path[0] === "resource");
@@ -2977,6 +3138,155 @@ describe("resource patch helpers", () => {
         headers: [{ name: "Authorization", value: '"Bearer token"' }],
         body: '"request body"',
       },
+    });
+  });
+
+  test("keeps an empty resource update as a no-op", () => {
+    const state = createResourceState();
+    state.resources.set("resource", resource);
+
+    const result = updateResource(
+      state,
+      { resourceId: "resource", values: {} },
+      { createId: () => "unused-id" }
+    );
+
+    expect(result).toMatchObject({
+      payload: [],
+      noop: true,
+      invalidatesNamespaces: [],
+      result: { resourceId: "resource" },
+    });
+  });
+
+  test("detaches render data when a resource becomes a write action", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.resources.set("resource", resource);
+    state.dataSources.set("data-source", {
+      id: "data-source",
+      scopeInstanceId: "body",
+      name: "Users",
+      type: "resource",
+      resourceId: "resource",
+    });
+
+    const result = updateResource(
+      state,
+      {
+        resourceId: "resource",
+        values: { method: "post" },
+      },
+      { createId: () => "unused-id" }
+    );
+
+    expect(result.result).toMatchObject({
+      resourceId: "resource",
+      dataSourceId: undefined,
+      warnings: [],
+    });
+    expect(result.payload).toContainEqual({
+      namespace: "dataSources",
+      patches: [{ op: "remove", path: ["data-source"] }],
+    });
+  });
+
+  test("preserves explicit write-resource exposure during unrelated updates", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.resources.set("resource", { ...resource, method: "post" });
+    state.dataSources.set("data-source", {
+      id: "data-source",
+      scopeInstanceId: "body",
+      name: "Users",
+      type: "resource",
+      resourceId: "resource",
+    });
+
+    const result = updateResource(
+      state,
+      {
+        resourceId: "resource",
+        values: { name: "Renamed" },
+      },
+      { createId: () => "unused-id" }
+    );
+
+    expect(result.result).toMatchObject({
+      resourceId: "resource",
+      dataSourceId: "data-source",
+      warnings: [],
+    });
+    expect(result.payload).not.toContainEqual({
+      namespace: "dataSources",
+      patches: [{ op: "remove", path: ["data-source"] }],
+    });
+  });
+
+  test("can explicitly attach and detach render data on update", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.resources.set("resource", { ...resource, method: "post" });
+
+    const attached = updateResource(
+      state,
+      {
+        resourceId: "resource",
+        values: {},
+        scopeInstanceId: "body",
+        exposeAsDataSource: true,
+      },
+      { createId: () => "data-source" }
+    );
+
+    expect(attached.result).toMatchObject({
+      dataSourceId: "data-source",
+      warnings: [
+        "The POST resource is explicitly exposed as render-time data and may execute while rendering the page.",
+      ],
+    });
+    expect(attached.payload).toContainEqual(
+      expect.objectContaining({ namespace: "dataSources" })
+    );
+
+    const attachedState = createResourceState();
+    attachedState.instances.set("body", state.instances.get("body")!);
+    attachedState.resources.set("resource", { ...resource, method: "post" });
+    attachedState.dataSources.set("data-source", {
+      id: "data-source",
+      scopeInstanceId: "body",
+      name: "Users",
+      type: "resource",
+      resourceId: "resource",
+    });
+    const detached = updateResource(
+      attachedState,
+      {
+        resourceId: "resource",
+        values: {},
+        exposeAsDataSource: false,
+      },
+      { createId: () => "unused-id" }
+    );
+
+    expect(detached.payload).toContainEqual({
+      namespace: "dataSources",
+      patches: [{ op: "remove", path: ["data-source"] }],
     });
   });
 

@@ -82,7 +82,7 @@ test("writes current data version after synchronizing from the API", async () =>
     bundleVersion,
   });
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle synchronized successfully (AGENTS.md: unchanged)"
+    "Project bundle synchronized successfully (AGENTS.md: unchanged). Next: webstudio connect"
   );
 });
 
@@ -111,7 +111,7 @@ test("materializes project agent instructions during sync", async () => {
     "Use existing design tokens."
   );
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle synchronized successfully (AGENTS.md: created)"
+    "Project bundle synchronized successfully (AGENTS.md: created). Next: webstudio connect"
   );
 });
 

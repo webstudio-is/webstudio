@@ -15,8 +15,10 @@ import {
   type Resource,
   type StyleDecl,
   type Styles,
-  asset as assetSchema,
   assetType,
+  fileAsset,
+  fontAsset,
+  imageAsset,
 } from "@webstudio-is/sdk";
 import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
@@ -119,9 +121,13 @@ export const imageDescriptionsSetInput = z
     });
   });
 
-export const assetAddInput = z.object({
-  asset: assetSchema,
-});
+const addableAsset = z.union([
+  fontAsset.omit({ projectId: true }),
+  imageAsset.omit({ projectId: true }),
+  fileAsset.omit({ projectId: true }),
+]);
+
+export const assetAddInput = z.object({ asset: addableAsset });
 
 export const parseAssetType = (value: string | null) => {
   const result = assetType.safeParse(value);
@@ -543,20 +549,28 @@ export const getAssetDisplayFilename = (asset: Asset) =>
 
 export const addAsset = (
   state: Pick<BuilderState, "assets">,
-  input: z.infer<typeof assetAddInput>
+  input: z.infer<typeof assetAddInput>,
+  context: { projectId?: string }
 ) => {
   const assets = getRequiredAssets(state);
+  if (context.projectId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "A configured project is required to add an asset"
+    );
+  }
   if (assets.has(input.asset.id)) {
     return throwBuilderRuntimeError("CONFLICT", "Asset already exists");
   }
+  const asset: Asset = { ...input.asset, projectId: context.projectId };
   return createRuntimeMutation({
     payload: [
       {
         namespace: "assets",
-        patches: [{ op: "add", path: [input.asset.id], value: input.asset }],
+        patches: [{ op: "add", path: [asset.id], value: asset }],
       },
     ],
-    result: { assetId: input.asset.id },
+    result: { assetId: asset.id },
     invalidatesNamespaces: ["assets"],
   });
 };

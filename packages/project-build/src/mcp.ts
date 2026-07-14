@@ -1446,6 +1446,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       },
       scopeInstanceId: "body-id",
       dataSourceName: "post",
+      exposeAsDataSource: true,
     },
     {
       resource: {
@@ -1463,6 +1464,11 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       resourceId: "resource-id",
       values: { url: "https://api.example.com/posts" },
+    },
+    {
+      resourceId: "resource-id",
+      values: { method: "post" },
+      exposeAsDataSource: false,
     },
   ],
   "update-asset": [
@@ -2179,7 +2185,11 @@ type SdkTool = {
   };
 };
 
-export const hiddenMcpOperationCommands = new Set<string>();
+export const hiddenMcpOperationCommands = new Set<string>([
+  // Hydrated Map-backed sourceData is available only to typed API callers.
+  // MCP callers use duplicate-page or serializable page-transfer workflows.
+  "copy-page",
+]);
 
 const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
   oneOf: [
@@ -3725,11 +3735,9 @@ const getAvailableComponentEntries = async ({
 const getComponentCoverageStatus = async ({
   input,
   executeOperation,
-  dryRun,
 }: {
   input: unknown;
   executeOperation: ExecuteMcpOperation;
-  dryRun: boolean;
 }) => {
   const { pageId, pagePath, documentType } = getCoverageStatusInput(input);
   const envelope = await executeOperation({
@@ -3738,7 +3746,7 @@ const getComponentCoverageStatus = async ({
       pageId,
       pagePath,
     },
-    dryRun,
+    dryRun: false,
   });
   const instancesResult = envelope.result;
   if (
@@ -3833,7 +3841,6 @@ const getComponentCoverageInsertNext = async ({
   const before = await getComponentCoverageStatus({
     input: definedStatusInput,
     executeOperation,
-    dryRun,
   });
   const missingRoots = before.missingRoots;
   const missingParts = before.missingParts;
@@ -3907,7 +3914,6 @@ const getComponentCoverageInsertNext = async ({
   const after = await getComponentCoverageStatus({
     input: definedStatusInput,
     executeOperation,
-    dryRun,
   });
   return {
     usage:
@@ -4518,13 +4524,13 @@ const readOnlySessionTools = new Set([
   "components.summary",
   "components.list",
   "components.coverage-plan",
+  "components.coverage-status",
   "components.find",
   "components.search",
   "components.get",
   "templates.list",
   "templates.get",
   "preview.status",
-  "preview.stop",
 ]);
 
 const toolAliases = new Map([
@@ -5336,7 +5342,6 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           await getComponentCoverageStatus({
             input,
             executeOperation: executeOperation as ExecuteMcpOperation,
-            dryRun,
           })
         );
       }

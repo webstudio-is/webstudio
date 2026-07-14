@@ -1115,7 +1115,7 @@ export function audit(
     pagePath: normalizedInput.pagePath,
     limit: Number.MAX_SAFE_INTEGER,
   });
-  const allFindings = raw.matches
+  const normalizedFindings = raw.matches
     .map(canonicalizeAuditMatchPagePaths)
     .map(normalizeAuditFinding)
     .sort(
@@ -1128,6 +1128,11 @@ export function audit(
         ) ||
         left.id.localeCompare(right.id)
     );
+  const allFindings = Array.from(
+    new Map(
+      normalizedFindings.map((finding) => [finding.id, finding] as const)
+    ).values()
+  );
   const severities = new Set(selectedSeverities);
   const findings = allFindings.filter((finding) =>
     severities.has(finding.severity)

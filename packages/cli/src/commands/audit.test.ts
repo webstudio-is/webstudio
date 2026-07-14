@@ -1,7 +1,23 @@
 import { describe, expect, test, vi } from "vitest";
-import { audit, getRenderedAuditToolInput, parseRouteExamples } from "./audit";
+import makeCLI from "yargs";
+import {
+  audit,
+  auditOptions,
+  getRenderedAuditToolInput,
+  parseRouteExamples,
+} from "./audit";
+import type { CommonYargsArgv } from "./yargs-types";
 
 describe("audit CLI input", () => {
+  test("allows static audit pagination without enabling rendered mode", async () => {
+    const parsed = await auditOptions(
+      makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+    ).parseAsync(["--cursor", "next-page"]);
+
+    expect(parsed).toMatchObject({ cursor: "next-page" });
+    expect(parsed.rendered).toBeUndefined();
+  });
+
   test("maps rendered audit flags to the MCP audit input", () => {
     expect(
       getRenderedAuditToolInput({

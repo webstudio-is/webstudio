@@ -144,11 +144,11 @@ required string expression. Headers can still read variables such as
 `"Bearer " + auth.token`, and GraphQL bodies can return objects such as
 `{ query: "...", variables: { slug: system.params.slug } }`.
 
-Create a resource with `scopeInstanceId`/`--scope-instance` when the fetched
-resource result should be available as a read data variable. Scoped resources
-are generated into the page resource `data` map and may be loaded during page
-rendering. Use this shape for read-oriented resources such as GET CMS/API data.
-Use `dataSourceName` or `--data-source-name` to choose the variable name.
+Create a GET resource with `scopeInstanceId` when the fetched resource result
+should be available as a read data variable. Scoped GET resources default to
+`exposeAsDataSource: true`, are generated into the page resource `data` map,
+and may be loaded during page rendering. Use `dataSourceName` to choose the
+variable name.
 
 For submit/write/action resources, create the resource without
 `scopeInstanceId`, then bind a component prop such as a Form `action` to the
@@ -157,6 +157,13 @@ are generated into the page resource `action` map instead of the read `data`
 map. Use this shape for POST, PUT, DELETE, webhook, and other resources that
 should run only from an explicit form/action flow, not merely because the page
 rendered.
+
+POST, PUT, and DELETE resources default to `exposeAsDataSource: false` even
+when a scope is supplied. Set `exposeAsDataSource: true` only when a write-method
+resource intentionally provides render-time data, such as a read-only GraphQL
+POST query. A scope is required, and the result includes a warning because the
+request may execute during page rendering. Set `exposeAsDataSource: false` on
+`update-resource` to detach an existing render-time data source.
 
 Resource `method` can be `get`, `post`, `put`, or `delete`. Use GET for read
 data. Use POST for creates, GraphQL requests, webhooks, and form submissions.

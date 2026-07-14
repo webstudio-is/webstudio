@@ -145,6 +145,7 @@ test("prints api manual as json", () => {
     "import",
     "build",
     "preview",
+    "connect",
     "screenshot",
     "permissions",
     "publish",

@@ -8,7 +8,7 @@
  * this list. Account, permission, deployment, domain, and other server-owned
  * state must use a dedicated tRPC API instead of Builder patches.
  */
-export const builderNamespaces = [
+export const webstudioDataNamespaces = [
   "pages",
   "instances",
   "props",
@@ -19,6 +19,12 @@ export const builderNamespaces = [
   "resources",
   "assets",
   "breakpoints",
+] as const;
+
+export type WebstudioDataNamespace = (typeof webstudioDataNamespaces)[number];
+
+export const builderNamespaces = [
+  ...webstudioDataNamespaces,
   "projectSettings",
   "marketplaceProduct",
 ] as const;

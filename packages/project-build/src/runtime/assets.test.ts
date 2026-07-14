@@ -16,6 +16,7 @@ import type {
 import type { BuilderState } from "../state/builder-state";
 import {
   addAsset,
+  assetAddInput,
   calculateUsagesByAssetId,
   createAssetDeletePayload,
   createAssetReplacementPayload,
@@ -226,8 +227,9 @@ describe("asset upload helpers", () => {
 describe("asset runtime operations", () => {
   test("adds uploaded assets", () => {
     const asset = imageAsset("new-asset", "new.png");
+    const { projectId, ...assetInput } = asset;
 
-    expect(addAsset(state, { asset })).toEqual({
+    expect(addAsset(state, { asset: assetInput }, { projectId })).toEqual({
       kind: "mutation",
       noop: false,
       result: { assetId: "new-asset" },
@@ -242,7 +244,8 @@ describe("asset runtime operations", () => {
   });
 
   test("rejects adding duplicate assets", () => {
-    expect(() => addAsset(state, { asset: imageAsset("asset") })).toThrow(
+    const { projectId, ...asset } = imageAsset("asset");
+    expect(() => addAsset(state, { asset }, { projectId })).toThrow(
       "Asset already exists"
     );
   });
@@ -896,6 +899,51 @@ const createAsset = (id: string): Asset =>
     createdAt: "2024-01-01T00:00:00.000Z",
     description: null,
   }) as Asset;
+
+describe("addAsset", () => {
+  const assetInput = {
+    id: "asset-1",
+    name: "asset-1.png",
+    type: "image" as const,
+    size: 1,
+    format: "png",
+    createdAt: "2024-01-01T00:00:00.000Z",
+    description: null,
+    meta: { width: 100, height: 100 },
+  };
+
+  test("uses the configured project instead of caller-owned identity", () => {
+    const input = assetAddInput.parse({
+      asset: { ...assetInput, projectId: "another-project" },
+    });
+    const result = addAsset({ assets: new Map() }, input, {
+      projectId: "configured-project",
+    });
+
+    expect(result.payload).toEqual([
+      {
+        namespace: "assets",
+        patches: [
+          {
+            op: "add",
+            path: ["asset-1"],
+            value: { ...assetInput, projectId: "configured-project" },
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("requires configured project ownership", () => {
+    expect(() =>
+      addAsset(
+        { assets: new Map() },
+        { asset: assetInput },
+        { projectId: undefined }
+      )
+    ).toThrow("A configured project is required to add an asset");
+  });
+});
 
 test("creates asset delete payload", () => {
   expect(createAssetDeletePayload([createAsset("asset-1")])).toEqual([

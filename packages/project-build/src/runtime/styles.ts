@@ -1158,7 +1158,11 @@ export const styleSourceClearStylesInput = z.object({
 
 export const styleSourceDuplicateInput = z.object({
   instanceId: z.string(),
-  styleSourceId: z.string(),
+  styleSourceId: z
+    .string()
+    .describe(
+      "ID of an attached design token to duplicate. Local style sources cannot be duplicated; convert the local source to a design token first."
+    ),
 });
 
 export const styleSourceConvertLocalToTokenInput = z.object({
@@ -2206,8 +2210,14 @@ export const duplicateStyleSource = (
   const styleState = getRequiredStyleMutationState(state);
   assertStyleInstances(styleState.instances, [input.instanceId]);
   const styleSource = styleState.styleSources.get(input.styleSourceId);
-  if (styleSource?.type !== "token") {
+  if (styleSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+  }
+  if (styleSource.type === "local") {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Local style sources cannot be duplicated. Convert the local style source to a design token first."
+    );
   }
   const styleSourceSelection = styleState.styleSourceSelections.get(
     input.instanceId

@@ -12,6 +12,7 @@ import { man, manOptions } from "./commands/man";
 import { mcp, mcpOptions } from "./commands/mcp";
 import { screenshot, screenshotOptions } from "./commands/screenshot";
 import { preview, previewOptions } from "./commands/preview";
+import { connect, connectOptions } from "./commands/connect";
 import { apiCommand } from "./commands/api-command";
 import {
   cliCommandGroupMetadata,
@@ -69,7 +70,9 @@ const registerApiCommand = (
 
 const topLevelCommandNames: ReadonlySet<string> = new Set([
   ...topLevelCliCommandMetadata.map((command) => command.command),
-  "audit",
+  ...cliCommandMetadata.map(
+    (command) => command.cliCommand.split(" ")[0] ?? command.cliCommand
+  ),
 ]);
 
 const mcpOnlyToolNames = new Set(
@@ -194,6 +197,12 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
     "Build and run the generated project production preview server for visual verification",
     previewOptions,
     preview
+  );
+  cmd.command(
+    ["connect [client]"],
+    "Generate the MCP client configuration for Claude Code, Codex, Cursor, or VS Code",
+    connectOptions,
+    connect
   );
   cmd.command(
     ["screenshot [url]"],

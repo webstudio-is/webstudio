@@ -163,6 +163,37 @@ describe("project audit and analysis", () => {
     ).toThrow(/cursor does not match/i);
   });
 
+  test("returns one finding for a CSS variable declared at multiple breakpoints", () => {
+    const styles = new Map<string, StyleDecl>(state.styles);
+    styles.set("local:base::--unused", {
+      styleSourceId: "local",
+      breakpointId: "base",
+      state: undefined,
+      property: "--unused",
+      value: { type: "keyword", value: "red" },
+    });
+    styles.set("local:desktop::--unused", {
+      styleSourceId: "local",
+      breakpointId: "desktop",
+      state: undefined,
+      property: "--unused",
+      value: { type: "keyword", value: "blue" },
+    });
+
+    const result = audit(
+      { ...state, styles },
+      { scopes: ["styles"], verbose: true, limit: 200 },
+      { projectVersion: 1 }
+    );
+    const findings = result.findings.filter(
+      (finding) =>
+        finding.ruleId === "unused-css-variable" &&
+        finding.location.cssVariableName === "--unused"
+    );
+
+    expect(findings).toHaveLength(1);
+  });
+
   test("runs all audit scopes deterministically without mutating state", () => {
     const before = structuredClone(state);
 

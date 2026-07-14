@@ -1430,6 +1430,54 @@ describe("builder runtime registry", () => {
     }
   });
 
+  test("publishes truthful inputs for asset, page-copy, style-source, and resource operations", () => {
+    const addAssetOperation = getBuilderRuntimeOperation("assets.add");
+    const addAssetSchema = toInputJsonSchemaObject(
+      addAssetOperation.inputJsonSchema
+    );
+    const assetSchema = toInputJsonSchemaObject(
+      addAssetSchema?.properties?.asset
+    );
+    expect(JSON.stringify(assetSchema)).not.toContain("projectId");
+
+    for (const operationId of [
+      "resources.create",
+      "resources.update",
+    ] as const) {
+      const operation = getBuilderRuntimeOperation(operationId);
+      const schema = toInputJsonSchemaObject(operation.inputJsonSchema);
+      expect(
+        toInputJsonSchemaObject(schema?.properties?.exposeAsDataSource)
+          ?.description
+      ).toContain("write resources default to false");
+    }
+
+    const copyPageOperation = getBuilderRuntimeOperation("pages.copy");
+    const copyPageSchema = toInputJsonSchemaObject(
+      copyPageOperation.inputJsonSchema
+    );
+    expect(copyPageSchema?.required).toContain("sourceData");
+    expect(
+      toInputJsonSchemaObject(copyPageSchema?.properties?.sourceData)
+        ?.description
+    ).toContain("use duplicate-page");
+    expect(() =>
+      copyPageOperation.execute({ state, input: { pageId: "home" }, context })
+    ).toThrow("sourceData");
+
+    const duplicateStyleSourceOperation = getBuilderRuntimeOperation(
+      "styleSources.duplicate"
+    );
+    const duplicateStyleSourceSchema = toInputJsonSchemaObject(
+      duplicateStyleSourceOperation.inputJsonSchema
+    );
+    expect(
+      toInputJsonSchemaObject(
+        duplicateStyleSourceSchema?.properties?.styleSourceId
+      )?.description
+    ).toContain("Local style sources cannot be duplicated");
+  });
+
   test("keeps router adapter policy in runtime metadata", () => {
     for (const operation of builderRuntimeOperations) {
       expect(operation.requiresAssets).toBe(

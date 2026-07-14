@@ -1519,7 +1519,7 @@ export const builderRuntimeOperations = [
       ],
     }),
     data.resourceUpdateInput,
-    ({ state, input }) => data.updateResource(state, input)
+    ({ state, input, context }) => data.updateResource(state, input, context)
   ),
   runtimeOperation(
     "resources.replaceText",
@@ -1643,7 +1643,7 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     assets.assetAddInput,
-    ({ state, input }) => assets.addAsset(state, input)
+    ({ state, input, context }) => assets.addAsset(state, input, context)
   ),
   runtimeOperation(
     "assets.replace",

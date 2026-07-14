@@ -11,7 +11,6 @@ export const auditOptions = (yargs: CommonYargsArgv) =>
   auditCommandOptions(yargs)
     .option("rendered", {
       type: "boolean",
-      default: false,
       describe:
         "Build and inspect rendered pages at responsive viewport widths",
     })

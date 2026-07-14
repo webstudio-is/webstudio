@@ -1074,9 +1074,14 @@ export const runtimeOperationContractData = [
     inputSchema: {
       type: "object",
       properties: {
-        sourceData: {},
+        sourceData: {
+          description:
+            "Required hydrated WebstudioData from the source project. This is a low-level cross-project transfer command; use duplicate-page to copy a page within the configured project.",
+        },
         pageId: {
           type: "string",
+          description:
+            "ID of the page in sourceData to copy into this project.",
         },
         parentFolderId: {
           type: "string",
@@ -1086,7 +1091,7 @@ export const runtimeOperationContractData = [
           enum: ["ours", "theirs", "merge"],
         },
       },
-      required: ["pageId"],
+      required: ["sourceData", "pageId"],
     },
     readNamespaces: [
       "pages",
@@ -33785,6 +33790,8 @@ export const runtimeOperationContractData = [
         },
         styleSourceId: {
           type: "string",
+          description:
+            "ID of an attached design token to duplicate. Local style sources cannot be duplicated; convert the local source to a design token first.",
         },
       },
       required: ["instanceId", "styleSourceId"],
@@ -37103,6 +37110,11 @@ export const runtimeOperationContractData = [
         dataSourceName: {
           type: "string",
         },
+        exposeAsDataSource: {
+          description:
+            "Expose the resource as render-time data. Scoped GET resources default to true; write resources default to false.",
+          type: "boolean",
+        },
       },
       required: ["resource"],
     },
@@ -37283,6 +37295,11 @@ export const runtimeOperationContractData = [
         },
         scopeInstanceId: {
           type: "string",
+        },
+        exposeAsDataSource: {
+          description:
+            "Expose the resource as render-time data. Scoped GET resources default to true; write resources default to false.",
+          type: "boolean",
         },
       },
       required: ["resourceId", "values"],

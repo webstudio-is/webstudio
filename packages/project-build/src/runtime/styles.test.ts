@@ -1382,6 +1382,23 @@ describe("runtime style operations", () => {
       },
     ]);
 
+    expect(() =>
+      duplicateStyleSource(
+        {
+          instances,
+          styles: createStyleDeclMap([]),
+          styleSources: sources([local("local")]),
+          styleSourceSelections: new Map([
+            ["box", { instanceId: "box", values: ["local"] }],
+          ]),
+        },
+        { instanceId: "box", styleSourceId: "local" },
+        { createId }
+      )
+    ).toThrow(
+      "Local style sources cannot be duplicated. Convert the local style source to a design token first."
+    );
+
     const convertMutation = convertLocalStyleSourceToToken(
       {
         instances,
