@@ -1,8 +1,7 @@
-import { loadDevBuild } from "../db";
-import { createDragProject, dragIds } from "../fixtures/drag-project";
+import { createDragProject } from "../fixtures/drag-project";
 import { openProjectBuilder, waitForCanvasFrame } from "../flows/builder";
+import { dragTreeRow, getTreeRowByButton } from "../flows/drag";
 import { openPagesPanel } from "../flows/pages-panel";
-import { dragTreeRowAndSave, getTreeRowByButton } from "../flows/tree-drag";
 import { newIsolatedPage, test } from "../harness";
 
 let fixture: Awaited<ReturnType<typeof createDragProject>>;
@@ -22,24 +21,19 @@ test("Pages panel pointer drag reorders and nests pages", async () => {
     await openPagesPanel({ page });
 
     const row = (kind: "Page" | "Folder", name: string) =>
-      getTreeRowByButton({
-        rowButton: page.getByRole("group", {
+      getTreeRowByButton(
+        page.getByRole("group", {
           name: `${kind} ${name}`,
           exact: true,
-        }),
-      });
-    await dragTreeRowAndSave({
+        })
+      );
+    await dragTreeRow(page, row("Page", "Beta"), row("Page", "Alpha"), "above");
+    await dragTreeRow(
       page,
-      sourceRow: row("Page", "Beta"),
-      targetRow: row("Page", "Alpha"),
-      position: "above",
-    });
-    await dragTreeRowAndSave({
-      page,
-      sourceRow: row("Page", "Alpha"),
-      targetRow: row("Folder", "Group"),
-      position: "inside",
-    });
+      row("Page", "Alpha"),
+      row("Folder", "Group"),
+      "inside"
+    );
 
     await page.reload();
     await waitForCanvasFrame({ page });
@@ -52,19 +46,15 @@ test("Pages panel pointer drag reorders and nests pages", async () => {
       .getByRole("group", { name: "Page Alpha", exact: true })
       .waitFor();
 
-    const build = await loadDevBuild({ projectId: fixture.projectId });
-    const pages = JSON.parse(build.pages) as {
-      rootFolderId: string;
-      folders: Array<{ id: string; children: string[] }>;
-    };
-    const children = (id: string) =>
-      pages.folders.find((folder) => folder.id === id)?.children;
-    const rootChildren = children(pages.rootFolderId);
+    const labels = await page
+      .locator(
+        '[role="group"][aria-label^="Page "], [role="group"][aria-label^="Folder "]'
+      )
+      .evaluateAll((rows) => rows.map((row) => row.getAttribute("aria-label")));
+    const beta = labels.indexOf("Page Beta");
     if (
-      JSON.stringify(children(dragIds.folder)) !==
-        JSON.stringify([dragIds.alpha]) ||
-      rootChildren?.indexOf(dragIds.beta) !==
-        (rootChildren?.indexOf(dragIds.folder) ?? 0) - 1
+      labels.slice(beta, beta + 3).join() !==
+      "Page Beta,Folder Group,Page Alpha"
     ) {
       throw new Error("Pages drag result did not persist");
     }

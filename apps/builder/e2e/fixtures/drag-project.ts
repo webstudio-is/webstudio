@@ -32,6 +32,21 @@ type Pages = {
   }>;
 };
 
+type Child = { type: "id" | "text"; value: string };
+const element = (
+  id: string,
+  tag: string,
+  children: Child[],
+  label?: string
+) => ({
+  type: "instance",
+  id,
+  component: "ws:element",
+  tag,
+  label,
+  children,
+});
+
 const seedBuild = (serializedPages: string) => {
   const pages = JSON.parse(serializedPages) as Pages;
   const home = pages.pages.find(({ id }) => id === pages.homePageId);
@@ -73,61 +88,36 @@ const seedBuild = (serializedPages: string) => {
 
   const pageBodies = pages.pages
     .filter(({ id }) => id !== pages.homePageId)
-    .map(({ rootInstanceId, name }) => ({
-      type: "instance",
-      id: rootInstanceId,
-      component: "ws:element",
-      tag: "body",
-      children: [{ type: "text", value: `${name} page` }],
-    }));
+    .map(({ rootInstanceId }) => element(rootInstanceId, "body", []));
 
   return {
     pages: JSON.stringify(pages),
     instances: JSON.stringify([
       ...pageBodies,
-      {
-        type: "instance",
-        id: dragIds.body,
-        component: "ws:element",
-        tag: "body",
-        children: [{ type: "id", value: dragIds.wrapper }],
-      },
-      {
-        type: "instance",
-        id: dragIds.wrapper,
-        component: "ws:element",
-        tag: "main",
-        label: "Drag Wrapper",
-        children: [
+      element(dragIds.body, "body", [{ type: "id", value: dragIds.wrapper }]),
+      element(
+        dragIds.wrapper,
+        "main",
+        [
           { type: "id", value: dragIds.box },
           { type: "id", value: dragIds.heading },
           { type: "id", value: dragIds.container },
         ],
-      },
-      {
-        type: "instance",
-        id: dragIds.box,
-        component: "ws:element",
-        tag: "div",
-        label: "Drag Box",
-        children: [{ type: "text", value: "Box" }],
-      },
-      {
-        type: "instance",
-        id: dragIds.heading,
-        component: "ws:element",
-        tag: "h1",
-        label: "Drag Heading",
-        children: [{ type: "text", value: "Heading" }],
-      },
-      {
-        type: "instance",
-        id: dragIds.container,
-        component: "ws:element",
-        tag: "section",
-        label: "Drop Container",
-        children: [{ type: "text", value: "Drop here" }],
-      },
+        "Drag Wrapper"
+      ),
+      element(dragIds.box, "div", [{ type: "text", value: "Box" }], "Drag Box"),
+      element(
+        dragIds.heading,
+        "h1",
+        [{ type: "text", value: "Heading" }],
+        "Drag Heading"
+      ),
+      element(
+        dragIds.container,
+        "section",
+        [{ type: "text", value: "Drop here" }],
+        "Drop Container"
+      ),
     ]),
     props: "[]",
     styleSources: "[]",
@@ -160,4 +150,16 @@ export const createDragProject = async (name: string) => {
   } finally {
     await page.close();
   }
+};
+
+export const loadChildIds = async (projectId: string, parentId: string) => {
+  const build = await loadDevBuild({ projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    id: string;
+    children: Child[];
+  }>;
+  return instances
+    .find(({ id }) => id === parentId)
+    ?.children.filter(({ type }) => type === "id")
+    .map(({ value }) => value);
 };

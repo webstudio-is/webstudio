@@ -1,11 +1,10 @@
-import { loadDevBuild } from "../db";
-import { createDragProject, dragIds } from "../fixtures/drag-project";
-import { openProjectBuilder } from "../flows/builder";
 import {
-  dragCanvasInstanceToInstance,
-  dragComponentCardToCanvas,
-  ensureInteractiveCanvas,
-} from "../flows/canvas-drag";
+  createDragProject,
+  dragIds,
+  loadChildIds,
+} from "../fixtures/drag-project";
+import { openProjectBuilder } from "../flows/builder";
+import { dragToCanvas, ensureInteractiveCanvas } from "../flows/drag";
 import { newIsolatedPage, test } from "../harness";
 
 let fixture: Awaited<ReturnType<typeof createDragProject>>;
@@ -30,37 +29,21 @@ test("Canvas pointer drag reparents and inserts instances", async () => {
       dragIds.body
     );
 
-    await dragCanvasInstanceToInstance({
+    await ensureInteractiveCanvas(page, canvas, container);
+    await dragToCanvas(
       page,
       canvas,
-      sourceSelector: heading,
-      targetSelector: container,
-    });
-    await ensureInteractiveCanvas({
-      page,
-      canvas,
-      probeSelector: selector(dragIds.container, dragIds.wrapper, dragIds.body),
-    });
+      canvas.locator(heading).first(),
+      container
+    );
+    await ensureInteractiveCanvas(page, canvas, container);
     await page.getByRole("tab", { name: "Components" }).click();
     await page.getByPlaceholder("Find components").fill("Box");
     const card = page.locator("[data-drag-component]").first();
     await card.waitFor();
-    await dragComponentCardToCanvas({
-      page,
-      canvas,
-      card,
-      targetSelector: container,
-    });
+    await dragToCanvas(page, canvas, card, container);
 
-    const build = await loadDevBuild({ projectId: fixture.projectId });
-    const instances = JSON.parse(build.instances) as Array<{
-      id: string;
-      children: Array<{ type: string; value: string }>;
-    }>;
-    const children = instances
-      .find(({ id }) => id === dragIds.container)
-      ?.children.filter(({ type }) => type === "id")
-      .map(({ value }) => value);
+    const children = await loadChildIds(fixture.projectId, dragIds.container);
     if (children?.includes(dragIds.heading) !== true || children.length < 2) {
       throw new Error(
         `Expected reparented and inserted instances: ${children}`

@@ -1,8 +1,14 @@
-import { loadDevBuild } from "../db";
-import { createDragProject, dragIds } from "../fixtures/drag-project";
+import {
+  createDragProject,
+  dragIds,
+  loadChildIds,
+} from "../fixtures/drag-project";
 import { openProjectBuilder } from "../flows/builder";
-import { ensureInteractiveCanvas } from "../flows/canvas-drag";
-import { dragTreeRowAndSave, getTreeRowByButton } from "../flows/tree-drag";
+import {
+  dragTreeRow,
+  ensureInteractiveCanvas,
+  getTreeRowByButton,
+} from "../flows/drag";
 import { newIsolatedPage, test } from "../harness";
 
 let fixture: Awaited<ReturnType<typeof createDragProject>>;
@@ -20,7 +26,7 @@ test("Navigator pointer drag reorders and reparents instances", async () => {
       authToken: fixture.builderToken,
     });
     const heading = `[data-ws-selector="${dragIds.heading},${dragIds.wrapper},${dragIds.body}"]`;
-    await ensureInteractiveCanvas({ page, canvas, probeSelector: heading });
+    await ensureInteractiveCanvas(page, canvas, heading);
     const navigator = page.getByRole("tab", { name: "Navigator" });
     if ((await navigator.getAttribute("aria-selected")) !== "true") {
       await navigator.click();
@@ -28,55 +34,33 @@ test("Navigator pointer drag reorders and reparents instances", async () => {
     await page.getByText("Navigator", { exact: true }).first().waitFor();
 
     const row = (label: string) =>
-      getTreeRowByButton({
-        rowButton: page
+      getTreeRowByButton(
+        page
           .locator("[data-navigator-tree] [data-tree-button]")
           .filter({ hasText: label })
-          .first(),
-      });
+          .first()
+      );
     await row("Drag Heading").waitFor();
 
-    await dragTreeRowAndSave({
-      page,
-      sourceRow: row("Drag Heading"),
-      targetRow: row("Drag Box"),
-      position: "above",
-    });
+    await dragTreeRow(page, row("Drag Heading"), row("Drag Box"), "above");
     const reloadedCanvas = await openProjectBuilder({
       page,
       projectId: fixture.projectId,
       authToken: fixture.builderToken,
     });
-    await ensureInteractiveCanvas({
-      page,
-      canvas: reloadedCanvas,
-      probeSelector: heading,
-    });
+    await ensureInteractiveCanvas(page, reloadedCanvas, heading);
     if ((await navigator.getAttribute("aria-selected")) !== "true") {
       await navigator.click();
     }
     await row("Drag Box").waitFor();
-    await dragTreeRowAndSave({
-      page,
-      sourceRow: row("Drag Box"),
-      targetRow: row("Drop Container"),
-      position: "inside",
-    });
+    await dragTreeRow(page, row("Drag Box"), row("Drop Container"), "inside");
 
-    const build = await loadDevBuild({ projectId: fixture.projectId });
-    const instances = JSON.parse(build.instances) as Array<{
-      id: string;
-      children: Array<{ type: string; value: string }>;
-    }>;
-    const childIds = (id: string) =>
-      instances
-        .find((instance) => instance.id === id)
-        ?.children.filter(({ type }) => type === "id")
-        .map(({ value }) => value);
+    const wrapper = await loadChildIds(fixture.projectId, dragIds.wrapper);
+    const container = await loadChildIds(fixture.projectId, dragIds.container);
     if (
-      JSON.stringify(childIds(dragIds.wrapper)) !==
+      JSON.stringify(wrapper) !==
         JSON.stringify([dragIds.heading, dragIds.container]) ||
-      childIds(dragIds.container)?.includes(dragIds.box) !== true
+      container?.includes(dragIds.box) !== true
     ) {
       throw new Error("Navigator drag result did not persist");
     }
