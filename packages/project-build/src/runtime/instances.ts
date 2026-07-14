@@ -65,25 +65,42 @@ import equal from "fast-deep-equal";
 import { z } from "zod";
 
 export const insertIndexInput = z.number().int().nonnegative();
+const instanceEndPositionInput = z.literal("end");
 export const instanceInsertModeInput = z.enum(["append", "prepend", "replace"]);
 
 export const moveInstancesInput = z.object({
   moves: z
     .array(
-      z.object({
-        instanceId: z.string(),
-        parentInstanceId: z.string(),
-        insertIndex: insertIndexInput.optional(),
-      })
+      z
+        .object({
+          instanceId: z.string(),
+          parentInstanceId: z.string(),
+          insertIndex: insertIndexInput
+            .optional()
+            .describe(
+              "Zero-based position in the target parent's children before the moved instance is removed. Omit it or use position: end to append."
+            ),
+          position: instanceEndPositionInput
+            .optional()
+            .describe(
+              'Use "end" to append deterministically without calculating an insertIndex.'
+            ),
+        })
+        .refine(
+          ({ insertIndex, position }) =>
+            insertIndex === undefined || position === undefined,
+          { message: "Use either insertIndex or position, not both." }
+        )
     )
-    .min(1),
+    .min(1)
+    .describe("Moves are applied sequentially in array order."),
 });
 
 export const reparentInstanceInput = z.object({
   sourceInstanceSelector: z.array(z.string()).min(2),
   dropTarget: z.object({
     parentSelector: z.array(z.string()).min(1),
-    position: z.union([insertIndexInput, z.literal("end")]),
+    position: z.union([insertIndexInput, instanceEndPositionInput]),
   }),
 });
 
@@ -963,10 +980,11 @@ export const createInstanceMovePatches = ({
     instanceId: Instance["id"];
     parentInstanceId: Instance["id"];
     insertIndex?: number;
+    position?: "end";
   }>;
 }) => {
-  const removalPatches = [];
-  const addPatches = [];
+  const mutableInstances = cloneInstances(instances);
+  const patches: BuilderPatchChange["patches"] = [];
   const errors: Array<
     | { type: "instance-not-found"; instanceId: Instance["id"] }
     | { type: "parent-not-found"; instanceId: Instance["id"] }
@@ -976,17 +994,17 @@ export const createInstanceMovePatches = ({
   > = [];
 
   for (const move of moves) {
-    const instance = instances.get(move.instanceId);
+    const instance = mutableInstances.get(move.instanceId);
     if (instance === undefined) {
       errors.push({ type: "instance-not-found", instanceId: move.instanceId });
       continue;
     }
-    const parent = findParentInstanceReference(instances, instance.id);
+    const parent = findParentInstanceReference(mutableInstances, instance.id);
     if (parent === undefined) {
       errors.push({ type: "parent-not-found", instanceId: instance.id });
       continue;
     }
-    const nextParent = instances.get(move.parentInstanceId);
+    const nextParent = mutableInstances.get(move.parentInstanceId);
     if (nextParent === undefined) {
       errors.push({
         type: "target-parent-not-found",
@@ -994,7 +1012,7 @@ export const createInstanceMovePatches = ({
       });
       continue;
     }
-    const descendantIds = collectInstanceIds(instances, instance.id);
+    const descendantIds = collectInstanceIds(mutableInstances, instance.id);
     if (descendantIds.includes(nextParent.id)) {
       errors.push({ type: "descendant-target", instanceId: instance.id });
       continue;
@@ -1015,7 +1033,7 @@ export const createInstanceMovePatches = ({
             requestedIndex: requestedInsertIndex,
           })
         : requestedInsertIndex;
-    removalPatches.push({
+    patches.push({
       op: "remove" as const,
       path: [parent.instance.id, "children", parent.childIndex] as [
         string,
@@ -1023,16 +1041,22 @@ export const createInstanceMovePatches = ({
         number,
       ],
     });
-    addPatches.push({
+    patches.push({
       op: "add" as const,
       path: [nextParent.id, "children", insertIndex],
       value: createInstanceChild(instance.id),
     });
+    parent.instance.children.splice(parent.childIndex, 1);
+    nextParent.children.splice(
+      insertIndex,
+      0,
+      createInstanceChild(instance.id)
+    );
   }
 
   return {
     errors,
-    patches: [...sortChildRemovalPatches(removalPatches), ...addPatches],
+    patches,
   };
 };
 

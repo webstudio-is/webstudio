@@ -633,7 +633,7 @@ export const insertComponentCommandOptions = (yargs: CommonYargsArgv) =>
 export const moveInstanceCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
     apiCommandOptions(yargs),
-    "Required JSON file containing an array of moves with instanceId, parentInstanceId, and optional insertIndex"
+    'Required JSON file containing an array of moves with instanceId, parentInstanceId, and either optional insertIndex or position: "end"'
   );
 
 export const cloneInstanceCommandOptions = (yargs: CommonYargsArgv) =>

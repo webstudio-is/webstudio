@@ -1,9 +1,4 @@
-import type {
-  Breakpoint,
-  CompilerSettings,
-  PageRedirect,
-  ProjectMeta,
-} from "@webstudio-is/sdk";
+import type { Breakpoint, PageRedirect } from "@webstudio-is/sdk";
 import {
   breakpoint,
   compilerSettings,
@@ -59,23 +54,42 @@ const getRequiredProjectSettings = (
   return state.projectSettings;
 };
 
-type Settable<T> = {
-  [Property in keyof T]?: T[Property] | null;
-};
+const createSettableObjectInput = <Shape extends z.ZodRawShape>(
+  schema: z.ZodObject<Shape>
+) =>
+  z
+    .object(
+      Object.fromEntries(
+        Object.entries(schema.shape).map(([name, value]) => [
+          name,
+          (value as z.ZodTypeAny).nullable().optional(),
+        ])
+      ) as unknown as {
+        [Name in keyof Shape]: z.ZodOptional<z.ZodNullable<Shape[Name]>>;
+      }
+    )
+    .strict();
 
-export const projectSettingsUpdateInput = z.object({
-  meta: z.record(z.string(), z.unknown()).optional(),
-  compiler: z.record(z.string(), z.unknown()).optional(),
-});
+const projectMetaUpdateInput = createSettableObjectInput(projectMeta);
+const compilerSettingsUpdateInput = createSettableObjectInput(compilerSettings);
+
+export const projectSettingsUpdateInput = z
+  .object({
+    meta: projectMetaUpdateInput.optional(),
+    compiler: compilerSettingsUpdateInput.optional(),
+  })
+  .strict()
+  .refine(
+    ({ meta, compiler }) =>
+      (meta !== undefined && Object.keys(meta).length > 0) ||
+      (compiler !== undefined && Object.keys(compiler).length > 0),
+    { message: "Provide at least one project setting to update." }
+  )
+  .describe(
+    "Update at least one supported project meta or compiler setting. Null removes a setting."
+  );
 
 export const marketplaceProductUpdateInput = marketplaceProduct;
-
-const projectMetaKeys: ReadonlySet<string> = new Set(
-  projectMeta.keyof().options
-);
-const compilerSettingKeys: ReadonlySet<string> = new Set(
-  compilerSettings.keyof().options
-);
 
 const emailAddress = z.string().email();
 
@@ -162,49 +176,21 @@ export const validateProjectAuthRoute = (
   return errors;
 };
 
-const omitNullValues = (input: Record<string, unknown>) =>
-  Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== null)
-  );
-
-const parseProjectMeta = (input: Record<string, unknown>) => {
-  const result = projectMeta.partial().safeParse(omitNullValues(input));
-  if (result.success === false) {
-    return throwBuilderRuntimeError("BAD_REQUEST", result.error.message);
-  }
-  if (typeof result.data.contactEmail === "string") {
-    const contactEmailError = validateContactEmail(result.data.contactEmail);
+const validateProjectMetaUpdate = (
+  values: z.infer<typeof projectMetaUpdateInput>
+) => {
+  if (typeof values.contactEmail === "string") {
+    const contactEmailError = validateContactEmail(values.contactEmail);
     if (contactEmailError !== undefined) {
       return throwBuilderRuntimeError("BAD_REQUEST", contactEmailError);
     }
   }
-  if (typeof result.data.auth === "string") {
-    const authError = validateProjectAuth(result.data.auth);
+  if (typeof values.auth === "string") {
+    const authError = validateProjectAuth(values.auth);
     if (authError !== undefined) {
       return throwBuilderRuntimeError("BAD_REQUEST", authError);
     }
   }
-  const values: Settable<ProjectMeta> = { ...result.data };
-  for (const [name, value] of Object.entries(input)) {
-    if (value === null && projectMetaKeys.has(name)) {
-      values[name as keyof ProjectMeta] = null;
-    }
-  }
-  return values;
-};
-
-const parseCompilerSettings = (input: Record<string, unknown>) => {
-  const result = compilerSettings.partial().safeParse(omitNullValues(input));
-  if (result.success === false) {
-    return throwBuilderRuntimeError("BAD_REQUEST", result.error.message);
-  }
-  const values: Settable<CompilerSettings> = { ...result.data };
-  for (const [name, value] of Object.entries(input)) {
-    if (value === null && compilerSettingKeys.has(name)) {
-      values[name as keyof CompilerSettings] = null;
-    }
-  }
-  return values;
 };
 
 export const getProjectSettings = (
@@ -231,7 +217,9 @@ const pushObjectFieldPatches = ({
   values: Record<string, unknown>;
 }) => {
   if (current === undefined) {
-    const next = omitNullValues(values);
+    const next = Object.fromEntries(
+      Object.entries(values).filter(([, value]) => value !== null)
+    );
     if (Object.keys(next).length > 0) {
       patches.push({ op: "add", path: basePath, value: next });
     }
@@ -243,6 +231,9 @@ const pushObjectFieldPatches = ({
       if (exists) {
         patches.push({ op: "remove", path: [...basePath, name] });
       }
+      continue;
+    }
+    if (exists && Object.is(current[name], value)) {
       continue;
     }
     patches.push({
@@ -260,28 +251,27 @@ export const updateProjectSettings = (
   const settings = getRequiredProjectSettings(state);
   const patches: BuilderPatchChange["patches"] = [];
   if (input.meta !== undefined) {
-    const values = parseProjectMeta(input.meta);
+    validateProjectMetaUpdate(input.meta);
     pushObjectFieldPatches({
       patches,
       basePath: ["meta"],
       current: settings.meta,
-      values,
+      values: input.meta,
     });
   }
   if (input.compiler !== undefined) {
-    const values = parseCompilerSettings(input.compiler);
     pushObjectFieldPatches({
       patches,
       basePath: ["compiler"],
       current: settings.compiler,
-      values,
+      values: input.compiler,
     });
   }
   return createRuntimeMutation({
     payload: compactBuilderPatchPayload([
       { namespace: "projectSettings", patches },
     ]),
-    result: { updated: true },
+    result: { updated: patches.length > 0 },
     invalidatesNamespaces: patches.length === 0 ? [] : ["projectSettings"],
   });
 };

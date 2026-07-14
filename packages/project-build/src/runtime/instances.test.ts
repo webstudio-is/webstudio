@@ -44,6 +44,7 @@ import {
   isTextContentChild,
   listInstances,
   deleteInstances,
+  moveInstancesInput,
   moveInstances,
   replaceTextInput,
   serializeTextNodes,
@@ -2045,6 +2046,95 @@ test("adjusts same-parent move insert indexes", () => {
       value: { type: "id", value: "c" },
     },
   ]);
+});
+
+test("appends batched same-parent moves in array order", () => {
+  const instances = new Map([
+    [
+      "parent",
+      createInstance("parent", elementComponent, [
+        { type: "id", value: "x" },
+        { type: "id", value: "b" },
+        { type: "id", value: "a" },
+      ]),
+    ],
+    ["x", createInstance("x", elementComponent)],
+    ["a", createInstance("a", elementComponent)],
+    ["b", createInstance("b", elementComponent)],
+  ]);
+  const payload = createInstanceMovePayload({
+    instances,
+    moves: [
+      { instanceId: "a", parentInstanceId: "parent", position: "end" },
+      { instanceId: "b", parentInstanceId: "parent", position: "end" },
+    ],
+  }).payload;
+  applyBuilderPatchPayloadMutable((namespace) => {
+    if (namespace === "instances") {
+      return instances;
+    }
+    throw new Error(`Unexpected namespace: ${namespace}`);
+  }, payload);
+
+  expect(instances.get("parent")?.children).toEqual([
+    { type: "id", value: "x" },
+    { type: "id", value: "a" },
+    { type: "id", value: "b" },
+  ]);
+});
+
+test("applies batched cross-parent moves against the evolving tree", () => {
+  const instances = new Map([
+    [
+      "source",
+      createInstance("source", elementComponent, [
+        { type: "id", value: "a" },
+        { type: "id", value: "b" },
+      ]),
+    ],
+    [
+      "target",
+      createInstance("target", elementComponent, [{ type: "id", value: "x" }]),
+    ],
+    ["x", createInstance("x", elementComponent)],
+    ["a", createInstance("a", elementComponent)],
+    ["b", createInstance("b", elementComponent)],
+  ]);
+  const payload = createInstanceMovePayload({
+    instances,
+    moves: [
+      { instanceId: "a", parentInstanceId: "target", position: "end" },
+      { instanceId: "b", parentInstanceId: "target", position: "end" },
+    ],
+  }).payload;
+  applyBuilderPatchPayloadMutable((namespace) => {
+    if (namespace === "instances") {
+      return instances;
+    }
+    throw new Error(`Unexpected namespace: ${namespace}`);
+  }, payload);
+
+  expect(instances.get("source")?.children).toEqual([]);
+  expect(instances.get("target")?.children).toEqual([
+    { type: "id", value: "x" },
+    { type: "id", value: "a" },
+    { type: "id", value: "b" },
+  ]);
+});
+
+test("rejects ambiguous move positions", () => {
+  expect(
+    moveInstancesInput.safeParse({
+      moves: [
+        {
+          instanceId: "a",
+          parentInstanceId: "parent",
+          insertIndex: 1,
+          position: "end",
+        },
+      ],
+    }).success
+  ).toBe(false);
 });
 
 test("reports invalid instance moves", () => {
