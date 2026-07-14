@@ -24,7 +24,11 @@ import type { BuilderPatchChange } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { CompactBuild } from "../types";
 import type { ProjectSettings } from "../shared/project-settings";
-import { throwBuilderRuntimeError } from "./errors";
+import {
+  addZodValidationIssue,
+  getZodValidationIssueOptions,
+  throwBuilderRuntimeError,
+} from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import {
   collectFontFamiliesFromStyleValue,
@@ -67,9 +71,16 @@ export const assetUpdateInput = z.object({
         .optional(),
       description: z.union([z.string(), z.null()]).optional(),
     })
-    .refine((values) => Object.keys(values).length > 0, {
-      message: "At least one asset field is required",
-    }),
+    .refine(
+      (values) => Object.keys(values).length > 0,
+      getZodValidationIssueOptions({
+        code: "empty_asset_update",
+        path: [],
+        message: "At least one asset field is required",
+        constraint: "at_least_one_property",
+        example: { description: "A concise image description" },
+      })
+    ),
 });
 
 const imageDescriptionUpdate = z.union([
@@ -111,10 +122,11 @@ export const imageDescriptionsSetInput = z
     const assetIds = new Set<string>();
     updates.forEach(({ assetId }, index) => {
       if (assetIds.has(assetId)) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["updates", index, "assetId"],
+        addZodValidationIssue(context, {
+          code: "duplicate_asset_update",
+          path: ["updates", String(index), "assetId"],
           message: "Each image asset may be updated only once.",
+          constraint: "unique_by:assetId",
         });
       }
       assetIds.add(assetId);

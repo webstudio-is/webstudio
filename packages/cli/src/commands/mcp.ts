@@ -15,9 +15,12 @@ import {
 import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
+import type { SemanticValidationIssue } from "@webstudio-is/project-build/runtime/errors";
 import { resolveApiConnection } from "../api-connection";
 import {
+  getCliErrorIssues,
   getCliErrorMessage,
+  getCliErrorSummary,
   getStableErrorCode,
   isMissingApiAccessError,
 } from "../error-codes";
@@ -895,6 +898,7 @@ const createMcpRunCheckpointStopPayload = ({
 };
 
 const getMcpRunError = (error: unknown) => {
+  const issues = getCliErrorIssues(error);
   if (
     isRecord(error) &&
     typeof error.message === "string" &&
@@ -904,32 +908,37 @@ const getMcpRunError = (error: unknown) => {
       code: isMissingApiAccessError(error)
         ? "UNAUTHORIZED"
         : (error.code ?? "MCP_TOOL_FAILED"),
-      message: getCliErrorMessage(error),
-      ...(Array.isArray(error.issues) ? { issues: error.issues } : {}),
+      message: getCliErrorSummary(error),
+      ...(issues === undefined ? {} : { issues }),
     };
   }
   const code = isMissingApiAccessError(error)
     ? "UNAUTHORIZED"
     : (getStableErrorCode(error) ?? "MCP_TOOL_FAILED");
-  const message = getCliErrorMessage(error);
-  return { code, message };
+  const message = getCliErrorSummary(error);
+  return { code, message, ...(issues === undefined ? {} : { issues }) };
 };
 
 const validateSingleOpCallInput = (tool: string, input: unknown) => {
   if (tool !== "audit" || isRecord(input) === false) {
     return;
   }
-  const issues: Array<{ path: string[]; message: string }> = [];
+  const issues: SemanticValidationIssue[] = [];
   if (input.pageId !== undefined && input.pagePath !== undefined) {
     issues.push({
       path: ["pagePath"],
+      code: "mutually_exclusive_fields",
       message: "pageId and pagePath are mutually exclusive.",
+      constraint: "use_page_id_or_page_path",
+      example: "/pricing",
     });
   }
   if (input.rendered === true && input.cursor !== undefined) {
     issues.push({
       path: ["cursor"],
+      code: "incompatible_fields",
       message: "cursor cannot be combined with rendered audit.",
+      constraint: "omit_cursor_for_rendered_audit",
     });
   }
   if (issues.length > 0) {

@@ -67,6 +67,12 @@ import {
 } from "./runtime/component-catalog";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { webstudioJsxFragmentInputDescription } from "./runtime/jsx/bindings";
+import {
+  getValidationIssues,
+  getZodValidationIssues,
+  semanticValidationIssuesJsonSchema,
+  type SemanticValidationIssue,
+} from "./runtime/errors";
 import { z } from "zod";
 
 type PublicMcpOperationMethod = "query" | "mutation";
@@ -2127,6 +2133,12 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
   }),
 ];
 
+type McpStructuredError = {
+  code: string;
+  message: string;
+  issues?: readonly SemanticValidationIssue[];
+};
+
 type ProjectSessionMcpStructuredContent =
   | {
       ok: true;
@@ -2140,7 +2152,7 @@ type ProjectSessionMcpStructuredContent =
   | {
       ok: false;
       data: unknown;
-      error: { code: string; message: string };
+      error: McpStructuredError;
       meta: {
         session?:
           | ReturnType<typeof serializeProjectSessionMeta>
@@ -2213,6 +2225,7 @@ const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
           properties: {
             code: { type: "string" },
             message: { type: "string" },
+            issues: semanticValidationIssuesJsonSchema,
           },
           required: ["code", "message"],
           additionalProperties: true,
@@ -5600,141 +5613,36 @@ type ProjectSessionMcpErrorResult = {
   content: [{ type: "text"; text: string }];
   structuredContent: {
     ok: false;
-    error: {
-      message: string;
-      code: string;
-    };
+    error: McpStructuredError;
     meta: Record<string, never>;
   };
 };
-
-const getJsonSchemaExample = (
-  schema: InputJsonSchema | undefined,
-  depth = 0
-): unknown => {
-  if (
-    schema === undefined ||
-    typeof schema !== "object" ||
-    schema === null ||
-    depth > 4
-  ) {
-    return {};
-  }
-  if ("default" in schema && schema.default !== undefined) {
-    return schema.default;
-  }
-  if (
-    "examples" in schema &&
-    Array.isArray(schema.examples) &&
-    schema.examples.length > 0
-  ) {
-    return schema.examples[0];
-  }
-  if ("const" in schema) {
-    return schema.const;
-  }
-  if ("enum" in schema && Array.isArray(schema.enum)) {
-    return schema.enum[0];
-  }
-  if ("anyOf" in schema && Array.isArray(schema.anyOf)) {
-    return getJsonSchemaExample(schema.anyOf[0] as InputJsonSchema, depth + 1);
-  }
-  if ("oneOf" in schema && Array.isArray(schema.oneOf)) {
-    return getJsonSchemaExample(schema.oneOf[0] as InputJsonSchema, depth + 1);
-  }
-  if ("allOf" in schema && Array.isArray(schema.allOf)) {
-    const examples = schema.allOf.map((item) =>
-      getJsonSchemaExample(item as InputJsonSchema, depth + 1)
-    );
-    return examples.every(
-      (example) =>
-        typeof example === "object" &&
-        example !== null &&
-        Array.isArray(example) === false
-    )
-      ? Object.assign({}, ...examples)
-      : examples[0];
-  }
-  if (schema.type === "object") {
-    const properties = getInputJsonSchemaProperties(schema) ?? {};
-    const required = new Set(schema.required ?? []);
-    const entries = Object.entries(properties).filter(([name]) =>
-      required.has(name)
-    );
-    return Object.fromEntries(
-      entries.map(([name, property]) => [
-        name,
-        getJsonSchemaExample(property as InputJsonSchema, depth + 1),
-      ])
-    );
-  }
-  if (schema.type === "array") {
-    const minItems = schema.minItems ?? 0;
-    return Array.from({ length: minItems }, () =>
-      getJsonSchemaExample(schema.items as InputJsonSchema, depth + 1)
-    );
-  }
-  if (schema.type === "number" || schema.type === "integer") {
-    if (typeof schema.exclusiveMinimum === "number") {
-      return schema.exclusiveMinimum + 1;
-    }
-    return schema.minimum ?? 0;
-  }
-  if (schema.type === "boolean") {
-    return true;
-  }
-  if (schema.type === "string") {
-    const formatExamples: Record<string, string> = {
-      email: "user@example.com",
-      uri: "https://example.com",
-      url: "https://example.com",
-      uuid: "00000000-0000-4000-8000-000000000000",
-      date: "2026-01-01",
-      "date-time": "2026-01-01T00:00:00.000Z",
-    };
-    const base =
-      typeof schema.format === "string"
-        ? (formatExamples[schema.format] ?? "string")
-        : "string";
-    return base.padEnd(schema.minLength ?? 0, "x");
-  }
-  return {};
-};
-
-const getZodErrorMessage = (
-  error: z.ZodError,
-  inputSchema: InputJsonSchema | undefined
-) => {
-  const issues = error.issues
-    .map((issue) => {
-      const path = issue.path.join(".");
-      return path === "" ? issue.message : `${path}: ${issue.message}`;
-    })
-    .join(", ");
-  const example = getJsonSchemaExample(inputSchema);
-  return `${issues}. Expected input shape example: ${JSON.stringify(example)}`;
-};
-
-const getZodFieldIssues = (error: z.ZodError) =>
-  error.issues.map((issue) => ({
-    path: issue.path.map(String),
-    message: issue.message,
-  }));
 
 const toToolErrorResult = (
   error: unknown,
   getErrorCode: McpErrorCodeResolver | undefined,
   inputSchema?: InputJsonSchema
 ): ProjectSessionMcpErrorResult => {
+  const structuredCode =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : undefined;
   const code =
     error instanceof z.ZodError
       ? "INVALID_INPUT"
-      : (getErrorCode?.(error) ?? "MCP_TOOL_FAILED");
+      : (getErrorCode?.(error) ?? structuredCode ?? "MCP_TOOL_FAILED");
+  const validationIssues =
+    error instanceof z.ZodError
+      ? getZodValidationIssues(error, inputSchema)
+      : getValidationIssues(error);
   const message =
     code === "PROJECT_SESSION_BUSY"
       ? projectSessionBusyMessage
       : error instanceof z.ZodError
-        ? getZodErrorMessage(error, inputSchema)
+        ? "Tool input is invalid."
         : error instanceof Error
           ? error.message
           : String(error);
@@ -5743,9 +5651,7 @@ const toToolErrorResult = (
     error: {
       message,
       code,
-      ...(error instanceof z.ZodError
-        ? { issues: getZodFieldIssues(error) }
-        : {}),
+      ...(validationIssues === undefined ? {} : { issues: validationIssues }),
     },
     meta: {},
   };

@@ -350,14 +350,11 @@ describe("project audit and analysis", () => {
   });
 
   test("rejects unknown audit input fields at the runtime boundary", () => {
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "project.audit",
-        state,
-        input: { unknown: true },
-        context: { projectVersion: 1, createId: () => "unused" },
-      })
-    ).toThrow(/Unrecognized key/);
+    expectRuntimeValidationError(
+      "project.audit",
+      { unknown: true },
+      { constraint: "recognized_keys_only" }
+    );
   });
 
   test("filters audit scopes and severities independently", () => {

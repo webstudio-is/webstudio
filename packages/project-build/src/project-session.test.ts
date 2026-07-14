@@ -733,6 +733,32 @@ describe("project session", () => {
     });
   });
 
+  test("returns actionable validation issues from local runtime operations", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const session = createSession({ storage, transport: createTransport() });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: 42 },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "INVALID_INPUT",
+        issues: [
+          expect.objectContaining({
+            code: "invalid_type",
+            path: ["values", "name"],
+            constraint: "type:string",
+            example: "string",
+          }),
+        ],
+      }),
+    ]);
+  });
+
   test("refreshes required namespaces and returns conflict diagnostic", async () => {
     const storage = createStorage(createPersistedSnapshot());
     const transport = createTransport();

@@ -235,6 +235,11 @@ test("extracts api error codes", () => {
     })
   ).toBe("PROJECT_NOT_PUBLISHED");
   expect(
+    getApiErrorCode({
+      data: { code: "BAD_REQUEST", webstudioCode: "INVALID_INPUT" },
+    })
+  ).toBe("INVALID_INPUT");
+  expect(
     getApiErrorCode({ data: { code: "SOME_PRIVATE_CODE" } })
   ).toBeUndefined();
   expect(getApiErrorCode(new Error("No code"))).toBeUndefined();

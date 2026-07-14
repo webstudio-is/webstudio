@@ -14,7 +14,9 @@ import {
   getCliServerApiContract,
 } from "../project-session";
 import {
+  getCliErrorIssues,
   getCliErrorMessage,
+  getCliErrorSummary,
   getStableErrorCode,
   isMissingApiAccessError,
 } from "../error-codes";
@@ -3020,14 +3022,15 @@ export const apiCommand = async (
       });
     }
   } catch (error) {
-    const message = getCliErrorMessage(error, options.command);
+    const issues = getCliErrorIssues(error);
     if (options.json === true) {
       const code = getErrorCode(error);
       printJson({
         ok: false,
         error: {
           code,
-          message,
+          message: getCliErrorSummary(error, options.command),
+          ...(issues === undefined ? {} : { issues }),
           retry: getRetryHint(code),
         },
         meta: {
@@ -3037,7 +3040,7 @@ export const apiCommand = async (
         },
       });
     } else {
-      console.error(message);
+      console.error(getCliErrorMessage(error, options.command));
     }
     throw new HandledCliError();
   }

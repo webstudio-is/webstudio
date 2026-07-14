@@ -35,7 +35,7 @@ import { isComponentAvailableForDocumentType } from "./component-catalog";
 import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { findAvailableVariables } from "./data";
-import { throwBuilderRuntimeError } from "./errors";
+import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import { insertWebstudioFragmentCopy } from "./fragment";
 import {
   createInstanceAppendPayload,
@@ -80,10 +80,12 @@ export const insertFragmentInput = z
       input.fragment.children.length > 0 &&
       input.parentInstanceId === undefined
     ) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
+      addZodValidationIssue(context, {
+        code: "missing_fragment_parent",
         path: ["parentInstanceId"],
         message: "Required when inserting a fragment with children",
+        constraint: "required_when:fragment.children.length>0",
+        example: "parent-instance-id",
       });
     }
   });

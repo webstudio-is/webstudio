@@ -16,7 +16,9 @@ import {
   insertComponent,
   insertComponentInput,
   insertFragment,
+  insertFragmentInput,
 } from "./components";
+import { getZodValidationIssues } from "./errors";
 import { getComponentTemplates } from "./component-templates";
 import { createEmptyWebstudioFragment } from "./component-template";
 import { isLikelyWebstudioJsxFragment, parseWebstudioJsxFragment } from "./jsx";
@@ -146,6 +148,27 @@ test("validates component ids with canonical instance schema", () => {
       component: "",
     }).success
   ).toBe(false);
+});
+
+test("explains the required parent for fragments with children", () => {
+  const result = insertFragmentInput.safeParse({
+    fragment: {
+      ...createEmptyWebstudioFragment(),
+      children: [{ type: "id", value: "child" }],
+    },
+  });
+  if (result.success) {
+    throw new Error("Expected fragment input to require a parent");
+  }
+
+  expect(getZodValidationIssues(result.error)).toEqual([
+    expect.objectContaining({
+      code: "missing_fragment_parent",
+      path: ["parentInstanceId"],
+      constraint: "required_when:fragment.children.length>0",
+      example: "parent-instance-id",
+    }),
+  ]);
 });
 
 test("requires tag when inserting ws.element component", async () => {
@@ -1160,6 +1183,20 @@ test("rejects module syntax in webstudio jsx fragments", async () => {
   await expect(
     parseWebstudioJsxFragment(`export const view = <$.Box />`)
   ).rejects.toThrow("Do not use import or export in JSX fragments");
+  await expect(
+    parseWebstudioJsxFragment(`import { Box } from "x"; <$.Box />`)
+  ).rejects.toMatchObject({
+    code: "INVALID_INPUT",
+    issues: [
+      expect.objectContaining({
+        code: "invalid_webstudio_jsx",
+        path: ["fragment"],
+        constraint: "declarative_jsx_without_modules",
+        example:
+          '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
+      }),
+    ],
+  });
 });
 
 test("rejects react fragment shorthand in webstudio jsx fragments", async () => {

@@ -14,6 +14,7 @@ import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
 import { pageExpressionFieldHint } from "./runtime/pages";
 import { imageDescriptionsSetInput } from "./runtime/assets";
+import { BuilderRuntimeError } from "./runtime/errors";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
@@ -614,6 +615,9 @@ describe("project session mcp adapter", () => {
               data: expect.objectContaining({ oneOf: expect.any(Array) }),
               error: expect.objectContaining({
                 required: ["code", "message"],
+                properties: expect.objectContaining({
+                  issues: expect.objectContaining({ type: "array" }),
+                }),
               }),
             }),
           }),
@@ -6225,16 +6229,18 @@ describe("project session mcp adapter", () => {
           structuredContent: {
             ok: false,
             error: {
-              message: expect.stringContaining('"email":"user@example.com"'),
+              message: "Tool input is invalid.",
               code: "INVALID_INPUT",
               issues: expect.arrayContaining([
                 expect.objectContaining({
                   path: ["email"],
                   message: expect.any(String),
+                  example: "user@example.com",
                 }),
                 expect.objectContaining({
                   path: ["description"],
                   message: expect.any(String),
+                  example: "stringxxxx",
                 }),
               ]),
             },
@@ -6242,13 +6248,49 @@ describe("project session mcp adapter", () => {
           },
         })
       );
-      expect(result.structuredContent).toEqual(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            message: expect.stringContaining('"description":"stringxxxx"'),
-          }),
-        })
-      );
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns equivalent structured runtime validation issues", async () => {
+    const issue = {
+      code: "invalid_expression",
+      path: ["values", "title"],
+      message: "Invalid Webstudio expression",
+      constraint: "valid_webstudio_expression",
+      example: 'pageTitle ?? "Pricing"',
+      detail: "Unexpected token at 1:4",
+    };
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(async () => {
+        throw new BuilderRuntimeError(
+          "INVALID_INPUT",
+          "Page input is invalid.",
+          {
+            issues: [issue],
+          }
+        );
+      }),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "list-pages",
+        arguments: {},
+      });
+      expect(result.structuredContent).toEqual({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          message: "Page input is invalid.",
+          issues: [issue],
+        },
+        meta: {},
+      });
     } finally {
       await close();
     }
