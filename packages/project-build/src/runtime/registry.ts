@@ -13,6 +13,7 @@ import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
 import * as components from "./components";
+import * as collection from "./collection";
 import * as data from "./data";
 import * as fonts from "./fonts";
 import * as instanceDuplicate from "./instance-duplicate";
@@ -180,10 +181,28 @@ const runtimeOperation = <
       if (outputSchema === undefined) {
         return result;
       }
+      const parseOutput = (value: Result) => {
+        if (contract.kind === "mutation") {
+          if (
+            typeof value !== "object" ||
+            value === null ||
+            "result" in value === false
+          ) {
+            throw new Error(
+              `Mutation runtime operation "${id}" must return a mutation envelope with a result.`
+            );
+          }
+          return {
+            ...value,
+            result: outputSchema.parse(value.result),
+          } as Result;
+        }
+        return outputSchema.parse(value) as Result;
+      };
       if (result instanceof Promise) {
-        return result.then((value) => outputSchema.parse(value) as Result);
+        return result.then(parseOutput);
       }
-      return outputSchema.parse(result) as Result;
+      return parseOutput(result);
     },
   };
 };
@@ -792,6 +811,18 @@ export const builderRuntimeOperations = [
     components.insertComponentInput,
     ({ state, input, context }) =>
       components.insertComponent(state, input, context)
+  ),
+  runtimeOperation(
+    "instances.insertCollection",
+    api("insert-collection", "insertCollection"),
+    mutationContract({
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertNamespaces,
+    }),
+    collection.insertCollectionInput,
+    ({ state, input, context }) =>
+      components.insertCollection(state, input, context),
+    collection.insertCollectionResult
   ),
   runtimeOperation(
     "instances.insertFragment",

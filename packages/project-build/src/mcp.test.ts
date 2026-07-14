@@ -218,6 +218,16 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     invalidatesNamespaces: ["instances", "props", "styles"],
   }),
   publicOperation({
+    command: "insert-collection",
+    id: "instances.insertCollection",
+    method: "mutation",
+    permit: "build",
+    description: "Insert a semantic Collection",
+    readNamespaces: ["pages", "instances", "dataSources"],
+    writeNamespaces: ["instances", "props", "dataSources"],
+    invalidatesNamespaces: ["instances", "props", "dataSources"],
+  }),
+  publicOperation({
     command: "list-texts",
     id: "texts.list",
     description: "List text children",
@@ -1751,6 +1761,85 @@ describe("project session mcp adapter", () => {
       dryRun: false,
     });
     expect(call?.input).not.toHaveProperty("source");
+  });
+
+  test("converts semantic Collection item jsx before executing one atomic operation", async () => {
+    const executeOperation = createExecuteOperation(async () =>
+      createEnvelope({
+        operationId: "instances.insertCollection",
+        result: {
+          rootInstanceIds: ["collection"],
+          instanceIds: ["collection", "item"],
+          collectionInstanceId: "collection",
+          itemRootInstanceId: "item",
+          itemParameterId: "item-parameter",
+          itemKeyParameterId: "item-key-parameter",
+        },
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "insert-collection",
+      input: {
+        parentInstanceId: "body",
+        data: { type: "expression", value: "Posts.data.items" },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.title`}</ws.element></ws.element>',
+      },
+    });
+
+    expect(vi.mocked(executeOperation).mock.calls[0]?.[0]).toEqual({
+      command: "insert-collection",
+      input: {
+        parentInstanceId: "body",
+        data: { type: "expression", value: "Posts.data.items" },
+        itemFragment: expect.objectContaining({
+          instances: expect.arrayContaining([
+            expect.objectContaining({
+              component: "ws:element",
+              tag: "article",
+            }),
+            expect.objectContaining({ component: "ws:element", tag: "h2" }),
+          ]),
+        }),
+        mode: undefined,
+        insertIndex: undefined,
+      },
+      dryRun: false,
+    });
+  });
+
+  test("rejects invalid semantic Collection data before execution", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "insert-collection",
+        input: {
+          parentInstanceId: "body",
+          data: { type: "json", value: "not-an-array" },
+          itemFragment: '<ws.element ws:tag="article" />',
+        },
+      })
+    ).rejects.toMatchObject({
+      issues: [
+        expect.objectContaining({
+          code: "invalid_union",
+          path: ["data", "value"],
+        }),
+      ],
+    });
+    expect(executeOperation).not.toHaveBeenCalled();
   });
 
   test("rejects structured fragment objects at the mcp boundary", async () => {
@@ -3449,12 +3538,12 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         workflow: expect.arrayContaining([
           expect.stringContaining("complete nested array/object"),
-          expect.stringContaining('Insert "ws:collection"'),
-          expect.stringContaining("current-item context"),
+          expect.stringContaining("insert-collection"),
+          expect.stringContaining("private parameters atomically"),
           expect.stringContaining("stable unique id or slug"),
         ]),
         tools: expect.arrayContaining([
-          expect.objectContaining({ name: "components.get" }),
+          expect.objectContaining({ name: "insert-collection" }),
         ]),
       })
     );
@@ -4177,9 +4266,9 @@ describe("project session mcp adapter", () => {
         component: "ws:collection",
         description: expect.stringContaining("array or object"),
         collectionUsage: expect.stringMatching(
-          /complete array or object.*renders its child structure once per entry/
+          /insert-collection.*private item\/itemKey parameters.*atomically/
         ),
-        usage: expect.stringContaining("internal item/itemKey parameter"),
+        usage: expect.stringContaining("internal Collection parameter"),
         props: expect.objectContaining({
           data: expect.objectContaining({ type: "json", required: true }),
           item: expect.objectContaining({ type: "string" }),
@@ -5414,6 +5503,43 @@ describe("project session mcp adapter", () => {
     expect(createProjectSession).not.toHaveBeenCalled();
     expect(executeOperation).not.toHaveBeenCalled();
   });
+
+  test.each([
+    {
+      command: "insert-fragment",
+      input: {
+        parentInstanceId: "body",
+        fragment: '<ws.element ws:tag="div" />',
+      },
+    },
+    {
+      command: "insert-collection",
+      input: {
+        parentInstanceId: "body",
+        data: { type: "json", value: [] },
+        itemFragment: '<ws.element ws:tag="article" />',
+      },
+    },
+  ])(
+    "does not dispatch the $command adapter when the operation is unavailable",
+    async ({ command, input }) => {
+      const createProjectSession = createSessionFactory();
+      const executeOperation = createExecuteOperation();
+      const adapter = createProjectSessionMcpCore({
+        operations: publicMcpOperations.filter(
+          (operation) => operation.command !== command
+        ),
+        createProjectSession,
+        executeOperation,
+      });
+
+      await expect(adapter.callTool({ name: command, input })).rejects.toThrow(
+        `Unknown MCP tool "${command}".`
+      );
+      expect(createProjectSession).not.toHaveBeenCalled();
+      expect(executeOperation).not.toHaveBeenCalled();
+    }
+  );
 
   test("reads MCP resources from the long-lived project session", async () => {
     const session = createSession({
