@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "typescript": "5.8.2"
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=22"

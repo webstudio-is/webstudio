@@ -1,5 +1,5 @@
 import { loginAndCreateBlankProject } from "../flows/dashboard";
-import { newPage } from "../harness";
+import { getBrowserScopeKey, newPage } from "../harness";
 import { measure } from "../perf";
 import {
   prepareExistingContentModeProject,
@@ -15,7 +15,7 @@ type ContentModeProjectOptions = {
   builderToken?: string;
 };
 
-let sharedProject: SeededContentModeProject | undefined;
+const sharedProjects = new WeakMap<object, SeededContentModeProject>();
 
 export const createContentModeProject = async ({
   email = "content-mode-e2e@webstudio.test",
@@ -55,11 +55,13 @@ export const createContentModeProject = async ({
 export const setupSharedContentModeProject = async (
   options?: ContentModeProjectOptions
 ) => {
-  sharedProject = await createContentModeProject(options);
-  return sharedProject;
+  const project = await createContentModeProject(options);
+  sharedProjects.set(getBrowserScopeKey(), project);
+  return project;
 };
 
 export const getSharedContentModeProject = () => {
+  const sharedProject = sharedProjects.get(getBrowserScopeKey());
   if (sharedProject === undefined) {
     throw new Error("Expected shared content-mode project to be initialized");
   }

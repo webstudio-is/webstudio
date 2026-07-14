@@ -5,10 +5,13 @@
 ## Startup
 
 1. Configure a project with `webstudio init --link <api-share-link> --json`.
-2. Check capabilities with `webstudio permissions --json`.
-3. For shell-driven agents, use shortcut calls such as `webstudio meta.index` and `webstudio insert-fragment '<json>' --dry-run` for individual MCP tool calls. Use the explicit equivalent `webstudio mcp single-op-call <tool> '<json>'` when you need to force the MCP path, or `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'` for bounded multi-call workflows. Use `webstudio mcp run .temp/mcp-calls.json` for large batches.
-4. For MCP clients, start the server with `webstudio mcp`.
-5. Start discovery with `meta.index`, then call focused tools with concrete JSON, for example `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`.
+2. Generate the client configuration with `webstudio connect claude`,
+   `webstudio connect codex`, `webstudio connect cursor`, or
+   `webstudio connect vscode`. Use `--print` to preview file-based config.
+3. Check capabilities with `webstudio permissions --json`.
+4. For shell-driven agents, use shortcut calls such as `webstudio meta.index` and `webstudio insert-fragment '<json>' --dry-run` for individual MCP tool calls. Use the explicit equivalent `webstudio mcp single-op-call <tool> '<json>'` when you need to force the MCP path, or `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'` for bounded multi-call workflows. Use `webstudio mcp run .temp/mcp-calls.json` for large batches.
+5. For MCP clients, start the server with `webstudio mcp`.
+6. Start discovery with `meta.index`, then call focused tools with concrete JSON, for example `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`.
 
 Start MCP from the linked Webstudio project root. The lifecycle status line prints that absolute root; create local scripts, screenshots, and temporary artifacts under that root, for example `<project root>/.temp/script.mjs`. If the shell starts in a parent workspace, `cd` into the project root first or use absolute paths.
 
@@ -242,6 +245,7 @@ Useful resources:
 - `webstudio://project/tools`: full operation catalog; read only when focused metadata is insufficient
 - `webstudio://project/components`: full component catalog with props, states, and content model composition constraints; read only when `components.summary`, `components.find`, and `components.get` are insufficient
 - `webstudio://project/guide`: concise discovery guide
+- `webstudio://project/expressions`: expression syntax, scope, supported methods, bindings, Collection iteration context, and verification
 - `webstudio://project/accessibility-review`: evidence-based LLM accessibility-review workflow using project checks, preview, and screenshots
 
 ## MCP SDK Client Imports

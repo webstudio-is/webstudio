@@ -9,9 +9,9 @@ import {
 
 test("documents generated app setup for visual verification", () => {
   expect(generatedAppDependencyNotes).toEqual([
-    expect.stringContaining("isolate generated app dependencies"),
+    expect.stringContaining("install generated app dependencies"),
     expect.stringContaining("Do not add generated-preview dependencies"),
-    expect.stringContaining("react-router-serve"),
+    expect.stringContaining("check npm and network configuration"),
   ]);
   expect(visualVerificationRule).toContain(
     "generated project files are current"

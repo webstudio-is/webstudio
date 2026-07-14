@@ -3,7 +3,8 @@ import { readdirSync } from "node:fs";
 import envPaths from "env-paths";
 import { z } from "zod";
 
-const GLOBAL_CONFIG_FOLDER = envPaths("webstudio").config;
+const GLOBAL_CONFIG_FOLDER =
+  process.env.WEBSTUDIO_CONFIG_DIR ?? envPaths("webstudio").config;
 const GLOBAL_CONFIG_FILE_NAME = "webstudio-config.json";
 export const GLOBAL_CONFIG_FILE = join(
   GLOBAL_CONFIG_FOLDER,

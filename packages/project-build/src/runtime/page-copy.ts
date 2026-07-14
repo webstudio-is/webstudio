@@ -33,6 +33,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
+import { webstudioDataNamespaces } from "../contracts/namespaces";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import {
@@ -65,10 +66,36 @@ export const pageDuplicateInput = z.object({
   path: z.string().optional(),
 });
 
+const isHydratedWebstudioData = (value: unknown): value is WebstudioData => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const data = value as Partial<WebstudioData>;
+  return webstudioDataNamespaces.every((namespace) => {
+    if (namespace === "pages") {
+      return (
+        data.pages?.pages instanceof Map && data.pages.folders instanceof Map
+      );
+    }
+    return data[namespace] instanceof Map;
+  });
+};
+
+const sourceWebstudioDataInput = z
+  .custom<WebstudioData>(isHydratedWebstudioData, {
+    message:
+      "sourceData must be a hydrated WebstudioData object from the source project",
+  })
+  .describe(
+    "Required hydrated WebstudioData from the source project. This is a low-level cross-project transfer command; use duplicate-page to copy a page within the configured project."
+  );
+
 export const pageCopyInput = z.object({
   projectId: z.string(),
-  sourceData: z.custom<WebstudioData>(),
-  pageId: z.string(),
+  sourceData: sourceWebstudioDataInput,
+  pageId: z
+    .string()
+    .describe("ID of the page in sourceData to copy into this project."),
   parentFolderId: z.string().optional(),
   conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
 });
@@ -129,19 +156,7 @@ const contentModePageMetaFields = new Set([
 ]);
 
 const getRequiredWebstudioData = (state: BuilderState): WebstudioData => {
-  const required = [
-    "pages",
-    "assets",
-    "dataSources",
-    "resources",
-    "instances",
-    "props",
-    "breakpoints",
-    "styles",
-    "styleSources",
-    "styleSourceSelections",
-  ] as const;
-  for (const namespace of required) {
+  for (const namespace of webstudioDataNamespaces) {
     if (state[namespace] === undefined) {
       return throwBuilderRuntimeError(
         "BAD_REQUEST",
@@ -152,18 +167,7 @@ const getRequiredWebstudioData = (state: BuilderState): WebstudioData => {
   return state as WebstudioData;
 };
 
-const pageCopyInvalidatesNamespaces = [
-  "pages",
-  "assets",
-  "dataSources",
-  "resources",
-  "instances",
-  "props",
-  "breakpoints",
-  "styles",
-  "styleSources",
-  "styleSourceSelections",
-] as const;
+const pageCopyInvalidatesNamespaces = webstudioDataNamespaces;
 
 const parseCopyNumberSuffix = (value: string) => {
   const { name = value, copyNumber = "0" } =

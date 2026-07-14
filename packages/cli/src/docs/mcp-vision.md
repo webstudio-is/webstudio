@@ -2,13 +2,20 @@
 
 ## Generated App Dependency Notes
 
-- `preview.start` and `webstudio preview` isolate generated app dependencies under `.webstudio/preview` by linking to the CLI package dependency tree.
+- `preview.start` and `webstudio preview` install generated app dependencies under `.webstudio/preview` and reuse them across regenerations.
 - Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
-- If preview fails with a missing generated-app command/package such as react-router, react-router-serve, or vite, install dependencies for the CLI package and retry.
+- If dependency installation fails, check npm and network configuration, then reinstall or update the Webstudio CLI if the problem persists.
 
 ## Visual Verification Rule
 
 For visual/design work, use preview.start and screenshot after generated project files are current so vision can inspect the rendered result before finishing. `preview.start` is long-lived and cannot be used through one-shot `mcp single-op-call`; from a shell, use `webstudio mcp run` for preview.start/screenshot/preview.stop in one shared process, or use a long-running MCP server. When a baseline exists, use screenshot.diff to get pixel regions, OCR text changes, and diff PNG artifacts.
+
+An authenticated project share URL is used with `webstudio init --link`; it is
+not a generated-site preview URL. Project screenshots and rendered audits use
+the generated local preview owned by the current CLI/MCP process. Do not pass a
+Builder URL containing `authToken` and `mode` to `screenshot`; use `path` after
+starting preview, or use `baseUrl` only for an intentional generated site that
+is already running.
 
 ## Vision Verification Loop
 
@@ -57,7 +64,7 @@ budget.
 
 ## Screenshot Verification Summary
 
-Inside a long-running MCP server, prefer preview.start plus screenshot({ path, viewport }) after generated project files are current, so a fresh production-like preview server is available for fast repeated checks across multiple pages. After MCP mutations, path screenshots restart preview as needed before capture; when preview is fresh in that same MCP server, repeated path screenshots reuse the running server. From one-shot shell calls or another process, use screenshot({ baseUrl, path, viewport }) to capture an already-running preview/site without generating, building, starting, or restarting preview. Use path values such as "/", "/pricing", or "/about" to capture specific generated routes. For responsive work, read list-breakpoints and capture viewport widths from Builder breakpoint edges plus mobile and desktop widths before using vision. Screenshot waits for load by default, then fonts and two layout frames; pass waitForSelector for app readiness, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout for final settling. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts on each baseline/current screenshot pair. Outside MCP, use `webstudio screenshot --path /pricing --output pricing.png` for one temporary generated preview capture, or keep `webstudio preview` running and pass its absolute URL to `webstudio screenshot` for repeated captures.
+Inside a long-running MCP server, prefer preview.start plus screenshot({ path, viewport }) after generated project files are current, so a fresh production-like preview server is available for fast repeated checks across multiple pages. After MCP mutations, path screenshots restart preview as needed before capture; when preview is fresh in that same MCP server, repeated path screenshots reuse the running server. From one-shot shell calls or another process, use screenshot({ baseUrl, path, viewport }) to capture an already-running preview/site without generating, building, starting, or restarting preview. Use path values such as "/", "/pricing", or "/about" to capture specific generated routes. For responsive work, read list-breakpoints and capture one familiar device viewport inside each Builder breakpoint range before using vision. Screenshot waits for load by default, then fonts and two layout frames; pass waitForSelector for app readiness, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout for final settling. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts on each baseline/current screenshot pair. Outside MCP, use `webstudio screenshot --path /pricing --output pricing.png` for one temporary generated preview capture, or keep `webstudio preview` running and pass its absolute URL to `webstudio screenshot` for repeated captures.
 
 ## Screenshot Diff Evidence
 

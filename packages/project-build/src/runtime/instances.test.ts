@@ -1606,28 +1606,26 @@ describe("fillGrid", () => {
 
 describe("setInstanceTag", () => {
   test("sets instance tag and deletes legacy tag prop", () => {
-    const result = setInstanceTag(
-      {
-        instances: new Map([["box", createInstance("box", "Box")]]),
-        props: new Map([
-          [
-            "tag-prop",
-            {
-              id: "tag-prop",
-              instanceId: "box",
-              name: "tag",
-              type: "string",
-              value: "div",
-            },
-          ],
-        ]),
-      },
-      {
-        instanceId: "box",
-        tag: "section",
-        legacyPropName: "tag",
-      }
-    );
+    const data = {
+      instances: new Map([["box", createInstance("box", "Box")]]),
+      props: new Map([
+        [
+          "tag-prop",
+          {
+            id: "tag-prop",
+            instanceId: "box",
+            name: "tag",
+            type: "string" as const,
+            value: "div",
+          },
+        ],
+      ]),
+    };
+    const result = setInstanceTag(data, {
+      instanceId: "box",
+      tag: "section",
+      legacyPropName: "tag",
+    });
 
     expect(result.result).toEqual({
       instanceId: "box",
@@ -1642,13 +1640,19 @@ describe("setInstanceTag", () => {
         namespace: "instances",
         patches: [
           {
-            op: "replace",
+            op: "add",
             path: ["box", "tag"],
             value: "section",
           },
         ],
       },
     ]);
+    applyBuilderPatchPayloadMutable(
+      (namespace) => data[namespace as keyof typeof data],
+      result.payload
+    );
+    expect(data.instances.get("box")?.tag).toBe("section");
+    expect(data.props.has("tag-prop")).toBe(false);
   });
 
   test("does not mutate unchanged tag", () => {

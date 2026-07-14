@@ -2,7 +2,6 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
 import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
 
 const {
@@ -20,9 +19,40 @@ const {
   parseMcpRunCalls,
   parseMcpRunInput,
   parseMcpSingleOpCallInput,
+  validateSingleOpCallInput,
+  isMcpToolCallFailure,
+  getMcpToolCallError,
   readPersistedMcpCheckpoint,
   updatePersistedMcpCheckpoint,
 } = __testing__;
+
+test("classifies structured MCP tool failures for nonzero CLI exit", () => {
+  expect(
+    isMcpToolCallFailure({
+      isError: true,
+      structuredContent: { ok: false },
+    })
+  ).toBe(true);
+  expect(
+    isMcpToolCallFailure({
+      structuredContent: { ok: false },
+    })
+  ).toBe(true);
+  expect(
+    isMcpToolCallFailure({
+      structuredContent: { ok: true },
+    })
+  ).toBe(false);
+  expect(
+    getMcpToolCallError({
+      isError: true,
+      structuredContent: {
+        ok: false,
+        error: { code: "AUDIT_FAILED", message: "Capture failed." },
+      },
+    })
+  ).toEqual({ code: "AUDIT_FAILED", message: "Capture failed." });
+});
 
 const tempDirs: string[] = [];
 type CommandBuilder = (yargs: unknown) => unknown;
@@ -150,9 +180,9 @@ test("documents MCP stdio startup and discovery tools", () => {
   );
 });
 
-test("marks cached namespaces stale before serving MCP tools", async () => {
+test("preserves an existing local snapshot before serving MCP tools", async () => {
   const session = {
-    snapshot: undefined,
+    snapshot: { version: 42 } as never,
     initialize: vi.fn(async () => undefined),
     markStale: vi.fn(async () => undefined),
   };
@@ -160,7 +190,7 @@ test("marks cached namespaces stale before serving MCP tools", async () => {
   await prepareMcpProjectSession(session);
 
   expect(session.initialize).toHaveBeenCalled();
-  expect(session.markStale).toHaveBeenCalledWith(builderNamespaces);
+  expect(session.markStale).not.toHaveBeenCalled();
 });
 
 test("preview session materialization uses the loaded local snapshot", () => {
@@ -191,12 +221,24 @@ test("reports sparse MCP startup status lines for agents", () => {
 
   reporter.starting();
   reporter.sessionReady();
+  reporter.apiContract({
+    clientVersion: "public-api:client",
+    serverVersion: "public-api:server",
+    supportedOperationIds: new Set(),
+    missingServerOperationIds: ["assets.upload"],
+    negotiated: true,
+  });
   reporter.ready(12);
+  reporter.connectionError(new Error("connection reset"));
+  reporter.connectionClosed();
 
   expect(lines).toEqual([
     `[webstudio mcp] starting stdio server from ${process.cwd()}`,
-    "[webstudio mcp] project session initialized; cached namespaces marked stale",
+    "[webstudio mcp] project session initialized; existing local snapshot preserved",
+    "[webstudio mcp] API contract negotiated: CLI 0.0.0-webstudio-version (public-api:client); server public-api:server; unavailable server procedures: assets.upload",
     "[webstudio mcp] ready with 12 tools; use tools/list, meta.index, or webstudio://project/guide; waiting for JSON-RPC on stdin",
+    '[webstudio mcp] lifecycle {"event":"stdio_transport_error","message":"connection reset","recovery":"Reconnect the MCP client. If the error repeats, restart the CLI with npx webstudio@latest mcp."}',
+    '[webstudio mcp] lifecycle {"event":"stdio_connection_closed","recovery":"Reconnect the MCP client if this was unexpected."}',
   ]);
 });
 
@@ -273,6 +315,58 @@ test("rejects long-lived preview tools in MCP single-op-call", () => {
   }).toThrow();
 
   expect(() => assertSingleOpCallToolSupported("preview.status")).not.toThrow();
+});
+
+test("rejects audit input conflicts before creating a project session", () => {
+  for (const input of [
+    { pageId: "home", pagePath: "/" },
+    { rendered: true, cursor: "next" },
+  ]) {
+    expect(() => validateSingleOpCallInput("audit", input)).toThrow(
+      "Audit input is invalid."
+    );
+    try {
+      validateSingleOpCallInput("audit", input);
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "INVALID_INPUT",
+        issues: [
+          expect.objectContaining({
+            path: expect.any(Array),
+            message: expect.any(String),
+          }),
+        ],
+      });
+    }
+  }
+});
+
+test("preserves structured input issues in MCP shell errors", () => {
+  expect(
+    createMcpSingleOpCallErrorPayload({
+      error: Object.assign(new Error("Audit input is invalid."), {
+        code: "INVALID_INPUT",
+        issues: [
+          {
+            path: ["pagePath"],
+            message: "pageId and pagePath are mutually exclusive.",
+          },
+        ],
+      }),
+      elapsedMs: 1,
+    })
+  ).toMatchObject({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      issues: [
+        {
+          path: ["pagePath"],
+          message: "pageId and pagePath are mutually exclusive.",
+        },
+      ],
+    },
+  });
 });
 
 test("parses MCP run call arrays", () => {
@@ -860,6 +954,36 @@ test("passes explicit preview source to preview preparation", async () => {
   ]);
 });
 
+test("rejects invalid external image domains before preparing preview", async () => {
+  const preview = {
+    status: vi.fn(() => ({ url: "", running: false })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn(),
+  };
+  const preparePreview = vi.fn();
+  const handlers = createMcpPreviewHandlers({ preview, preparePreview });
+
+  await expect(
+    handlers.startPreview({
+      imageDomains: ["https://images.example.com/path"],
+    })
+  ).rejects.toThrow(
+    "Image domains must be hostnames without a protocol or path"
+  );
+  await expect(
+    handlers.captureScreenshot({
+      path: "/",
+      imageDomains: ["https://images.example.com/path"],
+      viewport: { width: 1440, height: 900 },
+    })
+  ).rejects.toThrow(
+    "Image domains must be hostnames without a protocol or path"
+  );
+
+  expect(preparePreview).not.toHaveBeenCalled();
+  expect(preview.startAndWait).not.toHaveBeenCalled();
+});
+
 test("captures fresh path screenshots through the running preview server", async () => {
   const events: string[] = [];
   const preview = {
@@ -911,6 +1035,129 @@ test("captures fresh path screenshots through the running preview server", async
   ]);
 });
 
+test("reuses and closes one browser capture session for session screenshots", async () => {
+  const preview = {
+    status: vi.fn(() => ({ url: "http://127.0.0.1:3000/", running: true })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+    stop: vi.fn(async () => ({ url: "", running: false })),
+  };
+  const capture = createCaptureScreenshotMock([]);
+  const close = vi.fn(async () => undefined);
+  const capturePage = vi.fn(async () => []);
+  const createCaptureSession = vi.fn(() => ({ capture, capturePage, close }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession,
+  });
+
+  await handlers.captureScreenshot({
+    path: "/one",
+    source: "session",
+    viewport: { width: 1440, height: 900 },
+  });
+  await handlers.captureScreenshot({
+    path: "/two",
+    source: "session",
+    viewport: { width: 390, height: 844 },
+  });
+
+  expect(createCaptureSession).toHaveBeenCalledOnce();
+  expect(capture).toHaveBeenCalledTimes(2);
+  expect(close).not.toHaveBeenCalled();
+
+  await handlers.stopPreview();
+
+  expect(close).toHaveBeenCalledOnce();
+  expect(preview.stop).toHaveBeenCalledOnce();
+});
+
+test("stops the owned preview when browser capture cleanup fails", async () => {
+  const preview = {
+    status: vi.fn(() => ({ url: "http://127.0.0.1:3000/", running: true })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+    stop: vi.fn(async () => ({ url: "", running: false })),
+  };
+  const cleanupError = new Error("browser cleanup failed");
+  const createCaptureSession = vi.fn(() => ({
+    capture: createCaptureScreenshotMock([]),
+    capturePage: vi.fn(async () => []),
+    close: vi.fn(async () => {
+      throw cleanupError;
+    }),
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession,
+  });
+
+  await handlers.captureScreenshot({
+    path: "/one",
+    source: "session",
+    viewport: { width: 1440, height: 900 },
+  });
+
+  await expect(handlers.stopPreview()).rejects.toBe(cleanupError);
+  expect(preview.stop).toHaveBeenCalledOnce();
+});
+
+test("captures one session page across multiple viewports through resize", async () => {
+  const preview = {
+    status: vi.fn(() => ({ url: "http://127.0.0.1:3000/", running: true })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const capture = createCaptureScreenshotMock([]);
+  const capturePage = vi.fn(
+    async (optionsList) => await Promise.all(optionsList.map(capture))
+  );
+  const close = vi.fn(async () => undefined);
+  const createCaptureSession = vi.fn(() => ({
+    capture,
+    capturePage,
+    close,
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession,
+  });
+
+  const results = await handlers.capturePageScreenshots([
+    {
+      path: "/responsive",
+      source: "session",
+      viewport: { width: 375, height: 812 },
+      waitForTimeout: 0,
+    },
+    {
+      path: "/responsive",
+      source: "session",
+      viewport: { width: 1440, height: 900 },
+      waitForTimeout: 0,
+    },
+  ]);
+
+  expect(results.map((result) => result.viewport.width)).toEqual([375, 1440]);
+  expect(createCaptureSession).toHaveBeenCalledOnce();
+  expect(capturePage).toHaveBeenCalledWith([
+    expect.objectContaining({
+      url: "http://127.0.0.1:3000/responsive",
+      width: 375,
+      waitForTimeout: 0,
+    }),
+    expect.objectContaining({
+      url: "http://127.0.0.1:3000/responsive",
+      width: 1440,
+      waitForTimeout: 0,
+    }),
+  ]);
+  expect(preview.startAndWait).not.toHaveBeenCalled();
+});
+
 test("captures path screenshots through an existing base URL without preview", async () => {
   const events: string[] = [];
   const preview = {
@@ -952,6 +1199,34 @@ test("captures path screenshots through an existing base URL without preview", a
   expect(progress).toEqual([
     "tool screenshot capturing http://127.0.0.1:5177/design-system",
   ]);
+});
+
+test("rejects authenticated Builder URLs as generated preview targets", async () => {
+  const preview = {
+    status: vi.fn(),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn(),
+  };
+  const captureScreenshot = vi.fn();
+  const handlers = createMcpPreviewHandlers({ preview, captureScreenshot });
+
+  await expect(
+    handlers.captureScreenshot({
+      url: "https://p-project.wstd.dev:5173/?authToken=secret&mode=design",
+      viewport: { width: 1440, height: 900 },
+    })
+  ).rejects.toMatchObject({ code: "BUILDER_URL_IS_NOT_SITE_PREVIEW" });
+  await expect(
+    handlers.captureScreenshot({
+      baseUrl:
+        "https://p-project.apps.webstudio.is/?authToken=secret&mode=preview",
+      path: "/pricing",
+      viewport: { width: 1440, height: 900 },
+    })
+  ).rejects.toMatchObject({ code: "BUILDER_URL_IS_NOT_SITE_PREVIEW" });
+
+  expect(captureScreenshot).not.toHaveBeenCalled();
+  expect(preview.startAndWait).not.toHaveBeenCalled();
 });
 
 test("captures path screenshots through an explicit preview target", async () => {

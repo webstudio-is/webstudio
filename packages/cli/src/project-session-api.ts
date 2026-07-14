@@ -1,5 +1,6 @@
 import {
   getPublicApiOperation,
+  publicApiOperationRequiresServerSupport,
   type PublicApiCommand,
 } from "@webstudio-is/protocol";
 import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
@@ -8,7 +9,11 @@ import {
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
 } from "@webstudio-is/project-build/project-session";
-import { createCliProjectSession } from "./project-session";
+import {
+  assertCliServerOperationSupported,
+  createCliProjectSession,
+  getCliServerApiContract,
+} from "./project-session";
 
 export type ProjectSessionApiConnection = {
   projectId: string;
@@ -69,6 +74,7 @@ export const executeProjectSessionApiOperation = async ({
   input,
   connection,
   createProjectSession = createCliProjectSession,
+  getServerApiContract = getCliServerApiContract,
   dryRun = false,
   refresh = false,
 }: {
@@ -76,6 +82,7 @@ export const executeProjectSessionApiOperation = async ({
   input: unknown;
   connection: ProjectSessionApiConnection;
   createProjectSession?: CreateProjectSession;
+  getServerApiContract?: typeof getCliServerApiContract;
   dryRun?: boolean;
   refresh?: boolean;
 }) => {
@@ -100,6 +107,13 @@ export const executeProjectSessionApiOperation = async ({
         ...operation.writeNamespaces,
       ])
     );
+  }
+  if (
+    runtimeOperationId === undefined ||
+    publicApiOperationRequiresServerSupport(operation)
+  ) {
+    const contract = await getServerApiContract(connection);
+    assertCliServerOperationSupported(operation.id, contract);
   }
   const envelope =
     runtimeOperationId === undefined

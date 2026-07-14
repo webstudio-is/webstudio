@@ -1,4 +1,7 @@
-import { getApiErrorCode } from "@webstudio-is/http-client";
+import {
+  getApiCompatibilityMessage,
+  getApiErrorCode,
+} from "@webstudio-is/http-client";
 
 const missingProjectOwnerForTokenPattern =
   /^Project owner can't be found for token\b/;
@@ -31,7 +34,14 @@ export const isMissingApiAccessError = (error: unknown) => {
   return missingProjectOwnerForTokenPattern.test(message);
 };
 
-export const getCliErrorMessage = (error: unknown) => {
+export const getCliErrorMessage = (error: unknown, command = "mcp") => {
+  const compatibilityMessage = getApiCompatibilityMessage(error, {
+    updateCommand: "npm install -g webstudio@latest",
+    runLatestCommand: `npx webstudio@latest ${command}`,
+  });
+  if (compatibilityMessage !== undefined) {
+    return compatibilityMessage;
+  }
   const message = getErrorMessage(error);
   if (missingProjectOwnerForTokenPattern.test(message)) {
     return "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`.";

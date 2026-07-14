@@ -201,7 +201,7 @@ export const sync = async (
 
   syncing.stop(
     agents.status === "blocked-by-user-file"
-      ? `Project bundle synchronized; AGENTS.md blocked by user-owned file at ${agents.path}`
-      : `Project bundle synchronized successfully (AGENTS.md: ${agents.status})`
+      ? `Project bundle synchronized; AGENTS.md blocked by user-owned file at ${agents.path}. Next: webstudio connect`
+      : `Project bundle synchronized successfully (AGENTS.md: ${agents.status}). Next: webstudio connect`
   );
 };

@@ -97,3 +97,36 @@ test.runIf(process.platform !== "win32")(
     kill.mockRestore();
   }
 );
+
+test.runIf(process.platform !== "win32")(
+  "uses the child state when a stopped process group cannot be probed",
+  async () => {
+    const child = createChild();
+    Object.defineProperty(child, "pid", { value: 42 });
+    let signalSent = false;
+    const kill = vi
+      .spyOn(process, "kill")
+      .mockImplementation((_pid, signal) => {
+        if (signal === 0 && signalSent) {
+          throw Object.assign(new Error("Process group cannot be probed"), {
+            code: "EPERM",
+          });
+        }
+        if (signal === "SIGTERM") {
+          signalSent = true;
+          Object.defineProperty(child, "signalCode", {
+            value: signal,
+            writable: true,
+          });
+          child.emit("exit", null, signal);
+        }
+        return true;
+      });
+
+    await stopChildProcess(child, { killGroup: true, timeoutMs: 1 });
+
+    expect(kill).toHaveBeenCalledWith(-42, "SIGTERM");
+    expect(child.kill).not.toHaveBeenCalled();
+    kill.mockRestore();
+  }
+);

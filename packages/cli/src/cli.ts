@@ -12,6 +12,7 @@ import { man, manOptions } from "./commands/man";
 import { mcp, mcpOptions } from "./commands/mcp";
 import { screenshot, screenshotOptions } from "./commands/screenshot";
 import { preview, previewOptions } from "./commands/preview";
+import { connect, connectOptions } from "./commands/connect";
 import { apiCommand } from "./commands/api-command";
 import {
   cliCommandGroupMetadata,
@@ -23,6 +24,7 @@ import {
 import { schema, schemaOptions } from "./commands/schema";
 import { initFlow, initOptions } from "./commands/init-flow";
 import { registryInspect, registryInspectOptions } from "./commands/registry";
+import { audit, auditOptions } from "./commands/audit";
 import makeCLI from "yargs";
 import packageJson from "../package.json" with { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
@@ -66,9 +68,12 @@ const registerApiCommand = (
   );
 };
 
-const topLevelCommandNames: ReadonlySet<string> = new Set(
-  topLevelCliCommandMetadata.map((command) => command.command)
-);
+const topLevelCommandNames: ReadonlySet<string> = new Set([
+  ...topLevelCliCommandMetadata.map((command) => command.command),
+  ...cliCommandMetadata.map(
+    (command) => command.cliCommand.split(" ")[0] ?? command.cliCommand
+  ),
+]);
 
 const mcpOnlyToolNames = new Set(
   listProjectSessionMcpTools(publicApiOperations)
@@ -135,6 +140,9 @@ export const getTopLevelMcpToolForwardArgs = (args: readonly string[]) => {
   if (tool === undefined) {
     return;
   }
+  if (tool === "screenshot" && rest[0]?.trimStart().startsWith("{")) {
+    return ["mcp", "single-op-call", tool, ...rest];
+  }
   if (
     /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/i.test(tool) ||
     mcpOnlyToolNames.has(tool)
@@ -191,10 +199,22 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
     preview
   );
   cmd.command(
+    ["connect [client]"],
+    "Generate the MCP client configuration for Claude Code, Codex, Cursor, or VS Code",
+    connectOptions,
+    connect
+  );
+  cmd.command(
     ["screenshot [url]"],
     "Capture a PNG screenshot of a URL or local generated project route",
     screenshotOptions,
     screenshot
+  );
+  cmd.command(
+    ["audit"],
+    "Audit project accessibility, SEO, security, assets, styles, and performance",
+    auditOptions,
+    audit
   );
   cmd.command(
     ["registry"],
@@ -212,6 +232,9 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   const { direct, grouped } = getGroupedCommands(cliCommandMetadata);
   for (const metadata of direct) {
+    if (metadata.operation === "audit") {
+      continue;
+    }
     registerApiCommand(cmd, metadata.cliCommand, metadata);
   }
   for (const [group, commands] of grouped) {

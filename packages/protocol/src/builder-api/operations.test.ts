@@ -61,6 +61,7 @@ describe("public api operation catalog", () => {
       "resource",
       "scopeInstanceId",
       "dataSourceName",
+      "exposeAsDataSource",
     ]);
     expect(getPublicApiOperation("create-domain").inputFields).toEqual([
       "domain",

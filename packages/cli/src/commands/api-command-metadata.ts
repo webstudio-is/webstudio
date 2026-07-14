@@ -78,6 +78,12 @@ export const topLevelCliCommandMetadata = [
     examples: ["webstudio preview --port 5173"],
   },
   {
+    command: "connect",
+    description:
+      "Generate the MCP client configuration for Claude Code, Codex, Cursor, or VS Code",
+    examples: ["webstudio connect claude", "webstudio connect codex"],
+  },
+  {
     command: "screenshot",
     description:
       "Capture a PNG screenshot of an absolute URL or a generated project route with an installed Chromium-family browser",

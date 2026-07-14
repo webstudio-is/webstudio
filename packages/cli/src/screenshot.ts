@@ -14,7 +14,9 @@ import {
 } from "@webstudio-is/project-build/visual/screenshot-browser";
 import {
   captureBrowserScreenshot,
+  createBrowserScreenshotSession,
   defaultBrowserScreenshotDependencies,
+  type BrowserScreenshotSession,
   type BrowserScreenshotDependencies,
   type BrowserScreenshotLayout,
   type BrowserScreenshotOptions,
@@ -486,34 +488,51 @@ export const shouldOfferBrowserInstall = ({
 export const getScreenshotOutputPath = ({
   output,
   now,
+  format = "png",
+  suffix = "",
 }: {
   output?: string;
   now: number;
-}) => resolve(output ?? `${tmpdir()}/webstudio-screenshot-${now}.png`);
+  format?: "png" | "jpeg" | "webp";
+  suffix?: string;
+}) =>
+  resolve(
+    output ??
+      `${tmpdir()}/webstudio-screenshot-${now}${suffix}.${format === "jpeg" ? "jpg" : format}`
+  );
 
-export const captureScreenshot = async (
-  options: {
-    url: string;
-    output?: string;
-    width: number;
-    height: number;
-    fullPage?: boolean;
-    includeImageMetrics?: boolean;
-    includeResourceMetrics?: boolean;
-    browser: ScreenshotBrowser;
-    browserPath?: string;
-    waitUntil?: ScreenshotWaitUntil;
-    waitForSelector?: string;
-    waitForTimeout?: number;
-    timeout?: number;
-  },
-  dependencies = defaultScreenshotDependencies
+let screenshotBatchSequence = 0;
+
+type CaptureScreenshotOptions = {
+  url: string;
+  output?: string;
+  width: number;
+  height: number;
+  fullPage?: boolean;
+  includeImageMetrics?: boolean;
+  includeResourceMetrics?: boolean;
+  browser: ScreenshotBrowser;
+  browserPath?: string;
+  waitUntil?: ScreenshotWaitUntil;
+  waitForSelector?: string;
+  waitForTimeout?: number;
+  timeout?: number;
+  format?: "png" | "jpeg" | "webp";
+  quality?: number;
+  scale?: number;
+};
+
+const captureResolvedScreenshot = async (
+  options: CaptureScreenshotOptions,
+  browser: BrowserCandidate,
+  dependencies: ScreenshotDependencies,
+  browserSession?: BrowserScreenshotSession
 ) => {
   const startedAt = dependencies.now();
-  const browser = await resolveScreenshotBrowser(options, dependencies);
   const output = getScreenshotOutputPath({
     output: options.output,
     now: startedAt,
+    format: options.format,
   });
   await dependencies.mkdir(dirname(output), { recursive: true });
   const browserScreenshotOptions = {
@@ -530,11 +549,19 @@ export const captureScreenshot = async (
     waitForSelector: options.waitForSelector,
     waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
     timeout: options.timeout ?? defaultScreenshotTimeout,
+    format: options.format,
+    quality: options.quality,
+    scale: options.scale,
   };
   const layout =
-    dependencies.captureBrowserScreenshot !== undefined
-      ? await dependencies.captureBrowserScreenshot(browserScreenshotOptions)
-      : await captureBrowserScreenshot(browserScreenshotOptions, dependencies);
+    browserSession !== undefined
+      ? await browserSession.capture(browserScreenshotOptions)
+      : dependencies.captureBrowserScreenshot !== undefined
+        ? await dependencies.captureBrowserScreenshot(browserScreenshotOptions)
+        : await captureBrowserScreenshot(
+            browserScreenshotOptions,
+            dependencies
+          );
   return {
     output,
     browser,
@@ -545,7 +572,164 @@ export const captureScreenshot = async (
     fullPage: options.fullPage === true,
     elapsedMs: dependencies.now() - startedAt,
     warnings: [] as string[],
+    ...(layout?.timings === undefined ? {} : { timings: layout.timings }),
+    ...(layout?.navigation === undefined
+      ? {}
+      : { navigation: layout.navigation }),
     ...(layout === undefined ? {} : { layout }),
+  };
+};
+
+export const captureScreenshot = async (
+  options: CaptureScreenshotOptions,
+  dependencies = defaultScreenshotDependencies
+) => {
+  const browser = await resolveScreenshotBrowser(options, dependencies);
+  return await captureResolvedScreenshot(options, browser, dependencies);
+};
+
+export const createScreenshotCaptureSession = (
+  dependencies = defaultScreenshotDependencies
+) => {
+  let browserPromise: Promise<BrowserCandidate> | undefined;
+  let browserSession: BrowserScreenshotSession | undefined;
+  let browserSessionPromise: Promise<BrowserScreenshotSession> | undefined;
+  return {
+    async capture(options: CaptureScreenshotOptions) {
+      browserPromise ??= resolveScreenshotBrowser(options, dependencies);
+      const resolvedBrowser = await browserPromise;
+      if (
+        (options.browserPath !== undefined &&
+          options.browserPath !== resolvedBrowser.path) ||
+        (options.browser !== "auto" &&
+          options.browser !== resolvedBrowser.browser)
+      ) {
+        throw new Error(
+          "A reusable screenshot session cannot switch browser executables."
+        );
+      }
+      browserSessionPromise ??= createBrowserScreenshotSession(
+        {
+          browserPath: resolvedBrowser.path,
+          output: options.output ?? "",
+          width: options.width,
+          height: options.height,
+          fullPage: options.fullPage,
+          includeImageMetrics: options.includeImageMetrics,
+          includeResourceMetrics: options.includeResourceMetrics,
+          url: options.url,
+          uid: dependencies.getuid(),
+          waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
+          waitForSelector: options.waitForSelector,
+          waitForTimeout:
+            options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
+          timeout: options.timeout ?? defaultScreenshotTimeout,
+        },
+        dependencies
+      );
+      browserSession ??= await browserSessionPromise;
+      return await captureResolvedScreenshot(
+        options,
+        resolvedBrowser,
+        dependencies,
+        browserSession
+      );
+    },
+    async capturePage(optionsList: readonly CaptureScreenshotOptions[]) {
+      const firstOptions = optionsList[0];
+      if (firstOptions === undefined) {
+        return [];
+      }
+      browserPromise ??= resolveScreenshotBrowser(firstOptions, dependencies);
+      const resolvedBrowser = await browserPromise;
+      if (
+        optionsList.some(
+          (options) =>
+            (options.browserPath !== undefined &&
+              options.browserPath !== resolvedBrowser.path) ||
+            (options.browser !== "auto" &&
+              options.browser !== resolvedBrowser.browser)
+        )
+      ) {
+        throw new Error(
+          "A reusable screenshot session cannot switch browser executables."
+        );
+      }
+      const startedAt = dependencies.now();
+      const batchSequence = screenshotBatchSequence;
+      screenshotBatchSequence += 1;
+      const captures = await Promise.all(
+        optionsList.map(async (options, index) => {
+          const output = getScreenshotOutputPath({
+            output: options.output,
+            now: startedAt,
+            format: options.format,
+            suffix: `-${batchSequence}-${index}`,
+          });
+          await dependencies.mkdir(dirname(output), { recursive: true });
+          return {
+            options,
+            output,
+            browserOptions: {
+              browserPath: resolvedBrowser.path,
+              output,
+              width: options.width,
+              height: options.height,
+              fullPage: options.fullPage,
+              includeImageMetrics: options.includeImageMetrics,
+              includeResourceMetrics: options.includeResourceMetrics,
+              url: options.url,
+              uid: dependencies.getuid(),
+              waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
+              waitForSelector: options.waitForSelector,
+              waitForTimeout:
+                options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
+              timeout: options.timeout ?? defaultScreenshotTimeout,
+              format: options.format,
+              quality: options.quality,
+              scale: options.scale,
+            },
+          };
+        })
+      );
+      browserSessionPromise ??= createBrowserScreenshotSession(
+        captures[0].browserOptions,
+        dependencies
+      );
+      browserSession ??= await browserSessionPromise;
+      const layouts = await browserSession.capturePage(
+        captures.map((capture) => capture.browserOptions)
+      );
+      return captures.map(({ options, output }, index) => {
+        const layout = layouts[index];
+        if (layout === undefined) {
+          throw new Error("Browser omitted a resized screenshot result.");
+        }
+        return {
+          output,
+          browser: resolvedBrowser,
+          viewport: { width: options.width, height: options.height },
+          fullPage: options.fullPage === true,
+          elapsedMs: layout.timings?.wallMs ?? 0,
+          warnings: [] as string[],
+          ...(layout.timings === undefined ? {} : { timings: layout.timings }),
+          ...(layout.navigation === undefined
+            ? {}
+            : { navigation: layout.navigation }),
+          layout,
+        };
+      });
+    },
+    async close() {
+      try {
+        browserSession ??= await browserSessionPromise?.catch(() => undefined);
+        await browserSession?.close();
+      } finally {
+        browserSession = undefined;
+        browserSessionPromise = undefined;
+        browserPromise = undefined;
+      }
+    },
   };
 };
 

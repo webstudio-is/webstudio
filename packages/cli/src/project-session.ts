@@ -8,6 +8,8 @@ import {
 import * as httpClient from "@webstudio-is/http-client";
 import {
   bundleVersion,
+  publicApiContractVersion,
+  publicApiOperationRequiresServerSupport,
   publicApiOperations,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -42,6 +44,81 @@ type ApiConnection = {
   origin: string;
   authToken: string;
   headers?: Record<string, string | undefined>;
+};
+
+export type CliServerApiContract = {
+  clientVersion: string;
+  serverVersion?: string;
+  supportedOperationIds: ReadonlySet<string>;
+  missingServerOperationIds: readonly string[];
+  negotiated: boolean;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && Array.isArray(value) === false;
+
+export const getCliServerApiContract = async (
+  connection: ApiConnection,
+  getProjectPermissions = httpClient.getProjectPermissions
+): Promise<CliServerApiContract> => {
+  const permissions = (await getProjectPermissions(connection)) as unknown;
+  const apiContract = isRecord(permissions)
+    ? permissions.apiContract
+    : undefined;
+  const serverVersion =
+    isRecord(apiContract) && typeof apiContract.version === "string"
+      ? apiContract.version
+      : undefined;
+  const operationIds =
+    isRecord(apiContract) && Array.isArray(apiContract.operationIds)
+      ? apiContract.operationIds.filter(
+          (operationId): operationId is string =>
+            typeof operationId === "string"
+        )
+      : [];
+  const supportedOperationIds = new Set(operationIds);
+  const missingServerOperationIds = publicApiOperations.flatMap((operation) =>
+    publicApiOperationRequiresServerSupport(operation) &&
+    supportedOperationIds.has(operation.id) === false
+      ? [operation.id]
+      : []
+  );
+  return {
+    clientVersion: publicApiContractVersion,
+    serverVersion,
+    supportedOperationIds,
+    missingServerOperationIds,
+    negotiated: serverVersion !== undefined,
+  };
+};
+
+export const getSupportedPublicApiOperations = (
+  contract: CliServerApiContract
+) =>
+  publicApiOperations.filter((operation) => {
+    if (contract.negotiated === false) {
+      return publicApiOperationRequiresServerSupport(operation) === false;
+    }
+    return (
+      publicApiOperationRequiresServerSupport(operation) === false ||
+      contract.supportedOperationIds.has(operation.id)
+    );
+  });
+
+export const assertCliServerOperationSupported = (
+  operationId: string,
+  contract: CliServerApiContract
+) => {
+  if (contract.supportedOperationIds.has(operationId)) {
+    return;
+  }
+  const serverVersion = contract.serverVersion ?? "unavailable (legacy server)";
+  throw Object.assign(
+    new Error(
+      `The configured Webstudio API does not advertise server operation "${operationId}". CLI contract: ${contract.clientVersion}. Server contract: ${serverVersion}. Run this command with the latest CLI once; if it still appears, retry after the Webstudio API deployment is updated.`
+    ),
+    { code: "API_CONTRACT_MISMATCH" }
+  );
 };
 
 type PublicBuildSnapshot = Omit<
@@ -97,6 +174,20 @@ const toPublicApiInclude = (namespaces: readonly BuilderNamespace[]) => [
     })
   ),
 ];
+
+const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("invalid_enum_value") &&
+    message.includes('received "projectSettings"')
+  );
+};
+
+const getLegacyPublicApiInclude = (namespaces: readonly BuilderNamespace[]) =>
+  toPublicApiInclude([
+    ...namespaces.filter((namespace) => namespace !== "projectSettings"),
+    "pages",
+  ]);
 
 const toPages = (snapshot: PublicBuildSnapshot) => {
   if (snapshot.pages === undefined) {
@@ -247,12 +338,25 @@ export const createCliProjectSessionTransport = ({
     return createCliProjectSessionCompatibility(connection);
   },
   async fetchNamespaces({ namespaces }) {
-    const snapshot = (await withMappedRemoteError(() =>
-      getBuildSnapshot({
-        ...connection,
-        include: toPublicApiInclude(namespaces),
-      })
-    )) as PublicBuildSnapshot;
+    const fetchSnapshot = (include: string[]) =>
+      withMappedRemoteError(() =>
+        getBuildSnapshot({
+          ...connection,
+          include,
+        })
+      ) as Promise<PublicBuildSnapshot>;
+    let snapshot: PublicBuildSnapshot;
+    try {
+      snapshot = await fetchSnapshot(toPublicApiInclude(namespaces));
+    } catch (error) {
+      if (
+        namespaces.includes("projectSettings") === false ||
+        isUnsupportedProjectSettingsIncludeError(error) === false
+      ) {
+        throw error;
+      }
+      snapshot = await fetchSnapshot(getLegacyPublicApiInclude(namespaces));
+    }
     return toRemoteSnapshot(snapshot);
   },
   async commitPatch({ baseVersion, transactions }) {

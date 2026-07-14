@@ -51,6 +51,12 @@ export const screenshotOptions = (yargs: CommonYargsArgv) =>
       default: 5173,
       describe: "Port used by the temporary project preview server",
     })
+    .option("image-domain", {
+      type: "string",
+      array: true,
+      describe:
+        "External image hostname allowed when --path starts a generated preview; repeat for multiple hosts",
+    })
     .option("output", {
       type: "string",
       alias: "o",
@@ -257,6 +263,31 @@ export const screenshot = async (
         },
       });
 
+      if (
+        options.path !== undefined &&
+        result.navigation?.status !== undefined &&
+        result.navigation.status >= 400
+      ) {
+        const message = `Generated preview returned HTTP ${result.navigation.status} for ${result.navigation.finalUrl}.`;
+        if (options.json) {
+          printJson({
+            ok: false,
+            error: {
+              code: "SCREENSHOT_HTTP_ERROR",
+              message,
+            },
+            data: {
+              output: result.output,
+              navigation: result.navigation,
+            },
+            meta: { command: "screenshot" },
+          });
+        } else {
+          log.error(message);
+        }
+        throw new HandledCliError();
+      }
+
       if (options.json) {
         printJson({
           ok: true,
@@ -268,6 +299,8 @@ export const screenshot = async (
             fullPage: result.fullPage,
             elapsedMs: result.elapsedMs,
             warnings: result.warnings,
+            navigation: result.navigation,
+            layout: result.layout,
           },
           meta: { command: "screenshot" },
         });
@@ -283,13 +316,18 @@ export const screenshot = async (
 
     const host = options.host ?? "127.0.0.1";
     const port = options.port ?? 5173;
-    validatePreviewServerOptions({ host, port });
+    validatePreviewServerOptions({
+      host,
+      port,
+      imageDomains: options.imageDomain,
+    });
     const previewProject = await (
       dependencies.preparePreviewProject ?? preparePreviewProject
     )({
       assets: true,
       template: [...previewDefaultTemplate],
       generate: true,
+      silent: options.json,
     });
     const preview = (
       dependencies.createPreviewController ?? createPreviewController
@@ -297,8 +335,10 @@ export const screenshot = async (
     try {
       await preview.startAndWait({
         cwd: previewProject.cwd,
+        buildCacheKey: previewProject.buildCacheKey,
         host,
         port,
+        imageDomains: options.imageDomain,
         restart: true,
       });
       await capture(preview.resolveUrl(options.path));

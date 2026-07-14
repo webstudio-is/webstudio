@@ -370,6 +370,113 @@ describe("prebuild", () => {
     await expect(
       readFile("app/__generated__/$resources.redirects.ts", "utf8")
     ).resolves.toContain("/dl.php?filename=file.pdf");
+    await expect(readFile("app/constants.mjs", "utf8")).resolves.toContain(
+      "return `/_vercel/image?${searchParams}`"
+    );
+    await expect(readFile("app/routes/[_image].$.ts", "utf8")).rejects.toThrow(
+      "ENOENT"
+    );
+    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.dependencies).not.toHaveProperty("h3");
+    expect(packageJson.dependencies).not.toHaveProperty("ipx");
+  });
+
+  test("generates homepage, leaf, nested, dynamic, and 404 React Router routes", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "pricing",
+            name: "Pricing",
+            title: "Pricing",
+            path: "/pricing",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "guide",
+            name: "Guide",
+            title: "Guide",
+            path: "/docs/getting-started",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    await expect(readFile("app/routes/_index.tsx", "utf8")).resolves.toContain(
+      "../__generated__/_index"
+    );
+    await expect(
+      readFile("app/routes/[pricing]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[pricing]._index");
+    await expect(
+      readFile("app/routes/[docs].[getting-started]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[docs].[getting-started]._index");
+    await expect(
+      readFile("app/routes/[blog].$slug._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[blog].$slug._index");
+    await expectGeneratedRedirectFallback("app/routes/$.tsx");
+  });
+
+  test("uses pass-through images in the base react-router template", async () => {
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    await expect(readFile("app/constants.mjs", "utf8")).resolves.toContain(
+      "return props.src"
+    );
+    await expect(readFile("app/routes/[_image].$.ts", "utf8")).rejects.toThrow(
+      "ENOENT"
+    );
+    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.dependencies).not.toHaveProperty("h3");
+    expect(packageJson.dependencies).not.toHaveProperty("ipx");
+  });
+
+  test("keeps IPX image optimization in the react-router Docker overlay", async () => {
+    await prebuild({
+      assets: false,
+      template: ["react-router", "react-router-docker"],
+    });
+
+    await expect(readFile("app/constants.mjs", "utf8")).resolves.toContain(
+      "return `/_image/w_${props.width},q_${props.quality}${path}`"
+    );
+    await expect(
+      readFile("app/routes/[_image].$.ts", "utf8")
+    ).resolves.toContain("createIPXH3Handler");
+    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.dependencies).toMatchObject({
+      h3: "^1.15.1",
+      ipx: "^3.0.3",
+    });
+  });
+
+  test("rejects the react-router-docker overlay without its base template", async () => {
+    await expect(
+      prebuild({ assets: false, template: ["react-router-docker"] })
+    ).rejects.toThrow(
+      'requires "react-router". Use --template react-router --template react-router-docker.'
+    );
   });
 
   test("selects ssg templates and skips dynamic routes", async () => {

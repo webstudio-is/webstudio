@@ -111,7 +111,10 @@ test("captures a project route through a temporary production preview", async ()
     })),
     resolveUrl: vi.fn(() => "http://127.0.0.1:5180/pricing"),
   };
-  const preparePreviewProject = vi.fn(async () => ({ cwd: "/tmp/preview" }));
+  const preparePreviewProject = vi.fn(async () => ({
+    cwd: "/tmp/preview",
+    buildCacheKey: "preview-cache-key",
+  }));
   const createPreviewController = vi.fn(() => preview);
 
   try {
@@ -136,6 +139,7 @@ test("captures a project route through a temporary production preview", async ()
     assets: true,
     template: ["defaults", "react-router"],
     generate: true,
+    silent: true,
   });
   expect(createPreviewController).toHaveBeenCalledWith({
     host: "127.0.0.1",
@@ -143,6 +147,7 @@ test("captures a project route through a temporary production preview", async ()
   });
   expect(preview.startAndWait).toHaveBeenCalledWith({
     cwd: "/tmp/preview",
+    buildCacheKey: "preview-cache-key",
     host: "127.0.0.1",
     port: 5173,
     restart: true,
@@ -150,6 +155,69 @@ test("captures a project route through a temporary production preview", async ()
   expect(preview.resolveUrl).toHaveBeenCalledWith("/pricing");
   expect(captureScreenshotWithBrowserInstall).toHaveBeenCalledWith(
     expect.objectContaining({ url: "http://127.0.0.1:5180/pricing" })
+  );
+  expect(preview.stop).toHaveBeenCalledOnce();
+});
+
+test("fails a generated project route that returns an HTTP error", async () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+  const preview = {
+    startAndWait: vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+    })),
+    stop: vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: false,
+    })),
+    resolveUrl: vi.fn(() => "http://127.0.0.1:5173/missing"),
+  };
+
+  await expect(
+    screenshot(
+      { path: "/missing", width: 800, height: 600, json: true },
+      {
+        captureScreenshotWithBrowserInstall: vi.fn(async () => ({
+          output: "/tmp/missing.png",
+          browser: {
+            path: "/browser",
+            source: "option" as const,
+            browser: "chrome" as const,
+          },
+          viewport: { width: 800, height: 600 },
+          fullPage: false,
+          elapsedMs: 12,
+          warnings: [] as string[],
+          navigation: {
+            requestedUrl: "http://127.0.0.1:5173/missing",
+            finalUrl: "http://127.0.0.1:5173/missing",
+            status: 404,
+            statusText: "Not Found",
+            mimeType: "text/html",
+            redirects: [],
+            documentReadyState: "complete",
+            generatedSiteRootPresent: true,
+            layoutStable: true,
+          },
+        })),
+        preparePreviewProject: vi.fn(async () => ({ cwd: "/tmp/preview" })),
+        createPreviewController: vi.fn(() => preview),
+      }
+    )
+  ).rejects.toBeInstanceOf(HandledCliError);
+
+  expect(JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0])).toEqual(
+    expect.objectContaining({
+      ok: false,
+      error: {
+        code: "SCREENSHOT_HTTP_ERROR",
+        message: expect.stringContaining("HTTP 404"),
+      },
+      data: {
+        output: "/tmp/missing.png",
+        navigation: expect.objectContaining({ status: 404 }),
+      },
+    })
   );
   expect(preview.stop).toHaveBeenCalledOnce();
 });

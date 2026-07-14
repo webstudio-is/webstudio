@@ -52,7 +52,9 @@ if (componentFiles.length === 0) {
   throw new Error("No component files found");
 }
 
-// Create a parser with using your typescript config
+// TODO: Upgrade once https://github.com/styleguidist/react-docgen-typescript/issues/538 is resolved.
+// This private build-time tool stays on TypeScript 5 until react-docgen-typescript
+// supports the TypeScript 7 compiler API.
 const tsConfigParser = withCustomConfig(tsConfigPath, options);
 
 type ComponentNameType = string;

@@ -19,7 +19,8 @@
     "typecheck": "tsc --noEmit",
     "generate-docs": "tsx scripts/generate-docs.ts && oxfmt src/docs.generated.ts",
     "build": "pnpm generate-docs && rm -rf lib && vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:release-smoke": "pnpm build && tsx --conditions=webstudio scripts/release-smoke.ts"
   },
   "license": "AGPL-3.0-or-later",
   "engines": {
@@ -32,7 +33,6 @@
     "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/protocol": "workspace:*",
-    "@webstudio-is/sdk-components-registry": "workspace:*",
     "@webstudio-is/sync-client": "workspace:*",
     "acorn": "^8.14.1",
     "acorn-jsx": "^5.3.2",
@@ -85,6 +85,7 @@
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "@webstudio-is/sdk-components-react-router": "workspace:*",
+    "@webstudio-is/sdk-components-registry": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
     "h3": "^1.15.1",
@@ -94,7 +95,7 @@
     "mdast-util-from-markdown": "^2.0.3",
     "mdast-util-to-string": "^4.0.0",
     "micromark-extension-directive": "^4.0.0",
-    "prettier": "3.5.3",
+    "oxfmt": "0.58.0",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "react-router": "^7.5.3",

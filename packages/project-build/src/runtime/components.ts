@@ -52,7 +52,9 @@ const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
 
 export const insertComponentInput = z.object({
   parentInstanceId: z.string(),
-  component: instanceComponent,
+  component: instanceComponent.describe(
+    'Exact component id returned by components.search, components.get, or templates.get. Do not derive HTML shorthands such as "ws:div" or "ws:form". For a native HTML element, use "ws:element" and set "tag".'
+  ),
   tag: z
     .string()
     .min(1)
@@ -148,6 +150,22 @@ const getStandaloneInsertError = (component: Instance["component"]) => {
           .map((suggestion) => `"${suggestion}"`)
           .join(", ")}.`;
   return `Component "${component}" cannot be inserted standalone because its contentModel.category is "none". ${suggestion} Required provider/parent components must be created by the template.`;
+};
+
+const getUnknownCoreComponentError = ({
+  component,
+  templates,
+}: {
+  component: Instance["component"];
+  templates: ComponentTemplateRegistry;
+}) => {
+  if (
+    component.startsWith("ws:") &&
+    componentMetas.has(component) === false &&
+    templates.has(component) === false
+  ) {
+    return `Component "${component}" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands. To create a native HTML element, use component "ws:element" with its "tag" property, for example <ws.element ws:tag="div">...</ws.element>.`;
+  }
 };
 
 type ComponentInsertState = Pick<
@@ -459,6 +477,13 @@ const validateFragmentComponent = ({
 }) => {
   const { component } = instance;
   const meta = componentMetas.get(component);
+  const unknownCoreComponentError = getUnknownCoreComponentError({
+    component,
+    templates,
+  });
+  if (unknownCoreComponentError !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", unknownCoreComponentError);
+  }
   if (
     component === "ws:element" &&
     (typeof instance.tag !== "string" || instance.tag.length === 0)
@@ -799,6 +824,13 @@ export const insertComponent = (
   const templates = getComponentTemplates();
   const template = templates.get(input.component);
   const meta = componentMetas.get(input.component);
+  const unknownCoreComponentError = getUnknownCoreComponentError({
+    component: input.component,
+    templates,
+  });
+  if (unknownCoreComponentError !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", unknownCoreComponentError);
+  }
   const insertCategory = template?.category ?? meta?.category;
   const page = getInsertionPage(mutationState, parent);
   if (

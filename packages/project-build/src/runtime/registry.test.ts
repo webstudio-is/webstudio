@@ -528,6 +528,193 @@ describe("builder runtime read families", () => {
     });
   });
 
+  test("binds readable expression names to data sources at write time", () => {
+    const propResult = executeBuilderRuntimeOperation({
+      id: "instances.bindProps",
+      state,
+      input: {
+        bindings: [
+          {
+            instanceId: "heading",
+            name: "title",
+            binding: { type: "expression", value: "Title" },
+          },
+        ],
+      },
+      context,
+    });
+    expect(propResult).toMatchObject({
+      payload: [
+        {
+          namespace: "props",
+          patches: [
+            {
+              value: {
+                type: "expression",
+                value: "$ws$dataSource$variable",
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const textResult = executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: {
+        instanceId: "heading",
+        childIndex: 0,
+        text: 'Title ?? "Untitled"',
+        mode: "expression",
+      },
+      context,
+    });
+    expect(textResult).toMatchObject({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              value: {
+                type: "expression",
+                value: '$ws$dataSource$variable ?? "Untitled"',
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "instances.updateText",
+        state,
+        input: {
+          instanceId: "heading",
+          childIndex: 0,
+          text: "$ws$dataSource$stale.name",
+          mode: "expression",
+        },
+        context,
+      })
+    ).toThrow(/data source "stale".*not available/);
+  });
+
+  test("binds Collection data and item names in their respective scopes", () => {
+    const collectionState = {
+      ...state,
+      instances: new Map([
+        [
+          "body",
+          {
+            type: "instance" as const,
+            id: "body",
+            component: "Body",
+            children: [{ type: "id" as const, value: "collection" }],
+          },
+        ],
+        [
+          "collection",
+          {
+            type: "instance" as const,
+            id: "collection",
+            component: "ws:collection",
+            children: [{ type: "id" as const, value: "item" }],
+          },
+        ],
+        [
+          "item",
+          {
+            type: "instance" as const,
+            id: "item",
+            component: "Text",
+            children: [{ type: "text" as const, value: "Item" }],
+          },
+        ],
+      ]),
+      props: new Map(),
+      dataSources: new Map([
+        [
+          "plans",
+          {
+            id: "plans",
+            type: "variable" as const,
+            name: "Plans",
+            scopeInstanceId: "body",
+            value: { type: "json" as const, value: [{ name: "Starter" }] },
+          },
+        ],
+        [
+          "item-parameter",
+          {
+            id: "item-parameter",
+            type: "parameter" as const,
+            name: "collectionItem",
+            scopeInstanceId: "collection",
+          },
+        ],
+      ]),
+    } satisfies BuilderState;
+
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "instances.bindProps",
+        state: collectionState,
+        input: {
+          bindings: [
+            {
+              instanceId: "collection",
+              name: "data",
+              binding: { type: "expression", value: "Plans" },
+            },
+          ],
+        },
+        context,
+      })
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "props",
+          patches: [
+            {
+              value: {
+                value: "$ws$dataSource$plans",
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "instances.updateText",
+        state: collectionState,
+        input: {
+          instanceId: "item",
+          childIndex: 0,
+          text: "collectionItem.name",
+          mode: "expression",
+        },
+        context,
+      })
+    ).toMatchObject({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              value: {
+                value: "$ws$dataSource$item__DASH__parameter.name",
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   test("replaces bounded static prop text without changing dynamic bindings", () => {
     const replaceState = {
       ...state,
@@ -1241,6 +1428,54 @@ describe("builder runtime registry", () => {
         ).toBeGreaterThan(0);
       }
     }
+  });
+
+  test("publishes truthful inputs for asset, page-copy, style-source, and resource operations", () => {
+    const addAssetOperation = getBuilderRuntimeOperation("assets.add");
+    const addAssetSchema = toInputJsonSchemaObject(
+      addAssetOperation.inputJsonSchema
+    );
+    const assetSchema = toInputJsonSchemaObject(
+      addAssetSchema?.properties?.asset
+    );
+    expect(JSON.stringify(assetSchema)).not.toContain("projectId");
+
+    for (const operationId of [
+      "resources.create",
+      "resources.update",
+    ] as const) {
+      const operation = getBuilderRuntimeOperation(operationId);
+      const schema = toInputJsonSchemaObject(operation.inputJsonSchema);
+      expect(
+        toInputJsonSchemaObject(schema?.properties?.exposeAsDataSource)
+          ?.description
+      ).toContain("write resources default to false");
+    }
+
+    const copyPageOperation = getBuilderRuntimeOperation("pages.copy");
+    const copyPageSchema = toInputJsonSchemaObject(
+      copyPageOperation.inputJsonSchema
+    );
+    expect(copyPageSchema?.required).toContain("sourceData");
+    expect(
+      toInputJsonSchemaObject(copyPageSchema?.properties?.sourceData)
+        ?.description
+    ).toContain("use duplicate-page");
+    expect(() =>
+      copyPageOperation.execute({ state, input: { pageId: "home" }, context })
+    ).toThrow("sourceData");
+
+    const duplicateStyleSourceOperation = getBuilderRuntimeOperation(
+      "styleSources.duplicate"
+    );
+    const duplicateStyleSourceSchema = toInputJsonSchemaObject(
+      duplicateStyleSourceOperation.inputJsonSchema
+    );
+    expect(
+      toInputJsonSchemaObject(
+        duplicateStyleSourceSchema?.properties?.styleSourceId
+      )?.description
+    ).toContain("Local style sources cannot be duplicated");
   });
 
   test("keeps router adapter policy in runtime metadata", () => {

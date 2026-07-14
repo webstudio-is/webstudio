@@ -33,7 +33,7 @@ import type {
   PageSettingsErrors,
   PageSettingsValues,
 } from "@webstudio-is/project-build/runtime/pages";
-import type { OnChange } from "./shared";
+import { computePageSettingsText, type OnChange } from "./shared";
 
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
@@ -268,7 +268,7 @@ const RedirectField = ({
             id={id}
             placeholder="/another-path"
             disabled={disabled || isLiteralExpression(value) === false}
-            value={String(computeExpression(value, variableValues))}
+            value={computePageSettingsText(value, variableValues)}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
         </InputErrorsTooltip>

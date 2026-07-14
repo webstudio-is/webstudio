@@ -6,6 +6,7 @@ import {
   BrowserInstallUnavailableError,
   captureScreenshot,
   captureScreenshotWithBrowserInstall,
+  createScreenshotCaptureSession,
   getChromiumInstallCommand,
   getNoBrowserFoundMessage,
   installTesseractForOcr,
@@ -376,6 +377,42 @@ describe("captureScreenshot", () => {
       recursive: true,
     });
   });
+});
+
+test("resets a reusable capture session after browser startup rejects", async () => {
+  const spawnBrowser = vi.fn(() => ({
+    kill: vi.fn(() => true),
+    once: vi.fn((event: string, listener: () => void) => {
+      if (event === "error") {
+        setTimeout(listener, 0);
+      }
+    }),
+  }));
+  const dependencies = createDependencies({
+    which: vi.fn(async (command) =>
+      command === "chromium" ? "/usr/bin/chromium" : undefined
+    ),
+    spawnBrowser: spawnBrowser as never,
+  });
+  const session = createScreenshotCaptureSession(dependencies);
+  const options = {
+    url: "https://example.com",
+    width: 800,
+    height: 600,
+    browser: "auto" as const,
+    timeout: 100,
+  };
+
+  await expect(session.capture(options)).rejects.toThrow(
+    "Browser exited before its DevTools endpoint became ready."
+  );
+  await expect(session.close()).resolves.toBeUndefined();
+
+  await expect(session.capture(options)).rejects.toThrow(
+    "Browser exited before its DevTools endpoint became ready."
+  );
+  await session.close();
+  expect(spawnBrowser).toHaveBeenCalledTimes(2);
 });
 
 describe("browser installation", () => {

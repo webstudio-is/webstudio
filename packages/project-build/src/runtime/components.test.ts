@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import {
+  collectionComponent,
   elementComponent,
+  encodeDataVariableId,
   getStyleDeclKey,
   type Instance,
   type Page,
@@ -187,6 +189,37 @@ test("inserts ws.element component with tag", async () => {
   );
 });
 
+test("keeps Collection item expressions linked to each inserted parameter", () => {
+  for (let insertion = 0; insertion < 2; insertion += 1) {
+    const parent = createParent();
+    const mutation = insertComponent(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        component: collectionComponent,
+      },
+      { createId: createIdFactory() }
+    );
+    const props = getAddedValues<{
+      name: string;
+      type: string;
+      value: string;
+    }>(mutation, "props");
+    const itemParameterId = props.find(
+      (prop) => prop.name === "item" && prop.type === "parameter"
+    )?.value;
+    const expressions = getAddedValues<Instance>(mutation, "instances").flatMap(
+      (instance) =>
+        instance.children.flatMap((child) =>
+          child.type === "expression" ? [child.value] : []
+        )
+    );
+
+    expect(itemParameterId).toBeDefined();
+    expect(expressions).toContain(encodeDataVariableId(itemParameterId ?? ""));
+  }
+});
+
 test("inserts fragment into page template", async () => {
   const parent = createParent();
   const root: Instance = {
@@ -233,6 +266,45 @@ test("rejects tag when inserting non-element component", async () => {
       }
     )
   ).toThrow('"tag" can only be used with component "ws:element"');
+});
+
+test("rejects unknown Webstudio core components", () => {
+  const parent = createParent();
+
+  expect(() =>
+    insertComponent(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        component: "ws:div",
+      },
+      {
+        createId: createIdFactory(),
+      }
+    )
+  ).toThrow(
+    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands.'
+  );
+});
+
+test("rejects unknown Webstudio core components in JSX fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(`<ws.div />`);
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        fragment,
+      },
+      {
+        createId: createIdFactory(),
+      }
+    )
+  ).toThrow(
+    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands.'
+  );
 });
 
 test("inserts registered component template", async () => {

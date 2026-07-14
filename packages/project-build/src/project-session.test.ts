@@ -20,6 +20,7 @@ import type {
 } from "./project-session";
 import { createBuilderStateFromSnapshot } from "./state/adapters";
 import { createBuilderStateFreshness } from "./state/freshness";
+import { applyBuilderPatchTransactions } from "./state/patch";
 import { build } from "./state/fixtures.test-utils";
 
 const compatibilityVersion = "test-session";
@@ -137,16 +138,18 @@ const createSession = ({
 }: {
   storage?: ProjectSessionStorage;
   transport?: ProjectSessionTransport;
-} = {}) =>
-  createProjectSession({
+} = {}) => {
+  let generatedId = 0;
+  return createProjectSession({
     projectId: "project-1",
     storage,
     transport,
     compatibilityVersion,
     runtimeContext: {
-      createId: () => "generated-id",
+      createId: () => `generated-id-${generatedId++}`,
     },
   });
+};
 
 describe("project session", () => {
   test("derives default compatibility from the full runtime contract shape", () => {
@@ -176,7 +179,7 @@ describe("project session", () => {
 
     expect(result.source).toBe("local");
     expect(result.state.committed).toBe(false);
-    expect(result.namespaces.read).toEqual(["pages", "projectSettings"]);
+    expect(result.namespaces.read).toEqual(["pages"]);
     expect(transport.loadedNamespaces).toEqual([]);
   });
 
@@ -205,8 +208,111 @@ describe("project session", () => {
     const result = await session.read("pages.list", { projectId: "project-1" });
 
     expect(result.source).toBe("local");
-    expect(transport.loadedNamespaces).toEqual([["pages", "projectSettings"]]);
+    expect(transport.loadedNamespaces).toEqual([["pages"]]);
     expect(storage.saved).toHaveLength(1);
+  });
+
+  test("duplicates a page from a cold session with assets hydrated", async () => {
+    const remote = createSnapshot({
+      state: createBuilderStateFromSnapshot({
+        ...build,
+        assets: [
+          [
+            "asset-hero",
+            {
+              id: "asset-hero",
+              projectId: "project-1",
+              name: "hero.png",
+              type: "image",
+              size: 128,
+              format: "png",
+              createdAt: "2026-01-01T00:00:00.000Z",
+              description: "Product hero",
+              meta: { width: 1200, height: 800 },
+            },
+          ],
+        ],
+        instances: [
+          [
+            "instance-root",
+            {
+              type: "instance",
+              id: "instance-root",
+              component: "Body",
+              children: [{ type: "id", value: "instance-image" }],
+            },
+          ],
+          [
+            "instance-image",
+            {
+              type: "instance",
+              id: "instance-image",
+              component: "Image",
+              children: [],
+            },
+          ],
+        ],
+        props: [
+          ...build.props,
+          [
+            "prop-image-src",
+            {
+              id: "prop-image-src",
+              instanceId: "instance-image",
+              name: "src",
+              type: "asset",
+              value: "asset-hero",
+            },
+          ],
+        ],
+      }),
+    });
+    const transport = createTransport(remote);
+    const session = createSession({ transport });
+
+    const result = await session.mutate(
+      "pages.duplicate",
+      {
+        projectId: "project-1",
+        pageId: "page-home",
+        name: "Home copy",
+        path: "/home-copy",
+      },
+      { dryRun: true }
+    );
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "DRY_RUN" }),
+    ]);
+    expect(transport.loadedNamespaces[0]).toEqual(
+      expect.arrayContaining(["pages", "assets", "instances", "props"])
+    );
+    expect(result.transaction).toBeDefined();
+    const plannedState = applyBuilderPatchTransactions(remote.state, [
+      result.transaction!,
+    ]).state;
+    const duplicatedPage = Array.from(
+      plannedState.pages?.pages.values() ?? []
+    ).find((page) => page.name === "Home copy");
+    expect(duplicatedPage).toBeDefined();
+    const duplicateRoot = plannedState.instances?.get(
+      duplicatedPage!.rootInstanceId
+    );
+    const duplicateImageId = duplicateRoot?.children.find(
+      (child) => child.type === "id"
+    )?.value;
+    expect(duplicateImageId).toBeDefined();
+    const duplicateAssetProp = Array.from(
+      plannedState.props?.values() ?? []
+    ).find(
+      (prop) => prop.instanceId === duplicateImageId && prop.name === "src"
+    );
+    expect(duplicateAssetProp).toMatchObject({
+      type: "asset",
+      value: "asset-hero",
+    });
+    expect(plannedState.assets?.has("asset-hero")).toBe(true);
   });
 
   test("retries namespace refresh once when local snapshot changes on disk", async () => {
@@ -476,7 +582,9 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT" }),
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
     ]);
-    expect(transport.loadedNamespaces).toEqual([["instances", "props"]]);
+    expect(transport.loadedNamespaces).toEqual([
+      ["instances", "props", "dataSources"],
+    ]);
   });
 
   test("retries retry-safe mutations once after conflict refresh", async () => {

@@ -56,7 +56,7 @@ import {
 } from "./fs-utils";
 import { htmlToJsx } from "./html-to-jsx";
 import { compareMedia } from "@webstudio-is/css-engine";
-import { materializeAssetFiles } from "./asset-files";
+import { LOCAL_ASSETS_DIR, materializeAssetFiles } from "./asset-files";
 import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
@@ -259,12 +259,35 @@ export const prebuild = async (options: {
    * Template to use for the build in addition to defaults template
    **/
   template: string[];
+  /** Keep generated-project progress off stdout for JSON and MCP callers. */
+  silent?: boolean;
 }) => {
+  const buildRoot = cwd();
+  const feedback = options.silent
+    ? {
+        error: () => undefined,
+        step: () => undefined,
+      }
+    : log;
+  const createProgress = options.silent
+    ? () => ({
+        start: () => undefined,
+        stop: () => undefined,
+      })
+    : spinner;
   if (options.template.length === 0) {
-    log.error(
+    feedback.error(
       `Template is not provided\nPlease check webstudio --help for more details`
     );
     exit(1);
+  }
+  if (
+    options.template.includes("react-router-docker") &&
+    options.template.includes("react-router") === false
+  ) {
+    throw new Error(
+      'Template "react-router-docker" is an overlay and requires "react-router". Use --template react-router --template react-router-docker.'
+    );
   }
 
   for (const template of options.template) {
@@ -274,14 +297,14 @@ export const prebuild = async (options: {
     }
 
     if ((await isCliTemplate(template)) === false) {
-      log.error(
+      feedback.error(
         `Template ${options.template} is not available\nPlease check webstudio --help for more details`
       );
       exit(1);
     }
   }
 
-  log.step("Scaffolding the project files");
+  feedback.step("Scaffolding the project files");
 
   const appRoot = "app";
 
@@ -795,16 +818,17 @@ export const prebuild = async (options: {
   }
 
   if (options.assets === true && siteData.assets.length > 0) {
-    const downloading = spinner();
+    const downloading = createProgress();
     downloading.start("Downloading fonts and images");
     await materializeAssetFiles({
       assets: siteData.assets,
       continueOnError: true,
       origin: siteData.origin || "",
-      targetAssetsDirectory: join("public", assetBaseUrl),
+      sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),
+      targetAssetsDirectory: join(buildRoot, "public", assetBaseUrl),
     });
     downloading.stop("Downloaded fonts and images");
   }
 
-  log.step("Build finished");
+  feedback.step("Build finished");
 };

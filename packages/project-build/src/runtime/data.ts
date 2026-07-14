@@ -608,6 +608,43 @@ export const findAvailableVariables = ({
   return availableVariables;
 };
 
+export const bindExpressionToInstanceScope = ({
+  expression,
+  instanceId,
+  instances,
+  dataSources,
+}: {
+  expression: string;
+  instanceId: Instance["id"];
+  instances: Instances;
+  dataSources: DataSources;
+}) => {
+  const maskedIdByName = findMaskedVariablesByInstanceId({
+    startingInstanceId: instanceId,
+    parentInstanceById: getParentInstanceById(instances),
+    instances,
+    dataSources,
+  });
+  const boundExpression = restoreExpressionVariables({
+    expression,
+    maskedIdByName,
+  });
+  const availableDataSourceIds = new Set(maskedIdByName.values());
+  for (const identifier of getExpressionIdentifiers(boundExpression)) {
+    const dataSourceId = decodeDataVariableId(identifier);
+    if (
+      dataSourceId !== undefined &&
+      availableDataSourceIds.has(dataSourceId) === false
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Expression references data source "${dataSourceId}", which is not available to instance "${instanceId}". Read the target instance and its current Collection subtree again, then use an in-scope variable name or parameter from that subtree.`
+      );
+    }
+  }
+  return boundExpression;
+};
+
 const traverseExpressions = ({
   startingInstanceId,
   pages,
@@ -1503,7 +1540,7 @@ const resourceExpressionInput = z
     z.object({ type: z.literal("literal"), value: z.string() }),
   ])
   .describe(
-    'Dynamic JavaScript expression, or { type: "literal", value: string } for fixed text.'
+    'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.'
   );
 
 const resourceExpressionEntryInput = z.object({
@@ -1580,19 +1617,41 @@ const normalizeResourceFieldsInput = (
 
 const normalizeResourceFieldsUpdateInput = normalizeResourceFields;
 
-export const resourceCreateInput = z.object({
-  resourceId: runtimeGeneratedIdInput,
-  resource: resourceFieldsInput,
-  dataSourceId: runtimeGeneratedIdInput,
-  scopeInstanceId: z.string().optional(),
-  dataSourceName: z.string().optional(),
-});
+const exposeAsDataSourceInput = z
+  .boolean()
+  .optional()
+  .describe(
+    "Expose the resource as render-time data. Scoped GET resources default to true; write resources default to false."
+  );
+
+export const resourceCreateInput = z
+  .object({
+    resourceId: runtimeGeneratedIdInput,
+    resource: resourceFieldsInput,
+    dataSourceId: runtimeGeneratedIdInput,
+    scopeInstanceId: z.string().optional(),
+    dataSourceName: z.string().optional(),
+    exposeAsDataSource: exposeAsDataSourceInput,
+  })
+  .superRefine((input, context) => {
+    if (
+      input.exposeAsDataSource === true &&
+      input.scopeInstanceId === undefined
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["scopeInstanceId"],
+        message: "scopeInstanceId is required when exposeAsDataSource is true.",
+      });
+    }
+  });
 
 export const resourceUpdateInput = z.object({
   resourceId: z.string(),
   values: resourceFieldsUpdateInput,
   dataSourceName: z.string().optional(),
   scopeInstanceId: z.string().optional(),
+  exposeAsDataSource: exposeAsDataSourceInput,
 });
 
 export const replaceResourceTextInput = z.object({
@@ -1916,6 +1975,7 @@ export const upsertResourceMutable = ({
   dataSourceId,
   scopeInstanceId,
   dataSourceName,
+  exposeAsDataSource = scopeInstanceId !== undefined,
 }: {
   data: Pick<
     WebstudioData,
@@ -1927,9 +1987,34 @@ export const upsertResourceMutable = ({
   dataSourceId?: DataSource["id"];
   scopeInstanceId?: Instance["id"];
   dataSourceName?: DataSource["name"];
+  exposeAsDataSource?: boolean;
 }) => {
   data.resources.set(resource.id, resource);
-  if (dataSourceId !== undefined && scopeInstanceId !== undefined) {
+  const previousDataSource = Array.from(data.dataSources.values()).find(
+    (dataSource) =>
+      dataSource.type === "resource" && dataSource.resourceId === resource.id
+  );
+  if (previousDataSource !== undefined && exposeAsDataSource === false) {
+    data.dataSources.delete(previousDataSource.id);
+    if (previousDataSource.scopeInstanceId !== undefined) {
+      rebindTreeVariablesMutable({
+        startingInstanceId: previousDataSource.scopeInstanceId,
+        ...data,
+      });
+      if (data.pages !== undefined) {
+        rebindTreeVariablesMutable({
+          startingInstanceId: previousDataSource.scopeInstanceId,
+          ...data,
+          pages: undefined,
+        });
+      }
+    }
+  }
+  if (
+    exposeAsDataSource &&
+    dataSourceId !== undefined &&
+    scopeInstanceId !== undefined
+  ) {
     data.dataSources.set(
       dataSourceId,
       createResourceDataSource({
@@ -1959,6 +2044,7 @@ export const createResourceUpsertPatchPayload = ({
   dataSourceId,
   scopeInstanceId,
   dataSourceName,
+  exposeAsDataSource,
 }: {
   build: Pick<
     CompactBuild,
@@ -1976,6 +2062,7 @@ export const createResourceUpsertPatchPayload = ({
   dataSourceId?: DataSource["id"];
   scopeInstanceId?: Instance["id"];
   dataSourceName?: DataSource["name"];
+  exposeAsDataSource?: boolean;
 }) => {
   const before = createWebstudioDataFromBuild({ build });
   return produceWebstudioDataMutation(before, (draft) => {
@@ -1985,6 +2072,7 @@ export const createResourceUpsertPatchPayload = ({
       dataSourceId,
       scopeInstanceId,
       dataSourceName,
+      exposeAsDataSource,
     });
   }).payload;
 };
@@ -2261,8 +2349,18 @@ export const createResource = (
   validateResourceFields(resourceInput);
   const build = getRequiredBuildData(state);
   const resourceId = context.createId();
-  const dataSourceId =
-    input.scopeInstanceId === undefined ? undefined : context.createId();
+  const exposeAsDataSource =
+    input.exposeAsDataSource ??
+    (resourceInput.method === "get" && input.scopeInstanceId !== undefined);
+  if (
+    exposeAsDataSource &&
+    build.instances.some(
+      (instance) => instance.id === input.scopeInstanceId
+    ) === false
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Scope instance not found");
+  }
+  const dataSourceId = exposeAsDataSource ? context.createId() : undefined;
   const resultPayload = createResourceCreatePayload({
     resourceId,
     resource: resourceInput,
@@ -2299,8 +2397,18 @@ export const createResource = (
       dataSourceId,
       scopeInstanceId: input.scopeInstanceId,
       dataSourceName: input.dataSourceName,
+      exposeAsDataSource,
     }),
-    result: { resourceId, dataSourceId },
+    result: {
+      resourceId,
+      dataSourceId,
+      warnings:
+        exposeAsDataSource && resourceInput.method !== "get"
+          ? [
+              `The ${resourceInput.method.toUpperCase()} resource is explicitly exposed as render-time data and may execute while rendering the page.`,
+            ]
+          : [],
+    },
     invalidatesNamespaces: [
       "pages",
       "instances",
@@ -2328,7 +2436,8 @@ export const updateResource = (
     | "styleSourceSelections"
     | "styles"
   >,
-  input: z.infer<typeof resourceUpdateInput>
+  input: z.infer<typeof resourceUpdateInput>,
+  context: BuilderRuntimeContext
 ) => {
   const values = normalizeResourceFieldsUpdateInput(input.values);
   validateResourceFields(values);
@@ -2337,14 +2446,12 @@ export const updateResource = (
   if (resource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Resource not found");
   }
-  const directPayload = createResourceUpdatePayload({
-    resource,
-    values,
-    dataSources: build.dataSources,
-    dataSourceName: input.dataSourceName,
-    scopeInstanceId: input.scopeInstanceId,
-  });
-  if (directPayload.length === 0) {
+  if (
+    Object.values(values).every((value) => value === undefined) &&
+    input.dataSourceName === undefined &&
+    input.scopeInstanceId === undefined &&
+    input.exposeAsDataSource === undefined
+  ) {
     return createRuntimeMutation({
       payload: [],
       result: { resourceId: resource.id },
@@ -2359,15 +2466,48 @@ export const updateResource = (
     (dataSource) =>
       dataSource.type === "resource" && dataSource.resourceId === resource.id
   );
+  const scopeInstanceId = input.scopeInstanceId ?? dataSource?.scopeInstanceId;
+  const exposeAsDataSource =
+    input.exposeAsDataSource ??
+    (values.method !== undefined && nextResource.method !== "get"
+      ? false
+      : dataSource !== undefined ||
+        (nextResource.method === "get" && scopeInstanceId !== undefined));
+  if (exposeAsDataSource && scopeInstanceId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "scopeInstanceId is required when exposeAsDataSource is true."
+    );
+  }
+  if (
+    exposeAsDataSource &&
+    build.instances.some((instance) => instance.id === scopeInstanceId) ===
+      false
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Scope instance not found");
+  }
+  const dataSourceId = exposeAsDataSource
+    ? (dataSource?.id ?? context.createId())
+    : dataSource?.id;
   return createRuntimeMutation({
     payload: createResourceUpsertPatchPayload({
       build,
       resource: nextResource,
-      dataSourceId: dataSource?.id,
-      scopeInstanceId: input.scopeInstanceId ?? dataSource?.scopeInstanceId,
+      dataSourceId,
+      scopeInstanceId,
       dataSourceName: input.dataSourceName ?? dataSource?.name,
+      exposeAsDataSource,
     }),
-    result: { resourceId: resource.id },
+    result: {
+      resourceId: resource.id,
+      dataSourceId: exposeAsDataSource ? dataSourceId : undefined,
+      warnings:
+        input.exposeAsDataSource === true && nextResource.method !== "get"
+          ? [
+              `The ${nextResource.method.toUpperCase()} resource is explicitly exposed as render-time data and may execute while rendering the page.`,
+            ]
+          : [],
+    },
     invalidatesNamespaces: [
       "pages",
       "instances",

@@ -183,7 +183,11 @@ const propValueInputVariants = [
   z.object({
     ...propValueBaseInput,
     type: z.literal("expression"),
-    value: z.string().describe("JavaScript expression source."),
+    value: z
+      .string()
+      .describe(
+        "One Webstudio JavaScript expression, not a statement or function. Read webstudio://project/expressions for syntax and scope rules."
+      ),
   }),
   z.object({
     ...propValueBaseInput,
@@ -220,7 +224,14 @@ export const propBindingInput = z
     instanceId: z.string(),
     name: z.string(),
     binding: z.discriminatedUnion("type", [
-      z.object({ type: z.literal("expression"), value: z.string() }),
+      z.object({
+        type: z.literal("expression"),
+        value: z
+          .string()
+          .describe(
+            "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax."
+          ),
+      }),
       z.object({ type: z.literal("parameter"), value: z.string() }),
       z.object({ type: z.literal("resource"), value: z.string() }),
       z.object({

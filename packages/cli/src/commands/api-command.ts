@@ -9,7 +9,10 @@ import {
   createLocalUploadAssetsInput,
   LOCAL_ASSETS_DIR,
 } from "../asset-files";
-import { createCliProjectSession } from "../project-session";
+import {
+  createCliProjectSession,
+  getCliServerApiContract,
+} from "../project-session";
 import {
   getCliErrorMessage,
   getStableErrorCode,
@@ -32,6 +35,7 @@ type ApiCommandDependencies = typeof apiCommandHttpClient & {
   isFileExists: typeof isFileExists;
   readFile: typeof readFile;
   createCliProjectSession: typeof createCliProjectSession;
+  getServerApiContract: typeof getCliServerApiContract;
 };
 
 const defaultDependencies: ApiCommandDependencies = {
@@ -39,6 +43,7 @@ const defaultDependencies: ApiCommandDependencies = {
   isFileExists,
   readFile,
   createCliProjectSession,
+  getServerApiContract: getCliServerApiContract,
 };
 
 export type ApiCommandName = ProjectSessionApiCommand;
@@ -1261,7 +1266,7 @@ export const deleteAssetCommandOptions = (yargs: CommonYargsArgv) =>
     "Required. Confirm deleting asset records"
   );
 
-type ApiCommandOptions = {
+export type ApiCommandOptions = {
   command: ApiCommandName;
   json?: boolean;
   include?: string[];
@@ -1356,7 +1361,9 @@ type ApiCommandOptions = {
   sort?: "name" | "usage" | "size" | "createdAt";
   cursor?: string;
   limit?: number;
-  scopes?: Array<"accessibility" | "security" | "seo" | "assets" | "styles">;
+  scopes?: Array<
+    "accessibility" | "security" | "seo" | "assets" | "styles" | "performance"
+  >;
   severities?: Array<"error" | "warning" | "info">;
   pageId?: string;
   pagePath?: string;
@@ -1781,6 +1788,7 @@ const runProjectSessionCommand = async (
     input,
     connection,
     createProjectSession: dependencies.createCliProjectSession,
+    getServerApiContract: dependencies.getServerApiContract,
     dryRun: options.dryRun ?? activeApiCommandDryRun,
     refresh: activeApiCommandRefresh,
   });
@@ -1791,7 +1799,7 @@ type ApiCommandHandler = (
   dependencies: ApiCommandDependencies
 ) => Promise<unknown>;
 
-const printAuditReport = (value: unknown) => {
+export const printAuditReport = (value: unknown) => {
   if (typeof value !== "object" || value === null) {
     console.info("Audit completed.");
     return;
@@ -1813,6 +1821,20 @@ const printAuditReport = (value: unknown) => {
     manualChecks?: unknown[];
     skippedCheckCount?: number;
     manualCheckCount?: number;
+    renderedCheckCount?: number;
+    renderedIssueCount?: number;
+    renderedIssueSummaries?: Array<{
+      kind?: string;
+      count?: number;
+      captureCount?: number;
+      pagePaths?: string[];
+    }>;
+    renderedFailureCount?: number;
+    renderedPlan?: {
+      captureCount?: number;
+      confirmationToken?: string;
+      confirmationExpiresAt?: string;
+    } | null;
     nextCursor?: string | null;
   };
   const severity = result.summary?.bySeverity ?? {};
@@ -1844,6 +1866,30 @@ const printAuditReport = (value: unknown) => {
   }
   if (manualCheckCount > 0) {
     console.info(`${manualCheckCount} manual checks recommended.`);
+  }
+  if (result.renderedCheckCount !== undefined) {
+    console.info(
+      `Rendered: ${result.renderedCheckCount} checks, ${result.renderedIssueCount ?? 0} issues, ${result.renderedFailureCount ?? 0} failures.`
+    );
+    for (const summary of result.renderedIssueSummaries ?? []) {
+      const pages = summary.pagePaths?.join(", ");
+      console.info(
+        `  ${summary.kind ?? "rendered-issue"}: ${summary.count ?? 0} occurrences across ${summary.captureCount ?? 0} captures${pages === undefined || pages === "" ? "" : ` (${pages})`}.`
+      );
+    }
+  }
+  if (result.renderedPlan?.confirmationToken !== undefined) {
+    console.info(
+      `Rendered plan: ${result.renderedPlan.captureCount ?? 0} captures require confirmation.`
+    );
+    console.info(
+      `Retry with --confirm-large-run --confirmation-token '${result.renderedPlan.confirmationToken}'.`
+    );
+    if (result.renderedPlan.confirmationExpiresAt !== undefined) {
+      console.info(
+        `Confirmation expires at ${result.renderedPlan.confirmationExpiresAt}.`
+      );
+    }
   }
   if (result.nextCursor != null) {
     console.info(`More findings: rerun with --cursor '${result.nextCursor}'.`);
@@ -2974,7 +3020,7 @@ export const apiCommand = async (
       });
     }
   } catch (error) {
-    const message = getCliErrorMessage(error);
+    const message = getCliErrorMessage(error, options.command);
     if (options.json === true) {
       const code = getErrorCode(error);
       printJson({

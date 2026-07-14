@@ -9,13 +9,12 @@ import {
   Switch,
   theme,
 } from "@webstudio-is/design-system";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import { ImageControl } from "~/shared/project-settings";
 import { $assets } from "~/shared/sync/data-stores";
 import { Card } from "../../marketplace/card";
 import { ImageInfo } from "../image-info";
 import type { PageSettingsValues } from "@webstudio-is/project-build/runtime/pages";
-import type { OnChange } from "./shared";
+import { computePageSettingsText, type OnChange } from "./shared";
 
 export const MarketplaceSection = ({
   values,
@@ -30,10 +29,11 @@ export const MarketplaceSection = ({
     ({ property }) => property === "ws:category"
   );
   // @todo remove after all stores are migrated
-  const categoryFallback = String(
-    computeExpression(categoryMeta?.content ?? `""`, new Map())
+  const categoryFallback = computePageSettingsText(
+    categoryMeta?.content ?? `""`,
+    new Map()
   );
-  const category = values.marketplace.category ?? categoryFallback ?? "Pages";
+  const category = values.marketplace.category || categoryFallback || "Pages";
   const assets = useStore($assets);
   const thumbnailAsset = assets.get(values.marketplace.thumbnailAssetId);
   const thumnailFallbackAsset = assets.get(values.socialImageAssetId);

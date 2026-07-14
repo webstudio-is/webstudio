@@ -13,12 +13,12 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "fast-glob": "^3.3.2",
-    "react-docgen-typescript": "^2.2.2",
-    "typescript": "5.8.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "react-docgen-typescript": "2.2.2",
+    "typescript": "5.8.2"
   },
   "bin": {
     "generate-arg-types": "./src/cli.ts"

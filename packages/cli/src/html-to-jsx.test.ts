@@ -2,8 +2,7 @@ import { test, expect } from "vitest";
 import * as React from "react";
 import ReactDOMServer from "react-dom/server";
 import esbuild from "esbuild";
-import prettier from "prettier/standalone";
-import parserHtml from "prettier/parser-html";
+import { format } from "oxfmt";
 
 import { htmlToJsx } from "./html-to-jsx";
 
@@ -63,10 +62,7 @@ const convertHtmlToJsxAndRenderToHtml = async (htmlCode: string) => {
 };
 
 const formatHtml = async (htmlCode: string) => {
-  return await prettier.format(htmlCode, {
-    parser: "html",
-    plugins: [parserHtml],
-  });
+  return (await format("document.html", htmlCode)).code;
 };
 
 test("Simple conversion works", async () => {

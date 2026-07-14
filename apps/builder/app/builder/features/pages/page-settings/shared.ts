@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { getPagePath } from "@webstudio-is/sdk";
 import type { PageSettingsValues } from "@webstudio-is/project-build/runtime/pages";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import {
   compilePathnamePattern,
   tokenizePathnamePattern,
@@ -17,6 +18,14 @@ export type OnChange = (
     };
   }[keyof PageSettingsValues]
 ) => void;
+
+export const computePageSettingsText = (
+  expression: string,
+  variables: Map<string, unknown>
+) => {
+  const value = computeExpression(expression, variables);
+  return value === undefined || value === null ? "" : String(value);
+};
 
 export const usePageUrl = (values: PageSettingsValues) => {
   const pages = useStore($pages);

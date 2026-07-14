@@ -8,6 +8,8 @@ import {
   createLocalProjectBundleFromSessionSnapshot,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
+  getCliServerApiContract,
+  getSupportedPublicApiOperations,
 } from "./project-session";
 
 const temporaryDirectories: string[] = [];
@@ -122,6 +124,58 @@ describe("cli project session storage", () => {
         { expectedRevision: first?.revision }
       )
     ).resolves.toEqual({ revision: expect.any(String) });
+  });
+});
+
+describe("CLI/server operation contract", () => {
+  const connection = {
+    projectId: "project-1",
+    origin: "https://example.com",
+    authToken: "token",
+  };
+
+  test("uses the server operation catalog to hide unsupported server-only operations", async () => {
+    const contract = await getCliServerApiContract(connection, async () => ({
+      apiContract: {
+        version: "public-api:server",
+        operationIds: ["auth.me"],
+      },
+    }));
+
+    expect(contract).toMatchObject({
+      serverVersion: "public-api:server",
+      negotiated: true,
+    });
+    expect(contract.supportedOperationIds.has("auth.me")).toBe(true);
+    expect(
+      getSupportedPublicApiOperations(contract).some(
+        (operation) => operation.id === "auth.me"
+      )
+    ).toBe(true);
+    expect(
+      getSupportedPublicApiOperations(contract).some(
+        (operation) => operation.serverOnly && operation.id !== "auth.me"
+      )
+    ).toBe(false);
+  });
+
+  test("keeps established local operations on legacy servers but hides new routed operations", async () => {
+    const contract = await getCliServerApiContract(connection, async () => ({
+      canView: true,
+    }));
+    const operations = getSupportedPublicApiOperations(contract);
+
+    expect(contract.negotiated).toBe(false);
+    expect(
+      operations.some((operation) => operation.command === "list-pages")
+    ).toBe(true);
+    expect(
+      operations.some((operation) => operation.command === "insert-component")
+    ).toBe(false);
+    expect(
+      operations.some((operation) => operation.command === "insert-fragment")
+    ).toBe(false);
+    expect(operations.some((operation) => operation.serverOnly)).toBe(false);
   });
 });
 
@@ -313,6 +367,85 @@ describe("cli project session transport", () => {
       meta: { siteName: "Canonical Acme" },
       compiler: { atomicStyles: false },
     });
+  });
+
+  test("falls back to legacy page settings when the server rejects projectSettings", async () => {
+    const includes: unknown[] = [];
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      getBuildSnapshot: async (input) => {
+        includes.push(input.include);
+        if (input.include?.includes("projectSettings")) {
+          throw new Error(
+            'invalid_enum_value: received "projectSettings", expected one of pages|folders'
+          );
+        }
+        return {
+          projectId: "project-1",
+          buildId: "build-1",
+          version: 1,
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: "Home",
+              rootInstanceId: "body",
+              meta: {},
+            },
+          ],
+          folders: [
+            {
+              id: "root",
+              name: "Root",
+              slug: "",
+              children: ["home"],
+            },
+          ],
+          homePageId: "home",
+          rootFolderId: "root",
+          meta: { siteName: "Legacy Acme" },
+          compiler: { atomicStyles: true },
+        };
+      },
+    });
+
+    const snapshot = await transport.fetchNamespaces({
+      projectId: "project-1",
+      namespaces: ["projectSettings"],
+    });
+
+    expect(includes).toEqual([["projectSettings"], ["pages", "folders"]]);
+    expect(snapshot.state.projectSettings).toEqual({
+      meta: { siteName: "Legacy Acme" },
+      compiler: { atomicStyles: true },
+    });
+  });
+
+  test("does not hide unrelated snapshot errors", async () => {
+    const getBuildSnapshot = vi.fn(async () => {
+      throw new Error("Network unavailable");
+    });
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      getBuildSnapshot,
+    });
+
+    await expect(
+      transport.fetchNamespaces({
+        projectId: "project-1",
+        namespaces: ["projectSettings"],
+      })
+    ).rejects.toThrow("Network unavailable");
+    expect(getBuildSnapshot).toHaveBeenCalledTimes(1);
   });
 
   test("adapts injected permission reader to project session transport", async () => {

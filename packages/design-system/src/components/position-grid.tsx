@@ -3,7 +3,7 @@ import { css, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Grid } from "./grid";
 
-// prettier-ignore
+// oxfmt-ignore
 const positions = [
   [0, 0],   [50, 0],   [100, 0],
   [0, 50],  [50, 50], [100, 50],

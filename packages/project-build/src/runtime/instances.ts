@@ -162,7 +162,7 @@ export const updateTextInstanceInput = z.object({
   text: z
     .string()
     .describe(
-      "Replacement visible text when mode is text, or JavaScript expression source when mode is expression."
+      "Replacement visible text when mode is text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
     ),
   mode: z
     .enum(["text", "expression"])
@@ -176,7 +176,11 @@ export const setTextContentInput = z.discriminatedUnion("operation", [
   z.object({
     operation: z.literal("set"),
     instanceId: z.string().describe("Instance id to receive text content."),
-    text: z.string().describe("Visible text or JavaScript expression source."),
+    text: z
+      .string()
+      .describe(
+        "Visible text, or one Webstudio JavaScript expression when mode is expression. Read webstudio://project/expressions for syntax and scope rules."
+      ),
     mode: z
       .enum(["text", "expression"])
       .default("text")
@@ -2843,7 +2847,7 @@ export const setInstanceTag = (
       namespace: "instances",
       patches: [
         {
-          op: "replace",
+          op: instance.tag === undefined ? "add" : "replace",
           path: [input.instanceId, "tag"],
           value: input.tag,
         },

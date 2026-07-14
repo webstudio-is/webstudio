@@ -795,7 +795,7 @@ const pageMetaExpressionFields = [
 ] as const satisfies readonly (keyof PageMetaPatchInput)[];
 
 export const pageExpressionFieldHint =
-  'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.';
+  'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.';
 
 const jsExpressionStartPattern =
   /^\s*(?:["'`[{(]|(?:await|new|typeof|void)\b|(?:undefined|null|true|false)\s*$)/;
