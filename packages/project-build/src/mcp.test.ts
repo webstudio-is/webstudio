@@ -5672,6 +5672,42 @@ describe("project session mcp adapter", () => {
     }
   });
 
+  test("keeps one MCP SDK connection healthy across repeated reads and mutations", async () => {
+    const executeOperation = createExecuteOperation(async ({ command }) =>
+      createEnvelope({
+        operationId: command === "list-pages" ? "pages.list" : "pages.update",
+        result: command === "list-pages" ? { pages: [] } : { pageId: "home" },
+      })
+    );
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      for (let index = 0; index < 50; index += 1) {
+        const read = await client.callTool({
+          name: "list-pages",
+          arguments: {},
+        });
+        expect(read.isError).not.toBe(true);
+        const mutation = await client.callTool({
+          name: "update-page",
+          arguments: {
+            pageId: "home",
+            values: { title: `Session title ${index}` },
+          },
+        });
+        expect(mutation.isError).not.toBe(true);
+      }
+      expect(executeOperation).toHaveBeenCalledTimes(100);
+    } finally {
+      await close();
+    }
+  });
+
   test("sends sparse protocol-native startup logging after initialization", async () => {
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,

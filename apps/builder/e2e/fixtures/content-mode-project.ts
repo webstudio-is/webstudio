@@ -874,8 +874,8 @@ const createContentModeBuildData = ({
 
 export const prepareExistingContentModeProject = async ({
   projectId,
-  editorToken = "e2e-editor-token",
-  builderToken = "e2e-builder-token",
+  editorToken: editorTokenLabel = "e2e-editor-token",
+  builderToken: builderTokenLabel = "e2e-builder-token",
   listItemInstanceId = "list-item",
   linkInstanceId = "content-link",
   imageInstanceId = "content-image",
@@ -892,10 +892,13 @@ export const prepareExistingContentModeProject = async ({
   assetNamePrefix?: string;
 }): Promise<SeededContentModeProject> => {
   const build = await loadDevBuild({ projectId });
-  const seededAssetTemplateImageName = `${assetNamePrefix}${assetTemplateImageName}`;
-  const seededAssetTemplateVideoName = `${assetNamePrefix}${assetTemplateVideoName}`;
-  const seededAssetTemplateImageAssetId = `${assetNamePrefix}${assetTemplateImageAssetId}`;
-  const seededAssetTemplateVideoAssetId = `${assetNamePrefix}${assetTemplateVideoAssetId}`;
+  const fixturePrefix = `${projectId}-${assetNamePrefix}`;
+  const editorToken = `${projectId}-${editorTokenLabel}`;
+  const builderToken = `${projectId}-${builderTokenLabel}`;
+  const seededAssetTemplateImageName = `${fixturePrefix}${assetTemplateImageName}`;
+  const seededAssetTemplateVideoName = `${fixturePrefix}${assetTemplateVideoName}`;
+  const seededAssetTemplateImageAssetId = `${fixturePrefix}${assetTemplateImageAssetId}`;
+  const seededAssetTemplateVideoAssetId = `${fixturePrefix}${assetTemplateVideoAssetId}`;
 
   await Promise.all([
     insertFile({

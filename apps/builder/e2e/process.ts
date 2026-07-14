@@ -6,13 +6,17 @@ const delay = (milliseconds: number) =>
 const hasExited = (child: ChildProcess) =>
   child.exitCode !== null || child.signalCode !== null;
 
-const isProcessGroupRunning = (pid: number) => {
+const isProcessGroupRunning = (child: ChildProcess, pid: number) => {
   try {
     process.kill(-pid, 0);
     return true;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ESRCH") {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ESRCH") {
       return false;
+    }
+    if (code === "EPERM") {
+      return hasExited(child) === false;
     }
     throw error;
   }
@@ -29,7 +33,7 @@ export const stopChildProcess = async (
     killGroup && process.platform !== "win32" && child.pid !== undefined;
   const isRunning = () =>
     usesProcessGroup
-      ? isProcessGroupRunning(child.pid as number)
+      ? isProcessGroupRunning(child, child.pid as number)
       : hasExited(child) === false;
   const waitUntilStopped = async () => {
     const deadline = Date.now() + timeoutMs;

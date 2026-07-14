@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build": "vite build && vike prerender",
-    "postbuild": "prettier --write \"dist/**/*.html\" || true",
+    "postbuild": "cd dist && oxfmt '**/*.html'",
     "dev": "vite dev",
     "typecheck": "tsc --noEmit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
@@ -27,7 +27,6 @@
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@vitejs/plugin-react": "^4.4.1",
-    "prettier": "3.5.3",
     "typescript": "7.0.2",
     "vite": "^6.3.4",
     "webstudio": "workspace:*"

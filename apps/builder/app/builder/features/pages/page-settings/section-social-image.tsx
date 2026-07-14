@@ -11,7 +11,6 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
@@ -22,7 +21,7 @@ import { isLiteralExpression } from "@webstudio-is/sdk";
 import { $pageRootScope } from "../page-utils";
 import { ImageInfo } from "../image-info";
 import { SocialPreview } from "../social-preview";
-import { usePageUrl, type OnChange } from "./shared";
+import { computePageSettingsText, usePageUrl, type OnChange } from "./shared";
 
 export const SocialImageSection = ({
   values,
@@ -41,13 +40,15 @@ export const SocialImageSection = ({
   const assets = useStore($assets);
   const socialImageAsset = assets.get(values.socialImageAssetId);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
-  const socialImageUrl = String(
-    computeExpression(values.socialImageUrl, variableValues)
+  const socialImageUrl = computePageSettingsText(
+    values.socialImageUrl,
+    variableValues
   );
   const pageUrl = usePageUrl(values);
-  const title = String(computeExpression(values.title, variableValues));
-  const description = String(
-    computeExpression(values.description, variableValues)
+  const title = computePageSettingsText(values.title, variableValues);
+  const description = computePageSettingsText(
+    values.description,
+    variableValues
   );
   return (
     <Grid gap={2}>

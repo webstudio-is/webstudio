@@ -221,12 +221,24 @@ test("reports sparse MCP startup status lines for agents", () => {
 
   reporter.starting();
   reporter.sessionReady();
+  reporter.apiContract({
+    clientVersion: "public-api:client",
+    serverVersion: "public-api:server",
+    supportedOperationIds: new Set(),
+    missingServerOperationIds: ["assets.upload"],
+    negotiated: true,
+  });
   reporter.ready(12);
+  reporter.connectionError(new Error("connection reset"));
+  reporter.connectionClosed();
 
   expect(lines).toEqual([
     `[webstudio mcp] starting stdio server from ${process.cwd()}`,
     "[webstudio mcp] project session initialized; existing local snapshot preserved",
+    "[webstudio mcp] API contract negotiated: CLI 0.0.0-webstudio-version (public-api:client); server public-api:server; unavailable server procedures: assets.upload",
     "[webstudio mcp] ready with 12 tools; use tools/list, meta.index, or webstudio://project/guide; waiting for JSON-RPC on stdin",
+    '[webstudio mcp] lifecycle {"event":"stdio_transport_error","message":"connection reset","recovery":"Reconnect the MCP client. If the error repeats, restart the CLI with npx webstudio@latest mcp."}',
+    '[webstudio mcp] lifecycle {"event":"stdio_connection_closed","recovery":"Reconnect the MCP client if this was unexpected."}',
   ]);
 });
 

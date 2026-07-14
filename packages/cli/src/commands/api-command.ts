@@ -9,7 +9,10 @@ import {
   createLocalUploadAssetsInput,
   LOCAL_ASSETS_DIR,
 } from "../asset-files";
-import { createCliProjectSession } from "../project-session";
+import {
+  createCliProjectSession,
+  getCliServerApiContract,
+} from "../project-session";
 import {
   getCliErrorMessage,
   getStableErrorCode,
@@ -32,6 +35,7 @@ type ApiCommandDependencies = typeof apiCommandHttpClient & {
   isFileExists: typeof isFileExists;
   readFile: typeof readFile;
   createCliProjectSession: typeof createCliProjectSession;
+  getServerApiContract: typeof getCliServerApiContract;
 };
 
 const defaultDependencies: ApiCommandDependencies = {
@@ -39,6 +43,7 @@ const defaultDependencies: ApiCommandDependencies = {
   isFileExists,
   readFile,
   createCliProjectSession,
+  getServerApiContract: getCliServerApiContract,
 };
 
 export type ApiCommandName = ProjectSessionApiCommand;
@@ -1783,6 +1788,7 @@ const runProjectSessionCommand = async (
     input,
     connection,
     createProjectSession: dependencies.createCliProjectSession,
+    getServerApiContract: dependencies.getServerApiContract,
     dryRun: options.dryRun ?? activeApiCommandDryRun,
     refresh: activeApiCommandRefresh,
   });
@@ -3014,7 +3020,7 @@ export const apiCommand = async (
       });
     }
   } catch (error) {
-    const message = getCliErrorMessage(error);
+    const message = getCliErrorMessage(error, options.command);
     if (options.json === true) {
       const code = getErrorCode(error);
       printJson({

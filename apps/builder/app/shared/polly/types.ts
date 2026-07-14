@@ -58,7 +58,7 @@ export const topicNames = [
 
 // Compile-time check: every `TopicRegistry` key must appear in `topicNames`.
 // If you add a topic to the registry but forget `topicNames`, this line errors.
-// prettier-ignore
+// oxfmt-ignore
 type EnsureAllTopicsCovered =
   Exclude<TopicName, (typeof topicNames)[number]> extends never
     ? true

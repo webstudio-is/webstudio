@@ -13,8 +13,19 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
-import { bundleVersion } from "@webstudio-is/protocol";
+import {
+  bundleVersion,
+  publicApiContractVersion,
+  publicApiOperationRequiresServerSupport,
+  publicApiOperations,
+} from "@webstudio-is/protocol";
 import type { Instance } from "@webstudio-is/sdk";
+import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
+import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contracts/patch";
+import type { BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import React from "react";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const execFileAsync = promisify(execFile);
 const projectId = "release-smoke-project";
@@ -163,6 +174,20 @@ const packReleaseShapedCli = async ({
 };
 
 const createFixture = () => {
+  const assets = [
+    {
+      id: "asset-hero",
+      projectId,
+      name: "release-hero.png",
+      filename: "release-hero.png",
+      type: "image" as const,
+      size: 128,
+      format: "png",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: "Release smoke hero",
+      meta: { width: 1200, height: 800 },
+    },
+  ];
   const basePages = [
     {
       id: "home",
@@ -219,9 +244,33 @@ const createFixture = () => {
       type: "instance",
       id: page.rootInstanceId,
       component: "Box",
-      children: [{ type: "text", value: `Release smoke ${page.name}` }],
+      children:
+        page.id === "home"
+          ? [
+              { type: "text", value: `Release smoke ${page.name}` },
+              { type: "id", value: "home-image" },
+            ]
+          : [{ type: "text", value: `Release smoke ${page.name}` }],
     },
   ]);
+  instances.push([
+    "home-image",
+    {
+      type: "instance",
+      id: "home-image",
+      component: "Image",
+      children: [],
+    },
+  ]);
+  const props = [
+    {
+      id: "home-image-src",
+      instanceId: "home-image",
+      name: "src",
+      type: "asset" as const,
+      value: "asset-hero",
+    },
+  ];
   const build = {
     id: buildId,
     projectId,
@@ -229,7 +278,7 @@ const createFixture = () => {
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     pages: persistedPages,
-    props: [],
+    props: props.map((prop) => [prop.id, prop]) as never,
     instances: instances as never,
     dataSources: [],
     resources: [],
@@ -247,12 +296,14 @@ const createFixture = () => {
       projectTitle: "Release Smoke",
       page: pages[0],
       pages,
-      assets: [],
+      assets,
       build,
     },
     build,
     persistedPages,
     instances,
+    assets,
+    props,
   };
 };
 
@@ -321,24 +372,184 @@ const stopProcessTree = async (child: ChildProcess | undefined) => {
   }
 };
 
-const startFixtureApi = async () => {
-  const server = createServer((_request, response) => {
-    response.writeHead(200, { "content-type": "application/json" });
-    response.end(
-      JSON.stringify([
-        {
-          result: {
-            data: {
-              canView: true,
-              canEdit: true,
-              canBuild: true,
-              canAdmin: true,
-              canUseApi: true,
+const readTrpcInput = async (request: import("node:http").IncomingMessage) => {
+  const url = new URL(request.url ?? "", "http://127.0.0.1");
+  const source =
+    request.method === "GET"
+      ? (url.searchParams.get("input") ?? "{}")
+      : await new Promise<string>((resolve, reject) => {
+          let body = "";
+          request.setEncoding("utf8");
+          request.on("data", (chunk) => {
+            body += chunk;
+          });
+          request.on("end", () => resolve(body || "{}"));
+          request.on("error", reject);
+        });
+  const batch = JSON.parse(source) as Record<string, unknown>;
+  const first = batch["0"];
+  if (typeof first !== "object" || first === null || Array.isArray(first)) {
+    return {};
+  }
+  return "json" in first ? ((first as { json?: unknown }).json ?? {}) : first;
+};
+
+const startFixtureApi = async (
+  fixture: ReturnType<typeof createFixture>,
+  {
+    initialState,
+    executeRuntime,
+    applyTransactions,
+    serializeFixturePages,
+  }: {
+    initialState: BuilderState;
+    executeRuntime: (input: {
+      id: string;
+      state: BuilderState;
+      input: unknown;
+      context: {
+        createId: () => string;
+        projectId: string;
+        projectVersion: number;
+      };
+    }) => unknown | Promise<unknown>;
+    applyTransactions: (
+      state: BuilderState,
+      transactions: readonly BuilderPatchTransaction[]
+    ) => { state: BuilderState };
+    serializeFixturePages: (
+      pages: NonNullable<BuilderState["pages"]>
+    ) => ReturnType<
+      typeof import("@webstudio-is/project-migrations/pages").serializePages
+    >;
+  }
+) => {
+  let version = projectVersion;
+  let state = initialState;
+  let generatedId = 0;
+  const server = createServer(async (request, response) => {
+    try {
+      const requestUrl = request.url ?? "";
+      if (
+        new URL(requestUrl, "http://127.0.0.1").pathname.endsWith(
+          "/release-hero.png"
+        )
+      ) {
+        response.writeHead(200, { "content-type": "image/png" });
+        response.end(
+          Buffer.from(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+            "base64"
+          )
+        );
+        return;
+      }
+      const operationPath = new URL(
+        requestUrl,
+        "http://127.0.0.1"
+      ).pathname.replace(/^\/trpc\/api\./, "");
+      let data: unknown;
+      if (operationPath === "build.patch") {
+        const input = (await readTrpcInput(request)) as {
+          transactions?: BuilderPatchTransaction[];
+        };
+        state = applyTransactions(state, input.transactions ?? []).state;
+        version += 1;
+        data = { version };
+      } else if (operationPath === "build.get") {
+        const pages = serializeFixturePages(state.pages!);
+        data = {
+          ...fixture.build,
+          buildId,
+          version,
+          pages: pages.pages,
+          pageTemplates: pages.pageTemplates,
+          folders: pages.folders,
+          homePageId: pages.homePageId,
+          rootFolderId: pages.rootFolderId,
+          meta: pages.meta,
+          compiler: pages.compiler,
+          redirects: pages.redirects,
+          assets: Array.from(state.assets?.values() ?? []),
+          instances: Array.from(state.instances?.values() ?? []),
+          props: Array.from(state.props?.values() ?? []),
+          dataSources: Array.from(state.dataSources?.values() ?? []),
+          resources: Array.from(state.resources?.values() ?? []),
+          breakpoints: Array.from(state.breakpoints?.values() ?? []),
+          styles: Array.from(state.styles?.values() ?? []),
+          styleSources: Array.from(state.styleSources?.values() ?? []),
+          styleSourceSelections: Array.from(
+            state.styleSourceSelections?.values() ?? []
+          ),
+          marketplaceProduct: state.marketplaceProduct,
+          projectSettings: state.projectSettings,
+        };
+      } else if (
+        operationPath !== "projects.permissions" &&
+        operationPath !== ""
+      ) {
+        const input = await readTrpcInput(request);
+        const result = await executeRuntime({
+          id: operationPath,
+          state,
+          input,
+          context: {
+            createId: () => `fixture-${generatedId++}`,
+            projectId,
+            projectVersion: version,
+          },
+        });
+        if (
+          typeof result === "object" &&
+          result !== null &&
+          "kind" in result &&
+          (result as BuilderRuntimeMutation).kind === "mutation"
+        ) {
+          const mutation = result as BuilderRuntimeMutation;
+          state = applyTransactions(state, [
+            {
+              id: `fixture-transaction-${generatedId++}`,
+              payload: mutation.payload,
+            },
+          ]).state;
+          version += 1;
+          data = mutation.result;
+        } else {
+          data = result;
+        }
+      } else {
+        data = {
+          canView: true,
+          canEdit: true,
+          canBuild: true,
+          canAdmin: true,
+          canUseApi: true,
+          apiContract: {
+            version: publicApiContractVersion,
+            operationIds: publicApiOperations.flatMap((operation) =>
+              publicApiOperationRequiresServerSupport(operation)
+                ? [operation.id]
+                : []
+            ),
+          },
+        };
+      }
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify([{ result: { data } }]));
+    } catch (error) {
+      response.writeHead(500, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify([
+          {
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+              code: -32603,
+              data: { code: "INTERNAL_SERVER_ERROR", httpStatus: 500 },
             },
           },
-        },
-      ])
-    );
+        ])
+      );
+    }
   });
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);
@@ -384,6 +595,7 @@ const assertScreenshotEvidence = async ({
   viewport,
   projectDirectory,
   generatedSite = true,
+  origin = "http://127.0.0.1:5190",
 }: {
   payload: Record<string, unknown>;
   label: string;
@@ -392,12 +604,13 @@ const assertScreenshotEvidence = async ({
   viewport: { width: number; height: number };
   projectDirectory: string;
   generatedSite?: boolean;
+  origin?: string;
 }) => {
   const data = getRecord(payload.data, `${label} data`);
   const navigation = getRecord(data.navigation, `${label} navigation`);
   const finalUrl = new URL(String(navigation.finalUrl));
   if (
-    finalUrl.origin !== "http://127.0.0.1:5190" ||
+    finalUrl.origin !== origin ||
     finalUrl.pathname !== path ||
     navigation.status !== status ||
     (generatedSite && navigation.generatedSiteRootPresent !== true)
@@ -432,25 +645,43 @@ const assertScreenshotEvidence = async ({
 
 const run = async () => {
   Object.assign(globalThis, {
-    React: {
-      Fragment: Symbol.for("react.fragment"),
-      createElement: () => ({}),
-    },
+    React,
   });
-  const [pagesModule, adapters, namespaces, projectSession] = await Promise.all(
-    [
-      import("@webstudio-is/project-migrations/pages"),
-      import("@webstudio-is/project-build/state/adapters"),
-      import("@webstudio-is/project-build/contracts/namespaces"),
-      import("@webstudio-is/project-build/project-session"),
-    ]
-  );
+  const [
+    pagesModule,
+    adapters,
+    namespaces,
+    projectSession,
+    runtimeRegistry,
+    statePatch,
+  ] = await Promise.all([
+    import("@webstudio-is/project-migrations/pages"),
+    import("@webstudio-is/project-build/state/adapters"),
+    import("@webstudio-is/project-build/contracts/namespaces"),
+    import("@webstudio-is/project-build/project-session"),
+    import("@webstudio-is/project-build/runtime/registry"),
+    import("@webstudio-is/project-build/state/patch"),
+  ]);
   const temp = await mkdtemp(join(tmpdir(), "webstudio-release-smoke-"));
   let preview: ChildProcess | undefined;
   let apiServer: Server | undefined;
   try {
     const startedAt = Date.now();
-    const fixtureApi = await startFixtureApi();
+    const fixture = createFixture();
+    const initialState = adapters.createBuilderStateFromBuildData({
+      ...fixture.build,
+      pages: pagesModule.migratePages(fixture.persistedPages),
+      assets: fixture.assets,
+      instances: fixture.instances.map(([, instance]) => instance),
+      props: fixture.props,
+    });
+    const fixtureApi = await startFixtureApi(fixture, {
+      initialState,
+      executeRuntime: runtimeRegistry.executeBuilderRuntimeOperation,
+      applyTransactions: statePatch.applyBuilderPatchTransactions,
+      serializeFixturePages: pagesModule.serializePages,
+    });
+    fixture.data.origin = fixtureApi.origin;
     reportPhase("fixture API ready", startedAt);
     apiServer = fixtureApi.server;
     const packDirectory = join(temp, "pack");
@@ -499,7 +730,6 @@ const run = async () => {
     }
     reportPhase("installed packed CLI", installStartedAt);
 
-    const fixture = createFixture();
     await writeFile(
       join(projectDirectory, ".webstudio", "data.json"),
       JSON.stringify(fixture.data),
@@ -513,8 +743,9 @@ const run = async () => {
     const state = adapters.createBuilderStateFromBuildData({
       ...fixture.build,
       pages: pagesModule.migratePages(fixture.persistedPages),
-      assets: [],
+      assets: fixture.assets,
       instances: fixture.instances.map(([, instance]) => instance),
+      props: fixture.props,
     });
     const loadedAt = "2026-01-01T00:00:00.000Z";
     const freshness = Object.fromEntries(
@@ -627,6 +858,254 @@ const run = async () => {
     }
     reportPhase("started packed preview", previewStartedAt);
     const commandsStartedAt = Date.now();
+    const assertLocalDryRun = async (
+      label: string,
+      command: string,
+      input: Record<string, unknown>
+    ) => {
+      const payload = await invoke(label, [
+        command,
+        JSON.stringify(input),
+        "--dry-run",
+      ]);
+      const meta = getRecord(payload.meta, `${label} meta`);
+      const session = getRecord(meta.session, `${label} session`);
+      if (
+        payload.ok !== true ||
+        session.source !== "dry-run" ||
+        session.committed !== false ||
+        typeof session.transaction !== "object"
+      ) {
+        throw new Error(
+          `${label} did not produce a local dry-run transaction: ${JSON.stringify(payload)}`
+        );
+      }
+    };
+    await invoke("packed list pages", ["list-pages"]);
+    await assertLocalDryRun("plain page metadata update", "update-page", {
+      pageId: "home",
+      values: {
+        title: "My title: seven pages & more",
+        meta: { description: "Ordinary prose, punctuation included." },
+      },
+    });
+    await assertLocalDryRun("cold page duplicate", "duplicate-page", {
+      pageId: "home",
+      name: "Home copy",
+      path: "/home-copy",
+    });
+    await assertLocalDryRun("local fragment insertion", "insert-fragment", {
+      parentInstanceId: "home-root",
+      fragment: '<ws.element ws:tag="p">Release smoke</ws.element>',
+    });
+    await assertLocalDryRun("local component insertion", "insert-component", {
+      parentInstanceId: "home-root",
+      component: "ws:element",
+      tag: "p",
+    });
+
+    await stopProcessTree(preview);
+    preview = undefined;
+    await rm(join(projectDirectory, ".webstudio", "project-session.json"), {
+      force: true,
+    });
+    const stdioStartedAt = Date.now();
+    const stdioTransport = new StdioClientTransport({
+      command: bin,
+      args: ["mcp"],
+      cwd: projectDirectory,
+      env: Object.fromEntries(
+        Object.entries(env).filter(
+          (entry): entry is [string, string] => typeof entry[1] === "string"
+        )
+      ),
+      stderr: "pipe",
+    });
+    let stdioLogs = "";
+    stdioTransport.stderr?.on("data", (chunk) => {
+      stdioLogs += String(chunk);
+    });
+    const stdioClient = new Client({
+      name: "webstudio-release-smoke",
+      version: "1.0.0",
+    });
+    const callTool = async (
+      name: string,
+      args: Record<string, unknown> = {}
+    ) => {
+      const result = await stdioClient.callTool({ name, arguments: args });
+      const structured = getRecord(
+        result.structuredContent,
+        `${name} structured content`
+      );
+      if (result.isError === true || structured.ok !== true) {
+        throw new Error(
+          `${name} failed over packed stdio MCP: ${JSON.stringify(structured)}`
+        );
+      }
+      return getRecord(structured.data, `${name} data`);
+    };
+    await stdioClient.connect(stdioTransport);
+    try {
+      const initialPages = await callTool("list-pages", {
+        includeFolders: true,
+      });
+      if (
+        Array.isArray(initialPages.pages) === false ||
+        initialPages.pages.length !== 2
+      ) {
+        throw new Error(
+          `Cold stdio discovery returned unexpected pages: ${JSON.stringify(initialPages)}`
+        );
+      }
+      await callTool("refresh", {
+        namespaces: ["pages", "instances", "props", "assets"],
+      });
+      const assets = await callTool("list-assets");
+      if (Array.isArray(assets.items) === false || assets.items.length !== 1) {
+        throw new Error(
+          `Cold stdio asset discovery failed: ${JSON.stringify(assets)}`
+        );
+      }
+
+      const createdPages: Array<{
+        pageId: string;
+        name: string;
+        path: string;
+      }> = [];
+      const duplicate = await callTool("duplicate-page", {
+        pageId: "home",
+        name: "About",
+        path: "/about",
+      });
+      createdPages.push({
+        pageId: String(duplicate.pageId),
+        name: "About",
+        path: "/about",
+      });
+      for (const page of [
+        { name: "Services", path: "/services" },
+        { name: "Work", path: "/work" },
+        { name: "Blog", path: "/blog" },
+        { name: "Contact", path: "/contact" },
+      ]) {
+        const created = await callTool("create-page", page);
+        createdPages.push({ pageId: String(created.pageId), ...page });
+      }
+
+      for (const page of createdPages) {
+        await callTool("update-page", {
+          pageId: page.pageId,
+          values: {
+            title: `${page.name}: release smoke & verification`,
+            meta: { description: `A plain-text description for ${page.name}.` },
+          },
+        });
+        const details = await callTool("get-page", { pageId: page.pageId });
+        const inserted = await callTool("insert-component", {
+          parentInstanceId: String(details.rootInstanceId),
+          component: "ws:element",
+          tag: "section",
+        });
+        const sectionId = String(
+          (inserted.rootInstanceIds as unknown[] | undefined)?.[0]
+        );
+        await callTool("update-props", {
+          updates: [
+            {
+              instanceId: sectionId,
+              name: "data-imported-page",
+              type: "string",
+              value: page.name,
+            },
+          ],
+        });
+      }
+
+      await callTool("update-text", {
+        instanceId: "pricing-root",
+        childIndex: 0,
+        text: "Pricing imported content",
+        mode: "text",
+      });
+
+      for (let index = 0; index < 10; index += 1) {
+        await callTool("list-pages");
+        await callTool("update-page", {
+          pageId: "pricing",
+          values: { title: `Pricing session check ${index}` },
+        });
+      }
+
+      const usage = await callTool("find-asset-usage", {
+        assetId: "asset-hero",
+      });
+      if (Array.isArray(usage.usages) === false || usage.usages.length < 2) {
+        throw new Error(
+          `Duplicated page lost its image asset reference: ${JSON.stringify(usage)}`
+        );
+      }
+
+      await callTool("preview.start", {
+        host: "127.0.0.1",
+        port: 5191,
+        source: "session",
+      });
+      const workflowScreenshot = await callTool("screenshot", {
+        path: "/work",
+        output: ".webstudio/workflow-work.png",
+        viewport: { width: 1280, height: 800 },
+        waitUntil: "load",
+      });
+      await assertScreenshotEvidence({
+        payload: { data: workflowScreenshot },
+        label: "seven-page stdio workflow screenshot",
+        path: "/work",
+        status: 200,
+        viewport: { width: 1280, height: 800 },
+        projectDirectory,
+        origin: "http://127.0.0.1:5191",
+      });
+      await callTool("preview.stop");
+
+      const finalPages = await callTool("list-pages");
+      const finalPageNames = Array.isArray(finalPages.pages)
+        ? finalPages.pages.map((page) => getRecord(page, "final page").name)
+        : [];
+      if (
+        finalPageNames.length !== 7 ||
+        createdPages.some(
+          (page) => finalPageNames.includes(page.name) === false
+        )
+      ) {
+        throw new Error(
+          `Seven-page workflow verification failed: ${JSON.stringify(finalPages)}`
+        );
+      }
+    } finally {
+      await stdioClient.close();
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    if (
+      stdioLogs.includes("API contract negotiated") === false ||
+      stdioLogs.includes('"event":"stdio_connection_closed"') === false ||
+      stdioLogs.includes('"event":"stdio_transport_error"')
+    ) {
+      throw new Error(`Unexpected packed stdio lifecycle logs:\n${stdioLogs}`);
+    }
+    reportPhase(
+      "completed packed seven-page stdio MCP workflow",
+      stdioStartedAt
+    );
+
+    preview = spawn(bin, ["preview", "--port", "5190"], {
+      cwd: projectDirectory,
+      env,
+      detached: process.platform !== "win32",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    await waitForUrl("http://127.0.0.1:5190/", preview);
+
     const pricingScreenshot = await invoke("standalone screenshot", [
       "screenshot",
       "http://127.0.0.1:5190/pricing",

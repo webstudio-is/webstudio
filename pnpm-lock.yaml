@@ -836,9 +836,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.4.1
         version: 4.4.1(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3))
-      prettier:
-        specifier: 3.5.3
-        version: 3.5.3
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -894,9 +891,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.4.1
         version: 4.4.1(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3))
-      prettier:
-        specifier: 3.5.3
-        version: 3.5.3
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -1346,9 +1340,9 @@ importers:
       micromark-extension-directive:
         specifier: ^4.0.0
         version: 4.0.0
-      prettier:
-        specifier: 3.5.3
-        version: 3.5.3
+      oxfmt:
+        specifier: 0.58.0
+        version: 0.58.0
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -18940,7 +18934,8 @@ snapshots:
 
   prettier@2.8.7: {}
 
-  prettier@3.5.3: {}
+  prettier@3.5.3:
+    optional: true
 
   pretty-bytes@6.1.1: {}
 

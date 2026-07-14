@@ -1,3 +1,4 @@
+import hash from "@emotion/hash";
 import { serverOnlyRouterOperationMetadata } from "./__generated__/server-only-router-operation-metadata";
 import { localOnlyOperationInputs } from "./local-operation-inputs";
 import { publicApiOperationDocumentation } from "./operation-docs";
@@ -163,6 +164,34 @@ const getOperationInputByCommand = <Command extends PublicApiCommand>(
 export const publicApiOperations = publicApiOperationDocumentation.map(
   ({ command }) => withDefaultPermit(getOperationInputByCommand(command))
 );
+
+const operationsRequiringNegotiatedServerSupport = new Set([
+  "instances.insertComponent",
+  "instances.insertFragment",
+]);
+
+export const publicApiOperationRequiresServerSupport = (operation: {
+  id: string;
+  serverOnly: boolean;
+}) =>
+  operation.serverOnly ||
+  operationsRequiringNegotiatedServerSupport.has(operation.id);
+
+export const publicApiContractVersion = `public-api:${hash(
+  JSON.stringify(
+    publicApiOperations.map(({ command, id, method, path, serverOnly }) => ({
+      command,
+      id,
+      method,
+      path,
+      serverOnly,
+      requiresServerSupport: publicApiOperationRequiresServerSupport({
+        id,
+        serverOnly,
+      }),
+    }))
+  )
+)}`;
 
 const publicApiOperationByCommand = new Map(
   publicApiOperations.map((operation) => [operation.command, operation])

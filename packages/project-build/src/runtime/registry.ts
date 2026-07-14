@@ -328,7 +328,7 @@ export const builderRuntimeOperations = [
   runtimeOperation(
     "pages.list",
     api("list-pages", "listPages"),
-    readContract(["pages", "projectSettings"]),
+    readContract(["pages"]),
     pageListInput,
     ({ state, input }) => pages.listPages(state, input)
   ),

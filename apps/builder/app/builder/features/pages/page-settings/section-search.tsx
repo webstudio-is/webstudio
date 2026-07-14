@@ -24,7 +24,7 @@ import { useStore } from "@nanostores/react";
 import { $assets, $projectSettings } from "~/shared/sync/data-stores";
 import { $pageRootScope } from "../page-utils";
 import { SearchPreview } from "../search-preview";
-import { usePageUrl, type OnChange } from "./shared";
+import { computePageSettingsText, usePageUrl, type OnChange } from "./shared";
 
 const LanguageField = ({
   errors,
@@ -63,7 +63,7 @@ const LanguageField = ({
             id={id}
             placeholder="en-US"
             disabled={disabled || isLiteralExpression(value) === false}
-            value={String(computeExpression(value, variableValues))}
+            value={computePageSettingsText(value, variableValues)}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
         </InputErrorsTooltip>
@@ -100,9 +100,10 @@ export const SearchSection = ({
   const pageUrl = usePageUrl(values);
   const faviconAsset = assets.get(projectSettings?.meta.faviconAssetId ?? "");
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
-  const title = String(computeExpression(values.title, variableValues));
-  const description = String(
-    computeExpression(values.description, variableValues)
+  const title = computePageSettingsText(values.title, variableValues);
+  const description = computePageSettingsText(
+    values.description,
+    variableValues
   );
   const excludePageFromSearch = Boolean(
     computeExpression(values.excludePageFromSearch, variableValues)

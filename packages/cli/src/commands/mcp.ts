@@ -8,8 +8,12 @@ import {
 } from "@webstudio-is/project-build/mcp";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import { diffPngFiles } from "@webstudio-is/project-build/visual/screenshot-diff";
-import { publicApiOperations } from "@webstudio-is/protocol";
+import {
+  publicApiOperationRequiresServerSupport,
+  publicApiOperations,
+} from "@webstudio-is/protocol";
 import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
+import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
 import { resolveApiConnection } from "../api-connection";
 import {
@@ -20,7 +24,11 @@ import {
 import { HandledCliError, isHandledCliError } from "../errors";
 import { loadJSONFile } from "../fs-utils";
 import {
+  assertCliServerOperationSupported,
   createCliProjectSession,
+  getCliServerApiContract,
+  getSupportedPublicApiOperations,
+  type CliServerApiContract,
   writeCliProjectSessionDataFile,
 } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
@@ -149,6 +157,29 @@ export const createMcpStatusReporter = (
     write(
       formatMcpStatusLine(
         `ready with ${toolCount} tools; use tools/list, meta.index, or webstudio://project/guide; waiting for JSON-RPC on stdin`
+      )
+    );
+  },
+  apiContract(contract: CliServerApiContract) {
+    const serverVersion = contract.serverVersion ?? "legacy/unavailable";
+    const unavailable = contract.missingServerOperationIds.join(", ") || "none";
+    write(
+      formatMcpStatusLine(
+        `API contract negotiated: CLI ${packageJson.version} (${contract.clientVersion}); server ${serverVersion}; unavailable server procedures: ${unavailable}`
+      )
+    );
+  },
+  connectionClosed() {
+    write(
+      formatMcpStatusLine(
+        `lifecycle ${JSON.stringify({ event: "stdio_connection_closed", recovery: "Reconnect the MCP client if this was unexpected." })}`
+      )
+    );
+  },
+  connectionError(error: Error) {
+    write(
+      formatMcpStatusLine(
+        `lifecycle ${JSON.stringify({ event: "stdio_transport_error", message: getCliErrorMessage(error), recovery: "Reconnect the MCP client. If the error repeats, restart the CLI with npx webstudio@latest mcp." })}`
       )
     );
   },
@@ -1059,6 +1090,8 @@ const createCliMcpHost = async () => {
       }
     },
   };
+  const apiContract = await getCliServerApiContract(apiConnection);
+  const operations = getSupportedPublicApiOperations(apiContract);
   const session = createCliProjectSession({ connection: apiConnection });
   await prepareMcpProjectSession(session);
   const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
@@ -1096,7 +1129,7 @@ const createCliMcpHost = async () => {
     timings: result.timings,
   });
   const host: CliMcpHost = {
-    operations: publicApiOperations,
+    operations,
     createProjectSession: () => session,
     executeOperation: async ({ command, input, dryRun }) => {
       const result = await executeProjectSessionApiOperation({
@@ -1184,7 +1217,8 @@ const createCliMcpHost = async () => {
   return {
     session,
     host,
-    toolCount: publicApiOperations.length,
+    apiContract,
+    toolCount: operations.length,
     reportLog(message: string) {
       if (message.startsWith("ready with ")) {
         return;
@@ -1208,7 +1242,16 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     assertSingleOpCallToolSupported(options.tool);
     const input = await parseMcpSingleOpCallInput(options);
     validateSingleOpCallInput(options.tool, input);
-    const { host } = await createCliMcpHost();
+    const { host, apiContract } = await createCliMcpHost();
+    const operation = publicApiOperations.find(
+      (candidate) => candidate.command === options.tool
+    );
+    if (
+      operation !== undefined &&
+      publicApiOperationRequiresServerSupport(operation)
+    ) {
+      assertCliServerOperationSupported(operation.id, apiContract);
+    }
     const core = createProjectSessionMcpCore(host);
     const persistedCheckpoint =
       options.tool === "checkpoint.ack"
@@ -1299,7 +1342,18 @@ export const mcpRun = async (options: McpRunOptions) => {
   const results: unknown[] = [];
   let core: ReturnType<typeof createProjectSessionMcpCore<PublicApiCommand>>;
   try {
-    const { host } = await createCliMcpHost();
+    const { host, apiContract } = await createCliMcpHost();
+    for (const call of calls) {
+      const operation = publicApiOperations.find(
+        (candidate) => candidate.command === call.tool
+      );
+      if (
+        operation !== undefined &&
+        publicApiOperationRequiresServerSupport(operation)
+      ) {
+        assertCliServerOperationSupported(operation.id, apiContract);
+      }
+    }
     core = createProjectSessionMcpCore(host);
     if (calls.length > 0) {
       await assertPersistedMcpCheckpointAcknowledged(calls[0]!.tool);
@@ -1462,11 +1516,22 @@ export const mcpReadResource = async (options: McpReadResourceOptions) => {
 
 export const mcp = async () => {
   const status = createMcpStatusReporter();
+  let didReportClose = false;
+  const reportClose = () => {
+    if (didReportClose) {
+      return;
+    }
+    didReportClose = true;
+    status.connectionClosed();
+  };
+  stdin.once("end", reportClose);
+  stdin.once("close", reportClose);
   status.starting();
-  const { host, toolCount, reportLog } = await createCliMcpHost();
+  const { host, toolCount, reportLog, apiContract } = await createCliMcpHost();
   status.sessionReady();
+  status.apiContract(apiContract);
   status.ready(toolCount);
-  await connectProjectSessionMcpServer({
+  const server = await connectProjectSessionMcpServer({
     ...host,
     getErrorCode: getStableErrorCode,
     reportLog: (_level, message) => {
@@ -1474,4 +1539,8 @@ export const mcp = async () => {
     },
     transport: await createMcpStdioTransport({ stdin, stdout }),
   });
+  server.onclose = reportClose;
+  server.onerror = (error) => {
+    status.connectionError(error);
+  };
 };

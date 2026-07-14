@@ -26,6 +26,11 @@ import { getBuilderRuntimeOperationInputSchema } from "@webstudio-is/project-bui
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
+  publicApiContractVersion,
+  publicApiOperationRequiresServerSupport,
+  publicApiOperations,
+} from "@webstudio-is/protocol";
+import {
   assertApiProjectPermit,
   getTokenPermits,
   loadApiToken,
@@ -554,6 +559,14 @@ export const apiRouter = router({
           canPublishProjectDomain:
             token.canPublish === true || token.relation === "builders",
           canPublishCustomDomains: token.canPublish === true,
+          apiContract: {
+            version: publicApiContractVersion,
+            operationIds: publicApiOperations.flatMap((operation) =>
+              publicApiOperationRequiresServerSupport(operation)
+                ? [operation.id]
+                : []
+            ),
+          },
         };
       }),
 

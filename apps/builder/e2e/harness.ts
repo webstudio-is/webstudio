@@ -115,11 +115,20 @@ export type BrowserScope = {
 };
 
 type BrowserScopeState = {
+  scopeKey: object;
   context: BrowserContext;
   isolatedContexts: Set<BrowserContext>;
 };
 
 const browserScopeStorage = new AsyncLocalStorage<BrowserScopeState>();
+
+export const getBrowserScopeKey = () => {
+  const scopeKey = browserScopeStorage.getStore()?.scopeKey;
+  if (scopeKey === undefined) {
+    throw new Error("Expected an active browser scope");
+  }
+  return scopeKey;
+};
 
 const browserContextOptions: BrowserContextOptions = {
   ignoreHTTPSErrors: true,
@@ -157,8 +166,10 @@ export const stopBrowser = async () => {
 export const createBrowserScopeForBrowser = async (
   browserInstance: Pick<Browser, "newContext">
 ): Promise<BrowserScope> => {
+  const scopeKey = {};
   const createState = async (): Promise<BrowserScopeState> => {
     return {
+      scopeKey,
       context: await browserInstance.newContext(browserContextOptions),
       isolatedContexts: new Set(),
     };

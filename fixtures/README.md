@@ -54,7 +54,7 @@ To add a new asset (image, video, audio, etc.) to a fixture:
    - Update the `--buildId` parameter in the `fixtures:sync` script
 
    ```json
-   "fixtures:sync": "pnpm cli sync --buildId NEW_BUILD_ID_HERE && pnpm prettier --write ./.webstudio/"
+   "fixtures:sync": "pnpm cli sync --buildId NEW_BUILD_ID_HERE && pnpm oxfmt ./.webstudio/"
    ```
 
 4. **Sync with the correct environment**

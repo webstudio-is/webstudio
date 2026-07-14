@@ -16,7 +16,7 @@ export const runtimeOperationContractData = [
       },
       required: [],
     },
-    readNamespaces: ["pages", "projectSettings"],
+    readNamespaces: ["pages"],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,

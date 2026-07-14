@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import makeCLI from "yargs";
 import {
   getPublicApiOperation,
+  publicApiContractVersion,
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import { apiCompatibilityHeaders } from "./api";
@@ -17,6 +18,7 @@ const apiCalls = new Proxy({} as Record<string, ReturnType<typeof vi.fn>>, {
 });
 const isFileExists = vi.fn();
 const readFile = vi.fn();
+const getServerApiContract = vi.fn();
 const apiClientByOperationId = new Map(
   publicApiOperations.map((operation) => [operation.id, operation.client])
 );
@@ -84,10 +86,12 @@ const dependencies = new Proxy(
     isFileExists,
     readFile,
     createCliProjectSession,
+    getServerApiContract,
   } as typeof apiCalls & {
     isFileExists: typeof isFileExists;
     readFile: typeof readFile;
     createCliProjectSession: typeof createCliProjectSession;
+    getServerApiContract: typeof getServerApiContract;
   },
   {
     get(target, property: string) {
@@ -255,6 +259,16 @@ beforeEach(() => {
   isFileExists.mockResolvedValue(false);
   readFile.mockReset();
   createCliProjectSession.mockClear();
+  getServerApiContract.mockReset();
+  getServerApiContract.mockResolvedValue({
+    clientVersion: publicApiContractVersion,
+    serverVersion: publicApiContractVersion,
+    supportedOperationIds: new Set(
+      publicApiOperations.map((operation) => operation.id)
+    ),
+    missingServerOperationIds: [],
+    negotiated: true,
+  });
   vi.spyOn(console, "info").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
@@ -427,7 +441,7 @@ test("passes refresh to local-capable command session", async () => {
   );
 
   const session = createCliProjectSession.mock.results[0]?.value;
-  expect(session.refresh).toHaveBeenCalledWith(["pages", "projectSettings"]);
+  expect(session.refresh).toHaveBeenCalledWith(["pages"]);
   expect(session.read).toHaveBeenCalledWith(
     "pages.list",
     { projectId: "project-1", includeFolders: undefined },

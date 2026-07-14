@@ -8,6 +8,8 @@ import * as projectBuild from "@webstudio-is/project-build/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
   buildPatchTransaction,
+  publicApiContractVersion,
+  publicApiOperationRequiresServerSupport,
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import {
@@ -286,6 +288,14 @@ describe("api router permits", () => {
       canPublish: false,
       canPublishProjectDomain: false,
       canPublishCustomDomains: false,
+      apiContract: {
+        version: publicApiContractVersion,
+        operationIds: publicApiOperations.flatMap((operation) =>
+          publicApiOperationRequiresServerSupport(operation)
+            ? [operation.id]
+            : []
+        ),
+      },
     });
   });
 

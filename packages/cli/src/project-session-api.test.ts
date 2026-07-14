@@ -165,6 +165,13 @@ describe("project session api adapter", () => {
         authToken: "token",
       },
       createProjectSession,
+      getServerApiContract: async () => ({
+        clientVersion: "public-api:client",
+        serverVersion: "public-api:server",
+        supportedOperationIds: new Set(["auth.me"]),
+        missingServerOperationIds: [],
+        negotiated: true,
+      }),
     });
 
     expect(session.executeServerOperation).toHaveBeenCalledWith(
@@ -176,6 +183,38 @@ describe("project session api adapter", () => {
       {}
     );
     expect(result.result).toEqual({ actor: "token" });
+  });
+
+  test("rejects unsupported server-only commands before dispatch", async () => {
+    const session = {
+      initialize: vi.fn(async () => undefined),
+      read: vi.fn(),
+      mutate: vi.fn(),
+      executeServerOperation: vi.fn(),
+      refresh: vi.fn(),
+    };
+
+    await expect(
+      executeProjectSessionApiOperation({
+        command: "whoami",
+        input: {},
+        connection: {
+          projectId: "project-1",
+          origin: "https://example.com",
+          authToken: "token",
+        },
+        createProjectSession: vi.fn(
+          () => session
+        ) as unknown as CreateProjectSession,
+        getServerApiContract: async () => ({
+          clientVersion: "public-api:client",
+          supportedOperationIds: new Set(),
+          missingServerOperationIds: ["auth.me"],
+          negotiated: false,
+        }),
+      })
+    ).rejects.toThrow('does not advertise server operation "auth.me"');
+    expect(session.executeServerOperation).not.toHaveBeenCalled();
   });
 
   test("refreshes local namespaces before local-capable commands when requested", async () => {
@@ -214,7 +253,7 @@ describe("project session api adapter", () => {
       refresh: true,
     });
 
-    expect(session.refresh).toHaveBeenCalledWith(["pages", "projectSettings"]);
+    expect(session.refresh).toHaveBeenCalledWith(["pages"]);
   });
 
   test("explains dry-run is only for local-capable mutations", async () => {
