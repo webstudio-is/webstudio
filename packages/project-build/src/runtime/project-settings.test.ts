@@ -140,40 +140,40 @@ describe("project settings runtime", () => {
   });
 
   test("updates project meta and compiler settings", () => {
-    expect(
-      updateProjectSettings(createState(), {
-        meta: {
-          siteName: "New site",
-          faviconAssetId: null,
-          agentInstructions: "Use existing design tokens.",
-        },
-        compiler: { atomicStyles: false },
-      })
-    ).toEqual({
+    const mutation = updateProjectSettings(createState(), {
+      meta: {
+        siteName: "New site",
+        faviconAssetId: null,
+        agentInstructions: "Use existing design tokens.",
+      },
+      compiler: { atomicStyles: false },
+    });
+
+    expect(mutation).toMatchObject({
       kind: "mutation",
       invalidatesNamespaces: ["projectSettings"],
       noop: false,
       result: { updated: true },
-      payload: [
-        {
-          namespace: "projectSettings",
-          patches: [
-            { op: "replace", path: ["meta", "siteName"], value: "New site" },
-            {
-              op: "add",
-              path: ["meta", "agentInstructions"],
-              value: "Use existing design tokens.",
-            },
-            { op: "remove", path: ["meta", "faviconAssetId"] },
-            {
-              op: "replace",
-              path: ["compiler", "atomicStyles"],
-              value: false,
-            },
-          ],
-        },
-      ],
+      payload: [{ namespace: "projectSettings" }],
     });
+    const patches = mutation.payload[0]?.patches;
+    expect(patches).toHaveLength(4);
+    expect(patches).toEqual(
+      expect.arrayContaining([
+        { op: "replace", path: ["meta", "siteName"], value: "New site" },
+        {
+          op: "add",
+          path: ["meta", "agentInstructions"],
+          value: "Use existing design tokens.",
+        },
+        { op: "remove", path: ["meta", "faviconAssetId"] },
+        {
+          op: "replace",
+          path: ["compiler", "atomicStyles"],
+          value: false,
+        },
+      ])
+    );
   });
 
   test("validates contact email through shared project settings helper", () => {
@@ -327,17 +327,29 @@ describe("project settings runtime", () => {
     });
   });
 
-  test("ignores unknown project settings fields after validation", () => {
+  test("rejects empty and unknown project settings updates", () => {
+    expect(projectSettingsUpdateInput.safeParse({}).success).toBe(false);
+    expect(
+      projectSettingsUpdateInput.safeParse({ meta: {}, compiler: {} }).success
+    ).toBe(false);
+    expect(
+      projectSettingsUpdateInput.safeParse({
+        meta: { unknown: "value" },
+      }).success
+    ).toBe(false);
+  });
+
+  test("reports same-value project settings updates as unchanged", () => {
     expect(
       updateProjectSettings(createState(), {
-        meta: { unknown: "value" } as never,
-        compiler: { unknown: true } as never,
+        meta: { siteName: "Existing site" },
+        compiler: { atomicStyles: true },
       })
     ).toEqual({
       kind: "mutation",
       invalidatesNamespaces: [],
       noop: true,
-      result: { updated: true },
+      result: { updated: false },
       payload: [],
     });
   });

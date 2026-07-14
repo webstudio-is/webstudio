@@ -313,6 +313,10 @@ const getNamespacesNeedingRemote = (
   );
 };
 
+const mergeNamespaces = (
+  ...groups: readonly (readonly BuilderNamespace[])[]
+): BuilderNamespace[] => [...new Set(groups.flat())];
+
 const createFreshness = (
   state: BuilderState,
   version: number,
@@ -651,6 +655,7 @@ export class ProjectSession {
     );
     const invalidated = descriptor.invalidatesNamespaces ?? [];
     let snapshot = this.#snapshot;
+    let diagnostics: ProjectSessionDiagnostic[] = [];
     if (snapshot !== undefined && invalidated.length > 0) {
       snapshot = {
         ...snapshot,
@@ -660,10 +665,16 @@ export class ProjectSession {
           descriptor.id
         ),
       };
-      await this.saveSnapshot(snapshot);
     }
-    if (descriptor.refetchInvalidatedNamespaces && invalidated.length > 0) {
-      snapshot = await this.fetchAndSave(invalidated);
+    if (invalidated.length > 0) {
+      const persisted = await this.#synchronizeAfterCommit({
+        snapshot,
+        namespaces: invalidated,
+        diagnostics,
+        refresh: descriptor.refetchInvalidatedNamespaces,
+      });
+      snapshot = persisted.snapshot;
+      diagnostics = persisted.diagnostics;
     }
     return this.createEnvelope({
       source: "server",
@@ -675,6 +686,7 @@ export class ProjectSession {
         invalidatesNamespaces: invalidated,
       },
       snapshot,
+      diagnostics,
     });
   }
 
@@ -788,6 +800,79 @@ export class ProjectSession {
     this.#revision = result?.revision;
   }
 
+  async #synchronizeAfterCommit({
+    snapshot,
+    namespaces,
+    diagnostics,
+    refresh = false,
+  }: {
+    snapshot: ProjectSessionSnapshot | undefined;
+    namespaces: readonly BuilderNamespace[];
+    diagnostics: ProjectSessionDiagnostic[];
+    refresh?: boolean;
+  }): Promise<{
+    snapshot: ProjectSessionSnapshot | undefined;
+    diagnostics: ProjectSessionDiagnostic[];
+  }> {
+    try {
+      if (refresh) {
+        snapshot = await this.fetchAndSave(namespaces);
+      } else if (snapshot !== undefined) {
+        await this.saveSnapshot(snapshot);
+      }
+      return { snapshot, diagnostics };
+    } catch {
+      try {
+        await this.#reloadLocalSnapshot();
+        return {
+          snapshot: await this.fetchAndSave(namespaces),
+          diagnostics: [
+            ...diagnostics,
+            {
+              level: "info",
+              code: "COMMITTED_SESSION_RECONCILED",
+              message:
+                "The mutation committed and the local project session was refreshed after its snapshot could not be saved.",
+            },
+          ],
+        };
+      } catch (reconcileError) {
+        const staleSnapshot =
+          snapshot === undefined
+            ? undefined
+            : {
+                ...snapshot,
+                freshness: markBuilderStateNamespacesStale(
+                  snapshot.freshness,
+                  namespaces
+                ),
+              };
+        if (this.#snapshot !== undefined) {
+          this.#snapshot = {
+            ...this.#snapshot,
+            freshness: markBuilderStateNamespacesStale(
+              this.#snapshot.freshness,
+              namespaces
+            ),
+          };
+        }
+        return {
+          snapshot: staleSnapshot,
+          diagnostics: [
+            ...diagnostics,
+            {
+              level: "warning",
+              code: "COMMITTED_SESSION_RECONCILE_FAILED",
+              message:
+                "The mutation committed remotely, but the local project session could not be refreshed. Do not retry the mutation; refresh the session before the next change.",
+              details: redactProjectSessionValue(reconcileError),
+            },
+          ],
+        };
+      }
+    }
+  }
+
   async mutateUnqueued<
     Result extends Record<string, unknown> = Record<string, unknown>,
   >(
@@ -799,9 +884,10 @@ export class ProjectSession {
     if (contract.kind !== "mutation") {
       throw new Error(`Runtime operation "${operationId}" is not a mutation.`);
     }
-    const requiredNamespaces = [
-      ...new Set([...contract.readNamespaces, ...contract.writeNamespaces]),
-    ];
+    const requiredNamespaces = mergeNamespaces(
+      contract.readNamespaces,
+      contract.writeNamespaces
+    );
     const snapshot = await this.ensureNamespaces(requiredNamespaces);
     try {
       await this.assertPermit(options.permit);
@@ -958,7 +1044,15 @@ export class ProjectSession {
         operationId
       ),
     };
-    await this.saveSnapshot(committedSnapshot);
+    const persisted = await this.#synchronizeAfterCommit({
+      snapshot: committedSnapshot,
+      namespaces: mergeNamespaces(
+        contract.readNamespaces,
+        contract.writeNamespaces,
+        mutation.invalidatesNamespaces
+      ),
+      diagnostics,
+    });
     return this.createEnvelope({
       source: "local",
       result: mutation.result,
@@ -967,9 +1061,9 @@ export class ProjectSession {
         ...contract,
         invalidatesNamespaces: mutation.invalidatesNamespaces,
       },
-      snapshot: committedSnapshot,
+      snapshot: persisted.snapshot,
       transaction,
-      diagnostics,
+      diagnostics: persisted.diagnostics,
     });
   }
 

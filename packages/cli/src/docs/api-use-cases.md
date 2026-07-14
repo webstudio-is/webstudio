@@ -423,6 +423,12 @@ Commands:
 
 - MCP tool: move-instance {"moves":"moves.json contents"}
 
+Notes:
+
+- Use `position: "end"` to append an instance. Repeating this for A and then B preserves the final order A, B.
+- A numeric `insertIndex` addresses the target parent's children before the moved instance is removed. Use it for exact placement; do not calculate the last index to append.
+- Moves in one `moves` array are applied sequentially in array order.
+
 ## Clone element subtree
 
 Commands:

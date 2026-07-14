@@ -414,7 +414,7 @@ export const builderRuntimeOperations = [
   runtimeOperation(
     "projectSettings.get",
     api("get-project-settings", "getProjectSettings"),
-    readContract(["pages"]),
+    readContract(["pages", "projectSettings"]),
     emptyInput,
     ({ state }) => projectSettings.getProjectSettings(state)
   ),
@@ -422,8 +422,8 @@ export const builderRuntimeOperations = [
     "projectSettings.update",
     api("update-project-settings", "updateProjectSettings"),
     mutationContract({
-      readNamespaces: ["pages"],
-      writeNamespaces: ["pages"],
+      readNamespaces: ["projectSettings"],
+      writeNamespaces: ["projectSettings"],
       retryOnConflict: true,
     }),
     projectSettings.projectSettingsUpdateInput,
