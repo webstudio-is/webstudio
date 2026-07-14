@@ -553,7 +553,7 @@ export const runtimeOperationContractData = [
       required: [],
       additionalProperties: true,
     },
-    readNamespaces: ["pages"],
+    readNamespaces: ["pages", "projectSettings"],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
@@ -568,24 +568,97 @@ export const runtimeOperationContractData = [
       properties: {
         meta: {
           type: "object",
-          propertyNames: {
-            type: "string",
+          properties: {
+            siteName: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            contactEmail: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            faviconAssetId: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            code: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            agentInstructions: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            auth: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
           },
-          additionalProperties: {},
+          additionalProperties: false,
+          required: [],
         },
         compiler: {
           type: "object",
-          propertyNames: {
-            type: "string",
+          properties: {
+            atomicStyles: {
+              anyOf: [
+                {
+                  type: "boolean",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
           },
-          additionalProperties: {},
+          additionalProperties: false,
+          required: [],
         },
       },
+      additionalProperties: false,
+      description:
+        "Update at least one supported project meta or compiler setting. Null removes a setting.",
       required: [],
     },
-    readNamespaces: ["pages"],
-    writeNamespaces: ["pages"],
-    invalidatesNamespaces: ["pages"],
+    readNamespaces: ["projectSettings"],
+    writeNamespaces: ["projectSettings"],
+    invalidatesNamespaces: ["projectSettings"],
     retryOnConflict: true,
   },
   {
@@ -31627,13 +31700,22 @@ export const runtimeOperationContractData = [
                 type: "string",
               },
               insertIndex: {
+                description:
+                  "Zero-based position in the target parent's children before the moved instance is removed. Omit it or use position: end to append.",
                 type: "integer",
                 minimum: 0,
                 maximum: 9007199254740991,
               },
+              position: {
+                description:
+                  'Use "end" to append deterministically without calculating an insertIndex.',
+                type: "string",
+                const: "end",
+              },
             },
             required: ["instanceId", "parentInstanceId"],
           },
+          description: "Moves are applied sequentially in array order.",
         },
       },
       required: ["moves"],
