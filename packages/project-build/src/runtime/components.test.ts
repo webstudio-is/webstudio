@@ -268,6 +268,45 @@ test("rejects tag when inserting non-element component", async () => {
   ).toThrow('"tag" can only be used with component "ws:element"');
 });
 
+test("rejects unknown Webstudio core components", () => {
+  const parent = createParent();
+
+  expect(() =>
+    insertComponent(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        component: "ws:div",
+      },
+      {
+        createId: createIdFactory(),
+      }
+    )
+  ).toThrow(
+    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands.'
+  );
+});
+
+test("rejects unknown Webstudio core components in JSX fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(`<ws.div />`);
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        fragment,
+      },
+      {
+        createId: createIdFactory(),
+      }
+    )
+  ).toThrow(
+    'Component "ws:div" does not exist. The "ws:" namespace contains Webstudio core components, not HTML tag shorthands.'
+  );
+});
+
 test("inserts registered component template", async () => {
   const parent = createParent();
   const mutation = await insertComponent(

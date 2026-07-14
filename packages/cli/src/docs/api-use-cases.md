@@ -383,10 +383,14 @@ Commands:
 
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px;`}><ws.element ws:tag=\"h2\">Product OS</ws.element><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
+- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"Form"}
 
 Notes:
 
 - Use MCP `insert-fragment` as the default way to author styled component trees. It converts JSX to a structured fragment before mutation.
+- Use only exact component ids returned by `components.search`, `components.get`, or `templates.get`. Never derive or guess component ids.
+- The `ws:` namespace contains specific Webstudio core components; it is not HTML-tag shorthand. Use `<ws.element ws:tag="div">` for a native `div` and `<ws.element ws:tag="form">` for a native form, never `<ws.div>` or `<ws.form>`.
+- For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"Form"`.
 - MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
 - In `insert-fragment` JSX, use `ws:style={css\`...\`}`for Webstudio-native CSS, or use React-style object syntax such as`style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
@@ -398,7 +402,7 @@ Notes:
 - Use `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get` to discover known registry items, component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
 - Component/template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. They are for Builder/MCP discovery, not a published shadcn install registry yet.
 - Known components with `contentModel.category: "none"` are not standalone-insertable; insert their root component template instead so required providers/parents are included.
-- Unknown component ids fall back to a single-element instance when no template exists.
+- Unknown custom component ids are a low-level extension mechanism, not a discovery fallback. Agents must not synthesize them.
 
 ## Make a region editable in Content mode
 

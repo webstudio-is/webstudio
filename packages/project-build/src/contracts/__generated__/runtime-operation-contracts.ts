@@ -25839,6 +25839,8 @@ export const runtimeOperationContractData = [
         component: {
           type: "string",
           minLength: 1,
+          description:
+            'Exact component id returned by components.search, components.get, or templates.get. Do not derive HTML shorthands such as "ws:div" or "ws:form". For a native HTML element, use "ws:element" and set "tag".',
         },
         tag: {
           description:

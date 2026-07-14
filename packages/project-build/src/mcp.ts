@@ -4093,7 +4093,7 @@ const getComponentDetails = (component: string) => {
       found: false,
       component,
       usage:
-        "Component id was not found in the known registry. Unknown component ids may still be inserted as custom single instances.",
+        'Component id was not found in the known registry. Do not insert a guessed component id; use components.search, components.list, or templates.list to discover the exact id. For a native HTML element, use component "ws:element" with its "tag" property instead of inventing an id such as "ws:div".',
     };
   }
   return {
