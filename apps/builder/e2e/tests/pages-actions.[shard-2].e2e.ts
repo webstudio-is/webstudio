@@ -5,6 +5,7 @@ import {
   waitForCanvasTextHidden,
 } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
+import { openNavigatorPanel } from "../flows/navigator";
 import { openPage } from "../flows/pages-panel";
 import {
   waitForChangeToBeSaved,
@@ -489,17 +490,6 @@ const selectCommandPanelInstance = async ({
   });
   await commandInput.fill(label);
   await selectCommandPanelItem({ page, text: label });
-};
-
-const openNavigatorPanel = async ({ page }: { page: Page }) => {
-  const tab = page.getByRole("tab", { name: "Navigator" });
-  if ((await tab.getAttribute("aria-selected")) !== "true") {
-    await tab.click();
-  }
-  await page.locator("[data-navigator-tree]").waitFor({
-    state: "visible",
-    timeout: 10_000,
-  });
 };
 
 const selectNavigatorItem = async ({

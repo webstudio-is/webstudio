@@ -8,6 +8,17 @@ const builderNetworkIdleTimeout =
   Number.parseInt(process.env.E2E_BUILDER_NETWORK_IDLE_TIMEOUT_MS ?? "", 10) ||
   5_000;
 
+export const getCanvasInstanceSelector = (instanceSelector: string[]) =>
+  `[data-ws-selector="${instanceSelector.join(",")}"]`;
+
+export const getCanvasInstance = ({
+  canvas,
+  instanceSelector,
+}: {
+  canvas: Frame;
+  instanceSelector: string[];
+}) => canvas.locator(getCanvasInstanceSelector(instanceSelector)).first();
+
 export const getCanvasFrame = async (page: Page) => {
   const iframe = await page.locator("iframe").first().elementHandle();
   return (await iframe?.contentFrame()) ?? undefined;

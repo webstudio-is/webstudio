@@ -2,6 +2,7 @@ import type { Page } from "playwright";
 import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
+import { openNavigatorPanel } from "../flows/navigator";
 import {
   resetSelectedProperty,
   setSelectedBooleanProperty,
@@ -37,17 +38,6 @@ const insertComponentPanelOption = async ({
       : page.locator(`[data-drag-component="${component}"]`);
   await option.click();
   await waitForSyncStatus({ page, status: "idle" });
-};
-
-const openNavigatorPanel = async ({ page }: { page: Page }) => {
-  const tab = page.getByRole("tab", { name: "Navigator" });
-  if ((await tab.getAttribute("aria-selected")) !== "true") {
-    await tab.click();
-  }
-  await page.locator("[data-navigator-tree]").waitFor({
-    state: "visible",
-    timeout: 10_000,
-  });
 };
 
 const selectNavigatorItem = async ({
