@@ -850,8 +850,7 @@ export const builderRuntimeOperations = [
     }),
     collection.insertCollectionInput,
     ({ state, input, context }) =>
-      components.insertCollection(state, input, context),
-    collection.insertCollectionResult
+      components.insertCollection(state, input, context)
   ),
   runtimeOperation(
     "instances.insertFragment",

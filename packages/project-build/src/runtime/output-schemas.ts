@@ -13,6 +13,7 @@ import { builderNamespaces } from "../contracts/namespaces";
 import { builderPatchSchema } from "../contracts/patch";
 import { marketplaceProduct } from "../shared/marketplace";
 import { auditResult } from "./audit";
+import { insertCollectionResult } from "./collection";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
@@ -334,6 +335,7 @@ export const runtimeOutputSchemas = {
   }),
   "project.audit": auditResult,
   "instances.insertComponent": insertedInstances,
+  "instances.insertCollection": insertCollectionResult,
   "instances.insertFragment": insertedInstances,
   "instances.move": instanceIdsResult,
   "instances.reparent": looseObject({
