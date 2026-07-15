@@ -4,7 +4,12 @@ import {
   runtimeOperationContracts,
   type RuntimeOperationId,
 } from "./builder-runtime";
-import { pageExpressionFieldHint, pagePathFieldHint } from "../runtime/pages";
+import {
+  pageDraftFieldHint,
+  pageExpressionFieldHint,
+  pagePathFieldHint,
+} from "../runtime/pages";
+import { pageDraftOutputHint } from "../runtime/output-schemas";
 import { getBuilderRuntimeOperationInputSchema } from "../runtime/registry";
 
 const knownOperationId: RuntimeOperationId = "pages.list";
@@ -185,6 +190,28 @@ describe("builder runtime operation contracts", () => {
 
     expect(updatePageValueProperties.path).toMatchObject({
       description: pagePathFieldHint,
+    });
+  });
+
+  test("explains draft-page behavior in generated MCP contracts", () => {
+    const updatePageInputSchema = getContract("pages.update").inputSchema;
+    const updatePageProperties = getSchemaProperties(updatePageInputSchema);
+    const updatePageValueProperties = getSchemaProperties(
+      updatePageProperties.values
+    );
+
+    expect(updatePageValueProperties.isDraft).toMatchObject({
+      type: "boolean",
+      description: pageDraftFieldHint,
+    });
+
+    const listPagesOutputSchema = getContract("pages.list").outputSchema;
+    const listPagesProperties = getSchemaProperties(listPagesOutputSchema);
+    const listPageItems = getSchemaItems(listPagesProperties.pages);
+    const listPageProperties = getSchemaProperties(listPageItems);
+    expect(listPageProperties.isDraft).toMatchObject({
+      type: "boolean",
+      description: pageDraftOutputHint,
     });
   });
 

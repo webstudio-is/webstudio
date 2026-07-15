@@ -197,6 +197,7 @@ export const pagePath = defaultPagePath.refine(
 export const page = z.object({
   ...commonPageFields,
   path: z.union([homePagePath, pagePath]),
+  isDraft: z.boolean().optional(),
 });
 
 export const pageTemplate = z.object({
@@ -250,6 +251,26 @@ export type CompilerSettings = z.infer<typeof compilerSettings>;
 
 export type Page = z.infer<typeof page>;
 
+export const isPageDraft = (page: Pick<Page, "isDraft">) =>
+  page.isDraft === true;
+
+export const getPageDraftabilityError = ({
+  pageId,
+  pagePath,
+  homePageId,
+}: {
+  pageId: Page["id"];
+  pagePath: Page["path"];
+  homePageId: Page["id"];
+}) => {
+  if (pageId === homePageId) {
+    return "Home page can't be draft";
+  }
+  if (pagePath === "/*") {
+    return "Catch-all 404 page can't be draft";
+  }
+};
+
 export const pages = z
   .object({
     meta: projectMeta.optional(),
@@ -300,6 +321,18 @@ export const pages = z
           code: z.ZodIssueCode.custom,
           path: ["pages", pageId, "path"],
           message: "Page path can't be empty",
+        });
+      }
+      const draftabilityError = getPageDraftabilityError({
+        pageId,
+        pagePath: page.path,
+        homePageId: pages.homePageId,
+      });
+      if (isPageDraft(page) && draftabilityError !== undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pages", pageId, "isDraft"],
+          message: draftabilityError,
         });
       }
     }

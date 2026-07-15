@@ -8,6 +8,7 @@ import {
   projectMeta,
   projectNewRedirectPath,
 } from "./pages";
+import type { Page } from "./pages";
 
 const validPages = {
   homePageId: "home",
@@ -72,7 +73,7 @@ test("validates home page path is empty", () => {
   expect(
     pages.safeParse({
       ...validPages,
-      pages: new Map(validPages.pages).set("home", {
+      pages: new Map<string, Page>(validPages.pages).set("home", {
         ...validPages.pages.get("home")!,
         path: "/home",
       }),
@@ -81,6 +82,49 @@ test("validates home page path is empty", () => {
     expect.objectContaining({
       path: ["pages", "home", "path"],
       message: "Home page path must be empty",
+    }),
+  ]);
+});
+
+test("validates home page is not draft", () => {
+  expect(
+    pages.safeParse({
+      ...validPages,
+      pages: new Map<string, Page>(validPages.pages).set("home", {
+        ...validPages.pages.get("home")!,
+        isDraft: true,
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["pages", "home", "isDraft"],
+      message: "Home page can't be draft",
+    }),
+  ]);
+});
+
+test("validates catch-all 404 page is not draft", () => {
+  expect(
+    pages.safeParse({
+      ...validPages,
+      pages: new Map<string, Page>(validPages.pages).set("not-found", {
+        id: "not-found",
+        name: "404",
+        path: "/*",
+        title: `"Page not found"`,
+        meta: { status: "404" },
+        rootInstanceId: "notFoundRoot",
+        isDraft: true,
+      }),
+      folders: new Map(validPages.folders).set("root", {
+        ...validPages.folders.get("root")!,
+        children: ["home", "not-found"],
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["pages", "not-found", "isDraft"],
+      message: "Catch-all 404 page can't be draft",
     }),
   ]);
 });

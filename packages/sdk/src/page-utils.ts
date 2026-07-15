@@ -1,5 +1,6 @@
 import { executeExpression } from "./expression";
 import {
+  isPageDraft,
   type Folder,
   type Page,
   type PageTemplate,
@@ -47,6 +48,9 @@ export const getFolderById = (
 export const getAllPages = (pages: Pages): Page[] => {
   return Array.from(pages.pages.values());
 };
+
+export const getPublishablePages = (pages: Pages): Page[] =>
+  getAllPages(pages).filter((page) => isPageDraft(page) === false);
 
 export const getAllFolders = (pages: Pages): Folder[] => {
   return Array.from(pages.folders.values());
@@ -149,7 +153,7 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
 };
 
 export const getStaticSiteMapXml = (pages: Pages, updatedAt: string) => {
-  const allPages = getAllPages(pages);
+  const allPages = getPublishablePages(pages);
   return (
     allPages
       .filter((page) => (page.meta.documentType ?? "html") === "html")

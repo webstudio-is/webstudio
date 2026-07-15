@@ -10,6 +10,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { Page, Folder, PageTemplate } from "@webstudio-is/sdk";
+import { getPageDisplayName } from "./page-utils";
 
 type DeletePageConfirmationDialogProps = {
   onClose: () => void;
@@ -34,7 +35,7 @@ export const DeletePageConfirmationDialog = ({
       <DialogContent>
         <DialogTitle>Delete page</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-          <Text>{`Are you sure you want to delete "${page.name}"?`}</Text>
+          <Text>{`Are you sure you want to delete "${getPageDisplayName(page)}"?`}</Text>
           <Text>
             You can undo it even if you delete the page as long as you don't
             reload.

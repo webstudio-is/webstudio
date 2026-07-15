@@ -35,6 +35,7 @@ import {
 } from "~/builder/shared/binding-popover";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { getPageDisplayName } from "~/builder/features/pages/page-utils";
 import {
   type ControlProps,
   VerticalLayout,
@@ -384,7 +385,7 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
                 {pages.map((page) => {
                   return (
                     <SelectItem key={page.id} value={page.id}>
-                      {page.name}
+                      {getPageDisplayName(page)}
                     </SelectItem>
                   );
                 })}

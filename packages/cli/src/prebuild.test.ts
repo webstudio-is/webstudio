@@ -75,6 +75,7 @@ const createSiteData = (
       path: string;
       rootInstanceId: string;
       meta: Record<string, unknown>;
+      isDraft?: boolean;
     }>;
     instances?: Array<
       [
@@ -286,6 +287,55 @@ describe("generateRedirectsModule", () => {
 });
 
 describe("prebuild", () => {
+  test("excludes draft pages from published output", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "published",
+            name: "Published",
+            title: "Published",
+            path: "/published",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "draft",
+            name: "Draft",
+            title: "Draft",
+            path: "/draft",
+            rootInstanceId: "root",
+            meta: {},
+            isDraft: true,
+          },
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    await expect(
+      readFile("app/routes/[published]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[published]._index");
+    await expect(
+      readFile("app/routes/[draft]._index.tsx", "utf8")
+    ).rejects.toThrow("ENOENT");
+    await expect(
+      readFile("app/__generated__/[draft]._index.tsx", "utf8")
+    ).rejects.toThrow("ENOENT");
+    await expect(
+      readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
+    ).resolves.not.toContain('"path": "/draft"');
+  });
+
   test("scaffolds generated files and stores redirects as data", async () => {
     await mkdir("app/__generated__", { recursive: true });
     await mkdir("app/routes", { recursive: true });

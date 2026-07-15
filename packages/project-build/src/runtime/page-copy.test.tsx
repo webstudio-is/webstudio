@@ -334,6 +334,7 @@ describe("insert page copy", () => {
             title: `"Title"`,
             meta: {},
             rootInstanceId: "bodyId",
+            isDraft: true,
           },
         ],
         folders: [
@@ -370,6 +371,7 @@ describe("insert page copy", () => {
             id: result.result.pageId,
             name: "Copy",
             path: "/copy",
+            isDraft: true,
           }),
         },
         {

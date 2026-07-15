@@ -420,6 +420,8 @@ Before authoring unfamiliar expressions, read `webstudio://project/expressions` 
 - Expression binding example: `{"bindings":[{"instanceId":"link-id","name":"href","binding":{"type":"expression","value":"currentPost.url"}}]}`.
 - Page metadata fields such as `title`, `description`, `language`, `redirect`, `status`, and custom meta content accept plain fixed text. For computed values, pass JavaScript expression code such as `pageTitle ?? "Pricing | Acme"`.
 - Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"Pricing | Acme","meta":{"description":"Plans for teams"}}}`.
+- Draft a page with `update-page` and `{"pageId":"page-id","values":{"isDraft":true}}`. It remains editable and previewable but is omitted from every publish target, including staging, and from sitemap output.
+- Stage a draft page for a future publish with `{"pageId":"page-id","values":{"isDraft":false}}`. This clears draft state but does not deploy the site. The home page and `/*` catch-all page cannot be drafts.
 - Resource `url` accepts plain fixed URLs and paths. For computed URLs, pass JavaScript expression code such as `"https://api.example.com/items?tag=" + filters.tag`. Resource header values, search parameter values, and text bodies accept expressions for dynamic values; for fixed text, use `{ "type": "literal", "value": "application/json" }`.
 - Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"https://api.example.com/items"}}`.
 - Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`. Use `string[]` only for arrays where every item is a string; use `json` for objects, mixed arrays, filters, and nested data.

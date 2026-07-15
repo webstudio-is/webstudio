@@ -2607,6 +2607,21 @@ describe("content mode permissions", () => {
         capabilities,
         transaction: transaction("pages", [
           {
+            op: "add",
+            path: ["pages", "page-1", "isDraft"],
+            value: true,
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Page patch is not editable in content mode.",
+    });
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("pages", [
+          {
             op: "replace",
             path: ["pages", "page-1", "meta", "custom", 0, "content"],
             value: 1,

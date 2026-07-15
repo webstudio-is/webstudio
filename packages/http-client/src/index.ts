@@ -731,6 +731,7 @@ type PageFieldsInput = {
   name?: string;
   path?: string;
   title?: string;
+  isDraft?: boolean;
   parentFolderId?: string;
   meta?: PageMetaInput;
 };

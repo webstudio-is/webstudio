@@ -14,6 +14,7 @@ import { selectPage } from "~/shared/nano-states";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import { getPageDisplayName } from "~/builder/features/pages/page-utils";
 
 export type PageOption = BaseOption & {
   type: "page";
@@ -33,7 +34,7 @@ export const $pageOptions = computed(
           continue;
         }
         pageOptions.push({
-          terms: ["pages", page.name],
+          terms: ["pages", getPageDisplayName(page)],
           type: "page",
           page,
         });
@@ -75,7 +76,7 @@ export const PagesGroup = ({ options }: { options: PageOption[] }) => {
             }
           }}
         >
-          <Text>{page.name}</Text>
+          <Text>{getPageDisplayName(page)}</Text>
         </CommandItem>
       ))}
     </CommandGroup>

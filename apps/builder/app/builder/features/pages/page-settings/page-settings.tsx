@@ -3,6 +3,8 @@ import { useStore } from "@nanostores/react";
 import {
   type Page,
   findPageByIdOrPath,
+  getPageDraftabilityError,
+  isPageDraft,
   isLiteralExpression,
 } from "@webstudio-is/sdk";
 import {
@@ -18,6 +20,7 @@ import {
   DialogClose,
   DialogTitle,
   DialogTitleActions,
+  DropdownMenuItem,
 } from "@webstudio-is/design-system";
 import {
   $authPermit,
@@ -114,6 +117,7 @@ export const FormFields = ({
   canEditName = true,
   canEditPath = true,
   showHomePageControl = true,
+  canSetHomePage = true,
   showPathField = true,
   showStatusField = isEditorContext === false,
   showRedirectField = isEditorContext === false,
@@ -133,6 +137,7 @@ export const FormFields = ({
   canEditName?: boolean;
   canEditPath?: boolean;
   showHomePageControl?: boolean;
+  canSetHomePage?: boolean;
   showPathField?: boolean;
   showStatusField?: boolean;
   showRedirectField?: boolean;
@@ -190,6 +195,7 @@ export const FormFields = ({
             canEditName={canEditName}
             canEditPath={canEditPath}
             showHomePageControl={showHomePageControl}
+            canSetHomePage={canSetHomePage}
             showPathField={showPathField}
             showStatusField={showStatusField}
             showRedirectField={showRedirectField}
@@ -422,6 +428,14 @@ export const PageSettings = ({
   const isContentMode = useStore($isContentMode);
 
   const isHomePage = page?.id === pages?.homePageId;
+  const canChangeDraftState =
+    page !== undefined &&
+    pages !== undefined &&
+    getPageDraftabilityError({
+      pageId: page.id,
+      pagePath: page.path,
+      homePageId: pages.homePageId,
+    }) === undefined;
 
   const [refreshDebounce, setRefreshDebounce] = useState(0);
   let errors: PageSettingsErrors = {};
@@ -512,6 +526,24 @@ export const PageSettings = ({
             });
           }
         }}
+        draftAction={
+          canChangeDraftState === false
+            ? undefined
+            : {
+                label: isPageDraft(page)
+                  ? "Stage for publish"
+                  : "Mark as draft",
+                onSelect: () => {
+                  executeRuntimeMutation({
+                    id: "pages.update",
+                    input: {
+                      pageId,
+                      values: { isDraft: isPageDraft(page) === false },
+                    },
+                  });
+                },
+              }
+        }
       >
         <FormFields
           errors={errors}
@@ -523,6 +555,7 @@ export const PageSettings = ({
             isContentMode,
             path: page.path,
           })}
+          canSetHomePage={isPageDraft(page) === false}
           onChange={handleChange}
         />
       </PageSettingsView>
@@ -563,12 +596,14 @@ const PageSettingsView = ({
   onDelete,
   onDuplicate,
   onClose,
+  draftAction,
   children,
 }: {
   onCopy: () => void;
   onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
+  draftAction?: { label: string; onSelect: () => void };
   children: JSX.Element;
 }) => {
   const isDesignMode = useStore($isDesignMode);
@@ -586,6 +621,13 @@ const PageSettingsView = ({
           {isDesignMode && (
             <PageItemActionsDropdown
               label="Page actions"
+              additionalItems={
+                draftAction && (
+                  <DropdownMenuItem onSelect={draftAction.onSelect}>
+                    {draftAction.label}
+                  </DropdownMenuItem>
+                )
+              }
               actions={{
                 copy: onCopy,
                 duplicate: onDuplicate,

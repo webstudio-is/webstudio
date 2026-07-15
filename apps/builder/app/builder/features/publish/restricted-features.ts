@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import {
-  getAllPages,
+  getPublishablePages,
   isPathnamePattern,
   type DataSource,
   type Instance,
@@ -40,6 +40,8 @@ export const getRestrictedFeatures = ({
   if (pages === undefined) {
     return features;
   }
+  const publishablePages = getPublishablePages(pages);
+  const publishablePageIds = new Set(publishablePages.map((page) => page.id));
   const projectMeta = projectSettings?.meta;
   if (
     permissions.maxContactEmailsPerProject === 0 &&
@@ -51,7 +53,7 @@ export const getRestrictedFeatures = ({
     if ((projectMeta?.auth ?? "").trim()) {
       features.set("Project auth", undefined);
     }
-    for (const page of getAllPages(pages)) {
+    for (const page of publishablePages) {
       if (page.meta.auth !== undefined) {
         features.set("Page auth", {
           navigate: {
@@ -64,7 +66,7 @@ export const getRestrictedFeatures = ({
     }
   }
   if (permissions.allowDynamicData === false) {
-    for (const page of getAllPages(pages)) {
+    for (const page of publishablePages) {
       const navigate = {
         pageId: page.id,
         instanceSelector: [page.rootInstanceId],
@@ -79,12 +81,16 @@ export const getRestrictedFeatures = ({
     for (const dataSource of dataSources.values()) {
       if (dataSource.type === "resource") {
         const instanceId = dataSource.scopeInstanceId ?? "";
+        const navigate = findPageAndSelectorByInstanceId(
+          pages,
+          instances,
+          instanceId
+        );
+        if (publishablePageIds.has(navigate.pageId) === false) {
+          continue;
+        }
         features.set("Resource variable", {
-          navigate: findPageAndSelectorByInstanceId(
-            pages,
-            instances,
-            instanceId
-          ),
+          navigate,
         });
       }
     }

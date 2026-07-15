@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { Pages } from "./schema/pages";
+import type { Page, Pages } from "./schema/pages";
 import {
   findPageByIdOrPath,
   findParentFolderByChildId,
+  getPublishablePages,
   getPagePath,
   getStaticSiteMapXml,
   isPage,
@@ -234,5 +235,28 @@ describe("getStaticSiteMapXml", () => {
         lastModified: "2026-04-30",
       },
     ]);
+  });
+
+  test("excludes draft pages", () => {
+    const pagesWithDraft: Pages = {
+      ...pages,
+      pages: new Map<string, Page>(pages.pages)
+        .set("home", { ...pages.pages.get("home")!, isDraft: false })
+        .set("page-1", {
+          ...pages.pages.get("page-1")!,
+          isDraft: true,
+        }),
+    };
+
+    expect(getPublishablePages(pagesWithDraft).map((page) => page.id)).toEqual([
+      "home",
+    ]);
+    expect(getStaticSiteMapXml(pagesWithDraft, "2026-04-30")).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "/folder-1/folder-1-1/folder-1-1-1/page-1",
+        }),
+      ])
+    );
   });
 });

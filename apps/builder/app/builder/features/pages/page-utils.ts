@@ -12,11 +12,15 @@ import {
   ROOT_INSTANCE_ID,
   systemParameter,
   SYSTEM_VARIABLE_ID,
+  isPageDraft,
 } from "@webstudio-is/sdk";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
 import { nameToPath } from "@webstudio-is/project-build/runtime";
 import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
+
+export const getPageDisplayName = (page: Page) =>
+  isPageDraft(page) ? `[Draft] ${page.name}` : page.name;
 
 export const $pageRootScope = computed(
   [$selectedPage, $variableValuesByInstanceSelector, $dataSources],
