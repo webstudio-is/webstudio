@@ -1650,6 +1650,42 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
 const getMcpExamples = (command: string): readonly unknown[] =>
   mcpArgumentExamples[command] ?? [];
 
+const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
+  type: "object",
+  oneOf: [
+    {
+      type: "object",
+      properties: {
+        ok: { type: "boolean", const: true },
+        data: dataSchema,
+        meta: { type: "object", additionalProperties: true },
+      },
+      required: ["ok", "data", "meta"],
+      additionalProperties: false,
+    },
+    {
+      type: "object",
+      properties: {
+        ok: { type: "boolean", const: false },
+        data: dataSchema,
+        error: {
+          type: "object",
+          properties: {
+            code: { type: "string" },
+            message: { type: "string" },
+            issues: semanticValidationIssuesJsonSchema,
+          },
+          required: ["code", "message"],
+          additionalProperties: true,
+        },
+        meta: { type: "object", additionalProperties: true },
+      },
+      required: ["ok", "error", "meta"],
+      additionalProperties: false,
+    },
+  ],
+});
+
 const sessionStatusDataSchema = {
   type: "object",
   properties: { loaded: { type: "boolean" } },
@@ -2299,44 +2335,6 @@ export const hiddenMcpOperationCommands = new Set<string>([
   // MCP callers use duplicate-page or serializable page-transfer workflows.
   "copy-page",
 ]);
-
-function getMcpOutputSchema(dataSchema: InputJsonSchema): InputJsonSchema {
-  return {
-    type: "object",
-    oneOf: [
-      {
-        type: "object",
-        properties: {
-          ok: { type: "boolean", const: true },
-          data: dataSchema,
-          meta: { type: "object", additionalProperties: true },
-        },
-        required: ["ok", "data", "meta"],
-        additionalProperties: false,
-      },
-      {
-        type: "object",
-        properties: {
-          ok: { type: "boolean", const: false },
-          data: dataSchema,
-          error: {
-            type: "object",
-            properties: {
-              code: { type: "string" },
-              message: { type: "string" },
-              issues: semanticValidationIssuesJsonSchema,
-            },
-            required: ["code", "message"],
-            additionalProperties: true,
-          },
-          meta: { type: "object", additionalProperties: true },
-        },
-        required: ["ok", "error", "meta"],
-        additionalProperties: false,
-      },
-    ],
-  };
-}
 
 export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
