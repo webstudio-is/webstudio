@@ -1618,6 +1618,15 @@ describe("isPathAvailable", () => {
     ).toBe(false);
   });
 
+  test("draft pages continue to reserve their path", () => {
+    const page = pages.pages.get("page2")!;
+    page.isDraft = true;
+    expect(
+      isPathAvailable({ pages, path: "/page", parentFolderId: "folder2" })
+    ).toBe(false);
+    delete page.isDraft;
+  });
+
   test("/folder2/page1 new page", () => {
     expect(
       isPathAvailable({ pages, path: "/page1", parentFolderId: "folder2" })
@@ -1834,6 +1843,62 @@ describe("createPage", () => {
 });
 
 describe("updatePage", () => {
+  test("sets and clears draft", () => {
+    const pages = createPages();
+
+    expect(
+      updatePage({ pages }, { pageId: "page", values: { isDraft: true } })
+        .payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "add",
+            path: ["pages", "page", "isDraft"],
+            value: true,
+          },
+        ],
+      },
+    ]);
+
+    pages.pages.get("page")!.isDraft = true;
+    expect(
+      updatePage({ pages }, { pageId: "page", values: { isDraft: true } })
+        .payload
+    ).toEqual([]);
+    expect(
+      updatePage({ pages }, { pageId: "page", values: { isDraft: false } })
+        .payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [{ op: "remove", path: ["pages", "page", "isDraft"] }],
+      },
+    ]);
+  });
+
+  test("rejects drafting home and catch-all pages", () => {
+    const pages = createPages();
+    expect(() =>
+      updatePage({ pages }, { pageId: "home", values: { isDraft: true } })
+    ).toThrow("Home page can't be draft");
+
+    pages.pages.get("page")!.path = "/*";
+    expect(() =>
+      updatePage({ pages }, { pageId: "page", values: { isDraft: true } })
+    ).toThrow("Catch-all 404 page can't be draft");
+  });
+
+  test("rejects changing a draft page to the catch-all path", () => {
+    const pages = createPages();
+    pages.pages.get("page")!.isDraft = true;
+
+    expect(() =>
+      updatePage({ pages }, { pageId: "page", values: { path: "/*" } })
+    ).toThrow("Catch-all 404 page can't be draft");
+  });
+
   test("accepts fixed page metadata text and stores expression string literals", () => {
     const pages = createPages();
 
@@ -2183,6 +2248,15 @@ describe("savePagePathInHistory", () => {
 });
 
 describe("setHomePage", () => {
+  test("rejects setting a draft page as home", () => {
+    const pages = createPages();
+    pages.pages.get("page")!.isDraft = true;
+
+    expect(() => setHomePage({ pages }, { pageId: "page" })).toThrow(
+      "Home page can't be draft"
+    );
+  });
+
   test("sets home page and keeps a single root folder reference", () => {
     const pages = createPages();
     const rootFolder = pages.folders.get(ROOT_FOLDER_ID);

@@ -6,6 +6,7 @@ import {
   getAllPages,
   getHomePage,
   getFolderById,
+  getPageDraftabilityError,
   getPagePath,
   ROOT_FOLDER_ID,
   folder as sdkFolder,
@@ -20,6 +21,7 @@ import {
   documentTypes,
   type PageAuth,
   type Pages,
+  isPageDraft,
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import * as bcp47 from "bcp-47";
@@ -63,6 +65,7 @@ export type SerializedPageSummary = {
   rootInstanceId: Page["rootInstanceId"];
   parentFolderId: Folder["id"] | undefined;
   isHome: boolean;
+  isDraft?: boolean;
 };
 
 export type SerializedPageDetails = SerializedPageSummary & {
@@ -193,6 +196,7 @@ export const serializePageSummary = (
   rootInstanceId: page.rootInstanceId,
   parentFolderId: findParentFolderId(pages.folders, page.id),
   isHome: page.id === pages.homePageId,
+  ...(isPageDraft(page) ? { isDraft: true } : {}),
 });
 
 export const serializePageDetails = (
@@ -841,10 +845,14 @@ const pageExpressionStringInput = z
 export const pagePathFieldHint =
   'Plain page path. For a new non-home page, start with "/", for example "/pricing". The home page path is the empty string ""; do not use an empty path when creating a new page.';
 
+export const pageDraftFieldHint =
+  "Set true to mark the page as draft. Draft pages remain editable and previewable in Builder but are omitted from every publish target, including staging, and from sitemap output. Set false to stage the page for a future publish; this does not deploy the site. The home page and /* catch-all page cannot be drafts.";
+
 const pageCreatePathInput = pagePath.describe(pagePathFieldHint);
 const pageUpdatePathInput = z
   .union([homePagePath, pagePath])
   .describe(pagePathFieldHint);
+const pageDraftInput = z.boolean().describe(pageDraftFieldHint);
 
 export const normalizePageMetaValue = <Name extends keyof PageMeta>(
   name: Name,
@@ -874,6 +882,7 @@ type PageFieldsPatchInput = Partial<{
   name: Page["name"];
   path: Page["path"];
   title: Page["title"];
+  isDraft: boolean;
   parentFolderId: string;
   meta: PageMetaPatchInput;
 }>;
@@ -1059,6 +1068,7 @@ export const pageFieldsInput = z.object({
   name: z.string().min(1).optional(),
   path: pageUpdatePathInput.optional(),
   title: pageExpressionStringInput.optional(),
+  isDraft: pageDraftInput.optional(),
   parentFolderId: z.string().optional(),
   meta: pageMetaInputBase.optional(),
 });
@@ -1671,6 +1681,15 @@ export const createPageUpdatePatches = ({
   if (input.title !== undefined) {
     replace(["pages", page.id, "title"], input.title);
   }
+  if (input.isDraft === true && isPageDraft(page) === false) {
+    patches.push({
+      op: page.isDraft === undefined ? "add" : "replace",
+      path: ["pages", page.id, "isDraft"],
+      value: true,
+    });
+  } else if (input.isDraft === false && page.isDraft !== undefined) {
+    patches.push({ op: "remove", path: ["pages", page.id, "isDraft"] });
+  }
   if (input.meta !== undefined) {
     for (const [name, value] of Object.entries(
       pageMetaToPatchValue(input.meta)
@@ -1802,6 +1821,16 @@ export const updatePage = (
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
   }
   const normalizedValues = normalizePageFieldsExpressionInputs(input.values);
+  const nextPath = normalizedValues.path ?? page.path;
+  const nextIsDraft = normalizedValues.isDraft ?? isPageDraft(page);
+  const draftabilityError = getPageDraftabilityError({
+    pageId: page.id,
+    pagePath: nextPath,
+    homePageId: pages.homePageId,
+  });
+  if (nextIsDraft && draftabilityError !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", draftabilityError);
+  }
   const expressionIssues =
     collectPageExpressionValidationIssues(normalizedValues);
   if (expressionIssues.length > 0) {
@@ -2175,6 +2204,14 @@ export const setHomePage = (
   const rootFolder = pages.folders.get(pages.rootFolderId);
   if (newHomePage === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
+  }
+  const draftabilityError = getPageDraftabilityError({
+    pageId: newHomePage.id,
+    pagePath: newHomePage.path,
+    homePageId: newHomePage.id,
+  });
+  if (isPageDraft(newHomePage) && draftabilityError !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", draftabilityError);
   }
   if (rootFolder === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Root folder not found");

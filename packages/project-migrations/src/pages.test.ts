@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Pages } from "@webstudio-is/sdk";
 import { migratePages, serializePages } from "./pages";
 
-test("keeps current pages shape unchanged when page templates exist", () => {
+test("keeps current pages shape and draft flags unchanged", () => {
   const pages: Pages = {
     homePageId: "home",
     rootFolderId: "root",
@@ -18,6 +18,18 @@ test("keeps current pages shape unchanged when page templates exist", () => {
           rootInstanceId: "homeRoot",
         },
       ],
+      [
+        "draft",
+        {
+          id: "draft",
+          name: "Draft",
+          path: "/draft",
+          title: `"Draft"`,
+          meta: {},
+          rootInstanceId: "draftRoot",
+          isDraft: true,
+        },
+      ],
     ]),
     pageTemplates: new Map(),
     folders: new Map([
@@ -27,13 +39,18 @@ test("keeps current pages shape unchanged when page templates exist", () => {
           id: "root",
           name: "Root",
           slug: "",
-          children: ["home"],
+          children: ["home", "draft"],
         },
       ],
     ]),
   };
 
   expect(migratePages(pages)).toBe(pages);
+  const serialized = serializePages(pages);
+  expect(serialized.pages.find((page) => page.id === "draft")?.isDraft).toBe(
+    true
+  );
+  expect(migratePages(serialized).pages.get("draft")?.isDraft).toBe(true);
 });
 
 test("adds missing page templates map to current pages shape", () => {

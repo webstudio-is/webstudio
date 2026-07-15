@@ -287,6 +287,7 @@ export const GeneralSection = ({
   canEditName = true,
   canEditPath = true,
   showHomePageControl = true,
+  canSetHomePage = true,
   showPathField = true,
   showStatusField = true,
   showRedirectField = true,
@@ -303,6 +304,7 @@ export const GeneralSection = ({
   canEditName?: boolean;
   canEditPath?: boolean;
   showHomePageControl?: boolean;
+  canSetHomePage?: boolean;
   showPathField?: boolean;
   showStatusField?: boolean;
   showRedirectField?: boolean;
@@ -346,6 +348,13 @@ export const GeneralSection = ({
                   }}
                 >
                   “{values.name}” is the home page
+                </Text>
+              </>
+            ) : canSetHomePage === false ? (
+              <>
+                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <Text color="subtle">
+                  Stage this page for publish before setting it as the home page
                 </Text>
               </>
             ) : values.parentFolderId !== pages.rootFolderId ? (

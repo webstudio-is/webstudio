@@ -38,6 +38,7 @@ import { BuilderModeDropDown } from "~/builder/features/builder-mode";
 import { SafeModeButton } from "~/builder/features/safe-mode";
 import { NotificationPopover } from "~/shared/notifications/notification-popover";
 import { $notifications } from "~/shared/notifications/subscription";
+import { getPageDisplayName } from "~/builder/features/pages/page-utils";
 
 const topbarContainerStyle = css({
   position: "relative",
@@ -138,7 +139,7 @@ const PagesButton = () => {
         tabIndex={0}
       >
         <Text truncate css={{ maxWidth: theme.spacing[24] }}>
-          {page.name}
+          {isPage(page) ? getPageDisplayName(page) : page.name}
         </Text>
       </ToolbarButton>
     </Tooltip>

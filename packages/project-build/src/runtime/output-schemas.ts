@@ -34,6 +34,9 @@ const patchChange = z.object({
   patches: z.array(builderPatchSchema),
 });
 
+export const pageDraftOutputHint =
+  "True when the page is a draft. Missing or false means the page is publishable.";
+
 export const createRuntimeMutationExecutionSchema = <
   Result extends z.ZodTypeAny,
 >(
@@ -56,6 +59,7 @@ const pageSummary = looseObject({
   rootInstanceId: id,
   parentFolderId: id.optional(),
   isHome: z.boolean(),
+  isDraft: z.boolean().optional().describe(pageDraftOutputHint),
 });
 const pageDetails = pageSummary.extend({
   meta: looseObject({

@@ -67,18 +67,61 @@ const getFeatures = ({
   pages,
   projectSettings,
   permissions,
+  dataSources = new Map<string, DataSource>(),
+  instances = new Map<string, Instance>(),
 }: {
   pages: Pages | undefined;
   projectSettings?: ProjectSettings;
   permissions: Partial<RestrictedFeaturesPermissions>;
+  dataSources?: Map<string, DataSource>;
+  instances?: Map<string, Instance>;
 }) =>
   getRestrictedFeatures({
     pages,
     projectSettings,
-    dataSources: new Map<string, DataSource>(),
-    instances: new Map<string, Instance>(),
+    dataSources,
+    instances,
     permissions: { ...defaultPermissions, ...permissions },
   });
+
+const getPageRestrictedFeatures = (isDraft: boolean) => {
+  const page = createPage({
+    id: isDraft ? "draft" : "published",
+    path: isDraft ? "/draft/:slug" : "/published/:slug",
+    isDraft,
+    meta: {
+      auth: { method: "basic", login: "admin", password: "secret" },
+      redirect: `"/redirect"`,
+    },
+  });
+  return getFeatures({
+    pages: createPages({ pages: [homePage, page] }),
+    permissions: { allowAuth: false, allowDynamicData: false },
+    instances: new Map([
+      [
+        page.rootInstanceId,
+        {
+          type: "instance",
+          id: page.rootInstanceId,
+          component: "ws:element",
+          children: [],
+        },
+      ],
+    ]),
+    dataSources: new Map([
+      [
+        "resource-variable",
+        {
+          type: "resource",
+          id: "resource-variable",
+          resourceId: "resource",
+          scopeInstanceId: page.rootInstanceId,
+          name: "resourceVariable",
+        },
+      ],
+    ]),
+  });
+};
 
 describe("getRestrictedFeatures", () => {
   test("restricts project authentication when auth is not allowed", () => {
@@ -162,5 +205,18 @@ describe("getRestrictedFeatures", () => {
 
     expect(features.has("Project auth")).toBe(false);
     expect(features.has("Page auth")).toBe(false);
+  });
+
+  test("ignores restricted features used only by draft pages", () => {
+    expect(getPageRestrictedFeatures(true).size).toBe(0);
+  });
+
+  test("restricts dynamic features used by publishable pages", () => {
+    expect([...getPageRestrictedFeatures(false).keys()]).toEqual([
+      "Page auth",
+      "Dynamic path",
+      "Redirect",
+      "Resource variable",
+    ]);
   });
 });

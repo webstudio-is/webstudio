@@ -60,7 +60,7 @@ import {
   getAllChildrenAndSelf,
   getStoredPageDropTarget,
 } from "@webstudio-is/project-build/runtime";
-import { duplicateFolder, isFolder } from "./page-utils";
+import { duplicateFolder, getPageDisplayName, isFolder } from "./page-utils";
 import {
   FolderSettings,
   NewFolderSettings,
@@ -450,7 +450,7 @@ const PagesTree = ({
                   role: "group",
                   "aria-label":
                     item.type === "page"
-                      ? `Page ${item.page.name}`
+                      ? `Page ${getPageDisplayName(item.page)}`
                       : `Folder ${item.folder.name}`,
                 }}
                 buttonProps={{
@@ -519,7 +519,7 @@ const PagesTree = ({
                       )
                     }
                   >
-                    {item.page.name}
+                    {getPageDisplayName(item.page)}
                   </TreeNodeLabel>
                 )}
               </TreeNode>

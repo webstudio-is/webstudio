@@ -16,6 +16,7 @@ import {
   $pageRootScope,
   duplicateFolder,
   duplicateTemplate,
+  getPageDisplayName,
   instantiateTemplate,
   isFolder,
 } from "./page-utils";
@@ -40,6 +41,22 @@ import { $resourcesCache, getResourceKey } from "~/shared/resources";
 
 setEnv("*");
 registerContainers();
+
+test("prefixes draft page display names without changing the stored name", () => {
+  const page = {
+    id: "page",
+    name: "Pricing",
+    path: "/pricing",
+    title: `"Pricing"`,
+    rootInstanceId: "root",
+    meta: {},
+    isDraft: true,
+  } satisfies Page;
+
+  expect(getPageDisplayName(page)).toBe("[Draft] Pricing");
+  expect(page.name).toBe("Pricing");
+  expect(getPageDisplayName({ ...page, isDraft: false })).toBe("Pricing");
+});
 
 const initialSystem = {
   origin: "https://undefined.wstd.work",

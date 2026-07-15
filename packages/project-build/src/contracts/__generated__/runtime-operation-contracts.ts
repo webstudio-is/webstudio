@@ -48,6 +48,11 @@ export const runtimeOperationContractData = [
               isHome: {
                 type: "boolean",
               },
+              isDraft: {
+                description:
+                  "True when the page is a draft. Missing or false means the page is publishable.",
+                type: "boolean",
+              },
             },
             required: [
               "id",
@@ -137,6 +142,11 @@ export const runtimeOperationContractData = [
           type: "string",
         },
         isHome: {
+          type: "boolean",
+        },
+        isDraft: {
+          description:
+            "True when the page is a draft. Missing or false means the page is publishable.",
           type: "boolean",
         },
         meta: {
@@ -285,6 +295,11 @@ export const runtimeOperationContractData = [
               type: "string",
             },
             isHome: {
+              type: "boolean",
+            },
+            isDraft: {
+              description:
+                "True when the page is a draft. Missing or false means the page is publishable.",
               type: "boolean",
             },
             meta: {
@@ -450,6 +465,11 @@ export const runtimeOperationContractData = [
                   type: "string",
                 },
                 isHome: {
+                  type: "boolean",
+                },
+                isDraft: {
+                  description:
+                    "True when the page is a draft. Missing or false means the page is publishable.",
                   type: "boolean",
                 },
                 meta: {
@@ -762,6 +782,11 @@ export const runtimeOperationContractData = [
               description:
                 'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
               type: "string",
+            },
+            isDraft: {
+              type: "boolean",
+              description:
+                "Set true to mark the page as draft. Draft pages remain editable and previewable in Builder but are omitted from every publish target, including staging, and from sitemap output. Set false to stage the page for a future publish; this does not deploy the site. The home page and /* catch-all page cannot be drafts.",
             },
             parentFolderId: {
               type: "string",
@@ -2941,6 +2966,11 @@ export const runtimeOperationContractData = [
                 type: "string",
               },
               isHome: {
+                type: "boolean",
+              },
+              isDraft: {
+                description:
+                  "True when the page is a draft. Missing or false means the page is publishable.",
                 type: "boolean",
               },
             },

@@ -12,6 +12,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
+import type { ReactNode } from "react";
 
 export type PageItemActions = {
   paste?: () => void;
@@ -87,7 +88,11 @@ export const PageItemContextMenuActions = ({
 export const PageItemActionsDropdown = ({
   actions,
   label = "Actions",
-}: PageItemActionsMenuItemsProps & { label?: string }) => {
+  additionalItems,
+}: PageItemActionsMenuItemsProps & {
+  label?: string;
+  additionalItems?: ReactNode;
+}) => {
   return (
     <DropdownMenu>
       <Tooltip content={label} side="bottom">
@@ -101,6 +106,7 @@ export const PageItemActionsDropdown = ({
         </DropdownMenuTrigger>
       </Tooltip>
       <DropdownMenuContent align="end">
+        {additionalItems}
         {items
           .filter((item) => item.name !== "paste")
           .map((item) => {

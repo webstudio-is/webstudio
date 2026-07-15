@@ -155,7 +155,12 @@ const selectHeaderAction = async ({
 }: {
   page: Page;
   menuLabel: string;
-  action: "Copy" | "Duplicate" | "Delete";
+  action:
+    | "Copy"
+    | "Duplicate"
+    | "Delete"
+    | "Mark as draft"
+    | "Stage for publish";
 }) => {
   await page.getByRole("button", { name: menuLabel }).click();
   await page.getByRole("menuitem", { name: action }).click();
@@ -210,7 +215,7 @@ test.beforeAll(async () => {
   });
 });
 
-test("Builder can copy, duplicate, and delete a page from the header menu", async () => {
+test("Builder can draft, stage, copy, duplicate, and delete a page from the header menu", async () => {
   const { page, close } = await newIsolatedPage();
   const pageName = "Actions Menu Page";
   const renamedPageName = "Renamed Actions Menu Page";
@@ -261,6 +266,33 @@ test("Builder can copy, duplicate, and delete a page from the header menu", asyn
     await renameSave;
     await waitForPageRow({ page, pageName: renamedPageName });
     await expectPageRowHidden({ page, pageName });
+
+    const draftSave = waitForChangeToBeSaved({ page });
+    await selectHeaderAction({
+      page,
+      menuLabel: "Page actions",
+      action: "Mark as draft",
+    });
+    await draftSave;
+    await waitForPageRow({ page, pageName: `[Draft] ${renamedPageName}` });
+
+    await openPageSettings({
+      page,
+      pageName: `[Draft] ${renamedPageName}`,
+    });
+    await page
+      .getByText(
+        "Stage this page for publish before setting it as the home page"
+      )
+      .waitFor();
+    const stageSave = waitForChangeToBeSaved({ page });
+    await selectHeaderAction({
+      page,
+      menuLabel: "Page actions",
+      action: "Stage for publish",
+    });
+    await stageSave;
+    await waitForPageRow({ page, pageName: renamedPageName });
 
     await openPageSettings({ page, pageName: renamedPageName });
     await selectHeaderAction({
