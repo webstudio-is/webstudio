@@ -1698,6 +1698,7 @@ describe("builder runtime registry", () => {
       ["pageTree.move", {}],
       ["pageTree.reparentOrphans", "invalid"],
       ["instances.insertComponent", { parentInstanceId: "body" }],
+      ["instances.insertCollection", { parentInstanceId: "body" }],
       ["instances.insertFragment", { parentInstanceId: "body" }],
       ["instances.move", { moves: {} }],
       ["instances.reparent", {}],

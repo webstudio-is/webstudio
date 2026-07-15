@@ -5,6 +5,7 @@ import {
   ROOT_INSTANCE_ID,
   webstudioFragment,
   type Breakpoints,
+  type DataSource,
   type DataSources,
   type Instance,
   type Instances,
@@ -32,6 +33,12 @@ import {
   type ComponentTemplateRegistry,
 } from "./component-template";
 import { isComponentAvailableForDocumentType } from "./component-catalog";
+import type { ComponentInsertResult } from "./component-insert-contract";
+import {
+  createCollectionFragment,
+  insertCollectionInput,
+  type InsertCollectionResult,
+} from "./collection";
 import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { findAvailableVariables } from "./data";
@@ -626,7 +633,9 @@ export const getTemplateRequiredStructure = (
   };
 };
 
-const createInsertFragmentMutation = ({
+const createInsertFragmentMutation = <
+  Details extends Record<string, unknown> = Record<string, never>,
+>({
   state,
   parentInstanceId,
   fragment,
@@ -635,6 +644,8 @@ const createInsertFragmentMutation = ({
   insertIndex: explicitInsertIndex,
   conflictResolution,
   contentMode = false,
+  additionalAvailableVariables = [],
+  getResultDetails,
   context,
 }: {
   state: ComponentInsertState;
@@ -645,6 +656,11 @@ const createInsertFragmentMutation = ({
   insertIndex?: z.infer<typeof insertIndexInput>;
   conflictResolution?: ConflictResolution;
   contentMode?: boolean;
+  additionalAvailableVariables?: DataSource[];
+  getResultDetails?: (ids: {
+    newInstanceIds: Map<string, string>;
+    newDataSourceIds: Map<string, string>;
+  }) => Details;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -689,15 +705,18 @@ const createInsertFragmentMutation = ({
     );
   }
 
-  const { newInstanceIds, didMergeBreakpointsDueToLimit } =
+  const { newInstanceIds, newDataSourceIds, didMergeBreakpointsDueToLimit } =
     insertWebstudioFragmentCopy({
       data: nextData,
       fragment,
-      availableVariables: findAvailableVariables({
-        startingInstanceId: originalParent.id,
-        instances: mutationState.instances,
-        dataSources: mutationState.dataSources,
-      }),
+      availableVariables: [
+        ...findAvailableVariables({
+          startingInstanceId: originalParent.id,
+          instances: mutationState.instances,
+          dataSources: mutationState.dataSources,
+        }),
+        ...additionalAvailableVariables,
+      ],
       projectId: context.projectId ?? "",
       conflictResolution,
       createId: context.createId,
@@ -726,6 +745,27 @@ const createInsertFragmentMutation = ({
       return child;
     }
   );
+  const createResult = (
+    parentInstanceId: string,
+    removedInstanceIds: string[]
+  ): ComponentInsertResult & Details =>
+    ({
+      instanceIds: Array.from(newInstanceIds.values()).filter(
+        (instanceId) =>
+          instanceId !== ROOT_INSTANCE_ID &&
+          mutationState.instances.has(instanceId) === false
+      ),
+      rootInstanceIds: insertedChildren.flatMap((child) =>
+        child.type === "id" ? [child.value] : []
+      ),
+      removedInstanceIds,
+      parentInstanceId,
+      ...(getResultDetails?.({ newInstanceIds, newDataSourceIds }) ??
+        ({} as Details)),
+      ...(didMergeBreakpointsDueToLimit
+        ? { didMergeBreakpointsDueToLimit: true as const }
+        : {}),
+    }) as ComponentInsertResult & Details;
 
   if (normalizedSlotDropTarget !== undefined) {
     if (mode === "replace") {
@@ -749,21 +789,7 @@ const createInsertFragmentMutation = ({
     });
     return createRuntimeMutation({
       payload: insertPayload,
-      result: {
-        instanceIds: Array.from(newInstanceIds.values()).filter(
-          (instanceId) =>
-            instanceId !== ROOT_INSTANCE_ID &&
-            mutationState.instances.has(instanceId) === false
-        ),
-        rootInstanceIds: insertedChildren.flatMap((child) =>
-          child.type === "id" ? [child.value] : []
-        ),
-        removedInstanceIds: [],
-        parentInstanceId: parent.id,
-        ...(didMergeBreakpointsDueToLimit
-          ? { didMergeBreakpointsDueToLimit }
-          : {}),
-      },
+      result: createResult(parent.id, []),
       invalidatesNamespaces: componentInsertNamespaces,
     });
   }
@@ -793,21 +819,7 @@ const createInsertFragmentMutation = ({
       ...replacementPayload,
       ...insertPayload,
     ]),
-    result: {
-      instanceIds: Array.from(newInstanceIds.values()).filter(
-        (instanceId) =>
-          instanceId !== ROOT_INSTANCE_ID &&
-          mutationState.instances.has(instanceId) === false
-      ),
-      rootInstanceIds: insertedChildren.flatMap((child) =>
-        child.type === "id" ? [child.value] : []
-      ),
-      removedInstanceIds: replacedInstanceIds,
-      parentInstanceId: parent.id,
-      ...(didMergeBreakpointsDueToLimit
-        ? { didMergeBreakpointsDueToLimit }
-        : {}),
-    },
+    result: createResult(parent.id, replacedInstanceIds),
     invalidatesNamespaces: componentInsertNamespaces,
   });
 };
@@ -886,6 +898,63 @@ export const insertComponent = (
     templates,
     mode: input.mode,
     insertIndex: input.insertIndex,
+    context,
+  });
+};
+
+export const insertCollection = (
+  state: ComponentInsertState,
+  input: z.infer<typeof insertCollectionInput>,
+  context: BuilderRuntimeContext
+) => {
+  const mutationState = getRequiredComponentInsertState(state);
+  if (mutationState.instances.has(input.parentInstanceId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const templates = getComponentTemplates();
+  const collection = createCollectionFragment({
+    state: mutationState,
+    input,
+    templates,
+  });
+  const getMappedId = (ids: Map<string, string>, sourceId: string) => {
+    const id = ids.get(sourceId);
+    if (id === undefined) {
+      return throwBuilderRuntimeError(
+        "CONFLICT",
+        `Collection insertion did not map generated id "${sourceId}".`
+      );
+    }
+    return id;
+  };
+  return createInsertFragmentMutation<
+    Omit<InsertCollectionResult, keyof ComponentInsertResult>
+  >({
+    state,
+    parentInstanceId: input.parentInstanceId,
+    fragment: collection.fragment,
+    templates,
+    mode: input.mode,
+    insertIndex: input.insertIndex,
+    additionalAvailableVariables: collection.parameterDataSources,
+    getResultDetails: ({ newInstanceIds, newDataSourceIds }) => ({
+      collectionInstanceId: getMappedId(
+        newInstanceIds,
+        collection.collectionInstanceId
+      ),
+      itemRootInstanceId: getMappedId(
+        newInstanceIds,
+        collection.itemRootInstanceId
+      ),
+      itemParameterId: getMappedId(
+        newDataSourceIds,
+        collection.itemParameterId
+      ),
+      itemKeyParameterId: getMappedId(
+        newDataSourceIds,
+        collection.itemKeyParameterId
+      ),
+    }),
     context,
   });
 };

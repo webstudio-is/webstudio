@@ -22,6 +22,9 @@ import { createBuilderStateFromSnapshot } from "./state/adapters";
 import { createBuilderStateFreshness } from "./state/freshness";
 import { applyBuilderPatchTransactions } from "./state/patch";
 import { build } from "./state/fixtures.test-utils";
+import { parseWebstudioJsxFragment } from "./runtime/jsx";
+import { executeBuilderRuntimeOperation } from "./runtime/registry";
+import type { BuilderRuntimeMutation } from "./runtime/mutation";
 
 const compatibilityVersion = "test-session";
 const compatibility: ProjectSessionCompatibility = {
@@ -497,6 +500,83 @@ describe("project session", () => {
     });
     expect(transport.commits).toEqual([]);
     expect(storage.saved).toHaveLength(0);
+  });
+
+  test("plans and commits one semantic Collection transaction that survives refresh", async () => {
+    let remote = createSnapshot();
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport(remote);
+    transport.fetchNamespaces = async (input) => {
+      transport.loadedNamespaces.push([...input.namespaces]);
+      return remote;
+    };
+    let serverGeneratedId = 0;
+    transport.executeServerOperation = async <Result>(input: {
+      operationId: string;
+      input: unknown;
+    }) => {
+      transport.serverOperations.push(input);
+      const mutation =
+        await executeBuilderRuntimeOperation<BuilderRuntimeMutation>({
+          id: input.operationId,
+          state: remote.state,
+          input: input.input,
+          context: {
+            projectVersion: remote.version,
+            createId: () => `server-generated-id-${serverGeneratedId++}`,
+          },
+        });
+      const transaction: BuilderPatchTransaction = {
+        id: `server-transaction-${serverGeneratedId++}`,
+        payload: mutation.payload,
+      };
+      remote = {
+        ...remote,
+        version: remote.version + 1,
+        state: applyBuilderPatchTransactions(remote.state, [transaction]).state,
+      };
+      return mutation.result as Result;
+    };
+    const session = createSession({ storage, transport });
+    const input = {
+      parentInstanceId: "instance-root",
+      data: {
+        type: "json" as const,
+        value: [{ title: "First" }, { title: "Second" }],
+      },
+      itemFragment: await parseWebstudioJsxFragment(
+        '<ws.element ws:tag="article">{expression`collectionItem.title`}</ws.element>'
+      ),
+    };
+
+    await session.initialize();
+    const planned = await session.mutate("instances.insertCollection", input, {
+      dryRun: true,
+    });
+    expect(planned.diagnostics).toEqual([
+      expect.objectContaining({ code: "DRY_RUN" }),
+    ]);
+    expect(planned.source).toBe("dry-run");
+    expect(planned.state.committed).toBe(false);
+    expect(
+      planned.transaction?.payload.map((change) => change.namespace)
+    ).toEqual(expect.arrayContaining(["instances", "props", "dataSources"]));
+    expect(transport.commits).toHaveLength(0);
+
+    const committed = await session.mutate("instances.insertCollection", input);
+    expect(committed.state.committed).toBe(true);
+    expect(transport.serverOperations).toHaveLength(1);
+    const result = committed.result as { collectionInstanceId: string };
+    expect(
+      remote.state.instances?.get(result.collectionInstanceId)
+    ).toMatchObject({
+      component: "ws:collection",
+    });
+
+    await session.refresh(["instances", "props", "dataSources"]);
+    expect(
+      storage.saved.at(-1)?.state.instances?.get(result.collectionInstanceId)
+    ).toMatchObject({ component: "ws:collection" });
   });
 
   test("commits remotely before applying mutation locally", async () => {

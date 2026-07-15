@@ -81,13 +81,13 @@ inside actions. Use an explicit assignment there rather than `++` or `--`.
 
 ## Collections
 
-Whenever an array or object should render repeated UI, insert `ws:collection`
-with `insert-component` and bind its `data` prop to the complete iterable. Do
-not bind the response wrapper or one indexed item. Collection renders its child
-structure once per entry. Bind descendants with expressions such as
-`collectionItem.name`; for object iteration, `collectionItemKey` contains the
-current key. See `components.get {"component":"ws:collection"}` for the
-complete workflow.
+Whenever an array or object should render repeated UI, call `insert-collection`
+with the complete iterable and one repeated-item JSX root. Do not pass the
+response wrapper or one indexed item. The command creates the Collection and
+its private item parameters atomically, then renders the item root once per
+entry. Bind descendants with expressions such as `collectionItem.name`; for
+object iteration, `collectionItemKey` contains the current key. Wrap multiple
+repeated siblings in one `ws.element` root.
 
 ## Verification
 

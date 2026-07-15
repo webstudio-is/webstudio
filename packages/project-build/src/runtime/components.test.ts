@@ -8,11 +8,14 @@ import {
   type Page,
   type PageTemplate,
   type Pages,
+  type Prop,
+  type StyleDecl,
   type WsComponentMeta,
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
+  insertCollection,
   insertComponent,
   insertComponentInput,
   insertFragment,
@@ -241,6 +244,306 @@ test("keeps Collection item expressions linked to each inserted parameter", () =
     expect(itemParameterId).toBeDefined();
     expect(expressions).toContain(encodeDataVariableId(itemParameterId ?? ""));
   }
+});
+
+test("inserts a semantic Collection with literal data and bound item expressions", async () => {
+  const parent = createParent();
+  const mutation = insertCollection(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      data: {
+        type: "json",
+        value: [{ name: "Starter" }, { name: "Pro" }],
+      },
+      itemFragment: await parseWebstudioJsxFragment(
+        '<ws.element ws:tag="article" ws:style={css`display: grid;`}><ws.element ws:tag="h2">{expression`collectionItem.name`}</ws.element></ws.element>'
+      ),
+    },
+    { createId: createIdFactory() }
+  );
+  const instances = getAddedValues<Instance>(mutation, "instances");
+  const props = getAddedValues<Prop>(mutation, "props");
+  const styles = getAddedValues<StyleDecl>(mutation, "styles");
+
+  expect(mutation.result).toMatchObject({
+    parentInstanceId: parent.id,
+    collectionInstanceId: expect.any(String),
+    itemRootInstanceId: expect.any(String),
+    itemParameterId: expect.any(String),
+    itemKeyParameterId: expect.any(String),
+  });
+  expect(instances).toContainEqual(
+    expect.objectContaining({
+      id: mutation.result.collectionInstanceId,
+      component: collectionComponent,
+      children: [{ type: "id", value: mutation.result.itemRootInstanceId }],
+    })
+  );
+  expect(
+    instances.find(
+      (instance) => instance.id === mutation.result.collectionInstanceId
+    )
+  ).not.toHaveProperty("tag");
+  expect(props).toContainEqual(
+    expect.objectContaining({
+      instanceId: mutation.result.collectionInstanceId,
+      name: "data",
+      type: "json",
+      value: [{ name: "Starter" }, { name: "Pro" }],
+    })
+  );
+  expect(styles).toContainEqual(
+    expect.objectContaining({
+      property: "display",
+      value: { type: "keyword", value: "grid" },
+    })
+  );
+  expect(props).toContainEqual(
+    expect.objectContaining({
+      instanceId: mutation.result.collectionInstanceId,
+      name: "item",
+      type: "parameter",
+      value: mutation.result.itemParameterId,
+    })
+  );
+  expect(
+    instances.flatMap((instance) =>
+      instance.children.flatMap((child) =>
+        child.type === "expression" ? [child.value] : []
+      )
+    )
+  ).toContain(`${encodeDataVariableId(mutation.result.itemParameterId)}?.name`);
+});
+
+test("binds semantic Collection data to outer scope and item props to its parameter", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  state.dataSources.set("posts", {
+    id: "posts",
+    type: "variable",
+    name: "Posts",
+    scopeInstanceId: parent.id,
+    value: { type: "json", value: { data: { items: [] } } },
+  });
+  const mutation = insertCollection(
+    state,
+    {
+      parentInstanceId: parent.id,
+      data: { type: "expression", value: "Posts.data.items" },
+      itemFragment: await parseWebstudioJsxFragment(
+        '<ws.element ws:tag="article" title={expression`collectionItem.title`}>Item</ws.element>'
+      ),
+    },
+    { createId: createIdFactory() }
+  );
+  const props = getAddedValues<Prop>(mutation, "props");
+
+  expect(props).toContainEqual(
+    expect.objectContaining({
+      instanceId: mutation.result.collectionInstanceId,
+      name: "data",
+      type: "expression",
+      value: `${encodeDataVariableId("posts")}?.data?.items`,
+    })
+  );
+  expect(props).toContainEqual(
+    expect.objectContaining({
+      instanceId: mutation.result.itemRootInstanceId,
+      name: "title",
+      type: "expression",
+      value: `${encodeDataVariableId(mutation.result.itemParameterId)}?.title`,
+    })
+  );
+});
+
+test("binds semantic Collection data to an HTTP resource result", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  state.dataSources.set("posts", {
+    id: "posts",
+    type: "resource",
+    name: "Posts",
+    scopeInstanceId: parent.id,
+    resourceId: "posts-resource",
+  });
+  const mutation = insertCollection(
+    state,
+    {
+      parentInstanceId: parent.id,
+      data: { type: "expression", value: "Posts.data.items" },
+      itemFragment: await parseWebstudioJsxFragment(
+        '<ws.element ws:tag="article">{expression`collectionItem.title`}</ws.element>'
+      ),
+    },
+    { createId: createIdFactory() }
+  );
+  const dataProp = getAddedValues<Prop>(mutation, "props").find(
+    (prop) =>
+      prop.instanceId === mutation.result.collectionInstanceId &&
+      prop.name === "data"
+  );
+
+  expect(dataProp).toMatchObject({
+    type: "expression",
+    value: `${encodeDataVariableId("posts")}?.data?.items`,
+  });
+});
+
+test("binds object Collection keys to the generated itemKey parameter", async () => {
+  const parent = createParent();
+  const mutation = insertCollection(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      data: {
+        type: "json",
+        value: { starter: { name: "Starter" }, pro: { name: "Pro" } },
+      },
+      itemFragment: await parseWebstudioJsxFragment(
+        '<ws.element ws:tag="article">{expression`collectionItemKey`}</ws.element>'
+      ),
+    },
+    { createId: createIdFactory() }
+  );
+  const itemRoot = getAddedValues<Instance>(mutation, "instances").find(
+    (instance) => instance.id === mutation.result.itemRootInstanceId
+  );
+
+  expect(itemRoot?.children).toContainEqual({
+    type: "expression",
+    value: encodeDataVariableId(mutation.result.itemKeyParameterId),
+  });
+});
+
+test("requires one semantic Collection item root", async () => {
+  const parent = createParent();
+  const itemFragment = await parseWebstudioJsxFragment(
+    '<ws.element ws:tag="div" /><ws.element ws:tag="div" />'
+  );
+  expect(() =>
+    insertCollection(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        data: { type: "json", value: [] },
+        itemFragment,
+      },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("exactly one root instance");
+});
+
+test.each([
+  {
+    name: "duplicate ids",
+    createExtra: (root: Instance) => ({ ...root }),
+    message: "instance ids must be unique",
+  },
+  {
+    name: "a disconnected instance",
+    createExtra: (root: Instance) => ({ ...root, id: "disconnected" }),
+    message: "must not contain instances disconnected from its root",
+  },
+])(
+  "rejects Collection item fragments with $name",
+  ({ createExtra, message }) => {
+    const parent = createParent();
+    const root: Instance = {
+      type: "instance",
+      id: "item-root",
+      component: elementComponent,
+      tag: "article",
+      children: [],
+    };
+    expect(() =>
+      insertCollection(
+        createState(parent),
+        {
+          parentInstanceId: parent.id,
+          data: { type: "json", value: [] },
+          itemFragment: {
+            ...createEmptyWebstudioFragment(),
+            children: [{ type: "id", value: root.id }],
+            instances: [root, createExtra(root)],
+          },
+        },
+        { createId: createIdFactory() }
+      )
+    ).toThrow(message);
+  }
+);
+
+test.each([
+  {
+    name: "a missing child",
+    childId: "missing",
+    message: 'references missing instance "missing"',
+  },
+  {
+    name: "a cycle",
+    childId: "item-root",
+    message: "instance tree must not contain a cycle",
+  },
+])("rejects Collection item fragments with $name", ({ childId, message }) => {
+  const parent = createParent();
+  expect(() =>
+    insertCollection(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        data: { type: "json", value: [] },
+        itemFragment: {
+          ...createEmptyWebstudioFragment(),
+          children: [{ type: "id", value: "item-root" }],
+          instances: [
+            {
+              type: "instance",
+              id: "item-root",
+              component: elementComponent,
+              tag: "article",
+              children: [{ type: "id", value: childId }],
+            },
+          ],
+        },
+      },
+      { createId: createIdFactory() }
+    )
+  ).toThrow(message);
+});
+
+test("rejects Collection item ids that collide with its canonical template", () => {
+  const parent = createParent();
+  const template = getComponentTemplates().get(collectionComponent)?.template;
+  const collectionRoot = template?.children[0];
+  expect(collectionRoot?.type).toBe("id");
+  if (collectionRoot?.type !== "id") {
+    throw new Error("Collection template root is unavailable");
+  }
+
+  expect(() =>
+    insertCollection(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        data: { type: "json", value: [] },
+        itemFragment: {
+          ...createEmptyWebstudioFragment(),
+          children: [{ type: "id", value: collectionRoot.value }],
+          instances: [
+            {
+              type: "instance",
+              id: collectionRoot.value,
+              component: elementComponent,
+              tag: "article",
+              children: [],
+            },
+          ],
+        },
+      },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("conflicts with the generated Collection template");
 });
 
 test("inserts fragment into page template", async () => {
