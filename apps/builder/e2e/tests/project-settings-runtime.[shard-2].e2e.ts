@@ -1,6 +1,6 @@
 import type { Page as PlaywrightPage } from "playwright";
 import type { Page as WebstudioPage } from "@webstudio-is/sdk";
-import { parseProjectAuthRoutes } from "@webstudio-is/project-build/runtime";
+import { parseProjectAuthRoutes } from "@webstudio-is/project-build/contracts";
 import { loadDevBuild, updateProject } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { loginWithSecret } from "../flows/dashboard";

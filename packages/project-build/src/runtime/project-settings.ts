@@ -8,11 +8,14 @@ import {
   redirectSourcePath,
 } from "@webstudio-is/sdk";
 import { z } from "zod";
-import { parseWsAuth, type WsAuthRoute } from "@webstudio-is/wsauth";
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
 } from "../contracts/patch";
+import {
+  validateContactEmail,
+  validateProjectAuth,
+} from "../contracts/project-settings";
 import type { BuilderState } from "../state/builder-state";
 import { hasReachedBreakpointLimit, isBaseBreakpoint } from "./breakpoints";
 import type { BuilderRuntimeContext } from "./context";
@@ -35,6 +38,14 @@ import {
   normalizeRedirectSource,
   stripRedirectSourceFragment,
 } from "./redirect-source";
+
+export {
+  parseProjectAuthRoutes,
+  validateContactEmail,
+  validateProjectAuth,
+  validateProjectAuthRoute,
+  validateProjectAuthRouteSyntax,
+} from "../contracts/project-settings";
 
 const getRequiredBreakpoints = (state: Pick<BuilderState, "breakpoints">) => {
   if (state.breakpoints === undefined) {
@@ -100,91 +111,6 @@ export const projectSettingsUpdateInput = z
   );
 
 export const marketplaceProductUpdateInput = marketplaceProduct;
-
-const emailAddress = z.string().email();
-
-const getContactEmails = (contactEmail: string) => {
-  const trimmedContactEmail = contactEmail.trim();
-  if (trimmedContactEmail.length === 0) {
-    return [];
-  }
-  return trimmedContactEmail.split(/\s*,\s*/);
-};
-
-export const validateContactEmail = (
-  contactEmail: string,
-  maxContactEmailsPerProject?: number
-) => {
-  const emails = getContactEmails(contactEmail);
-  if (emails.length === 0) {
-    return;
-  }
-  if (
-    maxContactEmailsPerProject !== undefined &&
-    emails.length > maxContactEmailsPerProject
-  ) {
-    if (maxContactEmailsPerProject === 0) {
-      return `Upgrade to PRO to customize the contact email.`;
-    }
-    return `Only ${maxContactEmailsPerProject} emails are allowed.`;
-  }
-  if (
-    emails.every((email) => emailAddress.safeParse(email).success) === false
-  ) {
-    return "Contact email is invalid.";
-  }
-};
-
-export const validateProjectAuth = (auth: string) => {
-  const result = parseWsAuth(auth);
-  if (result.errors.length === 0) {
-    return;
-  }
-  return result.errors
-    .map((error) => `${error.path}: ${error.message}`)
-    .join("\n");
-};
-
-export const parseProjectAuthRoutes = (auth: string | undefined) => {
-  return parseWsAuth(auth ?? "");
-};
-
-export const validateProjectAuthRouteSyntax = (route: string) => {
-  const result = parseWsAuth(
-    JSON.stringify({
-      version: 1,
-      routes: {
-        [route]: {
-          method: "basic",
-          login: "login",
-          password: "password",
-        },
-      },
-    })
-  );
-  return result.errors.find((error) =>
-    error.path.startsWith(`routes.${JSON.stringify(route)}`)
-  )?.message;
-};
-
-export const validateProjectAuthRoute = (
-  route: string,
-  authRoutes: readonly WsAuthRoute[]
-) => {
-  const errors: string[] = [];
-  if (route === "") {
-    errors.push("Route is required");
-    return errors;
-  }
-  const routeError = validateProjectAuthRouteSyntax(route);
-  if (routeError !== undefined) {
-    errors.push(routeError);
-  }
-  if (authRoutes.some((authRoute) => authRoute.route === route)) {
-    errors.push("This route already requires authentication");
-  }
-  return errors;
-};
 
 const validateProjectMetaUpdate = (
   values: z.infer<typeof projectMetaUpdateInput>

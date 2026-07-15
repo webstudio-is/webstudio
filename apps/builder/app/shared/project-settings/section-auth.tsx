@@ -34,7 +34,7 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   parseProjectAuthRoutes,
   validateProjectAuthRoute,
-} from "@webstudio-is/project-build/runtime";
+} from "@webstudio-is/project-build/contracts";
 
 const saveAuthRoutes = (authRoutes: WsAuthRoute[]) => {
   executeRuntimeMutation({
