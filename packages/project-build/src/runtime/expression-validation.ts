@@ -1,10 +1,6 @@
 import { lintExpression } from "@webstudio-is/sdk";
+import { z } from "zod";
 import type { SemanticValidationIssue } from "./errors";
-
-export const getExpressionErrors = (expression: string) =>
-  lintExpression({ expression })
-    .filter((diagnostic) => diagnostic.severity === "error")
-    .map((diagnostic) => diagnostic.message);
 
 export const getExpressionErrorMessages = (
   options: Parameters<typeof lintExpression>[0]
@@ -13,9 +9,52 @@ export const getExpressionErrorMessages = (
     .filter((diagnostic) => diagnostic.severity === "error")
     .map((diagnostic) => diagnostic.message);
 
+export const getExpressionErrors = (expression: string) =>
+  getExpressionErrorMessages({ expression });
+
 export const hasExpressionDiagnostics = (
   options: Parameters<typeof lintExpression>[0]
 ) => lintExpression(options).length > 0;
+
+export const expressionWarningSchema = z.object({
+  severity: z.literal("warning"),
+  code: z.string(),
+  path: z.array(z.string()),
+  message: z.string(),
+  range: z.object({
+    from: z.number().int().nonnegative(),
+    to: z.number().int().nonnegative(),
+  }),
+  remediation: z.string(),
+  instanceId: z.string().optional(),
+  resourceId: z.string().optional(),
+});
+
+export type ExpressionWarning = z.infer<typeof expressionWarningSchema>;
+
+export const getExpressionWarnings = ({
+  path,
+  instanceId,
+  resourceId,
+  ...options
+}: Parameters<typeof lintExpression>[0] & {
+  path: string[];
+  instanceId?: string;
+  resourceId?: string;
+}): ExpressionWarning[] =>
+  lintExpression(options)
+    .filter(({ severity }) => severity !== "error")
+    .map(({ from, to, message }) => ({
+      severity: "warning",
+      code: "expression_lint_warning",
+      path,
+      message,
+      range: { from, to },
+      remediation:
+        "Use a variable available at this element or resource scope, then verify the rendered dynamic value.",
+      ...(instanceId === undefined ? {} : { instanceId }),
+      ...(resourceId === undefined ? {} : { resourceId }),
+    }));
 
 export const getNamedExpressionValidationIssues = (
   name: string,

@@ -33,11 +33,35 @@ const buildId = "release-smoke-build";
 const projectVersion = 1;
 const sessionVersion = "cli-project-session-v1";
 const releaseVersionPlaceholder = "0.0.0-webstudio-version";
+const agentSmokeClients = [
+  { connect: "claude", name: "claude-code" },
+  { connect: "codex", name: "codex" },
+  { connect: "cursor", name: "cursor" },
+] as const;
 
 const reportPhase = (phase: string, startedAt = Date.now()) => {
   process.stderr.write(
     `[release-smoke] ${phase} (${Date.now() - startedAt}ms)\n`
   );
+};
+
+const runAgentWorkflowStep = async <Result>({
+  step,
+  recovery,
+  run,
+}: {
+  step: string;
+  recovery: string;
+  run: () => Promise<Result>;
+}) => {
+  try {
+    return await run();
+  } catch (error) {
+    throw new Error(
+      `Agent connection workflow stopped at "${step}": ${error instanceof Error ? error.message : String(error)} Recovery: ${recovery}`,
+      { cause: error }
+    );
+  }
 };
 
 const replaceReleaseVersion = async (
@@ -447,9 +471,24 @@ const startFixtureApi = async (
       const operationPath = new URL(
         requestUrl,
         "http://127.0.0.1"
-      ).pathname.replace(/^\/trpc\/api\./, "");
+      ).pathname.replace(/^\/trpc\/(?:api\.)?/, "");
       let data: unknown;
-      if (operationPath === "build.patch") {
+      if (operationPath === "build.loadProjectBundleByProjectId") {
+        data = fixture.data;
+      } else if (operationPath === "projects.get") {
+        data = {
+          id: projectId,
+          name: "Release smoke project",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          buildId,
+          version,
+          homePageId: "home",
+          features: {},
+        };
+      } else if (operationPath === "publish.create") {
+        data = { jobId: "release-smoke-staging-job" };
+      } else if (operationPath === "build.patch") {
         const input = (await readTrpcInput(request)) as {
           transactions?: BuilderPatchTransaction[];
         };
@@ -730,16 +769,47 @@ const run = async () => {
     }
     reportPhase("installed packed CLI", installStartedAt);
 
-    await writeFile(
-      join(projectDirectory, ".webstudio", "data.json"),
-      JSON.stringify(fixture.data),
-      "utf8"
+    const bin = join(projectDirectory, "node_modules", ".bin", "webstudio");
+    const env = {
+      ...process.env,
+      WEBSTUDIO_CONFIG_DIR: configDirectory,
+    };
+    const globalConfigPath = join(configDirectory, "webstudio-config.json");
+    await mkdir(dirname(globalConfigPath), { recursive: true });
+    await writeFile(globalConfigPath, "{}", "utf8");
+    const workflowStartedAt = Date.now();
+    const runCliStep = (step: string, recovery: string, args: string[]) =>
+      runAgentWorkflowStep({
+        step,
+        recovery,
+        run: () =>
+          execFileAsync(bin, args, {
+            cwd: projectDirectory,
+            env,
+            maxBuffer: 20 * 1024 * 1024,
+          }),
+      });
+
+    const shareLink = `${fixtureApi.origin}/builder/${projectId}?authToken=fixture`;
+    const initialized = await runCliStep(
+      "link",
+      "Create a fresh editable API share link and rerun webstudio init --link <share-link> --json.",
+      ["init", "--link", shareLink, "--json"]
     );
-    await writeFile(
-      join(projectDirectory, ".webstudio", "config.json"),
-      JSON.stringify({ projectId }),
-      "utf8"
+    await assertJsonStdout(initialized.stdout, "agent workflow link");
+    await runCliStep(
+      "sync",
+      "Verify the share link has API access, then run webstudio sync again.",
+      ["sync"]
     );
+    for (const { connect: client } of agentSmokeClients) {
+      await runCliStep(
+        `connect ${client}`,
+        `Run webstudio connect ${client} again and reload ${client}.`,
+        ["connect", client]
+      );
+    }
+
     const state = adapters.createBuilderStateFromBuildData({
       ...fixture.build,
       pages: pagesModule.migratePages(fixture.persistedPages),
@@ -778,21 +848,6 @@ const run = async () => {
       }),
       "utf8"
     );
-    const globalConfigPath = join(configDirectory, "webstudio-config.json");
-    await mkdir(dirname(globalConfigPath), { recursive: true });
-    await writeFile(
-      globalConfigPath,
-      JSON.stringify({
-        [projectId]: { origin: fixtureApi.origin, token: "fixture" },
-      }),
-      "utf8"
-    );
-
-    const bin = join(projectDirectory, "node_modules", ".bin", "webstudio");
-    const env = {
-      ...process.env,
-      WEBSTUDIO_CONFIG_DIR: configDirectory,
-    };
     const invoke = async (label: string, args: string[]) => {
       const result = await execFileAsync(bin, args, {
         cwd: projectDirectory,
@@ -802,6 +857,23 @@ const run = async () => {
       await assertJsonStdout(result.stdout, label);
       return JSON.parse(result.stdout) as Record<string, unknown>;
     };
+
+    const stagingPublish = await invoke("agent workflow staging publish", [
+      "publish",
+      "deploy",
+      "--target",
+      "staging",
+      "--json",
+    ]);
+    if (
+      stagingPublish.ok !== true ||
+      getRecord(stagingPublish.data, "staging publish data").jobId !==
+        "release-smoke-staging-job"
+    ) {
+      throw new Error(
+        `Agent connection workflow stopped at "staging publish": ${JSON.stringify(stagingPublish)} Recovery: Verify edit permission and retry webstudio publish deploy --target staging --json.`
+      );
+    }
 
     const docs = await readFile(
       join(import.meta.dirname, "../src/docs/api-use-cases.md"),
@@ -910,6 +982,39 @@ const run = async () => {
       force: true,
     });
     const stdioStartedAt = Date.now();
+    for (const { name: clientName } of agentSmokeClients) {
+      await runAgentWorkflowStep({
+        step: `${clientName} connection smoke`,
+        recovery: `Reload ${clientName}, then verify its Webstudio MCP command starts in the linked project folder.`,
+        run: async () => {
+          const transport = new StdioClientTransport({
+            command: bin,
+            args: ["mcp"],
+            cwd: projectDirectory,
+            env: Object.fromEntries(
+              Object.entries(env).filter(
+                (entry): entry is [string, string] =>
+                  typeof entry[1] === "string"
+              )
+            ),
+            stderr: "pipe",
+          });
+          transport.stderr?.on("data", () => {});
+          const client = new Client({ name: clientName, version: "1.0.0" });
+          await client.connect(transport);
+          try {
+            const tools = await client.listTools();
+            if (
+              tools.tools.some(({ name }) => name === "meta.index") === false
+            ) {
+              throw new Error("Webstudio connected but meta.index is missing.");
+            }
+          } finally {
+            await client.close();
+          }
+        },
+      });
+    }
     const stdioTransport = new StdioClientTransport({
       command: bin,
       args: ["mcp"],
@@ -947,6 +1052,12 @@ const run = async () => {
     };
     await stdioClient.connect(stdioTransport);
     try {
+      const inspection = await callTool("inspect");
+      if (inspection.id !== projectId) {
+        throw new Error(
+          `Inspect returned the wrong project: ${JSON.stringify(inspection)}`
+        );
+      }
       const initialPages = await callTool("list-pages", {
         includeFolders: true,
       });
@@ -1067,6 +1178,17 @@ const run = async () => {
         origin: "http://127.0.0.1:5191",
       });
       await callTool("preview.stop");
+
+      const workflowDuration = Date.now() - workflowStartedAt;
+      if (workflowDuration >= 10 * 60_000) {
+        throw new Error(
+          `Agent connection workflow exceeded ten minutes (${workflowDuration}ms). Recovery: Inspect the reported release-smoke phase timings and optimize the slowest blocked step.`
+        );
+      }
+      reportPhase(
+        "completed ten-minute agent connection workflow",
+        workflowStartedAt
+      );
 
       const finalPages = await callTool("list-pages");
       const finalPageNames = Array.isArray(finalPages.pages)

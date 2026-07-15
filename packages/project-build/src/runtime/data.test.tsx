@@ -2435,7 +2435,13 @@ describe("resource patch helpers", () => {
     expect(result.result).toMatchObject({
       dataSourceId: "data-source-id",
       warnings: [
-        "The POST resource is explicitly exposed as render-time data and may execute while rendering the page.",
+        expect.objectContaining({
+          code: "render_time_mutation_resource",
+          path: ["resource", "method"],
+          resourceId: "resource-id",
+          message: expect.stringContaining("may execute while rendering"),
+          remediation: expect.stringContaining("explicit action"),
+        }),
       ],
     });
     expect(result.payload).toContainEqual(
@@ -3225,11 +3231,40 @@ describe("resource patch helpers", () => {
     expect(result.result).toMatchObject({
       resourceId: "resource",
       dataSourceId: "data-source",
-      warnings: [],
+      warnings: [
+        expect.objectContaining({
+          code: "render_time_mutation_resource",
+          resourceId: "resource",
+        }),
+      ],
     });
     expect(result.payload).not.toContainEqual({
       namespace: "dataSources",
       patches: [{ op: "remove", path: ["data-source"] }],
+    });
+  });
+
+  test("reports updated resource expression warnings at input paths", () => {
+    const state = createResourceState();
+    state.resources.set("resource", resource);
+
+    const result = updateResource(
+      state,
+      {
+        resourceId: "resource",
+        values: { body: "missingPayload" },
+      },
+      { createId: () => "unused-id" }
+    );
+
+    expect(result.result).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          code: "expression_lint_warning",
+          path: ["values", "body"],
+          resourceId: "resource",
+        }),
+      ],
     });
   });
 
@@ -3257,7 +3292,13 @@ describe("resource patch helpers", () => {
     expect(attached.result).toMatchObject({
       dataSourceId: "data-source",
       warnings: [
-        "The POST resource is explicitly exposed as render-time data and may execute while rendering the page.",
+        expect.objectContaining({
+          code: "render_time_mutation_resource",
+          path: ["values", "method"],
+          resourceId: "resource",
+          message: expect.stringContaining("may execute while rendering"),
+          remediation: expect.stringContaining("explicit action"),
+        }),
       ],
     });
     expect(attached.payload).toContainEqual(

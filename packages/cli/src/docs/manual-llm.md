@@ -21,7 +21,7 @@ For delegated design-system or “use every component” tasks, skip the generic
 6. Pick focused MCP read tool.
 7. Pick semantic MCP write tool.
 
-Use `webstudio schema mcp` for a tiny MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` only when exact input schemas for all tools are truly needed; otherwise prefer focused `meta.get_more_tools` and `components.*` calls.
+Use `webstudio schema mcp` for a compact MCP tool overview. Add `--verbose` only when exact input schemas for all tools are truly needed; otherwise prefer focused `meta.get_more_tools` and `components.*` calls.
 
 Run these commands from the linked project root. Use the MCP startup status line's absolute root for local files; write temporary scripts and artifacts under `<project root>/.temp`, not under a parent workspace.
 

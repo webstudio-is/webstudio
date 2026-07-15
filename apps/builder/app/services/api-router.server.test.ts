@@ -728,7 +728,9 @@ describe("api instance queries", () => {
         maxDepth: 1,
         labelContains: "Hero",
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
+      detail: "compact",
+      total: 1,
       instances: [
         {
           id: "hero-1",
@@ -880,13 +882,14 @@ describe("api instance queries", () => {
         projectId: "project-1",
         withUsage: true,
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
+      detail: "compact",
+      total: 1,
       tokens: [
         {
           id: "token-1",
           name: "Primary",
           declarationCount: 1,
-          styles: undefined,
           usageCount: 1,
         },
       ],

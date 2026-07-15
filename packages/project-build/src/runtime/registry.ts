@@ -4,6 +4,8 @@ import {
   type BuilderNamespace,
 } from "../contracts/namespaces";
 import type { BuilderApiCapability } from "../contracts/permissions";
+import { paginatedOutputInputSchema } from "./output";
+import { getExpressionWarnings } from "./expression-validation";
 import {
   getInputSchemaMetadata,
   isHiddenPublicApiInputField,
@@ -156,6 +158,77 @@ const bindExpressionInput = (
     dataSources: state.dataSources,
   });
 };
+
+const getScopedExpressionWarnings = (
+  state: BuilderState,
+  instanceId: string,
+  path: string[],
+  expression: string,
+  allowAssignment = false,
+  additionalVariables: readonly string[] = []
+) => {
+  if (state.instances === undefined || state.dataSources === undefined) {
+    return [];
+  }
+  const availableVariables = new Set(
+    data
+      .findAvailableVariables({
+        startingInstanceId: instanceId,
+        instances: state.instances,
+        dataSources: state.dataSources,
+      })
+      .map(({ name }) => name)
+  );
+  for (const name of additionalVariables) {
+    availableVariables.add(name);
+  }
+  return getExpressionWarnings({
+    expression,
+    availableVariables,
+    allowAssignment,
+    path,
+    instanceId,
+  });
+};
+
+const getScopedPropWarnings = ({
+  state,
+  instanceId,
+  path,
+  prop,
+  variables = [],
+}: {
+  state: BuilderState;
+  instanceId: string;
+  path: string[];
+  prop: Parameters<typeof props.listPropExpressions>[0];
+  variables?: readonly string[];
+}) =>
+  props
+    .listPropExpressions(prop)
+    .flatMap((entry) =>
+      getScopedExpressionWarnings(
+        state,
+        instanceId,
+        [...path, ...entry.path],
+        entry.expression,
+        entry.allowAssignment,
+        [...variables, ...entry.variables]
+      )
+    );
+
+const withExpressionWarnings = <
+  Mutation extends { result: Record<string, unknown> },
+>(
+  mutation: Mutation,
+  warnings: ReturnType<typeof getExpressionWarnings>
+) =>
+  warnings.length === 0
+    ? mutation
+    : {
+        ...mutation,
+        result: { ...mutation.result, warnings },
+      };
 
 const runtimeOperation = <
   Id extends RuntimeOutputSchemaId,
@@ -310,6 +383,7 @@ const instanceListInput = instanceFilterInput.extend({
   maxDepth: z.number().int().nonnegative().optional(),
   topLevelOnly: z.boolean().optional(),
   labelContains: z.string().optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const instanceInspectInput = z.object({
   instanceId: z.string(),
@@ -344,6 +418,7 @@ const styleDeclarationsListInput = z.object({
   property: z.string().optional(),
   propertyFilter: z.string().optional(),
   includeTokens: z.boolean().optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const designTokenListInput = z.object({
   filter: z.string().optional(),
@@ -351,11 +426,8 @@ const designTokenListInput = z.object({
     .boolean()
     .optional()
     .describe("Include usage counts. Defaults to true."),
-  includeStyles: z
-    .boolean()
-    .optional()
-    .describe("Include full inline style declarations for each token."),
   sort: z.enum(["name", "usage"]).optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const cssVariableListInput = z.object({
   filter: z.string().optional(),
@@ -368,8 +440,7 @@ const assetListInput = z.object({
   type: z.enum(["image", "font"]).optional(),
   sort: z.enum(["name", "size", "createdAt", "usage"]).optional(),
   withUsage: z.boolean().optional(),
-  cursor: z.string().optional(),
-  limit: z.number().int().min(1).optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const assetUsageInput = z.object({ assetId: z.string() });
 
@@ -849,8 +920,31 @@ export const builderRuntimeOperations = [
       writeNamespaces: components.componentInsertNamespaces,
     }),
     collection.insertCollectionInput,
-    ({ state, input, context }) =>
-      components.insertCollection(state, input, context)
+    ({ state, input, context }) => {
+      const warnings = [
+        ...(input.data.type === "expression"
+          ? getScopedExpressionWarnings(
+              state,
+              input.parentInstanceId,
+              ["data", "value"],
+              input.data.value
+            )
+          : []),
+        ...input.itemFragment.props.flatMap((prop, index) =>
+          getScopedPropWarnings({
+            state,
+            instanceId: input.parentInstanceId,
+            path: ["itemFragment", "props", String(index), "value"],
+            prop,
+            variables: ["collectionItem", "collectionItemKey"],
+          })
+        ),
+      ];
+      return withExpressionWarnings(
+        components.insertCollection(state, input, context),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.insertFragment",
@@ -1035,25 +1129,37 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["props"],
     }),
     props.propUpdatesInput,
-    ({ state, input, context }) =>
-      props.updateProps(
-        state,
-        {
-          updates: input.updates.map((update) =>
-            update.type === "expression"
-              ? {
-                  ...update,
-                  value: bindExpressionInput(
-                    state,
-                    update.instanceId,
-                    update.value
-                  ),
-                }
-              : update
-          ),
-        },
-        context
-      )
+    ({ state, input, context }) => {
+      const warnings = input.updates.flatMap((update, index) =>
+        getScopedPropWarnings({
+          state,
+          instanceId: update.instanceId,
+          path: ["updates", String(index), "value"],
+          prop: update,
+        })
+      );
+      return withExpressionWarnings(
+        props.updateProps(
+          state,
+          {
+            updates: input.updates.map((update) =>
+              update.type === "expression"
+                ? {
+                    ...update,
+                    value: bindExpressionInput(
+                      state,
+                      update.instanceId,
+                      update.value
+                    ),
+                  }
+                : update
+            ),
+          },
+          context
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.replacePropText",
@@ -1084,28 +1190,40 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["props"],
     }),
     props.propBindingsInput,
-    ({ state, input, context }) =>
-      props.bindProps(
-        state,
-        {
-          bindings: input.bindings.map((binding) =>
-            binding.binding.type === "expression"
-              ? {
-                  ...binding,
-                  binding: {
-                    ...binding.binding,
-                    value: bindExpressionInput(
-                      state,
-                      binding.instanceId,
-                      binding.binding.value
-                    ),
-                  },
-                }
-              : binding
-          ),
-        },
-        context
-      )
+    ({ state, input, context }) => {
+      const warnings = input.bindings.flatMap((binding, index) =>
+        getScopedPropWarnings({
+          state,
+          instanceId: binding.instanceId,
+          path: ["bindings", String(index), "binding", "value"],
+          prop: binding.binding,
+        })
+      );
+      return withExpressionWarnings(
+        props.bindProps(
+          state,
+          {
+            bindings: input.bindings.map((binding) =>
+              binding.binding.type === "expression"
+                ? {
+                    ...binding,
+                    binding: {
+                      ...binding.binding,
+                      value: bindExpressionInput(
+                        state,
+                        binding.instanceId,
+                        binding.binding.value
+                      ),
+                    },
+                  }
+                : binding
+            ),
+          },
+          context
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.listTexts",
@@ -1123,16 +1241,29 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     instances.updateTextInstanceInput,
-    ({ state, input }) =>
-      instances.updateTextInstance(
-        state,
+    ({ state, input }) => {
+      const warnings =
         input.mode === "expression"
-          ? {
-              ...input,
-              text: bindExpressionInput(state, input.instanceId, input.text),
-            }
-          : input
-      )
+          ? getScopedExpressionWarnings(
+              state,
+              input.instanceId,
+              ["text"],
+              input.text
+            )
+          : [];
+      return withExpressionWarnings(
+        instances.updateTextInstance(
+          state,
+          input.mode === "expression"
+            ? {
+                ...input,
+                text: bindExpressionInput(state, input.instanceId, input.text),
+              }
+            : input
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.replaceText",
@@ -1154,16 +1285,29 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     instances.setTextContentInput,
-    ({ state, input }) =>
-      instances.setTextContent(
-        state,
+    ({ state, input }) => {
+      const warnings =
         input.operation === "set" && input.mode === "expression"
-          ? {
-              ...input,
-              text: bindExpressionInput(state, input.instanceId, input.text),
-            }
-          : input
-      )
+          ? getScopedExpressionWarnings(
+              state,
+              input.instanceId,
+              ["text"],
+              input.text
+            )
+          : [];
+      return withExpressionWarnings(
+        instances.setTextContent(
+          state,
+          input.operation === "set" && input.mode === "expression"
+            ? {
+                ...input,
+                text: bindExpressionInput(state, input.instanceId, input.text),
+              }
+            : input
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.updateTextTree",

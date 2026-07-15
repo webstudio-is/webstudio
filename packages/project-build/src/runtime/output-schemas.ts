@@ -2,25 +2,32 @@ import { z } from "zod";
 import {
   assetType,
   compilerSettings,
+  dataSourceVariableValue,
   documentTypes,
   pageAuth,
   pageRedirect,
   pageTemplate as sdkPageTemplate,
   projectMeta,
   prop,
+  instance,
 } from "@webstudio-is/sdk";
+import { paginatedOutputMetadataSchema } from "./output";
 import { builderNamespaces } from "../contracts/namespaces";
 import { builderPatchSchema } from "../contracts/patch";
 import { marketplaceProduct } from "../shared/marketplace";
 import { auditResult } from "./audit";
 import { insertCollectionResult } from "./collection";
 import { componentInsertResult } from "./component-insert-contract";
+import { expressionWarningSchema } from "./expression-validation";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
 const id = z.string();
 const stringArray = z.array(z.string());
-const unknownRecord = z.record(z.string(), z.unknown());
+const styleValue = looseObject({
+  type: z.string().describe("CSS value kind"),
+  hidden: z.boolean().optional(),
+});
 
 const patchChange = z.object({
   namespace: z.enum(builderNamespaces),
@@ -104,6 +111,7 @@ const instanceSummary = looseObject({
   parentId: id.optional(),
   indexWithinParent: z.number().int().optional(),
 });
+const outputPage = paginatedOutputMetadataSchema.shape;
 const breakpoint = looseObject({
   id,
   label: z.string(),
@@ -129,16 +137,20 @@ const declaration = looseObject({
   instanceId: id,
   styleSourceId: id,
   property: z.string(),
-  value: z.unknown(),
+  value: styleValue,
   breakpoint: id,
   state: z.string().optional(),
   source: z.enum(["local", "token"]),
+});
+const declarationSummary = declaration.omit({ value: true }).extend({
+  valueType: z.string(),
+  value: styleValue.optional(),
 });
 const token = looseObject({
   id,
   name: z.string(),
   declarationCount: z.number().int(),
-  styles: unknownRecord.optional(),
+  styles: z.record(z.string(), styleValue).optional(),
   usageCount: z.number().int().optional(),
 });
 const cssVariable = looseObject({
@@ -151,7 +163,7 @@ const variable = looseObject({
   id,
   name: z.string(),
   scopeInstanceId: id.optional(),
-  value: z.unknown(),
+  value: dataSourceVariableValue,
 });
 const resource = looseObject({
   id,
@@ -166,13 +178,24 @@ const asset = looseObject({
   id,
   name: z.string(),
   filename: z.string().optional(),
-  description: z.string().nullable().optional(),
   type: assetType,
   size: z.number(),
   contentType: z.string(),
-  createdAt: z.string(),
   usageCount: z.number().int().optional(),
 });
+const assetRecord = looseObject({
+  id,
+  projectId: id,
+  name: z.string(),
+  filename: z.string().optional(),
+  description: z.string().nullable().optional(),
+  type: assetType,
+  size: z.number(),
+  format: z.string(),
+  createdAt: z.string(),
+  meta: looseObject({}),
+});
+const assetListItem = asset.extend({ record: assetRecord.optional() });
 const assetUsage = looseObject({
   namespace: z.enum([
     "props",
@@ -235,10 +258,11 @@ const resourceReplacementMatch = looseObject({
   before: z.string(),
   after: z.string(),
 });
+const expressionWarnings = z.array(expressionWarningSchema);
 const resourceMutationResult = looseObject({
   resourceId: id,
   dataSourceId: id.optional(),
-  warnings: stringArray,
+  warnings: expressionWarnings,
 });
 
 export const runtimeOutputSchemas = {
@@ -314,7 +338,10 @@ export const runtimeOutputSchemas = {
   }),
   "pageTree.move": looseObject({ childId: id }),
   "pageTree.reparentOrphans": looseObject({}),
-  "instances.list": looseObject({ instances: z.array(instanceSummary) }),
+  "instances.list": looseObject({
+    instances: z.array(instanceSummary.extend({ record: instance.optional() })),
+    ...outputPage,
+  }),
   "instances.inspect": instanceSummary.extend({
     ancestors: z.array(instanceSummary).optional(),
     props: z.array(prop).optional(),
@@ -332,7 +359,9 @@ export const runtimeOutputSchemas = {
   }),
   "project.audit": auditResult,
   "instances.insertComponent": componentInsertResult,
-  "instances.insertCollection": insertCollectionResult,
+  "instances.insertCollection": insertCollectionResult.extend({
+    warnings: expressionWarnings.optional(),
+  }),
   "instances.insertFragment": fragmentInsertResult,
   "instances.move": instanceIdsResult,
   "instances.reparent": looseObject({
@@ -355,7 +384,10 @@ export const runtimeOutputSchemas = {
     instanceIds: stringArray,
     instanceSelector: stringArray.optional(),
   }),
-  "instances.updateProps": looseObject({ propIds: stringArray }),
+  "instances.updateProps": looseObject({
+    propIds: stringArray,
+    warnings: expressionWarnings.optional(),
+  }),
   "instances.replacePropText": looseObject({
     changedCount: z.number().int(),
     matchingPropCount: z.number().int(),
@@ -363,12 +395,16 @@ export const runtimeOutputSchemas = {
     matches: z.array(propReplacementMatch),
   }),
   "instances.deleteProps": looseObject({ propIds: stringArray }),
-  "instances.bindProps": looseObject({ propIds: stringArray }),
+  "instances.bindProps": looseObject({
+    propIds: stringArray,
+    warnings: expressionWarnings.optional(),
+  }),
   "instances.listTexts": looseObject({ texts: z.array(textMatch) }),
   "instances.updateText": looseObject({
     instanceId: id,
     childIndex: z.number().int(),
     mode: z.enum(["text", "expression"]),
+    warnings: expressionWarnings.optional(),
   }),
   "instances.replaceText": looseObject({
     changedCount: z.number().int(),
@@ -380,6 +416,7 @@ export const runtimeOutputSchemas = {
     instanceId: id,
     operation: z.enum(["set", "reset"]),
     mode: z.enum(["text", "expression"]).optional(),
+    warnings: expressionWarnings.optional(),
   }),
   "instances.updateTextTree": looseObject({
     rootInstanceId: id,
@@ -392,14 +429,15 @@ export const runtimeOutputSchemas = {
     label: z.string(),
   }),
   "styles.getDeclarations": looseObject({
-    declarations: z.array(declaration),
+    declarations: z.array(declarationSummary),
+    ...outputPage,
   }),
   "styles.updateDeclarations": styleKeysResult,
   "styles.deleteDeclarations": styleKeysResult,
   "styles.updateSelectedDeclarations": styleKeysResult,
   "styles.deleteSelectedDeclarations": styleKeysResult,
   "styles.replaceValues": styleKeysResult,
-  "designTokens.list": looseObject({ tokens: z.array(token) }),
+  "designTokens.list": looseObject({ tokens: z.array(token), ...outputPage }),
   "designTokens.create": looseObject({ tokenIds: stringArray }),
   "designTokens.createAttached": looseObject({ tokenIds: stringArray }),
   "designTokens.updateStyles": looseObject({
@@ -477,8 +515,8 @@ export const runtimeOutputSchemas = {
     propIds: stringArray,
   }),
   "assets.list": looseObject({
-    items: z.array(asset),
-    nextCursor: z.string().nullable(),
+    items: z.array(assetListItem),
+    ...outputPage,
   }),
   "fonts.list": looseObject({
     uploaded: z.array(uploadedFont),

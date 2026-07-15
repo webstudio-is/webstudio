@@ -8,6 +8,7 @@ import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import { hasGeneratedRecordWritePatch } from "./contracts/patch";
 import type { BuilderApiCapability } from "./contracts/permissions";
+import { projectOutput } from "./runtime/output";
 import {
   builderRuntimeContext,
   type BuilderRuntimeContext,
@@ -15,6 +16,7 @@ import {
 import {
   BuilderRuntimeError,
   getValidationIssues,
+  sanitizeValidationDetail,
   type SemanticValidationIssue,
 } from "./runtime/errors";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
@@ -166,17 +168,18 @@ const getNamespaceCounts = (envelope: ProjectSessionEnvelope) =>
   ) as Record<keyof ProjectSessionEnvelope["namespaces"], number>;
 
 export const serializeProjectSessionMeta = (
-  envelope: ProjectSessionEnvelope
+  envelope: ProjectSessionEnvelope,
+  input: { verbose?: boolean } = {}
 ) => {
   const diagnostics = envelope.diagnostics.map(({ level, code, message }) => ({
     level,
     code,
-    message,
+    message: sanitizeValidationDetail(message),
   }));
   const diagnosticErrorCount = diagnostics.filter(
     (diagnostic) => diagnostic.level === "error"
   ).length;
-  return {
+  const compact = {
     operationId: envelope.operationId,
     projectId: envelope.projectId,
     ...(envelope.buildId === undefined ? {} : { buildId: envelope.buildId }),
@@ -196,17 +199,17 @@ export const serializeProjectSessionMeta = (
       ? {}
       : { transaction: envelope.transaction }),
   };
+  return projectOutput({
+    input,
+    compact,
+    expanded: () => ({
+      namespaces: envelope.namespaces,
+      freshness: envelope.state.freshness,
+      compatibility: envelope.state.compatibility,
+      diagnostics: redactProjectSessionValue(envelope.diagnostics),
+    }),
+  });
 };
-
-export const serializeProjectSessionDebug = (
-  envelope: ProjectSessionEnvelope
-) => ({
-  ...serializeProjectSessionMeta(envelope),
-  namespaces: envelope.namespaces,
-  freshness: envelope.state.freshness,
-  compatibility: envelope.state.compatibility,
-  diagnostics: envelope.diagnostics,
-});
 
 export type ProjectSessionMutationOptions = {
   dryRun?: boolean;

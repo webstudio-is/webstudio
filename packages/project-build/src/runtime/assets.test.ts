@@ -253,7 +253,7 @@ describe("asset runtime operations", () => {
   test("lists assets with usage counts", () => {
     expect(listAssets(state, { sort: "usage" })).toMatchObject({
       items: [
-        { id: "asset", description: null, usageCount: 1 },
+        { id: "asset", usageCount: 1 },
         { id: "next", usageCount: 0 },
         { id: "unused", usageCount: 0 },
       ],
@@ -261,19 +261,33 @@ describe("asset runtime operations", () => {
     });
   });
 
-  test("lists asset descriptions used as image alt text", () => {
+  test("expands asset descriptions only in verbose output", () => {
     const asset = imageAsset("described");
-    asset.description = "Team collaborating around a whiteboard";
-    expect(
-      listAssets({ ...state, assets: new Map([[asset.id, asset]]) })
-    ).toMatchObject({
+    asset.description = `Team collaborating around a whiteboard. ${"Detailed visual context. ".repeat(80)}`;
+    const assetState = { ...state, assets: new Map([[asset.id, asset]]) };
+    const compact = listAssets(assetState);
+    const verbose = listAssets(assetState, { verbose: true });
+    expect(compact).toMatchObject({
+      detail: "compact",
+      items: [{ id: "described" }],
+    });
+    expect(compact.items[0]).not.toHaveProperty("description");
+    expect(verbose).toMatchObject({
+      detail: "verbose",
       items: [
         {
           id: "described",
-          description: "Team collaborating around a whiteboard",
+          record: {
+            description: expect.stringContaining(
+              "Team collaborating around a whiteboard"
+            ),
+          },
         },
       ],
     });
+    expect(JSON.stringify(compact).length).toBeLessThan(
+      JSON.stringify(verbose).length * 0.5
+    );
   });
 
   test("lists editable filenames separately from immutable asset names", () => {

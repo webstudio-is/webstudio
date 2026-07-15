@@ -1492,6 +1492,7 @@ describe("project session mcp adapter", () => {
     );
     expect(accessibilityResult.structuredContent.data).toMatchObject({
       scopes: ["accessibility"],
+      renderedState: "complete",
       renderedCheckCount: 2,
       renderedIssueCount: 1,
       renderedChecks: [
@@ -1579,6 +1580,7 @@ describe("project session mcp adapter", () => {
       },
     });
     expect(result.structuredContent.data).toMatchObject({
+      renderedState: "failed",
       renderedCheckCount: 0,
       renderedIssueCount: 0,
       renderedFailureCount: 1,
@@ -1660,6 +1662,7 @@ describe("project session mcp adapter", () => {
     });
 
     expect(result.structuredContent.data).toMatchObject({
+      renderedState: "failed",
       renderedFailureCount: 1,
       renderedFailureSummaries: [
         {
@@ -1758,6 +1761,7 @@ describe("project session mcp adapter", () => {
     expect(result.structuredContent).toMatchObject({
       ok: true,
       data: {
+        renderedState: "confirmation-required",
         renderedPlan: {
           captureCount: 121,
           confirmationToken: expect.any(String),

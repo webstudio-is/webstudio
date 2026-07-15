@@ -39,8 +39,9 @@ value is not dynamic.
 
 Read `list-variables`, `list-resources`, `inspect-instance`, and existing
 bindings before writing an expression. Do not guess identifier names. Syntax is
-validated when a mutation is submitted, but an identifier that is unavailable
-at the final render scope may require preview verification to detect.
+validated when a mutation is submitted. A valid expression that references an
+identifier unavailable in that scope is accepted with a structured warning
+containing the field path, source range, affected record, and remediation.
 
 ## Supported Syntax
 
@@ -91,7 +92,9 @@ repeated siblings in one `ws.element` root.
 
 ## Verification
 
-After changing expressions, preview the affected page and verify representative
-data, empty/null data, and Collection item counts. Use `audit` for relevant
-structural findings, but do not treat a successful syntax parse as proof that
-runtime data has the expected shape.
+Inspect every returned expression warning. Correct warnings that indicate a
+misspelled or unavailable variable, then read the affected record and preview
+the page. A warning does not roll back the mutation, and a successful syntax
+parse does not prove runtime data has the expected shape. Verify representative
+data, empty/null data, and Collection item counts; use `audit` for relevant
+structural findings.

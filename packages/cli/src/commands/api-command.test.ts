@@ -1828,6 +1828,9 @@ test("passes style token inclusion through to the api", async () => {
       property: undefined,
       propertyFilter: undefined,
       includeTokens: true,
+      cursor: undefined,
+      limit: undefined,
+      verbose: undefined,
     },
   });
 });
@@ -1837,16 +1840,18 @@ test("lists design tokens with filters", async () => {
     options: {
       command: "list-design-tokens",
       filter: "brand",
-      includeStyles: true,
+      verbose: true,
       withUsage: true,
       sort: "usage",
     },
     call: apiCalls.listDesignTokens,
     connection: {
       filter: "brand",
-      includeStyles: true,
       withUsage: true,
       sort: "usage",
+      cursor: undefined,
+      limit: undefined,
+      verbose: true,
     },
   });
 });

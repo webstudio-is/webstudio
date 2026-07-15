@@ -18,7 +18,7 @@ afterEach(() => {
 test("prints api command schema as json", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  schema({ topic: "api", json: true });
+  schema({ topic: "api", json: true, verbose: true, limit: 200 });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.projectScope).toContain("single project");
@@ -127,13 +127,14 @@ test("prints api command schema as json by default", () => {
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.name).toBe("webstudio-cli");
-  expect(output.requiredOutputMode).toContain("always JSON");
+  expect(output.detail).toBe("compact");
+  expect(output).not.toHaveProperty("commandGroups");
 });
 
-test("prints tiny mcp tool overview as json by default", () => {
+test("prints compact mcp tool summaries as json by default", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  schema({ topic: "mcp", json: true });
+  schema({ topic: "mcp", json: true, limit: 200 });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   const expectedTools = listProjectSessionMcpTools(publicApiOperations, {
@@ -145,10 +146,10 @@ test("prints tiny mcp tool overview as json by default", () => {
   });
 
   expect(output.name).toBe("webstudio-mcp");
-  expect(output.detail).toBe("overview");
+  expect(output.detail).toBe("compact");
   expect(output).not.toHaveProperty("callCommand");
   expect(output.singleOpCallCommand).toContain("webstudio mcp single-op-call");
-  expect(output.usage).toContain("--detail summary");
+  expect(output.usage).toContain("--verbose");
   expect(output.discovery).toContain(
     `webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'`
   );
@@ -160,20 +161,6 @@ test("prints tiny mcp tool overview as json by default", () => {
   );
   expect(output.resources).toEqual(listProjectSessionMcpResources());
   expect(output.toolCount).toBe(expectedTools.length);
-  expect(output.tools).toEqual(expectedTools.map((tool) => tool.name));
-  expect(output.tools).toContain("insert-fragment");
-  expect(output.tools).toContain("insert-component");
-  expect(output.tools).not.toContain("append-instance");
-});
-
-test("prints mcp tool summary when requested", () => {
-  vi.spyOn(console, "info").mockImplementation(() => undefined);
-
-  schema({ topic: "mcp", json: true, detail: "summary" });
-
-  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
-
-  expect(output.detail).toBe("summary");
   expect(output.tools).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
@@ -215,11 +202,11 @@ test("prints mcp tool summary when requested", () => {
 test("prints full mcp tool input schemas when requested", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  schema({ topic: "mcp", json: true, detail: "full" });
+  schema({ topic: "mcp", json: true, verbose: true, limit: 200 });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
 
-  expect(output.detail).toBe("full");
+  expect(output.detail).toBe("verbose");
   expect(output.tools).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
@@ -261,6 +248,65 @@ test("prints full mcp tool input schemas when requested", () => {
   );
 });
 
+test("compact schema discovery is materially smaller but remains actionable", () => {
+  const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "mcp", json: true, limit: 200 });
+  const compactText = String(info.mock.calls.at(-1)?.[0]);
+  const compact = JSON.parse(compactText);
+  schema({ topic: "mcp", json: true, verbose: true, limit: 200 });
+  const verboseText = String(info.mock.calls.at(-1)?.[0]);
+  const verbose = JSON.parse(verboseText);
+
+  expect(compact.toolCount).toBe(verbose.toolCount);
+  expect(compact.tools).toHaveLength(verbose.tools.length);
+  expect(compact.tools).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: "insert-fragment",
+        method: "mutation",
+        requiredInputFields: ["parentInstanceId", "fragment"],
+      }),
+    ])
+  );
+  expect(compactText).not.toContain("/packages/");
+  expect(compactText.length).toBeLessThan(verboseText.length * 0.5);
+});
+
+test("paginates compact and verbose schema discovery over the same tools", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "mcp", json: true, limit: 2 });
+  const compact = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  schema({ topic: "mcp", json: true, verbose: true, limit: 2 });
+  const verbose = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  schema({
+    topic: "mcp",
+    json: true,
+    verbose: true,
+    cursor: verbose.nextCursor,
+    limit: 2,
+  });
+  const nextPage = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+
+  expect(compact).toMatchObject({
+    detail: "compact",
+    returnedCount: 2,
+    nextCursor: "2",
+  });
+  expect(verbose).toMatchObject({
+    detail: "verbose",
+    returnedCount: 2,
+    nextCursor: "2",
+  });
+  expect(verbose.tools.map(({ name }: { name: string }) => name)).toEqual(
+    compact.tools.map(({ name }: { name: string }) => name)
+  );
+  expect(nextPage.tools.map(({ name }: { name: string }) => name)).not.toEqual(
+    verbose.tools.map(({ name }: { name: string }) => name)
+  );
+});
+
 test("prints focused mcp tool schema with tool option", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
@@ -268,7 +314,7 @@ test("prints focused mcp tool schema with tool option", () => {
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
 
-  expect(output.detail).toBe("full");
+  expect(output.detail).toBe("verbose");
   expect(output.focusedToolNames).toEqual(["insert-fragment"]);
   expect(output.toolCount).toBe(1);
   expect(output.tools).toEqual([
@@ -286,7 +332,7 @@ test("prints focused mcp tool schema when topic is a tool name", () => {
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
 
-  expect(output.detail).toBe("full");
+  expect(output.detail).toBe("verbose");
   expect(output.focusedToolNames).toEqual(["insert-fragment"]);
   expect(output.tools).toEqual([
     expect.objectContaining({
@@ -305,7 +351,7 @@ test("prints mcp tool overview as json without json flag", () => {
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.name).toBe("webstudio-mcp");
-  expect(output.detail).toBe("overview");
+  expect(output.detail).toBe("compact");
 });
 
 test("reports unknown schema topics with available topics", () => {

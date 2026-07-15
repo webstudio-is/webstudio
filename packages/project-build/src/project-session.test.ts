@@ -515,6 +515,38 @@ describe("project session", () => {
         },
       ],
     });
+    const compact = serializeProjectSessionMeta(result);
+    const verbose = serializeProjectSessionMeta(result, { verbose: true });
+    expect(compact).not.toHaveProperty("namespaces");
+    expect(verbose).toMatchObject({
+      ...compact,
+      namespaces: result.namespaces,
+      freshness: result.state.freshness,
+    });
+    expect(JSON.stringify(compact).length).toBeLessThan(
+      JSON.stringify(verbose).length * 0.75
+    );
+
+    const withSecretDiagnostic = {
+      ...result,
+      diagnostics: [
+        ...result.diagnostics,
+        {
+          level: "warning" as const,
+          code: "TEST_DIAGNOSTIC",
+          message: "A credential was rejected.",
+          details: { authToken: "never-print-this" },
+        },
+      ],
+    };
+    expect(
+      JSON.stringify(serializeProjectSessionMeta(withSecretDiagnostic))
+    ).not.toContain("never-print-this");
+    const redactedVerbose = JSON.stringify(
+      serializeProjectSessionMeta(withSecretDiagnostic, { verbose: true })
+    );
+    expect(redactedVerbose).not.toContain("never-print-this");
+    expect(redactedVerbose).toContain("[redacted]");
     expect(transport.commits).toEqual([]);
     expect(storage.saved).toHaveLength(0);
   });

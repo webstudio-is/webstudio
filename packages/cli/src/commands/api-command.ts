@@ -71,6 +71,21 @@ export const apiCommandOptions = (yargs: CommonYargsArgv) =>
         "Refresh required local project namespaces from the remote project before running a local-capable command.",
     });
 
+const outputDetailCommandOptions = (yargs: CommonYargsArgv) =>
+  yargs
+    .option("cursor", {
+      type: "string",
+      describe: "Pagination cursor returned by the previous call",
+    })
+    .option("limit", {
+      type: "number",
+      describe: "Maximum records to return",
+    })
+    .option("verbose", {
+      type: "boolean",
+      describe: "Expand compact records with complete values and diagnostics",
+    });
+
 const requiredInputOption = (yargs: CommonYargsArgv, describe: string) =>
   yargs.option("input", {
     type: "string",
@@ -557,7 +572,7 @@ export const deleteFolderCommandOptions = (yargs: CommonYargsArgv) =>
   });
 
 export const instanceListCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("page", {
       type: "string",
       describe: "Limit results to a page id",
@@ -734,7 +749,7 @@ export const textUpdateCommandOptions = (yargs: CommonYargsArgv) =>
     });
 
 export const stylesCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("instance", {
       type: "string",
       describe: "Limit declarations to one instance id",
@@ -789,14 +804,10 @@ export const replaceStylesCommandOptions = (yargs: CommonYargsArgv) =>
   );
 
 export const designTokensCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("filter", {
       type: "string",
       describe: "Only return design tokens whose name contains this text",
-    })
-    .option("include-styles", {
-      type: "boolean",
-      describe: "Include full inline style declarations for each design token",
     })
     .option("with-usage", {
       type: "boolean",
@@ -1134,7 +1145,7 @@ export const verifyDomainCommandOptions = (yargs: CommonYargsArgv) =>
   });
 
 export const assetsCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("type", {
       choices: ["image", "font"] as const,
       describe: "Only return assets of this type",
@@ -1146,14 +1157,6 @@ export const assetsCommandOptions = (yargs: CommonYargsArgv) =>
     .option("with-usage", {
       type: "boolean",
       describe: "Include how many build references point to each asset",
-    })
-    .option("cursor", {
-      type: "string",
-      describe: "Pagination cursor returned as nextCursor by the previous call",
-    })
-    .option("limit", {
-      type: "number",
-      describe: "Maximum number of assets to return",
     });
 
 export const auditCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1356,7 +1359,6 @@ export type ApiCommandOptions = {
   position?: "before-local" | "after-local" | "before" | "after";
   filter?: string;
   withUsage?: boolean;
-  includeStyles?: boolean;
   includeSystem?: boolean;
   scopeInstance?: string;
   type?: "image" | "font" | "file";
@@ -1832,6 +1834,7 @@ export const printAuditReport = (value: unknown) => {
       pagePaths?: string[];
     }>;
     renderedFailureCount?: number;
+    renderedState?: "complete" | "partial" | "confirmation-required" | "failed";
     renderedPlan?: {
       captureCount?: number;
       confirmationToken?: string;
@@ -1871,7 +1874,7 @@ export const printAuditReport = (value: unknown) => {
   }
   if (result.renderedCheckCount !== undefined) {
     console.info(
-      `Rendered: ${result.renderedCheckCount} checks, ${result.renderedIssueCount ?? 0} issues, ${result.renderedFailureCount ?? 0} failures.`
+      `Rendered (${result.renderedState ?? "complete"}): ${result.renderedCheckCount} checks, ${result.renderedIssueCount ?? 0} issues, ${result.renderedFailureCount ?? 0} failures.`
     );
     for (const summary of result.renderedIssueSummaries ?? []) {
       const pages = summary.pagePaths?.join(", ");
@@ -2351,6 +2354,9 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       component: options.component,
       tag: options.tag,
       labelContains: options.label,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-instances",
@@ -2499,6 +2505,9 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       property: options.property,
       propertyFilter: options.propertyFilter,
       includeTokens: options.includeTokens,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "get-styles",
@@ -2548,8 +2557,10 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       filter: options.filter,
       withUsage: options.withUsage,
-      includeStyles: options.includeStyles,
       sort: designTokenSortOption(options.sort),
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-design-tokens",
@@ -2889,6 +2900,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       withUsage: options.withUsage,
       cursor: options.cursor,
       limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-assets",

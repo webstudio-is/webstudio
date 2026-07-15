@@ -9,3 +9,4 @@ export * from "./builder-api/errors";
 export * from "./builder-api/runtime-contracts";
 export * from "./builder-api/operations";
 export * from "./builder-api/url";
+export * from "./mcp-client";

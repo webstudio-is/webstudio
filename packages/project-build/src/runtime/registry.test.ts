@@ -23,6 +23,7 @@ import {
 } from "./styles";
 import {
   inspectInstance,
+  listInstances,
   listTextInstances,
   updateTextInstance,
 } from "./instances";
@@ -65,6 +66,11 @@ const hasDirectInputProperty = (
 const mutationOperationIds = runtimeOperationContracts
   .filter((contract) => contract.kind === "mutation")
   .map((contract) => contract.id);
+
+const getMutationResult = (operation: unknown): unknown => {
+  expect(operation).toHaveProperty("result");
+  return (operation as { result: unknown }).result;
+};
 
 test.each([
   {
@@ -198,9 +204,21 @@ test("validates structured runtime operation results", () => {
     getRuntimeOutputSchema("resources.update").parse({
       resourceId: "resource",
       dataSourceId: "data-source",
-      warnings: ["warning"],
+      warnings: [
+        {
+          severity: "warning",
+          code: "expression_lint_warning",
+          path: ["resource", "url"],
+          message: '"missing" is not defined in the scope',
+          range: { from: 0, to: 7 },
+          remediation: "Use an in-scope variable.",
+        },
+      ],
     })
-  ).toMatchObject({ dataSourceId: "data-source", warnings: ["warning"] });
+  ).toMatchObject({
+    dataSourceId: "data-source",
+    warnings: [{ code: "expression_lint_warning" }],
+  });
 
   expect(
     getRuntimeOutputSchema("instances.deleteBySelector").safeParse({
@@ -320,6 +338,50 @@ describe("builder runtime pages", () => {
 });
 
 describe("builder runtime read families", () => {
+  test("keeps instance lists compact and paginates verbose expansion", () => {
+    const instances: BuilderState["instances"] = new Map(state.instances);
+    const largeState: BuilderState = {
+      ...state,
+      instances,
+    };
+    instances.set("body", {
+      ...state.instances.get("body")!,
+      children: [
+        ...Array.from({ length: 100 }, (_, index) => ({
+          type: "id" as const,
+          value: `repeated-child-${index}-${"detail-".repeat(10)}`,
+        })),
+        { type: "id" as const, value: "heading" },
+      ],
+    });
+    const compact = listInstances(largeState, { limit: 1 });
+    const verbose = listInstances(largeState, { limit: 1, verbose: true });
+
+    expect(compact).toMatchObject({
+      detail: "compact",
+      total: 2,
+      returnedCount: 1,
+      nextCursor: "1",
+      instances: [{ id: "body" }],
+    });
+    expect(compact.instances[0]).not.toHaveProperty("record");
+    expect(verbose).toMatchObject({
+      detail: "verbose",
+      total: compact.total,
+      returnedCount: compact.returnedCount,
+      nextCursor: compact.nextCursor,
+      instances: [
+        expect.objectContaining({
+          ...compact.instances[0],
+          record: expect.objectContaining({ id: "body" }),
+        }),
+      ],
+    });
+    expect(JSON.stringify(compact).length).toBeLessThan(
+      JSON.stringify(verbose).length * 0.5
+    );
+  });
+
   test("reads instances and text nodes", () => {
     expect(
       executeBuilderRuntimeOperation({
@@ -597,6 +659,132 @@ describe("builder runtime read families", () => {
     ).toThrow(/data source "stale".*not available/);
   });
 
+  test("returns non-blocking expression warnings with actionable locations", () => {
+    const text = executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: {
+        instanceId: "heading",
+        childIndex: 0,
+        text: "missingTitle",
+        mode: "expression",
+      },
+      context,
+    });
+    expect(getMutationResult(text)).toMatchObject({
+      warnings: [
+        {
+          code: "expression_lint_warning",
+          path: ["text"],
+          instanceId: "heading",
+          range: { from: 0, to: 12 },
+          remediation: expect.stringContaining("available"),
+        },
+      ],
+    });
+
+    const prop = executeBuilderRuntimeOperation({
+      id: "instances.bindProps",
+      state,
+      input: {
+        bindings: [
+          {
+            instanceId: "heading",
+            name: "title",
+            binding: { type: "expression", value: "missingTitle" },
+          },
+          {
+            instanceId: "heading",
+            name: "onClick",
+            binding: {
+              type: "action",
+              value: [
+                {
+                  type: "execute",
+                  args: ["event"],
+                  code: "missingValue = event",
+                },
+              ],
+            },
+          },
+        ],
+      },
+      context,
+    });
+    expect(getMutationResult(prop)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["bindings", "0", "binding", "value"],
+          instanceId: "heading",
+        }),
+        expect.objectContaining({
+          path: ["bindings", "1", "binding", "value", "0", "code"],
+          instanceId: "heading",
+        }),
+      ],
+    });
+
+    const resource = executeBuilderRuntimeOperation({
+      id: "resources.create",
+      state,
+      input: {
+        resource: {
+          name: "Create post",
+          method: "post",
+          url: "https://api.example.com/posts",
+          headers: [],
+          body: "missingPayload",
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["warning-resource", "warning-data-source"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+    expect(getMutationResult(resource)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["resource", "body"],
+          resourceId: "warning-resource",
+        }),
+      ],
+    });
+
+    try {
+      executeBuilderRuntimeOperation({
+        id: "instances.bindProps",
+        state,
+        input: {
+          bindings: [
+            {
+              instanceId: "heading",
+              name: "onClick",
+              binding: {
+                type: "action",
+                value: [{ type: "execute", args: ["event"], code: "event +" }],
+              },
+            },
+          ],
+        },
+        context,
+      });
+      expect.unreachable("Expected invalid action syntax to be rejected");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "INVALID_INPUT",
+        issues: [
+          expect.objectContaining({
+            path: ["bindings", "0", "binding", "value"],
+            detail: expect.stringMatching(/Unexpected token/),
+          }),
+        ],
+      });
+    }
+  });
+
   test("binds Collection data and item names in their respective scopes", () => {
     const collectionState = {
       ...state,
@@ -669,6 +857,7 @@ describe("builder runtime read families", () => {
         context,
       })
     ).toMatchObject({
+      result: { propIds: ["id"] },
       payload: [
         {
           namespace: "props",
@@ -683,19 +872,18 @@ describe("builder runtime read families", () => {
       ],
     });
 
-    expect(
-      executeBuilderRuntimeOperation({
-        id: "instances.updateText",
-        state: collectionState,
-        input: {
-          instanceId: "item",
-          childIndex: 0,
-          text: "collectionItem.name",
-          mode: "expression",
-        },
-        context,
-      })
-    ).toMatchObject({
+    const validItemBinding = executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state: collectionState,
+      input: {
+        instanceId: "item",
+        childIndex: 0,
+        text: "collectionItem.name",
+        mode: "expression",
+      },
+      context,
+    });
+    expect(validItemBinding).toMatchObject({
       payload: [
         {
           namespace: "instances",
@@ -707,6 +895,27 @@ describe("builder runtime read families", () => {
             },
           ],
         },
+      ],
+    });
+
+    const invalidItemBinding = executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state: collectionState,
+      input: {
+        instanceId: "item",
+        childIndex: 0,
+        text: "missingCollectionItem.name",
+        mode: "expression",
+      },
+      context,
+    });
+    expect(getMutationResult(invalidItemBinding)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["text"],
+          instanceId: "item",
+          message: expect.stringContaining("missingCollectionItem"),
+        }),
       ],
     });
   });
@@ -818,7 +1027,7 @@ describe("builder runtime read families", () => {
       tokens: [{ id: "token", declarationCount: 1, usageCount: 1 }],
     });
     expect(
-      listDesignTokens(state, { withUsage: true, includeStyles: true })
+      listDesignTokens(state, { withUsage: true, verbose: true })
     ).toMatchObject({
       tokens: [{ id: "token", styles: { color: expect.any(Object) } }],
     });
