@@ -80,6 +80,16 @@ const getTestInputSchema = (inputSchema: z.ZodTypeAny) =>
 const getSchemaProperties = (schema: unknown) =>
   (schema as { properties?: Record<string, unknown> }).properties ?? {};
 
+const getSuccessfulOutputDataSchema = (schema: unknown) => {
+  const variants = (schema as { oneOf?: unknown[] }).oneOf ?? [];
+  const success = variants.find(
+    (variant) =>
+      getSchemaProperties(variant).ok !== undefined &&
+      (getSchemaProperties(variant).ok as { const?: unknown }).const === true
+  );
+  return getSchemaProperties(success).data;
+};
+
 const optionalArrayFieldInputSchema = (field: string) =>
   getTestInputSchema(
     z.object({
@@ -623,6 +633,20 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
+    expect(
+      getSuccessfulOutputDataSchema(
+        tools.find((tool) => tool.name === "refresh")?.outputSchema
+      )
+    ).toMatchObject({
+      type: "object",
+      required: ["refreshedNamespaces"],
+      properties: {
+        refreshedNamespaces: {
+          type: "array",
+          items: { type: "string", enum: expect.any(Array) },
+        },
+      },
+    });
     const auditOutputSchema = tools.find(
       (tool) => tool.name === "audit"
     )?.outputSchema;
@@ -664,6 +688,22 @@ describe("project session mcp adapter", () => {
         ),
       })
     ).not.toThrow();
+    for (const command of ["preview.start", "preview.status", "preview.stop"]) {
+      expect(
+        getSuccessfulOutputDataSchema(
+          visualTools.find((tool) => tool.name === command)?.outputSchema
+        ),
+        `Missing MCP output schema for ${command}`
+      ).toMatchObject({
+        type: "object",
+        required: ["url", "running"],
+        properties: {
+          url: { type: "string" },
+          pid: { type: "integer" },
+          running: { type: "boolean" },
+        },
+      });
+    }
     for (const command of hiddenMcpOperationCommands) {
       expect(toolNames).not.toContain(command);
     }

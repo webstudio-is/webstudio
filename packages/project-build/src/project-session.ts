@@ -564,10 +564,16 @@ export class ProjectSession {
     await this.#options.storage.clear();
     this.#snapshot = undefined;
     this.#revision = undefined;
-    return this.status(["Project session snapshot was reset."]);
+    return this.status(
+      ["Project session snapshot was reset."],
+      "project-session.reset"
+    );
   }
 
-  status(messages: string[] = []): ProjectSessionEnvelope<{
+  status(
+    messages: string[] = [],
+    operationId = "project-session.status"
+  ): ProjectSessionEnvelope<{
     loaded: boolean;
   }> {
     const diagnostics = messages.map(
@@ -581,7 +587,7 @@ export class ProjectSession {
       source: "local",
       result: { loaded: this.#snapshot !== undefined },
       committed: false,
-      contract: emptyContract,
+      contract: { ...emptyContract, id: operationId },
       diagnostics,
     });
   }
@@ -596,6 +602,7 @@ export class ProjectSession {
       committed: false,
       contract: {
         ...emptyContract,
+        id: "project-session.refresh",
         readNamespaces: namespaces,
       },
       snapshot,

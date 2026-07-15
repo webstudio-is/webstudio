@@ -1650,6 +1650,36 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
 const getMcpExamples = (command: string): readonly unknown[] =>
   mcpArgumentExamples[command] ?? [];
 
+const sessionStatusDataSchema = {
+  type: "object",
+  properties: { loaded: { type: "boolean" } },
+  required: ["loaded"],
+  additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const refreshDataSchema = {
+  type: "object",
+  properties: {
+    refreshedNamespaces: {
+      type: "array",
+      items: { type: "string", enum: builderNamespaces },
+    },
+  },
+  required: ["refreshedNamespaces"],
+  additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const previewDataSchema = {
+  type: "object",
+  properties: {
+    url: { type: "string" },
+    pid: { type: "integer" },
+    running: { type: "boolean" },
+  },
+  required: ["url", "running"],
+  additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
 const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "meta.index",
@@ -1994,6 +2024,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Read the current local ProjectSession status. Pass verbose true only when debugging namespace, compatibility, freshness, or diagnostic details.",
     inputSchema: statusInputSchema,
+    outputSchema: getMcpOutputSchema(sessionStatusDataSchema),
     annotations: {
       command: "status",
       operationId: "project-session.status",
@@ -2022,6 +2053,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
         },
       },
     },
+    outputSchema: getMcpOutputSchema(refreshDataSchema),
     annotations: {
       command: "refresh",
       operationId: "project-session.refresh",
@@ -2039,6 +2071,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     name: "reset-session",
     description: "Delete the persisted local ProjectSession snapshot.",
     inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema(sessionStatusDataSchema),
     annotations: {
       command: "reset-session",
       operationId: "project-session.reset",
@@ -2140,6 +2173,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Regenerate local project files when needed, build them, then start or restart a production-like generated-site preview server for fast visual verification while MCP is running.",
     inputSchema: previewInputSchema,
+    outputSchema: getMcpOutputSchema(previewDataSchema),
     mcpExamples: getMcpExamples("preview.start"),
     annotations: {
       command: "preview.start",
@@ -2159,6 +2193,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Return the active generated-site preview server URL and process state for screenshot-based verification.",
     inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema(previewDataSchema),
     mcpExamples: getMcpExamples("preview.status"),
     annotations: {
       command: "preview.status",
@@ -2178,6 +2213,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Stop the active generated-site preview server owned by this MCP session.",
     inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema(previewDataSchema),
     mcpExamples: getMcpExamples("preview.stop"),
     annotations: {
       command: "preview.stop",
@@ -2264,40 +2300,42 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
-const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
-  oneOf: [
-    {
-      type: "object",
-      properties: {
-        ok: { type: "boolean", const: true },
-        data: dataSchema,
-        meta: { type: "object", additionalProperties: true },
-      },
-      required: ["ok", "data", "meta"],
-      additionalProperties: false,
-    },
-    {
-      type: "object",
-      properties: {
-        ok: { type: "boolean", const: false },
-        data: dataSchema,
-        error: {
-          type: "object",
-          properties: {
-            code: { type: "string" },
-            message: { type: "string" },
-            issues: semanticValidationIssuesJsonSchema,
-          },
-          required: ["code", "message"],
-          additionalProperties: true,
+function getMcpOutputSchema(dataSchema: InputJsonSchema): InputJsonSchema {
+  return {
+    oneOf: [
+      {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: true },
+          data: dataSchema,
+          meta: { type: "object", additionalProperties: true },
         },
-        meta: { type: "object", additionalProperties: true },
+        required: ["ok", "data", "meta"],
+        additionalProperties: false,
       },
-      required: ["ok", "error", "meta"],
-      additionalProperties: false,
-    },
-  ],
-});
+      {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: false },
+          data: dataSchema,
+          error: {
+            type: "object",
+            properties: {
+              code: { type: "string" },
+              message: { type: "string" },
+              issues: semanticValidationIssuesJsonSchema,
+            },
+            required: ["code", "message"],
+            additionalProperties: true,
+          },
+          meta: { type: "object", additionalProperties: true },
+        },
+        required: ["ok", "error", "meta"],
+        additionalProperties: false,
+      },
+    ],
+  };
+}
 
 export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],

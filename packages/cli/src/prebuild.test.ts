@@ -367,6 +367,12 @@ describe("prebuild", () => {
     await expect(readFile("app/routes/_index.tsx", "utf8")).resolves.toContain(
       'from "react-router"'
     );
+    await expect(readFile("vite.config.ts", "utf8")).resolves.toContain(
+      'process.env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED === "1"'
+    );
+    await expect(readFile("vite.config.ts", "utf8")).resolves.toContain(
+      '["webstudio"]'
+    );
     await expect(
       readFile("app/__generated__/$resources.redirects.ts", "utf8")
     ).resolves.toContain("/dl.php?filename=file.pdf");

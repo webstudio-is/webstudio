@@ -259,6 +259,23 @@ describe("project session", () => {
     expect(storage.cleared).toBe(true);
   });
 
+  test("identifies session control operations in their envelopes", async () => {
+    const session = createSession({
+      storage: createStorage(),
+      transport: createTransport(),
+    });
+
+    await expect(session.initialize()).resolves.toMatchObject({
+      operationId: "project-session.status",
+    });
+    await expect(session.refresh(["pages"])).resolves.toMatchObject({
+      operationId: "project-session.refresh",
+    });
+    await expect(session.reset()).resolves.toMatchObject({
+      operationId: "project-session.reset",
+    });
+  });
+
   test("refreshes missing namespaces from remote and persists atomically", async () => {
     const storage = createStorage();
     const transport = createTransport();
