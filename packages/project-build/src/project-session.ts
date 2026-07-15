@@ -438,6 +438,9 @@ export const redactProjectSessionValue = (value: unknown): unknown => {
   if (Array.isArray(value)) {
     return value.map(redactProjectSessionValue);
   }
+  if (typeof value === "string") {
+    return sanitizeValidationDetail(value);
+  }
   if (typeof value !== "object" || value === null) {
     return value;
   }

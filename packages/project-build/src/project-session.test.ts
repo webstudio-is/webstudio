@@ -534,7 +534,8 @@ describe("project session", () => {
         {
           level: "warning" as const,
           code: "TEST_DIAGNOSTIC",
-          message: "A credential was rejected.",
+          message:
+            "A credential was rejected at https://example.com/?authToken=also-never-print-this.",
           details: { authToken: "never-print-this" },
         },
       ],
@@ -546,6 +547,7 @@ describe("project session", () => {
       serializeProjectSessionMeta(withSecretDiagnostic, { verbose: true })
     );
     expect(redactedVerbose).not.toContain("never-print-this");
+    expect(redactedVerbose).not.toContain("also-never-print-this");
     expect(redactedVerbose).toContain("[redacted]");
     expect(transport.commits).toEqual([]);
     expect(storage.saved).toHaveLength(0);

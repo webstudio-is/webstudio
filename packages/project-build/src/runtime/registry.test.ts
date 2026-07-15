@@ -753,6 +753,57 @@ describe("builder runtime read families", () => {
       ],
     });
 
+    const collection = executeBuilderRuntimeOperation({
+      id: "instances.insertCollection",
+      state,
+      input: {
+        parentInstanceId: "body",
+        data: { type: "json", value: [{ name: "Starter" }] },
+        itemFragment: {
+          children: [{ type: "id", value: "item" }],
+          instances: [
+            {
+              type: "instance",
+              id: "item",
+              component: "Text",
+              children: [
+                { type: "expression", value: "collectionItem.name" },
+                { type: "expression", value: "missingCollectionItem.name" },
+              ],
+            },
+          ],
+          props: [],
+          dataSources: [],
+          resources: [],
+          styleSources: [],
+          styleSourceSelections: [],
+          styles: [],
+          breakpoints: [],
+          assets: [],
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = [
+            "collection",
+            "collection-data-prop",
+            "collection-item",
+            "collection-item-key",
+          ];
+          return () => ids.shift() ?? "generated-id";
+        })(),
+      },
+    });
+    expect(getMutationResult(collection)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["itemFragment", "instances", "0", "children", "1", "value"],
+          message: expect.stringContaining("missingCollectionItem"),
+        }),
+      ],
+    });
+
     try {
       executeBuilderRuntimeOperation({
         id: "instances.bindProps",

@@ -36,6 +36,7 @@ import {
   type RuntimeOutputSchemaId,
 } from "./output-schemas";
 import type { BuilderRuntimeMutation } from "./mutation";
+import { listFragmentExpressions } from "./fragment";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -930,14 +931,15 @@ export const builderRuntimeOperations = [
               input.data.value
             )
           : []),
-        ...input.itemFragment.props.flatMap((prop, index) =>
-          getScopedPropWarnings({
+        ...listFragmentExpressions(input.itemFragment).flatMap((entry) =>
+          getScopedExpressionWarnings(
             state,
-            instanceId: input.parentInstanceId,
-            path: ["itemFragment", "props", String(index), "value"],
-            prop,
-            variables: ["collectionItem", "collectionItemKey"],
-          })
+            input.parentInstanceId,
+            ["itemFragment", ...entry.path],
+            entry.expression,
+            entry.allowAssignment,
+            ["collectionItem", "collectionItemKey", ...entry.variables]
+          )
         ),
       ];
       return withExpressionWarnings(
