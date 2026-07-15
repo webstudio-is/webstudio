@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { TRPCError } from "@trpc/server";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
-import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime/component-template";
+import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   createBuilderRuntimeState,

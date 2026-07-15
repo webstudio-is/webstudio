@@ -23,8 +23,8 @@ import {
   $styles,
 } from "~/shared/sync/data-stores";
 import { deleteAssets } from "~/builder/shared/assets";
-import { formatAssetName } from "@webstudio-is/project-build/runtime/assets";
-import { calculateUsagesByAssetId } from "@webstudio-is/project-build/runtime/assets";
+import { formatAssetName } from "@webstudio-is/project-build/runtime";
+import { calculateUsagesByAssetId } from "@webstudio-is/project-build/runtime";
 
 const $isDeleteUnusedAssetsDialogOpen = atom(false);
 

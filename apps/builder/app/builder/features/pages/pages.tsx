@@ -59,7 +59,7 @@ import {
   canDropPageTarget,
   getAllChildrenAndSelf,
   getStoredPageDropTarget,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 import { duplicateFolder, isFolder } from "./page-utils";
 import {
   FolderSettings,
@@ -75,7 +75,7 @@ import {
   getFolderById,
 } from "@webstudio-is/sdk";
 import { atom, computed } from "nanostores";
-import { isPathnamePattern } from "@webstudio-is/project-build/runtime/url-pattern";
+import { isPathnamePattern } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";

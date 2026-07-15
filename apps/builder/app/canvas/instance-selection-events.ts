@@ -18,11 +18,11 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
-import { findClosestRichText } from "@webstudio-is/project-build/runtime/content-model";
+import { findClosestRichText } from "@webstudio-is/project-build/runtime";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 import { isTextEditableInContentMode } from "./shared/content-mode";
 
 type SelectionAnchor = {

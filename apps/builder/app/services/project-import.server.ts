@@ -4,10 +4,12 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import {
-  loadDevBuildByProjectId,
   serializeConfig,
   serializeData,
-} from "@webstudio-is/project-build/index.server";
+  serializeStyles,
+  serializeStyleSourceSelections,
+} from "@webstudio-is/project-build/persistence";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
   migratePages,
   serializePages,
@@ -15,9 +17,7 @@ import {
 import {
   createProjectSettingsFromPages,
   removeLegacyProjectSettingsFromPages,
-} from "@webstudio-is/project-build/shared/project-settings";
-import { serializeStyles } from "@webstudio-is/project-build/styles.server";
-import { serializeStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
+} from "@webstudio-is/project-build";
 import {
   isAssetFileName,
   getMissingImportedAssetFilesMessage,

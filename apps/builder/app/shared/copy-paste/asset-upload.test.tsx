@@ -2,7 +2,7 @@ import { expect, test, vi } from "vitest";
 import { $, AssetValue, renderTemplate } from "@webstudio-is/template";
 import type { StyleDecl, WebstudioFragment } from "@webstudio-is/sdk";
 import { denormalizeSrcProps } from "./asset-upload";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 
 test("extractSrcProps works well", async () => {
   const data = renderTemplate(

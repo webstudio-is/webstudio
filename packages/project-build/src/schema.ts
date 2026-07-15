@@ -60,7 +60,7 @@ const serializedBuildShape = {
   deployment: deployment.optional(),
 } satisfies SchemaShape<SerializedBuild>;
 
-// Canonical project-build schema entrypoint for API-facing serialized builds.
+// Canonical project-build contract for API-facing serialized builds.
 // API packages compose this schema; they should not copy or maintain it.
 export const serializedBuild: z.ZodObject<typeof serializedBuildShape> =
   z.object(serializedBuildShape);

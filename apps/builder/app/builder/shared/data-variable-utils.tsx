@@ -25,8 +25,8 @@ import {
 import {
   findUnusedDataVariableIds,
   validateDataVariableNameWithSources,
-} from "@webstudio-is/project-build/runtime/data";
-import { type DataVariableNameError } from "@webstudio-is/project-build/runtime/data";
+} from "@webstudio-is/project-build/runtime";
+import { type DataVariableNameError } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const $isDeleteUnusedDataVariablesDialogOpen = atom(false);

@@ -26,7 +26,7 @@ Webstudio-owned data before falling back to other formats.
 `InstanceTransferData`, `InstancesTransferData`, and `PageTransferData`.
 Transfer data is portable and detached from a project; insertion/import remaps
 ids and merges it into authoritative project state. Runtime-owned transfer
-formats live in `@webstudio-is/project-build/runtime/data-formats/*`.
+formats live in `@webstudio-is/project-build/transfer`.
 
 **Clipboard data** is a UI transport concern. Builder copy/paste may serialize
 transfer data into a data envelope and place it on the browser clipboard, but

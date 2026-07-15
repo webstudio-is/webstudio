@@ -29,7 +29,7 @@ import {
   unsetExpressionVariables,
 } from "./data";
 import { cloneInstanceWithNewIds } from "./instances";
-import { clonePropForInstance } from "./props";
+import { clonePropForInstance, listPropExpressions } from "./props";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
 import {
   collectStyleSourcesFromInstances,
@@ -57,6 +57,35 @@ export type FragmentInsertTarget = {
   parentSelector: Instance["id"][];
   position: number | "end" | "after";
 };
+
+export const listFragmentExpressions = (fragment: WebstudioFragment) => [
+  ...fragment.instances.flatMap((instance, instanceIndex) =>
+    instance.children.flatMap((child, childIndex) =>
+      child.type === "expression"
+        ? [
+            {
+              expression: child.value,
+              allowAssignment: false,
+              variables: [] as string[],
+              path: [
+                "instances",
+                String(instanceIndex),
+                "children",
+                String(childIndex),
+                "value",
+              ],
+            },
+          ]
+        : []
+    )
+  ),
+  ...fragment.props.flatMap((prop, propIndex) =>
+    listPropExpressions(prop).map((entry) => ({
+      ...entry,
+      path: ["props", String(propIndex), "value", ...entry.path],
+    }))
+  ),
+];
 
 const mergeById = <Item extends { id: string }>(items: Item[]) =>
   Array.from(new Map(items.map((item) => [item.id, item])).values());
@@ -492,7 +521,7 @@ const insertFragmentBreakpointsMutable = ({
   return { mergedBreakpointIds, didMergeBreakpointsDueToLimit };
 };
 
-export const __testing__ = {
+export const fragmentTesting = {
   getFragmentInstancesData,
   insertFragmentAssetsMutable,
   insertFragmentBreakpointsMutable,

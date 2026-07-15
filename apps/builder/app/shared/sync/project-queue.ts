@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { atom } from "nanostores";
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
-import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { toast } from "@webstudio-is/design-system";
 import {

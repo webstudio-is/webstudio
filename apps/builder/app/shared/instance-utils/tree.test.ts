@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import {
   areInstanceSelectorsEqual,
   isDescendantOrSelf,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 
 test("compares instance selectors", () => {
   expect(areInstanceSelectorsEqual(["child", "body"], ["child", "body"])).toBe(

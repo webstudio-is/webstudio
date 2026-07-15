@@ -3,7 +3,7 @@ import { CustomMetadata } from "../custom-metadata";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 import type { OnChange } from "./shared";
 
 export const CustomMetadataSection = ({

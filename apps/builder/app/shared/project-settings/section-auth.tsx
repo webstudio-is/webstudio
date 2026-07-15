@@ -26,7 +26,7 @@ import {
   serializeWsAuth,
   type WsAuthRoute,
 } from "@webstudio-is/wsauth";
-import { validateBasicAuthCredentials } from "@webstudio-is/project-build/runtime/auth";
+import { validateBasicAuthCredentials } from "@webstudio-is/project-build/runtime";
 import { $permissions } from "~/shared/nano-states";
 import { $pages, $projectSettings } from "~/shared/sync/data-stores";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
@@ -34,7 +34,7 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   parseProjectAuthRoutes,
   validateProjectAuthRoute,
-} from "@webstudio-is/project-build/runtime/project-settings";
+} from "@webstudio-is/project-build/contracts";
 
 const saveAuthRoutes = (authRoutes: WsAuthRoute[]) => {
   executeRuntimeMutation({

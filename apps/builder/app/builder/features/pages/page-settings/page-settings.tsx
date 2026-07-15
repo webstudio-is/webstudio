@@ -38,11 +38,11 @@ import {
   validatePageSettings,
   type PageSettingsErrors,
   type PageSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
-import { findMatchingRedirect } from "@webstudio-is/project-build/runtime/redirect-source";
+} from "@webstudio-is/project-build/runtime";
+import { findMatchingRedirect } from "@webstudio-is/project-build/runtime";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { Form } from "../form";
-import { isContentModePagePath } from "@webstudio-is/project-build/runtime/content-mode-permissions";
+import { isContentModePagePath } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { AuthSection } from "./section-auth";
 import { CustomMetadataSection } from "./section-custom-metadata";

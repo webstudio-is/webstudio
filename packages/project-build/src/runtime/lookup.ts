@@ -7,12 +7,9 @@ import type {
 } from "@webstudio-is/sdk";
 import { getAllPages } from "@webstudio-is/sdk";
 import { isRichTextTree } from "./content-model";
-import type { InstanceSelector } from "./tree";
+import type { InstancePath, InstanceSelector } from "./instance-path";
 
-export type InstancePath = Array<{
-  instance: Instance;
-  instanceSelector: InstanceSelector;
-}>;
+export type { InstancePath } from "./instance-path";
 
 export const getInstancePath = (
   instanceSelector: InstanceSelector,

@@ -15,8 +15,8 @@ import { subscribeScrollState } from "./shared/scroll-state";
 import {
   isDescendantOrSelf,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
-import { findBlockChildSelector } from "@webstudio-is/project-build/runtime/block";
+} from "@webstudio-is/project-build/runtime";
+import { findBlockChildSelector } from "@webstudio-is/project-build/runtime";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;

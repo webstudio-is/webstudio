@@ -493,6 +493,40 @@ describe("rendered audit evidence", () => {
     ).not.toHaveProperty("failureCode");
   });
 
+  test("does not hide real failures behind a confirmation state", () => {
+    const result = mergeRenderedAudit({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: { scopes: ["performance"], manualCheckCount: 0 },
+      } as never,
+      input: { rendered: true },
+      checks: [],
+      failures: [
+        {
+          code: "RENDERED_AUDIT_CONFIRMATION_REQUIRED",
+          phase: "planning",
+          retryable: false,
+          remediation: "Confirm the planned run.",
+          message: "Confirmation required.",
+        },
+        {
+          code: "RENDERED_AUDIT_SCREENSHOT_FAILED",
+          phase: "capture",
+          retryable: true,
+          remediation: "Retry the capture.",
+          message: "Capture failed.",
+        },
+      ],
+    });
+
+    expect(result.result).toMatchObject({ renderedState: "failed" });
+  });
+
   test("summarizes rendered issue kinds in compact results", () => {
     const result = mergeRenderedAudit({
       envelope: {
@@ -738,6 +772,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(result.result).toMatchObject({
+      renderedState: "failed",
       renderedCheckCount: 0,
       renderedFailureCount: 1,
       renderedCaptureSummary: {
@@ -820,6 +855,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(result.result).toMatchObject({
+      renderedState: "complete",
       renderedCheckCount: 1,
       renderedFailureCount: 0,
       renderedCaptureSummary: {
@@ -830,6 +866,74 @@ describe("rendered audit evidence", () => {
         failed: 0,
       },
     });
+  });
+
+  test("returns partial evidence when one capture succeeds and one fails", async () => {
+    const stopPreview = vi.fn();
+    const result = await augmentAuditWithRenderedChecks({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: {
+          scopes: ["performance"],
+          manualCheckCount: 0,
+          verbose: true,
+        },
+      } as never,
+      input: { rendered: true, verbose: true },
+      executeRead: async (command) =>
+        ({
+          result:
+            command === "list-pages"
+              ? {
+                  pages: [
+                    { id: "good", path: "/good" },
+                    { id: "bad", path: "/bad" },
+                  ],
+                }
+              : { breakpoints: [] },
+        }) as never,
+      startPreview: vi.fn(),
+      stopPreview,
+      captureScreenshot: vi.fn(async (input) => {
+        if (input.path === "/bad") {
+          throw new Error("browser page closed");
+        }
+        return {
+          output: "/tmp/good.png",
+          browserPath: "/usr/bin/chromium",
+          browser: "chromium" as const,
+          viewport: input.viewport,
+          fullPage: true,
+          elapsedMs: 1,
+          warnings: [],
+          navigation: getNavigation("/good"),
+          layout,
+        };
+      }),
+    });
+
+    expect(result.result).toMatchObject({
+      renderedState: "partial",
+      renderedCheckCount: 1,
+      renderedFailureCount: 1,
+      renderedCaptureSummary: {
+        planned: 2,
+        passed: 1,
+        failed: 1,
+      },
+      renderedFailures: [
+        expect.objectContaining({
+          code: "RENDERED_AUDIT_SCREENSHOT_FAILED",
+          retryable: true,
+        }),
+      ],
+    });
+    expect(stopPreview).toHaveBeenCalledOnce();
   });
 
   test("accepts a generated non-HTML document without an HTML marker", async () => {
@@ -875,6 +979,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(result.result).toMatchObject({
+      renderedState: "complete",
       renderedCheckCount: 1,
       renderedFailureCount: 0,
       renderedCaptureSummary: {
@@ -919,6 +1024,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(result.result).toMatchObject({
+      renderedState: "failed",
       renderedCheckCount: 0,
       renderedFailureCount: 1,
       renderedCaptureSummary: {
@@ -965,6 +1071,7 @@ describe("rendered audit evidence", () => {
 
     expect(captureScreenshot).not.toHaveBeenCalled();
     expect(result.result).toMatchObject({
+      renderedState: "failed",
       renderedFailureCount: 1,
       renderedCaptureSummary: { planned: 1, failed: 1 },
       renderedFailures: [
@@ -1032,6 +1139,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(result.result).toMatchObject({
+      renderedState: "confirmation-required",
       renderedPlan: {
         version: 1,
         pages: expect.arrayContaining([
@@ -1091,6 +1199,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(confirmed.result).toMatchObject({
+      renderedState: "complete",
       renderedCheckCount: 122,
       renderedFailureCount: 0,
       renderedCaptureSummary: {
@@ -1144,6 +1253,7 @@ describe("rendered audit evidence", () => {
       captureScreenshot,
     });
     expect(stale.result).toMatchObject({
+      renderedState: "confirmation-required",
       renderedCheckCount: 0,
       renderedFailures: [
         expect.objectContaining({
@@ -1191,6 +1301,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(result.result).toMatchObject({
+      renderedState: "failed",
       renderedPlan: {
         pages: [],
         excludedPages: [
@@ -1261,6 +1372,7 @@ describe("rendered audit evidence", () => {
     });
 
     expect(result.result).toMatchObject({
+      renderedState: "failed",
       renderedCheckCount: 0,
       renderedCaptureSummary: {
         planned: 1,

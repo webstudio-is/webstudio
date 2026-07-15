@@ -93,7 +93,7 @@ import {
 import {
   formatBuildIntegrityError,
   getBuildIntegrityIssues,
-} from "@webstudio-is/project-build/build-integrity";
+} from "@webstudio-is/project-build/runtime";
 
 type ChangeProjectDomainProps = {
   project: Project;

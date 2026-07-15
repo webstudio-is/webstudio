@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
 import { isLiteralExpression } from "@webstudio-is/sdk";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
+import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   BindingControl,
   BindingPopover,

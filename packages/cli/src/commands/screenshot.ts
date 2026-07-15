@@ -8,7 +8,7 @@ import {
   screenshotWaitUntilValues,
   type ScreenshotBrowser,
   type ScreenshotWaitUntil,
-} from "@webstudio-is/project-build/visual/screenshot-browser";
+} from "@webstudio-is/project-build/visual";
 import { printJson } from "../json-output";
 import { HandledCliError } from "../errors";
 import {

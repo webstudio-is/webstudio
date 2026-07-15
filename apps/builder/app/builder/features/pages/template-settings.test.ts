@@ -3,7 +3,7 @@ import { __testing__ } from "./template-settings";
 import {
   pageSettingsDefaultValues,
   type PageSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 
 const { getEditorCreatePageValues } = __testing__;
 

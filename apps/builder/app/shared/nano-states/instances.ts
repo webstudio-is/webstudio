@@ -6,8 +6,8 @@ import {
   rootComponent,
 } from "@webstudio-is/sdk";
 import { $instances } from "../sync/data-stores";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
-import { getInstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
+import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { $selectedPage } from "./pages";
 import { $selectedInstanceSelector } from "./instance-selection";
 export {

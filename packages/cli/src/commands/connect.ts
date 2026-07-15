@@ -3,6 +3,15 @@ import { dirname, join } from "node:path";
 import { cwd } from "node:process";
 import { log } from "@clack/prompts";
 import {
+  agentClients,
+  agentClientTargets,
+  agentServerName,
+  createAgentServerEntry,
+  createCodexAgentSnippet,
+  defaultAgentServerCommand,
+  type AgentClient,
+} from "@webstudio-is/protocol";
+import {
   createFolderIfNotExists,
   isFileExists,
   writeFileAtomic,
@@ -14,12 +23,10 @@ import type {
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
 
-export const connectClients = ["claude", "codex", "cursor", "vscode"] as const;
-export type ConnectClient = (typeof connectClients)[number];
-
-export const defaultServerCommand = "npx -y webstudio@latest mcp";
-
-export const mcpServerName = "webstudio";
+export const connectClients = agentClients;
+export type ConnectClient = AgentClient;
+export const defaultServerCommand = defaultAgentServerCommand;
+export const mcpServerName = agentServerName;
 
 export type ConnectFileResult =
   | "created"
@@ -27,71 +34,9 @@ export type ConnectFileResult =
   | "unchanged"
   | "blocked-by-invalid-json";
 
-type JsonClientTarget = {
-  /**
-   * Config file path relative to the project root.
-   */
-  path: string;
-  /**
-   * Root object key holding server entries in the client config schema.
-   */
-  rootKey: "mcpServers" | "servers";
-  /**
-   * Extra fields required by the client config schema.
-   */
-  extraServerFields?: Record<string, unknown>;
-  /**
-   * One-line reload hint printed after the config is written.
-   */
-  hint: string;
-};
-
-const jsonClientTargets: Record<
-  Exclude<ConnectClient, "codex">,
-  JsonClientTarget
-> = {
-  claude: {
-    path: ".mcp.json",
-    rootKey: "mcpServers",
-    hint: "Restart Claude Code in this directory and approve the webstudio server.",
-  },
-  cursor: {
-    path: join(".cursor", "mcp.json"),
-    rootKey: "mcpServers",
-    hint: "Reload Cursor and enable the webstudio server in MCP settings.",
-  },
-  vscode: {
-    path: join(".vscode", "mcp.json"),
-    rootKey: "servers",
-    extraServerFields: { type: "stdio" },
-    hint: "Reload VS Code and start the webstudio server from the MCP view.",
-  },
-};
-
-const parseServerCommand = (serverCommand: string) => {
-  const [command, ...args] = serverCommand.trim().split(/\s+/);
-  if (command === undefined || command === "") {
-    throw new Error("--command must not be empty.");
-  }
-  return { command, args };
-};
-
-export const createServerEntry = (
-  serverCommand: string,
-  extraServerFields?: Record<string, unknown>
-) => {
-  const { command, args } = parseServerCommand(serverCommand);
-  return { ...extraServerFields, command, args };
-};
-
-export const createCodexSnippet = (serverCommand: string) => {
-  const { command, args } = parseServerCommand(serverCommand);
-  return [
-    `[mcp_servers.${mcpServerName}]`,
-    `command = ${JSON.stringify(command)}`,
-    `args = [${args.map((arg) => JSON.stringify(arg)).join(", ")}]`,
-  ].join("\n");
-};
+const jsonClientTargets = agentClientTargets;
+export const createServerEntry = createAgentServerEntry;
+export const createCodexSnippet = createCodexAgentSnippet;
 
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && Array.isArray(value) === false;
@@ -233,7 +178,7 @@ export const connect = async (
   const target = jsonClientTargets[client];
   const serverEntry = createServerEntry(
     serverCommand,
-    target.extraServerFields
+    "extraServerFields" in target ? target.extraServerFields : undefined
   );
 
   if (options.print === true) {

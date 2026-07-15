@@ -21,6 +21,11 @@ import {
   imageAsset,
 } from "@webstudio-is/sdk";
 import type { BuilderPatchChange } from "../contracts/patch";
+import {
+  paginateOutput,
+  projectOutput,
+  type PaginatedOutputInput,
+} from "./output";
 import type { BuilderState } from "../state/builder-state";
 import type { CompactBuild } from "../types";
 import type { ProjectSettings } from "../shared/project-settings";
@@ -754,11 +759,9 @@ const serializeAssetSummary = (asset: Asset) => ({
   id: asset.id,
   name: asset.name,
   filename: asset.filename,
-  description: asset.description,
   type: asset.type,
   size: asset.size,
   contentType: asset.format,
-  createdAt: asset.createdAt,
 });
 
 export const serializeAssetList = ({
@@ -768,12 +771,10 @@ export const serializeAssetList = ({
 }: {
   assets: Asset[];
   build?: AssetReferenceBuild;
-  input: {
+  input: PaginatedOutputInput & {
     type?: "image" | "font";
     withUsage?: boolean;
     sort?: "name" | "size" | "createdAt" | "usage";
-    cursor?: string;
-    limit?: number;
   };
 }) => {
   const shouldCountUsage = input.withUsage === true || input.sort === "usage";
@@ -781,14 +782,9 @@ export const serializeAssetList = ({
     shouldCountUsage && build !== undefined
       ? getAssetUsageCounts(build, assets)
       : undefined;
-  const sorted = assets
-    .filter((asset) => input.type === undefined || asset.type === input.type)
-    .map((asset) => ({
-      ...serializeAssetSummary(asset),
-      usageCount: shouldCountUsage
-        ? (usageCounts?.get(asset.id) ?? 0)
-        : undefined,
-    }));
+  const sorted = assets.filter(
+    (asset) => input.type === undefined || asset.type === input.type
+  );
   sorted.sort((left, right) => {
     switch (input.sort) {
       case "size":
@@ -796,23 +792,38 @@ export const serializeAssetList = ({
       case "createdAt":
         return right.createdAt.localeCompare(left.createdAt);
       case "usage":
-        return (right.usageCount ?? 0) - (left.usageCount ?? 0);
+        return (
+          (usageCounts?.get(right.id) ?? 0) - (usageCounts?.get(left.id) ?? 0)
+        );
       case "name":
       default:
         return left.name.localeCompare(right.name);
     }
   });
-  const start = input.cursor === undefined ? 0 : Number(input.cursor);
-  if (Number.isInteger(start) === false || start < 0) {
-    throw new Error("Invalid asset cursor");
-  }
-  const limit = input.limit ?? sorted.length;
-  const items = sorted.slice(start, start + limit);
-  const nextIndex = start + items.length;
-  return {
-    items,
-    nextCursor: nextIndex < sorted.length ? String(nextIndex) : null,
-  };
+  const projected = sorted.map((asset) =>
+    projectOutput({
+      input,
+      compact: {
+        ...serializeAssetSummary(asset),
+        usageCount: shouldCountUsage
+          ? (usageCounts?.get(asset.id) ?? 0)
+          : undefined,
+      },
+      expanded: () => ({ record: asset }),
+    })
+  );
+  return paginateOutput({
+    items: projected,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {
+      type: input.type,
+      withUsage: input.withUsage,
+      sort: input.sort,
+    },
+    verbose: input.verbose,
+    invalidCursorMessage: "Invalid asset cursor",
+  });
 };
 
 export const createAssetUsageList = ({
@@ -915,12 +926,10 @@ export const listAssets = (
     | "resources"
     | "dataSources"
   >,
-  input: {
+  input: PaginatedOutputInput & {
     type?: "image" | "font";
     withUsage?: boolean;
     sort?: "name" | "size" | "createdAt" | "usage";
-    cursor?: string;
-    limit?: number;
   } = {}
 ) => {
   try {

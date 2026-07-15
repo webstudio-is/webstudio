@@ -60,8 +60,8 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
-} from "@webstudio-is/project-build/runtime/tree";
-import { findBlockSelector } from "@webstudio-is/project-build/runtime/block";
+} from "@webstudio-is/project-build/runtime";
+import { findBlockSelector } from "@webstudio-is/project-build/runtime";
 import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { TextEditor } from "../text-editor";
@@ -79,7 +79,7 @@ import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
-import { richTextPlaceholders } from "@webstudio-is/project-build/runtime/content-model";
+import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
 
 const computeComponentKey = (props: Record<string, unknown>) => {
   const assetId = props.$webstudio$canvasOnly$assetId;

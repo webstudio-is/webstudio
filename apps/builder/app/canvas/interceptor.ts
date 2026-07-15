@@ -3,7 +3,7 @@ import {
   compilePathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
-} from "@webstudio-is/project-build/runtime/url-pattern";
+} from "@webstudio-is/project-build/runtime";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 import { $isPreviewMode, $selectedPageHash } from "~/shared/nano-states";

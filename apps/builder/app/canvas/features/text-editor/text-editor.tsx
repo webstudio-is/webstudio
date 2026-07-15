@@ -1,4 +1,4 @@
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime/lookup";
+import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -61,8 +61,8 @@ import {
 import {
   isDescendantOrSelf,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+} from "@webstudio-is/project-build/runtime";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
@@ -80,7 +80,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   findBlockChildSelector,
   findBlockTemplates,
-} from "@webstudio-is/project-build/runtime/block";
+} from "@webstudio-is/project-build/runtime";
 import {
   getElementByInstanceSelector,
   getVisibleElementsByInstanceSelector,
@@ -98,7 +98,7 @@ import {
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
-import { richTextPlaceholders } from "@webstudio-is/project-build/runtime/content-model";
+import { richTextPlaceholders } from "@webstudio-is/project-build/runtime";
 
 const BindInstanceToNodePlugin = ({
   refs,

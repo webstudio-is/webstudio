@@ -16,7 +16,6 @@ import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {
   projectSessionBusyMessage,
-  serializeProjectSessionDebug,
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
 } from "./project-session";
@@ -76,6 +75,8 @@ import {
   type SemanticValidationIssue,
 } from "./runtime/errors";
 import { z } from "zod";
+
+export { paginateOutput, projectOutput } from "./runtime/output";
 
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = BuilderApiCapability;
@@ -2281,9 +2282,7 @@ type ProjectSessionMcpStructuredContent =
       ok: true;
       data: unknown;
       meta: {
-        session?:
-          | ReturnType<typeof serializeProjectSessionMeta>
-          | ReturnType<typeof serializeProjectSessionDebug>;
+        session?: ReturnType<typeof serializeProjectSessionMeta>;
       };
     }
   | {
@@ -2291,9 +2290,7 @@ type ProjectSessionMcpStructuredContent =
       data: unknown;
       error: McpStructuredError;
       meta: {
-        session?:
-          | ReturnType<typeof serializeProjectSessionMeta>
-          | ReturnType<typeof serializeProjectSessionDebug>;
+        session?: ReturnType<typeof serializeProjectSessionMeta>;
       };
     };
 
@@ -4762,10 +4759,9 @@ const toCallResult = (
   } = {}
 ): ProjectSessionMcpToolResult => {
   const meta = {
-    session:
-      options.verboseSession === true
-        ? serializeProjectSessionDebug(envelope)
-        : serializeProjectSessionMeta(envelope),
+    session: serializeProjectSessionMeta(envelope, {
+      verbose: options.verboseSession,
+    }),
   };
   const structuredContent: ProjectSessionMcpStructuredContent =
     options.error === undefined
@@ -4799,39 +4795,23 @@ const getRenderedAuditError = (
   if (rendered === false || isRecord(envelope.result) === false) {
     return undefined;
   }
-  const failureCount = envelope.result.renderedFailureCount;
-  if (typeof failureCount !== "number" || failureCount === 0) {
+  const state = envelope.result.renderedState;
+  if (state === "complete" || state === "confirmation-required") {
     return undefined;
   }
-  const failures = Array.isArray(envelope.result.renderedFailures)
-    ? envelope.result.renderedFailures
-    : envelope.result.renderedFailureSummaries;
-  const confirmationRequired =
-    Array.isArray(failures) &&
-    failures.length > 0 &&
-    failures.every(
-      (failure) =>
-        isRecord(failure) &&
-        failure.code === "RENDERED_AUDIT_CONFIRMATION_REQUIRED"
-    );
-  if (confirmationRequired) {
-    return undefined;
-  }
-  const checkCount =
-    typeof envelope.result.renderedCheckCount === "number"
-      ? envelope.result.renderedCheckCount
-      : 0;
-  return checkCount === 0
+  return state === "failed"
     ? {
         code: "RENDERED_AUDIT_FAILED",
         message:
           "The static audit completed, but the requested rendered audit completed no rendered checks.",
       }
-    : {
-        code: "RENDERED_AUDIT_PARTIAL",
-        message:
-          "The static audit completed, but some requested rendered checks failed.",
-      };
+    : state === "partial"
+      ? {
+          code: "RENDERED_AUDIT_PARTIAL",
+          message:
+            "The static audit completed, but some requested rendered checks failed.",
+        }
+      : undefined;
 };
 
 const toResourceContent = (

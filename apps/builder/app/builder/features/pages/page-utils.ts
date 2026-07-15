@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/sdk";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
-import { nameToPath } from "@webstudio-is/project-build/runtime/pages";
+import { nameToPath } from "@webstudio-is/project-build/runtime";
 import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
 
 export const $pageRootScope = computed(

@@ -14,7 +14,7 @@ import {
 import type {
   PageSettingsErrors,
   PageSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 import { ImageControl } from "~/shared/project-settings";
 import { $assets } from "~/shared/sync/data-stores";
 import { isLiteralExpression } from "@webstudio-is/sdk";

@@ -1,7 +1,7 @@
 import { gfm, gfmHtml } from "micromark-extension-gfm";
 import { micromark } from "micromark";
 import { denormalizeSrcProps } from "./asset-upload";
-import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
+import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import {
   hasFragmentData,

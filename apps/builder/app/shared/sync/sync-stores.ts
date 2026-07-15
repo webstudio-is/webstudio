@@ -84,7 +84,7 @@ import { $resourcesCache } from "../resources";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 
 enableMapSet();
 // safari structuredClone fix

@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
-import type { ScreenshotWaitUntil } from "@webstudio-is/project-build/visual/screenshot-browser";
+import type { ScreenshotWaitUntil } from "@webstudio-is/project-build/visual";
 
 type BrowserProcess = Pick<ChildProcess, "kill" | "once">;
 

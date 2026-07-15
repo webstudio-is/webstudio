@@ -7,7 +7,7 @@ import {
   getSharedSlotBoundary,
   getSlotFragmentId,
   type SharedSlotBoundary,
-} from "@webstudio-is/project-build/runtime/slot";
+} from "@webstudio-is/project-build/runtime";
 
 export {
   countInstanceChildReferences,

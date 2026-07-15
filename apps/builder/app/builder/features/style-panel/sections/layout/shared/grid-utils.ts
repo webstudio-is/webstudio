@@ -1,4 +1,4 @@
 export {
   isAutoGridPlacement,
   resetGridChildPlacement,
-} from "@webstudio-is/project-build/runtime/style-utils";
+} from "@webstudio-is/project-build/runtime";

@@ -11,7 +11,7 @@ import { theme } from "@webstudio-is/design-system";
 import {
   formatAssetName,
   parseAssetName,
-} from "@webstudio-is/project-build/runtime/assets";
+} from "@webstudio-is/project-build/runtime";
 import type { IconComponent } from "@webstudio-is/icons";
 import type { AllowedFileExtension } from "@webstudio-is/sdk";
 import {

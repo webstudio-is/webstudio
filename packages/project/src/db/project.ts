@@ -5,7 +5,7 @@ import {
   AuthorizationError,
   getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
-import { createBuild } from "@webstudio-is/project-build/index.server";
+import { createBuild } from "@webstudio-is/project-build/server";
 import { projectTitle } from "../shared/project-schema";
 import type { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";

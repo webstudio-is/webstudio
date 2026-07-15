@@ -698,6 +698,20 @@ const mergeRenderedAudit = ({
     isVerbose && Array.isArray(result.manualChecks)
       ? result.manualChecks
       : undefined;
+  const confirmationRequired =
+    failures.length > 0 &&
+    failures.every(
+      ({ code }) =>
+        code === "RENDERED_AUDIT_CONFIRMATION_REQUIRED" ||
+        code === "RENDERED_AUDIT_CONFIRMATION_INVALID"
+    );
+  const renderedState = confirmationRequired
+    ? ("confirmation-required" as const)
+    : failures.length === 0
+      ? ("complete" as const)
+      : checks.length === 0
+        ? ("failed" as const)
+        : ("partial" as const);
   return {
     ...envelope,
     result: {
@@ -705,6 +719,7 @@ const mergeRenderedAudit = ({
       renderedCheckCount: checks.length,
       renderedIssueCount,
       renderedFailureCount: failures.length,
+      renderedState,
       renderedPlan: plan ?? null,
       renderedCaptureSummary,
       renderedCaptureStatuses,

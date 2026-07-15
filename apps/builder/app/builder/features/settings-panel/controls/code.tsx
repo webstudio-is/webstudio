@@ -22,8 +22,8 @@ import {
 import {
   validateHtmlEmbedCode,
   type HtmlEmbedCodeError,
-} from "@webstudio-is/project-build/runtime/html";
-import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime/props";
+} from "@webstudio-is/project-build/runtime";
+import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,

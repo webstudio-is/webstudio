@@ -12,7 +12,7 @@ import {
   flattenBuilderComponentPanelItems,
   listBuilderComponentPanelItems,
   type BuilderComponentPanelItem,
-} from "@webstudio-is/project-build/runtime/component-catalog";
+} from "@webstudio-is/project-build/runtime";
 import {
   $registeredComponentMetas,
   $registeredTemplates,

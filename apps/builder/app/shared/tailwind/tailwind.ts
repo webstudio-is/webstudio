@@ -15,7 +15,7 @@ import {
   type Prop,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
-import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime/breakpoints";
+import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime";
 import { preflight } from "./__generated__/preflight";
 
 // breakpoints used to map tailwind classes to webstudio breakpoints

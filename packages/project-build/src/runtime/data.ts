@@ -56,6 +56,7 @@ import { getStaticStringLiteral, replaceTextValue } from "./text-replacement";
 import {
   getNamedExpressionErrors,
   getNamedExpressionValidationIssues,
+  getExpressionWarnings,
   hasExpressionDiagnostics,
 } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
@@ -1860,22 +1861,90 @@ export const validateResourceBodyExpression = (
   return typeof value === "string" ? "" : "Expected string in body";
 };
 
+type ResourceExpressionFields = Partial<
+  Pick<Resource, "url" | "body" | "headers" | "searchParams">
+>;
+
+const listResourceExpressions = (
+  fields: ResourceExpressionFields,
+  pathPrefix: string[] = []
+) => [
+  ...(fields.url === undefined
+    ? []
+    : [{ path: [...pathPrefix, "url"], expression: fields.url }]),
+  ...(fields.body === undefined
+    ? []
+    : [{ path: [...pathPrefix, "body"], expression: fields.body }]),
+  ...(fields.headers ?? []).map((header, index) => ({
+    path: [...pathPrefix, "headers", String(index), "value"],
+    expression: header.value,
+  })),
+  ...(fields.searchParams ?? []).map((param, index) => ({
+    path: [...pathPrefix, "searchParams", String(index), "value"],
+    expression: param.value,
+  })),
+];
+
 const getResourceExpressionValidationIssues = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
-) => {
-  const issues: SemanticValidationIssue[] = [];
-  const validate = (name: string, expression: string | undefined) => {
-    issues.push(...getNamedExpressionValidationIssues(name, expression));
-  };
-  validate("url", fields.url);
-  validate("body", fields.body);
-  for (const [index, header] of (fields.headers ?? []).entries()) {
-    validate(`headers.${index}.value`, header.value);
+  fields: ResourceExpressionFields
+): SemanticValidationIssue[] =>
+  listResourceExpressions(fields).flatMap(({ path, expression }) =>
+    getNamedExpressionValidationIssues(path.join("."), expression)
+  );
+
+const getResourceWarnings = ({
+  fields,
+  state,
+  scopeInstanceId,
+  resourceId,
+  exposeAsDataSource = false,
+  fieldPath = ["resource"],
+  methodPath = ["resource", "method"],
+}: {
+  fields: Pick<
+    Resource,
+    "method" | "url" | "body" | "headers" | "searchParams"
+  >;
+  state: Pick<BuilderState, "instances" | "dataSources">;
+  scopeInstanceId?: string;
+  resourceId: string;
+  exposeAsDataSource?: boolean;
+  fieldPath?: string[];
+  methodPath?: string[];
+}) => {
+  const availableVariables = new Set(
+    scopeInstanceId === undefined ||
+      state.instances === undefined ||
+      state.dataSources === undefined
+      ? ["system"]
+      : findAvailableVariables({
+          startingInstanceId: scopeInstanceId,
+          instances: state.instances,
+          dataSources: state.dataSources,
+        }).map(({ name }) => name)
+  );
+  const warnings = listResourceExpressions(fields, fieldPath).flatMap(
+    ({ path, expression }) =>
+      getExpressionWarnings({
+        expression,
+        availableVariables,
+        path,
+        resourceId,
+      })
+  );
+  if (exposeAsDataSource && fields.method !== "get") {
+    warnings.push({
+      severity: "warning",
+      code: "render_time_mutation_resource",
+      path: methodPath,
+      message: `The ${fields.method.toUpperCase()} resource is explicitly exposed as render-time data and may execute while rendering the page.`,
+      range: { from: 0, to: 0 },
+      remediation:
+        "Expose GET resources for render-time data, or trigger mutating resources from an explicit action.",
+      resourceId,
+    });
   }
-  for (const [index, searchParam] of (fields.searchParams ?? []).entries()) {
-    validate(`searchParams.${index}.value`, searchParam.value);
-  }
-  return issues;
+  return warnings;
 };
 
 export const getResourceExpressionErrors = (
@@ -2450,6 +2519,14 @@ export const createResource = (
     headers: resourceInput.headers,
     body: resourceInput.body,
   });
+  const warnings = getResourceWarnings({
+    fields: resource,
+    state,
+    scopeInstanceId: input.scopeInstanceId,
+    resourceId,
+    exposeAsDataSource,
+    methodPath: ["resource", "method"],
+  });
   return createRuntimeMutation({
     payload: createResourceUpsertPatchPayload({
       build,
@@ -2462,12 +2539,7 @@ export const createResource = (
     result: {
       resourceId,
       dataSourceId,
-      warnings:
-        exposeAsDataSource && resourceInput.method !== "get"
-          ? [
-              `The ${resourceInput.method.toUpperCase()} resource is explicitly exposed as render-time data and may execute while rendering the page.`,
-            ]
-          : [],
+      warnings,
     },
     invalidatesNamespaces: [
       "pages",
@@ -2549,6 +2621,15 @@ export const updateResource = (
   const dataSourceId = exposeAsDataSource
     ? (dataSource?.id ?? context.createId())
     : dataSource?.id;
+  const warnings = getResourceWarnings({
+    fields: nextResource,
+    state,
+    scopeInstanceId,
+    resourceId: resource.id,
+    exposeAsDataSource,
+    fieldPath: ["values"],
+    methodPath: ["values", "method"],
+  });
   return createRuntimeMutation({
     payload: createResourceUpsertPatchPayload({
       build,
@@ -2561,12 +2642,7 @@ export const updateResource = (
     result: {
       resourceId: resource.id,
       dataSourceId: exposeAsDataSource ? dataSourceId : undefined,
-      warnings:
-        input.exposeAsDataSource === true && nextResource.method !== "get"
-          ? [
-              `The ${nextResource.method.toUpperCase()} resource is explicitly exposed as render-time data and may execute while rendering the page.`,
-            ]
-          : [],
+      warnings,
     },
     invalidatesNamespaces: [
       "pages",

@@ -46,7 +46,7 @@ vi.mock("~/shared/builder-data", () => ({
 
 //  Imports (after mocks)
 
-import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
   $hasUnsavedSyncChanges,
   $syncStatus,

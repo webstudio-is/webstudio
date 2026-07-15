@@ -19,6 +19,11 @@ import {
   type Styles,
 } from "@webstudio-is/sdk";
 import type { BuilderPatch, BuilderPatchChange } from "../contracts/patch";
+import {
+  paginateOutput,
+  projectOutput,
+  type PaginatedOutputInput,
+} from "./output";
 import type { BuilderState } from "../state/builder-state";
 import {
   findSerializedPageByInput,
@@ -40,9 +45,11 @@ export const serializeDesignTokens = ({
   styleSourceSelections,
   filter,
   withUsage,
-  includeStyles,
   sort,
-}: {
+  cursor,
+  limit,
+  verbose,
+}: PaginatedOutputInput & {
   styleSources: Iterable<StyleSource> | Map<string, StyleSource>;
   styles: Iterable<StyleDecl> | Map<string, StyleDecl>;
   styleSourceSelections:
@@ -50,7 +57,6 @@ export const serializeDesignTokens = ({
     | Map<string, StyleSourceSelection>;
   filter?: string;
   withUsage?: boolean;
-  includeStyles?: boolean;
   sort?: "name" | "usage";
 }) => {
   const shouldCountUsage = withUsage !== false || sort === "usage";
@@ -76,18 +82,21 @@ export const serializeDesignTokens = ({
       const usageCount = selections.filter((selection) =>
         selection.values.includes(styleSource.id)
       ).length;
-      return {
+      const compact = {
         id: styleSource.id,
         name: styleSource.name,
         declarationCount: tokenDecls.length,
-        styles:
-          includeStyles === true
-            ? Object.fromEntries(
-                tokenDecls.map((style) => [style.property, style.value])
-              )
-            : undefined,
         usageCount: shouldCountUsage ? usageCount : undefined,
       };
+      return projectOutput({
+        input: { verbose },
+        compact,
+        expanded: () => ({
+          styles: Object.fromEntries(
+            tokenDecls.map((style) => [style.property, style.value])
+          ),
+        }),
+      });
     });
 
   tokens.sort((left, right) =>
@@ -95,7 +104,15 @@ export const serializeDesignTokens = ({
       ? (right.usageCount ?? 0) - (left.usageCount ?? 0)
       : left.name.localeCompare(right.name)
   );
-  return { tokens };
+  const { items, ...pagination } = paginateOutput({
+    items: tokens,
+    cursor,
+    limit,
+    filters: { filter, withUsage, sort },
+    verbose,
+    invalidCursorMessage: "Invalid design token cursor",
+  });
+  return { tokens: items, ...pagination };
 };
 
 const getRequiredStyleState = (
@@ -123,7 +140,7 @@ export const getStyleDeclarations = (
     BuilderState,
     "pages" | "instances" | "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: {
+  input: PaginatedOutputInput & {
     instanceIds?: string[];
     pageId?: string;
     pagePath?: string;
@@ -168,19 +185,41 @@ export const getStyleDeclarations = (
             pageInstanceIds.has(instanceId)
           )
         );
-  return {
-    declarations: serializeStyleDeclarations({
-      styles: styleState.styles.values(),
-      styleSources: styleState.styleSources.values(),
-      styleSourceSelections: styleState.styleSourceSelections.values(),
-      instanceIds,
+  const declarations = serializeStyleDeclarations({
+    styles: styleState.styles.values(),
+    styleSources: styleState.styleSources.values(),
+    styleSourceSelections: styleState.styleSourceSelections.values(),
+    instanceIds,
+    breakpoint: input.breakpoint,
+    state: input.state,
+    property,
+    propertyFilter: input.propertyFilter,
+    includeTokens: input.includeTokens,
+  }).map(({ value, ...compact }) =>
+    projectOutput({
+      input,
+      compact: { ...compact, valueType: value.type },
+      expanded: () => ({ value }),
+    })
+  );
+  const { items, ...pagination } = paginateOutput({
+    items: declarations,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {
+      instanceIds: input.instanceIds,
+      pageId: input.pageId,
+      pagePath: input.pagePath,
       breakpoint: input.breakpoint,
       state: input.state,
-      property,
+      property: input.property,
       propertyFilter: input.propertyFilter,
       includeTokens: input.includeTokens,
-    }),
-  };
+    },
+    verbose: input.verbose,
+    invalidCursorMessage: "Invalid style cursor",
+  });
+  return { declarations: items, ...pagination };
 };
 
 export const listDesignTokens = (
@@ -188,10 +227,9 @@ export const listDesignTokens = (
     BuilderState,
     "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: {
+  input: PaginatedOutputInput & {
     filter?: string;
     withUsage?: boolean;
-    includeStyles?: boolean;
     sort?: "name" | "usage";
   } = {}
 ) => serializeDesignTokens({ ...getRequiredStyleState(state), ...input });

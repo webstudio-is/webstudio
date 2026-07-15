@@ -23,7 +23,7 @@ import {
   BindingPopover,
   type BindingVariant,
 } from "~/builder/shared/binding-popover";
-import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime/props";
+import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import { $props, $resources } from "~/shared/sync/data-stores";
@@ -31,7 +31,7 @@ import {
   computeExpression,
   createResourceFieldsFromResource,
   createResourceValueFromFormData,
-} from "@webstudio-is/project-build/runtime/data";
+} from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   $selectedInstance,

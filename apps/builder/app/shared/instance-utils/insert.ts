@@ -17,9 +17,9 @@ import {
   resolveComponentInsertTarget,
   resolveFragmentInsertTarget,
   type InsertTarget,
-} from "@webstudio-is/project-build/runtime/insert-target";
-import { createComponentTemplateFragment } from "@webstudio-is/project-build/runtime/component-template";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+} from "@webstudio-is/project-build/runtime";
+import { createComponentTemplateFragment } from "@webstudio-is/project-build/runtime";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { executeRuntimeMutation } from "./data";
 

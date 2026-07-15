@@ -20,6 +20,11 @@ import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
 } from "../contracts/patch";
+import {
+  paginateOutput,
+  projectOutput,
+  type PaginatedOutputInput,
+} from "./output";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import {
@@ -3466,7 +3471,7 @@ const getPageFilteredRootInstanceIds = (
 
 export const listInstances = (
   state: Pick<BuilderState, "pages" | "instances">,
-  input: {
+  input: PaginatedOutputInput & {
     pageId?: string;
     pagePath?: string;
     rootInstanceId?: string;
@@ -3511,11 +3516,36 @@ export const listInstances = (
     ) {
       continue;
     }
+    const compact = serializeInstanceSummary(
+      instance,
+      depth,
+      parents.get(instance.id)
+    );
     results.push(
-      serializeInstanceSummary(instance, depth, parents.get(instance.id))
+      projectOutput({
+        input,
+        compact,
+        expanded: () => ({ record: instance }),
+      })
     );
   }
-  return { instances: results };
+  const { items, ...pagination } = paginateOutput({
+    items: results,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {
+      pageId: input.pageId,
+      pagePath: input.pagePath,
+      rootInstanceId: input.rootInstanceId,
+      maxDepth: input.maxDepth,
+      topLevelOnly: input.topLevelOnly,
+      component: input.component,
+      tag: input.tag,
+      labelContains: input.labelContains,
+    },
+    verbose: input.verbose,
+  });
+  return { instances: items, ...pagination };
 };
 
 export const listTextInstances = (

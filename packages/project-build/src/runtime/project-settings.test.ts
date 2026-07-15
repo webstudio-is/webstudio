@@ -2,6 +2,12 @@ import { describe, expect, test } from "vitest";
 import { createBasicAuthRoute } from "@webstudio-is/wsauth";
 import type { BuilderState } from "../state/builder-state";
 import {
+  parseProjectAuthRoutes,
+  validateContactEmail,
+  validateProjectAuth,
+  validateProjectAuthRoute,
+} from "../contracts/project-settings";
+import {
   breakpointFieldsInput,
   breakpointUpdateFieldsInput,
   createBreakpoint,
@@ -13,7 +19,6 @@ import {
   listBreakpoints,
   listRedirects,
   marketplaceProductUpdateInput,
-  parseProjectAuthRoutes,
   projectSettingsUpdateInput,
   redirectFieldsInput,
   redirectUpdateFieldsInput,
@@ -22,9 +27,6 @@ import {
   updateMarketplaceProduct,
   updateProjectSettings,
   updateRedirect,
-  validateContactEmail,
-  validateProjectAuth,
-  validateProjectAuthRoute,
 } from "./project-settings";
 
 const createState = (): BuilderState =>

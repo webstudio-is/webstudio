@@ -17,7 +17,7 @@ import { $registeredComponentMetas } from "../../nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $project, $styleSources, $styles } from "~/shared/sync/data-stores";
 import invariant from "tiny-invariant";
-import { wfData } from "@webstudio-is/project-build/runtime/webflow/schema";
+import { wfData } from "@webstudio-is/project-build/transfer";
 import { pasteIgnored } from "../copy-paste";
 
 const { toWebstudioFragment } = __testing__;

@@ -60,7 +60,7 @@ Commands:
 
 Notes:
 
-- Use `webstudio schema mcp` for a tiny machine-readable MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` or focused `meta.get_more_tools` calls only when exact input schemas are needed.
+- Use `webstudio schema mcp` for a compact machine-readable MCP tool overview. Add `--verbose` or use focused `meta.get_more_tools` calls only when exact input schemas are needed.
 - Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Protocol clients can use `resources/list` and `resources/read`; shell agents can use `webstudio mcp list-resources` and `webstudio mcp read-resource <uri>`. Read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused tools are insufficient.
 - Read `webstudio://project/expressions` before authoring unfamiliar computed text, prop bindings, resource expressions, actions, or Collection item bindings.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
@@ -560,12 +560,12 @@ Commands:
 
 - MCP tool: list-design-tokens {}
 - MCP tool: list-design-tokens {"withUsage":true}
-- MCP tool: list-design-tokens {"includeStyles":true}
+- MCP tool: list-design-tokens {"verbose":true}
 
 Notes:
 
 - The default response is compact and includes token id, name, declaration count, and optional usage count.
-- Use `includeStyles:true` only when you need the full inline style declarations.
+- Use `verbose:true` only when you need the full inline style declarations.
 
 ## Create design tokens
 

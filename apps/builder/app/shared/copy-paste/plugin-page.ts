@@ -12,13 +12,13 @@ import {
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import { $pages, $project } from "~/shared/sync/data-stores";
-import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime/fragment";
+import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime";
 import { builderApi } from "../builder-api";
 import {
   createFolderCopyData,
   createPageCopyData,
   createTemplateCopyData,
-} from "@webstudio-is/project-build/runtime/page-copy";
+} from "@webstudio-is/project-build/runtime";
 import {
   pageTransferDataVersion,
   parsePageTransferData,
@@ -26,11 +26,11 @@ import {
   type PageTransferData,
   type PageTransferItem,
   type TemplateTransferData,
-} from "@webstudio-is/project-build/runtime/data-formats/page-transfer";
+} from "@webstudio-is/project-build/transfer";
 import { $selectedPage } from "../nano-states";
 import { getPageActionTarget } from "../page-action-target";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.";

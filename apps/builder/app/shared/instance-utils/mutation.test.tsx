@@ -11,11 +11,11 @@ import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import {
   canConvertInstance,
   reparentInstanceMutable,
-} from "@webstudio-is/project-build/runtime/instances";
+} from "@webstudio-is/project-build/runtime";
 import { $, ws, expression, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
@@ -35,7 +35,7 @@ import {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import type { InstancePath } from "@webstudio-is/project-build/runtime";
 import { $registeredComponentMetas } from "../nano-states";
 import {
   $instances,
@@ -55,7 +55,7 @@ import {
 import type {
   DroppableTarget,
   InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 
 enableMapSet();
 registerContainers();

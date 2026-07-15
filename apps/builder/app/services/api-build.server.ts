@@ -5,7 +5,7 @@ import type { CompactBuild } from "@webstudio-is/project-build";
 import {
   loadBuildById,
   loadDevBuildByProjectId,
-} from "@webstudio-is/project-build/index.server";
+} from "@webstudio-is/project-build/server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";

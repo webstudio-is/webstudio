@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { createProjectSessionMcpCore } from "@webstudio-is/project-build/mcp";
-import { getRuntimeGeneratedInputPaths } from "@webstudio-is/project-build/contracts/input-schema";
-import { builderRuntimeOperations } from "@webstudio-is/project-build/runtime/registry";
+import { getRuntimeGeneratedInputPaths } from "@webstudio-is/project-build/contracts";
+import { builderRuntimeOperations } from "@webstudio-is/project-build/runtime";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import {
   apiCommandMetadata,

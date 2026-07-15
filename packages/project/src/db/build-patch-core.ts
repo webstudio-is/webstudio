@@ -27,10 +27,12 @@ import {
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
-  findCycles,
   type MarketplaceProduct,
   type ProjectSettings,
   marketplaceProduct,
+} from "@webstudio-is/project-build";
+import { findCycles } from "@webstudio-is/project-build/runtime";
+import {
   parsePages,
   serializePages,
   parseStyleSourceSelections,
@@ -42,12 +44,12 @@ import {
   parseInstanceData,
   serializeConfig,
   serializeData,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/project-build/persistence";
 import type {
   BuilderPatch,
   BuilderPatchTransaction,
-} from "@webstudio-is/project-build/contracts/patch";
-import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state/patch";
+} from "@webstudio-is/project-build/contracts";
+import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 
 type TouchedKeys = {

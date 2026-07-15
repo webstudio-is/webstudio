@@ -25210,6 +25210,19 @@ export const runtimeOperationContractData = [
         labelContains: {
           type: "string",
         },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
       },
       required: [],
     },
@@ -25251,13 +25264,125 @@ export const runtimeOperationContractData = [
                 minimum: -9007199254740991,
                 maximum: 9007199254740991,
               },
+              record: {
+                type: "object",
+                properties: {
+                  type: {
+                    type: "string",
+                    const: "instance",
+                  },
+                  id: {
+                    type: "string",
+                  },
+                  component: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  tag: {
+                    type: "string",
+                    minLength: 1,
+                    description:
+                      "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                  },
+                  label: {
+                    type: "string",
+                  },
+                  children: {
+                    type: "array",
+                    items: {
+                      anyOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "id",
+                            },
+                            value: {
+                              type: "string",
+                            },
+                          },
+                          required: ["type", "value"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "text",
+                            },
+                            value: {
+                              type: "string",
+                            },
+                            placeholder: {
+                              type: "boolean",
+                            },
+                          },
+                          required: ["type", "value"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "expression",
+                            },
+                            value: {
+                              type: "string",
+                            },
+                          },
+                          required: ["type", "value"],
+                        },
+                      ],
+                    },
+                  },
+                },
+                required: ["type", "id", "component", "children"],
+              },
             },
             required: ["id", "component", "childCount", "depth"],
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["instances"],
+      required: [
+        "instances",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["pages", "instances", "props"],
@@ -27624,7 +27749,20 @@ export const runtimeOperationContractData = [
               property: {
                 type: "string",
               },
-              value: {},
+              value: {
+                type: "object",
+                properties: {
+                  type: {
+                    type: "string",
+                    description: "CSS value kind",
+                  },
+                  hidden: {
+                    type: "boolean",
+                  },
+                },
+                required: ["type"],
+                additionalProperties: {},
+              },
               breakpoint: {
                 type: "string",
               },
@@ -27640,6 +27778,7 @@ export const runtimeOperationContractData = [
               "instanceId",
               "styleSourceId",
               "property",
+              "value",
               "breakpoint",
               "source",
             ],
@@ -32906,6 +33045,10 @@ export const runtimeOperationContractData = [
               minimum: 0,
               maximum: 9007199254740991,
             },
+            renderedState: {
+              type: "string",
+              enum: ["complete", "partial", "confirmation-required", "failed"],
+            },
             renderedPlan: {
               anyOf: [
                 {
@@ -33414,6 +33557,7 @@ export const runtimeOperationContractData = [
             "renderedCheckCount",
             "renderedIssueCount",
             "renderedFailureCount",
+            "renderedState",
             "renderedPlan",
             "renderedCaptureSummary",
             "renderedCaptureStatuses",
@@ -33564,6 +33708,10 @@ export const runtimeOperationContractData = [
               type: "integer",
               minimum: 0,
               maximum: 9007199254740991,
+            },
+            renderedState: {
+              type: "string",
+              enum: ["complete", "partial", "confirmation-required", "failed"],
             },
             renderedPlan: {
               anyOf: [
@@ -34517,6 +34665,7 @@ export const runtimeOperationContractData = [
             "renderedCheckCount",
             "renderedIssueCount",
             "renderedFailureCount",
+            "renderedState",
             "renderedPlan",
             "renderedCaptureSummary",
             "renderedCaptureStatuses",
@@ -40409,6 +40558,63 @@ export const runtimeOperationContractData = [
         },
         itemKeyParameterId: {
           type: "string",
+        },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
         },
       },
       required: [
@@ -47236,6 +47442,63 @@ export const runtimeOperationContractData = [
             type: "string",
           },
         },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
+        },
       },
       required: ["propIds"],
       additionalProperties: {},
@@ -47506,6 +47769,63 @@ export const runtimeOperationContractData = [
             type: "string",
           },
         },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
+        },
       },
       required: ["propIds"],
       additionalProperties: {},
@@ -47644,6 +47964,63 @@ export const runtimeOperationContractData = [
         mode: {
           type: "string",
           enum: ["text", "expression"],
+        },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
         },
       },
       required: ["instanceId", "childIndex", "mode"],
@@ -47807,6 +48184,63 @@ export const runtimeOperationContractData = [
         mode: {
           type: "string",
           enum: ["text", "expression"],
+        },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
         },
       },
       required: ["instanceId", "operation"],
@@ -48079,6 +48513,19 @@ export const runtimeOperationContractData = [
         includeTokens: {
           type: "boolean",
         },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
       },
       required: [],
     },
@@ -48099,7 +48546,6 @@ export const runtimeOperationContractData = [
               property: {
                 type: "string",
               },
-              value: {},
               breakpoint: {
                 type: "string",
               },
@@ -48110,6 +48556,23 @@ export const runtimeOperationContractData = [
                 type: "string",
                 enum: ["local", "token"],
               },
+              valueType: {
+                type: "string",
+              },
+              value: {
+                type: "object",
+                properties: {
+                  type: {
+                    type: "string",
+                    description: "CSS value kind",
+                  },
+                  hidden: {
+                    type: "boolean",
+                  },
+                },
+                required: ["type"],
+                additionalProperties: {},
+              },
             },
             required: [
               "instanceId",
@@ -48117,12 +48580,50 @@ export const runtimeOperationContractData = [
               "property",
               "breakpoint",
               "source",
+              "valueType",
             ],
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["declarations"],
+      required: [
+        "declarations",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: [
@@ -48442,13 +48943,22 @@ export const runtimeOperationContractData = [
           description: "Include usage counts. Defaults to true.",
           type: "boolean",
         },
-        includeStyles: {
-          description: "Include full inline style declarations for each token.",
-          type: "boolean",
-        },
         sort: {
           type: "string",
           enum: ["name", "usage"],
+        },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
         },
       },
       required: [],
@@ -48477,7 +48987,20 @@ export const runtimeOperationContractData = [
                 propertyNames: {
                   type: "string",
                 },
-                additionalProperties: {},
+                additionalProperties: {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      description: "CSS value kind",
+                    },
+                    hidden: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["type"],
+                  additionalProperties: {},
+                },
               },
               usageCount: {
                 type: "integer",
@@ -48489,8 +49012,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["tokens"],
+      required: [
+        "tokens",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["styles", "styleSources", "styleSourceSelections"],
@@ -52131,9 +52691,78 @@ export const runtimeOperationContractData = [
               scopeInstanceId: {
                 type: "string",
               },
-              value: {},
+              value: {
+                anyOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "number",
+                      },
+                      value: {
+                        type: "number",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string",
+                      },
+                      value: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "boolean",
+                      },
+                      value: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string[]",
+                      },
+                      value: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "json",
+                      },
+                      value: {},
+                    },
+                    required: ["type"],
+                  },
+                ],
+              },
             },
-            required: ["id", "name"],
+            required: ["id", "name", "value"],
             additionalProperties: {},
           },
         },
@@ -52690,7 +53319,58 @@ export const runtimeOperationContractData = [
         warnings: {
           type: "array",
           items: {
-            type: "string",
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
           },
         },
       },
@@ -52895,7 +53575,58 @@ export const runtimeOperationContractData = [
         warnings: {
           type: "array",
           items: {
-            type: "string",
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
           },
         },
       },
@@ -53509,7 +54240,12 @@ export const runtimeOperationContractData = [
         limit: {
           type: "integer",
           minimum: 1,
-          maximum: 9007199254740991,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
         },
       },
       required: [],
@@ -53531,16 +54267,6 @@ export const runtimeOperationContractData = [
               filename: {
                 type: "string",
               },
-              description: {
-                anyOf: [
-                  {
-                    type: "string",
-                  },
-                  {
-                    type: "null",
-                  },
-                ],
-              },
               type: {
                 type: "string",
                 enum: ["font", "image", "file"],
@@ -53551,25 +54277,86 @@ export const runtimeOperationContractData = [
               contentType: {
                 type: "string",
               },
-              createdAt: {
-                type: "string",
-              },
               usageCount: {
                 type: "integer",
                 minimum: -9007199254740991,
                 maximum: 9007199254740991,
               },
+              record: {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "string",
+                  },
+                  projectId: {
+                    type: "string",
+                  },
+                  name: {
+                    type: "string",
+                  },
+                  filename: {
+                    type: "string",
+                  },
+                  description: {
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "null",
+                      },
+                    ],
+                  },
+                  type: {
+                    type: "string",
+                    enum: ["font", "image", "file"],
+                  },
+                  size: {
+                    type: "number",
+                  },
+                  format: {
+                    type: "string",
+                  },
+                  createdAt: {
+                    type: "string",
+                  },
+                  meta: {
+                    type: "object",
+                    properties: {},
+                    additionalProperties: {},
+                    required: [],
+                  },
+                },
+                required: [
+                  "id",
+                  "projectId",
+                  "name",
+                  "type",
+                  "size",
+                  "format",
+                  "createdAt",
+                  "meta",
+                ],
+                additionalProperties: {},
+              },
             },
-            required: [
-              "id",
-              "name",
-              "type",
-              "size",
-              "contentType",
-              "createdAt",
-            ],
+            required: ["id", "name", "type", "size", "contentType"],
             additionalProperties: {},
           },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
         },
         nextCursor: {
           anyOf: [
@@ -53581,8 +54368,21 @@ export const runtimeOperationContractData = [
             },
           ],
         },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["items", "nextCursor"],
+      required: [
+        "items",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: [

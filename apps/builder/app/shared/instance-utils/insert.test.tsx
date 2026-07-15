@@ -40,7 +40,7 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
-import { getInstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { selectPage } from "../nano-states";
 import { selectInstance } from "../nano-states";
 import { $selectedPageId } from "../nano-states/pages";
