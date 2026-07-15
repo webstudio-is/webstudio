@@ -14,6 +14,7 @@ import {
   getBuilderRuntimeOperation,
 } from "./registry";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
+import { getRuntimeOutputSchema, runtimeOutputSchemas } from "./output-schemas";
 import { getPage, listFolders, listPages } from "./pages";
 import {
   getStyleDeclarations,
@@ -161,9 +162,7 @@ test("keeps generated runtime contracts in sync with the registry", () => {
         permit,
         kind,
         inputSchema: inputJsonSchema,
-        ...(outputJsonSchema === undefined
-          ? {}
-          : { outputSchema: outputJsonSchema }),
+        outputSchema: outputJsonSchema,
         readNamespaces,
         writeNamespaces,
         invalidatesNamespaces,
@@ -175,131 +174,55 @@ test("keeps generated runtime contracts in sync with the registry", () => {
   );
 });
 
-test("tracks public runtime operations without output schemas", () => {
+test("requires an output schema for every runtime operation", () => {
   expect(
     builderRuntimeOperations
-      .filter(
-        (operation) =>
-          operation.command !== undefined &&
-          operation.outputSchema === undefined
-      )
+      .filter((operation) => operation.outputSchema === undefined)
       .map((operation) => operation.id)
-  ).toMatchInlineSnapshot(`
-    [
-      "pages.list",
-      "pages.get",
-      "pages.getByPath",
-      "pages.create",
-      "pages.update",
-      "pages.updateSettings",
-      "pages.updateMarketplace",
-      "pages.savePathInHistory",
-      "pages.setHome",
-      "projectSettings.get",
-      "projectSettings.update",
-      "projectSettings.getMarketplaceProduct",
-      "projectSettings.updateMarketplaceProduct",
-      "redirects.list",
-      "redirects.create",
-      "redirects.update",
-      "redirects.delete",
-      "redirects.setAll",
-      "breakpoints.list",
-      "breakpoints.create",
-      "breakpoints.update",
-      "breakpoints.delete",
-      "pages.delete",
-      "pages.duplicate",
-      "pages.copy",
-      "pageTemplates.list",
-      "pageTemplates.create",
-      "pageTemplates.update",
-      "pageTemplates.delete",
-      "pageTemplates.duplicate",
-      "pageTemplates.reorder",
-      "pageTemplates.createPage",
-      "folders.list",
-      "folders.create",
-      "folders.update",
-      "folders.delete",
-      "folders.duplicate",
-      "pageTransfer.insert",
-      "pageTree.move",
-      "pageTree.reparentOrphans",
-      "instances.list",
-      "instances.inspect",
-      "project.search",
-      "instances.insertComponent",
-      "instances.insertFragment",
-      "instances.move",
-      "instances.reparent",
-      "instances.fillGrid",
-      "instances.wrap",
-      "instances.convert",
-      "instances.unwrap",
-      "instances.clone",
-      "instances.duplicateAfterItself",
-      "instances.delete",
-      "instances.deleteBySelector",
-      "instances.updateProps",
-      "instances.replacePropText",
-      "instances.deleteProps",
-      "instances.bindProps",
-      "instances.listTexts",
-      "instances.updateText",
-      "instances.replaceText",
-      "instances.setTextContent",
-      "instances.updateTextTree",
-      "instances.setTag",
-      "instances.setLabel",
-      "styles.getDeclarations",
-      "styles.updateDeclarations",
-      "styles.deleteDeclarations",
-      "styles.updateSelectedDeclarations",
-      "styles.deleteSelectedDeclarations",
-      "styles.replaceValues",
-      "designTokens.list",
-      "designTokens.create",
-      "designTokens.createAttached",
-      "designTokens.updateStyles",
-      "designTokens.deleteStyles",
-      "designTokens.attach",
-      "designTokens.detach",
-      "designTokens.extract",
-      "styleSources.rename",
-      "styleSources.delete",
-      "styleSources.setLock",
-      "styleSources.reorder",
-      "styleSources.clearStyles",
-      "styleSources.duplicate",
-      "styleSources.convertLocalToToken",
-      "cssVariables.list",
-      "cssVariables.define",
-      "cssVariables.delete",
-      "cssVariables.rewriteRefs",
-      "cssVariables.rename",
-      "variables.list",
-      "variables.create",
-      "variables.update",
-      "variables.delete",
-      "variables.deleteUnused",
-      "resources.list",
-      "resources.create",
-      "resources.update",
-      "resources.replaceText",
-      "resources.upsert",
-      "resources.upsertProp",
-      "resources.delete",
-      "assets.list",
-      "fonts.list",
-      "assets.findUsage",
-      "assets.update",
-      "assets.setImageDescriptions",
-      "assets.add",
-      "assets.replace",
-      "assets.delete",
-    ]
-  `);
+  ).toEqual([]);
+  expect(
+    Object.keys(runtimeOutputSchemas)
+      .filter((operationId) => operationId.startsWith("system.") === false)
+      .sort()
+  ).toEqual(builderRuntimeOperations.map((operation) => operation.id).sort());
+  expect(() => getRuntimeOutputSchema("missing.operation")).toThrow(
+    'Missing runtime output schema for operation "missing.operation".'
+  );
+});
+
+test("validates structured runtime operation results", () => {
+  expect(
+    getRuntimeOutputSchema("resources.update").parse({ resourceId: "resource" })
+  ).toEqual({ resourceId: "resource" });
+  expect(
+    getRuntimeOutputSchema("resources.update").parse({
+      resourceId: "resource",
+      dataSourceId: "data-source",
+      warnings: ["warning"],
+    })
+  ).toMatchObject({ dataSourceId: "data-source", warnings: ["warning"] });
+
+  expect(
+    getRuntimeOutputSchema("instances.deleteBySelector").safeParse({
+      instanceSelector: ["instance", "parent"],
+    }).success
+  ).toBe(false);
+  expect(
+    getRuntimeOutputSchema("instances.replacePropText").parse({
+      changedCount: 1,
+      matchingPropCount: 1,
+      truncated: false,
+      matches: [
+        {
+          propId: "prop",
+          instanceId: "instance",
+          name: "title",
+          before: "Before",
+          after: "After",
+        },
+      ],
+    }).matches
+  ).toHaveLength(1);
 });
 
 describe("builder runtime pages", () => {

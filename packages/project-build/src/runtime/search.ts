@@ -367,7 +367,7 @@ export const analyzeProject = (
     instanceIds ?? getRelatedPageInstanceIds(instanceId, pageInstanceIds);
   const isInScope = (instanceId: string) =>
     instanceIds === undefined || instanceIds.has(instanceId);
-  const matches: Array<Record<string, unknown>> = [];
+  const matches: Array<Record<string, unknown> & { kind: string }> = [];
 
   if (scopes.has("instances")) {
     for (const instance of state.instances.values()) {
@@ -1474,4 +1474,4 @@ export const analyzeProject = (
 export const searchProject = (
   state: Parameters<typeof analyzeProject>[0],
   input: z.infer<typeof projectSearchInput>
-) => analyzeProject(state, input);
+) => ({ ...analyzeProject(state, input), query: input.query });

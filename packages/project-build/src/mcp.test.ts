@@ -49,6 +49,11 @@ type TestPublicMcpOperation = Pick<
 > &
   Partial<PublicMcpOperation>;
 
+const runtimeContractById = new Map<
+  string,
+  (typeof runtimeOperationContracts)[number]
+>(runtimeOperationContracts.map((contract) => [contract.id, contract]));
+
 const publicOperation = (
   operation: TestPublicMcpOperation
 ): PublicMcpOperation => {
@@ -63,6 +68,7 @@ const publicOperation = (
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
+    outputSchema: runtimeContractById.get(operation.id)?.outputSchema,
     ...operationFields,
   };
   return { ...merged, inputSchema };
@@ -73,6 +79,50 @@ const getTestInputSchema = (inputSchema: z.ZodTypeAny) =>
 
 const getSchemaProperties = (schema: unknown) =>
   (schema as { properties?: Record<string, unknown> }).properties ?? {};
+
+const getSuccessfulOutputDataSchema = (schema: unknown) => {
+  const variants = (schema as { oneOf?: unknown[] }).oneOf ?? [];
+  const success = variants.find(
+    (variant) =>
+      getSchemaProperties(variant).ok !== undefined &&
+      (getSchemaProperties(variant).ok as { const?: unknown }).const === true
+  );
+  return getSchemaProperties(success).data;
+};
+
+const getUnresolvedLocalSchemaRefs = (
+  schema: unknown,
+  root = schema,
+  path: readonly string[] = []
+): string[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  const object = schema as Record<string, unknown>;
+  const ref = object.$ref;
+  const unresolved =
+    typeof ref === "string" && ref.startsWith("#/")
+      ? ref
+          .slice(2)
+          .split("/")
+          .map((segment) => segment.replaceAll("~1", "/").replaceAll("~0", "~"))
+          .reduce<unknown>(
+            (value, segment) =>
+              value !== null && typeof value === "object"
+                ? (value as Record<string, unknown>)[segment]
+                : undefined,
+            root
+          ) === undefined
+        ? [`${path.join(".")}: ${ref}`]
+        : []
+      : [];
+  return [
+    ...unresolved,
+    ...Object.entries(object).flatMap(([key, value]) =>
+      getUnresolvedLocalSchemaRefs(value, root, [...path, key])
+    ),
+  ];
+};
 
 const optionalArrayFieldInputSchema = (field: string) =>
   getTestInputSchema(
@@ -574,6 +624,18 @@ describe("project session mcp adapter", () => {
     ]);
     expect(toolNames).toContain("insert-fragment");
     expect(toolNames).not.toContain("copy-page");
+    for (const operation of publicMcpOperations) {
+      if (
+        hiddenMcpOperationCommands.has(operation.command) ||
+        runtimeContractById.has(operation.id) === false
+      ) {
+        continue;
+      }
+      expect(
+        tools.find((tool) => tool.name === operation.command)?.outputSchema,
+        `Missing MCP output schema for ${operation.command}`
+      ).toBeDefined();
+    }
     const imageDescriptionsTool = tools.find(
       (tool) => tool.name === "set-image-descriptions"
     );
@@ -597,6 +659,25 @@ describe("project session mcp adapter", () => {
       includeScreenshot: true,
       includePreview: true,
     });
+    const completeTools = listProjectSessionMcpTools(publicMcpOperations, {
+      includeImport: true,
+      includeScreenshot: true,
+      includeScreenshotDiff: true,
+      includeInstallOcr: true,
+      includePreview: true,
+    });
+    for (const tool of completeTools) {
+      if (tool.outputSchema !== undefined) {
+        expect(
+          tool.outputSchema.type,
+          `MCP output schema must be object-typed for ${tool.name}`
+        ).toBe("object");
+        expect(
+          getUnresolvedLocalSchemaRefs(tool.outputSchema),
+          `MCP output schema has unresolved local references for ${tool.name}`
+        ).toEqual([]);
+      }
+    }
     expect(
       getSchemaProperties(
         visualTools.find((tool) => tool.name === "audit")?.inputSchema
@@ -605,6 +686,20 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
+    expect(
+      getSuccessfulOutputDataSchema(
+        tools.find((tool) => tool.name === "refresh")?.outputSchema
+      )
+    ).toMatchObject({
+      type: "object",
+      required: ["refreshedNamespaces"],
+      properties: {
+        refreshedNamespaces: {
+          type: "array",
+          items: { type: "string", enum: expect.any(Array) },
+        },
+      },
+    });
     const auditOutputSchema = tools.find(
       (tool) => tool.name === "audit"
     )?.outputSchema;
@@ -646,6 +741,22 @@ describe("project session mcp adapter", () => {
         ),
       })
     ).not.toThrow();
+    for (const command of ["preview.start", "preview.status", "preview.stop"]) {
+      expect(
+        getSuccessfulOutputDataSchema(
+          visualTools.find((tool) => tool.name === command)?.outputSchema
+        ),
+        `Missing MCP output schema for ${command}`
+      ).toMatchObject({
+        type: "object",
+        required: ["url", "running"],
+        properties: {
+          url: { type: "string" },
+          pid: { type: "integer" },
+          running: { type: "boolean" },
+        },
+      });
+    }
     for (const command of hiddenMcpOperationCommands) {
       expect(toolNames).not.toContain(command);
     }
