@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   $allSelectedInstanceSelectors,
   $selectedInstanceOutlines,
@@ -8,29 +9,130 @@ import {
   selectInstances,
 } from "../nano-states";
 import { __testing__, createObjectPool } from "./sync-stores";
+import { $instances } from "./data-stores";
 
 const { SelectedPageAndInstanceSyncObject } = __testing__;
+const subscriptionControllers: AbortController[] = [];
 
 const waitForBatchedStore = () =>
   new Promise<void>((resolve) => {
     setTimeout(resolve, 0);
   });
 
+const setTestInstances = (...instanceIds: string[]) => {
+  const instances = new Map<string, Instance>([
+    [
+      "body",
+      {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: instanceIds.map((value) => ({ type: "id", value })),
+      },
+    ],
+  ]);
+  for (const id of instanceIds) {
+    instances.set(id, {
+      type: "instance",
+      id,
+      component: "Box",
+      children: [],
+    });
+  }
+  $instances.set(instances);
+};
+
+const subscribeSelectionSync = async () => {
+  const syncObject = new SelectedPageAndInstanceSyncObject();
+  const sendTransaction = vi.fn();
+  const controller = new AbortController();
+  subscriptionControllers.push(controller);
+  syncObject.subscribe(sendTransaction, controller.signal);
+  await waitForBatchedStore();
+  sendTransaction.mockClear();
+  return { sendTransaction, syncObject };
+};
+
 afterEach(() => {
+  for (const controller of subscriptionControllers.splice(0)) {
+    controller.abort();
+  }
   $selectedPageId.set(undefined);
   selectInstance(undefined);
   $allSelectedInstanceSelectors.set([]);
   $selectedInstanceOutlines.set([]);
+  $instances.set(new Map());
 });
 
 describe("SelectedPageAndInstanceSyncObject", () => {
-  test("sends page and instance selector as one final transaction", async () => {
-    const syncObject = new SelectedPageAndInstanceSyncObject();
-    const sendTransaction = vi.fn();
-    syncObject.subscribe(sendTransaction, new AbortController().signal);
+  test("does not publish selection pruned by an instance update", async () => {
+    setTestInstances("box");
+    selectInstance(["box", "body"]);
+    const { sendTransaction } = await subscribeSelectionSync();
 
+    setTestInstances();
     await waitForBatchedStore();
-    sendTransaction.mockClear();
+
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
+    expect(sendTransaction).not.toHaveBeenCalled();
+
+    $selectedPageId.set("next-page");
+    await waitForBatchedStore();
+
+    expect(sendTransaction).toHaveBeenCalledWith({
+      id: expect.any(String),
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: "next-page",
+        selectedInstanceSelector: undefined,
+        allSelectedInstanceSelectors: [],
+      },
+    });
+  });
+
+  test("publishes a page change batched with instance pruning", async () => {
+    setTestInstances("box");
+    selectInstance(["box", "body"]);
+    const { sendTransaction } = await subscribeSelectionSync();
+
+    setTestInstances();
+    $selectedPageId.set("next-page");
+    await waitForBatchedStore();
+
+    expect(sendTransaction).toHaveBeenCalledWith({
+      id: expect.any(String),
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: "next-page",
+        selectedInstanceSelector: undefined,
+        allSelectedInstanceSelectors: [],
+      },
+    });
+  });
+
+  test("publishes an explicit fallback selected after instance pruning", async () => {
+    setTestInstances("box", "heading");
+    selectInstance(["box", "body"]);
+    const { sendTransaction } = await subscribeSelectionSync();
+
+    setTestInstances("heading");
+    selectInstance(["heading", "body"]);
+    await waitForBatchedStore();
+
+    expect(sendTransaction).toHaveBeenCalledTimes(1);
+    expect(sendTransaction).toHaveBeenCalledWith({
+      id: expect.any(String),
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: undefined,
+        selectedInstanceSelector: ["heading", "body"],
+        allSelectedInstanceSelectors: [["heading", "body"]],
+      },
+    });
+  });
+
+  test("sends page and instance selector as one final transaction", async () => {
+    const { sendTransaction } = await subscribeSelectionSync();
 
     $selectedPageId.set("page-a");
     selectInstance(["body-a"]);
@@ -50,12 +152,7 @@ describe("SelectedPageAndInstanceSyncObject", () => {
   });
 
   test("applies page and instance selector without echoing transaction", async () => {
-    const syncObject = new SelectedPageAndInstanceSyncObject();
-    const sendTransaction = vi.fn();
-    syncObject.subscribe(sendTransaction, new AbortController().signal);
-
-    await waitForBatchedStore();
-    sendTransaction.mockClear();
+    const { sendTransaction, syncObject } = await subscribeSelectionSync();
 
     syncObject.applyTransaction({
       id: "selection",
@@ -73,6 +170,35 @@ describe("SelectedPageAndInstanceSyncObject", () => {
     await waitForBatchedStore();
 
     expect(sendTransaction).not.toHaveBeenCalled();
+  });
+
+  test("remote no-op does not suppress the next local transaction", async () => {
+    $selectedPageId.set("page-a");
+    selectInstance(["body-a"]);
+    const { sendTransaction, syncObject } = await subscribeSelectionSync();
+
+    syncObject.applyTransaction({
+      id: "selection",
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: "page-a",
+        selectedInstanceSelector: ["body-a"],
+        allSelectedInstanceSelectors: [["body-a"]],
+      },
+    });
+    selectInstance(["body-b"]);
+    await waitForBatchedStore();
+
+    expect(sendTransaction).toHaveBeenCalledTimes(1);
+    expect(sendTransaction).toHaveBeenCalledWith({
+      id: expect.any(String),
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: "page-a",
+        selectedInstanceSelector: ["body-b"],
+        allSelectedInstanceSelectors: [["body-b"]],
+      },
+    });
   });
 
   test("applies undefined instance selector as cleared selection", async () => {
@@ -97,12 +223,7 @@ describe("SelectedPageAndInstanceSyncObject", () => {
   });
 
   test("sends undefined instance selector when multiple instances are selected", async () => {
-    const syncObject = new SelectedPageAndInstanceSyncObject();
-    const sendTransaction = vi.fn();
-    syncObject.subscribe(sendTransaction, new AbortController().signal);
-
-    await waitForBatchedStore();
-    sendTransaction.mockClear();
+    const { sendTransaction } = await subscribeSelectionSync();
 
     $selectedPageId.set("page-a");
     selectInstances([
@@ -152,12 +273,7 @@ describe("SelectedPageAndInstanceSyncObject", () => {
   });
 
   test("malformed remote payload does not suppress next local transaction", async () => {
-    const syncObject = new SelectedPageAndInstanceSyncObject();
-    const sendTransaction = vi.fn();
-    syncObject.subscribe(sendTransaction, new AbortController().signal);
-
-    await waitForBatchedStore();
-    sendTransaction.mockClear();
+    const { sendTransaction, syncObject } = await subscribeSelectionSync();
 
     syncObject.applyTransaction({
       id: "selection",
@@ -180,6 +296,28 @@ describe("SelectedPageAndInstanceSyncObject", () => {
         allSelectedInstanceSelectors: [["body-c"]],
       },
     });
+  });
+
+  test("malformed remote payload does not echo a pending valid update", async () => {
+    const { sendTransaction, syncObject } = await subscribeSelectionSync();
+
+    syncObject.applyTransaction({
+      id: "selection",
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: "page-a",
+        selectedInstanceSelector: ["body-a"],
+        allSelectedInstanceSelectors: [["body-a"]],
+      },
+    });
+    syncObject.applyTransaction({
+      id: "malformed-selection",
+      object: "selectedPageAndInstance",
+      payload: null,
+    });
+    await waitForBatchedStore();
+
+    expect(sendTransaction).not.toHaveBeenCalled();
   });
 
   test("malformed selection fields do not update stores", () => {
