@@ -15,11 +15,11 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
+import { computeExpression } from "@webstudio-is/project-build/runtime";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 import { useStore } from "@nanostores/react";
 import { $assets, $projectSettings } from "~/shared/sync/data-stores";
 import { $pageRootScope } from "../page-utils";

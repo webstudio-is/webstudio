@@ -4,7 +4,7 @@ import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   groupBreakpoints,
   isBaseBreakpoint,
-} from "@webstudio-is/project-build/runtime/breakpoints";
+} from "@webstudio-is/project-build/runtime";
 import { minCanvasWidth } from "~/shared/breakpoints-utils";
 import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
 import { $isPreviewMode, $selectedBreakpoint } from "~/shared/nano-states";

@@ -10,7 +10,7 @@ import { $pages, $props } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { $selectedPageId } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
-import { canWrapInstance } from "@webstudio-is/project-build/runtime/instances";
+import { canWrapInstance } from "@webstudio-is/project-build/runtime";
 
 registerContainers();
 

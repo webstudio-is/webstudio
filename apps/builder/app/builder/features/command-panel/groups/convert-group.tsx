@@ -21,7 +21,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
-import { canConvertInstance } from "@webstudio-is/project-build/runtime/instances";
+import { canConvertInstance } from "@webstudio-is/project-build/runtime";
 import {
   $commandContent,
   $isCommandPanelOpen,

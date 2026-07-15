@@ -5,7 +5,7 @@ import {
 import {
   formatValidationIssues,
   getValidationIssues,
-} from "@webstudio-is/project-build/runtime/errors";
+} from "@webstudio-is/project-build/runtime";
 
 const missingProjectOwnerForTokenPattern =
   /^Project owner can't be found for token\b/;

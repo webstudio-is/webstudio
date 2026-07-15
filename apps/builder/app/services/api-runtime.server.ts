@@ -1,11 +1,11 @@
 import type { CompactBuild } from "@webstudio-is/project-build";
-import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
-import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime/registry";
-import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
-import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
-import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
-import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/state/adapters";
+import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts";
+import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime";
+import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
+import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
+import type { BuilderState } from "@webstudio-is/project-build/state";
+import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/state";
 import { type Asset } from "@webstudio-is/sdk";
 import { throwApiError } from "./api-errors.server";
 

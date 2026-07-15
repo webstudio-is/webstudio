@@ -2,8 +2,8 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state/adapters";
-import { createBuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
+import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state";
+import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
 import {
   createLocalProjectBundleFromSessionSnapshot,
   createCliProjectSessionStorage,

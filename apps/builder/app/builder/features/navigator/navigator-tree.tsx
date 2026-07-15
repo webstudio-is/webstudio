@@ -34,7 +34,7 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
-import { showAttributeMeta } from "@webstudio-is/project-build/runtime/props";
+import { showAttributeMeta } from "@webstudio-is/project-build/runtime";
 import {
   EyeClosedIcon,
   EyeOpenIcon,
@@ -71,11 +71,11 @@ import {
   canDropInstanceSelector,
   isDescendantOrSelf,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { isRichTextContent } from "@webstudio-is/project-build/runtime/content-model";
+import { isRichTextContent } from "@webstudio-is/project-build/runtime";
 import {
   getInstanceLabel,
   InstanceIcon,

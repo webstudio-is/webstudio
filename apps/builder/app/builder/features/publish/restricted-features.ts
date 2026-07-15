@@ -6,7 +6,7 @@ import {
   type Instance,
   type Pages,
 } from "@webstudio-is/sdk";
-import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime/lookup";
+import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime";
 import type { ProjectSettings } from "@webstudio-is/project-build";
 
 export type RestrictedFeature =

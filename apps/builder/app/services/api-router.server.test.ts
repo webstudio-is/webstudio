@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
-import * as projectBuild from "@webstudio-is/project-build/index.server";
+import * as projectBuild from "@webstudio-is/project-build/server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
   buildPatchTransaction,

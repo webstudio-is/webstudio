@@ -1,6 +1,6 @@
 import { nativeClient } from "../trpc/trpc-client";
 import { $project } from "../sync/data-stores";
-import { isLikelyWebstudioJsxFragment } from "@webstudio-is/project-build/runtime/jsx/utils";
+import { isLikelyWebstudioJsxFragment } from "@webstudio-is/project-build/transfer";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { insertFragmentWithBreakpointWarning } from "./fragment-utils";
 

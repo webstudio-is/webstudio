@@ -500,7 +500,7 @@ const copyAndTransformPageMeta = (
   }
 };
 
-export const __testing__ = {
+export const pageCopyTesting = {
   deduplicateName,
   deduplicatePath,
   joinPath,

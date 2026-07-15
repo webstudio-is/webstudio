@@ -42,7 +42,7 @@ import {
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime/style-utils";
+import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,

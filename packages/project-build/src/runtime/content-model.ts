@@ -11,8 +11,7 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { setIsSubsetOf } from "./set-utils";
-
-export type InstanceSelector = Instance["id"][];
+import type { InstanceSelector } from "./instance-path";
 
 type Metas = Map<Instance["component"], WsComponentMeta>;
 type HtmlTagsByInstanceId = Map<Instance["id"], string>;

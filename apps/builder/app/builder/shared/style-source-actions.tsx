@@ -15,7 +15,7 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "@webstudio-is/sdk";
-import type { RenameStyleSourceError } from "@webstudio-is/project-build/runtime/styles";
+import type { RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
 import {
   $selectedStyleSources,
   $selectedStyleState,
@@ -28,7 +28,7 @@ import {
   findUnusedTokens,
   getStyleSourceUsages,
   validateStyleSourceName,
-} from "@webstudio-is/project-build/runtime/styles";
+} from "@webstudio-is/project-build/runtime";
 import { $selectedInstance } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 

@@ -18,7 +18,7 @@ import { InfoCircleIcon } from "@webstudio-is/icons";
 import type {
   PageSettingsErrors,
   PageSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 import type { OnChange } from "./shared";
 
 const emptyAuth: PageSettingsValues["auth"] = {

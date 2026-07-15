@@ -4,7 +4,7 @@ import {
   detectFragmentTokenConflicts,
   detectPageTokenConflicts,
   extractWebstudioFragment,
-} from "@webstudio-is/project-build/runtime/fragment";
+} from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { useMemo } from "react";
 import {

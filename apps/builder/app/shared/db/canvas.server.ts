@@ -6,8 +6,8 @@ import {
 import {
   loadBuildById,
   loadDevBuildByProjectId,
-} from "@webstudio-is/project-build/index.server";
-import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime/style-utils";
+} from "@webstudio-is/project-build/server";
+import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {

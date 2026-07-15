@@ -1,5 +1,5 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime/lookup";
+import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutationAsync,
   getWebstudioData,
@@ -8,7 +8,7 @@ import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import {
   detectFragmentTokenConflicts,
   extractWebstudioFragment,
-} from "@webstudio-is/project-build/runtime/fragment";
+} from "@webstudio-is/project-build/runtime";
 import {
   $selectedInstanceSelector,
   selectInstance,
@@ -24,11 +24,11 @@ import { $project } from "~/shared/sync/data-stores";
 import type {
   DroppableTarget,
   InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 import {
   findBlockSelector,
   getBlockTemplateInsertionIndex,
-} from "@webstudio-is/project-build/runtime/block";
+} from "@webstudio-is/project-build/runtime";
 
 const getTemplateTokenConflicts = ({
   fragment,

@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
-import { createDefaultPages, findCycles } from "@webstudio-is/project-build";
-import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime/registry";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { findCycles } from "@webstudio-is/project-build/runtime";
+import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime";
 import {
   executeRuntimeMutation,
   executeRuntimeMutationAsync,

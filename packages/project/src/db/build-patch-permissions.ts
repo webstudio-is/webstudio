@@ -3,7 +3,7 @@ import type { BuildPatchTransaction } from "./build-patch-core";
 import {
   validateContentModeTransaction,
   type ContentModeCapabilities,
-} from "@webstudio-is/project-build/runtime/content-mode-permissions";
+} from "@webstudio-is/project-build/runtime";
 
 export const getRequiredPermitForBuildPatchTransaction = (
   transaction: BuildPatchTransaction,

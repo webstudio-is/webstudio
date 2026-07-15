@@ -27,8 +27,8 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
   findClosestDroppableInstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
-import { findClosestRichText } from "@webstudio-is/project-build/runtime/content-model";
+} from "@webstudio-is/project-build/runtime";
+import { findClosestRichText } from "@webstudio-is/project-build/runtime";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

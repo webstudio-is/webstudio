@@ -3,7 +3,7 @@ import {
   deleteSelectedInstance,
   reparentInstance,
 } from "~/shared/instance-utils/mutation";
-import { sortInstancePathsForChildMutation } from "@webstudio-is/project-build/runtime/tree";
+import { sortInstancePathsForChildMutation } from "@webstudio-is/project-build/runtime";
 import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { toast } from "@webstudio-is/design-system";
@@ -43,7 +43,7 @@ import {
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime/block";
+import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
@@ -64,7 +64,7 @@ import {
 import {
   getInstancePath,
   type InstancePath,
-} from "@webstudio-is/project-build/runtime/lookup";
+} from "@webstudio-is/project-build/runtime";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
@@ -72,7 +72,7 @@ import { showDuplicateTokensView } from "../features/command-panel/groups/duplic
 import { builderApi } from "~/shared/builder-api";
 import { readClipboardText } from "~/shared/clipboard";
 import { getSetting, setSetting } from "./client-settings";
-import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
+import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { isSyncIdle } from "~/shared/sync/project-queue";
@@ -94,9 +94,9 @@ import {
   getPageActionTarget,
 } from "~/shared/page-action-target";
 import { getDirectSharedSlotChildBoundary } from "~/shared/instance-utils/slot";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
-import { areInstanceSelectorsEqual } from "@webstudio-is/project-build/runtime/tree";
-import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime/instances";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
+import { areInstanceSelectorsEqual } from "@webstudio-is/project-build/runtime";
+import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,

@@ -55,7 +55,7 @@ vi.mock("@webstudio-is/trpc-interface/index.server", () => {
   };
 });
 
-vi.mock("@webstudio-is/project-build/runtime/content-mode-permissions", () => ({
+vi.mock("@webstudio-is/project-build/runtime", () => ({
   applyContentModeTransaction,
   getContentModeCapabilities,
 }));

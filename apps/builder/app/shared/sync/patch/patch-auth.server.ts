@@ -7,7 +7,7 @@ import {
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
-} from "@webstudio-is/project-build/runtime/content-mode-permissions";
+} from "@webstudio-is/project-build/runtime";
 import {
   type Breakpoint,
   type Prop,
@@ -16,9 +16,9 @@ import {
 import {
   parseData,
   parseInstanceData,
-} from "@webstudio-is/project-build/build-parser.server";
-import { parseStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
-import { parseStyles } from "@webstudio-is/project-build/styles.server";
+  parseStyleSourceSelections,
+  parseStyles,
+} from "@webstudio-is/project-build/persistence";
 import env from "~/env/env.server";
 import { readAccessToken } from "~/services/token.server";
 import { componentMetas } from "~/shared/component-metas.server";

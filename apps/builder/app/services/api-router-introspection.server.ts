@@ -5,7 +5,7 @@ import {
   isHiddenPublicApiInputField,
   mergeInputSchemaMetadata,
   type InputSchemaMetadata,
-} from "@webstudio-is/project-build/contracts/input-schema";
+} from "@webstudio-is/project-build/contracts";
 
 export type ApiRouterProcedure = {
   _def?: {

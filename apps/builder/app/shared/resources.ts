@@ -1,7 +1,7 @@
 import { atom, computed } from "nanostores";
 import type { DataSource, Resource, ResourceRequest } from "@webstudio-is/sdk";
 import { restResourcesLoader } from "./router-utils";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
+import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
 

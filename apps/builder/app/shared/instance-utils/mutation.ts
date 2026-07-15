@@ -15,15 +15,15 @@ import {
   $textEditingInstanceSelector,
   selectInstance,
 } from "../nano-states";
-import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import type { InstancePath } from "@webstudio-is/project-build/runtime";
 import { $instances, $props } from "../sync/data-stores";
 import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 import {
   type DroppableTarget,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
-import { canUnwrapInstancePath } from "@webstudio-is/project-build/runtime/instances";
-import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime/block";
+} from "@webstudio-is/project-build/runtime";
+import { canUnwrapInstancePath } from "@webstudio-is/project-build/runtime";
+import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "./data";
 
 export const reparentInstance = (

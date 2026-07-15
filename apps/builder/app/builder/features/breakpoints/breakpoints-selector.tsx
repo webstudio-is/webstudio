@@ -20,7 +20,7 @@ import { $breakpoints } from "~/shared/sync/data-stores";
 import {
   groupBreakpoints,
   isBaseBreakpoint,
-} from "@webstudio-is/project-build/runtime/breakpoints";
+} from "@webstudio-is/project-build/runtime";
 import { setCanvasWidth } from "../../shared/calc-canvas-width";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 import { useDebouncedCallback } from "use-debounce";

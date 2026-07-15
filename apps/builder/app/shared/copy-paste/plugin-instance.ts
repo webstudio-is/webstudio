@@ -5,14 +5,14 @@ import {
   getCommonAncestorSelector,
   getPasteRootInstanceIds,
   mergeWebstudioFragments,
-} from "@webstudio-is/project-build/runtime/fragment";
+} from "@webstudio-is/project-build/runtime";
 import {
   instanceTransferDataVersion,
   instancesTransferDataVersion,
   parseInstanceTransferData,
   type InstanceTransferData,
   type InstancesTransferData,
-} from "@webstudio-is/project-build/runtime/data-formats/instance-transfer";
+} from "@webstudio-is/project-build/transfer";
 import { findClosestInsertable } from "../instance-utils/insert";
 import {
   executeRuntimeMutationAsync,
@@ -30,8 +30,8 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   type InstanceSelector,
   sortInstancePathsForChildMutation,
-} from "@webstudio-is/project-build/runtime/tree";
-import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime/instances";
+} from "@webstudio-is/project-build/runtime";
+import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime";
 import { deleteInstanceBySelector } from "../instance-utils/mutation";
 import {
   $allSelectedInstanceSelectors,
@@ -40,10 +40,10 @@ import {
   $selectedInstanceSelector,
   selectInstances,
 } from "~/shared/nano-states";
-import { getInstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { builderApi } from "../builder-api";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid.";

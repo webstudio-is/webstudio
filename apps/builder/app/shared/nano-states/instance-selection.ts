@@ -2,7 +2,7 @@ import { atom, computed } from "nanostores";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 import {
   areSelectorListsEqual,
   canResolveInstanceSelector,

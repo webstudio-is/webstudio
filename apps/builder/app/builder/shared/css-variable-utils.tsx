@@ -27,8 +27,8 @@ import {
   getReferencedCssVariables,
   getUnusedCssVariableNames,
   validateCssVariableNameWithStyles,
-} from "@webstudio-is/project-build/runtime/styles";
-import { type CssVariableNameError } from "@webstudio-is/project-build/runtime/styles";
+} from "@webstudio-is/project-build/runtime";
+import { type CssVariableNameError } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const $isDeleteUnusedCssVariablesDialogOpen = atom(false);

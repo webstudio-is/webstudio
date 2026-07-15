@@ -1,11 +1,11 @@
 import { useStore } from "@nanostores/react";
 import { getPagePath } from "@webstudio-is/sdk";
-import type { PageSettingsValues } from "@webstudio-is/project-build/runtime/pages";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
+import type { PageSettingsValues } from "@webstudio-is/project-build/runtime";
+import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   compilePathnamePattern,
   tokenizePathnamePattern,
-} from "@webstudio-is/project-build/runtime/url-pattern";
+} from "@webstudio-is/project-build/runtime";
 import { $publishedOrigin } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { $currentSystem } from "~/shared/system";

@@ -67,14 +67,14 @@ import {
   $selectedPage,
   getInstanceKey,
 } from "~/shared/nano-states";
-import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import type { InstancePath } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   createResourceFieldsFromFormData,
   validateResourceBodyExpression,
   validateResourceUrlExpression,
   type ResourceBodyInputType,
-} from "@webstudio-is/project-build/runtime/data";
+} from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";
 
 export const UrlField = ({

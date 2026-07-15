@@ -4,7 +4,7 @@ import {
   getStableErrorCode,
   isMissingApiAccessError,
 } from "./error-codes";
-import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors";
+import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime";
 
 describe("getStableErrorCode", () => {
   test("reads direct stable error codes", () => {

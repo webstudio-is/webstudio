@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { Instance, WebstudioData } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { ProjectSettings } from "@webstudio-is/project-build";
-import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import {
   createSyncChangesFromBuilderPatchPayload,
   createTransactionFromBuilderPatchPayload,

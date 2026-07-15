@@ -5,7 +5,7 @@ import { descendantComponent } from "@webstudio-is/sdk";
 import {
   getContentModeCapabilities,
   type ContentModeCapabilities,
-} from "@webstudio-is/project-build/runtime/content-mode-permissions";
+} from "@webstudio-is/project-build/runtime";
 import {
   reactPropsToStandardAttributes,
   showAttribute,
@@ -22,12 +22,12 @@ import { $styleSources } from "~/shared/sync/data-stores";
 import {
   isRichText,
   isRichTextTree,
-} from "@webstudio-is/project-build/runtime/content-model";
+} from "@webstudio-is/project-build/runtime";
 import {
   createStartingPropValueFromMeta,
   getDefaultPropMetaForType,
   showAttributeMeta,
-} from "@webstudio-is/project-build/runtime/props";
+} from "@webstudio-is/project-build/runtime";
 import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,

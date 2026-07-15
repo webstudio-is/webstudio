@@ -6,8 +6,8 @@ import {
   createProjectSessionMcpCore,
   createMcpStdioTransport,
 } from "@webstudio-is/project-build/mcp";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
-import { diffPngFiles } from "@webstudio-is/project-build/visual/screenshot-diff";
+import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
+import { diffPngFiles } from "@webstudio-is/project-build/visual";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
@@ -15,7 +15,7 @@ import {
 import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
-import type { SemanticValidationIssue } from "@webstudio-is/project-build/runtime/errors";
+import type { SemanticValidationIssue } from "@webstudio-is/project-build/runtime";
 import { resolveApiConnection } from "../api-connection";
 import {
   getCliErrorIssues,

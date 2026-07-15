@@ -18,7 +18,7 @@ import {
   getBrowserAssetFormat,
   parseAssetType,
   type AssetInfoFallback,
-} from "@webstudio-is/project-build/runtime/assets";
+} from "@webstudio-is/project-build/runtime";
 import { getBrowserUploadBody } from "~/services/asset-upload.server";
 
 const createAssetUploadResponse = async ({

@@ -1,7 +1,7 @@
 import {
   getContentModeCapabilities,
   isContentModeCopyableProp,
-} from "@webstudio-is/project-build/runtime/content-mode-permissions";
+} from "./content-mode-permissions";
 import type {
   Instance,
   Prop,

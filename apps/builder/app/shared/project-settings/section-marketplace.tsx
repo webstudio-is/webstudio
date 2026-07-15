@@ -22,7 +22,7 @@ import {
   type MarketplaceProduct,
   marketplaceCategories,
 } from "@webstudio-is/project-build";
-import { marketplaceProductUpdateInput } from "@webstudio-is/project-build/runtime/project-settings";
+import { marketplaceProductUpdateInput } from "@webstudio-is/project-build/runtime";
 import { ImageControl } from "./image-control";
 import {
   $assets,

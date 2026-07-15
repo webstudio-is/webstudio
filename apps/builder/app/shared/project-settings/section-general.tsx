@@ -19,7 +19,7 @@ import {
 import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { Image, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
-import { validateContactEmail } from "@webstudio-is/project-build/runtime/project-settings";
+import { validateContactEmail } from "@webstudio-is/project-build/runtime";
 import { ImageControl } from "./image-control";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import { $permissions } from "~/shared/nano-states";

@@ -12,7 +12,7 @@ import { BreakpointsMenu } from "./breakpoints-menu";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { $breakpointsMenuView } from "~/shared/breakpoints";
-import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime/breakpoints";
+import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime";
 import { setCanvasWidth } from "../../shared/calc-canvas-width";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";

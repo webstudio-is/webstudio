@@ -5,7 +5,7 @@ import {
   type AuthPermit,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import type { BuilderApiCapability } from "@webstudio-is/project-build/contracts/permissions";
+import type { BuilderApiCapability } from "@webstudio-is/project-build/contracts";
 
 type ApiPermit = BuilderApiCapability;
 type ProjectApiPermit = Extract<AuthPermit, BuilderApiCapability>;

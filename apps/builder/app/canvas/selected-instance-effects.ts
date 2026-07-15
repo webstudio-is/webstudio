@@ -34,7 +34,7 @@ import { inflateInstance } from "~/canvas/inflator";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 
 const toRect = (rect: DOMRect) => ({
   top: rect.top,

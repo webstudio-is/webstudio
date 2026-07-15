@@ -7,7 +7,7 @@ import {
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/nano-states";
-import { isStyleSourceLocked } from "@webstudio-is/project-build/runtime/styles";
+import { isStyleSourceLocked } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 type StyleUpdate =

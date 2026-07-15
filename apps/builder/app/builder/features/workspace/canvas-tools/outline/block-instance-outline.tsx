@@ -31,12 +31,12 @@ import {
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import {
   canDeleteInstanceInContentMode,
   findBlockSelector,
   findBlockTemplates,
-} from "@webstudio-is/project-build/runtime/block";
+} from "@webstudio-is/project-build/runtime";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { insertTemplateAt } from "./block-utils";

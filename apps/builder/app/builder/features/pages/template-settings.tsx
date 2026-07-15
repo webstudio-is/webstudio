@@ -14,8 +14,8 @@ import {
 } from "@webstudio-is/design-system";
 import { $isContentMode, $isDesignMode } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
-import { isContentModePagePath } from "@webstudio-is/project-build/runtime/content-mode-permissions";
-import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime/registry";
+import { isContentModePagePath } from "@webstudio-is/project-build/runtime";
+import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime";
 import {
   nameToPath,
   pageSettingsDefaultValues,
@@ -23,7 +23,7 @@ import {
   validatePageSettings,
   type PageSettingsErrors,
   type PageSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   $pageRootScope,

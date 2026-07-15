@@ -17,7 +17,7 @@ import { join } from "node:path";
 import { chdir, cwd } from "node:process";
 import { promisify } from "node:util";
 import { log } from "@clack/prompts";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import { prebuild } from "../prebuild";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";

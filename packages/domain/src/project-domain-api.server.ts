@@ -3,9 +3,9 @@ import { z } from "zod";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
   createProductionBuild,
-  parseDeployment,
   unpublishBuild,
-} from "@webstudio-is/project-build/index.server";
+} from "@webstudio-is/project-build/server";
+import { parseDeployment } from "@webstudio-is/project-build/persistence";
 import {
   templates as templateSchema,
   type Deployment,

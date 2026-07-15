@@ -8,14 +8,14 @@ import {
   type WfNode,
   type WfStyle,
   type WfAsset,
-} from "@webstudio-is/project-build/runtime/webflow/schema";
-import { addInstanceAndProperties } from "@webstudio-is/project-build/runtime/webflow/instances-properties";
-import { addStyles } from "@webstudio-is/project-build/runtime/webflow/styles";
+} from "@webstudio-is/project-build/transfer";
+import { addInstanceAndProperties } from "@webstudio-is/project-build/transfer";
+import { addStyles } from "@webstudio-is/project-build/transfer";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
 import { pasteHandled, pasteIgnored, type Plugin } from "../copy-paste";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import {
   hasFragmentData,
   insertFragmentWithBreakpointWarning,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime/component-template";
-import { inspectWebstudioJsxFragmentSyntax } from "@webstudio-is/project-build/runtime/jsx/syntax";
+import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
+import { inspectWebstudioJsxFragmentSyntax } from "@webstudio-is/project-build/transfer";
 import { isLikelyWebstudioJsx, jsx } from "./plugin-jsx";
 import { $project } from "../sync/data-stores";
 import { pasteHandled, pasteIgnored } from "./copy-paste";

@@ -19,7 +19,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { InstanceIcon } from "~/builder/shared/instance-label";
-import { getValidElementChildTags } from "@webstudio-is/project-build/runtime/instances";
+import { getValidElementChildTags } from "@webstudio-is/project-build/runtime";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { allowsHtmlMutations } from "../shared/document-utils";

@@ -3,8 +3,8 @@ import {
   publicApiOperationRequiresServerSupport,
   type PublicApiCommand,
 } from "@webstudio-is/protocol";
-import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
+import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts";
+import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
 import {
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,

@@ -1,6 +1,6 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { builderApi } from "../builder-api";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { produce, enablePatches, type Patch, applyPatches } from "immer";
 
 enablePatches();

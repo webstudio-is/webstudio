@@ -4,20 +4,18 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
 } from "./fragment";
+import type {
+  InstancePath,
+  InstancePathItem,
+  InstanceSelector,
+} from "./instance-path";
+
+export type { InstancePath, InstancePathItem } from "./instance-path";
 
 type SlotDropTarget = {
   parentSelector: Instance["id"][];
   position: number | "end";
 };
-
-export type InstanceSelector = Instance["id"][];
-
-export type InstancePathItem = {
-  instance: Instance;
-  instanceSelector: InstanceSelector;
-};
-
-export type InstancePath = InstancePathItem[];
 
 export type SharedSlotBoundary = {
   slotIndex: number;

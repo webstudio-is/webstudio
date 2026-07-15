@@ -11,7 +11,7 @@ import {
   defaultScreenshotWaitUntil,
   type ScreenshotBrowser,
   type ScreenshotWaitUntil,
-} from "@webstudio-is/project-build/visual/screenshot-browser";
+} from "@webstudio-is/project-build/visual";
 import {
   captureBrowserScreenshot,
   createBrowserScreenshotSession,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getInputSchemaMetadata } from "@webstudio-is/project-build/contracts/input-schema";
+import { getInputSchemaMetadata } from "@webstudio-is/project-build/contracts";
 import type { InputJsonSchema } from "@webstudio-is/sdk";
 import type { PublicApiOperationNamespace } from "./runtime-contracts";
 

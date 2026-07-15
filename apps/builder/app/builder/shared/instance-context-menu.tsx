@@ -26,8 +26,8 @@ import {
 import {
   getInstancePath,
   type InstancePath,
-} from "@webstudio-is/project-build/runtime/lookup";
-import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime/block";
+} from "@webstudio-is/project-build/runtime";
+import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime";
 import { $instances } from "~/shared/sync/data-stores";
 import {
   isComponentDetachable,

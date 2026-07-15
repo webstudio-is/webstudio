@@ -1,6 +1,6 @@
-import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts/builder-runtime";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
-import { builderApiCapabilities } from "@webstudio-is/project-build/contracts/permissions";
+import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts";
+import { builderApiCapabilities } from "@webstudio-is/project-build/contracts";
 import type { InputJsonSchema } from "@webstudio-is/sdk";
 
 export type { InputJsonSchema };

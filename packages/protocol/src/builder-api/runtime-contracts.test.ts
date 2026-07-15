@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { expect, test } from "vitest";
-import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts/builder-runtime";
-import { builderApiCapabilities } from "@webstudio-is/project-build/contracts/permissions";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
+import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts";
+import { builderApiCapabilities } from "@webstudio-is/project-build/contracts";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import {
   publicApiOperationNamespaces,
   publicApiOperationPermits,

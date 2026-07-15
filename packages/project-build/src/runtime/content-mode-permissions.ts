@@ -1093,7 +1093,7 @@ const validateEditableInstanceReferences = (
   return { success: true };
 };
 
-export const __testing__ = {
+export const contentModePermissionsTesting = {
   isContentModePageMetaValue,
   hasOnlyContentModePageMeta,
   hasOnlyAddedInstancesInSubtree,

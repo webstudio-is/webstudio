@@ -20,9 +20,9 @@ import {
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import type { Instance } from "@webstudio-is/sdk";
-import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
-import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contracts/patch";
-import type { BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
+import type { BuilderState } from "@webstudio-is/project-build/state";
+import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contracts";
+import type { BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import React from "react";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -695,11 +695,11 @@ const run = async () => {
     statePatch,
   ] = await Promise.all([
     import("@webstudio-is/project-migrations/pages"),
-    import("@webstudio-is/project-build/state/adapters"),
-    import("@webstudio-is/project-build/contracts/namespaces"),
+    import("@webstudio-is/project-build/state"),
+    import("@webstudio-is/project-build/contracts"),
     import("@webstudio-is/project-build/project-session"),
-    import("@webstudio-is/project-build/runtime/registry"),
-    import("@webstudio-is/project-build/state/patch"),
+    import("@webstudio-is/project-build/runtime"),
+    import("@webstudio-is/project-build/state"),
   ]);
   const temp = await mkdtemp(join(tmpdir(), "webstudio-release-smoke-"));
   let preview: ChildProcess | undefined;

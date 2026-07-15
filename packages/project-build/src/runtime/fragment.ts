@@ -492,7 +492,7 @@ const insertFragmentBreakpointsMutable = ({
   return { mergedBreakpointIds, didMergeBreakpointsDueToLimit };
 };
 
-export const __testing__ = {
+export const fragmentTesting = {
   getFragmentInstancesData,
   insertFragmentAssetsMutable,
   insertFragmentBreakpointsMutable,

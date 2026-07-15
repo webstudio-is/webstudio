@@ -26,7 +26,7 @@ import {
   groupBreakpoints,
   hasReachedBreakpointLimit,
   isBaseBreakpoint,
-} from "@webstudio-is/project-build/runtime/breakpoints";
+} from "@webstudio-is/project-build/runtime";
 import { ConditionInput } from "./condition-input";
 import { CssValueInput } from "~/builder/features/style-panel/shared/css-value-input";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
