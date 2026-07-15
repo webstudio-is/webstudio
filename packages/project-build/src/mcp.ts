@@ -58,6 +58,8 @@ import {
   getTemplateRequiredStructure,
   parseComponentEdge,
 } from "./runtime/components";
+import { getInputSchemaMetadata } from "./contracts/input-schema";
+import { insertCollectionInput } from "./runtime/collection";
 import {
   isComponentAvailableForDocumentType,
   isComponentHiddenFromCatalog,
@@ -485,6 +487,19 @@ const insertFragmentMcpInputSchema = {
   required: ["parentInstanceId", "fragment"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const insertCollectionMcpInput = insertCollectionInput
+  .omit({ itemFragment: true })
+  .extend({
+    itemFragment: z
+      .string()
+      .describe(
+        `${webstudioJsxFragmentInputDescription} Pass exactly one root instance. Expressions may reference collectionItem and collectionItemKey, for example {expression\`collectionItem.name\`}.`
+      ),
+  })
+  .describe(
+    "Create a Collection, bind its complete iterable, and insert one repeated-item Webstudio JSX fragment atomically. Internal item parameters are generated automatically."
+  );
+
 const componentInputSchema = {
   ...emptyInputSchema,
   properties: {
@@ -559,6 +574,35 @@ const getOperationInputSchema = (
     required: requiredInputFields,
   };
 };
+
+const insertCollectionMcpInputSchema = getOperationInputSchema({
+  inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
+});
+
+const mcpOperationOverrides = new Map<
+  string,
+  {
+    description: string;
+    inputSchema: ProjectSessionMcpInputSchema;
+  }
+>([
+  [
+    "insert-fragment",
+    {
+      description:
+        "Insert an authored/styled Webstudio fragment with components, text, props, tokens, and styles. Pass fragment as a Webstudio JSX string.",
+      inputSchema: insertFragmentMcpInputSchema,
+    },
+  ],
+  [
+    "insert-collection",
+    {
+      description:
+        "Create a Collection from array/object data and one repeated-item Webstudio JSX fragment. Internal item parameters and bindings are created atomically.",
+      inputSchema: insertCollectionMcpInputSchema,
+    },
+  ],
+]);
 
 const acceptsJsonType = (
   schema: InputJsonSchema | undefined,
@@ -1277,6 +1321,23 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       parentInstanceId: "parent-id",
       component: "@webstudio-is/sdk-components-react-radix:Switch",
+    },
+  ],
+  "insert-collection": [
+    {
+      parentInstanceId: "parent-id",
+      data: { type: "expression", value: "Posts.data.items" },
+      itemFragment:
+        '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.title ?? "Untitled"`}</ws.element></ws.element>',
+    },
+    {
+      parentInstanceId: "parent-id",
+      data: {
+        type: "json",
+        value: [{ name: "Starter" }, { name: "Pro" }],
+      },
+      itemFragment:
+        '<ws.element ws:tag="div">{expression`collectionItem.name`}</ws.element>',
     },
   ],
   "insert-fragment": [
@@ -2239,21 +2300,18 @@ export const listProjectSessionMcpTools = (
     .filter(
       (operation) => hiddenMcpOperationCommands.has(operation.command) === false
     )
-    .map((operation) =>
-      createProjectSessionMcpTool({
+    .map((operation) => {
+      const override = mcpOperationOverrides.get(operation.command);
+      return createProjectSessionMcpTool({
         name: operation.command,
-        description:
-          operation.command === "insert-fragment"
-            ? "Insert an authored/styled Webstudio fragment with components, text, props, tokens, and styles. Pass fragment as a Webstudio JSX string."
-            : operation.description,
+        description: override?.description ?? operation.description,
         inputSchema:
-          operation.command === "insert-fragment"
-            ? insertFragmentMcpInputSchema
-            : getMcpOperationInputSchema(operation, {
-                includeRenderedAudit:
-                  options.includeScreenshot === true &&
-                  options.includePreview === true,
-              }),
+          override?.inputSchema ??
+          getMcpOperationInputSchema(operation, {
+            includeRenderedAudit:
+              options.includeScreenshot === true &&
+              options.includePreview === true,
+          }),
         ...(operation.outputSchema === undefined
           ? {}
           : { outputSchema: getMcpOutputSchema(operation.outputSchema) }),
@@ -2270,8 +2328,8 @@ export const listProjectSessionMcpTools = (
           invalidatesNamespaces: operation.invalidatesNamespaces,
           retryOnConflict: operation.retryOnConflict,
         },
-      })
-    ),
+      });
+    }),
   ...sessionTools.map((tool) => ({
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
@@ -2654,6 +2712,25 @@ const getInsertFragmentInput = async (input: unknown) => {
     mode,
     insertIndex,
   };
+};
+
+const getInsertCollectionInput = async (input: unknown) => {
+  const { itemFragment, ...parsedInput } =
+    insertCollectionMcpInput.parse(input);
+  return {
+    ...parsedInput,
+    itemFragment: await parseWebstudioJsxFragment(itemFragment),
+  };
+};
+
+const normalizeMcpOperationInput = async (name: string, input: unknown) => {
+  if (name === "insert-fragment") {
+    return await getInsertFragmentInput(input);
+  }
+  if (name === "insert-collection") {
+    return await getInsertCollectionInput(input);
+  }
+  return input;
 };
 
 const coveragePlanDetailValues = ["summary", "roots", "parts", "full"] as const;
@@ -3229,7 +3306,7 @@ const getAnimationComponentGuidance = (component: string) =>
   animationComponentGuidanceByComponent.get(component);
 
 const collectionComponentUsage =
-  'Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Insert "ws:collection" with insert-component so Webstudio creates and preserves its internal item and itemKey parameters. Bind the Collection data prop to the complete array or object, not the resource response wrapper and not one indexed item; external resource arrays are often nested under the scoped resource result\'s data field or deeper. Collection renders its child structure once per entry. Array iteration exposes the current item as `collectionItem`; object iteration exposes the current value as `collectionItem` and key as `collectionItemKey`. Bind descendant content and props with expressions such as `collectionItem.name`; do not reuse encoded parameter ids from another Collection. Wrap multiple repeated sibling instances in one Element. For repeated Radix items, bind a stable unique id or slug to each required value prop. Do not create, replace, or delete the internal item/itemKey parameter records directly.';
+  "Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Prefer insert-collection: pass the complete array/object plus one repeated-item JSX root, and it creates the Collection, private item/itemKey parameters, iterable binding, and item bindings atomically. External resource arrays are often nested below the scoped result's data field. Array iteration exposes `collectionItem`; object iteration also exposes `collectionItemKey`. Use expressions such as expression`collectionItem.name` in item JSX. Wrap multiple repeated siblings in one Element. For repeated Radix items, bind a stable unique id or slug to required value props. Do not create, replace, or delete internal Collection parameter records directly.";
 
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
@@ -4226,9 +4303,9 @@ const getMetaGuide = (
             "components.get",
             "list-variables",
             "list-resources",
-            "insert-component",
+            "insert-collection",
             "inspect-instance",
-            "bind-props",
+            "audit",
           ],
           tools
         )
@@ -4267,10 +4344,9 @@ const getMetaGuide = (
         : []),
       ...(isCollectionGoal
         ? [
-            'Call components.get with {"component":"ws:collection"} and use its Collection-specific guidance.',
             "Find the array or object to repeat. For a scoped resource result, select the complete nested array/object, commonly below the result's data field; do not bind the response wrapper or one indexed item.",
-            'Insert "ws:collection" with insert-component so its internal item and itemKey parameters are created. Do not create or replace those parameter records manually.',
-            "Bind the Collection data prop to the complete iterable. Put the repeated UI under Collection and bind descendant text/props to the generated current-item context; wrap multiple sibling instances in one Element.",
+            "Call insert-collection once with the complete iterable and one repeated-item JSX root. Use expression`collectionItem.name` and expression`collectionItemKey` inside the item fragment; the operation creates and binds private parameters atomically.",
+            "Wrap multiple repeated sibling instances in one ws.element. Do not create, replace, or delete Collection parameter records manually.",
             "Verify that every array/object entry renders once. For repeated Radix items, bind a stable unique id or slug to required value props.",
           ]
         : []),
@@ -5427,18 +5503,11 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "preview.stop" && stopPreview !== undefined) {
         return toMetaResult(await stopPreview());
       }
-      if (name === "insert-fragment") {
-        const envelope = await executeOperation({
-          command: name as Command,
-          input: await getInsertFragmentInput(input),
-          dryRun,
-        });
-        return toCallResult(envelope);
-      }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {
         throw new Error(`Unknown MCP tool "${name}".`);
       }
+      const normalizedInput = await normalizeMcpOperationInput(name, input);
       const isAuditInput = name === "audit" && isRecord(input);
       if (
         isAuditInput &&
@@ -5539,7 +5608,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
                   key !== "routeExamples"
               )
             )
-          : input
+          : normalizedInput
       );
       const envelope = await executeOperation({
         command: name as Command,

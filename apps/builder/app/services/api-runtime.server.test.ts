@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
+import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime/component-template";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   createBuilderRuntimeState,
@@ -95,6 +96,45 @@ describe("api runtime adapter", () => {
       result: {
         rootInstanceIds: expect.arrayContaining([expect.any(String)]),
         instanceIds: expect.arrayContaining([expect.any(String)]),
+      },
+    });
+  });
+
+  test("executes semantic Collection insertion through the server runtime", async () => {
+    const mutation = await executeApiRuntimeOperation({
+      id: "instances.insertCollection",
+      build: createBuild(),
+      input: {
+        projectId: "project-1",
+        parentInstanceId: "root-1",
+        data: { type: "json", value: [{ title: "First" }] },
+        itemFragment: {
+          ...createEmptyWebstudioFragment(),
+          children: [{ type: "id", value: "item-root" }],
+          instances: [
+            {
+              type: "instance",
+              id: "item-root",
+              component: "ws:element",
+              tag: "article",
+              children: [],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(mutation).toMatchObject({
+      payload: expect.arrayContaining([
+        expect.objectContaining({ namespace: "instances" }),
+        expect.objectContaining({ namespace: "props" }),
+        expect.objectContaining({ namespace: "dataSources" }),
+      ]),
+      result: {
+        collectionInstanceId: expect.any(String),
+        itemRootInstanceId: expect.any(String),
+        itemParameterId: expect.any(String),
+        itemKeyParameterId: expect.any(String),
       },
     });
   });

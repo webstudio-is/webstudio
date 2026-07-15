@@ -1106,6 +1106,8 @@ export const insertComponent = projectMutationInput<
   }
 >("insert-component");
 
+export const insertCollection = runtimeProjectMutation("insert-collection");
+
 export const insertFragment = projectMutationInput<
   AuthProjectParams & {
     parentInstanceId: string;
