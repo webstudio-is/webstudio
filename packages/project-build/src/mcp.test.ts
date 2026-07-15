@@ -625,6 +625,21 @@ describe("project session mcp adapter", () => {
       includeScreenshot: true,
       includePreview: true,
     });
+    const completeTools = listProjectSessionMcpTools(publicMcpOperations, {
+      includeImport: true,
+      includeScreenshot: true,
+      includeScreenshotDiff: true,
+      includeInstallOcr: true,
+      includePreview: true,
+    });
+    for (const tool of completeTools) {
+      if (tool.outputSchema !== undefined) {
+        expect(
+          tool.outputSchema.type,
+          `MCP output schema must be object-typed for ${tool.name}`
+        ).toBe("object");
+      }
+    }
     expect(
       getSchemaProperties(
         visualTools.find((tool) => tool.name === "audit")?.inputSchema

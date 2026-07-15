@@ -2302,6 +2302,7 @@ export const hiddenMcpOperationCommands = new Set<string>([
 
 function getMcpOutputSchema(dataSchema: InputJsonSchema): InputJsonSchema {
   return {
+    type: "object",
     oneOf: [
       {
         type: "object",
