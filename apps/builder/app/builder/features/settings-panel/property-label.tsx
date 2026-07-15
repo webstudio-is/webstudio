@@ -21,7 +21,7 @@ import {
   $isContentMode,
   $selectedInstance,
 } from "~/shared/nano-states";
-import { getPropIdsToDelete } from "@webstudio-is/project-build/runtime/props";
+import { getPropIdsToDelete } from "@webstudio-is/project-build/runtime";
 import { $props } from "~/shared/sync/data-stores";
 import {
   $selectedInstanceInitialPropNames,

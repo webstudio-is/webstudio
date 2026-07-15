@@ -25,7 +25,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
-import { canWrapInstance } from "@webstudio-is/project-build/runtime/instances";
+import { canWrapInstance } from "@webstudio-is/project-build/runtime";
 import {
   $commandContent,
   $isCommandPanelOpen,

@@ -1,6 +1,6 @@
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
-import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts";
 import type { Transaction } from "@webstudio-is/sync-client";
 
 type Command =

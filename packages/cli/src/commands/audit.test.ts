@@ -122,7 +122,7 @@ describe("audit CLI input", () => {
       "Audit: 0 findings (0 errors, 0 warnings, 0 info)"
     );
     expect(info).toHaveBeenCalledWith(
-      "Rendered: 2 checks, 1 issues, 0 failures."
+      "Rendered (complete): 2 checks, 1 issues, 0 failures."
     );
     expect(info).toHaveBeenCalledWith(
       "  oversized-image: 1 occurrences across 1 captures (/)."

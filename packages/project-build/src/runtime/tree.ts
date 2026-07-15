@@ -14,9 +14,10 @@ import {
   isTreeSatisfyingContentModel,
 } from "./content-model";
 import { findClosestInstanceMatchingFragment } from "./matcher";
-import { getSlotFragmentDropTargetMutable, type InstancePath } from "./slot";
+import { getSlotFragmentDropTargetMutable } from "./slot";
+import type { InstancePath, InstanceSelector } from "./instance-path";
 
-export type InstanceSelector = Instance["id"][];
+export type { InstanceSelector } from "./instance-path";
 
 export type DroppableTarget = {
   parentSelector: InstanceSelector;

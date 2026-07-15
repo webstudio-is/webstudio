@@ -8,7 +8,7 @@ import {
   type BuilderComponentPanelItem,
   listBuilderComponentPanelItems,
   listComponentCatalogAvailableComponents,
-} from "@webstudio-is/project-build/runtime/component-catalog";
+} from "@webstudio-is/project-build/runtime";
 import {
   theme,
   Flex,

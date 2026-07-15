@@ -4,7 +4,7 @@ import {
   compilePathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
-} from "@webstudio-is/project-build/runtime/url-pattern";
+} from "@webstudio-is/project-build/runtime";
 import { $selectedPage } from "./nano-states/pages";
 import { $pages } from "./sync/data-stores";
 import { $publishedOrigin } from "./nano-states/misc";

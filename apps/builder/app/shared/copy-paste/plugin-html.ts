@@ -1,5 +1,5 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
-import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
+import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime";
 import { generateFragmentFromTailwind } from "../tailwind/tailwind";
 import { denormalizeSrcProps } from "./asset-upload";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";

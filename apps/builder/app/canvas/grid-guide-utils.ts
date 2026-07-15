@@ -7,7 +7,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $gridCellData, type GridCellData } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";

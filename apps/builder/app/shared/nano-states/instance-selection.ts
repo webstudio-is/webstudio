@@ -2,7 +2,7 @@ import { atom, computed } from "nanostores";
 import {
   areInstanceSelectorsEqual,
   type InstanceSelector,
-} from "@webstudio-is/project-build/runtime/tree";
+} from "@webstudio-is/project-build/runtime";
 import {
   areSelectorListsEqual,
   canResolveInstanceSelector,
@@ -11,6 +11,12 @@ import {
 import { $instances } from "../sync/data-stores";
 
 export const $allSelectedInstanceSelectors = atom<InstanceSelector[]>([]);
+// Instance pruning is derived from tree updates and must not be synchronized
+// back as an explicit selection change.
+export const $instanceSelectionUpdate = atom<{
+  revision: number;
+  origin: "explicit" | "instance-pruning";
+}>({ revision: 0, origin: "explicit" });
 
 export const $selectedInstanceSelector = computed(
   $allSelectedInstanceSelectors,
@@ -21,16 +27,23 @@ export const $selectedInstanceSelector = computed(
   }
 );
 
-export const selectInstances = (instanceSelectors: InstanceSelector[]) => {
+const setSelectedInstances = (
+  instanceSelectors: InstanceSelector[],
+  origin: "explicit" | "instance-pruning"
+) => {
   const normalizedSelectors = normalizeInstanceSelectors(instanceSelectors);
-  if (
-    areSelectorListsEqual(
-      $allSelectedInstanceSelectors.get(),
-      normalizedSelectors
-    ) === false
-  ) {
+  const selectedSelectors = $allSelectedInstanceSelectors.get();
+  if (areSelectorListsEqual(selectedSelectors, normalizedSelectors) === false) {
+    $instanceSelectionUpdate.set({
+      revision: $instanceSelectionUpdate.get().revision + 1,
+      origin,
+    });
     $allSelectedInstanceSelectors.set(normalizedSelectors);
   }
+};
+
+export const selectInstances = (instanceSelectors: InstanceSelector[]) => {
+  setSelectedInstances(instanceSelectors, "explicit");
 };
 
 export const clearInstanceSelection = () => {
@@ -67,9 +80,10 @@ $instances.listen((instances) => {
   if (selectedSelectors.length === 0) {
     return;
   }
-  selectInstances(
+  setSelectedInstances(
     selectedSelectors.filter((instanceSelector) =>
       canResolveInstanceSelector(instanceSelector, instances)
-    )
+    ),
+    "instance-pruning"
   );
 });

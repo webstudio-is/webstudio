@@ -22,6 +22,9 @@ import { createBuilderStateFromSnapshot } from "./state/adapters";
 import { createBuilderStateFreshness } from "./state/freshness";
 import { applyBuilderPatchTransactions } from "./state/patch";
 import { build } from "./state/fixtures.test-utils";
+import { parseWebstudioJsxFragment } from "./runtime/jsx";
+import { executeBuilderRuntimeOperation } from "./runtime/registry";
+import type { BuilderRuntimeMutation } from "./runtime/mutation";
 
 const compatibilityVersion = "test-session";
 const compatibility: ProjectSessionCompatibility = {
@@ -90,6 +93,37 @@ const createStorage = (
   };
 };
 
+const createOneTimeConflictingStorage = (
+  initial = createPersistedSnapshot()
+) => {
+  let current = initial;
+  let revision = initial.revision;
+  let saveAttempts = 0;
+  const storage: ProjectSessionStorage = {
+    async load() {
+      return current;
+    },
+    async save(snapshot, options) {
+      saveAttempts += 1;
+      if (saveAttempts === 1) {
+        revision = "rev-concurrent";
+        current = { ...current, revision };
+        throw new Error("Project session snapshot changed on disk.");
+      }
+      expect(options.expectedRevision).toBe(revision);
+      revision = "rev-reconciled";
+      current = { ...snapshot, revision };
+      return { revision };
+    },
+    async clear() {},
+  };
+  return {
+    storage,
+    getCurrent: () => current,
+    getSaveAttempts: () => saveAttempts,
+  };
+};
+
 const createTransport = (
   remote = createSnapshot()
 ): ProjectSessionTransport & {
@@ -131,6 +165,31 @@ const createTransport = (
     return { operationId: input.operationId } as unknown as Result;
   },
 });
+
+const createMutableTransport = (
+  initialRemote: ProjectSessionRemoteSnapshot = createSnapshot()
+) => {
+  let remote = initialRemote;
+  const transport = createTransport(remote);
+  transport.commitPatch = async (input) => {
+    transport.commits.push([...input.transactions]);
+    const applied = applyBuilderPatchTransactions(
+      remote.state,
+      input.transactions
+    );
+    remote = {
+      ...remote,
+      version: input.baseVersion + 1,
+      state: applied.state,
+    };
+    return { version: remote.version };
+  };
+  transport.fetchNamespaces = async (input) => {
+    transport.loadedNamespaces.push([...input.namespaces]);
+    return remote;
+  };
+  return transport;
+};
 
 const createSession = ({
   storage = createStorage(),
@@ -200,6 +259,23 @@ describe("project session", () => {
     expect(storage.cleared).toBe(true);
   });
 
+  test("identifies session control operations in their envelopes", async () => {
+    const session = createSession({
+      storage: createStorage(),
+      transport: createTransport(),
+    });
+
+    await expect(session.initialize()).resolves.toMatchObject({
+      operationId: "project-session.status",
+    });
+    await expect(session.refresh(["pages"])).resolves.toMatchObject({
+      operationId: "project-session.refresh",
+    });
+    await expect(session.reset()).resolves.toMatchObject({
+      operationId: "project-session.reset",
+    });
+  });
+
   test("refreshes missing namespaces from remote and persists atomically", async () => {
     const storage = createStorage();
     const transport = createTransport();
@@ -210,6 +286,36 @@ describe("project session", () => {
     expect(result.source).toBe("local");
     expect(transport.loadedNamespaces).toEqual([["pages"]]);
     expect(storage.saved).toHaveLength(1);
+  });
+
+  test("persists project settings from a cold session across refresh", async () => {
+    const storage = createStorage();
+    const transport = createMutableTransport();
+    const session = createSession({ storage, transport });
+
+    const update = await session.mutate("projectSettings.update", {
+      meta: { siteName: "Persisted site" },
+    });
+    expect(update.result).toEqual({ updated: true });
+    expect(update.state.committed).toBe(true);
+    expect(update.namespaces).toMatchObject({
+      read: ["projectSettings"],
+      write: ["projectSettings"],
+      invalidated: ["projectSettings"],
+    });
+
+    await session.refresh(["projectSettings"]);
+    const settings = await session.read("projectSettings.get", {});
+
+    expect(settings.result).toMatchObject({
+      meta: { siteName: "Persisted site" },
+    });
+    expect(transport.commits).toHaveLength(1);
+    expect(transport.loadedNamespaces).toEqual([
+      ["projectSettings"],
+      ["projectSettings"],
+      ["pages"],
+    ]);
   });
 
   test("duplicates a page from a cold session with assets hydrated", async () => {
@@ -409,8 +515,119 @@ describe("project session", () => {
         },
       ],
     });
+    const compact = serializeProjectSessionMeta(result);
+    const verbose = serializeProjectSessionMeta(result, { verbose: true });
+    expect(compact).not.toHaveProperty("namespaces");
+    expect(verbose).toMatchObject({
+      ...compact,
+      namespaces: result.namespaces,
+      freshness: result.state.freshness,
+    });
+    expect(JSON.stringify(compact).length).toBeLessThan(
+      JSON.stringify(verbose).length * 0.75
+    );
+
+    const withSecretDiagnostic = {
+      ...result,
+      diagnostics: [
+        ...result.diagnostics,
+        {
+          level: "warning" as const,
+          code: "TEST_DIAGNOSTIC",
+          message:
+            "A credential was rejected at https://example.com/?authToken=also-never-print-this.",
+          details: { authToken: "never-print-this" },
+        },
+      ],
+    };
+    expect(
+      JSON.stringify(serializeProjectSessionMeta(withSecretDiagnostic))
+    ).not.toContain("never-print-this");
+    const redactedVerbose = JSON.stringify(
+      serializeProjectSessionMeta(withSecretDiagnostic, { verbose: true })
+    );
+    expect(redactedVerbose).not.toContain("never-print-this");
+    expect(redactedVerbose).not.toContain("also-never-print-this");
+    expect(redactedVerbose).toContain("[redacted]");
     expect(transport.commits).toEqual([]);
     expect(storage.saved).toHaveLength(0);
+  });
+
+  test("plans and commits one semantic Collection transaction that survives refresh", async () => {
+    let remote = createSnapshot();
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport(remote);
+    transport.fetchNamespaces = async (input) => {
+      transport.loadedNamespaces.push([...input.namespaces]);
+      return remote;
+    };
+    let serverGeneratedId = 0;
+    transport.executeServerOperation = async <Result>(input: {
+      operationId: string;
+      input: unknown;
+    }) => {
+      transport.serverOperations.push(input);
+      const mutation =
+        await executeBuilderRuntimeOperation<BuilderRuntimeMutation>({
+          id: input.operationId,
+          state: remote.state,
+          input: input.input,
+          context: {
+            projectVersion: remote.version,
+            createId: () => `server-generated-id-${serverGeneratedId++}`,
+          },
+        });
+      const transaction: BuilderPatchTransaction = {
+        id: `server-transaction-${serverGeneratedId++}`,
+        payload: mutation.payload,
+      };
+      remote = {
+        ...remote,
+        version: remote.version + 1,
+        state: applyBuilderPatchTransactions(remote.state, [transaction]).state,
+      };
+      return mutation.result as Result;
+    };
+    const session = createSession({ storage, transport });
+    const input = {
+      parentInstanceId: "instance-root",
+      data: {
+        type: "json" as const,
+        value: [{ title: "First" }, { title: "Second" }],
+      },
+      itemFragment: await parseWebstudioJsxFragment(
+        '<ws.element ws:tag="article">{expression`collectionItem.title`}</ws.element>'
+      ),
+    };
+
+    await session.initialize();
+    const planned = await session.mutate("instances.insertCollection", input, {
+      dryRun: true,
+    });
+    expect(planned.diagnostics).toEqual([
+      expect.objectContaining({ code: "DRY_RUN" }),
+    ]);
+    expect(planned.source).toBe("dry-run");
+    expect(planned.state.committed).toBe(false);
+    expect(
+      planned.transaction?.payload.map((change) => change.namespace)
+    ).toEqual(expect.arrayContaining(["instances", "props", "dataSources"]));
+    expect(transport.commits).toHaveLength(0);
+
+    const committed = await session.mutate("instances.insertCollection", input);
+    expect(committed.state.committed).toBe(true);
+    expect(transport.serverOperations).toHaveLength(1);
+    const result = committed.result as { collectionInstanceId: string };
+    expect(
+      remote.state.instances?.get(result.collectionInstanceId)
+    ).toMatchObject({
+      component: "ws:collection",
+    });
+
+    await session.refresh(["instances", "props", "dataSources"]);
+    expect(
+      storage.saved.at(-1)?.state.instances?.get(result.collectionInstanceId)
+    ).toMatchObject({ component: "ws:collection" });
   });
 
   test("commits remotely before applying mutation locally", async () => {
@@ -450,6 +667,75 @@ describe("project session", () => {
     });
   });
 
+  test("reports a mutation as committed after reconciling a local snapshot race", async () => {
+    const { storage, getCurrent } = createOneTimeConflictingStorage();
+    const transport = createMutableTransport();
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "New Home" },
+    });
+
+    expect(transport.commits).toHaveLength(1);
+    expect(result.state.committed).toBe(true);
+    expect(result.result).toMatchObject({ pageId: "page-home" });
+    expect(result.version).toBe(2);
+    expect(result.diagnostics).toEqual([
+      {
+        level: "info",
+        code: "COMMITTED_SESSION_RECONCILED",
+        message:
+          "The mutation committed and the local project session was refreshed after its snapshot could not be saved.",
+      },
+    ]);
+    expect(getCurrent().version).toBe(2);
+    expect(getCurrent().state.pages?.pages.get("page-home")?.name).toBe(
+      "New Home"
+    );
+  });
+
+  test("does not report an applied mutation as uncommitted when reconciliation fails", async () => {
+    const current = createPersistedSnapshot();
+    let saveAttempts = 0;
+    const storage: ProjectSessionStorage = {
+      async load() {
+        return current;
+      },
+      async save() {
+        saveAttempts += 1;
+        throw new Error("Project session snapshot changed on disk.");
+      },
+      async clear() {},
+    };
+    const transport = createTransport();
+    transport.fetchNamespaces = async () => {
+      throw new Error("Remote refresh failed.");
+    };
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "New Home" },
+    });
+
+    expect(transport.commits).toHaveLength(1);
+    expect(saveAttempts).toBe(1);
+    expect(result.state.committed).toBe(true);
+    expect(result.result).toMatchObject({ pageId: "page-home" });
+    expect(result.state.freshness.pages?.status).toBe("stale");
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        level: "warning",
+        code: "COMMITTED_SESSION_RECONCILE_FAILED",
+        message:
+          "The mutation committed remotely, but the local project session could not be refreshed. Do not retry the mutation; refresh the session before the next change.",
+      }),
+    ]);
+  });
+
   test("runs generated-record create mutations on the server", async () => {
     const storage = createStorage(createPersistedSnapshot());
     const transport = createTransport();
@@ -471,6 +757,29 @@ describe("project session", () => {
       },
     ]);
     expect(transport.loadedNamespaces.at(-1)).toEqual(["pages"]);
+  });
+
+  test("does not report a committed server mutation as busy after a local snapshot race", async () => {
+    const { storage, getSaveAttempts } = createOneTimeConflictingStorage();
+    const transport = createTransport();
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("folders.create", {
+      name: "New",
+      slug: "new",
+    });
+
+    expect(result.source).toBe("server");
+    expect(result.state.committed).toBe(true);
+    expect(getSaveAttempts()).toBe(2);
+    expect(transport.serverOperations).toEqual([
+      {
+        operationId: "folders.create",
+        input: { name: "New", slug: "new" },
+      },
+    ]);
+    expect(result.diagnostics).toEqual([]);
   });
 
   test("commits generated-record field mutations locally", async () => {
@@ -553,6 +862,32 @@ describe("project session", () => {
       version: 1,
       invalidatedBy: "resources.update",
     });
+  });
+
+  test("returns actionable validation issues from local runtime operations", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const session = createSession({ storage, transport: createTransport() });
+
+    await session.initialize();
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: 42 },
+    });
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "INVALID_INPUT",
+        issues: [
+          expect.objectContaining({
+            code: "invalid_type",
+            path: ["values", "name"],
+            constraint: "type:string",
+            example: "string",
+          }),
+        ],
+      }),
+    ]);
   });
 
   test("refreshes required namespaces and returns conflict diagnostic", async () => {

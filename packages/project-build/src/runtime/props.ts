@@ -7,9 +7,12 @@ import {
 } from "@webstudio-is/sdk";
 import { validateJsonLd } from "@webstudio-is/sdk/runtime";
 import type { BuilderState } from "../state/builder-state";
-import { throwBuilderRuntimeError } from "./errors";
+import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import { replaceTextValue } from "./text-replacement";
-import { getExpressionErrors } from "./expression-validation";
+import {
+  getExpressionErrorMessages,
+  getExpressionErrors,
+} from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { validateHtmlEmbedCode } from "./html";
 import { createRuntimeMutation } from "./mutation";
@@ -80,6 +83,35 @@ export const createPropBindingFromInput = ({
     value: binding.value,
   });
 
+export const listPropExpressions = ({
+  type,
+  value,
+}: {
+  type: Prop["type"];
+  value: unknown;
+}) => {
+  if (type === "expression" && typeof value === "string") {
+    return [
+      {
+        expression: value,
+        allowAssignment: false,
+        variables: [] as string[],
+        path: [] as string[],
+      },
+    ];
+  }
+  if (type !== "action" || Array.isArray(value) === false) {
+    return [];
+  }
+  const actions = value as Extract<Prop, { type: "action" }>["value"];
+  return actions.map((action, index) => ({
+    expression: action.code,
+    allowAssignment: true,
+    variables: action.args,
+    path: [String(index), "code"],
+  }));
+};
+
 export const getPropValueErrors = ({
   type,
   value,
@@ -88,7 +120,14 @@ export const getPropValueErrors = ({
   value?: unknown;
 }) => {
   if (type !== "expression") {
-    return [];
+    return listPropExpressions({ type, value }).flatMap(
+      ({ expression, allowAssignment, variables }) =>
+        getExpressionErrorMessages({
+          expression,
+          allowAssignment,
+          availableVariables: new Set(variables),
+        })
+    );
   }
   return getExpressionErrors(String(value));
 };
@@ -113,10 +152,13 @@ const addExpressionIssues = (
   path: (string | number)[] = []
 ) => {
   for (const message of errors) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message,
-      path,
+    addZodValidationIssue(context, {
+      code: "invalid_expression",
+      path: path.map(String),
+      message: "Invalid Webstudio expression",
+      constraint: "valid_webstudio_expression",
+      example: "item.title",
+      detail: message,
     });
   }
 };

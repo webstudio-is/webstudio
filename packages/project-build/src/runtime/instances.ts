@@ -20,9 +20,18 @@ import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
 } from "../contracts/patch";
+import {
+  paginateOutput,
+  projectOutput,
+  type PaginatedOutputInput,
+} from "./output";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
-import { throwBuilderRuntimeError } from "./errors";
+import {
+  getZodValidationIssueOptions,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+} from "./errors";
 import { replaceTextValue } from "./text-replacement";
 import { getExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
@@ -65,25 +74,48 @@ import equal from "fast-deep-equal";
 import { z } from "zod";
 
 export const insertIndexInput = z.number().int().nonnegative();
+const instanceEndPositionInput = z.literal("end");
 export const instanceInsertModeInput = z.enum(["append", "prepend", "replace"]);
 
 export const moveInstancesInput = z.object({
   moves: z
     .array(
-      z.object({
-        instanceId: z.string(),
-        parentInstanceId: z.string(),
-        insertIndex: insertIndexInput.optional(),
-      })
+      z
+        .object({
+          instanceId: z.string(),
+          parentInstanceId: z.string(),
+          insertIndex: insertIndexInput
+            .optional()
+            .describe(
+              "Zero-based position in the target parent's children before the moved instance is removed. Omit it or use position: end to append."
+            ),
+          position: instanceEndPositionInput
+            .optional()
+            .describe(
+              'Use "end" to append deterministically without calculating an insertIndex.'
+            ),
+        })
+        .refine(
+          ({ insertIndex, position }) =>
+            insertIndex === undefined || position === undefined,
+          getZodValidationIssueOptions({
+            code: "conflicting_move_position",
+            path: ["position"],
+            message: "Use either insertIndex or position, not both.",
+            constraint: "mutually_exclusive_with:insertIndex",
+            example: "end",
+          })
+        )
     )
-    .min(1),
+    .min(1)
+    .describe("Moves are applied sequentially in array order."),
 });
 
 export const reparentInstanceInput = z.object({
   sourceInstanceSelector: z.array(z.string()).min(2),
   dropTarget: z.object({
     parentSelector: z.array(z.string()).min(1),
-    position: z.union([insertIndexInput, z.literal("end")]),
+    position: z.union([insertIndexInput, instanceEndPositionInput]),
   }),
 });
 
@@ -963,10 +995,11 @@ export const createInstanceMovePatches = ({
     instanceId: Instance["id"];
     parentInstanceId: Instance["id"];
     insertIndex?: number;
+    position?: "end";
   }>;
 }) => {
-  const removalPatches = [];
-  const addPatches = [];
+  const mutableInstances = cloneInstances(instances);
+  const patches: BuilderPatchChange["patches"] = [];
   const errors: Array<
     | { type: "instance-not-found"; instanceId: Instance["id"] }
     | { type: "parent-not-found"; instanceId: Instance["id"] }
@@ -976,17 +1009,17 @@ export const createInstanceMovePatches = ({
   > = [];
 
   for (const move of moves) {
-    const instance = instances.get(move.instanceId);
+    const instance = mutableInstances.get(move.instanceId);
     if (instance === undefined) {
       errors.push({ type: "instance-not-found", instanceId: move.instanceId });
       continue;
     }
-    const parent = findParentInstanceReference(instances, instance.id);
+    const parent = findParentInstanceReference(mutableInstances, instance.id);
     if (parent === undefined) {
       errors.push({ type: "parent-not-found", instanceId: instance.id });
       continue;
     }
-    const nextParent = instances.get(move.parentInstanceId);
+    const nextParent = mutableInstances.get(move.parentInstanceId);
     if (nextParent === undefined) {
       errors.push({
         type: "target-parent-not-found",
@@ -994,7 +1027,7 @@ export const createInstanceMovePatches = ({
       });
       continue;
     }
-    const descendantIds = collectInstanceIds(instances, instance.id);
+    const descendantIds = collectInstanceIds(mutableInstances, instance.id);
     if (descendantIds.includes(nextParent.id)) {
       errors.push({ type: "descendant-target", instanceId: instance.id });
       continue;
@@ -1015,7 +1048,7 @@ export const createInstanceMovePatches = ({
             requestedIndex: requestedInsertIndex,
           })
         : requestedInsertIndex;
-    removalPatches.push({
+    patches.push({
       op: "remove" as const,
       path: [parent.instance.id, "children", parent.childIndex] as [
         string,
@@ -1023,16 +1056,22 @@ export const createInstanceMovePatches = ({
         number,
       ],
     });
-    addPatches.push({
+    patches.push({
       op: "add" as const,
       path: [nextParent.id, "children", insertIndex],
       value: createInstanceChild(instance.id),
     });
+    parent.instance.children.splice(parent.childIndex, 1);
+    nextParent.children.splice(
+      insertIndex,
+      0,
+      createInstanceChild(instance.id)
+    );
   }
 
   return {
     errors,
-    patches: [...sortChildRemovalPatches(removalPatches), ...addPatches],
+    patches,
   };
 };
 
@@ -3285,6 +3324,19 @@ export const getTextContentErrors = ({
   return getExpressionErrors(value);
 };
 
+const throwTextExpressionValidationError = (errors: readonly string[]): never =>
+  throwBuilderValidationError(
+    errors.join("\n"),
+    errors.map((detail) => ({
+      code: "invalid_expression",
+      path: ["text"],
+      message: "Invalid Webstudio expression",
+      constraint: "valid_webstudio_expression",
+      example: "item.title",
+      detail,
+    }))
+  );
+
 export const setTextContentMutable = (
   instance: Instance,
   type: TextContentChild["type"],
@@ -3419,7 +3471,7 @@ const getPageFilteredRootInstanceIds = (
 
 export const listInstances = (
   state: Pick<BuilderState, "pages" | "instances">,
-  input: {
+  input: PaginatedOutputInput & {
     pageId?: string;
     pagePath?: string;
     rootInstanceId?: string;
@@ -3464,11 +3516,36 @@ export const listInstances = (
     ) {
       continue;
     }
+    const compact = serializeInstanceSummary(
+      instance,
+      depth,
+      parents.get(instance.id)
+    );
     results.push(
-      serializeInstanceSummary(instance, depth, parents.get(instance.id))
+      projectOutput({
+        input,
+        compact,
+        expanded: () => ({ record: instance }),
+      })
     );
   }
-  return { instances: results };
+  const { items, ...pagination } = paginateOutput({
+    items: results,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {
+      pageId: input.pageId,
+      pagePath: input.pagePath,
+      rootInstanceId: input.rootInstanceId,
+      maxDepth: input.maxDepth,
+      topLevelOnly: input.topLevelOnly,
+      component: input.component,
+      tag: input.tag,
+      labelContains: input.labelContains,
+    },
+    verbose: input.verbose,
+  });
+  return { instances: items, ...pagination };
 };
 
 export const listTextInstances = (
@@ -3501,6 +3578,15 @@ export const listTextInstances = (
   };
 };
 
+type InstanceInspection = ReturnType<typeof serializeInstanceSummary> & {
+  ancestors?: ReturnType<typeof getInstanceAncestors>;
+  props?: Prop[];
+  styles?: ReturnType<typeof serializeStyleDeclarations>;
+  children?: Array<ReturnType<typeof serializeInstanceSummary>>;
+  bindings?: Prop[];
+  sources?: string[];
+};
+
 export const inspectInstance = (
   state: Pick<
     BuilderState,
@@ -3522,7 +3608,7 @@ export const inspectInstance = (
   const depths = getInstanceDepths(instances, [input.instanceId]);
   const parents = getInstanceParents(instances);
   const include = new Set(input.include ?? []);
-  const details: Record<string, unknown> = serializeInstanceSummary(
+  const details: InstanceInspection = serializeInstanceSummary(
     instance,
     depths.get(instance.id) ?? 0,
     parents.get(instance.id)
@@ -3598,7 +3684,7 @@ export const updateTextInstance = (
   const mode = input.mode ?? "text";
   const errors = getTextContentErrors({ type: mode, value: input.text });
   if (errors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
+    return throwTextExpressionValidationError(errors);
   }
   const mutationResult = {
     instanceId: input.instanceId,
@@ -3720,7 +3806,7 @@ export const setTextContent = (
     value: input.text,
   });
   if (errors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
+    return throwTextExpressionValidationError(errors);
   }
 
   const child = createTextContentChild({

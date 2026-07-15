@@ -5,6 +5,8 @@ import {
 import {
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
+  paginateOutput,
+  projectOutput,
 } from "@webstudio-is/project-build/mcp";
 import { HandledCliError } from "../errors";
 import { printJson } from "../json-output";
@@ -35,11 +37,17 @@ export const schemaOptions = (yargs: CommonYargsArgv) =>
         "Accepted for compatibility. Schema output is always machine-readable JSON",
       default: false,
     })
-    .option("detail", {
+    .option("verbose", {
+      type: "boolean",
+      describe: "Include complete command and tool schemas",
+    })
+    .option("cursor", {
       type: "string",
-      choices: ["overview", "summary", "full"] as const,
-      describe:
-        "Schema detail. For mcp, overview is tiny, summary lists tools, full includes every input schema.",
+      describe: "Pagination cursor returned by the previous schema call",
+    })
+    .option("limit", {
+      type: "number",
+      describe: "Maximum schemas to return, from 1 to 200",
     })
     .option("tool", {
       type: "string",
@@ -47,15 +55,15 @@ export const schemaOptions = (yargs: CommonYargsArgv) =>
         "Focus MCP schema on one or more comma-separated tool names, for example insert-fragment",
     });
 
-type SchemaDetail = "overview" | "summary" | "full";
-
 type SchemaOptions = Omit<
   StrictYargsOptionsToInterface<typeof schemaOptions>,
-  "topic" | "detail" | "tool"
+  "topic" | "tool" | "verbose" | "cursor" | "limit"
 > & {
   topic?: string;
-  detail?: string;
   tool?: string;
+  verbose?: boolean;
+  cursor?: string;
+  limit?: number;
 };
 
 const topLevelCommands = topLevelCliCommandMetadata.map(
@@ -124,23 +132,29 @@ const mcpToolSummary = mcpToolSchema.map(
     serverOnly: annotations.serverOnly,
   })
 );
+const mcpToolSummaryByName = new Map(
+  mcpToolSummary.map((summary) => [summary.name, summary])
+);
 
-const getSchemaDetail = (
-  detail: string | undefined,
-  hasToolFilter = false
-): SchemaDetail => {
-  if (
-    detail === undefined ||
-    detail === "overview" ||
-    detail === "summary" ||
-    detail === "full"
-  ) {
-    return detail ?? (hasToolFilter ? "full" : "overview");
-  }
-  throw new Error(
-    `Unknown schema detail "${detail}". Available details: overview, summary, full`
-  );
-};
+const paginateSchemas = <Item extends object, Compact extends object>(
+  items: readonly Item[],
+  options: Pick<SchemaOptions, "cursor" | "limit" | "verbose">,
+  compact: (item: Item) => Compact
+) =>
+  paginateOutput({
+    items: items.map((item) =>
+      projectOutput({
+        input: options,
+        compact: compact(item),
+        expanded: () => item,
+      })
+    ),
+    cursor: options.cursor,
+    limit: options.limit,
+    filters: {},
+    verbose: options.verbose,
+    invalidCursorMessage: "Invalid schema cursor",
+  });
 
 const getSelectedMcpToolSchemas = (toolFilter: string | undefined) => {
   if (toolFilter === undefined || toolFilter.trim() === "") {
@@ -165,56 +179,56 @@ const getSelectedMcpToolSchemas = (toolFilter: string | undefined) => {
   return selectedTools;
 };
 
-const getMcpSchemaTools = (
-  detail: SchemaDetail,
-  tools: typeof mcpToolSchema
-) => {
-  if (detail === "full") {
-    return tools;
-  }
-  if (detail === "summary") {
-    const selectedToolNames = new Set(tools.map((tool) => tool.name));
-    return mcpToolSummary.filter((tool) => selectedToolNames.has(tool.name));
-  }
-  return tools.map(({ name }) => name);
-};
-
 const createMcpSchema = (
-  detail: SchemaDetail,
+  options: Pick<SchemaOptions, "cursor" | "limit" | "verbose">,
   selectedTools: typeof mcpToolSchema = mcpToolSchema
-) => ({
-  name: "webstudio-mcp",
-  version: 1,
-  command: "webstudio mcp",
-  singleOpCallCommand: "webstudio mcp single-op-call <tool> '<json>'",
-  focusedToolNames:
-    selectedTools.length === mcpToolSchema.length
-      ? undefined
-      : selectedTools.map(({ name }) => name),
-  detail,
-  usage:
-    selectedTools.length !== mcpToolSchema.length
+) => {
+  const focused = selectedTools.length !== mcpToolSchema.length;
+  const detailOptions = {
+    ...options,
+    verbose: options.verbose ?? focused,
+  };
+  const { items, ...pagination } = paginateSchemas(
+    selectedTools,
+    detailOptions,
+    (tool) => {
+      const summary = mcpToolSummaryByName.get(tool.name);
+      if (summary === undefined) {
+        throw new Error(`Missing compact schema for MCP tool "${tool.name}".`);
+      }
+      return summary;
+    }
+  );
+  return {
+    name: "webstudio-mcp",
+    version: 1,
+    command: "webstudio mcp",
+    singleOpCallCommand: "webstudio mcp single-op-call <tool> '<json>'",
+    focusedToolNames: focused
+      ? selectedTools.map(({ name }) => name)
+      : undefined,
+    usage: focused
       ? "Focused MCP tool schema. Use this when you know the tool name and need exact input fields."
-      : detail === "full"
-        ? "Full MCP tool schema. This output is large; prefer summary detail plus focused meta.get_more_tools/components.* calls for normal LLM workflows."
-        : detail === "summary"
-          ? 'MCP tool summary. Use this to inspect all tool descriptions and fields without full schemas. For exact tool schemas use webstudio schema mcp --detail full, or prefer focused webstudio mcp single-op-call meta.get_more_tools \'{"tools":["insert-fragment"]}\'.'
-          : "Tiny MCP overview. Use this first to discover tool names. For all descriptions use --detail summary; for exact schemas use --detail full or --tool <name>; for normal LLM workflows prefer focused meta.get_more_tools and components.* calls.",
-  discovery: [
-    "webstudio mcp single-op-call meta.index",
-    `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`,
-    `webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'`,
-    `webstudio mcp single-op-call components.list '{"source":"all"}'`,
-    "webstudio mcp single-op-call components.coverage-plan",
-    `webstudio mcp single-op-call components.search '{"brief":"radix select"}'`,
-    `webstudio mcp single-op-call components.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`,
-    "webstudio mcp single-op-call templates.list",
-    `webstudio mcp single-op-call templates.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`,
-  ],
-  resources: listProjectSessionMcpResources(),
-  toolCount: selectedTools.length,
-  tools: getMcpSchemaTools(detail, selectedTools),
-});
+      : detailOptions.verbose
+        ? "Full MCP tool schema. This output is large; prefer compact output plus focused meta.get_more_tools/components.* calls for normal LLM workflows."
+        : "Compact MCP tool summary. Use --verbose only when complete input and output schemas are needed.",
+    discovery: [
+      "webstudio mcp single-op-call meta.index",
+      `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`,
+      `webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'`,
+      `webstudio mcp single-op-call components.list '{"source":"all"}'`,
+      "webstudio mcp single-op-call components.coverage-plan",
+      `webstudio mcp single-op-call components.search '{"brief":"radix select"}'`,
+      `webstudio mcp single-op-call components.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`,
+      "webstudio mcp single-op-call templates.list",
+      `webstudio mcp single-op-call templates.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'`,
+    ],
+    resources: listProjectSessionMcpResources(),
+    toolCount: selectedTools.length,
+    tools: items,
+    ...pagination,
+  };
+};
 
 const apiSchema = {
   name: "webstudio-cli",
@@ -286,24 +300,60 @@ const apiSchema = {
 
 export const schema = (options: SchemaOptions) => {
   try {
+    if (
+      options.limit !== undefined &&
+      (Number.isInteger(options.limit) === false ||
+        options.limit < 1 ||
+        options.limit > 200)
+    ) {
+      throw new Error("--limit must be an integer from 1 to 200.");
+    }
     const topic = options.topic ?? "api";
     if (topic === "api") {
-      printJson(apiSchema);
+      const { items, ...pagination } = paginateSchemas(
+        cliCommands,
+        options,
+        ({ name, operation, summary, requiredOptions }) => ({
+          name,
+          operation,
+          summary,
+          requiredOptions,
+        })
+      );
+      const pageCommandNames = new Set(items.map(({ name }) => name));
+      printJson(
+        projectOutput({
+          input: options,
+          compact: {
+            name: apiSchema.name,
+            version: apiSchema.version,
+            topLevelCommands,
+            commands: items,
+            ...pagination,
+          },
+          expanded: () => ({
+            ...apiSchema,
+            commands: items,
+            commandGroups: commandGroups.map((group) => ({
+              ...group,
+              commands: group.commands.filter(({ name }) =>
+                pageCommandNames.has(name)
+              ),
+            })),
+            ...pagination,
+          }),
+        })
+      );
       return;
     }
     if (topic === "mcp") {
       const selectedTools = getSelectedMcpToolSchemas(options.tool);
-      printJson(
-        createMcpSchema(
-          getSchemaDetail(options.detail, selectedTools !== undefined),
-          selectedTools
-        )
-      );
+      printJson(createMcpSchema(options, selectedTools));
       return;
     }
     const focusedTool = getSelectedMcpToolSchemas(topic);
     if (focusedTool !== undefined) {
-      printJson(createMcpSchema("full", focusedTool));
+      printJson(createMcpSchema(options, focusedTool));
       return;
     }
     if (availableSchemaTopics.includes(topic as never) === false) {

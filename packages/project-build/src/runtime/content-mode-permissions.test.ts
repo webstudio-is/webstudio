@@ -11,7 +11,7 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
-  __testing__,
+  contentModePermissionsTesting,
   applyContentModeTransaction,
   getContentModeCapabilities,
   getContentModeEditableInstanceIds,
@@ -28,7 +28,7 @@ const {
   isContentModePageMetaValue,
   isContentModePropPatchValue,
   validateEditableInstanceReferences,
-} = __testing__;
+} = contentModePermissionsTesting;
 
 const metas = new Map<string, WsComponentMeta>([
   [

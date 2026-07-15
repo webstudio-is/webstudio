@@ -46,6 +46,7 @@ import {
   getInstanceIdByStyleSourceId,
   getReferencedCssVariables,
   getStyleSourceInsertionIndex,
+  getStyleDeclarations,
   getUnusedCssVariableNames,
   performCssVariableRename,
   renameCssVariable,
@@ -1602,6 +1603,11 @@ describe("serializeDesignTokens", () => {
         withUsage: true,
       })
     ).toEqual({
+      detail: "compact",
+      filters: { filter: "Primary", withUsage: true },
+      nextCursor: null,
+      returnedCount: 1,
+      total: 1,
       tokens: [
         {
           id: "primary",
@@ -1629,30 +1635,46 @@ describe("serializeDesignTokens", () => {
     ).toEqual(["secondary", "primary"]);
   });
 
-  test("includes full token styles only when requested", () => {
-    expect(
-      serializeDesignTokens({
-        styleSources: sources([token("primary", "Primary")]),
-        styles: createStyleDeclMap([
-          createStyleDecl("primary", "base", "color", {
-            type: "keyword",
-            value: "red",
-          }),
-        ]),
-        styleSourceSelections: [],
-        includeStyles: true,
-      })
-    ).toEqual({
+  test("includes full token styles only in verbose output", () => {
+    const tokenValue = {
+      type: "unparsed" as const,
+      value: `linear-gradient(${"red 0 1px, blue 1px 2px, ".repeat(80)}red)`,
+    };
+    const compact = serializeDesignTokens({
+      styleSources: sources([token("primary", "Primary")]),
+      styles: createStyleDeclMap([
+        createStyleDecl("primary", "base", "backgroundImage", tokenValue),
+      ]),
+      styleSourceSelections: [],
+    });
+    const verbose = serializeDesignTokens({
+      styleSources: sources([token("primary", "Primary")]),
+      styles: createStyleDeclMap([
+        createStyleDecl("primary", "base", "backgroundImage", tokenValue),
+      ]),
+      styleSourceSelections: [],
+      verbose: true,
+    });
+    expect(verbose).toEqual({
+      detail: "verbose",
+      filters: {},
+      nextCursor: null,
+      returnedCount: 1,
+      total: 1,
       tokens: [
         {
           id: "primary",
           name: "Primary",
           declarationCount: 1,
-          styles: { color: { type: "keyword", value: "red" } },
+          styles: { backgroundImage: tokenValue },
           usageCount: 0,
         },
       ],
     });
+    expect(verbose.tokens[0]).toMatchObject(compact.tokens[0] ?? {});
+    expect(JSON.stringify(compact).length).toBeLessThan(
+      JSON.stringify(verbose).length * 0.5
+    );
   });
 
   test("includes usage by default and allows omitting it", () => {
@@ -1667,6 +1689,50 @@ describe("serializeDesignTokens", () => {
         ?.usageCount
     ).toBeUndefined();
   });
+});
+
+test("expands style values without changing pagination or filters", () => {
+  const largeValue = {
+    type: "unparsed" as const,
+    value: `linear-gradient(${"red 0 1px, blue 1px 2px, ".repeat(80)}red)`,
+  };
+  const largeStyle = { ...displayStyle, value: largeValue };
+  const styleState = {
+    pages: undefined,
+    instances: undefined,
+    styles: new Map([[displayStyleKey, largeStyle]]),
+    styleSources: new Map([[localStyleSource.id, localStyleSource]]),
+    styleSourceSelections: new Map([
+      ["box", { instanceId: "box", values: [localStyleSource.id] }],
+    ]),
+  };
+  const compact = getStyleDeclarations(styleState, { limit: 1 });
+  const verbose = getStyleDeclarations(styleState, {
+    limit: 1,
+    verbose: true,
+  });
+
+  expect(compact).toMatchObject({
+    detail: "compact",
+    returnedCount: 1,
+    declarations: [{ property: "display", valueType: "unparsed" }],
+  });
+  expect(compact.declarations[0]).not.toHaveProperty("value");
+  expect(verbose).toMatchObject({
+    detail: "verbose",
+    total: compact.total,
+    returnedCount: compact.returnedCount,
+    nextCursor: compact.nextCursor,
+    declarations: [
+      expect.objectContaining({
+        ...compact.declarations[0],
+        value: largeValue,
+      }),
+    ],
+  });
+  expect(JSON.stringify(compact).length).toBeLessThan(
+    JSON.stringify(verbose).length * 0.5
+  );
 });
 
 describe("getLocalStyleSourceId", () => {

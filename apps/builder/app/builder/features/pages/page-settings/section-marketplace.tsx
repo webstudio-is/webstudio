@@ -13,7 +13,7 @@ import { ImageControl } from "~/shared/project-settings";
 import { $assets } from "~/shared/sync/data-stores";
 import { Card } from "../../marketplace/card";
 import { ImageInfo } from "../image-info";
-import type { PageSettingsValues } from "@webstudio-is/project-build/runtime/pages";
+import type { PageSettingsValues } from "@webstudio-is/project-build/runtime";
 import { computePageSettingsText, type OnChange } from "./shared";
 
 export const MarketplaceSection = ({

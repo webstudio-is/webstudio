@@ -419,6 +419,12 @@ const auditResultBase = z.object({
   renderedCheckCount: z.number().int().nonnegative(),
   renderedIssueCount: z.number().int().nonnegative(),
   renderedFailureCount: z.number().int().nonnegative(),
+  renderedState: z.enum([
+    "complete",
+    "partial",
+    "confirmation-required",
+    "failed",
+  ]),
   renderedPlan: renderedAuditPlan.nullable(),
   renderedCaptureSummary: renderedAuditCaptureSummary,
   renderedCaptureStatuses: z.array(renderedAuditCaptureStatus),
@@ -1237,6 +1243,7 @@ export function audit(
     renderedIssueCount: 0,
     renderedIssueSummaries: [],
     renderedFailureCount: 0,
+    renderedState: "complete",
     renderedFailureSummaries: [],
     renderedPlan: null,
     renderedCaptureSummary: {

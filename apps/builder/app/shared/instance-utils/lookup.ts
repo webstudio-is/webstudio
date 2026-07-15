@@ -2,7 +2,7 @@ import type { Instance, Instances, Pages } from "@webstudio-is/sdk";
 import {
   findPageAndSelectorByInstanceId,
   getInstancePath,
-} from "@webstudio-is/project-build/runtime/lookup";
+} from "@webstudio-is/project-build/runtime";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 /**

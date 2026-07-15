@@ -653,6 +653,45 @@ test("maps api not found errors to not found json", async () => {
   });
 });
 
+test("prints actionable validation issues in CLI JSON", async () => {
+  mockConfig();
+  const issue = {
+    code: "invalid_expression",
+    path: ["values", "title"],
+    message: "Invalid Webstudio expression",
+    constraint: "valid_webstudio_expression",
+    example: 'pageTitle ?? "Pricing"',
+    detail: "Unexpected token at 1:4",
+  };
+  apiCalls.getPage.mockRejectedValue(
+    Object.assign(new Error("Page input is invalid."), {
+      code: "INVALID_INPUT",
+      issues: [issue],
+    })
+  );
+
+  await expect(
+    apiCommand(
+      { command: "get-page", page: "page-1", json: true },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(getLastJsonOutput()).toEqual({
+    ok: false,
+    error: {
+      code: "INVALID_INPUT",
+      message: "Page input is invalid.",
+      issues: [issue],
+    },
+    meta: {
+      command: "get-page",
+      projectId: "project-1",
+      durationMs: expect.any(Number),
+    },
+  });
+});
+
 test("explains missing Builder API access instead of leaking token ownership errors", async () => {
   mockConfig();
   createCliProjectSession.mockImplementationOnce(() => ({
@@ -1789,6 +1828,9 @@ test("passes style token inclusion through to the api", async () => {
       property: undefined,
       propertyFilter: undefined,
       includeTokens: true,
+      cursor: undefined,
+      limit: undefined,
+      verbose: undefined,
     },
   });
 });
@@ -1798,16 +1840,18 @@ test("lists design tokens with filters", async () => {
     options: {
       command: "list-design-tokens",
       filter: "brand",
-      includeStyles: true,
+      verbose: true,
       withUsage: true,
       sort: "usage",
     },
     call: apiCalls.listDesignTokens,
     connection: {
       filter: "brand",
-      includeStyles: true,
       withUsage: true,
       sort: "usage",
+      cursor: undefined,
+      limit: undefined,
+      verbose: true,
     },
   });
 });

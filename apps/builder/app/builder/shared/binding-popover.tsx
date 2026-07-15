@@ -36,12 +36,12 @@ import {
   decodeDataSourceVariable,
   getExpressionIdentifiers,
 } from "@webstudio-is/sdk";
-import { getExpressionErrorMessages } from "@webstudio-is/project-build/runtime/expression-validation";
+import { getExpressionErrorMessages } from "@webstudio-is/project-build/runtime";
 import { $dataSourceVariables, $isDesignMode } from "~/shared/nano-states";
 import {
   computeExpressionWithinScope,
   encodeDataVariableName,
-} from "@webstudio-is/project-build/runtime/data";
+} from "@webstudio-is/project-build/runtime";
 import {
   ExpressionEditor,
   formatValuePreview,

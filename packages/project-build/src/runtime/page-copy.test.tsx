@@ -17,7 +17,7 @@ import {
   createRootFolder,
 } from "@webstudio-is/project-build";
 import {
-  __testing__,
+  pageCopyTesting,
   createPageTemplate,
   createPageFromTemplate,
   createPageDuplicatePayload,
@@ -43,7 +43,7 @@ import {
 } from "@webstudio-is/template";
 import { nanoid } from "nanoid";
 
-const { deduplicateName, deduplicatePath, joinPath } = __testing__;
+const { deduplicateName, deduplicatePath, joinPath } = pageCopyTesting;
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));

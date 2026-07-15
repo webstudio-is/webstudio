@@ -3,13 +3,13 @@ import { produceWithPatches, type Patch } from "immer";
 import type {
   BuilderPatch,
   BuilderPatchChange,
-} from "@webstudio-is/project-build/contracts/patch";
+} from "@webstudio-is/project-build/contracts";
 import type { WebstudioData } from "@webstudio-is/sdk";
 import type {
   MarketplaceProduct,
   ProjectSettings,
 } from "@webstudio-is/project-build";
-import * as builderStatePatch from "@webstudio-is/project-build/state/patch";
+import * as builderStatePatch from "@webstudio-is/project-build/state";
 import { serverSyncStore } from "./sync-stores";
 
 type BuilderPatchData = WebstudioData & {

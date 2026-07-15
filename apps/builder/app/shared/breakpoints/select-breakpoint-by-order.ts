@@ -1,4 +1,4 @@
-import { groupBreakpoints } from "@webstudio-is/project-build/runtime/breakpoints";
+import { groupBreakpoints } from "@webstudio-is/project-build/runtime";
 import { $selectedBreakpointId } from "../nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";

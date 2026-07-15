@@ -3,6 +3,7 @@ const publicApiRemoteErrorCodes = [
   "CONFLICT",
   "FORBIDDEN",
   "INTERNAL_SERVER_ERROR",
+  "INVALID_INPUT",
   "NOT_FOUND",
   "PROJECT_NOT_PUBLISHED",
   "UNAUTHORIZED",

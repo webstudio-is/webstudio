@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { expect, test } from "vitest";
-import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts/builder-runtime";
-import { builderApiCapabilities } from "@webstudio-is/project-build/contracts/permissions";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
+import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts";
+import { builderApiCapabilities } from "@webstudio-is/project-build/contracts";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import {
   publicApiOperationNamespaces,
   publicApiOperationPermits,
@@ -18,9 +18,7 @@ test("exposes public runtime contracts without private metadata", () => {
       permit: contract.permit,
       kind: contract.kind,
       inputSchema: contract.inputSchema,
-      ...("outputSchema" in contract
-        ? { outputSchema: contract.outputSchema }
-        : {}),
+      outputSchema: contract.outputSchema,
       readNamespaces: contract.readNamespaces,
       writeNamespaces: contract.writeNamespaces,
       invalidatesNamespaces: contract.invalidatesNamespaces,
@@ -40,6 +38,53 @@ test("exposes the audit output schema and stable rule ids", () => {
   expect(outputSchema).toContain('"missing-aria-reference"');
   expect(outputSchema).toContain('"contractVersion"');
   expect(outputSchema).toContain('"const":1');
+});
+
+test("exposes complete output schemas for every public runtime operation", () => {
+  expect(
+    publicRuntimeOperationContracts
+      .filter((contract) => contract.outputSchema === undefined)
+      .map((contract) => contract.id)
+  ).toEqual([]);
+
+  const byId = new Map(
+    publicRuntimeOperationContracts.map((contract) => [contract.id, contract])
+  );
+  expect(byId.get("pages.list")?.outputSchema.properties?.pages).toBeDefined();
+  expect(
+    byId.get("instances.inspect")?.outputSchema.properties?.ancestors
+  ).toBeDefined();
+  expect(
+    byId.get("instances.inspect")?.outputSchema.properties?.props
+  ).toMatchObject({ type: "array" });
+  expect(
+    byId.get("instances.inspect")?.outputSchema.properties?.children
+  ).toMatchObject({ type: "array" });
+  expect(byId.get("assets.update")?.outputSchema).toMatchObject({
+    required: ["assetId"],
+  });
+  expect(byId.get("resources.update")?.outputSchema).toMatchObject({
+    properties: {
+      resourceId: { type: "string" },
+      dataSourceId: { type: "string" },
+      warnings: { type: "array" },
+    },
+    required: ["resourceId"],
+  });
+  expect(byId.get("instances.deleteBySelector")?.outputSchema).toMatchObject({
+    properties: {
+      instanceIds: { type: "array" },
+      instanceSelector: { type: "array" },
+    },
+    required: ["instanceIds"],
+  });
+  expect(byId.get("projectSettings.get")?.outputSchema).toMatchObject({
+    properties: {
+      meta: { properties: { siteName: { type: "string" } } },
+      compiler: { properties: { atomicStyles: { type: "boolean" } } },
+      redirects: { type: "array" },
+    },
+  });
 });
 
 test("exposes public operation namespaces from builder namespaces", () => {

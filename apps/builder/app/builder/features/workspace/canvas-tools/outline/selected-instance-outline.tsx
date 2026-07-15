@@ -4,7 +4,7 @@ import {
   $selectedInstanceOutlines,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
-import { isDescendantOrSelf } from "@webstudio-is/project-build/runtime/tree";
+import { isDescendantOrSelf } from "@webstudio-is/project-build/runtime";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";

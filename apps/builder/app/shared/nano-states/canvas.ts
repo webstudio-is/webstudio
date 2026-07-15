@@ -3,7 +3,7 @@ import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { FontWeight } from "@webstudio-is/fonts";
 import type { Rect } from "@webstudio-is/design-system";
 import { $instances } from "../sync/data-stores";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 
 export type TextToolbarState = {
   selectionRect: undefined | DOMRect;

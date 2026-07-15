@@ -1,6 +1,6 @@
 import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { getIsVisuallyHidden } from "./visually-hidden";
 
 export const getInstanceIdFromElement = (

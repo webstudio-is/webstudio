@@ -5,7 +5,7 @@ import { Box, Combobox, Select, theme } from "@webstudio-is/design-system";
 import { elementsByTag } from "@webstudio-is/html-data";
 import { $selectedInstance, $selectedInstancePath } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { getValidTagsForInstance } from "@webstudio-is/project-build/runtime/instances";
+import { getValidTagsForInstance } from "@webstudio-is/project-build/runtime";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";

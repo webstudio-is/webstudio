@@ -44,7 +44,7 @@ import {
 import {
   findAvailableVariables,
   findUsedVariables,
-} from "@webstudio-is/project-build/runtime/data";
+} from "@webstudio-is/project-build/runtime";
 import {
   DeleteDataVariableDialog,
   deleteDataVariable,

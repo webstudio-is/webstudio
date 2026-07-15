@@ -11,6 +11,7 @@ import {
 } from "@webstudio-is/sdk";
 import { createBuilderStateFromSnapshot } from "../state/adapters";
 import { createRootFolder } from "../shared/pages-utils";
+import { getZodValidationIssues } from "./errors";
 import {
   createFolderCreatePayload,
   createFolderDeletePayload,
@@ -552,13 +553,22 @@ test("validates page general settings inputs", () => {
     redirect: "",
     documentType: "html",
   });
-  expect(
-    pageGeneralSettingsInput.safeParse({
-      name: "Pricing",
-      path: "/pricing",
-      status: 999,
-    }).success
-  ).toBe(false);
+  const invalidStatus = pageGeneralSettingsInput.safeParse({
+    name: "Pricing",
+    path: "/pricing",
+    status: 999,
+  });
+  expect(invalidStatus.success).toBe(false);
+  if (invalidStatus.success === false) {
+    expect(getZodValidationIssues(invalidStatus.error)).toEqual([
+      expect.objectContaining({
+        code: "invalid_page_status",
+        path: ["status"],
+        constraint: "http_status:200-599",
+        example: 200,
+      }),
+    ]);
+  }
   expect(
     pageGeneralSettingsInput.safeParse({
       name: "Pricing",
@@ -599,10 +609,21 @@ test("validates page search settings inputs", () => {
   expect(
     pageSearchSettingsInput.safeParse({ title: "D", language: "en-US" }).success
   ).toBe(false);
-  expect(
-    pageSearchSettingsInput.safeParse({ title: "Docs", language: "not locale" })
-      .success
-  ).toBe(false);
+  const invalidLanguage = pageSearchSettingsInput.safeParse({
+    title: "Docs",
+    language: "not locale",
+  });
+  expect(invalidLanguage.success).toBe(false);
+  if (invalidLanguage.success === false) {
+    expect(getZodValidationIssues(invalidLanguage.error)).toEqual([
+      expect.objectContaining({
+        code: "invalid_page_language",
+        path: ["language"],
+        constraint: "bcp_47_language_tag",
+        example: "en-US",
+      }),
+    ]);
+  }
 });
 
 test("validates page template settings inputs", () => {

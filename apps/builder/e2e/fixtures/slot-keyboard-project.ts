@@ -1,6 +1,4 @@
-import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
-import { loginAndCreateBlankProject } from "../flows/dashboard";
-import { newPage } from "../harness";
+import { createSeededBuilderProject } from "./builder-project";
 
 export type SeededSlotKeyboardProject = {
   projectId: string;
@@ -173,31 +171,14 @@ export const createSlotKeyboardProject = async ({
   title?: string;
   builderToken?: string;
 } = {}): Promise<SeededSlotKeyboardProject> => {
-  const ownerPage = await newPage();
-
-  try {
-    const projectId = await loginAndCreateBlankProject({
-      page: ownerPage,
-      email,
-      title,
-    });
-    const build = await loadDevBuild({ projectId });
-    await updateBuild(build.id, {
-      version: 0,
-      ...createSlotKeyboardBuildData({
+  return await createSeededBuilderProject({
+    email,
+    title,
+    builderToken,
+    createBuildUpdate: (build) =>
+      createSlotKeyboardBuildData({
         pages: build.pages,
         breakpoints: build.breakpoints,
       }),
-    });
-    await insertAuthorizationToken({
-      token: builderToken,
-      projectId,
-      name: "E2E slot keyboard builder token",
-      relation: "builders",
-    });
-
-    return { projectId, builderToken };
-  } finally {
-    await ownerPage.close();
-  }
+  });
 };

@@ -39,8 +39,9 @@ value is not dynamic.
 
 Read `list-variables`, `list-resources`, `inspect-instance`, and existing
 bindings before writing an expression. Do not guess identifier names. Syntax is
-validated when a mutation is submitted, but an identifier that is unavailable
-at the final render scope may require preview verification to detect.
+validated when a mutation is submitted. A valid expression that references an
+identifier unavailable in that scope is accepted with a structured warning
+containing the field path, source range, affected record, and remediation.
 
 ## Supported Syntax
 
@@ -81,17 +82,19 @@ inside actions. Use an explicit assignment there rather than `++` or `--`.
 
 ## Collections
 
-Whenever an array or object should render repeated UI, insert `ws:collection`
-with `insert-component` and bind its `data` prop to the complete iterable. Do
-not bind the response wrapper or one indexed item. Collection renders its child
-structure once per entry. Bind descendants with expressions such as
-`collectionItem.name`; for object iteration, `collectionItemKey` contains the
-current key. See `components.get {"component":"ws:collection"}` for the
-complete workflow.
+Whenever an array or object should render repeated UI, call `insert-collection`
+with the complete iterable and one repeated-item JSX root. Do not pass the
+response wrapper or one indexed item. The command creates the Collection and
+its private item parameters atomically, then renders the item root once per
+entry. Bind descendants with expressions such as `collectionItem.name`; for
+object iteration, `collectionItemKey` contains the current key. Wrap multiple
+repeated siblings in one `ws.element` root.
 
 ## Verification
 
-After changing expressions, preview the affected page and verify representative
-data, empty/null data, and Collection item counts. Use `audit` for relevant
-structural findings, but do not treat a successful syntax parse as proof that
-runtime data has the expected shape.
+Inspect every returned expression warning. Correct warnings that indicate a
+misspelled or unavailable variable, then read the affected record and preview
+the page. A warning does not roll back the mutation, and a successful syntax
+parse does not prove runtime data has the expected shape. Verify representative
+data, empty/null data, and Collection item counts; use `audit` for relevant
+structural findings.

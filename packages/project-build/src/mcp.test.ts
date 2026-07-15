@@ -14,6 +14,7 @@ import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
 import { pageExpressionFieldHint } from "./runtime/pages";
 import { imageDescriptionsSetInput } from "./runtime/assets";
+import { BuilderRuntimeError } from "./runtime/errors";
 import {
   createProjectSessionMcpCore,
   createProjectSessionMcpServer,
@@ -48,6 +49,11 @@ type TestPublicMcpOperation = Pick<
 > &
   Partial<PublicMcpOperation>;
 
+const runtimeContractById = new Map<
+  string,
+  (typeof runtimeOperationContracts)[number]
+>(runtimeOperationContracts.map((contract) => [contract.id, contract]));
+
 const publicOperation = (
   operation: TestPublicMcpOperation
 ): PublicMcpOperation => {
@@ -62,6 +68,7 @@ const publicOperation = (
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
+    outputSchema: runtimeContractById.get(operation.id)?.outputSchema,
     ...operationFields,
   };
   return { ...merged, inputSchema };
@@ -72,6 +79,50 @@ const getTestInputSchema = (inputSchema: z.ZodTypeAny) =>
 
 const getSchemaProperties = (schema: unknown) =>
   (schema as { properties?: Record<string, unknown> }).properties ?? {};
+
+const getSuccessfulOutputDataSchema = (schema: unknown) => {
+  const variants = (schema as { oneOf?: unknown[] }).oneOf ?? [];
+  const success = variants.find(
+    (variant) =>
+      getSchemaProperties(variant).ok !== undefined &&
+      (getSchemaProperties(variant).ok as { const?: unknown }).const === true
+  );
+  return getSchemaProperties(success).data;
+};
+
+const getUnresolvedLocalSchemaRefs = (
+  schema: unknown,
+  root = schema,
+  path: readonly string[] = []
+): string[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  const object = schema as Record<string, unknown>;
+  const ref = object.$ref;
+  const unresolved =
+    typeof ref === "string" && ref.startsWith("#/")
+      ? ref
+          .slice(2)
+          .split("/")
+          .map((segment) => segment.replaceAll("~1", "/").replaceAll("~0", "~"))
+          .reduce<unknown>(
+            (value, segment) =>
+              value !== null && typeof value === "object"
+                ? (value as Record<string, unknown>)[segment]
+                : undefined,
+            root
+          ) === undefined
+        ? [`${path.join(".")}: ${ref}`]
+        : []
+      : [];
+  return [
+    ...unresolved,
+    ...Object.entries(object).flatMap(([key, value]) =>
+      getUnresolvedLocalSchemaRefs(value, root, [...path, key])
+    ),
+  ];
+};
 
 const optionalArrayFieldInputSchema = (field: string) =>
   getTestInputSchema(
@@ -216,6 +267,16 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     readNamespaces: ["pages", "instances"],
     writeNamespaces: ["instances", "props", "styles"],
     invalidatesNamespaces: ["instances", "props", "styles"],
+  }),
+  publicOperation({
+    command: "insert-collection",
+    id: "instances.insertCollection",
+    method: "mutation",
+    permit: "build",
+    description: "Insert a semantic Collection",
+    readNamespaces: ["pages", "instances", "dataSources"],
+    writeNamespaces: ["instances", "props", "dataSources"],
+    invalidatesNamespaces: ["instances", "props", "dataSources"],
   }),
   publicOperation({
     command: "list-texts",
@@ -563,6 +624,18 @@ describe("project session mcp adapter", () => {
     ]);
     expect(toolNames).toContain("insert-fragment");
     expect(toolNames).not.toContain("copy-page");
+    for (const operation of publicMcpOperations) {
+      if (
+        hiddenMcpOperationCommands.has(operation.command) ||
+        runtimeContractById.has(operation.id) === false
+      ) {
+        continue;
+      }
+      expect(
+        tools.find((tool) => tool.name === operation.command)?.outputSchema,
+        `Missing MCP output schema for ${operation.command}`
+      ).toBeDefined();
+    }
     const imageDescriptionsTool = tools.find(
       (tool) => tool.name === "set-image-descriptions"
     );
@@ -586,6 +659,25 @@ describe("project session mcp adapter", () => {
       includeScreenshot: true,
       includePreview: true,
     });
+    const completeTools = listProjectSessionMcpTools(publicMcpOperations, {
+      includeImport: true,
+      includeScreenshot: true,
+      includeScreenshotDiff: true,
+      includeInstallOcr: true,
+      includePreview: true,
+    });
+    for (const tool of completeTools) {
+      if (tool.outputSchema !== undefined) {
+        expect(
+          tool.outputSchema.type,
+          `MCP output schema must be object-typed for ${tool.name}`
+        ).toBe("object");
+        expect(
+          getUnresolvedLocalSchemaRefs(tool.outputSchema),
+          `MCP output schema has unresolved local references for ${tool.name}`
+        ).toEqual([]);
+      }
+    }
     expect(
       getSchemaProperties(
         visualTools.find((tool) => tool.name === "audit")?.inputSchema
@@ -594,6 +686,20 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
+    expect(
+      getSuccessfulOutputDataSchema(
+        tools.find((tool) => tool.name === "refresh")?.outputSchema
+      )
+    ).toMatchObject({
+      type: "object",
+      required: ["refreshedNamespaces"],
+      properties: {
+        refreshedNamespaces: {
+          type: "array",
+          items: { type: "string", enum: expect.any(Array) },
+        },
+      },
+    });
     const auditOutputSchema = tools.find(
       (tool) => tool.name === "audit"
     )?.outputSchema;
@@ -614,6 +720,9 @@ describe("project session mcp adapter", () => {
               data: expect.objectContaining({ oneOf: expect.any(Array) }),
               error: expect.objectContaining({
                 required: ["code", "message"],
+                properties: expect.objectContaining({
+                  issues: expect.objectContaining({ type: "array" }),
+                }),
               }),
             }),
           }),
@@ -632,6 +741,22 @@ describe("project session mcp adapter", () => {
         ),
       })
     ).not.toThrow();
+    for (const command of ["preview.start", "preview.status", "preview.stop"]) {
+      expect(
+        getSuccessfulOutputDataSchema(
+          visualTools.find((tool) => tool.name === command)?.outputSchema
+        ),
+        `Missing MCP output schema for ${command}`
+      ).toMatchObject({
+        type: "object",
+        required: ["url", "running"],
+        properties: {
+          url: { type: "string" },
+          pid: { type: "integer" },
+          running: { type: "boolean" },
+        },
+      });
+    }
     for (const command of hiddenMcpOperationCommands) {
       expect(toolNames).not.toContain(command);
     }
@@ -1367,6 +1492,7 @@ describe("project session mcp adapter", () => {
     );
     expect(accessibilityResult.structuredContent.data).toMatchObject({
       scopes: ["accessibility"],
+      renderedState: "complete",
       renderedCheckCount: 2,
       renderedIssueCount: 1,
       renderedChecks: [
@@ -1454,6 +1580,7 @@ describe("project session mcp adapter", () => {
       },
     });
     expect(result.structuredContent.data).toMatchObject({
+      renderedState: "failed",
       renderedCheckCount: 0,
       renderedIssueCount: 0,
       renderedFailureCount: 1,
@@ -1535,6 +1662,7 @@ describe("project session mcp adapter", () => {
     });
 
     expect(result.structuredContent.data).toMatchObject({
+      renderedState: "failed",
       renderedFailureCount: 1,
       renderedFailureSummaries: [
         {
@@ -1633,6 +1761,7 @@ describe("project session mcp adapter", () => {
     expect(result.structuredContent).toMatchObject({
       ok: true,
       data: {
+        renderedState: "confirmation-required",
         renderedPlan: {
           captureCount: 121,
           confirmationToken: expect.any(String),
@@ -1751,6 +1880,85 @@ describe("project session mcp adapter", () => {
       dryRun: false,
     });
     expect(call?.input).not.toHaveProperty("source");
+  });
+
+  test("converts semantic Collection item jsx before executing one atomic operation", async () => {
+    const executeOperation = createExecuteOperation(async () =>
+      createEnvelope({
+        operationId: "instances.insertCollection",
+        result: {
+          rootInstanceIds: ["collection"],
+          instanceIds: ["collection", "item"],
+          collectionInstanceId: "collection",
+          itemRootInstanceId: "item",
+          itemParameterId: "item-parameter",
+          itemKeyParameterId: "item-key-parameter",
+        },
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "insert-collection",
+      input: {
+        parentInstanceId: "body",
+        data: { type: "expression", value: "Posts.data.items" },
+        itemFragment:
+          '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.title`}</ws.element></ws.element>',
+      },
+    });
+
+    expect(vi.mocked(executeOperation).mock.calls[0]?.[0]).toEqual({
+      command: "insert-collection",
+      input: {
+        parentInstanceId: "body",
+        data: { type: "expression", value: "Posts.data.items" },
+        itemFragment: expect.objectContaining({
+          instances: expect.arrayContaining([
+            expect.objectContaining({
+              component: "ws:element",
+              tag: "article",
+            }),
+            expect.objectContaining({ component: "ws:element", tag: "h2" }),
+          ]),
+        }),
+        mode: undefined,
+        insertIndex: undefined,
+      },
+      dryRun: false,
+    });
+  });
+
+  test("rejects invalid semantic Collection data before execution", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "insert-collection",
+        input: {
+          parentInstanceId: "body",
+          data: { type: "json", value: "not-an-array" },
+          itemFragment: '<ws.element ws:tag="article" />',
+        },
+      })
+    ).rejects.toMatchObject({
+      issues: [
+        expect.objectContaining({
+          code: "invalid_union",
+          path: ["data", "value"],
+        }),
+      ],
+    });
+    expect(executeOperation).not.toHaveBeenCalled();
   });
 
   test("rejects structured fragment objects at the mcp boundary", async () => {
@@ -3449,12 +3657,12 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         workflow: expect.arrayContaining([
           expect.stringContaining("complete nested array/object"),
-          expect.stringContaining('Insert "ws:collection"'),
-          expect.stringContaining("current-item context"),
+          expect.stringContaining("insert-collection"),
+          expect.stringContaining("private parameters atomically"),
           expect.stringContaining("stable unique id or slug"),
         ]),
         tools: expect.arrayContaining([
-          expect.objectContaining({ name: "components.get" }),
+          expect.objectContaining({ name: "insert-collection" }),
         ]),
       })
     );
@@ -4177,9 +4385,9 @@ describe("project session mcp adapter", () => {
         component: "ws:collection",
         description: expect.stringContaining("array or object"),
         collectionUsage: expect.stringMatching(
-          /complete array or object.*renders its child structure once per entry/
+          /insert-collection.*private item\/itemKey parameters.*atomically/
         ),
-        usage: expect.stringContaining("internal item/itemKey parameter"),
+        usage: expect.stringContaining("internal Collection parameter"),
         props: expect.objectContaining({
           data: expect.objectContaining({ type: "json", required: true }),
           item: expect.objectContaining({ type: "string" }),
@@ -5415,6 +5623,43 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
+  test.each([
+    {
+      command: "insert-fragment",
+      input: {
+        parentInstanceId: "body",
+        fragment: '<ws.element ws:tag="div" />',
+      },
+    },
+    {
+      command: "insert-collection",
+      input: {
+        parentInstanceId: "body",
+        data: { type: "json", value: [] },
+        itemFragment: '<ws.element ws:tag="article" />',
+      },
+    },
+  ])(
+    "does not dispatch the $command adapter when the operation is unavailable",
+    async ({ command, input }) => {
+      const createProjectSession = createSessionFactory();
+      const executeOperation = createExecuteOperation();
+      const adapter = createProjectSessionMcpCore({
+        operations: publicMcpOperations.filter(
+          (operation) => operation.command !== command
+        ),
+        createProjectSession,
+        executeOperation,
+      });
+
+      await expect(adapter.callTool({ name: command, input })).rejects.toThrow(
+        `Unknown MCP tool "${command}".`
+      );
+      expect(createProjectSession).not.toHaveBeenCalled();
+      expect(executeOperation).not.toHaveBeenCalled();
+    }
+  );
+
   test("reads MCP resources from the long-lived project session", async () => {
     const session = createSession({
       initialize: vi.fn(async () =>
@@ -6225,16 +6470,18 @@ describe("project session mcp adapter", () => {
           structuredContent: {
             ok: false,
             error: {
-              message: expect.stringContaining('"email":"user@example.com"'),
+              message: "Tool input is invalid.",
               code: "INVALID_INPUT",
               issues: expect.arrayContaining([
                 expect.objectContaining({
                   path: ["email"],
                   message: expect.any(String),
+                  example: "user@example.com",
                 }),
                 expect.objectContaining({
                   path: ["description"],
                   message: expect.any(String),
+                  example: "stringxxxx",
                 }),
               ]),
             },
@@ -6242,13 +6489,49 @@ describe("project session mcp adapter", () => {
           },
         })
       );
-      expect(result.structuredContent).toEqual(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            message: expect.stringContaining('"description":"stringxxxx"'),
-          }),
-        })
-      );
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns equivalent structured runtime validation issues", async () => {
+    const issue = {
+      code: "invalid_expression",
+      path: ["values", "title"],
+      message: "Invalid Webstudio expression",
+      constraint: "valid_webstudio_expression",
+      example: 'pageTitle ?? "Pricing"',
+      detail: "Unexpected token at 1:4",
+    };
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(async () => {
+        throw new BuilderRuntimeError(
+          "INVALID_INPUT",
+          "Page input is invalid.",
+          {
+            issues: [issue],
+          }
+        );
+      }),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "list-pages",
+        arguments: {},
+      });
+      expect(result.structuredContent).toEqual({
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          message: "Page input is invalid.",
+          issues: [issue],
+        },
+        meta: {},
+      });
     } finally {
       await close();
     }

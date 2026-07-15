@@ -76,7 +76,7 @@ import {
   validateDataVariableJsonValue,
   validateDataVariableNumberValue,
   validateDataVariableStringArrayValue,
-} from "@webstudio-is/project-build/runtime/data";
+} from "@webstudio-is/project-build/runtime";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
   GraphqlResourceForm,

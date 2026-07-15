@@ -8,7 +8,7 @@ import {
   type StyleSourceToken,
   type StyleDecl,
 } from "@webstudio-is/sdk";
-import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime/styles";
+import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
 import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
   renameStyleSource,

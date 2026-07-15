@@ -18,7 +18,7 @@ import { $project } from "~/shared/sync/data-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { formatAssetName } from "@webstudio-is/project-build/runtime/assets";
+import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import {
   getFileName,
   getMimeType,

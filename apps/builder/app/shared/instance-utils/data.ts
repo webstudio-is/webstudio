@@ -8,9 +8,9 @@ import {
   type BuilderRuntimeOperationInput,
   type BuilderRuntimeOperationId,
   type BuilderRuntimeOperationResult,
-} from "@webstudio-is/project-build/runtime/registry";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
-import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
+} from "@webstudio-is/project-build/runtime";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
+import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
 import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
 import { createTransactionFromBuilderPatchPayload } from "../sync/builder-patch";
 import {

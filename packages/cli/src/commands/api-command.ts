@@ -14,7 +14,9 @@ import {
   getCliServerApiContract,
 } from "../project-session";
 import {
+  getCliErrorIssues,
   getCliErrorMessage,
+  getCliErrorSummary,
   getStableErrorCode,
   isMissingApiAccessError,
 } from "../error-codes";
@@ -67,6 +69,21 @@ export const apiCommandOptions = (yargs: CommonYargsArgv) =>
       type: "boolean",
       describe:
         "Refresh required local project namespaces from the remote project before running a local-capable command.",
+    });
+
+const outputDetailCommandOptions = (yargs: CommonYargsArgv) =>
+  yargs
+    .option("cursor", {
+      type: "string",
+      describe: "Pagination cursor returned by the previous call",
+    })
+    .option("limit", {
+      type: "number",
+      describe: "Maximum records to return",
+    })
+    .option("verbose", {
+      type: "boolean",
+      describe: "Expand compact records with complete values and diagnostics",
     });
 
 const requiredInputOption = (yargs: CommonYargsArgv, describe: string) =>
@@ -555,7 +572,7 @@ export const deleteFolderCommandOptions = (yargs: CommonYargsArgv) =>
   });
 
 export const instanceListCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("page", {
       type: "string",
       describe: "Limit results to a page id",
@@ -633,7 +650,7 @@ export const insertComponentCommandOptions = (yargs: CommonYargsArgv) =>
 export const moveInstanceCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
     apiCommandOptions(yargs),
-    "Required JSON file containing an array of moves with instanceId, parentInstanceId, and optional insertIndex"
+    'Required JSON file containing an array of moves with instanceId, parentInstanceId, and either optional insertIndex or position: "end"'
   );
 
 export const cloneInstanceCommandOptions = (yargs: CommonYargsArgv) =>
@@ -732,7 +749,7 @@ export const textUpdateCommandOptions = (yargs: CommonYargsArgv) =>
     });
 
 export const stylesCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("instance", {
       type: "string",
       describe: "Limit declarations to one instance id",
@@ -787,14 +804,10 @@ export const replaceStylesCommandOptions = (yargs: CommonYargsArgv) =>
   );
 
 export const designTokensCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("filter", {
       type: "string",
       describe: "Only return design tokens whose name contains this text",
-    })
-    .option("include-styles", {
-      type: "boolean",
-      describe: "Include full inline style declarations for each design token",
     })
     .option("with-usage", {
       type: "boolean",
@@ -1132,7 +1145,7 @@ export const verifyDomainCommandOptions = (yargs: CommonYargsArgv) =>
   });
 
 export const assetsCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("type", {
       choices: ["image", "font"] as const,
       describe: "Only return assets of this type",
@@ -1144,14 +1157,6 @@ export const assetsCommandOptions = (yargs: CommonYargsArgv) =>
     .option("with-usage", {
       type: "boolean",
       describe: "Include how many build references point to each asset",
-    })
-    .option("cursor", {
-      type: "string",
-      describe: "Pagination cursor returned as nextCursor by the previous call",
-    })
-    .option("limit", {
-      type: "number",
-      describe: "Maximum number of assets to return",
     });
 
 export const auditCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1354,7 +1359,6 @@ export type ApiCommandOptions = {
   position?: "before-local" | "after-local" | "before" | "after";
   filter?: string;
   withUsage?: boolean;
-  includeStyles?: boolean;
   includeSystem?: boolean;
   scopeInstance?: string;
   type?: "image" | "font" | "file";
@@ -1830,6 +1834,7 @@ export const printAuditReport = (value: unknown) => {
       pagePaths?: string[];
     }>;
     renderedFailureCount?: number;
+    renderedState?: "complete" | "partial" | "confirmation-required" | "failed";
     renderedPlan?: {
       captureCount?: number;
       confirmationToken?: string;
@@ -1869,7 +1874,7 @@ export const printAuditReport = (value: unknown) => {
   }
   if (result.renderedCheckCount !== undefined) {
     console.info(
-      `Rendered: ${result.renderedCheckCount} checks, ${result.renderedIssueCount ?? 0} issues, ${result.renderedFailureCount ?? 0} failures.`
+      `Rendered (${result.renderedState ?? "complete"}): ${result.renderedCheckCount} checks, ${result.renderedIssueCount ?? 0} issues, ${result.renderedFailureCount ?? 0} failures.`
     );
     for (const summary of result.renderedIssueSummaries ?? []) {
       const pages = summary.pagePaths?.join(", ");
@@ -2349,6 +2354,9 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       component: options.component,
       tag: options.tag,
       labelContains: options.label,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-instances",
@@ -2497,6 +2505,9 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       property: options.property,
       propertyFilter: options.propertyFilter,
       includeTokens: options.includeTokens,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "get-styles",
@@ -2546,8 +2557,10 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       filter: options.filter,
       withUsage: options.withUsage,
-      includeStyles: options.includeStyles,
       sort: designTokenSortOption(options.sort),
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-design-tokens",
@@ -2887,6 +2900,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       withUsage: options.withUsage,
       cursor: options.cursor,
       limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-assets",
@@ -3020,14 +3034,15 @@ export const apiCommand = async (
       });
     }
   } catch (error) {
-    const message = getCliErrorMessage(error, options.command);
+    const issues = getCliErrorIssues(error);
     if (options.json === true) {
       const code = getErrorCode(error);
       printJson({
         ok: false,
         error: {
           code,
-          message,
+          message: getCliErrorSummary(error, options.command),
+          ...(issues === undefined ? {} : { issues }),
           retry: getRetryHint(code),
         },
         meta: {
@@ -3037,7 +3052,7 @@ export const apiCommand = async (
         },
       });
     } else {
-      console.error(message);
+      console.error(getCliErrorMessage(error, options.command));
     }
     throw new HandledCliError();
   }

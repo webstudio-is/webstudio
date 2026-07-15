@@ -9,8 +9,8 @@ import { compactBuilderPatchPayload } from "../contracts/patch";
 import type { BuilderState } from "./builder-state";
 import type { BuilderNamespace } from "../contracts/namespaces";
 
-// Keep initialization attached to the patch implementation. A bare side-effect
-// import can be removed because project-build declares sideEffects: false.
+// Initialize when this module is imported directly, independently of bundler
+// side-effect handling.
 enableImmerPatchPlugins();
 
 export class MissingBuilderStateNamespaceError extends Error {

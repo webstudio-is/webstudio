@@ -4,6 +4,7 @@ import {
   getStableErrorCode,
   isMissingApiAccessError,
 } from "./error-codes";
+import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime";
 
 describe("getStableErrorCode", () => {
   test("reads direct stable error codes", () => {
@@ -22,6 +23,28 @@ describe("getStableErrorCode", () => {
 });
 
 describe("getCliErrorMessage", () => {
+  test("formats actionable semantic issues for human output", () => {
+    const error = new BuilderRuntimeError(
+      "INVALID_INPUT",
+      "Operation input is invalid.",
+      {
+        issues: [
+          {
+            code: "invalid_type",
+            path: ["values", "title"],
+            message: "Expected a string",
+            constraint: "type:string",
+            example: "Pricing",
+          },
+        ],
+      }
+    );
+
+    expect(getCliErrorMessage(error)).toBe(
+      'Operation input is invalid.\nvalues.title: Expected a string (type:string). Example: "Pricing".'
+    );
+  });
+
   test("turns API procedure skew into actionable CLI update guidance", () => {
     const error = {
       data: {

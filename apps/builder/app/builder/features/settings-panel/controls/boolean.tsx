@@ -4,7 +4,7 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime/props";
+import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import {
   type ControlProps,
   $selectedInstanceScope,

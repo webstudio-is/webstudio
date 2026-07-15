@@ -32,7 +32,7 @@ import {
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { findVariableUsagesByInstance } from "@webstudio-is/project-build/runtime/data";
+import { findVariableUsagesByInstance } from "@webstudio-is/project-build/runtime";
 
 export type DataVariableOption = BaseOption & {
   type: "dataVariable";

@@ -1,9 +1,4 @@
-import type {
-  Breakpoint,
-  CompilerSettings,
-  PageRedirect,
-  ProjectMeta,
-} from "@webstudio-is/sdk";
+import type { Breakpoint, PageRedirect } from "@webstudio-is/sdk";
 import {
   breakpoint,
   compilerSettings,
@@ -13,15 +8,22 @@ import {
   redirectSourcePath,
 } from "@webstudio-is/sdk";
 import { z } from "zod";
-import { parseWsAuth, type WsAuthRoute } from "@webstudio-is/wsauth";
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
 } from "../contracts/patch";
+import {
+  validateContactEmail,
+  validateProjectAuth,
+} from "../contracts/project-settings";
 import type { BuilderState } from "../state/builder-state";
 import { hasReachedBreakpointLimit, isBaseBreakpoint } from "./breakpoints";
 import type { BuilderRuntimeContext } from "./context";
-import { throwBuilderRuntimeError } from "./errors";
+import {
+  getZodValidationIssueOptions,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+} from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 import { getRequiredPages } from "./pages";
@@ -36,6 +38,14 @@ import {
   normalizeRedirectSource,
   stripRedirectSourceFragment,
 } from "./redirect-source";
+
+export {
+  parseProjectAuthRoutes,
+  validateContactEmail,
+  validateProjectAuth,
+  validateProjectAuthRoute,
+  validateProjectAuthRouteSyntax,
+} from "../contracts/project-settings";
 
 const getRequiredBreakpoints = (state: Pick<BuilderState, "breakpoints">) => {
   if (state.breakpoints === undefined) {
@@ -59,152 +69,81 @@ const getRequiredProjectSettings = (
   return state.projectSettings;
 };
 
-type Settable<T> = {
-  [Property in keyof T]?: T[Property] | null;
-};
+const createSettableObjectInput = <Shape extends z.ZodRawShape>(
+  schema: z.ZodObject<Shape>
+) =>
+  z
+    .object(
+      Object.fromEntries(
+        Object.entries(schema.shape).map(([name, value]) => [
+          name,
+          (value as z.ZodTypeAny).nullable().optional(),
+        ])
+      ) as unknown as {
+        [Name in keyof Shape]: z.ZodOptional<z.ZodNullable<Shape[Name]>>;
+      }
+    )
+    .strict();
 
-export const projectSettingsUpdateInput = z.object({
-  meta: z.record(z.string(), z.unknown()).optional(),
-  compiler: z.record(z.string(), z.unknown()).optional(),
-});
+const projectMetaUpdateInput = createSettableObjectInput(projectMeta);
+const compilerSettingsUpdateInput = createSettableObjectInput(compilerSettings);
+
+export const projectSettingsUpdateInput = z
+  .object({
+    meta: projectMetaUpdateInput.optional(),
+    compiler: compilerSettingsUpdateInput.optional(),
+  })
+  .strict()
+  .refine(
+    ({ meta, compiler }) =>
+      (meta !== undefined && Object.keys(meta).length > 0) ||
+      (compiler !== undefined && Object.keys(compiler).length > 0),
+    getZodValidationIssueOptions({
+      code: "empty_project_settings_update",
+      path: [],
+      message: "Provide at least one project setting to update.",
+      constraint: "at_least_one_of:meta,compiler",
+      example: { meta: { siteName: "Acme" } },
+    })
+  )
+  .describe(
+    "Update at least one supported project meta or compiler setting. Null removes a setting."
+  );
 
 export const marketplaceProductUpdateInput = marketplaceProduct;
 
-const projectMetaKeys: ReadonlySet<string> = new Set(
-  projectMeta.keyof().options
-);
-const compilerSettingKeys: ReadonlySet<string> = new Set(
-  compilerSettings.keyof().options
-);
-
-const emailAddress = z.string().email();
-
-const getContactEmails = (contactEmail: string) => {
-  const trimmedContactEmail = contactEmail.trim();
-  if (trimmedContactEmail.length === 0) {
-    return [];
-  }
-  return trimmedContactEmail.split(/\s*,\s*/);
-};
-
-export const validateContactEmail = (
-  contactEmail: string,
-  maxContactEmailsPerProject?: number
+const validateProjectMetaUpdate = (
+  values: z.infer<typeof projectMetaUpdateInput>
 ) => {
-  const emails = getContactEmails(contactEmail);
-  if (emails.length === 0) {
-    return;
-  }
-  if (
-    maxContactEmailsPerProject !== undefined &&
-    emails.length > maxContactEmailsPerProject
-  ) {
-    if (maxContactEmailsPerProject === 0) {
-      return `Upgrade to PRO to customize the contact email.`;
-    }
-    return `Only ${maxContactEmailsPerProject} emails are allowed.`;
-  }
-  if (
-    emails.every((email) => emailAddress.safeParse(email).success) === false
-  ) {
-    return "Contact email is invalid.";
-  }
-};
-
-export const validateProjectAuth = (auth: string) => {
-  const result = parseWsAuth(auth);
-  if (result.errors.length === 0) {
-    return;
-  }
-  return result.errors
-    .map((error) => `${error.path}: ${error.message}`)
-    .join("\n");
-};
-
-export const parseProjectAuthRoutes = (auth: string | undefined) => {
-  return parseWsAuth(auth ?? "");
-};
-
-export const validateProjectAuthRouteSyntax = (route: string) => {
-  const result = parseWsAuth(
-    JSON.stringify({
-      version: 1,
-      routes: {
-        [route]: {
-          method: "basic",
-          login: "login",
-          password: "password",
-        },
-      },
-    })
-  );
-  return result.errors.find((error) =>
-    error.path.startsWith(`routes.${JSON.stringify(route)}`)
-  )?.message;
-};
-
-export const validateProjectAuthRoute = (
-  route: string,
-  authRoutes: readonly WsAuthRoute[]
-) => {
-  const errors: string[] = [];
-  if (route === "") {
-    errors.push("Route is required");
-    return errors;
-  }
-  const routeError = validateProjectAuthRouteSyntax(route);
-  if (routeError !== undefined) {
-    errors.push(routeError);
-  }
-  if (authRoutes.some((authRoute) => authRoute.route === route)) {
-    errors.push("This route already requires authentication");
-  }
-  return errors;
-};
-
-const omitNullValues = (input: Record<string, unknown>) =>
-  Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== null)
-  );
-
-const parseProjectMeta = (input: Record<string, unknown>) => {
-  const result = projectMeta.partial().safeParse(omitNullValues(input));
-  if (result.success === false) {
-    return throwBuilderRuntimeError("BAD_REQUEST", result.error.message);
-  }
-  if (typeof result.data.contactEmail === "string") {
-    const contactEmailError = validateContactEmail(result.data.contactEmail);
+  if (typeof values.contactEmail === "string") {
+    const contactEmailError = validateContactEmail(values.contactEmail);
     if (contactEmailError !== undefined) {
-      return throwBuilderRuntimeError("BAD_REQUEST", contactEmailError);
+      return throwBuilderValidationError(contactEmailError, [
+        {
+          code: "invalid_contact_email",
+          path: ["meta", "contactEmail"],
+          message: contactEmailError,
+          constraint: "comma_separated_email_addresses",
+          example: "team@example.com",
+        },
+      ]);
     }
   }
-  if (typeof result.data.auth === "string") {
-    const authError = validateProjectAuth(result.data.auth);
+  if (typeof values.auth === "string") {
+    const authError = validateProjectAuth(values.auth);
     if (authError !== undefined) {
-      return throwBuilderRuntimeError("BAD_REQUEST", authError);
+      return throwBuilderValidationError(authError, [
+        {
+          code: "invalid_project_auth",
+          path: ["meta", "auth"],
+          message: "Invalid project authentication configuration",
+          constraint: "valid_webstudio_auth_json",
+          example: '{"version":1,"routes":{}}',
+          detail: authError,
+        },
+      ]);
     }
   }
-  const values: Settable<ProjectMeta> = { ...result.data };
-  for (const [name, value] of Object.entries(input)) {
-    if (value === null && projectMetaKeys.has(name)) {
-      values[name as keyof ProjectMeta] = null;
-    }
-  }
-  return values;
-};
-
-const parseCompilerSettings = (input: Record<string, unknown>) => {
-  const result = compilerSettings.partial().safeParse(omitNullValues(input));
-  if (result.success === false) {
-    return throwBuilderRuntimeError("BAD_REQUEST", result.error.message);
-  }
-  const values: Settable<CompilerSettings> = { ...result.data };
-  for (const [name, value] of Object.entries(input)) {
-    if (value === null && compilerSettingKeys.has(name)) {
-      values[name as keyof CompilerSettings] = null;
-    }
-  }
-  return values;
 };
 
 export const getProjectSettings = (
@@ -231,7 +170,9 @@ const pushObjectFieldPatches = ({
   values: Record<string, unknown>;
 }) => {
   if (current === undefined) {
-    const next = omitNullValues(values);
+    const next = Object.fromEntries(
+      Object.entries(values).filter(([, value]) => value !== null)
+    );
     if (Object.keys(next).length > 0) {
       patches.push({ op: "add", path: basePath, value: next });
     }
@@ -243,6 +184,9 @@ const pushObjectFieldPatches = ({
       if (exists) {
         patches.push({ op: "remove", path: [...basePath, name] });
       }
+      continue;
+    }
+    if (exists && Object.is(current[name], value)) {
       continue;
     }
     patches.push({
@@ -260,28 +204,27 @@ export const updateProjectSettings = (
   const settings = getRequiredProjectSettings(state);
   const patches: BuilderPatchChange["patches"] = [];
   if (input.meta !== undefined) {
-    const values = parseProjectMeta(input.meta);
+    validateProjectMetaUpdate(input.meta);
     pushObjectFieldPatches({
       patches,
       basePath: ["meta"],
       current: settings.meta,
-      values,
+      values: input.meta,
     });
   }
   if (input.compiler !== undefined) {
-    const values = parseCompilerSettings(input.compiler);
     pushObjectFieldPatches({
       patches,
       basePath: ["compiler"],
       current: settings.compiler,
-      values,
+      values: input.compiler,
     });
   }
   return createRuntimeMutation({
     payload: compactBuilderPatchPayload([
       { namespace: "projectSettings", patches },
     ]),
-    result: { updated: true },
+    result: { updated: patches.length > 0 },
     invalidatesNamespaces: patches.length === 0 ? [] : ["projectSettings"],
   });
 };

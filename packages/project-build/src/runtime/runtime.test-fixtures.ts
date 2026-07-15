@@ -1,6 +1,7 @@
 import { expect } from "vitest";
 import type { BuilderRuntimeContext } from "./context";
 import type { BuilderState } from "../state/builder-state";
+import type { SemanticValidationIssue } from "./errors";
 import { executeBuilderRuntimeOperation } from "./registry";
 
 export const context: BuilderRuntimeContext = {
@@ -9,7 +10,8 @@ export const context: BuilderRuntimeContext = {
 
 export const expectRuntimeValidationError = (
   operationId: string,
-  input: unknown
+  input: unknown,
+  expectedIssue?: Partial<SemanticValidationIssue>
 ) => {
   try {
     executeBuilderRuntimeOperation({
@@ -19,7 +21,18 @@ export const expectRuntimeValidationError = (
       context,
     });
   } catch (error) {
-    expect(error).toMatchObject({ name: "ZodError" });
+    expect(error).toMatchObject({
+      name: "BuilderRuntimeError",
+      code: "INVALID_INPUT",
+      issues: expect.any(Array),
+    });
+    if (expectedIssue !== undefined) {
+      expect(
+        (error as { issues?: readonly SemanticValidationIssue[] }).issues
+      ).toEqual(
+        expect.arrayContaining([expect.objectContaining(expectedIssue)])
+      );
+    }
     return;
   }
   throw new Error(`Expected ${operationId} to reject invalid input`);

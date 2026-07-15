@@ -18,14 +18,14 @@ import {
   showAttribute,
   standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
-import { showAttributeMeta } from "@webstudio-is/project-build/runtime/props";
+import { showAttributeMeta } from "@webstudio-is/project-build/runtime";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
-import { getContentModePropNamesByTag } from "@webstudio-is/project-build/runtime/content-mode-permissions";
+import { getContentModePropNamesByTag } from "@webstudio-is/project-build/runtime";
 import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {

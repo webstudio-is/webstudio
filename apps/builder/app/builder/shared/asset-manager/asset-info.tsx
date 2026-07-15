@@ -55,7 +55,7 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $styles } from "~/shared/sync/data-stores";
 import { selectInstance } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
-import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime/lookup";
+import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime";
 import { $selectedPageId } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { deleteAssets, replaceAsset } from "~/builder/shared/assets";
@@ -73,14 +73,14 @@ import {
 import {
   formatAssetName,
   parseAssetName,
-} from "@webstudio-is/project-build/runtime/assets";
+} from "@webstudio-is/project-build/runtime";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import {
   calculateUsagesByAssetId,
   type AssetUsage,
-} from "@webstudio-is/project-build/runtime/assets";
+} from "@webstudio-is/project-build/runtime";
 
 const $usagesByAssetId = computed(
   [$pages, $projectSettings, $props, $styles, $assets],

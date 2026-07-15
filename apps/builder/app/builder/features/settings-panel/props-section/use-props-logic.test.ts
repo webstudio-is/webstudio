@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { Prop, PropMeta } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
-import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime/content-mode-permissions";
+import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
 const { isPropVisibleInContentMode, getAndDelete } = __testing__;
 

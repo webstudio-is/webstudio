@@ -1,5 +1,10 @@
 import type { Frame, Page } from "playwright";
-import { openProjectBuilder } from "../flows/builder";
+import {
+  getCanvasInstance,
+  getCanvasInstanceSelector,
+  openProjectBuilder,
+} from "../flows/builder";
+import { openNavigatorPanel } from "../flows/navigator";
 import { waitForSyncStatus } from "../flows/sync-status";
 import {
   createSlotKeyboardProject,
@@ -18,16 +23,11 @@ let navigatorTopChildFixture: SeededSlotKeyboardProject;
 let navigatorBottomChildFixture: SeededSlotKeyboardProject;
 let multiSelectFixture: SeededSlotKeyboardProject;
 
-const selector = (instanceSelector: string[]) =>
-  `[data-ws-selector="${instanceSelector.join(",")}"]`;
-
-const canvasInstance = ({
-  canvas,
-  instanceSelector,
-}: {
-  canvas: Frame;
-  instanceSelector: string[];
-}) => canvas.locator(selector(instanceSelector)).first();
+const slotASelector = getCanvasInstanceSelector([
+  "slot-keyboard-slot-a",
+  "slot-keyboard-wrapper",
+  "slot-keyboard-body",
+]);
 
 const expectCanvasInstanceVisible = async ({
   canvas,
@@ -36,20 +36,9 @@ const expectCanvasInstanceVisible = async ({
   canvas: Frame;
   instanceSelector: string[];
 }) => {
-  await canvasInstance({ canvas, instanceSelector }).waitFor({
+  await getCanvasInstance({ canvas, instanceSelector }).waitFor({
     state: "visible",
     timeout: 30_000,
-  });
-};
-
-const openNavigatorPanel = async ({ page }: { page: Page }) => {
-  const tab = page.getByRole("tab", { name: "Navigator" });
-  if ((await tab.getAttribute("aria-selected")) !== "true") {
-    await tab.click();
-  }
-  await page.getByText("Navigator", { exact: true }).first().waitFor({
-    state: "visible",
-    timeout: 10_000,
   });
 };
 
@@ -106,11 +95,11 @@ const expectCanvasInstancePrecedes = async ({
   beforeSelector: string[];
   afterSelector: string[];
 }) => {
-  const beforeLocator = canvasInstance({
+  const beforeLocator = getCanvasInstance({
     canvas,
     instanceSelector: beforeSelector,
   });
-  const afterLocator = canvasInstance({
+  const afterLocator = getCanvasInstance({
     canvas,
     instanceSelector: afterSelector,
   });
@@ -125,7 +114,7 @@ const expectCanvasInstancePrecedes = async ({
       beforeElement.compareDocumentPosition(afterElement) &
       Node.DOCUMENT_POSITION_FOLLOWING
     );
-  }, selector(afterSelector));
+  }, getCanvasInstanceSelector(afterSelector));
   if (precedes === false) {
     throw new Error(
       `Expected ${beforeSelector.join(",")} to precede ${afterSelector.join(",")}`
@@ -200,7 +189,10 @@ test("Keyboard shortcut moves a shared slot child into the previous sibling", as
       canvas,
       instanceSelector: headingSelector,
     });
-    await canvasInstance({ canvas, instanceSelector: headingSelector }).click();
+    await getCanvasInstance({
+      canvas,
+      instanceSelector: headingSelector,
+    }).click();
 
     await page.keyboard.press("Control+ArrowRight");
     await waitForSyncStatus({ page, status: "idle" });
@@ -254,7 +246,7 @@ test("Keyboard shortcut keeps Navigator arrows working after outdenting a row", 
       "slot-keyboard-wrapper",
       "slot-keyboard-body",
     ];
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).click();
@@ -308,7 +300,7 @@ test("Shift+ArrowDown in Navigator selects exactly one additional row", async ()
       "slot-keyboard-wrapper",
       "slot-keyboard-body",
     ];
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotADivSelector,
     }).click();
@@ -358,7 +350,7 @@ test("Control/Command+A after canvas selection selects sibling rows", async () =
       "slot-keyboard-wrapper",
       "slot-keyboard-body",
     ];
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).click();
@@ -408,7 +400,7 @@ test("Keyboard shortcut moves a direct shared slot child out of all slot occurre
       canvas,
       instanceSelector: slotAHeadingSelector,
     });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).click();
@@ -416,11 +408,11 @@ test("Keyboard shortcut moves a direct shared slot child out of all slot occurre
     await page.keyboard.press("Control+ArrowLeft");
     await waitForSyncStatus({ page, status: "idle" });
 
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-heading",
@@ -470,7 +462,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
       canvas,
       instanceSelector: slotADivSelector,
     });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotADivSelector,
     }).click();
@@ -478,11 +470,11 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
     await page.keyboard.press("Control+ArrowUp");
     await waitForSyncStatus({ page, status: "idle" });
 
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotADivSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-div",
@@ -504,11 +496,9 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
     });
 
     const movedDivPrecedesSlotA = await canvas
-      .locator(selector(movedDivSelector))
-      .evaluate((movedElement) => {
-        const slotA = document.querySelector(
-          '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
-        );
+      .locator(getCanvasInstanceSelector(movedDivSelector))
+      .evaluate((movedElement, selector) => {
+        const slotA = document.querySelector(selector);
         if (slotA === null) {
           return false;
         }
@@ -516,7 +506,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
           movedElement.compareDocumentPosition(slotA) &
           Node.DOCUMENT_POSITION_FOLLOWING
         );
-      });
+      }, slotASelector);
     if (movedDivPrecedesSlotA === false) {
       throw new Error("Expected moved div to be positioned before Slot A");
     }
@@ -551,7 +541,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
       canvas,
       instanceSelector: slotAHeadingSelector,
     });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).click();
@@ -559,11 +549,11 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
     await page.keyboard.press("Control+ArrowDown");
     await waitForSyncStatus({ page, status: "idle" });
 
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-heading",
@@ -585,9 +575,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
     });
 
     const slotAPrecedesMovedHeading = await canvas
-      .locator(
-        '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
-      )
+      .locator(slotASelector)
       .evaluate((slotA, movedSelector) => {
         const movedElement = document.querySelector(movedSelector);
         if (movedElement === null) {
@@ -597,7 +585,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
           slotA.compareDocumentPosition(movedElement) &
           Node.DOCUMENT_POSITION_FOLLOWING
         );
-      }, selector(movedHeadingSelector));
+      }, getCanvasInstanceSelector(movedHeadingSelector));
     if (slotAPrecedesMovedHeading === false) {
       throw new Error("Expected moved heading to be positioned after Slot A");
     }
@@ -628,7 +616,7 @@ test("Keyboard shortcut reorders a shared slot child from navigator focus", asyn
       "slot-keyboard-wrapper",
       "slot-keyboard-body",
     ];
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).click();
@@ -696,7 +684,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
       "slot-keyboard-wrapper",
       "slot-keyboard-body",
     ];
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotADivSelector,
     }).click();
@@ -706,11 +694,11 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
     await page.keyboard.press("Control+ArrowUp");
     await waitForSyncStatus({ page, status: "idle" });
 
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotADivSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-div",
@@ -732,11 +720,9 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
     });
 
     const movedDivPrecedesSlotA = await canvas
-      .locator(selector(movedDivSelector))
-      .evaluate((movedElement) => {
-        const slotA = document.querySelector(
-          '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
-        );
+      .locator(getCanvasInstanceSelector(movedDivSelector))
+      .evaluate((movedElement, selector) => {
+        const slotA = document.querySelector(selector);
         if (slotA === null) {
           return false;
         }
@@ -744,7 +730,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
           movedElement.compareDocumentPosition(slotA) &
           Node.DOCUMENT_POSITION_FOLLOWING
         );
-      });
+      }, slotASelector);
     if (movedDivPrecedesSlotA === false) {
       throw new Error("Expected moved div to be positioned before Slot A");
     }
@@ -775,7 +761,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
       "slot-keyboard-wrapper",
       "slot-keyboard-body",
     ];
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).click();
@@ -785,11 +771,11 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
     await page.keyboard.press("Control+ArrowDown");
     await waitForSyncStatus({ page, status: "idle" });
 
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await canvasInstance({
+    await getCanvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-heading",
@@ -811,9 +797,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
     });
 
     const slotAPrecedesMovedHeading = await canvas
-      .locator(
-        '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
-      )
+      .locator(slotASelector)
       .evaluate((slotA, movedSelector) => {
         const movedElement = document.querySelector(movedSelector);
         if (movedElement === null) {
@@ -823,7 +807,7 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
           slotA.compareDocumentPosition(movedElement) &
           Node.DOCUMENT_POSITION_FOLLOWING
         );
-      }, selector(movedHeadingSelector));
+      }, getCanvasInstanceSelector(movedHeadingSelector));
     if (slotAPrecedesMovedHeading === false) {
       throw new Error("Expected moved heading to be positioned after Slot A");
     }

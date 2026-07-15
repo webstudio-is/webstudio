@@ -295,8 +295,18 @@ describe("project session api adapter", () => {
         diagnostics: [
           {
             level: "error",
-            code: "PROJECT_SESSION_BUSY",
-            message: "Project session snapshot changed on disk.",
+            code: "INVALID_INPUT",
+            message: "Page input is invalid.",
+            issues: [
+              {
+                code: "invalid_expression",
+                path: ["values", "title"],
+                message: "Invalid Webstudio expression",
+                constraint: "valid_webstudio_expression",
+                example: 'pageTitle ?? "Pricing"',
+                detail: "Unexpected token",
+              },
+            ],
           },
         ],
       })),
@@ -319,8 +329,14 @@ describe("project session api adapter", () => {
         ) as unknown as CreateProjectSession,
       })
     ).rejects.toMatchObject({
-      code: "PROJECT_SESSION_BUSY",
-      message: "Project session snapshot changed on disk.",
+      code: "INVALID_INPUT",
+      message: "Page input is invalid.",
+      issues: [
+        expect.objectContaining({
+          path: ["values", "title"],
+          constraint: "valid_webstudio_expression",
+        }),
+      ],
     });
   });
 });

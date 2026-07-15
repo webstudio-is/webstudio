@@ -2,6 +2,10 @@ import {
   getApiCompatibilityMessage,
   getApiErrorCode,
 } from "@webstudio-is/http-client";
+import {
+  formatValidationIssues,
+  getValidationIssues,
+} from "@webstudio-is/project-build/runtime";
 
 const missingProjectOwnerForTokenPattern =
   /^Project owner can't be found for token\b/;
@@ -34,7 +38,7 @@ export const isMissingApiAccessError = (error: unknown) => {
   return missingProjectOwnerForTokenPattern.test(message);
 };
 
-export const getCliErrorMessage = (error: unknown, command = "mcp") => {
+export const getCliErrorSummary = (error: unknown, command = "mcp") => {
   const compatibilityMessage = getApiCompatibilityMessage(error, {
     updateCommand: "npm install -g webstudio@latest",
     runLatestCommand: `npx webstudio@latest ${command}`,
@@ -48,3 +52,13 @@ export const getCliErrorMessage = (error: unknown, command = "mcp") => {
   }
   return message;
 };
+
+export const getCliErrorMessage = (error: unknown, command = "mcp") => {
+  const message = getCliErrorSummary(error, command);
+  const issues = getValidationIssues(error);
+  return issues === undefined || issues.length === 0
+    ? message
+    : `${message}\n${formatValidationIssues(issues)}`;
+};
+
+export const getCliErrorIssues = getValidationIssues;

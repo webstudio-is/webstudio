@@ -14,6 +14,7 @@ import {
   getBuilderRuntimeOperation,
 } from "./registry";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
+import { getRuntimeOutputSchema, runtimeOutputSchemas } from "./output-schemas";
 import { getPage, listFolders, listPages } from "./pages";
 import {
   getStyleDeclarations,
@@ -22,6 +23,7 @@ import {
 } from "./styles";
 import {
   inspectInstance,
+  listInstances,
   listTextInstances,
   updateTextInstance,
 } from "./instances";
@@ -29,6 +31,7 @@ import { listDataVariables, listResources } from "./data";
 import { listFonts } from "./fonts";
 import { bindProps, deleteProps, updateProps } from "./props";
 import type { BuilderState } from "../state/builder-state";
+import type { SemanticValidationIssue } from "./errors";
 import {
   context,
   expectRuntimeValidationError,
@@ -64,6 +67,83 @@ const mutationOperationIds = runtimeOperationContracts
   .filter((contract) => contract.kind === "mutation")
   .map((contract) => contract.id);
 
+const getMutationResult = (operation: unknown): unknown => {
+  expect(operation).toHaveProperty("result");
+  return (operation as { result: unknown }).result;
+};
+
+test.each([
+  {
+    family: "page",
+    operationId: "pages.create",
+    input: { name: false, path: "/" },
+    path: ["name"],
+    constraint: "type:string",
+  },
+  {
+    family: "instance",
+    operationId: "instances.move",
+    input: {
+      moves: [
+        { instanceId: "item", parentInstanceId: "parent", insertIndex: -1 },
+      ],
+    },
+    path: ["moves", "0", "insertIndex"],
+    constraint: "number:minimum:0",
+  },
+  {
+    family: "prop",
+    operationId: "instances.updateProps",
+    input: { updates: "not-an-array" },
+    path: ["updates"],
+    constraint: "type:array",
+  },
+  {
+    family: "style",
+    operationId: "styles.updateDeclarations",
+    input: { updates: [{ instanceId: "item", property: false, value: "red" }] },
+    path: ["updates", "0", "property"],
+    constraint: "type:string",
+  },
+  {
+    family: "resource",
+    operationId: "resources.create",
+    input: {
+      resource: { name: "Posts", method: "get", url: "/posts", headers: {} },
+    },
+    path: ["resource", "headers"],
+    constraint: "type:array",
+  },
+  {
+    family: "expression",
+    operationId: "instances.updateProps",
+    input: {
+      updates: [
+        {
+          instanceId: "item",
+          name: "title",
+          type: "expression",
+          value: "invalid {",
+        },
+      ],
+    },
+    path: ["updates", "0", "value"],
+    constraint: "valid_webstudio_expression",
+  },
+  {
+    family: "project settings",
+    operationId: "projectSettings.update",
+    input: { meta: { siteName: false } },
+    path: ["meta", "siteName"],
+    constraint: "type:string",
+  },
+])(
+  "returns an actionable $family input issue",
+  ({ operationId, input, path, constraint }) => {
+    expectRuntimeValidationError(operationId, input, { path, constraint });
+  }
+);
+
 test("keeps generated runtime contracts in sync with the registry", () => {
   expect(runtimeOperationContracts).toEqual(
     builderRuntimeOperations.map(
@@ -88,9 +168,7 @@ test("keeps generated runtime contracts in sync with the registry", () => {
         permit,
         kind,
         inputSchema: inputJsonSchema,
-        ...(outputJsonSchema === undefined
-          ? {}
-          : { outputSchema: outputJsonSchema }),
+        outputSchema: outputJsonSchema,
         readNamespaces,
         writeNamespaces,
         invalidatesNamespaces,
@@ -102,131 +180,67 @@ test("keeps generated runtime contracts in sync with the registry", () => {
   );
 });
 
-test("tracks public runtime operations without output schemas", () => {
+test("requires an output schema for every runtime operation", () => {
   expect(
     builderRuntimeOperations
-      .filter(
-        (operation) =>
-          operation.command !== undefined &&
-          operation.outputSchema === undefined
-      )
+      .filter((operation) => operation.outputSchema === undefined)
       .map((operation) => operation.id)
-  ).toMatchInlineSnapshot(`
-    [
-      "pages.list",
-      "pages.get",
-      "pages.getByPath",
-      "pages.create",
-      "pages.update",
-      "pages.updateSettings",
-      "pages.updateMarketplace",
-      "pages.savePathInHistory",
-      "pages.setHome",
-      "projectSettings.get",
-      "projectSettings.update",
-      "projectSettings.getMarketplaceProduct",
-      "projectSettings.updateMarketplaceProduct",
-      "redirects.list",
-      "redirects.create",
-      "redirects.update",
-      "redirects.delete",
-      "redirects.setAll",
-      "breakpoints.list",
-      "breakpoints.create",
-      "breakpoints.update",
-      "breakpoints.delete",
-      "pages.delete",
-      "pages.duplicate",
-      "pages.copy",
-      "pageTemplates.list",
-      "pageTemplates.create",
-      "pageTemplates.update",
-      "pageTemplates.delete",
-      "pageTemplates.duplicate",
-      "pageTemplates.reorder",
-      "pageTemplates.createPage",
-      "folders.list",
-      "folders.create",
-      "folders.update",
-      "folders.delete",
-      "folders.duplicate",
-      "pageTransfer.insert",
-      "pageTree.move",
-      "pageTree.reparentOrphans",
-      "instances.list",
-      "instances.inspect",
-      "project.search",
-      "instances.insertComponent",
-      "instances.insertFragment",
-      "instances.move",
-      "instances.reparent",
-      "instances.fillGrid",
-      "instances.wrap",
-      "instances.convert",
-      "instances.unwrap",
-      "instances.clone",
-      "instances.duplicateAfterItself",
-      "instances.delete",
-      "instances.deleteBySelector",
-      "instances.updateProps",
-      "instances.replacePropText",
-      "instances.deleteProps",
-      "instances.bindProps",
-      "instances.listTexts",
-      "instances.updateText",
-      "instances.replaceText",
-      "instances.setTextContent",
-      "instances.updateTextTree",
-      "instances.setTag",
-      "instances.setLabel",
-      "styles.getDeclarations",
-      "styles.updateDeclarations",
-      "styles.deleteDeclarations",
-      "styles.updateSelectedDeclarations",
-      "styles.deleteSelectedDeclarations",
-      "styles.replaceValues",
-      "designTokens.list",
-      "designTokens.create",
-      "designTokens.createAttached",
-      "designTokens.updateStyles",
-      "designTokens.deleteStyles",
-      "designTokens.attach",
-      "designTokens.detach",
-      "designTokens.extract",
-      "styleSources.rename",
-      "styleSources.delete",
-      "styleSources.setLock",
-      "styleSources.reorder",
-      "styleSources.clearStyles",
-      "styleSources.duplicate",
-      "styleSources.convertLocalToToken",
-      "cssVariables.list",
-      "cssVariables.define",
-      "cssVariables.delete",
-      "cssVariables.rewriteRefs",
-      "cssVariables.rename",
-      "variables.list",
-      "variables.create",
-      "variables.update",
-      "variables.delete",
-      "variables.deleteUnused",
-      "resources.list",
-      "resources.create",
-      "resources.update",
-      "resources.replaceText",
-      "resources.upsert",
-      "resources.upsertProp",
-      "resources.delete",
-      "assets.list",
-      "fonts.list",
-      "assets.findUsage",
-      "assets.update",
-      "assets.setImageDescriptions",
-      "assets.add",
-      "assets.replace",
-      "assets.delete",
-    ]
-  `);
+  ).toEqual([]);
+  expect(
+    Object.keys(runtimeOutputSchemas)
+      .filter((operationId) => operationId.startsWith("system.") === false)
+      .sort()
+  ).toEqual(builderRuntimeOperations.map((operation) => operation.id).sort());
+  expect(() => getRuntimeOutputSchema("missing.operation")).toThrow(
+    'Missing runtime output schema for operation "missing.operation".'
+  );
+});
+
+test("validates structured runtime operation results", () => {
+  expect(
+    getRuntimeOutputSchema("resources.update").parse({ resourceId: "resource" })
+  ).toEqual({ resourceId: "resource" });
+  expect(
+    getRuntimeOutputSchema("resources.update").parse({
+      resourceId: "resource",
+      dataSourceId: "data-source",
+      warnings: [
+        {
+          severity: "warning",
+          code: "expression_lint_warning",
+          path: ["resource", "url"],
+          message: '"missing" is not defined in the scope',
+          range: { from: 0, to: 7 },
+          remediation: "Use an in-scope variable.",
+        },
+      ],
+    })
+  ).toMatchObject({
+    dataSourceId: "data-source",
+    warnings: [{ code: "expression_lint_warning" }],
+  });
+
+  expect(
+    getRuntimeOutputSchema("instances.deleteBySelector").safeParse({
+      instanceSelector: ["instance", "parent"],
+    }).success
+  ).toBe(false);
+  expect(
+    getRuntimeOutputSchema("instances.replacePropText").parse({
+      changedCount: 1,
+      matchingPropCount: 1,
+      truncated: false,
+      matches: [
+        {
+          propId: "prop",
+          instanceId: "instance",
+          name: "title",
+          before: "Before",
+          after: "After",
+        },
+      ],
+    }).matches
+  ).toHaveLength(1);
 });
 
 describe("builder runtime pages", () => {
@@ -324,6 +338,50 @@ describe("builder runtime pages", () => {
 });
 
 describe("builder runtime read families", () => {
+  test("keeps instance lists compact and paginates verbose expansion", () => {
+    const instances: BuilderState["instances"] = new Map(state.instances);
+    const largeState: BuilderState = {
+      ...state,
+      instances,
+    };
+    instances.set("body", {
+      ...state.instances.get("body")!,
+      children: [
+        ...Array.from({ length: 100 }, (_, index) => ({
+          type: "id" as const,
+          value: `repeated-child-${index}-${"detail-".repeat(10)}`,
+        })),
+        { type: "id" as const, value: "heading" },
+      ],
+    });
+    const compact = listInstances(largeState, { limit: 1 });
+    const verbose = listInstances(largeState, { limit: 1, verbose: true });
+
+    expect(compact).toMatchObject({
+      detail: "compact",
+      total: 2,
+      returnedCount: 1,
+      nextCursor: "1",
+      instances: [{ id: "body" }],
+    });
+    expect(compact.instances[0]).not.toHaveProperty("record");
+    expect(verbose).toMatchObject({
+      detail: "verbose",
+      total: compact.total,
+      returnedCount: compact.returnedCount,
+      nextCursor: compact.nextCursor,
+      instances: [
+        expect.objectContaining({
+          ...compact.instances[0],
+          record: expect.objectContaining({ id: "body" }),
+        }),
+      ],
+    });
+    expect(JSON.stringify(compact).length).toBeLessThan(
+      JSON.stringify(verbose).length * 0.5
+    );
+  });
+
   test("reads instances and text nodes", () => {
     expect(
       executeBuilderRuntimeOperation({
@@ -601,6 +659,183 @@ describe("builder runtime read families", () => {
     ).toThrow(/data source "stale".*not available/);
   });
 
+  test("returns non-blocking expression warnings with actionable locations", () => {
+    const text = executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state,
+      input: {
+        instanceId: "heading",
+        childIndex: 0,
+        text: "missingTitle",
+        mode: "expression",
+      },
+      context,
+    });
+    expect(getMutationResult(text)).toMatchObject({
+      warnings: [
+        {
+          code: "expression_lint_warning",
+          path: ["text"],
+          instanceId: "heading",
+          range: { from: 0, to: 12 },
+          remediation: expect.stringContaining("available"),
+        },
+      ],
+    });
+
+    const prop = executeBuilderRuntimeOperation({
+      id: "instances.bindProps",
+      state,
+      input: {
+        bindings: [
+          {
+            instanceId: "heading",
+            name: "title",
+            binding: { type: "expression", value: "missingTitle" },
+          },
+          {
+            instanceId: "heading",
+            name: "onClick",
+            binding: {
+              type: "action",
+              value: [
+                {
+                  type: "execute",
+                  args: ["event"],
+                  code: "missingValue = event",
+                },
+              ],
+            },
+          },
+        ],
+      },
+      context,
+    });
+    expect(getMutationResult(prop)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["bindings", "0", "binding", "value"],
+          instanceId: "heading",
+        }),
+        expect.objectContaining({
+          path: ["bindings", "1", "binding", "value", "0", "code"],
+          instanceId: "heading",
+        }),
+      ],
+    });
+
+    const resource = executeBuilderRuntimeOperation({
+      id: "resources.create",
+      state,
+      input: {
+        resource: {
+          name: "Create post",
+          method: "post",
+          url: "https://api.example.com/posts",
+          headers: [],
+          body: "missingPayload",
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["warning-resource", "warning-data-source"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+    expect(getMutationResult(resource)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["resource", "body"],
+          resourceId: "warning-resource",
+        }),
+      ],
+    });
+
+    const collection = executeBuilderRuntimeOperation({
+      id: "instances.insertCollection",
+      state,
+      input: {
+        parentInstanceId: "body",
+        data: { type: "json", value: [{ name: "Starter" }] },
+        itemFragment: {
+          children: [{ type: "id", value: "item" }],
+          instances: [
+            {
+              type: "instance",
+              id: "item",
+              component: "Text",
+              children: [
+                { type: "expression", value: "collectionItem.name" },
+                { type: "expression", value: "missingCollectionItem.name" },
+              ],
+            },
+          ],
+          props: [],
+          dataSources: [],
+          resources: [],
+          styleSources: [],
+          styleSourceSelections: [],
+          styles: [],
+          breakpoints: [],
+          assets: [],
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = [
+            "collection",
+            "collection-data-prop",
+            "collection-item",
+            "collection-item-key",
+          ];
+          return () => ids.shift() ?? "generated-id";
+        })(),
+      },
+    });
+    expect(getMutationResult(collection)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["itemFragment", "instances", "0", "children", "1", "value"],
+          message: expect.stringContaining("missingCollectionItem"),
+        }),
+      ],
+    });
+
+    try {
+      executeBuilderRuntimeOperation({
+        id: "instances.bindProps",
+        state,
+        input: {
+          bindings: [
+            {
+              instanceId: "heading",
+              name: "onClick",
+              binding: {
+                type: "action",
+                value: [{ type: "execute", args: ["event"], code: "event +" }],
+              },
+            },
+          ],
+        },
+        context,
+      });
+      expect.unreachable("Expected invalid action syntax to be rejected");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "INVALID_INPUT",
+        issues: [
+          expect.objectContaining({
+            path: ["bindings", "0", "binding", "value"],
+            detail: expect.stringMatching(/Unexpected token/),
+          }),
+        ],
+      });
+    }
+  });
+
   test("binds Collection data and item names in their respective scopes", () => {
     const collectionState = {
       ...state,
@@ -673,6 +908,7 @@ describe("builder runtime read families", () => {
         context,
       })
     ).toMatchObject({
+      result: { propIds: ["id"] },
       payload: [
         {
           namespace: "props",
@@ -687,19 +923,18 @@ describe("builder runtime read families", () => {
       ],
     });
 
-    expect(
-      executeBuilderRuntimeOperation({
-        id: "instances.updateText",
-        state: collectionState,
-        input: {
-          instanceId: "item",
-          childIndex: 0,
-          text: "collectionItem.name",
-          mode: "expression",
-        },
-        context,
-      })
-    ).toMatchObject({
+    const validItemBinding = executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state: collectionState,
+      input: {
+        instanceId: "item",
+        childIndex: 0,
+        text: "collectionItem.name",
+        mode: "expression",
+      },
+      context,
+    });
+    expect(validItemBinding).toMatchObject({
       payload: [
         {
           namespace: "instances",
@@ -711,6 +946,27 @@ describe("builder runtime read families", () => {
             },
           ],
         },
+      ],
+    });
+
+    const invalidItemBinding = executeBuilderRuntimeOperation({
+      id: "instances.updateText",
+      state: collectionState,
+      input: {
+        instanceId: "item",
+        childIndex: 0,
+        text: "missingCollectionItem.name",
+        mode: "expression",
+      },
+      context,
+    });
+    expect(getMutationResult(invalidItemBinding)).toMatchObject({
+      warnings: [
+        expect.objectContaining({
+          path: ["text"],
+          instanceId: "item",
+          message: expect.stringContaining("missingCollectionItem"),
+        }),
       ],
     });
   });
@@ -822,7 +1078,7 @@ describe("builder runtime read families", () => {
       tokens: [{ id: "token", declarationCount: 1, usageCount: 1 }],
     });
     expect(
-      listDesignTokens(state, { withUsage: true, includeStyles: true })
+      listDesignTokens(state, { withUsage: true, verbose: true })
     ).toMatchObject({
       tokens: [{ id: "token", styles: { color: expect.any(Object) } }],
     });
@@ -1079,34 +1335,34 @@ describe("builder runtime read families", () => {
   });
 
   test("validates resource URL mutations through the public runtime operation", () => {
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "resources.create",
-        state,
-        input: {
-          scopeInstanceId: "heading",
-          resource: {
-            name: "Users",
-            method: "get",
-            url: `"not-a-url"`,
-            headers: [],
-          },
+    expectRuntimeValidationError(
+      "resources.create",
+      {
+        scopeInstanceId: "heading",
+        resource: {
+          name: "Users",
+          method: "get",
+          url: `"not-a-url"`,
+          headers: [],
         },
-        context,
-      })
-    ).toThrow("url: URL is invalid");
+      },
+      {
+        path: ["resource", "url"],
+        constraint: "absolute_or_root_relative_url",
+      }
+    );
 
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "resources.update",
-        state,
-        input: {
-          resourceId: "resource",
-          values: { url: `""` },
-        },
-        context,
-      })
-    ).toThrow("url: URL is required");
+    expectRuntimeValidationError(
+      "resources.update",
+      {
+        resourceId: "resource",
+        values: { url: `""` },
+      },
+      {
+        path: ["values", "url"],
+        constraint: "absolute_or_root_relative_url",
+      }
+    );
 
     const fixedUrlResult = executeBuilderRuntimeOperation({
       id: "resources.create",
@@ -1295,38 +1551,38 @@ describe("builder runtime read families", () => {
   });
 
   test("validates project settings and redirects through public operations", () => {
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "projectSettings.update",
-        state,
-        input: {
-          meta: { contactEmail: "not-an-email" },
-        },
-        context,
-      })
-    ).toThrow("Contact email is invalid.");
+    expectRuntimeValidationError(
+      "projectSettings.update",
+      { meta: { contactEmail: "not-an-email" } },
+      {
+        code: "invalid_contact_email",
+        path: ["meta", "contactEmail"],
+        constraint: "comma_separated_email_addresses",
+      }
+    );
 
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "projectSettings.update",
-        state,
-        input: {
-          meta: {
-            auth: JSON.stringify({
-              version: 1,
-              routes: {
-                private: {
-                  method: "basic",
-                  login: "admin",
-                  password: "secret",
-                },
+    expectRuntimeValidationError(
+      "projectSettings.update",
+      {
+        meta: {
+          auth: JSON.stringify({
+            version: 1,
+            routes: {
+              private: {
+                method: "basic",
+                login: "admin",
+                password: "secret",
               },
-            }),
-          },
+            },
+          }),
         },
-        context,
-      })
-    ).toThrow('routes."private": Route must start with "/"');
+      },
+      {
+        code: "invalid_project_auth",
+        path: ["meta", "auth"],
+        constraint: "valid_webstudio_auth_json",
+      }
+    );
 
     expect(() =>
       executeBuilderRuntimeOperation({
@@ -1461,9 +1717,11 @@ describe("builder runtime registry", () => {
       toInputJsonSchemaObject(copyPageSchema?.properties?.sourceData)
         ?.description
     ).toContain("use duplicate-page");
-    expect(() =>
-      copyPageOperation.execute({ state, input: { pageId: "home" }, context })
-    ).toThrow("sourceData");
+    expectRuntimeValidationError(
+      "pages.copy",
+      { pageId: "home" },
+      { path: ["sourceData"] }
+    );
 
     const duplicateStyleSourceOperation = getBuilderRuntimeOperation(
       "styleSources.duplicate"
@@ -1623,6 +1881,7 @@ describe("builder runtime registry", () => {
       ["pageTree.move", {}],
       ["pageTree.reparentOrphans", "invalid"],
       ["instances.insertComponent", { parentInstanceId: "body" }],
+      ["instances.insertCollection", { parentInstanceId: "body" }],
       ["instances.insertFragment", { parentInstanceId: "body" }],
       ["instances.move", { moves: {} }],
       ["instances.reparent", {}],
@@ -1693,18 +1952,91 @@ describe("builder runtime registry", () => {
     }
   });
 
+  test("returns actionable issues for semantic input relationships", () => {
+    const cases: Array<[string, unknown, Partial<SemanticValidationIssue>]> = [
+      [
+        "projectSettings.update",
+        {},
+        {
+          code: "empty_project_settings_update",
+          path: [],
+          constraint: "at_least_one_of:meta,compiler",
+        },
+      ],
+      [
+        "assets.update",
+        { assetId: "asset", values: {} },
+        {
+          code: "empty_asset_update",
+          path: ["values"],
+          constraint: "at_least_one_property",
+        },
+      ],
+      [
+        "assets.setImageDescriptions",
+        {
+          updates: [
+            { assetId: "asset", decorative: true },
+            { assetId: "asset", decorative: true },
+          ],
+        },
+        {
+          code: "duplicate_asset_update",
+          path: ["updates", "1", "assetId"],
+          constraint: "unique_by:assetId",
+        },
+      ],
+      [
+        "resources.create",
+        {
+          exposeAsDataSource: true,
+          resource: {
+            name: "Posts",
+            method: "get",
+            url: "https://api.example.com/posts",
+            headers: [],
+          },
+        },
+        {
+          code: "missing_resource_scope",
+          path: ["scopeInstanceId"],
+          constraint: "required_when:exposeAsDataSource=true",
+        },
+      ],
+      [
+        "instances.move",
+        {
+          moves: [
+            {
+              instanceId: "heading",
+              parentInstanceId: "body",
+              insertIndex: 0,
+              position: "end",
+            },
+          ],
+        },
+        {
+          code: "conflicting_move_position",
+          path: ["moves", "0", "position"],
+          constraint: "mutually_exclusive_with:insertIndex",
+        },
+      ],
+    ];
+
+    for (const [operationId, input, issue] of cases) {
+      expectRuntimeValidationError(operationId, input, issue);
+    }
+  });
+
   test("validates internal runtime operation inputs without exposing them publicly", () => {
     expect(
       builderRuntimeOperations.map((operation) => operation.id)
     ).not.toContain("system.migrateLoadedData");
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "system.migrateLoadedData",
-        state,
-        input: { unexpected: true },
-        context,
-      })
-    ).toThrow(/unexpected/);
+    expectRuntimeValidationError(
+      "system.migrateLoadedData",
+      { unexpected: true },
+      { constraint: "recognized_keys_only" }
+    );
   });
 
   test("does not mutate caller state across representative public mutation surfaces", () => {

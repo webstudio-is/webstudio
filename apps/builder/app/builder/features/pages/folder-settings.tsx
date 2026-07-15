@@ -25,7 +25,7 @@ import {
   validateFolderSettings,
   type FolderSettingsFieldErrors,
   type FolderSettingsValues,
-} from "@webstudio-is/project-build/runtime/pages";
+} from "@webstudio-is/project-build/runtime";
 import { useState, type FocusEventHandler } from "react";
 import { useIds } from "~/shared/form-utils";
 import { $pages } from "~/shared/sync/data-stores";

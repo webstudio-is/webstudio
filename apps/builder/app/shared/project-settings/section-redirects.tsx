@@ -41,11 +41,11 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   LOOP_ERROR,
   wouldCreateLoop,
-} from "@webstudio-is/project-build/runtime/redirect-loop-detection";
+} from "@webstudio-is/project-build/runtime";
 import {
   validateRedirectSource,
   validateRedirectTarget,
-} from "@webstudio-is/project-build/runtime/project-settings";
+} from "@webstudio-is/project-build/runtime";
 
 const statusCodeOptions = ["301", "302"] as const;
 

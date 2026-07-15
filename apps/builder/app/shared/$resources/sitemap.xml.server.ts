@@ -1,5 +1,5 @@
 import { json } from "@remix-run/server-runtime";
-import { parsePages } from "@webstudio-is/project-build/index.server";
+import { parsePages } from "@webstudio-is/project-build/persistence";
 import { getStaticSiteMapXml } from "@webstudio-is/sdk";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { isBuilder } from "../router-utils";

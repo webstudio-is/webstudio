@@ -38,8 +38,8 @@ import {
   type StyleObjectModel,
 } from "~/shared/style-object-model";
 import { $selectedInstancePathWithRoot } from "~/shared/nano-states";
-import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import type { InstancePath } from "@webstudio-is/project-build/runtime";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 
 const propertyNameCollator = new Intl.Collator();
 

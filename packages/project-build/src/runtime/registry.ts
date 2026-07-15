@@ -4,6 +4,8 @@ import {
   type BuilderNamespace,
 } from "../contracts/namespaces";
 import type { BuilderApiCapability } from "../contracts/permissions";
+import { paginatedOutputInputSchema } from "./output";
+import { getExpressionWarnings } from "./expression-validation";
 import {
   getInputSchemaMetadata,
   isHiddenPublicApiInputField,
@@ -13,6 +15,7 @@ import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
 import * as components from "./components";
+import * as collection from "./collection";
 import * as data from "./data";
 import * as fonts from "./fonts";
 import * as instanceDuplicate from "./instance-duplicate";
@@ -25,6 +28,15 @@ import * as props from "./props";
 import * as search from "./search";
 import * as audit from "./audit";
 import * as styles from "./styles";
+import { getZodValidationIssues, throwBuilderValidationError } from "./errors";
+import {
+  createRuntimeMutationExecutionSchema,
+  getRuntimeOutputSchema,
+  type RuntimeOperationOutput,
+  type RuntimeOutputSchemaId,
+} from "./output-schemas";
+import type { BuilderRuntimeMutation } from "./mutation";
+import { listFragmentExpressions } from "./fragment";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -38,8 +50,8 @@ export type BuilderRuntimeOperation<
   kind: "read" | "mutation";
   inputSchema: z.ZodTypeAny;
   inputJsonSchema: InputJsonSchema;
-  outputSchema?: z.ZodTypeAny;
-  outputJsonSchema?: InputJsonSchema;
+  outputSchema: z.ZodTypeAny;
+  outputJsonSchema: InputJsonSchema;
   readNamespaces: readonly BuilderNamespace[];
   writeNamespaces: readonly BuilderNamespace[];
   invalidatesNamespaces: readonly BuilderNamespace[];
@@ -77,9 +89,31 @@ type RuntimeOperationContractInput =
       requiresConfirm?: boolean;
     };
 
+type ReadContract = Extract<RuntimeOperationContractInput, { kind: "read" }>;
+type MutationContract = Extract<
+  RuntimeOperationContractInput,
+  { kind: "mutation" }
+>;
+type RuntimeExecutionOutput<
+  Id extends RuntimeOutputSchemaId,
+  Contract extends RuntimeOperationContractInput,
+> = Contract extends MutationContract
+  ? BuilderRuntimeMutation<RuntimeOperationOutput<Id>>
+  : RuntimeOperationOutput<Id>;
+
+const throwInvalidOperationInput = (
+  error: z.ZodError,
+  inputJsonSchema: InputJsonSchema
+): never =>
+  throwBuilderValidationError(
+    "Operation input is invalid.",
+    getZodValidationIssues(error, inputJsonSchema)
+  );
+
 const parseOperationInput = <Schema extends z.ZodTypeAny>(
   schema: Schema,
-  input: unknown
+  input: unknown,
+  inputJsonSchema: InputJsonSchema
 ): z.infer<Schema> => {
   const result = schema.safeParse(input ?? {});
   if (result.success) {
@@ -101,9 +135,13 @@ const parseOperationInput = <Schema extends z.ZodTypeAny>(
       confirm: _confirm,
       ...operationInput
     } = input as Record<string, unknown>;
-    return schema.parse(operationInput);
+    const operationResult = schema.safeParse(operationInput);
+    if (operationResult.success) {
+      return operationResult.data;
+    }
+    return throwInvalidOperationInput(operationResult.error, inputJsonSchema);
   }
-  throw result.error;
+  return throwInvalidOperationInput(result.error, inputJsonSchema);
 };
 
 const bindExpressionInput = (
@@ -122,37 +160,116 @@ const bindExpressionInput = (
   });
 };
 
+const getScopedExpressionWarnings = (
+  state: BuilderState,
+  instanceId: string,
+  path: string[],
+  expression: string,
+  allowAssignment = false,
+  additionalVariables: readonly string[] = []
+) => {
+  if (state.instances === undefined || state.dataSources === undefined) {
+    return [];
+  }
+  const availableVariables = new Set(
+    data
+      .findAvailableVariables({
+        startingInstanceId: instanceId,
+        instances: state.instances,
+        dataSources: state.dataSources,
+      })
+      .map(({ name }) => name)
+  );
+  for (const name of additionalVariables) {
+    availableVariables.add(name);
+  }
+  return getExpressionWarnings({
+    expression,
+    availableVariables,
+    allowAssignment,
+    path,
+    instanceId,
+  });
+};
+
+const getScopedPropWarnings = ({
+  state,
+  instanceId,
+  path,
+  prop,
+  variables = [],
+}: {
+  state: BuilderState;
+  instanceId: string;
+  path: string[];
+  prop: Parameters<typeof props.listPropExpressions>[0];
+  variables?: readonly string[];
+}) =>
+  props
+    .listPropExpressions(prop)
+    .flatMap((entry) =>
+      getScopedExpressionWarnings(
+        state,
+        instanceId,
+        [...path, ...entry.path],
+        entry.expression,
+        entry.allowAssignment,
+        [...variables, ...entry.variables]
+      )
+    );
+
+const withExpressionWarnings = <
+  Mutation extends { result: Record<string, unknown> },
+>(
+  mutation: Mutation,
+  warnings: ReturnType<typeof getExpressionWarnings>
+) =>
+  warnings.length === 0
+    ? mutation
+    : {
+        ...mutation,
+        result: { ...mutation.result, warnings },
+      };
+
 const runtimeOperation = <
-  Id extends string,
+  Id extends RuntimeOutputSchemaId,
   Schema extends z.ZodTypeAny,
-  Result,
+  Contract extends RuntimeOperationContractInput,
 >(
   id: Id,
   publicApi: RuntimeOperationPublicApi,
-  contract: RuntimeOperationContractInput,
+  contract: Contract,
   inputSchema: Schema,
   execute: (args: {
     state: BuilderState;
     input: z.output<Schema>;
     context: BuilderRuntimeContext;
-  }) => Result | Promise<Result>,
-  outputSchema?: z.ZodTypeAny
-): BuilderRuntimeOperation<Id, z.input<Schema>, Result> => {
+  }) =>
+    | RuntimeExecutionOutput<Id, Contract>
+    | Promise<RuntimeExecutionOutput<Id, Contract>>
+): BuilderRuntimeOperation<
+  Id,
+  z.input<Schema>,
+  RuntimeExecutionOutput<Id, Contract>
+> => {
   const writeNamespaces =
     contract.kind === "mutation" ? contract.writeNamespaces : [];
+  const inputJsonSchema = getInputSchemaMetadata(inputSchema, {
+    isHiddenField: isHiddenPublicApiInputField,
+  }).inputJsonSchema;
+  const outputSchema = getRuntimeOutputSchema(id);
+  const executionOutputSchema =
+    contract.kind === "mutation"
+      ? createRuntimeMutationExecutionSchema(outputSchema)
+      : outputSchema;
   return {
     id,
     ...publicApi,
     kind: contract.kind,
     inputSchema,
-    inputJsonSchema: getInputSchemaMetadata(inputSchema, {
-      isHiddenField: isHiddenPublicApiInputField,
-    }).inputJsonSchema,
+    inputJsonSchema,
     outputSchema,
-    outputJsonSchema:
-      outputSchema === undefined
-        ? undefined
-        : getInputSchemaMetadata(outputSchema).inputJsonSchema,
+    outputJsonSchema: getInputSchemaMetadata(outputSchema).inputJsonSchema,
     readNamespaces: contract.readNamespaces,
     writeNamespaces,
     invalidatesNamespaces:
@@ -174,16 +291,22 @@ const runtimeOperation = <
     execute: ({ state, input, context }) => {
       const result = execute({
         state,
-        input: parseOperationInput(inputSchema, input),
+        input: parseOperationInput(inputSchema, input, inputJsonSchema),
         context,
       });
-      if (outputSchema === undefined) {
-        return result;
-      }
       if (result instanceof Promise) {
-        return result.then((value) => outputSchema.parse(value) as Result);
+        return result.then(
+          (value) =>
+            executionOutputSchema.parse(value) as RuntimeExecutionOutput<
+              Id,
+              Contract
+            >
+        );
       }
-      return outputSchema.parse(result) as Result;
+      return executionOutputSchema.parse(result) as RuntimeExecutionOutput<
+        Id,
+        Contract
+      >;
     },
   };
 };
@@ -197,7 +320,7 @@ const api = (
 const readContract = (
   readNamespaces: readonly BuilderNamespace[],
   options: { requiresAssets?: boolean } = {}
-): RuntimeOperationContractInput => ({
+): ReadContract => ({
   kind: "read",
   readNamespaces,
   ...options,
@@ -210,7 +333,7 @@ const mutationContract = (input: {
   retryOnConflict?: boolean;
   requiresAssets?: boolean;
   requiresConfirm?: boolean;
-}): RuntimeOperationContractInput => ({ kind: "mutation", ...input });
+}): MutationContract => ({ kind: "mutation", ...input });
 
 const pageNamespaces = ["pages", "instances"] as const;
 const instanceReadNamespaces = ["pages", "instances", "props"] as const;
@@ -261,6 +384,7 @@ const instanceListInput = instanceFilterInput.extend({
   maxDepth: z.number().int().nonnegative().optional(),
   topLevelOnly: z.boolean().optional(),
   labelContains: z.string().optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const instanceInspectInput = z.object({
   instanceId: z.string(),
@@ -295,6 +419,7 @@ const styleDeclarationsListInput = z.object({
   property: z.string().optional(),
   propertyFilter: z.string().optional(),
   includeTokens: z.boolean().optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const designTokenListInput = z.object({
   filter: z.string().optional(),
@@ -302,11 +427,8 @@ const designTokenListInput = z.object({
     .boolean()
     .optional()
     .describe("Include usage counts. Defaults to true."),
-  includeStyles: z
-    .boolean()
-    .optional()
-    .describe("Include full inline style declarations for each token."),
   sort: z.enum(["name", "usage"]).optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const cssVariableListInput = z.object({
   filter: z.string().optional(),
@@ -319,8 +441,7 @@ const assetListInput = z.object({
   type: z.enum(["image", "font"]).optional(),
   sort: z.enum(["name", "size", "createdAt", "usage"]).optional(),
   withUsage: z.boolean().optional(),
-  cursor: z.string().optional(),
-  limit: z.number().int().min(1).optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const assetUsageInput = z.object({ assetId: z.string() });
 
@@ -414,7 +535,7 @@ export const builderRuntimeOperations = [
   runtimeOperation(
     "projectSettings.get",
     api("get-project-settings", "getProjectSettings"),
-    readContract(["pages"]),
+    readContract(["pages", "projectSettings"]),
     emptyInput,
     ({ state }) => projectSettings.getProjectSettings(state)
   ),
@@ -422,8 +543,8 @@ export const builderRuntimeOperations = [
     "projectSettings.update",
     api("update-project-settings", "updateProjectSettings"),
     mutationContract({
-      readNamespaces: ["pages"],
-      writeNamespaces: ["pages"],
+      readNamespaces: ["projectSettings"],
+      writeNamespaces: ["projectSettings"],
       retryOnConflict: true,
     }),
     projectSettings.projectSettingsUpdateInput,
@@ -779,8 +900,7 @@ export const builderRuntimeOperations = [
       "breakpoints",
     ]),
     audit.auditInput,
-    ({ state, input, context }) => audit.audit(state, input, context),
-    audit.auditResult
+    ({ state, input, context }) => audit.audit(state, input, context)
   ),
   runtimeOperation(
     "instances.insertComponent",
@@ -792,6 +912,41 @@ export const builderRuntimeOperations = [
     components.insertComponentInput,
     ({ state, input, context }) =>
       components.insertComponent(state, input, context)
+  ),
+  runtimeOperation(
+    "instances.insertCollection",
+    api("insert-collection", "insertCollection"),
+    mutationContract({
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertNamespaces,
+    }),
+    collection.insertCollectionInput,
+    ({ state, input, context }) => {
+      const warnings = [
+        ...(input.data.type === "expression"
+          ? getScopedExpressionWarnings(
+              state,
+              input.parentInstanceId,
+              ["data", "value"],
+              input.data.value
+            )
+          : []),
+        ...listFragmentExpressions(input.itemFragment).flatMap((entry) =>
+          getScopedExpressionWarnings(
+            state,
+            input.parentInstanceId,
+            ["itemFragment", ...entry.path],
+            entry.expression,
+            entry.allowAssignment,
+            ["collectionItem", "collectionItemKey", ...entry.variables]
+          )
+        ),
+      ];
+      return withExpressionWarnings(
+        components.insertCollection(state, input, context),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.insertFragment",
@@ -976,25 +1131,37 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["props"],
     }),
     props.propUpdatesInput,
-    ({ state, input, context }) =>
-      props.updateProps(
-        state,
-        {
-          updates: input.updates.map((update) =>
-            update.type === "expression"
-              ? {
-                  ...update,
-                  value: bindExpressionInput(
-                    state,
-                    update.instanceId,
-                    update.value
-                  ),
-                }
-              : update
-          ),
-        },
-        context
-      )
+    ({ state, input, context }) => {
+      const warnings = input.updates.flatMap((update, index) =>
+        getScopedPropWarnings({
+          state,
+          instanceId: update.instanceId,
+          path: ["updates", String(index), "value"],
+          prop: update,
+        })
+      );
+      return withExpressionWarnings(
+        props.updateProps(
+          state,
+          {
+            updates: input.updates.map((update) =>
+              update.type === "expression"
+                ? {
+                    ...update,
+                    value: bindExpressionInput(
+                      state,
+                      update.instanceId,
+                      update.value
+                    ),
+                  }
+                : update
+            ),
+          },
+          context
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.replacePropText",
@@ -1025,28 +1192,40 @@ export const builderRuntimeOperations = [
       writeNamespaces: ["props"],
     }),
     props.propBindingsInput,
-    ({ state, input, context }) =>
-      props.bindProps(
-        state,
-        {
-          bindings: input.bindings.map((binding) =>
-            binding.binding.type === "expression"
-              ? {
-                  ...binding,
-                  binding: {
-                    ...binding.binding,
-                    value: bindExpressionInput(
-                      state,
-                      binding.instanceId,
-                      binding.binding.value
-                    ),
-                  },
-                }
-              : binding
-          ),
-        },
-        context
-      )
+    ({ state, input, context }) => {
+      const warnings = input.bindings.flatMap((binding, index) =>
+        getScopedPropWarnings({
+          state,
+          instanceId: binding.instanceId,
+          path: ["bindings", String(index), "binding", "value"],
+          prop: binding.binding,
+        })
+      );
+      return withExpressionWarnings(
+        props.bindProps(
+          state,
+          {
+            bindings: input.bindings.map((binding) =>
+              binding.binding.type === "expression"
+                ? {
+                    ...binding,
+                    binding: {
+                      ...binding.binding,
+                      value: bindExpressionInput(
+                        state,
+                        binding.instanceId,
+                        binding.binding.value
+                      ),
+                    },
+                  }
+                : binding
+            ),
+          },
+          context
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.listTexts",
@@ -1064,16 +1243,29 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     instances.updateTextInstanceInput,
-    ({ state, input }) =>
-      instances.updateTextInstance(
-        state,
+    ({ state, input }) => {
+      const warnings =
         input.mode === "expression"
-          ? {
-              ...input,
-              text: bindExpressionInput(state, input.instanceId, input.text),
-            }
-          : input
-      )
+          ? getScopedExpressionWarnings(
+              state,
+              input.instanceId,
+              ["text"],
+              input.text
+            )
+          : [];
+      return withExpressionWarnings(
+        instances.updateTextInstance(
+          state,
+          input.mode === "expression"
+            ? {
+                ...input,
+                text: bindExpressionInput(state, input.instanceId, input.text),
+              }
+            : input
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.replaceText",
@@ -1095,16 +1287,29 @@ export const builderRuntimeOperations = [
       retryOnConflict: true,
     }),
     instances.setTextContentInput,
-    ({ state, input }) =>
-      instances.setTextContent(
-        state,
+    ({ state, input }) => {
+      const warnings =
         input.operation === "set" && input.mode === "expression"
-          ? {
-              ...input,
-              text: bindExpressionInput(state, input.instanceId, input.text),
-            }
-          : input
-      )
+          ? getScopedExpressionWarnings(
+              state,
+              input.instanceId,
+              ["text"],
+              input.text
+            )
+          : [];
+      return withExpressionWarnings(
+        instances.setTextContent(
+          state,
+          input.operation === "set" && input.mode === "expression"
+            ? {
+                ...input,
+                text: bindExpressionInput(state, input.instanceId, input.text),
+              }
+            : input
+        ),
+        warnings
+      );
+    }
   ),
   runtimeOperation(
     "instances.updateTextTree",

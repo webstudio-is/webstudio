@@ -9,7 +9,7 @@ import {
   type Page,
   type Pages,
 } from "@webstudio-is/sdk";
-import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import type { InstancePath } from "@webstudio-is/project-build/runtime";
 import { $selectedPageId } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { __testing__ } from "./instance-context-menu";

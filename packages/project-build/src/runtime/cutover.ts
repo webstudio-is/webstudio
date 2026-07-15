@@ -129,10 +129,12 @@ export const builderRuntimeCutoverManifests = [
     family: "component-insert-mutations",
     operationIds: [
       "instances.insertComponent",
+      "instances.insertCollection",
       "instances.insertFragment",
     ] as const,
     callers: [
       "appRouter.api.instances",
+      "MCP insert-collection",
       "MCP insert-fragment",
       "Builder components panel",
     ] as const,

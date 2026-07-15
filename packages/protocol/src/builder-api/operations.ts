@@ -167,6 +167,7 @@ export const publicApiOperations = publicApiOperationDocumentation.map(
 
 const operationsRequiringNegotiatedServerSupport = new Set([
   "instances.insertComponent",
+  "instances.insertCollection",
   "instances.insertFragment",
 ]);
 

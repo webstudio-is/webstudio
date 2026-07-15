@@ -33,8 +33,15 @@ import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { validateBasicAuthCredentials } from "./auth";
 import { computeExpression } from "./data";
-import { throwBuilderRuntimeError } from "./errors";
-import { getNamedExpressionErrors } from "./expression-validation";
+import {
+  formatValidationIssueMessages,
+  getZodValidationIssueOptions,
+  prefixValidationIssuePaths,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+  type SemanticValidationIssue,
+} from "./errors";
+import { getNamedExpressionValidationIssues } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import {
   collectExclusiveInstanceIds,
@@ -924,13 +931,17 @@ const pageMetaInputBase = z.object({
     .optional(),
 });
 
-export const getPageExpressionErrors = (input: PageFieldsPatchInput) => {
-  const errors: string[] = [];
-  errors.push(
-    ...getNamedExpressionErrors("title", input.title, {
-      hint: pageExpressionFieldHint,
-    })
-  );
+const collectPageExpressionValidationIssues = (input: PageFieldsPatchInput) => {
+  const issues: SemanticValidationIssue[] = [];
+  const add = (name: string, expression: string | undefined) => {
+    issues.push(
+      ...getNamedExpressionValidationIssues(name, expression, {
+        hint: pageExpressionFieldHint,
+        example: 'pageTitle ?? "Pricing"',
+      })
+    );
+  };
+  add("title", input.title);
   if (input.meta !== undefined) {
     for (const name of pageMetaExpressionFields) {
       const expression = input.meta[name];
@@ -940,26 +951,34 @@ export const getPageExpressionErrors = (input: PageFieldsPatchInput) => {
       if (expression === "" && emptyStringRemovesMetaFields.has(name)) {
         continue;
       }
-      errors.push(
-        ...getNamedExpressionErrors(`meta.${name}`, expression, {
-          hint: pageExpressionFieldHint,
-        })
-      );
+      add(`meta.${name}`, expression);
     }
     for (const [index, customMeta] of (input.meta.custom ?? []).entries()) {
-      errors.push(
-        ...getNamedExpressionErrors(
-          `meta.custom.${index}.content`,
-          customMeta.content,
-          {
-            hint: pageExpressionFieldHint,
-          }
-        )
-      );
+      add(`meta.custom.${index}.content`, customMeta.content);
     }
   }
-  return errors;
+  return issues;
 };
+
+export const getPageExpressionErrors = (input: PageFieldsPatchInput) =>
+  formatValidationIssueMessages(collectPageExpressionValidationIssues(input))
+    .split("\n")
+    .filter(Boolean);
+
+const getPagePathValidationIssues = (
+  path: string | undefined,
+  pathPrefix: readonly string[] = []
+) =>
+  getPagePathPatternErrors(path).map(
+    (detail): SemanticValidationIssue => ({
+      code: "invalid_page_path",
+      path: [...pathPrefix, "path"],
+      message: "Invalid page path pattern",
+      constraint: "valid_page_path_pattern",
+      example: "/pricing",
+      detail,
+    })
+  );
 
 const getPagePathPatternErrors = (path: string | undefined) => {
   if (path === undefined || path === "") {
@@ -989,13 +1008,17 @@ export const pageCustomMetadataSettingsInput = z.object({
     .optional(),
 });
 
-const emptyLanguageInput = z.string().refine((value) => value === "");
-const pageLanguageInput = z
-  .string()
-  .refine(
-    (value) => bcp47.parse(value).language !== null,
-    "The language is invalid"
-  );
+const emptyLanguageInput = z.literal("");
+const pageLanguageInput = z.string().refine(
+  (value) => bcp47.parse(value).language !== null,
+  getZodValidationIssueOptions({
+    code: "invalid_page_language",
+    path: [],
+    message: "The language is invalid",
+    constraint: "bcp_47_language_tag",
+    example: "en-US",
+  })
+);
 
 export const pageSearchSettingsInput = z.object({
   title: pageTitle,
@@ -1009,12 +1032,16 @@ export const pageTemplateSettingsInput = z.object({
   title: pageTitle,
 });
 
-const pageStatusCodeInput = z
-  .number()
-  .refine(
-    (value) => /^[2345]\d\d$/.test(String(value)),
-    "Status code expects 2xx, 3xx, 4xx or 5xx"
-  );
+const pageStatusCodeInput = z.number().refine(
+  (value) => /^[2345]\d\d$/.test(String(value)),
+  getZodValidationIssueOptions({
+    code: "invalid_page_status",
+    path: [],
+    message: "Status code expects 2xx, 3xx, 4xx or 5xx",
+    constraint: "http_status:200-599",
+    example: 200,
+  })
+);
 
 export const pageGeneralSettingsInput = z.object({
   name: pageName,
@@ -1708,15 +1735,19 @@ export const createPage = (
   const normalizedInput = normalizePageFieldsExpressionInputs(input);
   const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
   const parentFolder = getFolderOrThrow(pages, parentFolderId);
-  const expressionErrors = getPageExpressionErrors(normalizedInput);
-  if (expressionErrors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
+  const expressionIssues =
+    collectPageExpressionValidationIssues(normalizedInput);
+  if (expressionIssues.length > 0) {
+    return throwBuilderValidationError(
+      formatValidationIssueMessages(expressionIssues),
+      expressionIssues
+    );
   }
-  const pathPatternErrors = getPagePathPatternErrors(input.path);
-  if (pathPatternErrors.length > 0) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      pathPatternErrors.join("\n")
+  const pathIssues = getPagePathValidationIssues(input.path);
+  if (pathIssues.length > 0) {
+    return throwBuilderValidationError(
+      pathIssues.map((issue) => issue.detail).join("\n"),
+      pathIssues
     );
   }
   const pageId = context.createId();
@@ -1771,15 +1802,21 @@ export const updatePage = (
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
   }
   const normalizedValues = normalizePageFieldsExpressionInputs(input.values);
-  const expressionErrors = getPageExpressionErrors(normalizedValues);
-  if (expressionErrors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
+  const expressionIssues =
+    collectPageExpressionValidationIssues(normalizedValues);
+  if (expressionIssues.length > 0) {
+    return throwBuilderValidationError(
+      formatValidationIssueMessages(expressionIssues),
+      prefixValidationIssuePaths(expressionIssues, ["values"])
+    );
   }
-  const pathPatternErrors = getPagePathPatternErrors(normalizedValues.path);
-  if (pathPatternErrors.length > 0) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      pathPatternErrors.join("\n")
+  const pathIssues = getPagePathValidationIssues(normalizedValues.path, [
+    "values",
+  ]);
+  if (pathIssues.length > 0) {
+    return throwBuilderValidationError(
+      pathIssues.map((issue) => issue.detail).join("\n"),
+      pathIssues
     );
   }
   if (

@@ -10,7 +10,7 @@ import {
 import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils/slot";
-import { isDescendantOrSelf } from "@webstudio-is/project-build/runtime/tree";
+import { isDescendantOrSelf } from "@webstudio-is/project-build/runtime";
 import { Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "../apply-scale";

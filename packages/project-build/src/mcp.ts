@@ -16,7 +16,6 @@ import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {
   projectSessionBusyMessage,
-  serializeProjectSessionDebug,
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
 } from "./project-session";
@@ -58,6 +57,8 @@ import {
   getTemplateRequiredStructure,
   parseComponentEdge,
 } from "./runtime/components";
+import { getInputSchemaMetadata } from "./contracts/input-schema";
+import { insertCollectionInput } from "./runtime/collection";
 import {
   isComponentAvailableForDocumentType,
   isComponentHiddenFromCatalog,
@@ -67,7 +68,15 @@ import {
 } from "./runtime/component-catalog";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { webstudioJsxFragmentInputDescription } from "./runtime/jsx/bindings";
+import {
+  getValidationIssues,
+  getZodValidationIssues,
+  semanticValidationIssuesJsonSchema,
+  type SemanticValidationIssue,
+} from "./runtime/errors";
 import { z } from "zod";
+
+export { paginateOutput, projectOutput } from "./runtime/output";
 
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = BuilderApiCapability;
@@ -485,6 +494,19 @@ const insertFragmentMcpInputSchema = {
   required: ["parentInstanceId", "fragment"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const insertCollectionMcpInput = insertCollectionInput
+  .omit({ itemFragment: true })
+  .extend({
+    itemFragment: z
+      .string()
+      .describe(
+        `${webstudioJsxFragmentInputDescription} Pass exactly one root instance. Expressions may reference collectionItem and collectionItemKey, for example {expression\`collectionItem.name\`}.`
+      ),
+  })
+  .describe(
+    "Create a Collection, bind its complete iterable, and insert one repeated-item Webstudio JSX fragment atomically. Internal item parameters are generated automatically."
+  );
+
 const componentInputSchema = {
   ...emptyInputSchema,
   properties: {
@@ -559,6 +581,35 @@ const getOperationInputSchema = (
     required: requiredInputFields,
   };
 };
+
+const insertCollectionMcpInputSchema = getOperationInputSchema({
+  inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
+});
+
+const mcpOperationOverrides = new Map<
+  string,
+  {
+    description: string;
+    inputSchema: ProjectSessionMcpInputSchema;
+  }
+>([
+  [
+    "insert-fragment",
+    {
+      description:
+        "Insert an authored/styled Webstudio fragment with components, text, props, tokens, and styles. Pass fragment as a Webstudio JSX string.",
+      inputSchema: insertFragmentMcpInputSchema,
+    },
+  ],
+  [
+    "insert-collection",
+    {
+      description:
+        "Create a Collection from array/object data and one repeated-item Webstudio JSX fragment. Internal item parameters and bindings are created atomically.",
+      inputSchema: insertCollectionMcpInputSchema,
+    },
+  ],
+]);
 
 const acceptsJsonType = (
   schema: InputJsonSchema | undefined,
@@ -1279,6 +1330,23 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       component: "@webstudio-is/sdk-components-react-radix:Switch",
     },
   ],
+  "insert-collection": [
+    {
+      parentInstanceId: "parent-id",
+      data: { type: "expression", value: "Posts.data.items" },
+      itemFragment:
+        '<ws.element ws:tag="article"><ws.element ws:tag="h2">{expression`collectionItem.title ?? "Untitled"`}</ws.element></ws.element>',
+    },
+    {
+      parentInstanceId: "parent-id",
+      data: {
+        type: "json",
+        value: [{ name: "Starter" }, { name: "Pro" }],
+      },
+      itemFragment:
+        '<ws.element ws:tag="div">{expression`collectionItem.name`}</ws.element>',
+    },
+  ],
   "insert-fragment": [
     {
       parentInstanceId: "parent-id",
@@ -1582,6 +1650,76 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
 
 const getMcpExamples = (command: string): readonly unknown[] =>
   mcpArgumentExamples[command] ?? [];
+
+const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => {
+  const { $defs, ...data } = dataSchema;
+  return {
+    type: "object",
+    ...($defs === undefined ? {} : { $defs }),
+    oneOf: [
+      {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: true },
+          data,
+          meta: { type: "object", additionalProperties: true },
+        },
+        required: ["ok", "data", "meta"],
+        additionalProperties: false,
+      },
+      {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: false },
+          data,
+          error: {
+            type: "object",
+            properties: {
+              code: { type: "string" },
+              message: { type: "string" },
+              issues: semanticValidationIssuesJsonSchema,
+            },
+            required: ["code", "message"],
+            additionalProperties: true,
+          },
+          meta: { type: "object", additionalProperties: true },
+        },
+        required: ["ok", "error", "meta"],
+        additionalProperties: false,
+      },
+    ],
+  };
+};
+
+const sessionStatusDataSchema = {
+  type: "object",
+  properties: { loaded: { type: "boolean" } },
+  required: ["loaded"],
+  additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const refreshDataSchema = {
+  type: "object",
+  properties: {
+    refreshedNamespaces: {
+      type: "array",
+      items: { type: "string", enum: builderNamespaces },
+    },
+  },
+  required: ["refreshedNamespaces"],
+  additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const previewDataSchema = {
+  type: "object",
+  properties: {
+    url: { type: "string" },
+    pid: { type: "integer" },
+    running: { type: "boolean" },
+  },
+  required: ["url", "running"],
+  additionalProperties: false,
+} as const satisfies InputJsonSchema;
 
 const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
@@ -1927,6 +2065,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Read the current local ProjectSession status. Pass verbose true only when debugging namespace, compatibility, freshness, or diagnostic details.",
     inputSchema: statusInputSchema,
+    outputSchema: getMcpOutputSchema(sessionStatusDataSchema),
     annotations: {
       command: "status",
       operationId: "project-session.status",
@@ -1955,6 +2094,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
         },
       },
     },
+    outputSchema: getMcpOutputSchema(refreshDataSchema),
     annotations: {
       command: "refresh",
       operationId: "project-session.refresh",
@@ -1972,6 +2112,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     name: "reset-session",
     description: "Delete the persisted local ProjectSession snapshot.",
     inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema(sessionStatusDataSchema),
     annotations: {
       command: "reset-session",
       operationId: "project-session.reset",
@@ -2073,6 +2214,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Regenerate local project files when needed, build them, then start or restart a production-like generated-site preview server for fast visual verification while MCP is running.",
     inputSchema: previewInputSchema,
+    outputSchema: getMcpOutputSchema(previewDataSchema),
     mcpExamples: getMcpExamples("preview.start"),
     annotations: {
       command: "preview.start",
@@ -2092,6 +2234,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Return the active generated-site preview server URL and process state for screenshot-based verification.",
     inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema(previewDataSchema),
     mcpExamples: getMcpExamples("preview.status"),
     annotations: {
       command: "preview.status",
@@ -2111,6 +2254,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     description:
       "Stop the active generated-site preview server owned by this MCP session.",
     inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema(previewDataSchema),
     mcpExamples: getMcpExamples("preview.stop"),
     annotations: {
       command: "preview.stop",
@@ -2127,24 +2271,26 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
   }),
 ];
 
+type McpStructuredError = {
+  code: string;
+  message: string;
+  issues?: readonly SemanticValidationIssue[];
+};
+
 type ProjectSessionMcpStructuredContent =
   | {
       ok: true;
       data: unknown;
       meta: {
-        session?:
-          | ReturnType<typeof serializeProjectSessionMeta>
-          | ReturnType<typeof serializeProjectSessionDebug>;
+        session?: ReturnType<typeof serializeProjectSessionMeta>;
       };
     }
   | {
       ok: false;
       data: unknown;
-      error: { code: string; message: string };
+      error: McpStructuredError;
       meta: {
-        session?:
-          | ReturnType<typeof serializeProjectSessionMeta>
-          | ReturnType<typeof serializeProjectSessionDebug>;
+        session?: ReturnType<typeof serializeProjectSessionMeta>;
       };
     };
 
@@ -2191,40 +2337,6 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
-const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
-  oneOf: [
-    {
-      type: "object",
-      properties: {
-        ok: { type: "boolean", const: true },
-        data: dataSchema,
-        meta: { type: "object", additionalProperties: true },
-      },
-      required: ["ok", "data", "meta"],
-      additionalProperties: false,
-    },
-    {
-      type: "object",
-      properties: {
-        ok: { type: "boolean", const: false },
-        data: dataSchema,
-        error: {
-          type: "object",
-          properties: {
-            code: { type: "string" },
-            message: { type: "string" },
-          },
-          required: ["code", "message"],
-          additionalProperties: true,
-        },
-        meta: { type: "object", additionalProperties: true },
-      },
-      required: ["ok", "error", "meta"],
-      additionalProperties: false,
-    },
-  ],
-});
-
 export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
   options: {
@@ -2239,21 +2351,18 @@ export const listProjectSessionMcpTools = (
     .filter(
       (operation) => hiddenMcpOperationCommands.has(operation.command) === false
     )
-    .map((operation) =>
-      createProjectSessionMcpTool({
+    .map((operation) => {
+      const override = mcpOperationOverrides.get(operation.command);
+      return createProjectSessionMcpTool({
         name: operation.command,
-        description:
-          operation.command === "insert-fragment"
-            ? "Insert an authored/styled Webstudio fragment with components, text, props, tokens, and styles. Pass fragment as a Webstudio JSX string."
-            : operation.description,
+        description: override?.description ?? operation.description,
         inputSchema:
-          operation.command === "insert-fragment"
-            ? insertFragmentMcpInputSchema
-            : getMcpOperationInputSchema(operation, {
-                includeRenderedAudit:
-                  options.includeScreenshot === true &&
-                  options.includePreview === true,
-              }),
+          override?.inputSchema ??
+          getMcpOperationInputSchema(operation, {
+            includeRenderedAudit:
+              options.includeScreenshot === true &&
+              options.includePreview === true,
+          }),
         ...(operation.outputSchema === undefined
           ? {}
           : { outputSchema: getMcpOutputSchema(operation.outputSchema) }),
@@ -2270,8 +2379,8 @@ export const listProjectSessionMcpTools = (
           invalidatesNamespaces: operation.invalidatesNamespaces,
           retryOnConflict: operation.retryOnConflict,
         },
-      })
-    ),
+      });
+    }),
   ...sessionTools.map((tool) => ({
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
@@ -2654,6 +2763,25 @@ const getInsertFragmentInput = async (input: unknown) => {
     mode,
     insertIndex,
   };
+};
+
+const getInsertCollectionInput = async (input: unknown) => {
+  const { itemFragment, ...parsedInput } =
+    insertCollectionMcpInput.parse(input);
+  return {
+    ...parsedInput,
+    itemFragment: await parseWebstudioJsxFragment(itemFragment),
+  };
+};
+
+const normalizeMcpOperationInput = async (name: string, input: unknown) => {
+  if (name === "insert-fragment") {
+    return await getInsertFragmentInput(input);
+  }
+  if (name === "insert-collection") {
+    return await getInsertCollectionInput(input);
+  }
+  return input;
 };
 
 const coveragePlanDetailValues = ["summary", "roots", "parts", "full"] as const;
@@ -3229,7 +3357,7 @@ const getAnimationComponentGuidance = (component: string) =>
   animationComponentGuidanceByComponent.get(component);
 
 const collectionComponentUsage =
-  'Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Insert "ws:collection" with insert-component so Webstudio creates and preserves its internal item and itemKey parameters. Bind the Collection data prop to the complete array or object, not the resource response wrapper and not one indexed item; external resource arrays are often nested under the scoped resource result\'s data field or deeper. Collection renders its child structure once per entry. Array iteration exposes the current item as `collectionItem`; object iteration exposes the current value as `collectionItem` and key as `collectionItemKey`. Bind descendant content and props with expressions such as `collectionItem.name`; do not reuse encoded parameter ids from another Collection. Wrap multiple repeated sibling instances in one Element. For repeated Radix items, bind a stable unique id or slug to each required value prop. Do not create, replace, or delete the internal item/itemKey parameter records directly.';
+  "Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Prefer insert-collection: pass the complete array/object plus one repeated-item JSX root, and it creates the Collection, private item/itemKey parameters, iterable binding, and item bindings atomically. External resource arrays are often nested below the scoped result's data field. Array iteration exposes `collectionItem`; object iteration also exposes `collectionItemKey`. Use expressions such as expression`collectionItem.name` in item JSX. Wrap multiple repeated siblings in one Element. For repeated Radix items, bind a stable unique id or slug to required value props. Do not create, replace, or delete internal Collection parameter records directly.";
 
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
@@ -4226,9 +4354,9 @@ const getMetaGuide = (
             "components.get",
             "list-variables",
             "list-resources",
-            "insert-component",
+            "insert-collection",
             "inspect-instance",
-            "bind-props",
+            "audit",
           ],
           tools
         )
@@ -4267,10 +4395,9 @@ const getMetaGuide = (
         : []),
       ...(isCollectionGoal
         ? [
-            'Call components.get with {"component":"ws:collection"} and use its Collection-specific guidance.',
             "Find the array or object to repeat. For a scoped resource result, select the complete nested array/object, commonly below the result's data field; do not bind the response wrapper or one indexed item.",
-            'Insert "ws:collection" with insert-component so its internal item and itemKey parameters are created. Do not create or replace those parameter records manually.',
-            "Bind the Collection data prop to the complete iterable. Put the repeated UI under Collection and bind descendant text/props to the generated current-item context; wrap multiple sibling instances in one Element.",
+            "Call insert-collection once with the complete iterable and one repeated-item JSX root. Use expression`collectionItem.name` and expression`collectionItemKey` inside the item fragment; the operation creates and binds private parameters atomically.",
+            "Wrap multiple repeated sibling instances in one ws.element. Do not create, replace, or delete Collection parameter records manually.",
             "Verify that every array/object entry renders once. For repeated Radix items, bind a stable unique id or slug to required value props.",
           ]
         : []),
@@ -4632,10 +4759,9 @@ const toCallResult = (
   } = {}
 ): ProjectSessionMcpToolResult => {
   const meta = {
-    session:
-      options.verboseSession === true
-        ? serializeProjectSessionDebug(envelope)
-        : serializeProjectSessionMeta(envelope),
+    session: serializeProjectSessionMeta(envelope, {
+      verbose: options.verboseSession,
+    }),
   };
   const structuredContent: ProjectSessionMcpStructuredContent =
     options.error === undefined
@@ -4669,39 +4795,23 @@ const getRenderedAuditError = (
   if (rendered === false || isRecord(envelope.result) === false) {
     return undefined;
   }
-  const failureCount = envelope.result.renderedFailureCount;
-  if (typeof failureCount !== "number" || failureCount === 0) {
+  const state = envelope.result.renderedState;
+  if (state === "complete" || state === "confirmation-required") {
     return undefined;
   }
-  const failures = Array.isArray(envelope.result.renderedFailures)
-    ? envelope.result.renderedFailures
-    : envelope.result.renderedFailureSummaries;
-  const confirmationRequired =
-    Array.isArray(failures) &&
-    failures.length > 0 &&
-    failures.every(
-      (failure) =>
-        isRecord(failure) &&
-        failure.code === "RENDERED_AUDIT_CONFIRMATION_REQUIRED"
-    );
-  if (confirmationRequired) {
-    return undefined;
-  }
-  const checkCount =
-    typeof envelope.result.renderedCheckCount === "number"
-      ? envelope.result.renderedCheckCount
-      : 0;
-  return checkCount === 0
+  return state === "failed"
     ? {
         code: "RENDERED_AUDIT_FAILED",
         message:
           "The static audit completed, but the requested rendered audit completed no rendered checks.",
       }
-    : {
-        code: "RENDERED_AUDIT_PARTIAL",
-        message:
-          "The static audit completed, but some requested rendered checks failed.",
-      };
+    : state === "partial"
+      ? {
+          code: "RENDERED_AUDIT_PARTIAL",
+          message:
+            "The static audit completed, but some requested rendered checks failed.",
+        }
+      : undefined;
 };
 
 const toResourceContent = (
@@ -5427,18 +5537,11 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "preview.stop" && stopPreview !== undefined) {
         return toMetaResult(await stopPreview());
       }
-      if (name === "insert-fragment") {
-        const envelope = await executeOperation({
-          command: name as Command,
-          input: await getInsertFragmentInput(input),
-          dryRun,
-        });
-        return toCallResult(envelope);
-      }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {
         throw new Error(`Unknown MCP tool "${name}".`);
       }
+      const normalizedInput = await normalizeMcpOperationInput(name, input);
       const isAuditInput = name === "audit" && isRecord(input);
       if (
         isAuditInput &&
@@ -5539,7 +5642,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
                   key !== "routeExamples"
               )
             )
-          : input
+          : normalizedInput
       );
       const envelope = await executeOperation({
         command: name as Command,
@@ -5600,141 +5703,36 @@ type ProjectSessionMcpErrorResult = {
   content: [{ type: "text"; text: string }];
   structuredContent: {
     ok: false;
-    error: {
-      message: string;
-      code: string;
-    };
+    error: McpStructuredError;
     meta: Record<string, never>;
   };
 };
-
-const getJsonSchemaExample = (
-  schema: InputJsonSchema | undefined,
-  depth = 0
-): unknown => {
-  if (
-    schema === undefined ||
-    typeof schema !== "object" ||
-    schema === null ||
-    depth > 4
-  ) {
-    return {};
-  }
-  if ("default" in schema && schema.default !== undefined) {
-    return schema.default;
-  }
-  if (
-    "examples" in schema &&
-    Array.isArray(schema.examples) &&
-    schema.examples.length > 0
-  ) {
-    return schema.examples[0];
-  }
-  if ("const" in schema) {
-    return schema.const;
-  }
-  if ("enum" in schema && Array.isArray(schema.enum)) {
-    return schema.enum[0];
-  }
-  if ("anyOf" in schema && Array.isArray(schema.anyOf)) {
-    return getJsonSchemaExample(schema.anyOf[0] as InputJsonSchema, depth + 1);
-  }
-  if ("oneOf" in schema && Array.isArray(schema.oneOf)) {
-    return getJsonSchemaExample(schema.oneOf[0] as InputJsonSchema, depth + 1);
-  }
-  if ("allOf" in schema && Array.isArray(schema.allOf)) {
-    const examples = schema.allOf.map((item) =>
-      getJsonSchemaExample(item as InputJsonSchema, depth + 1)
-    );
-    return examples.every(
-      (example) =>
-        typeof example === "object" &&
-        example !== null &&
-        Array.isArray(example) === false
-    )
-      ? Object.assign({}, ...examples)
-      : examples[0];
-  }
-  if (schema.type === "object") {
-    const properties = getInputJsonSchemaProperties(schema) ?? {};
-    const required = new Set(schema.required ?? []);
-    const entries = Object.entries(properties).filter(([name]) =>
-      required.has(name)
-    );
-    return Object.fromEntries(
-      entries.map(([name, property]) => [
-        name,
-        getJsonSchemaExample(property as InputJsonSchema, depth + 1),
-      ])
-    );
-  }
-  if (schema.type === "array") {
-    const minItems = schema.minItems ?? 0;
-    return Array.from({ length: minItems }, () =>
-      getJsonSchemaExample(schema.items as InputJsonSchema, depth + 1)
-    );
-  }
-  if (schema.type === "number" || schema.type === "integer") {
-    if (typeof schema.exclusiveMinimum === "number") {
-      return schema.exclusiveMinimum + 1;
-    }
-    return schema.minimum ?? 0;
-  }
-  if (schema.type === "boolean") {
-    return true;
-  }
-  if (schema.type === "string") {
-    const formatExamples: Record<string, string> = {
-      email: "user@example.com",
-      uri: "https://example.com",
-      url: "https://example.com",
-      uuid: "00000000-0000-4000-8000-000000000000",
-      date: "2026-01-01",
-      "date-time": "2026-01-01T00:00:00.000Z",
-    };
-    const base =
-      typeof schema.format === "string"
-        ? (formatExamples[schema.format] ?? "string")
-        : "string";
-    return base.padEnd(schema.minLength ?? 0, "x");
-  }
-  return {};
-};
-
-const getZodErrorMessage = (
-  error: z.ZodError,
-  inputSchema: InputJsonSchema | undefined
-) => {
-  const issues = error.issues
-    .map((issue) => {
-      const path = issue.path.join(".");
-      return path === "" ? issue.message : `${path}: ${issue.message}`;
-    })
-    .join(", ");
-  const example = getJsonSchemaExample(inputSchema);
-  return `${issues}. Expected input shape example: ${JSON.stringify(example)}`;
-};
-
-const getZodFieldIssues = (error: z.ZodError) =>
-  error.issues.map((issue) => ({
-    path: issue.path.map(String),
-    message: issue.message,
-  }));
 
 const toToolErrorResult = (
   error: unknown,
   getErrorCode: McpErrorCodeResolver | undefined,
   inputSchema?: InputJsonSchema
 ): ProjectSessionMcpErrorResult => {
+  const structuredCode =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : undefined;
   const code =
     error instanceof z.ZodError
       ? "INVALID_INPUT"
-      : (getErrorCode?.(error) ?? "MCP_TOOL_FAILED");
+      : (getErrorCode?.(error) ?? structuredCode ?? "MCP_TOOL_FAILED");
+  const validationIssues =
+    error instanceof z.ZodError
+      ? getZodValidationIssues(error, inputSchema)
+      : getValidationIssues(error);
   const message =
     code === "PROJECT_SESSION_BUSY"
       ? projectSessionBusyMessage
       : error instanceof z.ZodError
-        ? getZodErrorMessage(error, inputSchema)
+        ? "Tool input is invalid."
         : error instanceof Error
           ? error.message
           : String(error);
@@ -5743,9 +5741,7 @@ const toToolErrorResult = (
     error: {
       message,
       code,
-      ...(error instanceof z.ZodError
-        ? { issues: getZodFieldIssues(error) }
-        : {}),
+      ...(validationIssues === undefined ? {} : { issues: validationIssues }),
     },
     meta: {},
   };

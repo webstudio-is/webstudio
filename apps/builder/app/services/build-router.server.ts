@@ -19,8 +19,8 @@ import {
 import { normalizePatchRequest } from "~/shared/sync/patch/patch-normalize.server";
 import { loadById } from "@webstudio-is/project/index.server";
 import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
-import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
-import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/runtime/jsx";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
+import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import {
@@ -29,7 +29,7 @@ import {
   bundleVersion,
   publishedProjectBundle,
 } from "@webstudio-is/protocol";
-import { removeAgentInstructionsFromProjectSettings } from "@webstudio-is/project-build/shared/project-settings";
+import { removeAgentInstructionsFromProjectSettings } from "@webstudio-is/project-build";
 import {
   loadProjectBundleByBuildId,
   loadPublishedProjectBundleByProjectId,

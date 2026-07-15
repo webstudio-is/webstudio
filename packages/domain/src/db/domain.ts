@@ -6,7 +6,7 @@ import {
   getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
-import { unpublishBuild } from "@webstudio-is/project-build/index.server";
+import { unpublishBuild } from "@webstudio-is/project-build/server";
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";

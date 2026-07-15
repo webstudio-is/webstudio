@@ -49,8 +49,8 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
 } from "~/shared/nano-states";
-import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime/lookup";
-import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
 

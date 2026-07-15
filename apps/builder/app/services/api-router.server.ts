@@ -8,7 +8,7 @@ import {
   type AuthPermit,
 } from "@webstudio-is/trpc-interface/index.server";
 import { loadById } from "@webstudio-is/project/index.server";
-import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
   createProjectDomain,
   createUnpublishJobId,
@@ -22,7 +22,7 @@ import {
   unpublishProjectDomains,
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
-import { getBuilderRuntimeOperationInputSchema } from "@webstudio-is/project-build/runtime/registry";
+import { getBuilderRuntimeOperationInputSchema } from "@webstudio-is/project-build/runtime";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -40,15 +40,15 @@ import { type Asset } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
-} from "@webstudio-is/project-build/runtime/content-mode-permissions";
+} from "@webstudio-is/project-build/runtime";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
   runtimeOperationContracts,
   type RuntimeOperationId,
-} from "@webstudio-is/project-build/contracts/builder-runtime";
-import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
-import type { BuilderApiCapability } from "@webstudio-is/project-build/contracts/permissions";
+} from "@webstudio-is/project-build/contracts";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts";
+import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
+import type { BuilderApiCapability } from "@webstudio-is/project-build/contracts";
 import {
   buildGetInput,
   buildPatchInput,

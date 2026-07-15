@@ -1,5 +1,5 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
 import {
   insertWebstudioFragmentAt,
   type Insertable,

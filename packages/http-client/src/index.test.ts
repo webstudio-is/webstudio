@@ -54,6 +54,7 @@ import {
   getProjectSettings,
   getStyleDeclarations,
   inspectInstance,
+  insertCollection,
   insertComponent,
   insertFragment,
   importProjectBundle,
@@ -104,6 +105,21 @@ import {
   type PublishedProjectBundle,
 } from "./index";
 import * as httpClient from "./index";
+
+type FragmentPayload = Parameters<typeof insertFragment>[0]["fragment"];
+
+const createFragmentPayload = (): FragmentPayload => ({
+  children: [],
+  instances: [],
+  assets: [],
+  dataSources: [],
+  resources: [],
+  props: [],
+  breakpoints: [],
+  styleSourceSelections: [],
+  styleSources: [],
+  styles: [],
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -234,6 +250,11 @@ test("extracts api error codes", () => {
       data: { code: "NOT_FOUND", webstudioCode: "PROJECT_NOT_PUBLISHED" },
     })
   ).toBe("PROJECT_NOT_PUBLISHED");
+  expect(
+    getApiErrorCode({
+      data: { code: "BAD_REQUEST", webstudioCode: "INVALID_INPUT" },
+    })
+  ).toBe("INVALID_INPUT");
   expect(
     getApiErrorCode({ data: { code: "SOME_PRIVATE_CODE" } })
   ).toBeUndefined();
@@ -571,21 +592,28 @@ test("wraps project api trpc calls in named functions", async () => {
       parentInstanceId: "parent-id",
       component: "@webstudio-is/sdk-components-react-radix:Switch",
     });
+    await insertCollection({
+      ...params,
+      parentInstanceId: "parent-id",
+      data: { type: "json", value: [{ title: "First" }] },
+      itemFragment: {
+        ...createFragmentPayload(),
+        children: [{ type: "id", value: "item-root" }],
+        instances: [
+          {
+            type: "instance",
+            id: "item-root",
+            component: "ws:element",
+            tag: "article",
+            children: [],
+          },
+        ],
+      },
+    });
     await insertFragment({
       ...params,
       parentInstanceId: "parent-id",
-      fragment: {
-        children: [],
-        instances: [],
-        assets: [],
-        dataSources: [],
-        resources: [],
-        props: [],
-        breakpoints: [],
-        styleSourceSelections: [],
-        styleSources: [],
-        styles: [],
-      },
+      fragment: createFragmentPayload(),
     });
     await moveInstance({
       ...params,
@@ -862,6 +890,10 @@ test("wraps project api trpc calls in named functions", async () => {
     expectBodyRequest(
       "/trpc/api.instances.insertComponent",
       '"component":"@webstudio-is/sdk-components-react-radix:Switch"'
+    ),
+    expectBodyRequest(
+      "/trpc/api.instances.insertCollection",
+      '"itemFragment":{"children":[{"type":"id","value":"item-root"}]'
     ),
     expectBodyRequest(
       "/trpc/api.instances.insertFragment",

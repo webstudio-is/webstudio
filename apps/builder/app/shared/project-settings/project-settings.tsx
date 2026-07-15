@@ -22,6 +22,7 @@ import { $isDesignMode } from "~/shared/nano-states";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 import { SectionGeneral } from "./section-general";
 import { SectionAgents } from "./section-agents";
+import { SectionConnectAgent } from "./section-connect-agent";
 import { SectionAuth } from "./section-auth";
 import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
@@ -35,6 +36,7 @@ const sections = new Map<
 >([
   ["general", SectionGeneral],
   ["agents", SectionAgents],
+  ["connectAgent", SectionConnectAgent],
   ["redirects", SectionRedirects],
   ["publish", SectionPublish],
   ["marketplace", SectionMarketplace],
@@ -44,6 +46,7 @@ const sections = new Map<
 
 const sectionLabels = new Map<SectionName, string>([
   ["auth", "Authentication"],
+  ["connectAgent", "Connect your Agent"],
 ]);
 
 export const ProjectSettingsDialog = ({

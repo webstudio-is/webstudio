@@ -25,16 +25,16 @@ import {
   type ProjectSessionStorage,
   type ProjectSessionTransport,
 } from "@webstudio-is/project-build/project-session";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
+import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
 import {
   createBuilderStateFromBuildData,
   createBuilderStateFromSerializedSnapshot,
   createSerializedBuilderStateSnapshotFromState,
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
-} from "@webstudio-is/project-build/state/adapters";
-import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build/shared/project-settings";
-import type { BuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
+} from "@webstudio-is/project-build/state";
+import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
+import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "./config";
 import { getStableErrorCode } from "./error-codes";
 import { writeFileAtomic } from "./fs-utils";

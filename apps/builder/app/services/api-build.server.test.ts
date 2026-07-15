@@ -12,7 +12,7 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
-import * as projectBuild from "@webstudio-is/project-build/index.server";
+import * as projectBuild from "@webstudio-is/project-build/server";
 import type { z } from "zod";
 import {
   commitBuildPatch,

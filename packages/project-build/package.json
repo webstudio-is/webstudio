@@ -12,40 +12,28 @@
       "webstudio": "./src/index.ts",
       "partykit": "./src/index.ts"
     },
-    "./schema": {
-      "webstudio": "./src/schema.ts",
-      "import": "./src/schema.ts",
-      "default": "./src/schema.ts"
+    "./contracts": {
+      "webstudio": "./src/contracts.ts",
+      "import": "./src/contracts.ts",
+      "default": "./src/contracts.ts"
     },
-    "./shared/project-settings": {
-      "webstudio": "./src/shared/project-settings.ts",
-      "import": "./src/shared/project-settings.ts",
-      "default": "./src/shared/project-settings.ts"
+    "./runtime": {
+      "webstudio": "./src/runtime.ts",
+      "import": "./src/runtime.ts",
+      "default": "./src/runtime.ts"
     },
-    "./contracts/builder-runtime": {
-      "webstudio": "./src/contracts/builder-runtime.ts",
-      "import": "./src/contracts/builder-runtime.ts",
-      "default": "./src/contracts/builder-runtime.ts"
+    "./transfer": {
+      "webstudio": "./src/transfer.ts",
+      "import": "./src/transfer.ts",
+      "default": "./src/transfer.ts"
     },
-    "./contracts/input-schema": {
-      "webstudio": "./src/contracts/input-schema.ts",
-      "import": "./src/contracts/input-schema.ts",
-      "default": "./src/contracts/input-schema.ts"
+    "./transfer/server": {
+      "webstudio": "./src/transfer.server.ts"
     },
-    "./contracts/namespaces": {
-      "webstudio": "./src/contracts/namespaces.ts",
-      "import": "./src/contracts/namespaces.ts",
-      "default": "./src/contracts/namespaces.ts"
-    },
-    "./contracts/permissions": {
-      "webstudio": "./src/contracts/permissions.ts",
-      "import": "./src/contracts/permissions.ts",
-      "default": "./src/contracts/permissions.ts"
-    },
-    "./contracts/patch": {
-      "webstudio": "./src/contracts/patch.ts",
-      "import": "./src/contracts/patch.ts",
-      "default": "./src/contracts/patch.ts"
+    "./state": {
+      "webstudio": "./src/state.ts",
+      "import": "./src/state.ts",
+      "default": "./src/state.ts"
     },
     "./project-session": {
       "webstudio": "./src/project-session.ts",
@@ -53,279 +41,23 @@
       "default": "./src/project-session.ts"
     },
     "./mcp": {
-      "webstudio": "./src/mcp.ts",
-      "import": "./src/mcp.ts",
-      "default": "./src/mcp.ts"
+      "webstudio": "./src/mcp.ts"
     },
-    "./build-integrity": {
-      "webstudio": "./src/build-integrity.ts",
-      "import": "./src/build-integrity.ts",
-      "default": "./src/build-integrity.ts"
+    "./visual": {
+      "webstudio": "./src/visual.ts"
     },
-    "./state/adapters": {
-      "webstudio": "./src/state/adapters.ts",
-      "import": "./src/state/adapters.ts",
-      "default": "./src/state/adapters.ts"
+    "./persistence": {
+      "webstudio": "./src/persistence.ts",
+      "import": "./src/persistence.ts",
+      "default": "./src/persistence.ts"
     },
-    "./state/builder-state": {
-      "webstudio": "./src/state/builder-state.ts",
-      "import": "./src/state/builder-state.ts",
-      "default": "./src/state/builder-state.ts"
-    },
-    "./state/freshness": {
-      "webstudio": "./src/state/freshness.ts",
-      "import": "./src/state/freshness.ts",
-      "default": "./src/state/freshness.ts"
-    },
-    "./state/patch": {
-      "webstudio": "./src/state/patch.ts",
-      "import": "./src/state/patch.ts",
-      "default": "./src/state/patch.ts"
-    },
-    "./visual/screenshot-diff": {
-      "webstudio": "./src/visual/screenshot-diff.ts",
-      "import": "./src/visual/screenshot-diff.ts",
-      "default": "./src/visual/screenshot-diff.ts"
-    },
-    "./visual/screenshot-browser": {
-      "webstudio": "./src/visual/screenshot-browser.ts",
-      "import": "./src/visual/screenshot-browser.ts",
-      "default": "./src/visual/screenshot-browser.ts"
-    },
-    "./runtime/assets": {
-      "webstudio": "./src/runtime/assets.ts",
-      "import": "./src/runtime/assets.ts",
-      "default": "./src/runtime/assets.ts"
-    },
-    "./runtime/auth": {
-      "webstudio": "./src/runtime/auth.ts",
-      "import": "./src/runtime/auth.ts",
-      "default": "./src/runtime/auth.ts"
-    },
-    "./runtime/breakpoints": {
-      "webstudio": "./src/runtime/breakpoints.ts",
-      "import": "./src/runtime/breakpoints.ts",
-      "default": "./src/runtime/breakpoints.ts"
-    },
-    "./runtime/block": {
-      "webstudio": "./src/runtime/block.ts",
-      "import": "./src/runtime/block.ts",
-      "default": "./src/runtime/block.ts"
-    },
-    "./runtime/data": {
-      "webstudio": "./src/runtime/data.ts",
-      "import": "./src/runtime/data.ts",
-      "default": "./src/runtime/data.ts"
-    },
-    "./runtime/data-formats/data-envelope": {
-      "webstudio": "./src/runtime/data-formats/data-envelope.ts",
-      "import": "./src/runtime/data-formats/data-envelope.ts",
-      "default": "./src/runtime/data-formats/data-envelope.ts"
-    },
-    "./runtime/data-formats/instance-transfer": {
-      "webstudio": "./src/runtime/data-formats/instance-transfer.ts",
-      "import": "./src/runtime/data-formats/instance-transfer.ts",
-      "default": "./src/runtime/data-formats/instance-transfer.ts"
-    },
-    "./runtime/data-formats/page-transfer": {
-      "webstudio": "./src/runtime/data-formats/page-transfer.ts",
-      "import": "./src/runtime/data-formats/page-transfer.ts",
-      "default": "./src/runtime/data-formats/page-transfer.ts"
-    },
-    "./runtime/errors": {
-      "webstudio": "./src/runtime/errors.ts",
-      "import": "./src/runtime/errors.ts",
-      "default": "./src/runtime/errors.ts"
-    },
-    "./runtime/expression-validation": {
-      "webstudio": "./src/runtime/expression-validation.ts",
-      "import": "./src/runtime/expression-validation.ts",
-      "default": "./src/runtime/expression-validation.ts"
-    },
-    "./runtime/fragment": {
-      "webstudio": "./src/runtime/fragment.ts",
-      "import": "./src/runtime/fragment.ts",
-      "default": "./src/runtime/fragment.ts"
-    },
-    "./runtime/html": {
-      "webstudio": "./src/runtime/html.ts",
-      "import": "./src/runtime/html.ts",
-      "default": "./src/runtime/html.ts"
-    },
-    "./runtime/jsx": {
-      "webstudio": "./src/runtime/jsx/index.ts",
-      "import": "./src/runtime/jsx/index.ts",
-      "default": "./src/runtime/jsx/index.ts"
-    },
-    "./runtime/jsx/syntax": {
-      "webstudio": "./src/runtime/jsx/syntax.ts",
-      "import": "./src/runtime/jsx/syntax.ts",
-      "default": "./src/runtime/jsx/syntax.ts"
-    },
-    "./runtime/jsx/utils": {
-      "webstudio": "./src/runtime/jsx/utils.ts",
-      "import": "./src/runtime/jsx/utils.ts",
-      "default": "./src/runtime/jsx/utils.ts"
-    },
-    "./runtime/instances": {
-      "webstudio": "./src/runtime/instances.ts",
-      "import": "./src/runtime/instances.ts",
-      "default": "./src/runtime/instances.ts"
-    },
-    "./runtime/insert-target": {
-      "webstudio": "./src/runtime/insert-target.ts",
-      "import": "./src/runtime/insert-target.ts",
-      "default": "./src/runtime/insert-target.ts"
-    },
-    "./runtime/lookup": {
-      "webstudio": "./src/runtime/lookup.ts",
-      "import": "./src/runtime/lookup.ts",
-      "default": "./src/runtime/lookup.ts"
-    },
-    "./runtime/instance-duplicate": {
-      "webstudio": "./src/runtime/instance-duplicate.ts",
-      "import": "./src/runtime/instance-duplicate.ts",
-      "default": "./src/runtime/instance-duplicate.ts"
-    },
-    "./runtime/mutation": {
-      "webstudio": "./src/runtime/mutation.ts",
-      "import": "./src/runtime/mutation.ts",
-      "default": "./src/runtime/mutation.ts"
-    },
-    "./runtime/page-copy": {
-      "webstudio": "./src/runtime/page-copy.ts",
-      "import": "./src/runtime/page-copy.ts",
-      "default": "./src/runtime/page-copy.ts"
-    },
-    "./runtime/pages": {
-      "webstudio": "./src/runtime/pages.ts",
-      "import": "./src/runtime/pages.ts",
-      "default": "./src/runtime/pages.ts"
-    },
-    "./runtime/project-settings": {
-      "webstudio": "./src/runtime/project-settings.ts",
-      "import": "./src/runtime/project-settings.ts",
-      "default": "./src/runtime/project-settings.ts"
-    },
-    "./runtime/redirect-source": {
-      "webstudio": "./src/runtime/redirect-source.ts",
-      "import": "./src/runtime/redirect-source.ts",
-      "default": "./src/runtime/redirect-source.ts"
-    },
-    "./runtime/redirect-loop-detection": {
-      "webstudio": "./src/runtime/redirect-loop-detection.ts",
-      "import": "./src/runtime/redirect-loop-detection.ts",
-      "default": "./src/runtime/redirect-loop-detection.ts"
-    },
-    "./runtime/redirect-parsers": {
-      "webstudio": "./src/runtime/redirect-parsers.ts",
-      "import": "./src/runtime/redirect-parsers.ts",
-      "default": "./src/runtime/redirect-parsers.ts"
-    },
-    "./runtime/props": {
-      "webstudio": "./src/runtime/props.ts",
-      "import": "./src/runtime/props.ts",
-      "default": "./src/runtime/props.ts"
-    },
-    "./runtime/registry": {
-      "webstudio": "./src/runtime/registry.ts",
-      "import": "./src/runtime/registry.ts",
-      "default": "./src/runtime/registry.ts"
-    },
-    "./runtime/slot": {
-      "webstudio": "./src/runtime/slot.ts",
-      "import": "./src/runtime/slot.ts",
-      "default": "./src/runtime/slot.ts"
-    },
-    "./runtime/content-model": {
-      "webstudio": "./src/runtime/content-model.ts",
-      "import": "./src/runtime/content-model.ts",
-      "default": "./src/runtime/content-model.ts"
-    },
-    "./runtime/content-mode-copy-policy": {
-      "webstudio": "./src/runtime/content-mode-copy-policy.ts",
-      "import": "./src/runtime/content-mode-copy-policy.ts",
-      "default": "./src/runtime/content-mode-copy-policy.ts"
-    },
-    "./runtime/content-mode-permissions": {
-      "webstudio": "./src/runtime/content-mode-permissions.ts",
-      "import": "./src/runtime/content-mode-permissions.ts",
-      "default": "./src/runtime/content-mode-permissions.ts"
-    },
-    "./runtime/context": {
-      "webstudio": "./src/runtime/context.ts",
-      "import": "./src/runtime/context.ts",
-      "default": "./src/runtime/context.ts"
-    },
-    "./runtime/component-template": {
-      "webstudio": "./src/runtime/component-template.ts",
-      "import": "./src/runtime/component-template.ts",
-      "default": "./src/runtime/component-template.ts"
-    },
-    "./runtime/component-catalog": {
-      "webstudio": "./src/runtime/component-catalog.ts",
-      "import": "./src/runtime/component-catalog.ts",
-      "default": "./src/runtime/component-catalog.ts"
-    },
-    "./runtime/style-copy": {
-      "webstudio": "./src/runtime/style-copy.ts",
-      "import": "./src/runtime/style-copy.ts",
-      "default": "./src/runtime/style-copy.ts"
-    },
-    "./runtime/style-utils": {
-      "webstudio": "./src/runtime/style-utils.ts",
-      "import": "./src/runtime/style-utils.ts",
-      "default": "./src/runtime/style-utils.ts"
-    },
-    "./runtime/tree": {
-      "webstudio": "./src/runtime/tree.ts",
-      "import": "./src/runtime/tree.ts",
-      "default": "./src/runtime/tree.ts"
-    },
-    "./runtime/matcher": {
-      "webstudio": "./src/runtime/matcher.ts",
-      "import": "./src/runtime/matcher.ts",
-      "default": "./src/runtime/matcher.ts"
-    },
-    "./runtime/url-pattern": {
-      "webstudio": "./src/runtime/url-pattern.ts",
-      "import": "./src/runtime/url-pattern.ts",
-      "default": "./src/runtime/url-pattern.ts"
-    },
-    "./runtime/webflow/instances-properties": {
-      "webstudio": "./src/runtime/webflow/instances-properties.ts",
-      "import": "./src/runtime/webflow/instances-properties.ts",
-      "default": "./src/runtime/webflow/instances-properties.ts"
-    },
-    "./runtime/webflow/schema": {
-      "webstudio": "./src/runtime/webflow/schema.ts",
-      "import": "./src/runtime/webflow/schema.ts",
-      "default": "./src/runtime/webflow/schema.ts"
-    },
-    "./runtime/webflow/styles": {
-      "webstudio": "./src/runtime/webflow/styles.ts",
-      "import": "./src/runtime/webflow/styles.ts",
-      "default": "./src/runtime/webflow/styles.ts"
-    },
-    "./runtime/styles": {
-      "webstudio": "./src/runtime/styles.ts",
-      "import": "./src/runtime/styles.ts",
-      "default": "./src/runtime/styles.ts"
-    },
-    "./index.server": {
-      "webstudio": "./src/index.server.ts"
-    },
-    "./build-parser.server": {
-      "webstudio": "./src/db/build-parser.ts"
-    },
-    "./style-source-selections.server": {
-      "webstudio": "./src/db/style-source-selections.ts"
-    },
-    "./styles.server": {
-      "webstudio": "./src/db/styles.ts"
+    "./server": {
+      "webstudio": "./src/server.ts"
     }
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/state/immer.ts"
+  ],
   "scripts": {
     "generate-docs": "node scripts/generate-docs.mjs && oxfmt src/docs.generated.ts",
     "generate-runtime-operation-contracts": "tsx --import ../../scripts/register-react-global.ts --conditions=webstudio scripts/generate-runtime-operation-contracts.ts && oxfmt src/contracts/__generated__/runtime-operation-contracts.ts",

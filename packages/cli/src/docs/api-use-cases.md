@@ -60,7 +60,7 @@ Commands:
 
 Notes:
 
-- Use `webstudio schema mcp` for a tiny machine-readable MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` or focused `meta.get_more_tools` calls only when exact input schemas are needed.
+- Use `webstudio schema mcp` for a compact machine-readable MCP tool overview. Add `--verbose` or use focused `meta.get_more_tools` calls only when exact input schemas are needed.
 - Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Protocol clients can use `resources/list` and `resources/read`; shell agents can use `webstudio mcp list-resources` and `webstudio mcp read-resource <uri>`. Read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused tools are insufficient.
 - Read `webstudio://project/expressions` before authoring unfamiliar computed text, prop bindings, resource expressions, actions, or Collection item bindings.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
@@ -98,6 +98,7 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 - Create pages from reusable templates.
 - Update page metadata, SEO fields, auth settings, and marketplace metadata.
 - Insert components and styled JSX sections.
+- Create data-driven lists, grids, cards, and similar repeated UI from array or object data in one Collection operation.
 - Move, copy, wrap, unwrap, convert, rename, retag, and delete elements.
 - Update text, rich text, props, bindings, and actions.
 - Create and update local styles, design tokens, style sources, and CSS variables.
@@ -423,6 +424,12 @@ Commands:
 
 - MCP tool: move-instance {"moves":"moves.json contents"}
 
+Notes:
+
+- Use `position: "end"` to append an instance. Repeating this for A and then B preserves the final order A, B.
+- A numeric `insertIndex` addresses the target parent's children before the moved instance is removed. Use it for exact placement; do not calculate the last index to append.
+- Moves in one `moves` array are applied sequentially in array order.
+
 ## Clone element subtree
 
 Commands:
@@ -553,12 +560,12 @@ Commands:
 
 - MCP tool: list-design-tokens {}
 - MCP tool: list-design-tokens {"withUsage":true}
-- MCP tool: list-design-tokens {"includeStyles":true}
+- MCP tool: list-design-tokens {"verbose":true}
 
 Notes:
 
 - The default response is compact and includes token id, name, declaration count, and optional usage count.
-- Use `includeStyles:true` only when you need the full inline style declarations.
+- Use `verbose:true` only when you need the full inline style declarations.
 
 ## Create design tokens
 
@@ -987,17 +994,15 @@ Notes:
 
 Commands:
 
-- MCP tool: components.get {"component":"ws:collection"}
-- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"ws:collection"}
+- MCP tool: insert-collection {"parentInstanceId":"<instanceId>","data":{"type":"expression","value":"posts.data.items"},"itemFragment":"<ws.element ws:tag=\"article\"><ws.element ws:tag=\"h2\">{expression`collectionItem.title`}</ws.element></ws.element>"}
 - MCP tool: inspect-instance {"instanceId":"<collectionId>","include":["props","bindings","children"]}
-- MCP tool: bind-props {"bindings":[{"instanceId":"<collectionId>","name":"data","binding":{"type":"expression","value":"posts.data"}}]}
 
 Notes:
 
 - Use Collection whenever an array or object from a resource or data variable should render a list, grid, cards, table rows, options, tabs, or other repeated UI.
-- Bind the Collection `data` prop to the complete array or object. Do not bind the resource response wrapper or one indexed item. External resource arrays are commonly nested under the scoped resource result's `data` field or deeper.
-- Insert Collection with `insert-component` so Webstudio creates its internal current-item and current-key parameters. Preserve those generated parameters; they are scoped runtime context, not public records to create, replace, or delete.
-- Collection renders its child structure once for every entry. Bind descendant text and props to the current item. Array iteration exposes the item; object iteration exposes its key and value.
+- Pass `insert-collection` the complete array or object. Do not pass the resource response wrapper or one indexed item. External resource arrays are commonly nested under the scoped resource result's `data` field or deeper.
+- Pass one repeated-item Webstudio JSX root. The command creates the Collection, its private current-item/current-key parameters, the iterable binding, and descendant item bindings atomically.
+- Collection renders the item root once for every entry. Use `expression` values such as `collectionItem.title` in descendant text and props. Object iteration also exposes `collectionItemKey`.
 - Wrap multiple repeated sibling instances in one Element inside Collection.
 - For repeated Radix items such as accordion items, tabs, or menu options, bind a stable unique id or slug to every required `value` prop.
 - See the [Collection documentation](https://docs.webstudio.is/university/core-components/collection) for the equivalent Builder workflow.
