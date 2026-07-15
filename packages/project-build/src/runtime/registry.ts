@@ -27,6 +27,13 @@ import * as search from "./search";
 import * as audit from "./audit";
 import * as styles from "./styles";
 import { getZodValidationIssues, throwBuilderValidationError } from "./errors";
+import {
+  createRuntimeMutationExecutionSchema,
+  getRuntimeOutputSchema,
+  type RuntimeOperationOutput,
+  type RuntimeOutputSchemaId,
+} from "./output-schemas";
+import type { BuilderRuntimeMutation } from "./mutation";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -40,8 +47,8 @@ export type BuilderRuntimeOperation<
   kind: "read" | "mutation";
   inputSchema: z.ZodTypeAny;
   inputJsonSchema: InputJsonSchema;
-  outputSchema?: z.ZodTypeAny;
-  outputJsonSchema?: InputJsonSchema;
+  outputSchema: z.ZodTypeAny;
+  outputJsonSchema: InputJsonSchema;
   readNamespaces: readonly BuilderNamespace[];
   writeNamespaces: readonly BuilderNamespace[];
   invalidatesNamespaces: readonly BuilderNamespace[];
@@ -78,6 +85,18 @@ type RuntimeOperationContractInput =
       requiresAssets?: boolean;
       requiresConfirm?: boolean;
     };
+
+type ReadContract = Extract<RuntimeOperationContractInput, { kind: "read" }>;
+type MutationContract = Extract<
+  RuntimeOperationContractInput,
+  { kind: "mutation" }
+>;
+type RuntimeExecutionOutput<
+  Id extends RuntimeOutputSchemaId,
+  Contract extends RuntimeOperationContractInput,
+> = Contract extends MutationContract
+  ? BuilderRuntimeMutation<RuntimeOperationOutput<Id>>
+  : RuntimeOperationOutput<Id>;
 
 const throwInvalidOperationInput = (
   error: z.ZodError,
@@ -139,26 +158,36 @@ const bindExpressionInput = (
 };
 
 const runtimeOperation = <
-  Id extends string,
+  Id extends RuntimeOutputSchemaId,
   Schema extends z.ZodTypeAny,
-  Result,
+  Contract extends RuntimeOperationContractInput,
 >(
   id: Id,
   publicApi: RuntimeOperationPublicApi,
-  contract: RuntimeOperationContractInput,
+  contract: Contract,
   inputSchema: Schema,
   execute: (args: {
     state: BuilderState;
     input: z.output<Schema>;
     context: BuilderRuntimeContext;
-  }) => Result | Promise<Result>,
-  outputSchema?: z.ZodTypeAny
-): BuilderRuntimeOperation<Id, z.input<Schema>, Result> => {
+  }) =>
+    | RuntimeExecutionOutput<Id, Contract>
+    | Promise<RuntimeExecutionOutput<Id, Contract>>
+): BuilderRuntimeOperation<
+  Id,
+  z.input<Schema>,
+  RuntimeExecutionOutput<Id, Contract>
+> => {
   const writeNamespaces =
     contract.kind === "mutation" ? contract.writeNamespaces : [];
   const inputJsonSchema = getInputSchemaMetadata(inputSchema, {
     isHiddenField: isHiddenPublicApiInputField,
   }).inputJsonSchema;
+  const outputSchema = getRuntimeOutputSchema(id);
+  const executionOutputSchema =
+    contract.kind === "mutation"
+      ? createRuntimeMutationExecutionSchema(outputSchema)
+      : outputSchema;
   return {
     id,
     ...publicApi,
@@ -166,10 +195,7 @@ const runtimeOperation = <
     inputSchema,
     inputJsonSchema,
     outputSchema,
-    outputJsonSchema:
-      outputSchema === undefined
-        ? undefined
-        : getInputSchemaMetadata(outputSchema).inputJsonSchema,
+    outputJsonSchema: getInputSchemaMetadata(outputSchema).inputJsonSchema,
     readNamespaces: contract.readNamespaces,
     writeNamespaces,
     invalidatesNamespaces:
@@ -194,31 +220,19 @@ const runtimeOperation = <
         input: parseOperationInput(inputSchema, input, inputJsonSchema),
         context,
       });
-      if (outputSchema === undefined) {
-        return result;
-      }
-      const parseOutput = (value: Result) => {
-        if (contract.kind === "mutation") {
-          if (
-            typeof value !== "object" ||
-            value === null ||
-            "result" in value === false
-          ) {
-            throw new Error(
-              `Mutation runtime operation "${id}" must return a mutation envelope with a result.`
-            );
-          }
-          return {
-            ...value,
-            result: outputSchema.parse(value.result),
-          } as Result;
-        }
-        return outputSchema.parse(value) as Result;
-      };
       if (result instanceof Promise) {
-        return result.then(parseOutput);
+        return result.then(
+          (value) =>
+            executionOutputSchema.parse(value) as RuntimeExecutionOutput<
+              Id,
+              Contract
+            >
+        );
       }
-      return parseOutput(result);
+      return executionOutputSchema.parse(result) as RuntimeExecutionOutput<
+        Id,
+        Contract
+      >;
     },
   };
 };
@@ -232,7 +246,7 @@ const api = (
 const readContract = (
   readNamespaces: readonly BuilderNamespace[],
   options: { requiresAssets?: boolean } = {}
-): RuntimeOperationContractInput => ({
+): ReadContract => ({
   kind: "read",
   readNamespaces,
   ...options,
@@ -245,7 +259,7 @@ const mutationContract = (input: {
   retryOnConflict?: boolean;
   requiresAssets?: boolean;
   requiresConfirm?: boolean;
-}): RuntimeOperationContractInput => ({ kind: "mutation", ...input });
+}): MutationContract => ({ kind: "mutation", ...input });
 
 const pageNamespaces = ["pages", "instances"] as const;
 const instanceReadNamespaces = ["pages", "instances", "props"] as const;
@@ -814,8 +828,7 @@ export const builderRuntimeOperations = [
       "breakpoints",
     ]),
     audit.auditInput,
-    ({ state, input, context }) => audit.audit(state, input, context),
-    audit.auditResult
+    ({ state, input, context }) => audit.audit(state, input, context)
   ),
   runtimeOperation(
     "instances.insertComponent",

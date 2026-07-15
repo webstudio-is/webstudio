@@ -23,7 +23,7 @@ export type PublicRuntimeOperationContract = {
   permit?: PublicApiOperationPermit;
   kind: PublicApiOperationKind;
   inputSchema: InputJsonSchema;
-  outputSchema?: InputJsonSchema;
+  outputSchema: InputJsonSchema;
   readNamespaces: readonly PublicApiOperationNamespace[];
   writeNamespaces: readonly PublicApiOperationNamespace[];
   invalidatesNamespaces: readonly PublicApiOperationNamespace[];
@@ -55,9 +55,7 @@ export const publicRuntimeOperationContracts: readonly PublicRuntimeOperationCon
       permit,
       kind,
       inputSchema,
-      ...("outputSchema" in contract
-        ? { outputSchema: contract.outputSchema }
-        : {}),
+      outputSchema: contract.outputSchema,
       readNamespaces,
       writeNamespaces,
       invalidatesNamespaces,

@@ -3548,6 +3548,15 @@ export const listTextInstances = (
   };
 };
 
+type InstanceInspection = ReturnType<typeof serializeInstanceSummary> & {
+  ancestors?: ReturnType<typeof getInstanceAncestors>;
+  props?: Prop[];
+  styles?: ReturnType<typeof serializeStyleDeclarations>;
+  children?: Array<ReturnType<typeof serializeInstanceSummary>>;
+  bindings?: Prop[];
+  sources?: string[];
+};
+
 export const inspectInstance = (
   state: Pick<
     BuilderState,
@@ -3569,7 +3578,7 @@ export const inspectInstance = (
   const depths = getInstanceDepths(instances, [input.instanceId]);
   const parents = getInstanceParents(instances);
   const include = new Set(input.include ?? []);
-  const details: Record<string, unknown> = serializeInstanceSummary(
+  const details: InstanceInspection = serializeInstanceSummary(
     instance,
     depths.get(instance.id) ?? 0,
     parents.get(instance.id)

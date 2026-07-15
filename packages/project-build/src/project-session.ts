@@ -2,14 +2,12 @@ import hash from "@emotion/hash";
 import type {
   RuntimeOperationContract,
   RuntimeOperationId,
-  RuntimeOperationStateContract,
 } from "./contracts/builder-runtime";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import { hasGeneratedRecordWritePatch } from "./contracts/patch";
 import type { BuilderApiCapability } from "./contracts/permissions";
-import { emptyInputJsonSchema } from "./contracts/input-schema";
 import {
   builderRuntimeContext,
   type BuilderRuntimeContext,
@@ -34,6 +32,10 @@ import {
 import { applyBuilderPatchTransactions } from "./state/patch";
 
 type ProjectSessionSource = "local" | "remote" | "dry-run" | "server";
+type ProjectSessionEnvelopeContract = Pick<
+  RuntimeOperationContract,
+  "id" | "readNamespaces" | "writeNamespaces" | "invalidatesNamespaces"
+>;
 type ProjectSessionDiagnosticLevel = "info" | "warning" | "error";
 
 export type ProjectSessionDiagnostic = {
@@ -1133,10 +1135,7 @@ export class ProjectSession {
     source: ProjectSessionSource;
     result: Result;
     committed: boolean;
-    contract: Pick<
-      RuntimeOperationContract,
-      "id" | "readNamespaces" | "writeNamespaces" | "invalidatesNamespaces"
-    >;
+    contract: ProjectSessionEnvelopeContract;
     snapshot?: ProjectSessionSnapshot;
     diagnostics?: ProjectSessionDiagnostic[];
     transaction?: BuilderPatchTransaction;
@@ -1171,16 +1170,11 @@ export class ProjectSession {
   }
 }
 
-const emptyContract: RuntimeOperationStateContract = {
+const emptyContract: ProjectSessionEnvelopeContract = {
   id: "project-session.status",
-  kind: "read",
-  inputSchema: emptyInputJsonSchema,
   readNamespaces: [],
   writeNamespaces: [],
   invalidatesNamespaces: [],
-  retryOnConflict: false,
-  requiresAssets: false,
-  requiresConfirm: false,
 };
 
 export const createProjectSession = (options: ProjectSessionOptions) =>

@@ -49,6 +49,11 @@ type TestPublicMcpOperation = Pick<
 > &
   Partial<PublicMcpOperation>;
 
+const runtimeContractById = new Map<
+  string,
+  (typeof runtimeOperationContracts)[number]
+>(runtimeOperationContracts.map((contract) => [contract.id, contract]));
+
 const publicOperation = (
   operation: TestPublicMcpOperation
 ): PublicMcpOperation => {
@@ -63,6 +68,7 @@ const publicOperation = (
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
+    outputSchema: runtimeContractById.get(operation.id)?.outputSchema,
     ...operationFields,
   };
   return { ...merged, inputSchema };
@@ -574,6 +580,18 @@ describe("project session mcp adapter", () => {
     ]);
     expect(toolNames).toContain("insert-fragment");
     expect(toolNames).not.toContain("copy-page");
+    for (const operation of publicMcpOperations) {
+      if (
+        hiddenMcpOperationCommands.has(operation.command) ||
+        runtimeContractById.has(operation.id) === false
+      ) {
+        continue;
+      }
+      expect(
+        tools.find((tool) => tool.name === operation.command)?.outputSchema,
+        `Missing MCP output schema for ${operation.command}`
+      ).toBeDefined();
+    }
     const imageDescriptionsTool = tools.find(
       (tool) => tool.name === "set-image-descriptions"
     );
