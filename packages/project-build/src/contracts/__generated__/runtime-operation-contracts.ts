@@ -34611,10 +34611,15 @@ export const runtimeOperationContractData = [
         },
         didMergeBreakpointsDueToLimit: {
           type: "boolean",
+          const: true,
         },
       },
-      required: ["instanceIds", "rootInstanceIds", "removedInstanceIds"],
-      additionalProperties: {},
+      required: [
+        "instanceIds",
+        "rootInstanceIds",
+        "removedInstanceIds",
+        "parentInstanceId",
+      ],
     },
     readNamespaces: [
       "pages",
@@ -46152,10 +46157,10 @@ export const runtimeOperationContractData = [
         },
         didMergeBreakpointsDueToLimit: {
           type: "boolean",
+          const: true,
         },
       },
       required: ["instanceIds", "rootInstanceIds", "removedInstanceIds"],
-      additionalProperties: {},
     },
     readNamespaces: [
       "pages",

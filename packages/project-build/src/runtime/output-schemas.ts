@@ -14,6 +14,7 @@ import { builderPatchSchema } from "../contracts/patch";
 import { marketplaceProduct } from "../shared/marketplace";
 import { auditResult } from "./audit";
 import { insertCollectionResult } from "./collection";
+import { componentInsertResult } from "./component-insert-contract";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
@@ -204,12 +205,8 @@ const systemFont = looseObject({
   description: z.string(),
 });
 
-const insertedInstances = looseObject({
-  instanceIds: stringArray,
-  rootInstanceIds: stringArray,
-  removedInstanceIds: stringArray,
+const fragmentInsertResult = componentInsertResult.extend({
   parentInstanceId: id.optional(),
-  didMergeBreakpointsDueToLimit: z.boolean().optional(),
 });
 const instanceIdsResult = looseObject({ instanceIds: stringArray });
 const pageIdResult = looseObject({ pageId: id });
@@ -334,9 +331,9 @@ export const runtimeOutputSchemas = {
     matches: z.array(looseObject({ kind: z.string() })),
   }),
   "project.audit": auditResult,
-  "instances.insertComponent": insertedInstances,
+  "instances.insertComponent": componentInsertResult,
   "instances.insertCollection": insertCollectionResult,
-  "instances.insertFragment": insertedInstances,
+  "instances.insertFragment": fragmentInsertResult,
   "instances.move": instanceIdsResult,
   "instances.reparent": looseObject({
     instanceSelector: stringArray.optional(),
