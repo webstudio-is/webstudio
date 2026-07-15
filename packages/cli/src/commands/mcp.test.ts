@@ -348,8 +348,10 @@ test("preserves structured input issues in MCP shell errors", () => {
         code: "INVALID_INPUT",
         issues: [
           {
+            code: "mutually_exclusive_fields",
             path: ["pagePath"],
             message: "pageId and pagePath are mutually exclusive.",
+            constraint: "use_page_id_or_page_path",
           },
         ],
       }),
@@ -361,8 +363,10 @@ test("preserves structured input issues in MCP shell errors", () => {
       code: "INVALID_INPUT",
       issues: [
         {
+          code: "mutually_exclusive_fields",
           path: ["pagePath"],
           message: "pageId and pagePath are mutually exclusive.",
+          constraint: "use_page_id_or_page_path",
         },
       ],
     },

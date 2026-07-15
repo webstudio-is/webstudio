@@ -26,6 +26,7 @@ import * as props from "./props";
 import * as search from "./search";
 import * as audit from "./audit";
 import * as styles from "./styles";
+import { getZodValidationIssues, throwBuilderValidationError } from "./errors";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -78,9 +79,19 @@ type RuntimeOperationContractInput =
       requiresConfirm?: boolean;
     };
 
+const throwInvalidOperationInput = (
+  error: z.ZodError,
+  inputJsonSchema: InputJsonSchema
+): never =>
+  throwBuilderValidationError(
+    "Operation input is invalid.",
+    getZodValidationIssues(error, inputJsonSchema)
+  );
+
 const parseOperationInput = <Schema extends z.ZodTypeAny>(
   schema: Schema,
-  input: unknown
+  input: unknown,
+  inputJsonSchema: InputJsonSchema
 ): z.infer<Schema> => {
   const result = schema.safeParse(input ?? {});
   if (result.success) {
@@ -102,9 +113,13 @@ const parseOperationInput = <Schema extends z.ZodTypeAny>(
       confirm: _confirm,
       ...operationInput
     } = input as Record<string, unknown>;
-    return schema.parse(operationInput);
+    const operationResult = schema.safeParse(operationInput);
+    if (operationResult.success) {
+      return operationResult.data;
+    }
+    return throwInvalidOperationInput(operationResult.error, inputJsonSchema);
   }
-  throw result.error;
+  return throwInvalidOperationInput(result.error, inputJsonSchema);
 };
 
 const bindExpressionInput = (
@@ -141,14 +156,15 @@ const runtimeOperation = <
 ): BuilderRuntimeOperation<Id, z.input<Schema>, Result> => {
   const writeNamespaces =
     contract.kind === "mutation" ? contract.writeNamespaces : [];
+  const inputJsonSchema = getInputSchemaMetadata(inputSchema, {
+    isHiddenField: isHiddenPublicApiInputField,
+  }).inputJsonSchema;
   return {
     id,
     ...publicApi,
     kind: contract.kind,
     inputSchema,
-    inputJsonSchema: getInputSchemaMetadata(inputSchema, {
-      isHiddenField: isHiddenPublicApiInputField,
-    }).inputJsonSchema,
+    inputJsonSchema,
     outputSchema,
     outputJsonSchema:
       outputSchema === undefined
@@ -175,7 +191,7 @@ const runtimeOperation = <
     execute: ({ state, input, context }) => {
       const result = execute({
         state,
-        input: parseOperationInput(inputSchema, input),
+        input: parseOperationInput(inputSchema, input, inputJsonSchema),
         context,
       });
       if (outputSchema === undefined) {

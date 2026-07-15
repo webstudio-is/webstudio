@@ -29,6 +29,7 @@ import { listDataVariables, listResources } from "./data";
 import { listFonts } from "./fonts";
 import { bindProps, deleteProps, updateProps } from "./props";
 import type { BuilderState } from "../state/builder-state";
+import type { SemanticValidationIssue } from "./errors";
 import {
   context,
   expectRuntimeValidationError,
@@ -63,6 +64,78 @@ const hasDirectInputProperty = (
 const mutationOperationIds = runtimeOperationContracts
   .filter((contract) => contract.kind === "mutation")
   .map((contract) => contract.id);
+
+test.each([
+  {
+    family: "page",
+    operationId: "pages.create",
+    input: { name: false, path: "/" },
+    path: ["name"],
+    constraint: "type:string",
+  },
+  {
+    family: "instance",
+    operationId: "instances.move",
+    input: {
+      moves: [
+        { instanceId: "item", parentInstanceId: "parent", insertIndex: -1 },
+      ],
+    },
+    path: ["moves", "0", "insertIndex"],
+    constraint: "number:minimum:0",
+  },
+  {
+    family: "prop",
+    operationId: "instances.updateProps",
+    input: { updates: "not-an-array" },
+    path: ["updates"],
+    constraint: "type:array",
+  },
+  {
+    family: "style",
+    operationId: "styles.updateDeclarations",
+    input: { updates: [{ instanceId: "item", property: false, value: "red" }] },
+    path: ["updates", "0", "property"],
+    constraint: "type:string",
+  },
+  {
+    family: "resource",
+    operationId: "resources.create",
+    input: {
+      resource: { name: "Posts", method: "get", url: "/posts", headers: {} },
+    },
+    path: ["resource", "headers"],
+    constraint: "type:array",
+  },
+  {
+    family: "expression",
+    operationId: "instances.updateProps",
+    input: {
+      updates: [
+        {
+          instanceId: "item",
+          name: "title",
+          type: "expression",
+          value: "invalid {",
+        },
+      ],
+    },
+    path: ["updates", "0", "value"],
+    constraint: "valid_webstudio_expression",
+  },
+  {
+    family: "project settings",
+    operationId: "projectSettings.update",
+    input: { meta: { siteName: false } },
+    path: ["meta", "siteName"],
+    constraint: "type:string",
+  },
+])(
+  "returns an actionable $family input issue",
+  ({ operationId, input, path, constraint }) => {
+    expectRuntimeValidationError(operationId, input, { path, constraint });
+  }
+);
 
 test("keeps generated runtime contracts in sync with the registry", () => {
   expect(runtimeOperationContracts).toEqual(
@@ -1079,34 +1152,34 @@ describe("builder runtime read families", () => {
   });
 
   test("validates resource URL mutations through the public runtime operation", () => {
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "resources.create",
-        state,
-        input: {
-          scopeInstanceId: "heading",
-          resource: {
-            name: "Users",
-            method: "get",
-            url: `"not-a-url"`,
-            headers: [],
-          },
+    expectRuntimeValidationError(
+      "resources.create",
+      {
+        scopeInstanceId: "heading",
+        resource: {
+          name: "Users",
+          method: "get",
+          url: `"not-a-url"`,
+          headers: [],
         },
-        context,
-      })
-    ).toThrow("url: URL is invalid");
+      },
+      {
+        path: ["resource", "url"],
+        constraint: "absolute_or_root_relative_url",
+      }
+    );
 
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "resources.update",
-        state,
-        input: {
-          resourceId: "resource",
-          values: { url: `""` },
-        },
-        context,
-      })
-    ).toThrow("url: URL is required");
+    expectRuntimeValidationError(
+      "resources.update",
+      {
+        resourceId: "resource",
+        values: { url: `""` },
+      },
+      {
+        path: ["values", "url"],
+        constraint: "absolute_or_root_relative_url",
+      }
+    );
 
     const fixedUrlResult = executeBuilderRuntimeOperation({
       id: "resources.create",
@@ -1295,38 +1368,38 @@ describe("builder runtime read families", () => {
   });
 
   test("validates project settings and redirects through public operations", () => {
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "projectSettings.update",
-        state,
-        input: {
-          meta: { contactEmail: "not-an-email" },
-        },
-        context,
-      })
-    ).toThrow("Contact email is invalid.");
+    expectRuntimeValidationError(
+      "projectSettings.update",
+      { meta: { contactEmail: "not-an-email" } },
+      {
+        code: "invalid_contact_email",
+        path: ["meta", "contactEmail"],
+        constraint: "comma_separated_email_addresses",
+      }
+    );
 
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "projectSettings.update",
-        state,
-        input: {
-          meta: {
-            auth: JSON.stringify({
-              version: 1,
-              routes: {
-                private: {
-                  method: "basic",
-                  login: "admin",
-                  password: "secret",
-                },
+    expectRuntimeValidationError(
+      "projectSettings.update",
+      {
+        meta: {
+          auth: JSON.stringify({
+            version: 1,
+            routes: {
+              private: {
+                method: "basic",
+                login: "admin",
+                password: "secret",
               },
-            }),
-          },
+            },
+          }),
         },
-        context,
-      })
-    ).toThrow('routes."private": Route must start with "/"');
+      },
+      {
+        code: "invalid_project_auth",
+        path: ["meta", "auth"],
+        constraint: "valid_webstudio_auth_json",
+      }
+    );
 
     expect(() =>
       executeBuilderRuntimeOperation({
@@ -1461,9 +1534,11 @@ describe("builder runtime registry", () => {
       toInputJsonSchemaObject(copyPageSchema?.properties?.sourceData)
         ?.description
     ).toContain("use duplicate-page");
-    expect(() =>
-      copyPageOperation.execute({ state, input: { pageId: "home" }, context })
-    ).toThrow("sourceData");
+    expectRuntimeValidationError(
+      "pages.copy",
+      { pageId: "home" },
+      { path: ["sourceData"] }
+    );
 
     const duplicateStyleSourceOperation = getBuilderRuntimeOperation(
       "styleSources.duplicate"
@@ -1694,18 +1769,91 @@ describe("builder runtime registry", () => {
     }
   });
 
+  test("returns actionable issues for semantic input relationships", () => {
+    const cases: Array<[string, unknown, Partial<SemanticValidationIssue>]> = [
+      [
+        "projectSettings.update",
+        {},
+        {
+          code: "empty_project_settings_update",
+          path: [],
+          constraint: "at_least_one_of:meta,compiler",
+        },
+      ],
+      [
+        "assets.update",
+        { assetId: "asset", values: {} },
+        {
+          code: "empty_asset_update",
+          path: ["values"],
+          constraint: "at_least_one_property",
+        },
+      ],
+      [
+        "assets.setImageDescriptions",
+        {
+          updates: [
+            { assetId: "asset", decorative: true },
+            { assetId: "asset", decorative: true },
+          ],
+        },
+        {
+          code: "duplicate_asset_update",
+          path: ["updates", "1", "assetId"],
+          constraint: "unique_by:assetId",
+        },
+      ],
+      [
+        "resources.create",
+        {
+          exposeAsDataSource: true,
+          resource: {
+            name: "Posts",
+            method: "get",
+            url: "https://api.example.com/posts",
+            headers: [],
+          },
+        },
+        {
+          code: "missing_resource_scope",
+          path: ["scopeInstanceId"],
+          constraint: "required_when:exposeAsDataSource=true",
+        },
+      ],
+      [
+        "instances.move",
+        {
+          moves: [
+            {
+              instanceId: "heading",
+              parentInstanceId: "body",
+              insertIndex: 0,
+              position: "end",
+            },
+          ],
+        },
+        {
+          code: "conflicting_move_position",
+          path: ["moves", "0", "position"],
+          constraint: "mutually_exclusive_with:insertIndex",
+        },
+      ],
+    ];
+
+    for (const [operationId, input, issue] of cases) {
+      expectRuntimeValidationError(operationId, input, issue);
+    }
+  });
+
   test("validates internal runtime operation inputs without exposing them publicly", () => {
     expect(
       builderRuntimeOperations.map((operation) => operation.id)
     ).not.toContain("system.migrateLoadedData");
-    expect(() =>
-      executeBuilderRuntimeOperation({
-        id: "system.migrateLoadedData",
-        state,
-        input: { unexpected: true },
-        context,
-      })
-    ).toThrow(/unexpected/);
+    expectRuntimeValidationError(
+      "system.migrateLoadedData",
+      { unexpected: true },
+      { constraint: "recognized_keys_only" }
+    );
   });
 
   test("does not mutate caller state across representative public mutation surfaces", () => {

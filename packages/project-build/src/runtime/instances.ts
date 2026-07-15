@@ -22,7 +22,11 @@ import {
 } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
-import { throwBuilderRuntimeError } from "./errors";
+import {
+  getZodValidationIssueOptions,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+} from "./errors";
 import { replaceTextValue } from "./text-replacement";
 import { getExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
@@ -89,7 +93,13 @@ export const moveInstancesInput = z.object({
         .refine(
           ({ insertIndex, position }) =>
             insertIndex === undefined || position === undefined,
-          { message: "Use either insertIndex or position, not both." }
+          getZodValidationIssueOptions({
+            code: "conflicting_move_position",
+            path: ["position"],
+            message: "Use either insertIndex or position, not both.",
+            constraint: "mutually_exclusive_with:insertIndex",
+            example: "end",
+          })
         )
     )
     .min(1)
@@ -3309,6 +3319,19 @@ export const getTextContentErrors = ({
   return getExpressionErrors(value);
 };
 
+const throwTextExpressionValidationError = (errors: readonly string[]): never =>
+  throwBuilderValidationError(
+    errors.join("\n"),
+    errors.map((detail) => ({
+      code: "invalid_expression",
+      path: ["text"],
+      message: "Invalid Webstudio expression",
+      constraint: "valid_webstudio_expression",
+      example: "item.title",
+      detail,
+    }))
+  );
+
 export const setTextContentMutable = (
   instance: Instance,
   type: TextContentChild["type"],
@@ -3622,7 +3645,7 @@ export const updateTextInstance = (
   const mode = input.mode ?? "text";
   const errors = getTextContentErrors({ type: mode, value: input.text });
   if (errors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
+    return throwTextExpressionValidationError(errors);
   }
   const mutationResult = {
     instanceId: input.instanceId,
@@ -3744,7 +3767,7 @@ export const setTextContent = (
     value: input.text,
   });
   if (errors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
+    return throwTextExpressionValidationError(errors);
   }
 
   const child = createTextContentChild({

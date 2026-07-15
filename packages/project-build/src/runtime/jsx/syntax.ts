@@ -1,8 +1,7 @@
 import { Parser } from "acorn";
 import jsx from "acorn-jsx";
-import { throwBuilderRuntimeError } from "../errors";
 import { webstudioJsxFragmentBuiltInHelpers } from "./bindings";
-import { getErrorMessage } from "./errors";
+import { getErrorMessage, throwWebstudioJsxValidationError } from "./errors";
 
 const JsxParser = Parser.extend(jsx());
 
@@ -197,18 +196,19 @@ const hasModuleSyntax = (source: string) => {
 
 export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
   if (hasModuleSyntax(source)) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      `Do not use import or export in JSX fragments. Use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`
+    return throwWebstudioJsxValidationError(
+      `Do not use import or export in JSX fragments. Use the built-in ${webstudioJsxFragmentBuiltInHelpers} helpers.`,
+      "declarative_jsx_without_modules"
     );
   }
   let ast: AstNode;
   try {
     ast = parseWebstudioJsxFragmentExpression(source);
   } catch (error) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(error)}`
+    return throwWebstudioJsxValidationError(
+      `Could not parse JSX fragment. Pass Webstudio JSX such as <$.Box><$.Heading>Title</$.Heading></$.Box>. ${getErrorMessage(error)}`,
+      "valid_webstudio_jsx_syntax",
+      getErrorMessage(error)
     );
   }
   const error = visitAst(ast, (node, context) => {
@@ -228,6 +228,9 @@ export const inspectWebstudioJsxFragmentSyntax = (source: string) => {
     }
   });
   if (error !== undefined) {
-    return throwBuilderRuntimeError("BAD_REQUEST", error);
+    return throwWebstudioJsxValidationError(
+      error,
+      "declarative_webstudio_jsx_only"
+    );
   }
 };

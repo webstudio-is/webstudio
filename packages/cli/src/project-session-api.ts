@@ -8,6 +8,7 @@ import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/nam
 import {
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
+  type ProjectSessionDiagnostic,
 } from "@webstudio-is/project-build/project-session";
 import {
   assertCliServerOperationSupported,
@@ -31,17 +32,22 @@ const uniqueNamespaces = (
 ): readonly BuilderNamespace[] => [...new Set(namespaces)];
 
 const getSessionError = (envelope: {
-  diagnostics: readonly { level: string; code?: string; message: string }[];
+  diagnostics: readonly ProjectSessionDiagnostic[];
 }) => envelope.diagnostics.find((diagnostic) => diagnostic.level === "error");
 
-const createProjectSessionApiError = (diagnostic: {
-  code?: string;
-  message: string;
-}) => {
-  const error = new Error(diagnostic.message) as Error & { code?: string };
+const createProjectSessionApiError = (
+  diagnostic: Pick<ProjectSessionDiagnostic, "code" | "message" | "issues">
+) => {
+  const error = new Error(diagnostic.message) as Error & {
+    code?: string;
+    issues?: ProjectSessionDiagnostic["issues"];
+  };
   if (diagnostic.code !== undefined) {
     error.name = diagnostic.code;
     error.code = diagnostic.code;
+  }
+  if (diagnostic.issues !== undefined) {
+    error.issues = diagnostic.issues;
   }
   return error;
 };

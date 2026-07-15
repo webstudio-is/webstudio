@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { TRPCError } from "@trpc/server";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime/component-template";
@@ -76,6 +77,27 @@ describe("api runtime adapter", () => {
         input: { projectId: "project-1", query: "Home" },
       })
     ).resolves.toMatchObject({ query: "Home" });
+  });
+
+  test("preserves actionable validation issues in public api errors", async () => {
+    await expect(
+      executeApiRuntimeOperation({
+        id: "pages.create",
+        build: createBuild(),
+        input: { projectId: "project-1", name: false, path: "/pricing" },
+      })
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      cause: expect.objectContaining({
+        webstudioCode: "INVALID_INPUT",
+        issues: [
+          expect.objectContaining({
+            path: ["name"],
+            constraint: "type:string",
+          }),
+        ],
+      }),
+    } satisfies Partial<TRPCError>);
   });
 
   test("awaits async runtime mutations before reading mutation payload", async () => {

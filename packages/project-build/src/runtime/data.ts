@@ -44,10 +44,18 @@ import { createBuilderPatchPayloadFromImmerPatches } from "../state/patch";
 import type { BuilderState } from "../state/builder-state";
 import "../state/immer";
 import type { BuilderRuntimeContext } from "./context";
-import { throwBuilderRuntimeError } from "./errors";
+import {
+  addZodValidationIssue,
+  formatValidationIssueMessages,
+  prefixValidationIssuePaths,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+  type SemanticValidationIssue,
+} from "./errors";
 import { getStaticStringLiteral, replaceTextValue } from "./text-replacement";
 import {
   getNamedExpressionErrors,
+  getNamedExpressionValidationIssues,
   hasExpressionDiagnostics,
 } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
@@ -1511,13 +1519,16 @@ export const findResource = (
 
 const addExpressionIssues = (
   context: z.RefinementCtx,
-  errors: readonly string[]
+  issues: readonly SemanticValidationIssue[]
 ) => {
-  for (const message of errors) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message,
-    });
+  for (const issue of issues) {
+    addZodValidationIssue(
+      context,
+      issue,
+      issue.code === "invalid_resource_url"
+        ? { message: `${issue.path.join(".")}: ${issue.message}` }
+        : undefined
+    );
   }
 };
 
@@ -1563,8 +1574,14 @@ const resourceFieldsInputBase = resource.omit({ id: true }).extend({
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
     const normalizedFields = normalizeResourceFieldsInput(fields);
-    addExpressionIssues(context, getResourceExpressionErrors(normalizedFields));
-    addExpressionIssues(context, getResourceLiteralUrlErrors(normalizedFields));
+    addExpressionIssues(
+      context,
+      getResourceExpressionValidationIssues(normalizedFields)
+    );
+    addExpressionIssues(
+      context,
+      getResourceLiteralUrlValidationIssues(normalizedFields)
+    );
   }
 );
 
@@ -1572,8 +1589,14 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
   .partial()
   .superRefine((fields, context) => {
     const normalizedFields = normalizeResourceFieldsUpdateInput(fields);
-    addExpressionIssues(context, getResourceExpressionErrors(normalizedFields));
-    addExpressionIssues(context, getResourceLiteralUrlErrors(normalizedFields));
+    addExpressionIssues(
+      context,
+      getResourceExpressionValidationIssues(normalizedFields)
+    );
+    addExpressionIssues(
+      context,
+      getResourceLiteralUrlValidationIssues(normalizedFields)
+    );
   });
 
 const normalizeResourceExpressionInput = (
@@ -1638,10 +1661,12 @@ export const resourceCreateInput = z
       input.exposeAsDataSource === true &&
       input.scopeInstanceId === undefined
     ) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
+      addZodValidationIssue(context, {
+        code: "missing_resource_scope",
         path: ["scopeInstanceId"],
         message: "scopeInstanceId is required when exposeAsDataSource is true.",
+        constraint: "required_when:exposeAsDataSource=true",
+        example: "instance-id",
       });
     }
   });
@@ -1835,12 +1860,12 @@ export const validateResourceBodyExpression = (
   return typeof value === "string" ? "" : "Expected string in body";
 };
 
-export const getResourceExpressionErrors = (
+const getResourceExpressionValidationIssues = (
   fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
 ) => {
-  const errors: string[] = [];
+  const issues: SemanticValidationIssue[] = [];
   const validate = (name: string, expression: string | undefined) => {
-    errors.push(...getNamedExpressionErrors(name, expression));
+    issues.push(...getNamedExpressionValidationIssues(name, expression));
   };
   validate("url", fields.url);
   validate("body", fields.body);
@@ -1850,12 +1875,19 @@ export const getResourceExpressionErrors = (
   for (const [index, searchParam] of (fields.searchParams ?? []).entries()) {
     validate(`searchParams.${index}.value`, searchParam.value);
   }
-  return errors;
+  return issues;
 };
 
-const getResourceLiteralUrlErrors = (
+export const getResourceExpressionErrors = (
+  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
+) =>
+  formatValidationIssueMessages(getResourceExpressionValidationIssues(fields))
+    .split("\n")
+    .filter(Boolean);
+
+const getResourceLiteralUrlValidationIssues = (
   fields: Partial<Pick<Resource, "url">>
-) => {
+): SemanticValidationIssue[] => {
   if (fields.url === undefined || isLiteralExpression(fields.url) === false) {
     return [];
   }
@@ -1866,10 +1898,26 @@ const getResourceLiteralUrlErrors = (
     return [];
   }
   if (typeof value !== "string") {
-    return ["url: URL expects a string"];
+    return [
+      {
+        code: "invalid_resource_url",
+        path: ["url"],
+        message: "URL expects a string",
+        constraint: "absolute_or_root_relative_url",
+        example: "https://api.example.com/posts",
+      },
+    ];
   }
   if (value.length === 0) {
-    return ["url: URL is required"];
+    return [
+      {
+        code: "invalid_resource_url",
+        path: ["url"],
+        message: "URL is required",
+        constraint: "absolute_or_root_relative_url",
+        example: "https://api.example.com/posts",
+      },
+    ];
   }
   if (isLocalResource(value)) {
     return [];
@@ -1877,20 +1925,32 @@ const getResourceLiteralUrlErrors = (
   try {
     new URL(value);
   } catch {
-    return ["url: URL is invalid"];
+    return [
+      {
+        code: "invalid_resource_url",
+        path: ["url"],
+        message: "URL is invalid",
+        constraint: "absolute_or_root_relative_url",
+        example: "https://api.example.com/posts",
+      },
+    ];
   }
   return [];
 };
 
 const validateResourceFields = (
-  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>
+  fields: Partial<Pick<Resource, "url" | "body" | "headers" | "searchParams">>,
+  pathPrefix: readonly string[] = []
 ) => {
-  const errors = [
-    ...getResourceExpressionErrors(fields),
-    ...getResourceLiteralUrlErrors(fields),
+  const issues = [
+    ...getResourceExpressionValidationIssues(fields),
+    ...getResourceLiteralUrlValidationIssues(fields),
   ];
-  if (errors.length > 0) {
-    return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
+  if (issues.length > 0) {
+    return throwBuilderValidationError(
+      formatValidationIssueMessages(issues),
+      prefixValidationIssuePaths(issues, pathPrefix)
+    );
   }
 };
 
@@ -2346,7 +2406,7 @@ export const createResource = (
   context: BuilderRuntimeContext
 ) => {
   const resourceInput = normalizeResourceFieldsInput(input.resource);
-  validateResourceFields(resourceInput);
+  validateResourceFields(resourceInput, ["resource"]);
   const build = getRequiredBuildData(state);
   const resourceId = context.createId();
   const exposeAsDataSource =
@@ -2440,7 +2500,7 @@ export const updateResource = (
   context: BuilderRuntimeContext
 ) => {
   const values = normalizeResourceFieldsUpdateInput(input.values);
-  validateResourceFields(values);
+  validateResourceFields(values, ["values"]);
   const build = getRequiredBuildData(state);
   const resource = findResource(build.resources, input.resourceId);
   if (resource === undefined) {
@@ -2565,7 +2625,10 @@ export const replaceResourceText = (
         continue;
       }
       if (field === "url") {
-        validateResourceFields({ url: JSON.stringify(after) });
+        validateResourceFields({ url: JSON.stringify(after) }, [
+          "resources",
+          resource.id,
+        ]);
       }
       matches.push({ resourceId: resource.id, field, before, after });
     }
@@ -2612,7 +2675,7 @@ export const upsertResource = (
   context: BuilderRuntimeContext
 ) => {
   const resourceInput = normalizeResourceFieldsInput(input.resource);
-  validateResourceFields(resourceInput);
+  validateResourceFields(resourceInput, ["resource"]);
   const build = getRequiredBuildData(state);
   if (
     input.resourceId !== undefined &&
@@ -2682,7 +2745,7 @@ export const upsertResourceProp = (
   context: BuilderRuntimeContext
 ) => {
   const resourceInput = normalizeResourceFieldsInput(input.resource);
-  validateResourceFields(resourceInput);
+  validateResourceFields(resourceInput, ["resource"]);
   const build = getRequiredBuildData(state);
   if (
     build.instances.some((instance) => instance.id === input.instanceId) ===

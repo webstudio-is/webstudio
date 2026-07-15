@@ -1,8 +1,7 @@
 import { runInNewContext } from "node:vm";
 import { transform } from "esbuild";
 import { createElement, Fragment } from "react";
-import { throwBuilderRuntimeError } from "../errors";
-import { getErrorMessage } from "./errors";
+import { getErrorMessage, throwWebstudioJsxValidationError } from "./errors";
 
 type EvaluateJsxOptions = {
   source: string;
@@ -35,7 +34,11 @@ export const evaluateJsx = async <Result>({
     });
     code = result.code;
   } catch (error) {
-    return throwBuilderRuntimeError("BAD_REQUEST", parseErrorMessage(error));
+    return throwWebstudioJsxValidationError(
+      parseErrorMessage(error),
+      "valid_webstudio_jsx_syntax",
+      getErrorMessage(error)
+    );
   }
 
   const exports: { default?: Result } = {};
@@ -57,14 +60,18 @@ export const evaluateJsx = async <Result>({
       }
     );
   } catch (error) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      evaluationErrorMessage(error)
+    return throwWebstudioJsxValidationError(
+      evaluationErrorMessage(error),
+      "valid_declarative_webstudio_jsx",
+      getErrorMessage(error)
     );
   }
 
   if (exports.default === undefined) {
-    return throwBuilderRuntimeError("BAD_REQUEST", missingResultMessage);
+    return throwWebstudioJsxValidationError(
+      missingResultMessage,
+      "webstudio_jsx_fragment_produces_data"
+    );
   }
 
   return exports.default;

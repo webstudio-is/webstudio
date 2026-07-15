@@ -41,7 +41,14 @@ export const executeApiRuntimeOperation = async <Result>({
     });
   } catch (error) {
     if (error instanceof BuilderRuntimeError) {
-      return throwApiError(error.code, error.message);
+      return throwApiError(
+        error.code === "INVALID_INPUT" ? "BAD_REQUEST" : error.code,
+        error.message,
+        {
+          webstudioCode: error.code,
+          issues: error.issues,
+        }
+      );
     }
     throw error;
   }

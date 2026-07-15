@@ -16,7 +16,11 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import { hasReachedBreakpointLimit, isBaseBreakpoint } from "./breakpoints";
 import type { BuilderRuntimeContext } from "./context";
-import { throwBuilderRuntimeError } from "./errors";
+import {
+  getZodValidationIssueOptions,
+  throwBuilderRuntimeError,
+  throwBuilderValidationError,
+} from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 import { getRequiredPages } from "./pages";
@@ -83,7 +87,13 @@ export const projectSettingsUpdateInput = z
     ({ meta, compiler }) =>
       (meta !== undefined && Object.keys(meta).length > 0) ||
       (compiler !== undefined && Object.keys(compiler).length > 0),
-    { message: "Provide at least one project setting to update." }
+    getZodValidationIssueOptions({
+      code: "empty_project_settings_update",
+      path: [],
+      message: "Provide at least one project setting to update.",
+      constraint: "at_least_one_of:meta,compiler",
+      example: { meta: { siteName: "Acme" } },
+    })
   )
   .describe(
     "Update at least one supported project meta or compiler setting. Null removes a setting."
@@ -182,13 +192,30 @@ const validateProjectMetaUpdate = (
   if (typeof values.contactEmail === "string") {
     const contactEmailError = validateContactEmail(values.contactEmail);
     if (contactEmailError !== undefined) {
-      return throwBuilderRuntimeError("BAD_REQUEST", contactEmailError);
+      return throwBuilderValidationError(contactEmailError, [
+        {
+          code: "invalid_contact_email",
+          path: ["meta", "contactEmail"],
+          message: contactEmailError,
+          constraint: "comma_separated_email_addresses",
+          example: "team@example.com",
+        },
+      ]);
     }
   }
   if (typeof values.auth === "string") {
     const authError = validateProjectAuth(values.auth);
     if (authError !== undefined) {
-      return throwBuilderRuntimeError("BAD_REQUEST", authError);
+      return throwBuilderValidationError(authError, [
+        {
+          code: "invalid_project_auth",
+          path: ["meta", "auth"],
+          message: "Invalid project authentication configuration",
+          constraint: "valid_webstudio_auth_json",
+          example: '{"version":1,"routes":{}}',
+          detail: authError,
+        },
+      ]);
     }
   }
 };

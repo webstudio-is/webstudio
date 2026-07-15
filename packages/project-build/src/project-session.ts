@@ -14,7 +14,11 @@ import {
   builderRuntimeContext,
   type BuilderRuntimeContext,
 } from "./runtime/context";
-import { BuilderRuntimeError } from "./runtime/errors";
+import {
+  BuilderRuntimeError,
+  getValidationIssues,
+  type SemanticValidationIssue,
+} from "./runtime/errors";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import type { BuilderState } from "./state/builder-state";
@@ -36,6 +40,7 @@ export type ProjectSessionDiagnostic = {
   level: ProjectSessionDiagnosticLevel;
   code: string;
   message: string;
+  issues?: readonly SemanticValidationIssue[];
   details?: unknown;
 };
 
@@ -440,12 +445,22 @@ export const redactProjectSessionValue = (value: unknown): unknown => {
   return redacted;
 };
 
-const errorDiagnostic = (error: unknown): ProjectSessionDiagnostic => ({
-  level: "error",
-  code: getProjectSessionErrorCode(error),
-  message: error instanceof Error ? error.message : "Unknown error",
-  details: redactProjectSessionValue(error),
-});
+const errorDiagnostic = (error: unknown): ProjectSessionDiagnostic => {
+  const issues = getValidationIssues(error);
+  return {
+    level: "error",
+    code: getProjectSessionErrorCode(error),
+    message: error instanceof Error ? error.message : "Unknown error",
+    ...(issues === undefined
+      ? {}
+      : {
+          issues: redactProjectSessionValue(
+            issues
+          ) as SemanticValidationIssue[],
+        }),
+    details: redactProjectSessionValue(error),
+  };
+};
 
 const shouldRefreshPermissionsAfterError = (error: unknown) => {
   const code = getProjectSessionErrorCode(error);
