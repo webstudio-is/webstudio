@@ -90,6 +90,40 @@ const getSuccessfulOutputDataSchema = (schema: unknown) => {
   return getSchemaProperties(success).data;
 };
 
+const getUnresolvedLocalSchemaRefs = (
+  schema: unknown,
+  root = schema,
+  path: readonly string[] = []
+): string[] => {
+  if (schema === null || typeof schema !== "object") {
+    return [];
+  }
+  const object = schema as Record<string, unknown>;
+  const ref = object.$ref;
+  const unresolved =
+    typeof ref === "string" && ref.startsWith("#/")
+      ? ref
+          .slice(2)
+          .split("/")
+          .map((segment) => segment.replaceAll("~1", "/").replaceAll("~0", "~"))
+          .reduce<unknown>(
+            (value, segment) =>
+              value !== null && typeof value === "object"
+                ? (value as Record<string, unknown>)[segment]
+                : undefined,
+            root
+          ) === undefined
+        ? [`${path.join(".")}: ${ref}`]
+        : []
+      : [];
+  return [
+    ...unresolved,
+    ...Object.entries(object).flatMap(([key, value]) =>
+      getUnresolvedLocalSchemaRefs(value, root, [...path, key])
+    ),
+  ];
+};
+
 const optionalArrayFieldInputSchema = (field: string) =>
   getTestInputSchema(
     z.object({
@@ -638,6 +672,10 @@ describe("project session mcp adapter", () => {
           tool.outputSchema.type,
           `MCP output schema must be object-typed for ${tool.name}`
         ).toBe("object");
+        expect(
+          getUnresolvedLocalSchemaRefs(tool.outputSchema),
+          `MCP output schema has unresolved local references for ${tool.name}`
+        ).toEqual([]);
       }
     }
     expect(

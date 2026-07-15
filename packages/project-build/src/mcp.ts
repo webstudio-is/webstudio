@@ -1650,41 +1650,45 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
 const getMcpExamples = (command: string): readonly unknown[] =>
   mcpArgumentExamples[command] ?? [];
 
-const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => ({
-  type: "object",
-  oneOf: [
-    {
-      type: "object",
-      properties: {
-        ok: { type: "boolean", const: true },
-        data: dataSchema,
-        meta: { type: "object", additionalProperties: true },
-      },
-      required: ["ok", "data", "meta"],
-      additionalProperties: false,
-    },
-    {
-      type: "object",
-      properties: {
-        ok: { type: "boolean", const: false },
-        data: dataSchema,
-        error: {
-          type: "object",
-          properties: {
-            code: { type: "string" },
-            message: { type: "string" },
-            issues: semanticValidationIssuesJsonSchema,
-          },
-          required: ["code", "message"],
-          additionalProperties: true,
+const getMcpOutputSchema = (dataSchema: InputJsonSchema): InputJsonSchema => {
+  const { $defs, ...data } = dataSchema;
+  return {
+    type: "object",
+    ...($defs === undefined ? {} : { $defs }),
+    oneOf: [
+      {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: true },
+          data,
+          meta: { type: "object", additionalProperties: true },
         },
-        meta: { type: "object", additionalProperties: true },
+        required: ["ok", "data", "meta"],
+        additionalProperties: false,
       },
-      required: ["ok", "error", "meta"],
-      additionalProperties: false,
-    },
-  ],
-});
+      {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: false },
+          data,
+          error: {
+            type: "object",
+            properties: {
+              code: { type: "string" },
+              message: { type: "string" },
+              issues: semanticValidationIssuesJsonSchema,
+            },
+            required: ["code", "message"],
+            additionalProperties: true,
+          },
+          meta: { type: "object", additionalProperties: true },
+        },
+        required: ["ok", "error", "meta"],
+        additionalProperties: false,
+      },
+    ],
+  };
+};
 
 const sessionStatusDataSchema = {
   type: "object",
