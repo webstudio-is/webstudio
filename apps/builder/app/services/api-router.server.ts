@@ -22,7 +22,11 @@ import {
   unpublishProjectDomains,
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
-import { getBuilderRuntimeOperationInputSchema } from "@webstudio-is/project-build/runtime";
+import {
+  getBuilderRuntimeOperationInputSchema,
+  paginateOutput,
+  paginatedOutputInputSchema,
+} from "@webstudio-is/project-build/runtime";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -92,6 +96,22 @@ const assertApiPublishDomains = ({
 };
 
 const projectIdInput = z.object({ projectId: z.string() });
+
+const paginatedProjectInput = projectIdInput.extend(
+  paginatedOutputInputSchema.shape
+);
+
+const paginateProjectItems = <Item>(
+  items: readonly Item[],
+  input: z.infer<typeof paginatedProjectInput>
+) =>
+  paginateOutput({
+    items,
+    cursor: input.cursor,
+    limit: input.limit,
+    verbose: input.verbose,
+    filters: {},
+  });
 
 const withProjectId = <Schema extends z.ZodTypeAny>(
   input: Schema
@@ -206,6 +226,19 @@ const runtimeBuildQuery = <Result = unknown>(id: RuntimeOperationId) =>
     })
   );
 
+const withConfirm = <Schema extends z.ZodTypeAny>(input: Schema) =>
+  z.intersection(input, z.object({ confirm: z.literal(true) })) as z.ZodType<
+    z.infer<Schema> & { confirm: true }
+  >;
+
+const runtimeMutationInput = (
+  id: RuntimeOperationId,
+  requiresConfirm: boolean
+) => {
+  const input = runtimeProjectInput(id);
+  return requiresConfirm ? withConfirm(input) : input;
+};
+
 const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
   input: Schema,
   handler: (args: {
@@ -241,15 +274,18 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
     });
 
 const runtimeBuildMutation = <Result extends Record<string, unknown> = {}>(
-  id: RuntimeOperationId
+  id: RuntimeOperationId,
+  requiresConfirm: boolean
 ) =>
-  buildMutation(runtimeProjectInput(id), async ({ input, build, commit }) =>
-    commitRuntimeMutation<Result>({
-      id,
-      build,
-      input,
-      commit,
-    })
+  buildMutation(
+    runtimeMutationInput(id, requiresConfirm),
+    async ({ input, build, commit }) =>
+      commitRuntimeMutation<Result>({
+        id,
+        build,
+        input,
+        commit,
+      })
   );
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
@@ -367,10 +403,11 @@ const contentOrBuildMutation = <
 const runtimeContentOrBuildMutation = <
   Result extends Record<string, unknown> = {},
 >(
-  id: RuntimeOperationId
+  id: RuntimeOperationId,
+  requiresConfirm: boolean
 ) =>
   contentOrBuildMutation(
-    runtimeProjectInput(id),
+    runtimeMutationInput(id, requiresConfirm),
     async ({ input, build, commit }) =>
       commitRuntimeMutation<Result>({
         id,
@@ -379,11 +416,6 @@ const runtimeContentOrBuildMutation = <
         commit,
       })
   );
-
-const withConfirm = <Schema extends z.ZodTypeAny>(input: Schema) =>
-  z.intersection(input, z.object({ confirm: z.literal(true) })) as z.ZodType<
-    z.infer<Schema> & { confirm: true }
-  >;
 
 const runtimeAssetsQuery = <Result = unknown>(id: RuntimeOperationId) =>
   projectQuery(runtimeProjectInput(id), "view", async ({ ctx, input }) => {
@@ -403,7 +435,7 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
   id: RuntimeOperationId
 ) =>
   buildMutation(
-    withConfirm(runtimeProjectInput(id)),
+    runtimeMutationInput(id, true),
     async ({ ctx, input, build, commit }) => {
       const assets = await loadAssetsByProject(input.projectId, ctx, {
         skipPermissionsCheck: true,
@@ -452,25 +484,13 @@ const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
       ? runtimeAssetsQuery(id)
       : runtimeAssetsMutation(id);
   }
-  if (operation.requiresConfirm) {
-    return buildMutation(
-      withConfirm(runtimeProjectInput(id)),
-      async ({ input, build, commit }) =>
-        commitRuntimeMutation({
-          id,
-          build,
-          input,
-          commit,
-        })
-    );
-  }
   if (operation.kind === "read") {
     return runtimeBuildQuery(id);
   }
   if (operation.permit === "edit") {
-    return runtimeContentOrBuildMutation(id);
+    return runtimeContentOrBuildMutation(id, operation.requiresConfirm);
   }
-  return runtimeBuildMutation(id);
+  return runtimeBuildMutation(id, operation.requiresConfirm);
 };
 
 const createRuntimeOperationRouters = () => {
@@ -646,10 +666,12 @@ export const apiRouter = router({
 
   publish: router({
     list: projectQuery(
-      projectIdInput,
+      paginatedProjectInput,
       "view",
       async ({ ctx, input }) => {
-        return await listProjectPublishes(input.projectId, ctx);
+        const { publishes } = await listProjectPublishes(input.projectId, ctx);
+        const { items, ...pagination } = paginateProjectItems(publishes, input);
+        return { publishes: items, ...pagination };
       },
       { command: "list-publishes", client: "listPublishes" }
     ),
@@ -720,10 +742,14 @@ export const apiRouter = router({
 
   domains: router({
     list: projectQuery(
-      projectIdInput,
+      paginatedProjectInput,
       "view",
       async ({ ctx, input }) => {
-        return { domains: await listProjectDomains(input.projectId, ctx) };
+        const { items, ...pagination } = paginateProjectItems(
+          await listProjectDomains(input.projectId, ctx),
+          input
+        );
+        return { domains: items, ...pagination };
       },
       { command: "list-domains", client: "listDomains" }
     ),

@@ -266,6 +266,33 @@ export const createBuilderStateFromCompactBuild = (
       build.projectSettings ?? createProjectSettingsFromPages(build.pages),
   });
 
+export const createBuilderBuildDataSnapshotFromState = (
+  state: BuilderState
+): BuilderBuildDataSnapshot => {
+  const snapshot: BuilderBuildDataSnapshot = {};
+
+  for (const namespace of builderNamespaces) {
+    const value = state[namespace];
+    if (value === undefined) {
+      continue;
+    }
+    if (
+      namespace === "pages" ||
+      namespace === "projectSettings" ||
+      namespace === "marketplaceProduct"
+    ) {
+      (snapshot as Record<string, unknown>)[namespace] = structuredClone(value);
+      continue;
+    }
+    (snapshot as Record<string, unknown>)[namespace] = Array.from(
+      (value as Map<unknown, unknown>).values(),
+      (entry) => structuredClone(entry)
+    );
+  }
+
+  return snapshot;
+};
+
 export const createBuilderStateSnapshotFromState = (
   state: BuilderState
 ): BuilderStateSnapshot => {
@@ -302,4 +329,30 @@ export const createSerializedBuilderStateSnapshotFromState = (
     snapshot.pages = serializePages(state.pages);
   }
   return snapshot;
+};
+
+const toMutableEntries = <Key, Value>(
+  entries: readonly (readonly [Key, Value])[] | undefined
+): [Key, Value][] => Array.from(entries ?? [], ([key, value]) => [key, value]);
+
+export const createSerializedBuilderBuildDataFromState = (
+  state: BuilderState
+) => {
+  const snapshot = createSerializedBuilderStateSnapshotFromState(state);
+  if (snapshot.pages === undefined) {
+    throw new Error("Builder state pages are missing.");
+  }
+  return {
+    pages: snapshot.pages,
+    breakpoints: toMutableEntries(snapshot.breakpoints),
+    styles: toMutableEntries(snapshot.styles),
+    styleSources: toMutableEntries(snapshot.styleSources),
+    styleSourceSelections: toMutableEntries(snapshot.styleSourceSelections),
+    props: toMutableEntries(snapshot.props),
+    instances: toMutableEntries(snapshot.instances),
+    dataSources: toMutableEntries(snapshot.dataSources),
+    resources: toMutableEntries(snapshot.resources),
+    marketplaceProduct: snapshot.marketplaceProduct,
+    projectSettings: snapshot.projectSettings,
+  };
 };

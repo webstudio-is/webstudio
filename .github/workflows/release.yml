@@ -81,6 +81,9 @@ jobs:
 
       - id: version
         run: echo "value=$(echo ${{ github.ref }} | sed 's/refs\/tags\///')" >> $GITHUB_OUTPUT
+      - id: registry-baseline
+        name: Resolve pre-publish CLI baseline
+        run: echo "value=$(npm view webstudio@latest version)" >> "$GITHUB_OUTPUT"
       - name: bump version to ${{ steps.version.outputs.value }}
         run: |
           pnpx replace-in-files-cli \
@@ -101,3 +104,37 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: pnpm -r publish --access public --no-git-checks
+
+      - name: Wait for exact CLI registry artifact
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          for attempt in $(seq 1 30); do
+            integrity=$(npm view "webstudio@$VERSION" dist.integrity --json 2>/dev/null || true)
+            if [ -n "$integrity" ] && [ "$integrity" != "null" ]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Exact registry artifact webstudio@$VERSION was not observable with integrity metadata." >&2
+          exit 1
+
+      - name: Gate exact published CLI against baseline
+        id: registry-smoke
+        env:
+          DATABASE_URL: postgres://
+          AUTH_SECRET: test
+          WEBSTUDIO_RELEASE_SMOKE_TOKEN_BUDGET: 6000
+          WEBSTUDIO_RELEASE_SMOKE_CANDIDATE: webstudio@${{ steps.version.outputs.value }}
+          WEBSTUDIO_RELEASE_SMOKE_BASELINE: webstudio@${{ steps.registry-baseline.outputs.value }}
+          WEBSTUDIO_RELEASE_SMOKE_EXPECT_REGISTRY_VERSION: ${{ steps.version.outputs.value }}
+          WEBSTUDIO_RELEASE_SMOKE_REPORT: ${{ github.workspace }}/artifacts/cli-release-smoke.json
+        run: pnpm --filter webstudio test:release-smoke:registry
+
+      - name: Upload published CLI comparison report
+        if: ${{ always() && (steps.registry-smoke.outcome == 'success' || steps.registry-smoke.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-release-smoke-${{ steps.version.outputs.value }}
+          path: artifacts/cli-release-smoke.json
+          if-no-files-found: error

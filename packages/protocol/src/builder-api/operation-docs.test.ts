@@ -31,6 +31,7 @@ test("documents every public API command with examples", () => {
 
   for (const item of publicApiOperationDocumentation) {
     expect(item.description).not.toBe("");
+    expect(item.description).not.toContain("MCP/public API operation");
     expect(item.examples.length).toBeGreaterThan(0);
   }
 });

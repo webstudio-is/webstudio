@@ -3556,9 +3556,9 @@ export const listTextInstances = (
     instanceId?: string;
     mode?: "text" | "expression" | "all";
     contains?: string;
-    maxValueLength?: number;
-  } = {}
+  } & PaginatedOutputInput = {}
 ) => {
+  const compactValueLength = 160;
   const rootInstanceIds = getPageFilteredRootInstanceIds(state, input);
   const pageInstanceIds =
     rootInstanceIds === undefined
@@ -3566,16 +3566,40 @@ export const listTextInstances = (
       : new Set(
           getInstanceDepths(getRequiredInstances(state), rootInstanceIds).keys()
         );
-  return {
-    texts: serializeTextNodes({
-      instances: getRequiredInstances(state).values(),
-      rootInstanceIds: pageInstanceIds,
+  const texts = serializeTextNodes({
+    instances: getRequiredInstances(state).values(),
+    rootInstanceIds: pageInstanceIds,
+    instanceId: input.instanceId,
+    mode: input.mode,
+    contains: input.contains,
+  });
+  const { items, ...pagination } = paginateOutput({
+    items: texts.map((text) => {
+      const { value, ...summary } = text;
+      const valuePreview = value.slice(0, compactValueLength);
+      return projectOutput({
+        input,
+        compact: {
+          ...summary,
+          valuePreview,
+          valueLength: value.length,
+          truncated: valuePreview.length < value.length,
+        },
+        expanded: () => ({ value }),
+      });
+    }),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {
+      pageId: input.pageId,
+      pagePath: input.pagePath,
       instanceId: input.instanceId,
       mode: input.mode,
       contains: input.contains,
-      maxValueLength: input.maxValueLength,
-    }),
-  };
+    },
+    verbose: input.verbose,
+  });
+  return { texts: items, ...pagination };
 };
 
 type InstanceInspection = ReturnType<typeof serializeInstanceSummary> & {

@@ -47,7 +47,7 @@ const curatedPublicApiOperationDocumentation = [
     description: "List site pages",
     examples: [
       "webstudio list-pages --json",
-      "webstudio list-pages --include-folders --json",
+      "webstudio list-pages --cursor 50 --json",
     ],
   },
   {
@@ -179,10 +179,12 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "duplicate-page",
-    description: "Duplicate a page and its page content",
+    description:
+      "Duplicate a page and optionally substitute copied fixed text and variable values atomically",
     requiredOptions: ["page", "json"],
     examples: [
       'webstudio duplicate-page --page page-id --name "Pricing Copy" --path /pricing-copy --json',
+      `webstudio duplicate-page --page page-id --name Paris --path /paris --substitutions '{"text":{"London":"Paris"},"variables":{"city":{"type":"string","value":"Paris"}}}' --json`,
     ],
   },
   {
@@ -243,7 +245,7 @@ const curatedPublicApiOperationDocumentation = [
     description: "List page folders",
     examples: [
       "webstudio list-folders --json",
-      "webstudio list-folders --include-pages --json",
+      "webstudio list-folders --cursor 50 --json",
     ],
   },
   {
@@ -293,7 +295,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "audit",
     description:
-      "Audit project accessibility, security, SEO, assets, and styles with structured severity, evidence, remediation, skipped checks, and visual follow-ups",
+      "Audit project accessibility, security, SEO, assets, styles, and optional Craft compatibility with structured severity, evidence, remediation, skipped checks, and visual follow-ups",
     examples: [
       "webstudio audit --json",
       "webstudio audit --scopes accessibility,seo --json",
@@ -301,6 +303,17 @@ const curatedPublicApiOperationDocumentation = [
       "webstudio audit --page-path /pricing --json",
       'MCP tool: audit {"severities":["error","warning"]}',
       'MCP tool: audit {"scopes":["accessibility"],"verbose":true}',
+      'MCP tool: audit {"scopes":["craft"],"verbose":true}',
+    ],
+  },
+  {
+    command: "verify-bindings",
+    description:
+      "Statically verify persisted text, prop, resource, parameter, action, and page metadata bindings without resolving rendered values or executing external resources",
+    examples: [
+      "webstudio verify-bindings --json",
+      'MCP tool: verify-bindings {"pagePath":"/pricing"}',
+      'MCP tool: verify-bindings {"instanceId":"instance-id","limit":50}',
     ],
   },
   {
@@ -719,13 +732,21 @@ for (const documentation of curatedPublicApiOperationDocumentation) {
 
 const createDefaultDocumentation = (
   command: string
-): PublicApiOperationDocumentation => ({
-  command,
-  description: `Run the "${command}" MCP/public API operation. Use the operation input schema for valid JSON fields.`,
-  examples: [
-    `MCP/API: call "${command}" with JSON input matching its operation schema.`,
-  ],
-});
+): PublicApiOperationDocumentation => {
+  const words = command
+    .split("-")
+    .map((word) =>
+      word === "css" || word === "ui" ? word.toUpperCase() : word
+    )
+    .join(" ");
+  return {
+    command,
+    description: `${words.charAt(0).toUpperCase()}${words.slice(1)}.`,
+    examples: [
+      `MCP/API: call "${command}" with JSON input matching its operation schema.`,
+    ],
+  };
+};
 
 const documentedCommands = new Set<string>();
 

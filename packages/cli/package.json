@@ -20,7 +20,9 @@
     "generate-docs": "tsx scripts/generate-docs.ts && oxfmt src/docs.generated.ts",
     "build": "pnpm generate-docs && rm -rf lib && vite build",
     "test": "vitest run",
-    "test:release-smoke": "pnpm build && tsx --conditions=webstudio scripts/release-smoke.ts"
+    "test:release-smoke": "pnpm build && tsx --conditions=webstudio scripts/release-smoke.ts",
+    "test:release-smoke:model": "WEBSTUDIO_RELEASE_SMOKE_MODEL_EVAL_REQUIRED=1 pnpm test:release-smoke",
+    "test:release-smoke:registry": "tsx --conditions=webstudio scripts/release-smoke.ts"
   },
   "license": "AGPL-3.0-or-later",
   "engines": {

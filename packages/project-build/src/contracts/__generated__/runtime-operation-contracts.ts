@@ -10,7 +10,17 @@ export const runtimeOperationContractData = [
     inputSchema: {
       type: "object",
       properties: {
-        includeFolders: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
           type: "boolean",
         },
       },
@@ -66,36 +76,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
-        folders: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-              },
-              name: {
-                type: "string",
-              },
-              slug: {
-                type: "string",
-              },
-              parentFolderId: {
-                type: "string",
-              },
-              children: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
-              },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
             },
-            required: ["id", "name", "slug", "children"],
-            additionalProperties: {},
-          },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
         },
       },
-      required: ["pages"],
+      required: [
+        "pages",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["pages"],
@@ -1164,9 +1183,14 @@ export const runtimeOperationContractData = [
     kind: "read",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
     outputSchema: {
       type: "object",
@@ -1228,7 +1252,7 @@ export const runtimeOperationContractData = [
           },
         },
       },
-      required: ["meta", "compiler", "redirects"],
+      required: ["meta", "compiler"],
       additionalProperties: {},
     },
     readNamespaces: ["pages", "projectSettings"],
@@ -1560,9 +1584,22 @@ export const runtimeOperationContractData = [
     kind: "read",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
     outputSchema: {
       type: "object",
@@ -1588,8 +1625,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["redirects"],
+      required: [
+        "redirects",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["pages"],
@@ -1713,6 +1787,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "redirects.setAll",
@@ -1760,6 +1835,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "breakpoints.list",
@@ -1768,9 +1844,22 @@ export const runtimeOperationContractData = [
     kind: "read",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
     outputSchema: {
       type: "object",
@@ -1800,8 +1889,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["breakpoints"],
+      required: [
+        "breakpoints",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["breakpoints"],
@@ -1947,6 +2073,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["breakpoints", "styles"],
     invalidatesNamespaces: ["breakpoints", "styles"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "pages.delete",
@@ -2003,6 +2130,7 @@ export const runtimeOperationContractData = [
       "styleSourceSelections",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "pages.duplicate",
@@ -2024,6 +2152,103 @@ export const runtimeOperationContractData = [
         },
         path: {
           type: "string",
+        },
+        substitutions: {
+          type: "object",
+          properties: {
+            text: {
+              description:
+                "Exact fixed-text replacements applied only to the duplicated page's text children, string props, title, and metadata.",
+              type: "object",
+              propertyNames: {
+                type: "string",
+                minLength: 1,
+              },
+              additionalProperties: {
+                type: "string",
+              },
+            },
+            variables: {
+              description:
+                "Copied variable values keyed by the source variable name. Ambiguous duplicate names are rejected.",
+              type: "object",
+              propertyNames: {
+                type: "string",
+                minLength: 1,
+              },
+              additionalProperties: {
+                anyOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "number",
+                      },
+                      value: {
+                        type: "number",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string",
+                      },
+                      value: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "boolean",
+                      },
+                      value: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string[]",
+                      },
+                      value: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "json",
+                      },
+                      value: {},
+                    },
+                    required: ["type"],
+                  },
+                ],
+              },
+            },
+          },
+          required: [],
         },
       },
       required: ["pageId"],
@@ -2160,9 +2385,22 @@ export const runtimeOperationContractData = [
     kind: "read",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
     outputSchema: {
       type: "object",
@@ -2281,8 +2519,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["templates"],
+      required: [
+        "templates",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["pages"],
@@ -2718,6 +2993,7 @@ export const runtimeOperationContractData = [
     ],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
   {
     id: "pageTemplates.duplicate",
@@ -2902,7 +3178,17 @@ export const runtimeOperationContractData = [
     inputSchema: {
       type: "object",
       properties: {
-        includePages: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
           type: "boolean",
         },
       },
@@ -2939,55 +3225,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
-        pages: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-              },
-              name: {
-                type: "string",
-              },
-              path: {
-                type: "string",
-              },
-              localPath: {
-                type: "string",
-              },
-              title: {
-                type: "string",
-              },
-              rootInstanceId: {
-                type: "string",
-              },
-              parentFolderId: {
-                type: "string",
-              },
-              isHome: {
-                type: "boolean",
-              },
-              isDraft: {
-                description:
-                  "True when the page is a draft. Missing or false means the page is publishable.",
-                type: "boolean",
-              },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
             },
-            required: [
-              "id",
-              "name",
-              "path",
-              "localPath",
-              "title",
-              "rootInstanceId",
-              "isHome",
-            ],
-            additionalProperties: {},
-          },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
         },
       },
-      required: ["folders"],
+      required: [
+        "folders",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["pages"],
@@ -3141,6 +3417,7 @@ export const runtimeOperationContractData = [
       "styleSourceSelections",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "folders.duplicate",
@@ -32810,10 +33087,18 @@ export const runtimeOperationContractData = [
         pagePath: {
           type: "string",
         },
+        cursor: {
+          type: "string",
+        },
         limit: {
           type: "integer",
           minimum: 1,
           maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
         },
       },
       required: ["query"],
@@ -32831,11 +33116,6 @@ export const runtimeOperationContractData = [
             type: "string",
           },
         },
-        total: {
-          type: "integer",
-          minimum: -9007199254740991,
-          maximum: 9007199254740991,
-        },
         truncated: {
           type: "boolean",
         },
@@ -32852,8 +33132,48 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["query", "scopes", "total", "truncated", "matches"],
+      required: [
+        "query",
+        "scopes",
+        "truncated",
+        "matches",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: [
@@ -32884,7 +33204,7 @@ export const runtimeOperationContractData = [
       properties: {
         scopes: {
           description:
-            "Audit scopes. Omit to run all scopes. accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/. security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener. seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. assets info: unused-asset. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder. styles warning: style-on-dom-transparent-component; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens. performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css.",
+            "Audit scopes. Omit to run all standard scopes; Craft remains opt-in. accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/. security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener. seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. assets info: unused-asset. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder. styles warnings: style-on-dom-transparent-component, invalid-style-state-selector, and orphan-style-breakpoint; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens. performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css. craft is an opt-in, read-only compatibility check and is excluded when scopes are omitted. Documentation: https://docs.webstudio.is/university/craft.",
           minItems: 1,
           type: "array",
           items: {
@@ -32896,6 +33216,7 @@ export const runtimeOperationContractData = [
               "assets",
               "styles",
               "performance",
+              "craft",
             ],
           },
         },
@@ -32958,6 +33279,7 @@ export const runtimeOperationContractData = [
                   "assets",
                   "styles",
                   "performance",
+                  "craft",
                 ],
               },
             },
@@ -32983,6 +33305,7 @@ export const runtimeOperationContractData = [
                           "assets",
                           "styles",
                           "performance",
+                          "craft",
                         ],
                       },
                     },
@@ -33031,6 +33354,7 @@ export const runtimeOperationContractData = [
                       "assets",
                       "styles",
                       "performance",
+                      "craft",
                     ],
                   },
                   additionalProperties: {
@@ -33045,6 +33369,7 @@ export const runtimeOperationContractData = [
                     "assets",
                     "styles",
                     "performance",
+                    "craft",
                   ],
                 },
               },
@@ -33159,6 +33484,7 @@ export const runtimeOperationContractData = [
                           "oversized-image",
                           "render-blocking-resource",
                           "legacy-font-format",
+                          "low-text-contrast",
                         ],
                       },
                     },
@@ -33310,6 +33636,87 @@ export const runtimeOperationContractData = [
                 },
               ],
             },
+            generatedBuildSummary: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    fileCount: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    bytes: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    gzipBytes: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    version: {
+                      type: "number",
+                      const: 1,
+                    },
+                    client: {
+                      type: "object",
+                      properties: {
+                        fileCount: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        bytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        gzipBytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                      },
+                      required: ["fileCount", "bytes", "gzipBytes"],
+                    },
+                    server: {
+                      type: "object",
+                      properties: {
+                        fileCount: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        bytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        gzipBytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                      },
+                      required: ["fileCount", "bytes", "gzipBytes"],
+                    },
+                  },
+                  required: [
+                    "fileCount",
+                    "bytes",
+                    "gzipBytes",
+                    "version",
+                    "client",
+                    "server",
+                  ],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
             nextCursor: {
               anyOf: [
                 {
@@ -33319,6 +33726,89 @@ export const runtimeOperationContractData = [
                   type: "null",
                 },
               ],
+            },
+            profileStatuses: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "string",
+                    const: "craft",
+                  },
+                  profileVersion: {
+                    type: "number",
+                    const: 1,
+                  },
+                  craftVersion: {
+                    type: "string",
+                    const: "1.2",
+                  },
+                  sourceUrl: {
+                    type: "string",
+                    const: "https://docs.webstudio.is/university/craft",
+                  },
+                  status: {
+                    type: "string",
+                    enum: ["non-craft", "partial", "modified", "compatible"],
+                  },
+                  satisfiedRequiredChecks: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  totalRequiredChecks: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  nextAction: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  guidance: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  templateCompatibility: {
+                    type: "object",
+                    properties: {
+                      profile: {
+                        type: "string",
+                        const: "craft@1.2",
+                      },
+                      status: {
+                        type: "string",
+                        enum: [
+                          "compatible",
+                          "requires-review",
+                          "not-applicable",
+                        ],
+                      },
+                      reason: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    required: ["profile", "status", "reason"],
+                  },
+                },
+                required: [
+                  "id",
+                  "profileVersion",
+                  "craftVersion",
+                  "sourceUrl",
+                  "status",
+                  "satisfiedRequiredChecks",
+                  "totalRequiredChecks",
+                  "nextAction",
+                  "guidance",
+                  "templateCompatibility",
+                ],
+              },
             },
             verbose: {
               type: "boolean",
@@ -33341,6 +33831,7 @@ export const runtimeOperationContractData = [
                       "assets",
                       "styles",
                       "performance",
+                      "craft",
                     ],
                   },
                   ruleId: {
@@ -33393,7 +33884,14 @@ export const runtimeOperationContractData = [
                       "unused-breakpoint",
                       "duplicate-design-token-declarations",
                       "style-on-dom-transparent-component",
+                      "invalid-style-state-selector",
+                      "orphan-style-breakpoint",
                       "atomic-css-disabled",
+                      "craft-not-detected",
+                      "craft-missing-semantic-variables",
+                      "craft-container-token-missing",
+                      "craft-container-token-incompatible",
+                      "craft-style-guide-page-missing",
                     ],
                   },
                   severity: {
@@ -33460,6 +33958,12 @@ export const runtimeOperationContractData = [
                       breakpointId: {
                         type: "string",
                       },
+                      stateSelector: {
+                        type: "string",
+                      },
+                      styleProperty: {
+                        type: "string",
+                      },
                       resourceId: {
                         type: "string",
                       },
@@ -33496,12 +34000,21 @@ export const runtimeOperationContractData = [
                     type: "string",
                     enum: [
                       "horizontal-overflow",
+                      "clipped-content",
+                      "hidden-content",
+                      "overlapping-elements",
+                      "cross-breakpoint-layout-change",
                       "broken-image",
                       "eager-below-fold-image",
                       "oversized-image",
                       "render-blocking-resource",
                       "legacy-font-format",
+                      "low-text-contrast",
                     ],
+                  },
+                  confidence: {
+                    type: "string",
+                    enum: ["exact", "advisory"],
                   },
                   count: {
                     type: "integer",
@@ -33521,7 +34034,13 @@ export const runtimeOperationContractData = [
                     },
                   },
                 },
-                required: ["kind", "count", "captureCount", "pagePaths"],
+                required: [
+                  "kind",
+                  "confidence",
+                  "count",
+                  "captureCount",
+                  "pagePaths",
+                ],
               },
             },
             renderedFailureSummaries: {
@@ -33592,7 +34111,9 @@ export const runtimeOperationContractData = [
             "renderedCaptureSummary",
             "renderedCaptureStatuses",
             "renderedArtifactManifest",
+            "generatedBuildSummary",
             "nextCursor",
+            "profileStatuses",
             "verbose",
             "findings",
             "renderedIssueSummaries",
@@ -33622,6 +34143,7 @@ export const runtimeOperationContractData = [
                   "assets",
                   "styles",
                   "performance",
+                  "craft",
                 ],
               },
             },
@@ -33647,6 +34169,7 @@ export const runtimeOperationContractData = [
                           "assets",
                           "styles",
                           "performance",
+                          "craft",
                         ],
                       },
                     },
@@ -33695,6 +34218,7 @@ export const runtimeOperationContractData = [
                       "assets",
                       "styles",
                       "performance",
+                      "craft",
                     ],
                   },
                   additionalProperties: {
@@ -33709,6 +34233,7 @@ export const runtimeOperationContractData = [
                     "assets",
                     "styles",
                     "performance",
+                    "craft",
                   ],
                 },
               },
@@ -33823,6 +34348,7 @@ export const runtimeOperationContractData = [
                           "oversized-image",
                           "render-blocking-resource",
                           "legacy-font-format",
+                          "low-text-contrast",
                         ],
                       },
                     },
@@ -33974,6 +34500,87 @@ export const runtimeOperationContractData = [
                 },
               ],
             },
+            generatedBuildSummary: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    fileCount: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    bytes: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    gzipBytes: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    version: {
+                      type: "number",
+                      const: 1,
+                    },
+                    client: {
+                      type: "object",
+                      properties: {
+                        fileCount: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        bytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        gzipBytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                      },
+                      required: ["fileCount", "bytes", "gzipBytes"],
+                    },
+                    server: {
+                      type: "object",
+                      properties: {
+                        fileCount: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        bytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        gzipBytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                      },
+                      required: ["fileCount", "bytes", "gzipBytes"],
+                    },
+                  },
+                  required: [
+                    "fileCount",
+                    "bytes",
+                    "gzipBytes",
+                    "version",
+                    "client",
+                    "server",
+                  ],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
             nextCursor: {
               anyOf: [
                 {
@@ -33983,6 +34590,89 @@ export const runtimeOperationContractData = [
                   type: "null",
                 },
               ],
+            },
+            profileStatuses: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "string",
+                    const: "craft",
+                  },
+                  profileVersion: {
+                    type: "number",
+                    const: 1,
+                  },
+                  craftVersion: {
+                    type: "string",
+                    const: "1.2",
+                  },
+                  sourceUrl: {
+                    type: "string",
+                    const: "https://docs.webstudio.is/university/craft",
+                  },
+                  status: {
+                    type: "string",
+                    enum: ["non-craft", "partial", "modified", "compatible"],
+                  },
+                  satisfiedRequiredChecks: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  totalRequiredChecks: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  nextAction: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  guidance: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  templateCompatibility: {
+                    type: "object",
+                    properties: {
+                      profile: {
+                        type: "string",
+                        const: "craft@1.2",
+                      },
+                      status: {
+                        type: "string",
+                        enum: [
+                          "compatible",
+                          "requires-review",
+                          "not-applicable",
+                        ],
+                      },
+                      reason: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    required: ["profile", "status", "reason"],
+                  },
+                },
+                required: [
+                  "id",
+                  "profileVersion",
+                  "craftVersion",
+                  "sourceUrl",
+                  "status",
+                  "satisfiedRequiredChecks",
+                  "totalRequiredChecks",
+                  "nextAction",
+                  "guidance",
+                  "templateCompatibility",
+                ],
+              },
             },
             verbose: {
               type: "boolean",
@@ -34005,6 +34695,7 @@ export const runtimeOperationContractData = [
                       "assets",
                       "styles",
                       "performance",
+                      "craft",
                     ],
                   },
                   ruleId: {
@@ -34057,7 +34748,14 @@ export const runtimeOperationContractData = [
                       "unused-breakpoint",
                       "duplicate-design-token-declarations",
                       "style-on-dom-transparent-component",
+                      "invalid-style-state-selector",
+                      "orphan-style-breakpoint",
                       "atomic-css-disabled",
+                      "craft-not-detected",
+                      "craft-missing-semantic-variables",
+                      "craft-container-token-missing",
+                      "craft-container-token-incompatible",
+                      "craft-style-guide-page-missing",
                     ],
                   },
                   severity: {
@@ -34130,6 +34828,12 @@ export const runtimeOperationContractData = [
                       breakpointId: {
                         type: "string",
                       },
+                      stateSelector: {
+                        type: "string",
+                      },
+                      styleProperty: {
+                        type: "string",
+                      },
                       resourceId: {
                         type: "string",
                       },
@@ -34185,6 +34889,7 @@ export const runtimeOperationContractData = [
                       "assets",
                       "styles",
                       "performance",
+                      "craft",
                     ],
                   },
                   checkId: {
@@ -34256,6 +34961,12 @@ export const runtimeOperationContractData = [
                         type: "string",
                       },
                       breakpointId: {
+                        type: "string",
+                      },
+                      stateSelector: {
+                        type: "string",
+                      },
+                      styleProperty: {
                         type: "string",
                       },
                       resourceId: {
@@ -34355,6 +35066,91 @@ export const runtimeOperationContractData = [
                       horizontalOverflow: {
                         type: "boolean",
                       },
+                      elementGeometry: {
+                        type: "object",
+                        properties: {
+                          total: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          sampled: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 250,
+                          },
+                          truncated: {
+                            type: "boolean",
+                          },
+                          elements: {
+                            maxItems: 250,
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                instanceId: {
+                                  type: "string",
+                                },
+                                tagName: {
+                                  type: "string",
+                                },
+                                x: {
+                                  type: "number",
+                                },
+                                y: {
+                                  type: "number",
+                                },
+                                width: {
+                                  type: "number",
+                                  minimum: 0,
+                                },
+                                height: {
+                                  type: "number",
+                                  minimum: 0,
+                                },
+                                visible: {
+                                  type: "boolean",
+                                },
+                                hiddenReason: {
+                                  type: "string",
+                                  enum: [
+                                    "display",
+                                    "visibility",
+                                    "opacity",
+                                    "hidden",
+                                  ],
+                                },
+                                clippedX: {
+                                  type: "boolean",
+                                },
+                                clippedY: {
+                                  type: "boolean",
+                                },
+                                overlapsWith: {
+                                  maxItems: 5,
+                                  type: "array",
+                                  items: {
+                                    type: "string",
+                                  },
+                                },
+                              },
+                              required: [
+                                "instanceId",
+                                "tagName",
+                                "x",
+                                "y",
+                                "width",
+                                "height",
+                                "visible",
+                                "clippedX",
+                                "clippedY",
+                                "overlapsWith",
+                              ],
+                            },
+                          },
+                        },
+                        required: ["total", "sampled", "truncated", "elements"],
+                      },
                       images: {
                         type: "array",
                         items: {
@@ -34452,6 +35248,60 @@ export const runtimeOperationContractData = [
                           ],
                         },
                       },
+                      contrasts: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            instanceId: {
+                              type: "string",
+                            },
+                            tagName: {
+                              type: "string",
+                            },
+                            foreground: {
+                              type: "string",
+                            },
+                            background: {
+                              type: "string",
+                            },
+                            ratio: {
+                              type: "number",
+                              exclusiveMinimum: 0,
+                            },
+                            requiredRatio: {
+                              anyOf: [
+                                {
+                                  type: "number",
+                                  const: 3,
+                                },
+                                {
+                                  type: "number",
+                                  const: 4.5,
+                                },
+                              ],
+                            },
+                            fontSize: {
+                              type: "number",
+                              exclusiveMinimum: 0,
+                            },
+                            fontWeight: {
+                              type: "number",
+                              minimum: 0,
+                            },
+                          },
+                          required: [
+                            "instanceId",
+                            "tagName",
+                            "foreground",
+                            "background",
+                            "ratio",
+                            "requiredRatio",
+                            "fontSize",
+                            "fontWeight",
+                          ],
+                        },
+                      },
                     },
                     required: [
                       "viewportWidth",
@@ -34459,6 +35309,7 @@ export const runtimeOperationContractData = [
                       "contentWidth",
                       "contentHeight",
                       "horizontalOverflow",
+                      "elementGeometry",
                       "images",
                       "resources",
                     ],
@@ -34469,11 +35320,187 @@ export const runtimeOperationContractData = [
                       type: "string",
                       enum: [
                         "horizontal-overflow",
+                        "clipped-content",
+                        "hidden-content",
+                        "overlapping-elements",
+                        "cross-breakpoint-layout-change",
                         "broken-image",
                         "eager-below-fold-image",
                         "oversized-image",
                         "render-blocking-resource",
                         "legacy-font-format",
+                        "low-text-contrast",
+                      ],
+                    },
+                  },
+                  geometryIssues: {
+                    type: "array",
+                    items: {
+                      anyOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            instanceId: {
+                              type: "string",
+                            },
+                            relatedInstanceId: {
+                              type: "string",
+                            },
+                            message: {
+                              type: "string",
+                            },
+                            evidence: {
+                              type: "object",
+                              properties: {
+                                clippedX: {
+                                  type: "boolean",
+                                },
+                                clippedY: {
+                                  type: "boolean",
+                                },
+                                hiddenReason: {
+                                  type: "string",
+                                  enum: [
+                                    "display",
+                                    "visibility",
+                                    "opacity",
+                                    "hidden",
+                                  ],
+                                },
+                                sourceViewportWidth: {
+                                  type: "integer",
+                                  exclusiveMinimum: 0,
+                                  maximum: 9007199254740991,
+                                },
+                                targetViewportWidth: {
+                                  type: "integer",
+                                  exclusiveMinimum: 0,
+                                  maximum: 9007199254740991,
+                                },
+                                sourceVisible: {
+                                  type: "boolean",
+                                },
+                                targetVisible: {
+                                  type: "boolean",
+                                },
+                                sourceX: {
+                                  type: "number",
+                                },
+                                targetX: {
+                                  type: "number",
+                                },
+                                sourceWidth: {
+                                  type: "number",
+                                  minimum: 0,
+                                },
+                                targetWidth: {
+                                  type: "number",
+                                  minimum: 0,
+                                },
+                              },
+                              required: [],
+                            },
+                            kind: {
+                              type: "string",
+                              const: "clipped-content",
+                            },
+                            confidence: {
+                              type: "string",
+                              const: "exact",
+                            },
+                          },
+                          required: [
+                            "instanceId",
+                            "message",
+                            "evidence",
+                            "kind",
+                            "confidence",
+                          ],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            instanceId: {
+                              type: "string",
+                            },
+                            relatedInstanceId: {
+                              type: "string",
+                            },
+                            message: {
+                              type: "string",
+                            },
+                            evidence: {
+                              type: "object",
+                              properties: {
+                                clippedX: {
+                                  type: "boolean",
+                                },
+                                clippedY: {
+                                  type: "boolean",
+                                },
+                                hiddenReason: {
+                                  type: "string",
+                                  enum: [
+                                    "display",
+                                    "visibility",
+                                    "opacity",
+                                    "hidden",
+                                  ],
+                                },
+                                sourceViewportWidth: {
+                                  type: "integer",
+                                  exclusiveMinimum: 0,
+                                  maximum: 9007199254740991,
+                                },
+                                targetViewportWidth: {
+                                  type: "integer",
+                                  exclusiveMinimum: 0,
+                                  maximum: 9007199254740991,
+                                },
+                                sourceVisible: {
+                                  type: "boolean",
+                                },
+                                targetVisible: {
+                                  type: "boolean",
+                                },
+                                sourceX: {
+                                  type: "number",
+                                },
+                                targetX: {
+                                  type: "number",
+                                },
+                                sourceWidth: {
+                                  type: "number",
+                                  minimum: 0,
+                                },
+                                targetWidth: {
+                                  type: "number",
+                                  minimum: 0,
+                                },
+                              },
+                              required: [],
+                            },
+                            kind: {
+                              type: "string",
+                              enum: [
+                                "hidden-content",
+                                "overlapping-elements",
+                                "cross-breakpoint-layout-change",
+                              ],
+                            },
+                            confidence: {
+                              type: "string",
+                              const: "advisory",
+                            },
+                          },
+                          required: [
+                            "instanceId",
+                            "message",
+                            "evidence",
+                            "kind",
+                            "confidence",
+                          ],
+                        },
                       ],
                     },
                   },
@@ -34482,14 +35509,6 @@ export const runtimeOperationContractData = [
                     items: {
                       type: "object",
                       properties: {
-                        kind: {
-                          type: "string",
-                          enum: [
-                            "broken-image",
-                            "eager-below-fold-image",
-                            "oversized-image",
-                          ],
-                        },
                         instanceId: {
                           type: "string",
                         },
@@ -34526,15 +35545,23 @@ export const runtimeOperationContractData = [
                         top: {
                           type: "number",
                         },
+                        kind: {
+                          type: "string",
+                          enum: [
+                            "broken-image",
+                            "eager-below-fold-image",
+                            "oversized-image",
+                          ],
+                        },
                       },
                       required: [
-                        "kind",
                         "loading",
                         "naturalWidth",
                         "naturalHeight",
                         "renderedWidth",
                         "renderedHeight",
                         "top",
+                        "kind",
                       ],
                     },
                   },
@@ -34543,13 +35570,6 @@ export const runtimeOperationContractData = [
                     items: {
                       type: "object",
                       properties: {
-                        kind: {
-                          type: "string",
-                          enum: [
-                            "render-blocking-resource",
-                            "legacy-font-format",
-                          ],
-                        },
                         pathname: {
                           type: "string",
                         },
@@ -34575,15 +35595,86 @@ export const runtimeOperationContractData = [
                         renderBlockingStatus: {
                           type: "string",
                         },
+                        kind: {
+                          type: "string",
+                          enum: [
+                            "render-blocking-resource",
+                            "legacy-font-format",
+                          ],
+                        },
                       },
                       required: [
-                        "kind",
                         "pathname",
                         "initiatorType",
                         "transferSize",
                         "encodedBodySize",
                         "decodedBodySize",
                         "duration",
+                        "kind",
+                      ],
+                    },
+                  },
+                  contrastIssues: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        instanceId: {
+                          type: "string",
+                        },
+                        tagName: {
+                          type: "string",
+                        },
+                        foreground: {
+                          type: "string",
+                        },
+                        background: {
+                          type: "string",
+                        },
+                        ratio: {
+                          type: "number",
+                          exclusiveMinimum: 0,
+                        },
+                        requiredRatio: {
+                          anyOf: [
+                            {
+                              type: "number",
+                              const: 3,
+                            },
+                            {
+                              type: "number",
+                              const: 4.5,
+                            },
+                          ],
+                        },
+                        fontSize: {
+                          type: "number",
+                          exclusiveMinimum: 0,
+                        },
+                        fontWeight: {
+                          type: "number",
+                          minimum: 0,
+                        },
+                        kind: {
+                          type: "string",
+                          const: "low-text-contrast",
+                        },
+                        confidence: {
+                          type: "string",
+                          const: "exact",
+                        },
+                      },
+                      required: [
+                        "instanceId",
+                        "tagName",
+                        "foreground",
+                        "background",
+                        "ratio",
+                        "requiredRatio",
+                        "fontSize",
+                        "fontWeight",
+                        "kind",
+                        "confidence",
                       ],
                     },
                   },
@@ -34595,6 +35686,7 @@ export const runtimeOperationContractData = [
                   "screenshotPath",
                   "layout",
                   "issues",
+                  "geometryIssues",
                   "imageIssues",
                   "resourceIssues",
                 ],
@@ -34683,6 +35775,115 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
+            generatedBuildMetrics: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    fileCount: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    bytes: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    gzipBytes: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    version: {
+                      type: "number",
+                      const: 1,
+                    },
+                    client: {
+                      type: "object",
+                      properties: {
+                        fileCount: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        bytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        gzipBytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                      },
+                      required: ["fileCount", "bytes", "gzipBytes"],
+                    },
+                    server: {
+                      type: "object",
+                      properties: {
+                        fileCount: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        bytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        gzipBytes: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                      },
+                      required: ["fileCount", "bytes", "gzipBytes"],
+                    },
+                    largestFiles: {
+                      maxItems: 20,
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          path: {
+                            type: "string",
+                          },
+                          bytes: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          gzipBytes: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          kind: {
+                            type: "string",
+                            enum: ["script", "style", "image", "font", "other"],
+                          },
+                        },
+                        required: ["path", "bytes", "gzipBytes", "kind"],
+                      },
+                    },
+                  },
+                  required: [
+                    "fileCount",
+                    "bytes",
+                    "gzipBytes",
+                    "version",
+                    "client",
+                    "server",
+                    "largestFiles",
+                  ],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
           },
           required: [
             "contractVersion",
@@ -34700,13 +35901,16 @@ export const runtimeOperationContractData = [
             "renderedCaptureSummary",
             "renderedCaptureStatuses",
             "renderedArtifactManifest",
+            "generatedBuildSummary",
             "nextCursor",
+            "profileStatuses",
             "verbose",
             "findings",
             "skippedChecks",
             "manualChecks",
             "renderedChecks",
             "renderedFailures",
+            "generatedBuildMetrics",
           ],
         },
       ],
@@ -34726,6 +35930,9835 @@ export const runtimeOperationContractData = [
     ],
     writeNamespaces: [],
     invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "project.verifyBindings",
+    command: "verify-bindings",
+    client: "verifyBindings",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+        pageId: {
+          description: "Verify only bindings on this page.",
+          type: "string",
+        },
+        pagePath: {
+          description: "Verify only bindings on the page matching this path.",
+          type: "string",
+        },
+        instanceId: {
+          description: "Verify only bindings in this instance subtree.",
+          type: "string",
+        },
+      },
+      additionalProperties: false,
+      required: [],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        contractVersion: {
+          type: "number",
+          const: 1,
+        },
+        analysis: {
+          type: "object",
+          properties: {
+            staticIntegrity: {
+              type: "string",
+              const: "complete",
+            },
+            renderedResolution: {
+              type: "string",
+              const: "not-evaluated",
+            },
+            externalResourcesExecuted: {
+              type: "boolean",
+              const: false,
+            },
+          },
+          required: [
+            "staticIntegrity",
+            "renderedResolution",
+            "externalResourcesExecuted",
+          ],
+        },
+        summary: {
+          type: "object",
+          properties: {
+            bindingsChecked: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            findings: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+          },
+          required: ["bindingsChecked", "findings"],
+        },
+        findings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+              },
+              code: {
+                type: "string",
+                enum: [
+                  "invalid-expression",
+                  "unknown-identifier",
+                  "stale-data-source-id",
+                  "out-of-scope-data-source",
+                  "missing-resource",
+                  "missing-parameter",
+                  "out-of-scope-parameter",
+                ],
+              },
+              category: {
+                type: "string",
+                enum: ["validity", "scope", "reference"],
+              },
+              severity: {
+                type: "string",
+                enum: ["error", "warning"],
+              },
+              bindingKind: {
+                type: "string",
+                enum: [
+                  "text-expression",
+                  "prop-expression",
+                  "prop-action",
+                  "prop-resource",
+                  "data-source-resource",
+                  "prop-parameter",
+                  "resource-expression",
+                  "page-metadata",
+                ],
+              },
+              message: {
+                type: "string",
+              },
+              remediation: {
+                type: "string",
+              },
+              location: {
+                type: "object",
+                properties: {
+                  pageId: {
+                    type: "string",
+                  },
+                  pagePath: {
+                    type: "string",
+                  },
+                  instanceId: {
+                    type: "string",
+                  },
+                  propId: {
+                    type: "string",
+                  },
+                  propName: {
+                    type: "string",
+                  },
+                  resourceId: {
+                    type: "string",
+                  },
+                  dataSourceId: {
+                    type: "string",
+                  },
+                  path: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                },
+                required: ["path"],
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+            },
+            required: [
+              "id",
+              "code",
+              "category",
+              "severity",
+              "bindingKind",
+              "message",
+              "remediation",
+              "location",
+            ],
+          },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
+      },
+      required: [
+        "contractVersion",
+        "analysis",
+        "summary",
+        "findings",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
+    },
+    readNamespaces: ["pages", "instances", "props", "resources", "dataSources"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
+    id: "runtimeUi.integrate",
+    command: "integrate-runtime-ui",
+    client: "integrateRuntimeUi",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        parentInstanceId: {
+          type: "string",
+        },
+        variables: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {
+                type: "string",
+                minLength: 1,
+              },
+              value: {
+                anyOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "number",
+                      },
+                      value: {
+                        type: "number",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string",
+                      },
+                      value: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "boolean",
+                      },
+                      value: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string[]",
+                      },
+                      value: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "json",
+                      },
+                      value: {},
+                    },
+                    required: ["type"],
+                  },
+                ],
+              },
+            },
+            required: ["name", "value"],
+          },
+        },
+        resources: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              resource: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                  },
+                  control: {
+                    type: "string",
+                    enum: ["system", "graphql"],
+                  },
+                  method: {
+                    anyOf: [
+                      {
+                        type: "string",
+                        const: "get",
+                      },
+                      {
+                        type: "string",
+                        const: "post",
+                      },
+                      {
+                        type: "string",
+                        const: "put",
+                      },
+                      {
+                        type: "string",
+                        const: "delete",
+                      },
+                    ],
+                  },
+                  url: {
+                    type: "string",
+                  },
+                  searchParams: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: {
+                          type: "string",
+                        },
+                        value: {
+                          anyOf: [
+                            {
+                              type: "string",
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "literal",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                          ],
+                          description:
+                            'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                        },
+                      },
+                      required: ["name", "value"],
+                    },
+                  },
+                  headers: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: {
+                          type: "string",
+                        },
+                        value: {
+                          anyOf: [
+                            {
+                              type: "string",
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "literal",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                          ],
+                          description:
+                            'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                        },
+                      },
+                      required: ["name", "value"],
+                    },
+                  },
+                  body: {
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                  },
+                },
+                required: ["name", "method", "url", "headers"],
+              },
+              dataSourceName: {
+                type: "string",
+              },
+              exposeAsDataSource: {
+                description:
+                  "Expose the resource as render-time data. Scoped GET resources default to true; write resources default to false.",
+                type: "boolean",
+              },
+            },
+            required: ["resource"],
+          },
+        },
+        structure: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "fragment",
+                },
+                fragment: {
+                  type: "object",
+                  properties: {
+                    children: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "id",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "value"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "text",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                              placeholder: {
+                                type: "boolean",
+                              },
+                            },
+                            required: ["type", "value"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "expression",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "value"],
+                          },
+                        ],
+                      },
+                    },
+                    instances: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "instance",
+                          },
+                          id: {
+                            type: "string",
+                          },
+                          component: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          tag: {
+                            type: "string",
+                            minLength: 1,
+                            description:
+                              "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          label: {
+                            type: "string",
+                          },
+                          children: {
+                            type: "array",
+                            items: {
+                              anyOf: [
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "id",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "text",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                    placeholder: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "expression",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                              ],
+                            },
+                          },
+                        },
+                        required: ["type", "id", "component", "children"],
+                      },
+                    },
+                    assets: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              format: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                    const: "ttf",
+                                  },
+                                  {
+                                    type: "string",
+                                    const: "woff",
+                                  },
+                                  {
+                                    type: "string",
+                                    const: "woff2",
+                                  },
+                                ],
+                              },
+                              meta: {
+                                anyOf: [
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      family: {
+                                        type: "string",
+                                      },
+                                      style: {
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
+                                      weight: {
+                                        type: "number",
+                                      },
+                                    },
+                                    required: ["family", "style", "weight"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      family: {
+                                        type: "string",
+                                      },
+                                      variationAxes: {
+                                        type: "object",
+                                        propertyNames: {
+                                          type: "string",
+                                          enum: [
+                                            "wght",
+                                            "wdth",
+                                            "slnt",
+                                            "opsz",
+                                            "ital",
+                                            "GRAD",
+                                            "XTRA",
+                                            "XOPQ",
+                                            "YOPQ",
+                                            "YTLC",
+                                            "YTUC",
+                                            "YTAS",
+                                            "YTDE",
+                                            "YTFI",
+                                          ],
+                                        },
+                                        additionalProperties: {
+                                          type: "object",
+                                          properties: {
+                                            name: {
+                                              type: "string",
+                                            },
+                                            min: {
+                                              type: "number",
+                                            },
+                                            default: {
+                                              type: "number",
+                                            },
+                                            max: {
+                                              type: "number",
+                                            },
+                                          },
+                                          required: [
+                                            "name",
+                                            "min",
+                                            "default",
+                                            "max",
+                                          ],
+                                        },
+                                      },
+                                    },
+                                    required: ["family", "variationAxes"],
+                                  },
+                                ],
+                              },
+                              type: {
+                                type: "string",
+                                const: "font",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {},
+                                required: [],
+                                additionalProperties: true,
+                              },
+                              type: {
+                                type: "string",
+                                const: "file",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    dataSources: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "variable",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              scopeInstanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              value: {
+                                anyOf: [
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "number",
+                                      },
+                                      value: {
+                                        type: "number",
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "string",
+                                      },
+                                      value: {
+                                        type: "string",
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "boolean",
+                                      },
+                                      value: {
+                                        type: "boolean",
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "string[]",
+                                      },
+                                      value: {
+                                        type: "array",
+                                        items: {
+                                          type: "string",
+                                        },
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "json",
+                                      },
+                                      value: {},
+                                    },
+                                    required: ["type"],
+                                  },
+                                ],
+                              },
+                            },
+                            required: ["type", "id", "name", "value"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "parameter",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              scopeInstanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "name"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "resource",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              scopeInstanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              resourceId: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "name", "resourceId"],
+                          },
+                        ],
+                      },
+                    },
+                    resources: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: {
+                            type: "string",
+                          },
+                          name: {
+                            type: "string",
+                          },
+                          control: {
+                            anyOf: [
+                              {
+                                type: "string",
+                                const: "system",
+                              },
+                              {
+                                type: "string",
+                                const: "graphql",
+                              },
+                            ],
+                          },
+                          method: {
+                            anyOf: [
+                              {
+                                type: "string",
+                                const: "get",
+                              },
+                              {
+                                type: "string",
+                                const: "post",
+                              },
+                              {
+                                type: "string",
+                                const: "put",
+                              },
+                              {
+                                type: "string",
+                                const: "delete",
+                              },
+                            ],
+                          },
+                          url: {
+                            type: "string",
+                          },
+                          searchParams: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                name: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                              },
+                              required: ["name", "value"],
+                            },
+                          },
+                          headers: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                name: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                              },
+                              required: ["name", "value"],
+                            },
+                          },
+                          body: {
+                            type: "string",
+                          },
+                        },
+                        required: ["id", "name", "method", "url", "headers"],
+                      },
+                    },
+                    props: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "number",
+                              },
+                              value: {
+                                type: "number",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "string",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "boolean",
+                              },
+                              value: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "json",
+                              },
+                              value: {},
+                            },
+                            required: ["id", "instanceId", "name", "type"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "asset",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "page",
+                              },
+                              value: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      pageId: {
+                                        type: "string",
+                                      },
+                                      instanceId: {
+                                        type: "string",
+                                      },
+                                    },
+                                    required: ["pageId", "instanceId"],
+                                  },
+                                ],
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "string[]",
+                              },
+                              value: {
+                                type: "array",
+                                items: {
+                                  type: "string",
+                                },
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "parameter",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "resource",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "expression",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "action",
+                              },
+                              value: {
+                                type: "array",
+                                items: {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "execute",
+                                    },
+                                    args: {
+                                      type: "array",
+                                      items: {
+                                        type: "string",
+                                      },
+                                    },
+                                    code: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "args", "code"],
+                                },
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "animationAction",
+                              },
+                              value: {
+                                oneOf: [
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "scroll",
+                                      },
+                                      source: {
+                                        anyOf: [
+                                          {
+                                            type: "string",
+                                            const: "closest",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "nearest",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "root",
+                                          },
+                                        ],
+                                      },
+                                      axis: {
+                                        anyOf: [
+                                          {
+                                            type: "string",
+                                            const: "block",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "inline",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "x",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "y",
+                                          },
+                                        ],
+                                      },
+                                      animations: {
+                                        type: "array",
+                                        items: {
+                                          type: "object",
+                                          properties: {
+                                            name: {
+                                              type: "string",
+                                            },
+                                            description: {
+                                              type: "string",
+                                            },
+                                            enabled: {
+                                              type: "array",
+                                              items: {
+                                                type: "array",
+                                                prefixItems: [
+                                                  {
+                                                    type: "string",
+                                                    description: "breakpointId",
+                                                  },
+                                                  {
+                                                    type: "boolean",
+                                                  },
+                                                ],
+                                                minItems: 2,
+                                                maxItems: 2,
+                                              },
+                                            },
+                                            keyframes: {
+                                              type: "array",
+                                              items: {
+                                                type: "object",
+                                                properties: {
+                                                  offset: {
+                                                    type: "number",
+                                                  },
+                                                  styles: {
+                                                    type: "object",
+                                                    propertyNames: {
+                                                      type: "string",
+                                                    },
+                                                    additionalProperties: {
+                                                      $ref: "#/$defs/__schema0",
+                                                    },
+                                                  },
+                                                },
+                                                required: ["styles"],
+                                              },
+                                            },
+                                            timing: {
+                                              type: "object",
+                                              properties: {
+                                                easing: {
+                                                  type: "string",
+                                                },
+                                                fill: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "string",
+                                                      const: "none",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "forwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "backwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "both",
+                                                    },
+                                                  ],
+                                                },
+                                                duration: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                delay: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                iterations: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "number",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "infinite",
+                                                    },
+                                                  ],
+                                                },
+                                                rangeStart: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "start",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "end",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                                rangeEnd: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "start",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "end",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                              },
+                                              required: [],
+                                            },
+                                          },
+                                          required: ["keyframes", "timing"],
+                                        },
+                                      },
+                                      isPinned: {
+                                        type: "boolean",
+                                      },
+                                      debug: {
+                                        type: "boolean",
+                                      },
+                                    },
+                                    required: ["type", "animations"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "view",
+                                      },
+                                      subject: {
+                                        type: "string",
+                                      },
+                                      axis: {
+                                        anyOf: [
+                                          {
+                                            type: "string",
+                                            const: "block",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "inline",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "x",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "y",
+                                          },
+                                        ],
+                                      },
+                                      animations: {
+                                        type: "array",
+                                        items: {
+                                          type: "object",
+                                          properties: {
+                                            name: {
+                                              type: "string",
+                                            },
+                                            description: {
+                                              type: "string",
+                                            },
+                                            enabled: {
+                                              type: "array",
+                                              items: {
+                                                type: "array",
+                                                prefixItems: [
+                                                  {
+                                                    type: "string",
+                                                    description: "breakpointId",
+                                                  },
+                                                  {
+                                                    type: "boolean",
+                                                  },
+                                                ],
+                                                minItems: 2,
+                                                maxItems: 2,
+                                              },
+                                            },
+                                            keyframes: {
+                                              type: "array",
+                                              items: {
+                                                type: "object",
+                                                properties: {
+                                                  offset: {
+                                                    type: "number",
+                                                  },
+                                                  styles: {
+                                                    type: "object",
+                                                    propertyNames: {
+                                                      type: "string",
+                                                    },
+                                                    additionalProperties: {
+                                                      $ref: "#/$defs/__schema0",
+                                                    },
+                                                  },
+                                                },
+                                                required: ["styles"],
+                                              },
+                                            },
+                                            timing: {
+                                              type: "object",
+                                              properties: {
+                                                easing: {
+                                                  type: "string",
+                                                },
+                                                fill: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "string",
+                                                      const: "none",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "forwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "backwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "both",
+                                                    },
+                                                  ],
+                                                },
+                                                duration: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                delay: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                iterations: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "number",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "infinite",
+                                                    },
+                                                  ],
+                                                },
+                                                rangeStart: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "contain",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "cover",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "entry",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "exit",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "entry-crossing",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "exit-crossing",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                                rangeEnd: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "contain",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "cover",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "entry",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "exit",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "entry-crossing",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "exit-crossing",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                              },
+                                              required: [],
+                                            },
+                                          },
+                                          required: ["keyframes", "timing"],
+                                        },
+                                      },
+                                      insetStart: {
+                                        anyOf: [
+                                          {
+                                            anyOf: [
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unit",
+                                                  },
+                                                  value: {
+                                                    type: "number",
+                                                  },
+                                                  unit: {
+                                                    anyOf: [
+                                                      {
+                                                        type: "string",
+                                                        const: "%",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "px",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "mm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "q",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "in",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pt",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pc",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "em",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rem",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rcap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rlh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmax",
+                                                      },
+                                                    ],
+                                                  },
+                                                },
+                                                required: [
+                                                  "type",
+                                                  "value",
+                                                  "unit",
+                                                ],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unparsed",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "var",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                            ],
+                                          },
+                                          {
+                                            type: "object",
+                                            properties: {
+                                              type: {
+                                                type: "string",
+                                                const: "keyword",
+                                              },
+                                              value: {
+                                                type: "string",
+                                                const: "auto",
+                                              },
+                                            },
+                                            required: ["type", "value"],
+                                          },
+                                        ],
+                                      },
+                                      insetEnd: {
+                                        anyOf: [
+                                          {
+                                            anyOf: [
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unit",
+                                                  },
+                                                  value: {
+                                                    type: "number",
+                                                  },
+                                                  unit: {
+                                                    anyOf: [
+                                                      {
+                                                        type: "string",
+                                                        const: "%",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "px",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "mm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "q",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "in",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pt",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pc",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "em",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rem",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rcap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rlh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmax",
+                                                      },
+                                                    ],
+                                                  },
+                                                },
+                                                required: [
+                                                  "type",
+                                                  "value",
+                                                  "unit",
+                                                ],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unparsed",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "var",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                            ],
+                                          },
+                                          {
+                                            type: "object",
+                                            properties: {
+                                              type: {
+                                                type: "string",
+                                                const: "keyword",
+                                              },
+                                              value: {
+                                                type: "string",
+                                                const: "auto",
+                                              },
+                                            },
+                                            required: ["type", "value"],
+                                          },
+                                        ],
+                                      },
+                                      isPinned: {
+                                        type: "boolean",
+                                      },
+                                      debug: {
+                                        type: "boolean",
+                                      },
+                                    },
+                                    required: ["type", "animations"],
+                                  },
+                                ],
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    breakpoints: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: {
+                            type: "string",
+                          },
+                          label: {
+                            type: "string",
+                          },
+                          minWidth: {
+                            type: "number",
+                          },
+                          maxWidth: {
+                            type: "number",
+                          },
+                          condition: {
+                            type: "string",
+                          },
+                        },
+                        required: ["id", "label"],
+                      },
+                    },
+                    styleSourceSelections: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          instanceId: {
+                            type: "string",
+                          },
+                          values: {
+                            type: "array",
+                            items: {
+                              type: "string",
+                            },
+                          },
+                        },
+                        required: ["instanceId", "values"],
+                      },
+                    },
+                    styleSources: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "token",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              locked: {
+                                type: "boolean",
+                              },
+                            },
+                            required: ["type", "id", "name"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "local",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id"],
+                          },
+                        ],
+                      },
+                    },
+                    styles: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          styleSourceId: {
+                            type: "string",
+                          },
+                          breakpointId: {
+                            type: "string",
+                          },
+                          state: {
+                            type: "string",
+                          },
+                          property: {
+                            type: "string",
+                          },
+                          value: {
+                            $ref: "#/$defs/__schema0",
+                          },
+                          listed: {
+                            description:
+                              "Whether the style is from the Advanced panel",
+                            type: "boolean",
+                          },
+                        },
+                        required: [
+                          "styleSourceId",
+                          "breakpointId",
+                          "property",
+                          "value",
+                        ],
+                      },
+                    },
+                  },
+                  required: [
+                    "children",
+                    "instances",
+                    "assets",
+                    "dataSources",
+                    "resources",
+                    "props",
+                    "breakpoints",
+                    "styleSourceSelections",
+                    "styleSources",
+                    "styles",
+                  ],
+                  description:
+                    "Structured Webstudio fragment produced by Webstudio JSX/template helpers. Runtime remaps fragment ids to generated project ids.",
+                },
+                conflictResolution: {
+                  type: "string",
+                  enum: ["ours", "theirs", "merge"],
+                },
+                contentMode: {
+                  type: "boolean",
+                },
+                mode: {
+                  type: "string",
+                  enum: ["append", "prepend", "replace"],
+                },
+                insertIndex: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+              },
+              required: ["type", "fragment"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "collection",
+                },
+                data: {
+                  oneOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "json",
+                        },
+                        value: {
+                          anyOf: [
+                            {
+                              type: "array",
+                              items: {},
+                            },
+                            {
+                              type: "object",
+                              propertyNames: {
+                                type: "string",
+                              },
+                              additionalProperties: {},
+                            },
+                          ],
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "expression",
+                        },
+                        value: {
+                          type: "string",
+                          minLength: 1,
+                          description:
+                            'Expression resolving to the complete array or object, for example "Posts.data.items".',
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                  ],
+                  description:
+                    "Complete iterable for the Collection. Do not pass one indexed item.",
+                },
+                itemFragment: {
+                  type: "object",
+                  properties: {
+                    children: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "id",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "value"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "text",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                              placeholder: {
+                                type: "boolean",
+                              },
+                            },
+                            required: ["type", "value"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "expression",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "value"],
+                          },
+                        ],
+                      },
+                    },
+                    instances: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "instance",
+                          },
+                          id: {
+                            type: "string",
+                          },
+                          component: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                          tag: {
+                            type: "string",
+                            minLength: 1,
+                            description:
+                              "Optional HTML tag override for component rendering. Omit for component defaults; never pass an empty string.",
+                          },
+                          label: {
+                            type: "string",
+                          },
+                          children: {
+                            type: "array",
+                            items: {
+                              anyOf: [
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "id",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "text",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                    placeholder: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "expression",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                              ],
+                            },
+                          },
+                        },
+                        required: ["type", "id", "component", "children"],
+                      },
+                    },
+                    assets: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              format: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                    const: "ttf",
+                                  },
+                                  {
+                                    type: "string",
+                                    const: "woff",
+                                  },
+                                  {
+                                    type: "string",
+                                    const: "woff2",
+                                  },
+                                ],
+                              },
+                              meta: {
+                                anyOf: [
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      family: {
+                                        type: "string",
+                                      },
+                                      style: {
+                                        type: "string",
+                                        enum: ["normal", "italic", "oblique"],
+                                      },
+                                      weight: {
+                                        type: "number",
+                                      },
+                                    },
+                                    required: ["family", "style", "weight"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      family: {
+                                        type: "string",
+                                      },
+                                      variationAxes: {
+                                        type: "object",
+                                        propertyNames: {
+                                          type: "string",
+                                          enum: [
+                                            "wght",
+                                            "wdth",
+                                            "slnt",
+                                            "opsz",
+                                            "ital",
+                                            "GRAD",
+                                            "XTRA",
+                                            "XOPQ",
+                                            "YOPQ",
+                                            "YTLC",
+                                            "YTUC",
+                                            "YTAS",
+                                            "YTDE",
+                                            "YTFI",
+                                          ],
+                                        },
+                                        additionalProperties: {
+                                          type: "object",
+                                          properties: {
+                                            name: {
+                                              type: "string",
+                                            },
+                                            min: {
+                                              type: "number",
+                                            },
+                                            default: {
+                                              type: "number",
+                                            },
+                                            max: {
+                                              type: "number",
+                                            },
+                                          },
+                                          required: [
+                                            "name",
+                                            "min",
+                                            "default",
+                                            "max",
+                                          ],
+                                        },
+                                      },
+                                    },
+                                    required: ["family", "variationAxes"],
+                                  },
+                                ],
+                              },
+                              type: {
+                                type: "string",
+                                const: "font",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {
+                                  width: {
+                                    type: "number",
+                                  },
+                                  height: {
+                                    type: "number",
+                                  },
+                                },
+                                required: ["width", "height"],
+                              },
+                              type: {
+                                type: "string",
+                                const: "image",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              size: {
+                                type: "number",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              filename: {
+                                type: "string",
+                              },
+                              description: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "null",
+                                  },
+                                ],
+                              },
+                              createdAt: {
+                                type: "string",
+                              },
+                              format: {
+                                type: "string",
+                              },
+                              meta: {
+                                type: "object",
+                                properties: {},
+                                required: [],
+                                additionalProperties: true,
+                              },
+                              type: {
+                                type: "string",
+                                const: "file",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "size",
+                              "name",
+                              "createdAt",
+                              "format",
+                              "meta",
+                              "type",
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    dataSources: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "variable",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              scopeInstanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              value: {
+                                anyOf: [
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "number",
+                                      },
+                                      value: {
+                                        type: "number",
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "string",
+                                      },
+                                      value: {
+                                        type: "string",
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "boolean",
+                                      },
+                                      value: {
+                                        type: "boolean",
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "string[]",
+                                      },
+                                      value: {
+                                        type: "array",
+                                        items: {
+                                          type: "string",
+                                        },
+                                      },
+                                    },
+                                    required: ["type", "value"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "json",
+                                      },
+                                      value: {},
+                                    },
+                                    required: ["type"],
+                                  },
+                                ],
+                              },
+                            },
+                            required: ["type", "id", "name", "value"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "parameter",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              scopeInstanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "name"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "resource",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              scopeInstanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              resourceId: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "name", "resourceId"],
+                          },
+                        ],
+                      },
+                    },
+                    resources: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: {
+                            type: "string",
+                          },
+                          name: {
+                            type: "string",
+                          },
+                          control: {
+                            anyOf: [
+                              {
+                                type: "string",
+                                const: "system",
+                              },
+                              {
+                                type: "string",
+                                const: "graphql",
+                              },
+                            ],
+                          },
+                          method: {
+                            anyOf: [
+                              {
+                                type: "string",
+                                const: "get",
+                              },
+                              {
+                                type: "string",
+                                const: "post",
+                              },
+                              {
+                                type: "string",
+                                const: "put",
+                              },
+                              {
+                                type: "string",
+                                const: "delete",
+                              },
+                            ],
+                          },
+                          url: {
+                            type: "string",
+                          },
+                          searchParams: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                name: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                              },
+                              required: ["name", "value"],
+                            },
+                          },
+                          headers: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                name: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                              },
+                              required: ["name", "value"],
+                            },
+                          },
+                          body: {
+                            type: "string",
+                          },
+                        },
+                        required: ["id", "name", "method", "url", "headers"],
+                      },
+                    },
+                    props: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "number",
+                              },
+                              value: {
+                                type: "number",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "string",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "boolean",
+                              },
+                              value: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "json",
+                              },
+                              value: {},
+                            },
+                            required: ["id", "instanceId", "name", "type"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "asset",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "page",
+                              },
+                              value: {
+                                anyOf: [
+                                  {
+                                    type: "string",
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      pageId: {
+                                        type: "string",
+                                      },
+                                      instanceId: {
+                                        type: "string",
+                                      },
+                                    },
+                                    required: ["pageId", "instanceId"],
+                                  },
+                                ],
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "string[]",
+                              },
+                              value: {
+                                type: "array",
+                                items: {
+                                  type: "string",
+                                },
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "parameter",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "resource",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "expression",
+                              },
+                              value: {
+                                type: "string",
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "action",
+                              },
+                              value: {
+                                type: "array",
+                                items: {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "execute",
+                                    },
+                                    args: {
+                                      type: "array",
+                                      items: {
+                                        type: "string",
+                                      },
+                                    },
+                                    code: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "args", "code"],
+                                },
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                              },
+                              instanceId: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              required: {
+                                type: "boolean",
+                              },
+                              type: {
+                                type: "string",
+                                const: "animationAction",
+                              },
+                              value: {
+                                oneOf: [
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "scroll",
+                                      },
+                                      source: {
+                                        anyOf: [
+                                          {
+                                            type: "string",
+                                            const: "closest",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "nearest",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "root",
+                                          },
+                                        ],
+                                      },
+                                      axis: {
+                                        anyOf: [
+                                          {
+                                            type: "string",
+                                            const: "block",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "inline",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "x",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "y",
+                                          },
+                                        ],
+                                      },
+                                      animations: {
+                                        type: "array",
+                                        items: {
+                                          type: "object",
+                                          properties: {
+                                            name: {
+                                              type: "string",
+                                            },
+                                            description: {
+                                              type: "string",
+                                            },
+                                            enabled: {
+                                              type: "array",
+                                              items: {
+                                                type: "array",
+                                                prefixItems: [
+                                                  {
+                                                    type: "string",
+                                                    description: "breakpointId",
+                                                  },
+                                                  {
+                                                    type: "boolean",
+                                                  },
+                                                ],
+                                                minItems: 2,
+                                                maxItems: 2,
+                                              },
+                                            },
+                                            keyframes: {
+                                              type: "array",
+                                              items: {
+                                                type: "object",
+                                                properties: {
+                                                  offset: {
+                                                    type: "number",
+                                                  },
+                                                  styles: {
+                                                    type: "object",
+                                                    propertyNames: {
+                                                      type: "string",
+                                                    },
+                                                    additionalProperties: {
+                                                      $ref: "#/$defs/__schema0",
+                                                    },
+                                                  },
+                                                },
+                                                required: ["styles"],
+                                              },
+                                            },
+                                            timing: {
+                                              type: "object",
+                                              properties: {
+                                                easing: {
+                                                  type: "string",
+                                                },
+                                                fill: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "string",
+                                                      const: "none",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "forwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "backwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "both",
+                                                    },
+                                                  ],
+                                                },
+                                                duration: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                delay: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                iterations: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "number",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "infinite",
+                                                    },
+                                                  ],
+                                                },
+                                                rangeStart: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "start",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "end",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                                rangeEnd: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "start",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "end",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                              },
+                                              required: [],
+                                            },
+                                          },
+                                          required: ["keyframes", "timing"],
+                                        },
+                                      },
+                                      isPinned: {
+                                        type: "boolean",
+                                      },
+                                      debug: {
+                                        type: "boolean",
+                                      },
+                                    },
+                                    required: ["type", "animations"],
+                                  },
+                                  {
+                                    type: "object",
+                                    properties: {
+                                      type: {
+                                        type: "string",
+                                        const: "view",
+                                      },
+                                      subject: {
+                                        type: "string",
+                                      },
+                                      axis: {
+                                        anyOf: [
+                                          {
+                                            type: "string",
+                                            const: "block",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "inline",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "x",
+                                          },
+                                          {
+                                            type: "string",
+                                            const: "y",
+                                          },
+                                        ],
+                                      },
+                                      animations: {
+                                        type: "array",
+                                        items: {
+                                          type: "object",
+                                          properties: {
+                                            name: {
+                                              type: "string",
+                                            },
+                                            description: {
+                                              type: "string",
+                                            },
+                                            enabled: {
+                                              type: "array",
+                                              items: {
+                                                type: "array",
+                                                prefixItems: [
+                                                  {
+                                                    type: "string",
+                                                    description: "breakpointId",
+                                                  },
+                                                  {
+                                                    type: "boolean",
+                                                  },
+                                                ],
+                                                minItems: 2,
+                                                maxItems: 2,
+                                              },
+                                            },
+                                            keyframes: {
+                                              type: "array",
+                                              items: {
+                                                type: "object",
+                                                properties: {
+                                                  offset: {
+                                                    type: "number",
+                                                  },
+                                                  styles: {
+                                                    type: "object",
+                                                    propertyNames: {
+                                                      type: "string",
+                                                    },
+                                                    additionalProperties: {
+                                                      $ref: "#/$defs/__schema0",
+                                                    },
+                                                  },
+                                                },
+                                                required: ["styles"],
+                                              },
+                                            },
+                                            timing: {
+                                              type: "object",
+                                              properties: {
+                                                easing: {
+                                                  type: "string",
+                                                },
+                                                fill: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "string",
+                                                      const: "none",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "forwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "backwards",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "both",
+                                                    },
+                                                  ],
+                                                },
+                                                duration: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                delay: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "unit",
+                                                        },
+                                                        value: {
+                                                          type: "number",
+                                                        },
+                                                        unit: {
+                                                          anyOf: [
+                                                            {
+                                                              type: "string",
+                                                              const: "ms",
+                                                            },
+                                                            {
+                                                              type: "string",
+                                                              const: "s",
+                                                            },
+                                                          ],
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                        "unit",
+                                                      ],
+                                                    },
+                                                    {
+                                                      type: "object",
+                                                      properties: {
+                                                        type: {
+                                                          type: "string",
+                                                          const: "var",
+                                                        },
+                                                        value: {
+                                                          type: "string",
+                                                        },
+                                                      },
+                                                      required: [
+                                                        "type",
+                                                        "value",
+                                                      ],
+                                                    },
+                                                  ],
+                                                },
+                                                iterations: {
+                                                  anyOf: [
+                                                    {
+                                                      type: "number",
+                                                    },
+                                                    {
+                                                      type: "string",
+                                                      const: "infinite",
+                                                    },
+                                                  ],
+                                                },
+                                                rangeStart: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "contain",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "cover",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "entry",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "exit",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "entry-crossing",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "exit-crossing",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                                rangeEnd: {
+                                                  type: "array",
+                                                  prefixItems: [
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "string",
+                                                          const: "contain",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "cover",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "entry",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const: "exit",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "entry-crossing",
+                                                        },
+                                                        {
+                                                          type: "string",
+                                                          const:
+                                                            "exit-crossing",
+                                                        },
+                                                      ],
+                                                    },
+                                                    {
+                                                      anyOf: [
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unit",
+                                                            },
+                                                            value: {
+                                                              type: "number",
+                                                            },
+                                                            unit: {
+                                                              anyOf: [
+                                                                {
+                                                                  type: "string",
+                                                                  const: "%",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "px",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "mm",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "q",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "in",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pt",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "pc",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "em",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rem",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rex",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "cap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rcap",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "ch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rch",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "rlh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvw",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvh",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvi",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "svb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "lvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "dvb",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmin",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const: "vmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "svmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "lvmax",
+                                                                },
+                                                                {
+                                                                  type: "string",
+                                                                  const:
+                                                                    "dvmax",
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                            "unit",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "unparsed",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                        {
+                                                          type: "object",
+                                                          properties: {
+                                                            type: {
+                                                              type: "string",
+                                                              const: "var",
+                                                            },
+                                                            value: {
+                                                              type: "string",
+                                                            },
+                                                          },
+                                                          required: [
+                                                            "type",
+                                                            "value",
+                                                          ],
+                                                        },
+                                                      ],
+                                                    },
+                                                  ],
+                                                  minItems: 2,
+                                                  maxItems: 2,
+                                                },
+                                              },
+                                              required: [],
+                                            },
+                                          },
+                                          required: ["keyframes", "timing"],
+                                        },
+                                      },
+                                      insetStart: {
+                                        anyOf: [
+                                          {
+                                            anyOf: [
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unit",
+                                                  },
+                                                  value: {
+                                                    type: "number",
+                                                  },
+                                                  unit: {
+                                                    anyOf: [
+                                                      {
+                                                        type: "string",
+                                                        const: "%",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "px",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "mm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "q",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "in",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pt",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pc",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "em",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rem",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rcap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rlh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmax",
+                                                      },
+                                                    ],
+                                                  },
+                                                },
+                                                required: [
+                                                  "type",
+                                                  "value",
+                                                  "unit",
+                                                ],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unparsed",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "var",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                            ],
+                                          },
+                                          {
+                                            type: "object",
+                                            properties: {
+                                              type: {
+                                                type: "string",
+                                                const: "keyword",
+                                              },
+                                              value: {
+                                                type: "string",
+                                                const: "auto",
+                                              },
+                                            },
+                                            required: ["type", "value"],
+                                          },
+                                        ],
+                                      },
+                                      insetEnd: {
+                                        anyOf: [
+                                          {
+                                            anyOf: [
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unit",
+                                                  },
+                                                  value: {
+                                                    type: "number",
+                                                  },
+                                                  unit: {
+                                                    anyOf: [
+                                                      {
+                                                        type: "string",
+                                                        const: "%",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "px",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "mm",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "q",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "in",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pt",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "pc",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "em",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rem",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rex",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "cap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rcap",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "ch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rch",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "rlh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvw",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvh",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvi",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvb",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmin",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "vmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "svmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "lvmax",
+                                                      },
+                                                      {
+                                                        type: "string",
+                                                        const: "dvmax",
+                                                      },
+                                                    ],
+                                                  },
+                                                },
+                                                required: [
+                                                  "type",
+                                                  "value",
+                                                  "unit",
+                                                ],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "unparsed",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                              {
+                                                type: "object",
+                                                properties: {
+                                                  type: {
+                                                    type: "string",
+                                                    const: "var",
+                                                  },
+                                                  value: {
+                                                    type: "string",
+                                                  },
+                                                },
+                                                required: ["type", "value"],
+                                              },
+                                            ],
+                                          },
+                                          {
+                                            type: "object",
+                                            properties: {
+                                              type: {
+                                                type: "string",
+                                                const: "keyword",
+                                              },
+                                              value: {
+                                                type: "string",
+                                                const: "auto",
+                                              },
+                                            },
+                                            required: ["type", "value"],
+                                          },
+                                        ],
+                                      },
+                                      isPinned: {
+                                        type: "boolean",
+                                      },
+                                      debug: {
+                                        type: "boolean",
+                                      },
+                                    },
+                                    required: ["type", "animations"],
+                                  },
+                                ],
+                              },
+                            },
+                            required: [
+                              "id",
+                              "instanceId",
+                              "name",
+                              "type",
+                              "value",
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    breakpoints: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: {
+                            type: "string",
+                          },
+                          label: {
+                            type: "string",
+                          },
+                          minWidth: {
+                            type: "number",
+                          },
+                          maxWidth: {
+                            type: "number",
+                          },
+                          condition: {
+                            type: "string",
+                          },
+                        },
+                        required: ["id", "label"],
+                      },
+                    },
+                    styleSourceSelections: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          instanceId: {
+                            type: "string",
+                          },
+                          values: {
+                            type: "array",
+                            items: {
+                              type: "string",
+                            },
+                          },
+                        },
+                        required: ["instanceId", "values"],
+                      },
+                    },
+                    styleSources: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "token",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              name: {
+                                type: "string",
+                              },
+                              locked: {
+                                type: "boolean",
+                              },
+                            },
+                            required: ["type", "id", "name"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "local",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id"],
+                          },
+                        ],
+                      },
+                    },
+                    styles: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          styleSourceId: {
+                            type: "string",
+                          },
+                          breakpointId: {
+                            type: "string",
+                          },
+                          state: {
+                            type: "string",
+                          },
+                          property: {
+                            type: "string",
+                          },
+                          value: {
+                            $ref: "#/$defs/__schema0",
+                          },
+                          listed: {
+                            description:
+                              "Whether the style is from the Advanced panel",
+                            type: "boolean",
+                          },
+                        },
+                        required: [
+                          "styleSourceId",
+                          "breakpointId",
+                          "property",
+                          "value",
+                        ],
+                      },
+                    },
+                  },
+                  required: [
+                    "children",
+                    "instances",
+                    "assets",
+                    "dataSources",
+                    "resources",
+                    "props",
+                    "breakpoints",
+                    "styleSourceSelections",
+                    "styleSources",
+                    "styles",
+                  ],
+                  description:
+                    "One structured repeated-item fragment. Descendant expressions may reference collectionItem and collectionItemKey.",
+                },
+                mode: {
+                  type: "string",
+                  enum: ["append", "prepend", "replace"],
+                },
+                insertIndex: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+              },
+              required: ["type", "data", "itemFragment"],
+            },
+          ],
+        },
+        bindings: {
+          default: [],
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              target: {
+                oneOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "existing",
+                      },
+                      instanceId: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "instanceId"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "insertedRoot",
+                      },
+                      index: {
+                        default: 0,
+                        type: "integer",
+                        minimum: 0,
+                        maximum: 9007199254740991,
+                      },
+                    },
+                    required: ["type"],
+                  },
+                ],
+              },
+              name: {
+                type: "string",
+              },
+              binding: {
+                oneOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "expression",
+                      },
+                      value: {
+                        type: "string",
+                        description:
+                          "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax.",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "parameter",
+                      },
+                      value: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "resource",
+                      },
+                      value: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                ],
+                description:
+                  "Data binding only. Script actions are intentionally unsupported by runtime-ui integration.",
+              },
+            },
+            required: ["target", "name", "binding"],
+          },
+        },
+        retainedBehavior: {
+          default: [],
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              instanceId: {
+                type: "string",
+                description:
+                  "Existing script-owning instance that remains unchanged.",
+              },
+              responsibility: {
+                type: "string",
+                minLength: 1,
+                description:
+                  "Runtime behavior retained by the existing instance.",
+              },
+            },
+            required: ["instanceId", "responsibility"],
+          },
+        },
+        unsupportedConversions: {
+          default: [],
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              behavior: {
+                type: "string",
+                minLength: 1,
+              },
+              reason: {
+                type: "string",
+                minLength: 1,
+                description:
+                  "Why this behavior cannot be represented safely in editable UI.",
+              },
+            },
+            required: ["behavior", "reason"],
+          },
+        },
+      },
+      required: ["parentInstanceId", "structure"],
+      description:
+        "Atomically integrate data-backed editable UI while retaining existing script-owned behavior. This operation stores declarative Webstudio data and never evaluates scripts.",
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "image",
+                },
+                value: {
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "asset",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "url",
+                        },
+                        url: {
+                          type: "string",
+                        },
+                      },
+                      required: ["type", "url"],
+                    },
+                  ],
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "layers",
+                },
+                value: {
+                  type: "array",
+                  items: {
+                    anyOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "unit",
+                          },
+                          unit: {
+                            type: "string",
+                          },
+                          value: {
+                            type: "number",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "unit", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "keyword",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "unparsed",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "image",
+                          },
+                          value: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "asset",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "url",
+                                  },
+                                  url: {
+                                    type: "string",
+                                  },
+                                },
+                                required: ["type", "url"],
+                              },
+                            ],
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "tuple",
+                          },
+                          value: {
+                            type: "array",
+                            items: {
+                              anyOf: [
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "unit",
+                                    },
+                                    unit: {
+                                      type: "string",
+                                    },
+                                    value: {
+                                      type: "number",
+                                    },
+                                    hidden: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "unit", "value"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "keyword",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                    hidden: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "unparsed",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                    hidden: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "image",
+                                    },
+                                    value: {
+                                      anyOf: [
+                                        {
+                                          type: "object",
+                                          properties: {
+                                            type: {
+                                              type: "string",
+                                              const: "asset",
+                                            },
+                                            value: {
+                                              type: "string",
+                                            },
+                                          },
+                                          required: ["type", "value"],
+                                        },
+                                        {
+                                          type: "object",
+                                          properties: {
+                                            type: {
+                                              type: "string",
+                                              const: "url",
+                                            },
+                                            url: {
+                                              type: "string",
+                                            },
+                                          },
+                                          required: ["type", "url"],
+                                        },
+                                      ],
+                                    },
+                                    hidden: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                                {
+                                  $ref: "#/$defs/__schema1",
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "rgb",
+                                    },
+                                    r: {
+                                      type: "number",
+                                    },
+                                    g: {
+                                      type: "number",
+                                    },
+                                    b: {
+                                      type: "number",
+                                    },
+                                    alpha: {
+                                      type: "number",
+                                    },
+                                    hidden: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "r", "g", "b", "alpha"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "function",
+                                    },
+                                    name: {
+                                      type: "string",
+                                    },
+                                    args: {
+                                      $ref: "#/$defs/__schema0",
+                                    },
+                                    hidden: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "name", "args"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "var",
+                                    },
+                                    value: {
+                                      type: "string",
+                                    },
+                                    fallback: {
+                                      anyOf: [
+                                        {
+                                          type: "object",
+                                          properties: {
+                                            type: {
+                                              type: "string",
+                                              const: "unparsed",
+                                            },
+                                            value: {
+                                              type: "string",
+                                            },
+                                            hidden: {
+                                              type: "boolean",
+                                            },
+                                          },
+                                          required: ["type", "value"],
+                                        },
+                                        {
+                                          type: "object",
+                                          properties: {
+                                            type: {
+                                              type: "string",
+                                              const: "keyword",
+                                            },
+                                            value: {
+                                              type: "string",
+                                            },
+                                            hidden: {
+                                              type: "boolean",
+                                            },
+                                          },
+                                          required: ["type", "value"],
+                                        },
+                                        {
+                                          type: "object",
+                                          properties: {
+                                            type: {
+                                              type: "string",
+                                              const: "unit",
+                                            },
+                                            unit: {
+                                              type: "string",
+                                            },
+                                            value: {
+                                              type: "number",
+                                            },
+                                            hidden: {
+                                              type: "boolean",
+                                            },
+                                          },
+                                          required: ["type", "unit", "value"],
+                                        },
+                                        {
+                                          $ref: "#/$defs/__schema1",
+                                        },
+                                        {
+                                          type: "object",
+                                          properties: {
+                                            type: {
+                                              type: "string",
+                                              const: "rgb",
+                                            },
+                                            r: {
+                                              type: "number",
+                                            },
+                                            g: {
+                                              type: "number",
+                                            },
+                                            b: {
+                                              type: "number",
+                                            },
+                                            alpha: {
+                                              type: "number",
+                                            },
+                                            hidden: {
+                                              type: "boolean",
+                                            },
+                                          },
+                                          required: [
+                                            "type",
+                                            "r",
+                                            "g",
+                                            "b",
+                                            "alpha",
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                    hidden: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                },
+                              ],
+                            },
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "shadow",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                          position: {
+                            anyOf: [
+                              {
+                                type: "string",
+                                const: "inset",
+                              },
+                              {
+                                type: "string",
+                                const: "outset",
+                              },
+                            ],
+                          },
+                          offsetX: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unit",
+                                  },
+                                  unit: {
+                                    type: "string",
+                                  },
+                                  value: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "unit", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "var",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  fallback: {
+                                    anyOf: [
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unparsed",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "keyword",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unit",
+                                          },
+                                          unit: {
+                                            type: "string",
+                                          },
+                                          value: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "unit", "value"],
+                                      },
+                                      {
+                                        $ref: "#/$defs/__schema1",
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "rgb",
+                                          },
+                                          r: {
+                                            type: "number",
+                                          },
+                                          g: {
+                                            type: "number",
+                                          },
+                                          b: {
+                                            type: "number",
+                                          },
+                                          alpha: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: [
+                                          "type",
+                                          "r",
+                                          "g",
+                                          "b",
+                                          "alpha",
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                            ],
+                          },
+                          offsetY: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unit",
+                                  },
+                                  unit: {
+                                    type: "string",
+                                  },
+                                  value: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "unit", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "var",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  fallback: {
+                                    anyOf: [
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unparsed",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "keyword",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unit",
+                                          },
+                                          unit: {
+                                            type: "string",
+                                          },
+                                          value: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "unit", "value"],
+                                      },
+                                      {
+                                        $ref: "#/$defs/__schema1",
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "rgb",
+                                          },
+                                          r: {
+                                            type: "number",
+                                          },
+                                          g: {
+                                            type: "number",
+                                          },
+                                          b: {
+                                            type: "number",
+                                          },
+                                          alpha: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: [
+                                          "type",
+                                          "r",
+                                          "g",
+                                          "b",
+                                          "alpha",
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                            ],
+                          },
+                          blur: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unit",
+                                  },
+                                  unit: {
+                                    type: "string",
+                                  },
+                                  value: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "unit", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "var",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  fallback: {
+                                    anyOf: [
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unparsed",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "keyword",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unit",
+                                          },
+                                          unit: {
+                                            type: "string",
+                                          },
+                                          value: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "unit", "value"],
+                                      },
+                                      {
+                                        $ref: "#/$defs/__schema1",
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "rgb",
+                                          },
+                                          r: {
+                                            type: "number",
+                                          },
+                                          g: {
+                                            type: "number",
+                                          },
+                                          b: {
+                                            type: "number",
+                                          },
+                                          alpha: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: [
+                                          "type",
+                                          "r",
+                                          "g",
+                                          "b",
+                                          "alpha",
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                            ],
+                          },
+                          spread: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unit",
+                                  },
+                                  unit: {
+                                    type: "string",
+                                  },
+                                  value: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "unit", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "var",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  fallback: {
+                                    anyOf: [
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unparsed",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "keyword",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unit",
+                                          },
+                                          unit: {
+                                            type: "string",
+                                          },
+                                          value: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "unit", "value"],
+                                      },
+                                      {
+                                        $ref: "#/$defs/__schema1",
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "rgb",
+                                          },
+                                          r: {
+                                            type: "number",
+                                          },
+                                          g: {
+                                            type: "number",
+                                          },
+                                          b: {
+                                            type: "number",
+                                          },
+                                          alpha: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: [
+                                          "type",
+                                          "r",
+                                          "g",
+                                          "b",
+                                          "alpha",
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                            ],
+                          },
+                          color: {
+                            anyOf: [
+                              {
+                                $ref: "#/$defs/__schema1",
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "rgb",
+                                  },
+                                  r: {
+                                    type: "number",
+                                  },
+                                  g: {
+                                    type: "number",
+                                  },
+                                  b: {
+                                    type: "number",
+                                  },
+                                  alpha: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "r", "g", "b", "alpha"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "keyword",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "var",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  fallback: {
+                                    anyOf: [
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unparsed",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "keyword",
+                                          },
+                                          value: {
+                                            type: "string",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "value"],
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "unit",
+                                          },
+                                          unit: {
+                                            type: "string",
+                                          },
+                                          value: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: ["type", "unit", "value"],
+                                      },
+                                      {
+                                        $ref: "#/$defs/__schema1",
+                                      },
+                                      {
+                                        type: "object",
+                                        properties: {
+                                          type: {
+                                            type: "string",
+                                            const: "rgb",
+                                          },
+                                          r: {
+                                            type: "number",
+                                          },
+                                          g: {
+                                            type: "number",
+                                          },
+                                          b: {
+                                            type: "number",
+                                          },
+                                          alpha: {
+                                            type: "number",
+                                          },
+                                          hidden: {
+                                            type: "boolean",
+                                          },
+                                        },
+                                        required: [
+                                          "type",
+                                          "r",
+                                          "g",
+                                          "b",
+                                          "alpha",
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                            ],
+                          },
+                        },
+                        required: ["type", "position", "offsetX", "offsetY"],
+                      },
+                      {
+                        $ref: "#/$defs/__schema1",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "rgb",
+                          },
+                          r: {
+                            type: "number",
+                          },
+                          g: {
+                            type: "number",
+                          },
+                          b: {
+                            type: "number",
+                          },
+                          alpha: {
+                            type: "number",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "r", "g", "b", "alpha"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "invalid",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "function",
+                          },
+                          name: {
+                            type: "string",
+                          },
+                          args: {
+                            $ref: "#/$defs/__schema0",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "name", "args"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "var",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                          fallback: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unparsed",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "keyword",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unit",
+                                  },
+                                  unit: {
+                                    type: "string",
+                                  },
+                                  value: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "unit", "value"],
+                              },
+                              {
+                                $ref: "#/$defs/__schema1",
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "rgb",
+                                  },
+                                  r: {
+                                    type: "number",
+                                  },
+                                  g: {
+                                    type: "number",
+                                  },
+                                  b: {
+                                    type: "number",
+                                  },
+                                  alpha: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "r", "g", "b", "alpha"],
+                              },
+                            ],
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                  },
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "unit",
+                },
+                unit: {
+                  type: "string",
+                },
+                value: {
+                  type: "number",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "unit", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "keyword",
+                },
+                value: {
+                  type: "string",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "fontFamily",
+                },
+                value: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                  },
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              $ref: "#/$defs/__schema1",
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "rgb",
+                },
+                r: {
+                  type: "number",
+                },
+                g: {
+                  type: "number",
+                },
+                b: {
+                  type: "number",
+                },
+                alpha: {
+                  type: "number",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "r", "g", "b", "alpha"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "unparsed",
+                },
+                value: {
+                  type: "string",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "tuple",
+                },
+                value: {
+                  type: "array",
+                  items: {
+                    anyOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "unit",
+                          },
+                          unit: {
+                            type: "string",
+                          },
+                          value: {
+                            type: "number",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "unit", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "keyword",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "unparsed",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "image",
+                          },
+                          value: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "asset",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "url",
+                                  },
+                                  url: {
+                                    type: "string",
+                                  },
+                                },
+                                required: ["type", "url"],
+                              },
+                            ],
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                      {
+                        $ref: "#/$defs/__schema1",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "rgb",
+                          },
+                          r: {
+                            type: "number",
+                          },
+                          g: {
+                            type: "number",
+                          },
+                          b: {
+                            type: "number",
+                          },
+                          alpha: {
+                            type: "number",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "r", "g", "b", "alpha"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "function",
+                          },
+                          name: {
+                            type: "string",
+                          },
+                          args: {
+                            $ref: "#/$defs/__schema0",
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "name", "args"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "var",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                          fallback: {
+                            anyOf: [
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unparsed",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "keyword",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "unit",
+                                  },
+                                  unit: {
+                                    type: "string",
+                                  },
+                                  value: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "unit", "value"],
+                              },
+                              {
+                                $ref: "#/$defs/__schema1",
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "rgb",
+                                  },
+                                  r: {
+                                    type: "number",
+                                  },
+                                  g: {
+                                    type: "number",
+                                  },
+                                  b: {
+                                    type: "number",
+                                  },
+                                  alpha: {
+                                    type: "number",
+                                  },
+                                  hidden: {
+                                    type: "boolean",
+                                  },
+                                },
+                                required: ["type", "r", "g", "b", "alpha"],
+                              },
+                            ],
+                          },
+                          hidden: {
+                            type: "boolean",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                  },
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "function",
+                },
+                name: {
+                  type: "string",
+                },
+                args: {
+                  $ref: "#/$defs/__schema0",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "name", "args"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "guaranteedInvalid",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "invalid",
+                },
+                value: {
+                  type: "string",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "unset",
+                },
+                value: {
+                  type: "string",
+                  const: "",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "var",
+                },
+                value: {
+                  type: "string",
+                },
+                fallback: {
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "unparsed",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "keyword",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "unit",
+                        },
+                        unit: {
+                          type: "string",
+                        },
+                        value: {
+                          type: "number",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "unit", "value"],
+                    },
+                    {
+                      $ref: "#/$defs/__schema1",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "rgb",
+                        },
+                        r: {
+                          type: "number",
+                        },
+                        g: {
+                          type: "number",
+                        },
+                        b: {
+                          type: "number",
+                        },
+                        alpha: {
+                          type: "number",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "r", "g", "b", "alpha"],
+                    },
+                  ],
+                },
+                hidden: {
+                  type: "boolean",
+                },
+              },
+              required: ["type", "value"],
+            },
+            {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  const: "shadow",
+                },
+                hidden: {
+                  type: "boolean",
+                },
+                position: {
+                  anyOf: [
+                    {
+                      type: "string",
+                      const: "inset",
+                    },
+                    {
+                      type: "string",
+                      const: "outset",
+                    },
+                  ],
+                },
+                offsetX: {
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "unit",
+                        },
+                        unit: {
+                          type: "string",
+                        },
+                        value: {
+                          type: "number",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "unit", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "var",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        fallback: {
+                          anyOf: [
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unparsed",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "keyword",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unit",
+                                },
+                                unit: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "unit", "value"],
+                            },
+                            {
+                              $ref: "#/$defs/__schema1",
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "rgb",
+                                },
+                                r: {
+                                  type: "number",
+                                },
+                                g: {
+                                  type: "number",
+                                },
+                                b: {
+                                  type: "number",
+                                },
+                                alpha: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "r", "g", "b", "alpha"],
+                            },
+                          ],
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                  ],
+                },
+                offsetY: {
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "unit",
+                        },
+                        unit: {
+                          type: "string",
+                        },
+                        value: {
+                          type: "number",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "unit", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "var",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        fallback: {
+                          anyOf: [
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unparsed",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "keyword",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unit",
+                                },
+                                unit: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "unit", "value"],
+                            },
+                            {
+                              $ref: "#/$defs/__schema1",
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "rgb",
+                                },
+                                r: {
+                                  type: "number",
+                                },
+                                g: {
+                                  type: "number",
+                                },
+                                b: {
+                                  type: "number",
+                                },
+                                alpha: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "r", "g", "b", "alpha"],
+                            },
+                          ],
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                  ],
+                },
+                blur: {
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "unit",
+                        },
+                        unit: {
+                          type: "string",
+                        },
+                        value: {
+                          type: "number",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "unit", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "var",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        fallback: {
+                          anyOf: [
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unparsed",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "keyword",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unit",
+                                },
+                                unit: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "unit", "value"],
+                            },
+                            {
+                              $ref: "#/$defs/__schema1",
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "rgb",
+                                },
+                                r: {
+                                  type: "number",
+                                },
+                                g: {
+                                  type: "number",
+                                },
+                                b: {
+                                  type: "number",
+                                },
+                                alpha: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "r", "g", "b", "alpha"],
+                            },
+                          ],
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                  ],
+                },
+                spread: {
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "unit",
+                        },
+                        unit: {
+                          type: "string",
+                        },
+                        value: {
+                          type: "number",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "unit", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "var",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        fallback: {
+                          anyOf: [
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unparsed",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "keyword",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unit",
+                                },
+                                unit: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "unit", "value"],
+                            },
+                            {
+                              $ref: "#/$defs/__schema1",
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "rgb",
+                                },
+                                r: {
+                                  type: "number",
+                                },
+                                g: {
+                                  type: "number",
+                                },
+                                b: {
+                                  type: "number",
+                                },
+                                alpha: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "r", "g", "b", "alpha"],
+                            },
+                          ],
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                  ],
+                },
+                color: {
+                  anyOf: [
+                    {
+                      $ref: "#/$defs/__schema1",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "rgb",
+                        },
+                        r: {
+                          type: "number",
+                        },
+                        g: {
+                          type: "number",
+                        },
+                        b: {
+                          type: "number",
+                        },
+                        alpha: {
+                          type: "number",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "r", "g", "b", "alpha"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "keyword",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "var",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                        fallback: {
+                          anyOf: [
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unparsed",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "keyword",
+                                },
+                                value: {
+                                  type: "string",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "value"],
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "unit",
+                                },
+                                unit: {
+                                  type: "string",
+                                },
+                                value: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "unit", "value"],
+                            },
+                            {
+                              $ref: "#/$defs/__schema1",
+                            },
+                            {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  const: "rgb",
+                                },
+                                r: {
+                                  type: "number",
+                                },
+                                g: {
+                                  type: "number",
+                                },
+                                b: {
+                                  type: "number",
+                                },
+                                alpha: {
+                                  type: "number",
+                                },
+                                hidden: {
+                                  type: "boolean",
+                                },
+                              },
+                              required: ["type", "r", "g", "b", "alpha"],
+                            },
+                          ],
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type", "value"],
+                    },
+                  ],
+                },
+              },
+              required: ["type", "position", "offsetX", "offsetY"],
+            },
+          ],
+        },
+        __schema1: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              const: "color",
+            },
+            colorSpace: {
+              anyOf: [
+                {
+                  type: "string",
+                  const: "hex",
+                },
+                {
+                  type: "string",
+                  const: "srgb",
+                },
+                {
+                  type: "string",
+                  const: "p3",
+                },
+                {
+                  type: "string",
+                  const: "srgb-linear",
+                },
+                {
+                  type: "string",
+                  const: "hsl",
+                },
+                {
+                  type: "string",
+                  const: "hwb",
+                },
+                {
+                  type: "string",
+                  const: "lab",
+                },
+                {
+                  type: "string",
+                  const: "lch",
+                },
+                {
+                  type: "string",
+                  const: "oklab",
+                },
+                {
+                  type: "string",
+                  const: "oklch",
+                },
+                {
+                  type: "string",
+                  const: "a98rgb",
+                },
+                {
+                  type: "string",
+                  const: "prophoto",
+                },
+                {
+                  type: "string",
+                  const: "rec2020",
+                },
+                {
+                  type: "string",
+                  const: "xyz-d65",
+                },
+                {
+                  type: "string",
+                  const: "xyz-d50",
+                },
+              ],
+            },
+            components: {
+              type: "array",
+              prefixItems: [
+                {
+                  type: "number",
+                },
+                {
+                  type: "number",
+                },
+                {
+                  type: "number",
+                },
+              ],
+              minItems: 3,
+              maxItems: 3,
+            },
+            alpha: {
+              anyOf: [
+                {
+                  type: "number",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      const: "var",
+                    },
+                    value: {
+                      type: "string",
+                    },
+                    fallback: {
+                      anyOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "unparsed",
+                            },
+                            value: {
+                              type: "string",
+                            },
+                            hidden: {
+                              type: "boolean",
+                            },
+                          },
+                          required: ["type", "value"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "keyword",
+                            },
+                            value: {
+                              type: "string",
+                            },
+                            hidden: {
+                              type: "boolean",
+                            },
+                          },
+                          required: ["type", "value"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "unit",
+                            },
+                            unit: {
+                              type: "string",
+                            },
+                            value: {
+                              type: "number",
+                            },
+                            hidden: {
+                              type: "boolean",
+                            },
+                          },
+                          required: ["type", "unit", "value"],
+                        },
+                        {
+                          $ref: "#/$defs/__schema1",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "rgb",
+                            },
+                            r: {
+                              type: "number",
+                            },
+                            g: {
+                              type: "number",
+                            },
+                            b: {
+                              type: "number",
+                            },
+                            alpha: {
+                              type: "number",
+                            },
+                            hidden: {
+                              type: "boolean",
+                            },
+                          },
+                          required: ["type", "r", "g", "b", "alpha"],
+                        },
+                      ],
+                    },
+                    hidden: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["type", "value"],
+                },
+              ],
+            },
+            hidden: {
+              type: "boolean",
+            },
+          },
+          required: ["type", "colorSpace", "components", "alpha"],
+        },
+      },
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        created: {
+          type: "object",
+          properties: {
+            variableIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+            resources: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  resourceId: {
+                    type: "string",
+                  },
+                  dataSourceId: {
+                    type: "string",
+                  },
+                },
+                required: ["resourceId"],
+                additionalProperties: {},
+              },
+            },
+            instanceIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+            rootInstanceIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+            propIds: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+          },
+          required: [
+            "variableIds",
+            "resources",
+            "instanceIds",
+            "rootInstanceIds",
+            "propIds",
+          ],
+          additionalProperties: {},
+        },
+        editableStructure: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              enum: ["fragment", "collection"],
+            },
+            usesCollection: {
+              type: "boolean",
+            },
+          },
+          required: ["type", "usesCollection"],
+          additionalProperties: {},
+        },
+        retainedBehavior: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              instanceId: {
+                type: "string",
+              },
+              responsibility: {
+                type: "string",
+              },
+            },
+            required: ["instanceId", "responsibility"],
+            additionalProperties: {},
+          },
+        },
+        unsupportedConversions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              behavior: {
+                type: "string",
+              },
+              reason: {
+                type: "string",
+              },
+            },
+            required: ["behavior", "reason"],
+            additionalProperties: {},
+          },
+        },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
+        },
+      },
+      required: [
+        "created",
+        "editableStructure",
+        "retainedBehavior",
+        "unsupportedConversions",
+        "warnings",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSources",
+      "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
     retryOnConflict: false,
     requiresAssets: true,
   },
@@ -47031,6 +58064,7 @@ export const runtimeOperationContractData = [
       "styleSourceSelections",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "instances.deleteBySelector",
@@ -47107,6 +58141,7 @@ export const runtimeOperationContractData = [
     ],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
   {
     id: "instances.updateProps",
@@ -47639,6 +58674,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["props"],
     invalidatesNamespaces: ["props"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "instances.deleteProps",
@@ -47685,6 +58721,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["props", "resources"],
     invalidatesNamespaces: ["props", "resources"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "instances.bindProps",
@@ -47889,10 +58926,18 @@ export const runtimeOperationContractData = [
         contains: {
           type: "string",
         },
-        maxValueLength: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
           type: "integer",
-          minimum: 0,
-          maximum: 9007199254740991,
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
         },
       },
       required: [],
@@ -47923,8 +58968,19 @@ export const runtimeOperationContractData = [
                 type: "string",
                 enum: ["text", "expression"],
               },
+              valuePreview: {
+                type: "string",
+              },
               value: {
                 type: "string",
+              },
+              valueLength: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+              truncated: {
+                type: "boolean",
               },
             },
             required: [
@@ -47932,13 +58988,52 @@ export const runtimeOperationContractData = [
               "childIndex",
               "component",
               "mode",
-              "value",
+              "valuePreview",
+              "valueLength",
+              "truncated",
             ],
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["texts"],
+      required: [
+        "texts",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["pages", "instances"],
@@ -48150,6 +59245,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "instances.setTextContent",
@@ -48787,6 +59883,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styles.updateSelectedDeclarations",
@@ -48911,6 +60008,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styles.replaceValues",
@@ -48957,6 +60055,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "designTokens.list",
@@ -49366,6 +60465,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "designTokens.attach",
@@ -49574,6 +60674,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
     invalidatesNamespaces: ["styles", "styleSources", "styleSourceSelections"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styleSources.setLock",
@@ -49685,6 +60786,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styleSources.duplicate",
@@ -49775,6 +60877,19 @@ export const runtimeOperationContractData = [
         withUsage: {
           type: "boolean",
         },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
       },
       required: [],
     },
@@ -49792,6 +60907,11 @@ export const runtimeOperationContractData = [
               value: {
                 type: "string",
               },
+              valueLength: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
               scope: {
                 type: "string",
               },
@@ -49801,12 +60921,49 @@ export const runtimeOperationContractData = [
                 maximum: 9007199254740991,
               },
             },
-            required: ["name", "value", "scope"],
+            required: ["name", "valueLength", "scope"],
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["vars"],
+      required: [
+        "vars",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: [
@@ -52701,6 +63858,19 @@ export const runtimeOperationContractData = [
         scopeInstanceId: {
           type: "string",
         },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
       },
       required: [],
     },
@@ -52719,6 +63889,9 @@ export const runtimeOperationContractData = [
                 type: "string",
               },
               scopeInstanceId: {
+                type: "string",
+              },
+              valueType: {
                 type: "string",
               },
               value: {
@@ -52792,12 +63965,49 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
-            required: ["id", "name", "value"],
+            required: ["id", "name", "valueType"],
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["variables"],
+      required: [
+        "variables",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["dataSources"],
@@ -53084,6 +64294,7 @@ export const runtimeOperationContractData = [
       "resources",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "variables.deleteUnused",
@@ -53130,6 +64341,7 @@ export const runtimeOperationContractData = [
       "resources",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "resources.list",
@@ -53141,6 +64353,19 @@ export const runtimeOperationContractData = [
       properties: {
         scopeInstanceId: {
           type: "string",
+        },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
         },
       },
       required: [],
@@ -53180,8 +64405,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["resources"],
+      required: [
+        "resources",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["dataSources", "resources"],
@@ -53797,6 +65059,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["resources"],
     invalidatesNamespaces: ["resources"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "resources.upsert",
@@ -54244,6 +65507,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["dataSources", "resources", "props"],
     invalidatesNamespaces: ["dataSources", "resources", "props"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "assets.list",
@@ -54442,6 +65706,19 @@ export const runtimeOperationContractData = [
           description: "Include built-in system font stacks.",
           type: "boolean",
         },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
       },
       required: [],
     },
@@ -54459,6 +65736,11 @@ export const runtimeOperationContractData = [
               source: {
                 type: "string",
                 const: "uploaded",
+              },
+              assetCount: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
               },
               assets: {
                 type: "array",
@@ -54493,7 +65775,7 @@ export const runtimeOperationContractData = [
                 },
               },
             },
-            required: ["family", "source", "assets"],
+            required: ["family", "source", "assetCount"],
             additionalProperties: {},
           },
         },
@@ -54519,12 +65801,50 @@ export const runtimeOperationContractData = [
                 type: "string",
               },
             },
-            required: ["family", "source", "stack", "description"],
+            required: ["family", "source"],
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["uploaded", "system"],
+      required: [
+        "uploaded",
+        "system",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: ["assets"],
@@ -54543,6 +65863,19 @@ export const runtimeOperationContractData = [
       properties: {
         assetId: {
           type: "string",
+        },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
         },
       },
       required: ["assetId"],
@@ -54590,8 +65923,45 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
       },
-      required: ["usages"],
+      required: [
+        "usages",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
       additionalProperties: {},
     },
     readNamespaces: [
@@ -55063,6 +66433,7 @@ export const runtimeOperationContractData = [
     ],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
   {
     id: "assets.delete",
@@ -55111,5 +66482,6 @@ export const runtimeOperationContractData = [
     invalidatesNamespaces: ["assets"],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
 ] as const;

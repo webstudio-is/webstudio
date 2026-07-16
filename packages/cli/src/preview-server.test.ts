@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { expect, test, vi } from "vitest";
 import {
   createPreviewController,
+  findAvailablePort,
   getPreviewBuildArgs,
   getPreviewCommand,
   getPreviewStartArgs,
@@ -14,6 +15,13 @@ import {
   waitForPreviewReady,
   type PreviewServerDependencies,
 } from "./preview-server";
+
+test("allocates an available local preview port", async () => {
+  const port = await findAvailablePort();
+
+  expect(port).toBeGreaterThan(0);
+  expect(port).toBeLessThanOrEqual(65_535);
+});
 
 const createDependencies = (
   overrides: Partial<PreviewServerDependencies> = {}

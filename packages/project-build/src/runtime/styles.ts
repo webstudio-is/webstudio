@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import deepEqual from "fast-deep-equal";
-import { camelCaseProperty } from "@webstudio-is/css-data";
+import { camelCaseProperty, validateSelector } from "@webstudio-is/css-data";
 import { styleValue, toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
@@ -37,7 +37,7 @@ import { createRuntimeMutation } from "./mutation";
 import { serializeStyleDeclarations } from "./style-utils";
 import { createPropValue } from "./props";
 import { getStyleSourceStylesSignature } from "./style-copy";
-import { isBaseBreakpoint } from "./breakpoints";
+import { isBaseWidthBreakpoint } from "./breakpoints";
 
 export const serializeDesignTokens = ({
   styleSources,
@@ -243,17 +243,32 @@ const normalizeStyleProperty = (property: unknown): StyleDecl["property"] =>
 
 const getBaseBreakpointId = (breakpoints: Breakpoints | undefined) => {
   const breakpoint = Array.from(breakpoints?.values() ?? []).find(
-    isBaseBreakpoint
+    isBaseWidthBreakpoint
   );
   return breakpoint?.id ?? DEFAULT_BREAKPOINT_ID;
 };
 
-const withDefaultBreakpoint = <Input extends { breakpoint?: string }>(
+const withValidatedBreakpoint = <Input extends { breakpoint?: string }>(
   input: Input,
-  breakpoint: string
+  breakpoints: Breakpoints | undefined
 ): Input => ({
   ...input,
-  breakpoint: input.breakpoint ?? breakpoint,
+  breakpoint:
+    input.breakpoint === undefined
+      ? getBaseBreakpointId(breakpoints)
+      : breakpoints !== undefined && breakpoints.has(input.breakpoint) === false
+        ? throwBuilderRuntimeError("NOT_FOUND", "Breakpoint not found")
+        : input.breakpoint,
+});
+
+const styleStateInput = z.string().superRefine((state, context) => {
+  const result = validateSelector(state);
+  if (result.success === false) {
+    context.addIssue({
+      code: "custom",
+      message: result.error,
+    });
+  }
 });
 
 export const styleUpdateInput = z.object({
@@ -261,7 +276,7 @@ export const styleUpdateInput = z.object({
   property: z.string(),
   value: z.unknown(),
   breakpoint: z.string().optional(),
-  state: z.string().optional(),
+  state: styleStateInput.optional(),
   listed: z.boolean().optional(),
   createLocalIfMissing: z.boolean().optional(),
 });
@@ -270,7 +285,7 @@ export const styleDeleteInput = z.object({
   instanceId: z.string(),
   property: z.string(),
   breakpoint: z.string().optional(),
-  state: z.string().optional(),
+  state: styleStateInput.optional(),
 });
 
 const jsonArrayStringInput = (value: unknown) => {
@@ -1116,7 +1131,7 @@ export const designTokenStyleInput = z.object({
   property: z.string(),
   value: z.unknown(),
   breakpoint: z.string().optional(),
-  state: z.string().optional(),
+  state: styleStateInput.optional(),
 });
 type DesignTokenStyleInput = z.input<typeof designTokenStyleInput>;
 
@@ -3144,7 +3159,7 @@ export const updateStyleDeclarations = (
   const { payload, styleKeys, missingLocalStyleSourceInstanceIds } =
     createStyleDeclarationUpdatePayload({
       updates: input.updates.map((update) =>
-        withDefaultBreakpoint(update, getBaseBreakpointId(state.breakpoints))
+        withValidatedBreakpoint(update, state.breakpoints)
       ),
       styleSources: styleState.styleSources,
       styleSourceSelections: styleState.styleSourceSelections.values(),
@@ -3182,7 +3197,7 @@ export const deleteStyleDeclarations = (
   );
   const { payload, styleKeys } = createStyleDeclarationDeletePayload({
     deletions: input.deletions.map((deletion) =>
-      withDefaultBreakpoint(deletion, getBaseBreakpointId(state.breakpoints))
+      withValidatedBreakpoint(deletion, state.breakpoints)
     ),
     styleSources: styleState.styleSources,
     styleSourceSelections: styleState.styleSourceSelections.values(),
@@ -3220,7 +3235,7 @@ export const updateSelectedStyleDeclarations = (
       return throwBuilderRuntimeError("BAD_REQUEST", "Style source is locked");
     }
     return {
-      ...withDefaultBreakpoint(update, getBaseBreakpointId(state.breakpoints)),
+      ...withValidatedBreakpoint(update, state.breakpoints),
       styleSource,
     };
   });
@@ -3264,7 +3279,7 @@ export const deleteSelectedStyleDeclarations = (
   }
   const { payload, styleKeys } = createSelectedStyleDeclarationDeletePayload({
     deletions: input.deletions.map((deletion) =>
-      withDefaultBreakpoint(deletion, getBaseBreakpointId(state.breakpoints))
+      withValidatedBreakpoint(deletion, state.breakpoints)
     ),
     styles: styleState.styles.values(),
   });
@@ -3339,7 +3354,7 @@ export const listCssVariables = (
   input: {
     filter?: string;
     withUsage?: boolean;
-  } = {}
+  } & PaginatedOutputInput = {}
 ) => {
   if (state.props === undefined) {
     return throwBuilderRuntimeError(
@@ -3348,13 +3363,32 @@ export const listCssVariables = (
     );
   }
   const styleState = getRequiredStyleState(state);
-  return serializeCssVariables({
+  const serialized = serializeCssVariables({
     styles: styleState.styles.values(),
     props: state.props.values(),
     styleSourceSelections: styleState.styleSourceSelections.values(),
     filter: input.filter,
     withUsage: input.withUsage,
   });
+  const { items, ...pagination } = paginateOutput({
+    items: serialized.vars.map((variable) =>
+      projectOutput({
+        input,
+        compact: {
+          name: variable.name,
+          scope: variable.scope,
+          usageCount: variable.usageCount,
+          valueLength: variable.value.length,
+        },
+        expanded: () => ({ value: variable.value }),
+      })
+    ),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: { filter: input.filter, withUsage: input.withUsage },
+    verbose: input.verbose,
+  });
+  return { vars: items, ...pagination };
 };
 
 export const defineCssVariables = (
@@ -3545,10 +3579,7 @@ export const createDesignTokens = (
       ...token,
       styles: undefined,
       declarations: createDesignTokenStyleInputs(token).map((declaration) =>
-        withDefaultBreakpoint(
-          declaration,
-          getBaseBreakpointId(state.breakpoints)
-        )
+        withValidatedBreakpoint(declaration, state.breakpoints)
       ),
     })),
     styleSources: new Map(styleState.styleSources),
@@ -3600,10 +3631,7 @@ export const createAttachedDesignTokens = (
       ...token,
       styles: undefined,
       declarations: createDesignTokenStyleInputs(token).map((declaration) =>
-        withDefaultBreakpoint(
-          declaration,
-          getBaseBreakpointId(state.breakpoints)
-        )
+        withValidatedBreakpoint(declaration, state.breakpoints)
       ),
     })),
     styleSources: nextStyleSources,
@@ -3654,7 +3682,7 @@ export const updateDesignTokenStyles = (
   const { payload, styleKeys } = createDesignTokenStyleUpdatePayload({
     designTokenId: input.designTokenId,
     updates: input.updates.map((update) =>
-      withDefaultBreakpoint(update, getBaseBreakpointId(state.breakpoints))
+      withValidatedBreakpoint(update, state.breakpoints)
     ),
     styles: styleState.styles.values(),
   });
@@ -3677,7 +3705,7 @@ export const deleteDesignTokenStyles = (
   const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
     designTokenId: input.designTokenId,
     deletions: input.deletions.map((deletion) =>
-      withDefaultBreakpoint(deletion, getBaseBreakpointId(state.breakpoints))
+      withValidatedBreakpoint(deletion, state.breakpoints)
     ),
     styles: styleState.styles.values(),
   });

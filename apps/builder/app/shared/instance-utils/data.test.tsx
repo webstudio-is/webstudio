@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { findCycles } from "@webstudio-is/project-build/runtime";
@@ -6,8 +6,10 @@ import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/r
 import {
   executeRuntimeMutation,
   executeRuntimeMutationAsync,
+  executeRuntimeMutationSequence,
   getWebstudioData,
   migrateLoadedWebstudioData,
+  type RuntimeMutationOperation,
 } from "./data";
 import { registerContainers, serverSyncStore } from "../sync/sync-stores";
 import {
@@ -35,6 +37,15 @@ const createInstance = (
 };
 
 registerContainers();
+
+test("accepts only mutation operation ids in the Builder commit helpers", () => {
+  expectTypeOf<
+    Extract<RuntimeMutationOperation, { id: "pages.create" }>
+  >().not.toBeNever();
+  expectTypeOf<
+    Extract<RuntimeMutationOperation, { id: "pages.list" }>
+  >().toBeNever();
+});
 
 const setBaseStores = () => {
   serverSyncStore.transactionManager.currentStack = [];
@@ -164,6 +175,45 @@ describe("data store helpers", () => {
         value: "main",
       }),
     ]);
+  });
+
+  test("commits a runtime mutation sequence as one undoable transaction", () => {
+    setBaseStores();
+
+    executeRuntimeMutationSequence([
+      {
+        id: "instances.updateProps",
+        input: {
+          updates: [
+            {
+              instanceId: "body",
+              name: "id",
+              type: "string",
+              value: "main",
+            },
+          ],
+        },
+      },
+      {
+        id: "instances.updateProps",
+        input: {
+          updates: [
+            {
+              instanceId: "body",
+              name: "title",
+              type: "string",
+              value: "Main content",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(Array.from($props.get().values())).toHaveLength(2);
+    serverSyncStore.undo();
+    expect($props.get()).toEqual(new Map());
+    serverSyncStore.redo();
+    expect(Array.from($props.get().values())).toHaveLength(2);
   });
 
   test("runtime bridge keeps sync changes scoped to changed namespaces", () => {

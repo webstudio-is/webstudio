@@ -1,6 +1,6 @@
 import { enableMapSet } from "immer";
 import { describe, expect, test } from "vitest";
-import { registerContainers } from "~/shared/sync/sync-stores";
+import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   $selectedBreakpointId,
   $selectedStyleSources,
@@ -18,13 +18,20 @@ import {
   $styles,
 } from "~/shared/sync/data-stores";
 import { $selectedPageId, selectInstance } from "~/shared/nano-states";
-import { deleteProperty, setProperty } from "./use-style-data";
+import {
+  createBatchUpdate,
+  deleteProperty,
+  setProperty,
+} from "./use-style-data";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 
 enableMapSet();
 registerContainers();
 
 const setupBaseStores = () => {
+  serverSyncStore.transactionManager.currentStack = [];
+  serverSyncStore.transactionManager.undoneStack = [];
+  serverSyncStore.popAll();
   const pages = createDefaultPages({ rootInstanceId: "body" });
   $pages.set(pages);
   $selectedPageId.set(pages.homePageId);
@@ -154,5 +161,30 @@ describe("use-style-data", () => {
         state: undefined,
       },
     ]);
+  });
+
+  test("commits mixed batch updates in one undoable transaction", () => {
+    setupSelection({ id: "token1", type: "token", name: "Primary" });
+    const color: StyleDecl = {
+      breakpointId: "base",
+      styleSourceId: "token1",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    };
+    $styles.set(new Map([[getStyleDeclKey(color), color]]));
+
+    const batch = createBatchUpdate();
+    batch.deleteProperty("color");
+    batch.setProperty("display")({ type: "keyword", value: "grid" });
+    batch.publish();
+
+    expect(Array.from($styles.get().values())).toEqual([
+      expect.objectContaining({
+        property: "display",
+        value: { type: "keyword", value: "grid" },
+      }),
+    ]);
+    serverSyncStore.undo();
+    expect(Array.from($styles.get().values())).toEqual([color]);
   });
 });

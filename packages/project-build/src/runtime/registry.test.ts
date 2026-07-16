@@ -4,6 +4,7 @@ import {
   toInputJsonSchemaObject,
   type Assets,
   type InputJsonSchema,
+  type Instance,
 } from "@webstudio-is/sdk";
 import { runtimeOperationContracts } from "../contracts/builder-runtime";
 import { getRuntimeGeneratedInputPaths } from "../contracts/input-schema";
@@ -12,6 +13,7 @@ import {
   builderRuntimeOperations,
   executeBuilderRuntimeOperation,
   getBuilderRuntimeOperation,
+  isDestructiveRuntimeCommand,
 } from "./registry";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { getRuntimeOutputSchema, runtimeOutputSchemas } from "./output-schemas";
@@ -29,6 +31,7 @@ import {
 } from "./instances";
 import { listDataVariables, listResources } from "./data";
 import { listFonts } from "./fonts";
+import { listAssets } from "./assets";
 import { bindProps, deleteProps, updateProps } from "./props";
 import type { BuilderState } from "../state/builder-state";
 import type { SemanticValidationIssue } from "./errors";
@@ -37,6 +40,7 @@ import {
   expectRuntimeValidationError,
   state,
 } from "./runtime.test-fixtures";
+import { createResourceCollectionIntegrationFixture } from "./runtime-ui.test-fixture";
 
 const hasDirectInputProperty = (
   schema: InputJsonSchema | undefined,
@@ -66,6 +70,53 @@ const hasDirectInputProperty = (
 const mutationOperationIds = runtimeOperationContracts
   .filter((contract) => contract.kind === "mutation")
   .map((contract) => contract.id);
+
+const paginatedReadOperationIds = [
+  "pages.list",
+  "redirects.list",
+  "breakpoints.list",
+  "pageTemplates.list",
+  "folders.list",
+  "instances.list",
+  "instances.listTexts",
+  "styles.getDeclarations",
+  "designTokens.list",
+  "cssVariables.list",
+  "variables.list",
+  "resources.list",
+  "assets.list",
+  "fonts.list",
+] as const;
+
+const maxCompactListBytes = 16 * 1024;
+
+test.each(paginatedReadOperationIds)(
+  "%s uses the shared paginated compact/verbose contract",
+  (operationId) => {
+    const operation = getBuilderRuntimeOperation(operationId);
+    expect(hasDirectInputProperty(operation.inputJsonSchema, "cursor")).toBe(
+      true
+    );
+    expect(hasDirectInputProperty(operation.inputJsonSchema, "limit")).toBe(
+      true
+    );
+    expect(hasDirectInputProperty(operation.inputJsonSchema, "verbose")).toBe(
+      true
+    );
+    for (const property of [
+      "detail",
+      "total",
+      "returnedCount",
+      "nextCursor",
+      "filters",
+    ]) {
+      expect(
+        hasDirectInputProperty(operation.outputJsonSchema, property),
+        `${operationId} output is missing ${property}`
+      ).toBe(true);
+    }
+  }
+);
 
 const getMutationResult = (operation: unknown): unknown => {
   expect(operation).toHaveProperty("result");
@@ -245,23 +296,18 @@ test("validates structured runtime operation results", () => {
 
 describe("builder runtime pages", () => {
   test("lists pages and folders from shared state", () => {
-    expect(listPages(state, { includeFolders: true })).toMatchObject({
+    expect(listPages(state)).toMatchObject({
       pages: [
         { id: "home", path: "", isHome: true, parentFolderId: "root" },
         { id: "post", path: "/blog/post", parentFolderId: "blog" },
       ],
-      folders: [
-        { id: "root", children: ["home", "blog"] },
-        { id: "blog", children: ["post"] },
-      ],
     });
 
-    expect(listFolders(state, { includePages: true })).toMatchObject({
+    expect(listFolders(state)).toMatchObject({
       folders: [
         { id: "root", parentFolderId: undefined },
         { id: "blog", parentFolderId: "root" },
       ],
-      pages: [{ id: "home" }, { id: "post" }],
     });
   });
 
@@ -338,6 +384,56 @@ describe("builder runtime pages", () => {
 });
 
 describe("builder runtime read families", () => {
+  test("keeps representative high-volume compact lists within budget", () => {
+    const sourceInstance = state.instances.get("heading")!;
+    const sourceAsset = state.assets.get("asset")!;
+    const sourceToken = state.styleSources.get("token")!;
+    const largeState: BuilderState = {
+      ...state,
+      instances: new Map(
+        Array.from({ length: 100 }, (_, index) => {
+          const id = `instance-${index}`;
+          return [id, { ...sourceInstance, id, label: `Item ${index}` }];
+        })
+      ),
+      assets: new Map(
+        Array.from({ length: 100 }, (_, index) => {
+          const id = `asset-${index}`;
+          return [
+            id,
+            {
+              ...sourceAsset,
+              id,
+              name: `${id}.png`,
+              description: `Verbose description ${"detail ".repeat(100)}`,
+            },
+          ];
+        })
+      ),
+      styleSources: new Map(
+        Array.from({ length: 100 }, (_, index) => {
+          const id = `token-${index}`;
+          return [id, { ...sourceToken, id, name: `Token ${index}` }];
+        })
+      ),
+      styles: new Map(),
+      styleSourceSelections: new Map(),
+    };
+
+    const outputs = [
+      listInstances(largeState),
+      listAssets(largeState),
+      listDesignTokens(largeState),
+    ];
+
+    for (const output of outputs) {
+      expect(output.returnedCount).toBe(20);
+      expect(Buffer.byteLength(JSON.stringify(output))).toBeLessThanOrEqual(
+        maxCompactListBytes
+      );
+    }
+  });
+
   test("keeps instance lists compact and paginates verbose expansion", () => {
     const instances: BuilderState["instances"] = new Map(state.instances);
     const largeState: BuilderState = {
@@ -424,7 +520,15 @@ describe("builder runtime read families", () => {
     );
 
     expect(listTextInstances(state, { contains: "Hello" })).toMatchObject({
-      texts: [{ instanceId: "heading", childIndex: 0, value: "Hello" }],
+      texts: [
+        {
+          instanceId: "heading",
+          childIndex: 0,
+          valuePreview: "Hello",
+          valueLength: 5,
+          truncated: false,
+        },
+      ],
     });
   });
 
@@ -1083,14 +1187,93 @@ describe("builder runtime read families", () => {
       tokens: [{ id: "token", styles: { color: expect.any(Object) } }],
     });
     expect(listCssVariables(state, { withUsage: true })).toMatchObject({
-      vars: [{ name: "--brand-color", scope: "heading", usageCount: 1 }],
+      vars: [
+        {
+          name: "--brand-color",
+          scope: "heading",
+          usageCount: 1,
+          valueLength: expect.any(Number),
+        },
+      ],
     });
+    expect(
+      listCssVariables(state, { withUsage: true, verbose: true })
+    ).toMatchObject({ vars: [{ value: expect.any(String) }] });
     expect(listDataVariables(state)).toMatchObject({
-      variables: [{ id: "variable", scopeInstanceId: "heading" }],
+      variables: [
+        {
+          id: "variable",
+          scopeInstanceId: "heading",
+          valueType: expect.any(String),
+        },
+      ],
+    });
+    expect(listDataVariables(state, { verbose: true })).toMatchObject({
+      variables: [{ value: expect.any(Object) }],
     });
     expect(listResources(state)).toMatchObject({
       resources: [{ id: "resource", dataSourceId: "resourceDataSource" }],
     });
+  });
+
+  test("compact list records are bounded subsets of verbose records", () => {
+    const assertions = [
+      [
+        listCssVariables(state, { withUsage: true }),
+        listCssVariables(state, { withUsage: true, verbose: true }),
+      ],
+      [listDataVariables(state), listDataVariables(state, { verbose: true })],
+    ] as const;
+
+    for (const [compact, verbose] of assertions) {
+      const { detail: _compactDetail, ...compactResult } = compact;
+      const { detail: _verboseDetail, ...verboseResult } = verbose;
+      expect(verboseResult).toMatchObject(compactResult);
+      expect(JSON.stringify(compact).length).toBeLessThan(
+        JSON.stringify(verbose).length
+      );
+      expect(verbose.total).toBe(compact.total);
+      expect(verbose.nextCursor).toBe(compact.nextCursor);
+    }
+
+    const instances = new Map<string, Instance>(state.instances);
+    const heading = instances.get("heading");
+    if (heading === undefined || heading.type !== "instance") {
+      throw new Error("Expected heading fixture");
+    }
+    instances.set("heading", {
+      ...heading,
+      children: [{ type: "text", value: "x".repeat(400) }],
+    });
+    const compactText = listTextInstances({ ...state, instances });
+    const verboseText = listTextInstances(
+      { ...state, instances },
+      { verbose: true }
+    );
+    const { detail: _compactDetail, ...compactTextResult } = compactText;
+    const { detail: _verboseDetail, ...verboseTextResult } = verboseText;
+    expect(verboseTextResult).toMatchObject(compactTextResult);
+    expect(compactText.texts[0]).toMatchObject({
+      valueLength: 400,
+      truncated: true,
+    });
+    expect(JSON.stringify(compactText).length).toBeLessThan(
+      JSON.stringify(verboseText).length
+    );
+  });
+
+  test("cursor traversal preserves page ordering without duplication", () => {
+    const first = listPages(state, { limit: 1 });
+    const second = listPages(state, {
+      limit: 1,
+      cursor: first.nextCursor ?? undefined,
+    });
+
+    expect([...first.pages, ...second.pages].map((page) => page.id)).toEqual([
+      "home",
+      "post",
+    ]);
+    expect(second.nextCursor).toBeNull();
   });
 
   test("lists uploaded font families separately from system font stacks", () => {
@@ -1116,6 +1299,24 @@ describe("builder runtime read families", () => {
         {
           family: "Acme Sans",
           source: "uploaded",
+          assetCount: 1,
+        },
+      ],
+      system: [],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: { includeSystem: false },
+    });
+
+    expect(
+      listFonts(fontState, { includeSystem: false, verbose: true })
+    ).toMatchObject({
+      uploaded: [
+        {
+          family: "Acme Sans",
+          assetCount: 1,
           assets: [
             {
               assetId: "font",
@@ -1127,7 +1328,7 @@ describe("builder runtime read families", () => {
           ],
         },
       ],
-      system: [],
+      detail: "verbose",
     });
 
     expect(
@@ -1743,11 +1944,23 @@ describe("builder runtime registry", () => {
           operation.writeNamespaces.includes("assets")
       );
     }
+    for (const operation of builderRuntimeOperations.filter((operation) =>
+      isDestructiveRuntimeCommand(operation.command)
+    )) {
+      expect(operation.requiresConfirm, operation.command).toBe(true);
+    }
+    expect(getBuilderRuntimeOperation("folders.delete").requiresConfirm).toBe(
+      true
+    );
+    expect(getBuilderRuntimeOperation("redirects.setAll").requiresConfirm).toBe(
+      true
+    );
     expect(
-      builderRuntimeOperations
-        .filter((operation) => operation.requiresConfirm)
-        .map((operation) => operation.id)
-    ).toEqual(["cssVariables.delete"]);
+      getBuilderRuntimeOperation("styleSources.clearStyles").requiresConfirm
+    ).toBe(true);
+    expect(getBuilderRuntimeOperation("pages.create").requiresConfirm).toBe(
+      false
+    );
   });
 
   test("rejects client-supplied generated ids and hides generated id fields", () => {
@@ -1880,6 +2093,7 @@ describe("builder runtime registry", () => {
       ["pageTransfer.insert", {}],
       ["pageTree.move", {}],
       ["pageTree.reparentOrphans", "invalid"],
+      ["runtimeUi.integrate", {}],
       ["instances.insertComponent", { parentInstanceId: "body" }],
       ["instances.insertCollection", { parentInstanceId: "body" }],
       ["instances.insertFragment", { parentInstanceId: "body" }],
@@ -2052,6 +2266,7 @@ describe("builder runtime registry", () => {
         "folders.create",
         { name: "Docs", slug: "docs", parentFolderId: "root" },
       ],
+      ["folders.delete", { folderId: "blog" }],
       [
         "pageTemplates.create",
         {
@@ -2060,6 +2275,7 @@ describe("builder runtime registry", () => {
           meta: { description: '"Reusable article"' },
         },
       ],
+      ["projectSettings.update", { meta: { siteName: "Updated project" } }],
       ["redirects.create", { old: "/legacy", new: "/new" }],
       ["breakpoints.create", { label: "Tablet", maxWidth: 768 }],
       [
@@ -2079,6 +2295,22 @@ describe("builder runtime registry", () => {
         "instances.clone",
         { sourceInstanceId: "heading", targetParentInstanceId: "body" },
       ],
+      [
+        "instances.insertComponent",
+        { parentInstanceId: "body", component: "ws:element", tag: "div" },
+      ],
+      [
+        "runtimeUi.integrate",
+        {
+          ...createResourceCollectionIntegrationFixture().input,
+          retainedBehavior: [],
+        },
+      ],
+      [
+        "instances.fillGrid",
+        { parentInstanceId: "body", totalCells: 3, breakpointId: "base" },
+      ],
+      ["pageTree.reparentOrphans", {}],
       [
         "instances.duplicateAfterItself",
         { sourceInstanceId: "heading", parentInstanceId: "body" },
@@ -2207,9 +2439,28 @@ describe("builder runtime registry", () => {
       ["assets.replace", { fromAssetId: "asset", toAssetId: "next" }],
     ]);
 
+    const mutationIds = new Set(mutationOperationIds);
+    for (const manifest of builderRuntimeCutoverManifests) {
+      const familyMutationIds = manifest.operationIds.filter((id) =>
+        mutationIds.has(id)
+      );
+      if (familyMutationIds.length > 0) {
+        expect(
+          familyMutationIds.some((id) => inputs.has(id)),
+          `${manifest.family} has no caller-state immutability fixture`
+        ).toBe(true);
+      }
+    }
+
     for (const [id, input] of inputs) {
       const before = structuredClone(state);
-      executeBuilderRuntimeOperation({ id, state, input, context });
+      let nextId = 0;
+      executeBuilderRuntimeOperation({
+        id,
+        state,
+        input,
+        context: { createId: () => `runtime-id-${++nextId}` },
+      });
       expect(state).toEqual(before);
     }
   });

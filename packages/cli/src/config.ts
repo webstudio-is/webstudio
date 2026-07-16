@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { readdirSync } from "node:fs";
 import envPaths from "env-paths";
 import { z } from "zod";
@@ -13,6 +13,19 @@ export const GLOBAL_CONFIG_FILE = join(
 
 export const LOCAL_CONFIG_FILE = ".webstudio/config.json";
 export const LOCAL_DATA_FILE = ".webstudio/data.json";
+
+export const getLocalProjectStateDirectory = (
+  projectRoot: string,
+  projectId?: string
+) =>
+  projectId === undefined
+    ? join(projectRoot, dirname(LOCAL_CONFIG_FILE))
+    : join(
+        projectRoot,
+        dirname(LOCAL_CONFIG_FILE),
+        "projects",
+        encodeURIComponent(projectId)
+      );
 
 const zLocalConfig = z.object({
   projectId: z.string(),

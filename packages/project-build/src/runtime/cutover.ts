@@ -107,7 +107,11 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "project-inspection-read",
-    operationIds: ["project.search", "project.audit"] as const,
+    operationIds: [
+      "project.search",
+      "project.audit",
+      "project.verifyBindings",
+    ] as const,
     callers: ["MCP/CLI project search and audit"] as const,
   },
   {
@@ -138,6 +142,11 @@ export const builderRuntimeCutoverManifests = [
       "MCP insert-fragment",
       "Builder components panel",
     ] as const,
+  },
+  {
+    family: "runtime-ui-integration",
+    operationIds: ["runtimeUi.integrate"] as const,
+    callers: ["MCP/CLI runtime UI authoring"] as const,
   },
   {
     family: "text-content-mutations",

@@ -57,8 +57,12 @@ builder_backend_wait_for_db() {
   local timeout_at
   timeout_at="$(($(date +%s) + timeout_seconds))"
 
+  # Connect over TCP, not the unix socket: the postgres image's entrypoint
+  # runs a temporary socket-only server (listen_addresses='') during init,
+  # which lets a socket probe pass while host clients (prisma migrate,
+  # postgrest) still get connection refused.
   until builder_compose exec -T db \
-    sh -c 'psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "SELECT 1"' \
+    sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -q -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "SELECT 1"' \
     >/dev/null 2>&1; do
     if [ "$(date +%s)" -ge "$timeout_at" ]; then
       echo "Timed out waiting for database" >&2

@@ -1,11 +1,13 @@
 import type { ProjectSessionEnvelope } from "./project-session";
 import type {
+  GeneratedBuildMetrics,
   RenderedAuditCheck,
   RenderedAuditFailure,
   renderedAuditPlan,
 } from "./runtime/audit";
 import {
   auditContractVersion,
+  generatedBuildMetrics as generatedBuildMetricsSchema,
   renderedAuditManifestVersion,
 } from "./runtime/audit";
 import type { z } from "zod";
@@ -14,6 +16,10 @@ import type {
   ProjectSessionScreenshotInput,
   ProjectSessionScreenshotResult,
 } from "./mcp";
+import {
+  createConfirmationToken,
+  validateConfirmationToken,
+} from "./confirmation-token";
 
 type Viewport = { width: number; height: number; purposes: string[] };
 type RenderedAuditPlan = z.infer<typeof renderedAuditPlan>;
@@ -31,10 +37,48 @@ type ExecuteRead = (
   input: unknown
 ) => Promise<ProjectSessionEnvelope>;
 
+const readAllPaginatedItems = async (
+  executeRead: ExecuteRead,
+  command: "list-pages" | "list-breakpoints",
+  key: "pages" | "breakpoints"
+) => {
+  const items: unknown[] = [];
+  const seenCursors = new Set<string>();
+  let cursor: string | undefined;
+  let firstEnvelope: ProjectSessionEnvelope | undefined;
+  do {
+    const envelope = await executeRead(command, { cursor, limit: 200 });
+    firstEnvelope ??= envelope;
+    if (isRecord(envelope.result) === false) {
+      throw new Error(`${command} returned an invalid result.`);
+    }
+    const page = envelope.result[key];
+    if (Array.isArray(page) === false) {
+      throw new Error(`${command} did not return ${key}.`);
+    }
+    items.push(...page);
+    const nextCursor = envelope.result.nextCursor;
+    cursor = typeof nextCursor === "string" ? nextCursor : undefined;
+    if (cursor !== undefined && seenCursors.has(cursor)) {
+      throw new Error(`${command} returned a repeated pagination cursor.`);
+    }
+    if (cursor !== undefined) {
+      seenCursors.add(cursor);
+    }
+  } while (cursor !== undefined);
+  if (firstEnvelope === undefined || isRecord(firstEnvelope.result) === false) {
+    throw new Error(`${command} returned no result.`);
+  }
+  return {
+    ...firstEnvelope,
+    result: { ...firstEnvelope.result, [key]: items, nextCursor: null },
+  };
+};
+
 type StartPreview = (
   input: { source: "session"; port: number; imageDomains?: string[] },
   progress: { report: (message: string) => void }
-) => Promise<unknown>;
+) => Promise<{ url: string; generatedBuildMetrics?: unknown }>;
 
 type CaptureScreenshot = (
   input: ProjectSessionScreenshotInput
@@ -75,6 +119,7 @@ export type RenderedAuditArtifactManifest = {
     artifactWriteMs: number;
     targetCleanupMs: number;
   };
+  generatedBuildMetrics: GeneratedBuildMetrics | null;
 };
 
 type StoreRenderedAuditArtifacts = (
@@ -87,7 +132,7 @@ const renderedAuditScreenshotTimeout = 10_000;
 const renderedAuditCaptureTimeout = 30_000;
 const renderedAuditPageTimeout = 120_000;
 const renderedAuditOverallTimeout = 5 * 60_000;
-const renderedAuditPreviewPort = 5177;
+const automaticPreviewPort = 0;
 const renderedAuditCaptureConcurrency = 6;
 
 const getRenderedAuditCaptureKey = (
@@ -95,16 +140,29 @@ const getRenderedAuditCaptureKey = (
   viewport: { width: number; height: number }
 ) => `${pageId}\n${viewport.width}\n${viewport.height}`;
 
+const getRenderedIssueConfidence = (
+  kind: RenderedAuditCheck["issues"][number]
+) =>
+  kind === "hidden-content" ||
+  kind === "overlapping-elements" ||
+  kind === "cross-breakpoint-layout-change" ||
+  kind === "eager-below-fold-image" ||
+  kind === "oversized-image"
+    ? ("advisory" as const)
+    : ("exact" as const);
+
 const getRenderedAuditScreenshotInput = ({
   pageId,
   pagePath,
   viewport,
   performanceEnabled,
+  accessibilityEnabled,
 }: {
   pageId: string;
   pagePath: string;
   viewport: { width: number; height: number };
   performanceEnabled: boolean;
+  accessibilityEnabled: boolean;
 }): ProjectSessionScreenshotInput => ({
   path: pagePath,
   output: `.webstudio/audits/screenshots/${pageId.replaceAll(/[^a-z0-9_-]/gi, "_")}-${viewport.width}x${viewport.height}.webp`,
@@ -113,6 +171,7 @@ const getRenderedAuditScreenshotInput = ({
   fullPage: true,
   includeImageMetrics: performanceEnabled,
   includeResourceMetrics: performanceEnabled,
+  includeContrastMetrics: accessibilityEnabled,
   browser: "auto",
   waitForTimeout: 0,
   timeout: renderedAuditScreenshotTimeout,
@@ -215,50 +274,13 @@ const getRenderedAuditPlanSignature = ({
     },
   });
 
-const getRenderedAuditConfirmationDigest = async (
-  signature: string,
-  expiresAt: number
-) => {
-  const digest = await globalThis.crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(`${expiresAt}:${signature}`)
-  );
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
-};
+const createRenderedAuditConfirmation = (signature: string) =>
+  createConfirmationToken(signature, renderedAuditConfirmationTtlMs);
 
-const createRenderedAuditConfirmation = async (signature: string) => {
-  const expiresAt = Date.now() + renderedAuditConfirmationTtlMs;
-  const digest = await getRenderedAuditConfirmationDigest(signature, expiresAt);
-  const token = `${expiresAt.toString(36)}.${digest}`;
-  return { token, expiresAt };
-};
-
-const validateRenderedAuditConfirmation = async (
+const validateRenderedAuditConfirmation = (
   token: string | undefined,
   signature: string
-) => {
-  if (token === undefined) {
-    return false;
-  }
-  const [encodedExpiresAt, digest, ...extra] = token.split(".");
-  if (
-    encodedExpiresAt === undefined ||
-    digest === undefined ||
-    extra.length > 0
-  ) {
-    return false;
-  }
-  const expiresAt = Number.parseInt(encodedExpiresAt, 36);
-  if (Number.isSafeInteger(expiresAt) === false || expiresAt < Date.now()) {
-    return false;
-  }
-  return (
-    digest === (await getRenderedAuditConfirmationDigest(signature, expiresAt))
-  );
-};
+) => validateConfirmationToken(token, signature);
 
 export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
   const popularViewports = [
@@ -390,6 +412,163 @@ type Layout = NonNullable<ProjectSessionScreenshotResult["layout"]> & {
   resources: NonNullable<
     NonNullable<ProjectSessionScreenshotResult["layout"]>["resources"]
   >;
+  contrasts: NonNullable<
+    NonNullable<ProjectSessionScreenshotResult["layout"]>["contrasts"]
+  >;
+};
+
+type GeometryLayout = Layout & {
+  elementGeometry: RenderedAuditCheck["layout"]["elementGeometry"];
+};
+
+const emptyElementGeometry: GeometryLayout["elementGeometry"] = {
+  total: 0,
+  sampled: 0,
+  truncated: false,
+  elements: [],
+};
+
+export const getRenderedGeometryIssues = (
+  layout: GeometryLayout
+): RenderedAuditCheck["geometryIssues"] => {
+  const issues: RenderedAuditCheck["geometryIssues"] = [];
+  for (const element of layout.elementGeometry.elements) {
+    if (element.clippedX || element.clippedY) {
+      issues.push({
+        kind: "clipped-content",
+        confidence: "exact",
+        instanceId: element.instanceId,
+        message: "Rendered content exceeds a clipping boundary.",
+        evidence: {
+          clippedX: element.clippedX,
+          clippedY: element.clippedY,
+        },
+      });
+    }
+    for (const relatedInstanceId of element.overlapsWith) {
+      if (element.instanceId.localeCompare(relatedInstanceId) >= 0) {
+        continue;
+      }
+      issues.push({
+        kind: "overlapping-elements",
+        confidence: "advisory",
+        instanceId: element.instanceId,
+        relatedInstanceId,
+        message:
+          "Rendered element bounds overlap; inspect the screenshot to determine whether this is intentional.",
+        evidence: {},
+      });
+    }
+  }
+  return issues;
+};
+
+const addCrossBreakpointGeometryIssues = (
+  checks: RenderedAuditCheck[]
+): RenderedAuditCheck[] => {
+  const checksByPage = checks.reduce((pages, check) => {
+    const pageChecks = pages.get(check.pageId) ?? [];
+    pageChecks.push(check);
+    pages.set(check.pageId, pageChecks);
+    return pages;
+  }, new Map<string, RenderedAuditCheck[]>());
+  const additions = new Map<
+    RenderedAuditCheck,
+    RenderedAuditCheck["geometryIssues"]
+  >();
+  for (const pageChecks of checksByPage.values()) {
+    pageChecks.sort(
+      (left, right) => left.viewport.width - right.viewport.width
+    );
+    const elementsByCheck = pageChecks.map(
+      (check) =>
+        new Map(
+          check.layout.elementGeometry.elements.map((element) => [
+            element.instanceId,
+            element,
+          ])
+        )
+    );
+    const firstCheck = pageChecks[0];
+    const firstElements = elementsByCheck[0];
+    if (firstCheck !== undefined && firstElements !== undefined) {
+      const hiddenIssues = additions.get(firstCheck) ?? [];
+      for (const [instanceId, element] of firstElements) {
+        if (
+          elementsByCheck.every(
+            (elements) => elements.get(instanceId)?.visible === false
+          )
+        ) {
+          hiddenIssues.push({
+            kind: "hidden-content",
+            confidence: "advisory",
+            instanceId,
+            message:
+              "This element is hidden at every audited viewport; verify that it is intentionally unreachable.",
+            evidence: { hiddenReason: element.hiddenReason },
+          });
+        }
+      }
+      additions.set(firstCheck, hiddenIssues);
+    }
+    for (let index = 1; index < pageChecks.length; index++) {
+      const previous = pageChecks[index - 1]!;
+      const check = pageChecks[index]!;
+      const previousElements = elementsByCheck[index - 1]!;
+      const geometryIssues = additions.get(check) ?? [];
+      for (const element of check.layout.elementGeometry.elements) {
+        const previousElement = previousElements.get(element.instanceId);
+        if (previousElement === undefined) {
+          continue;
+        }
+        const normalizedXChange = Math.abs(
+          previousElement.x / previous.viewport.width -
+            element.x / check.viewport.width
+        );
+        const normalizedWidthChange = Math.abs(
+          previousElement.width / previous.viewport.width -
+            element.width / check.viewport.width
+        );
+        const overlapChanged =
+          [...previousElement.overlapsWith].sort().join("\n") !==
+          [...element.overlapsWith].sort().join("\n");
+        if (
+          previousElement.visible === element.visible &&
+          normalizedXChange <= 0.35 &&
+          normalizedWidthChange <= 0.6 &&
+          overlapChanged === false
+        ) {
+          continue;
+        }
+        geometryIssues.push({
+          kind: "cross-breakpoint-layout-change",
+          confidence: "advisory",
+          instanceId: element.instanceId,
+          message:
+            "This element changes visibility, position, size, or overlap state between audited breakpoints; inspect both screenshots.",
+          evidence: {
+            sourceViewportWidth: previous.viewport.width,
+            targetViewportWidth: check.viewport.width,
+            sourceVisible: previousElement.visible,
+            targetVisible: element.visible,
+            sourceX: previousElement.x,
+            targetX: element.x,
+            sourceWidth: previousElement.width,
+            targetWidth: element.width,
+          },
+        });
+      }
+      additions.set(check, geometryIssues);
+    }
+  }
+  return checks.map((check) => {
+    const addedIssues = additions.get(check) ?? [];
+    return {
+      ...check,
+      geometryIssues: [...check.geometryIssues, ...addedIssues],
+      issues: [...check.issues, ...addedIssues.map((issue) => issue.kind)],
+    };
+  });
 };
 
 export const getRenderedImageIssues = (
@@ -454,11 +633,27 @@ export const getRenderedResourceIssues = (
     return issues;
   });
 
+export const getRenderedContrastIssues = (
+  layout: Layout
+): NonNullable<RenderedAuditCheck["contrastIssues"]> =>
+  layout.contrasts.flatMap((contrast) =>
+    contrast.ratio < contrast.requiredRatio
+      ? [
+          {
+            kind: "low-text-contrast" as const,
+            confidence: "exact" as const,
+            ...contrast,
+          },
+        ]
+      : []
+  );
+
 const getRenderedAuditPlan = (
   pagesResult: unknown,
   breakpointsResult: unknown,
   input: RenderedAuditInput,
-  performanceEnabled: boolean
+  performanceEnabled: boolean,
+  accessibilityEnabled: boolean
 ): RenderedAuditPlan => {
   const normalizePagePath = (path: string) => path || "/";
   const candidates =
@@ -514,6 +709,7 @@ const getRenderedAuditPlan = (
             "legacy-font-format",
           ] as const)
         : []),
+      ...(accessibilityEnabled ? (["low-text-contrast"] as const) : []),
     ],
     captureCount: pages.length * viewports.length,
   };
@@ -525,12 +721,14 @@ const mergeRenderedAudit = ({
   checks,
   failures,
   plan,
+  generatedBuildMetrics,
 }: {
   envelope: ProjectSessionEnvelope;
   input: RenderedAuditInput;
   checks: RenderedAuditCheck[];
   failures: RenderedAuditFailure[];
   plan?: RenderedAuditPlan;
+  generatedBuildMetrics?: GeneratedBuildMetrics;
 }): ProjectSessionEnvelope => {
   const result = envelope.result;
   if (isRecord(result) === false) {
@@ -654,6 +852,7 @@ const mergeRenderedAudit = ({
         for (const kind of new Set(check.issues)) {
           const summary = summaries.get(kind) ?? {
             kind,
+            confidence: getRenderedIssueConfidence(kind),
             count: 0,
             captureCount: 0,
             pagePaths: new Set<string>(),
@@ -669,7 +868,7 @@ const mergeRenderedAudit = ({
           }
         }
         return summaries;
-      }, new Map<RenderedAuditCheck["issues"][number], { kind: RenderedAuditCheck["issues"][number]; count: number; captureCount: number; pagePaths: Set<string> }>())
+      }, new Map<RenderedAuditCheck["issues"][number], { kind: RenderedAuditCheck["issues"][number]; confidence: "exact" | "advisory"; count: number; captureCount: number; pagePaths: Set<string> }>())
       .values(),
     ({ pagePaths, ...summary }) => ({
       ...summary,
@@ -723,12 +922,24 @@ const mergeRenderedAudit = ({
       renderedPlan: plan ?? null,
       renderedCaptureSummary,
       renderedCaptureStatuses,
+      generatedBuildSummary:
+        generatedBuildMetrics === undefined
+          ? null
+          : {
+              version: generatedBuildMetrics.version,
+              fileCount: generatedBuildMetrics.fileCount,
+              bytes: generatedBuildMetrics.bytes,
+              gzipBytes: generatedBuildMetrics.gzipBytes,
+              client: generatedBuildMetrics.client,
+              server: generatedBuildMetrics.server,
+            },
       manualCheckCount: result.manualCheckCount,
       ...(isVerbose
         ? {
             renderedChecks: orderedChecks,
             renderedFailures: orderedFailures,
             manualChecks: manualChecks ?? [],
+            generatedBuildMetrics: generatedBuildMetrics ?? null,
           }
         : { renderedIssueSummaries, renderedFailureSummaries }),
     },
@@ -778,6 +989,8 @@ export const augmentAuditWithRenderedChecks = async ({
   const result = envelope.result;
   const performanceEnabled =
     Array.isArray(result.scopes) && result.scopes.includes("performance");
+  const accessibilityEnabled =
+    Array.isArray(result.scopes) && result.scopes.includes("accessibility");
   const checks: RenderedAuditCheck[] = [];
   const failures: RenderedAuditFailure[] = [];
   const performance = {
@@ -794,6 +1007,8 @@ export const augmentAuditWithRenderedChecks = async ({
     artifactWriteMs: 0,
     targetCleanupMs: 0,
   };
+  let generatedBuildMetrics: GeneratedBuildMetrics | undefined;
+  let previewOrigin: string | undefined;
   const captureTimeout = timeouts?.capture ?? renderedAuditCaptureTimeout;
   const pageTimeout = timeouts?.page ?? renderedAuditPageTimeout;
   let overallTimeout = getRenderedAuditOverallTimeout(1, timeouts?.overall);
@@ -830,12 +1045,14 @@ export const augmentAuditWithRenderedChecks = async ({
     });
   };
   const finish = async () => {
+    const completedChecks = addCrossBreakpointGeometryIssues(checks);
     let merged = mergeRenderedAudit({
       envelope,
       input: renderedInput,
-      checks,
+      checks: completedChecks,
       failures,
       plan,
+      generatedBuildMetrics,
     });
     if (
       plan !== undefined &&
@@ -857,7 +1074,7 @@ export const augmentAuditWithRenderedChecks = async ({
           captureStatuses: Array.isArray(merged.result.renderedCaptureStatuses)
             ? merged.result.renderedCaptureStatuses
             : [],
-          checks: [...checks],
+          checks: completedChecks,
           failures: [...failures],
           screenshot: {
             format: "webp",
@@ -865,9 +1082,10 @@ export const augmentAuditWithRenderedChecks = async ({
             scale: 0.5,
           },
           performance: { ...performance },
+          generatedBuildMetrics: generatedBuildMetrics ?? null,
         });
         const screenshotCount = new Set([
-          ...checks.map((check) => check.screenshotPath),
+          ...completedChecks.map((check) => check.screenshotPath),
           ...failures.flatMap((failure) =>
             failure.screenshotPath === undefined ? [] : [failure.screenshotPath]
           ),
@@ -895,9 +1113,10 @@ export const augmentAuditWithRenderedChecks = async ({
         merged = mergeRenderedAudit({
           envelope,
           input: renderedInput,
-          checks,
+          checks: completedChecks,
           failures,
           plan,
+          generatedBuildMetrics,
         });
       }
     }
@@ -909,8 +1128,8 @@ export const augmentAuditWithRenderedChecks = async ({
   let breakpointsEnvelope: ProjectSessionEnvelope;
   try {
     [pagesEnvelope, breakpointsEnvelope] = await Promise.all([
-      executeRead("list-pages", {}),
-      executeRead("list-breakpoints", {}),
+      readAllPaginatedItems(executeRead, "list-pages", "pages"),
+      readAllPaginatedItems(executeRead, "list-breakpoints", "breakpoints"),
     ]);
   } catch (error) {
     failures.push({
@@ -928,7 +1147,16 @@ export const augmentAuditWithRenderedChecks = async ({
     pagesEnvelope.result,
     breakpointsEnvelope.result,
     renderedInput,
-    performanceEnabled
+    performanceEnabled,
+    accessibilityEnabled
+  );
+  reportProgress?.(
+    `tool audit progress ${JSON.stringify({
+      phase: "planned",
+      pages: plan.pages.length,
+      viewports: plan.viewports.length,
+      captures: plan.captureCount,
+    })}`
   );
   if (plan.pages.length === 0) {
     failures.push({
@@ -990,14 +1218,27 @@ export const augmentAuditWithRenderedChecks = async ({
 
   const previewStartStartedAt = Date.now();
   try {
-    await startPreview(
+    const previewResult = await startPreview(
       {
         source: "session",
-        port: renderedAuditPreviewPort,
+        port: automaticPreviewPort,
         imageDomains: renderedInput.imageDomains,
       },
       { report: (message) => reportProgress?.(message) }
     );
+    const previewUrl = new URL(previewResult.url);
+    if (previewUrl.hostname !== "127.0.0.1") {
+      throw new Error(
+        `Rendered audit preview must use 127.0.0.1, received ${previewUrl.origin}.`
+      );
+    }
+    previewOrigin = previewUrl.origin;
+    const parsedGeneratedBuildMetrics = generatedBuildMetricsSchema.safeParse(
+      isRecord(previewResult) ? previewResult.generatedBuildMetrics : undefined
+    );
+    if (parsedGeneratedBuildMetrics.success) {
+      generatedBuildMetrics = parsedGeneratedBuildMetrics.data;
+    }
     performance.previewStartMs = Date.now() - previewStartStartedAt;
   } catch (error) {
     performance.previewStartMs = Date.now() - previewStartStartedAt;
@@ -1040,12 +1281,10 @@ export const augmentAuditWithRenderedChecks = async ({
             pagePath: page.pagePath,
             viewport,
             performanceEnabled,
+            accessibilityEnabled,
           })
         );
         try {
-          reportProgress?.(
-            `tool audit capturing ${pages.length} pages across ${inputs.length} viewport widths`
-          );
           const screenshots = await withRenderedAuditCancellation(
             withRenderedAuditCaptureTimeout(
               capturePageScreenshots(inputs),
@@ -1111,13 +1350,14 @@ export const augmentAuditWithRenderedChecks = async ({
       };
       let nextPage = 0;
       const captureNextPage = async (): Promise<void> => {
-        const page = plan.pages[nextPage];
-        nextPage += 1;
-        if (page === undefined) {
-          return;
+        while (true) {
+          const page = plan.pages[nextPage];
+          nextPage += 1;
+          if (page === undefined) {
+            return;
+          }
+          await capturePageBatch([page]);
         }
-        await capturePageBatch([page]);
-        await captureNextPage();
       };
       await Promise.all(
         Array.from(
@@ -1133,269 +1373,313 @@ export const augmentAuditWithRenderedChecks = async ({
     }
     const pageStartedAt = new Map<string, number>();
     let nextCapture = 0;
-    const captureNext = async (): Promise<void> => {
-      if (signal?.aborted) {
-        recordCancellation();
-        return;
-      }
-      const capture = captures[nextCapture];
-      nextCapture += 1;
-      if (capture === undefined) {
-        return;
-      }
-      const { page, viewport } = capture;
-      if (
-        terminalCaptureKeys.has(
-          getRenderedAuditCaptureKey(page.pageId, viewport)
-        )
-      ) {
-        return await captureNext();
-      }
-      const pagePath = page.pagePath;
-      const viewportSize = { width: viewport.width, height: viewport.height };
-      const now = Date.now();
-      const pageStart = pageStartedAt.get(page.pageId) ?? now;
-      pageStartedAt.set(page.pageId, pageStart);
-      if (now > overallDeadline) {
-        failures.push({
-          code: "RENDERED_AUDIT_OVERALL_TIMEOUT",
-          phase: "capture",
-          retryable: true,
-          remediation:
-            "Run a focused page audit or reduce the viewport plan, then retry the remaining pages.",
-          pageId: page.pageId,
-          pagePath,
-          viewport: viewportSize,
-          message: `Rendered audit exceeded its ${overallTimeout}ms overall timeout.`,
-        });
-        return await captureNext();
-      }
-      if (now - pageStart > pageTimeout) {
-        failures.push({
-          code: "RENDERED_AUDIT_PAGE_TIMEOUT",
-          phase: "capture",
-          retryable: true,
-          remediation:
-            "Audit this page alone and inspect slow resources or readiness behavior before retrying the full run.",
-          pageId: page.pageId,
-          pagePath,
-          viewport: viewportSize,
-          message: `Rendered page audit exceeded its ${pageTimeout}ms timeout.`,
-        });
-        return await captureNext();
-      }
-      reportProgress?.(
-        `tool audit capturing ${pagePath} at ${viewport.width}px`
+    let completedCaptures = 0;
+    let lastReportedMilestone = 0;
+    const reportCaptureComplete = () => {
+      completedCaptures += 1;
+      const milestone = Math.floor(
+        (completedCaptures / Math.max(1, captures.length)) * 10
       );
-      try {
-        const screenshot =
-          resizedScreenshots.get(
-            getRenderedAuditCaptureKey(page.pageId, viewport)
-          ) ??
-          (await withRenderedAuditCancellation(
-            withRenderedAuditCaptureTimeout(
-              captureScreenshot(
-                getRenderedAuditScreenshotInput({
-                  pageId: page.pageId,
-                  pagePath,
-                  viewport: viewportSize,
-                  performanceEnabled,
-                })
-              ),
-              captureTimeout
-            ),
-            signal
-          ));
-        if (screenshot.timings !== undefined) {
-          performance.captureCount += 1;
-          for (const key of [
-            "targetSetupMs",
-            "navigationMs",
-            "readinessMs",
-            "imageInspectionMs",
-            "resourceInspectionMs",
-            "screenshotMs",
-            "artifactWriteMs",
-            "targetCleanupMs",
-          ] as const) {
-            performance[key] += screenshot.timings[key];
-          }
-        }
-        if (screenshot.layout === undefined) {
-          failures.push({
-            code: "RENDERED_AUDIT_LAYOUT_METRICS_MISSING",
-            phase: "capture",
-            retryable: true,
-            remediation:
-              "Retry the page capture. If layout metrics remain absent, verify the screenshot browser and generated page readiness.",
-            pageId: page.pageId,
-            pagePath,
-            viewport: viewportSize,
-            message: "Screenshot did not return rendered layout metrics.",
-          });
-          return await captureNext();
-        }
-        if (screenshot.navigation === undefined) {
-          failures.push({
-            code: "RENDERED_AUDIT_NAVIGATION_EVIDENCE_MISSING",
-            phase: "capture",
-            retryable: true,
-            remediation:
-              "Retry with a current Chromium-family browser and CLI that reports top-level navigation evidence.",
-            pageId: page.pageId,
-            pagePath,
-            viewport: viewportSize,
-            screenshotPath: screenshot.output,
-            message:
-              "Screenshot did not report its final URL, HTTP status, redirects, and readiness evidence.",
-          });
-          return await captureNext();
-        }
-        const finalUrl = new URL(screenshot.navigation.finalUrl);
-        if (
-          finalUrl.origin !== `http://127.0.0.1:${renderedAuditPreviewPort}`
-        ) {
-          failures.push({
-            code: "RENDERED_AUDIT_ORIGIN_MISMATCH",
-            phase: "capture",
-            retryable: false,
-            remediation:
-              "Stop conflicting local servers and retry so the audit captures only its owned generated preview.",
-            pageId: page.pageId,
-            pagePath,
-            viewport: viewportSize,
-            screenshotPath: screenshot.output,
-            message: `Expected the owned generated preview origin, but captured ${finalUrl.origin}.`,
-          });
-          return await captureNext();
-        }
-        const requestedUrl = new URL(pagePath, finalUrl.origin);
-        const requestedRoute = `${requestedUrl.pathname}${requestedUrl.search}`;
-        const finalRoute = `${finalUrl.pathname}${finalUrl.search}`;
-        if (
-          finalRoute !== requestedRoute &&
-          screenshot.navigation.redirects.includes(requestedUrl.toString()) ===
-            false
-        ) {
-          failures.push({
-            code: "RENDERED_AUDIT_ROUTE_MISMATCH",
-            phase: "capture",
-            retryable: false,
-            remediation:
-              "Inspect generated redirects and route definitions, then provide the canonical concrete page path.",
-            pageId: page.pageId,
-            pagePath,
-            viewport: viewportSize,
-            screenshotPath: screenshot.output,
-            message: `Requested ${requestedRoute}, but the generated preview finished at ${finalRoute}.`,
-          });
-          return await captureNext();
-        }
-        if (
-          screenshot.navigation.status !== undefined &&
-          screenshot.navigation.status >= 400
-        ) {
-          failures.push({
-            code: "RENDERED_AUDIT_HTTP_ERROR",
-            phase: "capture",
-            retryable: false,
-            remediation:
-              "Verify that the generated project defines this route and that the preview server can render it.",
-            pageId: page.pageId,
-            pagePath,
-            viewport: viewportSize,
-            screenshotPath: screenshot.output,
-            message: `Generated preview returned HTTP ${screenshot.navigation.status} for ${screenshot.navigation.finalUrl}.`,
-          });
-          return await captureNext();
-        }
-        const isHtmlDocument =
-          screenshot.layout.documentType === "text/html" ||
-          screenshot.layout.documentType === "application/xhtml+xml";
-        if (
-          isHtmlDocument &&
-          screenshot.navigation.generatedSiteRootPresent === false
-        ) {
-          failures.push({
-            code: "RENDERED_AUDIT_DOCUMENT_NOT_GENERATED_SITE",
-            phase: "capture",
-            retryable: false,
-            remediation:
-              "Verify that the capture uses the owned generated preview rather than a Builder/share URL or unrelated server.",
-            pageId: page.pageId,
-            pagePath,
-            viewport: viewportSize,
-            screenshotPath: screenshot.output,
-            message: `Captured ${screenshot.navigation.finalUrl} without a generated Webstudio page marker.`,
-          });
-          return await captureNext();
-        }
-        if (screenshot.navigation.layoutStable === false) {
-          failures.push({
-            code: "RENDERED_AUDIT_LAYOUT_UNSTABLE",
-            phase: "capture",
-            retryable: true,
-            remediation:
-              "Retry after the page finishes loading, or provide a readiness selector for asynchronously rendered content.",
-            pageId: page.pageId,
-            pagePath,
-            viewport: viewportSize,
-            screenshotPath: screenshot.output,
-            message: `Captured ${screenshot.navigation.finalUrl} before its layout stabilized.`,
-          });
-          return await captureNext();
-        }
-        const layout: Layout = {
-          ...screenshot.layout,
-          navigation: screenshot.navigation,
-          images: screenshot.layout.images ?? [],
-          resources: screenshot.layout.resources ?? [],
-        };
-        const imageIssues = performanceEnabled
-          ? getRenderedImageIssues(layout)
-          : [];
-        const resourceIssues = performanceEnabled
-          ? getRenderedResourceIssues(layout)
-          : [];
-        checks.push({
-          pageId: page.pageId,
-          pagePath,
-          viewport: viewportSize,
-          screenshotPath: screenshot.output,
-          layout,
-          issues: [
-            ...(layout.horizontalOverflow
-              ? (["horizontal-overflow"] as const)
-              : []),
-            ...imageIssues.map((issue) => issue.kind),
-            ...resourceIssues.map((issue) => issue.kind),
-          ],
-          imageIssues,
-          resourceIssues,
-        });
-      } catch (error) {
-        if (error instanceof RenderedAuditCancelledError) {
-          recordCancellation(capture);
+      if (milestone <= lastReportedMilestone && completedCaptures > 1) {
+        return;
+      }
+      lastReportedMilestone = milestone;
+      reportProgress?.(
+        `tool audit progress ${JSON.stringify({
+          phase: "capture",
+          completed: completedCaptures,
+          total: captures.length,
+        })}`
+      );
+    };
+    const captureNext = async (): Promise<void> => {
+      while (true) {
+        if (signal?.aborted) {
+          recordCancellation();
           return;
         }
-        failures.push({
-          code:
-            error instanceof RenderedAuditCaptureTimeoutError
-              ? "RENDERED_AUDIT_CAPTURE_TIMEOUT"
-              : "RENDERED_AUDIT_SCREENSHOT_FAILED",
-          phase: "capture",
-          retryable: true,
-          remediation:
-            error instanceof RenderedAuditCaptureTimeoutError
-              ? "Audit this page alone and inspect its navigation/readiness behavior before retrying the full run."
-              : "Capture this page and viewport with the screenshot tool to inspect browser startup, navigation, or readiness errors, then retry.",
-          pageId: page.pageId,
-          pagePath,
-          viewport: viewportSize,
-          message: error instanceof Error ? error.message : String(error),
-        });
+        const capture = captures[nextCapture];
+        nextCapture += 1;
+        if (capture === undefined) {
+          return;
+        }
+        const { page, viewport } = capture;
+        if (
+          terminalCaptureKeys.has(
+            getRenderedAuditCaptureKey(page.pageId, viewport)
+          )
+        ) {
+          reportCaptureComplete();
+          continue;
+        }
+        const pagePath = page.pagePath;
+        const viewportSize = { width: viewport.width, height: viewport.height };
+        const now = Date.now();
+        const pageStart = pageStartedAt.get(page.pageId) ?? now;
+        pageStartedAt.set(page.pageId, pageStart);
+        if (now > overallDeadline) {
+          failures.push({
+            code: "RENDERED_AUDIT_OVERALL_TIMEOUT",
+            phase: "capture",
+            retryable: true,
+            remediation:
+              "Run a focused page audit or reduce the viewport plan, then retry the remaining pages.",
+            pageId: page.pageId,
+            pagePath,
+            viewport: viewportSize,
+            message: `Rendered audit exceeded its ${overallTimeout}ms overall timeout.`,
+          });
+          reportCaptureComplete();
+          continue;
+        }
+        if (now - pageStart > pageTimeout) {
+          failures.push({
+            code: "RENDERED_AUDIT_PAGE_TIMEOUT",
+            phase: "capture",
+            retryable: true,
+            remediation:
+              "Audit this page alone and inspect slow resources or readiness behavior before retrying the full run.",
+            pageId: page.pageId,
+            pagePath,
+            viewport: viewportSize,
+            message: `Rendered page audit exceeded its ${pageTimeout}ms timeout.`,
+          });
+          reportCaptureComplete();
+          continue;
+        }
+        try {
+          const screenshot =
+            resizedScreenshots.get(
+              getRenderedAuditCaptureKey(page.pageId, viewport)
+            ) ??
+            (await withRenderedAuditCancellation(
+              withRenderedAuditCaptureTimeout(
+                captureScreenshot(
+                  getRenderedAuditScreenshotInput({
+                    pageId: page.pageId,
+                    pagePath,
+                    viewport: viewportSize,
+                    performanceEnabled,
+                    accessibilityEnabled,
+                  })
+                ),
+                captureTimeout
+              ),
+              signal
+            ));
+          performance.captureCount += 1;
+          if (screenshot.timings !== undefined) {
+            for (const key of [
+              "targetSetupMs",
+              "navigationMs",
+              "readinessMs",
+              "imageInspectionMs",
+              "resourceInspectionMs",
+              "screenshotMs",
+              "artifactWriteMs",
+              "targetCleanupMs",
+            ] as const) {
+              performance[key] += screenshot.timings[key];
+            }
+          }
+          if (screenshot.layout === undefined) {
+            failures.push({
+              code: "RENDERED_AUDIT_LAYOUT_METRICS_MISSING",
+              phase: "capture",
+              retryable: true,
+              remediation:
+                "Retry the page capture. If layout metrics remain absent, verify the screenshot browser and generated page readiness.",
+              pageId: page.pageId,
+              pagePath,
+              viewport: viewportSize,
+              message: "Screenshot did not return rendered layout metrics.",
+            });
+            reportCaptureComplete();
+            continue;
+          }
+          if (screenshot.navigation === undefined) {
+            failures.push({
+              code: "RENDERED_AUDIT_NAVIGATION_EVIDENCE_MISSING",
+              phase: "capture",
+              retryable: true,
+              remediation:
+                "Retry with a current Chromium-family browser and CLI that reports top-level navigation evidence.",
+              pageId: page.pageId,
+              pagePath,
+              viewport: viewportSize,
+              screenshotPath: screenshot.output,
+              message:
+                "Screenshot did not report its final URL, HTTP status, redirects, and readiness evidence.",
+            });
+            reportCaptureComplete();
+            continue;
+          }
+          const finalUrl = new URL(screenshot.navigation.finalUrl);
+          if (finalUrl.origin !== previewOrigin) {
+            failures.push({
+              code: "RENDERED_AUDIT_ORIGIN_MISMATCH",
+              phase: "capture",
+              retryable: false,
+              remediation:
+                "Stop conflicting local servers and retry so the audit captures only its owned generated preview.",
+              pageId: page.pageId,
+              pagePath,
+              viewport: viewportSize,
+              screenshotPath: screenshot.output,
+              message: `Expected the owned generated preview origin, but captured ${finalUrl.origin}.`,
+            });
+            reportCaptureComplete();
+            continue;
+          }
+          const requestedUrl = new URL(pagePath, finalUrl.origin);
+          const requestedRoute = `${requestedUrl.pathname}${requestedUrl.search}`;
+          const finalRoute = `${finalUrl.pathname}${finalUrl.search}`;
+          if (
+            finalRoute !== requestedRoute &&
+            screenshot.navigation.redirects.includes(
+              requestedUrl.toString()
+            ) === false
+          ) {
+            failures.push({
+              code: "RENDERED_AUDIT_ROUTE_MISMATCH",
+              phase: "capture",
+              retryable: false,
+              remediation:
+                "Inspect generated redirects and route definitions, then provide the canonical concrete page path.",
+              pageId: page.pageId,
+              pagePath,
+              viewport: viewportSize,
+              screenshotPath: screenshot.output,
+              message: `Requested ${requestedRoute}, but the generated preview finished at ${finalRoute}.`,
+            });
+            reportCaptureComplete();
+            continue;
+          }
+          if (
+            screenshot.navigation.status !== undefined &&
+            screenshot.navigation.status >= 400
+          ) {
+            failures.push({
+              code: "RENDERED_AUDIT_HTTP_ERROR",
+              phase: "capture",
+              retryable: false,
+              remediation:
+                "Verify that the generated project defines this route and that the preview server can render it.",
+              pageId: page.pageId,
+              pagePath,
+              viewport: viewportSize,
+              screenshotPath: screenshot.output,
+              message: `Generated preview returned HTTP ${screenshot.navigation.status} for ${screenshot.navigation.finalUrl}.`,
+            });
+            reportCaptureComplete();
+            continue;
+          }
+          const isHtmlDocument =
+            screenshot.layout.documentType === "text/html" ||
+            screenshot.layout.documentType === "application/xhtml+xml";
+          if (
+            isHtmlDocument &&
+            screenshot.navigation.generatedSiteRootPresent === false
+          ) {
+            failures.push({
+              code: "RENDERED_AUDIT_DOCUMENT_NOT_GENERATED_SITE",
+              phase: "capture",
+              retryable: false,
+              remediation:
+                "Verify that the capture uses the owned generated preview rather than a Builder/share URL or unrelated server.",
+              pageId: page.pageId,
+              pagePath,
+              viewport: viewportSize,
+              screenshotPath: screenshot.output,
+              message: `Captured ${screenshot.navigation.finalUrl} without a generated Webstudio page marker.`,
+            });
+            reportCaptureComplete();
+            continue;
+          }
+          if (screenshot.navigation.layoutStable === false) {
+            failures.push({
+              code: "RENDERED_AUDIT_LAYOUT_UNSTABLE",
+              phase: "capture",
+              retryable: true,
+              remediation:
+                "Retry after the page finishes loading, or provide a readiness selector for asynchronously rendered content.",
+              pageId: page.pageId,
+              pagePath,
+              viewport: viewportSize,
+              screenshotPath: screenshot.output,
+              message: `Captured ${screenshot.navigation.finalUrl} before its layout stabilized.`,
+            });
+            reportCaptureComplete();
+            continue;
+          }
+          const layout: GeometryLayout = {
+            ...screenshot.layout,
+            navigation: screenshot.navigation,
+            elementGeometry:
+              "elementGeometry" in screenshot.layout &&
+              isRecord(screenshot.layout.elementGeometry)
+                ? (screenshot.layout
+                    .elementGeometry as GeometryLayout["elementGeometry"])
+                : emptyElementGeometry,
+            images: screenshot.layout.images ?? [],
+            resources: screenshot.layout.resources ?? [],
+            contrasts: screenshot.layout.contrasts ?? [],
+          };
+          const imageIssues = performanceEnabled
+            ? getRenderedImageIssues(layout)
+            : [];
+          const resourceIssues = performanceEnabled
+            ? getRenderedResourceIssues(layout)
+            : [];
+          const geometryIssues = getRenderedGeometryIssues(layout);
+          const contrastIssues = accessibilityEnabled
+            ? getRenderedContrastIssues(layout)
+            : [];
+          checks.push({
+            pageId: page.pageId,
+            pagePath,
+            viewport: viewportSize,
+            screenshotPath: screenshot.output,
+            layout,
+            issues: [
+              ...(layout.horizontalOverflow
+                ? (["horizontal-overflow"] as const)
+                : []),
+              ...geometryIssues.map((issue) => issue.kind),
+              ...imageIssues.map((issue) => issue.kind),
+              ...resourceIssues.map((issue) => issue.kind),
+              ...contrastIssues.map((issue) => issue.kind),
+            ],
+            geometryIssues,
+            imageIssues,
+            resourceIssues,
+            contrastIssues,
+          });
+        } catch (error) {
+          if (error instanceof RenderedAuditCancelledError) {
+            recordCancellation(capture);
+            reportCaptureComplete();
+            return;
+          }
+          failures.push({
+            code:
+              error instanceof RenderedAuditCaptureTimeoutError
+                ? "RENDERED_AUDIT_CAPTURE_TIMEOUT"
+                : "RENDERED_AUDIT_SCREENSHOT_FAILED",
+            phase: "capture",
+            retryable: true,
+            remediation:
+              error instanceof RenderedAuditCaptureTimeoutError
+                ? "Audit this page alone and inspect its navigation/readiness behavior before retrying the full run."
+                : "Capture this page and viewport with the screenshot tool to inspect browser startup, navigation, or readiness errors, then retry.",
+            pageId: page.pageId,
+            pagePath,
+            viewport: viewportSize,
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
+        reportCaptureComplete();
       }
-      await captureNext();
     };
     await Promise.all(
       Array.from(
@@ -1424,4 +1708,7 @@ export const augmentAuditWithRenderedChecks = async ({
   return await finish();
 };
 
-export const __testing__ = { mergeRenderedAudit };
+export const __testing__ = {
+  addCrossBreakpointGeometryIssues,
+  mergeRenderedAudit,
+};

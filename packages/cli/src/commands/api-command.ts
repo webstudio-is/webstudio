@@ -152,10 +152,7 @@ export const pathCommandOptions = (yargs: CommonYargsArgv) =>
   });
 
 export const pagesCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs).option("include-folders", {
-    type: "boolean",
-    describe: "Include folder records alongside page summaries",
-  });
+  outputDetailCommandOptions(apiCommandOptions(yargs));
 
 export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs)
@@ -247,7 +244,10 @@ export const updatePageCommandOptions = (yargs: CommonYargsArgv) =>
     });
 
 export const projectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs);
+  outputDetailCommandOptions(apiCommandOptions(yargs));
+
+export const paginatedListCommandOptions = (yargs: CommonYargsArgv) =>
+  outputDetailCommandOptions(apiCommandOptions(yargs));
 
 export const updateProjectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
@@ -320,7 +320,7 @@ export const setRedirectsCommandOptions = (yargs: CommonYargsArgv) =>
   );
 
 export const breakpointCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs);
+  outputDetailCommandOptions(apiCommandOptions(yargs));
 
 const breakpointFieldsCommandOptions = (
   yargs: CommonYargsArgv,
@@ -409,10 +409,15 @@ export const duplicatePageCommandOptions = (yargs: CommonYargsArgv) =>
     .option("parent-folder", {
       type: "string",
       describe: "Folder id where the duplicated page should be inserted",
+    })
+    .option("substitutions", {
+      type: "string",
+      describe:
+        "JSON object with exact text replacements and copied variable value overrides",
     });
 
 export const listPageTemplatesCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs);
+  outputDetailCommandOptions(apiCommandOptions(yargs));
 
 const pageTemplateFieldsCommandOptions = (
   yargs: CommonYargsArgv,
@@ -521,10 +526,7 @@ export const createPageFromTemplateCommandOptions = (yargs: CommonYargsArgv) =>
     });
 
 export const foldersCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs).option("include-pages", {
-    type: "boolean",
-    describe: "Include a top-level pages array with page summaries",
-  });
+  outputDetailCommandOptions(apiCommandOptions(yargs));
 
 export const createFolderCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs)
@@ -698,7 +700,7 @@ export const bindPropsCommandOptions = (yargs: CommonYargsArgv) =>
   );
 
 export const textListCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("page", {
       type: "string",
       describe: "Limit text nodes to a page id",
@@ -718,10 +720,6 @@ export const textListCommandOptions = (yargs: CommonYargsArgv) =>
     .option("contains", {
       type: "string",
       describe: "Only return text nodes whose value contains this substring",
-    })
-    .option("max-value-length", {
-      type: "number",
-      describe: "Truncate returned text values to this character count",
     });
 
 export const textUpdateCommandOptions = (yargs: CommonYargsArgv) =>
@@ -878,7 +876,7 @@ export const extractDesignTokenCommandOptions = (yargs: CommonYargsArgv) =>
   );
 
 export const cssVariablesCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  outputDetailCommandOptions(apiCommandOptions(yargs))
     .option("filter", {
       type: "string",
       describe: "Only return CSS variables whose name contains this text",
@@ -920,10 +918,13 @@ export const rewriteCssVariableRefsCommandOptions = (yargs: CommonYargsArgv) =>
   );
 
 export const scopedCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs).option("scope-instance", {
-    type: "string",
-    describe: "Only return items scoped to this instance id",
-  });
+  outputDetailCommandOptions(apiCommandOptions(yargs)).option(
+    "scope-instance",
+    {
+      type: "string",
+      describe: "Only return items scoped to this instance id",
+    }
+  );
 
 export const createVariableCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs)
@@ -1171,6 +1172,7 @@ export const auditCommandOptions = (yargs: CommonYargsArgv) =>
         "assets",
         "styles",
         "performance",
+        "craft",
       ] as const,
       describe: "Audit only the selected project-quality scopes",
     })
@@ -1208,11 +1210,14 @@ export const auditCommandOptions = (yargs: CommonYargsArgv) =>
     );
 
 export const fontsCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs).option("include-system", {
-    type: "boolean",
-    default: true,
-    describe: "Include built-in system font stacks",
-  });
+  outputDetailCommandOptions(apiCommandOptions(yargs)).option(
+    "include-system",
+    {
+      type: "boolean",
+      default: true,
+      describe: "Include built-in system font stacks",
+    }
+  );
 
 export const uploadAssetCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
@@ -1238,6 +1243,9 @@ export const assetCommandOptions = (yargs: CommonYargsArgv) =>
     describe: "Required asset id",
     demandOption: true,
   });
+
+export const assetUsageCommandOptions = (yargs: CommonYargsArgv) =>
+  outputDetailCommandOptions(assetCommandOptions(yargs));
 
 export const replaceAssetCommandOptions = (yargs: CommonYargsArgv) =>
   confirmOption(
@@ -1322,8 +1330,7 @@ export type ApiCommandOptions = {
   authPassword?: string;
   message?: string;
   parentFolder?: string;
-  includeFolders?: boolean;
-  includePages?: boolean;
+  substitutions?: string;
   sourceTemplate?: string;
   targetTemplate?: string;
   root?: string;
@@ -1350,7 +1357,6 @@ export type ApiCommandOptions = {
   overwrite?: boolean;
   scopeRegex?: string;
   contains?: string;
-  maxValueLength?: number;
   breakpoint?: string;
   state?: string;
   property?: string;
@@ -1366,7 +1372,13 @@ export type ApiCommandOptions = {
   cursor?: string;
   limit?: number;
   scopes?: Array<
-    "accessibility" | "security" | "seo" | "assets" | "styles" | "performance"
+    | "accessibility"
+    | "security"
+    | "seo"
+    | "assets"
+    | "styles"
+    | "performance"
+    | "craft"
   >;
   severities?: Array<"error" | "warning" | "info">;
   pageId?: string;
@@ -1953,7 +1965,11 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   "list-pages": async (options, connection, dependencies) => {
-    const input = { includeFolders: options.includeFolders };
+    const input = {
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
+    };
     return runProjectSessionCommand(
       "list-pages",
       input,
@@ -2012,10 +2028,10 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
-  "get-project-settings": async (_options, connection, dependencies) =>
+  "get-project-settings": async (options, connection, dependencies) =>
     runProjectSessionCommand(
       "get-project-settings",
-      {},
+      { verbose: options.verbose },
       connection,
       dependencies
     ),
@@ -2050,8 +2066,17 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
-  "list-redirects": async (_options, connection, dependencies) =>
-    runProjectSessionCommand("list-redirects", {}, connection, dependencies),
+  "list-redirects": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-redirects",
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
   "create-redirect": async (options, connection, dependencies) => {
     const input = {
       old: requireOption(options.old, "--old"),
@@ -2111,8 +2136,17 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
-  "list-breakpoints": async (_options, connection, dependencies) =>
-    runProjectSessionCommand("list-breakpoints", {}, connection, dependencies),
+  "list-breakpoints": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-breakpoints",
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
   "create-breakpoint": async (options, connection, dependencies) => {
     const input: Omit<BreakpointInput, "id"> = {
       label: requireOption(options.label, "--label"),
@@ -2185,11 +2219,16 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   "duplicate-page": async (options, connection, dependencies) => {
+    const substitutions =
+      options.substitutions === undefined
+        ? undefined
+        : (JSON.parse(options.substitutions) as unknown);
     const input = {
       pageId: requireOption(options.page, "--page"),
       parentFolderId: options.parentFolder,
       name: options.name,
       path: options.path,
+      substitutions,
     };
     return runProjectSessionCommand(
       "duplicate-page",
@@ -2198,10 +2237,14 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
-  "list-page-templates": async (_options, connection, dependencies) =>
+  "list-page-templates": async (options, connection, dependencies) =>
     runProjectSessionCommand(
       "list-page-templates",
-      {},
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
       connection,
       dependencies
     ),
@@ -2298,7 +2341,11 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   "list-folders": async (options, connection, dependencies) => {
-    const input = { includePages: options.includePages };
+    const input = {
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
+    };
     return runProjectSessionCommand(
       "list-folders",
       input,
@@ -2471,7 +2518,9 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
         typeof options.instance === "string" ? options.instance : undefined,
       mode: textListModeOption(options.mode),
       contains: options.contains,
-      maxValueLength: options.maxValueLength,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-texts",
@@ -2557,10 +2606,10 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       filter: options.filter,
       withUsage: options.withUsage,
-      sort: designTokenSortOption(options.sort),
       cursor: options.cursor,
       limit: options.limit,
       verbose: options.verbose,
+      sort: designTokenSortOption(options.sort),
     };
     return runProjectSessionCommand(
       "list-design-tokens",
@@ -2654,6 +2703,9 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       filter: options.filter,
       withUsage: options.withUsage,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
     };
     return runProjectSessionCommand(
       "list-css-variables",
@@ -2709,7 +2761,12 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   "list-variables": async (options, connection, dependencies) => {
-    const input = { scopeInstanceId: options.scopeInstance };
+    const input = {
+      scopeInstanceId: options.scopeInstance,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
+    };
     return runProjectSessionCommand(
       "list-variables",
       input,
@@ -2758,7 +2815,12 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   "list-resources": async (options, connection, dependencies) => {
-    const input = { scopeInstanceId: options.scopeInstance };
+    const input = {
+      scopeInstanceId: options.scopeInstance,
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
+    };
     return runProjectSessionCommand(
       "list-resources",
       input,
@@ -2822,8 +2884,17 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     };
     return runProjectSessionCommand("publish", input, connection, dependencies);
   },
-  "list-publishes": async (_options, connection, dependencies) =>
-    runProjectSessionCommand("list-publishes", {}, connection, dependencies),
+  "list-publishes": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-publishes",
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
   "get-publish-job": async (options, connection, dependencies) => {
     const input = { jobId: requireOption(options.job, "--job") };
     return runProjectSessionCommand(
@@ -2848,8 +2919,17 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
-  "list-domains": async (_options, connection, dependencies) =>
-    runProjectSessionCommand("list-domains", {}, connection, dependencies),
+  "list-domains": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-domains",
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
+      connection,
+      dependencies
+    ),
   "create-domain": async (options, connection, dependencies) => {
     const input = { domain: requireSingleOption(options.domain, "--domain") };
     return runProjectSessionCommand(
@@ -2912,7 +2992,12 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   "list-fonts": async (options, connection, dependencies) =>
     runProjectSessionCommand(
       "list-fonts",
-      { includeSystem: options.includeSystem },
+      {
+        includeSystem: options.includeSystem,
+        cursor: options.cursor,
+        limit: options.limit,
+        verbose: options.verbose,
+      },
       connection,
       dependencies
     ),
@@ -2943,7 +3028,12 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   "find-asset-usage": async (options, connection, dependencies) => {
-    const input = { assetId: requireSingleOption(options.asset, "--asset") };
+    const input = {
+      assetId: requireSingleOption(options.asset, "--asset"),
+      cursor: options.cursor,
+      limit: options.limit,
+      verbose: options.verbose,
+    };
     return runProjectSessionCommand(
       "find-asset-usage",
       input,

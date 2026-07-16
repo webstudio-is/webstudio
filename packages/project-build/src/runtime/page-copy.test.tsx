@@ -9,6 +9,7 @@ import {
   type DataSource,
   type Instance,
   type PageTemplate,
+  type Prop,
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
@@ -18,6 +19,7 @@ import {
 } from "@webstudio-is/project-build";
 import {
   pageCopyTesting,
+  pageDuplicateInput,
   createPageTemplate,
   createPageFromTemplate,
   createPageDuplicatePayload,
@@ -42,6 +44,7 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { nanoid } from "nanoid";
+import { applyBuilderPatchTransactions } from "../state/patch";
 
 const { deduplicateName, deduplicatePath, joinPath } = pageCopyTesting;
 
@@ -52,6 +55,28 @@ const getCopiedPages = (data: WebstudioData) =>
   Array.from(data.pages.pages.values()).filter(
     (page) => page.id !== data.pages.homePageId
   );
+
+test("validates duplicate page substitutions", () => {
+  expect(
+    pageDuplicateInput.parse({
+      projectId: "projectId",
+      pageId: "pageId",
+      substitutions: {
+        text: { London: "Paris" },
+        variables: { city: { type: "string", value: "Paris" } },
+      },
+    })
+  ).toMatchObject({ substitutions: { text: { London: "Paris" } } });
+  expect(
+    pageDuplicateInput.safeParse({
+      projectId: "projectId",
+      pageId: "pageId",
+      substitutions: {
+        variables: { city: { type: "number", value: "not a number" } },
+      },
+    }).success
+  ).toBe(false);
+});
 
 const getWebstudioDataStub = (
   data?: Partial<WebstudioData>
@@ -381,6 +406,150 @@ describe("insert page copy", () => {
         },
       ]),
     });
+  });
+
+  test("runtime duplicate atomically substitutes copied page text and variables", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        {
+          type: "instance",
+          id: ROOT_INSTANCE_ID,
+          component: "Slot",
+          children: [],
+        },
+        {
+          type: "instance",
+          id: "bodyId",
+          component: "Body",
+          children: [
+            { type: "text", value: "Old city" },
+            { type: "text", value: "toString" },
+          ],
+        },
+      ]),
+      props: toMap<Prop>([
+        {
+          id: "rootLabelProp",
+          instanceId: ROOT_INSTANCE_ID,
+          name: "aria-label",
+          type: "string",
+          value: "Old city",
+        },
+        {
+          id: "labelProp",
+          instanceId: "bodyId",
+          name: "aria-label",
+          type: "string",
+          value: "Old city",
+        },
+      ]),
+      dataSources: toMap<DataSource>([
+        {
+          id: "cityVariable",
+          scopeInstanceId: "bodyId",
+          name: "city",
+          type: "variable",
+          value: { type: "string", value: "Old city" },
+        },
+      ]),
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "homePageId",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [
+          {
+            id: "pageId",
+            name: "City",
+            path: "/old-city",
+            title: `"Old city"`,
+            meta: { description: `"Visit Old city"` },
+            rootInstanceId: "bodyId",
+          },
+        ],
+        folders: [createRootFolder(["homePageId", "pageId"])],
+      }),
+    });
+    let nextId = 0;
+    const mutation = duplicatePage(
+      data,
+      {
+        projectId: "projectId",
+        pageId: "pageId",
+        path: "/new-city",
+        substitutions: {
+          text: {
+            "Old city": "New city",
+            "Visit Old city": "Visit New city",
+          },
+          variables: {
+            city: { type: "string", value: "New city" },
+          },
+        },
+      },
+      { createId: () => `copy-${nextId++}` }
+    );
+    const updated = applyBuilderPatchTransactions(data, [
+      { id: "duplicate-page", payload: mutation.payload },
+    ]).state as WebstudioData;
+    const copiedPage = updated.pages.pages.get(mutation.result.pageId);
+    const copiedRootId = copiedPage?.rootInstanceId;
+
+    expect(copiedPage).toMatchObject({
+      path: "/new-city",
+      title: `"New city"`,
+      meta: { description: `"Visit New city"` },
+    });
+    expect(updated.instances.get(copiedRootId ?? "")?.children).toEqual([
+      { type: "text", value: "New city" },
+      { type: "text", value: "toString" },
+    ]);
+    expect(
+      Array.from(updated.props.values()).find(
+        (prop) => prop.instanceId === copiedRootId && prop.name === "aria-label"
+      )
+    ).toMatchObject({ type: "string", value: "New city" });
+    expect(
+      Array.from(updated.dataSources.values()).find(
+        (dataSource) =>
+          dataSource.scopeInstanceId === copiedRootId &&
+          dataSource.name === "city"
+      )
+    ).toMatchObject({
+      type: "variable",
+      value: { type: "string", value: "New city" },
+    });
+    expect(data.instances.get("bodyId")?.children).toEqual([
+      { type: "text", value: "Old city" },
+      { type: "text", value: "toString" },
+    ]);
+    expect(data.dataSources.get("cityVariable")).toMatchObject({
+      value: { type: "string", value: "Old city" },
+    });
+    expect(updated.props.get("rootLabelProp")).toMatchObject({
+      value: "Old city",
+    });
+    expect(() =>
+      duplicatePage(
+        data,
+        {
+          projectId: "projectId",
+          pageId: "pageId",
+          substitutions: {
+            variables: {
+              missing: { type: "string", value: "No match" },
+            },
+          },
+        },
+        { createId: nanoid }
+      )
+    ).toThrow('Copied variable "missing" was not found');
+    expect(data.pages.pages.size).toBe(2);
   });
 
   test("runtime duplicate rejects explicit path conflicts", () => {
@@ -1176,6 +1345,11 @@ describe("insert page copy", () => {
           meta: { description: `"Description"` },
         },
       ],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: {},
     });
   });
 

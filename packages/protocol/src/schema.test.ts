@@ -13,6 +13,8 @@ import {
   stagedUploadProjectIdHeader,
   buildPatchNamespaces,
   buildPatchTransaction,
+  getPublicBuildIncludes,
+  publicBuildIncludes,
 } from "./schema";
 import { createPublishedProjectBundleFixture } from "./fixtures";
 
@@ -203,5 +205,22 @@ describe("project bundle contract", () => {
         ],
       }).success
     ).toBe(false);
+  });
+
+  test("maps every builder namespace to a supported public build include", () => {
+    const includes = getPublicBuildIncludes(builderNamespaces);
+
+    expect(includes).toContain("projectSettings");
+    expect(includes).toContain("marketplaceProduct");
+    expect(includes).toContain("folders");
+    expect(includes).toContain("variables");
+    expect(includes).not.toContain("dataSources");
+    expect(publicBuildIncludes).toContain("designTokens");
+    expect(
+      includes.every((include) => publicBuildIncludes.includes(include))
+    ).toBe(true);
+    expect(new Set(publicBuildIncludes)).toEqual(
+      new Set([...includes, "designTokens"])
+    );
   });
 });

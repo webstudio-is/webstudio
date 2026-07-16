@@ -3,6 +3,7 @@ import { isLiteralExpression, type StyleDecl } from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
 import { ariaAttributes, ariaRoles } from "@webstudio-is/html-data";
+import { validateSelector } from "@webstudio-is/css-data";
 import * as bcp47 from "bcp-47";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
@@ -10,10 +11,11 @@ import { computeExpression } from "./data";
 import { listAssets } from "./assets";
 import { listCssVariables, listDesignTokens } from "./styles";
 import { getInstanceDepths } from "./instances";
-import { isBaseBreakpoint } from "./breakpoints";
+import { isBaseWidthBreakpoint } from "./breakpoints";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { validatePageSelector } from "./page-selector";
 import { hasAccessibleName, isDynamicPropType } from "./accessibility-analysis";
+import { paginateOutput, paginatedOutputInputSchema } from "./output";
 
 const projectLookupScope = z.enum([
   "instances",
@@ -38,7 +40,7 @@ export const projectSearchInput = z
     scopes: z.array(projectLookupScope).min(1).optional(),
     pageId: z.string().optional(),
     pagePath: z.string().optional(),
-    limit: z.number().int().min(1).max(200).optional(),
+    ...paginatedOutputInputSchema.shape,
   })
   .strict()
   .superRefine(validatePageSelector);
@@ -616,11 +618,37 @@ export const analyzeProject = (
           (declaration) => declaration.breakpointId
         )
       );
-      for (const breakpoint of state.breakpoints.values()) {
+      for (const declaration of state.styles.values()) {
         if (
-          breakpoint.condition === undefined &&
-          isBaseBreakpoint(breakpoint)
+          declaration.state !== undefined &&
+          validateSelector(declaration.state).success === false
         ) {
+          matches.push({
+            kind: "style",
+            issue: "invalid-style-state-selector",
+            styleSourceId: declaration.styleSourceId,
+            breakpointId: declaration.breakpointId,
+            stateSelector: declaration.state,
+            styleProperty: declaration.property,
+            message:
+              "Style state selector is not safely scoped to its element and may generate invalid or escaping CSS.",
+          });
+        }
+        if (state.breakpoints.has(declaration.breakpointId) === false) {
+          matches.push({
+            kind: "style",
+            issue: "orphan-style-breakpoint",
+            styleSourceId: declaration.styleSourceId,
+            breakpointId: declaration.breakpointId,
+            stateSelector: declaration.state,
+            styleProperty: declaration.property,
+            message:
+              "Style declaration references a breakpoint that no longer exists and therefore cannot render.",
+          });
+        }
+      }
+      for (const breakpoint of state.breakpoints.values()) {
+        if (isBaseWidthBreakpoint(breakpoint)) {
           continue;
         }
         if (breakpointIdsWithDeclarations.has(breakpoint.id) === false) {
@@ -1461,7 +1489,7 @@ export const analyzeProject = (
     }
   }
 
-  const limit = input.limit ?? 50;
+  const limit = input.limit ?? 20;
   return {
     query: input.query,
     scopes: [...scopes],
@@ -1474,4 +1502,28 @@ export const analyzeProject = (
 export const searchProject = (
   state: Parameters<typeof analyzeProject>[0],
   input: z.infer<typeof projectSearchInput>
-) => ({ ...analyzeProject(state, input), query: input.query });
+) => {
+  const result = analyzeProject(state, {
+    ...input,
+    limit: Number.MAX_SAFE_INTEGER,
+  });
+  const { items, ...pagination } = paginateOutput({
+    items: result.matches,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {
+      query: input.query,
+      scopes: input.scopes,
+      pageId: input.pageId,
+      pagePath: input.pagePath,
+    },
+    verbose: input.verbose,
+  });
+  return {
+    query: input.query,
+    scopes: result.scopes,
+    matches: items,
+    truncated: pagination.nextCursor !== null,
+    ...pagination,
+  };
+};

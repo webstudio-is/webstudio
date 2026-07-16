@@ -23,6 +23,7 @@ import {
   type Asset,
   type Folder,
   type DataSource,
+  dataSourceVariableValue,
   type Page,
   type PageTemplate,
   type Pages,
@@ -33,9 +34,11 @@ import {
 } from "@webstudio-is/sdk";
 import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
+import { paginateOutput, type PaginatedOutputInput } from "./output";
 import { webstudioDataNamespaces } from "../contracts/namespaces";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
+import { getStaticStringLiteral } from "./text-replacement";
 import {
   collectExclusiveInstanceIds,
   createInstanceCleanupPayload,
@@ -58,12 +61,28 @@ import {
 
 type CreateId = () => string;
 
+const pageDuplicateSubstitutionsInput = z.object({
+  text: z
+    .record(z.string().min(1), z.string())
+    .optional()
+    .describe(
+      "Exact fixed-text replacements applied only to the duplicated page's text children, string props, title, and metadata."
+    ),
+  variables: z
+    .record(z.string().min(1), dataSourceVariableValue)
+    .optional()
+    .describe(
+      "Copied variable values keyed by the source variable name. Ambiguous duplicate names are rejected."
+    ),
+});
+
 export const pageDuplicateInput = z.object({
   projectId: z.string(),
   pageId: z.string(),
   parentFolderId: z.string().optional(),
   name: z.string().min(1).optional(),
   path: z.string().optional(),
+  substitutions: pageDuplicateSubstitutionsInput.optional(),
 });
 
 const isHydratedWebstudioData = (value: unknown): value is WebstudioData => {
@@ -571,7 +590,7 @@ export const insertPageFromTemplateMutable = ({
   return newPage.id;
 };
 
-export const insertPageCopyMutable = ({
+const copyPageMutable = ({
   source,
   target,
   projectId,
@@ -600,7 +619,124 @@ export const insertPageCopyMutable = ({
   if (copied === undefined) {
     return;
   }
-  return insertCopiedPageMutable({ page, copied, target, createId });
+  return {
+    pageId: insertCopiedPageMutable({ page, copied, target, createId }),
+    copied,
+  };
+};
+
+export const insertPageCopyMutable = (
+  input: Parameters<typeof copyPageMutable>[0]
+) => copyPageMutable(input)?.pageId;
+
+type PageDuplicateSubstitutions = z.infer<
+  typeof pageDuplicateSubstitutionsInput
+>;
+
+const applyCopiedPageTextSubstitutions = ({
+  target,
+  pageId,
+  instanceIds,
+  replacements,
+}: {
+  target: WebstudioData;
+  pageId: Page["id"];
+  instanceIds: ReadonlySet<string>;
+  replacements: Record<string, string>;
+}) => {
+  const replacementsByText = new Map(Object.entries(replacements));
+  const replaceText = (value: string) => replacementsByText.get(value) ?? value;
+  for (const instanceId of instanceIds) {
+    const instance = target.instances.get(instanceId);
+    if (instance !== undefined) {
+      instance.children = instance.children.map((child) =>
+        child.type === "text"
+          ? { ...child, value: replaceText(child.value) }
+          : child
+      );
+    }
+  }
+  for (const prop of target.props.values()) {
+    if (prop.type === "string" && instanceIds.has(prop.instanceId)) {
+      prop.value = replaceText(prop.value);
+    }
+  }
+  const page = target.pages.pages.get(pageId);
+  if (page === undefined) {
+    return;
+  }
+  const replaceFixedExpression = (expression: string) => {
+    const value = getStaticStringLiteral(expression);
+    const replacement =
+      value === undefined ? undefined : replacementsByText.get(value);
+    return replacement === undefined ? expression : JSON.stringify(replacement);
+  };
+  page.title = replaceFixedExpression(page.title);
+  copyAndTransformPageMeta(page.meta, page.meta, replaceFixedExpression);
+};
+
+const applyPageDuplicateSubstitutions = ({
+  source,
+  target,
+  pageId,
+  copied,
+  substitutions,
+}: {
+  source: WebstudioData;
+  target: WebstudioData;
+  pageId: Page["id"];
+  copied: NonNullable<ReturnType<typeof copyPageRootAndBodyMutable>>;
+  substitutions: PageDuplicateSubstitutions;
+}) => {
+  if (
+    substitutions.text !== undefined &&
+    Object.keys(substitutions.text).length > 0
+  ) {
+    const copiedInstanceIds = new Set(copied.newInstanceIds.values());
+    copiedInstanceIds.delete(ROOT_INSTANCE_ID);
+    applyCopiedPageTextSubstitutions({
+      target,
+      pageId,
+      instanceIds: copiedInstanceIds,
+      replacements: substitutions.text,
+    });
+  }
+
+  const variablesByName = new Map<string, DataSource[]>();
+  for (const sourceId of copied.newDataSourceIds.keys()) {
+    const dataSource = source.dataSources.get(sourceId);
+    if (dataSource?.type !== "variable") {
+      continue;
+    }
+    const variables = variablesByName.get(dataSource.name) ?? [];
+    variables.push(dataSource);
+    variablesByName.set(dataSource.name, variables);
+  }
+  for (const [name, value] of Object.entries(substitutions.variables ?? {})) {
+    const matches = variablesByName.get(name) ?? [];
+    if (matches.length === 0) {
+      return throwBuilderRuntimeError(
+        "NOT_FOUND",
+        `Copied variable "${name}" was not found`
+      );
+    }
+    if (matches.length > 1) {
+      return throwBuilderRuntimeError(
+        "CONFLICT",
+        `Copied variable name "${name}" is ambiguous`
+      );
+    }
+    const newId = copied.newDataSourceIds.get(matches[0]!.id);
+    const variable =
+      newId === undefined ? undefined : target.dataSources.get(newId);
+    if (variable?.type !== "variable") {
+      return throwBuilderRuntimeError(
+        "NOT_FOUND",
+        `Copied variable "${name}" was not found`
+      );
+    }
+    variable.value = structuredClone(value);
+  }
 };
 
 export const createPageDuplicatePayload = ({
@@ -611,6 +747,7 @@ export const createPageDuplicatePayload = ({
   parentFolderId,
   name,
   path,
+  substitutions,
   createId = nanoid,
 }: {
   build: Parameters<typeof createWebstudioDataFromBuild>[0]["build"];
@@ -620,17 +757,19 @@ export const createPageDuplicatePayload = ({
   parentFolderId: Folder["id"];
   name?: Page["name"];
   path?: Page["path"];
+  substitutions?: PageDuplicateSubstitutions;
   createId?: CreateId;
 }) => {
   const before = createWebstudioDataFromBuild({ build, assets });
   let duplicatedPageId: Page["id"] | undefined;
   const { payload } = produceWebstudioDataMutation(before, (draft) => {
-    duplicatedPageId = insertPageCopyMutable({
+    const duplicate = copyPageMutable({
       source: { data: draft, pageId },
       target: { data: draft, folderId: parentFolderId },
       projectId,
       createId,
     });
+    duplicatedPageId = duplicate?.pageId;
     if (duplicatedPageId === undefined) {
       return;
     }
@@ -644,6 +783,15 @@ export const createPageDuplicatePayload = ({
     }
     if (path !== undefined) {
       page.path = path;
+    }
+    if (substitutions !== undefined && duplicate !== undefined) {
+      applyPageDuplicateSubstitutions({
+        source: before,
+        target: draft,
+        pageId: duplicatedPageId,
+        copied: duplicate.copied,
+        substitutions,
+      });
     }
   });
   if (duplicatedPageId === undefined) {
@@ -694,6 +842,7 @@ export const duplicatePage = (
     parentFolderId,
     name: input.name,
     path: input.path,
+    substitutions: input.substitutions,
     createId: context.createId,
   });
   if (duplicate === undefined) {
@@ -1040,19 +1189,28 @@ export const reorderPageTemplates = (
   });
 };
 
-export const listPageTemplates = (state: Pick<BuilderState, "pages">) => {
+export const listPageTemplates = (
+  state: Pick<BuilderState, "pages">,
+  input: PaginatedOutputInput = {}
+) => {
   const pages = getRequiredPages(state);
+  const { items, ...pagination } = paginateOutput({
+    items: Array.from(pages.pageTemplates?.values() ?? []).map((template) => ({
+      id: template.id,
+      name: template.name,
+      title: template.title,
+      rootInstanceId: template.rootInstanceId,
+      systemDataSourceId: template.systemDataSourceId,
+      meta: template.meta,
+    })),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {},
+    verbose: input.verbose,
+  });
   return {
-    templates: Array.from(pages.pageTemplates?.values() ?? []).map(
-      (template) => ({
-        id: template.id,
-        name: template.name,
-        title: template.title,
-        rootInstanceId: template.rootInstanceId,
-        systemDataSourceId: template.systemDataSourceId,
-        meta: template.meta,
-      })
-    ),
+    templates: items,
+    ...pagination,
   };
 };
 

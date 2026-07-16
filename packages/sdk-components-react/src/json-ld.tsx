@@ -3,7 +3,16 @@ import {
   escapeJsonLdScriptText,
   validateJsonLd,
 } from "@webstudio-is/sdk/runtime";
-import { forwardRef, type ElementRef, type Ref, useContext } from "react";
+import {
+  forwardRef,
+  type ElementRef,
+  type Ref,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import { HeadSlotContext } from "./head-slot-context";
 import { XmlNode } from "./xml-node";
 
 export const defaultTag = "script";
@@ -19,7 +28,15 @@ const serializeJsonLd = (code: unknown) => {
 export const JsonLd = forwardRef<ElementRef<"script">, { code?: unknown }>(
   ({ code = "" }, ref) => {
     const { renderer } = useContext(ReactSdkContext);
+    const isInHeadSlot = useContext(HeadSlotContext);
+    const [isMounted, setIsMounted] = useState(false);
     const serialized = serializeJsonLd(code);
+
+    useEffect(() => {
+      if (isInHeadSlot) {
+        setIsMounted(true);
+      }
+    }, [isInHeadSlot]);
 
     if (renderer === "canvas") {
       return (
@@ -44,13 +61,19 @@ export const JsonLd = forwardRef<ElementRef<"script">, { code?: unknown }>(
       return null;
     }
 
-    return (
+    const script = (
       <script
         ref={ref}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: content }}
       />
     );
+
+    if (isInHeadSlot && isMounted) {
+      return createPortal(script, document.head);
+    }
+
+    return script;
   }
 );
 

@@ -62,6 +62,11 @@ import {
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 import {
+  paginateOutput,
+  projectOutput,
+  type PaginatedOutputInput,
+} from "./output";
+import {
   createPropUpsertPayload,
   createValidatedPropValueFromInput,
   findProp,
@@ -181,12 +186,32 @@ export const serializeDataVariables = ({
 
 export const listDataVariables = (
   state: Pick<BuilderState, "dataSources">,
-  input: { scopeInstanceId?: string } = {}
-) =>
-  serializeDataVariables({
+  input: { scopeInstanceId?: string } & PaginatedOutputInput = {}
+) => {
+  const serialized = serializeDataVariables({
     dataSources: getRequiredDataSources(state),
     scopeInstanceId: input.scopeInstanceId,
   });
+  const { items, ...pagination } = paginateOutput({
+    items: serialized.variables.map((variable) =>
+      projectOutput({
+        input,
+        compact: {
+          id: variable.id,
+          name: variable.name,
+          scopeInstanceId: variable.scopeInstanceId,
+          valueType: variable.value.type,
+        },
+        expanded: () => ({ value: variable.value }),
+      })
+    ),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: { scopeInstanceId: input.scopeInstanceId },
+    verbose: input.verbose,
+  });
+  return { variables: items, ...pagination };
+};
 
 export const dataVariableValueInput = dataSourceVariableValue;
 
@@ -1865,7 +1890,7 @@ type ResourceExpressionFields = Partial<
   Pick<Resource, "url" | "body" | "headers" | "searchParams">
 >;
 
-const listResourceExpressions = (
+export const listResourceExpressions = (
   fields: ResourceExpressionFields,
   pathPrefix: string[] = []
 ) => [
@@ -2449,13 +2474,21 @@ export const serializeResources = ({
 
 export const listResources = (
   state: Pick<BuilderState, "dataSources" | "resources">,
-  input: { scopeInstanceId?: string } = {}
+  input: { scopeInstanceId?: string } & PaginatedOutputInput = {}
 ) => {
-  return serializeResources({
+  const serialized = serializeResources({
     resources: getRequiredResources(state),
     dataSources: getRequiredDataSources(state),
     scopeInstanceId: input.scopeInstanceId,
   });
+  const { items, ...pagination } = paginateOutput({
+    items: serialized.resources,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: { scopeInstanceId: input.scopeInstanceId },
+    verbose: input.verbose,
+  });
+  return { resources: items, ...pagination };
 };
 
 export const createResource = (

@@ -101,6 +101,34 @@ export const checkProjectBuildPermissionInput = z.object({
 });
 
 export const buildPatchNamespaces = builderNamespaces;
+type BuilderNamespace = (typeof builderNamespaces)[number];
+export type PublicBuildInclude =
+  | Exclude<BuilderNamespace, "dataSources">
+  | "folders"
+  | "variables"
+  | "designTokens";
+
+export const getPublicBuildIncludes = (
+  namespaces: readonly BuilderNamespace[]
+): PublicBuildInclude[] => [
+  ...new Set(
+    namespaces.flatMap((namespace): PublicBuildInclude[] => {
+      if (namespace === "pages") {
+        return ["pages", "folders"];
+      }
+      if (namespace === "dataSources") {
+        return ["variables"];
+      }
+      return [namespace];
+    })
+  ),
+];
+
+export const publicBuildIncludes = [
+  "designTokens",
+  ...getPublicBuildIncludes(builderNamespaces),
+] as const satisfies readonly [PublicBuildInclude, ...PublicBuildInclude[]];
+
 export type BuildPatchPath = Array<string | number>;
 export type BuildPatch =
   | { op: "add"; path: BuildPatchPath; value: unknown }

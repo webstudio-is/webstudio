@@ -1,5 +1,5 @@
 import { readFile, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { cwd } from "node:process";
 import {
   migratePages,
@@ -8,6 +8,7 @@ import {
 import * as httpClient from "@webstudio-is/http-client";
 import {
   bundleVersion,
+  getPublicBuildIncludes,
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
@@ -29,22 +30,18 @@ import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
 import {
   createBuilderStateFromBuildData,
   createBuilderStateFromSerializedSnapshot,
+  createSerializedBuilderBuildDataFromState,
   createSerializedBuilderStateSnapshotFromState,
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state";
 import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
-import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "./config";
+import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
+import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
 import { writeFileAtomic } from "./fs-utils";
-
-type ApiConnection = {
-  projectId: string;
-  origin: string;
-  authToken: string;
-  headers?: Record<string, string | undefined>;
-};
+import { isPlainRecord } from "./type-utils";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -54,23 +51,20 @@ export type CliServerApiContract = {
   negotiated: boolean;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
-
 export const getCliServerApiContract = async (
   connection: ApiConnection,
   getProjectPermissions = httpClient.getProjectPermissions
 ): Promise<CliServerApiContract> => {
   const permissions = (await getProjectPermissions(connection)) as unknown;
-  const apiContract = isRecord(permissions)
+  const apiContract = isPlainRecord(permissions)
     ? permissions.apiContract
     : undefined;
   const serverVersion =
-    isRecord(apiContract) && typeof apiContract.version === "string"
+    isPlainRecord(apiContract) && typeof apiContract.version === "string"
       ? apiContract.version
       : undefined;
   const operationIds =
-    isRecord(apiContract) && Array.isArray(apiContract.operationIds)
+    isPlainRecord(apiContract) && Array.isArray(apiContract.operationIds)
       ? apiContract.operationIds.filter(
           (operationId): operationId is string =>
             typeof operationId === "string"
@@ -148,7 +142,14 @@ type PersistedCliProjectSessionSnapshot = Omit<
   state: SerializedBuilderStateSnapshot;
 };
 
-const sessionFile = join(dirname(LOCAL_CONFIG_FILE), "project-session.json");
+export const getCliProjectSessionFile = (
+  projectRoot = cwd(),
+  projectId?: string
+) =>
+  join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    "project-session.json"
+  );
 const compatibilityVersion = "cli-project-session-v1";
 
 const createCliProjectSessionCompatibility = (
@@ -157,23 +158,6 @@ const createCliProjectSessionCompatibility = (
   ...createDefaultProjectSessionCompatibility(compatibilityVersion),
   apiCompatibilityVersion: connection.headers?.["x-webstudio-client-version"],
 });
-
-const toPublicApiInclude = (namespaces: readonly BuilderNamespace[]) => [
-  ...new Set(
-    namespaces.flatMap((namespace) => {
-      if (namespace === "dataSources") {
-        return ["variables"];
-      }
-      if (namespace === "pages") {
-        return ["pages", "folders"];
-      }
-      if (namespace === "projectSettings") {
-        return ["projectSettings"];
-      }
-      return [namespace];
-    })
-  ),
-];
 
 const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
@@ -184,7 +168,7 @@ const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
 };
 
 const getLegacyPublicApiInclude = (namespaces: readonly BuilderNamespace[]) =>
-  toPublicApiInclude([
+  getPublicBuildIncludes([
     ...namespaces.filter((namespace) => namespace !== "projectSettings"),
     "pages",
   ]);
@@ -282,7 +266,7 @@ const serializePersistedSnapshot = (
 });
 
 export const createCliProjectSessionStorage = (
-  path = join(cwd(), sessionFile)
+  path = getCliProjectSessionFile()
 ): ProjectSessionStorage => ({
   async load() {
     try {
@@ -347,7 +331,7 @@ export const createCliProjectSessionTransport = ({
       ) as Promise<PublicBuildSnapshot>;
     let snapshot: PublicBuildSnapshot;
     try {
-      snapshot = await fetchSnapshot(toPublicApiInclude(namespaces));
+      snapshot = await fetchSnapshot(getPublicBuildIncludes(namespaces));
     } catch (error) {
       if (
         namespaces.includes("projectSettings") === false ||
@@ -402,12 +386,16 @@ export const createCliProjectSessionTransport = ({
 
 export const createCliProjectSession = ({
   connection,
-  storage = createCliProjectSessionStorage(),
+  storage,
+  projectRoot,
+  sessionProjectId,
   executeServerOperation,
   getPermissions,
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
+  projectRoot?: string;
+  sessionProjectId?: string;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
 }) =>
@@ -418,7 +406,11 @@ export const createCliProjectSession = ({
       executeServerOperation,
       getPermissions,
     }),
-    storage,
+    storage:
+      storage ??
+      createCliProjectSessionStorage(
+        getCliProjectSessionFile(projectRoot, sessionProjectId)
+      ),
     compatibilityVersion,
   });
 
@@ -444,6 +436,8 @@ export const createLocalProjectBundleFromSessionSnapshot = (
     structuredClone(pages)
   );
   const serializedPages = serializePages(persistedPages);
+  const { pages: _pages, ...serializedBuildState } =
+    createSerializedBuilderBuildDataFromState(snapshot.state);
   const homePage = getHomePage(persistedPages);
   return {
     bundleVersion,
@@ -462,19 +456,8 @@ export const createLocalProjectBundleFromSessionSnapshot = (
       version: snapshot.version,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      ...serializedBuildState,
       pages: serializedPages,
-      breakpoints: Array.from(snapshot.state.breakpoints?.entries() ?? []),
-      styles: Array.from(snapshot.state.styles?.entries() ?? []),
-      styleSources: Array.from(snapshot.state.styleSources?.entries() ?? []),
-      styleSourceSelections: Array.from(
-        snapshot.state.styleSourceSelections?.entries() ?? []
-      ),
-      props: Array.from(snapshot.state.props?.entries() ?? []),
-      instances: Array.from(snapshot.state.instances?.entries() ?? []),
-      dataSources: Array.from(snapshot.state.dataSources?.entries() ?? []),
-      resources: Array.from(snapshot.state.resources?.entries() ?? []),
-      marketplaceProduct: snapshot.state.marketplaceProduct,
-      projectSettings,
     },
   };
 };

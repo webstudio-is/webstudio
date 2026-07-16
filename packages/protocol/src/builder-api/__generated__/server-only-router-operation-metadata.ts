@@ -65,6 +65,7 @@ export const serverOnlyRouterOperationMetadata = {
           items: {
             type: "string",
             enum: [
+              "designTokens",
               "pages",
               "folders",
               "instances",
@@ -72,10 +73,9 @@ export const serverOnlyRouterOperationMetadata = {
               "styles",
               "styleSources",
               "styleSourceSelections",
-              "designTokens",
-              "assets",
-              "resources",
               "variables",
+              "resources",
+              "assets",
               "breakpoints",
               "projectSettings",
               "marketplaceProduct",
@@ -251,9 +251,22 @@ export const serverOnlyRouterOperationMetadata = {
     permit: "view",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
   },
   "publish.create": {
@@ -342,9 +355,22 @@ export const serverOnlyRouterOperationMetadata = {
     permit: "view",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
   },
   "domains.create": {

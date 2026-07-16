@@ -4,8 +4,7 @@ import {
   type BuilderNamespace,
 } from "../contracts/namespaces";
 import type { BuilderApiCapability } from "../contracts/permissions";
-import { paginatedOutputInputSchema } from "./output";
-import { getExpressionWarnings } from "./expression-validation";
+import { outputDetailInputSchema, paginatedOutputInputSchema } from "./output";
 import {
   getInputSchemaMetadata,
   isHiddenPublicApiInputField,
@@ -14,6 +13,7 @@ import { instanceFilterInput, type InputJsonSchema } from "@webstudio-is/sdk";
 import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
+import * as bindingVerification from "./binding-verification";
 import * as components from "./components";
 import * as collection from "./collection";
 import * as data from "./data";
@@ -25,6 +25,7 @@ import * as pageCopy from "./page-copy";
 import * as pages from "./pages";
 import * as projectSettings from "./project-settings";
 import * as props from "./props";
+import * as runtimeUi from "./runtime-ui";
 import * as search from "./search";
 import * as audit from "./audit";
 import * as styles from "./styles";
@@ -37,6 +38,10 @@ import {
 } from "./output-schemas";
 import type { BuilderRuntimeMutation } from "./mutation";
 import { listFragmentExpressions } from "./fragment";
+import {
+  bindExpressionInput,
+  getScopedExpressionWarnings,
+} from "./expression-scope";
 
 export type BuilderRuntimeOperation<
   Id extends string = string,
@@ -144,54 +149,6 @@ const parseOperationInput = <Schema extends z.ZodTypeAny>(
   return throwInvalidOperationInput(result.error, inputJsonSchema);
 };
 
-const bindExpressionInput = (
-  state: BuilderState,
-  instanceId: string,
-  expression: string
-) => {
-  if (state.instances === undefined || state.dataSources === undefined) {
-    return expression;
-  }
-  return data.bindExpressionToInstanceScope({
-    expression,
-    instanceId,
-    instances: state.instances,
-    dataSources: state.dataSources,
-  });
-};
-
-const getScopedExpressionWarnings = (
-  state: BuilderState,
-  instanceId: string,
-  path: string[],
-  expression: string,
-  allowAssignment = false,
-  additionalVariables: readonly string[] = []
-) => {
-  if (state.instances === undefined || state.dataSources === undefined) {
-    return [];
-  }
-  const availableVariables = new Set(
-    data
-      .findAvailableVariables({
-        startingInstanceId: instanceId,
-        instances: state.instances,
-        dataSources: state.dataSources,
-      })
-      .map(({ name }) => name)
-  );
-  for (const name of additionalVariables) {
-    availableVariables.add(name);
-  }
-  return getExpressionWarnings({
-    expression,
-    availableVariables,
-    allowAssignment,
-    path,
-    instanceId,
-  });
-};
-
 const getScopedPropWarnings = ({
   state,
   instanceId,
@@ -222,7 +179,7 @@ const withExpressionWarnings = <
   Mutation extends { result: Record<string, unknown> },
 >(
   mutation: Mutation,
-  warnings: ReturnType<typeof getExpressionWarnings>
+  warnings: ReturnType<typeof getScopedExpressionWarnings>
 ) =>
   warnings.length === 0
     ? mutation
@@ -286,7 +243,8 @@ const runtimeOperation = <
         writeNamespaces.includes("assets")),
     requiresConfirm:
       contract.kind === "mutation"
-        ? (contract.requiresConfirm ?? false)
+        ? (contract.requiresConfirm ??
+          isDestructiveRuntimeCommand(publicApi.command))
         : false,
     execute: ({ state, input, context }) => {
       const result = execute({
@@ -316,6 +274,11 @@ const api = (
   client: string,
   permit?: BuilderApiCapability
 ): RuntimeOperationPublicApi => ({ command, client, permit });
+
+export const isDestructiveRuntimeCommand = (command: string) =>
+  command.startsWith("delete-") ||
+  command.startsWith("replace-") ||
+  command === "set-redirects";
 
 const readContract = (
   readNamespaces: readonly BuilderNamespace[],
@@ -373,10 +336,14 @@ const pageCopyNamespaces = [
 ] as const;
 
 const emptyInput = z.object({});
-const pageListInput = z.object({ includeFolders: z.boolean().optional() });
+const pageListInput = z.object({
+  ...paginatedOutputInputSchema.shape,
+});
 const pageGetInput = z.object({ pageId: z.string() });
 const pageGetByPathInput = z.object({ path: z.string() });
-const folderListInput = z.object({ includePages: z.boolean().optional() });
+const folderListInput = z.object({
+  ...paginatedOutputInputSchema.shape,
+});
 const instanceListInput = instanceFilterInput.extend({
   pageId: z.string().optional(),
   pagePath: z.string().optional(),
@@ -408,7 +375,7 @@ const textListInput = z.object({
   instanceId: z.string().optional(),
   mode: z.enum(["text", "expression", "all"]).optional(),
   contains: z.string().optional(),
-  maxValueLength: z.number().int().nonnegative().optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const styleDeclarationsListInput = z.object({
   instanceIds: z.array(z.string()).optional(),
@@ -433,17 +400,23 @@ const designTokenListInput = z.object({
 const cssVariableListInput = z.object({
   filter: z.string().optional(),
   withUsage: z.boolean().optional(),
+  ...paginatedOutputInputSchema.shape,
 });
 const scopedInstanceListInput = z.object({
   scopeInstanceId: z.string().optional(),
+  ...paginatedOutputInputSchema.shape,
 });
+const paginatedListInput = paginatedOutputInputSchema;
 const assetListInput = z.object({
   type: z.enum(["image", "font"]).optional(),
   sort: z.enum(["name", "size", "createdAt", "usage"]).optional(),
   withUsage: z.boolean().optional(),
   ...paginatedOutputInputSchema.shape,
 });
-const assetUsageInput = z.object({ assetId: z.string() });
+const assetUsageInput = z.object({
+  assetId: z.string(),
+  ...paginatedOutputInputSchema.shape,
+});
 
 export const builderRuntimeOperations = [
   runtimeOperation(
@@ -536,8 +509,8 @@ export const builderRuntimeOperations = [
     "projectSettings.get",
     api("get-project-settings", "getProjectSettings"),
     readContract(["pages", "projectSettings"]),
-    emptyInput,
-    ({ state }) => projectSettings.getProjectSettings(state)
+    outputDetailInputSchema,
+    ({ state, input }) => projectSettings.getProjectSettings(state, input)
   ),
   runtimeOperation(
     "projectSettings.update",
@@ -572,8 +545,8 @@ export const builderRuntimeOperations = [
     "redirects.list",
     api("list-redirects", "listRedirects"),
     readContract(["pages"]),
-    emptyInput,
-    ({ state }) => projectSettings.listRedirects(state)
+    paginatedListInput,
+    ({ state, input }) => projectSettings.listRedirects(state, input)
   ),
   runtimeOperation(
     "redirects.create",
@@ -623,8 +596,8 @@ export const builderRuntimeOperations = [
     "breakpoints.list",
     api("list-breakpoints", "listBreakpoints"),
     readContract(["breakpoints"]),
-    emptyInput,
-    ({ state }) => projectSettings.listBreakpoints(state)
+    paginatedListInput,
+    ({ state, input }) => projectSettings.listBreakpoints(state, input)
   ),
   runtimeOperation(
     "breakpoints.create",
@@ -694,8 +667,8 @@ export const builderRuntimeOperations = [
     "pageTemplates.list",
     api("list-page-templates", "listPageTemplates"),
     readContract(["pages"]),
-    emptyInput,
-    ({ state }) => pageCopy.listPageTemplates(state)
+    paginatedListInput,
+    ({ state, input }) => pageCopy.listPageTemplates(state, input)
   ),
   runtimeOperation(
     "pageTemplates.create",
@@ -901,6 +874,24 @@ export const builderRuntimeOperations = [
     ]),
     audit.auditInput,
     ({ state, input, context }) => audit.audit(state, input, context)
+  ),
+  runtimeOperation(
+    "project.verifyBindings",
+    api("verify-bindings", "verifyBindings"),
+    readContract(["pages", "instances", "props", "resources", "dataSources"]),
+    bindingVerification.bindingVerificationInput,
+    ({ state, input }) => bindingVerification.verifyBindings(state, input)
+  ),
+  runtimeOperation(
+    "runtimeUi.integrate",
+    api("integrate-runtime-ui", "integrateRuntimeUi"),
+    mutationContract({
+      readNamespaces: components.componentInsertReadNamespaces,
+      writeNamespaces: components.componentInsertReadNamespaces,
+    }),
+    runtimeUi.integrateRuntimeUiInput,
+    ({ state, input, context }) =>
+      runtimeUi.integrateRuntimeUi(state, input, context)
   ),
   runtimeOperation(
     "instances.insertComponent",
@@ -1544,6 +1535,7 @@ export const builderRuntimeOperations = [
     mutationContract({
       readNamespaces: ["styles", "styleSources"],
       writeNamespaces: ["styles"],
+      requiresConfirm: true,
     }),
     styles.styleSourceClearStylesInput,
     ({ state, input }) => styles.clearStyleSourceStyles(state, input)
@@ -1920,6 +1912,12 @@ export type BuilderRuntimeOperationResult<Id extends string> =
       ? Result
       : never
     : never;
+
+export type BuilderRuntimeMutationOperationId = {
+  [Id in BuilderRuntimeOperationId]: BuilderRuntimeOperationResult<Id> extends BuilderRuntimeMutation
+    ? Id
+    : never;
+}[BuilderRuntimeOperationId];
 
 const builderRuntimeOperationById: ReadonlyMap<
   string,

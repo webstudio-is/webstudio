@@ -511,6 +511,7 @@ type CaptureScreenshotOptions = {
   fullPage?: boolean;
   includeImageMetrics?: boolean;
   includeResourceMetrics?: boolean;
+  includeContrastMetrics?: boolean;
   browser: ScreenshotBrowser;
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
@@ -521,6 +522,31 @@ type CaptureScreenshotOptions = {
   quality?: number;
   scale?: number;
 };
+
+const getBrowserScreenshotOptions = (
+  options: CaptureScreenshotOptions,
+  browserPath: string,
+  output: string,
+  dependencies: ScreenshotDependencies
+): BrowserScreenshotOptions => ({
+  browserPath,
+  output,
+  width: options.width,
+  height: options.height,
+  fullPage: options.fullPage,
+  includeImageMetrics: options.includeImageMetrics,
+  includeResourceMetrics: options.includeResourceMetrics,
+  includeContrastMetrics: options.includeContrastMetrics,
+  url: options.url,
+  uid: dependencies.getuid(),
+  waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
+  waitForSelector: options.waitForSelector,
+  waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
+  timeout: options.timeout ?? defaultScreenshotTimeout,
+  format: options.format,
+  quality: options.quality,
+  scale: options.scale,
+});
 
 const captureResolvedScreenshot = async (
   options: CaptureScreenshotOptions,
@@ -535,24 +561,12 @@ const captureResolvedScreenshot = async (
     format: options.format,
   });
   await dependencies.mkdir(dirname(output), { recursive: true });
-  const browserScreenshotOptions = {
-    browserPath: browser.path,
+  const browserScreenshotOptions = getBrowserScreenshotOptions(
+    options,
+    browser.path,
     output,
-    width: options.width,
-    height: options.height,
-    fullPage: options.fullPage,
-    includeImageMetrics: options.includeImageMetrics,
-    includeResourceMetrics: options.includeResourceMetrics,
-    url: options.url,
-    uid: dependencies.getuid(),
-    waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
-    waitForSelector: options.waitForSelector,
-    waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
-    timeout: options.timeout ?? defaultScreenshotTimeout,
-    format: options.format,
-    quality: options.quality,
-    scale: options.scale,
-  };
+    dependencies
+  );
   const layout =
     browserSession !== undefined
       ? await browserSession.capture(browserScreenshotOptions)
@@ -609,22 +623,12 @@ export const createScreenshotCaptureSession = (
         );
       }
       browserSessionPromise ??= createBrowserScreenshotSession(
-        {
-          browserPath: resolvedBrowser.path,
-          output: options.output ?? "",
-          width: options.width,
-          height: options.height,
-          fullPage: options.fullPage,
-          includeImageMetrics: options.includeImageMetrics,
-          includeResourceMetrics: options.includeResourceMetrics,
-          url: options.url,
-          uid: dependencies.getuid(),
-          waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
-          waitForSelector: options.waitForSelector,
-          waitForTimeout:
-            options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
-          timeout: options.timeout ?? defaultScreenshotTimeout,
-        },
+        getBrowserScreenshotOptions(
+          options,
+          resolvedBrowser.path,
+          options.output ?? "",
+          dependencies
+        ),
         dependencies
       );
       browserSession ??= await browserSessionPromise;
@@ -670,25 +674,12 @@ export const createScreenshotCaptureSession = (
           return {
             options,
             output,
-            browserOptions: {
-              browserPath: resolvedBrowser.path,
+            browserOptions: getBrowserScreenshotOptions(
+              options,
+              resolvedBrowser.path,
               output,
-              width: options.width,
-              height: options.height,
-              fullPage: options.fullPage,
-              includeImageMetrics: options.includeImageMetrics,
-              includeResourceMetrics: options.includeResourceMetrics,
-              url: options.url,
-              uid: dependencies.getuid(),
-              waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
-              waitForSelector: options.waitForSelector,
-              waitForTimeout:
-                options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
-              timeout: options.timeout ?? defaultScreenshotTimeout,
-              format: options.format,
-              quality: options.quality,
-              scale: options.scale,
-            },
+              dependencies
+            ),
           };
         })
       );
@@ -742,6 +733,7 @@ export const captureScreenshotWithBrowserInstall = async (
     fullPage?: boolean;
     includeImageMetrics?: boolean;
     includeResourceMetrics?: boolean;
+    includeContrastMetrics?: boolean;
     browser: ScreenshotBrowser;
     browserPath?: string;
     waitUntil?: ScreenshotWaitUntil;

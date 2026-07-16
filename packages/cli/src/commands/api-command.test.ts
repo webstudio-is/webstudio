@@ -103,10 +103,10 @@ const dependencies = new Proxy(
   }
 ) as unknown as Parameters<typeof apiCommand>[1];
 
-const expectJsonOutput = (command: string) => {
+const expectJsonOutput = (command: string, data: unknown = { ok: true }) => {
   expect(getLastJsonOutput()).toEqual({
     ok: true,
-    data: { ok: true },
+    data,
     meta: {
       command,
       projectId: "project-1",
@@ -202,11 +202,13 @@ const expectCommandCall = async ({
   call,
   connection = {},
   inputJson,
+  expectedData,
 }: {
   options: Parameters<typeof apiCommand>[0];
   call: ReturnType<typeof vi.fn>;
   connection?: Record<string, unknown>;
   inputJson?: unknown;
+  expectedData?: unknown;
 }) => {
   mockConfig();
   if (inputJson !== undefined) {
@@ -217,7 +219,7 @@ const expectCommandCall = async ({
 
   expect(call).toHaveBeenCalledWith(expectConnection(connection));
   expectCallUsesDocumentedInputFields(call, options.command);
-  expectJsonOutput(options.command);
+  expectJsonOutput(options.command, expectedData);
 };
 
 const patchTransactions = [
@@ -347,15 +349,25 @@ const simpleCommandCases = [
   ],
   [
     "page list",
-    { command: "list-pages", includeFolders: true },
+    {
+      command: "list-pages",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
     "listPages",
-    { includeFolders: true },
+    { cursor: "10", limit: 5, verbose: true },
   ],
   [
     "folder list",
-    { command: "list-folders", includePages: true },
+    {
+      command: "list-folders",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
     "listFolders",
-    { includePages: true },
+    { cursor: "10", limit: 5, verbose: true },
   ],
   [
     "folder delete",
@@ -398,17 +410,13 @@ test.each(simpleCommandCases)(
 test("routes local-capable commands through project session runtime", async () => {
   mockConfig();
 
-  await apiCommand(
-    { command: "list-pages", includeFolders: true, json: true },
-    dependencies
-  );
+  await apiCommand({ command: "list-pages", json: true }, dependencies);
 
   const session = createCliProjectSession.mock.results[0]?.value;
   expect(session.read).toHaveBeenCalledWith(
     "pages.list",
     {
       projectId: "project-1",
-      includeFolders: true,
     },
     {
       permit: "view",
@@ -444,7 +452,7 @@ test("passes refresh to local-capable command session", async () => {
   expect(session.refresh).toHaveBeenCalledWith(["pages"]);
   expect(session.read).toHaveBeenCalledWith(
     "pages.list",
-    { projectId: "project-1", includeFolders: undefined },
+    { projectId: "project-1" },
     { permit: "view" }
   );
 });
@@ -528,6 +536,14 @@ test("parses the documented repeated audit scope options", async () => {
     scopes: ["accessibility", "seo"],
     pagePath: "/pricing",
   });
+});
+
+test("accepts the opt-in Craft audit scope", async () => {
+  const parsed = await auditCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).parseAsync(["--scopes", "craft"]);
+
+  expect(parsed).toMatchObject({ scopes: ["craft"] });
 });
 
 test("prints a compact project audit without --json", async () => {
@@ -899,6 +915,19 @@ test("updates marketplace product from input file", async () => {
   });
 });
 
+test("lists redirects with shared output detail options", async () => {
+  await expectCommandCall({
+    options: {
+      command: "list-redirects",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
+    call: apiCalls.listRedirects,
+    connection: { cursor: "10", limit: 5, verbose: true },
+  });
+});
+
 test("creates redirect", async () => {
   await expectCommandCall({
     options: {
@@ -969,6 +998,19 @@ test("sets redirects from input file", async () => {
     inputJson: input,
     call: apiCalls.setRedirects,
     connection: input,
+  });
+});
+
+test("lists breakpoints with shared output detail options", async () => {
+  await expectCommandCall({
+    options: {
+      command: "list-breakpoints",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
+    call: apiCalls.listBreakpoints,
+    connection: { cursor: "10", limit: 5, verbose: true },
   });
 });
 
@@ -1083,6 +1125,10 @@ test("duplicates page", async () => {
       name: "Pricing Copy",
       path: "/pricing-copy",
       parentFolder: "folder-1",
+      substitutions: JSON.stringify({
+        text: { London: "Paris" },
+        variables: { city: { type: "string", value: "Paris" } },
+      }),
     },
     call: apiCalls.duplicatePage,
     connection: {
@@ -1090,14 +1136,24 @@ test("duplicates page", async () => {
       name: "Pricing Copy",
       path: "/pricing-copy",
       parentFolderId: "folder-1",
+      substitutions: {
+        text: { London: "Paris" },
+        variables: { city: { type: "string", value: "Paris" } },
+      },
     },
   });
 });
 
 test("lists page templates", async () => {
   await expectCommandCall({
-    options: { command: "list-page-templates" },
+    options: {
+      command: "list-page-templates",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
     call: apiCalls.listPageTemplates,
+    connection: { cursor: "10", limit: 5, verbose: true },
   });
 });
 
@@ -1414,7 +1470,9 @@ test("lists text children with filters", async () => {
       instance: "instance-1",
       mode: "expression",
       contains: "headline",
-      maxValueLength: 80,
+      cursor: "10",
+      limit: 5,
+      verbose: true,
     },
     call: apiCalls.listTexts,
     connection: {
@@ -1423,7 +1481,9 @@ test("lists text children with filters", async () => {
       instanceId: "instance-1",
       mode: "expression",
       contains: "headline",
-      maxValueLength: 80,
+      cursor: "10",
+      limit: 5,
+      verbose: true,
     },
   });
 });
@@ -1466,9 +1526,20 @@ test("creates variable with parsed value", async () => {
 
 test("lists variables with scope filter", async () => {
   await expectCommandCall({
-    options: { command: "list-variables", scopeInstance: "body-id" },
+    options: {
+      command: "list-variables",
+      scopeInstance: "body-id",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
     call: apiCalls.listVariables,
-    connection: { scopeInstanceId: "body-id" },
+    connection: {
+      scopeInstanceId: "body-id",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
   });
 });
 
@@ -1528,9 +1599,20 @@ test("creates resource from options and exposes data source", async () => {
 
 test("lists resources with scope filter", async () => {
   await expectCommandCall({
-    options: { command: "list-resources", scopeInstance: "body-id" },
+    options: {
+      command: "list-resources",
+      scopeInstance: "body-id",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
     call: apiCalls.listResources,
-    connection: { scopeInstanceId: "body-id" },
+    connection: {
+      scopeInstanceId: "body-id",
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
   });
 });
 
@@ -1692,9 +1774,20 @@ test("calls asset list with pagination", async () => {
 
 test("lists fonts with optional system stacks", async () => {
   await expectCommandCall({
-    options: { command: "list-fonts", includeSystem: false },
+    options: {
+      command: "list-fonts",
+      includeSystem: false,
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
     call: apiCalls.listFonts,
-    connection: { includeSystem: false },
+    connection: {
+      includeSystem: false,
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
   });
 });
 
@@ -1991,9 +2084,21 @@ test("extracts design token from input file", async () => {
 
 test("lists css variables", async () => {
   await expectCommandCall({
-    options: { command: "list-css-variables", withUsage: true },
+    options: {
+      command: "list-css-variables",
+      withUsage: true,
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
     call: apiCalls.listCssVariables,
-    connection: { filter: undefined, withUsage: true },
+    connection: {
+      filter: undefined,
+      withUsage: true,
+      cursor: "10",
+      limit: 5,
+      verbose: true,
+    },
   });
 });
 

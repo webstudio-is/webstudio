@@ -5,11 +5,15 @@ import {
   augmentAuditWithRenderedChecks,
   getRenderedAuditOverallTimeout,
   getRenderedAuditViewports,
+  getRenderedContrastIssues,
+  getRenderedGeometryIssues,
   getRenderedImageIssues,
   getRenderedResourceIssues,
 } from "./mcp-rendered-audit";
 
-const { mergeRenderedAudit } = __testing__;
+const { addCrossBreakpointGeometryIssues, mergeRenderedAudit } = __testing__;
+const previewUrl = "http://127.0.0.1:5177";
+const createStartPreview = () => vi.fn(async () => ({ url: previewUrl }));
 
 const layout = {
   documentType: "text/html",
@@ -20,6 +24,7 @@ const layout = {
   horizontalOverflow: false,
   images: [],
   resources: [],
+  contrasts: [],
 };
 
 const getNavigation = (path: string) => ({
@@ -35,6 +40,200 @@ const getNavigation = (path: string) => ({
 });
 
 describe("rendered audit evidence", () => {
+  test("reports only measured contrast ratios below their exact threshold", () => {
+    expect(
+      getRenderedContrastIssues({
+        ...layout,
+        contrasts: [
+          {
+            instanceId: "muted-copy",
+            tagName: "p",
+            foreground: "rgb(120, 120, 120)",
+            background: "rgb(255, 255, 255)",
+            ratio: 4.2,
+            requiredRatio: 4.5,
+            fontSize: 16,
+            fontWeight: 400,
+          },
+          {
+            instanceId: "heading",
+            tagName: "h1",
+            foreground: "rgb(0, 0, 0)",
+            background: "rgb(255, 255, 255)",
+            ratio: 21,
+            requiredRatio: 3,
+            fontSize: 32,
+            fontWeight: 700,
+          },
+        ],
+      })
+    ).toEqual([
+      {
+        kind: "low-text-contrast",
+        confidence: "exact",
+        instanceId: "muted-copy",
+        tagName: "p",
+        foreground: "rgb(120, 120, 120)",
+        background: "rgb(255, 255, 255)",
+        ratio: 4.2,
+        requiredRatio: 4.5,
+        fontSize: 16,
+        fontWeight: 400,
+      },
+    ]);
+  });
+
+  test("reports exact clipping and advisory overlap from bounded geometry", () => {
+    expect(
+      getRenderedGeometryIssues({
+        ...layout,
+        elementGeometry: {
+          total: 2,
+          sampled: 2,
+          truncated: false,
+          elements: [
+            {
+              instanceId: "card",
+              tagName: "article",
+              x: 0,
+              y: 0,
+              width: 300,
+              height: 200,
+              visible: true,
+              clippedX: true,
+              clippedY: false,
+              overlapsWith: ["badge"],
+            },
+            {
+              instanceId: "badge",
+              tagName: "div",
+              x: 250,
+              y: 0,
+              width: 100,
+              height: 40,
+              visible: true,
+              clippedX: false,
+              clippedY: false,
+              overlapsWith: ["card"],
+            },
+          ],
+        },
+      })
+    ).toEqual([
+      {
+        kind: "clipped-content",
+        confidence: "exact",
+        instanceId: "card",
+        message: "Rendered content exceeds a clipping boundary.",
+        evidence: { clippedX: true, clippedY: false },
+      },
+      {
+        kind: "overlapping-elements",
+        confidence: "advisory",
+        instanceId: "badge",
+        relatedInstanceId: "card",
+        message:
+          "Rendered element bounds overlap; inspect the screenshot to determine whether this is intentional.",
+        evidence: {},
+      },
+    ]);
+  });
+
+  test("reports persistent hidden content and advisory breakpoint changes once", () => {
+    const makeCheck = (
+      width: number,
+      elements: Array<{
+        instanceId: string;
+        visible: boolean;
+        x: number;
+        width: number;
+        hiddenReason?: "display";
+      }>
+    ) => ({
+      pageId: "home",
+      pagePath: "/",
+      viewport: { width, height: 800 },
+      screenshotPath: `/tmp/${width}.webp`,
+      layout: {
+        ...layout,
+        viewportWidth: width,
+        elementGeometry: {
+          total: elements.length,
+          sampled: elements.length,
+          truncated: false,
+          elements: elements.map((element) => ({
+            ...element,
+            tagName: "div",
+            y: 0,
+            height: 100,
+            clippedX: false,
+            clippedY: false,
+            overlapsWith: [],
+          })),
+        },
+      },
+      issues: [],
+      geometryIssues: [],
+      imageIssues: [],
+      resourceIssues: [],
+    });
+    const [mobile, desktop] = addCrossBreakpointGeometryIssues([
+      makeCheck(375, [
+        {
+          instanceId: "always-hidden",
+          visible: false,
+          hiddenReason: "display",
+          x: 0,
+          width: 0,
+        },
+        {
+          instanceId: "responsive-nav",
+          visible: false,
+          hiddenReason: "display",
+          x: 0,
+          width: 0,
+        },
+      ]),
+      makeCheck(1440, [
+        {
+          instanceId: "always-hidden",
+          visible: false,
+          hiddenReason: "display",
+          x: 0,
+          width: 0,
+        },
+        {
+          instanceId: "responsive-nav",
+          visible: true,
+          x: 900,
+          width: 400,
+        },
+      ]),
+    ] as never);
+
+    expect(mobile?.geometryIssues).toMatchObject([
+      {
+        kind: "hidden-content",
+        confidence: "advisory",
+        instanceId: "always-hidden",
+      },
+    ]);
+    expect(desktop?.geometryIssues).toMatchObject([
+      {
+        kind: "cross-breakpoint-layout-change",
+        confidence: "advisory",
+        instanceId: "responsive-nav",
+        evidence: {
+          sourceViewportWidth: 375,
+          targetViewportWidth: 1440,
+          sourceVisible: false,
+          targetVisible: true,
+        },
+      },
+    ]);
+    expect(desktop?.issues).toEqual(["cross-breakpoint-layout-change"]);
+  });
+
   test("budgets five minutes for each confirmed capture batch", () => {
     expect(getRenderedAuditOverallTimeout(1)).toBe(5 * 60_000);
     expect(getRenderedAuditOverallTimeout(120)).toBe(5 * 60_000);
@@ -44,6 +243,7 @@ describe("rendered audit evidence", () => {
   });
 
   test("matches the public root path to the stored empty home path", async () => {
+    const storeRenderedAuditArtifacts = vi.fn(async () => "/manifest.json");
     const captureScreenshot = vi.fn(async (input) => ({
       output: `/tmp/home-${input.viewport.width}.png`,
       browserPath: "/usr/bin/chromium",
@@ -77,9 +277,28 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "home", path: "" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: vi.fn(async () => ({
+        url: previewUrl,
+        generatedBuildMetrics: {
+          version: 1,
+          fileCount: 3,
+          bytes: 4_000,
+          gzipBytes: 1_200,
+          client: { fileCount: 2, bytes: 3_000, gzipBytes: 900 },
+          server: { fileCount: 1, bytes: 1_000, gzipBytes: 300 },
+          largestFiles: [
+            {
+              path: "client/assets/index.js",
+              bytes: 2_000,
+              gzipBytes: 600,
+              kind: "script",
+            },
+          ],
+        },
+      })),
       stopPreview: vi.fn(),
       captureScreenshot,
+      storeRenderedAuditArtifacts,
     });
 
     expect(captureScreenshot).toHaveBeenCalledOnce();
@@ -89,7 +308,23 @@ describe("rendered audit evidence", () => {
         captureCount: 1,
       },
       renderedFailureCount: 0,
+      generatedBuildSummary: {
+        version: 1,
+        fileCount: 3,
+        bytes: 4_000,
+        gzipBytes: 1_200,
+      },
+      generatedBuildMetrics: {
+        largestFiles: [
+          expect.objectContaining({ path: "client/assets/index.js" }),
+        ],
+      },
     });
+    expect(storeRenderedAuditArtifacts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        performance: expect.objectContaining({ captureCount: 1 }),
+      })
+    );
   });
 
   test("loads pages and breakpoints concurrently", async () => {
@@ -124,7 +359,7 @@ describe("rendered audit evidence", () => {
       } as never,
       input: { rendered: true, verbose: true },
       executeRead,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(async (input) => ({
         output: "/tmp/home.png",
@@ -140,6 +375,63 @@ describe("rendered audit evidence", () => {
     });
 
     expect(maximumActiveReads).toBe(2);
+  });
+
+  test("reports sparse structured capture progress for larger audits", async () => {
+    const progress: string[] = [];
+    const pages = Array.from({ length: 12 }, (_, index) => ({
+      id: `page-${index}`,
+      path: `/page-${index}`,
+    }));
+
+    await augmentAuditWithRenderedChecks({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: { scopes: ["accessibility"], manualCheckCount: 0 },
+      } as never,
+      input: { rendered: true },
+      executeRead: async (command) =>
+        ({
+          result: command === "list-pages" ? { pages } : { breakpoints: [] },
+        }) as never,
+      startPreview: createStartPreview(),
+      stopPreview: vi.fn(),
+      captureScreenshot: vi.fn(async (input) => ({
+        output: `/tmp${input.path}.webp`,
+        browserPath: "/usr/bin/chromium",
+        browser: "chromium" as const,
+        viewport: input.viewport,
+        fullPage: true,
+        elapsedMs: 10,
+        warnings: [],
+        navigation: getNavigation(input.path ?? "/"),
+        layout,
+      })),
+      reportProgress: (message) => progress.push(message),
+    });
+
+    const structured = progress.filter((message) =>
+      message.startsWith("tool audit progress ")
+    );
+    expect(structured.length).toBeLessThanOrEqual(12);
+    expect(
+      structured.map((message) =>
+        JSON.parse(message.slice("tool audit progress ".length))
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        { phase: "planned", pages: 12, viewports: 1, captures: 12 },
+        { phase: "capture", completed: 12, total: 12 },
+      ])
+    );
+    expect(progress.some((message) => message.includes("capturing /"))).toBe(
+      false
+    );
   });
 
   test("captures each page once and resizes through its viewport plan", async () => {
@@ -174,6 +466,7 @@ describe("rendered audit evidence", () => {
         }))
     );
     const storeRenderedAuditArtifacts = vi.fn(async () => "/manifest.json");
+    const startPreview = createStartPreview();
 
     const result = await augmentAuditWithRenderedChecks({
       envelope: {
@@ -197,13 +490,17 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "page", path: "/page" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview,
       stopPreview: vi.fn(),
       captureScreenshot,
       capturePageScreenshots,
       storeRenderedAuditArtifacts,
     });
 
+    expect(startPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ port: 0, source: "session" }),
+      expect.any(Object)
+    );
     expect(capturePageScreenshots).toHaveBeenCalledOnce();
     expect(capturePageScreenshots).toHaveBeenCalledWith([
       expect.objectContaining({
@@ -281,7 +578,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "page", path: "/page" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot,
       capturePageScreenshots,
@@ -352,7 +649,7 @@ describe("rendered audit evidence", () => {
         ({
           result: command === "list-pages" ? { pages } : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot,
       capturePageScreenshots,
@@ -472,7 +769,7 @@ describe("rendered audit evidence", () => {
             purposes: ["base breakpoint: desktop"],
           },
         ],
-        checks: ["horizontal-overflow"],
+        checks: ["horizontal-overflow", "low-text-contrast"],
         captureCount: 2,
       },
     });
@@ -565,12 +862,14 @@ describe("rendered audit evidence", () => {
       renderedIssueSummaries: [
         {
           kind: "oversized-image",
+          confidence: "advisory",
           count: 3,
           captureCount: 2,
           pagePaths: ["/"],
         },
         {
           kind: "broken-image",
+          confidence: "exact",
           count: 1,
           captureCount: 1,
           pagePaths: ["/"],
@@ -745,7 +1044,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "missing", path: "/missing" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(async () => ({
         output: "/tmp/missing.png",
@@ -835,7 +1134,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "old", path: "/old" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(async (input) => ({
         output: `/tmp/redirect-${input.viewport.width}.png`,
@@ -897,7 +1196,7 @@ describe("rendered audit evidence", () => {
                 }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview,
       captureScreenshot: vi.fn(async (input) => {
         if (input.path === "/bad") {
@@ -959,7 +1258,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "sitemap", path: "/sitemap.xml" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(async (input) => ({
         output: `/tmp/sitemap-${input.viewport.width}.png`,
@@ -1015,7 +1314,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "slow", path: "/slow" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(
         async (): Promise<never> => await new Promise<never>(() => {})
@@ -1060,7 +1359,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "slow", path: "/slow" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot,
       capturePageScreenshots: vi.fn(
@@ -1080,8 +1379,67 @@ describe("rendered audit evidence", () => {
     });
   });
 
+  test("reads every page of paginated audit planning data", async () => {
+    const pages = Array.from({ length: 205 }, (_, index) => ({
+      id: `page-${index}`,
+      path: `/page-${index}`,
+    }));
+    const executeRead = vi.fn(
+      async (command: "list-pages" | "list-breakpoints", input: unknown) => {
+        if (command === "list-breakpoints") {
+          return { result: { breakpoints: [], nextCursor: null } } as never;
+        }
+        const { cursor, limit } = input as {
+          cursor?: string;
+          limit: number;
+        };
+        const offset = Number(cursor ?? 0);
+        const items = pages.slice(offset, offset + limit);
+        return {
+          result: {
+            pages: items,
+            nextCursor:
+              offset + items.length < pages.length
+                ? String(offset + items.length)
+                : null,
+          },
+        } as never;
+      }
+    );
+
+    const result = await augmentAuditWithRenderedChecks({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: { scopes: ["accessibility"], manualCheckCount: 1 },
+      } as never,
+      input: { rendered: true },
+      executeRead,
+      startPreview: createStartPreview(),
+      stopPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
+    });
+
+    expect(executeRead).toHaveBeenCalledWith("list-pages", {
+      cursor: undefined,
+      limit: 200,
+    });
+    expect(executeRead).toHaveBeenCalledWith("list-pages", {
+      cursor: "200",
+      limit: 200,
+    });
+    expect(result.result).toMatchObject({
+      renderedState: "confirmation-required",
+      renderedPlan: { captureCount: 205 },
+    });
+  });
+
   test("requires and consumes confirmation for a large unchanged plan", async () => {
-    const startPreview = vi.fn();
+    const startPreview = createStartPreview();
     const stopPreview = vi.fn();
     const captureScreenshot = vi.fn(async (input) => ({
       output: `/tmp/${input.path}-${input.viewport.width}.png`,
@@ -1152,7 +1510,7 @@ describe("rendered audit evidence", () => {
             purposes: ["base breakpoint: desktop"],
           }),
         ],
-        checks: ["horizontal-overflow"],
+        checks: ["horizontal-overflow", "low-text-contrast"],
         captureCount: 122,
         confirmationToken: expect.any(String),
         confirmationExpiresAt: expect.any(String),
@@ -1265,7 +1623,7 @@ describe("rendered audit evidence", () => {
   });
 
   test("explains excluded dynamic routes without starting preview", async () => {
-    const startPreview = vi.fn();
+    const startPreview = createStartPreview();
     const result = await augmentAuditWithRenderedChecks({
       envelope: {
         operationId: "project.audit",
@@ -1337,7 +1695,7 @@ describe("rendered audit evidence", () => {
 
   test("stops scheduling captures and cleans up when the caller cancels", async () => {
     const controller = new AbortController();
-    const startPreview = vi.fn();
+    const startPreview = createStartPreview();
     const stopPreview = vi.fn();
     const captureScreenshot = vi.fn(() => {
       controller.abort();
@@ -1434,7 +1792,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "post", path: "/blog/:slug" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot,
       storeRenderedAuditArtifacts,
@@ -1523,7 +1881,7 @@ describe("rendered audit evidence", () => {
               ? { pages: [{ id: "home", path: "" }] }
               : { breakpoints: [] },
         }) as never,
-      startPreview: vi.fn(),
+      startPreview: createStartPreview(),
       stopPreview: vi.fn(),
       captureScreenshot,
     });

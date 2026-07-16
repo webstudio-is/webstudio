@@ -54,7 +54,7 @@ const parseCursor = (
 export const paginateOutput = <Item, Filters extends object>({
   items,
   cursor,
-  limit = 50,
+  limit = 20,
   filters,
   verbose,
   invalidCursorMessage = "Invalid pagination cursor",

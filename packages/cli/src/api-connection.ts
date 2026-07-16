@@ -27,32 +27,41 @@ export const defaultApiConnectionDependencies: ApiConnectionDependencies = {
 };
 
 export const resolveApiConnection = async (
-  dependencies = defaultApiConnectionDependencies
+  dependencies = defaultApiConnectionDependencies,
+  projectRoot = cwd(),
+  projectId?: string
 ): Promise<ApiConnection> => {
-  if ((await dependencies.isFileExists(LOCAL_CONFIG_FILE)) === false) {
-    throw new Error(
-      "Local config file is not found. Run webstudio init --link <api-share-link> from a Webstudio project."
-    );
+  const isExplicitProject = projectId !== undefined;
+  if (projectId === undefined) {
+    const localConfigFile = join(projectRoot, LOCAL_CONFIG_FILE);
+    if ((await dependencies.isFileExists(localConfigFile)) === false) {
+      throw new Error(
+        "Local config file is not found. Run webstudio init --link <api-share-link> from a Webstudio project."
+      );
+    }
+    projectId = jsonToLocalConfig(
+      JSON.parse(await dependencies.readFile(localConfigFile, "utf-8"))
+    ).projectId;
   }
 
-  const localConfig = jsonToLocalConfig(
-    JSON.parse(
-      await dependencies.readFile(join(cwd(), LOCAL_CONFIG_FILE), "utf-8")
-    )
-  );
+  if (projectId.trim() === "") {
+    throw new Error("Project id must not be empty.");
+  }
   const globalConfig = jsonToGlobalConfig(
     JSON.parse(await dependencies.readFile(GLOBAL_CONFIG_FILE, "utf-8"))
   );
-  const projectConfig = globalConfig[localConfig.projectId];
+  const projectConfig = globalConfig[projectId];
   if (projectConfig === undefined) {
     throw new Error(
-      "Project config is not found. Run webstudio init --link <api-share-link>."
+      isExplicitProject
+        ? `Project config for "${projectId}" is not found. Run webstudio init --link <api-share-link> once to save its credentials.`
+        : "Project config is not found. Run webstudio init --link <api-share-link>."
     );
   }
 
   return {
     origin: projectConfig.origin,
     authToken: projectConfig.token,
-    projectId: localConfig.projectId,
+    projectId,
   };
 };

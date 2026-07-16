@@ -15,13 +15,7 @@ import {
   createCliProjectSession,
   getCliServerApiContract,
 } from "./project-session";
-
-export type ProjectSessionApiConnection = {
-  projectId: string;
-  origin: string;
-  authToken: string;
-  headers?: Record<string, string | undefined>;
-};
+import type { ApiConnection } from "./api-connection";
 
 export type ProjectSessionApiCommand = PublicApiCommand;
 
@@ -86,7 +80,7 @@ export const executeProjectSessionApiOperation = async ({
 }: {
   command: ProjectSessionApiCommand;
   input: unknown;
-  connection: ProjectSessionApiConnection;
+  connection: ApiConnection;
   createProjectSession?: CreateProjectSession;
   getServerApiContract?: typeof getCliServerApiContract;
   dryRun?: boolean;

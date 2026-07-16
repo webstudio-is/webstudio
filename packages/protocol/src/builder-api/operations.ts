@@ -16,6 +16,11 @@ export type {
 } from "./runtime-contracts";
 
 export type PublicApiOperationMethod = "query" | "mutation";
+export type PublicApiOperationOwner =
+  | "runtime"
+  | "raw-build-patch"
+  | "server-infrastructure"
+  | "local-side-effect";
 
 export type PublicApiCommand =
   (typeof publicApiOperationDocumentation)[number]["command"];
@@ -47,6 +52,7 @@ export type PublicApiOperation<Command extends string = string> = Omit<
   examples: readonly string[];
   localCapable: boolean;
   serverOnly: boolean;
+  semanticOwner: PublicApiOperationOwner;
   runtimeOperationId?: PublicRuntimeOperationId;
   readNamespaces: readonly PublicApiOperationNamespace[];
   writeNamespaces: readonly PublicApiOperationNamespace[];
@@ -108,6 +114,15 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
     examples: documentation.examples,
     localCapable: runtimeOperation !== undefined,
     serverOnly: runtimeOperation === undefined,
+    semanticOwner:
+      runtimeOperation !== undefined
+        ? "runtime"
+        : operation.id === "build.patch"
+          ? "raw-build-patch"
+          : operation.id === "assets.upload" ||
+              operation.id === "assets.uploadMany"
+            ? "local-side-effect"
+            : "server-infrastructure",
     runtimeOperationId: runtimeOperation?.id,
     readNamespaces: runtimeOperation?.readNamespaces ?? [],
     writeNamespaces: runtimeOperation?.writeNamespaces ?? [],

@@ -62,6 +62,7 @@ Notes:
 
 - Use `webstudio schema mcp` for a compact machine-readable MCP tool overview. Add `--verbose` or use focused `meta.get_more_tools` calls only when exact input schemas are needed.
 - Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Protocol clients can use `resources/list` and `resources/read`; shell agents can use `webstudio mcp list-resources` and `webstudio mcp read-resource <uri>`. Read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused tools are insufficient.
+- `components.summary` returns counts by default; request `{"detail":"components","limit":20}` for paginated entries. Registry list tools return compact metadata, while `components.get` and `templates.get` return focused full details.
 - Read `webstudio://project/expressions` before authoring unfamiliar computed text, prop bindings, resource expressions, actions, or Collection item bindings.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 
@@ -163,7 +164,8 @@ Notes:
 
 Commands:
 
-- MCP tool: list-pages {"includeFolders":true}
+- MCP tool: list-pages {}
+- MCP tool: list-folders {}
 
 ## Read page by id
 
@@ -194,7 +196,7 @@ Notes:
 Commands:
 
 - MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans","status":"200"}}}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"method":"basic","login":"<login>","password":"<password>"}}}}
 
 Notes:
 
@@ -293,6 +295,14 @@ Commands:
 Commands:
 
 - MCP tool: duplicate-page {"pageId":"<pageId>","name":"Pricing Copy","path":"/pricing-copy"}
+- MCP tool: duplicate-page {"pageId":"<pageId>","name":"Paris","path":"/paris","substitutions":{"text":{"London":"Paris"},"variables":{"city":{"type":"string","value":"Paris"}}}}
+- webstudio duplicate-page --page <pageId> --name Paris --path /paris --substitutions '{"text":{"London":"Paris"},"variables":{"city":{"type":"string","value":"Paris"}}}' --json
+
+Notes:
+
+- Text substitutions replace exact fixed text only in the duplicated page's text children, string props, title, and metadata.
+- Variable substitutions are keyed by copied source-variable name and use typed variable values. The operation rejects missing or ambiguous names without committing a partial duplicate.
+- Existing expressions and cloned variable/resource references keep their remapped ids.
 
 ## List page templates
 
@@ -346,7 +356,8 @@ Commands:
 
 Commands:
 
-- MCP tool: list-folders {"includePages":true}
+- MCP tool: list-folders {}
+- MCP tool: list-pages {}
 
 ## Create folder
 
@@ -896,11 +907,13 @@ Commands:
 - MCP tool: audit {}
 - MCP tool: audit {"scopes":["accessibility","security"],"severities":["error","warning"]}
 - MCP tool: audit {"scopes":["accessibility"],"verbose":true}
+- MCP tool: audit {"scopes":["craft"],"verbose":true}
 - MCP tool: audit {"rendered":true,"verbose":true}
 
 Notes:
 
 - With no scopes, `audit` checks accessibility, security, SEO, performance settings, unused assets, ineffective Collection styles, non-GET resources exposed as render-time data, and unused or duplicate style data.
+- Craft is opt-in and read-only. Run `audit` with `scopes:["craft"]` to detect whether the project is not using Craft, partially compatible, or compatible with the versioned Craft 1.2 profile. `profileStatuses` includes the University-doc provenance and the smallest safe next action. The audit never installs Craft or changes a non-Craft project.
 - The `performance` scope reports disabled atomic CSS generation. A rendered audit also measures broken, eager below-fold, and oversized images, browser-marked render-blocking resources, and legacy font formats.
 - Rendered image and resource metrics run only when the selected scopes include `performance`; responsive layout dimensions remain available whenever `rendered:true` is requested.
 - Compact findings include stable ids, severity, message, and location. Use `--verbose` or `{"verbose":true}` for evidence, explanation, suggested remediation, skipped-check details, and manual-check workflows.
@@ -932,6 +945,21 @@ Notes:
   `.woff` fonts without applying a universal transfer-size threshold.
 - Fix findings through semantic mutation commands, then rerun `audit` to confirm their deterministic finding ids disappeared.
 
+## Verify dynamic bindings
+
+Commands:
+
+- webstudio verify-bindings --json
+- MCP tool: verify-bindings {"pagePath":"/pricing"}
+- MCP tool: verify-bindings {"instanceId":"<instanceId>","limit":50}
+
+Notes:
+
+- Statically checks persisted text expressions, expression/action/resource/parameter props, resource expressions, and page metadata.
+- Findings distinguish invalid syntax, unknown or out-of-scope variables, stale internal data-source ids, and missing resource or parameter references.
+- Page and instance filters can be combined when the instance belongs to the selected page. Continue findings with `cursor`.
+- This operation does not resolve rendered values or execute external resources. Preview representative loading, empty, error, and populated states after static findings are fixed.
+
 ## Refactor targeted content
 
 Commands:
@@ -955,7 +983,8 @@ Notes:
 
 Commands:
 
-- MCP tool: list-pages {"includeFolders":true}
+- MCP tool: list-pages {}
+- MCP tool: list-folders {}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans"}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: list-breakpoints {}
@@ -1011,6 +1040,7 @@ Notes:
 
 Commands:
 
+- MCP tool: integrate-runtime-ui {"parentInstanceId":"<instanceId>","resources":[{"resource":{"name":"Seats","method":"get","url":"https://api.example.com/seats","headers":[]},"dataSourceName":"Seats","exposeAsDataSource":true}],"structure":{"type":"collection","data":{"type":"expression","value":"Seats.data"},"itemFragment":{"children":[{"type":"id","value":"seat"}],"instances":[{"type":"instance","id":"seat","component":"Text","children":[{"type":"expression","value":"collectionItem.label"}]}],"props":[],"dataSources":[],"resources":[],"styleSources":[],"styleSourceSelections":[],"styles":[],"breakpoints":[],"assets":[]}},"retainedBehavior":[{"instanceId":"<scriptInstanceId>","responsibility":"Seat selection behavior"}]}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
 - MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"https://api.example.com/seats","headers":[]}}
@@ -1019,15 +1049,18 @@ Commands:
 
 Notes:
 
-- Use existing scripts/resources for behavior, then move presentational structure into editable Webstudio instances where possible.
-- There is no dedicated semantic command yet for converting script-generated UI into editable Webstudio structure.
+- Use `integrate-runtime-ui` to create variables/resources, insert one editable fragment or Collection, and add safe data bindings in one transaction.
+- List existing script-owned responsibilities under `retainedBehavior`. The operation preserves those instances and never evaluates or accepts replacement script bodies.
+- `unsupportedConversions` records behavior that cannot be represented safely. Dry-run returns the complete transaction and the same retained/unsupported report without changing the project.
+- New actions and HtmlEmbed scripts are intentionally rejected. Create normal editable components and data bindings; keep opaque runtime behavior in existing script instances.
 
 ## Build authenticated pages
 
 Commands:
 
+- MCP tool: meta.guide {"brief":"Build a Supabase-authenticated account page"}
 - MCP tool: create-page {"name":"Account","path":"/account"}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"method":"basic","login":"<login>","password":"<password>"}}}}
 - MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"https://api.example.com/session","headers":[]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"user","value":{"type":"json","value":{}}}
 - MCP tool: update-props {"updates":"props.json contents"}
@@ -1035,36 +1068,56 @@ Commands:
 
 Notes:
 
-- Basic auth is semantic today. Provider-specific Supabase/Firebase setup still requires manual resources, props, embeds, or patches.
+- Inspect and reuse the project's existing auth convention before authoring. Do
+  not add a second provider or session model implicitly.
+- Model signed-out, loading, signed-in, and failed-auth states explicitly.
+- Never store credentials, service-role keys, refresh tokens, private session
+  values, or authenticated response bodies in project data, command output,
+  screenshots, agent instructions, or error reports. Privileged provider calls
+  and authorization enforcement belong server-side.
+- Basic auth is semantic today. Provider-specific Supabase/Firebase setup still
+  uses the existing resource, variable, prop, binding, and embed tools; there is
+  no provider-specific installer.
 
 ## Generate from design input
 
 Commands:
 
+- MCP tool: meta.guide {"brief":"Recreate this Figma design as a responsive page"}
 - MCP tool: create-page {"name":"Landing","path":"/landing"}
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
+- MCP tool: list-breakpoints {}
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\"><ws.element ws:tag=\"p\">Section copy</ws.element></ws.element>"}
-- MCP tool: update-styles {"updates":"styles.json contents"}
+- MCP tool: update-styles {"updates":[{"instanceId":"<instanceId>","breakpointId":"<breakpointId-from-list-breakpoints>","property":"padding-left","value":{"type":"unit","unit":"px","value":24}}]}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
-- MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
-- MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"path":"/landing","output":"landing-mobile.png","viewport":{"width":390,"height":844},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/landing","output":"landing-desktop.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 
 Notes:
 
-- Use this after external design interpretation. There is no dedicated import command for Figma, screenshots, Inception output, or design.md yet.
+- Use this after the agent can inspect the supplied design. There is no direct
+  Figma, screenshot, Inception, or `design.md` import command.
+- Inspect and reuse existing variables, tokens, styles, components, assets, and
+  page patterns before authoring. Build semantic editable structure rather than
+  flattening the design into an image or absolute-positioned approximation.
+- Verify one familiar viewport inside every distinct Builder breakpoint range,
+  then run rendered audit and inspect the screenshots before completion.
 
 ## Cross-project maintenance
 
 Commands:
 
-- webstudio init --link <api-share-link> --json
-- webstudio permissions --json
-- webstudio mcp
+- webstudio mcp run .temp/projects.json
+- webstudio mcp run .temp/projects.json --dry-run
+- webstudio mcp run .temp/projects.json --approve-mutations --concurrency 2
 
 Notes:
 
-- Public API and CLI intentionally operate on one configured project at a time. Use an external script to loop over projects.
+- Put shared `calls` and a `projects` array of independently linked project roots in the existing `mcp run` manifest. Project roots are relative to the manifest file.
+- Each project uses its own config, authentication, ProjectSession storage, checkpoint, and failure boundary. Confirmed successful calls are checkpointed. Reads can resume automatically; a mutation interrupted after dispatch is reported as ambiguous and is not replayed automatically, preventing silent duplicate writes.
+- Focus the manifest on bounded reads or audits first. Use per-call `dryRun`, global `--dry-run`, or explicitly approve committed mutations with `--approve-mutations` after reviewing the manifest.
 
 # Known CLI Gaps
 
@@ -1074,23 +1127,13 @@ Missing:
 CLI supports page basic auth and generic resources/props/embeds, but not guided Supabase/Firebase auth setup.
 
 Current fallback:
-Create the page, resources, variables, props, and embeds manually with existing MCP semantic tools.
+Call `meta.guide` with the provider-authenticated page goal, then create the
+page, resources, variables, props, bindings, and embeds with existing semantic
+tools.
 
 Suggested commands:
 
 - setup-auth-page
-
-## Dynamic script/runtime integration helpers
-
-Missing:
-CLI can manipulate props/resources/embeds, but has no semantic workflow for converting script-generated UI into editable Webstudio structures.
-
-Current fallback:
-Use MCP props, resources, and raw patch where necessary.
-
-Suggested commands:
-
-- integrate-runtime-ui
 
 ## Generate from design input
 
@@ -1098,7 +1141,10 @@ Missing:
 No command imports Figma, screenshots, Inception output, or design.md and turns it into pages/tokens/layout.
 
 Current fallback:
-Use external generation, then apply semantic CLI commands or apply-patch.
+Call `meta.guide` with the design-input goal, let the agent inspect the supplied
+design, then use semantic page, token, asset, fragment, style, preview,
+screenshot, and audit tools. Use `apply-patch` only when no semantic operation
+fits.
 
 Suggested commands:
 

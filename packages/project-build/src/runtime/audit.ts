@@ -15,6 +15,11 @@ import {
   getAccessibleContentState,
   isDynamicPropType,
 } from "./accessibility-analysis";
+import {
+  analyzeCraftProfile,
+  craftProfile,
+  craftProfileStatus,
+} from "./craft-profile";
 
 export const auditScope = z.enum([
   "accessibility",
@@ -23,7 +28,12 @@ export const auditScope = z.enum([
   "assets",
   "styles",
   "performance",
+  "craft",
 ]);
+
+const defaultAuditScopes = auditScope.options.filter(
+  (scope) => scope !== "craft"
+);
 
 export const auditSeverity = z.enum(["error", "warning", "info"]);
 export const auditContractVersion = 2 as const;
@@ -95,17 +105,25 @@ export const auditRuleId = z.enum([
   "unused-breakpoint",
   "duplicate-design-token-declarations",
   "style-on-dom-transparent-component",
+  "invalid-style-state-selector",
+  "orphan-style-breakpoint",
   "atomic-css-disabled",
+  "craft-not-detected",
+  "craft-missing-semantic-variables",
+  "craft-container-token-missing",
+  "craft-container-token-incompatible",
+  "craft-style-guide-page-missing",
 ]);
 
 const auditScopeDescription = [
-  "Audit scopes. Omit to run all scopes.",
+  "Audit scopes. Omit to run all standard scopes; Craft remains opt-in.",
   "accessibility errors: missing-alt, missing-image-input-alt, missing-iframe-title, missing-accessible-name, missing-form-label, invalid-aria-role, missing-required-aria-role-property, role-interactive-not-focusable, aria-hidden-focusable, invalid-aria-state, invalid-aria-number, autoplay-media-with-sound, invalid-label-reference, duplicate-id, and missing-aria-reference; warnings: missing-image-description, unsupported-aria-role-property, positive-tabindex, missing-page-heading, skipped-heading-level, missing-main-landmark, and multiple-main-landmarks. Documentation: https://www.w3.org/WAI/WCAG22/understanding/.",
   "security errors: non-get-resource-exposed-as-data-source; warning: target-blank-without-noopener. Documentation: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/noopener.",
   "seo errors: empty-page-title, invalid-json-ld, and json-ld-in-custom-metadata; warnings: missing-page-description, empty-page-description, invalid-page-language, missing-social-image-asset, duplicate-page-title, duplicate-page-description, missing-json-ld-context, unknown-schema-org-type, deprecated-schema-org-type, unknown-schema-org-property, deprecated-schema-org-property, unsupported-schema-org-property, and incompatible-schema-org-value. Documentation: https://developers.google.com/search/docs/fundamentals/seo-starter-guide.",
   "assets info: unused-asset. Documentation: https://docs.webstudio.is/university/foundations/anatomy-of-the-webstudio-builder.",
-  "styles warning: style-on-dom-transparent-component; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens.",
+  "styles warnings: style-on-dom-transparent-component, invalid-style-state-selector, and orphan-style-breakpoint; info: unused-design-token, unused-css-variable, unused-local-style-source, unused-breakpoint, and duplicate-design-token-declarations. Documentation: https://docs.webstudio.is/university/foundations/design-tokens.",
   "performance info: atomic-css-disabled. Rendered checks add image loading/sizing, render-blocking resource, and legacy font-format evidence. Documentation: https://docs.webstudio.is/university/foundations/project-settings#atomic-css.",
+  "craft is an opt-in, read-only compatibility check and is excluded when scopes are omitted. Documentation: https://docs.webstudio.is/university/craft.",
 ].join(" ");
 
 export const auditInput = z
@@ -152,6 +170,8 @@ export const auditLocation = z
     cssVariableName: z.string().optional(),
     cssVariableScope: z.string().optional(),
     breakpointId: z.string().optional(),
+    stateSelector: z.string().optional(),
+    styleProperty: z.string().optional(),
     resourceId: z.string().optional(),
     dataSourceId: z.string().optional(),
     htmlId: z.string().optional(),
@@ -208,12 +228,102 @@ export const manualAuditCheck = z.object({
 
 export const renderedAuditIssueKind = z.enum([
   "horizontal-overflow",
+  "clipped-content",
+  "hidden-content",
+  "overlapping-elements",
+  "cross-breakpoint-layout-change",
   "broken-image",
   "eager-below-fold-image",
   "oversized-image",
   "render-blocking-resource",
   "legacy-font-format",
+  "low-text-contrast",
 ]);
+
+const renderedElementGeometry = z.object({
+  instanceId: z.string(),
+  tagName: z.string(),
+  x: z.number(),
+  y: z.number(),
+  width: z.number().nonnegative(),
+  height: z.number().nonnegative(),
+  visible: z.boolean(),
+  hiddenReason: z
+    .enum(["display", "visibility", "opacity", "hidden"])
+    .optional(),
+  clippedX: z.boolean(),
+  clippedY: z.boolean(),
+  overlapsWith: z.array(z.string()).max(5),
+});
+
+const renderedGeometryIssueBase = z.object({
+  instanceId: z.string(),
+  relatedInstanceId: z.string().optional(),
+  message: z.string(),
+  evidence: z.object({
+    clippedX: z.boolean().optional(),
+    clippedY: z.boolean().optional(),
+    hiddenReason: renderedElementGeometry.shape.hiddenReason,
+    sourceViewportWidth: z.number().int().positive().optional(),
+    targetViewportWidth: z.number().int().positive().optional(),
+    sourceVisible: z.boolean().optional(),
+    targetVisible: z.boolean().optional(),
+    sourceX: z.number().optional(),
+    targetX: z.number().optional(),
+    sourceWidth: z.number().nonnegative().optional(),
+    targetWidth: z.number().nonnegative().optional(),
+  }),
+});
+
+const renderedGeometryIssue = z.union([
+  renderedGeometryIssueBase.extend({
+    kind: z.literal("clipped-content"),
+    confidence: z.literal("exact"),
+  }),
+  renderedGeometryIssueBase.extend({
+    kind: z.enum([
+      "hidden-content",
+      "overlapping-elements",
+      "cross-breakpoint-layout-change",
+    ]),
+    confidence: z.literal("advisory"),
+  }),
+]);
+
+const renderedImageMetric = z.object({
+  instanceId: z.string().optional(),
+  sourcePathname: z.string().optional(),
+  loading: z.string(),
+  complete: z.boolean(),
+  naturalWidth: z.number().nonnegative(),
+  naturalHeight: z.number().nonnegative(),
+  selectedSourceWidth: z.number().nonnegative().optional(),
+  selectedSourceHeight: z.number().nonnegative().optional(),
+  renderedWidth: z.number().nonnegative(),
+  renderedHeight: z.number().nonnegative(),
+  top: z.number(),
+});
+
+const renderedResourceMetric = z.object({
+  pathname: z.string(),
+  initiatorType: z.string(),
+  transferSize: z.number().nonnegative(),
+  encodedBodySize: z.number().nonnegative(),
+  decodedBodySize: z.number().nonnegative(),
+  duration: z.number().nonnegative(),
+  renderBlockingStatus: z.string().optional(),
+});
+
+const renderedContrastMetric = z.object({
+  instanceId: z.string(),
+  tagName: z.string(),
+  foreground: z.string(),
+  background: z.string(),
+  ratio: z.number().positive(),
+  requiredRatio: z.union([z.literal(3), z.literal(4.5)]),
+  fontSize: z.number().positive(),
+  fontWeight: z.number().nonnegative(),
+});
 
 export const renderedAuditCheck = z.object({
   pageId: z.string(),
@@ -230,65 +340,40 @@ export const renderedAuditCheck = z.object({
     contentWidth: z.number().int().positive(),
     contentHeight: z.number().int().positive(),
     horizontalOverflow: z.boolean(),
-    images: z.array(
-      z.object({
-        instanceId: z.string().optional(),
-        sourcePathname: z.string().optional(),
-        loading: z.string(),
-        complete: z.boolean(),
-        naturalWidth: z.number().nonnegative(),
-        naturalHeight: z.number().nonnegative(),
-        selectedSourceWidth: z.number().nonnegative().optional(),
-        selectedSourceHeight: z.number().nonnegative().optional(),
-        renderedWidth: z.number().nonnegative(),
-        renderedHeight: z.number().nonnegative(),
-        top: z.number(),
-      })
-    ),
-    resources: z.array(
-      z.object({
-        pathname: z.string(),
-        initiatorType: z.string(),
-        transferSize: z.number().nonnegative(),
-        encodedBodySize: z.number().nonnegative(),
-        decodedBodySize: z.number().nonnegative(),
-        duration: z.number().nonnegative(),
-        renderBlockingStatus: z.string().optional(),
-      })
-    ),
+    elementGeometry: z.object({
+      total: z.number().int().nonnegative(),
+      sampled: z.number().int().nonnegative().max(250),
+      truncated: z.boolean(),
+      elements: z.array(renderedElementGeometry).max(250),
+    }),
+    images: z.array(renderedImageMetric),
+    resources: z.array(renderedResourceMetric),
+    contrasts: z.array(renderedContrastMetric).optional(),
   }),
   issues: z.array(renderedAuditIssueKind),
+  geometryIssues: z.array(renderedGeometryIssue),
   imageIssues: z.array(
-    z.object({
+    renderedImageMetric.omit({ complete: true }).extend({
       kind: z.enum([
         "broken-image",
         "eager-below-fold-image",
         "oversized-image",
       ]),
-      instanceId: z.string().optional(),
-      sourcePathname: z.string().optional(),
-      loading: z.string(),
-      naturalWidth: z.number().nonnegative(),
-      naturalHeight: z.number().nonnegative(),
-      selectedSourceWidth: z.number().nonnegative().optional(),
-      selectedSourceHeight: z.number().nonnegative().optional(),
-      renderedWidth: z.number().nonnegative(),
-      renderedHeight: z.number().nonnegative(),
-      top: z.number(),
     })
   ),
   resourceIssues: z.array(
-    z.object({
+    renderedResourceMetric.extend({
       kind: z.enum(["render-blocking-resource", "legacy-font-format"]),
-      pathname: z.string(),
-      initiatorType: z.string(),
-      transferSize: z.number().nonnegative(),
-      encodedBodySize: z.number().nonnegative(),
-      decodedBodySize: z.number().nonnegative(),
-      duration: z.number().nonnegative(),
-      renderBlockingStatus: z.string().optional(),
     })
   ),
+  contrastIssues: z
+    .array(
+      renderedContrastMetric.extend({
+        kind: z.literal("low-text-contrast"),
+        confidence: z.literal("exact"),
+      })
+    )
+    .optional(),
 });
 
 export const renderedAuditFailure = z.object({
@@ -355,6 +440,32 @@ export const renderedAuditArtifactManifestSummary = z.object({
   screenshotCount: z.number().int().nonnegative(),
 });
 
+const generatedBuildTotals = z.object({
+  fileCount: z.number().int().nonnegative(),
+  bytes: z.number().int().nonnegative(),
+  gzipBytes: z.number().int().nonnegative(),
+});
+
+export const generatedBuildMetrics = generatedBuildTotals.extend({
+  version: z.literal(1),
+  client: generatedBuildTotals,
+  server: generatedBuildTotals,
+  largestFiles: z
+    .array(
+      z.object({
+        path: z.string(),
+        bytes: z.number().int().nonnegative(),
+        gzipBytes: z.number().int().nonnegative(),
+        kind: z.enum(["script", "style", "image", "font", "other"]),
+      })
+    )
+    .max(20),
+});
+
+const generatedBuildSummary = generatedBuildMetrics.omit({
+  largestFiles: true,
+});
+
 export const renderedAuditFailureSummary = renderedAuditFailure
   .pick({
     code: true,
@@ -365,6 +476,7 @@ export const renderedAuditFailureSummary = renderedAuditFailure
 
 export const renderedAuditIssueSummary = z.object({
   kind: renderedAuditIssueKind,
+  confidence: z.enum(["exact", "advisory"]),
   count: z.number().int().positive(),
   captureCount: z.number().int().positive(),
   pagePaths: z.array(z.string()).max(5),
@@ -395,6 +507,7 @@ export const renderedAuditPlan = z.object({
       "oversized-image",
       "render-blocking-resource",
       "legacy-font-format",
+      "low-text-contrast",
     ])
   ),
   captureCount: z.number().int().nonnegative(),
@@ -429,7 +542,9 @@ const auditResultBase = z.object({
   renderedCaptureSummary: renderedAuditCaptureSummary,
   renderedCaptureStatuses: z.array(renderedAuditCaptureStatus),
   renderedArtifactManifest: renderedAuditArtifactManifestSummary.nullable(),
+  generatedBuildSummary: generatedBuildSummary.nullable(),
   nextCursor: z.string().nullable(),
+  profileStatuses: z.array(craftProfileStatus),
 });
 
 export const compactAuditResult = auditResultBase.extend({
@@ -446,6 +561,7 @@ export const verboseAuditResult = auditResultBase.extend({
   manualChecks: z.array(manualAuditCheck),
   renderedChecks: z.array(renderedAuditCheck),
   renderedFailures: z.array(renderedAuditFailure),
+  generatedBuildMetrics: generatedBuildMetrics.nullable(),
 });
 
 export const auditResult = z.discriminatedUnion("verbose", [
@@ -460,6 +576,7 @@ export type AuditSummary = z.infer<typeof auditSummary>;
 export type AuditResult = z.infer<typeof auditResult>;
 export type CompactAuditResult = z.infer<typeof compactAuditResult>;
 export type VerboseAuditResult = z.infer<typeof verboseAuditResult>;
+export type GeneratedBuildMetrics = z.infer<typeof generatedBuildMetrics>;
 export type RenderedAuditCheck = z.infer<typeof renderedAuditCheck>;
 export type RenderedAuditFailure = z.infer<typeof renderedAuditFailure>;
 
@@ -483,6 +600,7 @@ const auditDocumentationByScope: Record<AuditRule["scope"], string> = {
   styles: "https://docs.webstudio.is/university/foundations/design-tokens",
   performance:
     "https://docs.webstudio.is/university/foundations/project-settings#atomic-css",
+  craft: craftProfile.provenance.url,
 };
 
 const rule = (
@@ -793,12 +911,54 @@ export const auditRules = {
     "Move the style to a rendered child or wrap the component in an Element and style that wrapper.",
     "https://docs.webstudio.is/university/core-components/collection"
   ),
+  "invalid-style-state-selector": rule(
+    "styles",
+    "warning",
+    "The style state selector is not a valid element-scoped suffix and may escape its component or generate invalid CSS.",
+    "Replace it with one pseudo-class, pseudo-element, attribute selector, or a compound suffix that remains scoped to the styled element."
+  ),
+  "orphan-style-breakpoint": rule(
+    "styles",
+    "warning",
+    "The style declaration references a breakpoint that does not exist, so the declaration cannot render.",
+    "Move the declaration to an existing breakpoint or remove it."
+  ),
   "atomic-css-disabled": rule(
     "performance",
     "info",
     "Atomic CSS generation is disabled, which can produce substantially larger published CSS.",
     "Enable atomic CSS for optimized published output unless human-readable exported classes are required.",
     "https://docs.webstudio.is/university/foundations/project-settings#atomic-css"
+  ),
+  "craft-not-detected": rule(
+    "craft",
+    "info",
+    "No Craft signature was found. Craft is optional, so this is not a project defect.",
+    "Adopt Craft only when the project should use that system; otherwise leave the project unchanged."
+  ),
+  "craft-missing-semantic-variables": rule(
+    "craft",
+    "warning",
+    "A partial Craft setup is missing semantic variables defined by the Craft profile.",
+    "Define the first reported missing variable on Global Root, then rerun the Craft audit before adding more."
+  ),
+  "craft-container-token-missing": rule(
+    "craft",
+    "warning",
+    "Craft 1.2 uses a container token for consistent vertical layout and spacing.",
+    'Create a token named "container" with display flex, flex direction column, and gap var(--gap-m).'
+  ),
+  "craft-container-token-incompatible": rule(
+    "craft",
+    "warning",
+    "The container token differs from the Craft 1.2 compatibility contract.",
+    "Correct the first reported declaration and rerun the Craft audit."
+  ),
+  "craft-style-guide-page-missing": rule(
+    "craft",
+    "info",
+    "Craft recommends an internal Style Guide page for shared references and page templates.",
+    'Add or rename the internal reference page to "Style Guide" when that workflow is useful.'
   ),
 } satisfies Record<AuditRuleId, AuditRule>;
 
@@ -823,6 +983,8 @@ const locationKeys = new Set([
   "designTokenId",
   "designTokenIds",
   "breakpointId",
+  "stateSelector",
+  "styleProperty",
   "resourceId",
   "dataSourceId",
   "jsonLdPath",
@@ -1093,7 +1255,7 @@ export function audit(
       "Audit requires the current project version"
     );
   }
-  const scopes = input.scopes ?? auditScope.options;
+  const scopes = input.scopes ?? defaultAuditScopes;
   const selectedSeverities = input.severities ?? auditSeverity.options;
   let selectedPage: ReturnType<typeof findSerializedPageByInput> | undefined;
   let normalizedInput = input;
@@ -1115,13 +1277,20 @@ export function audit(
     pageId: selectedPage?.id,
     verbose: input.verbose === true,
   });
-  const raw = analyzeProject(state, {
-    scopes,
-    pageId: normalizedInput.pageId,
-    pagePath: normalizedInput.pagePath,
-    limit: Number.MAX_SAFE_INTEGER,
-  });
-  const normalizedFindings = raw.matches
+  const standardScopes = scopes.filter((scope) => scope !== "craft");
+  const raw =
+    standardScopes.length === 0
+      ? { matches: [] }
+      : analyzeProject(state, {
+          scopes: standardScopes,
+          pageId: normalizedInput.pageId,
+          pagePath: normalizedInput.pagePath,
+          limit: Number.MAX_SAFE_INTEGER,
+        });
+  const craftAnalysis = scopes.includes("craft")
+    ? analyzeCraftProfile(state)
+    : undefined;
+  const normalizedFindings = [...raw.matches, ...(craftAnalysis?.matches ?? [])]
     .map(canonicalizeAuditMatchPagePaths)
     .map(normalizeAuditFinding)
     .sort(
@@ -1143,7 +1312,7 @@ export function audit(
   const findings = allFindings.filter((finding) =>
     severities.has(finding.severity)
   );
-  const limit = input.limit ?? 50;
+  const limit = input.limit ?? 20;
   let offset = 0;
   if (input.cursor !== undefined) {
     const cursor = decodeCursor(input.cursor);
@@ -1187,7 +1356,10 @@ export function audit(
       pagePath: getAuditPagePath(pages, selectedPage),
       projectWideScopes: scopes.filter(
         (scope) =>
-          scope === "assets" || scope === "styles" || scope === "performance"
+          scope === "assets" ||
+          scope === "styles" ||
+          scope === "performance" ||
+          scope === "craft"
       ),
     };
   }
@@ -1255,6 +1427,8 @@ export function audit(
     },
     renderedCaptureStatuses: [],
     renderedArtifactManifest: null,
+    generatedBuildSummary: null,
+    profileStatuses: craftAnalysis === undefined ? [] : [craftAnalysis.status],
     nextCursor:
       offset + limit < findings.length
         ? encodeCursor(context.projectVersion, offset + limit, cursorSignature)
@@ -1269,6 +1443,7 @@ export function audit(
       manualChecks: offset === 0 ? manualChecks : [],
       renderedChecks: [],
       renderedFailures: [],
+      generatedBuildMetrics: null,
     });
   }
   return compactAuditResult.parse({

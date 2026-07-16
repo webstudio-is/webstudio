@@ -760,7 +760,6 @@ describe("api instance queries", () => {
         projectId: "project-1",
         pagePath: "",
         mode: "expression",
-        maxValueLength: 6,
       })
     ).resolves.toEqual({
       texts: [
@@ -770,9 +769,16 @@ describe("api instance queries", () => {
           component: blockComponent,
           label: "Hero",
           mode: "expression",
-          value: "system",
+          valuePreview: "system.params.slug",
+          valueLength: 18,
+          truncated: false,
         },
       ],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: { pagePath: "", mode: "expression" },
     });
   });
 
@@ -840,7 +846,7 @@ describe("api instance queries", () => {
     const caller = createCaller(createContext(true));
 
     await expect(
-      caller.pages.list({ projectId: "project-1", includeFolders: true })
+      caller.pages.list({ projectId: "project-1" })
     ).resolves.toMatchObject({
       pages: [
         expect.objectContaining({ isHome: true, path: "" }),
@@ -850,9 +856,6 @@ describe("api instance queries", () => {
           parentFolderId: "folder-1",
         }),
       ],
-      folders: expect.arrayContaining([
-        expect.objectContaining({ id: "folder-1", slug: "blog" }),
-      ]),
     });
     await expect(
       caller.pages.getByPath({
@@ -864,17 +867,15 @@ describe("api instance queries", () => {
       meta: { description: "Post description" },
     });
     await expect(
-      caller.folders.list({ projectId: "project-1", includePages: true })
+      caller.folders.list({ projectId: "project-1" })
     ).resolves.toMatchObject({
       folders: expect.arrayContaining([
         expect.objectContaining({
           id: "folder-1",
+          slug: "blog",
           parentFolderId: build.pages.rootFolderId,
           children: ["page-1"],
         }),
-      ]),
-      pages: expect.arrayContaining([
-        expect.objectContaining({ id: "page-1" }),
       ]),
     });
     await expect(
@@ -905,9 +906,14 @@ describe("api instance queries", () => {
           id: "variable-1",
           name: "Title",
           scopeInstanceId: "hero-1",
-          value: { type: "string", value: "Hello" },
+          valueType: "string",
         },
       ],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: { scopeInstanceId: "hero-1" },
     });
     await expect(
       caller.resources.list({
@@ -926,6 +932,11 @@ describe("api instance queries", () => {
           dataSourceId: "resource-data-source-1",
         },
       ],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: { scopeInstanceId: "hero-1" },
     });
   });
 });

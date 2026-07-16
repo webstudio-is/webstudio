@@ -8,7 +8,13 @@ import {
 import { executeBuilderRuntimeOperation } from "./registry";
 import { setImageDescriptions } from "./assets";
 import { analyzeProject, searchProject } from "./search";
-import { audit, auditRuleId, auditRules, normalizeAuditFinding } from "./audit";
+import {
+  audit,
+  auditRuleId,
+  auditRules,
+  normalizeAuditFinding,
+  renderedAuditCheck,
+} from "./audit";
 import type { BuilderState } from "../state/builder-state";
 import { applyBuilderPatchTransactions } from "../state/patch";
 import {
@@ -18,6 +24,84 @@ import {
 } from "./runtime.test-fixtures";
 
 describe("project audit and analysis", () => {
+  test("keeps rendered geometry bounded and confidence semantics explicit", () => {
+    const geometryIssue = {
+      instanceId: "content",
+      message: "Content is clipped.",
+      evidence: { clippedX: true },
+    };
+    const check = {
+      pageId: "home",
+      pagePath: "/",
+      viewport: { width: 375, height: 812 },
+      screenshotPath: "/tmp/home.webp",
+      layout: {
+        viewportWidth: 375,
+        viewportHeight: 812,
+        contentWidth: 375,
+        contentHeight: 1200,
+        horizontalOverflow: false,
+        elementGeometry: {
+          total: 0,
+          sampled: 0,
+          truncated: false,
+          elements: [],
+        },
+        images: [],
+        resources: [],
+      },
+      issues: ["clipped-content"],
+      geometryIssues: [
+        {
+          ...geometryIssue,
+          kind: "clipped-content",
+          confidence: "exact",
+        },
+      ],
+      imageIssues: [],
+      resourceIssues: [],
+    };
+
+    expect(renderedAuditCheck.safeParse(check).success).toBe(true);
+    expect(
+      renderedAuditCheck.safeParse({
+        ...check,
+        geometryIssues: [
+          {
+            ...geometryIssue,
+            kind: "hidden-content",
+            confidence: "exact",
+          },
+        ],
+      }).success
+    ).toBe(false);
+    expect(
+      renderedAuditCheck.safeParse({
+        ...check,
+        layout: {
+          ...check.layout,
+          elementGeometry: {
+            total: 251,
+            sampled: 251,
+            truncated: false,
+            elements: Array.from({ length: 251 }, (_, index) => ({
+              instanceId: String(index),
+              tagName: "div",
+              x: 0,
+              y: 0,
+              width: 1,
+              height: 1,
+              visible: true,
+              clippedX: false,
+              clippedY: false,
+              overlapsWith: [],
+            })),
+          },
+        },
+      }).success
+    ).toBe(false);
+  });
+
   test("requires every emitted audit rule to be registered", () => {
     expect(Object.keys(auditRules).sort()).toEqual(
       [...auditRuleId.options].sort()
@@ -849,6 +933,9 @@ describe("project audit and analysis", () => {
       searchProject(searchState, { query: "video.example.com" })
     ).toMatchObject({
       total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      detail: "compact",
       matches: [
         {
           kind: "prop",
@@ -2510,6 +2597,47 @@ describe("project audit and analysis", () => {
           ruleId: "unused-breakpoint",
           location: expect.objectContaining({
             breakpointId: "imported-base-id",
+          }),
+        }),
+      ])
+    );
+  });
+
+  test("audits legacy selectors that escape scope and orphan breakpoints", () => {
+    const styles: NonNullable<BuilderState["styles"]> = new Map(state.styles);
+    styles.set("local:missing:color::hover, body", {
+      styleSourceId: "local",
+      breakpointId: "missing",
+      property: "color",
+      state: ":hover, body",
+      value: { type: "keyword", value: "red" },
+    });
+
+    const result = audit(
+      { ...state, styles },
+      { scopes: ["styles"], verbose: true },
+      { projectVersion: 1 }
+    );
+
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "invalid-style-state-selector",
+          severity: "warning",
+          location: expect.objectContaining({
+            styleSourceId: "local",
+            breakpointId: "missing",
+            stateSelector: ":hover, body",
+            styleProperty: "color",
+          }),
+        }),
+        expect.objectContaining({
+          ruleId: "orphan-style-breakpoint",
+          severity: "warning",
+          location: expect.objectContaining({
+            styleSourceId: "local",
+            breakpointId: "missing",
+            styleProperty: "color",
           }),
         }),
       ])
