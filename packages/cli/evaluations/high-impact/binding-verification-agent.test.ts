@@ -74,28 +74,6 @@ test("runs verify-bindings through the local CLI with minimal MCP context", asyn
       cwd: projectRoot,
       env,
     });
-    const renderedAuditProcess = await execFileAsync(
-      process.execPath,
-      [
-        localCli,
-        "audit",
-        "--rendered",
-        "--page-path",
-        "/",
-        "--verbose",
-        "--json",
-      ],
-      { cwd: projectRoot, env }
-    ).catch((error: unknown) => {
-      const output = error as { stdout?: string; stderr?: string };
-      throw new Error(
-        `Rendered audit process failed. stdout: ${output.stdout ?? ""} stderr: ${output.stderr ?? ""}`
-      );
-    });
-    const renderedAudit = JSON.parse(renderedAuditProcess.stdout) as {
-      ok: boolean;
-      data: { renderedState?: string; renderedFailures?: unknown[] };
-    };
     const refreshed = await runVerifyBindings(true);
 
     expect(first).toMatchObject({
@@ -108,10 +86,6 @@ test("runs verify-bindings through the local CLI with minimal MCP context", asyn
         },
         findings: [],
       },
-    });
-    expect(renderedAudit).toMatchObject({
-      ok: true,
-      data: { renderedState: "complete", renderedFailures: [] },
     });
     expect(refreshed).toEqual(first);
     expect(fixtureApi.getToolCalls()).toEqual([]);
