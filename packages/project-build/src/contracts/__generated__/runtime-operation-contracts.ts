@@ -2153,6 +2153,103 @@ export const runtimeOperationContractData = [
         path: {
           type: "string",
         },
+        substitutions: {
+          type: "object",
+          properties: {
+            text: {
+              description:
+                "Exact fixed-text replacements applied only to the duplicated page's text children, string props, title, and metadata.",
+              type: "object",
+              propertyNames: {
+                type: "string",
+                minLength: 1,
+              },
+              additionalProperties: {
+                type: "string",
+              },
+            },
+            variables: {
+              description:
+                "Copied variable values keyed by the source variable name. Ambiguous duplicate names are rejected.",
+              type: "object",
+              propertyNames: {
+                type: "string",
+                minLength: 1,
+              },
+              additionalProperties: {
+                anyOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "number",
+                      },
+                      value: {
+                        type: "number",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string",
+                      },
+                      value: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "boolean",
+                      },
+                      value: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "string[]",
+                      },
+                      value: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                        },
+                      },
+                    },
+                    required: ["type", "value"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "json",
+                      },
+                      value: {},
+                    },
+                    required: ["type"],
+                  },
+                ],
+              },
+            },
+          },
+          required: [],
+        },
       },
       required: ["pageId"],
     },

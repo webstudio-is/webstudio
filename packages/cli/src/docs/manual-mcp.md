@@ -84,6 +84,7 @@ Rules:
 - The command writes sparse progress to stderr, including start, success/failure, elapsed time, and committed status when the tool returns session metadata.
 - Invalid argument types fail loudly with path-specific messages, for example `meta.guide input.brief must be a string when provided`.
 - Run one-shot shortcut or `mcp single-op-call` commands sequentially against the same linked `.webstudio` folder. If you receive `PROJECT_SESSION_BUSY`, another CLI/MCP process is updating the local session; wait a moment and retry sequentially.
+- To work with another previously linked project without changing the directory's default link, start MCP or a shell call with `--project <projectId>`, for example `webstudio mcp --project <projectId>` or `webstudio mcp single-op-call list-pages --project <projectId>`. Selected projects use isolated local session and checkpoint files.
 - If you are a delegated agent and your parent cannot see live stderr/stdout, do not run a long sequence of shortcut or `mcp single-op-call` commands silently and do not wrap many calls in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one `webstudio <tool>` or `webstudio mcp single-op-call` command, report that command/result, then wait before the next MCP command. For all-component design-system pages, checkpoint after discovery, checkpoint after page creation, call `components.coverage-insert-next` once before checkpointing again, then finish with the `presentation-pass` workflow phase. Coverage alone is not completion; organize examples into styled sections/cards.
 
 ## Reporting CLI/MCP Issues
@@ -159,7 +160,7 @@ Input shape:
 Rules:
 
 - The command prints JSON to stdout for both success and failure. It stops at the first failed call and prints partial results in `{ "ok": false, "error": ..., "data": { "completedCalls": ..., "results": [...] }, "meta": ... }`, then exits nonzero.
-- If a call returns `checkpoint.required`, `mcp run` stops immediately before later calls and prints partial results with `CHECKPOINT_REQUIRED`. Stop now and report the checkpoint to the parent/user. Only after the parent/user continues, call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}` before continuing.
+- If a call returns `checkpoint.required`, read-only discovery and inspection remain available, but mutations and state-changing session tools return `CHECKPOINT_REQUIRED`. Stop and report the checkpoint to the parent/user. Only after the parent/user continues, call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}` before continuing mutations.
 - For `mcp single-op-call`, checkpoint requirements persist across later one-shot CLI processes until you call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}`.
 - Use this instead of manually sending JSON-RPC frames to `webstudio mcp` from a shell.
 

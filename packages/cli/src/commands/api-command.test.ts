@@ -1125,6 +1125,10 @@ test("duplicates page", async () => {
       name: "Pricing Copy",
       path: "/pricing-copy",
       parentFolder: "folder-1",
+      substitutions: JSON.stringify({
+        text: { London: "Paris" },
+        variables: { city: { type: "string", value: "Paris" } },
+      }),
     },
     call: apiCalls.duplicatePage,
     connection: {
@@ -1132,6 +1136,10 @@ test("duplicates page", async () => {
       name: "Pricing Copy",
       path: "/pricing-copy",
       parentFolderId: "folder-1",
+      substitutions: {
+        text: { London: "Paris" },
+        variables: { city: { type: "string", value: "Paris" } },
+      },
     },
   });
 });

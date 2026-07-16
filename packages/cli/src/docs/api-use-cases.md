@@ -294,6 +294,14 @@ Commands:
 Commands:
 
 - MCP tool: duplicate-page {"pageId":"<pageId>","name":"Pricing Copy","path":"/pricing-copy"}
+- MCP tool: duplicate-page {"pageId":"<pageId>","name":"Paris","path":"/paris","substitutions":{"text":{"London":"Paris"},"variables":{"city":{"type":"string","value":"Paris"}}}}
+- webstudio duplicate-page --page <pageId> --name Paris --path /paris --substitutions '{"text":{"London":"Paris"},"variables":{"city":{"type":"string","value":"Paris"}}}' --json
+
+Notes:
+
+- Text substitutions replace exact fixed text only in the duplicated page's text children, string props, title, and metadata.
+- Variable substitutions are keyed by copied source-variable name and use typed variable values. The operation rejects missing or ambiguous names without committing a partial duplicate.
+- Existing expressions and cloned variable/resource references keep their remapped ids.
 
 ## List page templates
 

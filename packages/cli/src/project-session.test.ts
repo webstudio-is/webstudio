@@ -9,8 +9,18 @@ import {
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
   getCliServerApiContract,
+  getCliProjectSessionFile,
   getSupportedPublicApiOperations,
 } from "./project-session";
+
+test("scopes project session files for explicitly selected projects", () => {
+  expect(getCliProjectSessionFile("/workspace", "project/a")).toBe(
+    "/workspace/.webstudio/projects/project%2Fa/project-session.json"
+  );
+  expect(getCliProjectSessionFile("/workspace")).toBe(
+    "/workspace/.webstudio/project-session.json"
+  );
+});
 
 const temporaryDirectories: string[] = [];
 

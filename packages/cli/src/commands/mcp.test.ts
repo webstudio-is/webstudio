@@ -2,7 +2,14 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
-import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
+import { listProjectSessionMcpTools } from "@webstudio-is/project-build/mcp";
+import { publicApiOperations } from "@webstudio-is/protocol";
+import {
+  __testing__,
+  __testingMcpRun,
+  mcpOptions,
+  prepareMcpProjectSession,
+} from "./mcp";
 
 const {
   assertPersistedMcpCheckpointAcknowledged,
@@ -25,6 +32,7 @@ const {
   readPersistedMcpCheckpoint,
   updatePersistedMcpCheckpoint,
 } = __testing__;
+const { executeMcpRunCall } = __testingMcpRun;
 
 test("classifies structured MCP tool failures for nonzero CLI exit", () => {
   expect(
@@ -68,11 +76,17 @@ afterEach(async () => {
 test("documents MCP stdio startup and discovery tools", () => {
   const yargs = {
     command: vi.fn(() => yargs),
+    option: vi.fn(() => yargs),
     example: vi.fn(() => yargs),
     epilogue: vi.fn(() => yargs),
   };
 
   mcpOptions(yargs as never);
+
+  expect(yargs.option).toHaveBeenCalledWith(
+    "project",
+    expect.objectContaining({ type: "string" })
+  );
 
   expect(yargs.example).toHaveBeenCalledWith(
     "$0 mcp",
@@ -462,12 +476,13 @@ test("applies batch dry-run to every MCP run call", () => {
 });
 
 test("persists MCP checkpoints across single-op-call processes", async () => {
+  const tools = listProjectSessionMcpTools(publicApiOperations);
   const dir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-checkpoint-"));
   tempDirs.push(dir);
 
   await updatePersistedMcpCheckpoint({
     tool: "components.coverage-plan",
-    projectRoot: dir,
+    scope: { projectRoot: dir },
     structuredContent: {
       data: {
         checkpoint: {
@@ -481,7 +496,9 @@ test("persists MCP checkpoints across single-op-call processes", async () => {
     },
   });
 
-  await expect(readPersistedMcpCheckpoint(dir)).resolves.toEqual({
+  await expect(
+    readPersistedMcpCheckpoint({ projectRoot: dir })
+  ).resolves.toEqual({
     tool: "components.coverage-plan",
     message:
       "Stop after this coverage-plan response and report before continuing.",
@@ -489,25 +506,93 @@ test("persists MCP checkpoints across single-op-call processes", async () => {
       'node packages/cli/local.js workflow.next \'{"goal":"design-system-page","phase":"page-creation"}\'',
   });
   await expect(
-    assertPersistedMcpCheckpointAcknowledged("components.get", dir)
+    assertPersistedMcpCheckpointAcknowledged("components.get", tools, {
+      projectRoot: dir,
+    })
+  ).resolves.toBeUndefined();
+  await expect(
+    assertPersistedMcpCheckpointAcknowledged("create-page", tools, {
+      projectRoot: dir,
+    })
   ).rejects.toMatchObject({
     code: "CHECKPOINT_REQUIRED",
     message: expect.stringContaining("CHECKPOINT_REQUIRED"),
   });
   await expect(
-    assertPersistedMcpCheckpointAcknowledged("checkpoint.ack", dir)
+    assertPersistedMcpCheckpointAcknowledged("checkpoint.ack", tools, {
+      projectRoot: dir,
+    })
   ).resolves.toBeUndefined();
 
   await updatePersistedMcpCheckpoint({
     tool: "checkpoint.ack",
-    projectRoot: dir,
+    scope: { projectRoot: dir },
     structuredContent: { data: { acknowledged: true } },
   });
 
-  await expect(readPersistedMcpCheckpoint(dir)).resolves.toBeUndefined();
   await expect(
-    assertPersistedMcpCheckpointAcknowledged("components.get", dir)
+    readPersistedMcpCheckpoint({ projectRoot: dir })
   ).resolves.toBeUndefined();
+  await expect(
+    assertPersistedMcpCheckpointAcknowledged("create-page", tools, {
+      projectRoot: dir,
+    })
+  ).resolves.toBeUndefined();
+});
+
+test("isolates persisted MCP checkpoints by selected project", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-projects-"));
+  tempDirs.push(dir);
+  await updatePersistedMcpCheckpoint({
+    tool: "workflow.next",
+    scope: { projectRoot: dir, projectId: "project-a" },
+    structuredContent: {
+      data: { checkpoint: { required: true, instruction: "Report project A" } },
+    },
+  });
+
+  await expect(
+    readPersistedMcpCheckpoint({ projectRoot: dir, projectId: "project-a" })
+  ).resolves.toEqual(expect.objectContaining({ message: "Report project A" }));
+  await expect(
+    readPersistedMcpCheckpoint({ projectRoot: dir, projectId: "project-b" })
+  ).resolves.toBeUndefined();
+});
+
+test("checks persisted checkpoints before every MCP run call", async () => {
+  const dir = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-run-checkpoint-")
+  );
+  tempDirs.push(dir);
+  const scope = { projectRoot: dir };
+  const tools = listProjectSessionMcpTools(publicApiOperations);
+  const callTool = vi.fn(async () => ({
+    structuredContent: { ok: true, data: {}, meta: {} },
+  }));
+  const core = { listTools: () => tools, callTool };
+  await updatePersistedMcpCheckpoint({
+    tool: "workflow.next",
+    scope,
+    structuredContent: {
+      data: { checkpoint: { required: true, instruction: "Report first" } },
+    },
+  });
+
+  await expect(
+    executeMcpRunCall({
+      core: core as never,
+      call: { tool: "components.get", input: {}, dryRun: false },
+      scope,
+    })
+  ).resolves.toBeDefined();
+  await expect(
+    executeMcpRunCall({
+      core: core as never,
+      call: { tool: "create-page", input: {}, dryRun: false },
+      scope,
+    })
+  ).rejects.toMatchObject({ code: "CHECKPOINT_REQUIRED" });
+  expect(callTool).toHaveBeenCalledTimes(1);
 });
 
 test("formats MCP run checkpoint stops with partial results", () => {
@@ -697,7 +782,7 @@ test("persists checkpoint producer tool name", async () => {
 
   await updatePersistedMcpCheckpoint({
     tool: "future.checkpoint-tool",
-    projectRoot: dir,
+    scope: { projectRoot: dir },
     structuredContent: {
       data: {
         checkpoint: {
@@ -708,7 +793,9 @@ test("persists checkpoint producer tool name", async () => {
     },
   });
 
-  await expect(readPersistedMcpCheckpoint(dir)).resolves.toMatchObject({
+  await expect(
+    readPersistedMcpCheckpoint({ projectRoot: dir })
+  ).resolves.toMatchObject({
     tool: "future.checkpoint-tool",
   });
 });

@@ -179,10 +179,12 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "duplicate-page",
-    description: "Duplicate a page and its page content",
+    description:
+      "Duplicate a page and optionally substitute copied fixed text and variable values atomically",
     requiredOptions: ["page", "json"],
     examples: [
       'webstudio duplicate-page --page page-id --name "Pricing Copy" --path /pricing-copy --json',
+      `webstudio duplicate-page --page page-id --name Paris --path /paris --substitutions '{"text":{"London":"Paris"},"variables":{"city":{"type":"string","value":"Paris"}}}' --json`,
     ],
   },
   {

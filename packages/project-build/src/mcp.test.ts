@@ -3213,11 +3213,12 @@ describe("project session mcp adapter", () => {
       name: "workflow.next",
       input: { goal: "design-system-page" },
     });
+    const detailsWhileCheckpointed = await adapter.callTool({
+      name: "meta.get_more_tools",
+      input: { tools: ["publish"] },
+    });
     await expect(
-      adapter.callTool({
-        name: "meta.get_more_tools",
-        input: { tools: ["publish"] },
-      })
+      adapter.callTool({ name: "create-page", input: { name: "Blocked" } })
     ).rejects.toThrow("CHECKPOINT_REQUIRED");
     const ackCheckpoint = () =>
       adapter.callTool({
@@ -3382,6 +3383,9 @@ describe("project session mcp adapter", () => {
         allowedTools: ["components.coverage-plan"],
         nextPhase: "page-creation",
       })
+    );
+    expect(detailsWhileCheckpointed.structuredContent.data).toEqual(
+      expect.objectContaining({ tools: expect.any(Array) })
     );
     expect(workflowPhase.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -4014,12 +4018,13 @@ describe("project session mcp adapter", () => {
     const coveragePlan = await adapter.callTool({
       name: "components.coverage-plan",
     });
-    await expect(
-      adapter.callTool({
-        name: "components.find",
-        input: { brief: "radix select" },
-      })
-    ).rejects.toThrow("CHECKPOINT_REQUIRED");
+    const checkpointedFind = await adapter.callTool({
+      name: "components.find",
+      input: { brief: "radix select" },
+    });
+    expect(checkpointedFind.structuredContent.data).toEqual(
+      expect.objectContaining({ components: expect.any(Array) })
+    );
     await expect(
       adapter.callTool({
         name: "checkpoint.ack",
@@ -4927,10 +4932,17 @@ describe("project session mcp adapter", () => {
         }),
       })
     );
+    const find = await adapter.callTool({
+      name: "components.find",
+      input: { brief: "button" },
+    });
+    expect(find.structuredContent.data).toEqual(
+      expect.objectContaining({ components: expect.any(Array) })
+    );
     await expect(
       adapter.callTool({
-        name: "components.find",
-        input: { brief: "button" },
+        name: "components.coverage-insert-next",
+        input: { pagePath: "/design-system", parentInstanceId: "root" },
       })
     ).rejects.toThrow("CHECKPOINT_REQUIRED");
   });
@@ -6990,7 +7002,7 @@ describe("project session mcp adapter", () => {
     }
   });
 
-  test("blocks long-lived MCP tool chains until required checkpoint is acknowledged", async () => {
+  test("allows reads but blocks mutations until a required checkpoint is acknowledged", async () => {
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -7022,15 +7034,24 @@ describe("project session mcp adapter", () => {
         })
       ).resolves.toEqual(
         expect.objectContaining({
+          structuredContent: expect.objectContaining({ ok: true }),
+        })
+      );
+      await expect(
+        client.callTool({
+          name: "create-page",
+          arguments: { name: "Blocked", path: "/blocked" },
+        })
+      ).resolves.toEqual(
+        expect.objectContaining({
           isError: true,
-          structuredContent: {
+          structuredContent: expect.objectContaining({
             ok: false,
-            error: {
+            error: expect.objectContaining({
               message: expect.stringContaining("CHECKPOINT_REQUIRED"),
               code: "CHECKPOINT_REQUIRED",
-            },
-            meta: {},
-          },
+            }),
+          }),
         })
       );
 

@@ -4864,7 +4864,6 @@ const readOnlySessionTools = new Set([
   "meta.index",
   "meta.guide",
   "meta.get_more_tools",
-  "workflow.next",
   "status",
   "components.summary",
   "components.list",
@@ -4884,10 +4883,21 @@ const toolAliases = new Map([
 
 const resolveToolName = (name: string) => toolAliases.get(name) ?? name;
 
-const isReadOnlyTool = (tool: ProjectSessionMcpTool) =>
+export const isReadOnlyProjectSessionMcpTool = (tool: ProjectSessionMcpTool) =>
   tool.annotations.method === "query" ||
   (tool.annotations.method === "session" &&
     readOnlySessionTools.has(tool.name));
+
+export const isReadOnlyProjectSessionMcpToolCall = (
+  name: string,
+  tools: readonly ProjectSessionMcpTool[]
+) => {
+  const resolvedName = resolveToolName(name);
+  return tools.some(
+    (tool) =>
+      tool.name === resolvedName && isReadOnlyProjectSessionMcpTool(tool)
+  );
+};
 
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
@@ -4897,7 +4907,7 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
     ? {}
     : { outputSchema: tool.outputSchema }),
   annotations: {
-    readOnlyHint: isReadOnlyTool(tool),
+    readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),
     destructiveHint: tool.annotations.requiresConfirm,
     openWorldHint: tool.annotations.serverOnly,
   },
@@ -5759,7 +5769,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           nextCommand,
         });
       }
-      if (pendingCheckpoint !== undefined) {
+      if (
+        pendingCheckpoint !== undefined &&
+        isReadOnlyProjectSessionMcpToolCall(name, listTools()) === false
+      ) {
         throw new ProjectSessionMcpCheckpointError(
           `CHECKPOINT_REQUIRED: ${pendingCheckpoint.message} Stop now and report the checkpoint to the parent/user. Only after the parent/user continues, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"} before calling "${name}".`
         );
