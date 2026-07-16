@@ -1,5 +1,5 @@
 import { readFile, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { cwd } from "node:process";
 import {
   migratePages,
@@ -37,7 +37,7 @@ import {
 } from "@webstudio-is/project-build/state";
 import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
-import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "./config";
+import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
 import { writeFileAtomic } from "./fs-utils";
@@ -146,15 +146,10 @@ export const getCliProjectSessionFile = (
   projectRoot = cwd(),
   projectId?: string
 ) =>
-  projectId === undefined
-    ? join(projectRoot, dirname(LOCAL_CONFIG_FILE), "project-session.json")
-    : join(
-        projectRoot,
-        dirname(LOCAL_CONFIG_FILE),
-        "projects",
-        encodeURIComponent(projectId),
-        "project-session.json"
-      );
+  join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    "project-session.json"
+  );
 const compatibilityVersion = "cli-project-session-v1";
 
 const createCliProjectSessionCompatibility = (

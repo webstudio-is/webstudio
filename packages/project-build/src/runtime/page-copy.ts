@@ -644,7 +644,8 @@ const applyCopiedPageTextSubstitutions = ({
   instanceIds: ReadonlySet<string>;
   replacements: Record<string, string>;
 }) => {
-  const replaceText = (value: string) => replacements[value] ?? value;
+  const replacementsByText = new Map(Object.entries(replacements));
+  const replaceText = (value: string) => replacementsByText.get(value) ?? value;
   for (const instanceId of instanceIds) {
     const instance = target.instances.get(instanceId);
     if (instance !== undefined) {
@@ -666,9 +667,9 @@ const applyCopiedPageTextSubstitutions = ({
   }
   const replaceFixedExpression = (expression: string) => {
     const value = getStaticStringLiteral(expression);
-    return value === undefined || replacements[value] === undefined
-      ? expression
-      : JSON.stringify(replacements[value]);
+    const replacement =
+      value === undefined ? undefined : replacementsByText.get(value);
+    return replacement === undefined ? expression : JSON.stringify(replacement);
   };
   page.title = replaceFixedExpression(page.title);
   copyAndTransformPageMeta(page.meta, page.meta, replaceFixedExpression);
@@ -691,10 +692,12 @@ const applyPageDuplicateSubstitutions = ({
     substitutions.text !== undefined &&
     Object.keys(substitutions.text).length > 0
   ) {
+    const copiedInstanceIds = new Set(copied.newInstanceIds.values());
+    copiedInstanceIds.delete(ROOT_INSTANCE_ID);
     applyCopiedPageTextSubstitutions({
       target,
       pageId,
-      instanceIds: new Set(copied.newInstanceIds.values()),
+      instanceIds: copiedInstanceIds,
       replacements: substitutions.text,
     });
   }

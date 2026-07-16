@@ -11,6 +11,7 @@ import {
   parseComponentName,
   toInputJsonSchemaObject,
   type InputJsonSchema,
+  type InputJsonSchemaValue,
 } from "@webstudio-is/sdk";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
@@ -335,7 +336,7 @@ const emptyInputSchema = {
   type: "object",
   description:
     "Pass this MCP tool's JSON arguments. Use meta.get_more_tools for examples and required fields. For authored content with styles, prefer insert-fragment so the CLI converts JSX into Webstudio data.",
-  additionalProperties: true,
+  additionalProperties: false,
 } as const satisfies ProjectSessionMcpInputSchema;
 
 const textInputSchema = (description: string) =>
@@ -422,6 +423,29 @@ const registryListInputSchema = {
     offset: {
       type: "number",
       description: "Zero-based pagination offset for additional items.",
+    },
+  },
+  required: [],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const componentSummaryInputSchema = {
+  ...emptyInputSchema,
+  additionalProperties: false,
+  properties: {
+    detail: {
+      type: "string",
+      enum: ["summary", "components"],
+      description:
+        'Response detail. Defaults to "summary"; use "components" for paginated component entries.',
+    },
+    limit: {
+      type: "number",
+      description:
+        "Maximum component entries to return with detail components. Defaults to 20 and is capped at 100.",
+    },
+    offset: {
+      type: "number",
+      description: "Zero-based component pagination offset.",
     },
   },
   required: [],
@@ -593,6 +617,125 @@ const getOperationInputSchema = (
     type: "object",
     additionalProperties,
     required: requiredInputFields,
+  };
+};
+
+const jsonCompatibleValueSchema = {
+  anyOf: [
+    { type: "string" },
+    { type: "number" },
+    { type: "boolean" },
+    { type: "null" },
+    { type: "array" },
+    { type: "object" },
+  ],
+  description: "JSON-compatible value.",
+} as const satisfies InputJsonSchema;
+
+const constrainUnconstrainedInputSchemaValue = (
+  value: InputJsonSchemaValue
+): InputJsonSchemaValue => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (Object.keys(value).length === 0) {
+    return jsonCompatibleValueSchema;
+  }
+  return constrainUnconstrainedInputSchemas(value);
+};
+
+const constrainUnconstrainedInputSchemas = <Schema extends InputJsonSchema>(
+  schema: Schema
+): Schema => {
+  const result: InputJsonSchema = { ...schema };
+  if (schema.properties !== undefined) {
+    result.properties = Object.fromEntries(
+      Object.entries(schema.properties).map(([name, value]) => [
+        name,
+        constrainUnconstrainedInputSchemaValue(value),
+      ])
+    );
+  }
+  if (schema.additionalProperties !== undefined) {
+    result.additionalProperties = constrainUnconstrainedInputSchemaValue(
+      schema.additionalProperties
+    );
+  }
+  if (schema.items !== undefined) {
+    result.items = constrainUnconstrainedInputSchemaValue(schema.items);
+  }
+  for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
+    const values = schema[key];
+    if (Array.isArray(values)) {
+      result[key] = values.map(constrainUnconstrainedInputSchemaValue);
+    }
+  }
+  if (schema.$defs !== undefined) {
+    result.$defs = Object.fromEntries(
+      Object.entries(schema.$defs).map(([name, value]) => [
+        name,
+        constrainUnconstrainedInputSchemaValue(value),
+      ])
+    );
+  }
+  return result as Schema;
+};
+
+const maxInlineMcpInputSchemaSize = 20_000;
+
+const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
+  const description =
+    schema.description === undefined
+      ? undefined
+      : schema.description.length <= 240
+        ? schema.description
+        : `${schema.description.slice(0, 239)}…`;
+  const compact = {
+    ...(schema.type === undefined ? {} : { type: schema.type }),
+    ...(description === undefined ? {} : { description }),
+    ...(schema.enum === undefined ? {} : { enum: schema.enum }),
+  };
+  if (Object.keys(compact).length > 0) {
+    return compact;
+  }
+  return {
+    description:
+      "Complex structured value. Use meta.get_more_tools with this exact tool name for its complete schema.",
+  };
+};
+
+const getHandshakeInputSchema = (
+  schema: ProjectSessionMcpInputSchema
+): {
+  inputSchema: ProjectSessionMcpInputSchema;
+  detailedInputSchema?: ProjectSessionMcpInputSchema;
+} => {
+  if (JSON.stringify(schema).length <= maxInlineMcpInputSchemaSize) {
+    return { inputSchema: schema };
+  }
+  return {
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: Object.fromEntries(
+        Object.entries(schema.properties ?? {}).map(([name, property]) => {
+          const propertySchema = toInputJsonSchemaObject(property);
+          const serializedProperty = JSON.stringify(property);
+          return [
+            name,
+            propertySchema === undefined ||
+            (serializedProperty.length <= maxInlineMcpInputSchemaSize &&
+              serializedProperty.includes('"$ref"') === false)
+              ? property
+              : getCompactSchemaProperty(propertySchema),
+          ];
+        })
+      ),
+      required: schema.required,
+      description:
+        "Compact handshake schema. Use meta.get_more_tools with this exact tool name for the complete input schema.",
+    },
+    detailedInputSchema: schema,
   };
 };
 
@@ -1086,7 +1229,16 @@ const getMcpOperationInputSchema = (
     schema?: ProjectSessionMcpInputSchema;
   }
 ) => {
-  const schema = options.schema ?? getOperationInputSchema(operation);
+  let schema = constrainUnconstrainedInputSchemas(
+    options.schema ?? getOperationInputSchema(operation)
+  );
+  const properties = getInputJsonSchemaProperties(schema);
+  if (
+    schema.additionalProperties === true &&
+    (properties === undefined || Object.keys(properties).length === 0)
+  ) {
+    schema = { ...schema, additionalProperties: false };
+  }
   const transportProperties = {
     ...(operation.method === "mutation" && operation.localCapable
       ? { dryRun: dryRunInputProperty }
@@ -1893,8 +2045,8 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "components.summary",
     description:
-      "Return a compact structured component catalog summary. Use this before full component resources.",
-    inputSchema: emptyInputSchema,
+      'Return component counts by default, or paginated component entries with detail:"components".',
+    inputSchema: componentSummaryInputSchema,
     annotations: {
       command: "components.summary",
       operationId: "components.summary",
@@ -1911,7 +2063,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "components.list",
     description:
-      "Return shadcn-compatible Webstudio registry items for insertable components and templates. Use this when you need the shared Builder/MCP component list shape.",
+      "List compact metadata for insertable components and templates. Use components.get or templates.get for one complete item.",
     inputSchema: registryListInputSchema,
     annotations: {
       command: "components.list",
@@ -2081,7 +2233,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "templates.list",
     description:
-      "Return shadcn-compatible Webstudio registry items for registered templates only, including explicit registry:file payload metadata.",
+      "List compact metadata for registered templates. Use templates.get for one complete insertion payload.",
     inputSchema: registryListInputSchema,
     annotations: {
       command: "templates.list",
@@ -2398,6 +2550,15 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
+const detailedMcpInputSchemas = new WeakMap<
+  ProjectSessionMcpTool,
+  ProjectSessionMcpInputSchema
+>();
+
+export const getDetailedProjectSessionMcpInputSchema = (
+  tool: ProjectSessionMcpTool
+) => detailedMcpInputSchemas.get(tool) ?? tool.inputSchema;
+
 export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
   options: {
@@ -2414,15 +2575,18 @@ export const listProjectSessionMcpTools = (
     )
     .map((operation) => {
       const override = mcpOperationOverrides.get(operation.command);
-      return createProjectSessionMcpTool({
-        name: operation.command,
-        description: override?.description ?? operation.description,
-        inputSchema: getMcpOperationInputSchema(operation, {
+      const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
+        getMcpOperationInputSchema(operation, {
           includeRenderedAudit:
             options.includeScreenshot === true &&
             options.includePreview === true,
           schema: override?.inputSchema,
-        }),
+        })
+      );
+      const tool = createProjectSessionMcpTool({
+        name: operation.command,
+        description: override?.description ?? operation.description,
+        inputSchema,
         ...(operation.outputSchema === undefined
           ? {}
           : { outputSchema: getMcpOutputSchema(operation.outputSchema) }),
@@ -2441,6 +2605,10 @@ export const listProjectSessionMcpTools = (
           requiresConfirm: operation.requiresConfirm,
         },
       });
+      if (detailedInputSchema !== undefined) {
+        detailedMcpInputSchemas.set(tool, detailedInputSchema);
+      }
+      return tool;
     }),
   ...sessionTools.map((tool) => ({
     ...tool,
@@ -2741,17 +2909,12 @@ const getRegistryListInput = (
       `${toolName} input.documentType must be one of html, xml, text.`
     );
   }
-  const limit = Math.min(
-    100,
-    Math.max(
-      1,
-      Math.floor(getOptionalNumberInput(input, "limit", toolName) ?? 50)
-    )
-  );
-  const offset = Math.max(
-    0,
-    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
-  );
+  const { limit, offset } = getOffsetPaginationInput({
+    input,
+    toolName,
+    defaultLimit: 50,
+    maxLimit: 100,
+  });
   return {
     source: source as RegistryListSource,
     documentType: documentType as CoveragePlanDocumentType,
@@ -2867,6 +3030,32 @@ const getOptionalNumberInput = (
   return value;
 };
 
+const getOffsetPaginationInput = ({
+  input,
+  toolName,
+  defaultLimit,
+  maxLimit,
+}: {
+  input: unknown;
+  toolName: string;
+  defaultLimit: number;
+  maxLimit: number;
+}) => ({
+  offset: Math.max(
+    0,
+    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
+  ),
+  limit: Math.min(
+    maxLimit,
+    Math.max(
+      1,
+      Math.floor(
+        getOptionalNumberInput(input, "limit", toolName) ?? defaultLimit
+      )
+    )
+  ),
+});
+
 const getCoveragePlanInput = (input: unknown) => {
   const detail =
     getOptionalStringInput(input, "detail", "components.coverage-plan") ||
@@ -2890,21 +3079,12 @@ const getCoveragePlanInput = (input: unknown) => {
       `components.coverage-plan input.documentType must be one of ${coveragePlanDocumentTypes.join(", ")}.`
     );
   }
-  const offset = Math.max(
-    0,
-    Math.floor(
-      getOptionalNumberInput(input, "offset", "components.coverage-plan") ?? 0
-    )
-  );
-  const limit = Math.min(
-    100,
-    Math.max(
-      1,
-      Math.floor(
-        getOptionalNumberInput(input, "limit", "components.coverage-plan") ?? 20
-      )
-    )
-  );
+  const { offset, limit } = getOffsetPaginationInput({
+    input,
+    toolName: "components.coverage-plan",
+    defaultLimit: 20,
+    maxLimit: 100,
+  });
   return {
     detail: detail as CoveragePlanDetail,
     namespace: getOptionalStringInput(
@@ -3603,7 +3783,7 @@ type ComponentSummaryEntry = NonNullable<
   ReturnType<typeof getComponentSummaryEntry>
 >;
 
-const getComponentSummary = () => {
+const getComponentCatalogSummary = () => {
   const templates = getComponentTemplates();
   const entries = [...componentMetas.keys()]
     .flatMap((component) => {
@@ -3633,6 +3813,51 @@ const getComponentSummary = () => {
   };
 };
 
+const getComponentSummary = (input: unknown) => {
+  const detail =
+    getOptionalStringInput(input, "detail", "components.summary") || "summary";
+  if (detail !== "summary" && detail !== "components") {
+    throw new Error(
+      "components.summary input.detail must be summary or components."
+    );
+  }
+  const summary = getComponentCatalogSummary();
+  const base = {
+    usage:
+      'Default summary is compact. Use detail:"components" with offset and limit for component entries, or components.search/components.get for focused discovery.',
+    total: summary.total,
+    namespaceCounts: summary.namespaceCounts,
+    templateCount: summary.templateComponents.length,
+    standaloneInsertableCount: summary.standaloneInsertable.length,
+    nonStandaloneCount: summary.nonStandaloneComponents.length,
+  };
+  if (detail === "summary") {
+    return base;
+  }
+  const { offset, limit } = getOffsetPaginationInput({
+    input,
+    toolName: "components.summary",
+    defaultLimit: 20,
+    maxLimit: 100,
+  });
+  const components = summary.components.slice(offset, offset + limit);
+  return {
+    ...base,
+    detail,
+    count: components.length,
+    omittedCount: Math.max(0, summary.total - offset - components.length),
+    pagination: {
+      offset,
+      limit,
+      nextOffset:
+        offset + components.length < summary.total
+          ? offset + components.length
+          : undefined,
+    },
+    components,
+  };
+};
+
 const getComponentRegistryItems = () =>
   listComponentRegistryItems({
     metas: componentMetas,
@@ -3653,6 +3878,21 @@ const filterRegistryItemsBySource = (
       : item.meta.source === "meta"
   );
 };
+
+const toRegistryItemSummary = (item: ComponentRegistryItem) => ({
+  name: item.name,
+  title: item.title,
+  description: item.description,
+  type: item.type,
+  meta: {
+    catalogId: item.meta.catalogId,
+    source: item.meta.source,
+    component: item.meta.component,
+    category: item.meta.category,
+    label: item.meta.label,
+    insert: item.meta.insert,
+  },
+});
 
 const listRegistryItems = ({
   input,
@@ -3681,7 +3921,7 @@ const listRegistryItems = ({
   const items = allItems.slice(offset, offset + limit);
   return {
     usage:
-      "Registry items use the shadcn-compatible shape plus Webstudio insertion metadata in meta. Use meta.insert.component with insert-component for automatic templates, or use insert-fragment for authored/styled JSX sections.",
+      "Registry lists return compact metadata. Use components.get or templates.get for one complete item before insertion.",
     source,
     documentType,
     count: items.length,
@@ -3692,7 +3932,7 @@ const listRegistryItems = ({
       limit,
       nextOffset: offset + limit < allItems.length ? offset + limit : undefined,
     },
-    items,
+    items: items.map(toRegistryItemSummary),
   };
 };
 
@@ -3728,7 +3968,7 @@ const getTemplateDetails = (input: unknown) => {
 const getComponentCoveragePlan = async (input: unknown) => {
   const { detail, namespace, documentType, offset, limit } =
     getCoveragePlanInput(input);
-  const summary = getComponentSummary();
+  const summary = getComponentCatalogSummary();
   const documentEntries = summary.components.filter((entry) =>
     isComponentAvailableForDocumentType({
       component: entry.component,
@@ -3935,7 +4175,7 @@ const getAvailableComponentEntries = async ({
 }: {
   documentType: CoveragePlanDocumentType;
 }) => {
-  const summary = getComponentSummary();
+  const summary = getComponentCatalogSummary();
   return summary.components.filter((entry) =>
     isComponentAvailableForDocumentType({
       component: entry.component,
@@ -4177,17 +4417,12 @@ const getComponentFindInput = (
   input: unknown,
   toolName: "components.find" | "components.search"
 ) => {
-  const limit = Math.min(
-    25,
-    Math.max(
-      1,
-      Math.floor(getOptionalNumberInput(input, "limit", toolName) ?? 12)
-    )
-  );
-  const offset = Math.max(
-    0,
-    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
-  );
+  const { limit, offset } = getOffsetPaginationInput({
+    input,
+    toolName,
+    defaultLimit: 12,
+    maxLimit: 25,
+  });
   return {
     brief: getRequiredStringInput(input, "brief", toolName),
     limit,
@@ -4214,7 +4449,7 @@ const findComponents = async (
   toolName: "components.find" | "components.search" = "components.find"
 ) => {
   const { brief, limit, offset } = getComponentFindInput(input, toolName);
-  const summary = getComponentSummary();
+  const summary = getComponentCatalogSummary();
   const normalizedBrief = normalize(brief);
   const tokens = normalizedBrief
     .split(/\s+/)
@@ -4763,7 +4998,7 @@ const getExactTools = (
 const serializeToolDetails = (tool: ProjectSessionMcpTool) => ({
   name: tool.name,
   description: tool.description,
-  inputSchema: tool.inputSchema,
+  inputSchema: getDetailedProjectSessionMcpInputSchema(tool),
   inputFields: tool.annotations.inputFields,
   requiredInputFields: tool.annotations.requiredInputFields,
   mcpExamples: tool.mcpExamples ?? [],
@@ -5806,7 +6041,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         );
       }
       if (name === "components.summary") {
-        return toMetaResult(getComponentSummary());
+        return toMetaResult(getComponentSummary(input));
       }
       if (name === "components.list") {
         return toMetaResult(

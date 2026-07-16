@@ -202,14 +202,14 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `meta.index`: concise capability catalog
 - `meta.guide`: workflow for a user goal; call with a string brief such as `{"brief":"Create a pricing page"}`
 - `meta.get_more_tools`: detailed params, examples, namespaces, and local/server behavior; prefer exact names such as `{"tools":["insert-fragment"]}` when you know them
-- `components.list`: shadcn-compatible registry items for visible components and templates
-- `components.summary`: compact structured component catalog with insertability and template hints
+- `components.list`: compact registry metadata for visible components and templates; use a focused get tool for complete details
+- `components.summary`: component counts by default; use `{"detail":"components","limit":20}` for paginated entries
 - `components.coverage-plan`: compact paged plan for design-system coverage tasks that need every component; default returns counts plus the first root page, use `{"detail":"roots"}`, `{"detail":"parts"}`, or `{"detail":"full"}` for more
 - `components.coverage-status`: page-specific covered/missing component report with `missingRoots` and `missingParts`
 - `components.search`: focused component/template search by id, namespace, label, category, or content model
 - `components.find`: compatibility alias for focused component search
 - `components.get`: full metadata for one component id
-- `templates.list`: shadcn-compatible registry items for template-backed insertions only
+- `templates.list`: compact metadata for template-backed insertions only
 - `templates.get`: full registry item and payload metadata for one template
 
 Component and template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. Use `meta.runtime` for component ids, props, states, content model, and source identity; `meta.authoring` for composition and accessibility guidance; and `meta.builder` for template insertion details and expected project-data namespaces. These items are for Builder/MCP discovery and are not a published shadcn install registry yet.

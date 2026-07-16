@@ -413,12 +413,28 @@ describe("insert page copy", () => {
       instances: toMap<Instance>([
         {
           type: "instance",
+          id: ROOT_INSTANCE_ID,
+          component: "Slot",
+          children: [],
+        },
+        {
+          type: "instance",
           id: "bodyId",
           component: "Body",
-          children: [{ type: "text", value: "Old city" }],
+          children: [
+            { type: "text", value: "Old city" },
+            { type: "text", value: "toString" },
+          ],
         },
       ]),
       props: toMap<Prop>([
+        {
+          id: "rootLabelProp",
+          instanceId: ROOT_INSTANCE_ID,
+          name: "aria-label",
+          type: "string",
+          value: "Old city",
+        },
         {
           id: "labelProp",
           instanceId: "bodyId",
@@ -491,6 +507,7 @@ describe("insert page copy", () => {
     });
     expect(updated.instances.get(copiedRootId ?? "")?.children).toEqual([
       { type: "text", value: "New city" },
+      { type: "text", value: "toString" },
     ]);
     expect(
       Array.from(updated.props.values()).find(
@@ -509,9 +526,13 @@ describe("insert page copy", () => {
     });
     expect(data.instances.get("bodyId")?.children).toEqual([
       { type: "text", value: "Old city" },
+      { type: "text", value: "toString" },
     ]);
     expect(data.dataSources.get("cityVariable")).toMatchObject({
       value: { type: "string", value: "Old city" },
+    });
+    expect(updated.props.get("rootLabelProp")).toMatchObject({
+      value: "Old city",
     });
     expect(() =>
       duplicatePage(

@@ -57,7 +57,7 @@ import { readCliDoc } from "../docs";
 import { printJson } from "../json-output";
 import { isPlainRecord } from "../type-utils";
 import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
-import { LOCAL_DATA_FILE } from "../config";
+import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "../config";
 import {
   assertMcpBatchMutationApproved,
   isMcpProjectsManifest,
@@ -144,7 +144,7 @@ export const prepareMcpProjectSession = async (
 };
 
 const mcpStatusPrefix = "[webstudio mcp]";
-const mcpCheckpointFile = ".webstudio/mcp-checkpoint.json";
+const mcpCheckpointFilename = "mcp-checkpoint.json";
 const renderedAuditArtifactDirectory = ".webstudio/audits";
 
 export const formatMcpStatusLine = (message: string) =>
@@ -247,14 +247,10 @@ const getMcpCheckpointPath = ({
   projectRoot = cwd(),
   projectId,
 }: McpProjectScope = {}) =>
-  projectId === undefined
-    ? path.join(projectRoot, mcpCheckpointFile)
-    : path.join(
-        projectRoot,
-        ".webstudio/projects",
-        encodeURIComponent(projectId),
-        "mcp-checkpoint.json"
-      );
+  path.join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    mcpCheckpointFilename
+  );
 
 const readPersistedMcpCheckpoint = async (scope: McpProjectScope = {}) => {
   try {

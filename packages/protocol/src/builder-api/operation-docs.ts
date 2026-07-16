@@ -732,13 +732,21 @@ for (const documentation of curatedPublicApiOperationDocumentation) {
 
 const createDefaultDocumentation = (
   command: string
-): PublicApiOperationDocumentation => ({
-  command,
-  description: `Run the "${command}" MCP/public API operation. Use the operation input schema for valid JSON fields.`,
-  examples: [
-    `MCP/API: call "${command}" with JSON input matching its operation schema.`,
-  ],
-});
+): PublicApiOperationDocumentation => {
+  const words = command
+    .split("-")
+    .map((word) =>
+      word === "css" || word === "ui" ? word.toUpperCase() : word
+    )
+    .join(" ");
+  return {
+    command,
+    description: `${words.charAt(0).toUpperCase()}${words.slice(1)}.`,
+    examples: [
+      `MCP/API: call "${command}" with JSON input matching its operation schema.`,
+    ],
+  };
+};
 
 const documentedCommands = new Set<string>();
 

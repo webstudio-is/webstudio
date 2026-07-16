@@ -703,6 +703,14 @@ describe("project session mcp adapter", () => {
       includePreview: true,
     });
     for (const tool of completeTools) {
+      expect(
+        tool.inputSchema.additionalProperties,
+        `MCP input schema accepts unknown root fields for ${tool.name}`
+      ).not.toBe(true);
+      expect(
+        getUnresolvedLocalSchemaRefs(tool.inputSchema),
+        `MCP input schema has unresolved local references for ${tool.name}`
+      ).toEqual([]);
       if (tool.outputSchema !== undefined) {
         expect(
           tool.outputSchema.type,
@@ -722,6 +730,11 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
+    expect(
+      JSON.stringify(
+        tools.find(({ name }) => name === "update-styles")?.inputSchema
+      )
+    ).toContain("JSON-compatible value.");
     expect(
       getSuccessfulOutputDataSchema(
         tools.find((tool) => tool.name === "refresh")?.outputSchema
@@ -946,6 +959,41 @@ describe("project session mcp adapter", () => {
         confirmDestructive: expect.objectContaining({ type: "boolean" }),
         confirmationToken: expect.objectContaining({ type: "string" }),
       })
+    );
+  });
+
+  test("defers oversized input schemas until focused discovery", async () => {
+    const description = "x".repeat(25_000);
+    const operation = publicOperation({
+      command: "large-input",
+      id: "test.largeInput",
+      description: "Accept a large structured input",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          targetId: { type: "string" },
+          payload: { type: "object", description },
+        },
+        required: ["targetId", "payload"],
+      },
+    });
+    const [tool] = listProjectSessionMcpTools([operation]);
+
+    expect(JSON.stringify(tool?.inputSchema).length).toBeLessThan(1_000);
+    expect(tool?.inputSchema.required).toEqual(["targetId", "payload"]);
+
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const details = await adapter.callTool({
+      name: "meta.get_more_tools",
+      input: { tools: ["large-input"] },
+    });
+    expect(JSON.stringify(details.structuredContent.data)).toContain(
+      description
     );
   });
 
@@ -4007,6 +4055,10 @@ describe("project session mcp adapter", () => {
     });
 
     const summary = await adapter.callTool({ name: "components.summary" });
+    const summaryDetails = await adapter.callTool({
+      name: "components.summary",
+      input: { detail: "components", limit: 100 },
+    });
     const componentRegistry = await adapter.callTool({
       name: "components.list",
       input: { source: "all", limit: 200 },
@@ -4195,14 +4247,22 @@ describe("project session mcp adapter", () => {
     expect(session.initialize).not.toHaveBeenCalled();
     expect(summary.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("Do not dump/parse"),
+        usage: expect.stringContaining("Default summary is compact"),
         total: expect.any(Number),
-        templateComponents: expect.arrayContaining([
-          "@webstudio-is/sdk-components-react-radix:Select",
-        ]),
-        nonStandaloneComponents: expect.arrayContaining([
-          "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
-        ]),
+        templateCount: expect.any(Number),
+        standaloneInsertableCount: expect.any(Number),
+        nonStandaloneCount: expect.any(Number),
+      })
+    );
+    expect(summary.structuredContent.data).not.toHaveProperty("components");
+    expect(JSON.stringify(summary.structuredContent.data).length).toBeLessThan(
+      1_000
+    );
+    expect(summaryDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        detail: "components",
+        count: expect.any(Number),
+        pagination: { offset: 0, limit: 100, nextOffset: undefined },
         components: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
@@ -4228,14 +4288,13 @@ describe("project session mcp adapter", () => {
     );
     expect(componentRegistry.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("shadcn-compatible"),
+        usage: expect.stringContaining("compact metadata"),
         source: "all",
         documentType: "html",
         items: expect.arrayContaining([
           expect.objectContaining({
             name: "component:HtmlEmbed",
             type: "registry:ui",
-            files: [],
             meta: expect.objectContaining({
               source: "meta",
               component: "HtmlEmbed",
@@ -4248,13 +4307,6 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({
             name: "template:@webstudio-is/sdk-components-react-radix:Select",
             type: "registry:ui",
-            files: [
-              expect.objectContaining({
-                type: "registry:file",
-                target:
-                  "webstudio/components/%40webstudio-is%2Fsdk-components-react-radix%3ASelect.template.json",
-              }),
-            ],
             meta: expect.objectContaining({
               source: "template",
               component: "@webstudio-is/sdk-components-react-radix:Select",
@@ -4267,6 +4319,9 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(
+      JSON.stringify(componentRegistry.structuredContent.data)
+    ).not.toContain('"files"');
     expect(templateRegistry.structuredContent.data).toEqual(
       expect.objectContaining({
         source: "template",
@@ -4284,6 +4339,9 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(
+      JSON.stringify(templateRegistry.structuredContent.data).length
+    ).toBeLessThan(50_000);
     expect(coveragePlan.structuredContent.data).toEqual(
       expect.objectContaining({
         usage: expect.stringContaining("intentionally compact"),
@@ -4705,7 +4763,10 @@ describe("project session mcp adapter", () => {
         createProjectSession: createSessionFactory(),
         executeOperation: createExecuteOperation(),
       });
-      const summary = await adapter.callTool({ name: "components.summary" });
+      const summary = await adapter.callTool({
+        name: "components.summary",
+        input: { detail: "components", limit: 100 },
+      });
       const find = await adapter.callTool({
         name: "components.find",
         input: { brief: "ConcealedWidget" },
