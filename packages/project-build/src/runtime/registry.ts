@@ -1535,6 +1535,7 @@ export const builderRuntimeOperations = [
     mutationContract({
       readNamespaces: ["styles", "styleSources"],
       writeNamespaces: ["styles"],
+      requiresConfirm: true,
     }),
     styles.styleSourceClearStylesInput,
     ({ state, input }) => styles.clearStyleSourceStyles(state, input)

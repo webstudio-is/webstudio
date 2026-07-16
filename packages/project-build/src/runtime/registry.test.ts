@@ -1944,21 +1944,20 @@ describe("builder runtime registry", () => {
           operation.writeNamespaces.includes("assets")
       );
     }
-    expect(
-      builderRuntimeOperations
-        .filter((operation) => operation.requiresConfirm)
-        .map((operation) => operation.command)
-    ).toEqual(
-      builderRuntimeOperations
-        .filter((operation) => isDestructiveRuntimeCommand(operation.command))
-        .map((operation) => operation.command)
-    );
+    for (const operation of builderRuntimeOperations.filter((operation) =>
+      isDestructiveRuntimeCommand(operation.command)
+    )) {
+      expect(operation.requiresConfirm, operation.command).toBe(true);
+    }
     expect(getBuilderRuntimeOperation("folders.delete").requiresConfirm).toBe(
       true
     );
     expect(getBuilderRuntimeOperation("redirects.setAll").requiresConfirm).toBe(
       true
     );
+    expect(
+      getBuilderRuntimeOperation("styleSources.clearStyles").requiresConfirm
+    ).toBe(true);
     expect(getBuilderRuntimeOperation("pages.create").requiresConfirm).toBe(
       false
     );

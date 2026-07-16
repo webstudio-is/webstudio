@@ -60786,6 +60786,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styleSources.duplicate",
