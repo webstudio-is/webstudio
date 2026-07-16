@@ -124,9 +124,10 @@ export const getPublicBuildIncludes = (
   ),
 ];
 
-export const publicBuildIncludes = getPublicBuildIncludes(
-  builderNamespaces
-).concat("designTokens") as [PublicBuildInclude, ...PublicBuildInclude[]];
+export const publicBuildIncludes = [
+  "designTokens",
+  ...getPublicBuildIncludes(builderNamespaces),
+] as const satisfies readonly [PublicBuildInclude, ...PublicBuildInclude[]];
 
 export type BuildPatchPath = Array<string | number>;
 export type BuildPatch =

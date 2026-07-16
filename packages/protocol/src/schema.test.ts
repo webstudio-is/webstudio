@@ -219,5 +219,8 @@ describe("project bundle contract", () => {
     expect(
       includes.every((include) => publicBuildIncludes.includes(include))
     ).toBe(true);
+    expect(new Set(publicBuildIncludes)).toEqual(
+      new Set([...includes, "designTokens"])
+    );
   });
 });

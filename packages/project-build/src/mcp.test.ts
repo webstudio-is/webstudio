@@ -2143,6 +2143,30 @@ describe("project session mcp adapter", () => {
     });
   });
 
+  test("requires binding verification after binding-related mutations", async () => {
+    const operation = publicOperation({
+      command: "bind-props",
+      id: "props.bind",
+      method: "mutation",
+      permit: "edit",
+      description: "Bind props",
+      writeNamespaces: ["props"],
+      invalidatesNamespaces: ["props"],
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const result = await adapter.callTool({ name: operation.command });
+
+    expect(result.structuredContent.meta.next).toEqual([
+      expect.stringContaining("run verify-bindings"),
+      expect.stringContaining("run audit"),
+    ]);
+  });
+
   test("normalizes create-page description and preserves basic auth", async () => {
     const executeOperation = createExecuteOperation(async () =>
       createEnvelope({

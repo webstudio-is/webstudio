@@ -65,6 +65,7 @@ export const serverOnlyRouterOperationMetadata = {
           items: {
             type: "string",
             enum: [
+              "designTokens",
               "pages",
               "folders",
               "instances",
@@ -72,10 +73,9 @@ export const serverOnlyRouterOperationMetadata = {
               "styles",
               "styleSources",
               "styleSourceSelections",
-              "designTokens",
-              "assets",
-              "resources",
               "variables",
+              "resources",
+              "assets",
               "breakpoints",
               "projectSettings",
               "marketplaceProduct",

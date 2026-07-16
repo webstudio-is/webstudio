@@ -3312,6 +3312,21 @@ const expressionsGuide = readProjectBuildDoc("expressions")
 const valuesVsBindingsRule =
   "Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, resources, actions, or existing scoped runtime context such as system. Parameters are internal scoped runtime values, not a public create/update/delete surface. Page metadata and fixed resource URLs accept plain strings; use JavaScript expression code only when values are computed. Page and resource updates put changed fields under values.";
 
+const bindingVerificationWriteNamespaces = new Set([
+  "props",
+  "dataSources",
+  "resources",
+]);
+
+const visualVerificationWriteNamespaces = new Set([
+  "pages",
+  "instances",
+  "props",
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
+]);
+
 const getComponentStateUsage = (
   states:
     | readonly {
@@ -5887,32 +5902,33 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           error: getRenderedAuditError(auditedEnvelope, isRenderedAudit),
         });
       }
-      const needsVisualVerification = operation.writeNamespaces.some(
-        (namespace) =>
-          namespace === "pages" ||
-          namespace === "instances" ||
-          namespace === "props" ||
-          namespace === "styles" ||
-          namespace === "styleSources" ||
-          namespace === "styleSourceSelections"
+      const needsBindingVerification = operation.writeNamespaces.some(
+        (namespace) => bindingVerificationWriteNamespaces.has(namespace)
       );
+      const needsVisualVerification = operation.writeNamespaces.some(
+        (namespace) => visualVerificationWriteNamespaces.has(namespace)
+      );
+      const next = [
+        ...(needsBindingVerification
+          ? [
+              "After changing props, variables, or resources, run verify-bindings for the changed page or instance and resolve every finding.",
+            ]
+          : []),
+        ...(needsVisualVerification
+          ? [
+              "Before reporting completion, run audit for the changed page or project.",
+              ...(startPreview !== undefined && captureScreenshot !== undefined
+                ? [
+                    "For visual changes, start a session preview and capture desktop and mobile screenshots before reporting completion.",
+                  ]
+                : []),
+            ]
+          : []),
+      ];
       return toCallResult(envelope, {
-        ...(operation.method !== "mutation" ||
-        dryRun ||
-        needsVisualVerification === false
+        ...(operation.method !== "mutation" || dryRun || next.length === 0
           ? {}
-          : {
-              next: [
-                "Before reporting completion, run audit for the changed page or project.",
-                ...(needsVisualVerification &&
-                startPreview !== undefined &&
-                captureScreenshot !== undefined
-                  ? [
-                      "For visual changes, start a session preview and capture desktop and mobile screenshots before reporting completion.",
-                    ]
-                  : []),
-              ],
-            }),
+          : { next }),
       });
     },
   };
