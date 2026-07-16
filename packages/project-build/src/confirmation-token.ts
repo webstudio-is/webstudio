@@ -4,26 +4,22 @@ const encodeDigest = (digest: ArrayBuffer) =>
     .replaceAll("/", "_")
     .replaceAll("=", "");
 
-const canonicalize = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map(canonicalize);
-  }
-  if (value === null || typeof value !== "object") {
-    return value;
-  }
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, child]) => [key, canonicalize(child)])
-  );
-};
+const stringifyCanonicalJson = (value: unknown) =>
+  JSON.stringify(value, (_key, child: unknown) => {
+    if (child === null || Array.isArray(child) || typeof child !== "object") {
+      return child;
+    }
+    return Object.fromEntries(
+      Object.entries(child).sort(([left], [right]) => left.localeCompare(right))
+    );
+  });
 
 const getConfirmationDigest = async (payload: unknown, expiresAt: number) =>
   encodeDigest(
     await globalThis.crypto.subtle.digest(
       "SHA-256",
       new TextEncoder().encode(
-        `${expiresAt}:${JSON.stringify(canonicalize(payload))}`
+        `${expiresAt}:${stringifyCanonicalJson(payload)}`
       )
     )
   );
