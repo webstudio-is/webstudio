@@ -13,6 +13,7 @@ import {
   builderRuntimeOperations,
   executeBuilderRuntimeOperation,
   getBuilderRuntimeOperation,
+  isDestructiveRuntimeCommand,
 } from "./registry";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { getRuntimeOutputSchema, runtimeOutputSchemas } from "./output-schemas";
@@ -1946,8 +1947,21 @@ describe("builder runtime registry", () => {
     expect(
       builderRuntimeOperations
         .filter((operation) => operation.requiresConfirm)
-        .map((operation) => operation.id)
-    ).toEqual(["cssVariables.delete"]);
+        .map((operation) => operation.command)
+    ).toEqual(
+      builderRuntimeOperations
+        .filter((operation) => isDestructiveRuntimeCommand(operation.command))
+        .map((operation) => operation.command)
+    );
+    expect(getBuilderRuntimeOperation("folders.delete").requiresConfirm).toBe(
+      true
+    );
+    expect(getBuilderRuntimeOperation("redirects.setAll").requiresConfirm).toBe(
+      true
+    );
+    expect(getBuilderRuntimeOperation("pages.create").requiresConfirm).toBe(
+      false
+    );
   });
 
   test("rejects client-supplied generated ids and hides generated id fields", () => {

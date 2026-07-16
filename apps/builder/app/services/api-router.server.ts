@@ -277,6 +277,12 @@ type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
   result?: CommitResult
 ) => Promise<{ version: number } & CommitResult>;
 
+type RuntimeMutationHandlerArgs = {
+  input: unknown;
+  build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
+  commit: BuildCommit;
+};
+
 const commitRuntimeMutation = async <
   Result extends Record<string, unknown> = Record<string, unknown>,
 >({
@@ -438,6 +444,22 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
     }
   );
 
+const runtimeConfirmedMutation = (
+  id: RuntimeOperationId,
+  permit: "edit" | "build"
+) => {
+  const input = withConfirm(runtimeProjectInput(id));
+  const handler = async ({
+    input,
+    build,
+    commit,
+  }: RuntimeMutationHandlerArgs) =>
+    commitRuntimeMutation({ id, build, input, commit });
+  return permit === "edit"
+    ? contentOrBuildMutation(input, handler)
+    : buildMutation(input, handler);
+};
+
 type RuntimeOperationRouteTree = Record<string, unknown>;
 type RouterRecord = Parameters<typeof router>[0];
 type RuntimeOperation = (typeof runtimeOperationContracts)[number];
@@ -473,15 +495,9 @@ const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
       : runtimeAssetsMutation(id);
   }
   if (operation.requiresConfirm) {
-    return buildMutation(
-      withConfirm(runtimeProjectInput(id)),
-      async ({ input, build, commit }) =>
-        commitRuntimeMutation({
-          id,
-          build,
-          input,
-          commit,
-        })
+    return runtimeConfirmedMutation(
+      id,
+      operation.permit === "edit" ? "edit" : "build"
     );
   }
   if (operation.kind === "read") {

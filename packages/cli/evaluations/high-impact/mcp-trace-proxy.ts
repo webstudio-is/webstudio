@@ -7,7 +7,12 @@ type JsonRpcId = string | number;
 
 export type BoundedMcpCall = {
   name: string;
-  arguments?: { viewport: { width: number; height: number } };
+  arguments?: {
+    viewport?: { width: number; height: number };
+    dryRun?: true;
+    confirmDestructive?: true;
+    hasConfirmationToken?: true;
+  };
   isError?: true;
 };
 
@@ -25,16 +30,28 @@ export const getMcpTraceRequest = (value: unknown) => {
     return;
   }
   const call: BoundedMcpCall = { name: params.name };
-  if (params.name === "screenshot" && isPlainRecord(params.arguments)) {
+  if (isPlainRecord(params.arguments)) {
+    const args: NonNullable<BoundedMcpCall["arguments"]> = {};
     const viewport = params.arguments.viewport;
     if (
+      params.name === "screenshot" &&
       isPlainRecord(viewport) &&
       typeof viewport.width === "number" &&
       typeof viewport.height === "number"
     ) {
-      call.arguments = {
-        viewport: { width: viewport.width, height: viewport.height },
-      };
+      args.viewport = { width: viewport.width, height: viewport.height };
+    }
+    if (params.arguments.dryRun === true) {
+      args.dryRun = true;
+    }
+    if (params.arguments.confirmDestructive === true) {
+      args.confirmDestructive = true;
+    }
+    if (typeof params.arguments.confirmationToken === "string") {
+      args.hasConfirmationToken = true;
+    }
+    if (Object.keys(args).length > 0) {
+      call.arguments = args;
     }
   }
   return { id, call };

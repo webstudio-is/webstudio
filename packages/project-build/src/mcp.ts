@@ -75,6 +75,11 @@ import {
   type SemanticValidationIssue,
 } from "./runtime/errors";
 import { z } from "zod";
+import {
+  canonicalizeConfirmationValue,
+  createConfirmationToken,
+  validateConfirmationToken,
+} from "./confirmation-token";
 
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = BuilderApiCapability;
@@ -95,6 +100,7 @@ export type PublicMcpOperation<Command extends string = string> = {
   writeNamespaces: readonly string[];
   invalidatesNamespaces: readonly string[];
   retryOnConflict: boolean;
+  requiresConfirm: boolean;
 };
 
 type ProjectSessionLike = {
@@ -1055,21 +1061,57 @@ const renderedAuditConfirmationInputProperties = {
   },
 } as const;
 
+const dryRunInputProperty = {
+  type: "boolean",
+  description:
+    "Plan this local-capable mutation without committing it. Returns the planned transaction in meta.session.transaction.",
+} as const;
+
+const destructiveConfirmationInputProperties = {
+  confirmDestructive: {
+    type: "boolean",
+    description:
+      "Commit the unchanged destructive plan. Requires the short-lived confirmationToken returned by the previous planned call.",
+  },
+  confirmationToken: {
+    type: "string",
+    description:
+      "Short-lived token returned with the unchanged destructive mutation plan.",
+  },
+} as const;
+
 const getMcpOperationInputSchema = (
   operation: PublicMcpOperation,
-  options: { includeRenderedAudit: boolean }
+  options: {
+    includeRenderedAudit: boolean;
+    schema?: ProjectSessionMcpInputSchema;
+  }
 ) => {
-  const schema = getOperationInputSchema(operation);
-  if (operation.command !== "audit" || options.includeRenderedAudit === false) {
+  const schema = options.schema ?? getOperationInputSchema(operation);
+  const properties = {
+    ...(schema.properties ?? {}),
+    ...(operation.method === "mutation" && operation.localCapable
+      ? { dryRun: dryRunInputProperty }
+      : {}),
+    ...(operation.requiresConfirm && operation.localCapable
+      ? destructiveConfirmationInputProperties
+      : {}),
+    ...(operation.command === "audit" && options.includeRenderedAudit
+      ? {
+          rendered: renderedAuditInputProperty,
+          ...renderedAuditConfirmationInputProperties,
+        }
+      : {}),
+  };
+  if (
+    Object.keys(properties).length ===
+    Object.keys(schema.properties ?? {}).length
+  ) {
     return schema;
   }
   return {
     ...schema,
-    properties: {
-      ...schema.properties,
-      rendered: renderedAuditInputProperty,
-      ...renderedAuditConfirmationInputProperties,
-    },
+    properties,
   } satisfies InputJsonSchema;
 };
 
@@ -1247,14 +1289,15 @@ export type ProjectSessionMcpTool = {
     writeNamespaces: readonly string[];
     invalidatesNamespaces: readonly string[];
     retryOnConflict: boolean;
+    requiresConfirm: boolean;
   };
 };
 
 type ProjectSessionMcpToolInput = Omit<ProjectSessionMcpTool, "annotations"> & {
   annotations: Omit<
     ProjectSessionMcpTool["annotations"],
-    "inputFields" | "requiredInputFields"
-  >;
+    "inputFields" | "requiredInputFields" | "requiresConfirm"
+  > & { requiresConfirm?: boolean };
 };
 
 const createProjectSessionMcpTool = (
@@ -1269,6 +1312,7 @@ const createProjectSessionMcpTool = (
       ...tool.annotations,
       inputFields,
       requiredInputFields,
+      requiresConfirm: tool.annotations.requiresConfirm ?? false,
     },
   };
 };
@@ -2292,6 +2336,19 @@ type McpStructuredError = {
   issues?: readonly SemanticValidationIssue[];
 };
 
+type DestructiveConfirmation = {
+  required: true;
+  operation: string;
+  token: string;
+  expiresAt: string;
+  summary: {
+    namespaces: string[];
+    changeCount: number;
+    patchCount: number;
+    patchOperations: Record<string, number>;
+  };
+};
+
 type ProjectSessionMcpStructuredContent =
   | {
       ok: true;
@@ -2299,6 +2356,7 @@ type ProjectSessionMcpStructuredContent =
       meta: {
         session?: ReturnType<typeof serializeProjectSessionMeta>;
         next?: string[];
+        confirmation?: DestructiveConfirmation;
       };
     }
   | {
@@ -2308,6 +2366,7 @@ type ProjectSessionMcpStructuredContent =
       meta: {
         session?: ReturnType<typeof serializeProjectSessionMeta>;
         next?: string[];
+        confirmation?: DestructiveConfirmation;
       };
     };
 
@@ -2373,13 +2432,12 @@ export const listProjectSessionMcpTools = (
       return createProjectSessionMcpTool({
         name: operation.command,
         description: override?.description ?? operation.description,
-        inputSchema:
-          override?.inputSchema ??
-          getMcpOperationInputSchema(operation, {
-            includeRenderedAudit:
-              options.includeScreenshot === true &&
-              options.includePreview === true,
-          }),
+        inputSchema: getMcpOperationInputSchema(operation, {
+          includeRenderedAudit:
+            options.includeScreenshot === true &&
+            options.includePreview === true,
+          schema: override?.inputSchema,
+        }),
         ...(operation.outputSchema === undefined
           ? {}
           : { outputSchema: getMcpOutputSchema(operation.outputSchema) }),
@@ -2395,6 +2453,7 @@ export const listProjectSessionMcpTools = (
           writeNamespaces: operation.writeNamespaces,
           invalidatesNamespaces: operation.invalidatesNamespaces,
           retryOnConflict: operation.retryOnConflict,
+          requiresConfirm: operation.requiresConfirm,
         },
       });
     }),
@@ -3293,6 +3352,7 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 const startupGuidance = [
   "For any multi-step authoring task, first call meta.guide with the user's objective and follow its complete workflow, including final audit, preview, and screenshot steps.",
   "Mutation responses can include meta.next. Treat those steps as required before reporting completion.",
+  "Every local-capable mutation exposes dryRun. Destructive delete, replace, and replace-all calls plan first; review the transaction, ask the user to confirm, then retry the unchanged call with confirmDestructive: true and meta.confirmation.token. Never retry blindly because changed input, version, or plan invalidates the short-lived token.",
   readProjectBuildDoc("mcp-startup-guidance").trim(),
 ].join("\n\n");
 const formatExpressionMethods = (methods: ReadonlySet<string>) =>
@@ -4845,8 +4905,7 @@ const isReadOnlyTool = (tool: ProjectSessionMcpTool) =>
     readOnlySessionTools.has(tool.name));
 
 const isDestructiveTool = (tool: ProjectSessionMcpTool) =>
-  tool.annotations.method === "mutation" ||
-  tool.annotations.invalidatesNamespaces.length > 0;
+  tool.annotations.requiresConfirm;
 
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
@@ -4925,12 +4984,74 @@ export const listProjectSessionMcpResources =
     },
   ];
 
+const destructiveConfirmationTtlMs = 5 * 60 * 1000;
+
+const getDestructiveConfirmationSignature = ({
+  operation,
+  input,
+  envelope,
+}: {
+  operation: string;
+  input: unknown;
+  envelope: ProjectSessionEnvelope;
+}) =>
+  JSON.stringify(
+    canonicalizeConfirmationValue({
+      operation,
+      input,
+      projectId: envelope.projectId,
+      buildId: envelope.buildId,
+      version: envelope.version,
+      payload: envelope.transaction?.payload,
+    })
+  );
+
+const getDestructivePlanSummary = (
+  envelope: ProjectSessionEnvelope
+): DestructiveConfirmation["summary"] => {
+  const changes = envelope.transaction?.payload ?? [];
+  const patches = changes.flatMap(({ patches }) => patches);
+  const patchOperations: Record<string, number> = {};
+  for (const patch of patches) {
+    patchOperations[patch.op] = (patchOperations[patch.op] ?? 0) + 1;
+  }
+  return {
+    namespaces: [...new Set(changes.map(({ namespace }) => namespace))],
+    changeCount: changes.length,
+    patchCount: patches.length,
+    patchOperations,
+  };
+};
+
+const createDestructiveConfirmation = async ({
+  operation,
+  signature,
+  envelope,
+}: {
+  operation: string;
+  signature: string;
+  envelope: ProjectSessionEnvelope;
+}): Promise<DestructiveConfirmation> => {
+  const { token, expiresAt } = await createConfirmationToken(
+    signature,
+    destructiveConfirmationTtlMs
+  );
+  return {
+    required: true,
+    operation,
+    token,
+    expiresAt: new Date(expiresAt).toISOString(),
+    summary: getDestructivePlanSummary(envelope),
+  };
+};
+
 const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
     verboseSession?: boolean;
     error?: { code: string; message: string };
     next?: string[];
+    confirmation?: DestructiveConfirmation;
   } = {}
 ): ProjectSessionMcpToolResult => {
   const meta = {
@@ -4938,6 +5059,9 @@ const toCallResult = (
       verbose: options.verboseSession,
     }),
     ...(options.next === undefined ? {} : { next: options.next }),
+    ...(options.confirmation === undefined
+      ? {}
+      : { confirmation: options.confirmation }),
   };
   const structuredContent: ProjectSessionMcpStructuredContent =
     options.error === undefined
@@ -5759,20 +5883,23 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (operation === undefined) {
         throw new Error(`Unknown MCP tool "${name}".`);
       }
-      const normalizedInput = await normalizeMcpOperationInput(name, input);
-      const isAuditInput = name === "audit" && isRecord(input);
+      const transportInput = getToolCallInput(input, operation.requiresConfirm);
+      const toolInput = transportInput.input;
+      dryRun = dryRun || transportInput.dryRun;
+      const normalizedInput = await normalizeMcpOperationInput(name, toolInput);
+      const isAuditInput = name === "audit" && isRecord(toolInput);
       if (
         isAuditInput &&
-        input.rendered !== undefined &&
-        typeof input.rendered !== "boolean"
+        toolInput.rendered !== undefined &&
+        typeof toolInput.rendered !== "boolean"
       ) {
         throw new Error("audit input.rendered must be a boolean.");
       }
       if (
         isAuditInput &&
-        input.routeExamples !== undefined &&
-        (Array.isArray(input.routeExamples) === false ||
-          input.routeExamples.some(
+        toolInput.routeExamples !== undefined &&
+        (Array.isArray(toolInput.routeExamples) === false ||
+          toolInput.routeExamples.some(
             (example) =>
               isRecord(example) === false ||
               typeof example.pageId !== "string" ||
@@ -5787,7 +5914,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           "audit input.routeExamples must contain { pageId, path } objects with concrete paths beginning with one slash."
         );
       }
-      const isRenderedAudit = isAuditInput && input.rendered === true;
+      const isRenderedAudit = isAuditInput && toolInput.rendered === true;
       const renderedOnlyInputFields = [
         "confirmLargeRun",
         "confirmationToken",
@@ -5795,7 +5922,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         "routeExamples",
       ] as const;
       const providedRenderedOnlyInput = renderedOnlyInputFields.find(
-        (field) => isAuditInput && input[field] !== undefined
+        (field) => isAuditInput && toolInput[field] !== undefined
       );
       if (isAuditInput && isRenderedAudit === false) {
         if (providedRenderedOnlyInput !== undefined) {
@@ -5806,23 +5933,23 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (
         isAuditInput &&
-        input.confirmLargeRun !== undefined &&
-        typeof input.confirmLargeRun !== "boolean"
+        toolInput.confirmLargeRun !== undefined &&
+        typeof toolInput.confirmLargeRun !== "boolean"
       ) {
         throw new Error("audit input.confirmLargeRun must be a boolean.");
       }
       if (
         isAuditInput &&
-        input.confirmationToken !== undefined &&
-        typeof input.confirmationToken !== "string"
+        toolInput.confirmationToken !== undefined &&
+        typeof toolInput.confirmationToken !== "string"
       ) {
         throw new Error("audit input.confirmationToken must be a string.");
       }
       if (
         isAuditInput &&
-        input.imageDomains !== undefined &&
-        (Array.isArray(input.imageDomains) === false ||
-          input.imageDomains.some(
+        toolInput.imageDomains !== undefined &&
+        (Array.isArray(toolInput.imageDomains) === false ||
+          toolInput.imageDomains.some(
             (domain) =>
               typeof domain !== "string" ||
               /^[a-z0-9.-]+(?::\d+)?$/i.test(domain) === false
@@ -5842,7 +5969,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           "Rendered audit is unavailable because this MCP host does not provide preview and screenshot capabilities."
         );
       }
-      if (isRenderedAudit && typeof input.cursor === "string") {
+      if (isRenderedAudit && typeof toolInput.cursor === "string") {
         throw new Error(
           "Rendered audit cannot be combined with cursor pagination. Run the rendered pass once without cursor."
         );
@@ -5851,7 +5978,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         operation,
         isAuditInput
           ? Object.fromEntries(
-              Object.entries(input).filter(
+              Object.entries(toolInput).filter(
                 ([key]) =>
                   key !== "rendered" &&
                   key !== "confirmLargeRun" &&
@@ -5862,11 +5989,72 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             )
           : normalizedInput
       );
-      const envelope = await executeOperation({
-        command: name as Command,
-        input: operationInput,
-        dryRun,
-      });
+      let envelope: ProjectSessionEnvelope;
+      if (operation.requiresConfirm) {
+        const plannedEnvelope = await executeOperation({
+          command: name as Command,
+          input: operationInput,
+          dryRun: true,
+        });
+        if (plannedEnvelope.transaction === undefined) {
+          return toCallResult(plannedEnvelope);
+        }
+        const signature = getDestructiveConfirmationSignature({
+          operation: name,
+          input: operationInput,
+          envelope: plannedEnvelope,
+        });
+        if (dryRun) {
+          return toCallResult(plannedEnvelope, {
+            confirmation: await createDestructiveConfirmation({
+              operation: name,
+              signature,
+              envelope: plannedEnvelope,
+            }),
+            next: [
+              "Review the planned result and transaction. To commit the unchanged destructive operation, retry with confirmDestructive: true and this confirmationToken before it expires.",
+            ],
+          });
+        }
+        const confirmationIsValid =
+          transportInput.confirmDestructive === true &&
+          (await validateConfirmationToken(
+            transportInput.confirmationToken,
+            signature
+          ));
+        if (confirmationIsValid === false) {
+          const confirmation = await createDestructiveConfirmation({
+            operation: name,
+            signature,
+            envelope: plannedEnvelope,
+          });
+          return toCallResult(plannedEnvelope, {
+            error: {
+              code:
+                transportInput.confirmDestructive === true
+                  ? "DESTRUCTIVE_CONFIRMATION_INVALID"
+                  : "DESTRUCTIVE_CONFIRMATION_REQUIRED",
+              message:
+                "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.",
+            },
+            confirmation,
+            next: [
+              "Do not retry blindly. Review meta.session.transaction and meta.confirmation.summary, ask the user to confirm, then retry the unchanged operation with confirmDestructive: true and meta.confirmation.token.",
+            ],
+          });
+        }
+        envelope = await executeOperation({
+          command: name as Command,
+          input: operationInput,
+          dryRun: false,
+        });
+      } else {
+        envelope = await executeOperation({
+          command: name as Command,
+          input: operationInput,
+          dryRun,
+        });
+      }
       if (name === "audit") {
         const auditedEnvelope = await augmentAuditWithRenderedChecks({
           envelope,
@@ -5875,17 +6063,17 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
               ? {
                   ...operationInput,
                   rendered: true,
-                  ...(input.confirmLargeRun === true
+                  ...(toolInput.confirmLargeRun === true
                     ? { confirmLargeRun: true }
                     : {}),
-                  ...(typeof input.confirmationToken === "string"
-                    ? { confirmationToken: input.confirmationToken }
+                  ...(typeof toolInput.confirmationToken === "string"
+                    ? { confirmationToken: toolInput.confirmationToken }
                     : {}),
-                  ...(Array.isArray(input.imageDomains)
-                    ? { imageDomains: input.imageDomains }
+                  ...(Array.isArray(toolInput.imageDomains)
+                    ? { imageDomains: toolInput.imageDomains }
                     : {}),
-                  ...(Array.isArray(input.routeExamples)
-                    ? { routeExamples: input.routeExamples }
+                  ...(Array.isArray(toolInput.routeExamples)
+                    ? { routeExamples: toolInput.routeExamples }
                     : {}),
                 }
               : operationInput,
@@ -5934,13 +6122,41 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   };
 };
 
-const getToolCallInput = (input: unknown) => {
-  if (isRecord(input) === false) {
-    return { input, dryRun: false };
+const getToolCallInput = (input: unknown, destructive = false) => {
+  if (isPlainRecord(input) === false) {
+    return {
+      input,
+      dryRun: false,
+      confirmDestructive: false,
+      confirmationToken: undefined,
+    };
   }
   const dryRun = input.dryRun === true || input["dry-run"] === true;
-  const { dryRun: _dryRun, "dry-run": _dashDryRun, ...rest } = input;
-  return { input: rest, dryRun };
+  const confirmDestructive = input.confirmDestructive === true;
+  const confirmationToken =
+    typeof input.confirmationToken === "string"
+      ? input.confirmationToken
+      : undefined;
+  const { dryRun: _dryRun, "dry-run": _dashDryRun, ...withoutDryRun } = input;
+  if (destructive) {
+    const {
+      confirmDestructive: _confirmDestructive,
+      confirmationToken: _confirmationToken,
+      ...operationInput
+    } = withoutDryRun;
+    return {
+      input: operationInput,
+      dryRun,
+      confirmDestructive,
+      confirmationToken,
+    };
+  }
+  return {
+    input: withoutDryRun,
+    dryRun,
+    confirmDestructive: false,
+    confirmationToken: undefined,
+  };
 };
 
 type ProjectSessionMcpErrorResult = {

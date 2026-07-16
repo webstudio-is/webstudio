@@ -243,7 +243,8 @@ const runtimeOperation = <
         writeNamespaces.includes("assets")),
     requiresConfirm:
       contract.kind === "mutation"
-        ? (contract.requiresConfirm ?? false)
+        ? (contract.requiresConfirm ??
+          isDestructiveRuntimeCommand(publicApi.command))
         : false,
     execute: ({ state, input, context }) => {
       const result = execute({
@@ -273,6 +274,11 @@ const api = (
   client: string,
   permit?: BuilderApiCapability
 ): RuntimeOperationPublicApi => ({ command, client, permit });
+
+export const isDestructiveRuntimeCommand = (command: string) =>
+  command.startsWith("delete-") ||
+  command.startsWith("replace-") ||
+  command === "set-redirects";
 
 const readContract = (
   readNamespaces: readonly BuilderNamespace[],
