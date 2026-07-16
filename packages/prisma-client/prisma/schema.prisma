@@ -45,10 +45,27 @@ model Asset {
   name             String
   filename         String?
   description      String?
+  folderId         String?
+  folder           AssetFolder?       @relation(fields: [folderId, projectId], references: [id, projectId], onDelete: NoAction)
   Project          Project[]
   DashboardProject DashboardProject[]
 
   @@id([id, projectId])
+}
+
+model AssetFolder {
+  id        String        @default(uuid())
+  projectId String
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  parentId  String?
+  parent    AssetFolder?  @relation("AssetFolderChildren", fields: [parentId, projectId], references: [id, projectId], onDelete: NoAction)
+  children  AssetFolder[] @relation("AssetFolderChildren")
+  assets    Asset[]
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@id([id, projectId])
+  @@index([projectId, parentId])
 }
 
 model User {
@@ -149,6 +166,7 @@ model Project {
   build                     Build[]
   isDeleted                 Boolean                      @default(false)
   files                     File[]
+  assetFolders              AssetFolder[]
   projectDomain             ProjectDomain[]
   authorizationToken        AuthorizationToken[]
   previewImageAsset         Asset?                       @relation(fields: [previewImageAssetId, id], references: [id, projectId])

@@ -75,6 +75,7 @@ export const assetUpdateInput = z.object({
         )
         .optional(),
       description: z.union([z.string(), z.null()]).optional(),
+      folderId: z.union([z.string().min(1), z.null()]).optional(),
     })
     .refine(
       (values) => Object.keys(values).length > 0,
@@ -564,8 +565,17 @@ export const formatAssetName = (asset: Pick<Asset, "name" | "filename">) => {
 export const getAssetDisplayFilename = (asset: Asset) =>
   asset.filename ?? asset.name.replace(/\.[^/.]+$/, "");
 
+const assertAssetFolderExists = (
+  assetFolders: BuilderState["assetFolders"],
+  folderId: string | undefined
+) => {
+  if (folderId !== undefined && assetFolders?.has(folderId) !== true) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Asset folder not found");
+  }
+};
+
 export const addAsset = (
-  state: Pick<BuilderState, "assets">,
+  state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetAddInput>,
   context: { projectId?: string }
 ) => {
@@ -579,6 +589,7 @@ export const addAsset = (
   if (assets.has(input.asset.id)) {
     return throwBuilderRuntimeError("CONFLICT", "Asset already exists");
   }
+  assertAssetFolderExists(state.assetFolders, input.asset.folderId);
   const asset: Asset = { ...input.asset, projectId: context.projectId };
   return createRuntimeMutation({
     payload: [
@@ -602,7 +613,7 @@ const createAssetDescriptionPatch = (
 });
 
 export const updateAsset = (
-  state: Pick<BuilderState, "assets">,
+  state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetUpdateInput>
 ) => {
   const assets = getRequiredAssets(state);
@@ -637,6 +648,21 @@ export const updateAsset = (
     asset.description !== input.values.description
   ) {
     patches.push(createAssetDescriptionPatch(asset, input.values.description));
+  }
+  if (input.values.folderId !== undefined) {
+    const folderId = input.values.folderId ?? undefined;
+    assertAssetFolderExists(state.assetFolders, folderId);
+    if (asset.folderId !== folderId) {
+      if (folderId === undefined) {
+        patches.push({ op: "remove", path: [asset.id, "folderId"] });
+      } else {
+        patches.push({
+          op: asset.folderId === undefined ? "add" : "replace",
+          path: [asset.id, "folderId"],
+          value: folderId,
+        });
+      }
+    }
   }
 
   return createRuntimeMutation({

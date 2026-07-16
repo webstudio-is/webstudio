@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { asset, type Assets } from "./assets";
+import type { AssetFolders } from "./asset-folders";
 import { dataSource, type DataSources } from "./data-sources";
 import { resource, type Resources } from "./resources";
 import { instance, instanceChild, type Instances } from "./instances";
@@ -40,6 +41,7 @@ export type WebstudioFragment = z.infer<typeof webstudioFragment>;
 export type WebstudioData = {
   pages: Pages;
   assets: Assets;
+  assetFolders?: AssetFolders;
   dataSources: DataSources;
   resources: Resources;
   instances: Instances;

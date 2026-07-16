@@ -71,6 +71,7 @@ export type Database = {
         Row: {
           description: string | null;
           filename: string | null;
+          folderId: string | null;
           id: string;
           name: string;
           projectId: string;
@@ -78,6 +79,7 @@ export type Database = {
         Insert: {
           description?: string | null;
           filename?: string | null;
+          folderId?: string | null;
           id: string;
           name: string;
           projectId: string;
@@ -85,17 +87,71 @@ export type Database = {
         Update: {
           description?: string | null;
           filename?: string | null;
+          folderId?: string | null;
           id?: string;
           name?: string;
           projectId?: string;
         };
         Relationships: [
           {
+            foreignKeyName: "Asset_folderId_projectId_fkey";
+            columns: ["folderId", "projectId"];
+            isOneToOne: false;
+            referencedRelation: "AssetFolder";
+            referencedColumns: ["id", "projectId"];
+          },
+          {
             foreignKeyName: "Asset_name_fkey";
             columns: ["name"];
             isOneToOne: false;
             referencedRelation: "File";
             referencedColumns: ["name"];
+          },
+        ];
+      };
+      AssetFolder: {
+        Row: {
+          createdAt: string;
+          id: string;
+          name: string;
+          parentId: string | null;
+          projectId: string;
+        };
+        Insert: {
+          createdAt?: string;
+          id?: string;
+          name: string;
+          parentId?: string | null;
+          projectId: string;
+        };
+        Update: {
+          createdAt?: string;
+          id?: string;
+          name?: string;
+          parentId?: string | null;
+          projectId?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "AssetFolder_parentId_projectId_fkey";
+            columns: ["parentId", "projectId"];
+            isOneToOne: false;
+            referencedRelation: "AssetFolder";
+            referencedColumns: ["id", "projectId"];
+          },
+          {
+            foreignKeyName: "AssetFolder_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "DashboardProject";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "AssetFolder_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "Project";
+            referencedColumns: ["id"];
           },
         ];
       };

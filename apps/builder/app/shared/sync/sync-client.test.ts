@@ -23,6 +23,7 @@ describe("getServerSyncState", () => {
       dataSources: "dataSources",
       resources: "resources",
       assets: "assets",
+      assetFolders: "assetFolders",
       marketplaceProduct: "marketplaceProduct",
       projectSettings: "projectSettings",
     } as unknown as LoadedBuilderData;
@@ -42,6 +43,7 @@ describe("getServerSyncState", () => {
         ["dataSources", "dataSources"],
         ["resources", "resources"],
         ["assets", "assets"],
+        ["assetFolders", "assetFolders"],
         ["projectSettings", "projectSettings"],
         ["marketplaceProduct", "marketplaceProduct"],
       ])

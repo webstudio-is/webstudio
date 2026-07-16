@@ -14,6 +14,10 @@ export type SortState = {
   order: SortOrder;
 };
 
+export type AssetManagerSelection =
+  | { type: "asset"; id: string }
+  | { type: "folder"; id: string };
+
 /**
  * Safely gets the asset format as a lowercase extension.
  */
@@ -161,4 +165,27 @@ export const findAssetIndex = (
     return -1;
   }
   return assetContainers.findIndex((item) => item.asset.id === assetId);
+};
+
+export const getAssetManagerSelectionIndex = (
+  items: AssetManagerSelection[],
+  selection: AssetManagerSelection | undefined
+) =>
+  selection === undefined
+    ? -1
+    : items.findIndex(
+        (item) => item.type === selection.type && item.id === selection.id
+      );
+
+export const isAssetManagerSelectionVisible = (
+  selection: AssetManagerSelection | undefined,
+  assetContainers: AssetContainer[],
+  folders: Array<{ id: string }>
+) => {
+  if (selection === undefined) {
+    return true;
+  }
+  return selection.type === "asset"
+    ? findAssetIndex(assetContainers, selection.id) !== -1
+    : folders.some(({ id }) => id === selection.id);
 };

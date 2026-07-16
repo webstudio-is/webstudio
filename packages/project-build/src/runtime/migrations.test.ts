@@ -49,6 +49,7 @@ describe("migrateLoadedData", () => {
       "dataSources",
       "resources",
       "assets",
+      "assetFolders",
       "breakpoints",
     ]);
   });

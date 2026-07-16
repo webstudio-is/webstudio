@@ -11,6 +11,10 @@ import {
   loadAssetsByProjectWithClient,
   patchAssetsWithClient,
 } from "./asset-patch-core";
+import {
+  deleteAssetFoldersWithClient,
+  patchAssetFoldersWithClient,
+} from "./folder-persistence";
 import { patchAssets } from "./patch";
 import type { Patch } from "immer";
 
@@ -32,6 +36,179 @@ const ownershipHandler = db.get("Project", ({ request }) => {
     return json({ id: url.searchParams.get("id")?.replace("eq.", "") });
   }
   return json(null);
+});
+
+describe("asset folder persistence", () => {
+  test("inserts parents before children", async () => {
+    const projectId = uid();
+    let inserted: Array<{ id: string }> = [];
+    server.use(
+      db.get("AssetFolder", () => json([])),
+      db.post("AssetFolder", async ({ request }) => {
+        inserted = (await request.json()) as Array<{ id: string }>;
+        return json(inserted);
+      })
+    );
+
+    await patchAssetFoldersWithClient(
+      { projectId, client: testContext.postgrest.client },
+      [
+        {
+          op: "add",
+          path: ["child"],
+          value: {
+            id: "child",
+            projectId,
+            name: "Child",
+            parentId: "parent",
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        },
+        {
+          op: "add",
+          path: ["parent"],
+          value: {
+            id: "parent",
+            projectId,
+            name: "Parent",
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        },
+      ]
+    );
+
+    expect(inserted.map(({ id }) => id)).toEqual(["parent", "child"]);
+  });
+
+  test("can defer folder deletion until assets are moved", async () => {
+    const projectId = uid();
+    let deleteCount = 0;
+    server.use(
+      db.get("AssetFolder", () =>
+        json([
+          {
+            id: "folder",
+            projectId,
+            name: "Folder",
+            parentId: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ])
+      ),
+      db.delete("AssetFolder", () => {
+        deleteCount += 1;
+        return json([{ id: "folder" }]);
+      })
+    );
+
+    const ids = await patchAssetFoldersWithClient(
+      { projectId, client: testContext.postgrest.client },
+      [{ op: "remove", path: ["folder"] }],
+      { deferDeletes: true }
+    );
+    expect(ids).toEqual(["folder"]);
+    expect(deleteCount).toBe(0);
+
+    await deleteAssetFoldersWithClient(
+      { projectId, ids },
+      testContext.postgrest.client
+    );
+    expect(deleteCount).toBe(1);
+  });
+
+  test("persists moving a nested folder to root as null", async () => {
+    const projectId = uid();
+    let updatedParentId: unknown = "not-updated";
+    server.use(
+      db.get("AssetFolder", () =>
+        json([
+          {
+            id: "parent",
+            projectId,
+            name: "Parent",
+            parentId: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+          {
+            id: "child",
+            projectId,
+            name: "Child",
+            parentId: "parent",
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ])
+      ),
+      db.post("AssetFolder", async ({ request }) => {
+        const [update] = (await request.json()) as Array<{
+          id: string;
+          name: string;
+          parentId: unknown;
+        }>;
+        updatedParentId = update.parentId;
+        return json([update]);
+      })
+    );
+
+    await patchAssetFoldersWithClient(
+      { projectId, client: testContext.postgrest.client },
+      [{ op: "remove", path: ["child", "parentId"] }]
+    );
+    expect(updatedParentId).toBeNull();
+  });
+
+  test("rejects folders that claim another project", async () => {
+    const projectId = uid();
+    server.use(db.get("AssetFolder", () => json([])));
+
+    await expect(
+      patchAssetFoldersWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [
+          {
+            op: "add",
+            path: ["folder"],
+            value: {
+              id: "folder",
+              projectId: "another-project",
+              name: "Folder",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          },
+        ]
+      )
+    ).rejects.toThrow("belongs to another project");
+  });
+
+  test("persists the normalized folder name returned by validation", async () => {
+    const projectId = uid();
+    let insertedName: string | undefined;
+    server.use(
+      db.get("AssetFolder", () => json([])),
+      db.post("AssetFolder", async ({ request }) => {
+        const rows = (await request.json()) as Array<{ name: string }>;
+        insertedName = rows[0]?.name;
+        return json(rows);
+      })
+    );
+
+    await patchAssetFoldersWithClient(
+      { projectId, client: testContext.postgrest.client },
+      [
+        {
+          op: "add",
+          path: ["folder"],
+          value: {
+            id: "folder",
+            projectId,
+            name: "  Media  ",
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        },
+      ]
+    );
+
+    expect(insertedName).toBe("Media");
+  });
 });
 
 const assetRow = {
@@ -150,6 +327,32 @@ describe("patchAssets (msw)", () => {
         filename: "renamed-photo.jpg",
       }),
     ]);
+  });
+
+  test("persists moving an asset to root as null", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId, folderId: "folder" };
+    let updatedFolderId: unknown = "not-updated";
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("Asset", async ({ request }) => {
+        updatedFolderId = ((await request.json()) as { folderId: unknown })
+          .folderId;
+        return json({
+          filename: localAssetRow.filename,
+          description: localAssetRow.description,
+          folderId: null,
+        });
+      })
+    );
+
+    await patchAssets(
+      { projectId },
+      [{ op: "remove", path: ["asset-1", "folderId"] }],
+      createContext()
+    );
+    expect(updatedFolderId).toBeNull();
   });
 
   test("does not update metadata when adding an existing asset", async () => {

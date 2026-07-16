@@ -133,6 +133,152 @@ describe("patchBuild", () => {
     expect(didLoadBuild).toBe(false);
   });
 
+  test("persists asset-folder namespace changes before accepting the build transaction", async () => {
+    let insertedFolders: unknown;
+    server.use(
+      db.get("AssetFolder", () => json([])),
+      db.post("AssetFolder", async ({ request }) => {
+        insertedFolders = await request.json();
+        return json(insertedFolders as never);
+      }),
+      db.patch("Build", () => empty({ headers: { "Content-Range": "*/1" } }))
+    );
+
+    const result = await patchLoadedBuild(
+      {
+        build: buildRow,
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "assetFolders",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["folder-1"],
+                    value: {
+                      id: "folder-1",
+                      projectId: "project-1",
+                      name: "Images",
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      },
+      createContext()
+    );
+
+    expect(result.status).toBe("ok");
+    expect(insertedFolders).toEqual([
+      {
+        id: "folder-1",
+        projectId: "project-1",
+        name: "Images",
+        parentId: null,
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+  });
+
+  test("deletes folder assets before deleting the folder", async () => {
+    const calls: string[] = [];
+    const assetRow = {
+      assetId: "asset-1",
+      projectId: "project-1",
+      filename: null,
+      description: null,
+      folderId: "folder-1",
+      file: {
+        name: "asset.pdf",
+        format: "pdf",
+        description: null,
+        size: 1,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        meta: "{}",
+        status: "UPLOADED",
+      },
+    };
+    server.use(
+      ownershipHandler,
+      db.get("AssetFolder", () =>
+        json([
+          {
+            id: "folder-1",
+            projectId: "project-1",
+            name: "Folder",
+            parentId: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ])
+      ),
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("name")) {
+          return json([]);
+        }
+        if (url.searchParams.has("id")) {
+          return json([
+            {
+              id: "asset-1",
+              projectId: "project-1",
+              name: "asset.pdf",
+              file: assetRow.file,
+            },
+          ]);
+        }
+        return json([assetRow]);
+      }),
+      db.patch("Project", () => empty({ status: 204 })),
+      db.delete("Asset", () => {
+        calls.push("asset-delete");
+        return empty({ status: 204 });
+      }),
+      db.patch("File", () => empty({ status: 204 })),
+      db.delete("AssetFolder", () => {
+        calls.push("folder-delete");
+        return json([{ id: "folder-1" }]);
+      }),
+      db.patch("Build", () => {
+        calls.push("build-update");
+        return empty({ headers: { "Content-Range": "*/1" } });
+      })
+    );
+
+    const result = await patchLoadedBuild(
+      {
+        build: buildRow,
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "assetFolders",
+                patches: [{ op: "remove", path: ["folder-1"] }],
+              },
+              {
+                namespace: "assets",
+                patches: [{ op: "remove", path: ["asset-1"] }],
+              },
+            ],
+          }),
+        ],
+      },
+      createContext()
+    );
+
+    expect(result.status).toBe("ok");
+    expect(calls).toEqual(["asset-delete", "folder-delete", "build-update"]);
+  });
+
   test("applies transactions, validates data, and updates build with optimistic version guard", async () => {
     let updatedBuild: unknown;
     server.use(

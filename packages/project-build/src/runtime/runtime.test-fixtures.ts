@@ -252,6 +252,17 @@ export const state = {
       },
     ],
   ]),
+  assetFolders: new Map([
+    [
+      "asset-folder",
+      {
+        id: "asset-folder",
+        projectId: "project",
+        name: "Media",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+  ]),
   breakpoints: new Map([
     ["base", { id: "base", label: "Base" }],
     ["desktop", { id: "desktop", label: "Desktop", minWidth: 1024 }],

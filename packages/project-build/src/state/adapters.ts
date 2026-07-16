@@ -13,6 +13,7 @@ import {
 import {
   getStyleDeclKey,
   type Asset,
+  type AssetFolder,
   type Breakpoint,
   type DataSource,
   type Instance,
@@ -57,6 +58,7 @@ export type BuilderBuildDataSnapshot = Partial<{
   dataSources: DataSource[];
   resources: Resource[];
   assets: Asset[];
+  assetFolders: AssetFolder[];
   breakpoints: Breakpoint[];
   marketplaceProduct: MarketplaceProduct;
   projectSettings: ProjectSettings;
@@ -76,6 +78,7 @@ export type BuilderCompactBuildDataSnapshot = Pick<
   | "marketplaceProduct"
 > & {
   assets?: Asset[];
+  assetFolders?: AssetFolder[];
   projectSettings?: ProjectSettings;
 };
 
@@ -111,7 +114,7 @@ const normalizeProjectSettings = (state: BuilderState) => {
 const setClonedBuilderStateValue = <Namespace extends BuilderNamespace>(
   state: BuilderState,
   namespace: Namespace,
-  value: BuilderStateValueByNamespace[Namespace]
+  value: BuilderStateValueByNamespace[Namespace] | SnapshotValue<Namespace>
 ) => {
   if (namespace === "pages") {
     state.pages = migratePages(serializePages(value as Pages));
@@ -121,27 +124,10 @@ const setClonedBuilderStateValue = <Namespace extends BuilderNamespace>(
     (state as Record<string, unknown>)[namespace] = structuredClone(value);
     return;
   }
-  (state as Record<string, unknown>)[namespace] = cloneMap(
-    value as Map<unknown, unknown>
-  );
-};
-
-const setClonedBuilderStateSnapshotValue = <Namespace extends BuilderNamespace>(
-  state: BuilderState,
-  namespace: Namespace,
-  value: SnapshotValue<Namespace>
-) => {
-  if (namespace === "pages") {
-    state.pages = migratePages(serializePages(value as Pages));
-    return;
-  }
-  if (namespace === "marketplaceProduct" || namespace === "projectSettings") {
-    (state as Record<string, unknown>)[namespace] = structuredClone(value);
-    return;
-  }
-  (state as Record<string, unknown>)[namespace] = cloneMapEntries(
-    value as readonly (readonly [unknown, unknown])[]
-  );
+  (state as Record<string, unknown>)[namespace] =
+    value instanceof Map
+      ? cloneMap(value as Map<unknown, unknown>)
+      : cloneMapEntries(value as readonly (readonly [unknown, unknown])[]);
 };
 
 export const createBuilderStateFromStores = (
@@ -170,7 +156,7 @@ export const createBuilderStateFromSnapshot = (
   for (const namespace of builderNamespaces) {
     const value = build[namespace];
     if (value !== undefined) {
-      setClonedBuilderStateSnapshotValue(
+      setClonedBuilderStateValue(
         state,
         namespace,
         value as SnapshotValue<typeof namespace>
@@ -234,6 +220,9 @@ export const createBuilderStateFromBuildData = (
   if (build.assets !== undefined) {
     snapshot.assets = mapEntriesById(build.assets);
   }
+  if (build.assetFolders !== undefined) {
+    snapshot.assetFolders = mapEntriesById(build.assetFolders);
+  }
   if (build.breakpoints !== undefined) {
     snapshot.breakpoints = mapEntriesById(build.breakpoints);
   }
@@ -261,6 +250,7 @@ export const createBuilderStateFromCompactBuild = (
     resources: build.resources,
     instances: build.instances,
     assets: build.assets,
+    assetFolders: build.assetFolders,
     marketplaceProduct: build.marketplaceProduct,
     projectSettings:
       build.projectSettings ?? createProjectSettingsFromPages(build.pages),

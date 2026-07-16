@@ -8,13 +8,14 @@ import {
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/server";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
-import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   findPageByIdOrPath,
   getAllPages,
   getStyleDeclKey,
   type Asset,
+  type AssetFolder,
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
@@ -35,9 +36,11 @@ class ProjectNotPublishedError extends Error {
 const serializeProjectBundle = ({
   build,
   assets,
+  assetFolders = [],
 }: {
   build: Build;
   assets: Asset[];
+  assetFolders?: AssetFolder[];
 }): ProjectBundle => {
   const page = findPageByIdOrPath("/", build.pages);
 
@@ -81,17 +84,19 @@ const serializeProjectBundle = ({
     page,
     pages: getAllPages(build.pages),
     assets: usedAssets,
+    assetFolders,
   };
 };
 
 const createProjectBundle = async (
   build: Build,
   context: AppContext
-): Promise<ProjectBundle> =>
-  serializeProjectBundle({
+): Promise<ProjectBundle> => {
+  return serializeProjectBundle({
     build,
-    assets: await loadAssetsByProject(build.projectId, context),
+    ...(await loadAssetDataByProject(build.projectId, context)),
   });
+};
 
 const loadProductionCanvasDataAndProject = async (
   buildId: string,

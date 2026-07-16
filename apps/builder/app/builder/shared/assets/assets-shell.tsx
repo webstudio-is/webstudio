@@ -10,12 +10,11 @@ import {
   Flex,
   ScrollArea,
   SearchField,
-  Text,
   theme,
 } from "@webstudio-is/design-system";
 import { acceptUploadType, validateFiles } from "./asset-upload";
 import { detectAssetType } from "@webstudio-is/sdk";
-import { NotFound } from "./not-found";
+import { AssetPanelState } from "./asset-panel-state";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
@@ -26,7 +25,6 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 import invariant from "tiny-invariant";
 import type { ContainsSource } from "@atlaskit/pragmatic-drag-and-drop/dist/types/public-utils/external/native-types";
 import { uploadAssets } from "./upload-assets";
-import { UploadIcon } from "@webstudio-is/icons";
 import {
   IDLE,
   isBlockedByBackdrop,
@@ -39,9 +37,13 @@ type AssetsShellProps = {
   filters?: JSX.Element;
   searchProps: ComponentProps<typeof SearchField>;
   children: JSX.Element;
+  footer?: JSX.Element;
   type: AssetType;
   accept?: string;
   isEmpty: boolean;
+  emptyMessage?: string;
+  emptyContent?: JSX.Element;
+  folderId?: string;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -57,7 +59,11 @@ export const AssetsShell = ({
   filters,
   searchProps,
   isEmpty,
+  emptyMessage = "Drop files here",
+  emptyContent,
   children,
+  footer,
+  folderId,
   type,
   accept,
 }: AssetsShellProps) => {
@@ -159,14 +165,14 @@ export const AssetsShell = ({
 
           // Upload each group with the correct type
           for (const [detectedType, filesOfType] of filesByType) {
-            uploadAssets(detectedType as AssetType, filesOfType);
+            uploadAssets(detectedType as AssetType, filesOfType, { folderId });
           }
 
-          uploadAssets(type, droppedUrls);
+          uploadAssets(type, droppedUrls, { folderId });
         },
       })
     );
-  }, [accept, containsByType, type]);
+  }, [accept, containsByType, folderId, type]);
 
   const dragState = Math.max(monitorState, dropTargetState);
 
@@ -178,6 +184,7 @@ export const AssetsShell = ({
         overflow: "hidden",
         paddingBlock: theme.panel.paddingBlock,
         flex: 1,
+        minHeight: 0,
         position: "relative",
       }}
     >
@@ -196,15 +203,38 @@ export const AssetsShell = ({
         {filters}
       </Flex>
       <Separator />
-      {isEmpty && <NotFound />}
-      <ScrollArea css={{ display: "flex", flexDirection: "column" }}>
-        {children}
-      </ScrollArea>
+      {isEmpty ? (
+        <Flex direction="column" css={{ flex: 1, minHeight: 0 }}>
+          {emptyContent}
+          <AssetPanelState
+            message={emptyMessage}
+            active={dragState === OVER}
+            framed={dragState === OVER}
+            description={
+              emptyMessage === "Drop files here"
+                ? "Drop files from anywhere into this panel."
+                : undefined
+            }
+          />
+        </Flex>
+      ) : (
+        <ScrollArea
+          css={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          {children}
+        </ScrollArea>
+      )}
+      {footer}
       <Flex
         css={{
           position: "absolute",
           inset: 0,
-          display: dragState !== IDLE ? "flex" : "none",
+          display: dragState !== IDLE && isEmpty === false ? "flex" : "none",
           backgroundColor: theme.colors.backgroundPanel,
           opacity: 0.85,
           color:
@@ -213,21 +243,12 @@ export const AssetsShell = ({
               : theme.colors.foregroundSubtle,
         }}
       >
-        <Flex
-          align="center"
-          justify="center"
-          css={{
-            position: "absolute",
-            inset: theme.spacing[4],
-            border: `2px dashed ${dragState === OVER ? theme.colors.foregroundMain : theme.colors.foregroundMoreSubtle}`,
-          }}
-        >
-          <Flex align={"center"} gap={1}>
-            <UploadIcon />
-
-            <Text variant={"regularBold"}>Drop files here</Text>
-          </Flex>
-        </Flex>
+        <AssetPanelState
+          message="Drop files here"
+          description="Drop files from anywhere into this panel."
+          active={dragState === OVER}
+          framed={dragState === OVER}
+        />
       </Flex>
     </Flex>
   );

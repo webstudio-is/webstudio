@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assetFolderId } from "./asset-folders";
 import { fontFormat, fontMeta } from "@webstudio-is/fonts";
 
 const assetId = z.string();
@@ -10,6 +11,7 @@ const baseAsset = {
   name: z.string(),
   filename: z.string().optional(),
   description: z.union([z.string().optional(), z.null()]),
+  folderId: assetFolderId.optional(),
   createdAt: z.string(),
 };
 

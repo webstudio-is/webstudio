@@ -1,5 +1,6 @@
 import type {
   Assets,
+  AssetFolders,
   Breakpoints,
   DataSources,
   Instances,
@@ -27,6 +28,7 @@ export type BuilderStateValueByNamespace = {
   dataSources: DataSources;
   resources: Resources;
   assets: Assets;
+  assetFolders: AssetFolders;
   breakpoints: Breakpoints;
   projectSettings: ProjectSettings;
   marketplaceProduct: MarketplaceProduct;

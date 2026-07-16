@@ -130,6 +130,23 @@ describe("detectAssetType", () => {
 });
 
 describe("uploadingFileDataToAsset", () => {
+  test("preserves the upload destination folder in the preview asset", () => {
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file: new File(["content"], "document.pdf", {
+        type: "application/pdf",
+      }),
+      assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
+      type: "file",
+      objectURL: "blob:test",
+      folderId: "folder-id",
+    });
+
+    expect(result.folderId).toBe("folder-id");
+  });
+
   test("extracts format from MIME type for font with valid MIME", () => {
     const file = new File(["content"], "InterVariable.woff2", {
       type: "font/woff2",

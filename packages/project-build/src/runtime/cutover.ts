@@ -269,6 +269,16 @@ export const builderRuntimeCutoverManifests = [
     callers: ["MCP/CLI font discovery"] as const,
   },
   {
+    family: "asset-folder-operations",
+    operationIds: [
+      "assetFolders.list",
+      "assetFolders.create",
+      "assetFolders.update",
+      "assetFolders.delete",
+    ] as const,
+    callers: ["appRouter.api.assetFolders", "Builder asset manager"] as const,
+  },
+  {
     family: "asset-reference-operations",
     operationIds: [
       "assets.list",

@@ -6,7 +6,8 @@ vi.mock("~/shared/fetch.client", () => ({
   fetch: vi.fn(),
 }));
 
-const { createUploadTicket, deduplicateAssetName, uploadAsset } = __testing__;
+const { createUploadTicket, deduplicateAssetName, getFilesData, uploadAsset } =
+  __testing__;
 const fetchMock = vi.mocked(fetch);
 
 describe("upload-assets", () => {
@@ -59,6 +60,20 @@ describe("upload-assets", () => {
 
     expect(onCompleted).not.toHaveBeenCalled();
     expect(onError).toHaveBeenCalledWith("network down");
+  });
+
+  test("keeps the selected folder throughout upload preparation", async () => {
+    const [fileData] = await getFilesData(
+      "image",
+      [new URL("https://example.com/image.png")],
+      "folder-id"
+    );
+
+    expect(fileData).toMatchObject({
+      source: "url",
+      folderId: "folder-id",
+      url: "https://example.com/image.png",
+    });
   });
 
   describe("deduplicateAssetName", () => {

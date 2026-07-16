@@ -131,6 +131,7 @@ export type BuildPatchUpdateResult =
       update?: Database["public"]["Tables"]["Build"]["Update"];
       nextVersion: number;
       assetPatches: Patch[][];
+      assetFolderPatches: Patch[][];
       previewImageAssetId?: string | null;
     }
   | { status: "version_mismatched"; errors: string }
@@ -165,7 +166,12 @@ export const createBuildPatchUpdate = async ({
   const serverVersion = build.version;
   if (clientVersion !== serverVersion) {
     if (lastTransactionId === build.lastTransactionId) {
-      return { status: "ok", assetPatches: [], nextVersion: serverVersion };
+      return {
+        status: "ok",
+        assetPatches: [],
+        assetFolderPatches: [],
+        nextVersion: serverVersion,
+      };
     }
 
     return singlePlayerVersionMismatchResult;
@@ -195,6 +201,7 @@ export const createBuildPatchUpdate = async ({
   const touchedStyleSources = createTouchedKeys();
   const touchedStyleSourceSelections = createTouchedKeys();
   const assetPatches: Patch[][] = [];
+  const assetFolderPatches: Patch[][] = [];
 
   for (const transaction of transactions) {
     for (const change of transaction.payload) {
@@ -265,6 +272,11 @@ export const createBuildPatchUpdate = async ({
 
       if (namespace === "assets") {
         assetPatches.push(patches);
+        continue;
+      }
+
+      if (namespace === "assetFolders") {
+        assetFolderPatches.push(patches);
         continue;
       }
 
@@ -442,6 +454,7 @@ export const createBuildPatchUpdate = async ({
   return {
     status: "ok",
     assetPatches,
+    assetFolderPatches,
     update,
     nextVersion: clientVersion + 1,
     previewImageAssetId,

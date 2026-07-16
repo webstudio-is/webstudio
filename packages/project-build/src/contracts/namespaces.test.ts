@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { builderNamespaces, webstudioDataNamespaces } from "./namespaces";
+import {
+  builderNamespaces,
+  pageCopyNamespaces,
+  webstudioDataNamespaces,
+} from "./namespaces";
 
 test("defines the shared builder namespace catalog", () => {
   expect(webstudioDataNamespaces).toEqual([
@@ -12,6 +16,7 @@ test("defines the shared builder namespace catalog", () => {
     "dataSources",
     "resources",
     "assets",
+    "assetFolders",
     "breakpoints",
   ]);
   expect(builderNamespaces).toEqual([
@@ -24,8 +29,17 @@ test("defines the shared builder namespace catalog", () => {
     "dataSources",
     "resources",
     "assets",
+    "assetFolders",
     "breakpoints",
     "projectSettings",
     "marketplaceProduct",
   ]);
+  expect(pageCopyNamespaces).not.toContain("assetFolders");
+  expect(new Set(pageCopyNamespaces)).toEqual(
+    new Set(
+      webstudioDataNamespaces.filter(
+        (namespace) => namespace !== "assetFolders"
+      )
+    )
+  );
 });

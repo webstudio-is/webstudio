@@ -1941,7 +1941,9 @@ describe("builder runtime registry", () => {
     for (const operation of builderRuntimeOperations) {
       expect(operation.requiresAssets).toBe(
         operation.readNamespaces.includes("assets") ||
-          operation.writeNamespaces.includes("assets")
+          operation.writeNamespaces.includes("assets") ||
+          operation.readNamespaces.includes("assetFolders") ||
+          operation.writeNamespaces.includes("assetFolders")
       );
     }
     for (const operation of builderRuntimeOperations.filter((operation) =>
@@ -2153,6 +2155,9 @@ describe("builder runtime registry", () => {
       ["resources.upsert", {}],
       ["resources.upsertProp", {}],
       ["resources.delete", {}],
+      ["assetFolders.create", {}],
+      ["assetFolders.update", {}],
+      ["assetFolders.delete", {}],
       ["assets.update", {}],
       ["assets.setImageDescriptions", {}],
       ["assets.add", {}],
@@ -2425,6 +2430,10 @@ describe("builder runtime registry", () => {
         },
       ],
       ["resources.delete", { resourceId: "resource", force: true }],
+      [
+        "assetFolders.update",
+        { folderId: "asset-folder", values: { name: "Updated Media" } },
+      ],
       [
         "assets.update",
         {

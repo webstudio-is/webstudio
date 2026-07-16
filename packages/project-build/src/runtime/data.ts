@@ -2092,6 +2092,7 @@ export const createWebstudioDataFromBuild = ({
 }): WebstudioData => ({
   pages: structuredClone(build.pages),
   assets: new Map(assets.map(getClonedPair)),
+  assetFolders: new Map(),
   instances: new Map(getBuildItems(build.instances).map(getClonedPair)),
   props: new Map(getBuildItems(build.props).map(getClonedPair)),
   dataSources: new Map(getBuildItems(build.dataSources).map(getClonedPair)),

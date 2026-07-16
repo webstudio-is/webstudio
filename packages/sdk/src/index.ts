@@ -1,4 +1,5 @@
 export * from "./schema/assets";
+export * from "./schema/asset-folders";
 export * from "./schema/pages";
 export * from "./schema/instances";
 export * from "./schema/data-sources";
@@ -14,6 +15,7 @@ export * from "./schema/prop-meta";
 export * from "./schema/component-meta";
 
 export * from "./assets";
+export * from "./asset-folder-utils";
 export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";

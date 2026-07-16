@@ -21,7 +21,7 @@ export const validateFiles = (files: File[]) => {
   return files.filter((file) => file.size <= maxSize);
 };
 
-const useUpload = () => {
+const useUpload = (folderId?: string) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {
@@ -44,7 +44,7 @@ const useUpload = () => {
 
     // Upload each group with the correct type
     for (const [detectedType, filesOfType] of filesByType) {
-      uploadAssets(detectedType, filesOfType);
+      uploadAssets(detectedType, filesOfType, { folderId });
     }
 
     form.reset();
@@ -105,10 +105,11 @@ export const acceptUploadType = (
 type AssetUploadProps = {
   type: AssetType;
   accept?: string;
+  folderId?: string;
 };
 
-const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
-  const { inputRef, onChange } = useUpload();
+const EnabledAssetUpload = ({ accept, type, folderId }: AssetUploadProps) => {
+  const { inputRef, onChange } = useUpload(folderId);
 
   return (
     <form onChange={onChange}>
@@ -131,13 +132,15 @@ const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
   );
 };
 
-export const AssetUpload = ({ type, accept }: AssetUploadProps) => {
+export const AssetUpload = ({ type, accept, folderId }: AssetUploadProps) => {
   const authPermit = useStore($authPermit);
 
   if (authPermit !== "view") {
     // Split into a separate component to avoid using `useUpload` hook unnecessarily
     // (It's hard to mock this hook in storybook)
-    return <EnabledAssetUpload type={type} accept={accept} />;
+    return (
+      <EnabledAssetUpload type={type} accept={accept} folderId={folderId} />
+    );
   }
 
   return (

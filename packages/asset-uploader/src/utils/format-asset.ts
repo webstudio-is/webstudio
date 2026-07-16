@@ -6,12 +6,14 @@ export const formatAsset = ({
   projectId,
   filename,
   description,
+  folderId,
   file,
 }: {
   assetId: string;
   projectId: string;
   filename: string | null;
   description: string | null;
+  folderId?: string | null;
   file: {
     name: string;
     format: string;
@@ -23,17 +25,21 @@ export const formatAsset = ({
 }): Asset => {
   const isFont = FONT_FORMATS.has(file.format as FontFormat);
   const parsedMeta = JSON.parse(file.meta);
+  const base = {
+    id: assetId,
+    name: file.name,
+    projectId,
+    filename: filename ?? undefined,
+    description: description ?? undefined,
+    folderId: folderId ?? undefined,
+    size: file.size,
+    createdAt: file.createdAt,
+  };
 
   if (isFont) {
     return {
-      id: assetId,
-      name: file.name,
-      projectId,
-      filename: filename ?? undefined,
-      description: description ?? undefined,
-      size: file.size,
+      ...base,
       type: "font",
-      createdAt: file.createdAt,
       format: file.format as FontFormat,
       meta: fontMeta.parse(parsedMeta),
     };
@@ -52,30 +58,18 @@ export const formatAsset = ({
 
   if (isImage) {
     return {
-      id: assetId,
-      name: file.name,
-      projectId,
-      filename: filename ?? undefined,
-      description: description ?? undefined,
-      size: file.size,
+      ...base,
       type: "image",
       format: file.format,
-      createdAt: file.createdAt,
       meta: imageMeta.parse(parsedMeta),
     };
   }
 
   // Default to file type for everything else (including videos)
   return {
-    id: assetId,
-    name: file.name,
-    projectId,
-    filename: filename ?? undefined,
-    description: description ?? undefined,
-    size: file.size,
+    ...base,
     type: "file",
     format: file.format,
-    createdAt: file.createdAt,
     meta: {},
   };
 };

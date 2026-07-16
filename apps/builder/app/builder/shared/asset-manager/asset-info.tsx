@@ -74,6 +74,9 @@ import {
   formatAssetName,
   parseAssetName,
 } from "@webstudio-is/project-build/runtime";
+import { AssetFolderSelector } from "./asset-folder-selector";
+import { moveAssetToFolder } from "./asset-folder-actions";
+import { assetInfoTriggerVisibilityValue } from "./asset-thumbnail-card";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -342,6 +345,10 @@ const AssetInfoContent = ({
     }
   );
 
+  const moveToFolder = (newFolderId: string | undefined) => {
+    moveAssetToFolder(asset.id, newFolderId);
+  };
+
   const authPermit = useStore($authPermit);
   const replaceInputRef = useRef<HTMLInputElement>(null);
 
@@ -460,6 +467,15 @@ const AssetInfoContent = ({
       </Grid>
 
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <AssetFolderSelector
+          value={asset.folderId}
+          onChange={moveToFolder}
+          rootLabel="Folder"
+          disabled={authPermit === "view"}
+        />
+      </Grid>
+
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
         <Label htmlFor="asset-manager-id">ID</Label>
         <InputField
           id="asset-manager-id"
@@ -571,12 +587,6 @@ const AssetInfoContent = ({
   );
 };
 
-const triggerVisibilityVar = `--ws-asset-info-trigger-visibility`;
-
-export const assetInfoCssVars = ({ show }: { show: boolean }) => ({
-  [triggerVisibilityVar]: show ? "visible" : "hidden",
-});
-
 export const AssetInfo = ({ asset }: { asset: Asset }) => {
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
@@ -588,7 +598,7 @@ export const AssetInfo = ({ asset }: { asset: Asset }) => {
             title="Options"
             tabIndex={-1}
             css={{
-              visibility: `var(${triggerVisibilityVar}, hidden)`,
+              visibility: assetInfoTriggerVisibilityValue,
               position: "absolute",
               color: theme.colors.backgroundIconSubtle,
               top: theme.spacing[3],

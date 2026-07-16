@@ -22,7 +22,7 @@ import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
-import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/index.server";
 import {
   checkProjectBuildPermissionInput,
   importProjectBundleInput,
@@ -230,13 +230,15 @@ export const loadBuilderDataByProjectId = async (
     throw new Error("Project must have project userId defined");
   }
 
-  const build = await loadDevBuildByProjectId(ctx, project.id);
-  const assets = await loadAssetsByProject(project.id, ctx);
+  const [build, assetData] = await Promise.all([
+    loadDevBuildByProjectId(ctx, project.id),
+    loadAssetDataByProject(project.id, ctx),
+  ]);
 
   return {
     ...build,
     pages: serializePages(build.pages),
-    assets,
+    ...assetData,
     project,
     publisherHost: env.PUBLISHER_HOST,
   };

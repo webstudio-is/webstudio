@@ -263,7 +263,9 @@ describe("asset runtime operations", () => {
 
   test("expands asset descriptions only in verbose output", () => {
     const asset = imageAsset("described");
-    asset.description = `Team collaborating around a whiteboard. ${"Detailed visual context. ".repeat(80)}`;
+    asset.description = `Team collaborating around a whiteboard. ${"Detailed visual context. ".repeat(
+      80
+    )}`;
     const assetState = { ...state, assets: new Map([[asset.id, asset]]) };
     const compact = listAssets(assetState);
     const verbose = listAssets(assetState, { verbose: true });
@@ -962,6 +964,45 @@ describe("addAsset", () => {
       )
     ).toThrow("A configured project is required to add an asset");
   });
+
+  test("adds an asset to an existing folder", () => {
+    const result = addAsset(
+      {
+        assets: new Map(),
+        assetFolders: new Map([
+          [
+            "folder",
+            {
+              id: "folder",
+              projectId: "project",
+              name: "Folder",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        ]),
+      },
+      { asset: { ...assetInput, folderId: "folder" } },
+      { projectId: "project" }
+    );
+
+    expect(result.payload[0]?.patches).toEqual([
+      {
+        op: "add",
+        path: ["asset-1"],
+        value: { ...assetInput, folderId: "folder", projectId: "project" },
+      },
+    ]);
+  });
+
+  test("rejects adding an asset to a missing folder", () => {
+    expect(() =>
+      addAsset(
+        { assets: new Map(), assetFolders: new Map() },
+        { asset: { ...assetInput, folderId: "missing" } },
+        { projectId: "project" }
+      )
+    ).toThrow("Asset folder not found");
+  });
 });
 
 test("creates asset delete payload", () => {
@@ -1054,6 +1095,46 @@ describe("updateAsset", () => {
         }
       )
     ).toThrow("Filename already used");
+  });
+
+  test("moves an asset into an existing folder", () => {
+    const result = updateAsset(
+      {
+        assets: new Map([["asset-1", imageAsset("asset-1")]]),
+        assetFolders: new Map([
+          [
+            "folder",
+            {
+              id: "folder",
+              projectId: "project",
+              name: "Folder",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        ]),
+      },
+      { assetId: "asset-1", values: { folderId: "folder" } }
+    );
+
+    expect(result.payload[0]?.patches).toEqual([
+      {
+        op: "add",
+        path: ["asset-1", "folderId"],
+        value: "folder",
+      },
+    ]);
+  });
+
+  test("rejects moving an asset into a missing folder", () => {
+    expect(() =>
+      updateAsset(
+        {
+          assets: new Map([["asset-1", imageAsset("asset-1")]]),
+          assetFolders: new Map(),
+        },
+        { assetId: "asset-1", values: { folderId: "missing" } }
+      )
+    ).toThrow("Asset folder not found");
   });
 });
 

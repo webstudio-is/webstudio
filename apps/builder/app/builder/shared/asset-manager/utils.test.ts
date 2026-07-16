@@ -6,6 +6,8 @@ import {
   calculateFormatCounts,
   filterAndSortAssets,
   findAssetIndex,
+  getAssetManagerSelectionIndex,
+  isAssetManagerSelectionVisible,
   sortAssets,
   getAssetFormat,
   type SortState,
@@ -234,6 +236,58 @@ describe("findAssetIndex", () => {
 
   test("finds last asset", () => {
     expect(findAssetIndex(containers, "3")).toBe(2);
+  });
+});
+
+describe("asset manager selection", () => {
+  const first = createAssetContainer(
+    "first",
+    "first.png",
+    "png",
+    "image",
+    "2024-01-01"
+  );
+  const second = createAssetContainer(
+    "second",
+    "second.png",
+    "png",
+    "image",
+    "2024-01-02"
+  );
+
+  test("tracks mixed folder and asset selections by id", () => {
+    const folder = { type: "folder", id: "folder" } as const;
+    const firstAsset = { type: "asset", id: first.asset.id } as const;
+    const secondAsset = { type: "asset", id: second.asset.id } as const;
+    expect(
+      getAssetManagerSelectionIndex(
+        [folder, firstAsset, secondAsset],
+        secondAsset
+      )
+    ).toBe(2);
+    expect(
+      getAssetManagerSelectionIndex(
+        [secondAsset, folder, firstAsset],
+        secondAsset
+      )
+    ).toBe(0);
+  });
+
+  test("detects selections hidden by filtering", () => {
+    expect(
+      isAssetManagerSelectionVisible(
+        { type: "asset", id: "second" },
+        [first],
+        []
+      )
+    ).toBe(false);
+    expect(
+      isAssetManagerSelectionVisible(
+        { type: "folder", id: "nested" },
+        [],
+        [{ id: "sibling" }]
+      )
+    ).toBe(false);
   });
 });
 
