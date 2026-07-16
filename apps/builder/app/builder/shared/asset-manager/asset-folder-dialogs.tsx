@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Box,
@@ -13,28 +13,32 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { findAssetFolderByName, type AssetFolder } from "@webstudio-is/sdk";
+import {
+  createAssetFolderHierarchy,
+  type AssetFolder,
+} from "@webstudio-is/sdk";
 import { TrashIcon } from "@webstudio-is/icons";
 import { $assetFolders } from "~/shared/sync/data-stores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { AssetFolderSelector } from "./asset-folder-selector";
+import {
+  createAssetFolder,
+  deleteAssetFolder,
+  saveAssetFolder,
+} from "./asset-folder-actions";
 
-const isDuplicateName = ({
-  name,
-  parentId,
-  ignoredId,
-  folders,
-}: {
+type AssetFolderFormValues = {
   name: string;
   parentId: string | undefined;
-  ignoredId?: string;
-  folders: ReturnType<typeof $assetFolders.get>;
-}) =>
-  findAssetFolderByName(folders, {
-    name,
-    parentId,
-    excludeIds: ignoredId === undefined ? undefined : new Set([ignoredId]),
-  }) !== undefined;
+};
+
+const runAndClose = (
+  action: () => unknown,
+  onOpenChange: (open: boolean) => void
+) => {
+  if (action() !== undefined) {
+    onOpenChange(false);
+  }
+};
 
 const AssetFolderForm = ({
   id,
@@ -53,9 +57,13 @@ const AssetFolderForm = ({
   excludedFolderId?: string;
   submitLabel: string;
   secondaryAction?: ReactNode;
-  onSubmit: (values: { name: string; parentId: string | undefined }) => void;
+  onSubmit: (values: AssetFolderFormValues) => void;
 }) => {
   const folders = useStore($assetFolders);
+  const hierarchy = useMemo(
+    () => createAssetFolderHierarchy(folders),
+    [folders]
+  );
   const [name, setName] = useState(initialName);
   const [parentId, setParentId] = useState(initialParentId);
 
@@ -67,12 +75,15 @@ const AssetFolderForm = ({
   }, [initialName, initialParentId, open]);
 
   const normalizedName = name.trim();
-  const duplicate = isDuplicateName({
-    name,
-    parentId,
-    ignoredId: excludedFolderId,
-    folders,
-  });
+  const duplicate =
+    hierarchy.findByName({
+      name,
+      parentId,
+      excludeIds:
+        excludedFolderId === undefined
+          ? undefined
+          : new Set([excludedFolderId]),
+    }) !== undefined;
   const canSubmit = normalizedName.length > 0 && duplicate === false;
   const submit = () => {
     if (canSubmit) {
@@ -122,24 +133,13 @@ export const CreateAssetFolderDialog = ({
   open,
   onOpenChange,
   currentFolderId,
-  onCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentFolderId: string | undefined;
-  onCreated?: (folderId: string) => void;
 }) => {
-  const create = (values: { name: string; parentId: string | undefined }) => {
-    const result = executeRuntimeMutation({
-      id: "assetFolders.create",
-      input: values,
-    });
-    const folderId = result?.result.folderId;
-    if (folderId !== undefined) {
-      onCreated?.(folderId);
-      onOpenChange(false);
-    }
-  };
+  const create = (values: AssetFolderFormValues) =>
+    runAndClose(() => createAssetFolder(values), onOpenChange);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -174,28 +174,11 @@ export const AssetFolderSettingsDialog = ({
     }
   }, [open]);
 
-  const save = (values: { name: string; parentId: string | undefined }) => {
-    const result = executeRuntimeMutation({
-      id: "assetFolders.update",
-      input: {
-        folderId: folder.id,
-        values: { name: values.name, parentId: values.parentId ?? null },
-      },
-    });
-    if (result !== undefined) {
-      onOpenChange(false);
-    }
-  };
+  const save = (values: AssetFolderFormValues) =>
+    runAndClose(() => saveAssetFolder(folder.id, values), onOpenChange);
 
-  const remove = () => {
-    const result = executeRuntimeMutation({
-      id: "assetFolders.delete",
-      input: { folderId: folder.id },
-    });
-    if (result !== undefined) {
-      onOpenChange(false);
-    }
-  };
+  const remove = () =>
+    runAndClose(() => deleteAssetFolder(folder.id), onOpenChange);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

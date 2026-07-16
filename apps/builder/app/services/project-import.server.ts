@@ -9,7 +9,10 @@ import {
   serializeStyles,
   serializeStyleSourceSelections,
 } from "@webstudio-is/project-build/persistence";
-import { createAssetFolderRows } from "@webstudio-is/asset-uploader/index.server";
+import {
+  createAssetFolderRows,
+  createAssetRows,
+} from "@webstudio-is/asset-uploader/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
   migratePages,
@@ -29,6 +32,7 @@ import {
 } from "@webstudio-is/protocol";
 import {
   getHomePage,
+  normalizeAssetFolderData,
   assetFolders as assetFoldersSchema,
   type Asset,
   type AssetFolder,
@@ -150,24 +154,19 @@ const assertImportedAssets = (assets: Asset[]) => {
   assertImportedAssetNames(assets);
 };
 
-const assertImportedAssetFolders = (
+const normalizeImportedAssetFolderData = (
   folders: AssetFolder[],
   assets: Asset[]
-): AssetFolder[] => {
+) => {
   const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
   if (folderMap.size !== folders.length) {
     throw new Error("Imported asset folder id is duplicated.");
   }
   const validatedFolders = assetFoldersSchema.parse(folderMap);
-  for (const asset of assets) {
-    if (
-      asset.folderId !== undefined &&
-      folderMap.has(asset.folderId) === false
-    ) {
-      throw new Error(`Imported asset folder is missing: ${asset.folderId}`);
-    }
-  }
-  return Array.from(validatedFolders.values());
+  return normalizeAssetFolderData({
+    assets,
+    folders: Array.from(validatedFolders.values()),
+  });
 };
 
 const assertImportedAssetFilesUploaded = async ({
@@ -272,27 +271,11 @@ const replaceProjectAssetRows = async ({
 
   const insertedAssets = await ctx.postgrest.client
     .from("Asset")
-    .insert(createImportedAssetRows({ assets, projectId }));
+    .insert(createAssetRows(assets, projectId));
   if (insertedAssets.error) {
     throw insertedAssets.error;
   }
 };
-
-const createImportedAssetRows = ({
-  assets,
-  projectId,
-}: {
-  assets: Asset[];
-  projectId: string;
-}) =>
-  assets.map((asset) => ({
-    id: asset.id,
-    projectId,
-    name: asset.name,
-    filename: asset.filename ?? null,
-    description: asset.description ?? null,
-    folderId: asset.folderId ?? null,
-  }));
 
 const updateProjectPreviewImage = async ({
   assetId,
@@ -343,13 +326,11 @@ export const importPublishedProjectBundle = async (
   const nextVersion = build.version + 1;
 
   assertImportedAssets(data.assets);
-  const importedAssetFolders = assertImportedAssetFolders(
-    data.assetFolders ?? [],
-    data.assets
-  );
+  const { assets: importedAssets, folders: importedAssetFolders } =
+    normalizeImportedAssetFolderData(data.assetFolders ?? [], data.assets);
 
   await assertImportedAssetFilesUploaded({
-    assets: data.assets,
+    assets: importedAssets,
     ctx,
     projectId,
   });
@@ -379,7 +360,7 @@ export const importPublishedProjectBundle = async (
   }
 
   await replaceProjectAssetRows({
-    assets: data.assets,
+    assets: importedAssets,
     assetFolders: importedAssetFolders,
     ctx,
     projectId,
@@ -397,11 +378,10 @@ export const importPublishedProjectBundle = async (
 export const __testing__ = {
   assertProjectBuildPermit,
   assertBundleVersion,
-  createImportedAssetRows,
   createBuildImportUpdate,
   getImportedPreviewImageAssetId,
   assertImportedAssetNames,
   assertImportedAssets,
-  assertImportedAssetFolders,
+  normalizeImportedAssetFolderData,
   assertImportedAssetFilesUploaded,
 };

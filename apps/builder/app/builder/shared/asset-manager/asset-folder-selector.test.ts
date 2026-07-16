@@ -1,17 +1,12 @@
 import { describe, expect, test } from "vitest";
-import type { AssetFolder, AssetFolders } from "@webstudio-is/sdk";
 import { createAssetFolderSelectorLevels } from "./asset-folder-selector";
+import {
+  createAssetFolderFixture,
+  createAssetFoldersFixture as folders,
+} from "./asset-folder.test-fixtures";
 
-const folder = (id: string, parentId?: string): AssetFolder => ({
-  id,
-  projectId: "project",
-  name: id,
-  parentId,
-  createdAt: "2026-01-01T00:00:00.000Z",
-});
-
-const folders = (...items: AssetFolder[]): AssetFolders =>
-  new Map(items.map((item) => [item.id, item]));
+const folder = (id: string, parentId?: string) =>
+  createAssetFolderFixture({ id, parentId });
 
 describe("asset folder selector levels", () => {
   const values = folders(
@@ -61,7 +56,6 @@ describe("asset folder selector levels", () => {
       rootLabel: "Parent folder",
     });
 
-    expect(level.label).toBe("Parent folder");
     expect(level.ariaLabel).toBe("Parent folder");
   });
 
@@ -73,7 +67,6 @@ describe("asset folder selector levels", () => {
 
     expect(level.selected).toEqual({
       label: "No folder",
-      value: "root:",
       folderId: undefined,
     });
   });

@@ -16,6 +16,7 @@ import {
   attachDesignToken,
   bindProps,
   cloneInstance,
+  createAssetFolder,
   createBreakpoint,
   createPageFromTemplate,
   createDesignTokens,
@@ -29,6 +30,7 @@ import {
   createVariable,
   deleteDesignTokenStyles,
   deleteCssVariables,
+  deleteAssetFolder,
   deleteAssets,
   deleteBreakpoint,
   deleteDomain,
@@ -61,6 +63,7 @@ import {
   importProjectBundle,
   importProjectBundleWithAssets,
   listAssets,
+  listAssetFolders,
   listBreakpoints,
   listDesignTokens,
   listDomains,
@@ -90,6 +93,7 @@ import {
   replaceStyleValues,
   rewriteCssVariableRefs,
   updateDesignTokenStyles,
+  updateAssetFolder,
   updateDomain,
   updateBreakpoint,
   updatePage,
@@ -787,6 +791,20 @@ test("wraps project api trpc calls in named functions", async () => {
       ...params,
       domainId: "domain-id",
     });
+    await listAssetFolders(params);
+    await createAssetFolder({
+      ...params,
+      name: "Images",
+    });
+    await updateAssetFolder({
+      ...params,
+      folderId: "folder-id",
+      values: { name: "Photos", parentId: null },
+    });
+    await deleteAssetFolder({
+      ...params,
+      folderId: "folder-id",
+    });
     await listAssets({
       ...params,
       type: "image",
@@ -973,6 +991,13 @@ test("wraps project api trpc calls in named functions", async () => {
     expectBodyRequest("/trpc/api.domains.update", '"domain":"www.example.com"'),
     expectBodyRequest("/trpc/api.domains.delete", '"confirm":true'),
     expectBodyRequest("/trpc/api.domains.verify", '"domainId":"domain-id"'),
+    expectRequest("/trpc/api.assetFolders.list"),
+    expectBodyRequest("/trpc/api.assetFolders.create", '"name":"Images"'),
+    expectBodyRequest("/trpc/api.assetFolders.update", '"parentId":null'),
+    expectBodyRequest(
+      "/trpc/api.assetFolders.delete",
+      '"folderId":"folder-id"'
+    ),
     expectRequest("/trpc/api.assets.list"),
     expectRequest("/trpc/api.assets.findUsage"),
     expectBodyRequest("/trpc/api.assets.replace", '"confirm":true'),
@@ -1293,6 +1318,14 @@ test("uploads project asset descriptors with local data readers", async () => {
 test("normalizes synced project bundles for local storage", () => {
   const bundle = createPublishedProjectBundleFixture({
     bundleVersion: "bundle-old",
+    assetFolders: [
+      {
+        id: "folder-1",
+        projectId: "project-1",
+        name: "Images",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
   });
 
   expect(toLocalProjectBundle(bundle)).toMatchObject({
@@ -1301,6 +1334,7 @@ test("normalizes synced project bundles for local storage", () => {
     page: bundle.page,
     pages: bundle.pages,
     assets: bundle.assets,
+    assetFolders: bundle.assetFolders,
     user: bundle.user,
     projectDomain: bundle.projectDomain,
     projectTitle: bundle.projectTitle,

@@ -1,32 +1,14 @@
-import { createRoot, type Root } from "react-dom/client";
-import { act } from "react-dom/test-utils";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AssetThumbnailCard } from "./asset-thumbnail-card";
+import { createAssetManagerTestRenderer } from "./test-utils";
 
-(
-  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
-let root: Root | undefined;
-
-afterEach(() => {
-  act(() => root?.unmount());
-  root = undefined;
-  document.body.innerHTML = "";
-});
-
-const render = (element: ReactNode) => {
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
-  act(() => root?.render(element));
-  return container;
-};
+const renderer = createAssetManagerTestRenderer();
+afterEach(renderer.cleanup);
 
 describe("AssetThumbnailCard", () => {
   test("renders folder and Back thumbnails as native buttons", () => {
     const onClick = vi.fn();
-    const container = render(
+    const container = renderer.render(
       <AssetThumbnailCard
         as="button"
         type="button"
@@ -47,7 +29,7 @@ describe("AssetThumbnailCard", () => {
   });
 
   test("renders asset metadata in the same thumbnail component", () => {
-    const container = render(
+    const container = renderer.render(
       <AssetThumbnailCard
         preview={<span>preview</span>}
         label="Hero"
@@ -66,4 +48,3 @@ describe("AssetThumbnailCard", () => {
     );
   });
 });
-import type { ReactNode } from "react";

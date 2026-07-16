@@ -8,10 +8,7 @@ import {
 import { Box, Flex, styled, Text, theme } from "@webstudio-is/design-system";
 
 const assetInfoTriggerVisibility = "--ws-asset-info-trigger-visibility";
-
-const assetInfoCssVars = ({ show }: { show: boolean }) => ({
-  [assetInfoTriggerVisibility]: show ? "visible" : "hidden",
-});
+const showAssetInfoTrigger = { [assetInfoTriggerVisibility]: "visible" };
 
 export const assetInfoTriggerVisibilityValue = `var(${assetInfoTriggerVisibility}, hidden)`;
 
@@ -31,7 +28,7 @@ const Root = styled("div", {
   overflow: "hidden",
   padding: 2,
   "&:hover, &:focus-visible": {
-    ...assetInfoCssVars({ show: true }),
+    ...showAssetInfoTrigger,
     backgroundColor: theme.colors.backgroundAssetcardHover,
   },
   variants: {
@@ -40,7 +37,7 @@ const Root = styled("div", {
         outline: `1px solid ${theme.colors.borderFocus}`,
         outlineOffset: -1,
         backgroundColor: theme.colors.backgroundAssetcardHover,
-        ...assetInfoCssVars({ show: true }),
+        ...showAssetInfoTrigger,
       },
     },
     dropTarget: {

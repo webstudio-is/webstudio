@@ -1902,6 +1902,7 @@ export const builderRuntimeOperations = [
       readNamespaces: ["assets", "assetFolders"],
       writeNamespaces: ["assets"],
       retryOnConflict: true,
+      requiresAssets: true,
     }),
     assets.assetAddInput,
     ({ state, input, context }) => assets.addAsset(state, input, context)

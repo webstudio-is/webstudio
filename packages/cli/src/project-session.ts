@@ -544,6 +544,7 @@ export const createLocalProjectBundleFromSessionSnapshot = (
     page: homePage,
     pages: Array.from(persistedPages.pages.values()),
     assets: Array.from(snapshot.state.assets?.values() ?? []),
+    assetFolders: Array.from(snapshot.state.assetFolders?.values() ?? []),
     build: {
       id: snapshot.buildId,
       projectId: snapshot.projectId,

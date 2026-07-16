@@ -1,47 +1,26 @@
 import {
-  getAssetFolderPath,
-  getAssetFolderDescendantIds,
   type Asset,
   type AssetFolder,
-  type AssetFolders,
+  type AssetFolderHierarchy,
 } from "@webstudio-is/sdk";
 import type { SortState } from "./utils";
 
-const getFolderSize = (
-  folderId: string,
-  folders: AssetFolders,
-  assets: Iterable<Asset>
-) => {
-  const descendantIds = getAssetFolderDescendantIds(folders, folderId);
-  descendantIds.add(folderId);
-  let size = 0;
-  for (const asset of assets) {
-    if (asset.folderId !== undefined && descendantIds.has(asset.folderId)) {
-      size += asset.size;
-    }
-  }
-  return size;
-};
-
 export const sortAssetFolders = ({
   folders,
-  allFolders,
+  hierarchy,
   assets,
   sortState,
 }: {
   folders: AssetFolder[];
-  allFolders: AssetFolders;
+  hierarchy: AssetFolderHierarchy;
   assets: Iterable<Asset>;
   sortState: SortState;
 }) => {
   const direction = sortState.order === "asc" ? 1 : -1;
-  const sizes = new Map<string, number>();
-  if (sortState.sortBy === "size") {
-    const assetList = Array.from(assets);
-    for (const folder of folders) {
-      sizes.set(folder.id, getFolderSize(folder.id, allFolders, assetList));
-    }
-  }
+  const sizes =
+    sortState.sortBy === "size"
+      ? hierarchy.getAggregateAssetSizes(assets)
+      : new Map<string, number>();
   return [...folders].sort((left, right) => {
     let comparison = 0;
     if (sortState.sortBy === "name") {
@@ -61,10 +40,10 @@ export const sortAssetFolders = ({
 };
 
 export const formatAssetFolderPath = (
-  folders: AssetFolders,
+  hierarchy: AssetFolderHierarchy,
   folderId: string | undefined
 ) => {
-  const path = getAssetFolderPath(folders, folderId);
+  const path = hierarchy.getPath(folderId);
   return path.length === 0
     ? "No folder"
     : `Root / ${path.map(({ name }) => name).join(" / ")}`;

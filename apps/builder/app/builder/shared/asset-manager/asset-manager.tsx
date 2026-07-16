@@ -16,8 +16,8 @@ import {
 } from "@webstudio-is/design-system";
 import {
   acceptToMimePatterns,
+  createAssetFolderHierarchy,
   doesAssetMatchMimePatterns,
-  getAssetFolderDescendantIds,
   type Asset,
   type AllowedFileExtension,
 } from "@webstudio-is/sdk";
@@ -29,8 +29,7 @@ import { AssetSortSelect } from "./asset-sort";
 import { $assetFolders } from "~/shared/sync/data-stores";
 import { AssetFolderBreadcrumbs } from "./asset-folder-breadcrumbs";
 import { formatAssetFolderPath, sortAssetFolders } from "./asset-folder-utils";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { moveAssetToFolder } from "./asset-folder-actions";
+import { moveAssetFolder, moveAssetToFolder } from "./asset-folder-actions";
 import {
   getInitialExtensions,
   calculateFormatCounts,
@@ -70,6 +69,10 @@ export const AssetManager = ({
 }: AssetManagerProps) => {
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
+  const folderHierarchy = useMemo(
+    () => createAssetFolderHierarchy(folders),
+    [folders]
+  );
   const [internalFolderId, setInternalFolderId] = useState(folderId);
   const [selection, setSelection] = useState<AssetManagerSelection>();
   const [announcement, setAnnouncement] = useState("");
@@ -152,16 +155,17 @@ export const AssetManager = ({
   });
 
   const filteredItems = useMemo(() => {
-    const descendantIds = getAssetFolderDescendantIds(folders, currentFolderId);
+    const descendantIds = folderHierarchy.getDescendantIds(currentFolderId);
     const scopedContainers = compatibleContainers.filter(({ asset }) => {
+      const folderId = folderHierarchy.resolveFolderId(asset.folderId);
       if (searchProps.value.length > 0) {
         return (
           currentFolderId === undefined ||
-          asset.folderId === currentFolderId ||
-          (asset.folderId !== undefined && descendantIds.has(asset.folderId))
+          folderId === currentFolderId ||
+          (folderId !== undefined && descendantIds.has(folderId))
         );
       }
-      return asset.folderId === currentFolderId;
+      return folderId === currentFolderId;
     });
     return filterAndSortAssets({
       assetContainers: scopedContainers,
@@ -172,7 +176,7 @@ export const AssetManager = ({
   }, [
     compatibleContainers,
     currentFolderId,
-    folders,
+    folderHierarchy,
     selectedExtensions,
     searchProps.value,
     sortState,
@@ -180,15 +184,16 @@ export const AssetManager = ({
 
   const visibleFolders = useMemo(() => {
     const normalizedSearch = searchProps.value.trim().toLocaleLowerCase();
-    const directFolders = Array.from(folders.values()).filter(
-      (folder) =>
-        folder.parentId === currentFolderId &&
-        (normalizedSearch === "" ||
-          folder.name.toLocaleLowerCase().includes(normalizedSearch))
-    );
+    const directFolders = folderHierarchy
+      .getChildren(currentFolderId)
+      .filter(
+        (folder) =>
+          normalizedSearch === "" ||
+          folder.name.toLocaleLowerCase().includes(normalizedSearch)
+      );
     return sortAssetFolders({
       folders: directFolders,
-      allFolders: folders,
+      hierarchy: folderHierarchy,
       assets: compatibleContainers.flatMap((container) =>
         container.status === "uploaded" ? [container.asset] : []
       ),
@@ -197,7 +202,7 @@ export const AssetManager = ({
   }, [
     compatibleContainers,
     currentFolderId,
-    folders,
+    folderHierarchy,
     searchProps.value,
     sortState,
   ]);
@@ -230,9 +235,10 @@ export const AssetManager = ({
     );
   };
 
-  const handleFolderSelect = (selectedId: string) => {
-    setSelection({ type: "folder", id: selectedId });
-  };
+  const getFolderName = (folderId: string | undefined) =>
+    folderId === undefined
+      ? "No folder"
+      : (folders.get(folderId)?.name ?? "folder");
 
   const moveAsset = (assetId: string, nextFolderId: string | undefined) => {
     if (moveAssetToFolder(assetId, nextFolderId) === undefined) {
@@ -241,31 +247,17 @@ export const AssetManager = ({
     const assetName = assetContainers.find(({ asset }) => asset.id === assetId)
       ?.asset.name;
     setAnnouncement(
-      `${assetName ?? "Asset"} moved to ${
-        nextFolderId === undefined
-          ? "No folder"
-          : (folders.get(nextFolderId)?.name ?? "folder")
-      }.`
+      `${assetName ?? "Asset"} moved to ${getFolderName(nextFolderId)}.`
     );
   };
 
   const moveFolder = (movedFolderId: string, parentId: string | undefined) => {
-    const result = executeRuntimeMutation({
-      id: "assetFolders.update",
-      input: {
-        folderId: movedFolderId,
-        values: { parentId: parentId ?? null },
-      },
-    });
+    const result = moveAssetFolder(movedFolderId, parentId);
     if (result === undefined) {
       return;
     }
     setAnnouncement(
-      `${folders.get(movedFolderId)?.name ?? "Folder"} moved to ${
-        parentId === undefined
-          ? "No folder"
-          : (folders.get(parentId)?.name ?? "folder")
-      }.`
+      `${folders.get(movedFolderId)?.name ?? "Folder"} moved to ${getFolderName(parentId)}.`
     );
   };
 
@@ -303,7 +295,7 @@ export const AssetManager = ({
       folderId={currentFolderId}
       footer={
         <AssetFolderBreadcrumbs
-          folders={folders}
+          hierarchy={folderHierarchy}
           folderId={currentFolderId}
           onChange={setCurrentFolderId}
         />
@@ -332,13 +324,13 @@ export const AssetManager = ({
               selected={
                 selection?.type === "folder" && selection.id === folder.id
               }
-              onSelect={() => handleFolderSelect(folder.id)}
+              onSelect={() => setSelection({ type: "folder", id: folder.id })}
               canManage={canManageFolders}
               canMoveFolder={(movedFolderId) =>
                 movedFolderId !== folder.id &&
-                getAssetFolderDescendantIds(folders, movedFolderId).has(
-                  folder.id
-                ) === false
+                folderHierarchy
+                  .getDescendantIds(movedFolderId)
+                  .has(folder.id) === false
               }
               onOpen={() => setCurrentFolderId(folder.id)}
               onMoveAsset={(assetId) => moveAsset(assetId, folder.id)}
@@ -353,16 +345,14 @@ export const AssetManager = ({
               onChange={(assetContainer) => {
                 onChange?.(assetContainer.asset.id);
               }}
-              state={
+              selected={
                 selection?.type === "asset" &&
                 selection.id === assetContainer.asset.id
-                  ? "selected"
-                  : undefined
               }
               folderPath={
                 searchProps.value.length > 0
                   ? formatAssetFolderPath(
-                      folders,
+                      folderHierarchy,
                       assetContainer.asset.folderId
                     )
                   : undefined

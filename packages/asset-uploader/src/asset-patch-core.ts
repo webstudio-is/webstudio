@@ -8,6 +8,16 @@ import {
   type Patch,
 } from "./patch-utils";
 
+export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
+  Array.from(assets, (asset) => ({
+    id: asset.id,
+    projectId,
+    name: asset.name,
+    filename: asset.filename ?? null,
+    description: asset.description ?? null,
+    folderId: asset.folderId ?? null,
+  }));
+
 export const loadAssetsByProjectWithClient = async (
   projectId: string,
   client: Client
@@ -194,17 +204,12 @@ export const patchAssetsWithClient = async (
     assertPostgrestSuccess(restoredFiles);
 
     const insertedAssets = await client.from("Asset").insert(
-      addedAssets
-        // making sure corresponding file exist before creating an asset that references it
-        .filter((asset) => fileNames.has(asset.name))
-        .map((asset) => ({
-          id: asset.id,
-          projectId,
-          name: asset.name,
-          filename: asset.filename ?? null,
-          description: asset.description ?? null,
-          folderId: asset.folderId ?? null,
-        }))
+      createAssetRows(
+        // Make sure the corresponding file exists before creating an asset
+        // that references it.
+        addedAssets.filter((asset) => fileNames.has(asset.name)),
+        projectId
+      )
     );
     assertPostgrestSuccess(insertedAssets);
   }

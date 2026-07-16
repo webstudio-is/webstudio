@@ -35,10 +35,7 @@ import {
 import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
 import { paginateOutput, type PaginatedOutputInput } from "./output";
-import {
-  pageCopyNamespaces,
-  webstudioDataNamespaces,
-} from "../contracts/namespaces";
+import { pageCopyNamespaces } from "../contracts/namespaces";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import { getStaticStringLiteral } from "./text-replacement";
@@ -93,12 +90,7 @@ const isHydratedWebstudioData = (value: unknown): value is WebstudioData => {
     return false;
   }
   const data = value as Partial<WebstudioData>;
-  return webstudioDataNamespaces.every((namespace) => {
-    if (namespace === "assetFolders") {
-      return (
-        data.assetFolders === undefined || data.assetFolders instanceof Map
-      );
-    }
+  return pageCopyNamespaces.every((namespace) => {
     if (namespace === "pages") {
       return (
         data.pages?.pages instanceof Map && data.pages.folders instanceof Map
@@ -183,10 +175,7 @@ const contentModePageMetaFields = new Set([
 ]);
 
 const getRequiredWebstudioData = (state: BuilderState): WebstudioData => {
-  for (const namespace of webstudioDataNamespaces) {
-    if (namespace === "assetFolders") {
-      continue;
-    }
+  for (const namespace of pageCopyNamespaces) {
     if (state[namespace] === undefined) {
       return throwBuilderRuntimeError(
         "BAD_REQUEST",
@@ -194,10 +183,7 @@ const getRequiredWebstudioData = (state: BuilderState): WebstudioData => {
       );
     }
   }
-  return {
-    ...state,
-    assetFolders: state.assetFolders ?? new Map(),
-  } as WebstudioData;
+  return state as WebstudioData;
 };
 
 const parseCopyNumberSuffix = (value: string) => {

@@ -3,53 +3,47 @@ import { useStore } from "@nanostores/react";
 import { Flex, Grid, Label, Select } from "@webstudio-is/design-system";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import {
-  getAssetFolderDescendantIds,
-  getAssetFolderPath,
+  createAssetFolderHierarchy,
   type AssetFolders,
 } from "@webstudio-is/sdk";
 import { $assetFolders } from "~/shared/sync/data-stores";
 
-type Option = { label: string; value: string; folderId: string | undefined };
+type Option = { label: string; folderId: string | undefined };
+const defaultRootLabel = "Top level folder";
 
 export const createAssetFolderSelectorLevels = ({
   folders,
   value,
   excludedFolderId,
-  rootLabel = "Top level folder",
+  rootLabel = defaultRootLabel,
 }: {
   folders: AssetFolders;
   value: string | undefined;
   excludedFolderId?: string;
   rootLabel?: string;
 }) => {
+  const hierarchy = createAssetFolderHierarchy(folders);
   const excludedIds =
     excludedFolderId === undefined
       ? new Set<string>()
-      : getAssetFolderDescendantIds(folders, excludedFolderId).add(
-          excludedFolderId
-        );
+      : hierarchy.getDescendantIds(excludedFolderId).add(excludedFolderId);
   const getChildren = (parentId: string | undefined) =>
-    Array.from(folders.values())
-      .filter(
-        (folder) =>
-          folder.parentId === parentId && excludedIds.has(folder.id) === false
-      )
-      .sort((left, right) => left.name.localeCompare(right.name));
-  const path = getAssetFolderPath(folders, value).filter(
-    ({ id }) => excludedIds.has(id) === false
-  );
+    hierarchy
+      .getChildren(parentId)
+      .filter((folder) => excludedIds.has(folder.id) === false)
+      .toSorted((left, right) => left.name.localeCompare(right.name));
+  const path = hierarchy
+    .getPath(value)
+    .filter(({ id }) => excludedIds.has(id) === false);
   const topOptions: Option[] = [
-    { label: "No folder", value: "root:", folderId: undefined },
+    { label: "No folder", folderId: undefined },
     ...getChildren(undefined).map((folder) => ({
       label: folder.name,
-      value: `folder:${folder.id}`,
       folderId: folder.id,
     })),
   ];
   const levels = [
     {
-      key: "level:root",
-      label: rootLabel,
       ariaLabel: rootLabel,
       options: topOptions,
       selected:
@@ -66,19 +60,15 @@ export const createAssetFolderSelectorLevels = ({
     const options: Option[] = [
       {
         label: "This folder",
-        value: `current:${folder.id}`,
         folderId: folder.id,
       },
       ...children.map((child) => ({
         label: child.name,
-        value: `folder:${child.id}`,
         folderId: child.id,
       })),
     ];
     const nextId = path[index + 1]?.id;
     levels.push({
-      key: `level:${folder.id}`,
-      label: `Subfolder level ${index + 1}`,
       ariaLabel: `Asset subfolder level ${index + 1}`,
       options,
       selected:
@@ -92,7 +82,7 @@ export const AssetFolderSelector = ({
   value,
   onChange,
   excludedFolderId,
-  rootLabel,
+  rootLabel = defaultRootLabel,
   disabled,
 }: {
   value: string | undefined;
@@ -116,10 +106,10 @@ export const AssetFolderSelector = ({
 
   return (
     <Grid gap={1}>
-      <Label htmlFor={`${selectId}-0`}>{levels[0].label}</Label>
+      <Label htmlFor={`${selectId}-0`}>{rootLabel}</Label>
       <Flex align="center" gap={1} wrap="wrap">
         {levels.map((level, index) => (
-          <Flex key={level.key} align="center" gap={1}>
+          <Flex key={level.ariaLabel} align="center" gap={1}>
             {index > 0 && <ChevronRightIcon size={12} />}
             <Select
               id={`${selectId}-${index}`}
@@ -128,7 +118,7 @@ export const AssetFolderSelector = ({
               value={level.selected}
               disabled={disabled}
               getLabel={(option: Option) => option.label}
-              getValue={(option: Option) => option.value}
+              getValue={(option: Option) => option.folderId ?? ""}
               onChange={(option: Option) => onChange(option.folderId)}
               css={{ width: "auto", minWidth: "8ch", maxWidth: "18ch" }}
             />

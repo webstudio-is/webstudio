@@ -3,7 +3,7 @@ import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
 enableMapSet();
 enablePatches();
 
-export { applyPatches, type Patch };
+export type { Patch };
 
 export const assertPostgrestSuccess = (result: { error: unknown }) => {
   if (result.error) {

@@ -4,6 +4,9 @@ import {
   builderPatchSchema,
   builderPatchTransactionSchema,
   compactBuilderPatchPayload,
+  appendOptionalPropertyPatch,
+  type BuilderPatch,
+  createOptionalPropertyPatch,
   hasGeneratedRecordWritePatch,
   restorePointPatchTransactionSchema,
 } from "./patch";
@@ -69,6 +72,58 @@ describe("builder patch contracts", () => {
         payload: [transaction.payload[0], transaction.payload[0]],
       }).success
     ).toBe(false);
+  });
+
+  test("creates patches for optional properties", () => {
+    expect(
+      createOptionalPropertyPatch({
+        path: ["record", "field"],
+        previous: undefined,
+        next: "value",
+      })
+    ).toEqual({
+      op: "add",
+      path: ["record", "field"],
+      value: "value",
+    });
+    expect(
+      createOptionalPropertyPatch({
+        path: ["record", "field"],
+        previous: "value",
+        next: "next",
+      })
+    ).toEqual({
+      op: "replace",
+      path: ["record", "field"],
+      value: "next",
+    });
+    expect(
+      createOptionalPropertyPatch({
+        path: ["record", "field"],
+        previous: "value",
+        next: undefined,
+      })
+    ).toEqual({ op: "remove", path: ["record", "field"] });
+    expect(
+      createOptionalPropertyPatch({
+        path: ["record", "field"],
+        previous: "value",
+        next: "value",
+      })
+    ).toBeUndefined();
+
+    const patches: BuilderPatch[] = [];
+    appendOptionalPropertyPatch(patches, {
+      path: ["record", "field"],
+      previous: undefined,
+      next: "value",
+    });
+    appendOptionalPropertyPatch(patches, {
+      path: ["record", "field"],
+      previous: "value",
+      next: "value",
+    });
+    expect(patches).toHaveLength(1);
   });
 
   test("requires values for add and replace patches", () => {

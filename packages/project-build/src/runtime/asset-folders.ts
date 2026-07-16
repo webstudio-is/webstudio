@@ -3,12 +3,15 @@ import {
   assetFolderIssue,
   assetFolderName,
   assetFolders,
-  getAssetFolderDescendantIds,
+  createAssetFolderHierarchy,
   type AssetFolder,
   type AssetFolders,
 } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
-import type { BuilderPatch } from "../contracts/patch";
+import {
+  appendOptionalPropertyPatch,
+  type BuilderPatch,
+} from "../contracts/patch";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
@@ -138,17 +141,11 @@ export const updateAssetFolder = (
       value: nextName,
     });
   }
-  if (nextParentId !== folder.parentId) {
-    if (nextParentId === undefined) {
-      patches.push({ op: "remove", path: [folder.id, "parentId"] });
-    } else {
-      patches.push({
-        op: folder.parentId === undefined ? "add" : "replace",
-        path: [folder.id, "parentId"],
-        value: nextParentId,
-      });
-    }
-  }
+  appendOptionalPropertyPatch(patches, {
+    path: [folder.id, "parentId"],
+    previous: folder.parentId,
+    next: nextParentId,
+  });
   return createRuntimeMutation({
     payload:
       patches.length === 0 ? [] : [{ namespace: "assetFolders", patches }],
@@ -167,7 +164,9 @@ export const deleteAssetFolder = (
     return throwBuilderRuntimeError("NOT_FOUND", "Folder not found");
   }
 
-  const deletedFolderIds = getAssetFolderDescendantIds(folders, folder.id);
+  const deletedFolderIds = createAssetFolderHierarchy(folders).getDescendantIds(
+    folder.id
+  );
   deletedFolderIds.add(folder.id);
   const folderPatches: BuilderPatch[] = Array.from(deletedFolderIds).map(
     (folderId) => ({ op: "remove", path: [folderId] })

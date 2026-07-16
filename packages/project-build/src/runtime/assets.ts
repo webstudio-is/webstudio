@@ -20,7 +20,10 @@ import {
   fontAsset,
   imageAsset,
 } from "@webstudio-is/sdk";
-import type { BuilderPatchChange } from "../contracts/patch";
+import {
+  appendOptionalPropertyPatch,
+  type BuilderPatchChange,
+} from "../contracts/patch";
 import {
   paginateOutput,
   projectOutput,
@@ -603,15 +606,6 @@ export const addAsset = (
   });
 };
 
-const createAssetDescriptionPatch = (
-  asset: Asset,
-  description: string | null
-): BuilderPatchChange["patches"][number] => ({
-  op: asset.description === undefined ? "add" : "replace",
-  path: [asset.id, "description"],
-  value: description,
-});
-
 export const updateAsset = (
   state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetUpdateInput>
@@ -636,10 +630,10 @@ export const updateAsset = (
       }
     }
     if (asset.filename !== input.values.filename) {
-      patches.push({
-        op: asset.filename === undefined ? "add" : "replace",
+      appendOptionalPropertyPatch(patches, {
         path: [asset.id, "filename"],
-        value: input.values.filename,
+        previous: asset.filename,
+        next: input.values.filename,
       });
     }
   }
@@ -647,22 +641,20 @@ export const updateAsset = (
     input.values.description !== undefined &&
     asset.description !== input.values.description
   ) {
-    patches.push(createAssetDescriptionPatch(asset, input.values.description));
+    appendOptionalPropertyPatch(patches, {
+      path: [asset.id, "description"],
+      previous: asset.description,
+      next: input.values.description,
+    });
   }
   if (input.values.folderId !== undefined) {
     const folderId = input.values.folderId ?? undefined;
     assertAssetFolderExists(state.assetFolders, folderId);
-    if (asset.folderId !== folderId) {
-      if (folderId === undefined) {
-        patches.push({ op: "remove", path: [asset.id, "folderId"] });
-      } else {
-        patches.push({
-          op: asset.folderId === undefined ? "add" : "replace",
-          path: [asset.id, "folderId"],
-          value: folderId,
-        });
-      }
-    }
+    appendOptionalPropertyPatch(patches, {
+      path: [asset.id, "folderId"],
+      previous: asset.folderId,
+      next: folderId,
+    });
   }
 
   return createRuntimeMutation({
@@ -696,7 +688,11 @@ export const setImageDescriptions = (
     }
     const description = update.decorative === true ? "" : update.description;
     if (asset.description !== description) {
-      patches.push(createAssetDescriptionPatch(asset, description));
+      appendOptionalPropertyPatch(patches, {
+        path: [asset.id, "description"],
+        previous: asset.description,
+        next: description,
+      });
       updated.push({
         assetId: asset.id,
         decorative: update.decorative === true,

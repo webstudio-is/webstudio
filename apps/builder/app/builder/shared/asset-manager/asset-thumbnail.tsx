@@ -105,7 +105,7 @@ type AssetThumbnailProps = {
   assetContainer: AssetContainer;
   onSelect: (assetContainer?: AssetContainer) => void;
   onChange?: (assetContainer: AssetContainer) => void;
-  state?: "selected";
+  selected?: boolean;
   folderPath?: string;
   canDrag?: boolean;
 };
@@ -114,7 +114,7 @@ export const AssetThumbnail = ({
   assetContainer,
   onSelect,
   onChange,
-  state,
+  selected,
   folderPath,
   canDrag = false,
 }: AssetThumbnailProps) => {
@@ -141,7 +141,7 @@ export const AssetThumbnail = ({
       ref={elementRef}
       title={alt}
       tabIndex={0}
-      selected={state === "selected"}
+      selected={selected}
       preview={
         assetType === "image" ? (
           <StyledWebstudioImage
@@ -171,9 +171,7 @@ export const AssetThumbnail = ({
       labelSuffix={`.${ext}`}
       path={folderPath}
       onPreviewClick={() => onChange?.(assetContainer)}
-      onFocus={() => {
-        onSelect?.(assetContainer);
-      }}
+      onFocus={() => onSelect(assetContainer)}
       onBlur={(event: FocusEvent) => {
         const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
         if (isFocusWithin === false) {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
-  getAssetFolderDescendantIds,
+  createAssetFolderHierarchy,
   type Asset,
   type AssetFolder,
   type AssetFolders,
@@ -145,15 +145,14 @@ describe("asset folders", () => {
 
   test("collects all descendants", () => {
     expect(
-      getAssetFolderDescendantIds(
+      createAssetFolderHierarchy(
         folders(
           folder("root"),
           folder("child", "root"),
           folder("grandchild", "child"),
           folder("sibling")
-        ),
-        "root"
-      )
+        )
+      ).getDescendantIds("root")
     ).toEqual(new Set(["child", "grandchild"]));
   });
 });

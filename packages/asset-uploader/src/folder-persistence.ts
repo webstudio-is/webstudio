@@ -1,6 +1,6 @@
 import {
   assetFolders,
-  sortAssetFoldersByDepth,
+  createAssetFolderHierarchy,
   type AssetFolder,
 } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
@@ -14,14 +14,19 @@ import {
 export const createAssetFolderRows = (
   folders: Iterable<AssetFolder>,
   projectId: string
-) =>
-  sortAssetFoldersByDepth(folders).map((folder) => ({
+) => {
+  const folderList = Array.from(folders);
+  const hierarchy = createAssetFolderHierarchy(
+    new Map(folderList.map((folder) => [folder.id, folder]))
+  );
+  return hierarchy.sortByDepth(folderList).map((folder) => ({
     id: folder.id,
     projectId,
     name: folder.name,
     parentId: folder.parentId ?? null,
     createdAt: folder.createdAt,
   }));
+};
 
 export const loadAssetFoldersByProjectWithClient = async (
   projectId: string,
@@ -91,11 +96,10 @@ export const patchAssetFoldersWithClient = async (
     }
   }
 
-  const deletedIds = deletedKeys;
-  if (deletedIds.length > 0 && deferDeletes === false) {
-    await deleteAssetFoldersWithClient({ projectId, ids: deletedIds }, client);
+  if (deletedKeys.length > 0 && deferDeletes === false) {
+    await deleteAssetFoldersWithClient({ projectId, ids: deletedKeys }, client);
   }
-  return deletedIds;
+  return deletedKeys;
 };
 
 export const deleteAssetFoldersWithClient = async (

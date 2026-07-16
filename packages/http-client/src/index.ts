@@ -609,6 +609,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
   const normalizedProject = publishedProjectBundle.parse(project);
   const {
     assets,
+    assetFolders,
     build,
     origin,
     page,
@@ -623,6 +624,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     page,
     pages,
     assets,
+    assetFolders,
     user,
     projectDomain,
     projectTitle,
@@ -1528,6 +1530,30 @@ export const deleteDomain = projectConfirmedMutationInput<
 export const verifyDomain = projectMutationInput<
   AuthProjectParams & { domainId: string }
 >("verify-domain");
+
+export const listAssetFolders =
+  projectQueryInput<AuthProjectParams>("list-asset-folders");
+
+export const createAssetFolder = projectMutationInput<
+  AuthProjectParams & {
+    name: string;
+    parentId?: string;
+  }
+>("create-asset-folder");
+
+export const updateAssetFolder = projectMutationInput<
+  AuthProjectParams & {
+    folderId: string;
+    values: {
+      name?: string;
+      parentId?: string | null;
+    };
+  }
+>("update-asset-folder");
+
+export const deleteAssetFolder = projectMutationInput<
+  AuthProjectParams & { folderId: string }
+>("delete-asset-folder");
 
 export const listAssets = projectQueryInput<
   AuthProjectParams &

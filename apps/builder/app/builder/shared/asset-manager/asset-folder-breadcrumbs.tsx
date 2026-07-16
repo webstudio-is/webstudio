@@ -6,20 +6,20 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { getAssetFolderPath, type AssetFolders } from "@webstudio-is/sdk";
+import type { AssetFolderHierarchy } from "@webstudio-is/sdk";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { useEffect, useRef } from "react";
 
 export const AssetFolderBreadcrumbs = ({
-  folders,
+  hierarchy,
   folderId,
   onChange,
 }: {
-  folders: AssetFolders;
+  hierarchy: AssetFolderHierarchy;
   folderId: string | undefined;
   onChange: (folderId: string | undefined) => void;
 }) => {
-  const path = getAssetFolderPath(folders, folderId);
+  const path = hierarchy.getPath(folderId);
   const currentFolderRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     currentFolderRef.current?.scrollIntoView({

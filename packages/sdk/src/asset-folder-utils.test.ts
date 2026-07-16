@@ -1,46 +1,43 @@
 import { describe, expect, test } from "vitest";
-import type { AssetFolder, AssetFolders } from "./schema/asset-folders";
+import { createAssetFolderHierarchy } from "./asset-folder-hierarchy";
+import { normalizeAssetFolderData } from "./asset-folder-normalization";
 import {
-  findAssetFolderByName,
-  getAssetFolderDescendantIds,
-  getAssetFolderPath,
-  sortAssetFoldersByDepth,
-} from "./asset-folder-utils";
-
-const folder = (id: string, parentId?: string, name = id): AssetFolder => ({
-  id,
-  projectId: "project",
-  name,
-  parentId,
-  createdAt: "2026-01-01T00:00:00.000Z",
-});
-
-const createFolders = (...items: AssetFolder[]): AssetFolders =>
-  new Map(items.map((item) => [item.id, item]));
+  createAssetFolderFixture as folder,
+  createAssetFoldersFixture as createFolders,
+} from "./asset-folder.test-fixtures";
 
 describe("asset folder utilities", () => {
   const root = folder("root");
   const child = folder("child", "root");
   const grandchild = folder("grandchild", "child");
   const folders = createFolders(grandchild, child, root);
+  const hierarchy = createAssetFolderHierarchy(folders);
 
   test("traverses descendants and ancestors", () => {
-    expect(getAssetFolderDescendantIds(folders, "root")).toEqual(
+    expect(hierarchy.getDescendantIds("root")).toEqual(
       new Set(["child", "grandchild"])
     );
-    expect(getAssetFolderPath(folders, "grandchild")).toEqual([
+    expect(hierarchy.getPath("grandchild")).toEqual([root, child, grandchild]);
+  });
+
+  test("sorts parents before descendants", () => {
+    expect(hierarchy.sortByDepth(folders.values())).toEqual([
       root,
       child,
       grandchild,
     ]);
   });
 
-  test("sorts parents before descendants", () => {
-    expect(sortAssetFoldersByDepth(folders.values())).toEqual([
-      root,
-      child,
-      grandchild,
-    ]);
+  test("handles cyclic hierarchy traversal without looping", () => {
+    const cyclic = createFolders(
+      folder("left", "right"),
+      folder("right", "left")
+    );
+
+    const cyclicHierarchy = createAssetFolderHierarchy(cyclic);
+    expect(cyclicHierarchy.getPath("left")).toHaveLength(2);
+    expect(cyclicHierarchy.hasCycle("left")).toBe(true);
+    expect(cyclicHierarchy.sortByDepth(cyclic.values())).toHaveLength(2);
   });
 
   test("finds sibling names case-insensitively and respects exclusions", () => {
@@ -48,17 +45,40 @@ describe("asset folder utilities", () => {
     const folders = createFolders(photos, folder("nested", "photos", "Photos"));
 
     expect(
-      findAssetFolderByName(folders, {
+      createAssetFolderHierarchy(folders).findByName({
         name: " photos ",
         parentId: undefined,
       })
     ).toBe(photos);
     expect(
-      findAssetFolderByName(folders, {
+      createAssetFolderHierarchy(folders).findByName({
         name: "photos",
         parentId: undefined,
         excludeIds: new Set([photos.id]),
       })
     ).toBeUndefined();
+  });
+
+  test("treats orphaned asset folder references as root", () => {
+    const asset = {
+      id: "asset",
+      projectId: "project",
+      name: "asset.pdf",
+      type: "file" as const,
+      format: "pdf",
+      size: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      folderId: "missing",
+      meta: {},
+    };
+
+    expect(hierarchy.resolveFolderId(asset.folderId)).toBeUndefined();
+    expect(
+      normalizeAssetFolderData({
+        assets: [asset],
+        folders: [...folders.values()],
+      }).assets[0]
+    ).not.toHaveProperty("folderId");
   });
 });

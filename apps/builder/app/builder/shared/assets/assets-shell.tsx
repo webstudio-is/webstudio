@@ -209,7 +209,6 @@ export const AssetsShell = ({
           <AssetPanelState
             message={emptyMessage}
             active={dragState === OVER}
-            framed={dragState === OVER}
             description={
               emptyMessage === "Drop files here"
                 ? "Drop files from anywhere into this panel."
@@ -247,7 +246,6 @@ export const AssetsShell = ({
           message="Drop files here"
           description="Drop files from anywhere into this panel."
           active={dragState === OVER}
-          framed={dragState === OVER}
         />
       </Flex>
     </Flex>

@@ -33,6 +33,7 @@ const assetRow = {
   projectId: "proj-1",
   filename: "photo.jpg",
   description: null,
+  folderId: null,
   file: {
     name: "photo.jpg",
     format: "jpg",
@@ -53,7 +54,8 @@ describe("loadAssetsByProject (msw)", () => {
         expect(url.searchParams.get("projectId")).toBe("eq.proj-1");
         expect(url.searchParams.get("file.status")).toBe("eq.UPLOADED");
         return json([assetRow]);
-      })
+      }),
+      db.get("AssetFolder", () => json([]))
     );
 
     const result = await loadAssetsByProject("proj-1", createContext());
@@ -69,11 +71,46 @@ describe("loadAssetsByProject (msw)", () => {
   test("returns empty array when project has no uploaded assets", async () => {
     server.use(
       projectOwnershipHandler,
-      db.get("Asset", () => json([]))
+      db.get("Asset", () => json([])),
+      db.get("AssetFolder", () => json([]))
     );
 
     const result = await loadAssetsByProject("proj-1", createContext());
     expect(result).toEqual([]);
+  });
+
+  test("places assets with a missing folder in the root", async () => {
+    server.use(
+      projectOwnershipHandler,
+      db.get("Asset", () =>
+        json([{ ...assetRow, folderId: "deleted-folder" }])
+      ),
+      db.get("AssetFolder", () => json([]))
+    );
+
+    const [asset] = await loadAssetsByProject("proj-1", createContext());
+    expect(asset).not.toHaveProperty("folderId");
+  });
+
+  test("preserves references to existing folders", async () => {
+    server.use(
+      projectOwnershipHandler,
+      db.get("Asset", () => json([{ ...assetRow, folderId: "folder-1" }])),
+      db.get("AssetFolder", () =>
+        json([
+          {
+            id: "folder-1",
+            projectId: "proj-1",
+            name: "Images",
+            parentId: null,
+            createdAt: "2024-01-01T00:00:00.000Z",
+          },
+        ])
+      )
+    );
+
+    const [asset] = await loadAssetsByProject("proj-1", createContext());
+    expect(asset?.folderId).toBe("folder-1");
   });
 
   test("throws AuthorizationError when caller lacks access", async () => {

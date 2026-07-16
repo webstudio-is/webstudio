@@ -5,6 +5,7 @@ import {
   createPublishedProjectBundleFixture,
 } from "@webstudio-is/protocol/fixtures";
 import { type PublishedProjectBundle } from "@webstudio-is/protocol";
+import { createAssetRows } from "@webstudio-is/asset-uploader/index.server";
 import {
   __testing__,
   importPublishedProjectBundle,
@@ -13,11 +14,10 @@ import {
 const {
   assertBundleVersion,
   assertImportedAssetFilesUploaded,
-  assertImportedAssetFolders,
+  normalizeImportedAssetFolderData,
   assertImportedAssetNames,
   assertProjectBuildPermit,
   createBuildImportUpdate,
-  createImportedAssetRows,
   getImportedPreviewImageAssetId,
 } = __testing__;
 
@@ -261,8 +261,8 @@ describe("build import helpers", () => {
 
   test("remaps imported asset rows to destination project", () => {
     expect(
-      createImportedAssetRows({
-        assets: [
+      createAssetRows(
+        [
           createData().assets[0],
           {
             ...createData().assets[0],
@@ -271,8 +271,8 @@ describe("build import helpers", () => {
             description: undefined,
           },
         ],
-        projectId: "destination-project",
-      })
+        "destination-project"
+      )
     ).toEqual([
       {
         id: "asset-1",
@@ -293,7 +293,7 @@ describe("build import helpers", () => {
     ]);
   });
 
-  test("validates asset folder hierarchy and asset destinations", () => {
+  test("validates folder hierarchy and moves orphaned assets to root", () => {
     const parent = {
       id: "parent",
       projectId: "source-project",
@@ -303,21 +303,27 @@ describe("build import helpers", () => {
     const child = { ...parent, id: "child", name: "Child", parentId: "parent" };
 
     expect(() =>
-      assertImportedAssetFolders(
+      normalizeImportedAssetFolderData(
         [child, parent],
         [{ ...createData().assets[0], folderId: "child" }]
       )
     ).not.toThrow();
     expect(() =>
-      assertImportedAssetFolders(
+      normalizeImportedAssetFolderData(
         [parent],
         [{ ...createData().assets[0], folderId: "missing" }]
       )
-    ).toThrow("Imported asset folder is missing");
+    ).not.toThrow();
+    expect(
+      normalizeImportedAssetFolderData(
+        [parent],
+        [{ ...createData().assets[0], folderId: "missing" }]
+      ).assets[0]
+    ).not.toHaveProperty("folderId");
   });
 
   test("normalizes imported asset folder names", () => {
-    const normalized = assertImportedAssetFolders(
+    const normalized = normalizeImportedAssetFolderData(
       [
         {
           id: "folder",
@@ -329,7 +335,7 @@ describe("build import helpers", () => {
       []
     );
 
-    expect(normalized[0]?.name).toBe("Media");
+    expect(normalized.folders[0]?.name).toBe("Media");
   });
 
   test("updates the build before replacing asset rows", async () => {

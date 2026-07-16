@@ -30,7 +30,6 @@ import {
 import {
   loadAssetDataByProject,
   loadAssetFoldersByProject,
-  loadAssetsByProject,
 } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -649,9 +648,15 @@ export const apiRouter = router({
           projectId: input.projectId,
         });
         if (include.has("assets")) {
-          snapshot.assets = await loadAssetsByProject(input.projectId, ctx);
-        }
-        if (include.has("assetFolders")) {
+          const { assets, assetFolders } = await loadAssetDataByProject(
+            input.projectId,
+            ctx
+          );
+          snapshot.assets = assets;
+          if (include.has("assetFolders")) {
+            snapshot.assetFolders = assetFolders;
+          }
+        } else if (include.has("assetFolders")) {
           snapshot.assetFolders = await loadAssetFoldersByProject(
             input.projectId,
             ctx

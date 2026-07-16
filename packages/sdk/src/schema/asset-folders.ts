@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  createAssetFolderHierarchy,
+  getAssetFolderSiblingKey,
+} from "../asset-folder-hierarchy";
 
 export const assetFolderId = z.string().min(1);
 
@@ -6,9 +10,6 @@ export const assetFolderName = z
   .string()
   .trim()
   .min(1, "Folder name can't be empty");
-
-export const normalizeAssetFolderName = (name: string) =>
-  name.trim().toLowerCase();
 
 export const assetFolderIssue = {
   idMismatch: "Folder id must match its record key",
@@ -32,7 +33,7 @@ export type AssetFolder = z.infer<typeof assetFolder>;
 export const assetFolders = z
   .map(assetFolderId, assetFolder)
   .superRefine((folders, context) => {
-    const namesByParent = new Map<string | undefined, Set<string>>();
+    const siblingKeys = new Set<string>();
     const projectIds = new Set<string>();
 
     for (const [folderId, folder] of folders) {
@@ -61,17 +62,15 @@ export const assetFolders = z
         });
       }
 
-      const siblingNames = namesByParent.get(folder.parentId) ?? new Set();
-      const normalizedName = normalizeAssetFolderName(folder.name);
-      if (siblingNames.has(normalizedName)) {
+      const siblingKey = getAssetFolderSiblingKey(folder.parentId, folder.name);
+      if (siblingKeys.has(siblingKey)) {
         context.addIssue({
           code: "custom",
           path: [folderId, "name"],
           message: assetFolderIssue.duplicateName,
         });
       }
-      siblingNames.add(normalizedName);
-      namesByParent.set(folder.parentId, siblingNames);
+      siblingKeys.add(siblingKey);
     }
 
     if (projectIds.size > 1) {
@@ -81,20 +80,14 @@ export const assetFolders = z
       });
     }
 
+    const hierarchy = createAssetFolderHierarchy(folders);
     for (const folderId of folders.keys()) {
-      const visited = new Set<string>();
-      let currentId: string | undefined = folderId;
-      while (currentId !== undefined) {
-        if (visited.has(currentId)) {
-          context.addIssue({
-            code: "custom",
-            path: [folderId, "parentId"],
-            message: assetFolderIssue.cycle,
-          });
-          break;
-        }
-        visited.add(currentId);
-        currentId = folders.get(currentId)?.parentId;
+      if (hierarchy.hasCycle(folderId)) {
+        context.addIssue({
+          code: "custom",
+          path: [folderId, "parentId"],
+          message: assetFolderIssue.cycle,
+        });
       }
     }
   });

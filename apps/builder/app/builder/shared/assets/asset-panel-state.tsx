@@ -5,12 +5,10 @@ export const AssetPanelState = ({
   message,
   description,
   active = false,
-  framed = true,
 }: {
   message: string;
   description?: string;
   active?: boolean;
-  framed?: boolean;
 }) => (
   <Flex
     align="center"
@@ -22,13 +20,7 @@ export const AssetPanelState = ({
       color: active
         ? theme.colors.foregroundMain
         : theme.colors.foregroundSubtle,
-      border: `1px dashed ${
-        framed
-          ? active
-            ? theme.colors.foregroundMain
-            : theme.colors.foregroundMoreSubtle
-          : "transparent"
-      }`,
+      border: `1px dashed ${active ? theme.colors.foregroundMain : "transparent"}`,
       paddingTop: "35%",
     }}
   >

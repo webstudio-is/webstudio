@@ -93,7 +93,7 @@ export const FolderThumbnail = ({
           type="button"
           label={folder.name}
           preview={<FolderIcon size={48} strokeWidth={0.5} />}
-          aria-label={`Open folder ${folder.name}`}
+          aria-label={`Folder ${folder.name}`}
           aria-description="Double-click to open. Drag assets or folders here to move them."
           aria-pressed={selected}
           clickable
@@ -102,7 +102,7 @@ export const FolderThumbnail = ({
           onClick={onSelect}
           onDoubleClick={onOpen}
           onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
+            if (event.key === "Enter") {
               event.preventDefault();
               onOpen();
             }

@@ -1,13 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { assetFolders, type AssetFolder } from "./asset-folders";
-
-const folder = (id: string, parentId?: string, name = id): AssetFolder => ({
-  id,
-  projectId: "project",
-  name,
-  parentId,
-  createdAt: "2026-01-01T00:00:00.000Z",
-});
+import { assetFolders } from "./asset-folders";
+import { createAssetFolderFixture as folder } from "../asset-folder.test-fixtures";
 
 describe("assetFolders", () => {
   test("accepts nested folders", () => {
