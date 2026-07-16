@@ -13,7 +13,11 @@ import {
   type StyleSourceSelections,
   type Styles,
 } from "@webstudio-is/sdk";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import {
+  createRegularStyleSheet,
+  type StyleProperty,
+  type StyleValue,
+} from "@webstudio-is/css-engine";
 import {
   collectCssVariableReferences,
   createCssVariableDeletePayload,
@@ -987,6 +991,150 @@ const instance = (id: string): Instance => ({
 });
 
 describe("runtime style operations", () => {
+  test.each([":hover, body", ":hover > div", "body:hover"])(
+    "rejects state selectors that escape the styled element: %s",
+    (state) => {
+      expect(
+        styleUpdateInput.safeParse({
+          instanceId: "box",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+          state,
+        })
+      ).toMatchObject({ success: false });
+      expect(
+        styleDeleteInput.safeParse({
+          instanceId: "box",
+          property: "color",
+          state,
+        })
+      ).toMatchObject({ success: false });
+      expect(
+        designTokenCreateInput.safeParse({
+          name: "Primary",
+          declarations: [
+            {
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              state,
+            },
+          ],
+        })
+      ).toMatchObject({ success: false });
+    }
+  );
+
+  test("preserves an editable compound state through mutation and generated CSS", () => {
+    const state = ":hover:focus-visible";
+    const mutation = updateStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("box")]),
+        styles: new Map(),
+        styleSources: sources([local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["local"] }],
+        ]),
+      },
+      {
+        updates: [
+          {
+            instanceId: "box",
+            property: "borderTopColor",
+            value: { type: "keyword", value: "currentcolor" },
+            state,
+          },
+        ],
+      },
+      { createId }
+    );
+    const patch = mutation.payload
+      .find((change) => change.namespace === "styles")
+      ?.patches.at(0);
+    if (patch === undefined || patch.op === "remove") {
+      throw new Error("Expected a style declaration patch");
+    }
+    const declaration = patch.value as StyleDecl;
+
+    expect(declaration).toMatchObject({
+      property: "borderTopColor",
+      state,
+      breakpointId: "desktop",
+    });
+
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".box");
+    rule.setDeclaration({
+      breakpoint: declaration.breakpointId,
+      selector: declaration.state ?? "",
+      property: declaration.property,
+      value: declaration.value,
+    });
+    expect(rule.toString({ breakpoint: "desktop" })).toContain(
+      ".box:hover:focus-visible {\n  border-top-color: currentcolor\n}"
+    );
+  });
+
+  test("rejects declarations for unknown breakpoints", () => {
+    expect(() =>
+      updateStyleDeclarations(
+        {
+          breakpoints: runtimeBreakpoints,
+          instances: toMap([instance("box")]),
+          styles: new Map(),
+          styleSources: sources([local("local")]),
+          styleSourceSelections: new Map([
+            ["box", { instanceId: "box", values: ["local"] }],
+          ]),
+        },
+        {
+          updates: [
+            {
+              instanceId: "box",
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              breakpoint: "missing",
+            },
+          ],
+        },
+        { createId }
+      )
+    ).toThrow("Breakpoint not found");
+  });
+
+  test("does not treat a custom condition as the base breakpoint", () => {
+    const mutation = updateStyleDeclarations(
+      {
+        breakpoints: toMap<Breakpoint>([
+          {
+            id: "dark",
+            label: "Dark",
+            condition: "(prefers-color-scheme: dark)",
+          },
+          { id: "base", label: "Base" },
+        ]),
+        instances: toMap([instance("box")]),
+        styles: new Map(),
+        styleSources: sources([local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["local"] }],
+        ]),
+      },
+      {
+        updates: [
+          {
+            instanceId: "box",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      },
+      { createId }
+    );
+
+    expect(mutation.result.styleKeys).toEqual(["local:base:color:"]);
+  });
+
   test("update styles uses the project base breakpoint when omitted", () => {
     const mutation = updateStyleDeclarations(
       {

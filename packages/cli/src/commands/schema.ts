@@ -5,9 +5,11 @@ import {
 import {
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
+} from "@webstudio-is/project-build/mcp";
+import {
   paginateOutput,
   projectOutput,
-} from "@webstudio-is/project-build/mcp";
+} from "@webstudio-is/project-build/runtime";
 import { HandledCliError } from "../errors";
 import { printJson } from "../json-output";
 import { useCaseScenarios } from "./api-command-docs";

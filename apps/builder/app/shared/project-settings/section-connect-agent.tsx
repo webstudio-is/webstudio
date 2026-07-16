@@ -10,25 +10,29 @@ import {
 import { CopyIcon } from "@webstudio-is/icons";
 import {
   agentClients,
-  createAgentClientConfiguration,
+  agentClientDefinitions,
+  createAgentQuickstart,
   createAgentShareUrl,
-  createAgentSetupCommand,
   type AgentClient,
 } from "@webstudio-is/protocol";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $authToken } from "~/shared/nano-states";
 import { sectionSpacing } from "./utils";
 
-const clientLabels: Record<AgentClient, string> = {
-  claude: "Claude Code",
-  codex: "Codex",
-  cursor: "Cursor",
-  vscode: "VS Code",
-};
 const clientOptions = agentClients.map((value) => ({
   value,
-  label: clientLabels[value],
+  label: agentClientDefinitions[value].label,
 }));
+
+export const createConnectAgentViewModel = ({
+  client,
+  shareUrl,
+}: {
+  client: AgentClient;
+  shareUrl?: string;
+}) => {
+  return createAgentQuickstart({ client, shareUrl });
+};
 
 export const SectionConnectAgent = () => {
   const authToken = useStore($authToken);
@@ -48,11 +52,10 @@ export const SectionConnectAgent = () => {
     );
   }, [authToken]);
 
-  const configuration = createAgentClientConfiguration(client);
-  const setupCommand =
-    shareUrl === undefined
-      ? undefined
-      : createAgentSetupCommand({ client, shareUrl });
+  const { configuration, setupCommand, steps } = createConnectAgentViewModel({
+    client,
+    shareUrl,
+  });
 
   return (
     <Grid gap={3} css={sectionSpacing}>
@@ -88,7 +91,11 @@ export const SectionConnectAgent = () => {
           readOnly
           value={configuration.content}
         />
-        <Text color="subtle">{configuration.hint}</Text>
+        {steps.slice(-2).map((step) => (
+          <Text key={step.phase} color="subtle">
+            {step.label}
+          </Text>
+        ))}
       </Grid>
     </Grid>
   );

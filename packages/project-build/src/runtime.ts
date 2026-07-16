@@ -1,6 +1,7 @@
 export * from "./build-integrity";
 export * from "./shared/graph-utils";
 export * from "./runtime/assets";
+export * from "./runtime/binding-verification";
 export * from "./runtime/auth";
 export * from "./runtime/block";
 export * from "./runtime/breakpoints";
@@ -22,6 +23,7 @@ export * from "./runtime/instances";
 export * from "./runtime/lookup";
 export * from "./runtime/matcher";
 export * from "./runtime/mutation";
+export * from "./runtime/output";
 export * from "./runtime/page-copy";
 export * from "./runtime/pages";
 export * from "./runtime/project-settings";

@@ -1176,6 +1176,11 @@ describe("insert page copy", () => {
           meta: { description: `"Description"` },
         },
       ],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: {},
     });
   });
 

@@ -27,18 +27,18 @@ export const defaultApiConnectionDependencies: ApiConnectionDependencies = {
 };
 
 export const resolveApiConnection = async (
-  dependencies = defaultApiConnectionDependencies
+  dependencies = defaultApiConnectionDependencies,
+  projectRoot = cwd()
 ): Promise<ApiConnection> => {
-  if ((await dependencies.isFileExists(LOCAL_CONFIG_FILE)) === false) {
+  const localConfigFile = join(projectRoot, LOCAL_CONFIG_FILE);
+  if ((await dependencies.isFileExists(localConfigFile)) === false) {
     throw new Error(
       "Local config file is not found. Run webstudio init --link <api-share-link> from a Webstudio project."
     );
   }
 
   const localConfig = jsonToLocalConfig(
-    JSON.parse(
-      await dependencies.readFile(join(cwd(), LOCAL_CONFIG_FILE), "utf-8")
-    )
+    JSON.parse(await dependencies.readFile(localConfigFile, "utf-8"))
   );
   const globalConfig = jsonToGlobalConfig(
     JSON.parse(await dependencies.readFile(GLOBAL_CONFIG_FILE, "utf-8"))

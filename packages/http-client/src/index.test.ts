@@ -435,7 +435,8 @@ test("wraps project api trpc calls in named functions", async () => {
     });
     await listPages({
       ...params,
-      includeFolders: true,
+      limit: 20,
+      verbose: true,
     });
     await getPage({
       ...params,
@@ -807,7 +808,8 @@ test("wraps project api trpc calls in named functions", async () => {
     await getProjectPermissions(params);
     await listFolders({
       ...params,
-      includePages: true,
+      cursor: "20",
+      limit: 20,
     });
     await applyBuildPatch({
       ...params,

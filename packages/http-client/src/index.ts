@@ -201,6 +201,12 @@ type AuthProjectParams = {
   headers?: RequestHeaders;
 };
 
+type PaginatedQueryInput = {
+  cursor?: string;
+  limit?: number;
+  verbose?: boolean;
+};
+
 type AuthTokenParams = {
   origin: string;
   authToken: string;
@@ -694,6 +700,9 @@ export const getBuildSnapshot = projectQueryInput<
   AuthProjectParams & {
     include?: string[];
     version?: number;
+    verbose?: boolean;
+    cursor?: string;
+    limit?: number;
   }
 >("snapshot");
 
@@ -737,9 +746,7 @@ type PageFieldsInput = {
 };
 
 export const listPages = projectQueryInput<
-  AuthProjectParams & {
-    includeFolders?: boolean;
-  }
+  AuthProjectParams & PaginatedQueryInput
 >("list-pages");
 
 export const getPage = projectQueryInput<
@@ -901,6 +908,10 @@ export const upsertResourceProp = runtimeProjectMutation(
   "upsert-resource-prop"
 );
 
+export const integrateRuntimeUi = runtimeProjectMutation(
+  "integrate-runtime-ui"
+);
+
 export const updateAsset = runtimeProjectMutation("update-asset");
 
 export const addAsset = runtimeProjectMutation("add-asset");
@@ -918,17 +929,17 @@ type ProjectSettingsInput = {
   };
 };
 
-export const getProjectSettings = projectQuery(
-  getPublicApiOperationPath("get-project-settings")
-);
+export const getProjectSettings = projectQueryInput<
+  AuthProjectParams & Pick<PaginatedQueryInput, "verbose">
+>("get-project-settings");
 
 export const updateProjectSettings = projectMutationInput<
   AuthProjectParams & ProjectSettingsInput
 >("update-project-settings");
 
-export const listRedirects = projectQuery(
-  getPublicApiOperationPath("list-redirects")
-);
+export const listRedirects = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-redirects");
 
 export const createRedirect = projectMutationInput<
   AuthProjectParams & {
@@ -955,9 +966,9 @@ export const deleteRedirect = projectMutationInput<
   }
 >("delete-redirect");
 
-export const listBreakpoints = projectQuery(
-  getPublicApiOperationPath("list-breakpoints")
-);
+export const listBreakpoints = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-breakpoints");
 
 type BreakpointInput = {
   id: string;
@@ -1005,9 +1016,9 @@ export const duplicatePage = projectMutationInput<
   }
 >("duplicate-page");
 
-export const listPageTemplates = projectQuery(
-  getPublicApiOperationPath("list-page-templates")
-);
+export const listPageTemplates = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-page-templates");
 
 export const createPageFromTemplate = projectMutationInput<
   AuthProjectParams & {
@@ -1019,9 +1030,7 @@ export const createPageFromTemplate = projectMutationInput<
 >("create-page-from-template");
 
 export const listFolders = projectQueryInput<
-  AuthProjectParams & {
-    includePages?: boolean;
-  }
+  AuthProjectParams & PaginatedQueryInput
 >("list-folders");
 
 export const createFolder = projectMutationInput<
@@ -1050,15 +1059,19 @@ export const deleteFolder = projectMutationInput<
 >("delete-folder");
 
 export const searchProject = projectQueryInput<
-  AuthProjectParams & Record<string, unknown>
+  AuthProjectParams & PaginatedQueryInput & Record<string, unknown>
 >("search-project");
 
 export const audit = projectQueryInput<
   AuthProjectParams & Record<string, unknown>
 >("audit");
 
+export const verifyBindings = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput & Record<string, unknown>
+>("verify-bindings");
+
 export const listFonts = projectQueryInput<
-  AuthProjectParams & Record<string, unknown>
+  AuthProjectParams & PaginatedQueryInput & Record<string, unknown>
 >("list-fonts");
 
 export const replacePropText = projectMutationInput<
@@ -1078,16 +1091,17 @@ export const setImageDescriptions = projectMutationInput<
 >("set-image-descriptions");
 
 export const listInstances = projectQueryInput<
-  AuthProjectParams & {
-    pageId?: string;
-    pagePath?: string;
-    rootInstanceId?: string;
-    maxDepth?: number;
-    topLevelOnly?: boolean;
-    component?: string;
-    tag?: string;
-    labelContains?: string;
-  }
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      pageId?: string;
+      pagePath?: string;
+      rootInstanceId?: string;
+      maxDepth?: number;
+      topLevelOnly?: boolean;
+      component?: string;
+      tag?: string;
+      labelContains?: string;
+    }
 >("list-instances");
 
 export const inspectInstance = projectQueryInput<
@@ -1200,8 +1214,7 @@ export const listTexts = projectQueryInput<
     instanceId?: string;
     mode?: "text" | "expression" | "all";
     contains?: string;
-    maxValueLength?: number;
-  }
+  } & PaginatedQueryInput
 >("list-texts");
 
 export const updateText = projectMutationInput<
@@ -1265,11 +1278,12 @@ export const replaceStyleValues = projectMutationInput<
 >("replace-styles");
 
 export const listDesignTokens = projectQueryInput<
-  AuthProjectParams & {
-    filter?: string;
-    withUsage?: boolean;
-    sort?: "name" | "usage";
-  }
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      filter?: string;
+      withUsage?: boolean;
+      sort?: "name" | "usage";
+    }
 >("list-design-tokens");
 
 type DesignTokenStyleInput = {
@@ -1327,10 +1341,11 @@ export const extractDesignToken = projectMutationInput<
 >("extract-design-token");
 
 export const listCssVariables = projectQueryInput<
-  AuthProjectParams & {
-    filter?: string;
-    withUsage?: boolean;
-  }
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      filter?: string;
+      withUsage?: boolean;
+    }
 >("list-css-variables");
 
 export const defineCssVariables = projectMutationInput<
@@ -1362,9 +1377,10 @@ type VariableValueInput =
   | { type: "json"; value: unknown };
 
 export const listVariables = projectQueryInput<
-  AuthProjectParams & {
-    scopeInstanceId?: string;
-  }
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      scopeInstanceId?: string;
+    }
 >("list-variables");
 
 export const createVariable = projectMutationInput<
@@ -1403,9 +1419,10 @@ type ResourceFieldsInput = {
 };
 
 export const listResources = projectQueryInput<
-  AuthProjectParams & {
-    scopeInstanceId?: string;
-  }
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      scopeInstanceId?: string;
+    }
 >("list-resources");
 
 export const createResource = projectMutationInput<
@@ -1432,9 +1449,9 @@ export const deleteResource = projectMutationInput<
   }
 >("delete-resource");
 
-export const listPublishes = projectQuery(
-  getPublicApiOperationPath("list-publishes")
-);
+export const listPublishes = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-publishes");
 
 export const publish = projectMutationInput<
   AuthProjectParams & {
@@ -1458,9 +1475,9 @@ export const unpublish = projectConfirmedMutationInput<
   }
 >("unpublish");
 
-export const listDomains = projectQuery(
-  getPublicApiOperationPath("list-domains")
-);
+export const listDomains = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput
+>("list-domains");
 
 export const createDomain = projectMutationInput<
   AuthProjectParams & { domain: string }
@@ -1482,19 +1499,19 @@ export const verifyDomain = projectMutationInput<
 >("verify-domain");
 
 export const listAssets = projectQueryInput<
-  AuthProjectParams & {
-    type?: "image" | "font";
-    sort?: "name" | "size" | "createdAt" | "usage";
-    withUsage?: boolean;
-    cursor?: string;
-    limit?: number;
-  }
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      type?: "image" | "font";
+      sort?: "name" | "size" | "createdAt" | "usage";
+      withUsage?: boolean;
+    }
 >("list-assets");
 
 export const findAssetUsage = projectQueryInput<
-  AuthProjectParams & {
-    assetId: string;
-  }
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      assetId: string;
+    }
 >("find-asset-usage");
 
 export const replaceAsset = projectConfirmedMutationInput<

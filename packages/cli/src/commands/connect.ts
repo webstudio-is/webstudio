@@ -4,8 +4,9 @@ import { cwd } from "node:process";
 import { log } from "@clack/prompts";
 import {
   agentClients,
-  agentClientTargets,
+  agentClientDefinitions,
   agentServerName,
+  createAgentQuickstart,
   createAgentServerEntry,
   createCodexAgentSnippet,
   defaultAgentServerCommand,
@@ -34,7 +35,6 @@ export type ConnectFileResult =
   | "unchanged"
   | "blocked-by-invalid-json";
 
-const jsonClientTargets = agentClientTargets;
 export const createServerEntry = createAgentServerEntry;
 export const createCodexSnippet = createCodexAgentSnippet;
 
@@ -159,35 +159,38 @@ export const connect = async (
     );
   }
 
+  const quickstart = createAgentQuickstart({ client, serverCommand });
+  const configuration = quickstart.configuration;
+  const completionHint = quickstart.steps
+    .slice(-2)
+    .map(({ label }) => label)
+    .join(" ");
+
   if (client === "codex") {
-    const snippet = createCodexSnippet(serverCommand);
     log.message(
       [
-        "Codex reads MCP servers from ~/.codex/config.toml. Add the server with:",
+        `${quickstart.label} reads MCP servers from ${configuration.path}. Add the server with:`,
         "",
         `  codex mcp add ${mcpServerName} -- ${serverCommand}`,
         "",
-        "or append this snippet to ~/.codex/config.toml:",
+        `or append this snippet to ${configuration.path}:`,
         "",
-        snippet,
+        configuration.content,
+        "",
+        quickstart.steps.at(-1)?.label ?? "",
       ].join("\n")
     );
     return;
   }
 
-  const target = jsonClientTargets[client];
+  const target = agentClientDefinitions[client];
   const serverEntry = createServerEntry(
     serverCommand,
     "extraServerFields" in target ? target.extraServerFields : undefined
   );
 
   if (options.print === true) {
-    const { content } = mergeServerConfig({
-      current: undefined,
-      rootKey: target.rootKey,
-      serverEntry,
-    });
-    log.message(`${target.path}\n\n${content}`);
+    log.message(`${configuration.path}\n\n${configuration.content}`);
     return;
   }
 
@@ -209,13 +212,13 @@ export const connect = async (
   }
 
   if (result === "unchanged") {
-    log.success(`${target.path} is already configured. ${target.hint}`);
+    log.success(`${target.path} is already configured. ${completionHint}`);
     return;
   }
 
   await dependencies.createFolderIfNotExists(dirname(path));
   await dependencies.writeFileAtomic(path, content ?? "");
   log.success(
-    `${result === "created" ? "Created" : "Updated"} ${target.path} with the ${mcpServerName} MCP server. ${target.hint}`
+    `${result === "created" ? "Created" : "Updated"} ${target.path} with the ${mcpServerName} MCP server. ${completionHint}`
   );
 };

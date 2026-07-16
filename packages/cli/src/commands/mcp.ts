@@ -35,7 +35,7 @@ import {
   writeCliProjectSessionDataFile,
 } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
-import { createPreviewController } from "../preview-server";
+import { createPreviewController, findAvailablePort } from "../preview-server";
 import {
   captureScreenshotWithBrowserInstall,
   createScreenshotCaptureSession,
@@ -52,6 +52,15 @@ import {
 } from "../mcp-guidance";
 import { readCliDoc } from "../docs";
 import { printJson } from "../json-output";
+import { inspectGeneratedBuild } from "../generated-build-evidence";
+import { LOCAL_DATA_FILE } from "../config";
+import {
+  assertMcpBatchMutationApproved,
+  isMcpProjectsManifest,
+  parseMcpProjectsManifest,
+  runMcpProjectBatch,
+  type McpBatchCall,
+} from "./mcp-batch";
 import { apiCompatibilityHeaders } from "./api";
 import { importProject as importProjectCommand } from "./import";
 import {
@@ -100,6 +109,7 @@ type McpScreenshotInput = {
   fullPage?: boolean;
   includeImageMetrics?: boolean;
   includeResourceMetrics?: boolean;
+  includeContrastMetrics?: boolean;
   browser?: CaptureScreenshotInput["browser"];
   browserPath?: string;
   waitUntil?: CaptureScreenshotInput["waitUntil"];
@@ -121,11 +131,7 @@ type CliMcpHost = Parameters<
   typeof createProjectSessionMcpCore<PublicApiCommand>
 >[0];
 
-type McpRunCall = {
-  tool: string;
-  input: unknown;
-  dryRun: boolean;
-};
+type McpRunCall = McpBatchCall;
 
 export const prepareMcpProjectSession = async (
   session: StartableProjectSession
@@ -468,6 +474,7 @@ const createMcpPreviewHandlers = ({
     fullPage: input.fullPage,
     includeImageMetrics: input.includeImageMetrics,
     includeResourceMetrics: input.includeResourceMetrics,
+    includeContrastMetrics: input.includeContrastMetrics,
     browser: input.browser ?? "auto",
     browserPath: input.browserPath,
     waitUntil: input.waitUntil,
@@ -501,7 +508,10 @@ const createMcpPreviewHandlers = ({
         restart: true,
       });
       markFresh();
-      return result;
+      return {
+        ...result,
+        generatedBuild: await inspectGeneratedBuild(previewProject.cwd),
+      };
     },
     async captureScreenshot(
       input: McpScreenshotInput,
@@ -618,7 +628,7 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
     )
     .command(
       ["run <input>"],
-      "Run multiple MCP tool calls in one shared CLI session from JSON or a file",
+      "Run an MCP workflow manifest for one or more linked projects",
       mcpRunOptions,
       mcpRun
     )
@@ -643,6 +653,10 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
     .example(
       "$0 mcp run .temp/mcp-calls.json",
       "Run a larger bounded multi-step MCP workflow from a file"
+    )
+    .example(
+      "$0 mcp run .temp/projects.json --dry-run --concurrency 2",
+      "Run one resumable workflow across independently linked projects"
     )
     .example(
       '$0 mcp single-op-call components.search \'{"brief":"radix select"}\'',
@@ -740,13 +754,27 @@ const mcpRunOptions = (yargs: CommonYargsArgv) =>
     .positional("input", {
       type: "string",
       describe:
-        'Inline JSON or path to a JSON file containing { "calls": [{ "tool": "...", "input": {} }] }',
+        'Inline JSON or path to a JSON workflow with "calls" and optional "projects"',
       demandOption: true,
     })
     .option("dry-run", {
       type: "boolean",
       describe: "Run local-capable mutation tools without committing",
       default: false,
+    })
+    .option("approve-mutations", {
+      type: "boolean",
+      describe: "Explicitly approve committed mutations in a projects batch",
+      default: false,
+    })
+    .option("concurrency", {
+      type: "number",
+      describe: "Maximum projects to run concurrently (projects batches only)",
+    })
+    .option("resume", {
+      type: "boolean",
+      describe: "Resume a projects batch and skip successful calls",
+      default: true,
     })
     .option("json", {
       type: "boolean",
@@ -813,14 +841,17 @@ const parseMcpRunCalls = (value: unknown): McpRunCall[] => {
   });
 };
 
-const parseMcpRunInput = async (input: string | undefined) => {
+const readMcpRunInput = async (input: string | undefined) => {
   if (input === undefined || input.length === 0) {
     throw new Error("mcp run requires inline JSON or an input file.");
   }
   const trimmedInput = input.trim();
   if (trimmedInput.startsWith("{") || trimmedInput.startsWith("[")) {
     try {
-      return parseMcpRunCalls(JSON.parse(trimmedInput));
+      return {
+        value: JSON.parse(trimmedInput) as unknown,
+        baseDirectory: cwd(),
+      };
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw createMcpInputError(
@@ -833,7 +864,10 @@ const parseMcpRunInput = async (input: string | undefined) => {
   }
   const inputPath = path.resolve(cwd(), input);
   try {
-    return parseMcpRunCalls(JSON.parse(await readFile(inputPath, "utf8")));
+    return {
+      value: JSON.parse(await readFile(inputPath, "utf8")) as unknown,
+      baseDirectory: path.dirname(inputPath),
+    };
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw createMcpInputError(
@@ -854,6 +888,9 @@ const parseMcpRunInput = async (input: string | undefined) => {
     throw error;
   }
 };
+
+const parseMcpRunInput = async (input: string | undefined) =>
+  parseMcpRunCalls((await readMcpRunInput(input)).value);
 
 const applyMcpRunOptions = (
   calls: McpRunCall[],
@@ -1083,8 +1120,8 @@ export const __testing__ = {
   updatePersistedMcpCheckpoint,
 };
 
-const createCliMcpHost = async () => {
-  const connection = await resolveApiConnection();
+const createCliMcpHost = async (projectRoot = cwd()) => {
+  const connection = await resolveApiConnection(undefined, projectRoot);
   const apiConnection = {
     ...connection,
     headers: apiCompatibilityHeaders,
@@ -1101,7 +1138,10 @@ const createCliMcpHost = async () => {
   };
   const apiContract = await getCliServerApiContract(apiConnection);
   const operations = getSupportedPublicApiOperations(apiContract);
-  const session = createCliProjectSession({ connection: apiConnection });
+  const session = createCliProjectSession({
+    connection: apiConnection,
+    projectRoot,
+  });
   await prepareMcpProjectSession(session);
   const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
   let isPreviewStale = true;
@@ -1118,7 +1158,7 @@ const createCliMcpHost = async () => {
     prepareSessionDataFile: async () => {
       await writeCliProjectSessionDataFile(
         getLoadedProjectSessionSnapshot(session),
-        undefined,
+        path.join(projectRoot, LOCAL_DATA_FILE),
         { origin: connection.origin }
       );
     },
@@ -1184,7 +1224,20 @@ const createCliMcpHost = async () => {
       markPreviewStale();
       return { imported: true as const };
     },
-    startPreview: previewHandlers.startPreview,
+    async startPreview(input, progress) {
+      const resolvedInput =
+        input.port === 0
+          ? {
+              ...input,
+              port: await findAvailablePort(input.host ?? "127.0.0.1"),
+            }
+          : input;
+      const result = await previewHandlers.startPreview(
+        resolvedInput,
+        progress
+      );
+      return result;
+    },
     async getPreviewStatus() {
       return preview.status();
     },
@@ -1204,7 +1257,7 @@ const createCliMcpHost = async () => {
       return installTesseractForOcr();
     },
     async storeRenderedAuditArtifacts(manifest) {
-      const directory = path.join(cwd(), renderedAuditArtifactDirectory);
+      const directory = path.join(projectRoot, renderedAuditArtifactDirectory);
       await mkdir(directory, { recursive: true });
       const artifactPath = path.join(
         directory,
@@ -1237,6 +1290,14 @@ const createCliMcpHost = async () => {
   };
 };
 
+const createCliMcpCore = (host: CliMcpHost) =>
+  createProjectSessionMcpCore({
+    ...host,
+    reportToolProgress(message) {
+      stderr.write(`${formatMcpStatusLine(message)}\n`);
+    },
+  });
+
 export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
   if (options.tool === undefined || options.tool === "") {
     throw new Error("mcp single-op-call requires a tool name.");
@@ -1261,7 +1322,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     ) {
       assertCliServerOperationSupported(operation.id, apiContract);
     }
-    const core = createProjectSessionMcpCore(host);
+    const core = createCliMcpCore(host);
     const persistedCheckpoint =
       options.tool === "checkpoint.ack"
         ? await readPersistedMcpCheckpoint()
@@ -1329,12 +1390,136 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
 
 class McpRunCheckpointStop extends Error {}
 
+const runMcpProjectsBatch = async ({
+  source,
+  options,
+  startedAt,
+}: {
+  source: Awaited<ReturnType<typeof readMcpRunInput>>;
+  options: McpRunOptions;
+  startedAt: number;
+}) => {
+  const manifest = parseMcpProjectsManifest({
+    value: source.value,
+    baseDirectory: source.baseDirectory,
+    defaultProgressDirectory: cwd(),
+    parseCalls: (value) => applyMcpRunOptions(parseMcpRunCalls(value), options),
+    concurrency: options.concurrency,
+  });
+  stderr.write(
+    `${formatMcpStatusLine(
+      `batch started for ${manifest.projects.length} projects with concurrency ${manifest.concurrency}`
+    )}\n`
+  );
+  const reports = await runMcpProjectBatch({
+    manifest,
+    resume: options.resume !== false,
+    runProject: async ({ project, startCall, callSucceeded }) => {
+      stderr.write(
+        `${formatMcpStatusLine(
+          `batch project ${project.id} started at call ${startCall + 1}/${project.calls.length}`
+        )}\n`
+      );
+      const { host, apiContract } = await createCliMcpHost(project.root);
+      const core = createCliMcpCore(host);
+      const tools = new Map(core.listTools().map((tool) => [tool.name, tool]));
+      for (const call of project.calls.slice(startCall)) {
+        const operation = publicApiOperations.find(
+          (candidate) => candidate.command === call.tool
+        );
+        if (
+          operation !== undefined &&
+          publicApiOperationRequiresServerSupport(operation)
+        ) {
+          assertCliServerOperationSupported(operation.id, apiContract);
+        }
+        const tool = tools.get(call.tool);
+        assertMcpBatchMutationApproved({
+          projectId: project.id,
+          call,
+          method: tool?.annotations.method,
+          approved: options.approveMutations === true,
+        });
+      }
+      if (startCall < project.calls.length) {
+        await assertPersistedMcpCheckpointAcknowledged(
+          project.calls[startCall]!.tool,
+          project.root
+        );
+      }
+      for (let index = startCall; index < project.calls.length; index++) {
+        const call = project.calls[index]!;
+        const result = await core.callTool({
+          name: call.tool,
+          input: call.input,
+          dryRun: call.dryRun,
+        });
+        const toolError = getMcpToolCallError(result);
+        if (toolError !== undefined) {
+          throw toolError;
+        }
+        const checkpoint = getResultCheckpoint(
+          call.tool,
+          result.structuredContent
+        );
+        await updatePersistedMcpCheckpoint({
+          tool: call.tool,
+          structuredContent: result.structuredContent,
+          projectRoot: project.root,
+        });
+        await callSucceeded(index + 1);
+        if (checkpoint !== undefined && index + 1 < project.calls.length) {
+          throw createMcpInputError(checkpoint.message, "CHECKPOINT_REQUIRED");
+        }
+      }
+    },
+  });
+  const succeeded = reports.filter(
+    (report) => report.status === "succeeded"
+  ).length;
+  const skipped = reports.filter(
+    (report) => report.status === "skipped"
+  ).length;
+  const failed = reports.length - succeeded - skipped;
+  const payload = {
+    ok: failed === 0,
+    data: {
+      projects: {
+        total: reports.length,
+        succeeded,
+        failed,
+        skipped,
+      },
+      results: reports,
+      progressFile: manifest.progressFile,
+    },
+    meta: { elapsedMs: Date.now() - startedAt },
+  };
+  stderr.write(
+    `${formatMcpStatusLine(
+      `batch finished: ${succeeded} succeeded, ${failed} failed, ${skipped} skipped`
+    )}\n`
+  );
+  printJson(payload);
+  if (failed > 0) {
+    throw new HandledCliError();
+  }
+};
+
 export const mcpRun = async (options: McpRunOptions) => {
   const startedAt = Date.now();
   let calls: McpRunCall[];
   try {
-    calls = await parseMcpRunInput(options.input);
+    const source = await readMcpRunInput(options.input);
+    if (isMcpProjectsManifest(source.value)) {
+      await runMcpProjectsBatch({ source, options, startedAt });
+      return;
+    }
+    calls = parseMcpRunCalls(source.value);
   } catch (error) {
+    if (isHandledCliError(error)) {
+      throw error;
+    }
     reportMcpRunPreflightFailure({
       error,
       startedAt,
@@ -1363,7 +1548,7 @@ export const mcpRun = async (options: McpRunOptions) => {
         assertCliServerOperationSupported(operation.id, apiContract);
       }
     }
-    core = createProjectSessionMcpCore(host);
+    core = createCliMcpCore(host);
     if (calls.length > 0) {
       await assertPersistedMcpCheckpointAcknowledged(calls[0]!.tool);
     }
@@ -1477,7 +1662,7 @@ export const mcpListTools = async (_options: McpListToolsOptions) => {
   const startedAt = Date.now();
   stderr.write(`${formatMcpStatusLine("list-tools started")}\n`);
   const { host } = await createCliMcpHost();
-  const core = createProjectSessionMcpCore(host);
+  const core = createCliMcpCore(host);
   const result = await core.callTool({
     name: "meta.index",
     input: {},
@@ -1494,7 +1679,7 @@ export const mcpListTools = async (_options: McpListToolsOptions) => {
 export const mcpListResources = async (_options: McpListResourcesOptions) => {
   const startedAt = Date.now();
   const { host } = await createCliMcpHost();
-  const core = createProjectSessionMcpCore(host);
+  const core = createCliMcpCore(host);
   printJson({
     ok: true,
     data: { resources: core.listResources() },
@@ -1509,7 +1694,7 @@ export const mcpReadResource = async (options: McpReadResourceOptions) => {
   const startedAt = Date.now();
   try {
     const { host } = await createCliMcpHost();
-    const core = createProjectSessionMcpCore(host);
+    const core = createCliMcpCore(host);
     printJson({
       ok: true,
       data: await core.readResource({ uri: options.uri }),

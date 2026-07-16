@@ -87,6 +87,17 @@ export const serverOnlyRouterOperationMetadata = {
           minimum: -9007199254740991,
           maximum: 9007199254740991,
         },
+        verbose: {
+          type: "boolean",
+        },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
       },
       required: [],
     },
@@ -251,9 +262,22 @@ export const serverOnlyRouterOperationMetadata = {
     permit: "view",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
   },
   "publish.create": {
@@ -342,9 +366,22 @@ export const serverOnlyRouterOperationMetadata = {
     permit: "view",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
       required: [],
-      additionalProperties: true,
     },
   },
   "domains.create": {

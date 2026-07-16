@@ -260,32 +260,38 @@ export const propValueInput = z
     addExpressionIssues(context, getPropValueErrors(value), ["value"]);
   });
 
+export const dataPropBindingInput = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("expression"),
+    value: z
+      .string()
+      .describe(
+        "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax."
+      ),
+  }),
+  z.object({ type: z.literal("parameter"), value: z.string() }),
+  z.object({ type: z.literal("resource"), value: z.string() }),
+]);
+
+const actionPropBindingInput = z.object({
+  type: z.literal("action"),
+  value: z.array(
+    z.object({
+      type: z.literal("execute"),
+      args: z.array(z.string()),
+      code: z.string(),
+    })
+  ),
+});
+
 export const propBindingInput = z
   .object({
     propId: runtimeGeneratedIdInput,
     instanceId: z.string(),
     name: z.string(),
     binding: z.discriminatedUnion("type", [
-      z.object({
-        type: z.literal("expression"),
-        value: z
-          .string()
-          .describe(
-            "One Webstudio JavaScript expression. Read webstudio://project/expressions before using unfamiliar scope or syntax."
-          ),
-      }),
-      z.object({ type: z.literal("parameter"), value: z.string() }),
-      z.object({ type: z.literal("resource"), value: z.string() }),
-      z.object({
-        type: z.literal("action"),
-        value: z.array(
-          z.object({
-            type: z.literal("execute"),
-            args: z.array(z.string()),
-            code: z.string(),
-          })
-        ),
-      }),
+      ...dataPropBindingInput.options,
+      actionPropBindingInput,
     ]),
   })
   .superRefine((value, context) => {

@@ -145,6 +145,22 @@ test("writes the cursor config into .cursor/mcp.json", async () => {
   );
 });
 
+test.each(["claude", "cursor", "vscode"] as const)(
+  "prints the same generated %s configuration that it writes",
+  async (client) => {
+    const writeDependencies = createDependencies(linkedProject);
+    const printDependencies = createDependencies(linkedProject);
+
+    await connect({ client, print: false }, writeDependencies);
+    await connect({ client, print: true }, printDependencies);
+
+    const [, written] = vi.mocked(writeDependencies.writeFileAtomic).mock
+      .calls[0];
+    expect(written).toContain("webstudio@latest");
+    expect(printDependencies.writeFileAtomic).not.toHaveBeenCalled();
+  }
+);
+
 test("prints codex snippet without writing files", async () => {
   const dependencies = createDependencies(linkedProject);
 

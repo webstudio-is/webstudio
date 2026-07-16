@@ -148,7 +148,8 @@ type PersistedCliProjectSessionSnapshot = Omit<
   state: SerializedBuilderStateSnapshot;
 };
 
-const sessionFile = join(dirname(LOCAL_CONFIG_FILE), "project-session.json");
+export const getCliProjectSessionFile = (projectRoot = cwd()) =>
+  join(projectRoot, dirname(LOCAL_CONFIG_FILE), "project-session.json");
 const compatibilityVersion = "cli-project-session-v1";
 
 const createCliProjectSessionCompatibility = (
@@ -282,7 +283,7 @@ const serializePersistedSnapshot = (
 });
 
 export const createCliProjectSessionStorage = (
-  path = join(cwd(), sessionFile)
+  path = getCliProjectSessionFile()
 ): ProjectSessionStorage => ({
   async load() {
     try {
@@ -402,12 +403,14 @@ export const createCliProjectSessionTransport = ({
 
 export const createCliProjectSession = ({
   connection,
-  storage = createCliProjectSessionStorage(),
+  storage,
+  projectRoot,
   executeServerOperation,
   getPermissions,
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
+  projectRoot?: string;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
 }) =>
@@ -418,7 +421,9 @@ export const createCliProjectSession = ({
       executeServerOperation,
       getPermissions,
     }),
-    storage,
+    storage:
+      storage ??
+      createCliProjectSessionStorage(getCliProjectSessionFile(projectRoot)),
     compatibilityVersion,
   });
 

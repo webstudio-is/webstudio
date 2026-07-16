@@ -1,5 +1,5 @@
 import { execFile, spawn, type ChildProcess } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import {
   cp,
@@ -8,6 +8,7 @@ import {
   readFile,
   readdir,
   rm,
+  stat,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -26,6 +27,20 @@ import type { BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import React from "react";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import {
+  compactSmokeOperations,
+  countCompactTokens,
+  createReleaseSmokeReporter,
+  defaultCandidateTokenBudget,
+  getModelVerificationItemCount,
+  modelEvaluationReportSchema,
+  modelEvaluationSubmissionSchema,
+  modelEvaluationTaskId,
+  publishedCliManifestContractSchema,
+  writeModelEvaluationReport,
+  type CompactOperationMeasurement,
+  type CompactSmokeOperation,
+} from "./release-smoke-report";
 
 const execFileAsync = promisify(execFile);
 const projectId = "release-smoke-project";
@@ -33,16 +48,177 @@ const buildId = "release-smoke-build";
 const projectVersion = 1;
 const sessionVersion = "cli-project-session-v1";
 const releaseVersionPlaceholder = "0.0.0-webstudio-version";
+const privacyCanary = "releaseSmokePrivateCanaryAuthTokenDoNotReport";
 const agentSmokeClients = [
   { connect: "claude", name: "claude-code" },
   { connect: "codex", name: "codex" },
   { connect: "cursor", name: "cursor" },
+  { connect: "vscode", name: "vscode" },
 ] as const;
 
-const reportPhase = (phase: string, startedAt = Date.now()) => {
-  process.stderr.write(
-    `[release-smoke] ${phase} (${Date.now() - startedAt}ms)\n`
+const configuredTokenBudget = Number(
+  process.env.WEBSTUDIO_RELEASE_SMOKE_TOKEN_BUDGET ??
+    defaultCandidateTokenBudget
+);
+const reporter = createReleaseSmokeReporter({
+  privacyCanary,
+  candidateTokenBudget: configuredTokenBudget,
+});
+const reportPhase = reporter.complete;
+
+type ReleaseTarget = {
+  source: "local" | "registry";
+  version: string;
+  installSpec: string;
+  integrity?: string;
+};
+
+const readNpmJson = async (args: string[]) =>
+  JSON.parse((await execFileAsync("npm", args)).stdout) as unknown;
+
+const resolveRegistryTarget = async (spec: string): Promise<ReleaseTarget> => {
+  const version = await readNpmJson(["view", spec, "version", "--json"]);
+  const integrity = await readNpmJson([
+    "view",
+    spec,
+    "dist.integrity",
+    "--json",
+  ]);
+  if (typeof version !== "string" || version.length === 0) {
+    throw new Error(`Could not resolve registry package ${spec}.`);
+  }
+  if (typeof integrity !== "string" || integrity.length === 0) {
+    throw new Error(`Registry package webstudio@${version} has no integrity.`);
+  }
+  return {
+    source: "registry",
+    version,
+    installSpec: `webstudio@${version}`,
+    integrity,
+  };
+};
+
+const installReleaseTarget = async ({
+  directory,
+  target,
+  enforceArtifactContract = false,
+}: {
+  directory: string;
+  target: ReleaseTarget;
+  enforceArtifactContract?: boolean;
+}) => {
+  await writeFile(
+    join(directory, "package.json"),
+    JSON.stringify({ private: true }),
+    "utf8"
   );
+  const install = await execFileAsync(
+    "npm",
+    [
+      "install",
+      target.installSpec,
+      "--no-audit",
+      "--no-fund",
+      "--loglevel=warn",
+    ],
+    { cwd: directory, maxBuffer: 10 * 1024 * 1024 }
+  );
+  if (/ERESOLVE|overriding peer dependency/i.test(install.stderr)) {
+    throw new Error(
+      `npm install emitted peer dependency warnings for ${target.source} ${target.version}.`
+    );
+  }
+  const installedManifest = JSON.parse(
+    await readFile(
+      join(directory, "node_modules", "webstudio", "package.json"),
+      "utf8"
+    )
+  ) as Record<string, unknown>;
+  if (installedManifest.version !== target.version) {
+    throw new Error(
+      `Clean install resolved webstudio ${String(installedManifest.version)} instead of ${target.version}.`
+    );
+  }
+  if (enforceArtifactContract) {
+    publishedCliManifestContractSchema.parse({
+      name: installedManifest.name,
+      version: installedManifest.version,
+      type: installedManifest.type,
+      bin: installedManifest.bin,
+      files: installedManifest.files,
+      engines: installedManifest.engines,
+    });
+    const packageDirectory = join(directory, "node_modules", "webstudio");
+    const packageEntries = new Set(await readdir(packageDirectory));
+    for (const requiredEntry of [
+      "bin.js",
+      "lib",
+      "package.json",
+      "templates",
+    ]) {
+      if (packageEntries.has(requiredEntry) === false) {
+        throw new Error(
+          `Installed webstudio artifact is missing required entry ${requiredEntry}.`
+        );
+      }
+    }
+    const allowedTopLevelEntries = new Set([
+      "LICENSE",
+      "README.md",
+      "bin.js",
+      "lib",
+      "package.json",
+      "templates",
+    ]);
+    const unexpectedEntry = Array.from(packageEntries).find(
+      (entry) => allowedTopLevelEntries.has(entry) === false
+    );
+    if (unexpectedEntry !== undefined) {
+      throw new Error(
+        `Installed webstudio artifact contains unexpected top-level entry ${unexpectedEntry}.`
+      );
+    }
+    const scanTree = async (path: string, relativePath = "") => {
+      for (const entry of await readdir(path, { withFileTypes: true })) {
+        const entryPath = join(path, entry.name);
+        const relativeEntryPath = join(relativePath, entry.name);
+        if (entry.isSymbolicLink()) {
+          throw new Error(
+            `Installed webstudio artifact contains symlink ${relativeEntryPath}.`
+          );
+        }
+        if (
+          /(?:^|\/)(?:\.env(?:\.|$)|\.npmrc$)|\.(?:map|test\.[^.]+|stories\.[^.]+)$/i.test(
+            relativeEntryPath
+          )
+        ) {
+          throw new Error(
+            `Installed webstudio artifact contains forbidden file ${relativeEntryPath}.`
+          );
+        }
+        if (entry.isDirectory()) {
+          await scanTree(entryPath, relativeEntryPath);
+        }
+      }
+    };
+    await scanTree(packageDirectory);
+    const executable = await stat(join(packageDirectory, "bin.js"));
+    if (executable.isFile() === false || (executable.mode & 0o111) === 0) {
+      throw new Error("Installed webstudio bin.js is not executable.");
+    }
+  }
+  if (target.integrity !== undefined) {
+    const lock = JSON.parse(
+      await readFile(join(directory, "package-lock.json"), "utf8")
+    ) as { packages?: Record<string, { integrity?: unknown }> };
+    const installedIntegrity =
+      lock.packages?.["node_modules/webstudio"]?.integrity;
+    if (installedIntegrity !== target.integrity) {
+      throw new Error(
+        `Installed webstudio integrity ${String(installedIntegrity)} does not match registry metadata.`
+      );
+    }
+  }
 };
 
 const runAgentWorkflowStep = async <Result>({
@@ -133,9 +309,11 @@ const replaceReleaseVersion = async (
 const packReleaseShapedCli = async ({
   stagingDirectory,
   packDirectory,
+  releaseVersion,
 }: {
   stagingDirectory: string;
   packDirectory: string;
+  releaseVersion: string;
 }) => {
   const cliDirectory = join(import.meta.dirname, "..");
   await Promise.all(
@@ -145,12 +323,6 @@ const packReleaseShapedCli = async ({
       })
     )
   );
-  const releaseVersion =
-    process.env.WEBSTUDIO_RELEASE_SMOKE_VERSION ??
-    JSON.parse(
-      (await execFileAsync("npm", ["view", "webstudio", "version", "--json"]))
-        .stdout
-    );
   if (typeof releaseVersion !== "string" || releaseVersion.length === 0) {
     throw new Error("Could not resolve a published Webstudio release version.");
   }
@@ -216,7 +388,7 @@ const createFixture = () => {
     {
       id: "home",
       name: "Home",
-      title: "Home",
+      title: privacyCanary,
       path: "",
       rootInstanceId: "home-root",
       meta: {},
@@ -626,6 +798,468 @@ const getRecord = (value: unknown, label: string) => {
   return value as Record<string, unknown>;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && Array.isArray(value) === false;
+
+const createMcpSmokeClient = ({
+  bin,
+  cwd,
+  env,
+  name,
+}: {
+  bin: string;
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  name: string;
+}) => {
+  const transport = new StdioClientTransport({
+    command: bin,
+    args: ["mcp"],
+    cwd,
+    env: Object.fromEntries(
+      Object.entries(env).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string"
+      )
+    ),
+    stderr: "pipe",
+  });
+  const client = new Client({ name, version: "1.0.0" });
+  return { client, transport };
+};
+
+const emptyFallbackCounts = () => ({
+  verbose: 0,
+  fullResource: 0,
+  source: 0,
+});
+
+const runCompactMeasurementSuite = async ({
+  bin,
+  cwd,
+  env,
+  expectedDetail,
+}: {
+  bin: string;
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  expectedDetail: "compact" | "verbose";
+}) => {
+  const { client, transport } = createMcpSmokeClient({
+    bin,
+    cwd,
+    env,
+    name: "webstudio-release-smoke-compact-measurement",
+  });
+  const measurements = new Map<
+    CompactSmokeOperation,
+    CompactOperationMeasurement
+  >();
+  const contractFailures: CompactSmokeOperation[] = [];
+  let canarySeen = false;
+  await client.connect(transport);
+  try {
+    for (const operation of compactSmokeOperations) {
+      let attempts = 0;
+      let failures = 0;
+      let bytes = 0;
+      let tokens = 0;
+      const fallbacks = emptyFallbackCounts();
+      let passed = false;
+      for (let attempt = 0; attempt < 2 && passed === false; attempt += 1) {
+        attempts += 1;
+        try {
+          const result = await client.callTool({
+            name: operation,
+            arguments: {
+              limit: 25,
+              ...(expectedDetail === "verbose" ? { verbose: true } : {}),
+            },
+          });
+          const source = JSON.stringify(result.structuredContent);
+          canarySeen ||= source.includes(privacyCanary);
+          const structured = getRecord(
+            result.structuredContent,
+            `${operation} compact structured content`
+          );
+          const data = getRecord(
+            structured.data,
+            `${operation} compact response data`
+          );
+          if (result.isError === true || structured.ok !== true) {
+            throw new Error(`${expectedDetail} operation failed`);
+          }
+          bytes = Buffer.byteLength(source, "utf8");
+          tokens = countCompactTokens(source);
+          if (data.detail !== expectedDetail) {
+            contractFailures.push(operation);
+            if (data.detail === "verbose") {
+              fallbacks.verbose += 1;
+            }
+          }
+          passed = true;
+        } catch {
+          failures += 1;
+        }
+      }
+      measurements.set(operation, {
+        bytes,
+        tokens,
+        attempts,
+        retries: Math.max(0, attempts - 1),
+        failures,
+        fallbacks,
+      });
+      if (passed === false) {
+        contractFailures.push(operation);
+      }
+    }
+  } finally {
+    await client.close();
+  }
+  return { measurements, contractFailures, canarySeen };
+};
+
+const runConfiguredAgentCommand = async ({
+  command,
+  cwd,
+  env,
+}: {
+  command: string;
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+}) =>
+  new Promise<{ exitCode: number; durationMs: number }>((resolve, reject) => {
+    const startedAt = Date.now();
+    const child = spawn(process.env.SHELL ?? "/bin/sh", ["-c", command], {
+      cwd,
+      env,
+      stdio: "ignore",
+      detached: process.platform !== "win32",
+    });
+    const timeout = setTimeout(() => {
+      if (child.pid !== undefined) {
+        try {
+          process.kill(process.platform === "win32" ? child.pid : -child.pid);
+        } catch {}
+      }
+      reject(new Error("Configured model evaluation exceeded ten minutes."));
+    }, 10 * 60_000);
+    child.once("error", (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once("exit", (code, signal) => {
+      clearTimeout(timeout);
+      if (signal !== null) {
+        reject(
+          new Error(`Configured model evaluation exited from signal ${signal}.`)
+        );
+        return;
+      }
+      resolve({ exitCode: code ?? -1, durationMs: Date.now() - startedAt });
+    });
+  });
+
+const verifyModelEvaluationOutcome = async ({
+  bin,
+  cwd,
+  env,
+}: {
+  bin: string;
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+}) => {
+  const { client, transport } = createMcpSmokeClient({
+    bin,
+    cwd,
+    env,
+    name: "webstudio-release-smoke-model-verifier",
+  });
+  await client.connect(transport);
+  try {
+    const countItems = async (operation: "list-pages" | "list-assets") => {
+      let result = await client.callTool({
+        name: operation,
+        arguments: { limit: 25 },
+      });
+      if (result.isError === true) {
+        result = await client.callTool({ name: operation, arguments: {} });
+      }
+      const structured = getRecord(
+        result.structuredContent,
+        `${operation} model evaluation verification response`
+      );
+      if (result.isError === true || structured.ok === false) {
+        throw new Error(`${operation} model evaluation verification failed.`);
+      }
+      return getModelVerificationItemCount(operation, structured);
+    };
+    return {
+      pageCount: await countItems("list-pages"),
+      assetCount: await countItems("list-assets"),
+    };
+  } finally {
+    await client.close();
+  }
+};
+
+const runSingleModelEvaluation = async ({
+  targetName,
+  command,
+  subject,
+  bin,
+  projectDirectory,
+  configDirectory,
+  temp,
+}: {
+  targetName: "candidate" | "baseline";
+  command: string;
+  subject: ReleaseTarget;
+  bin: string;
+  projectDirectory: string;
+  configDirectory: string;
+  temp: string;
+}) => {
+  const evaluationDirectory = join(
+    temp,
+    `model-evaluation-${targetName}-project`
+  );
+  const evaluationConfigDirectory = join(
+    temp,
+    `model-evaluation-${targetName}-config`
+  );
+  const taskPath = join(temp, `model-evaluation-${targetName}-task.json`);
+  const submissionPath = join(
+    temp,
+    `model-evaluation-${targetName}-submission.json`
+  );
+  await Promise.all([
+    cp(projectDirectory, evaluationDirectory, { recursive: true }),
+    cp(configDirectory, evaluationConfigDirectory, { recursive: true }),
+  ]);
+  const task = {
+    schemaVersion: 2,
+    taskId: modelEvaluationTaskId,
+    objective:
+      "Using only the packaged Webstudio MCP server, determine the exact number of pages and assets in the linked project. Choose the minimal tool sequence yourself.",
+    mcp: { command: bin, args: ["mcp"], cwd: evaluationDirectory },
+    resultPath: submissionPath,
+    resultContract: {
+      schemaVersion: 2,
+      taskId: modelEvaluationTaskId,
+      provider: "agent provider identifier",
+      model: "agent model identifier",
+      outcome: "completed or failed",
+      toolCallCount: "non-negative integer",
+      observations: {
+        pageCount: "non-negative integer",
+        assetCount: "non-negative integer",
+      },
+    },
+  };
+  await writeFile(taskPath, JSON.stringify(task, undefined, 2), "utf8");
+  const evaluationEnv = {
+    ...process.env,
+    WEBSTUDIO_CONFIG_DIR: evaluationConfigDirectory,
+    WEBSTUDIO_RELEASE_SMOKE_AGENT_TASK: taskPath,
+    WEBSTUDIO_RELEASE_SMOKE_AGENT_RESULT: submissionPath,
+    WEBSTUDIO_RELEASE_SMOKE_MCP_COMMAND: bin,
+    WEBSTUDIO_RELEASE_SMOKE_MCP_CWD: evaluationDirectory,
+    WEBSTUDIO_RELEASE_SMOKE_MODEL_TARGET: targetName,
+  };
+  const execution = await runConfiguredAgentCommand({
+    command,
+    cwd: evaluationDirectory,
+    env: evaluationEnv,
+  });
+  const submission = modelEvaluationSubmissionSchema.parse(
+    JSON.parse(await readFile(submissionPath, "utf8"))
+  );
+  const verifiedObservations = await verifyModelEvaluationOutcome({
+    bin,
+    cwd: evaluationDirectory,
+    env: evaluationEnv,
+  });
+  const projectOutcome =
+    submission.observations.pageCount === verifiedObservations.pageCount &&
+    submission.observations.assetCount === verifiedObservations.assetCount;
+  const passed =
+    execution.exitCode === 0 &&
+    submission.outcome === "completed" &&
+    projectOutcome;
+  return {
+    passed,
+    run: {
+      subject: { source: subject.source, version: subject.version },
+      evidence: {
+        source: "configured-agent-command" as const,
+        provider: submission.provider,
+        model: submission.model,
+        commandSha256: createHash("sha256").update(command).digest("hex"),
+        durationMs: execution.durationMs,
+        exitCode: execution.exitCode,
+        toolCallCount: submission.toolCallCount,
+      },
+      observations: submission.observations,
+      checks: {
+        submissionContract: "passed" as const,
+        projectOutcome: projectOutcome
+          ? ("passed" as const)
+          : ("failed" as const),
+      },
+    },
+  };
+};
+
+const runModelEvaluation = async ({
+  command,
+  reportPath,
+  candidate,
+  baseline,
+  candidateBin,
+  baselineBin,
+  candidateProjectDirectory,
+  baselineProjectDirectory,
+  candidateConfigDirectory,
+  baselineConfigDirectory,
+  temp,
+}: {
+  command: string;
+  reportPath: string;
+  candidate: ReleaseTarget;
+  baseline: ReleaseTarget;
+  candidateBin: string;
+  baselineBin: string;
+  candidateProjectDirectory: string;
+  baselineProjectDirectory: string;
+  candidateConfigDirectory: string;
+  baselineConfigDirectory: string;
+  temp: string;
+}) => {
+  const results = await Promise.allSettled([
+    runSingleModelEvaluation({
+      targetName: "candidate",
+      command,
+      subject: candidate,
+      bin: candidateBin,
+      projectDirectory: candidateProjectDirectory,
+      configDirectory: candidateConfigDirectory,
+      temp,
+    }),
+    runSingleModelEvaluation({
+      targetName: "baseline",
+      command,
+      subject: baseline,
+      bin: baselineBin,
+      projectDirectory: baselineProjectDirectory,
+      configDirectory: baselineConfigDirectory,
+      temp,
+    }),
+  ]);
+  const rejected = results.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected"
+  );
+  if (rejected !== undefined) {
+    throw rejected.reason;
+  }
+  const [candidateResult, baselineResult] = results.map(
+    (result) =>
+      (
+        result as PromiseFulfilledResult<
+          Awaited<ReturnType<typeof runSingleModelEvaluation>>
+        >
+      ).value
+  );
+  if (candidateResult === undefined || baselineResult === undefined) {
+    throw new Error(
+      "Both packaged CLI model evaluations must produce evidence."
+    );
+  }
+  const passed = candidateResult.passed && baselineResult.passed;
+  const report = modelEvaluationReportSchema.parse({
+    schemaVersion: 2,
+    kind: "model-driven-packaged-cli-evaluation",
+    outcome: passed ? "passed" : "failed",
+    subjects: {
+      candidate: { source: candidate.source, version: candidate.version },
+      baseline: { source: baseline.source, version: baseline.version },
+    },
+    taskId: modelEvaluationTaskId,
+    runs: {
+      candidate: candidateResult.run,
+      baseline: baselineResult.run,
+    },
+    checks: {
+      bothOutcomes: passed ? "passed" : "failed",
+      canaryRedaction: "passed",
+    },
+  });
+  await writeModelEvaluationReport(reportPath, report, [privacyCanary]);
+  if (passed === false) {
+    throw new Error(
+      "Configured model-driven evaluation did not pass against both packaged CLIs."
+    );
+  }
+};
+
+const getRenderedNetworkTransferBytes = (manifest: Record<string, unknown>) =>
+  (Array.isArray(manifest.checks) ? manifest.checks : []).reduce(
+    (total, check) => {
+      if (isRecord(check) === false || isRecord(check.layout) === false) {
+        return total;
+      }
+      return (
+        total +
+        (Array.isArray(check.layout.resources)
+          ? check.layout.resources
+          : []
+        ).reduce(
+          (resourceTotal, resource) =>
+            resourceTotal +
+            (isRecord(resource) && typeof resource.transferSize === "number"
+              ? resource.transferSize
+              : 0),
+          0
+        )
+      );
+    },
+    0
+  );
+
+const getRetainedArtifactBytes = async ({
+  manifest,
+  manifestPath,
+  projectDirectory,
+}: {
+  manifest: Record<string, unknown>;
+  manifestPath: string;
+  projectDirectory: string;
+}) => {
+  const artifactPaths = new Set([manifestPath]);
+  for (const collection of [manifest.checks, manifest.failures]) {
+    if (Array.isArray(collection) === false) {
+      continue;
+    }
+    for (const item of collection) {
+      if (isRecord(item) && typeof item.screenshotPath === "string") {
+        artifactPaths.add(
+          item.screenshotPath.startsWith("/")
+            ? item.screenshotPath
+            : join(projectDirectory, item.screenshotPath)
+        );
+      }
+    }
+  }
+  const sizes = await Promise.all(
+    Array.from(artifactPaths, async (path) =>
+      stat(path)
+        .then((file) => file.size)
+        .catch(() => 0)
+    )
+  );
+  return sizes.reduce((total, size) => total + size, 0);
+};
+
 const assertScreenshotEvidence = async ({
   payload,
   label,
@@ -686,28 +1320,21 @@ const run = async () => {
   Object.assign(globalThis, {
     React,
   });
-  const [
-    pagesModule,
-    adapters,
-    namespaces,
-    projectSession,
-    runtimeRegistry,
-    statePatch,
-  ] = await Promise.all([
-    import("@webstudio-is/project-migrations/pages"),
-    import("@webstudio-is/project-build/state"),
-    import("@webstudio-is/project-build/contracts"),
-    import("@webstudio-is/project-build/project-session"),
-    import("@webstudio-is/project-build/runtime"),
-    import("@webstudio-is/project-build/state"),
-  ]);
+  const [pagesModule, state, namespaces, projectSession, runtimeRegistry] =
+    await Promise.all([
+      import("@webstudio-is/project-migrations/pages"),
+      import("@webstudio-is/project-build/state"),
+      import("@webstudio-is/project-build/contracts"),
+      import("@webstudio-is/project-build/project-session"),
+      import("@webstudio-is/project-build/runtime"),
+    ]);
   const temp = await mkdtemp(join(tmpdir(), "webstudio-release-smoke-"));
   let preview: ChildProcess | undefined;
   let apiServer: Server | undefined;
   try {
     const startedAt = Date.now();
     const fixture = createFixture();
-    const initialState = adapters.createBuilderStateFromBuildData({
+    const initialState = state.createBuilderStateFromBuildData({
       ...fixture.build,
       pages: pagesModule.migratePages(fixture.persistedPages),
       assets: fixture.assets,
@@ -717,66 +1344,121 @@ const run = async () => {
     const fixtureApi = await startFixtureApi(fixture, {
       initialState,
       executeRuntime: runtimeRegistry.executeBuilderRuntimeOperation,
-      applyTransactions: statePatch.applyBuilderPatchTransactions,
+      applyTransactions: state.applyBuilderPatchTransactions,
       serializeFixturePages: pagesModule.serializePages,
     });
     fixture.data.origin = fixtureApi.origin;
-    reportPhase("fixture API ready", startedAt);
+    reportPhase("fixture-api", startedAt);
     apiServer = fixtureApi.server;
     const packDirectory = join(temp, "pack");
     const stagingDirectory = join(temp, "staging");
-    const projectDirectory = join(temp, "project");
-    const configDirectory = join(temp, "config");
+    const projectDirectory = join(temp, "candidate-project");
+    const baselineProjectDirectory = join(temp, "baseline-project");
+    const configDirectory = join(temp, "candidate-config");
+    const baselineConfigDirectory = join(temp, "baseline-config");
     await Promise.all([
       mkdir(packDirectory, { recursive: true }),
       mkdir(stagingDirectory, { recursive: true }),
       mkdir(join(projectDirectory, ".webstudio"), { recursive: true }),
+      mkdir(join(baselineProjectDirectory, ".webstudio"), { recursive: true }),
       mkdir(join(configDirectory, "webstudio-nodejs"), { recursive: true }),
+      mkdir(join(baselineConfigDirectory, "webstudio-nodejs"), {
+        recursive: true,
+      }),
     ]);
-    const packStartedAt = Date.now();
-    const releaseVersion = await packReleaseShapedCli({
-      stagingDirectory,
-      packDirectory,
-    });
-    reportPhase("packed release-shaped CLI", packStartedAt);
-    const tarballName = (await readdir(packDirectory)).find((name) =>
-      name.endsWith(".tgz")
-    );
-    if (tarballName === undefined) {
-      throw new Error("pnpm pack did not produce a tarball.");
-    }
-    await writeFile(
-      join(projectDirectory, "package.json"),
-      JSON.stringify({ private: true }),
-      "utf8"
-    );
-    const installStartedAt = Date.now();
-    const install = await execFileAsync(
-      "npm",
-      [
-        "install",
-        join(packDirectory, tarballName),
-        "--no-audit",
-        "--no-fund",
-        "--loglevel=warn",
-      ],
-      { cwd: projectDirectory, maxBuffer: 10 * 1024 * 1024 }
-    );
-    if (/ERESOLVE|overriding peer dependency/i.test(install.stderr)) {
-      throw new Error(
-        `npm install emitted peer dependency warnings:\n${install.stderr}`
+    const requestedCandidate =
+      process.env.WEBSTUDIO_RELEASE_SMOKE_CANDIDATE ?? "local";
+    let candidate: ReleaseTarget;
+    if (requestedCandidate === "local") {
+      const releaseVersion =
+        process.env.WEBSTUDIO_RELEASE_SMOKE_VERSION ??
+        (await resolveRegistryTarget("webstudio@latest")).version;
+      const packStartedAt = Date.now();
+      await packReleaseShapedCli({
+        stagingDirectory,
+        packDirectory,
+        releaseVersion,
+      });
+      reportPhase("package", packStartedAt);
+      const tarballName = (await readdir(packDirectory)).find((name) =>
+        name.endsWith(".tgz")
       );
+      if (tarballName === undefined) {
+        throw new Error("npm pack did not produce a tarball.");
+      }
+      candidate = {
+        source: "local",
+        version: releaseVersion,
+        installSpec: join(packDirectory, tarballName),
+      };
+    } else {
+      candidate = await resolveRegistryTarget(requestedCandidate);
     }
-    reportPhase("installed packed CLI", installStartedAt);
+    const baseline = await resolveRegistryTarget(
+      process.env.WEBSTUDIO_RELEASE_SMOKE_BASELINE ?? "webstudio@latest"
+    );
+    reporter.setSubjects({
+      candidate: { source: candidate.source, version: candidate.version },
+      baseline: { source: baseline.source, version: baseline.version },
+    });
+    const expectedRegistryVersion =
+      process.env.WEBSTUDIO_RELEASE_SMOKE_EXPECT_REGISTRY_VERSION;
+    if (expectedRegistryVersion !== undefined) {
+      if (
+        candidate.source !== "registry" ||
+        candidate.version !== expectedRegistryVersion ||
+        candidate.integrity === undefined
+      ) {
+        reporter.setRegistryArtifact("failed");
+        throw new Error(
+          `Expected exact registry artifact webstudio@${expectedRegistryVersion}, resolved ${candidate.source} ${candidate.version}.`
+        );
+      }
+    }
+
+    const candidateInstallStartedAt = Date.now();
+    await installReleaseTarget({
+      directory: projectDirectory,
+      target: candidate,
+      enforceArtifactContract: true,
+    });
+    if (expectedRegistryVersion !== undefined) {
+      reporter.setRegistryArtifact("passed");
+    }
+    reportPhase("candidate-install", candidateInstallStartedAt);
+    const baselineInstallStartedAt = Date.now();
+    await installReleaseTarget({
+      directory: baselineProjectDirectory,
+      target: baseline,
+    });
+    reportPhase("baseline-install", baselineInstallStartedAt);
 
     const bin = join(projectDirectory, "node_modules", ".bin", "webstudio");
+    const baselineBin = join(
+      baselineProjectDirectory,
+      "node_modules",
+      ".bin",
+      "webstudio"
+    );
     const env = {
       ...process.env,
       WEBSTUDIO_CONFIG_DIR: configDirectory,
     };
+    const baselineEnv = {
+      ...process.env,
+      WEBSTUDIO_CONFIG_DIR: baselineConfigDirectory,
+    };
     const globalConfigPath = join(configDirectory, "webstudio-config.json");
-    await mkdir(dirname(globalConfigPath), { recursive: true });
-    await writeFile(globalConfigPath, "{}", "utf8");
+    const baselineGlobalConfigPath = join(
+      baselineConfigDirectory,
+      "webstudio-config.json"
+    );
+    await Promise.all([
+      mkdir(dirname(globalConfigPath), { recursive: true }),
+      mkdir(dirname(baselineGlobalConfigPath), { recursive: true }),
+      writeFile(globalConfigPath, "{}", "utf8"),
+      writeFile(baselineGlobalConfigPath, "{}", "utf8"),
+    ]);
     const workflowStartedAt = Date.now();
     const runCliStep = (step: string, recovery: string, args: string[]) =>
       runAgentWorkflowStep({
@@ -810,7 +1492,7 @@ const run = async () => {
       );
     }
 
-    const state = adapters.createBuilderStateFromBuildData({
+    const builderState = state.createBuilderStateFromBuildData({
       ...fixture.build,
       pages: pagesModule.migratePages(fixture.persistedPages),
       assets: fixture.assets,
@@ -829,25 +1511,157 @@ const run = async () => {
         },
       ])
     );
+    const candidateSessionSnapshot = {
+      projectId,
+      buildId,
+      version: projectVersion,
+      state: state.createSerializedBuilderStateSnapshotFromState(builderState),
+      freshness,
+      compatibilityVersion: sessionVersion,
+      compatibility: {
+        ...projectSession.createDefaultProjectSessionCompatibility(
+          sessionVersion
+        ),
+        apiCompatibilityVersion: candidate.version,
+      },
+      revision: randomUUID(),
+    };
     await writeFile(
       join(projectDirectory, ".webstudio", "project-session.json"),
-      JSON.stringify({
-        projectId,
-        buildId,
-        version: projectVersion,
-        state: adapters.createSerializedBuilderStateSnapshotFromState(state),
-        freshness,
-        compatibilityVersion: sessionVersion,
-        compatibility: {
-          ...projectSession.createDefaultProjectSessionCompatibility(
-            sessionVersion
-          ),
-          apiCompatibilityVersion: releaseVersion,
-        },
-        revision: randomUUID(),
-      }),
+      JSON.stringify(candidateSessionSnapshot),
       "utf8"
     );
+    await cp(
+      join(projectDirectory, ".webstudio"),
+      join(baselineProjectDirectory, ".webstudio"),
+      { recursive: true, force: true }
+    );
+    await Promise.all([
+      writeFile(
+        join(baselineProjectDirectory, ".webstudio", "project-session.json"),
+        JSON.stringify({
+          ...candidateSessionSnapshot,
+          compatibility: {
+            ...candidateSessionSnapshot.compatibility,
+            apiCompatibilityVersion: baseline.version,
+          },
+          revision: randomUUID(),
+        }),
+        "utf8"
+      ),
+      cp(globalConfigPath, baselineGlobalConfigPath, { force: true }),
+    ]);
+    const agentCommand = process.env.WEBSTUDIO_RELEASE_SMOKE_AGENT_COMMAND;
+    if (
+      process.env.WEBSTUDIO_RELEASE_SMOKE_MODEL_EVAL_REQUIRED === "1" &&
+      (agentCommand === undefined || agentCommand === "")
+    ) {
+      throw new Error(
+        "WEBSTUDIO_RELEASE_SMOKE_AGENT_COMMAND is required for model evaluation; no model evidence was created."
+      );
+    }
+    if (agentCommand !== undefined && agentCommand !== "") {
+      const agentReportPath = process.env.WEBSTUDIO_RELEASE_SMOKE_AGENT_REPORT;
+      if (agentReportPath === undefined || agentReportPath === "") {
+        throw new Error(
+          "WEBSTUDIO_RELEASE_SMOKE_AGENT_REPORT is required when a model evaluation command is configured."
+        );
+      }
+      const modelEvaluationStartedAt = Date.now();
+      await runModelEvaluation({
+        command: agentCommand,
+        reportPath: agentReportPath,
+        candidate,
+        baseline,
+        candidateBin: bin,
+        baselineBin,
+        candidateProjectDirectory: projectDirectory,
+        baselineProjectDirectory,
+        candidateConfigDirectory: configDirectory,
+        baselineConfigDirectory,
+        temp,
+      });
+      reportPhase("model-evaluation", modelEvaluationStartedAt);
+    }
+    const compactComparisonStartedAt = Date.now();
+    const candidateCompact = await runCompactMeasurementSuite({
+      bin,
+      cwd: projectDirectory,
+      env,
+      expectedDetail: "compact",
+    });
+    const candidateVerbose = await runCompactMeasurementSuite({
+      bin,
+      cwd: projectDirectory,
+      env,
+      expectedDetail: "verbose",
+    });
+    const baselineCompact = await runCompactMeasurementSuite({
+      bin: baselineBin,
+      cwd: baselineProjectDirectory,
+      env: baselineEnv,
+      expectedDetail: "compact",
+    });
+    for (const operation of compactSmokeOperations) {
+      const candidateMeasurement = candidateCompact.measurements.get(operation);
+      const verboseMeasurement = candidateVerbose.measurements.get(operation);
+      const baselineMeasurement = baselineCompact.measurements.get(operation);
+      if (
+        candidateMeasurement === undefined ||
+        verboseMeasurement === undefined ||
+        baselineMeasurement === undefined
+      ) {
+        throw new Error(`Missing comparison measurement for ${operation}.`);
+      }
+      reporter.recordOperation(
+        operation,
+        candidateMeasurement,
+        verboseMeasurement,
+        baselineMeasurement
+      );
+    }
+    const candidateContractPassed =
+      candidateCompact.contractFailures.length === 0;
+    const candidateVerboseContractPassed =
+      candidateVerbose.contractFailures.length === 0;
+    const baselineContractPassed =
+      baselineCompact.contractFailures.length === 0;
+    reporter.setContract(
+      "candidateCompact",
+      candidateContractPassed ? "passed" : "failed"
+    );
+    reporter.setContract(
+      "candidateVerbose",
+      candidateVerboseContractPassed ? "passed" : "failed"
+    );
+    reporter.setContract(
+      "historicalBaselineCompact",
+      baselineContractPassed ? "passed" : "failed"
+    );
+    reportPhase("compact-comparison", compactComparisonStartedAt);
+    if (candidateContractPassed === false) {
+      throw new Error(
+        `Compact output contract failed for candidate [${candidateCompact.contractFailures.join(", ")}].`
+      );
+    }
+    if (candidateVerboseContractPassed === false) {
+      throw new Error(
+        `Verbose semantic baseline failed for candidate [${candidateVerbose.contractFailures.join(", ")}].`
+      );
+    }
+    if (reporter.candidatePassesCompactRollout() === false) {
+      const report = reporter.createReport("failed");
+      const totals = report.sameCandidate.totals;
+      throw new Error(
+        `Candidate compact rollout gate failed: compact=${totals.compact.tokens} tokens, verbose=${totals.verbose.tokens} tokens, budget=${report.candidateTokenBudget}, retryDelta=${totals.retryDelta}, failureDelta=${totals.failureDelta}. Compact must be strictly smaller with no retry or failure regression.`
+      );
+    }
+    if (candidateCompact.canarySeen === false) {
+      throw new Error(
+        "Privacy canary was not exercised by the candidate compact list-pages response."
+      );
+    }
+    reporter.markCanaryExercised();
     const invoke = async (label: string, args: string[]) => {
       const result = await execFileAsync(bin, args, {
         cwd: projectDirectory,
@@ -904,7 +1718,7 @@ const run = async () => {
         );
       }
     }
-    reportPhase("validated packed audit help examples", helpStartedAt);
+    reportPhase("audit-help", helpStartedAt);
 
     const previewStartedAt = Date.now();
     preview = spawn(bin, ["preview", "--port", "5190"], {
@@ -928,7 +1742,7 @@ const run = async () => {
         "Generic React Router preview unexpectedly includes Docker-only image proxy dependencies."
       );
     }
-    reportPhase("started packed preview", previewStartedAt);
+    reportPhase("preview-start", previewStartedAt);
     const commandsStartedAt = Date.now();
     const assertLocalDryRun = async (
       label: string,
@@ -987,20 +1801,13 @@ const run = async () => {
         step: `${clientName} connection smoke`,
         recovery: `Reload ${clientName}, then verify its Webstudio MCP command starts in the linked project folder.`,
         run: async () => {
-          const transport = new StdioClientTransport({
-            command: bin,
-            args: ["mcp"],
+          const { client, transport } = createMcpSmokeClient({
+            bin,
             cwd: projectDirectory,
-            env: Object.fromEntries(
-              Object.entries(env).filter(
-                (entry): entry is [string, string] =>
-                  typeof entry[1] === "string"
-              )
-            ),
-            stderr: "pipe",
+            env,
+            name: clientName,
           });
           transport.stderr?.on("data", () => {});
-          const client = new Client({ name: clientName, version: "1.0.0" });
           await client.connect(transport);
           try {
             const tools = await client.listTools();
@@ -1015,24 +1822,16 @@ const run = async () => {
         },
       });
     }
-    const stdioTransport = new StdioClientTransport({
-      command: bin,
-      args: ["mcp"],
-      cwd: projectDirectory,
-      env: Object.fromEntries(
-        Object.entries(env).filter(
-          (entry): entry is [string, string] => typeof entry[1] === "string"
-        )
-      ),
-      stderr: "pipe",
-    });
+    const { client: stdioClient, transport: stdioTransport } =
+      createMcpSmokeClient({
+        bin,
+        cwd: projectDirectory,
+        env,
+        name: "webstudio-release-smoke",
+      });
     let stdioLogs = "";
     stdioTransport.stderr?.on("data", (chunk) => {
       stdioLogs += String(chunk);
-    });
-    const stdioClient = new Client({
-      name: "webstudio-release-smoke",
-      version: "1.0.0",
     });
     const callTool = async (
       name: string,
@@ -1058,9 +1857,7 @@ const run = async () => {
           `Inspect returned the wrong project: ${JSON.stringify(inspection)}`
         );
       }
-      const initialPages = await callTool("list-pages", {
-        includeFolders: true,
-      });
+      const initialPages = await callTool("list-pages");
       if (
         Array.isArray(initialPages.pages) === false ||
         initialPages.pages.length !== 2
@@ -1185,10 +1982,7 @@ const run = async () => {
           `Agent connection workflow exceeded ten minutes (${workflowDuration}ms). Recovery: Inspect the reported release-smoke phase timings and optimize the slowest blocked step.`
         );
       }
-      reportPhase(
-        "completed ten-minute agent connection workflow",
-        workflowStartedAt
-      );
+      reportPhase("agent-workflow", workflowStartedAt);
 
       const finalPages = await callTool("list-pages");
       const finalPageNames = Array.isArray(finalPages.pages)
@@ -1215,10 +2009,7 @@ const run = async () => {
     ) {
       throw new Error(`Unexpected packed stdio lifecycle logs:\n${stdioLogs}`);
     }
-    reportPhase(
-      "completed packed seven-page stdio MCP workflow",
-      stdioStartedAt
-    );
+    reportPhase("stdio-workflow", stdioStartedAt);
 
     preview = spawn(bin, ["preview", "--port", "5190"], {
       cwd: projectDirectory,
@@ -1367,14 +2158,12 @@ const run = async () => {
         "confirmed large audit artifact manifest"
       );
       const manifestPath = String(manifestSummary.path);
+      const absoluteManifestPath = manifestPath.startsWith("/")
+        ? manifestPath
+        : join(projectDirectory, manifestPath);
       const manifest = JSON.parse(
-        await readFile(
-          manifestPath.startsWith("/")
-            ? manifestPath
-            : join(projectDirectory, manifestPath),
-          "utf8"
-        )
-      ) as { failures?: unknown[]; performance?: unknown };
+        await readFile(absoluteManifestPath, "utf8")
+      ) as Record<string, unknown>;
       if (
         confirmedPayload.ok !== true ||
         confirmedData.renderedCheckCount !== 122 ||
@@ -1386,10 +2175,26 @@ const run = async () => {
           `Confirmed large rendered audit was incomplete: ${JSON.stringify({ summary, failures: manifest.failures })}`
         );
       }
-      reportPhase(
-        `validated confirmed 122-capture packaged audit ${JSON.stringify({ performance: manifest.performance })}`,
-        confirmedAuditStartedAt
-      );
+      const memory = process.memoryUsage();
+      const generatedBuild = isRecord(manifest.generatedBuildEvidence)
+        ? manifest.generatedBuildEvidence
+        : undefined;
+      reportPhase("rendered-audit", confirmedAuditStartedAt, {
+        rssBytes: memory.rss,
+        heapUsedBytes: memory.heapUsed,
+        networkTransferBytes: getRenderedNetworkTransferBytes(manifest),
+        retainedArtifactBytes: await getRetainedArtifactBytes({
+          manifest,
+          manifestPath: absoluteManifestPath,
+          projectDirectory,
+        }),
+        ...(typeof generatedBuild?.bytes === "number"
+          ? { generatedBuildBytes: generatedBuild.bytes }
+          : {}),
+        ...(typeof generatedBuild?.gzipBytes === "number"
+          ? { generatedBuildGzipBytes: generatedBuild.gzipBytes }
+          : {}),
+      });
       const confirmedAuditDuration = Date.now() - confirmedAuditStartedAt;
       if (confirmedAuditDuration > 90_000) {
         throw new Error(
@@ -1406,7 +2211,7 @@ const run = async () => {
         "performance",
         "--json",
       ]);
-      reportPhase("validated cached rendered audit", cachedAuditStartedAt);
+      reportPhase("cached-audit", cachedAuditStartedAt);
       const cachedAuditDuration = Date.now() - cachedAuditStartedAt;
       if (cachedAuditDuration > 20_000) {
         throw new Error(
@@ -1414,13 +2219,22 @@ const run = async () => {
         );
       }
     }
-    reportPhase("validated structured commands", commandsStartedAt);
+    reportPhase("structured-commands", commandsStartedAt);
   } finally {
     await stopProcessTree(preview);
     await closeServer(apiServer);
     await rm(temp, { recursive: true, force: true });
-    reportPhase("cleaned temporary release smoke files");
+    reportPhase("cleanup");
   }
 };
 
-await run();
+let outcome: "passed" | "failed" = "failed";
+try {
+  await run();
+  outcome = "passed";
+} finally {
+  const reportPath = process.env.WEBSTUDIO_RELEASE_SMOKE_REPORT;
+  if (reportPath !== undefined && reportPath !== "") {
+    await reporter.write(reportPath, outcome);
+  }
+}

@@ -511,6 +511,7 @@ type CaptureScreenshotOptions = {
   fullPage?: boolean;
   includeImageMetrics?: boolean;
   includeResourceMetrics?: boolean;
+  includeContrastMetrics?: boolean;
   browser: ScreenshotBrowser;
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
@@ -543,6 +544,7 @@ const captureResolvedScreenshot = async (
     fullPage: options.fullPage,
     includeImageMetrics: options.includeImageMetrics,
     includeResourceMetrics: options.includeResourceMetrics,
+    includeContrastMetrics: options.includeContrastMetrics,
     url: options.url,
     uid: dependencies.getuid(),
     waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
@@ -617,6 +619,7 @@ export const createScreenshotCaptureSession = (
           fullPage: options.fullPage,
           includeImageMetrics: options.includeImageMetrics,
           includeResourceMetrics: options.includeResourceMetrics,
+          includeContrastMetrics: options.includeContrastMetrics,
           url: options.url,
           uid: dependencies.getuid(),
           waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
@@ -678,6 +681,7 @@ export const createScreenshotCaptureSession = (
               fullPage: options.fullPage,
               includeImageMetrics: options.includeImageMetrics,
               includeResourceMetrics: options.includeResourceMetrics,
+              includeContrastMetrics: options.includeContrastMetrics,
               url: options.url,
               uid: dependencies.getuid(),
               waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
@@ -742,6 +746,7 @@ export const captureScreenshotWithBrowserInstall = async (
     fullPage?: boolean;
     includeImageMetrics?: boolean;
     includeResourceMetrics?: boolean;
+    includeContrastMetrics?: boolean;
     browser: ScreenshotBrowser;
     browserPath?: string;
     waitUntil?: ScreenshotWaitUntil;

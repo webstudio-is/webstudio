@@ -8,6 +8,7 @@ import {
   apiCommandMetadata,
   cliCommandMetadata,
   mcpOnlyApiCommandMetadata,
+  topLevelCliCommandMetadata,
 } from "./api-command-metadata";
 import {
   generatedAppDependencyNotes,
@@ -27,10 +28,66 @@ const visibleMcpOnlyApiCommandMetadata = mcpOnlyApiCommandMetadata.filter(
   (command) => mcpVisibleToolNames.has(command.command)
 );
 
-test("prints complete manual by default", () => {
+const readLastJsonOutput = () =>
+  JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+
+test("prints a bounded compact manual by default", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ json: false });
+  man({ json: true });
+
+  const rawOutput = vi.mocked(console.info).mock.calls.at(-1)?.[0];
+  const output = JSON.parse(rawOutput);
+  expect(output).toMatchObject({
+    topic: "all",
+    detail: "compact",
+    returnedCount: 20,
+    nextCursor: "20",
+  });
+  expect(output.items).toHaveLength(20);
+  expect(rawOutput.length).toBeLessThan(16_000);
+  expect(rawOutput).not.toContain("inputSchema");
+  expect(rawOutput).not.toContain("mcpArgumentExamples");
+});
+
+test("caps compact manual pages and preserves complete catalog parity", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+  const ids: string[] = [];
+  let cursor: string | undefined;
+
+  do {
+    man({ json: true, cursor, limit: 500 });
+    const output = readLastJsonOutput();
+    expect(output.returnedCount).toBeLessThanOrEqual(50);
+    ids.push(...output.items.map((item: { id: string }) => item.id));
+    cursor = output.nextCursor;
+  } while (cursor !== undefined);
+
+  expect(ids).toEqual([
+    ...topLevelCliCommandMetadata.map(({ command }) => `cli:${command}`),
+    ...cliCommandMetadata.map(({ cliCommand }) => `api:${cliCommand}`),
+    ...listProjectSessionMcpTools(publicApiOperations).map(
+      ({ name }) => `mcp:${name}`
+    ),
+  ]);
+  expect(new Set(ids).size).toBe(ids.length);
+});
+
+test("rejects invalid compact manual pagination", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  expect(() => man({ json: true, cursor: "not-a-cursor" })).toThrow(
+    'Invalid manual cursor "not-a-cursor".'
+  );
+  expect(() => man({ json: true, limit: 0 })).toThrow(
+    "Manual limit must be at least 1."
+  );
+});
+
+test("prints the complete manual in verbose mode", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  man({ json: false, verbose: true });
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("# Webstudio Complete CLI Manual");
@@ -43,10 +100,10 @@ test("prints complete manual by default", () => {
   expect(output).not.toContain("### insert-component");
 });
 
-test("prints complete manual as json by default", () => {
+test("prints the complete manual as verbose json", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ json: true });
+  man({ json: true, verbose: true });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("all");
@@ -66,7 +123,7 @@ test("prints complete manual as json by default", () => {
 test("prints api manual with patch workflow and examples", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "api", json: false });
+  man({ topic: "api", json: false, verbose: true });
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("webstudio permissions --json");
@@ -110,7 +167,7 @@ test("prints api manual with patch workflow and examples", () => {
 test("prints api manual as json", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "api", json: true });
+  man({ topic: "api", json: true, verbose: true });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("api");
@@ -194,9 +251,7 @@ test("prints api manual as json", () => {
   for (const command of output.mcpOnlyCommands) {
     expect(command).not.toHaveProperty("required");
   }
-  expect(output.taskRecipes.pages).toContain(
-    'MCP tool: list-pages {"includeFolders":true}'
-  );
+  expect(output.taskRecipes.pages).toContain("MCP tool: list-pages {}");
   expect(output.useCaseScenarios).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
@@ -289,7 +344,7 @@ test("prints api manual as json", () => {
 test("prints llm manual with discovery rules", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "llm", json: false });
+  man({ topic: "llm", json: false, verbose: true });
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("webstudio schema api");
@@ -351,7 +406,7 @@ test("prints llm manual with discovery rules", () => {
 test("prints project-editing manual as llm alias", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "project-editing", json: false });
+  man({ topic: "project-editing", json: false, verbose: true });
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("## LLM Implementation Process");
@@ -362,7 +417,7 @@ test("prints project-editing manual as llm alias", () => {
 test("prints project-editing manual as json alias", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "project-editing", json: true });
+  man({ topic: "project-editing", json: true, verbose: true });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("project-editing");
@@ -378,7 +433,7 @@ test("prints project-editing manual as json alias", () => {
 test("prints llm manual as json with implementation process", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "llm", json: true });
+  man({ topic: "llm", json: true, verbose: true });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("llm");
@@ -446,7 +501,7 @@ test("prints llm manual as json with implementation process", () => {
 test("prints mcp manual with startup and JSON argument examples", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "mcp", json: false });
+  man({ topic: "mcp", json: false, verbose: true });
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("# Webstudio MCP Manual");
@@ -479,7 +534,7 @@ test("prints mcp manual with startup and JSON argument examples", () => {
 test("prints mcp manual as json", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-  man({ topic: "mcp", json: true });
+  man({ topic: "mcp", json: true, verbose: true });
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("mcp");

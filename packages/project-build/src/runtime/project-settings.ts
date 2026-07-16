@@ -26,6 +26,12 @@ import {
 } from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
+import {
+  paginateOutput,
+  projectOutput,
+  type OutputDetailInput,
+  type PaginatedOutputInput,
+} from "./output";
 import { getRequiredPages } from "./pages";
 import {
   marketplaceProduct,
@@ -147,15 +153,16 @@ const validateProjectMetaUpdate = (
 };
 
 export const getProjectSettings = (
-  state: Pick<BuilderState, "pages" | "projectSettings">
+  state: Pick<BuilderState, "pages" | "projectSettings">,
+  input: OutputDetailInput = {}
 ) => {
   const pages = getRequiredPages(state);
   const settings = getRequiredProjectSettings(state);
-  return {
-    meta: settings.meta,
-    compiler: settings.compiler,
-    redirects: pages.redirects ?? [],
-  };
+  return projectOutput({
+    input,
+    compact: { meta: settings.meta, compiler: settings.compiler },
+    expanded: () => ({ redirects: pages.redirects ?? [] }),
+  });
 };
 
 const pushObjectFieldPatches = ({
@@ -263,9 +270,19 @@ export const getMarketplaceProduct = (
   return { marketplaceProduct: state.marketplaceProduct };
 };
 
-export const listRedirects = (state: Pick<BuilderState, "pages">) => ({
-  redirects: getRequiredPages(state).redirects ?? [],
-});
+export const listRedirects = (
+  state: Pick<BuilderState, "pages">,
+  input: PaginatedOutputInput = {}
+) => {
+  const { items, ...pagination } = paginateOutput({
+    items: getRequiredPages(state).redirects ?? [],
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {},
+    verbose: input.verbose,
+  });
+  return { redirects: items, ...pagination };
+};
 
 export const redirectStatusInput = z.enum(["301", "302"]);
 
@@ -550,9 +567,19 @@ export const setRedirects = (
   });
 };
 
-export const listBreakpoints = (state: Pick<BuilderState, "breakpoints">) => ({
-  breakpoints: Array.from(getRequiredBreakpoints(state).values()),
-});
+export const listBreakpoints = (
+  state: Pick<BuilderState, "breakpoints">,
+  input: PaginatedOutputInput = {}
+) => {
+  const { items, ...pagination } = paginateOutput({
+    items: Array.from(getRequiredBreakpoints(state).values()),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {},
+    verbose: input.verbose,
+  });
+  return { breakpoints: items, ...pagination };
+};
 
 export const breakpointFieldsInput = z.object({
   id: runtimeGeneratedIdInput,

@@ -1,0 +1,16 @@
+{
+  "concurrency": 2,
+  "calls": [
+    { "tool": "status", "input": {} },
+    { "tool": "audit", "input": {} },
+    {
+      "tool": "update-project-settings",
+      "input": { "meta": { "siteName": "Reviewed" } },
+      "dryRun": true
+    }
+  ],
+  "projects": [
+    { "id": "site-a", "root": "../../../../../../examples/site-a" },
+    { "id": "site-b", "root": "../../../../../../examples/site-b" }
+  ]
+}

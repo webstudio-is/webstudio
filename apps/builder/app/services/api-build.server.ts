@@ -68,6 +68,9 @@ export const buildGetInput = z.object({
   projectId: z.string(),
   include: z.array(buildInclude).optional(),
   version: z.number().int().optional(),
+  verbose: z.boolean().optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(200).optional(),
 });
 
 export const buildPatchInput = z.object({

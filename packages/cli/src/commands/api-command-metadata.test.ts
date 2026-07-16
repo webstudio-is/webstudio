@@ -142,7 +142,7 @@ test("parses redirect status as a string option", () => {
   );
 });
 
-test("describes list-folders include-pages response shape", () => {
+test("describes list-folders pagination and detail options", () => {
   const yargs = { option: vi.fn().mockReturnThis() };
   const metadata = apiCommandMetadata.find(
     (item) => item.command === "list-folders"
@@ -152,10 +152,12 @@ test("describes list-folders include-pages response shape", () => {
   getApiCommandOptions(metadata!)(yargs as never);
 
   expect(yargs.option).toHaveBeenCalledWith(
-    "include-pages",
-    expect.objectContaining({
-      describe: "Include a top-level pages array with page summaries",
-    })
+    "limit",
+    expect.objectContaining({ type: "number" })
+  );
+  expect(yargs.option).toHaveBeenCalledWith(
+    "verbose",
+    expect.objectContaining({ type: "boolean" })
   );
 });
 

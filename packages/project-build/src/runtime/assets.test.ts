@@ -323,6 +323,11 @@ describe("asset runtime operations", () => {
       usages: [
         { namespace: "props", instanceId: "body", path: ["prop", "value"] },
       ],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: { assetId: "asset" },
     });
   });
 

@@ -9,3 +9,9 @@ export const componentInsertResult = z.object({
 });
 
 export type ComponentInsertResult = z.infer<typeof componentInsertResult>;
+
+export const fragmentInsertResult = componentInsertResult.extend({
+  parentInstanceId: z.string().optional(),
+});
+
+export type FragmentInsertResult = z.infer<typeof fragmentInsertResult>;

@@ -226,10 +226,29 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     ],
   }),
   publicOperation({
+    command: "verify-bindings",
+    id: "project.verifyBindings",
+    description: "Verify persisted bindings",
+    inputSchema: getTestInputSchema(
+      z.object({
+        pagePath: z.string().optional(),
+        instanceId: z.string().optional(),
+        limit: z.number().int().positive().optional(),
+      })
+    ),
+    readNamespaces: ["pages", "instances", "props", "resources", "dataSources"],
+  }),
+  publicOperation({
     command: "list-breakpoints",
     id: "breakpoints.list",
     description: "List breakpoints",
     readNamespaces: ["breakpoints"],
+  }),
+  publicOperation({
+    command: "list-design-tokens",
+    id: "designTokens.list",
+    description: "List design tokens",
+    readNamespaces: ["styleSources", "styles"],
   }),
   publicOperation({
     command: "whoami",
@@ -403,6 +422,21 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
             value: z.unknown(),
           })
         ),
+      })
+    ),
+  }),
+  styleOperation({
+    command: "attach-design-token",
+    id: "designTokens.attach",
+    description: "Attach a reusable style token",
+    readNamespaces: ["styleSources", "styleSourceSelections"],
+    writeNamespaces: ["styleSourceSelections"],
+    invalidatesNamespaces: ["styleSourceSelections"],
+    inputSchema: getTestInputSchema(
+      z.object({
+        designTokenId: z.string(),
+        instanceIds: z.array(z.string()).min(1),
+        position: z.enum(["before-local", "after-local"]).optional(),
       })
     ),
   }),
@@ -1295,7 +1329,7 @@ describe("project session mcp adapter", () => {
       }
     );
     const startPreview = vi.fn(async () => ({
-      url: "http://127.0.0.1:5173",
+      url: "http://127.0.0.1:5177",
       running: true,
     }));
     const stopPreview = vi.fn(async () => ({
@@ -2085,7 +2119,7 @@ describe("project session mcp adapter", () => {
       executeOperation,
     });
 
-    await adapter.callTool({
+    const result = await adapter.callTool({
       name: "insert-component",
       input: {
         parentInstanceId: "body",
@@ -2104,9 +2138,12 @@ describe("project session mcp adapter", () => {
         },
       })
     );
+    expect(result.structuredContent.meta).toMatchObject({
+      next: [expect.stringContaining("run audit")],
+    });
   });
 
-  test("normalizes create-page description alias to meta description", async () => {
+  test("normalizes create-page description and preserves basic auth", async () => {
     const executeOperation = createExecuteOperation(async () =>
       createEnvelope({
         operationId: "pages.create",
@@ -2133,6 +2170,13 @@ describe("project session mcp adapter", () => {
             meta: z
               .object({
                 description: z.string().optional(),
+                auth: z
+                  .object({
+                    method: z.literal("basic"),
+                    login: z.string(),
+                    password: z.string(),
+                  })
+                  .optional(),
               })
               .optional(),
           })
@@ -2155,6 +2199,13 @@ describe("project session mcp adapter", () => {
         title: "Harbor Ops Design System",
         description:
           "A realistic component coverage page for the Harbor Ops logistics product design system.",
+        meta: {
+          auth: {
+            method: "basic",
+            login: "editor",
+            password: "private-value",
+          },
+        },
       },
     });
 
@@ -2168,6 +2219,11 @@ describe("project session mcp adapter", () => {
           meta: {
             description:
               "A realistic component coverage page for the Harbor Ops logistics product design system.",
+            auth: {
+              method: "basic",
+              login: "editor",
+              password: "private-value",
+            },
           },
         },
       })
@@ -3073,7 +3129,7 @@ describe("project session mcp adapter", () => {
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
         readThisFirst: expect.stringContaining(
-          "do one small discovery step, then act"
+          "first call meta.guide with the user's objective"
         ),
         delegatedAgentRule: expect.stringContaining(
           "shortcut command such as webstudio meta.index"
@@ -3216,7 +3272,7 @@ describe("project session mcp adapter", () => {
         phase: "page-creation",
         purpose: expect.stringContaining("Create it only if lookup proves"),
         allowedTools: expect.arrayContaining(["list-pages"]),
-        commandPattern: expect.stringMatching(/list-pages.*includeFolders/),
+        commandPattern: expect.stringMatching(/list-pages.*limit/),
         fallbackCommandPattern: expect.stringMatching(
           /create-page.*\/design-system/
         ),
@@ -3619,6 +3675,18 @@ describe("project session mcp adapter", () => {
       name: "meta.guide",
       input: { brief: "Bind a dynamic expression to a prop" },
     });
+    const authenticatedPageGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Build a Supabase authenticated account page" },
+    });
+    const designInputGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Recreate this Figma design as a responsive page" },
+    });
+    const craftGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Add a section that preserves this Craft project" },
+    });
     const getComponentToolNames = (
       getComponentDetails.structuredContent.data as {
         tools: { name: string }[];
@@ -3673,6 +3741,57 @@ describe("project session mcp adapter", () => {
           expect.stringContaining("do not guess scoped identifier names"),
           expect.stringContaining("one expression rather than a statement"),
           expect.stringContaining("successful syntax validation"),
+        ]),
+      })
+    );
+    expect(authenticatedPageGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining("existing auth resources"),
+          expect.stringContaining("Never place credentials"),
+          expect.stringContaining("signed-out, loading, signed-in"),
+          expect.stringContaining("not an authorization boundary"),
+          expect.stringContaining("call verify-bindings"),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "list-instances" }),
+          expect.objectContaining({ name: "insert-fragment" }),
+          expect.objectContaining({ name: "verify-bindings" }),
+          expect.objectContaining({ name: "audit" }),
+        ]),
+      })
+    );
+    expect(designInputGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining("Interpret the supplied design"),
+          expect.stringContaining(
+            "Before the first mutation, call list-breakpoints and list-design-tokens"
+          ),
+          expect.stringContaining("parallel design system"),
+          expect.stringContaining("semantic editable structure"),
+          expect.stringContaining("actual breakpoint ranges"),
+          expect.stringContaining("Run rendered audit"),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "list-breakpoints" }),
+          expect.objectContaining({ name: "components.search" }),
+          expect.objectContaining({ name: "insert-fragment" }),
+          expect.objectContaining({ name: "attach-design-token" }),
+          expect.objectContaining({ name: "update-styles" }),
+        ]),
+      })
+    );
+    expect(craftGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining('"scopes":["craft"]'),
+          expect.stringContaining("do not add Craft"),
+          expect.stringContaining("only the first reported"),
+          expect.stringContaining("templateCompatibility"),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "audit" }),
         ]),
       })
     );
@@ -4944,11 +5063,13 @@ describe("project session mcp adapter", () => {
         output: "current.png",
         host: undefined,
         port: undefined,
+        imageDomains: undefined,
         source: undefined,
         viewport: { width: 1440, height: 900 },
         fullPage: true,
         includeImageMetrics: false,
         includeResourceMetrics: false,
+        includeContrastMetrics: false,
         browser: "auto",
         browserPath: undefined,
         waitUntil: "networkidle",
@@ -5701,6 +5822,9 @@ describe("project session mcp adapter", () => {
     const components = await adapter.readResource({
       uri: "webstudio://project/components",
     });
+    const componentsVerbose = await adapter.readResource({
+      uri: "webstudio://project/components?verbose=true",
+    });
 
     expect(JSON.parse(status.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
@@ -5713,8 +5837,15 @@ describe("project session mcp adapter", () => {
       })
     );
     expect(JSON.parse(tools.contents[0]?.text ?? "{}")).toEqual(
-      expect.objectContaining({ tools: expect.any(Array) })
+      expect.objectContaining({
+        detail: "compact",
+        returnedCount: 20,
+        nextCursor: "20",
+        tools: expect.any(Array),
+      })
     );
+    expect(tools.contents[0]?.text).not.toContain("inputSchema");
+    expect((tools.contents[0]?.text ?? "").length).toBeLessThan(16_000);
     expect(JSON.parse(toolsOverview.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
         usage: expect.stringContaining("Short tool overview"),
@@ -5722,7 +5853,7 @@ describe("project session mcp adapter", () => {
         capabilities: expect.arrayContaining([
           expect.objectContaining({
             area: "content",
-            tools: expect.arrayContaining(["delete-instance"]),
+            count: expect.any(Number),
           }),
         ]),
       })
@@ -5784,6 +5915,15 @@ describe("project session mcp adapter", () => {
         namespaces: expect.objectContaining({
           "@webstudio-is/sdk-components-react-radix": expect.any(Number),
         }),
+      })
+    );
+    expect(componentOverviewData).not.toHaveProperty("components");
+    const compactComponents = JSON.parse(components.contents[0]?.text ?? "{}");
+    expect(compactComponents).toEqual(
+      expect.objectContaining({
+        detail: "compact",
+        returnedCount: 20,
+        nextCursor: "20",
         components: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Accordion",
@@ -5794,14 +5934,17 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
-    for (const component of componentOverviewData.components) {
+    for (const component of compactComponents.components) {
       expect(component).not.toHaveProperty("contentModel");
       expect(component).not.toHaveProperty("props");
       expect(component).not.toHaveProperty("states");
     }
-    expect(JSON.parse(components.contents[0]?.text ?? "{}")).toEqual(
+    expect((components.contents[0]?.text ?? "").length).toBeLessThan(16_000);
+    expect(JSON.parse(componentsVerbose.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
         source: "@webstudio-is/sdk-components-registry/metas",
+        detail: "verbose",
+        returnedCount: 20,
         components: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Accordion",
@@ -5825,6 +5968,80 @@ describe("project session mcp adapter", () => {
     await expect(
       adapter.readResource({ uri: "webstudio://project/unknown" })
     ).rejects.toThrow('Unknown MCP resource "webstudio://project/unknown".');
+  });
+
+  test("pages discovery resources without omissions or duplicate entries", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const readCatalog = async (
+      resource: "tools" | "components",
+      verbose: boolean
+    ) => {
+      const ids: string[] = [];
+      let cursor: string | undefined;
+      let total = 0;
+      do {
+        const query = new URLSearchParams({
+          limit: "13",
+          verbose: String(verbose),
+          ...(cursor === undefined ? {} : { cursor }),
+        });
+        const result = await adapter.readResource({
+          uri: `webstudio://project/${resource}?${query}`,
+        });
+        const data = JSON.parse(result.contents[0]?.text ?? "{}");
+        const entries = data[resource] as Array<{
+          name?: string;
+          component?: string;
+        }>;
+        expect(data.returnedCount).toBe(entries.length);
+        expect(entries.length).toBeLessThanOrEqual(13);
+        ids.push(
+          ...entries.map(({ name, component }) => name ?? component ?? "")
+        );
+        total = data.total;
+        cursor = data.nextCursor;
+      } while (cursor !== undefined);
+      expect(ids).toHaveLength(total);
+      expect(new Set(ids).size).toBe(ids.length);
+      return ids;
+    };
+
+    const compactTools = await readCatalog("tools", false);
+    const verboseTools = await readCatalog("tools", true);
+    const compactComponents = await readCatalog("components", false);
+    const verboseComponents = await readCatalog("components", true);
+
+    expect(compactTools).toEqual(verboseTools);
+    expect(compactTools).toEqual(adapter.listTools().map(({ name }) => name));
+    expect(compactComponents).toEqual(verboseComponents);
+  });
+
+  test("caps and validates discovery resource pagination", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const capped = await adapter.readResource({
+      uri: "webstudio://project/tools?limit=500",
+    });
+    const cappedData = JSON.parse(capped.contents[0]?.text ?? "{}");
+    expect(cappedData.returnedCount).toBeLessThanOrEqual(50);
+
+    await expect(
+      adapter.readResource({
+        uri: "webstudio://project/tools?cursor=invalid",
+      })
+    ).rejects.toThrow("Invalid webstudio://project/tools cursor");
+    await expect(
+      adapter.readResource({
+        uri: "webstudio://project/components?limit=0",
+      })
+    ).rejects.toThrow("limit must be at least 1");
   });
 
   test("connects through the official MCP SDK and exposes discovery", async () => {
@@ -5954,10 +6171,12 @@ describe("project session mcp adapter", () => {
   });
 
   test("sends sparse protocol-native startup logging after initialization", async () => {
+    const onInitialized = vi.fn();
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
       executeOperation: createExecuteOperation(),
+      onInitialized,
     });
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
@@ -5985,6 +6204,8 @@ describe("project session mcp adapter", () => {
           data: expect.stringContaining("ready with"),
         },
       ]);
+      expect(onInitialized).toHaveBeenCalledOnce();
+      expect(onInitialized).toHaveBeenCalledWith("test-client");
     } finally {
       await client.close();
       await server.close();

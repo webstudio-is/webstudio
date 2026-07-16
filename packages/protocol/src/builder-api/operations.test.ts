@@ -251,6 +251,26 @@ describe("public api operation catalog", () => {
     expect(serverOnlyOperations.length).toBeGreaterThan(0);
   });
 
+  test("classifies every public mutation by architectural owner", () => {
+    const mutations = publicApiOperations.filter(
+      (operation) => operation.method === "mutation"
+    );
+
+    expect(
+      mutations.every((operation) => operation.semanticOwner !== undefined)
+    ).toBe(true);
+    expect(getPublicApiOperation("apply-patch").semanticOwner).toBe(
+      "raw-build-patch"
+    );
+    expect(getPublicApiOperation("upload-asset").semanticOwner).toBe(
+      "local-side-effect"
+    );
+    expect(getPublicApiOperation("publish").semanticOwner).toBe(
+      "server-infrastructure"
+    );
+    expect(getPublicApiOperation("create-page").semanticOwner).toBe("runtime");
+  });
+
   test("documents server-only namespace invalidation", () => {
     expect(getPublicApiOperation("apply-patch").serverOnly).toBe(true);
     expect(getPublicApiOperation("apply-patch").invalidatesNamespaces).toEqual(

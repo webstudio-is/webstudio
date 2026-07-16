@@ -45,6 +45,7 @@ import {
 } from "./errors";
 import { getNamedExpressionValidationIssues } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
+import { paginateOutput, type PaginatedOutputInput } from "./output";
 import {
   collectExclusiveInstanceIds,
   createInstanceCleanupPayload,
@@ -346,12 +347,19 @@ export const canDropPageTarget = (dropTarget: PageDropTarget, pages: Pages) => {
 
 export const listPages = (
   state: Pick<BuilderState, "pages">,
-  input: { includeFolders?: boolean } = {}
+  input: PaginatedOutputInput = {}
 ) => {
   const pages = getSerializedPages(state);
+  const { items, ...pagination } = paginateOutput({
+    items: pages.pages.map((page) => serializePageSummary(pages, page)),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {},
+    verbose: input.verbose,
+  });
   return {
-    pages: pages.pages.map((page) => serializePageSummary(pages, page)),
-    folders: input.includeFolders === true ? pages.folders : undefined,
+    pages: items,
+    ...pagination,
   };
 };
 
@@ -412,21 +420,25 @@ export const getPageByPath = (
 
 export const listFolders = (
   state: Pick<BuilderState, "pages">,
-  input: { includePages?: boolean } = {}
+  input: PaginatedOutputInput = {}
 ) => {
   const pages = getSerializedPages(state);
-  return {
-    folders: pages.folders.map((folder) => ({
+  const { items, ...pagination } = paginateOutput({
+    items: pages.folders.map((folder) => ({
       id: folder.id,
       name: folder.name,
       slug: folder.slug,
       parentFolderId: findParentFolderId(pages.folders, folder.id),
       children: folder.children,
     })),
-    pages:
-      input.includePages === true
-        ? pages.pages.map((page) => serializePageSummary(pages, page))
-        : undefined,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {},
+    verbose: input.verbose,
+  });
+  return {
+    folders: items,
+    ...pagination,
   };
 };
 

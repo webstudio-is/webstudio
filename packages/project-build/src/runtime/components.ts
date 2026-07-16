@@ -33,7 +33,10 @@ import {
   type ComponentTemplateRegistry,
 } from "./component-template";
 import { isComponentAvailableForDocumentType } from "./component-catalog";
-import type { ComponentInsertResult } from "./component-insert-contract";
+import type {
+  ComponentInsertResult,
+  FragmentInsertResult,
+} from "./component-insert-contract";
 import {
   createCollectionFragment,
   insertCollectionInput,
@@ -50,7 +53,7 @@ import {
   insertIndexInput,
   instanceInsertModeInput,
 } from "./instances";
-import { createRuntimeMutation } from "./mutation";
+import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { ConflictResolution } from "./style-copy";
 import { z } from "zod";
@@ -1001,7 +1004,7 @@ export const insertFragment = (
   state: ComponentInsertState,
   input: z.infer<typeof insertFragmentInput>,
   context: BuilderRuntimeContext
-) => {
+): BuilderRuntimeMutation<FragmentInsertResult> => {
   if (input.fragment.children.length === 0) {
     return createInsertTokenFragmentMutation({
       state,

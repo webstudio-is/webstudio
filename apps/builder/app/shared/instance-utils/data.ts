@@ -5,8 +5,9 @@ import { toast } from "@webstudio-is/design-system";
 import { type WebstudioData, isPageTemplate } from "@webstudio-is/sdk";
 import {
   executeBuilderRuntimeOperation,
+  createRuntimeMutationAccumulator,
   type BuilderRuntimeOperationInput,
-  type BuilderRuntimeOperationId,
+  type BuilderRuntimeMutationOperationId,
   type BuilderRuntimeOperationResult,
 } from "@webstudio-is/project-build/runtime";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
@@ -29,10 +30,15 @@ import {
   $styleSources,
 } from "../sync/data-stores";
 
-type RuntimeMutationResult<Id extends BuilderRuntimeOperationId> = Extract<
-  BuilderRuntimeOperationResult<Id>,
-  BuilderRuntimeMutation
->;
+type RuntimeMutationResult<Id extends BuilderRuntimeMutationOperationId> =
+  Extract<BuilderRuntimeOperationResult<Id>, BuilderRuntimeMutation>;
+
+export type RuntimeMutationOperation = {
+  [Id in BuilderRuntimeMutationOperationId]: {
+    id: Id;
+    input: BuilderRuntimeOperationInput<Id>;
+  };
+}[BuilderRuntimeMutationOperationId];
 
 export type WebstudioInstanceData = Pick<
   WebstudioData,
@@ -63,7 +69,24 @@ export const migrateLoadedWebstudioData = () => {
   }
 };
 
-const createRuntimeMutationArgs = <Id extends BuilderRuntimeOperationId>({
+const getRuntimeMutationContext = () => ({
+  createId: builderRuntimeContext.createId,
+  projectId: $project.get()?.id,
+});
+
+const requireSynchronousResult = <Result>(
+  id: BuilderRuntimeMutationOperationId,
+  result: Result | Promise<Result>
+): Result => {
+  if (result instanceof Promise) {
+    throw Error(`Builder runtime operation "${id}" must be synchronous.`);
+  }
+  return result;
+};
+
+const createRuntimeMutationArgs = <
+  Id extends BuilderRuntimeMutationOperationId,
+>({
   id,
   input,
 }: {
@@ -73,10 +96,7 @@ const createRuntimeMutationArgs = <Id extends BuilderRuntimeOperationId>({
   id,
   state: getWebstudioData(),
   input,
-  context: {
-    createId: builderRuntimeContext.createId,
-    projectId: $project.get()?.id,
-  },
+  context: getRuntimeMutationContext(),
 });
 
 const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
@@ -89,7 +109,9 @@ const commitRuntimeMutation = <Mutation extends BuilderRuntimeMutation>(
   return result;
 };
 
-export const executeRuntimeMutation = <Id extends BuilderRuntimeOperationId>({
+export const executeRuntimeMutation = <
+  Id extends BuilderRuntimeMutationOperationId,
+>({
   id,
   input,
 }: {
@@ -99,17 +121,41 @@ export const executeRuntimeMutation = <Id extends BuilderRuntimeOperationId>({
   if (canCommitWebstudioData() === false) {
     return;
   }
-  const operationResult = executeBuilderRuntimeOperation<
-    RuntimeMutationResult<Id>
-  >(createRuntimeMutationArgs({ id, input }));
-  if (operationResult instanceof Promise) {
-    throw Error(`Builder runtime operation "${id}" must be synchronous.`);
+  return commitRuntimeMutation(
+    requireSynchronousResult(
+      id,
+      executeBuilderRuntimeOperation<RuntimeMutationResult<Id>>(
+        createRuntimeMutationArgs({ id, input })
+      )
+    )
+  );
+};
+
+export const executeRuntimeMutationSequence = (
+  operations: readonly RuntimeMutationOperation[]
+): void => {
+  if (canCommitWebstudioData() === false) {
+    return;
   }
-  return commitRuntimeMutation(operationResult);
+  const accumulator = createRuntimeMutationAccumulator(getWebstudioData());
+  const results = operations.map(({ id, input }) => {
+    return accumulator.stage(
+      requireSynchronousResult(
+        id,
+        executeBuilderRuntimeOperation<BuilderRuntimeMutation>({
+          id,
+          state: accumulator.state,
+          input,
+          context: getRuntimeMutationContext(),
+        })
+      )
+    );
+  });
+  commitRuntimeMutation(accumulator.complete({ results }));
 };
 
 export const executeRuntimeMutationAsync = async <
-  Id extends BuilderRuntimeOperationId,
+  Id extends BuilderRuntimeMutationOperationId,
 >({
   id,
   input,

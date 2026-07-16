@@ -15,6 +15,7 @@ export type BrowserScreenshotOptions = {
   fullPage?: boolean;
   includeImageMetrics?: boolean;
   includeResourceMetrics?: boolean;
+  includeContrastMetrics?: boolean;
   url: string;
   uid?: number;
   waitUntil: ScreenshotWaitUntil;
@@ -227,29 +228,29 @@ const waitForDevToolsPort = async (
   userDataDir: string,
   dependencies: BrowserScreenshotDependencies,
   timeout: number
-) =>
-  await withDeadline(
-    (async () => {
-      const portFile = join(userDataDir, "DevToolsActivePort");
-      while (true) {
-        try {
-          const [port, browserPath] = (
-            await dependencies.readFile(portFile, "utf8")
-          )
-            .trim()
-            .split(/\r?\n/);
-          if (port !== undefined && browserPath !== undefined) {
-            return { port, browserPath };
-          }
-        } catch {
-          // Keep polling until Chromium creates DevToolsActivePort.
-        }
-        await delay(50);
+) => {
+  const portFile = join(userDataDir, "DevToolsActivePort");
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      const [port, browserPath] = (
+        await dependencies.readFile(portFile, "utf8")
+      )
+        .trim()
+        .split(/\r?\n/);
+      if (port !== undefined && browserPath !== undefined) {
+        return { port, browserPath };
       }
-    })(),
+    } catch {
+      // Chromium creates DevToolsActivePort asynchronously.
+    }
+    await delay(Math.min(50, Math.max(0, deadline - Date.now())));
+  }
+  throw createTimeoutError(
     "Browser DevTools endpoint was not created",
     timeout
   );
+};
 
 const getPageWebSocketUrl = async ({
   port,
@@ -343,25 +344,22 @@ const waitForSelector = async (
   selector: string,
   timeout: number
 ) => {
-  await withDeadline(
-    (async () => {
-      while (true) {
-        const result = await cdp.send<{ result?: { value?: boolean } }>(
-          "Runtime.evaluate",
-          {
-            expression: `document.querySelector(${JSON.stringify(selector)}) !== null`,
-            returnByValue: true,
-          }
-        );
-        if (result.result?.value === true) {
-          return;
-        }
-        await delay(100);
-      }
-    })(),
-    `Selector ${selector} was not found`,
-    timeout
-  );
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const result = await withDeadline(
+      cdp.send<{ result?: { value?: boolean } }>("Runtime.evaluate", {
+        expression: `document.querySelector(${JSON.stringify(selector)}) !== null`,
+        returnByValue: true,
+      }),
+      `Selector ${selector} was not found`,
+      Math.max(1, deadline - Date.now())
+    );
+    if (result.result?.value === true) {
+      return;
+    }
+    await delay(Math.min(100, Math.max(0, deadline - Date.now())));
+  }
+  throw createTimeoutError(`Selector ${selector} was not found`, timeout);
 };
 
 type BrowserReadiness = {
@@ -498,9 +496,32 @@ export type BrowserScreenshotLayout = {
   contentWidth: number;
   contentHeight: number;
   horizontalOverflow: boolean;
+  elementGeometry?: BrowserScreenshotElementGeometry;
   images?: BrowserScreenshotImage[];
   resources?: BrowserScreenshotResource[];
+  contrasts?: BrowserScreenshotContrast[];
   timings?: BrowserScreenshotTimings;
+};
+
+export type BrowserScreenshotElement = {
+  instanceId: string;
+  tagName: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  visible: boolean;
+  hiddenReason?: "display" | "visibility" | "opacity" | "hidden";
+  clippedX: boolean;
+  clippedY: boolean;
+  overlapsWith: string[];
+};
+
+export type BrowserScreenshotElementGeometry = {
+  total: number;
+  sampled: number;
+  truncated: boolean;
+  elements: BrowserScreenshotElement[];
 };
 
 export type BrowserScreenshotNavigation = {
@@ -537,6 +558,151 @@ export type BrowserScreenshotResource = {
   decodedBodySize: number;
   duration: number;
   renderBlockingStatus?: string;
+};
+
+export type BrowserScreenshotContrast = {
+  instanceId: string;
+  tagName: string;
+  foreground: string;
+  background: string;
+  ratio: number;
+  requiredRatio: 3 | 4.5;
+  fontSize: number;
+  fontWeight: number;
+};
+
+const maxBrowserScreenshotElements = 250;
+const maxBrowserScreenshotOverlapsPerElement = 5;
+
+const getBrowserScreenshotElementGeometry = async (
+  send: <Result = unknown>(
+    method: string,
+    params?: Record<string, unknown>
+  ) => Promise<Result>
+): Promise<BrowserScreenshotElementGeometry> => {
+  const response = await send<{
+    result?: { value?: unknown };
+  }>("Runtime.evaluate", {
+    expression: `(() => {
+      const limit = ${maxBrowserScreenshotElements};
+      const overlapLimit = ${maxBrowserScreenshotOverlapsPerElement};
+      const candidates = Array.from(document.querySelectorAll("[data-ws-id]"));
+      const elements = candidates.slice(0, limit).map((element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        let hiddenReason;
+        if (element.hidden) hiddenReason = "hidden";
+        else if (style.display === "none") hiddenReason = "display";
+        else if (style.visibility === "hidden" || style.visibility === "collapse") hiddenReason = "visibility";
+        else if (Number(style.opacity) === 0) hiddenReason = "opacity";
+        const visible = hiddenReason === undefined && rect.width > 0 && rect.height > 0;
+        const clipsX = style.overflowX === "hidden" || style.overflowX === "clip";
+        const clipsY = style.overflowY === "hidden" || style.overflowY === "clip";
+        return {
+          element,
+          instanceId: element.getAttribute("data-ws-id"),
+          tagName: element.tagName.toLowerCase(),
+          x: rect.left + window.scrollX,
+          y: rect.top + window.scrollY,
+          width: rect.width,
+          height: rect.height,
+          visible,
+          hiddenReason,
+          clippedX: visible && clipsX && element.scrollWidth > element.clientWidth + 1,
+          clippedY: visible && clipsY && element.scrollHeight > element.clientHeight + 1,
+          overlapsWith: [],
+        };
+      }).filter((item) => item.instanceId !== null);
+      const visible = elements.filter((item) => item.visible);
+      for (let leftIndex = 0; leftIndex < visible.length; leftIndex += 1) {
+        const left = visible[leftIndex];
+        const leftRect = left.element.getBoundingClientRect();
+        for (let rightIndex = leftIndex + 1; rightIndex < visible.length; rightIndex += 1) {
+          const right = visible[rightIndex];
+          if (left.overlapsWith.length >= overlapLimit && right.overlapsWith.length >= overlapLimit) continue;
+          if (left.element.contains(right.element) || right.element.contains(left.element)) continue;
+          const rightRect = right.element.getBoundingClientRect();
+          const intersectionWidth = Math.min(leftRect.right, rightRect.right) - Math.max(leftRect.left, rightRect.left);
+          const intersectionHeight = Math.min(leftRect.bottom, rightRect.bottom) - Math.max(leftRect.top, rightRect.top);
+          if (intersectionWidth <= 1 || intersectionHeight <= 1) continue;
+          if (left.overlapsWith.length < overlapLimit) left.overlapsWith.push(right.instanceId);
+          if (right.overlapsWith.length < overlapLimit) right.overlapsWith.push(left.instanceId);
+        }
+      }
+      return {
+        total: candidates.length,
+        sampled: elements.length,
+        truncated: candidates.length > limit,
+        elements: elements.map(({ element: _element, ...item }) => item),
+      };
+    })()`,
+    returnByValue: true,
+  });
+  const value = response.result?.value;
+  if (typeof value !== "object" || value === null) {
+    return { total: 0, sampled: 0, truncated: false, elements: [] };
+  }
+  const geometry = value as Record<string, unknown>;
+  if (
+    typeof geometry.total !== "number" ||
+    typeof geometry.sampled !== "number" ||
+    typeof geometry.truncated !== "boolean" ||
+    Array.isArray(geometry.elements) === false
+  ) {
+    return { total: 0, sampled: 0, truncated: false, elements: [] };
+  }
+  const elements = geometry.elements.flatMap((value) => {
+    if (typeof value !== "object" || value === null) {
+      return [];
+    }
+    const element = value as Record<string, unknown>;
+    if (
+      typeof element.instanceId !== "string" ||
+      typeof element.tagName !== "string" ||
+      typeof element.x !== "number" ||
+      typeof element.y !== "number" ||
+      typeof element.width !== "number" ||
+      typeof element.height !== "number" ||
+      typeof element.visible !== "boolean" ||
+      typeof element.clippedX !== "boolean" ||
+      typeof element.clippedY !== "boolean" ||
+      Array.isArray(element.overlapsWith) === false ||
+      element.overlapsWith.some((id) => typeof id !== "string")
+    ) {
+      return [];
+    }
+    const hiddenReason: BrowserScreenshotElement["hiddenReason"] =
+      element.hiddenReason === "display" ||
+      element.hiddenReason === "visibility" ||
+      element.hiddenReason === "opacity" ||
+      element.hiddenReason === "hidden"
+        ? element.hiddenReason
+        : undefined;
+    const overlapsWith = (element.overlapsWith as unknown[])
+      .filter((id): id is string => typeof id === "string")
+      .slice(0, maxBrowserScreenshotOverlapsPerElement);
+    return [
+      {
+        instanceId: element.instanceId,
+        tagName: element.tagName,
+        x: element.x,
+        y: element.y,
+        width: element.width,
+        height: element.height,
+        visible: element.visible,
+        ...(hiddenReason === undefined ? {} : { hiddenReason }),
+        clippedX: element.clippedX,
+        clippedY: element.clippedY,
+        overlapsWith,
+      },
+    ];
+  });
+  return {
+    total: Math.max(0, Math.round(geometry.total)),
+    sampled: elements.length,
+    truncated: geometry.truncated,
+    elements,
+  };
 };
 
 const getBrowserScreenshotResources = async (
@@ -594,6 +760,128 @@ const getBrowserScreenshotResources = async (
           : {}),
       },
     ];
+  });
+};
+
+const getBrowserScreenshotContrasts = async (
+  send: <Result = unknown>(
+    method: string,
+    params?: Record<string, unknown>
+  ) => Promise<Result>
+): Promise<BrowserScreenshotContrast[]> => {
+  const response = await send<{
+    result?: { value?: unknown };
+  }>("Runtime.evaluate", {
+    expression: `(() => {
+      const limit = ${maxBrowserScreenshotElements};
+      const parseOpaqueRgb = (value) => {
+        const match = value.match(/^rgba?\\(\\s*(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)\\D+(\\d+(?:\\.\\d+)?)(?:\\D+(\\d+(?:\\.\\d+)?))?\\s*\\)$/i);
+        if (match === null || (match[4] !== undefined && Number(match[4]) !== 1)) return undefined;
+        return [Number(match[1]), Number(match[2]), Number(match[3])];
+      };
+      const luminance = (rgb) => {
+        const channels = rgb.map((value) => {
+          const channel = value / 255;
+          return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+      };
+      const candidates = Array.from(document.querySelectorAll("[data-ws-id]"))
+        .filter((element) => Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ""))
+        .slice(0, limit);
+      return candidates.flatMap((element) => {
+        if (element.closest(":disabled,[aria-disabled='true']") !== null) return [];
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0 || style.display === "none" || style.visibility !== "visible") return [];
+        const foreground = parseOpaqueRgb(style.color);
+        if (foreground === undefined || style.textShadow !== "none" || style.webkitBackgroundClip === "text") return [];
+        const ancestors = [];
+        let current = element;
+        let background;
+        while (current instanceof Element) {
+          ancestors.push(current);
+          const currentStyle = getComputedStyle(current);
+          const before = getComputedStyle(current, "::before");
+          const after = getComputedStyle(current, "::after");
+          if (
+            Number(currentStyle.opacity) !== 1 ||
+            currentStyle.backgroundImage !== "none" ||
+            currentStyle.mixBlendMode !== "normal" ||
+            currentStyle.filter !== "none" ||
+            currentStyle.backdropFilter !== "none" ||
+            (before.content !== "none" && before.content !== "normal") ||
+            (after.content !== "none" && after.content !== "normal")
+          ) return [];
+          const color = parseOpaqueRgb(currentStyle.backgroundColor);
+          if (color !== undefined) {
+            background = { rgb: color, value: currentStyle.backgroundColor, element: current };
+            break;
+          }
+          if (currentStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && currentStyle.backgroundColor !== "transparent") return [];
+          current = current.parentElement;
+        }
+        if (background === undefined) return [];
+        const range = document.createRange();
+        const textNode = Array.from(element.childNodes).find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "");
+        if (textNode === undefined) return [];
+        range.selectNodeContents(textNode);
+        const textRect = range.getBoundingClientRect();
+        if (
+          textRect.width <= 0 ||
+          textRect.height <= 0 ||
+          textRect.right <= 0 ||
+          textRect.bottom <= 0 ||
+          textRect.left >= window.innerWidth ||
+          textRect.top >= window.innerHeight
+        ) return [];
+        const x = Math.min(window.innerWidth - 1, Math.max(0, textRect.left + textRect.width / 2));
+        const y = Math.min(window.innerHeight - 1, Math.max(0, textRect.top + textRect.height / 2));
+        const stack = document.elementsFromPoint(x, y);
+        const backgroundIndex = stack.indexOf(background.element);
+        if (backgroundIndex < 0 || stack.slice(0, backgroundIndex).some((candidate) => !element.contains(candidate) && !candidate.contains(element))) return [];
+        const foregroundLuminance = luminance(foreground);
+        const backgroundLuminance = luminance(background.rgb);
+        const ratio = (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
+        const fontSize = Number.parseFloat(style.fontSize);
+        const parsedWeight = Number.parseInt(style.fontWeight, 10);
+        const fontWeight = Number.isFinite(parsedWeight) ? parsedWeight : style.fontWeight === "bold" ? 700 : 400;
+        const requiredRatio = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700) ? 3 : 4.5;
+        return [{
+          instanceId: element.getAttribute("data-ws-id"),
+          tagName: element.tagName.toLowerCase(),
+          foreground: style.color,
+          background: background.value,
+          ratio,
+          requiredRatio,
+          fontSize,
+          fontWeight,
+        }];
+      });
+    })()`,
+    returnByValue: true,
+  });
+  if (Array.isArray(response.result?.value) === false) {
+    return [];
+  }
+  return response.result.value.flatMap((value) => {
+    if (typeof value !== "object" || value === null) {
+      return [];
+    }
+    const contrast = value as Record<string, unknown>;
+    if (
+      typeof contrast.instanceId !== "string" ||
+      typeof contrast.tagName !== "string" ||
+      typeof contrast.foreground !== "string" ||
+      typeof contrast.background !== "string" ||
+      typeof contrast.ratio !== "number" ||
+      (contrast.requiredRatio !== 3 && contrast.requiredRatio !== 4.5) ||
+      typeof contrast.fontSize !== "number" ||
+      typeof contrast.fontWeight !== "number"
+    ) {
+      return [];
+    }
+    return [contrast as BrowserScreenshotContrast];
   });
 };
 
@@ -699,8 +987,10 @@ const getBrowserScreenshotLayout = (
   metrics: BrowserLayoutMetricsResponse,
   documentMetrics: BrowserDocumentMetrics,
   viewport: { width: number; height: number },
+  elementGeometry: BrowserScreenshotElementGeometry,
   images: BrowserScreenshotImage[],
-  resources: BrowserScreenshotResource[]
+  resources: BrowserScreenshotResource[],
+  contrasts: BrowserScreenshotContrast[]
 ): BrowserScreenshotLayout => {
   const contentWidth = documentMetrics.scrollWidth;
   const contentHeight = documentMetrics.scrollHeight;
@@ -727,8 +1017,10 @@ const getBrowserScreenshotLayout = (
     horizontalOverflow:
       documentMetrics.horizontalOverflowSuppressed === false &&
       contentWidth > viewportWidth + 1,
+    elementGeometry,
     images,
     resources,
+    contrasts,
   };
 };
 
@@ -1105,6 +1397,8 @@ const capturePageWithBrowserRuntime = async (
             options.timeout
           );
           const documentMetricsPromise = getBrowserDocumentMetrics(send);
+          const elementGeometryPromise =
+            getBrowserScreenshotElementGeometry(send);
           const imageInspectionPromise = measureDuration(async () =>
             options.includeImageMetrics === true
               ? await getBrowserScreenshotImages(send)
@@ -1113,6 +1407,11 @@ const capturePageWithBrowserRuntime = async (
           const resourceInspectionPromise = measureDuration(async () =>
             options.includeResourceMetrics === true
               ? await getBrowserScreenshotResources(send)
+              : undefined
+          );
+          const contrastInspectionPromise = measureDuration(async () =>
+            options.includeContrastMetrics === true
+              ? await getBrowserScreenshotContrasts(send)
               : undefined
           );
           const screenshotPromise = (async () => {
@@ -1146,15 +1445,19 @@ const capturePageWithBrowserRuntime = async (
             locationResult,
             metrics,
             documentMetrics,
+            elementGeometry,
             imageInspection,
             resourceInspection,
+            contrastInspection,
             screenshot,
           ] = await Promise.all([
             locationPromise,
             metricsPromise,
             documentMetricsPromise,
+            elementGeometryPromise,
             imageInspectionPromise,
             resourceInspectionPromise,
+            contrastInspectionPromise,
             screenshotPromise,
           ]);
           const finalUrl =
@@ -1174,12 +1477,15 @@ const capturePageWithBrowserRuntime = async (
               : (redirectsByFrame.get(navigationFrameId) ?? []);
           const images = imageInspection.value;
           const resources = resourceInspection.value;
+          const contrasts = contrastInspection.value;
           const layout = getBrowserScreenshotLayout(
             metrics,
             documentMetrics,
             { width: options.width, height: options.height },
+            elementGeometry,
             images ?? [],
-            resources ?? []
+            resources ?? [],
+            contrasts ?? []
           );
           layout.navigation = {
             requestedUrl: options.url,
@@ -1203,6 +1509,9 @@ const capturePageWithBrowserRuntime = async (
           }
           if (resources === undefined) {
             delete layout.resources;
+          }
+          if (contrasts === undefined) {
+            delete layout.contrasts;
           }
           layout.timings = {
             wallMs: Date.now() - viewportStartedAt,

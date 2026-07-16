@@ -13,6 +13,11 @@
 5. For MCP clients, start the server with `webstudio mcp`.
 6. Start discovery with `meta.index`, then call focused tools with concrete JSON, for example `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`.
 
+Every supported client follows the same generated quickstart: link the project,
+sync it, run `webstudio connect <client>`, reload or restart the client, then ask
+the agent to use Webstudio MCP to list the project pages. The supported client
+names are `claude`, `codex`, `cursor`, and `vscode`.
+
 Start MCP from the linked Webstudio project root. The lifecycle status line prints that absolute root; create local scripts, screenshots, and temporary artifacts under that root, for example `<project root>/.temp/script.mjs`. If the shell starts in a parent workspace, `cd` into the project root first or use absolute paths.
 
 When developing inside the Webstudio monorepo, start the local CLI exactly as `node packages/cli/local.js mcp` from the repo root. Do not use `pnpm exec webstudio`, `pnpm --filter webstudio exec webstudio`, or a global `webstudio`: they can resolve an older binary.
@@ -157,6 +162,35 @@ Rules:
 - If a call returns `checkpoint.required`, `mcp run` stops immediately before later calls and prints partial results with `CHECKPOINT_REQUIRED`. Stop now and report the checkpoint to the parent/user. Only after the parent/user continues, call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}` before continuing.
 - For `mcp single-op-call`, checkpoint requirements persist across later one-shot CLI processes until you call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}`.
 - Use this instead of manually sending JSON-RPC frames to `webstudio mcp` from a shell.
+
+### Cross-project batches
+
+Add `projects` to the same `mcp run` manifest to run focused reads, audits, or dry runs across independently linked project roots:
+
+```json
+{
+  "concurrency": 2,
+  "calls": [
+    { "tool": "status" },
+    { "tool": "audit", "input": {} },
+    {
+      "tool": "update-project-settings",
+      "input": { "meta": { "siteName": "Reviewed" } },
+      "dryRun": true
+    }
+  ],
+  "projects": [
+    { "id": "site-a", "root": "../site-a" },
+    { "id": "site-b", "root": "../site-b" }
+  ]
+}
+```
+
+Project roots and an optional `progressFile` are resolved relative to the manifest file. Each project may provide its own `calls` instead of using the top-level calls. Each root must already be linked with its own `.webstudio/config.json`; the runner creates an independently authenticated ProjectSession and uses root-scoped session, audit, preview-data, and checkpoint paths without changing the process working directory.
+
+Concurrency defaults to 2, is capped at 16, and can be set in the manifest or overridden with `--concurrency`. A failure is reported for that project while other projects continue. Progress is saved after every successful call; rerunning with the default `--resume` skips completed projects and starts failed projects after their last successful call. Use `--no-resume` to intentionally start over.
+
+Committed mutation tools are rejected in a projects batch unless the command includes `--approve-mutations`. Review the complete manifest before granting approval. `--dry-run` applies to every call and does not require mutation approval. The final stdout object is compact: project counts, one status/error record per project, elapsed time, and the progress-file path rather than every tool result.
 
 ## Discovery
 

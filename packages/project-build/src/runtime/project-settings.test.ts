@@ -137,6 +137,10 @@ describe("project settings runtime", () => {
     expect(getProjectSettings(createState())).toEqual({
       meta: { siteName: "Existing site", faviconAssetId: "old-asset" },
       compiler: { atomicStyles: true },
+    });
+    expect(getProjectSettings(createState(), { verbose: true })).toEqual({
+      meta: { siteName: "Existing site", faviconAssetId: "old-asset" },
+      compiler: { atomicStyles: true },
       redirects: [{ old: "/old", new: "/new", status: "301" }],
     });
   });
@@ -396,6 +400,11 @@ describe("redirect runtime", () => {
   test("lists redirects", () => {
     expect(listRedirects(createState())).toEqual({
       redirects: [{ old: "/old", new: "/new", status: "301" }],
+      detail: "compact",
+      total: 1,
+      returnedCount: 1,
+      nextCursor: null,
+      filters: {},
     });
   });
 
@@ -534,6 +543,11 @@ describe("breakpoint runtime", () => {
         { id: "base", label: "Base" },
         { id: "desktop", label: "Desktop", minWidth: 1024 },
       ],
+      detail: "compact",
+      total: 2,
+      returnedCount: 2,
+      nextCursor: null,
+      filters: {},
     });
   });
 
