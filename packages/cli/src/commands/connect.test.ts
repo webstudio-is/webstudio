@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { cwd } from "node:process";
+import { log } from "@clack/prompts";
 import { expect, test, vi } from "vitest";
 import {
   connect,
@@ -28,6 +29,7 @@ const createDependencies = (
     }
     return content;
   }),
+  verifyProjectAccess: vi.fn(async () => undefined),
   writeFileAtomic: vi.fn(async () => undefined),
 });
 
@@ -109,6 +111,24 @@ test("blocks on invalid json without touching the file", async () => {
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
 });
 
+test("does not configure a client when project access cannot be verified", async () => {
+  const dependencies = createDependencies(linkedProject);
+  vi.mocked(dependencies.verifyProjectAccess).mockRejectedValue(
+    new Error("credential included by upstream error")
+  );
+  const error = vi.spyOn(log, "error").mockImplementation(() => {});
+
+  await expect(
+    connect({ client: "vscode", print: false }, dependencies)
+  ).rejects.toThrow(HandledCliError);
+
+  expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+  expect(error).toHaveBeenCalledWith(
+    expect.not.stringContaining("credential included by upstream error")
+  );
+  error.mockRestore();
+});
+
 test("writes the vscode schema with servers root key and stdio type", async () => {
   const dependencies = createDependencies(linkedProject);
 
@@ -148,23 +168,32 @@ test.each(["claude", "cursor", "vscode"] as const)(
   async (client) => {
     const writeDependencies = createDependencies(linkedProject);
     const printDependencies = createDependencies(linkedProject);
+    const message = vi.spyOn(log, "message").mockImplementation(() => {});
 
     await connect({ client, print: false }, writeDependencies);
     await connect({ client, print: true }, printDependencies);
 
     const [, written] = vi.mocked(writeDependencies.writeFileAtomic).mock
       .calls[0];
-    expect(written).toContain("webstudio@latest");
+    expect(message).toHaveBeenCalledWith(expect.stringContaining(written));
     expect(printDependencies.writeFileAtomic).not.toHaveBeenCalled();
+    message.mockRestore();
   }
 );
 
-test("prints codex snippet without writing files", async () => {
+test("prints the Codex registration command without writing files", async () => {
   const dependencies = createDependencies(linkedProject);
+  const message = vi.spyOn(log, "message");
 
   await connect({ client: "codex", print: false }, dependencies);
 
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+  expect(message).toHaveBeenCalledWith(
+    expect.stringContaining(
+      "codex mcp add webstudio -- npx -y webstudio@latest mcp"
+    )
+  );
+  message.mockRestore();
 });
 
 test("prints configuration without writing when print is requested", async () => {
@@ -181,7 +210,7 @@ test("lists supported clients when no client is provided", async () => {
   await connect({ client: undefined, print: false }, dependencies);
 
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
-  expect(dependencies.isFileExists).not.toHaveBeenCalled();
+  expect(dependencies.verifyProjectAccess).not.toHaveBeenCalled();
 });
 
 test("uses a custom server command", async () => {
