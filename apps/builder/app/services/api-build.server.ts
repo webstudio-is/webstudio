@@ -6,7 +6,10 @@ import {
   loadBuildById,
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/server";
-import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
+import {
+  buildPatchTransaction,
+  publicBuildIncludes,
+} from "@webstudio-is/protocol/schema";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { assertApiProjectPermit } from "./api-permits.server";
@@ -45,22 +48,7 @@ export const loadReadableDevBuild = async (
   return await loadDevBuildByProjectId(ctx, projectId);
 };
 
-const buildInclude = z.enum([
-  "pages",
-  "folders",
-  "instances",
-  "props",
-  "styles",
-  "styleSources",
-  "styleSourceSelections",
-  "designTokens",
-  "assets",
-  "resources",
-  "variables",
-  "breakpoints",
-  "projectSettings",
-  "marketplaceProduct",
-]);
+const buildInclude = z.enum(publicBuildIncludes);
 
 export type BuildInclude = z.infer<typeof buildInclude>;
 

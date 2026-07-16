@@ -2,6 +2,39 @@ import { describe, test, expect } from "vitest";
 import { validateSelector } from "./selector-validation";
 
 describe("validateSelector", () => {
+  test.each([
+    ":hover, body",
+    ":hover > div",
+    ":hover .child",
+    "body:hover",
+    ".class",
+    "#identifier",
+  ])(
+    "rejects selector syntax that can escape element scope: %s",
+    (selector) => {
+      expect(validateSelector(selector)).toMatchObject({ success: false });
+    }
+  );
+
+  test.each([
+    ":hover:focus-visible",
+    "[data-state=open]:hover",
+    ":not(.disabled, [aria-disabled=true])",
+  ])("accepts compound state suffixes: %s", (selector) => {
+    expect(validateSelector(selector).success).toBe(true);
+  });
+
+  test.each([
+    ":not-a-real-state:hover",
+    ":hover:not-a-real-state",
+    ":hover::not-a-real-element",
+    ":not(:not-a-real-state)",
+  ])(
+    "rejects invalid selectors anywhere in a compound state: %s",
+    (selector) => {
+      expect(validateSelector(selector)).toMatchObject({ success: false });
+    }
+  );
   describe("valid selectors", () => {
     test("simple pseudo-classes", () => {
       const selectors = [

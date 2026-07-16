@@ -1,0 +1,52 @@
+name: CLI release smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  release-smoke:
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    environment:
+      name: development
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+      WEBSTUDIO_RELEASE_SMOKE_TOKEN_BUDGET: 6000
+      WEBSTUDIO_RELEASE_SMOKE_REPORT: ${{ github.workspace }}/artifacts/cli-release-smoke.json
+      WEBSTUDIO_RELEASE_SMOKE_AGENT_COMMAND: ${{ vars.CLI_RELEASE_SMOKE_AGENT_COMMAND }}
+      WEBSTUDIO_RELEASE_SMOKE_AGENT_REPORT: ${{ github.workspace }}/artifacts/cli-release-smoke-model.json
+      CLI_RELEASE_SMOKE_AGENT_API_KEY: ${{ secrets.CLI_RELEASE_SMOKE_AGENT_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Run packaged CLI and agent onboarding smoke
+        run: pnpm --filter webstudio test:release-smoke
+
+      - name: Upload compact comparison report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-release-smoke-comparison
+          path: artifacts/cli-release-smoke.json
+          if-no-files-found: error
+
+      - name: Upload dual-package model evaluation report
+        if: ${{ always() && vars.CLI_RELEASE_SMOKE_AGENT_COMMAND != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-release-smoke-model-evaluation
+          path: artifacts/cli-release-smoke-model.json
+          if-no-files-found: error

@@ -4,11 +4,11 @@ import { cwd } from "node:process";
 import { log } from "@clack/prompts";
 import {
   agentClients,
-  agentClientTargets,
   agentServerName,
+  createAgentQuickstart,
   createAgentServerEntry,
-  createCodexAgentSnippet,
   defaultAgentServerCommand,
+  getAgentClientDefinition,
   type AgentClient,
 } from "@webstudio-is/protocol";
 import {
@@ -18,28 +18,19 @@ import {
 } from "../fs-utils";
 import { LOCAL_CONFIG_FILE } from "../config";
 import { HandledCliError } from "../errors";
+import { isPlainRecord } from "../type-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
 
-export const connectClients = agentClients;
 export type ConnectClient = AgentClient;
-export const defaultServerCommand = defaultAgentServerCommand;
-export const mcpServerName = agentServerName;
 
 export type ConnectFileResult =
   | "created"
   | "updated"
   | "unchanged"
   | "blocked-by-invalid-json";
-
-const jsonClientTargets = agentClientTargets;
-export const createServerEntry = createAgentServerEntry;
-export const createCodexSnippet = createCodexAgentSnippet;
-
-const isJsonObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
 
 /**
  * Merge the webstudio server entry into an existing client config while
@@ -63,17 +54,19 @@ export const mergeServerConfig = ({
     } catch {
       return { result: "blocked-by-invalid-json" };
     }
-    if (isJsonObject(parsed) === false) {
+    if (isPlainRecord(parsed) === false) {
       return { result: "blocked-by-invalid-json" };
     }
     config = parsed;
   }
-  const servers = isJsonObject(config[rootKey]) ? config[rootKey] : {};
-  if (JSON.stringify(servers[mcpServerName]) === JSON.stringify(serverEntry)) {
+  const servers = isPlainRecord(config[rootKey]) ? config[rootKey] : {};
+  if (
+    JSON.stringify(servers[agentServerName]) === JSON.stringify(serverEntry)
+  ) {
     return { result: "unchanged" };
   }
   const content = `${JSON.stringify(
-    { ...config, [rootKey]: { ...servers, [mcpServerName]: serverEntry } },
+    { ...config, [rootKey]: { ...servers, [agentServerName]: serverEntry } },
     null,
     2
   )}\n`;
@@ -98,12 +91,12 @@ export const connectOptions = (yargs: CommonYargsArgv) =>
   yargs
     .positional("client", {
       type: "string",
-      choices: connectClients,
+      choices: agentClients,
       describe: "Agent client to generate the MCP configuration for",
     })
     .option("command", {
       type: "string",
-      default: defaultServerCommand,
+      default: defaultAgentServerCommand,
       describe:
         "Command used by the client to start the Webstudio MCP server over stdio",
     })
@@ -140,14 +133,14 @@ export const connect = async (
   options: ConnectOptions,
   dependencies: ConnectDependencies = defaultDependencies
 ) => {
-  const serverCommand = options.command ?? defaultServerCommand;
+  const serverCommand = options.command ?? defaultAgentServerCommand;
   const client = options.client;
 
   if (client === undefined) {
     log.message(
       [
         "Specify the agent client to connect:",
-        ...connectClients.map((name) => `  webstudio connect ${name}`),
+        ...agentClients.map((name) => `  webstudio connect ${name}`),
       ].join("\n")
     );
     return;
@@ -159,35 +152,35 @@ export const connect = async (
     );
   }
 
+  const quickstart = createAgentQuickstart({ client, serverCommand });
+  const configuration = quickstart.configuration;
+  const completionHint = `${quickstart.completion.connection} ${quickstart.completion.firstRead}`;
+
   if (client === "codex") {
-    const snippet = createCodexSnippet(serverCommand);
     log.message(
       [
-        "Codex reads MCP servers from ~/.codex/config.toml. Add the server with:",
+        `${quickstart.label} reads MCP servers from ${configuration.path}. Add the server with:`,
         "",
-        `  codex mcp add ${mcpServerName} -- ${serverCommand}`,
+        `  codex mcp add ${agentServerName} -- ${serverCommand}`,
         "",
-        "or append this snippet to ~/.codex/config.toml:",
+        `or append this snippet to ${configuration.path}:`,
         "",
-        snippet,
+        configuration.content,
+        "",
+        quickstart.completion.firstRead,
       ].join("\n")
     );
     return;
   }
 
-  const target = jsonClientTargets[client];
-  const serverEntry = createServerEntry(
+  const target = getAgentClientDefinition(client);
+  const serverEntry = createAgentServerEntry(
     serverCommand,
     "extraServerFields" in target ? target.extraServerFields : undefined
   );
 
   if (options.print === true) {
-    const { content } = mergeServerConfig({
-      current: undefined,
-      rootKey: target.rootKey,
-      serverEntry,
-    });
-    log.message(`${target.path}\n\n${content}`);
+    log.message(`${configuration.path}\n\n${configuration.content}`);
     return;
   }
 
@@ -209,13 +202,13 @@ export const connect = async (
   }
 
   if (result === "unchanged") {
-    log.success(`${target.path} is already configured. ${target.hint}`);
+    log.success(`${target.path} is already configured. ${completionHint}`);
     return;
   }
 
   await dependencies.createFolderIfNotExists(dirname(path));
   await dependencies.writeFileAtomic(path, content ?? "");
   log.success(
-    `${result === "created" ? "Created" : "Updated"} ${target.path} with the ${mcpServerName} MCP server. ${target.hint}`
+    `${result === "created" ? "Created" : "Updated"} ${target.path} with the ${agentServerName} MCP server. ${completionHint}`
   );
 };

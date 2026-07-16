@@ -114,9 +114,21 @@ test("documents MCP stdio startup and discovery tools", () => {
       describe: "Run local-capable mutation tools without committing",
     })
   );
+  expect(runYargs.option).toHaveBeenCalledWith(
+    "approve-mutations",
+    expect.objectContaining({ default: false })
+  );
+  expect(runYargs.option).toHaveBeenCalledWith(
+    "concurrency",
+    expect.objectContaining({ type: "number" })
+  );
+  expect(runYargs.option).toHaveBeenCalledWith(
+    "resume",
+    expect.objectContaining({ default: true })
+  );
   expect(yargs.command).toHaveBeenCalledWith(
     ["run <input>"],
-    "Run multiple MCP tool calls in one shared CLI session from JSON or a file",
+    "Run an MCP workflow manifest for one or more linked projects",
     expect.any(Function),
     expect.any(Function)
   );

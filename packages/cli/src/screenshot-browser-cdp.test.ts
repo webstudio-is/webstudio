@@ -138,6 +138,82 @@ class FakeWebSocket {
     if (
       message.method === "Runtime.evaluate" &&
       typeof message.params?.expression === "string" &&
+      message.params.expression.includes("parseOpaqueRgb")
+    ) {
+      setTimeout(
+        () =>
+          respond({
+            result: {
+              value: [
+                {
+                  instanceId: "hero-title",
+                  tagName: "h1",
+                  foreground: "rgb(120, 120, 120)",
+                  background: "rgb(255, 255, 255)",
+                  ratio: 4.42,
+                  requiredRatio: 4.5,
+                  fontSize: 16,
+                  fontWeight: 400,
+                },
+              ],
+            },
+          }),
+        0
+      );
+      return;
+    }
+    if (
+      message.method === "Runtime.evaluate" &&
+      typeof message.params?.expression === "string" &&
+      message.params.expression.includes(
+        'document.querySelectorAll("[data-ws-id]")'
+      )
+    ) {
+      setTimeout(
+        () =>
+          respond({
+            result: {
+              value: {
+                total: 2,
+                sampled: 2,
+                truncated: false,
+                elements: [
+                  {
+                    instanceId: "hero",
+                    tagName: "section",
+                    x: 0,
+                    y: 0,
+                    width: 800,
+                    height: 600,
+                    visible: true,
+                    clippedX: false,
+                    clippedY: true,
+                    overlapsWith: ["overlay"],
+                  },
+                  {
+                    instanceId: "overlay",
+                    tagName: "div",
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                    visible: false,
+                    hiddenReason: "display",
+                    clippedX: false,
+                    clippedY: false,
+                    overlapsWith: [],
+                  },
+                ],
+              },
+            },
+          }),
+        0
+      );
+      return;
+    }
+    if (
+      message.method === "Runtime.evaluate" &&
+      typeof message.params?.expression === "string" &&
       message.params.expression.includes("document.querySelector")
     ) {
       setTimeout(() => respond({ result: { value: true } }), 0);
@@ -760,6 +836,7 @@ test("captures full page and returns DevTools layout metrics", async () => {
       fullPage: true,
       includeImageMetrics: true,
       includeResourceMetrics: true,
+      includeContrastMetrics: true,
       browserPath: "/usr/bin/chromium",
       uid: 1000,
       waitUntil: "networkidle",
@@ -787,6 +864,38 @@ test("captures full page and returns DevTools layout metrics", async () => {
     contentWidth: 813,
     contentHeight: 2346,
     horizontalOverflow: false,
+    elementGeometry: {
+      total: 2,
+      sampled: 2,
+      truncated: false,
+      elements: [
+        {
+          instanceId: "hero",
+          tagName: "section",
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 600,
+          visible: true,
+          clippedX: false,
+          clippedY: true,
+          overlapsWith: ["overlay"],
+        },
+        {
+          instanceId: "overlay",
+          tagName: "div",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          visible: false,
+          hiddenReason: "display",
+          clippedX: false,
+          clippedY: false,
+          overlapsWith: [],
+        },
+      ],
+    },
     images: [
       {
         instanceId: "hero-image",
@@ -819,6 +928,18 @@ test("captures full page and returns DevTools layout metrics", async () => {
         encodedBodySize: 79000,
         decodedBodySize: 79000,
         duration: 40,
+      },
+    ],
+    contrasts: [
+      {
+        instanceId: "hero-title",
+        tagName: "h1",
+        foreground: "rgb(120, 120, 120)",
+        background: "rgb(255, 255, 255)",
+        ratio: 4.42,
+        requiredRatio: 4.5,
+        fontSize: 16,
+        fontWeight: 400,
       },
     ],
     timings: {
@@ -1016,6 +1137,35 @@ test("times out when browser page target creation does not respond", async () =>
     recursive: true,
     force: true,
   });
+});
+
+test("stops polling when the browser DevTools port is not created", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  const dependencies = createDependencies({ browserProcess });
+  vi.mocked(dependencies.readFile).mockRejectedValue(
+    Object.assign(new Error("not ready"), { code: "ENOENT" })
+  );
+
+  await expect(
+    captureBrowserScreenshot(
+      {
+        url: "https://example.com",
+        output: "/tmp/current.png",
+        width: 800,
+        height: 600,
+        browserPath: "/usr/bin/chromium",
+        waitUntil: "load",
+        waitForTimeout: 0,
+        timeout: 10,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Browser DevTools endpoint was not created within 10ms.");
+
+  const callsAfterTimeout = vi.mocked(dependencies.readFile).mock.calls.length;
+  await new Promise((resolve) => setTimeout(resolve, 75));
+  expect(dependencies.readFile).toHaveBeenCalledTimes(callsAfterTimeout);
+  expect(browserProcess.kill).toHaveBeenCalled();
 });
 
 test("reports browser navigation errors directly", async () => {

@@ -954,20 +954,25 @@ export const findAssetUsage = (
     BuilderState,
     "assets" | "pages" | "props" | "styles" | "resources" | "dataSources"
   >,
-  input: { assetId: string }
+  input: { assetId: string } & PaginatedOutputInput
 ) => {
   const assets = Array.from(getRequiredAssets(state).values());
   const asset = findAsset(assets, input.assetId);
   if (asset === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
   }
-  return {
-    usages: createAssetUsageList({
+  const { items, ...pagination } = paginateOutput({
+    items: createAssetUsageList({
       asset,
       assets,
       build: getRequiredAssetReferenceBuild(state),
     }),
-  };
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: { assetId: input.assetId },
+    verbose: input.verbose,
+  });
+  return { usages: items, ...pagination };
 };
 
 export const replaceAsset = (

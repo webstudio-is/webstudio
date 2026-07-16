@@ -3,8 +3,6 @@ import { cwd } from "node:process";
 import { expect, test, vi } from "vitest";
 import {
   connect,
-  createCodexSnippet,
-  defaultServerCommand,
   mergeServerConfig,
   type ConnectDependencies,
 } from "./connect";
@@ -145,6 +143,22 @@ test("writes the cursor config into .cursor/mcp.json", async () => {
   );
 });
 
+test.each(["claude", "cursor", "vscode"] as const)(
+  "prints the same generated %s configuration that it writes",
+  async (client) => {
+    const writeDependencies = createDependencies(linkedProject);
+    const printDependencies = createDependencies(linkedProject);
+
+    await connect({ client, print: false }, writeDependencies);
+    await connect({ client, print: true }, printDependencies);
+
+    const [, written] = vi.mocked(writeDependencies.writeFileAtomic).mock
+      .calls[0];
+    expect(written).toContain("webstudio@latest");
+    expect(printDependencies.writeFileAtomic).not.toHaveBeenCalled();
+  }
+);
+
 test("prints codex snippet without writing files", async () => {
   const dependencies = createDependencies(linkedProject);
 
@@ -195,16 +209,6 @@ test("rejects an empty server command", async () => {
   await expect(
     connect({ client: "claude", print: false, command: "  " }, dependencies)
   ).rejects.toThrow("--command must not be empty.");
-});
-
-test("renders the codex toml snippet", () => {
-  expect(createCodexSnippet(defaultServerCommand)).toBe(
-    [
-      "[mcp_servers.webstudio]",
-      'command = "npx"',
-      'args = ["-y", "webstudio@latest", "mcp"]',
-    ].join("\n")
-  );
 });
 
 test("merge keeps result unchanged only for a deep-equal server entry", () => {

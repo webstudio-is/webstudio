@@ -93,8 +93,9 @@ repeated siblings in one `ws.element` root.
 ## Verification
 
 Inspect every returned expression warning. Correct warnings that indicate a
-misspelled or unavailable variable, then read the affected record and preview
-the page. A warning does not roll back the mutation, and a successful syntax
-parse does not prove runtime data has the expected shape. Verify representative
-data, empty/null data, and Collection item counts; use `audit` for relevant
-structural findings.
+misspelled or unavailable variable, then run `verify-bindings` for persisted
+syntax, scope, and reference integrity. A warning does not roll back the
+mutation, and successful static verification does not prove runtime data has
+the expected shape. `verify-bindings` never executes external resources or
+resolves rendered values. Preview representative data, empty/null data, and
+Collection item counts; use `audit` for relevant structural findings.

@@ -1,8 +1,6 @@
 import {
   publicApiOperations,
-  type InputJsonSchema,
-  type PublicApiOperationMethod,
-  type PublicApiOperationPermit,
+  type PublicApiOperation,
 } from "@webstudio-is/protocol";
 import type { CommonYargsArgv } from "./yargs-types";
 import * as apiCommand from "./api-command";
@@ -10,19 +8,20 @@ import type { ApiCommandName } from "./api-command";
 
 type ApiCommandOptions = (yargs: CommonYargsArgv) => CommonYargsArgv;
 
-type ApiCommandMetadata = {
-  command: ApiCommandName;
-  description: string;
-  method: PublicApiOperationMethod;
-  permit: PublicApiOperationPermit;
-  inputFields: readonly string[];
-  requiredInputFields: readonly string[];
-  inputFieldTypes: Partial<Record<string, "array">>;
-  inputSchema: InputJsonSchema;
-  outputSchema?: InputJsonSchema;
-  requiredOptions?: readonly string[];
-  examples: readonly string[];
-};
+type ApiCommandMetadata = Pick<
+  PublicApiOperation<ApiCommandName>,
+  | "command"
+  | "description"
+  | "method"
+  | "permit"
+  | "inputFields"
+  | "requiredInputFields"
+  | "inputFieldTypes"
+  | "inputSchema"
+  | "outputSchema"
+  | "requiredOptions"
+  | "examples"
+>;
 
 export type CliCommandMetadata = ApiCommandMetadata & {
   cliCommand: string;
@@ -145,7 +144,7 @@ const apiCommandOptionsByCommand: Partial<
   "get-marketplace-product": apiCommand.projectSettingsCommandOptions,
   "update-marketplace-product":
     apiCommand.updateMarketplaceProductCommandOptions,
-  "list-redirects": apiCommand.projectSettingsCommandOptions,
+  "list-redirects": apiCommand.paginatedListCommandOptions,
   "create-redirect": apiCommand.createRedirectCommandOptions,
   "update-redirect": apiCommand.updateRedirectCommandOptions,
   "delete-redirect": apiCommand.deleteRedirectCommandOptions,
@@ -200,9 +199,11 @@ const apiCommandOptionsByCommand: Partial<
   "update-variable": apiCommand.updateVariableCommandOptions,
   "delete-variable": apiCommand.deleteVariableCommandOptions,
   "list-resources": apiCommand.scopedCommandOptions,
+  "list-publishes": apiCommand.paginatedListCommandOptions,
   "create-resource": apiCommand.createResourceCommandOptions,
   "update-resource": apiCommand.updateResourceCommandOptions,
   "delete-resource": apiCommand.deleteResourceCommandOptions,
+  "list-domains": apiCommand.paginatedListCommandOptions,
   publish: apiCommand.publishCommandOptions,
   "get-publish-job": apiCommand.publishJobCommandOptions,
   unpublish: apiCommand.unpublishCommandOptions,
@@ -214,7 +215,7 @@ const apiCommandOptionsByCommand: Partial<
   "list-fonts": apiCommand.fontsCommandOptions,
   "upload-asset": apiCommand.uploadAssetCommandOptions,
   "upload-assets": apiCommand.uploadAssetsCommandOptions,
-  "find-asset-usage": apiCommand.assetCommandOptions,
+  "find-asset-usage": apiCommand.assetUsageCommandOptions,
   "replace-asset": apiCommand.replaceAssetCommandOptions,
   "delete-asset": apiCommand.deleteAssetCommandOptions,
 };

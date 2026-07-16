@@ -76,8 +76,6 @@ import {
 } from "./runtime/errors";
 import { z } from "zod";
 
-export { paginateOutput, projectOutput } from "./runtime/output";
-
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = BuilderApiCapability;
 
@@ -136,6 +134,7 @@ export type ProjectSessionScreenshotInput = {
   fullPage?: boolean;
   includeImageMetrics?: boolean;
   includeResourceMetrics?: boolean;
+  includeContrastMetrics?: boolean;
   browser: ScreenshotBrowser;
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
@@ -219,6 +218,16 @@ export type ProjectSessionScreenshotResult = {
       decodedBodySize: number;
       duration: number;
       renderBlockingStatus?: string;
+    }>;
+    contrasts?: Array<{
+      instanceId: string;
+      tagName: string;
+      foreground: string;
+      background: string;
+      ratio: number;
+      requiredRatio: 3 | 4.5;
+      fontSize: number;
+      fontWeight: number;
     }>;
   };
 };
@@ -930,6 +939,12 @@ const screenshotInputSchema = {
       description:
         "Include sanitized Resource Timing transfer and render-blocking metadata. Rendered audit enables this automatically; omit for compact ordinary screenshots.",
     },
+    includeContrastMetrics: {
+      type: "boolean",
+      default: false,
+      description:
+        "Include only statically resolvable opaque text/background contrast measurements. Rendered accessibility audit enables this automatically.",
+    },
     browser: {
       type: "string",
       enum: screenshotBrowserChoices,
@@ -1305,7 +1320,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "preview.status": [{}],
   "preview.stop": [{}],
   status: [{}, { verbose: true }],
-  "list-pages": [{ includeFolders: true }],
+  "list-pages": [{ limit: 20 }],
   "get-page-by-path": [{ path: "/pricing" }],
   "list-instances": [{ pagePath: "/", maxDepth: 3 }],
   "inspect-instance": [
@@ -2283,6 +2298,7 @@ type ProjectSessionMcpStructuredContent =
       data: unknown;
       meta: {
         session?: ReturnType<typeof serializeProjectSessionMeta>;
+        next?: string[];
       };
     }
   | {
@@ -2291,6 +2307,7 @@ type ProjectSessionMcpStructuredContent =
       error: McpStructuredError;
       meta: {
         session?: ReturnType<typeof serializeProjectSessionMeta>;
+        next?: string[];
       };
     };
 
@@ -2298,7 +2315,7 @@ class ProjectSessionMcpCheckpointError extends Error {
   code = "CHECKPOINT_REQUIRED";
 }
 
-type ProjectSessionMcpCheckpoint = {
+export type ProjectSessionMcpCheckpoint = {
   tool: string;
   message: string;
   nextCommand?: string;
@@ -2404,7 +2421,7 @@ const toMetaResult = (data: unknown): ProjectSessionMcpToolResult => {
   };
 };
 
-const getMcpCheckpoint = (
+export const getProjectSessionMcpCheckpoint = (
   tool: string,
   data: unknown
 ): ProjectSessionMcpCheckpoint | undefined => {
@@ -3273,7 +3290,11 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
   return capabilities;
 };
 
-const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
+const startupGuidance = [
+  "For any multi-step authoring task, first call meta.guide with the user's objective and follow its complete workflow, including final audit, preview, and screenshot steps.",
+  "Mutation responses can include meta.next. Treat those steps as required before reporting completion.",
+  readProjectBuildDoc("mcp-startup-guidance").trim(),
+].join("\n\n");
 const formatExpressionMethods = (methods: ReadonlySet<string>) =>
   [...methods]
     .sort((left, right) => left.localeCompare(right))
@@ -3290,6 +3311,21 @@ const expressionsGuide = readProjectBuildDoc("expressions")
   );
 const valuesVsBindingsRule =
   "Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, resources, actions, or existing scoped runtime context such as system. Parameters are internal scoped runtime values, not a public create/update/delete surface. Page metadata and fixed resource URLs accept plain strings; use JavaScript expression code only when values are computed. Page and resource updates put changed fields under values.";
+
+const bindingVerificationWriteNamespaces = new Set([
+  "props",
+  "dataSources",
+  "resources",
+]);
+
+const visualVerificationWriteNamespaces = new Set([
+  "pages",
+  "instances",
+  "props",
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
+]);
 
 const getComponentStateUsage = (
   states:
@@ -3388,10 +3424,8 @@ const getComponentCatalog = () => ({
     .sort((left, right) => left.component.localeCompare(right.component)),
 });
 
-const getComponentCatalogOverview = () => {
-  const categories = new Map<string, number>();
-  const namespaces = new Map<string, number>();
-  const components = [...componentMetas.entries()]
+const getCompactComponentCatalogEntries = () =>
+  [...componentMetas.entries()]
     .filter(
       ([_component, meta]) =>
         isComponentMetaUnavailableInCatalog(meta) === false
@@ -3400,8 +3434,6 @@ const getComponentCatalogOverview = () => {
       const [parsedNamespace, exportName] = parseComponentName(component);
       const namespace = parsedNamespace ?? "global";
       const category = meta.category ?? "uncategorized";
-      namespaces.set(namespace, (namespaces.get(namespace) ?? 0) + 1);
-      categories.set(category, (categories.get(category) ?? 0) + 1);
       return {
         component,
         exportName,
@@ -3411,14 +3443,22 @@ const getComponentCatalogOverview = () => {
       };
     })
     .sort((left, right) => left.component.localeCompare(right.component));
+
+const getComponentCatalogOverview = () => {
+  const categories = new Map<string, number>();
+  const namespaces = new Map<string, number>();
+  const components = getCompactComponentCatalogEntries();
+  for (const { category, namespace } of components) {
+    namespaces.set(namespace, (namespaces.get(namespace) ?? 0) + 1);
+    categories.set(category, (categories.get(category) ?? 0) + 1);
+  }
   return {
     source: "@webstudio-is/sdk-components-registry/metas",
     usage:
-      'Short component overview. Prefer MCP tools components.list({"source":"all"}), templates.list({}), components.search({"brief":"radix select"}), and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for structured discovery. Read webstudio://project/components only when you need the full catalog.',
+      'Short component overview. Prefer MCP tools components.list({"source":"all"}), templates.list({}), components.search({"brief":"radix select"}), and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for structured discovery. Read the bounded webstudio://project/components catalog only when needed.',
     count: components.length,
     namespaces: Object.fromEntries([...namespaces.entries()].sort()),
     categories: Object.fromEntries([...categories.entries()].sort()),
-    components,
   };
 };
 
@@ -3532,7 +3572,7 @@ const getComponentSummary = () => {
   }
   return {
     usage:
-      "Use this structured summary before reading full component resources. Do not dump/parse webstudio://project/components for common discovery. Use components.list for shadcn-compatible registry items, components.search for search, templates.list for templates, and components.get/templates.get for one item.",
+      "Use this structured summary before paging through component resources. Do not dump/parse the whole component catalog. Prefer components.list for shadcn-compatible registry items, components.search for search, templates.list for templates, and components.get/templates.get for one item.",
     total: entries.length,
     namespaceCounts: Object.fromEntries([...namespaces.entries()].sort()),
     templateComponents: entries
@@ -4253,12 +4293,12 @@ const getComponentDetails = (component: string) => {
 
 const getToolCatalogOverview = (tools: readonly ProjectSessionMcpTool[]) => ({
   usage:
-    'Short tool overview. Do one small discovery step, then act. Start with meta.index or meta.guide({"brief":"Create a pricing page"}). Use meta.get_more_tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Read webstudio://project/tools only when you need the full catalog.',
+    'Short tool overview. Do one small discovery step, then act. Start with meta.index or meta.guide({"brief":"Create a pricing page"}). Use meta.get_more_tools({"tools":["insert-fragment"]}) for exact details, or read the bounded webstudio://project/tools catalog.',
   count: tools.length,
   capabilities: filterCapabilities(tools).map((capability) => ({
     area: capability.area,
     goal: capability.goal,
-    tools: capability.tools,
+    count: capability.tools.length,
   })),
 });
 
@@ -4285,7 +4325,7 @@ const getMetaIndex = (
       overview:
         "Do not call every discovery tool up front. Use this meta.index response for orientation, then call at most one focused discovery tool before acting.",
       tools:
-        'Use meta.get_more_tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Read webstudio://project/tools only when the full operation catalog is necessary.',
+        'Use meta.get_more_tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Page through webstudio://project/tools only when broader operation discovery is necessary.',
       insertFragment:
         'Primary authored/styled insertion command shape: node packages/cli/local.js insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\\"section\\" ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag="h2">Section title</ws.element><ws.element ws:tag="p">Section copy.</ws.element></ws.element>"}\' --dry-run. Use parentInstanceId, not parentId. Use Webstudio components/helpers such as ws.element, radix.*, css, token, expression, and ActionValue. Use ws:style={css`...`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.',
       resources:
@@ -4323,57 +4363,148 @@ const getMetaIndex = (
   };
 };
 
+const metaGoalGuides = [
+  {
+    pattern: /json\s*-?\s*ld|structured\s+data/i,
+    tools: [
+      "components.get",
+      "list-instances",
+      "insert-component",
+      "update-props",
+      "audit",
+    ],
+    workflow: [
+      'Call components.get with {"component":"JsonLd"}; do not use update-page custom metadata for JSON-LD.',
+      "Find the page HeadSlot instance with list-instances.",
+      'Insert JsonLd under HeadSlot with insert-component, then set code with update-props using type "string" and a compact JSON object or array string.',
+      'Run audit with {"scopes":["seo"],"pagePath":"<path>"} and fix any JSON-LD finding.',
+    ],
+  },
+  {
+    pattern:
+      /collection|repeat(?:ed|ing)?\s+(?:list|item|card|row|content)|render\s+(?:an?\s+)?array|array\s+(?:as|into)\s+(?:a\s+)?(?:list|grid|table|cards?)/i,
+    tools: [
+      "components.get",
+      "list-variables",
+      "list-resources",
+      "insert-collection",
+      "inspect-instance",
+      "audit",
+    ],
+    workflow: [
+      "Find the array or object to repeat. For a scoped resource result, select the complete nested array/object, commonly below the result's data field; do not bind the response wrapper or one indexed item.",
+      "Call insert-collection once with the complete iterable and one repeated-item JSX root. Use expression`collectionItem.name` and expression`collectionItemKey` inside the item fragment; the operation creates and binds private parameters atomically.",
+      "Wrap multiple repeated sibling instances in one ws.element. Do not create, replace, or delete Collection parameter records manually.",
+      "Verify that every array/object entry renders once. For repeated Radix items, bind a stable unique id or slug to required value props.",
+    ],
+  },
+  {
+    pattern:
+      /\bexpressions?\b|computed\s+(?:text|value|prop|metadata|url)|dynamic\s+(?:text|prop|binding)/i,
+    tools: [
+      "list-variables",
+      "list-resources",
+      "list-texts",
+      "inspect-instance",
+      "update-text",
+      "bind-props",
+      "update-resource",
+    ],
+    workflow: [
+      "Read webstudio://project/expressions for the supported syntax, method allowlist, scope rules, and encoding examples.",
+      "Read variables, resources, the target instance, and existing bindings before writing an expression; do not guess scoped identifier names.",
+      "Use one expression rather than a statement or function. Use direct values for fixed content and expressions only for runtime-computed values.",
+      "Preview the affected route with representative and empty data; successful syntax validation does not prove the runtime data shape or scope is correct.",
+    ],
+  },
+  {
+    pattern:
+      /authenticated?\s+(?:page|route|screen)|(?:supabase|firebase)\s+auth|sign(?:ed)?[- ]?(?:in|out)|login\s+(?:page|flow)|user\s+session/i,
+    tools: [
+      "get-project-settings",
+      "list-resources",
+      "list-variables",
+      "list-instances",
+      "create-page",
+      "create-resource",
+      "create-variable",
+      "insert-fragment",
+      "bind-props",
+      "verify-bindings",
+      "update-page",
+      "preview.start",
+      "screenshot",
+      "audit",
+    ],
+    workflow: [
+      "Inspect the project's existing auth resources, variables, embeds, page settings, and agent instructions before choosing a provider workflow. Reuse that convention; do not add a second auth system implicitly.",
+      "Never place credentials, service-role keys, refresh tokens, private session values, or authenticated response bodies in project data, command output, screenshots, agent instructions, or error reports. Ask the user to configure secrets in the provider/server environment.",
+      "Model explicit signed-out, loading, signed-in, and failed-auth UI states with ordinary components and bindings. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
+      "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
+      "After creating or changing authentication expressions, call verify-bindings for the account page and resolve every validity, scope, and reference finding before previewing.",
+      "Preview and verify every auth state with non-secret fixture data, then audit the route. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.",
+    ],
+  },
+  {
+    pattern:
+      /(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception)/i,
+    tools: [
+      "list-pages",
+      "list-breakpoints",
+      "list-variables",
+      "list-design-tokens",
+      "list-style-sources",
+      "attach-design-token",
+      "list-assets",
+      "components.search",
+      "create-page",
+      "insert-fragment",
+      "update-styles",
+      "upload-asset",
+      "preview.start",
+      "screenshot",
+      "screenshot.diff",
+      "audit",
+    ],
+    workflow: [
+      "Interpret the supplied design before mutating: identify page sections, responsive behavior, reusable patterns, assets, typography, color, spacing, and interaction states. Ask for missing source assets rather than inventing brand-critical content.",
+      "Before the first mutation, call list-breakpoints and list-design-tokens. Reuse the returned breakpoint ids and attach relevant token ids to the new instances; do not continue with disconnected local copies when matching tokens exist.",
+      "Inspect the target project's pages, variables, design tokens, style sources, components, and assets. Reuse exact existing values and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
+      "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
+      "Create semantic editable structure with insert-fragment and known components. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
+      "Implement responsive behavior inside the project's actual breakpoint ranges. Capture one familiar desktop and mobile viewport, plus one representative viewport for any distinct intermediate breakpoint behavior.",
+      "Run rendered audit and inspect screenshots after each bounded page section. Iterate on hierarchy, overflow, wrapping, image choice, spacing, and states; visual similarity is evidence, not permission to discard accessibility or project conventions.",
+    ],
+  },
+  {
+    pattern: /\bcraft\b/i,
+    tools: [
+      "audit",
+      "list-variables",
+      "list-design-tokens",
+      "list-style-sources",
+      "list-pages",
+      "update-styles",
+    ],
+    workflow: [
+      'Run audit with {"scopes":["craft"]} before changing the project. Use profileStatuses for the detected profile, source provenance, next action, preservation guidance, and template compatibility.',
+      "If Craft is not detected, do not add Craft variables, tokens, or templates unless the user explicitly asks to adopt Craft.",
+      "For partial or modified Craft projects, apply only the first reported missing or incompatible requirement, preserve project-specific values and non-Craft styles, then rerun the Craft audit.",
+      "Use a Craft-dependent template only when templateCompatibility is compatible; requires-review means repair or explicitly resolve the mismatch first.",
+    ],
+  },
+] as const;
+
 const getMetaGuide = (
   brief: string,
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
 ) => {
-  const isJsonLdGoal = /json\s*-?\s*ld|structured\s+data/i.test(brief);
-  const isCollectionGoal =
-    /collection|repeat(?:ed|ing)?\s+(?:list|item|card|row|content)|render\s+(?:an?\s+)?array|array\s+(?:as|into)\s+(?:a\s+)?(?:list|grid|table|cards?)/i.test(
-      brief
-    );
-  const isExpressionGoal =
-    /\bexpressions?\b|computed\s+(?:text|value|prop|metadata|url)|dynamic\s+(?:text|prop|binding)/i.test(
-      brief
-    );
-  const matches = isJsonLdGoal
-    ? getExactTools(
-        [
-          "components.get",
-          "list-instances",
-          "insert-component",
-          "update-props",
-          "audit",
-        ],
-        tools
-      )
-    : isCollectionGoal
-      ? getExactTools(
-          [
-            "components.get",
-            "list-variables",
-            "list-resources",
-            "insert-collection",
-            "inspect-instance",
-            "audit",
-          ],
-          tools
-        )
-      : isExpressionGoal
-        ? getExactTools(
-            [
-              "list-variables",
-              "list-resources",
-              "list-texts",
-              "inspect-instance",
-              "update-text",
-              "bind-props",
-              "update-resource",
-            ],
-            tools
-          )
-        : getMatchingTools(brief, tools).slice(0, 12);
+  const goalGuide = metaGoalGuides.find(({ pattern }) => pattern.test(brief));
+  const matches =
+    goalGuide === undefined
+      ? getMatchingTools(brief, tools).slice(0, 12)
+      : getExactTools(goalGuide.tools, tools);
   const canVerifyVisually =
     tools.some((tool) => tool.name === "preview.start") &&
     tools.some((tool) => tool.name === "screenshot");
@@ -4385,30 +4516,7 @@ const getMetaGuide = (
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: [
-      ...(isJsonLdGoal
-        ? [
-            'Call components.get with {"component":"JsonLd"}; do not use update-page custom metadata for JSON-LD.',
-            "Find the page HeadSlot instance with list-instances.",
-            'Insert JsonLd under HeadSlot with insert-component, then set code with update-props using type "string" and a compact JSON object or array string.',
-            'Run audit with {"scopes":["seo"],"pagePath":"<path>"} and fix any JSON-LD finding.',
-          ]
-        : []),
-      ...(isCollectionGoal
-        ? [
-            "Find the array or object to repeat. For a scoped resource result, select the complete nested array/object, commonly below the result's data field; do not bind the response wrapper or one indexed item.",
-            "Call insert-collection once with the complete iterable and one repeated-item JSX root. Use expression`collectionItem.name` and expression`collectionItemKey` inside the item fragment; the operation creates and binds private parameters atomically.",
-            "Wrap multiple repeated sibling instances in one ws.element. Do not create, replace, or delete Collection parameter records manually.",
-            "Verify that every array/object entry renders once. For repeated Radix items, bind a stable unique id or slug to required value props.",
-          ]
-        : []),
-      ...(isExpressionGoal
-        ? [
-            "Read webstudio://project/expressions for the supported syntax, method allowlist, scope rules, and encoding examples.",
-            "Read variables, resources, the target instance, and existing bindings before writing an expression; do not guess scoped identifier names.",
-            "Use one expression rather than a statement or function. Use direct values for fixed content and expressions only for runtime-computed values.",
-            "Preview the affected route with representative and empty data; successful syntax validation does not prove the runtime data shape or scope is correct.",
-          ]
-        : []),
+      ...(goalGuide?.workflow ?? []),
       "Use the fewest discovery calls needed for the immediate action.",
       "Call permissions or status only when the task depends on capabilities or local session freshness.",
       matches.some((tool) => tool.annotations.localCapable)
@@ -4486,8 +4594,7 @@ const designSystemWorkflowPhases: Record<
     purpose:
       "Identify exactly one target page and return its page id and root instance id. Create it only if lookup proves it is missing.",
     allowedTools: ["create-page", "list-pages", "get-page-by-path"],
-    commandPattern:
-      "node packages/cli/local.js list-pages '{\"includeFolders\":true}'",
+    commandPattern: "node packages/cli/local.js list-pages '{\"limit\":20}'",
     fallbackCommandPattern:
       'node packages/cli/local.js create-page \'{"path":"/design-system","name":"Design System"}\'',
     expectedReturn: [
@@ -4619,6 +4726,72 @@ const serializeToolDetails = (tool: ProjectSessionMcpTool) => ({
   annotations: tool.annotations,
 });
 
+const serializeCompactTool = (tool: ProjectSessionMcpTool) => ({
+  name: tool.name,
+  description:
+    tool.description.length <= 240
+      ? tool.description
+      : `${tool.description.slice(0, 239)}…`,
+  method: tool.annotations.method,
+  requiredInputFields: tool.annotations.requiredInputFields,
+});
+
+const maxDiscoveryResourcePageSize = 50;
+const defaultDiscoveryResourcePageSize = 20;
+
+const getDiscoveryResourceInput = (uri: string, resourceUri: string) => {
+  const url = new URL(uri);
+  const baseUri = `${url.protocol}//${url.host}${url.pathname}`;
+  if (baseUri !== resourceUri) {
+    return;
+  }
+  for (const name of url.searchParams.keys()) {
+    if (["cursor", "limit", "verbose"].includes(name) === false) {
+      throw new Error(`Unknown ${resourceUri} parameter "${name}".`);
+    }
+  }
+  const cursor = url.searchParams.get("cursor");
+  if (cursor !== null && /^(0|[1-9]\d*)$/.test(cursor) === false) {
+    throw new Error(`Invalid ${resourceUri} cursor "${cursor}".`);
+  }
+  const rawLimit = url.searchParams.get("limit");
+  if (rawLimit !== null && /^(0|[1-9]\d*)$/.test(rawLimit) === false) {
+    throw new Error(`Invalid ${resourceUri} limit "${rawLimit}".`);
+  }
+  const requestedLimit =
+    rawLimit === null
+      ? defaultDiscoveryResourcePageSize
+      : Number.parseInt(rawLimit, 10);
+  if (requestedLimit < 1) {
+    throw new Error(`${resourceUri} limit must be at least 1.`);
+  }
+  const rawVerbose = url.searchParams.get("verbose");
+  if (rawVerbose !== null && rawVerbose !== "true" && rawVerbose !== "false") {
+    throw new Error(`${resourceUri} verbose must be true or false.`);
+  }
+  return {
+    offset: cursor === null ? 0 : Number.parseInt(cursor, 10),
+    limit: Math.min(requestedLimit, maxDiscoveryResourcePageSize),
+    verbose: rawVerbose === "true",
+  };
+};
+
+const paginateDiscoveryResource = (
+  items: readonly unknown[],
+  input: NonNullable<ReturnType<typeof getDiscoveryResourceInput>>
+) => {
+  const page = items.slice(input.offset, input.offset + input.limit);
+  return {
+    total: items.length,
+    returnedCount: page.length,
+    nextCursor:
+      input.offset + page.length < items.length
+        ? String(input.offset + page.length)
+        : undefined,
+    page,
+  };
+};
+
 const getMoreTools = (
   brief: string,
   toolNames: readonly string[],
@@ -4705,27 +4878,28 @@ export const listProjectSessionMcpResources =
       uri: "webstudio://project/tools-overview",
       name: "Webstudio operation tools overview",
       description:
-        "Small operation overview grouped by capability area. Use before reading the full tool catalog.",
+        "Small operation overview grouped by capability area. Use before paging through the tool catalog.",
       mimeType: "application/json",
     },
     {
       uri: "webstudio://project/tools",
       name: "Webstudio operation tools",
-      description: "Catalog-derived MCP tools available for the project.",
+      description:
+        "Bounded tool catalog. Supports cursor, limit (maximum 50), and verbose query parameters.",
       mimeType: "application/json",
     },
     {
       uri: "webstudio://project/components-overview",
       name: "Webstudio components overview",
       description:
-        "Small component overview with ids, labels, namespaces, and categories. Use before reading the full component catalog.",
+        "Small component overview with namespace and category counts. Use before paging through the component catalog.",
       mimeType: "application/json",
     },
     {
       uri: "webstudio://project/components",
       name: "Webstudio components",
       description:
-        "Registry-derived component catalog with props, states, and content model composition constraints.",
+        "Bounded component catalog. Supports cursor, limit (maximum 50), and verbose query parameters.",
       mimeType: "application/json",
     },
     {
@@ -4756,12 +4930,14 @@ const toCallResult = (
   options: {
     verboseSession?: boolean;
     error?: { code: string; message: string };
+    next?: string[];
   } = {}
 ): ProjectSessionMcpToolResult => {
   const meta = {
     session: serializeProjectSessionMeta(envelope, {
       verbose: options.verboseSession,
     }),
+    ...(options.next === undefined ? {} : { next: options.next }),
   };
   const structuredContent: ProjectSessionMcpStructuredContent =
     options.error === undefined
@@ -4983,6 +5159,7 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     fullPage: input.fullPage === true,
     includeImageMetrics: input.includeImageMetrics === true,
     includeResourceMetrics: input.includeResourceMetrics === true,
+    includeContrastMetrics: input.includeContrastMetrics === true,
     browser,
     browserPath:
       typeof input.browserPath === "string" ? input.browserPath : undefined,
@@ -5201,22 +5378,7 @@ const getImportInput = (input: unknown): ProjectSessionImportInput => {
   };
 };
 
-export const createProjectSessionMcpCore = <Command extends string = string>({
-  operations,
-  createProjectSession,
-  executeOperation,
-  importProject,
-  captureScreenshot,
-  capturePageScreenshots,
-  diffScreenshots,
-  installOcr,
-  startPreview,
-  getPreviewStatus,
-  stopPreview,
-  guidance,
-  reportToolProgress,
-  storeRenderedAuditArtifacts,
-}: {
+type ProjectSessionMcpCoreOptions<Command extends string> = {
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
@@ -5233,14 +5395,31 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   storeRenderedAuditArtifacts?: (
     manifest: RenderedAuditArtifactManifest
   ) => Promise<string>;
-}) => {
+};
+
+export const createProjectSessionMcpCore = <Command extends string = string>({
+  operations,
+  createProjectSession,
+  executeOperation,
+  importProject,
+  captureScreenshot,
+  capturePageScreenshots,
+  diffScreenshots,
+  installOcr,
+  startPreview,
+  getPreviewStatus,
+  stopPreview,
+  guidance,
+  reportToolProgress,
+  storeRenderedAuditArtifacts,
+}: ProjectSessionMcpCoreOptions<Command>) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
   const toCheckpointedMetaResult = (
     tool: string,
     data: unknown
   ): ProjectSessionMcpToolResult => {
-    pendingCheckpoint = getMcpCheckpoint(tool, data);
+    pendingCheckpoint = getProjectSessionMcpCheckpoint(tool, data);
     return toMetaResult(data);
   };
   const operationByCommand = new Map(
@@ -5284,13 +5463,31 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           ],
         };
       }
-      if (uri === "webstudio://project/tools") {
+      const toolsInput = getDiscoveryResourceInput(
+        uri,
+        "webstudio://project/tools"
+      );
+      if (toolsInput !== undefined) {
+        const tools = listTools();
+        const serializedTools = toolsInput.verbose
+          ? tools.map(serializeToolDetails)
+          : tools.map(serializeCompactTool);
+        const { page, ...pagination } = paginateDiscoveryResource(
+          serializedTools,
+          toolsInput
+        );
         return {
           contents: [
             {
               uri,
               mimeType: "application/json",
-              text: JSON.stringify({ tools: listTools() }),
+              text: JSON.stringify({
+                usage:
+                  "Use cursor to continue. Pass verbose=true for schemas and examples for this page only.",
+                detail: toolsInput.verbose ? "verbose" : "compact",
+                ...pagination,
+                tools: page,
+              }),
             },
           ],
         };
@@ -5306,13 +5503,34 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           ],
         };
       }
-      if (uri === "webstudio://project/components") {
+      const componentsInput = getDiscoveryResourceInput(
+        uri,
+        "webstudio://project/components"
+      );
+      if (componentsInput !== undefined) {
+        const compactCatalog = getComponentCatalogOverview();
+        const items = componentsInput.verbose
+          ? getComponentCatalog().components
+          : getCompactComponentCatalogEntries();
+        const { page, ...pagination } = paginateDiscoveryResource(
+          items,
+          componentsInput
+        );
         return {
           contents: [
             {
               uri,
               mimeType: "application/json",
-              text: JSON.stringify(getComponentCatalog()),
+              text: JSON.stringify({
+                source: "@webstudio-is/sdk-components-registry/metas",
+                usage:
+                  "Use cursor to continue. Pass verbose=true for props, states, and composition details for this page only.",
+                detail: componentsInput.verbose ? "verbose" : "compact",
+                namespaces: compactCatalog.namespaces,
+                categories: compactCatalog.categories,
+                ...pagination,
+                components: page,
+              }),
             },
           ],
         };
@@ -5684,7 +5902,34 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           error: getRenderedAuditError(auditedEnvelope, isRenderedAudit),
         });
       }
-      return toCallResult(envelope);
+      const needsBindingVerification = operation.writeNamespaces.some(
+        (namespace) => bindingVerificationWriteNamespaces.has(namespace)
+      );
+      const needsVisualVerification = operation.writeNamespaces.some(
+        (namespace) => visualVerificationWriteNamespaces.has(namespace)
+      );
+      const next = [
+        ...(needsBindingVerification
+          ? [
+              "After changing props, variables, or resources, run verify-bindings for the changed page or instance and resolve every finding.",
+            ]
+          : []),
+        ...(needsVisualVerification
+          ? [
+              "Before reporting completion, run audit for the changed page or project.",
+              ...(startPreview !== undefined && captureScreenshot !== undefined
+                ? [
+                    "For visual changes, start a session preview and capture desktop and mobile screenshots before reporting completion.",
+                  ]
+                : []),
+            ]
+          : []),
+      ];
+      return toCallResult(envelope, {
+        ...(operation.method !== "mutation" || dryRun || next.length === 0
+          ? {}
+          : { next }),
+      });
     },
   };
 };
@@ -5770,25 +6015,12 @@ export const createProjectSessionMcpServer = async <
   getErrorCode,
   reportLog,
   storeRenderedAuditArtifacts,
+  onInitialized,
   toolHeartbeatIntervalMs = 10_000,
-}: {
-  operations: readonly (PublicMcpOperation & { command: Command })[];
-  createProjectSession: CreateProjectSession;
-  executeOperation: ExecuteMcpOperation<Command>;
-  importProject?: ImportProject;
-  captureScreenshot?: CaptureScreenshot;
-  capturePageScreenshots?: CapturePageScreenshots;
-  diffScreenshots?: DiffScreenshots;
-  installOcr?: InstallOcr;
-  startPreview?: StartPreview;
-  getPreviewStatus?: GetPreviewStatus;
-  stopPreview?: StopPreview;
-  guidance?: ProjectSessionMcpGuidance;
+}: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
-  storeRenderedAuditArtifacts?: (
-    manifest: RenderedAuditArtifactManifest
-  ) => Promise<string>;
+  onInitialized?: (clientName: string | undefined) => void;
   toolHeartbeatIntervalMs?: number;
 }) => {
   const server = new Server(
@@ -5830,6 +6062,7 @@ export const createProjectSessionMcpServer = async <
   });
 
   server.oninitialized = () => {
+    onInitialized?.(server.getClientVersion()?.name);
     sendLog(
       "info",
       `ready with ${core.listTools().length} tools; use tools/list, meta.index, or webstudio://project/guide`

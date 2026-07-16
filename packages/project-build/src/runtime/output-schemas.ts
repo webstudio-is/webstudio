@@ -16,8 +16,12 @@ import { builderNamespaces } from "../contracts/namespaces";
 import { builderPatchSchema } from "../contracts/patch";
 import { marketplaceProduct } from "../shared/marketplace";
 import { auditResult } from "./audit";
+import { bindingVerificationResult } from "./binding-verification";
 import { insertCollectionResult } from "./collection";
-import { componentInsertResult } from "./component-insert-contract";
+import {
+  componentInsertResult,
+  fragmentInsertResult,
+} from "./component-insert-contract";
 import { expressionWarningSchema } from "./expression-validation";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
@@ -135,7 +139,10 @@ const textMatch = looseObject({
   component: z.string(),
   label: z.string().optional(),
   mode: z.enum(["text", "expression"]),
-  value: z.string(),
+  valuePreview: z.string(),
+  value: z.string().optional(),
+  valueLength: z.number().int().nonnegative(),
+  truncated: z.boolean(),
 });
 const declaration = looseObject({
   instanceId: id,
@@ -159,7 +166,8 @@ const token = looseObject({
 });
 const cssVariable = looseObject({
   name: z.string(),
-  value: z.string(),
+  value: z.string().optional(),
+  valueLength: z.number().int().nonnegative(),
   scope: z.string(),
   usageCount: z.number().int().optional(),
 });
@@ -167,7 +175,8 @@ const variable = looseObject({
   id,
   name: z.string(),
   scopeInstanceId: id.optional(),
-  value: dataSourceVariableValue,
+  valueType: z.string(),
+  value: dataSourceVariableValue.optional(),
 });
 const resource = looseObject({
   id,
@@ -223,18 +232,16 @@ const uploadedFontAsset = looseObject({
 const uploadedFont = looseObject({
   family: z.string(),
   source: z.literal("uploaded"),
-  assets: z.array(uploadedFontAsset),
+  assetCount: z.number().int().nonnegative(),
+  assets: z.array(uploadedFontAsset).optional(),
 });
 const systemFont = looseObject({
   family: z.string(),
   source: z.literal("system"),
-  stack: stringArray,
-  description: z.string(),
+  stack: stringArray.optional(),
+  description: z.string().optional(),
 });
 
-const fragmentInsertResult = componentInsertResult.extend({
-  parentInstanceId: id.optional(),
-});
 const instanceIdsResult = looseObject({ instanceIds: stringArray });
 const pageIdResult = looseObject({ pageId: id });
 const folderIdResult = looseObject({ folderId: id });
@@ -268,11 +275,19 @@ const resourceMutationResult = looseObject({
   dataSourceId: id.optional(),
   warnings: expressionWarnings,
 });
+const retainedRuntimeBehavior = looseObject({
+  instanceId: id,
+  responsibility: z.string(),
+});
+const unsupportedRuntimeConversion = looseObject({
+  behavior: z.string(),
+  reason: z.string(),
+});
 
 export const runtimeOutputSchemas = {
   "pages.list": looseObject({
     pages: z.array(pageSummary),
-    folders: z.array(folder).optional(),
+    ...outputPage,
   }),
   "pages.get": pageDetails,
   "pages.getByPath": z.union([
@@ -295,7 +310,7 @@ export const runtimeOutputSchemas = {
   "projectSettings.get": looseObject({
     meta: looseObject(projectMeta.shape),
     compiler: looseObject(compilerSettings.shape),
-    redirects: z.array(redirect),
+    redirects: z.array(redirect).optional(),
   }),
   "projectSettings.update": looseObject({ updated: z.boolean() }),
   "projectSettings.getMarketplaceProduct": looseObject({
@@ -304,19 +319,28 @@ export const runtimeOutputSchemas = {
   "projectSettings.updateMarketplaceProduct": looseObject({
     updated: z.boolean(),
   }),
-  "redirects.list": looseObject({ redirects: z.array(redirect) }),
+  "redirects.list": looseObject({
+    redirects: z.array(redirect),
+    ...outputPage,
+  }),
   "redirects.create": looseObject({ old: z.string() }),
   "redirects.update": looseObject({ old: z.string() }),
   "redirects.delete": looseObject({ old: z.string() }),
   "redirects.setAll": looseObject({ count: z.number().int() }),
-  "breakpoints.list": looseObject({ breakpoints: z.array(breakpoint) }),
+  "breakpoints.list": looseObject({
+    breakpoints: z.array(breakpoint),
+    ...outputPage,
+  }),
   "breakpoints.create": breakpointIdResult,
   "breakpoints.update": breakpointIdResult,
   "breakpoints.delete": breakpointIdResult,
   "pages.delete": pageIdResult,
   "pages.duplicate": pageIdResult,
   "pages.copy": pageIdResult,
-  "pageTemplates.list": looseObject({ templates: z.array(pageTemplate) }),
+  "pageTemplates.list": looseObject({
+    templates: z.array(pageTemplate),
+    ...outputPage,
+  }),
   "pageTemplates.create": looseObject({ templateId: id, rootInstanceId: id }),
   "pageTemplates.update": templateIdResult,
   "pageTemplates.delete": templateIdResult,
@@ -325,7 +349,7 @@ export const runtimeOutputSchemas = {
   "pageTemplates.createPage": pageIdResult,
   "folders.list": looseObject({
     folders: z.array(folder),
-    pages: z.array(pageSummary).optional(),
+    ...outputPage,
   }),
   "folders.create": folderIdResult,
   "folders.update": folderIdResult,
@@ -357,11 +381,30 @@ export const runtimeOutputSchemas = {
   "project.search": looseObject({
     query: z.string(),
     scopes: stringArray,
-    total: z.number().int(),
     truncated: z.boolean(),
     matches: z.array(looseObject({ kind: z.string() })),
+    ...outputPage,
   }),
   "project.audit": auditResult,
+  "project.verifyBindings": bindingVerificationResult,
+  "runtimeUi.integrate": looseObject({
+    created: looseObject({
+      variableIds: stringArray,
+      resources: z.array(
+        looseObject({ resourceId: id, dataSourceId: id.optional() })
+      ),
+      instanceIds: stringArray,
+      rootInstanceIds: stringArray,
+      propIds: stringArray,
+    }),
+    editableStructure: looseObject({
+      type: z.enum(["fragment", "collection"]),
+      usesCollection: z.boolean(),
+    }),
+    retainedBehavior: z.array(retainedRuntimeBehavior),
+    unsupportedConversions: z.array(unsupportedRuntimeConversion),
+    warnings: expressionWarnings,
+  }),
   "instances.insertComponent": componentInsertResult,
   "instances.insertCollection": insertCollectionResult.extend({
     warnings: expressionWarnings.optional(),
@@ -403,7 +446,10 @@ export const runtimeOutputSchemas = {
     propIds: stringArray,
     warnings: expressionWarnings.optional(),
   }),
-  "instances.listTexts": looseObject({ texts: z.array(textMatch) }),
+  "instances.listTexts": looseObject({
+    texts: z.array(textMatch),
+    ...outputPage,
+  }),
   "instances.updateText": looseObject({
     instanceId: id,
     childIndex: z.number().int(),
@@ -474,7 +520,10 @@ export const runtimeOutputSchemas = {
   }),
   "styleSources.duplicate": looseObject({ styleSourceId: id }),
   "styleSources.convertLocalToToken": looseObject({ styleSourceId: id }),
-  "cssVariables.list": looseObject({ vars: z.array(cssVariable) }),
+  "cssVariables.list": looseObject({
+    vars: z.array(cssVariable),
+    ...outputPage,
+  }),
   "cssVariables.define": looseObject({ names: stringArray }),
   "cssVariables.delete": looseObject({
     names: stringArray,
@@ -490,7 +539,10 @@ export const runtimeOutputSchemas = {
     styleKeys: stringArray,
     propIds: stringArray,
   }),
-  "variables.list": looseObject({ variables: z.array(variable) }),
+  "variables.list": looseObject({
+    variables: z.array(variable),
+    ...outputPage,
+  }),
   "variables.create": dataSourceIdResult,
   "variables.update": dataSourceIdResult,
   "variables.delete": dataSourceIdResult,
@@ -498,7 +550,10 @@ export const runtimeOutputSchemas = {
     dataSourceIds: stringArray,
     deletedCount: z.number().int(),
   }),
-  "resources.list": looseObject({ resources: z.array(resource) }),
+  "resources.list": looseObject({
+    resources: z.array(resource),
+    ...outputPage,
+  }),
   "resources.create": resourceMutationResult,
   "resources.update": resourceMutationResult.partial({ warnings: true }),
   "resources.replaceText": looseObject({
@@ -525,8 +580,12 @@ export const runtimeOutputSchemas = {
   "fonts.list": looseObject({
     uploaded: z.array(uploadedFont),
     system: z.array(systemFont),
+    ...outputPage,
   }),
-  "assets.findUsage": looseObject({ usages: z.array(assetUsage) }),
+  "assets.findUsage": looseObject({
+    usages: z.array(assetUsage),
+    ...outputPage,
+  }),
   "assets.update": assetIdResult,
   "assets.setImageDescriptions": looseObject({
     updated: z.array(looseObject({ assetId: id, decorative: z.boolean() })),

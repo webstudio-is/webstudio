@@ -22,7 +22,11 @@ import {
   unpublishProjectDomains,
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
-import { getBuilderRuntimeOperationInputSchema } from "@webstudio-is/project-build/runtime";
+import {
+  getBuilderRuntimeOperationInputSchema,
+  paginateOutput,
+  paginatedOutputInputSchema,
+} from "@webstudio-is/project-build/runtime";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -92,6 +96,22 @@ const assertApiPublishDomains = ({
 };
 
 const projectIdInput = z.object({ projectId: z.string() });
+
+const paginatedProjectInput = projectIdInput.extend(
+  paginatedOutputInputSchema.shape
+);
+
+const paginateProjectItems = <Item>(
+  items: readonly Item[],
+  input: z.infer<typeof paginatedProjectInput>
+) =>
+  paginateOutput({
+    items,
+    cursor: input.cursor,
+    limit: input.limit,
+    verbose: input.verbose,
+    filters: {},
+  });
 
 const withProjectId = <Schema extends z.ZodTypeAny>(
   input: Schema
@@ -646,10 +666,12 @@ export const apiRouter = router({
 
   publish: router({
     list: projectQuery(
-      projectIdInput,
+      paginatedProjectInput,
       "view",
       async ({ ctx, input }) => {
-        return await listProjectPublishes(input.projectId, ctx);
+        const { publishes } = await listProjectPublishes(input.projectId, ctx);
+        const { items, ...pagination } = paginateProjectItems(publishes, input);
+        return { publishes: items, ...pagination };
       },
       { command: "list-publishes", client: "listPublishes" }
     ),
@@ -720,10 +742,14 @@ export const apiRouter = router({
 
   domains: router({
     list: projectQuery(
-      projectIdInput,
+      paginatedProjectInput,
       "view",
       async ({ ctx, input }) => {
-        return { domains: await listProjectDomains(input.projectId, ctx) };
+        const { items, ...pagination } = paginateProjectItems(
+          await listProjectDomains(input.projectId, ctx),
+          input
+        );
+        return { domains: items, ...pagination };
       },
       { command: "list-domains", client: "listDomains" }
     ),

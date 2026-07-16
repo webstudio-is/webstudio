@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   agentClients,
   createAgentClientConfiguration,
+  createAgentQuickstart,
   createAgentShareUrl,
   createAgentSetupCommand,
   defaultAgentServerCommand,
@@ -55,6 +56,26 @@ describe("agent connection configuration", () => {
     );
     expect(defaultAgentServerCommand).toBe("npx -y webstudio@latest mcp");
   });
+
+  test.each(agentClients)(
+    "generates the same complete %s quickstart",
+    (client) => {
+      const quickstart = createAgentQuickstart({
+        client,
+        shareUrl: "https://example.com/?authToken=secret&mode=design",
+      });
+
+      expect(quickstart.setupCommand).toContain(
+        `npx -y webstudio@latest connect ${client}`
+      );
+      expect(quickstart.completion).toEqual({
+        connection: quickstart.configuration.hint,
+        firstRead:
+          "Ask your agent to use Webstudio MCP and list the project pages.",
+      });
+      expect(quickstart.configuration.client).toBe(client);
+    }
+  );
 });
 
 test("creates a minimal revocable Builder share URL", () => {

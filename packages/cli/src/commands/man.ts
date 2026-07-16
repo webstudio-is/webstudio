@@ -40,14 +40,40 @@ export const manOptions = (yargs: CommonYargsArgv) =>
       type: "boolean",
       describe: "Print the manual topic as structured JSON",
       default: false,
+    })
+    .option("cursor", {
+      type: "string",
+      describe: "Continue a compact manual listing from this cursor",
+    })
+    .option("limit", {
+      type: "number",
+      describe: "Maximum compact manual entries to return (1-50)",
+      default: 20,
+    })
+    .option("verbose", {
+      type: "boolean",
+      describe: "Print the complete manual instead of a compact listing",
+      default: false,
     });
 
 type ManOptions = Omit<
   StrictYargsOptionsToInterface<typeof manOptions>,
-  "topic"
+  "topic" | "cursor" | "limit" | "verbose"
 > & {
   topic?: string;
+  cursor?: string;
+  limit?: number;
+  verbose?: boolean;
 };
+
+const maxManualPageSize = 50;
+const defaultManualPageSize = 20;
+const compactDescriptionLength = 240;
+
+const compactDescription = (value: string) =>
+  value.length <= compactDescriptionLength
+    ? value
+    : `${value.slice(0, compactDescriptionLength - 1)}…`;
 
 const commandIndex = cliCommandMetadata
   .map((command) => {
@@ -752,6 +778,102 @@ const topics = {
   },
 };
 
+type ManualCatalogItem = {
+  id: string;
+  command: string;
+  surface: "cli" | "api" | "mcp";
+  use: string;
+};
+
+const topLevelManualItems: ManualCatalogItem[] = topLevelCommandCatalog.map(
+  ({ command, use }) => ({
+    id: `cli:${command}`,
+    command,
+    surface: "cli",
+    use: compactDescription(use),
+  })
+);
+
+const apiManualItems: ManualCatalogItem[] = commandCatalog.map(
+  ({ command, use }) => ({
+    id: `api:${command}`,
+    command,
+    surface: "api",
+    use: compactDescription(use),
+  })
+);
+
+const mcpManualItems: ManualCatalogItem[] = listProjectSessionMcpTools(
+  publicApiOperations
+).map(({ name, description }) => ({
+  id: `mcp:${name}`,
+  command: name,
+  surface: "mcp",
+  use: compactDescription(description),
+}));
+
+const manualItemsByTopic: Record<keyof typeof topics, ManualCatalogItem[]> = {
+  all: [...topLevelManualItems, ...apiManualItems, ...mcpManualItems],
+  api: [...apiManualItems, ...mcpManualItems],
+  llm: [...topLevelManualItems, ...apiManualItems, ...mcpManualItems],
+  "project-editing": [...apiManualItems, ...mcpManualItems],
+  mcp: mcpManualItems,
+};
+
+const parseManualCursor = (cursor: string | undefined) => {
+  if (cursor === undefined) {
+    return 0;
+  }
+  if (/^(0|[1-9]\d*)$/.test(cursor) === false) {
+    throw new Error(`Invalid manual cursor "${cursor}".`);
+  }
+  return Number(cursor);
+};
+
+const getCompactManual = (
+  topic: keyof typeof topics,
+  options: Pick<ManOptions, "cursor" | "limit">
+) => {
+  const items = manualItemsByTopic[topic];
+  const offset = parseManualCursor(options.cursor);
+  const requestedLimit = Math.floor(options.limit ?? defaultManualPageSize);
+  if (requestedLimit < 1) {
+    throw new Error("Manual limit must be at least 1.");
+  }
+  const limit = Math.min(requestedLimit, maxManualPageSize);
+  const page = items.slice(offset, offset + limit);
+  return {
+    topic,
+    title: topics[topic].json.title,
+    detail: "compact" as const,
+    usage:
+      "Use cursor to continue this listing. Pass --verbose for the complete manual and full examples.",
+    total: items.length,
+    returnedCount: page.length,
+    nextCursor:
+      offset + page.length < items.length
+        ? String(offset + page.length)
+        : undefined,
+    items: page,
+  };
+};
+
+const renderCompactManual = (manual: ReturnType<typeof getCompactManual>) =>
+  [
+    `# ${manual.title}`,
+    "",
+    manual.usage,
+    "",
+    ...manual.items.map(
+      ({ command, surface, use }) => `- ${command} (${surface}): ${use}`
+    ),
+    "",
+    `Showing ${manual.returnedCount} of ${manual.total}.`,
+    ...(manual.nextCursor === undefined
+      ? []
+      : [`Continue with --cursor ${manual.nextCursor}.`]),
+  ].join("\n");
+
 export const man = (options: ManOptions) => {
   const topic = options.topic ?? "all";
   const entry = topics[topic as keyof typeof topics];
@@ -763,6 +885,18 @@ Available topics:
 ${Object.keys(topics)
   .map((name) => `- ${name}`)
   .join("\n")}`);
+    return;
+  }
+  if (options.verbose !== true) {
+    const compactManual = getCompactManual(
+      topic as keyof typeof topics,
+      options
+    );
+    if (options.json === true) {
+      printJson(compactManual);
+      return;
+    }
+    console.info(renderCompactManual(compactManual));
     return;
   }
   if (options.json === true) {

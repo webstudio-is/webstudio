@@ -33,6 +33,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
+import { paginateOutput, type PaginatedOutputInput } from "./output";
 import { webstudioDataNamespaces } from "../contracts/namespaces";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
@@ -1040,19 +1041,28 @@ export const reorderPageTemplates = (
   });
 };
 
-export const listPageTemplates = (state: Pick<BuilderState, "pages">) => {
+export const listPageTemplates = (
+  state: Pick<BuilderState, "pages">,
+  input: PaginatedOutputInput = {}
+) => {
   const pages = getRequiredPages(state);
+  const { items, ...pagination } = paginateOutput({
+    items: Array.from(pages.pageTemplates?.values() ?? []).map((template) => ({
+      id: template.id,
+      name: template.name,
+      title: template.title,
+      rootInstanceId: template.rootInstanceId,
+      systemDataSourceId: template.systemDataSourceId,
+      meta: template.meta,
+    })),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: {},
+    verbose: input.verbose,
+  });
   return {
-    templates: Array.from(pages.pageTemplates?.values() ?? []).map(
-      (template) => ({
-        id: template.id,
-        name: template.name,
-        title: template.title,
-        rootInstanceId: template.rootInstanceId,
-        systemDataSourceId: template.systemDataSourceId,
-        meta: template.meta,
-      })
-    ),
+    templates: items,
+    ...pagination,
   };
 };
 

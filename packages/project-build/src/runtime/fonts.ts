@@ -2,17 +2,24 @@ import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
+import {
+  paginateOutput,
+  paginatedOutputInputSchema,
+  projectOutput,
+  type PaginatedOutputInput,
+} from "./output";
 
 export const fontListInput = z.object({
   includeSystem: z
     .boolean()
     .default(true)
     .describe("Include built-in system font stacks."),
+  ...paginatedOutputInputSchema.shape,
 });
 
 export const listFonts = (
   state: Pick<BuilderState, "assets">,
-  input: z.infer<typeof fontListInput>
+  input: z.infer<typeof fontListInput> & PaginatedOutputInput
 ) => {
   if (state.assets === undefined) {
     return throwBuilderRuntimeError(
@@ -57,5 +64,35 @@ export const listFonts = (
         description: config.description,
       }))
     : [];
-  return { uploaded, system };
+  const { items, ...pagination } = paginateOutput({
+    items: [...uploaded, ...system].map((font) =>
+      font.source === "uploaded"
+        ? projectOutput({
+            input,
+            compact: {
+              family: font.family,
+              source: font.source,
+              assetCount: font.assets.length,
+            },
+            expanded: () => ({ assets: font.assets }),
+          })
+        : projectOutput({
+            input,
+            compact: { family: font.family, source: font.source },
+            expanded: () => ({
+              stack: font.stack,
+              description: font.description,
+            }),
+          })
+    ),
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: { includeSystem: input.includeSystem },
+    verbose: input.verbose,
+  });
+  return {
+    uploaded: items.filter((font) => font.source === "uploaded"),
+    system: items.filter((font) => font.source === "system"),
+    ...pagination,
+  };
 };

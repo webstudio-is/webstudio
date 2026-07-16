@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
+import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   createBuilderRuntimeState,
@@ -67,6 +68,30 @@ describe("api runtime adapter", () => {
         input: { pageId: "missing" },
       })
     ).rejects.toThrow("Page not found");
+  });
+
+  test("preserves canonical mutation payloads across the API adapter", async () => {
+    const build = createBuild();
+    const pageId = build.pages.homePageId;
+    const input = {
+      projectId: build.projectId,
+      pageId,
+      values: { name: "Updated home" },
+    };
+    const direct = executeBuilderRuntimeOperation({
+      id: "pages.update",
+      state: createBuilderRuntimeState(build),
+      input,
+      context: {
+        createId: () => "unused",
+        projectId: build.projectId,
+        projectVersion: build.version,
+      },
+    });
+
+    await expect(
+      executeApiRuntimeOperation({ id: "pages.update", build, input })
+    ).resolves.toEqual(direct);
   });
 
   test("strips API transport fields before strict runtime validation", async () => {

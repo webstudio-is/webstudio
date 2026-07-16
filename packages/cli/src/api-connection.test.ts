@@ -10,7 +10,7 @@ const createDependencies = ({
   files?: Record<string, string>;
 } = {}) => ({
   isFileExists: vi.fn(async (path: string) =>
-    path === LOCAL_CONFIG_FILE ? exists : path in files
+    path.endsWith(LOCAL_CONFIG_FILE) ? exists : path in files
   ),
   readFile: vi.fn(async (path: string) => {
     const key = path.endsWith(LOCAL_CONFIG_FILE) ? LOCAL_CONFIG_FILE : path;
@@ -41,6 +41,27 @@ describe("resolveApiConnection", () => {
       origin: "https://example.com",
       authToken: "token-1",
     });
+  });
+
+  test("resolves local config from an explicit project root", async () => {
+    const dependencies = createDependencies({
+      files: {
+        [LOCAL_CONFIG_FILE]: JSON.stringify({ projectId: "project-1" }),
+        [GLOBAL_CONFIG_FILE]: JSON.stringify({
+          "project-1": { origin: "https://example.com", token: "token-1" },
+        }),
+      },
+    });
+
+    await resolveApiConnection(dependencies, "/workspace/site-a");
+
+    expect(dependencies.isFileExists).toHaveBeenCalledWith(
+      "/workspace/site-a/.webstudio/config.json"
+    );
+    expect(dependencies.readFile).toHaveBeenCalledWith(
+      "/workspace/site-a/.webstudio/config.json",
+      "utf-8"
+    );
   });
 
   test("requires a local project config", async () => {

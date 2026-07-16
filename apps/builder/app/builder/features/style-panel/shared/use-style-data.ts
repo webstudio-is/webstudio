@@ -8,7 +8,10 @@ import {
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/nano-states";
 import { isStyleSourceLocked } from "@webstudio-is/project-build/runtime";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  executeRuntimeMutationSequence,
+  type RuntimeMutationOperation,
+} from "~/shared/instance-utils/data";
 
 type StyleUpdate =
   | {
@@ -98,6 +101,7 @@ const publishUpdates = (
     (update) => update.operation === "delete"
   );
 
+  const operations: RuntimeMutationOperation[] = [];
   if (setUpdates.length > 0) {
     const inputUpdates = setUpdates.map((update) => ({
       instanceId,
@@ -107,7 +111,7 @@ const publishUpdates = (
       value: update.value,
       listed: options.listed,
     }));
-    executeRuntimeMutation({
+    operations.push({
       id:
         selectedStyleSource.type === "local"
           ? "styles.updateDeclarations"
@@ -131,7 +135,7 @@ const publishUpdates = (
       state,
       property: camelCaseProperty(update.property),
     }));
-    executeRuntimeMutation({
+    operations.push({
       id:
         selectedStyleSource.type === "local"
           ? "styles.deleteDeclarations"
@@ -147,6 +151,7 @@ const publishUpdates = (
       },
     });
   }
+  executeRuntimeMutationSequence(operations);
 };
 
 export const setProperty: SetProperty = (property) => {

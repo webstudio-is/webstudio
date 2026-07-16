@@ -9,26 +9,15 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon } from "@webstudio-is/icons";
 import {
-  agentClients,
-  createAgentClientConfiguration,
+  agentClientDefinitions,
+  createAgentQuickstart,
   createAgentShareUrl,
-  createAgentSetupCommand,
   type AgentClient,
+  type AgentClientDefinition,
 } from "@webstudio-is/protocol";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $authToken } from "~/shared/nano-states";
 import { sectionSpacing } from "./utils";
-
-const clientLabels: Record<AgentClient, string> = {
-  claude: "Claude Code",
-  codex: "Codex",
-  cursor: "Cursor",
-  vscode: "VS Code",
-};
-const clientOptions = agentClients.map((value) => ({
-  value,
-  label: clientLabels[value],
-}));
 
 export const SectionConnectAgent = () => {
   const authToken = useStore($authToken);
@@ -48,21 +37,22 @@ export const SectionConnectAgent = () => {
     );
   }, [authToken]);
 
-  const configuration = createAgentClientConfiguration(client);
-  const setupCommand =
-    shareUrl === undefined
-      ? undefined
-      : createAgentSetupCommand({ client, shareUrl });
+  const { configuration, setupCommand, completion } = createAgentQuickstart({
+    client,
+    shareUrl,
+  });
 
   return (
     <Grid gap={3} css={sectionSpacing}>
       <Text variant="titles">Connect your Agent</Text>
       <Select
-        options={clientOptions}
-        value={clientOptions.find(({ value }) => value === client)}
-        getValue={({ value }) => value}
-        getLabel={({ label }) => label}
-        onChange={(option) => setClient(option.value)}
+        options={agentClientDefinitions}
+        value={agentClientDefinitions.find(
+          (option) => option.client === client
+        )}
+        getValue={({ client }: AgentClientDefinition) => client}
+        getLabel={({ label }: AgentClientDefinition) => label}
+        onChange={(option) => setClient(option.client)}
       />
       {setupCommand === undefined ? (
         <Text color="subtle">
@@ -88,7 +78,8 @@ export const SectionConnectAgent = () => {
           readOnly
           value={configuration.content}
         />
-        <Text color="subtle">{configuration.hint}</Text>
+        <Text color="subtle">{completion.connection}</Text>
+        <Text color="subtle">{completion.firstRead}</Text>
       </Grid>
     </Grid>
   );

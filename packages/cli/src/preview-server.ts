@@ -4,6 +4,7 @@ import {
   type StdioOptions,
 } from "node:child_process";
 import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { createServer as createTcpServer } from "node:net";
 import { delimiter, dirname, join, parse } from "node:path";
 
 export type PreviewServerOptions = {
@@ -41,6 +42,24 @@ export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   platform: process.platform,
 };
+
+export const findAvailablePort = (host = "127.0.0.1") =>
+  new Promise<number>((resolve, reject) => {
+    const server = createTcpServer();
+    server.unref();
+    server.once("error", reject);
+    server.listen({ host, port: 0, exclusive: true }, () => {
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        server.close();
+        reject(new Error("Could not allocate a local preview port."));
+        return;
+      }
+      server.close((error) =>
+        error === undefined ? resolve(address.port) : reject(error)
+      );
+    });
+  });
 
 const processEnv = () => process.env;
 

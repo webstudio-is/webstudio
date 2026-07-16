@@ -35,7 +35,7 @@ describe("project session api adapter", () => {
 
     const result = await executeProjectSessionApiOperation({
       command: "list-pages",
-      input: { includeFolders: true },
+      input: { limit: 20 },
       connection: {
         projectId: "project-1",
         origin: "https://example.com",
@@ -46,7 +46,7 @@ describe("project session api adapter", () => {
 
     expect(session.read).toHaveBeenCalledWith(
       "pages.list",
-      { projectId: "project-1", includeFolders: true },
+      { projectId: "project-1", limit: 20 },
       { permit: "view" }
     );
     expect(result.result).toEqual(["page"]);
