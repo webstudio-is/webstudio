@@ -4,26 +4,42 @@ const encodeDigest = (digest: ArrayBuffer) =>
     .replaceAll("/", "_")
     .replaceAll("=", "");
 
-const getConfirmationDigest = async (signature: string, expiresAt: number) =>
+const canonicalize = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(canonicalize);
+  }
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, child]) => [key, canonicalize(child)])
+  );
+};
+
+const getConfirmationDigest = async (payload: unknown, expiresAt: number) =>
   encodeDigest(
     await globalThis.crypto.subtle.digest(
       "SHA-256",
-      new TextEncoder().encode(`${expiresAt}:${signature}`)
+      new TextEncoder().encode(
+        `${expiresAt}:${JSON.stringify(canonicalize(payload))}`
+      )
     )
   );
 
 export const createConfirmationToken = async (
-  signature: string,
+  payload: unknown,
   ttlMs: number
 ) => {
   const expiresAt = Date.now() + ttlMs;
-  const digest = await getConfirmationDigest(signature, expiresAt);
+  const digest = await getConfirmationDigest(payload, expiresAt);
   return { token: `${expiresAt.toString(36)}.${digest}`, expiresAt };
 };
 
 export const validateConfirmationToken = async (
   token: string | undefined,
-  signature: string
+  payload: unknown
 ) => {
   if (token === undefined) {
     return false;
@@ -40,19 +56,5 @@ export const validateConfirmationToken = async (
   if (Number.isSafeInteger(expiresAt) === false || expiresAt < Date.now()) {
     return false;
   }
-  return digest === (await getConfirmationDigest(signature, expiresAt));
-};
-
-export const canonicalizeConfirmationValue = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map(canonicalizeConfirmationValue);
-  }
-  if (value === null || typeof value !== "object") {
-    return value;
-  }
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, child]) => [key, canonicalizeConfirmationValue(child)])
-  );
+  return digest === (await getConfirmationDigest(payload, expiresAt));
 };

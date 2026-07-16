@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  canonicalizeConfirmationValue,
   createConfirmationToken,
   validateConfirmationToken,
 } from "./confirmation-token";
@@ -19,11 +18,16 @@ describe("confirmation tokens", () => {
     vi.useRealTimers();
   });
 
-  test("canonicalizes object keys without reordering arrays", () => {
+  test("treats object key order as insignificant", async () => {
+    const { token } = await createConfirmationToken(
+      { b: 2, a: [{ d: 4, c: 3 }, 1] },
+      1_000
+    );
     expect(
-      JSON.stringify(
-        canonicalizeConfirmationValue({ b: 2, a: [{ d: 4, c: 3 }, 1] })
-      )
-    ).toBe('{"a":[{"c":3,"d":4},1],"b":2}');
+      await validateConfirmationToken(token, {
+        a: [{ c: 3, d: 4 }, 1],
+        b: 2,
+      })
+    ).toBe(true);
   });
 });
