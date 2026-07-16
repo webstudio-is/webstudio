@@ -63,7 +63,9 @@ const summarizeFiles = (files: readonly BuildFile[]) => ({
   gzipBytes: files.reduce((total, file) => total + file.gzipBytes, 0),
 });
 
-export const inspectGeneratedBuild = async (projectDirectory: string) => {
+export const inspectGeneratedBuildMetrics = async (
+  projectDirectory: string
+) => {
   const buildDirectory = join(projectDirectory, "build");
   const paths = await listFiles(buildDirectory).catch(
     (error: NodeJS.ErrnoException) => {

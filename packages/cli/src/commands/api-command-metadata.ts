@@ -1,8 +1,6 @@
 import {
   publicApiOperations,
-  type InputJsonSchema,
-  type PublicApiOperationMethod,
-  type PublicApiOperationPermit,
+  type PublicApiOperation,
 } from "@webstudio-is/protocol";
 import type { CommonYargsArgv } from "./yargs-types";
 import * as apiCommand from "./api-command";
@@ -10,19 +8,20 @@ import type { ApiCommandName } from "./api-command";
 
 type ApiCommandOptions = (yargs: CommonYargsArgv) => CommonYargsArgv;
 
-type ApiCommandMetadata = {
-  command: ApiCommandName;
-  description: string;
-  method: PublicApiOperationMethod;
-  permit: PublicApiOperationPermit;
-  inputFields: readonly string[];
-  requiredInputFields: readonly string[];
-  inputFieldTypes: Partial<Record<string, "array">>;
-  inputSchema: InputJsonSchema;
-  outputSchema?: InputJsonSchema;
-  requiredOptions?: readonly string[];
-  examples: readonly string[];
-};
+type ApiCommandMetadata = Pick<
+  PublicApiOperation<ApiCommandName>,
+  | "command"
+  | "description"
+  | "method"
+  | "permit"
+  | "inputFields"
+  | "requiredInputFields"
+  | "inputFieldTypes"
+  | "inputSchema"
+  | "outputSchema"
+  | "requiredOptions"
+  | "examples"
+>;
 
 export type CliCommandMetadata = ApiCommandMetadata & {
   cliCommand: string;

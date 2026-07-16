@@ -270,17 +270,26 @@ export const getMarketplaceProduct = (
   return { marketplaceProduct: state.marketplaceProduct };
 };
 
-export const listRedirects = (
-  state: Pick<BuilderState, "pages">,
-  input: PaginatedOutputInput = {}
-) => {
-  const { items, ...pagination } = paginateOutput({
-    items: getRequiredPages(state).redirects ?? [],
+const paginateProjectSettingItems = <Item>(
+  items: readonly Item[],
+  input: PaginatedOutputInput
+) =>
+  paginateOutput({
+    items,
     cursor: input.cursor,
     limit: input.limit,
     filters: {},
     verbose: input.verbose,
   });
+
+export const listRedirects = (
+  state: Pick<BuilderState, "pages">,
+  input: PaginatedOutputInput = {}
+) => {
+  const { items, ...pagination } = paginateProjectSettingItems(
+    getRequiredPages(state).redirects ?? [],
+    input
+  );
   return { redirects: items, ...pagination };
 };
 
@@ -571,13 +580,10 @@ export const listBreakpoints = (
   state: Pick<BuilderState, "breakpoints">,
   input: PaginatedOutputInput = {}
 ) => {
-  const { items, ...pagination } = paginateOutput({
-    items: Array.from(getRequiredBreakpoints(state).values()),
-    cursor: input.cursor,
-    limit: input.limit,
-    filters: {},
-    verbose: input.verbose,
-  });
+  const { items, ...pagination } = paginateProjectSettingItems(
+    Array.from(getRequiredBreakpoints(state).values()),
+    input
+  );
   return { breakpoints: items, ...pagination };
 };
 

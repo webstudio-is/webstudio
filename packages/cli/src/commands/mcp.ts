@@ -52,7 +52,8 @@ import {
 } from "../mcp-guidance";
 import { readCliDoc } from "../docs";
 import { printJson } from "../json-output";
-import { inspectGeneratedBuild } from "../generated-build-evidence";
+import { isPlainRecord } from "../type-utils";
+import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
 import { LOCAL_DATA_FILE } from "../config";
 import {
   assertMcpBatchMutationApproved,
@@ -194,17 +195,14 @@ export const createMcpStatusReporter = (
   },
 });
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
-
 const createMcpInputError = (message: string, code: string) =>
   Object.assign(new Error(message), { code });
 
 const hasAssetName = (value: unknown): value is { name: string } =>
-  isRecord(value) && typeof value.name === "string";
+  isPlainRecord(value) && typeof value.name === "string";
 
 const getMcpUploadAssetInput = (input: unknown) => {
-  if (isRecord(input) === false || hasAssetName(input.asset) === false) {
+  if (isPlainRecord(input) === false || hasAssetName(input.asset) === false) {
     throw new Error("upload-asset requires an asset object.");
   }
   return createLocalUploadAssetInput({
@@ -217,7 +215,7 @@ const getMcpUploadAssetInput = (input: unknown) => {
 
 const getMcpUploadAssetsInput = (input: unknown) => {
   if (
-    isRecord(input) === false ||
+    isPlainRecord(input) === false ||
     Array.isArray(input.assets) === false ||
     input.assets.every(hasAssetName) === false
   ) {
@@ -284,16 +282,16 @@ const assertPersistedMcpCheckpointAcknowledged = async (
 };
 
 const getResultCheckpoint = (tool: string, structuredContent: unknown) => {
-  if (isRecord(structuredContent) === false) {
+  if (isPlainRecord(structuredContent) === false) {
     return;
   }
   const data = structuredContent.data;
-  if (isRecord(data) === false) {
+  if (isPlainRecord(data) === false) {
     return;
   }
   const checkpoint = data.checkpoint;
   if (
-    isRecord(checkpoint) &&
+    isPlainRecord(checkpoint) &&
     checkpoint.required === true &&
     typeof checkpoint.instruction === "string"
   ) {
@@ -510,7 +508,9 @@ const createMcpPreviewHandlers = ({
       markFresh();
       return {
         ...result,
-        generatedBuild: await inspectGeneratedBuild(previewProject.cwd),
+        generatedBuildMetrics: await inspectGeneratedBuildMetrics(
+          previewProject.cwd
+        ),
       };
     },
     async captureScreenshot(
@@ -813,7 +813,7 @@ const parseMcpSingleOpCallInput = async ({
 const parseMcpRunCalls = (value: unknown): McpRunCall[] => {
   const calls = Array.isArray(value)
     ? value
-    : isRecord(value) && Array.isArray(value.calls)
+    : isPlainRecord(value) && Array.isArray(value.calls)
       ? value.calls
       : undefined;
   if (calls === undefined) {
@@ -825,7 +825,7 @@ const parseMcpRunCalls = (value: unknown): McpRunCall[] => {
     throw new Error("MCP run input must include at least one call.");
   }
   return calls.map((call, index): McpRunCall => {
-    if (isRecord(call) === false) {
+    if (isPlainRecord(call) === false) {
       throw new Error(`MCP run calls[${index}] must be an object.`);
     }
     if (typeof call.tool !== "string" || call.tool.length === 0) {
@@ -937,7 +937,7 @@ const createMcpRunCheckpointStopPayload = ({
 const getMcpRunError = (error: unknown) => {
   const issues = getCliErrorIssues(error);
   if (
-    isRecord(error) &&
+    isPlainRecord(error) &&
     typeof error.message === "string" &&
     (error.code === undefined || typeof error.code === "string")
   ) {
@@ -957,7 +957,7 @@ const getMcpRunError = (error: unknown) => {
 };
 
 const validateSingleOpCallInput = (tool: string, input: unknown) => {
-  if (tool !== "audit" || isRecord(input) === false) {
+  if (tool !== "audit" || isPlainRecord(input) === false) {
     return;
   }
   const issues: SemanticValidationIssue[] = [];
@@ -1064,7 +1064,7 @@ const getMcpToolCallError = (result: {
   if (isMcpToolCallFailure(result) === false) {
     return;
   }
-  return isRecord(result.structuredContent.error)
+  return isPlainRecord(result.structuredContent.error)
     ? result.structuredContent.error
     : { code: "MCP_TOOL_FAILED", message: "MCP tool call failed." };
 };
@@ -1298,6 +1298,50 @@ const createCliMcpCore = (host: CliMcpHost) =>
     },
   });
 
+type CliMcpCore = ReturnType<
+  typeof createProjectSessionMcpCore<PublicApiCommand>
+>;
+
+const assertMcpToolServerSupport = (
+  tool: string,
+  contract: CliServerApiContract
+) => {
+  const operation = publicApiOperationByCommand.get(tool as PublicApiCommand);
+  if (
+    operation !== undefined &&
+    publicApiOperationRequiresServerSupport(operation)
+  ) {
+    assertCliServerOperationSupported(operation.id, contract);
+  }
+};
+
+const executeMcpRunCall = async ({
+  core,
+  call,
+  projectRoot,
+}: {
+  core: CliMcpCore;
+  call: McpRunCall;
+  projectRoot?: string;
+}) => {
+  const result = await core.callTool({
+    name: call.tool,
+    input: call.input,
+    dryRun: call.dryRun,
+  });
+  const toolError = getMcpToolCallError(result);
+  if (toolError !== undefined) {
+    throw toolError;
+  }
+  const checkpoint = getResultCheckpoint(call.tool, result.structuredContent);
+  await updatePersistedMcpCheckpoint({
+    tool: call.tool,
+    structuredContent: result.structuredContent,
+    projectRoot,
+  });
+  return { result, checkpoint };
+};
+
 export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
   if (options.tool === undefined || options.tool === "") {
     throw new Error("mcp single-op-call requires a tool name.");
@@ -1313,15 +1357,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     const input = await parseMcpSingleOpCallInput(options);
     validateSingleOpCallInput(options.tool, input);
     const { host, apiContract } = await createCliMcpHost();
-    const operation = publicApiOperations.find(
-      (candidate) => candidate.command === options.tool
-    );
-    if (
-      operation !== undefined &&
-      publicApiOperationRequiresServerSupport(operation)
-    ) {
-      assertCliServerOperationSupported(operation.id, apiContract);
-    }
+    assertMcpToolServerSupport(options.tool, apiContract);
     const core = createCliMcpCore(host);
     const persistedCheckpoint =
       options.tool === "checkpoint.ack"
@@ -1348,7 +1384,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     if (
       options.tool === "checkpoint.ack" &&
       persistedCheckpoint?.nextCommand !== undefined &&
-      isRecord(result.structuredContent.data)
+      isPlainRecord(result.structuredContent.data)
     ) {
       result.structuredContent.data.nextCommand =
         persistedCheckpoint.nextCommand;
@@ -1424,15 +1460,7 @@ const runMcpProjectsBatch = async ({
       const core = createCliMcpCore(host);
       const tools = new Map(core.listTools().map((tool) => [tool.name, tool]));
       for (const call of project.calls.slice(startCall)) {
-        const operation = publicApiOperations.find(
-          (candidate) => candidate.command === call.tool
-        );
-        if (
-          operation !== undefined &&
-          publicApiOperationRequiresServerSupport(operation)
-        ) {
-          assertCliServerOperationSupported(operation.id, apiContract);
-        }
+        assertMcpToolServerSupport(call.tool, apiContract);
         const tool = tools.get(call.tool);
         assertMcpBatchMutationApproved({
           projectId: project.id,
@@ -1449,22 +1477,9 @@ const runMcpProjectsBatch = async ({
       }
       for (let index = startCall; index < project.calls.length; index++) {
         const call = project.calls[index]!;
-        const result = await core.callTool({
-          name: call.tool,
-          input: call.input,
-          dryRun: call.dryRun,
-        });
-        const toolError = getMcpToolCallError(result);
-        if (toolError !== undefined) {
-          throw toolError;
-        }
-        const checkpoint = getResultCheckpoint(
-          call.tool,
-          result.structuredContent
-        );
-        await updatePersistedMcpCheckpoint({
-          tool: call.tool,
-          structuredContent: result.structuredContent,
+        const { checkpoint } = await executeMcpRunCall({
+          core,
+          call,
           projectRoot: project.root,
         });
         await callSucceeded(index + 1);
@@ -1538,15 +1553,7 @@ export const mcpRun = async (options: McpRunOptions) => {
   try {
     const { host, apiContract } = await createCliMcpHost();
     for (const call of calls) {
-      const operation = publicApiOperations.find(
-        (candidate) => candidate.command === call.tool
-      );
-      if (
-        operation !== undefined &&
-        publicApiOperationRequiresServerSupport(operation)
-      ) {
-        assertCliServerOperationSupported(operation.id, apiContract);
-      }
+      assertMcpToolServerSupport(call.tool, apiContract);
     }
     core = createCliMcpCore(host);
     if (calls.length > 0) {
@@ -1568,23 +1575,7 @@ export const mcpRun = async (options: McpRunOptions) => {
       )}\n`
     );
     try {
-      const result = await core.callTool({
-        name: call.tool,
-        input: call.input,
-        dryRun: call.dryRun,
-      });
-      const toolError = getMcpToolCallError(result);
-      if (toolError !== undefined) {
-        throw toolError;
-      }
-      const checkpoint = getResultCheckpoint(
-        call.tool,
-        result.structuredContent
-      );
-      await updatePersistedMcpCheckpoint({
-        tool: call.tool,
-        structuredContent: result.structuredContent,
-      });
+      const { result, checkpoint } = await executeMcpRunCall({ core, call });
       const session = result.structuredContent.meta.session;
       const committed =
         session === undefined ? "" : `; committed=${session.committed}`;

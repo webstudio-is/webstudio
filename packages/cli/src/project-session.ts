@@ -36,15 +36,10 @@ import {
 import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "./config";
+import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
 import { writeFileAtomic } from "./fs-utils";
-
-type ApiConnection = {
-  projectId: string;
-  origin: string;
-  authToken: string;
-  headers?: Record<string, string | undefined>;
-};
+import { isPlainRecord } from "./type-utils";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -54,23 +49,20 @@ export type CliServerApiContract = {
   negotiated: boolean;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
-
 export const getCliServerApiContract = async (
   connection: ApiConnection,
   getProjectPermissions = httpClient.getProjectPermissions
 ): Promise<CliServerApiContract> => {
   const permissions = (await getProjectPermissions(connection)) as unknown;
-  const apiContract = isRecord(permissions)
+  const apiContract = isPlainRecord(permissions)
     ? permissions.apiContract
     : undefined;
   const serverVersion =
-    isRecord(apiContract) && typeof apiContract.version === "string"
+    isPlainRecord(apiContract) && typeof apiContract.version === "string"
       ? apiContract.version
       : undefined;
   const operationIds =
-    isRecord(apiContract) && Array.isArray(apiContract.operationIds)
+    isPlainRecord(apiContract) && Array.isArray(apiContract.operationIds)
       ? apiContract.operationIds.filter(
           (operationId): operationId is string =>
             typeof operationId === "string"

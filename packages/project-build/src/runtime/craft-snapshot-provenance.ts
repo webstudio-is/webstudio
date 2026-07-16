@@ -76,7 +76,7 @@ const sensitiveKeys = new Set([
   "sessiontoken",
 ]);
 
-const compareText = (left: string, right: string) =>
+export const compareCraftSnapshotText = (left: string, right: string) =>
   left < right ? -1 : left > right ? 1 : 0;
 
 export const normalizeCraftSnapshotText = (value: string) =>
@@ -125,7 +125,7 @@ const normalizeSnapshotValue = (
   }
   const normalized: Record<string, CraftSnapshotValue> = {};
   const record = value as Record<string, unknown>;
-  for (const key of Object.keys(record).sort(compareText)) {
+  for (const key of Object.keys(record).sort(compareCraftSnapshotText)) {
     const normalizedKey = normalizeCraftSnapshotText(key);
     const normalizedValue = sensitiveKeys.has(
       normalizedKey.replace(/[-_]/g, "").toLowerCase()
@@ -159,11 +159,14 @@ const compareDifferences = (
   left: CraftReviewedDifference,
   right: CraftReviewedDifference
 ) =>
-  compareText(left.path, right.path) ||
-  compareText(left.kind, right.kind) ||
-  compareText(left.officialValue ?? "", right.officialValue ?? "") ||
-  compareText(left.profileValue ?? "", right.profileValue ?? "") ||
-  compareText(left.review, right.review);
+  compareCraftSnapshotText(left.path, right.path) ||
+  compareCraftSnapshotText(left.kind, right.kind) ||
+  compareCraftSnapshotText(
+    left.officialValue ?? "",
+    right.officialValue ?? ""
+  ) ||
+  compareCraftSnapshotText(left.profileValue ?? "", right.profileValue ?? "") ||
+  compareCraftSnapshotText(left.review, right.review);
 
 export const normalizeCraftReviewedDifferences = (
   rows: readonly CraftReviewedDifference[]

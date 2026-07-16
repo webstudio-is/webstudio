@@ -279,7 +279,7 @@ describe("rendered audit evidence", () => {
         }) as never,
       startPreview: vi.fn(async () => ({
         url: previewUrl,
-        generatedBuild: {
+        generatedBuildMetrics: {
           version: 1,
           fileCount: 3,
           bytes: 4_000,
@@ -314,7 +314,7 @@ describe("rendered audit evidence", () => {
         bytes: 4_000,
         gzipBytes: 1_200,
       },
-      generatedBuildEvidence: {
+      generatedBuildMetrics: {
         largestFiles: [
           expect.objectContaining({ path: "client/assets/index.js" }),
         ],

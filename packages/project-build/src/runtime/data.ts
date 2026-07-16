@@ -1890,7 +1890,7 @@ type ResourceExpressionFields = Partial<
   Pick<Resource, "url" | "body" | "headers" | "searchParams">
 >;
 
-const listResourceExpressions = (
+export const listResourceExpressions = (
   fields: ResourceExpressionFields,
   pathPrefix: string[] = []
 ) => [

@@ -65,16 +65,14 @@ describe("agent connection configuration", () => {
         shareUrl: "https://example.com/?authToken=secret&mode=design",
       });
 
-      expect(quickstart.steps.map(({ phase }) => phase)).toEqual([
-        "project-linked",
-        "project-synced",
-        "client-configured",
-        "mcp-connected",
-        "first-read",
-      ]);
-      expect(quickstart.steps[2]?.command).toBe(
+      expect(quickstart.setupCommand).toContain(
         `npx -y webstudio@latest connect ${client}`
       );
+      expect(quickstart.completion).toEqual({
+        connection: quickstart.configuration.hint,
+        firstRead:
+          "Ask your agent to use Webstudio MCP and list the project pages.",
+      });
       expect(quickstart.configuration.client).toBe(client);
     }
   );

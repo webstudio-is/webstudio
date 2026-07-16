@@ -1,6 +1,5 @@
 import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { createServer, type Server } from "node:http";
 import {
   cp,
   mkdir,
@@ -14,12 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
-import {
-  bundleVersion,
-  publicApiContractVersion,
-  publicApiOperationRequiresServerSupport,
-  publicApiOperations,
-} from "@webstudio-is/protocol";
+import { bundleVersion } from "@webstudio-is/protocol";
 import type { Instance } from "@webstudio-is/sdk";
 import type { BuilderState } from "@webstudio-is/project-build/state";
 import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contracts";
@@ -41,6 +35,12 @@ import {
   type CompactOperationMeasurement,
   type CompactSmokeOperation,
 } from "./release-smoke-report";
+import {
+  runtimeFixturePermissions,
+  startRuntimeFixtureApi,
+} from "./runtime-fixture-api";
+import { runAgentCommand } from "./run-agent-command";
+import { isPlainRecord } from "../src/type-utils";
 
 const execFileAsync = promisify(execFile);
 const projectId = "release-smoke-project";
@@ -568,28 +568,6 @@ const stopProcessTree = async (child: ChildProcess | undefined) => {
   }
 };
 
-const readTrpcInput = async (request: import("node:http").IncomingMessage) => {
-  const url = new URL(request.url ?? "", "http://127.0.0.1");
-  const source =
-    request.method === "GET"
-      ? (url.searchParams.get("input") ?? "{}")
-      : await new Promise<string>((resolve, reject) => {
-          let body = "";
-          request.setEncoding("utf8");
-          request.on("data", (chunk) => {
-            body += chunk;
-          });
-          request.on("end", () => resolve(body || "{}"));
-          request.on("error", reject);
-        });
-  const batch = JSON.parse(source) as Record<string, unknown>;
-  const first = batch["0"];
-  if (typeof first !== "object" || first === null || Array.isArray(first)) {
-    return {};
-  }
-  return "json" in first ? ((first as { json?: unknown }).json ?? {}) : first;
-};
-
 const startFixtureApi = async (
   fixture: ReturnType<typeof createFixture>,
   {
@@ -623,14 +601,9 @@ const startFixtureApi = async (
   let version = projectVersion;
   let state = initialState;
   let generatedId = 0;
-  const server = createServer(async (request, response) => {
-    try {
-      const requestUrl = request.url ?? "";
-      if (
-        new URL(requestUrl, "http://127.0.0.1").pathname.endsWith(
-          "/release-hero.png"
-        )
-      ) {
+  return startRuntimeFixtureApi(
+    async ({ pathname, response, operationPath, readInput }) => {
+      if (pathname.endsWith("/release-hero.png")) {
         response.writeHead(200, { "content-type": "image/png" });
         response.end(
           Buffer.from(
@@ -638,12 +611,8 @@ const startFixtureApi = async (
             "base64"
           )
         );
-        return;
+        return undefined;
       }
-      const operationPath = new URL(
-        requestUrl,
-        "http://127.0.0.1"
-      ).pathname.replace(/^\/trpc\/(?:api\.)?/, "");
       let data: unknown;
       if (operationPath === "build.loadProjectBundleByProjectId") {
         data = fixture.data;
@@ -661,7 +630,7 @@ const startFixtureApi = async (
       } else if (operationPath === "publish.create") {
         data = { jobId: "release-smoke-staging-job" };
       } else if (operationPath === "build.patch") {
-        const input = (await readTrpcInput(request)) as {
+        const input = (await readInput()) as {
           transactions?: BuilderPatchTransaction[];
         };
         state = applyTransactions(state, input.transactions ?? []).state;
@@ -699,7 +668,7 @@ const startFixtureApi = async (
         operationPath !== "projects.permissions" &&
         operationPath !== ""
       ) {
-        const input = await readTrpcInput(request);
+        const input = await readInput();
         const result = await executeRuntime({
           id: operationPath,
           state,
@@ -729,58 +698,11 @@ const startFixtureApi = async (
           data = result;
         }
       } else {
-        data = {
-          canView: true,
-          canEdit: true,
-          canBuild: true,
-          canAdmin: true,
-          canUseApi: true,
-          apiContract: {
-            version: publicApiContractVersion,
-            operationIds: publicApiOperations.flatMap((operation) =>
-              publicApiOperationRequiresServerSupport(operation)
-                ? [operation.id]
-                : []
-            ),
-          },
-        };
+        data = runtimeFixturePermissions;
       }
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify([{ result: { data } }]));
-    } catch (error) {
-      response.writeHead(500, { "content-type": "application/json" });
-      response.end(
-        JSON.stringify([
-          {
-            error: {
-              message: error instanceof Error ? error.message : String(error),
-              code: -32603,
-              data: { code: "INTERNAL_SERVER_ERROR", httpStatus: 500 },
-            },
-          },
-        ])
-      );
+      return data;
     }
-  });
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  if (address === null || typeof address === "string") {
-    throw new Error("Fixture API address is unavailable.");
-  }
-  return { server, origin: `http://127.0.0.1:${address.port}` };
-};
-
-const closeServer = async (server: Server | undefined) => {
-  if (server === undefined) {
-    return;
-  }
-  server.closeAllConnections();
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => (error === undefined ? resolve() : reject(error)));
-  });
+  );
 };
 
 const assertJsonStdout = async (stdout: string, label: string) => {
@@ -797,9 +719,6 @@ const getRecord = (value: unknown, label: string) => {
   }
   return value as Record<string, unknown>;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
 
 const createMcpSmokeClient = ({
   bin,
@@ -919,47 +838,6 @@ const runCompactMeasurementSuite = async ({
   return { measurements, contractFailures, canarySeen };
 };
 
-const runConfiguredAgentCommand = async ({
-  command,
-  cwd,
-  env,
-}: {
-  command: string;
-  cwd: string;
-  env: NodeJS.ProcessEnv;
-}) =>
-  new Promise<{ exitCode: number; durationMs: number }>((resolve, reject) => {
-    const startedAt = Date.now();
-    const child = spawn(process.env.SHELL ?? "/bin/sh", ["-c", command], {
-      cwd,
-      env,
-      stdio: "ignore",
-      detached: process.platform !== "win32",
-    });
-    const timeout = setTimeout(() => {
-      if (child.pid !== undefined) {
-        try {
-          process.kill(process.platform === "win32" ? child.pid : -child.pid);
-        } catch {}
-      }
-      reject(new Error("Configured model evaluation exceeded ten minutes."));
-    }, 10 * 60_000);
-    child.once("error", (error) => {
-      clearTimeout(timeout);
-      reject(error);
-    });
-    child.once("exit", (code, signal) => {
-      clearTimeout(timeout);
-      if (signal !== null) {
-        reject(
-          new Error(`Configured model evaluation exited from signal ${signal}.`)
-        );
-        return;
-      }
-      resolve({ exitCode: code ?? -1, durationMs: Date.now() - startedAt });
-    });
-  });
-
 const verifyModelEvaluationOutcome = async ({
   bin,
   cwd,
@@ -1067,10 +945,11 @@ const runSingleModelEvaluation = async ({
     WEBSTUDIO_RELEASE_SMOKE_MCP_CWD: evaluationDirectory,
     WEBSTUDIO_RELEASE_SMOKE_MODEL_TARGET: targetName,
   };
-  const execution = await runConfiguredAgentCommand({
+  const execution = await runAgentCommand({
     command,
     cwd: evaluationDirectory,
     env: evaluationEnv,
+    timeoutMs: 10 * 60_000,
   });
   const submission = modelEvaluationSubmissionSchema.parse(
     JSON.parse(await readFile(submissionPath, "utf8"))
@@ -1205,7 +1084,10 @@ const runModelEvaluation = async ({
 const getRenderedNetworkTransferBytes = (manifest: Record<string, unknown>) =>
   (Array.isArray(manifest.checks) ? manifest.checks : []).reduce(
     (total, check) => {
-      if (isRecord(check) === false || isRecord(check.layout) === false) {
+      if (
+        isPlainRecord(check) === false ||
+        isPlainRecord(check.layout) === false
+      ) {
         return total;
       }
       return (
@@ -1216,7 +1098,8 @@ const getRenderedNetworkTransferBytes = (manifest: Record<string, unknown>) =>
         ).reduce(
           (resourceTotal, resource) =>
             resourceTotal +
-            (isRecord(resource) && typeof resource.transferSize === "number"
+            (isPlainRecord(resource) &&
+            typeof resource.transferSize === "number"
               ? resource.transferSize
               : 0),
           0
@@ -1241,7 +1124,7 @@ const getRetainedArtifactBytes = async ({
       continue;
     }
     for (const item of collection) {
-      if (isRecord(item) && typeof item.screenshotPath === "string") {
+      if (isPlainRecord(item) && typeof item.screenshotPath === "string") {
         artifactPaths.add(
           item.screenshotPath.startsWith("/")
             ? item.screenshotPath
@@ -1330,7 +1213,7 @@ const run = async () => {
     ]);
   const temp = await mkdtemp(join(tmpdir(), "webstudio-release-smoke-"));
   let preview: ChildProcess | undefined;
-  let apiServer: Server | undefined;
+  let closeApiServer: (() => Promise<void>) | undefined;
   try {
     const startedAt = Date.now();
     const fixture = createFixture();
@@ -1349,7 +1232,7 @@ const run = async () => {
     });
     fixture.data.origin = fixtureApi.origin;
     reportPhase("fixture-api", startedAt);
-    apiServer = fixtureApi.server;
+    closeApiServer = fixtureApi.close;
     const packDirectory = join(temp, "pack");
     const stagingDirectory = join(temp, "staging");
     const projectDirectory = join(temp, "candidate-project");
@@ -2176,8 +2059,8 @@ const run = async () => {
         );
       }
       const memory = process.memoryUsage();
-      const generatedBuild = isRecord(manifest.generatedBuildEvidence)
-        ? manifest.generatedBuildEvidence
+      const buildMetrics = isPlainRecord(manifest.generatedBuildMetrics)
+        ? manifest.generatedBuildMetrics
         : undefined;
       reportPhase("rendered-audit", confirmedAuditStartedAt, {
         rssBytes: memory.rss,
@@ -2188,11 +2071,11 @@ const run = async () => {
           manifestPath: absoluteManifestPath,
           projectDirectory,
         }),
-        ...(typeof generatedBuild?.bytes === "number"
-          ? { generatedBuildBytes: generatedBuild.bytes }
+        ...(typeof buildMetrics?.bytes === "number"
+          ? { generatedBuildBytes: buildMetrics.bytes }
           : {}),
-        ...(typeof generatedBuild?.gzipBytes === "number"
-          ? { generatedBuildGzipBytes: generatedBuild.gzipBytes }
+        ...(typeof buildMetrics?.gzipBytes === "number"
+          ? { generatedBuildGzipBytes: buildMetrics.gzipBytes }
           : {}),
       });
       const confirmedAuditDuration = Date.now() - confirmedAuditStartedAt;
@@ -2222,7 +2105,7 @@ const run = async () => {
     reportPhase("structured-commands", commandsStartedAt);
   } finally {
     await stopProcessTree(preview);
-    await closeServer(apiServer);
+    await closeApiServer?.();
     await rm(temp, { recursive: true, force: true });
     reportPhase("cleanup");
   }

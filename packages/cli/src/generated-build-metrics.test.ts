@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test } from "vitest";
-import { inspectGeneratedBuild } from "./generated-build-evidence";
+import { inspectGeneratedBuildMetrics } from "./generated-build-metrics";
 
 const directories: string[] = [];
 
@@ -12,8 +12,8 @@ afterEach(async () => {
   );
 });
 
-test("returns bounded privacy-safe generated build evidence", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "webstudio-build-evidence-"));
+test("returns bounded privacy-safe generated build metrics", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "webstudio-build-metrics-"));
   directories.push(directory);
   await mkdir(join(directory, "build/client/assets"), { recursive: true });
   await mkdir(join(directory, "build/server"), { recursive: true });
@@ -30,9 +30,9 @@ test("returns bounded privacy-safe generated build evidence", async () => {
     "server".repeat(50)
   );
 
-  const evidence = await inspectGeneratedBuild(directory);
+  const metrics = await inspectGeneratedBuildMetrics(directory);
 
-  expect(evidence).toMatchObject({
+  expect(metrics).toMatchObject({
     version: 1,
     fileCount: 3,
     client: { fileCount: 2 },
@@ -48,16 +48,16 @@ test("returns bounded privacy-safe generated build evidence", async () => {
       }),
     ]),
   });
-  expect(evidence.gzipBytes).toBeLessThan(evidence.bytes);
-  expect(JSON.stringify(evidence)).not.toContain(directory);
-  expect(evidence.largestFiles).toHaveLength(3);
+  expect(metrics.gzipBytes).toBeLessThan(metrics.bytes);
+  expect(JSON.stringify(metrics)).not.toContain(directory);
+  expect(metrics.largestFiles).toHaveLength(3);
 });
 
-test("returns empty evidence when no generated build exists", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "webstudio-build-evidence-"));
+test("returns empty metrics when no generated build exists", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "webstudio-build-metrics-"));
   directories.push(directory);
 
-  await expect(inspectGeneratedBuild(directory)).resolves.toEqual({
+  await expect(inspectGeneratedBuildMetrics(directory)).resolves.toEqual({
     version: 1,
     fileCount: 0,
     bytes: 0,

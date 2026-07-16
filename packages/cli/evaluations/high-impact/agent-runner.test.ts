@@ -37,25 +37,25 @@ describe("high-impact agent runner", () => {
         repositoryRoot: root,
       })
     ).toMatchObject({
-      designEvidence: {
+      designReference: {
         desktop: { viewport: { width: 1440, height: 900 } },
         mobile: { viewport: { width: 390, height: 844 } },
       },
     });
   });
 
-  test("retains only bounded privacy-safe evidence from a real process", async () => {
+  test("retains only a bounded privacy-safe result from a real process", async () => {
     const directory = await mkdtemp(join(tmpdir(), "high-impact-agent-"));
     try {
-      const evidencePath = join(directory, "evidence.json");
+      const resultPath = join(directory, "result.json");
       const taskPath = join(directory, "task.json");
-      const evidence = await runHighImpactAgentEvaluation({
+      const result = await runHighImpactAgentEvaluation({
         fixture: authenticatedPageFixture,
         target: { kind: "packaged", executable: "/tmp/webstudio" },
         agentCommand: "node -e 'process.exit(0)'",
         cwd: directory,
         taskPath,
-        evidencePath,
+        resultPath,
         provider: "test-provider",
         model: "test-model",
         getCallSequence: () => ["meta.guide", "audit"],
@@ -66,14 +66,14 @@ describe("high-impact agent runner", () => {
           metrics: { toolCallCount: 6, focusedReadCount: 2 },
         }),
       });
-      expect(evidence).toMatchObject({
+      expect(result).toMatchObject({
         outcome: "passed",
         cli: "packaged",
         toolCallCount: 6,
         focusedReadCount: 2,
         callSequence: ["meta.guide", "audit"],
       });
-      const source = await readFile(evidencePath, "utf8");
+      const source = await readFile(resultPath, "utf8");
       expect(source).not.toMatch(/transcript|stdout|stderr|credential/i);
       expect(JSON.parse(await readFile(taskPath, "utf8"))).toMatchObject({
         fixtureId: "authenticated-page-v1",

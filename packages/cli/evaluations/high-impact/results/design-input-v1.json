@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "kind": "high-impact-minimal-context-agent-evaluation",
+  "kind": "high-impact-minimal-context-agent-evaluation-result",
   "fixtureId": "design-input-v1",
   "outcome": "passed",
   "cli": "source",

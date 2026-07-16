@@ -87,17 +87,6 @@ export const serverOnlyRouterOperationMetadata = {
           minimum: -9007199254740991,
           maximum: 9007199254740991,
         },
-        verbose: {
-          type: "boolean",
-        },
-        cursor: {
-          type: "string",
-        },
-        limit: {
-          type: "integer",
-          minimum: 1,
-          maximum: 200,
-        },
       },
       required: [],
     },

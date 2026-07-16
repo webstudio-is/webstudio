@@ -101,6 +101,15 @@ const textOf = (instances: EvaluationInstance[]) =>
     .join(" ")
     .toLowerCase();
 
+const getPageEvaluationContext = (project: EvaluationProject, path: string) => {
+  const page = project.pages.find((candidate) => candidate.path === path);
+  return {
+    page,
+    instances:
+      page === undefined ? [] : descendants(project, page.rootInstanceId),
+  };
+};
+
 const isValidExpression = (value: string) => {
   try {
     const expression = parseExpressionAt(value, 0, { ecmaVersion: "latest" });
@@ -132,6 +141,15 @@ const validateExpressions = (project: EvaluationProject) => {
 
 const hasSuccessfulCall = (calls: EvaluationToolCall[], name: string) =>
   calls.some((call) => call.name === name && call.isError !== true);
+
+const hasPassedEvidence = (
+  input: HighImpactEvaluationInput,
+  kind: EvaluationArtifact["kind"]
+) =>
+  hasSuccessfulCall(input.toolCalls, kind) ||
+  (input.artifacts ?? []).some(
+    (artifact) => artifact.kind === kind && artifact.passed
+  );
 
 const getScreenshots = (input: HighImpactEvaluationInput) => [
   ...input.toolCalls
@@ -216,10 +234,7 @@ const validateAuth = (
     checks,
     failures,
     "audit",
-    hasSuccessfulCall(input.toolCalls, "audit") ||
-      (input.artifacts ?? []).some(
-        (artifact) => artifact.kind === "audit" && artifact.passed
-      ),
+    hasPassedEvidence(input, "audit"),
     "No successful account-page audit evidence was retained."
   );
   recordCheck(
@@ -229,10 +244,10 @@ const validateAuth = (
     getScreenshots(input).length > 0,
     "No successful account-page screenshot evidence was retained."
   );
-  const page = input.project.pages.find(
-    (candidate) => candidate.path === "/account"
+  const { page, instances } = getPageEvaluationContext(
+    input.project,
+    "/account"
   );
-  const instances = page ? descendants(input.project, page.rootInstanceId) : [];
   const instanceIds = new Set(instances.map((instance) => instance.id));
   const text = [
     textOf(instances),
@@ -291,16 +306,13 @@ const validateDesign = (
     checks,
     failures,
     "audit",
-    hasSuccessfulCall(input.toolCalls, "audit") ||
-      (input.artifacts ?? []).some(
-        (artifact) => artifact.kind === "audit" && artifact.passed
-      ),
+    hasPassedEvidence(input, "audit"),
     "No successful design audit evidence was retained."
   );
-  const page = input.project.pages.find(
-    (candidate) => candidate.path === "/summer"
+  const { page, instances } = getPageEvaluationContext(
+    input.project,
+    "/summer"
   );
-  const instances = page ? descendants(input.project, page.rootInstanceId) : [];
   const tags = new Set(
     instances.map(
       (instance) =>

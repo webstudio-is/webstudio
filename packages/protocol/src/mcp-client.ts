@@ -1,31 +1,32 @@
-export const agentClients = ["claude", "codex", "cursor", "vscode"] as const;
-export type AgentClient = (typeof agentClients)[number];
-
 export const defaultAgentServerCommand = "npx -y webstudio@latest mcp";
 export const agentServerName = "webstudio";
 
-export const agentClientDefinitions = {
-  claude: {
+export const agentClientDefinitions = [
+  {
+    client: "claude",
     format: "json",
     label: "Claude Code",
     path: ".mcp.json",
     rootKey: "mcpServers",
     hint: "Restart Claude Code in this directory and approve the webstudio server.",
   },
-  codex: {
+  {
+    client: "codex",
     format: "toml",
     label: "Codex",
     path: "~/.codex/config.toml",
     hint: "Restart Codex so it loads the webstudio MCP server.",
   },
-  cursor: {
+  {
+    client: "cursor",
     format: "json",
     label: "Cursor",
     path: ".cursor/mcp.json",
     rootKey: "mcpServers",
     hint: "Reload Cursor and enable the webstudio server in MCP settings.",
   },
-  vscode: {
+  {
+    client: "vscode",
     format: "json",
     label: "VS Code",
     path: ".vscode/mcp.json",
@@ -33,7 +34,19 @@ export const agentClientDefinitions = {
     extraServerFields: { type: "stdio" },
     hint: "Reload VS Code and start the webstudio server from the MCP view.",
   },
-} as const;
+] as const;
+
+export type AgentClient = (typeof agentClientDefinitions)[number]["client"];
+export type AgentClientDefinition = (typeof agentClientDefinitions)[number];
+
+export const agentClients = agentClientDefinitions.map(({ client }) => client);
+
+export const getAgentClientDefinition = <Client extends AgentClient>(
+  client: Client
+) =>
+  agentClientDefinitions.find(
+    (definition) => definition.client === client
+  ) as Extract<(typeof agentClientDefinitions)[number], { client: Client }>;
 
 export const parseAgentServerCommand = (serverCommand: string) => {
   const [command, ...args] = serverCommand.trim().split(/\s+/);
@@ -61,7 +74,7 @@ export const createAgentClientConfiguration = (
   client: AgentClient,
   serverCommand = defaultAgentServerCommand
 ) => {
-  const target = agentClientDefinitions[client];
+  const target = getAgentClientDefinition(client);
   if (target.format === "toml") {
     return {
       client,
@@ -104,46 +117,23 @@ export const createAgentQuickstart = ({
   serverCommand?: string;
 }) => {
   const configuration = createAgentClientConfiguration(client, serverCommand);
-  const steps = [
-    ...(shareUrl === undefined
-      ? []
-      : [
-          {
-            phase: "project-linked" as const,
-            label: "Link the project",
-            command: `npx -y webstudio@latest init --link ${quoteShellArgument(shareUrl)} --json`,
-          },
-        ]),
-    {
-      phase: "project-synced" as const,
-      label: "Sync the project",
-      command: "npx -y webstudio@latest sync",
-    },
-    {
-      phase: "client-configured" as const,
-      label: `Configure ${configuration.label}`,
-      command: `npx -y webstudio@latest connect ${client}`,
-    },
-    {
-      phase: "mcp-connected" as const,
-      label: configuration.hint,
-    },
-    {
-      phase: "first-read" as const,
-      label: "Ask your agent to use Webstudio MCP and list the project pages.",
-    },
-  ];
   return {
     client,
     label: configuration.label,
     configuration,
-    steps,
+    completion: {
+      connection: configuration.hint,
+      firstRead:
+        "Ask your agent to use Webstudio MCP and list the project pages.",
+    },
     setupCommand:
       shareUrl === undefined
         ? undefined
-        : steps
-            .flatMap((step) => (step.command === undefined ? [] : step.command))
-            .join(" && "),
+        : [
+            `npx -y webstudio@latest init --link ${quoteShellArgument(shareUrl)} --json`,
+            "npx -y webstudio@latest sync",
+            `npx -y webstudio@latest connect ${client}`,
+          ].join(" && "),
   };
 };
 

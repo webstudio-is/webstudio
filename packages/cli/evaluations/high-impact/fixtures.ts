@@ -129,14 +129,14 @@ export const authenticatedPageFixture: HighImpactFixture = {
 };
 
 export const designInputFixture: HighImpactFixture & {
-  designEvidence: {
+  designReference: {
     desktop: Record<string, unknown>;
     mobile: Record<string, unknown>;
   };
 } = {
   id: "design-input-v1",
   objective:
-    "Build an editable /summer page from the supplied desktop and mobile design evidence. Preserve and reuse the existing design system, implement responsive behavior with the project's breakpoints, then run rendered audit and inspect desktop/mobile screenshots.",
+    "Build an editable /summer page from the supplied desktop and mobile design reference. Preserve and reuse the existing design system, implement responsive behavior with the project's breakpoints, then run rendered audit and inspect desktop/mobile screenshots.",
   project: {
     ...emptyProject(),
     styleSources: [
@@ -178,7 +178,7 @@ export const designInputFixture: HighImpactFixture & {
       },
     ],
   },
-  designEvidence: {
+  designReference: {
     desktop: {
       viewport: { width: 1440, height: 900 },
       structure: ["header", "main", "hero", "featured trips", "footer"],
@@ -239,16 +239,16 @@ export const validateHighImpactFixture = (fixture: HighImpactFixture) => {
   if (fixture.id === "design-input-v1") {
     const designFixture = fixture as typeof designInputFixture;
     const desktopWidth = Number(
-      (designFixture.designEvidence.desktop.viewport as { width?: unknown })
+      (designFixture.designReference.desktop.viewport as { width?: unknown })
         .width
     );
     const mobileWidth = Number(
-      (designFixture.designEvidence.mobile.viewport as { width?: unknown })
+      (designFixture.designReference.mobile.viewport as { width?: unknown })
         .width
     );
     if (desktopWidth < 1200 || mobileWidth > 479) {
       failures.push(
-        "The design fixture must include familiar desktop and mobile evidence."
+        "The design fixture must include familiar desktop and mobile references."
       );
     }
     if (

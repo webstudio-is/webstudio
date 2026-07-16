@@ -9,13 +9,16 @@ import {
   isLiteralExpression,
   type Instance,
   type Page,
-  type Resource,
 } from "@webstudio-is/sdk";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
-import { findAvailableVariables } from "./data";
-import { findSerializedPageByInput, getSerializedPages } from "./pages";
+import { findAvailableVariables, listResourceExpressions } from "./data";
+import {
+  findSerializedPageByInput,
+  getSerializedPages,
+  listPageMetadataExpressions,
+} from "./pages";
 import { listPropExpressions } from "./props";
 import {
   paginateOutput,
@@ -165,48 +168,6 @@ const createFinding = (
 });
 
 const getPagePath = (page: Page) => (page.path === "" ? "/" : page.path);
-
-const listPageMetadataExpressions = (page: Page) => {
-  const expressions: Array<{ path: string[]; expression: string }> = [
-    { path: ["title"], expression: page.title },
-  ];
-  for (const field of [
-    "description",
-    "language",
-    "redirect",
-    "socialImageUrl",
-    "excludePageFromSearch",
-    "status",
-    "content",
-  ] as const) {
-    const expression = page.meta[field];
-    if (typeof expression === "string") {
-      expressions.push({ path: ["meta", field], expression });
-    }
-  }
-  for (const [index, item] of (page.meta.custom ?? []).entries()) {
-    expressions.push({
-      path: ["meta", "custom", String(index), "content"],
-      expression: item.content,
-    });
-  }
-  return expressions;
-};
-
-const listResourceExpressions = (resource: Resource) => [
-  { path: ["url"], expression: resource.url },
-  ...resource.headers.map((header, index) => ({
-    path: ["headers", String(index), "value"],
-    expression: header.value,
-  })),
-  ...(resource.searchParams ?? []).map((parameter, index) => ({
-    path: ["searchParams", String(index), "value"],
-    expression: parameter.value,
-  })),
-  ...(resource.body === undefined
-    ? []
-    : [{ path: ["body"], expression: resource.body }]),
-];
 
 const shouldVerifyPageMetadataExpression = (
   expression: string,

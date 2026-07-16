@@ -2,6 +2,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
+import { compareCraftSnapshotText } from "./craft-snapshot-provenance";
 
 /** Sanitized compatibility inventory captured from the authenticated template. */
 export const craftOfficialReferenceSnapshot = {
@@ -205,16 +206,13 @@ export type CraftAuditMatch = Record<string, unknown> & {
   message: string;
 };
 
-const compareText = (left: string, right: string) =>
-  left < right ? -1 : left > right ? 1 : 0;
-
 const getContainerTokenState = (state: BuilderState) => {
   const expected = craftProfile.checks.required.containerToken;
   const token = Array.from(state.styleSources?.values() ?? [])
     .filter(
       (source) => source.type === "token" && source.name === expected.name
     )
-    .sort((left, right) => compareText(left.id, right.id))[0];
+    .sort((left, right) => compareCraftSnapshotText(left.id, right.id))[0];
   if (token === undefined) {
     return { exists: false, compatible: false, mismatches: [] as string[] };
   }
@@ -233,7 +231,7 @@ const getContainerTokenState = (state: BuilderState) => {
     }
   }
   const mismatchesByBreakpoint = Array.from(valuesByBreakpoint.entries())
-    .sort(([left], [right]) => compareText(left, right))
+    .sort(([left], [right]) => compareCraftSnapshotText(left, right))
     .map(([, values]) =>
       Object.entries(expected.declarations)
         .filter(([property, value]) => values.get(property) !== value)

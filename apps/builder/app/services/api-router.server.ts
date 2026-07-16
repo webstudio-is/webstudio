@@ -101,6 +101,18 @@ const paginatedProjectInput = projectIdInput.extend(
   paginatedOutputInputSchema.shape
 );
 
+const paginateProjectItems = <Item>(
+  items: readonly Item[],
+  input: z.infer<typeof paginatedProjectInput>
+) =>
+  paginateOutput({
+    items,
+    cursor: input.cursor,
+    limit: input.limit,
+    verbose: input.verbose,
+    filters: {},
+  });
+
 const withProjectId = <Schema extends z.ZodTypeAny>(
   input: Schema
 ): z.ZodType<z.infer<Schema> & { projectId: string }> =>
@@ -658,13 +670,7 @@ export const apiRouter = router({
       "view",
       async ({ ctx, input }) => {
         const { publishes } = await listProjectPublishes(input.projectId, ctx);
-        const { items, ...pagination } = paginateOutput({
-          items: publishes,
-          cursor: input.cursor,
-          limit: input.limit,
-          verbose: input.verbose,
-          filters: {},
-        });
+        const { items, ...pagination } = paginateProjectItems(publishes, input);
         return { publishes: items, ...pagination };
       },
       { command: "list-publishes", client: "listPublishes" }
@@ -739,13 +745,10 @@ export const apiRouter = router({
       paginatedProjectInput,
       "view",
       async ({ ctx, input }) => {
-        const { items, ...pagination } = paginateOutput({
-          items: await listProjectDomains(input.projectId, ctx),
-          cursor: input.cursor,
-          limit: input.limit,
-          verbose: input.verbose,
-          filters: {},
-        });
+        const { items, ...pagination } = paginateProjectItems(
+          await listProjectDomains(input.projectId, ctx),
+          input
+        );
         return { domains: items, ...pagination };
       },
       { command: "list-domains", client: "listDomains" }

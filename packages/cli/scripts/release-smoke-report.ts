@@ -160,13 +160,17 @@ export const releaseSmokeMetricsSchema = z
   })
   .strict();
 
+const operationMeasurementFields = {
+  bytes: byteCount,
+  tokens: count,
+  attempts: count,
+  retries: count,
+  failures: count,
+};
+
 export const compactOperationMeasurementSchema = z
   .object({
-    bytes: byteCount,
-    tokens: count,
-    attempts: count,
-    retries: count,
-    failures: count,
+    ...operationMeasurementFields,
     fallbacks: z
       .object({
         verbose: count,
@@ -178,13 +182,7 @@ export const compactOperationMeasurementSchema = z
   .strict();
 
 const aggregateMeasurementSchema = z
-  .object({
-    bytes: byteCount,
-    tokens: count,
-    attempts: count,
-    retries: count,
-    failures: count,
-  })
+  .object(operationMeasurementFields)
   .strict();
 
 const releaseSubjectSchema = z

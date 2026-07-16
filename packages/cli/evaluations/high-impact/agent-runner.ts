@@ -1,17 +1,17 @@
-import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { HighImpactFixture } from "./fixtures";
 import type { HighImpactEvaluationResult } from "./validate";
+import { runAgentCommand } from "../../scripts/run-agent-command";
 
 export type AgentCliTarget =
   | { kind: "source"; repositoryRoot: string }
   | { kind: "packaged"; executable: string };
 
-export type AgentEvaluationEvidence = {
+export type AgentEvaluationResult = {
   schemaVersion: 1;
-  kind: "high-impact-minimal-context-agent-evaluation";
+  kind: "high-impact-minimal-context-agent-evaluation-result";
   fixtureId: HighImpactFixture["id"];
   outcome: "passed" | "failed";
   cli: "source" | "packaged";
@@ -27,7 +27,7 @@ export type AgentEvaluationEvidence = {
 };
 
 const safeIdentifier = /^[A-Za-z0-9._:/-]{1,128}$/;
-const forbiddenEvidenceKeys =
+const forbiddenResultKeys =
   /(?:prompt|transcript|stdout|stderr|token|secret|credential|payload)/i;
 
 export const getCliInvocation = (target: AgentCliTarget) =>
@@ -42,16 +42,16 @@ export const createMinimalAgentTask = (
   fixture: HighImpactFixture,
   target: AgentCliTarget
 ) => {
-  const designEvidence =
-    "designEvidence" in fixture
-      ? (fixture as HighImpactFixture & { designEvidence: unknown })
-          .designEvidence
+  const designReference =
+    "designReference" in fixture
+      ? (fixture as HighImpactFixture & { designReference: unknown })
+          .designReference
       : undefined;
   return {
     schemaVersion: 1,
     fixtureId: fixture.id,
     objective: fixture.objective,
-    ...(designEvidence === undefined ? {} : { designEvidence }),
+    ...(designReference === undefined ? {} : { designReference }),
     mcp: getCliInvocation(target),
     constraints: [
       "Use the configured Webstudio project and local CLI.",
@@ -63,53 +63,10 @@ export const createMinimalAgentTask = (
   };
 };
 
-const runCommand = (
-  command: string,
-  cwd: string,
-  env: NodeJS.ProcessEnv,
-  timeoutMs: number
-) =>
-  new Promise<{ exitCode: number; durationMs: number }>(
-    (resolveRun, reject) => {
-      const startedAt = Date.now();
-      const child = spawn(process.env.SHELL ?? "/bin/sh", ["-c", command], {
-        cwd,
-        env,
-        stdio: "ignore",
-        detached: process.platform !== "win32",
-      });
-      const timeout = setTimeout(() => {
-        if (child.pid !== undefined) {
-          try {
-            process.kill(process.platform === "win32" ? child.pid : -child.pid);
-          } catch {}
-        }
-        reject(new Error("High-impact agent evaluation timed out."));
-      }, timeoutMs);
-      child.once("error", (error) => {
-        clearTimeout(timeout);
-        reject(error);
-      });
-      child.once("exit", (code, signal) => {
-        clearTimeout(timeout);
-        if (signal !== null) {
-          reject(
-            new Error(`High-impact agent evaluation exited from ${signal}.`)
-          );
-          return;
-        }
-        resolveRun({
-          exitCode: code ?? -1,
-          durationMs: Date.now() - startedAt,
-        });
-      });
-    }
-  );
-
-const assertBoundedEvidence = (evidence: AgentEvaluationEvidence) => {
+const assertBoundedResult = (result: AgentEvaluationResult) => {
   if (
-    safeIdentifier.test(evidence.provider) === false ||
-    safeIdentifier.test(evidence.model) === false
+    safeIdentifier.test(result.provider) === false ||
+    safeIdentifier.test(result.model) === false
   ) {
     throw new Error("Agent provider and model must be bounded identifiers.");
   }
@@ -118,15 +75,15 @@ const assertBoundedEvidence = (evidence: AgentEvaluationEvidence) => {
       return;
     }
     for (const [key, child] of Object.entries(value)) {
-      if (forbiddenEvidenceKeys.test(key)) {
-        throw new Error(`Agent evidence contains forbidden field ${key}.`);
+      if (forbiddenResultKeys.test(key)) {
+        throw new Error(`Agent result contains forbidden field ${key}.`);
       }
       visit(child);
     }
   };
-  visit(evidence);
-  if (JSON.stringify(evidence).length > 12_000) {
-    throw new Error("Agent evidence exceeds the bounded artifact limit.");
+  visit(result);
+  if (JSON.stringify(result).length > 12_000) {
+    throw new Error("Agent result exceeds the bounded artifact limit.");
   }
 };
 
@@ -136,7 +93,7 @@ export const runHighImpactAgentEvaluation = async ({
   agentCommand,
   cwd,
   taskPath,
-  evidencePath,
+  resultPath,
   provider,
   model,
   getCallSequence,
@@ -149,7 +106,7 @@ export const runHighImpactAgentEvaluation = async ({
   agentCommand: string;
   cwd: string;
   taskPath: string;
-  evidencePath: string;
+  resultPath: string;
   provider: string;
   model: string;
   getCallSequence: () => string[];
@@ -163,33 +120,34 @@ export const runHighImpactAgentEvaluation = async ({
     JSON.stringify(createMinimalAgentTask(fixture, target), undefined, 2),
     "utf8"
   );
-  const execution = await runCommand(
-    agentCommand,
+  const execution = await runAgentCommand({
+    command: agentCommand,
     cwd,
-    { ...env, WEBSTUDIO_HIGH_IMPACT_AGENT_TASK: taskPath },
-    timeoutMs
-  );
-  const result = await evaluate();
-  const evidence: AgentEvaluationEvidence = {
+    env: { ...env, WEBSTUDIO_HIGH_IMPACT_AGENT_TASK: taskPath },
+    timeoutMs,
+  });
+  const evaluation = await evaluate();
+  const result: AgentEvaluationResult = {
     schemaVersion: 1,
-    kind: "high-impact-minimal-context-agent-evaluation",
+    kind: "high-impact-minimal-context-agent-evaluation-result",
     fixtureId: fixture.id,
-    outcome: execution.exitCode === 0 && result.passed ? "passed" : "failed",
+    outcome:
+      execution.exitCode === 0 && evaluation.passed ? "passed" : "failed",
     cli: target.kind,
     provider,
     model,
     commandSha256: createHash("sha256").update(agentCommand).digest("hex"),
     durationMs: execution.durationMs,
     exitCode: execution.exitCode,
-    toolCallCount: result.metrics.toolCallCount,
-    focusedReadCount: result.metrics.focusedReadCount,
+    toolCallCount: evaluation.metrics.toolCallCount,
+    focusedReadCount: evaluation.metrics.focusedReadCount,
     callSequence: getCallSequence(),
-    checks: result.checks,
+    checks: evaluation.checks,
   };
-  assertBoundedEvidence(evidence);
-  await mkdir(dirname(evidencePath), { recursive: true });
-  await writeFile(evidencePath, JSON.stringify(evidence, undefined, 2), "utf8");
+  assertBoundedResult(result);
+  await mkdir(dirname(resultPath), { recursive: true });
+  await writeFile(resultPath, JSON.stringify(result, undefined, 2), "utf8");
   return JSON.parse(
-    await readFile(evidencePath, "utf8")
-  ) as AgentEvaluationEvidence;
+    await readFile(resultPath, "utf8")
+  ) as AgentEvaluationResult;
 };

@@ -817,6 +817,27 @@ const pageMetaExpressionFields = [
   "content",
 ] as const satisfies readonly (keyof PageMetaPatchInput)[];
 
+export const listPageMetadataExpressions = (
+  page: Pick<Page, "title" | "meta">
+) => {
+  const expressions: Array<{ path: string[]; expression: string }> = [
+    { path: ["title"], expression: page.title },
+  ];
+  for (const field of pageMetaExpressionFields) {
+    const expression = page.meta[field];
+    if (typeof expression === "string") {
+      expressions.push({ path: ["meta", field], expression });
+    }
+  }
+  for (const [index, item] of (page.meta.custom ?? []).entries()) {
+    expressions.push({
+      path: ["meta", "custom", String(index), "content"],
+      expression: item.content,
+    });
+  }
+  return expressions;
+};
+
 export const pageExpressionFieldHint =
   'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.';
 

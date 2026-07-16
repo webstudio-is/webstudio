@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { writeFileAtomic } from "../fs-utils";
+import { isPlainRecord } from "../type-utils";
 
 export type McpBatchCall = {
   tool: string;
@@ -47,9 +48,6 @@ export type McpBatchProjectReport = {
   error?: { code: string; message: string };
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
-
 const parsePositiveInteger = (value: unknown, fallback: number) => {
   if (value === undefined) {
     return fallback;
@@ -70,7 +68,7 @@ const parsePositiveInteger = (value: unknown, fallback: number) => {
 export const isMcpProjectsManifest = (
   value: unknown
 ): value is Record<string, unknown> & { projects: unknown[] } =>
-  isRecord(value) && Array.isArray(value.projects);
+  isPlainRecord(value) && Array.isArray(value.projects);
 
 export const assertMcpBatchMutationApproved = ({
   projectId,
@@ -120,7 +118,7 @@ export const parseMcpProjectsManifest = ({
   const projects = value.projects.map((entry, index): McpBatchProject => {
     const project = typeof entry === "string" ? { root: entry } : entry;
     if (
-      isRecord(project) === false ||
+      isPlainRecord(project) === false ||
       typeof project.root !== "string" ||
       project.root.trim() === ""
     ) {
@@ -182,7 +180,7 @@ const readProgress = async (
       if (
         progress.version === 1 &&
         progress.fingerprint === manifest.fingerprint &&
-        isRecord(progress.projects)
+        isPlainRecord(progress.projects)
       ) {
         return {
           ...progress,
@@ -192,7 +190,7 @@ const readProgress = async (
         };
       }
     } catch (error) {
-      if (isRecord(error) === false || error.code !== "ENOENT") {
+      if (isPlainRecord(error) === false || error.code !== "ENOENT") {
         throw error;
       }
     }
@@ -205,7 +203,7 @@ const readProgress = async (
 };
 
 const toError = (error: unknown) => {
-  if (isRecord(error) && typeof error.message === "string") {
+  if (isPlainRecord(error) && typeof error.message === "string") {
     return {
       code: typeof error.code === "string" ? error.code : "MCP_PROJECT_FAILED",
       message: error.message,

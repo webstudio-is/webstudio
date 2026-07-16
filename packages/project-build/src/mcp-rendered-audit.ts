@@ -1,13 +1,13 @@
 import type { ProjectSessionEnvelope } from "./project-session";
 import type {
-  GeneratedBuildEvidence,
+  GeneratedBuildMetrics,
   RenderedAuditCheck,
   RenderedAuditFailure,
   renderedAuditPlan,
 } from "./runtime/audit";
 import {
   auditContractVersion,
-  generatedBuildEvidence as generatedBuildEvidenceSchema,
+  generatedBuildMetrics as generatedBuildMetricsSchema,
   renderedAuditManifestVersion,
 } from "./runtime/audit";
 import type { z } from "zod";
@@ -36,7 +36,7 @@ type ExecuteRead = (
 type StartPreview = (
   input: { source: "session"; port: number; imageDomains?: string[] },
   progress: { report: (message: string) => void }
-) => Promise<{ url: string; generatedBuild?: unknown }>;
+) => Promise<{ url: string; generatedBuildMetrics?: unknown }>;
 
 type CaptureScreenshot = (
   input: ProjectSessionScreenshotInput
@@ -77,7 +77,7 @@ export type RenderedAuditArtifactManifest = {
     artifactWriteMs: number;
     targetCleanupMs: number;
   };
-  generatedBuildEvidence: GeneratedBuildEvidence | null;
+  generatedBuildMetrics: GeneratedBuildMetrics | null;
 };
 
 type StoreRenderedAuditArtifacts = (
@@ -716,14 +716,14 @@ const mergeRenderedAudit = ({
   checks,
   failures,
   plan,
-  generatedBuildEvidence,
+  generatedBuildMetrics,
 }: {
   envelope: ProjectSessionEnvelope;
   input: RenderedAuditInput;
   checks: RenderedAuditCheck[];
   failures: RenderedAuditFailure[];
   plan?: RenderedAuditPlan;
-  generatedBuildEvidence?: GeneratedBuildEvidence;
+  generatedBuildMetrics?: GeneratedBuildMetrics;
 }): ProjectSessionEnvelope => {
   const result = envelope.result;
   if (isRecord(result) === false) {
@@ -918,15 +918,15 @@ const mergeRenderedAudit = ({
       renderedCaptureSummary,
       renderedCaptureStatuses,
       generatedBuildSummary:
-        generatedBuildEvidence === undefined
+        generatedBuildMetrics === undefined
           ? null
           : {
-              version: generatedBuildEvidence.version,
-              fileCount: generatedBuildEvidence.fileCount,
-              bytes: generatedBuildEvidence.bytes,
-              gzipBytes: generatedBuildEvidence.gzipBytes,
-              client: generatedBuildEvidence.client,
-              server: generatedBuildEvidence.server,
+              version: generatedBuildMetrics.version,
+              fileCount: generatedBuildMetrics.fileCount,
+              bytes: generatedBuildMetrics.bytes,
+              gzipBytes: generatedBuildMetrics.gzipBytes,
+              client: generatedBuildMetrics.client,
+              server: generatedBuildMetrics.server,
             },
       manualCheckCount: result.manualCheckCount,
       ...(isVerbose
@@ -934,7 +934,7 @@ const mergeRenderedAudit = ({
             renderedChecks: orderedChecks,
             renderedFailures: orderedFailures,
             manualChecks: manualChecks ?? [],
-            generatedBuildEvidence: generatedBuildEvidence ?? null,
+            generatedBuildMetrics: generatedBuildMetrics ?? null,
           }
         : { renderedIssueSummaries, renderedFailureSummaries }),
     },
@@ -1002,7 +1002,7 @@ export const augmentAuditWithRenderedChecks = async ({
     artifactWriteMs: 0,
     targetCleanupMs: 0,
   };
-  let generatedBuildEvidence: GeneratedBuildEvidence | undefined;
+  let generatedBuildMetrics: GeneratedBuildMetrics | undefined;
   let previewOrigin: string | undefined;
   const captureTimeout = timeouts?.capture ?? renderedAuditCaptureTimeout;
   const pageTimeout = timeouts?.page ?? renderedAuditPageTimeout;
@@ -1047,7 +1047,7 @@ export const augmentAuditWithRenderedChecks = async ({
       checks: completedChecks,
       failures,
       plan,
-      generatedBuildEvidence,
+      generatedBuildMetrics,
     });
     if (
       plan !== undefined &&
@@ -1077,7 +1077,7 @@ export const augmentAuditWithRenderedChecks = async ({
             scale: 0.5,
           },
           performance: { ...performance },
-          generatedBuildEvidence: generatedBuildEvidence ?? null,
+          generatedBuildMetrics: generatedBuildMetrics ?? null,
         });
         const screenshotCount = new Set([
           ...completedChecks.map((check) => check.screenshotPath),
@@ -1111,7 +1111,7 @@ export const augmentAuditWithRenderedChecks = async ({
           checks: completedChecks,
           failures,
           plan,
-          generatedBuildEvidence,
+          generatedBuildMetrics,
         });
       }
     }
@@ -1228,11 +1228,11 @@ export const augmentAuditWithRenderedChecks = async ({
       );
     }
     previewOrigin = previewUrl.origin;
-    const parsedGeneratedBuildEvidence = generatedBuildEvidenceSchema.safeParse(
-      isRecord(previewResult) ? previewResult.generatedBuild : undefined
+    const parsedGeneratedBuildMetrics = generatedBuildMetricsSchema.safeParse(
+      isRecord(previewResult) ? previewResult.generatedBuildMetrics : undefined
     );
-    if (parsedGeneratedBuildEvidence.success) {
-      generatedBuildEvidence = parsedGeneratedBuildEvidence.data;
+    if (parsedGeneratedBuildMetrics.success) {
+      generatedBuildMetrics = parsedGeneratedBuildMetrics.data;
     }
     performance.previewStartMs = Date.now() - previewStartStartedAt;
   } catch (error) {

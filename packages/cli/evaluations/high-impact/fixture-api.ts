@@ -1,9 +1,4 @@
-import { createServer, type IncomingMessage, type Server } from "node:http";
-import {
-  publicApiContractVersion,
-  publicApiOperationRequiresServerSupport,
-  publicApiOperations,
-} from "@webstudio-is/protocol";
+import type { Server } from "node:http";
 import {
   migratePages,
   serializePages,
@@ -15,48 +10,15 @@ import type { BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime
 import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contracts";
 import type { HighImpactFixture, EvaluationProject } from "./fixtures";
 import type { EvaluationToolCall } from "./validate";
+import {
+  publicApiCommandByOperationId,
+  runtimeFixturePermissions,
+  startRuntimeFixtureApi,
+} from "../../scripts/runtime-fixture-api";
 
 const projectId = "high-impact-evaluation-project";
 const buildId = "high-impact-evaluation-build";
 const initialVersion = 1;
-
-const operationNames = new Map<string, string>([
-  ["pages.list", "list-pages"],
-  ["pages.create", "create-page"],
-  ["pages.update", "update-page"],
-  ["breakpoints.list", "list-breakpoints"],
-  ["instances.list", "list-instances"],
-  ["instances.inspect", "inspect-instance"],
-  ["instances.insertFragment", "insert-fragment"],
-  ["project.audit", "audit"],
-  ["resources.list", "list-resources"],
-  ["resources.create", "create-resource"],
-  ["dataSources.list", "list-variables"],
-  ["dataSources.create", "create-variable"],
-  ["designTokens.list", "list-design-tokens"],
-  ["designTokens.create", "create-design-token"],
-  ["styles.update", "update-styles"],
-]);
-
-const readTrpcInput = async (request: IncomingMessage) => {
-  const url = new URL(request.url ?? "", "http://127.0.0.1");
-  const source =
-    request.method === "GET"
-      ? (url.searchParams.get("input") ?? "{}")
-      : await new Promise<string>((resolve, reject) => {
-          let body = "";
-          request.setEncoding("utf8");
-          request.on("data", (chunk) => (body += chunk));
-          request.on("end", () => resolve(body || "{}"));
-          request.on("error", reject);
-        });
-  const parsed = JSON.parse(source) as Record<string, unknown>;
-  const first = parsed["0"];
-  if (typeof first !== "object" || first === null || Array.isArray(first)) {
-    return {};
-  }
-  return "json" in first ? ((first as { json?: unknown }).json ?? {}) : first;
-};
 
 const createPersistedPages = (project: EvaluationProject) => ({
   meta: { siteName: "High-impact evaluation", contactEmail: "" },
@@ -155,10 +117,8 @@ export const startHighImpactFixtureApi = async (
   let generatedId = 0;
   const calls: EvaluationToolCall[] = [];
   let origin = "";
-  const server = createServer(async (request, response) => {
-    try {
-      const pathname = new URL(request.url ?? "", "http://127.0.0.1").pathname;
-      const operationPath = pathname.replace(/^\/trpc\/(?:api\.)?/, "");
+  const fixtureApi = await startRuntimeFixtureApi(
+    async ({ operationPath, readInput }) => {
       let data: unknown;
       if (operationPath === "build.loadProjectBundleByProjectId") {
         data = createLocalProjectBundleFromSessionSnapshot(
@@ -189,7 +149,7 @@ export const startHighImpactFixtureApi = async (
           features: {},
         };
       } else if (operationPath === "build.patch") {
-        const input = (await readTrpcInput(request)) as {
+        const input = (await readInput()) as {
           transactions?: BuilderPatchTransaction[];
         };
         state = applyBuilderPatchTransactions(
@@ -226,25 +186,12 @@ export const startHighImpactFixtureApi = async (
         operationPath === "projects.permissions" ||
         operationPath === ""
       ) {
-        data = {
-          canView: true,
-          canEdit: true,
-          canBuild: true,
-          canAdmin: true,
-          canUseApi: true,
-          apiContract: {
-            version: publicApiContractVersion,
-            operationIds: publicApiOperations.flatMap((operation) =>
-              publicApiOperationRequiresServerSupport(operation)
-                ? [operation.id]
-                : []
-            ),
-          },
-        };
+        data = runtimeFixturePermissions;
       } else {
-        const input = await readTrpcInput(request);
+        const input = await readInput();
         const call: EvaluationToolCall = {
-          name: operationNames.get(operationPath) ?? operationPath,
+          name:
+            publicApiCommandByOperationId.get(operationPath) ?? operationPath,
           arguments:
             typeof input === "object" && input !== null
               ? (input as Record<string, unknown>)
@@ -285,45 +232,17 @@ export const startHighImpactFixtureApi = async (
           throw error;
         }
       }
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify([{ result: { data } }]));
-    } catch (error) {
-      response.writeHead(500, { "content-type": "application/json" });
-      response.end(
-        JSON.stringify([
-          {
-            error: {
-              message: error instanceof Error ? error.message : String(error),
-              code: -32603,
-              data: { code: "INTERNAL_SERVER_ERROR", httpStatus: 500 },
-            },
-          },
-        ])
-      );
+      return data;
     }
-  });
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  if (address === null || typeof address === "string") {
-    throw new Error("Fixture API address is unavailable.");
-  }
-  origin = `http://127.0.0.1:${address.port}`;
+  );
+  const { server } = fixtureApi;
+  origin = fixtureApi.origin;
   return {
     server,
     origin,
     shareLink: `${origin}/builder/${projectId}?authToken=fixture-only-not-persisted`,
     getProject: () => stateToProject(state),
     getToolCalls: () => structuredClone(calls),
-    close: async () => {
-      server.closeAllConnections();
-      await new Promise<void>((resolve, reject) =>
-        server.close((error) =>
-          error === undefined ? resolve() : reject(error)
-        )
-      );
-    },
+    close: fixtureApi.close,
   };
 };

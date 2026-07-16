@@ -1,6 +1,7 @@
 import { appendFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { isPlainRecord } from "../../src/type-utils";
 
 type JsonRpcId = string | number;
 
@@ -10,27 +11,24 @@ export type BoundedMcpCall = {
   isError?: true;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && Array.isArray(value) === false;
-
 export const getMcpTraceRequest = (value: unknown) => {
-  if (isRecord(value) === false || value.method !== "tools/call") {
+  if (isPlainRecord(value) === false || value.method !== "tools/call") {
     return;
   }
   const id = value.id;
   const params = value.params;
   if (
     (typeof id !== "string" && typeof id !== "number") ||
-    isRecord(params) === false ||
+    isPlainRecord(params) === false ||
     typeof params.name !== "string"
   ) {
     return;
   }
   const call: BoundedMcpCall = { name: params.name };
-  if (params.name === "screenshot" && isRecord(params.arguments)) {
+  if (params.name === "screenshot" && isPlainRecord(params.arguments)) {
     const viewport = params.arguments.viewport;
     if (
-      isRecord(viewport) &&
+      isPlainRecord(viewport) &&
       typeof viewport.width === "number" &&
       typeof viewport.height === "number"
     ) {
@@ -46,7 +44,7 @@ export const getMcpTraceResponse = (
   value: unknown,
   pending: Map<JsonRpcId, BoundedMcpCall>
 ) => {
-  if (isRecord(value) === false) {
+  if (isPlainRecord(value) === false) {
     return;
   }
   const id = value.id;
@@ -60,7 +58,7 @@ export const getMcpTraceResponse = (
   pending.delete(id);
   const result = value.result;
   return value.error !== undefined ||
-    (isRecord(result) && result.isError === true)
+    (isPlainRecord(result) && result.isError === true)
     ? { ...call, isError: true as const }
     : call;
 };

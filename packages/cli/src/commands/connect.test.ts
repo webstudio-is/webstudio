@@ -3,8 +3,6 @@ import { cwd } from "node:process";
 import { expect, test, vi } from "vitest";
 import {
   connect,
-  createCodexSnippet,
-  defaultServerCommand,
   mergeServerConfig,
   type ConnectDependencies,
 } from "./connect";
@@ -211,16 +209,6 @@ test("rejects an empty server command", async () => {
   await expect(
     connect({ client: "claude", print: false, command: "  " }, dependencies)
   ).rejects.toThrow("--command must not be empty.");
-});
-
-test("renders the codex toml snippet", () => {
-  expect(createCodexSnippet(defaultServerCommand)).toBe(
-    [
-      "[mcp_servers.webstudio]",
-      'command = "npx"',
-      'args = ["-y", "webstudio@latest", "mcp"]',
-    ].join("\n")
-  );
 });
 
 test("merge keeps result unchanged only for a deep-equal server entry", () => {

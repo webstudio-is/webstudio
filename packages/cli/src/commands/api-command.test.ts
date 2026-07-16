@@ -493,13 +493,6 @@ test("calls build snapshot for configured project", async () => {
     },
     call: apiCalls.getBuildSnapshot,
     connection: { include: ["pages", "designTokens"], version: 3 },
-    expectedData: {
-      detail: "compact",
-      namespaces: [
-        { name: "pages", count: 0 },
-        { name: "designTokens", count: 0 },
-      ],
-    },
   });
 });
 

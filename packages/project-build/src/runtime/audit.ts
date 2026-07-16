@@ -473,7 +473,7 @@ const generatedBuildTotals = z.object({
   gzipBytes: z.number().int().nonnegative(),
 });
 
-export const generatedBuildEvidence = generatedBuildTotals.extend({
+export const generatedBuildMetrics = generatedBuildTotals.extend({
   version: z.literal(1),
   client: generatedBuildTotals,
   server: generatedBuildTotals,
@@ -489,7 +489,7 @@ export const generatedBuildEvidence = generatedBuildTotals.extend({
     .max(20),
 });
 
-const generatedBuildSummary = generatedBuildEvidence.omit({
+const generatedBuildSummary = generatedBuildMetrics.omit({
   largestFiles: true,
 });
 
@@ -588,7 +588,7 @@ export const verboseAuditResult = auditResultBase.extend({
   manualChecks: z.array(manualAuditCheck),
   renderedChecks: z.array(renderedAuditCheck),
   renderedFailures: z.array(renderedAuditFailure),
-  generatedBuildEvidence: generatedBuildEvidence.nullable(),
+  generatedBuildMetrics: generatedBuildMetrics.nullable(),
 });
 
 export const auditResult = z.discriminatedUnion("verbose", [
@@ -603,7 +603,7 @@ export type AuditSummary = z.infer<typeof auditSummary>;
 export type AuditResult = z.infer<typeof auditResult>;
 export type CompactAuditResult = z.infer<typeof compactAuditResult>;
 export type VerboseAuditResult = z.infer<typeof verboseAuditResult>;
-export type GeneratedBuildEvidence = z.infer<typeof generatedBuildEvidence>;
+export type GeneratedBuildMetrics = z.infer<typeof generatedBuildMetrics>;
 export type RenderedAuditCheck = z.infer<typeof renderedAuditCheck>;
 export type RenderedAuditFailure = z.infer<typeof renderedAuditFailure>;
 
@@ -1470,7 +1470,7 @@ export function audit(
       manualChecks: offset === 0 ? manualChecks : [],
       renderedChecks: [],
       renderedFailures: [],
-      generatedBuildEvidence: null,
+      generatedBuildMetrics: null,
     });
   }
   return compactAuditResult.parse({

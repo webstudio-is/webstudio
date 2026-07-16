@@ -35672,7 +35672,7 @@ export const runtimeOperationContractData = [
                 ],
               },
             },
-            generatedBuildEvidence: {
+            generatedBuildMetrics: {
               anyOf: [
                 {
                   type: "object",
@@ -35807,7 +35807,7 @@ export const runtimeOperationContractData = [
             "manualChecks",
             "renderedChecks",
             "renderedFailures",
-            "generatedBuildEvidence",
+            "generatedBuildMetrics",
           ],
         },
       ],

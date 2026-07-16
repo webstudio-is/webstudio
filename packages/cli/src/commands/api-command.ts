@@ -101,7 +101,7 @@ const confirmOption = (yargs: CommonYargsArgv, describe: string) =>
   });
 
 export const snapshotCommandOptions = (yargs: CommonYargsArgv) =>
-  outputDetailCommandOptions(apiCommandOptions(yargs.version(false)))
+  apiCommandOptions(yargs.version(false))
     .option("include", {
       type: "array",
       string: true,
@@ -1918,9 +1918,6 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       include: listOption(options.include),
       version: options.version,
-      verbose: options.verbose,
-      cursor: options.cursor,
-      limit: options.limit,
     };
     return runProjectSessionCommand(
       "snapshot",

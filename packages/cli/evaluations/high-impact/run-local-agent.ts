@@ -30,9 +30,9 @@ const run = async () => {
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
   const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.6-sol";
-  const evidencePath = resolve(
-    process.env.WEBSTUDIO_HIGH_IMPACT_EVIDENCE ??
-      join(import.meta.dirname, "evidence", `${fixture.id}.json`)
+  const resultPath = resolve(
+    process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
+      join(import.meta.dirname, "results", `${fixture.id}.json`)
   );
   const directory = await mkdtemp(
     join(tmpdir(), "webstudio-high-impact-agent-")
@@ -84,13 +84,13 @@ const run = async () => {
         .split("\n")
         .filter(Boolean)
         .map((line) => JSON.parse(line) as EvaluationToolCall);
-    const evidence = await runHighImpactAgentEvaluation({
+    const result = await runHighImpactAgentEvaluation({
       fixture,
       target: { kind: "source", repositoryRoot },
       agentCommand,
       cwd: projectDirectory,
       taskPath,
-      evidencePath,
+      resultPath,
       provider: "openai",
       model,
       env,
@@ -105,8 +105,8 @@ const run = async () => {
         });
       },
     });
-    process.stdout.write(`${JSON.stringify(evidence, undefined, 2)}\n`);
-    if (evidence.outcome !== "passed") {
+    process.stdout.write(`${JSON.stringify(result, undefined, 2)}\n`);
+    if (result.outcome !== "passed") {
       process.exitCode = 1;
     }
   } finally {
