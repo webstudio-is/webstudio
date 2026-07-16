@@ -4,6 +4,7 @@ import {
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
 import { forwardRef, type ElementRef, useContext, type ReactNode } from "react";
+import { HeadSlotContext } from "./head-slot-context";
 import { XmlNode } from "./xml-node";
 
 export const defaultTag = "head";
@@ -15,7 +16,11 @@ export const HeadSlot = forwardRef<
   const { renderer } = useContext(ReactSdkContext);
 
   if (renderer === undefined) {
-    return children;
+    return (
+      <HeadSlotContext.Provider value={true}>
+        {children}
+      </HeadSlotContext.Provider>
+    );
   }
 
   if (props["data-ws-expand"] !== true) {
