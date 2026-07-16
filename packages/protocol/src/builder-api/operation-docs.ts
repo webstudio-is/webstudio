@@ -179,10 +179,12 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "duplicate-page",
-    description: "Duplicate a page and its page content",
+    description:
+      "Duplicate a page and optionally substitute copied fixed text and variable values atomically",
     requiredOptions: ["page", "json"],
     examples: [
       'webstudio duplicate-page --page page-id --name "Pricing Copy" --path /pricing-copy --json',
+      `webstudio duplicate-page --page page-id --name Paris --path /paris --substitutions '{"text":{"London":"Paris"},"variables":{"city":{"type":"string","value":"Paris"}}}' --json`,
     ],
   },
   {
@@ -730,13 +732,21 @@ for (const documentation of curatedPublicApiOperationDocumentation) {
 
 const createDefaultDocumentation = (
   command: string
-): PublicApiOperationDocumentation => ({
-  command,
-  description: `Run the "${command}" MCP/public API operation. Use the operation input schema for valid JSON fields.`,
-  examples: [
-    `MCP/API: call "${command}" with JSON input matching its operation schema.`,
-  ],
-});
+): PublicApiOperationDocumentation => {
+  const words = command
+    .split("-")
+    .map((word) =>
+      word === "css" || word === "ui" ? word.toUpperCase() : word
+    )
+    .join(" ");
+  return {
+    command,
+    description: `${words.charAt(0).toUpperCase()}${words.slice(1)}.`,
+    examples: [
+      `MCP/API: call "${command}" with JSON input matching its operation schema.`,
+    ],
+  };
+};
 
 const documentedCommands = new Set<string>();
 

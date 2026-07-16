@@ -409,6 +409,11 @@ export const duplicatePageCommandOptions = (yargs: CommonYargsArgv) =>
     .option("parent-folder", {
       type: "string",
       describe: "Folder id where the duplicated page should be inserted",
+    })
+    .option("substitutions", {
+      type: "string",
+      describe:
+        "JSON object with exact text replacements and copied variable value overrides",
     });
 
 export const listPageTemplatesCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1325,6 +1330,7 @@ export type ApiCommandOptions = {
   authPassword?: string;
   message?: string;
   parentFolder?: string;
+  substitutions?: string;
   sourceTemplate?: string;
   targetTemplate?: string;
   root?: string;
@@ -2213,11 +2219,16 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   "duplicate-page": async (options, connection, dependencies) => {
+    const substitutions =
+      options.substitutions === undefined
+        ? undefined
+        : (JSON.parse(options.substitutions) as unknown);
     const input = {
       pageId: requireOption(options.page, "--page"),
       parentFolderId: options.parentFolder,
       name: options.name,
       path: options.path,
+      substitutions,
     };
     return runProjectSessionCommand(
       "duplicate-page",

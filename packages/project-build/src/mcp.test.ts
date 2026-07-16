@@ -68,6 +68,7 @@ const publicOperation = (
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
+    requiresConfirm: false,
     outputSchema: runtimeContractById.get(operation.id)?.outputSchema,
     ...operationFields,
   };
@@ -353,6 +354,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     ),
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
+    requiresConfirm: true,
   }),
   publicOperation({
     command: "move-instance",
@@ -701,6 +703,14 @@ describe("project session mcp adapter", () => {
       includePreview: true,
     });
     for (const tool of completeTools) {
+      expect(
+        tool.inputSchema.additionalProperties,
+        `MCP input schema accepts unknown root fields for ${tool.name}`
+      ).not.toBe(true);
+      expect(
+        getUnresolvedLocalSchemaRefs(tool.inputSchema),
+        `MCP input schema has unresolved local references for ${tool.name}`
+      ).toEqual([]);
       if (tool.outputSchema !== undefined) {
         expect(
           tool.outputSchema.type,
@@ -720,6 +730,11 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(imageDescriptionsTool?.inputSchema)).toContain(
       "rendered image in context"
     );
+    expect(
+      JSON.stringify(
+        tools.find(({ name }) => name === "update-styles")?.inputSchema
+      )
+    ).toContain("JSON-compatible value.");
     expect(
       getSuccessfulOutputDataSchema(
         tools.find((tool) => tool.name === "refresh")?.outputSchema
@@ -803,7 +818,13 @@ describe("project session mcp adapter", () => {
     ]);
     expect(
       Object.keys(insertFragmentTool?.inputSchema.properties ?? {})
-    ).toEqual(["parentInstanceId", "fragment", "mode", "insertIndex"]);
+    ).toEqual([
+      "parentInstanceId",
+      "fragment",
+      "mode",
+      "insertIndex",
+      "dryRun",
+    ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
     expect(fragmentSchema).toEqual(expect.objectContaining({ type: "string" }));
     const jsxDescription =
@@ -929,6 +950,51 @@ describe("project session mcp adapter", () => {
       tools.find((tool) => tool.name === "delete-instance")?.annotations
         .requiredInputFields
     ).toEqual(["instanceIds"]);
+    expect(
+      tools.find((tool) => tool.name === "delete-instance")?.inputSchema
+        .properties
+    ).toEqual(
+      expect.objectContaining({
+        dryRun: expect.objectContaining({ type: "boolean" }),
+        confirmDestructive: expect.objectContaining({ type: "boolean" }),
+        confirmationToken: expect.objectContaining({ type: "string" }),
+      })
+    );
+  });
+
+  test("defers oversized input schemas until focused discovery", async () => {
+    const description = "x".repeat(25_000);
+    const operation = publicOperation({
+      command: "large-input",
+      id: "test.largeInput",
+      description: "Accept a large structured input",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          targetId: { type: "string" },
+          payload: { type: "object", description },
+        },
+        required: ["targetId", "payload"],
+      },
+    });
+    const [tool] = listProjectSessionMcpTools([operation]);
+
+    expect(JSON.stringify(tool?.inputSchema).length).toBeLessThan(1_000);
+    expect(tool?.inputSchema.required).toEqual(["targetId", "payload"]);
+
+    const adapter = createProjectSessionMcpCore({
+      operations: [operation],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    const details = await adapter.callTool({
+      name: "meta.get_more_tools",
+      input: { tools: ["large-input"] },
+    });
+    expect(JSON.stringify(details.structuredContent.data)).toContain(
+      description
+    );
   });
 
   test("exposes page expression input descriptions to MCP clients", async () => {
@@ -1082,7 +1148,7 @@ describe("project session mcp adapter", () => {
 
     expect(tool?.inputSchema.required).toEqual(["settings"]);
     expect(tool?.annotations).toMatchObject({
-      inputFields: ["settings"],
+      inputFields: ["dryRun", "settings"],
       requiredInputFields: ["settings"],
     });
   });
@@ -1835,9 +1901,8 @@ describe("project session mcp adapter", () => {
     });
 
     const result = await adapter.callTool({
-      name: "list-pages",
-      input: {},
-      dryRun: true,
+      name: "move-instance",
+      input: { moves: [], dryRun: true },
     });
 
     expect(result.structuredContent).toMatchObject({
@@ -1850,6 +1915,97 @@ describe("project session mcp adapter", () => {
         },
       },
     });
+  });
+
+  test("plans and confirms destructive mutations without blind retries", async () => {
+    const transaction = {
+      id: "planned-delete",
+      payload: [
+        {
+          namespace: "instances" as const,
+          patches: [{ op: "remove" as const, path: ["target"] }],
+        },
+      ],
+    };
+    const executeOperation = createExecuteOperation(async ({ dryRun }) =>
+      createEnvelope({
+        operationId: "instances.delete",
+        source: dryRun ? "dry-run" : "remote",
+        result: { deletedInstanceIds: ["target"] },
+        state: { committed: dryRun === false, freshness: {} },
+        ...(dryRun ? { transaction } : {}),
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const planned = await adapter.callTool({
+      name: "delete-instance",
+      input: { instanceIds: ["target"] },
+    });
+
+    expect(planned).toMatchObject({
+      isError: true,
+      structuredContent: {
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_REQUIRED" },
+        meta: {
+          session: { source: "dry-run", committed: false, transaction },
+          confirmation: {
+            required: true,
+            operation: "delete-instance",
+            token: expect.any(String),
+            summary: {
+              namespaces: ["instances"],
+              changeCount: 1,
+              patchCount: 1,
+              patchOperations: { remove: 1 },
+            },
+          },
+        },
+      },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(1);
+
+    const confirmation = planned.structuredContent.meta.confirmation;
+    if (confirmation === undefined) {
+      throw new Error("Expected destructive confirmation");
+    }
+    const altered = await adapter.callTool({
+      name: "delete-instance",
+      input: {
+        instanceIds: ["other"],
+        confirmDestructive: true,
+        confirmationToken: confirmation.token,
+      },
+    });
+    expect(altered).toMatchObject({
+      structuredContent: {
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+      },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(2);
+
+    const committed = await adapter.callTool({
+      name: "delete-instance",
+      input: {
+        confirmationToken: confirmation.token,
+        instanceIds: ["target"],
+        confirmDestructive: true,
+      },
+    });
+
+    expect(committed).toMatchObject({
+      structuredContent: {
+        ok: true,
+        meta: { session: { committed: true } },
+      },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(4);
   });
 
   test("rejects unsupported operation input fields before execution", async () => {
@@ -2847,7 +3003,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledWith({
       command: "delete-instance",
       input: { instanceIds },
-      dryRun: false,
+      dryRun: true,
     });
   });
 
@@ -3105,11 +3261,12 @@ describe("project session mcp adapter", () => {
       name: "workflow.next",
       input: { goal: "design-system-page" },
     });
+    const detailsWhileCheckpointed = await adapter.callTool({
+      name: "meta.get_more_tools",
+      input: { tools: ["publish"] },
+    });
     await expect(
-      adapter.callTool({
-        name: "meta.get_more_tools",
-        input: { tools: ["publish"] },
-      })
+      adapter.callTool({ name: "create-page", input: { name: "Blocked" } })
     ).rejects.toThrow("CHECKPOINT_REQUIRED");
     const ackCheckpoint = () =>
       adapter.callTool({
@@ -3274,6 +3431,9 @@ describe("project session mcp adapter", () => {
         allowedTools: ["components.coverage-plan"],
         nextPhase: "page-creation",
       })
+    );
+    expect(detailsWhileCheckpointed.structuredContent.data).toEqual(
+      expect.objectContaining({ tools: expect.any(Array) })
     );
     expect(workflowPhase.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -3895,6 +4055,10 @@ describe("project session mcp adapter", () => {
     });
 
     const summary = await adapter.callTool({ name: "components.summary" });
+    const summaryDetails = await adapter.callTool({
+      name: "components.summary",
+      input: { detail: "components", limit: 100 },
+    });
     const componentRegistry = await adapter.callTool({
       name: "components.list",
       input: { source: "all", limit: 200 },
@@ -3906,12 +4070,13 @@ describe("project session mcp adapter", () => {
     const coveragePlan = await adapter.callTool({
       name: "components.coverage-plan",
     });
-    await expect(
-      adapter.callTool({
-        name: "components.find",
-        input: { brief: "radix select" },
-      })
-    ).rejects.toThrow("CHECKPOINT_REQUIRED");
+    const checkpointedFind = await adapter.callTool({
+      name: "components.find",
+      input: { brief: "radix select" },
+    });
+    expect(checkpointedFind.structuredContent.data).toEqual(
+      expect.objectContaining({ components: expect.any(Array) })
+    );
     await expect(
       adapter.callTool({
         name: "checkpoint.ack",
@@ -4082,14 +4247,22 @@ describe("project session mcp adapter", () => {
     expect(session.initialize).not.toHaveBeenCalled();
     expect(summary.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("Do not dump/parse"),
+        usage: expect.stringContaining("Default summary is compact"),
         total: expect.any(Number),
-        templateComponents: expect.arrayContaining([
-          "@webstudio-is/sdk-components-react-radix:Select",
-        ]),
-        nonStandaloneComponents: expect.arrayContaining([
-          "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
-        ]),
+        templateCount: expect.any(Number),
+        standaloneInsertableCount: expect.any(Number),
+        nonStandaloneCount: expect.any(Number),
+      })
+    );
+    expect(summary.structuredContent.data).not.toHaveProperty("components");
+    expect(JSON.stringify(summary.structuredContent.data).length).toBeLessThan(
+      1_000
+    );
+    expect(summaryDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        detail: "components",
+        count: expect.any(Number),
+        pagination: { offset: 0, limit: 100, nextOffset: undefined },
         components: expect.arrayContaining([
           expect.objectContaining({
             component: "@webstudio-is/sdk-components-react-radix:Select",
@@ -4115,14 +4288,13 @@ describe("project session mcp adapter", () => {
     );
     expect(componentRegistry.structuredContent.data).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("shadcn-compatible"),
+        usage: expect.stringContaining("compact metadata"),
         source: "all",
         documentType: "html",
         items: expect.arrayContaining([
           expect.objectContaining({
             name: "component:HtmlEmbed",
             type: "registry:ui",
-            files: [],
             meta: expect.objectContaining({
               source: "meta",
               component: "HtmlEmbed",
@@ -4135,13 +4307,6 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({
             name: "template:@webstudio-is/sdk-components-react-radix:Select",
             type: "registry:ui",
-            files: [
-              expect.objectContaining({
-                type: "registry:file",
-                target:
-                  "webstudio/components/%40webstudio-is%2Fsdk-components-react-radix%3ASelect.template.json",
-              }),
-            ],
             meta: expect.objectContaining({
               source: "template",
               component: "@webstudio-is/sdk-components-react-radix:Select",
@@ -4154,6 +4319,9 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(
+      JSON.stringify(componentRegistry.structuredContent.data)
+    ).not.toContain('"files"');
     expect(templateRegistry.structuredContent.data).toEqual(
       expect.objectContaining({
         source: "template",
@@ -4171,6 +4339,9 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(
+      JSON.stringify(templateRegistry.structuredContent.data).length
+    ).toBeLessThan(50_000);
     expect(coveragePlan.structuredContent.data).toEqual(
       expect.objectContaining({
         usage: expect.stringContaining("intentionally compact"),
@@ -4592,7 +4763,10 @@ describe("project session mcp adapter", () => {
         createProjectSession: createSessionFactory(),
         executeOperation: createExecuteOperation(),
       });
-      const summary = await adapter.callTool({ name: "components.summary" });
+      const summary = await adapter.callTool({
+        name: "components.summary",
+        input: { detail: "components", limit: 100 },
+      });
       const find = await adapter.callTool({
         name: "components.find",
         input: { brief: "ConcealedWidget" },
@@ -4819,10 +4993,17 @@ describe("project session mcp adapter", () => {
         }),
       })
     );
+    const find = await adapter.callTool({
+      name: "components.find",
+      input: { brief: "button" },
+    });
+    expect(find.structuredContent.data).toEqual(
+      expect.objectContaining({ components: expect.any(Array) })
+    );
     await expect(
       adapter.callTool({
-        name: "components.find",
-        input: { brief: "button" },
+        name: "components.coverage-insert-next",
+        input: { pagePath: "/design-system", parentInstanceId: "root" },
       })
     ).rejects.toThrow("CHECKPOINT_REQUIRED");
   });
@@ -6104,7 +6285,7 @@ describe("project session mcp adapter", () => {
             name: "publish",
             annotations: expect.objectContaining({
               readOnlyHint: false,
-              destructiveHint: true,
+              destructiveHint: false,
               openWorldHint: true,
             }),
           }),
@@ -6133,6 +6314,13 @@ describe("project session mcp adapter", () => {
             name: "reset-session",
             annotations: expect.objectContaining({
               readOnlyHint: false,
+              destructiveHint: false,
+            }),
+          }),
+          expect.objectContaining({
+            name: "delete-instance",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
               destructiveHint: true,
             }),
           }),
@@ -6152,6 +6340,99 @@ describe("project session mcp adapter", () => {
             uri: "webstudio://project/components",
           }),
         ]),
+      });
+    } finally {
+      await close();
+    }
+  });
+
+  test("exposes dry-run and destructive confirmation through stdio MCP", async () => {
+    const transaction = {
+      id: "stdio-delete-plan",
+      payload: [
+        {
+          namespace: "instances" as const,
+          patches: [{ op: "remove" as const, path: ["target"] }],
+        },
+      ],
+    };
+    const executeOperation = createExecuteOperation(async ({ dryRun }) =>
+      createEnvelope({
+        operationId: "instances.delete",
+        source: dryRun ? "dry-run" : "remote",
+        result: { deletedInstanceIds: ["target"] },
+        state: { committed: dryRun === false, freshness: {} },
+        ...(dryRun ? { transaction } : {}),
+      })
+    );
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const tools = await client.listTools();
+      const deleteTool = tools.tools.find(
+        ({ name }) => name === "delete-instance"
+      );
+      expect(deleteTool).toMatchObject({
+        inputSchema: {
+          properties: expect.objectContaining({
+            dryRun: expect.objectContaining({ type: "boolean" }),
+            confirmDestructive: expect.objectContaining({ type: "boolean" }),
+            confirmationToken: expect.objectContaining({ type: "string" }),
+          }),
+        },
+        annotations: expect.objectContaining({ destructiveHint: true }),
+      });
+      expect(
+        tools.tools.find(({ name }) => name === "move-instance")
+      ).toMatchObject({
+        inputSchema: {
+          properties: expect.objectContaining({
+            dryRun: expect.objectContaining({ type: "boolean" }),
+          }),
+        },
+        annotations: expect.objectContaining({ destructiveHint: false }),
+      });
+      expect(
+        tools.tools.find(({ name }) => name === "publish")?.inputSchema
+          .properties
+      ).not.toHaveProperty("dryRun");
+
+      const planned = await client.callTool({
+        name: "delete-instance",
+        arguments: { instanceIds: ["target"] },
+      });
+      const plannedContent = planned.structuredContent as
+        | {
+            ok: boolean;
+            error?: { code: string };
+            meta: { confirmation?: { token: string } };
+          }
+        | undefined;
+      expect(plannedContent).toMatchObject({
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_REQUIRED" },
+      });
+      const confirmation = plannedContent?.meta.confirmation;
+      if (confirmation === undefined) {
+        throw new Error("Expected stdio destructive confirmation");
+      }
+
+      const committed = await client.callTool({
+        name: "delete-instance",
+        arguments: {
+          instanceIds: ["target"],
+          confirmDestructive: true,
+          confirmationToken: confirmation.token,
+        },
+      });
+      expect(committed.structuredContent).toMatchObject({
+        ok: true,
+        meta: { session: { committed: true } },
       });
     } finally {
       await close();
@@ -6782,7 +7063,7 @@ describe("project session mcp adapter", () => {
     }
   });
 
-  test("blocks long-lived MCP tool chains until required checkpoint is acknowledged", async () => {
+  test("allows reads but blocks mutations until a required checkpoint is acknowledged", async () => {
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -6814,15 +7095,24 @@ describe("project session mcp adapter", () => {
         })
       ).resolves.toEqual(
         expect.objectContaining({
+          structuredContent: expect.objectContaining({ ok: true }),
+        })
+      );
+      await expect(
+        client.callTool({
+          name: "create-page",
+          arguments: { name: "Blocked", path: "/blocked" },
+        })
+      ).resolves.toEqual(
+        expect.objectContaining({
           isError: true,
-          structuredContent: {
+          structuredContent: expect.objectContaining({
             ok: false,
-            error: {
+            error: expect.objectContaining({
               message: expect.stringContaining("CHECKPOINT_REQUIRED"),
               code: "CHECKPOINT_REQUIRED",
-            },
-            meta: {},
-          },
+            }),
+          }),
         })
       );
 

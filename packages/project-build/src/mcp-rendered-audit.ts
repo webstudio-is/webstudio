@@ -16,6 +16,10 @@ import type {
   ProjectSessionScreenshotInput,
   ProjectSessionScreenshotResult,
 } from "./mcp";
+import {
+  createConfirmationToken,
+  validateConfirmationToken,
+} from "./confirmation-token";
 
 type Viewport = { width: number; height: number; purposes: string[] };
 type RenderedAuditPlan = z.infer<typeof renderedAuditPlan>;
@@ -270,50 +274,13 @@ const getRenderedAuditPlanSignature = ({
     },
   });
 
-const getRenderedAuditConfirmationDigest = async (
-  signature: string,
-  expiresAt: number
-) => {
-  const digest = await globalThis.crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(`${expiresAt}:${signature}`)
-  );
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
-};
+const createRenderedAuditConfirmation = (signature: string) =>
+  createConfirmationToken(signature, renderedAuditConfirmationTtlMs);
 
-const createRenderedAuditConfirmation = async (signature: string) => {
-  const expiresAt = Date.now() + renderedAuditConfirmationTtlMs;
-  const digest = await getRenderedAuditConfirmationDigest(signature, expiresAt);
-  const token = `${expiresAt.toString(36)}.${digest}`;
-  return { token, expiresAt };
-};
-
-const validateRenderedAuditConfirmation = async (
+const validateRenderedAuditConfirmation = (
   token: string | undefined,
   signature: string
-) => {
-  if (token === undefined) {
-    return false;
-  }
-  const [encodedExpiresAt, digest, ...extra] = token.split(".");
-  if (
-    encodedExpiresAt === undefined ||
-    digest === undefined ||
-    extra.length > 0
-  ) {
-    return false;
-  }
-  const expiresAt = Number.parseInt(encodedExpiresAt, 36);
-  if (Number.isSafeInteger(expiresAt) === false || expiresAt < Date.now()) {
-    return false;
-  }
-  return (
-    digest === (await getRenderedAuditConfirmationDigest(signature, expiresAt))
-  );
-};
+) => validateConfirmationToken(token, signature);
 
 export const getRenderedAuditViewports = (breakpoints: unknown): Viewport[] => {
   const popularViewports = [

@@ -226,6 +226,19 @@ const runtimeBuildQuery = <Result = unknown>(id: RuntimeOperationId) =>
     })
   );
 
+const withConfirm = <Schema extends z.ZodTypeAny>(input: Schema) =>
+  z.intersection(input, z.object({ confirm: z.literal(true) })) as z.ZodType<
+    z.infer<Schema> & { confirm: true }
+  >;
+
+const runtimeMutationInput = (
+  id: RuntimeOperationId,
+  requiresConfirm: boolean
+) => {
+  const input = runtimeProjectInput(id);
+  return requiresConfirm ? withConfirm(input) : input;
+};
+
 const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
   input: Schema,
   handler: (args: {
@@ -261,15 +274,18 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
     });
 
 const runtimeBuildMutation = <Result extends Record<string, unknown> = {}>(
-  id: RuntimeOperationId
+  id: RuntimeOperationId,
+  requiresConfirm: boolean
 ) =>
-  buildMutation(runtimeProjectInput(id), async ({ input, build, commit }) =>
-    commitRuntimeMutation<Result>({
-      id,
-      build,
-      input,
-      commit,
-    })
+  buildMutation(
+    runtimeMutationInput(id, requiresConfirm),
+    async ({ input, build, commit }) =>
+      commitRuntimeMutation<Result>({
+        id,
+        build,
+        input,
+        commit,
+      })
   );
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
@@ -387,10 +403,11 @@ const contentOrBuildMutation = <
 const runtimeContentOrBuildMutation = <
   Result extends Record<string, unknown> = {},
 >(
-  id: RuntimeOperationId
+  id: RuntimeOperationId,
+  requiresConfirm: boolean
 ) =>
   contentOrBuildMutation(
-    runtimeProjectInput(id),
+    runtimeMutationInput(id, requiresConfirm),
     async ({ input, build, commit }) =>
       commitRuntimeMutation<Result>({
         id,
@@ -399,11 +416,6 @@ const runtimeContentOrBuildMutation = <
         commit,
       })
   );
-
-const withConfirm = <Schema extends z.ZodTypeAny>(input: Schema) =>
-  z.intersection(input, z.object({ confirm: z.literal(true) })) as z.ZodType<
-    z.infer<Schema> & { confirm: true }
-  >;
 
 const runtimeAssetsQuery = <Result = unknown>(id: RuntimeOperationId) =>
   projectQuery(runtimeProjectInput(id), "view", async ({ ctx, input }) => {
@@ -423,7 +435,7 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
   id: RuntimeOperationId
 ) =>
   buildMutation(
-    withConfirm(runtimeProjectInput(id)),
+    runtimeMutationInput(id, true),
     async ({ ctx, input, build, commit }) => {
       const assets = await loadAssetsByProject(input.projectId, ctx, {
         skipPermissionsCheck: true,
@@ -472,25 +484,13 @@ const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
       ? runtimeAssetsQuery(id)
       : runtimeAssetsMutation(id);
   }
-  if (operation.requiresConfirm) {
-    return buildMutation(
-      withConfirm(runtimeProjectInput(id)),
-      async ({ input, build, commit }) =>
-        commitRuntimeMutation({
-          id,
-          build,
-          input,
-          commit,
-        })
-    );
-  }
   if (operation.kind === "read") {
     return runtimeBuildQuery(id);
   }
   if (operation.permit === "edit") {
-    return runtimeContentOrBuildMutation(id);
+    return runtimeContentOrBuildMutation(id, operation.requiresConfirm);
   }
-  return runtimeBuildMutation(id);
+  return runtimeBuildMutation(id, operation.requiresConfirm);
 };
 
 const createRuntimeOperationRouters = () => {

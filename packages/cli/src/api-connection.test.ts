@@ -64,6 +64,26 @@ describe("resolveApiConnection", () => {
     );
   });
 
+  test("resolves an explicitly selected saved project without local config", async () => {
+    const dependencies = createDependencies({
+      exists: false,
+      files: {
+        [GLOBAL_CONFIG_FILE]: JSON.stringify({
+          "project-2": { origin: "https://two.example.com", token: "token-2" },
+        }),
+      },
+    });
+
+    await expect(
+      resolveApiConnection(dependencies, "/workspace/agency", "project-2")
+    ).resolves.toEqual({
+      projectId: "project-2",
+      origin: "https://two.example.com",
+      authToken: "token-2",
+    });
+    expect(dependencies.isFileExists).not.toHaveBeenCalled();
+  });
+
   test("requires a local project config", async () => {
     await expect(
       resolveApiConnection(createDependencies({ exists: false }))

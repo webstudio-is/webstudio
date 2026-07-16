@@ -11,6 +11,7 @@ import {
   parseComponentName,
   toInputJsonSchemaObject,
   type InputJsonSchema,
+  type InputJsonSchemaValue,
 } from "@webstudio-is/sdk";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
@@ -75,6 +76,10 @@ import {
   type SemanticValidationIssue,
 } from "./runtime/errors";
 import { z } from "zod";
+import {
+  createConfirmationToken,
+  validateConfirmationToken,
+} from "./confirmation-token";
 
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = BuilderApiCapability;
@@ -95,6 +100,7 @@ export type PublicMcpOperation<Command extends string = string> = {
   writeNamespaces: readonly string[];
   invalidatesNamespaces: readonly string[];
   retryOnConflict: boolean;
+  requiresConfirm: boolean;
 };
 
 type ProjectSessionLike = {
@@ -330,7 +336,7 @@ const emptyInputSchema = {
   type: "object",
   description:
     "Pass this MCP tool's JSON arguments. Use meta.get_more_tools for examples and required fields. For authored content with styles, prefer insert-fragment so the CLI converts JSX into Webstudio data.",
-  additionalProperties: true,
+  additionalProperties: false,
 } as const satisfies ProjectSessionMcpInputSchema;
 
 const textInputSchema = (description: string) =>
@@ -417,6 +423,29 @@ const registryListInputSchema = {
     offset: {
       type: "number",
       description: "Zero-based pagination offset for additional items.",
+    },
+  },
+  required: [],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const componentSummaryInputSchema = {
+  ...emptyInputSchema,
+  additionalProperties: false,
+  properties: {
+    detail: {
+      type: "string",
+      enum: ["summary", "components"],
+      description:
+        'Response detail. Defaults to "summary"; use "components" for paginated component entries.',
+    },
+    limit: {
+      type: "number",
+      description:
+        "Maximum component entries to return with detail components. Defaults to 20 and is capped at 100.",
+    },
+    offset: {
+      type: "number",
+      description: "Zero-based component pagination offset.",
     },
   },
   required: [],
@@ -588,6 +617,125 @@ const getOperationInputSchema = (
     type: "object",
     additionalProperties,
     required: requiredInputFields,
+  };
+};
+
+const jsonCompatibleValueSchema = {
+  anyOf: [
+    { type: "string" },
+    { type: "number" },
+    { type: "boolean" },
+    { type: "null" },
+    { type: "array" },
+    { type: "object" },
+  ],
+  description: "JSON-compatible value.",
+} as const satisfies InputJsonSchema;
+
+const constrainUnconstrainedInputSchemaValue = (
+  value: InputJsonSchemaValue
+): InputJsonSchemaValue => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (Object.keys(value).length === 0) {
+    return jsonCompatibleValueSchema;
+  }
+  return constrainUnconstrainedInputSchemas(value);
+};
+
+const constrainUnconstrainedInputSchemas = <Schema extends InputJsonSchema>(
+  schema: Schema
+): Schema => {
+  const result: InputJsonSchema = { ...schema };
+  if (schema.properties !== undefined) {
+    result.properties = Object.fromEntries(
+      Object.entries(schema.properties).map(([name, value]) => [
+        name,
+        constrainUnconstrainedInputSchemaValue(value),
+      ])
+    );
+  }
+  if (schema.additionalProperties !== undefined) {
+    result.additionalProperties = constrainUnconstrainedInputSchemaValue(
+      schema.additionalProperties
+    );
+  }
+  if (schema.items !== undefined) {
+    result.items = constrainUnconstrainedInputSchemaValue(schema.items);
+  }
+  for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
+    const values = schema[key];
+    if (Array.isArray(values)) {
+      result[key] = values.map(constrainUnconstrainedInputSchemaValue);
+    }
+  }
+  if (schema.$defs !== undefined) {
+    result.$defs = Object.fromEntries(
+      Object.entries(schema.$defs).map(([name, value]) => [
+        name,
+        constrainUnconstrainedInputSchemaValue(value),
+      ])
+    );
+  }
+  return result as Schema;
+};
+
+const maxInlineMcpInputSchemaSize = 20_000;
+
+const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
+  const description =
+    schema.description === undefined
+      ? undefined
+      : schema.description.length <= 240
+        ? schema.description
+        : `${schema.description.slice(0, 239)}…`;
+  const compact = {
+    ...(schema.type === undefined ? {} : { type: schema.type }),
+    ...(description === undefined ? {} : { description }),
+    ...(schema.enum === undefined ? {} : { enum: schema.enum }),
+  };
+  if (Object.keys(compact).length > 0) {
+    return compact;
+  }
+  return {
+    description:
+      "Complex structured value. Use meta.get_more_tools with this exact tool name for its complete schema.",
+  };
+};
+
+const getHandshakeInputSchema = (
+  schema: ProjectSessionMcpInputSchema
+): {
+  inputSchema: ProjectSessionMcpInputSchema;
+  detailedInputSchema?: ProjectSessionMcpInputSchema;
+} => {
+  if (JSON.stringify(schema).length <= maxInlineMcpInputSchemaSize) {
+    return { inputSchema: schema };
+  }
+  return {
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: Object.fromEntries(
+        Object.entries(schema.properties ?? {}).map(([name, property]) => {
+          const propertySchema = toInputJsonSchemaObject(property);
+          const serializedProperty = JSON.stringify(property);
+          return [
+            name,
+            propertySchema === undefined ||
+            (serializedProperty.length <= maxInlineMcpInputSchemaSize &&
+              serializedProperty.includes('"$ref"') === false)
+              ? property
+              : getCompactSchemaProperty(propertySchema),
+          ];
+        })
+      ),
+      required: schema.required,
+      description:
+        "Compact handshake schema. Use meta.get_more_tools with this exact tool name for the complete input schema.",
+    },
+    detailedInputSchema: schema,
   };
 };
 
@@ -1055,21 +1203,62 @@ const renderedAuditConfirmationInputProperties = {
   },
 } as const;
 
+const dryRunInputProperty = {
+  type: "boolean",
+  description:
+    "Plan this local-capable mutation without committing it. Returns the planned transaction in meta.session.transaction.",
+} as const;
+
+const destructiveConfirmationInputProperties = {
+  confirmDestructive: {
+    type: "boolean",
+    description:
+      "Commit the unchanged destructive plan. Requires the short-lived confirmationToken returned by the previous planned call.",
+  },
+  confirmationToken: {
+    type: "string",
+    description:
+      "Short-lived token returned with the unchanged destructive mutation plan.",
+  },
+} as const;
+
 const getMcpOperationInputSchema = (
   operation: PublicMcpOperation,
-  options: { includeRenderedAudit: boolean }
+  options: {
+    includeRenderedAudit: boolean;
+    schema?: ProjectSessionMcpInputSchema;
+  }
 ) => {
-  const schema = getOperationInputSchema(operation);
-  if (operation.command !== "audit" || options.includeRenderedAudit === false) {
+  let schema = constrainUnconstrainedInputSchemas(
+    options.schema ?? getOperationInputSchema(operation)
+  );
+  const properties = getInputJsonSchemaProperties(schema);
+  if (
+    schema.additionalProperties === true &&
+    (properties === undefined || Object.keys(properties).length === 0)
+  ) {
+    schema = { ...schema, additionalProperties: false };
+  }
+  const transportProperties = {
+    ...(operation.method === "mutation" && operation.localCapable
+      ? { dryRun: dryRunInputProperty }
+      : {}),
+    ...(operation.requiresConfirm && operation.localCapable
+      ? destructiveConfirmationInputProperties
+      : {}),
+    ...(operation.command === "audit" && options.includeRenderedAudit
+      ? {
+          rendered: renderedAuditInputProperty,
+          ...renderedAuditConfirmationInputProperties,
+        }
+      : {}),
+  };
+  if (Object.keys(transportProperties).length === 0) {
     return schema;
   }
   return {
     ...schema,
-    properties: {
-      ...schema.properties,
-      rendered: renderedAuditInputProperty,
-      ...renderedAuditConfirmationInputProperties,
-    },
+    properties: { ...schema.properties, ...transportProperties },
   } satisfies InputJsonSchema;
 };
 
@@ -1247,14 +1436,15 @@ export type ProjectSessionMcpTool = {
     writeNamespaces: readonly string[];
     invalidatesNamespaces: readonly string[];
     retryOnConflict: boolean;
+    requiresConfirm: boolean;
   };
 };
 
 type ProjectSessionMcpToolInput = Omit<ProjectSessionMcpTool, "annotations"> & {
   annotations: Omit<
     ProjectSessionMcpTool["annotations"],
-    "inputFields" | "requiredInputFields"
-  >;
+    "inputFields" | "requiredInputFields" | "requiresConfirm"
+  > & { requiresConfirm?: boolean };
 };
 
 const createProjectSessionMcpTool = (
@@ -1269,6 +1459,7 @@ const createProjectSessionMcpTool = (
       ...tool.annotations,
       inputFields,
       requiredInputFields,
+      requiresConfirm: tool.annotations.requiresConfirm ?? false,
     },
   };
 };
@@ -1854,8 +2045,8 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "components.summary",
     description:
-      "Return a compact structured component catalog summary. Use this before full component resources.",
-    inputSchema: emptyInputSchema,
+      'Return component counts by default, or paginated component entries with detail:"components".',
+    inputSchema: componentSummaryInputSchema,
     annotations: {
       command: "components.summary",
       operationId: "components.summary",
@@ -1872,7 +2063,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "components.list",
     description:
-      "Return shadcn-compatible Webstudio registry items for insertable components and templates. Use this when you need the shared Builder/MCP component list shape.",
+      "List compact metadata for insertable components and templates. Use components.get or templates.get for one complete item.",
     inputSchema: registryListInputSchema,
     annotations: {
       command: "components.list",
@@ -2042,7 +2233,7 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "templates.list",
     description:
-      "Return shadcn-compatible Webstudio registry items for registered templates only, including explicit registry:file payload metadata.",
+      "List compact metadata for registered templates. Use templates.get for one complete insertion payload.",
     inputSchema: registryListInputSchema,
     annotations: {
       command: "templates.list",
@@ -2292,24 +2483,29 @@ type McpStructuredError = {
   issues?: readonly SemanticValidationIssue[];
 };
 
-type ProjectSessionMcpStructuredContent =
-  | {
-      ok: true;
-      data: unknown;
-      meta: {
-        session?: ReturnType<typeof serializeProjectSessionMeta>;
-        next?: string[];
-      };
-    }
-  | {
-      ok: false;
-      data: unknown;
-      error: McpStructuredError;
-      meta: {
-        session?: ReturnType<typeof serializeProjectSessionMeta>;
-        next?: string[];
-      };
-    };
+type DestructiveConfirmation = {
+  required: true;
+  operation: string;
+  token: string;
+  expiresAt: string;
+  summary: {
+    namespaces: string[];
+    changeCount: number;
+    patchCount: number;
+    patchOperations: Record<string, number>;
+  };
+};
+
+type ProjectSessionMcpMeta = {
+  session?: ReturnType<typeof serializeProjectSessionMeta>;
+  next?: string[];
+  confirmation?: DestructiveConfirmation;
+};
+
+type ProjectSessionMcpStructuredContent = {
+  data: unknown;
+  meta: ProjectSessionMcpMeta;
+} & ({ ok: true } | { ok: false; error: McpStructuredError });
 
 class ProjectSessionMcpCheckpointError extends Error {
   code = "CHECKPOINT_REQUIRED";
@@ -2354,6 +2550,15 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
+const detailedMcpInputSchemas = new WeakMap<
+  ProjectSessionMcpTool,
+  ProjectSessionMcpInputSchema
+>();
+
+export const getDetailedProjectSessionMcpInputSchema = (
+  tool: ProjectSessionMcpTool
+) => detailedMcpInputSchemas.get(tool) ?? tool.inputSchema;
+
 export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
   options: {
@@ -2370,16 +2575,18 @@ export const listProjectSessionMcpTools = (
     )
     .map((operation) => {
       const override = mcpOperationOverrides.get(operation.command);
-      return createProjectSessionMcpTool({
+      const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
+        getMcpOperationInputSchema(operation, {
+          includeRenderedAudit:
+            options.includeScreenshot === true &&
+            options.includePreview === true,
+          schema: override?.inputSchema,
+        })
+      );
+      const tool = createProjectSessionMcpTool({
         name: operation.command,
         description: override?.description ?? operation.description,
-        inputSchema:
-          override?.inputSchema ??
-          getMcpOperationInputSchema(operation, {
-            includeRenderedAudit:
-              options.includeScreenshot === true &&
-              options.includePreview === true,
-          }),
+        inputSchema,
         ...(operation.outputSchema === undefined
           ? {}
           : { outputSchema: getMcpOutputSchema(operation.outputSchema) }),
@@ -2395,8 +2602,13 @@ export const listProjectSessionMcpTools = (
           writeNamespaces: operation.writeNamespaces,
           invalidatesNamespaces: operation.invalidatesNamespaces,
           retryOnConflict: operation.retryOnConflict,
+          requiresConfirm: operation.requiresConfirm,
         },
       });
+      if (detailedInputSchema !== undefined) {
+        detailedMcpInputSchemas.set(tool, detailedInputSchema);
+      }
+      return tool;
     }),
   ...sessionTools.map((tool) => ({
     ...tool,
@@ -2697,17 +2909,12 @@ const getRegistryListInput = (
       `${toolName} input.documentType must be one of html, xml, text.`
     );
   }
-  const limit = Math.min(
-    100,
-    Math.max(
-      1,
-      Math.floor(getOptionalNumberInput(input, "limit", toolName) ?? 50)
-    )
-  );
-  const offset = Math.max(
-    0,
-    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
-  );
+  const { limit, offset } = getOffsetPaginationInput({
+    input,
+    toolName,
+    defaultLimit: 50,
+    maxLimit: 100,
+  });
   return {
     source: source as RegistryListSource,
     documentType: documentType as CoveragePlanDocumentType,
@@ -2823,6 +3030,32 @@ const getOptionalNumberInput = (
   return value;
 };
 
+const getOffsetPaginationInput = ({
+  input,
+  toolName,
+  defaultLimit,
+  maxLimit,
+}: {
+  input: unknown;
+  toolName: string;
+  defaultLimit: number;
+  maxLimit: number;
+}) => ({
+  offset: Math.max(
+    0,
+    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
+  ),
+  limit: Math.min(
+    maxLimit,
+    Math.max(
+      1,
+      Math.floor(
+        getOptionalNumberInput(input, "limit", toolName) ?? defaultLimit
+      )
+    )
+  ),
+});
+
 const getCoveragePlanInput = (input: unknown) => {
   const detail =
     getOptionalStringInput(input, "detail", "components.coverage-plan") ||
@@ -2846,21 +3079,12 @@ const getCoveragePlanInput = (input: unknown) => {
       `components.coverage-plan input.documentType must be one of ${coveragePlanDocumentTypes.join(", ")}.`
     );
   }
-  const offset = Math.max(
-    0,
-    Math.floor(
-      getOptionalNumberInput(input, "offset", "components.coverage-plan") ?? 0
-    )
-  );
-  const limit = Math.min(
-    100,
-    Math.max(
-      1,
-      Math.floor(
-        getOptionalNumberInput(input, "limit", "components.coverage-plan") ?? 20
-      )
-    )
-  );
+  const { offset, limit } = getOffsetPaginationInput({
+    input,
+    toolName: "components.coverage-plan",
+    defaultLimit: 20,
+    maxLimit: 100,
+  });
   return {
     detail: detail as CoveragePlanDetail,
     namespace: getOptionalStringInput(
@@ -3293,6 +3517,7 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 const startupGuidance = [
   "For any multi-step authoring task, first call meta.guide with the user's objective and follow its complete workflow, including final audit, preview, and screenshot steps.",
   "Mutation responses can include meta.next. Treat those steps as required before reporting completion.",
+  "Every local-capable mutation exposes dryRun. Destructive delete, replace, and replace-all calls plan first; review the transaction, ask the user to confirm, then retry the unchanged call with confirmDestructive: true and meta.confirmation.token. Never retry blindly because changed input, version, or plan invalidates the short-lived token.",
   readProjectBuildDoc("mcp-startup-guidance").trim(),
 ].join("\n\n");
 const formatExpressionMethods = (methods: ReadonlySet<string>) =>
@@ -3558,7 +3783,7 @@ type ComponentSummaryEntry = NonNullable<
   ReturnType<typeof getComponentSummaryEntry>
 >;
 
-const getComponentSummary = () => {
+const getComponentCatalogSummary = () => {
   const templates = getComponentTemplates();
   const entries = [...componentMetas.keys()]
     .flatMap((component) => {
@@ -3588,6 +3813,51 @@ const getComponentSummary = () => {
   };
 };
 
+const getComponentSummary = (input: unknown) => {
+  const detail =
+    getOptionalStringInput(input, "detail", "components.summary") || "summary";
+  if (detail !== "summary" && detail !== "components") {
+    throw new Error(
+      "components.summary input.detail must be summary or components."
+    );
+  }
+  const summary = getComponentCatalogSummary();
+  const base = {
+    usage:
+      'Default summary is compact. Use detail:"components" with offset and limit for component entries, or components.search/components.get for focused discovery.',
+    total: summary.total,
+    namespaceCounts: summary.namespaceCounts,
+    templateCount: summary.templateComponents.length,
+    standaloneInsertableCount: summary.standaloneInsertable.length,
+    nonStandaloneCount: summary.nonStandaloneComponents.length,
+  };
+  if (detail === "summary") {
+    return base;
+  }
+  const { offset, limit } = getOffsetPaginationInput({
+    input,
+    toolName: "components.summary",
+    defaultLimit: 20,
+    maxLimit: 100,
+  });
+  const components = summary.components.slice(offset, offset + limit);
+  return {
+    ...base,
+    detail,
+    count: components.length,
+    omittedCount: Math.max(0, summary.total - offset - components.length),
+    pagination: {
+      offset,
+      limit,
+      nextOffset:
+        offset + components.length < summary.total
+          ? offset + components.length
+          : undefined,
+    },
+    components,
+  };
+};
+
 const getComponentRegistryItems = () =>
   listComponentRegistryItems({
     metas: componentMetas,
@@ -3608,6 +3878,21 @@ const filterRegistryItemsBySource = (
       : item.meta.source === "meta"
   );
 };
+
+const toRegistryItemSummary = (item: ComponentRegistryItem) => ({
+  name: item.name,
+  title: item.title,
+  description: item.description,
+  type: item.type,
+  meta: {
+    catalogId: item.meta.catalogId,
+    source: item.meta.source,
+    component: item.meta.component,
+    category: item.meta.category,
+    label: item.meta.label,
+    insert: item.meta.insert,
+  },
+});
 
 const listRegistryItems = ({
   input,
@@ -3636,7 +3921,7 @@ const listRegistryItems = ({
   const items = allItems.slice(offset, offset + limit);
   return {
     usage:
-      "Registry items use the shadcn-compatible shape plus Webstudio insertion metadata in meta. Use meta.insert.component with insert-component for automatic templates, or use insert-fragment for authored/styled JSX sections.",
+      "Registry lists return compact metadata. Use components.get or templates.get for one complete item before insertion.",
     source,
     documentType,
     count: items.length,
@@ -3647,7 +3932,7 @@ const listRegistryItems = ({
       limit,
       nextOffset: offset + limit < allItems.length ? offset + limit : undefined,
     },
-    items,
+    items: items.map(toRegistryItemSummary),
   };
 };
 
@@ -3683,7 +3968,7 @@ const getTemplateDetails = (input: unknown) => {
 const getComponentCoveragePlan = async (input: unknown) => {
   const { detail, namespace, documentType, offset, limit } =
     getCoveragePlanInput(input);
-  const summary = getComponentSummary();
+  const summary = getComponentCatalogSummary();
   const documentEntries = summary.components.filter((entry) =>
     isComponentAvailableForDocumentType({
       component: entry.component,
@@ -3890,7 +4175,7 @@ const getAvailableComponentEntries = async ({
 }: {
   documentType: CoveragePlanDocumentType;
 }) => {
-  const summary = getComponentSummary();
+  const summary = getComponentCatalogSummary();
   return summary.components.filter((entry) =>
     isComponentAvailableForDocumentType({
       component: entry.component,
@@ -4132,17 +4417,12 @@ const getComponentFindInput = (
   input: unknown,
   toolName: "components.find" | "components.search"
 ) => {
-  const limit = Math.min(
-    25,
-    Math.max(
-      1,
-      Math.floor(getOptionalNumberInput(input, "limit", toolName) ?? 12)
-    )
-  );
-  const offset = Math.max(
-    0,
-    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
-  );
+  const { limit, offset } = getOffsetPaginationInput({
+    input,
+    toolName,
+    defaultLimit: 12,
+    maxLimit: 25,
+  });
   return {
     brief: getRequiredStringInput(input, "brief", toolName),
     limit,
@@ -4169,7 +4449,7 @@ const findComponents = async (
   toolName: "components.find" | "components.search" = "components.find"
 ) => {
   const { brief, limit, offset } = getComponentFindInput(input, toolName);
-  const summary = getComponentSummary();
+  const summary = getComponentCatalogSummary();
   const normalizedBrief = normalize(brief);
   const tokens = normalizedBrief
     .split(/\s+/)
@@ -4718,7 +4998,7 @@ const getExactTools = (
 const serializeToolDetails = (tool: ProjectSessionMcpTool) => ({
   name: tool.name,
   description: tool.description,
-  inputSchema: tool.inputSchema,
+  inputSchema: getDetailedProjectSessionMcpInputSchema(tool),
   inputFields: tool.annotations.inputFields,
   requiredInputFields: tool.annotations.requiredInputFields,
   mcpExamples: tool.mcpExamples ?? [],
@@ -4819,7 +5099,6 @@ const readOnlySessionTools = new Set([
   "meta.index",
   "meta.guide",
   "meta.get_more_tools",
-  "workflow.next",
   "status",
   "components.summary",
   "components.list",
@@ -4839,14 +5118,21 @@ const toolAliases = new Map([
 
 const resolveToolName = (name: string) => toolAliases.get(name) ?? name;
 
-const isReadOnlyTool = (tool: ProjectSessionMcpTool) =>
+export const isReadOnlyProjectSessionMcpTool = (tool: ProjectSessionMcpTool) =>
   tool.annotations.method === "query" ||
   (tool.annotations.method === "session" &&
     readOnlySessionTools.has(tool.name));
 
-const isDestructiveTool = (tool: ProjectSessionMcpTool) =>
-  tool.annotations.method === "mutation" ||
-  tool.annotations.invalidatesNamespaces.length > 0;
+export const isReadOnlyProjectSessionMcpToolCall = (
+  name: string,
+  tools: readonly ProjectSessionMcpTool[]
+) => {
+  const resolvedName = resolveToolName(name);
+  return tools.some(
+    (tool) =>
+      tool.name === resolvedName && isReadOnlyProjectSessionMcpTool(tool)
+  );
+};
 
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
@@ -4856,8 +5142,8 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
     ? {}
     : { outputSchema: tool.outputSchema }),
   annotations: {
-    readOnlyHint: isReadOnlyTool(tool),
-    destructiveHint: isDestructiveTool(tool),
+    readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),
+    destructiveHint: tool.annotations.requiresConfirm,
     openWorldHint: tool.annotations.serverOnly,
   },
   _meta: {
@@ -4925,12 +5211,32 @@ export const listProjectSessionMcpResources =
     },
   ];
 
+const destructiveConfirmationTtlMs = 5 * 60 * 1000;
+
+const getDestructivePlanSummary = (
+  envelope: ProjectSessionEnvelope
+): DestructiveConfirmation["summary"] => {
+  const changes = envelope.transaction?.payload ?? [];
+  const patches = changes.flatMap(({ patches }) => patches);
+  const patchOperations: Record<string, number> = {};
+  for (const patch of patches) {
+    patchOperations[patch.op] = (patchOperations[patch.op] ?? 0) + 1;
+  }
+  return {
+    namespaces: [...new Set(changes.map(({ namespace }) => namespace))],
+    changeCount: changes.length,
+    patchCount: patches.length,
+    patchOperations,
+  };
+};
+
 const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
     verboseSession?: boolean;
     error?: { code: string; message: string };
     next?: string[];
+    confirmation?: DestructiveConfirmation;
   } = {}
 ): ProjectSessionMcpToolResult => {
   const meta = {
@@ -4938,6 +5244,9 @@ const toCallResult = (
       verbose: options.verboseSession,
     }),
     ...(options.next === undefined ? {} : { next: options.next }),
+    ...(options.confirmation === undefined
+      ? {}
+      : { confirmation: options.confirmation }),
   };
   const structuredContent: ProjectSessionMcpStructuredContent =
     options.error === undefined
@@ -4962,6 +5271,85 @@ const toCallResult = (
     structuredContent,
     ...(options.error === undefined ? {} : { isError: true }),
   };
+};
+
+const executeDestructiveMcpOperation = async <Command extends string>({
+  command,
+  input,
+  dryRun,
+  confirmDestructive,
+  confirmationToken,
+  executeOperation,
+}: {
+  command: Command;
+  input: unknown;
+  dryRun: boolean;
+  confirmDestructive: boolean;
+  confirmationToken?: string;
+  executeOperation: ExecuteMcpOperation<Command>;
+}): Promise<[ProjectSessionEnvelope, ProjectSessionMcpToolResult?]> => {
+  const plannedEnvelope = await executeOperation({
+    command,
+    input,
+    dryRun: true,
+  });
+  if (plannedEnvelope.transaction === undefined) {
+    return [plannedEnvelope, toCallResult(plannedEnvelope)];
+  }
+  const confirmationPayload = {
+    operation: command,
+    input,
+    projectId: plannedEnvelope.projectId,
+    buildId: plannedEnvelope.buildId,
+    version: plannedEnvelope.version,
+    payload: plannedEnvelope.transaction.payload,
+  };
+  const confirmation = async (): Promise<DestructiveConfirmation> => {
+    const { token, expiresAt } = await createConfirmationToken(
+      confirmationPayload,
+      destructiveConfirmationTtlMs
+    );
+    return {
+      required: true,
+      operation: command,
+      token,
+      expiresAt: new Date(expiresAt).toISOString(),
+      summary: getDestructivePlanSummary(plannedEnvelope),
+    };
+  };
+  if (dryRun) {
+    return [
+      plannedEnvelope,
+      toCallResult(plannedEnvelope, {
+        confirmation: await confirmation(),
+        next: [
+          "Review the planned result and transaction. To commit the unchanged destructive operation, retry with confirmDestructive: true and this confirmationToken before it expires.",
+        ],
+      }),
+    ];
+  }
+  const isConfirmed =
+    confirmDestructive &&
+    (await validateConfirmationToken(confirmationToken, confirmationPayload));
+  if (isConfirmed === false) {
+    return [
+      plannedEnvelope,
+      toCallResult(plannedEnvelope, {
+        error: {
+          code: confirmDestructive
+            ? "DESTRUCTIVE_CONFIRMATION_INVALID"
+            : "DESTRUCTIVE_CONFIRMATION_REQUIRED",
+          message:
+            "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.",
+        },
+        confirmation: await confirmation(),
+        next: [
+          "Do not retry blindly. Review meta.session.transaction and meta.confirmation.summary, ask the user to confirm, then retry the unchanged operation with confirmDestructive: true and meta.confirmation.token.",
+        ],
+      }),
+    ];
+  }
+  return [await executeOperation({ command, input, dryRun: false })];
 };
 
 const getRenderedAuditError = (
@@ -5616,7 +6004,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           nextCommand,
         });
       }
-      if (pendingCheckpoint !== undefined) {
+      if (
+        pendingCheckpoint !== undefined &&
+        isReadOnlyProjectSessionMcpToolCall(name, listTools()) === false
+      ) {
         throw new ProjectSessionMcpCheckpointError(
           `CHECKPOINT_REQUIRED: ${pendingCheckpoint.message} Stop now and report the checkpoint to the parent/user. Only after the parent/user continues, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"} before calling "${name}".`
         );
@@ -5650,7 +6041,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         );
       }
       if (name === "components.summary") {
-        return toMetaResult(getComponentSummary());
+        return toMetaResult(getComponentSummary(input));
       }
       if (name === "components.list") {
         return toMetaResult(
@@ -5759,20 +6150,23 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (operation === undefined) {
         throw new Error(`Unknown MCP tool "${name}".`);
       }
-      const normalizedInput = await normalizeMcpOperationInput(name, input);
-      const isAuditInput = name === "audit" && isRecord(input);
+      const transportInput = getToolCallInput(input, operation.requiresConfirm);
+      const toolInput = transportInput.input;
+      dryRun = dryRun || transportInput.dryRun;
+      const normalizedInput = await normalizeMcpOperationInput(name, toolInput);
+      const isAuditInput = name === "audit" && isRecord(toolInput);
       if (
         isAuditInput &&
-        input.rendered !== undefined &&
-        typeof input.rendered !== "boolean"
+        toolInput.rendered !== undefined &&
+        typeof toolInput.rendered !== "boolean"
       ) {
         throw new Error("audit input.rendered must be a boolean.");
       }
       if (
         isAuditInput &&
-        input.routeExamples !== undefined &&
-        (Array.isArray(input.routeExamples) === false ||
-          input.routeExamples.some(
+        toolInput.routeExamples !== undefined &&
+        (Array.isArray(toolInput.routeExamples) === false ||
+          toolInput.routeExamples.some(
             (example) =>
               isRecord(example) === false ||
               typeof example.pageId !== "string" ||
@@ -5787,7 +6181,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           "audit input.routeExamples must contain { pageId, path } objects with concrete paths beginning with one slash."
         );
       }
-      const isRenderedAudit = isAuditInput && input.rendered === true;
+      const isRenderedAudit = isAuditInput && toolInput.rendered === true;
       const renderedOnlyInputFields = [
         "confirmLargeRun",
         "confirmationToken",
@@ -5795,7 +6189,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         "routeExamples",
       ] as const;
       const providedRenderedOnlyInput = renderedOnlyInputFields.find(
-        (field) => isAuditInput && input[field] !== undefined
+        (field) => isAuditInput && toolInput[field] !== undefined
       );
       if (isAuditInput && isRenderedAudit === false) {
         if (providedRenderedOnlyInput !== undefined) {
@@ -5806,23 +6200,23 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (
         isAuditInput &&
-        input.confirmLargeRun !== undefined &&
-        typeof input.confirmLargeRun !== "boolean"
+        toolInput.confirmLargeRun !== undefined &&
+        typeof toolInput.confirmLargeRun !== "boolean"
       ) {
         throw new Error("audit input.confirmLargeRun must be a boolean.");
       }
       if (
         isAuditInput &&
-        input.confirmationToken !== undefined &&
-        typeof input.confirmationToken !== "string"
+        toolInput.confirmationToken !== undefined &&
+        typeof toolInput.confirmationToken !== "string"
       ) {
         throw new Error("audit input.confirmationToken must be a string.");
       }
       if (
         isAuditInput &&
-        input.imageDomains !== undefined &&
-        (Array.isArray(input.imageDomains) === false ||
-          input.imageDomains.some(
+        toolInput.imageDomains !== undefined &&
+        (Array.isArray(toolInput.imageDomains) === false ||
+          toolInput.imageDomains.some(
             (domain) =>
               typeof domain !== "string" ||
               /^[a-z0-9.-]+(?::\d+)?$/i.test(domain) === false
@@ -5842,7 +6236,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           "Rendered audit is unavailable because this MCP host does not provide preview and screenshot capabilities."
         );
       }
-      if (isRenderedAudit && typeof input.cursor === "string") {
+      if (isRenderedAudit && typeof toolInput.cursor === "string") {
         throw new Error(
           "Rendered audit cannot be combined with cursor pagination. Run the rendered pass once without cursor."
         );
@@ -5851,7 +6245,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         operation,
         isAuditInput
           ? Object.fromEntries(
-              Object.entries(input).filter(
+              Object.entries(toolInput).filter(
                 ([key]) =>
                   key !== "rendered" &&
                   key !== "confirmLargeRun" &&
@@ -5862,11 +6256,25 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             )
           : normalizedInput
       );
-      const envelope = await executeOperation({
-        command: name as Command,
-        input: operationInput,
-        dryRun,
-      });
+      const [envelope, response] = operation.requiresConfirm
+        ? await executeDestructiveMcpOperation({
+            command: name as Command,
+            input: operationInput,
+            dryRun,
+            confirmDestructive: transportInput.confirmDestructive,
+            confirmationToken: transportInput.confirmationToken,
+            executeOperation,
+          })
+        : [
+            await executeOperation({
+              command: name as Command,
+              input: operationInput,
+              dryRun,
+            }),
+          ];
+      if (response !== undefined) {
+        return response;
+      }
       if (name === "audit") {
         const auditedEnvelope = await augmentAuditWithRenderedChecks({
           envelope,
@@ -5875,17 +6283,17 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
               ? {
                   ...operationInput,
                   rendered: true,
-                  ...(input.confirmLargeRun === true
+                  ...(toolInput.confirmLargeRun === true
                     ? { confirmLargeRun: true }
                     : {}),
-                  ...(typeof input.confirmationToken === "string"
-                    ? { confirmationToken: input.confirmationToken }
+                  ...(typeof toolInput.confirmationToken === "string"
+                    ? { confirmationToken: toolInput.confirmationToken }
                     : {}),
-                  ...(Array.isArray(input.imageDomains)
-                    ? { imageDomains: input.imageDomains }
+                  ...(Array.isArray(toolInput.imageDomains)
+                    ? { imageDomains: toolInput.imageDomains }
                     : {}),
-                  ...(Array.isArray(input.routeExamples)
-                    ? { routeExamples: input.routeExamples }
+                  ...(Array.isArray(toolInput.routeExamples)
+                    ? { routeExamples: toolInput.routeExamples }
                     : {}),
                 }
               : operationInput,
@@ -5934,13 +6342,41 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   };
 };
 
-const getToolCallInput = (input: unknown) => {
-  if (isRecord(input) === false) {
-    return { input, dryRun: false };
+const getToolCallInput = (input: unknown, destructive = false) => {
+  if (isPlainRecord(input) === false) {
+    return {
+      input,
+      dryRun: false,
+      confirmDestructive: false,
+      confirmationToken: undefined,
+    };
   }
   const dryRun = input.dryRun === true || input["dry-run"] === true;
-  const { dryRun: _dryRun, "dry-run": _dashDryRun, ...rest } = input;
-  return { input: rest, dryRun };
+  const confirmDestructive = input.confirmDestructive === true;
+  const confirmationToken =
+    typeof input.confirmationToken === "string"
+      ? input.confirmationToken
+      : undefined;
+  const { dryRun: _dryRun, "dry-run": _dashDryRun, ...withoutDryRun } = input;
+  if (destructive) {
+    const {
+      confirmDestructive: _confirmDestructive,
+      confirmationToken: _confirmationToken,
+      ...operationInput
+    } = withoutDryRun;
+    return {
+      input: operationInput,
+      dryRun,
+      confirmDestructive,
+      confirmationToken,
+    };
+  }
+  return {
+    input: withoutDryRun,
+    dryRun,
+    confirmDestructive: false,
+    confirmationToken: undefined,
+  };
 };
 
 type ProjectSessionMcpErrorResult = {

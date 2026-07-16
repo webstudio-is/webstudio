@@ -3,6 +3,7 @@ import {
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import {
+  getDetailedProjectSessionMcpInputSchema,
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
 } from "@webstudio-is/project-build/mcp";
@@ -113,7 +114,7 @@ const mcpToolSchema = listProjectSessionMcpTools(publicApiOperations, {
 }).map((tool) => ({
   name: tool.name,
   description: tool.description,
-  inputSchema: tool.inputSchema,
+  inputSchema: getDetailedProjectSessionMcpInputSchema(tool),
   ...(tool.outputSchema === undefined
     ? {}
     : { outputSchema: tool.outputSchema }),

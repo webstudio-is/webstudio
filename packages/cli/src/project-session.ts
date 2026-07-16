@@ -1,5 +1,5 @@
 import { readFile, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { cwd } from "node:process";
 import {
   migratePages,
@@ -37,7 +37,7 @@ import {
 } from "@webstudio-is/project-build/state";
 import { removeLegacyProjectSettingsFromPages } from "@webstudio-is/project-build";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
-import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "./config";
+import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
 import { writeFileAtomic } from "./fs-utils";
@@ -142,8 +142,14 @@ type PersistedCliProjectSessionSnapshot = Omit<
   state: SerializedBuilderStateSnapshot;
 };
 
-export const getCliProjectSessionFile = (projectRoot = cwd()) =>
-  join(projectRoot, dirname(LOCAL_CONFIG_FILE), "project-session.json");
+export const getCliProjectSessionFile = (
+  projectRoot = cwd(),
+  projectId?: string
+) =>
+  join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    "project-session.json"
+  );
 const compatibilityVersion = "cli-project-session-v1";
 
 const createCliProjectSessionCompatibility = (
@@ -382,12 +388,14 @@ export const createCliProjectSession = ({
   connection,
   storage,
   projectRoot,
+  sessionProjectId,
   executeServerOperation,
   getPermissions,
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;
   projectRoot?: string;
+  sessionProjectId?: string;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
   getPermissions?: ProjectSessionTransport["getPermissions"];
 }) =>
@@ -400,7 +408,9 @@ export const createCliProjectSession = ({
     }),
     storage:
       storage ??
-      createCliProjectSessionStorage(getCliProjectSessionFile(projectRoot)),
+      createCliProjectSessionStorage(
+        getCliProjectSessionFile(projectRoot, sessionProjectId)
+      ),
     compatibilityVersion,
   });
 

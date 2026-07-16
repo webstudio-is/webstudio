@@ -161,6 +161,20 @@ test("prints compact mcp tool summaries as json by default", () => {
   );
   expect(output.resources).toEqual(listProjectSessionMcpResources());
   expect(output.toolCount).toBe(expectedTools.length);
+  const handshakePayload = expectedTools.map(
+    ({ name, description, inputSchema }) => ({
+      name,
+      description,
+      inputSchema,
+    })
+  );
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(200_000);
+  expect(
+    JSON.stringify(
+      expectedTools.find(({ name }) => name === "insert-page-transfer-item")
+        ?.inputSchema
+    ).length
+  ).toBeLessThan(1_000);
   expect(output.tools).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
@@ -233,6 +247,7 @@ test("prints full mcp tool input schemas when requested", () => {
     "fragment",
     "mode",
     "insertIndex",
+    "dryRun",
   ]);
   const fragmentSchema = insertFragmentTool.inputSchema.properties.fragment;
   expect(fragmentSchema.type).toBe("string");
@@ -342,6 +357,24 @@ test("prints focused mcp tool schema when topic is a tool name", () => {
       }),
     }),
   ]);
+});
+
+test("prints deferred schemas in full for focused discovery", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  schema({ topic: "insert-page-transfer-item", json: true });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  expect(output.tools[0]).toEqual(
+    expect.objectContaining({
+      name: "insert-page-transfer-item",
+      inputSchema: expect.objectContaining({
+        properties: expect.objectContaining({
+          item: expect.objectContaining({ anyOf: expect.any(Array) }),
+        }),
+      }),
+    })
+  );
 });
 
 test("prints mcp tool overview as json without json flag", () => {
