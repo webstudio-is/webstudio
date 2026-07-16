@@ -315,6 +315,20 @@ type ImportProject = (
   input: ProjectSessionImportInput
 ) => Promise<ProjectSessionImportResult>;
 
+export type ProjectSessionDownloadAssetInput = {
+  assetId: string;
+  assetsDir?: string;
+};
+
+export type ProjectSessionDownloadAssetResult = {
+  assetId: string;
+  path: string;
+};
+
+type DownloadAsset = (
+  input: ProjectSessionDownloadAssetInput
+) => Promise<ProjectSessionDownloadAssetResult>;
+
 export type ProjectSessionMcpGuidance = {
   visualVerificationRule: string;
   getVisionVerificationLoop: (options: {
@@ -1437,6 +1451,24 @@ const importInputSchema = {
   required: ["to"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const downloadAssetInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Download one project asset to the local filesystem and return its absolute path.",
+  properties: {
+    assetId: {
+      type: "string",
+      description: "Existing asset id from list-assets.",
+    },
+    assetsDir: {
+      type: "string",
+      description:
+        "Optional destination directory. Defaults to .webstudio/assets.",
+    },
+  },
+  required: ["assetId"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
 export type ProjectSessionMcpTool = {
   name: string;
   description: string;
@@ -1526,6 +1558,25 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       to: "https://p-destination-project-id.wstd.dev/?authToken=destination-token",
     },
+  ],
+  "download-asset": [{ assetId: "asset-id" }],
+  "list-asset-folders": [{}],
+  "create-asset-folder": [
+    { name: "Marketing" },
+    { name: "Photos", parentId: "marketing-folder-id" },
+  ],
+  "update-asset-folder": [
+    { folderId: "folder-id", values: { name: "Brand" } },
+    { folderId: "folder-id", values: { parentId: null } },
+  ],
+  "duplicate-asset-folder": [
+    { folderId: "folder-id" },
+    { folderId: "folder-id", parentId: "target-folder-id" },
+  ],
+  "delete-asset-folder": [{ folderId: "folder-id" }],
+  "duplicate-asset": [
+    { assetId: "asset-id" },
+    { assetId: "asset-id", folderId: "target-folder-id" },
   ],
   "preview.start": [{ host: "127.0.0.1", port: 5173, source: "session" }],
   "preview.status": [{}],
@@ -1770,7 +1821,15 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       assetId: "asset-id",
       values: { description: "Team collaborating around a whiteboard" },
     },
+    {
+      assetId: "asset-id",
+      values: { filename: "hero", folderId: "folder-id" },
+    },
+    { assetId: "asset-id", values: { folderId: null } },
   ],
+  "list-assets": [{}, { verbose: true }],
+  "replace-asset": [{ fromAssetId: "old-asset-id", toAssetId: "new-asset-id" }],
+  "delete-asset": [{ assetIdsOrPrefixes: ["asset-id"] }],
   "set-image-descriptions": [
     {
       updates: [
@@ -2546,6 +2605,35 @@ const importTool = createProjectSessionMcpTool({
   },
 });
 
+const downloadAssetTool = createProjectSessionMcpTool({
+  name: "download-asset",
+  description:
+    "Download one project asset into .webstudio/assets or a specified directory and return its local path.",
+  inputSchema: downloadAssetInputSchema,
+  outputSchema: getMcpOutputSchema({
+    type: "object",
+    properties: {
+      assetId: { type: "string" },
+      path: { type: "string" },
+    },
+    required: ["assetId", "path"],
+    additionalProperties: false,
+  }),
+  mcpExamples: getMcpExamples("download-asset"),
+  annotations: {
+    command: "download-asset",
+    operationId: "assets.download",
+    method: "session",
+    permit: "view",
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: ["assets"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
 const previewTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "preview.start",
@@ -2695,6 +2783,7 @@ export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
   options: {
     includeImport?: boolean;
+    includeDownloadAsset?: boolean;
     includeScreenshot?: boolean;
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
@@ -2749,6 +2838,7 @@ export const listProjectSessionMcpTools = (
   })),
   ...(options.includeRestorePoints ? restorePointTools : []),
   ...(options.includeImport ? [importTool] : []),
+  ...(options.includeDownloadAsset ? [downloadAssetTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
@@ -2927,13 +3017,20 @@ const capabilityAreas = [
   },
   {
     area: "assets",
-    goal: "Manage uploaded and system fonts, plus upload, replace, delete, list, and find usage of assets.",
+    goal: "Manage asset folders and uploaded assets, including listing, creating, renaming, moving, duplicating, downloading, uploading, replacing, and deleting.",
     tools: [
+      "list-asset-folders",
+      "create-asset-folder",
+      "update-asset-folder",
+      "duplicate-asset-folder",
+      "delete-asset-folder",
       "list-assets",
       "list-fonts",
       "upload-asset",
       "upload-assets",
+      "download-asset",
       "update-asset",
+      "duplicate-asset",
       "set-image-descriptions",
       "find-asset-usage",
       "replace-asset",
@@ -5900,11 +5997,30 @@ const getImportInput = (input: unknown): ProjectSessionImportInput => {
   };
 };
 
+const getDownloadAssetInput = (
+  input: unknown
+): ProjectSessionDownloadAssetInput => {
+  if (isRecord(input) === false) {
+    throw new Error("download-asset input must be an object.");
+  }
+  if (typeof input.assetId !== "string" || input.assetId.length === 0) {
+    throw new Error("download-asset requires assetId.");
+  }
+  return {
+    assetId: input.assetId,
+    assetsDir:
+      typeof input.assetsDir === "string" && input.assetsDir.length > 0
+        ? input.assetsDir
+        : undefined,
+  };
+};
+
 type ProjectSessionMcpCoreOptions<Command extends string> = {
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
   importProject?: ImportProject;
+  downloadAsset?: DownloadAsset;
   captureScreenshot?: CaptureScreenshot;
   capturePageScreenshots?: CapturePageScreenshots;
   diffScreenshots?: DiffScreenshots;
@@ -5937,6 +6053,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   createProjectSession,
   executeOperation,
   importProject,
+  downloadAsset,
   captureScreenshot,
   capturePageScreenshots,
   diffScreenshots,
@@ -5964,6 +6081,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   const listTools = () =>
     listProjectSessionMcpTools(operations, {
       includeImport: importProject !== undefined,
+      includeDownloadAsset: downloadAsset !== undefined,
       includeScreenshot: captureScreenshot !== undefined,
       includeScreenshotDiff: diffScreenshots !== undefined,
       includeInstallOcr: installOcr !== undefined,
@@ -6291,6 +6409,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (name === "import" && importProject !== undefined) {
         return toMetaResult(await importProject(getImportInput(input)));
+      }
+      if (name === "download-asset" && downloadAsset !== undefined) {
+        return toMetaResult(await downloadAsset(getDownloadAssetInput(input)));
       }
       if (name === "screenshot" && captureScreenshot !== undefined) {
         return toMetaResult(

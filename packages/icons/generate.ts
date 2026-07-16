@@ -50,6 +50,10 @@ type GenerateOptions = {
   content: string;
 };
 
+const componentDefaults = new Map<string, { strokeWidth?: number }>([
+  ["./icons/folder.svg", { strokeWidth: 1 }],
+]);
+
 export const generateStringExport = (options: GenerateOptions) => {
   const { data: optimized } = optimize(options.content, {
     path: options.file,
@@ -74,6 +78,7 @@ export const generateStringExport = (options: GenerateOptions) => {
 };
 
 const generateComponentExport = (options: GenerateOptions) => {
+  const defaults = componentDefaults.get(options.file);
   const { jsx } = convertSvgToJsx({
     target: "react-dom",
     file: options.file,
@@ -82,6 +87,9 @@ const generateComponentExport = (options: GenerateOptions) => {
       width: "{size}",
       height: "{size}",
       fill: "{fill}",
+      ...(defaults?.strokeWidth === undefined
+        ? {}
+        : { strokeWidth: "{strokeWidth}" }),
       "{...props}": null,
       ref: "{forwardedRef}",
     },
@@ -89,7 +97,7 @@ const generateComponentExport = (options: GenerateOptions) => {
   });
   return `
 export const ${options.exportName}: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+  ({ fill = "none", size = 16${defaults?.strokeWidth === undefined ? "" : `, strokeWidth = ${defaults.strokeWidth}`}, ...props }, forwardedRef) => {
     return (
       ${jsx}
     );

@@ -4,6 +4,7 @@ import {
   assetFolderName,
   assetFolders,
   createAssetFolderHierarchy,
+  type Asset,
   type AssetFolder,
   type AssetFolders,
 } from "@webstudio-is/sdk";
@@ -15,6 +16,8 @@ import {
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
+import { createCopyName } from "./copy-name";
+import { getAssetDisplayFilename } from "./assets";
 
 export const assetFolderListInput = z.object({});
 
@@ -36,6 +39,11 @@ export const assetFolderUpdateInput = z.object({
 });
 
 export const assetFolderDeleteInput = z.object({ folderId: z.string().min(1) });
+
+export const assetFolderDuplicateInput = z.object({
+  folderId: z.string().min(1),
+  parentId: z.string().min(1).nullable().optional(),
+});
 
 const getRequiredFolders = (state: Pick<BuilderState, "assetFolders">) => {
   if (state.assetFolders === undefined) {
@@ -151,6 +159,109 @@ export const updateAssetFolder = (
       patches.length === 0 ? [] : [{ namespace: "assetFolders", patches }],
     result: { folderId: folder.id },
     invalidatesNamespaces: patches.length === 0 ? [] : ["assetFolders"],
+  });
+};
+
+export const duplicateAssetFolder = (
+  state: Pick<BuilderState, "assetFolders" | "assets">,
+  input: z.infer<typeof assetFolderDuplicateInput>,
+  context: BuilderRuntimeContext
+) => {
+  const folders = getRequiredFolders(state);
+  const source = folders.get(input.folderId);
+  if (source === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Folder not found");
+  }
+  const parentId =
+    input.parentId === undefined
+      ? source.parentId
+      : (input.parentId ?? undefined);
+  if (parentId !== undefined && folders.has(parentId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent folder not found");
+  }
+
+  const hierarchy = createAssetFolderHierarchy(folders);
+  const sourceFolderIds = hierarchy.getDescendantIds(source.id).add(source.id);
+  const sourceFolders = hierarchy.sortByDepth(
+    Array.from(sourceFolderIds, (folderId) => folders.get(folderId)!)
+  );
+  const duplicatedIds = new Map<string, string>();
+  const duplicatedFolders: AssetFolder[] = [];
+  const copiedRootName = createCopyName(
+    source.name,
+    (candidate) =>
+      hierarchy.findByName({ name: candidate, parentId }) !== undefined
+  );
+  const createdAt = new Date().toISOString();
+  for (const folder of sourceFolders) {
+    const id = context.createId();
+    duplicatedIds.set(folder.id, id);
+    duplicatedFolders.push({
+      ...folder,
+      id,
+      name: folder.id === source.id ? copiedRootName : folder.name,
+      parentId:
+        folder.id === source.id
+          ? parentId
+          : duplicatedIds.get(folder.parentId!),
+      createdAt,
+    });
+  }
+
+  const displayFilenames = new Set(
+    Array.from(state.assets?.values() ?? [], getAssetDisplayFilename)
+  );
+  const duplicatedAssets: Asset[] = [];
+  for (const asset of state.assets?.values() ?? []) {
+    if (
+      asset.folderId === undefined ||
+      sourceFolderIds.has(asset.folderId) === false
+    ) {
+      continue;
+    }
+    const filename = createCopyName(
+      getAssetDisplayFilename(asset),
+      (candidate) => displayFilenames.has(candidate)
+    );
+    displayFilenames.add(filename);
+    duplicatedAssets.push({
+      ...asset,
+      id: context.createId(),
+      filename,
+      folderId: duplicatedIds.get(asset.folderId),
+    });
+  }
+
+  const nextFolders = new Map(folders);
+  for (const folder of duplicatedFolders) {
+    nextFolders.set(folder.id, folder);
+  }
+  validateFolderMutation(nextFolders, copiedRootName);
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "assetFolders",
+        patches: duplicatedFolders.map((folder) => ({
+          op: "add" as const,
+          path: [folder.id],
+          value: folder,
+        })),
+      },
+      ...(duplicatedAssets.length === 0
+        ? []
+        : [
+            {
+              namespace: "assets" as const,
+              patches: duplicatedAssets.map((asset) => ({
+                op: "add" as const,
+                path: [asset.id],
+                value: asset,
+              })),
+            },
+          ]),
+    ],
+    result: { folderId: duplicatedIds.get(source.id)! },
+    invalidatesNamespaces: ["assetFolders", "assets"],
   });
 };
 

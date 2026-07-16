@@ -1,9 +1,22 @@
-import { useEffect, useRef, type KeyboardEvent, type FocusEvent } from "react";
-import { Box, styled, Text } from "@webstudio-is/design-system";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type FocusEvent,
+} from "react";
+import { useStore } from "@nanostores/react";
+import {
+  Box,
+  ContextMenu,
+  ContextMenuTrigger,
+  styled,
+  Text,
+} from "@webstudio-is/design-system";
 import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
 import { wsVideoLoader } from "@webstudio-is/image";
 import { UploadingAnimation } from "./uploading-animation";
-import { AssetInfo } from "./asset-info";
+import { AssetDeleteDialog, AssetInfo } from "./asset-info";
 import type { AssetContainer } from "~/builder/shared/assets";
 import { Image } from "./image";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
@@ -15,11 +28,29 @@ import type { IconComponent } from "@webstudio-is/icons";
 import type { AllowedFileExtension } from "@webstudio-is/sdk";
 import {
   FILE_EXTENSIONS_BY_CATEGORY,
+  IMAGE_MIME_TYPES,
   detectAssetType,
 } from "@webstudio-is/sdk";
 import type { MimeCategory } from "@webstudio-is/sdk";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { AssetThumbnailCard } from "./asset-thumbnail-card";
+import {
+  AssetThumbnailAction,
+  AssetThumbnailCard,
+  AssetThumbnailGroup,
+} from "./asset-thumbnail-card";
+import { $authPermit, $permissions } from "~/shared/nano-states";
+import { replaceAsset } from "~/builder/shared/assets";
+import { validateFiles } from "~/builder/shared/assets/asset-upload";
+import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
+import {
+  copyAssetManagerItem,
+  cutAssetManagerItem,
+  duplicateAssetManagerItem,
+} from "./asset-manager-clipboard";
+import {
+  AssetManagerItemContextMenuContent,
+  type AssetManagerItemActions,
+} from "./asset-manager-item-menu";
 
 const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
@@ -108,6 +139,7 @@ type AssetThumbnailProps = {
   selected?: boolean;
   folderPath?: string;
   canDrag?: boolean;
+  onElementChange?: (element: HTMLElement | null) => void;
 };
 
 export const AssetThumbnail = ({
@@ -117,13 +149,66 @@ export const AssetThumbnail = ({
   selected,
   folderPath,
   canDrag = false,
+  onElementChange,
 }: AssetThumbnailProps) => {
-  const elementRef = useRef<HTMLElement>(null);
+  const elementRef = useRef<HTMLElement | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [focusName, setFocusName] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const authPermit = useStore($authPermit);
+  const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
   const { basename, ext } = parseAssetName(asset.name);
   const alt = asset.description ?? formatAssetName(asset);
   const isUploading = assetContainer.status === "uploading";
   const assetType = detectAssetType(asset.name);
+  const item = {
+    type: "asset" as const,
+    id: asset.id,
+    projectId:
+      assetContainer.status === "uploaded"
+        ? assetContainer.asset.projectId
+        : "uploading",
+  };
+  const download = () => {
+    if (assetContainer.status !== "uploaded") {
+      return;
+    }
+    const link = document.createElement("a");
+    link.download = formatAssetName(assetContainer.asset);
+    link.href = getAssetUrl(assetContainer.asset, window.location.origin).href;
+    link.click();
+  };
+  const actions: AssetManagerItemActions =
+    assetContainer.status === "uploading"
+      ? {}
+      : {
+          ...(authPermit === "view"
+            ? {}
+            : {
+                rename: () => {
+                  setFocusName(true);
+                  setDetailsOpen(true);
+                },
+                cut: () => cutAssetManagerItem(item),
+                copy: () => copyAssetManagerItem(item),
+                duplicate: () => duplicateAssetManagerItem(item),
+                delete: () => setDeleteOpen(true),
+                ...(asset.type === "image"
+                  ? { replace: () => replaceInputRef.current?.click() }
+                  : {}),
+              }),
+          ...(authPermit !== "view" && canDownloadAssets ? { download } : {}),
+        };
+
+  const handleReplaceFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = validateFiles(Array.from(event.target.files ?? []))[0];
+    if (file !== undefined) {
+      replaceAsset(asset.id, file);
+    }
+    event.target.value = "";
+  };
 
   useEffect(() => {
     const element = elementRef.current;
@@ -137,57 +222,99 @@ export const AssetThumbnail = ({
   }, [asset.id, canDrag, isUploading]);
 
   return (
-    <AssetThumbnailCard
-      ref={elementRef}
-      title={alt}
-      tabIndex={0}
-      selected={selected}
-      preview={
-        assetType === "image" ? (
-          <StyledWebstudioImage
-            assetId={asset.id}
-            name={asset.name}
-            objectURL={
-              assetContainer.status === "uploading"
-                ? assetContainer.objectURL
-                : undefined
-            }
-            alt={alt}
-            width={64}
-          />
-        ) : assetType === "video" ? (
-          <StyledWebstudioVideo
-            src={
-              assetContainer.status === "uploading"
-                ? assetContainer.objectURL
-                : wsVideoLoader({ src: asset.name })
-            }
-          />
-        ) : (
-          <GenericFilePreview ext={ext} format={asset.format} />
-        )
-      }
-      label={asset.filename ?? basename}
-      labelSuffix={`.${ext}`}
-      path={folderPath}
-      onPreviewClick={() => onChange?.(assetContainer)}
-      onFocus={() => onSelect(assetContainer)}
-      onBlur={(event: FocusEvent) => {
-        const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
-        if (isFocusWithin === false) {
-          onSelect();
-        }
-      }}
-      onKeyDown={(event: KeyboardEvent) => {
-        if (event.code === "Enter") {
-          onChange?.(assetContainer);
-        }
-      }}
-    >
+    <>
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept={IMAGE_MIME_TYPES.join(", ")}
+        hidden
+        onChange={handleReplaceFile}
+      />
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <AssetThumbnailGroup
+            selected={selected}
+            onFocus={() => onSelect(assetContainer)}
+            onBlur={(event: FocusEvent) => {
+              if (event.currentTarget.contains(event.relatedTarget) === false) {
+                onSelect();
+              }
+            }}
+          >
+            <AssetThumbnailCard
+              ref={(element) => {
+                elementRef.current = element;
+                onElementChange?.(element);
+              }}
+              as="button"
+              type="button"
+              title={alt}
+              selected={selected}
+              preview={
+                assetType === "image" ? (
+                  <StyledWebstudioImage
+                    assetId={asset.id}
+                    name={asset.name}
+                    objectURL={
+                      assetContainer.status === "uploading"
+                        ? assetContainer.objectURL
+                        : undefined
+                    }
+                    alt={alt}
+                    width={64}
+                  />
+                ) : assetType === "video" ? (
+                  <StyledWebstudioVideo
+                    src={
+                      assetContainer.status === "uploading"
+                        ? assetContainer.objectURL
+                        : wsVideoLoader({ src: asset.name })
+                    }
+                  />
+                ) : (
+                  <GenericFilePreview ext={ext} format={asset.format} />
+                )
+              }
+              label={asset.filename ?? basename}
+              labelSuffix={`.${ext}`}
+              path={folderPath}
+              onContextMenu={() => onSelect(assetContainer)}
+              onPreviewClick={() => onChange?.(assetContainer)}
+              onKeyDown={(event: KeyboardEvent) => {
+                if (event.code === "Enter") {
+                  onChange?.(assetContainer);
+                }
+              }}
+            >
+              {isUploading && <UploadingAnimation />}
+            </AssetThumbnailCard>
+            {assetContainer.status === "uploaded" && (
+              <AssetThumbnailAction>
+                <AssetInfo
+                  asset={assetContainer.asset}
+                  open={detailsOpen}
+                  onOpenChange={(open) => {
+                    setDetailsOpen(open);
+                    if (open === false) {
+                      setFocusName(false);
+                    }
+                  }}
+                  actions={actions}
+                  focusName={focusName}
+                />
+              </AssetThumbnailAction>
+            )}
+          </AssetThumbnailGroup>
+        </ContextMenuTrigger>
+        <AssetManagerItemContextMenuContent actions={actions} />
+      </ContextMenu>
       {assetContainer.status === "uploaded" && (
-        <AssetInfo asset={assetContainer.asset} />
+        <AssetDeleteDialog
+          asset={assetContainer.asset}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
       )}
-      {isUploading && <UploadingAnimation />}
-    </AssetThumbnailCard>
+    </>
   );
 };

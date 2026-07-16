@@ -66139,6 +66139,49 @@ export const runtimeOperationContractData = [
     invalidatesNamespaces: ["assetFolders", "assets"],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
+  },
+  {
+    id: "assetFolders.duplicate",
+    command: "duplicate-asset-folder",
+    client: "duplicateAssetFolder",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+          minLength: 1,
+        },
+        parentId: {
+          anyOf: [
+            {
+              type: "string",
+              minLength: 1,
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+      },
+      required: ["folderId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+        },
+      },
+      required: ["folderId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assetFolders", "assets"],
+    writeNamespaces: ["assetFolders", "assets"],
+    invalidatesNamespaces: ["assetFolders", "assets"],
+    retryOnConflict: true,
+    requiresAssets: true,
   },
   {
     id: "assets.list",
@@ -67024,6 +67067,48 @@ export const runtimeOperationContractData = [
         },
       },
       required: ["asset"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+      },
+      required: ["assetId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assets", "assetFolders"],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: true,
+    requiresAssets: true,
+  },
+  {
+    id: "assets.duplicate",
+    command: "duplicate-asset",
+    client: "duplicateAsset",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+          minLength: 1,
+        },
+        folderId: {
+          anyOf: [
+            {
+              type: "string",
+              minLength: 1,
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+      },
+      required: ["assetId"],
     },
     outputSchema: {
       type: "object",

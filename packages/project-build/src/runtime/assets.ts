@@ -38,6 +38,8 @@ import {
   throwBuilderRuntimeError,
 } from "./errors";
 import { createRuntimeMutation } from "./mutation";
+import { createCopyName } from "./copy-name";
+import type { BuilderRuntimeContext } from "./context";
 import {
   collectFontFamiliesFromStyleValue,
   traverseStyleValue,
@@ -149,6 +151,11 @@ const addableAsset = z.union([
 ]);
 
 export const assetAddInput = z.object({ asset: addableAsset });
+
+export const assetDuplicateInput = z.object({
+  assetId: z.string().min(1),
+  folderId: z.string().min(1).nullable().optional(),
+});
 
 export const parseAssetType = (value: string | null) => {
   const result = assetType.safeParse(value);
@@ -602,6 +609,47 @@ export const addAsset = (
       },
     ],
     result: { assetId: asset.id },
+    invalidatesNamespaces: ["assets"],
+  });
+};
+
+export const duplicateAsset = (
+  state: Pick<BuilderState, "assets" | "assetFolders">,
+  input: z.infer<typeof assetDuplicateInput>,
+  context: BuilderRuntimeContext
+) => {
+  const assets = getRequiredAssets(state);
+  const asset = assets.get(input.assetId);
+  if (asset === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
+  }
+  const folderId =
+    input.folderId === undefined
+      ? asset.folderId
+      : (input.folderId ?? undefined);
+  assertAssetFolderExists(state.assetFolders, folderId);
+
+  const displayFilenames = new Set(
+    Array.from(assets.values(), getAssetDisplayFilename)
+  );
+  const duplicatedAsset: Asset = {
+    ...asset,
+    id: context.createId(),
+    filename: createCopyName(getAssetDisplayFilename(asset), (candidate) =>
+      displayFilenames.has(candidate)
+    ),
+    folderId,
+  };
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "assets",
+        patches: [
+          { op: "add", path: [duplicatedAsset.id], value: duplicatedAsset },
+        ],
+      },
+    ],
+    result: { assetId: duplicatedAsset.id },
     invalidatesNamespaces: ["assets"],
   });
 };

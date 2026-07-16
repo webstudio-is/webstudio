@@ -2158,9 +2158,11 @@ describe("builder runtime registry", () => {
       ["assetFolders.create", {}],
       ["assetFolders.update", {}],
       ["assetFolders.delete", {}],
+      ["assetFolders.duplicate", {}],
       ["assets.update", {}],
       ["assets.setImageDescriptions", {}],
       ["assets.add", {}],
+      ["assets.duplicate", {}],
       ["assets.replace", {}],
       ["assets.delete", { assetIdsOrPrefixes: "asset" }],
     ]);

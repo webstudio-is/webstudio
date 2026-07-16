@@ -5,7 +5,9 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogClose,
   DialogTitle,
+  DialogTitleActions,
   Flex,
   Grid,
   InputField,
@@ -20,6 +22,10 @@ import {
 import { TrashIcon } from "@webstudio-is/icons";
 import { $assetFolders } from "~/shared/sync/data-stores";
 import { AssetFolderSelector } from "./asset-folder-selector";
+import {
+  AssetManagerItemActionsDropdown,
+  type AssetManagerItemActions,
+} from "./asset-manager-item-menu";
 import {
   createAssetFolder,
   deleteAssetFolder,
@@ -162,17 +168,21 @@ export const AssetFolderSettingsDialog = ({
   folder,
   open,
   onOpenChange,
+  initialDeleteConfirmation = false,
+  actions,
 }: {
   folder: AssetFolder;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialDeleteConfirmation?: boolean;
+  actions?: AssetManagerItemActions;
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   useLayoutEffect(() => {
     if (open) {
-      setConfirmDelete(false);
+      setConfirmDelete(initialDeleteConfirmation);
     }
-  }, [open]);
+  }, [initialDeleteConfirmation, open]);
 
   const save = (values: AssetFolderFormValues) =>
     runAndClose(() => saveAssetFolder(folder.id, values), onOpenChange);
@@ -183,7 +193,23 @@ export const AssetFolderSettingsDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent minWidth={360}>
-        <DialogTitle>
+        <DialogTitle
+          suffix={
+            confirmDelete ? undefined : (
+              <DialogTitleActions>
+                <AssetManagerItemActionsDropdown
+                  actions={{
+                    ...actions,
+                    open: undefined,
+                    rename: () => setConfirmDelete(false),
+                    delete: () => setConfirmDelete(true),
+                  }}
+                />
+                <DialogClose />
+              </DialogTitleActions>
+            )
+          }
+        >
           {confirmDelete ? "Delete folder" : "Folder settings"}
         </DialogTitle>
         {confirmDelete ? (

@@ -144,8 +144,9 @@ export const filterAndSortAssets = ({
   }
 
   // Apply search
-  if (searchQuery !== "") {
-    filtered = matchSorter(filtered, searchQuery, {
+  const normalizedSearchQuery = searchQuery.trim();
+  if (normalizedSearchQuery !== "") {
+    filtered = matchSorter(filtered, normalizedSearchQuery, {
       keys: [(item) => item.asset.name],
     });
   }
@@ -176,6 +177,18 @@ export const getAssetManagerSelectionIndex = (
     : items.findIndex(
         (item) => item.type === selection.type && item.id === selection.id
       );
+
+export const getNearestAssetManagerSelection = (
+  previousItems: AssetManagerSelection[],
+  nextItems: AssetManagerSelection[],
+  selection: AssetManagerSelection | undefined
+) => {
+  if (selection === undefined || nextItems.length === 0) {
+    return;
+  }
+  const previousIndex = getAssetManagerSelectionIndex(previousItems, selection);
+  return nextItems[Math.min(Math.max(previousIndex, 0), nextItems.length - 1)];
+};
 
 export const isAssetManagerSelectionVisible = (
   selection: AssetManagerSelection | undefined,

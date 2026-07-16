@@ -678,8 +678,43 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio verify-domain --domain-id domain-id --json"],
   },
   {
+    command: "list-asset-folders",
+    description: "List the complete Asset Manager folder hierarchy",
+    examples: ["MCP/API: list-asset-folders {}"],
+  },
+  {
+    command: "create-asset-folder",
+    description: "Create a root or nested Asset Manager folder",
+    examples: [
+      'MCP/API: create-asset-folder {"name":"Marketing","parentId":"parent-folder-id"}',
+    ],
+  },
+  {
+    command: "update-asset-folder",
+    description:
+      "Rename an Asset Manager folder or move it under another folder; use parentId:null for Root",
+    examples: [
+      'MCP/API: update-asset-folder {"folderId":"folder-id","values":{"name":"Brand","parentId":null}}',
+    ],
+  },
+  {
+    command: "duplicate-asset-folder",
+    description:
+      "Recursively duplicate a folder, nested folders, and contained assets; optionally choose a target parent",
+    examples: [
+      'MCP/API: duplicate-asset-folder {"folderId":"folder-id","parentId":"target-folder-id"}',
+    ],
+  },
+  {
+    command: "delete-asset-folder",
+    description:
+      "Delete a folder recursively, including nested folders and contained assets",
+    examples: ['MCP/API: delete-asset-folder {"folderId":"folder-id"}'],
+  },
+  {
     command: "list-assets",
-    description: "List project assets",
+    description:
+      "List project assets, including their Asset Manager folder ids",
     examples: ["webstudio list-assets --type image --with-usage --json"],
   },
   {
@@ -716,6 +751,30 @@ const curatedPublicApiOperationDocumentation = [
       "Save agent-generated image descriptions or mark images as decorative",
     examples: [
       'MCP/API: set-image-descriptions {"updates":[{"assetId":"hero-id","description":"Team collaborating around a whiteboard"},{"assetId":"texture-id","decorative":true}]}',
+    ],
+  },
+  {
+    command: "update-asset",
+    description:
+      "Rename an asset, update its description, or move it to another folder; use folderId:null for Root",
+    examples: [
+      'MCP/API: update-asset {"assetId":"asset-id","values":{"filename":"hero","folderId":"folder-id"}}',
+    ],
+  },
+  {
+    command: "add-asset",
+    description:
+      "Add an already-uploaded asset record, optionally inside an Asset Manager folder",
+    examples: [
+      'MCP/API: add-asset {"asset":{"id":"asset-id","name":"hero_hash.png","type":"image","size":1200,"format":"png","createdAt":"2026-01-01T00:00:00.000Z","meta":{"width":1200,"height":800},"folderId":"folder-id"}}',
+    ],
+  },
+  {
+    command: "duplicate-asset",
+    description:
+      "Duplicate an asset record while reusing its uploaded file; optionally choose a target folder",
+    examples: [
+      'MCP/API: duplicate-asset {"assetId":"asset-id","folderId":"target-folder-id"}',
     ],
   },
   {

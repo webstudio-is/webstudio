@@ -11,6 +11,9 @@ import { $assetFolders } from "~/shared/sync/data-stores";
 type Option = { label: string; folderId: string | undefined };
 const defaultRootLabel = "Top level folder";
 
+export const getAssetFolderSelectValue = (option: Option) =>
+  option.folderId === undefined ? "no-folder" : `folder:${option.folderId}`;
+
 export const createAssetFolderSelectorLevels = ({
   folders,
   value,
@@ -118,7 +121,7 @@ export const AssetFolderSelector = ({
               value={level.selected}
               disabled={disabled}
               getLabel={(option: Option) => option.label}
-              getValue={(option: Option) => option.folderId ?? ""}
+              getValue={getAssetFolderSelectValue}
               onChange={(option: Option) => onChange(option.folderId)}
               css={{ width: "auto", minWidth: "8ch", maxWidth: "18ch" }}
             />

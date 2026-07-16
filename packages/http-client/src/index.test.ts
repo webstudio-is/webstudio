@@ -43,6 +43,8 @@ import {
   deleteRedirect,
   deleteVariable,
   duplicatePage,
+  duplicateAsset,
+  duplicateAssetFolder,
   extractDesignToken,
   findAssetUsage,
   getPublishJob,
@@ -805,6 +807,11 @@ test("wraps project api trpc calls in named functions", async () => {
       ...params,
       folderId: "folder-id",
     });
+    await duplicateAssetFolder({
+      ...params,
+      folderId: "folder-id",
+      parentId: null,
+    });
     await listAssets({
       ...params,
       type: "image",
@@ -823,6 +830,11 @@ test("wraps project api trpc calls in named functions", async () => {
       ...params,
       assetIdsOrPrefixes: ["asset-id"],
       force: true,
+    });
+    await duplicateAsset({
+      ...params,
+      assetId: "asset-id",
+      folderId: null,
     });
     await getProjectPermissions(params);
     await listFolders({
@@ -998,6 +1010,7 @@ test("wraps project api trpc calls in named functions", async () => {
       "/trpc/api.assetFolders.delete",
       '"folderId":"folder-id"'
     ),
+    expectBodyRequest("/trpc/api.assetFolders.duplicate", '"parentId":null'),
     expectRequest("/trpc/api.assets.list"),
     expectRequest("/trpc/api.assets.findUsage"),
     expectBodyRequest("/trpc/api.assets.replace", '"confirm":true'),
@@ -1005,6 +1018,7 @@ test("wraps project api trpc calls in named functions", async () => {
       "/trpc/api.assets.delete",
       '"assetIdsOrPrefixes":["asset-id"]'
     ),
+    expectBodyRequest("/trpc/api.assets.duplicate", '"folderId":null'),
     expectRequest("/trpc/api.projects.permissions"),
     expectRequest("/trpc/api.folders.list"),
     expectBodyRequest("/trpc/api.build.patch", '"baseVersion":2'),

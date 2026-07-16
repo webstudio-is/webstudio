@@ -298,6 +298,7 @@ export const runtimeOutputSchemas = {
   "assetFolders.create": folderIdResult,
   "assetFolders.update": folderIdResult,
   "assetFolders.delete": folderIdResult,
+  "assetFolders.duplicate": folderIdResult,
   "pages.list": looseObject({
     pages: z.array(pageSummary),
     ...outputPage,
@@ -614,6 +615,7 @@ export const runtimeOutputSchemas = {
     updated: z.array(looseObject({ assetId: id, decorative: z.boolean() })),
   }),
   "assets.add": assetIdResult,
+  "assets.duplicate": assetIdResult,
   "assets.replace": looseObject({ fromAssetId: id, toAssetId: id }),
   "assets.delete": looseObject({ assetIds: stringArray }),
   "system.migrateLoadedData": looseObject({ didBreakCycles: z.boolean() }),

@@ -1,6 +1,8 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
+  useRef,
   useState,
   useMemo,
   type ReactNode,
@@ -26,19 +28,32 @@ import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
 import { AssetFilters } from "./asset-filters";
 import { AssetSortSelect } from "./asset-sort";
-import { $assetFolders } from "~/shared/sync/data-stores";
+import { $assetFolders, $project } from "~/shared/sync/data-stores";
 import { AssetFolderBreadcrumbs } from "./asset-folder-breadcrumbs";
-import { formatAssetFolderPath, sortAssetFolders } from "./asset-folder-utils";
+import {
+  filterAssetFolders,
+  formatAssetFolderPath,
+  sortAssetFolders,
+} from "./asset-folder-utils";
 import { moveAssetFolder, moveAssetToFolder } from "./asset-folder-actions";
 import {
   getInitialExtensions,
   calculateFormatCounts,
   filterAndSortAssets,
   getAssetManagerSelectionIndex,
+  getNearestAssetManagerSelection,
   isAssetManagerSelectionVisible,
   type AssetManagerSelection,
   type SortState,
 } from "./utils";
+import {
+  $assetManagerClipboard,
+  pasteAssetManagerItem,
+} from "./asset-manager-clipboard";
+import {
+  AssetManagerItemContextMenuContent,
+  type AssetManagerItemActions,
+} from "./asset-manager-item-menu";
 
 type FolderNavigationProps =
   | { folderId?: never; onFolderChange?: never }
@@ -52,6 +67,12 @@ type AssetManagerProps = FolderNavigationProps & {
   /** acceptable file types in the `<input accept>` attribute format */
   accept?: string;
   canManageFolders?: boolean;
+  panelActions?: Partial<
+    Pick<
+      AssetManagerItemActions,
+      "createFolder" | "upload" | "deleteUnusedAssets"
+    >
+  >;
 };
 
 const AssetGrid = ({ children }: { children: ReactNode }) => (
@@ -66,9 +87,12 @@ export const AssetManager = ({
   folderId,
   onFolderChange,
   canManageFolders = false,
+  panelActions,
 }: AssetManagerProps) => {
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
+  const project = useStore($project);
+  const clipboard = useStore($assetManagerClipboard);
   const folderHierarchy = useMemo(
     () => createAssetFolderHierarchy(folders),
     [folders]
@@ -76,6 +100,9 @@ export const AssetManager = ({
   const [internalFolderId, setInternalFolderId] = useState(folderId);
   const [selection, setSelection] = useState<AssetManagerSelection>();
   const [announcement, setAnnouncement] = useState("");
+  const itemElements = useRef(new Map<string, HTMLElement>());
+  const backElement = useRef<HTMLElement | null>(null);
+  const pendingFocus = useRef<"back" | AssetManagerSelection>();
   const currentFolderId =
     onFolderChange === undefined ? internalFolderId : folderId;
   const setCurrentFolderId = useCallback(
@@ -86,8 +113,13 @@ export const AssetManager = ({
         onFolderChange(nextFolderId);
       }
       setSelection(undefined);
+      setAnnouncement(
+        nextFolderId === undefined
+          ? "Opened Root."
+          : `Opened folder ${folders.get(nextFolderId)?.name ?? "folder"}.`
+      );
     },
-    [onFolderChange]
+    [folders, onFolderChange]
   );
 
   useEffect(() => {
@@ -134,6 +166,7 @@ export const AssetManager = ({
       if (direction === "current") {
         const selectedItem = navigableItems[selectedIndex];
         if (selectedItem?.type === "folder") {
+          pendingFocus.current = "back";
           setCurrentFolderId(selectedItem.id);
           return;
         }
@@ -153,12 +186,14 @@ export const AssetManager = ({
       setSelection(navigableItems[nextIndex]);
     },
   });
+  const searchQuery = searchProps.value.trim();
+  const isSearching = searchQuery.length > 0;
 
   const filteredItems = useMemo(() => {
     const descendantIds = folderHierarchy.getDescendantIds(currentFolderId);
     const scopedContainers = compatibleContainers.filter(({ asset }) => {
       const folderId = folderHierarchy.resolveFolderId(asset.folderId);
-      if (searchProps.value.length > 0) {
+      if (isSearching) {
         return (
           currentFolderId === undefined ||
           folderId === currentFolderId ||
@@ -170,7 +205,7 @@ export const AssetManager = ({
     return filterAndSortAssets({
       assetContainers: scopedContainers,
       selectedExtensions,
-      searchQuery: searchProps.value,
+      searchQuery,
       sortState,
     });
   }, [
@@ -178,44 +213,57 @@ export const AssetManager = ({
     currentFolderId,
     folderHierarchy,
     selectedExtensions,
-    searchProps.value,
+    isSearching,
+    searchQuery,
     sortState,
   ]);
 
-  const visibleFolders = useMemo(() => {
-    const normalizedSearch = searchProps.value.trim().toLocaleLowerCase();
-    const directFolders = folderHierarchy
-      .getChildren(currentFolderId)
-      .filter(
-        (folder) =>
-          normalizedSearch === "" ||
-          folder.name.toLocaleLowerCase().includes(normalizedSearch)
-      );
-    return sortAssetFolders({
-      folders: directFolders,
-      hierarchy: folderHierarchy,
-      assets: compatibleContainers.flatMap((container) =>
+  const uploadedCompatibleAssets = useMemo(
+    () =>
+      compatibleContainers.flatMap((container) =>
         container.status === "uploaded" ? [container.asset] : []
       ),
+    [compatibleContainers]
+  );
+
+  const visibleFolders = useMemo(() => {
+    const matchingFolders = filterAssetFolders({
+      folders,
+      hierarchy: folderHierarchy,
+      currentFolderId,
+      searchQuery,
+      compatibleAssets: uploadedCompatibleAssets,
+      hideEmptyFolders: acceptToMimePatterns(accept) !== "*",
+    });
+    return sortAssetFolders({
+      folders: matchingFolders,
+      hierarchy: folderHierarchy,
+      assets: uploadedCompatibleAssets,
       sortState,
     });
   }, [
-    compatibleContainers,
+    accept,
     currentFolderId,
+    folders,
     folderHierarchy,
-    searchProps.value,
+    searchQuery,
     sortState,
+    uploadedCompatibleAssets,
   ]);
 
-  const navigableItems: AssetManagerSelection[] = [
-    ...visibleFolders.map(({ id }) => ({ type: "folder" as const, id })),
-    ...filteredItems.map(({ asset }) => ({
-      type: "asset" as const,
-      id: asset.id,
-    })),
-  ];
+  const navigableItems: AssetManagerSelection[] = useMemo(
+    () => [
+      ...visibleFolders.map(({ id }) => ({ type: "folder" as const, id })),
+      ...filteredItems.map(({ asset }) => ({
+        type: "asset" as const,
+        id: asset.id,
+      })),
+    ],
+    [filteredItems, visibleFolders]
+  );
 
-  useEffect(() => {
+  const previousNavigableItems = useRef(navigableItems);
+  useLayoutEffect(() => {
     if (
       isAssetManagerSelectionVisible(
         selection,
@@ -223,9 +271,51 @@ export const AssetManager = ({
         visibleFolders
       ) === false
     ) {
-      setSelection(undefined);
+      const nextSelection = getNearestAssetManagerSelection(
+        previousNavigableItems.current,
+        navigableItems,
+        selection
+      );
+      setSelection(nextSelection);
+      if (nextSelection !== undefined) {
+        window.requestAnimationFrame(() => {
+          if (document.activeElement === document.body) {
+            itemElements.current
+              .get(`${nextSelection.type}:${nextSelection.id}`)
+              ?.focus();
+          }
+        });
+      }
     }
-  }, [filteredItems, selection, visibleFolders]);
+    previousNavigableItems.current = navigableItems;
+  }, [filteredItems, navigableItems, selection, visibleFolders]);
+
+  useLayoutEffect(() => {
+    const target = pendingFocus.current;
+    pendingFocus.current = undefined;
+    if (target === "back") {
+      backElement.current?.focus();
+    } else if (target !== undefined) {
+      itemElements.current.get(`${target.type}:${target.id}`)?.focus();
+    }
+  }, [currentFolderId]);
+
+  const registerItemElement = (
+    item: AssetManagerSelection,
+    element: HTMLElement | null
+  ) => {
+    const key = `${item.type}:${item.id}`;
+    if (element === null) {
+      itemElements.current.delete(key);
+    } else {
+      itemElements.current.set(key, element);
+    }
+  };
+
+  const openFolder = (folderId: string) => {
+    pendingFocus.current = "back";
+    setCurrentFolderId(folderId);
+  };
 
   const handleSelect = (assetContainer?: AssetContainer) => {
     setSelection(
@@ -264,11 +354,30 @@ export const AssetManager = ({
   const backCard =
     currentFolderId === undefined ? undefined : (
       <BackThumbnail
-        onOpen={() =>
-          setCurrentFolderId(folders.get(currentFolderId)?.parentId)
-        }
+        onElementChange={(element) => {
+          backElement.current = element;
+        }}
+        onOpen={() => {
+          pendingFocus.current = { type: "folder", id: currentFolderId };
+          setCurrentFolderId(folders.get(currentFolderId)?.parentId);
+        }}
       />
     );
+
+  const assetGrid = (children: ReactNode) => <AssetGrid>{children}</AssetGrid>;
+  const panelContextMenuActions: AssetManagerItemActions = {
+    ...panelActions,
+    ...(canManageFolders
+      ? { paste: () => pasteAssetManagerItem(currentFolderId) }
+      : {}),
+  };
+  const disabledPanelActions = new Set<keyof AssetManagerItemActions>();
+  if (clipboard === undefined || clipboard.projectId !== project?.id) {
+    disabledPanelActions.add("paste");
+  }
+  const hasPanelContextMenuActions = Object.values(
+    panelContextMenuActions
+  ).some((action) => action !== undefined);
 
   return (
     <AssetsShell
@@ -284,20 +393,29 @@ export const AssetManager = ({
       }
       searchProps={searchProps}
       isEmpty={filteredItems.length === 0 && visibleFolders.length === 0}
-      emptyMessage={
-        searchProps.value.length > 0 ? "No matching assets" : undefined
-      }
-      emptyContent={
-        backCard === undefined ? undefined : <AssetGrid>{backCard}</AssetGrid>
-      }
+      emptyMessage={isSearching ? "No matching assets or folders" : undefined}
+      emptyContent={backCard === undefined ? undefined : assetGrid(backCard)}
       type="file"
       accept={accept}
       folderId={currentFolderId}
+      contextMenu={
+        hasPanelContextMenuActions ? (
+          <AssetManagerItemContextMenuContent
+            actions={panelContextMenuActions}
+            disabledActions={disabledPanelActions}
+          />
+        ) : undefined
+      }
       footer={
         <AssetFolderBreadcrumbs
           hierarchy={folderHierarchy}
           folderId={currentFolderId}
           onChange={setCurrentFolderId}
+          onPaste={
+            canManageFolders && clipboard !== undefined
+              ? pasteAssetManagerItem
+              : undefined
+          }
         />
       }
     >
@@ -315,52 +433,71 @@ export const AssetManager = ({
         >
           {announcement}
         </Box>
-        <AssetGrid>
-          {backCard}
-          {visibleFolders.map((folder) => (
-            <FolderThumbnail
-              key={folder.id}
-              folder={folder}
-              selected={
-                selection?.type === "folder" && selection.id === folder.id
-              }
-              onSelect={() => setSelection({ type: "folder", id: folder.id })}
-              canManage={canManageFolders}
-              canMoveFolder={(movedFolderId) =>
-                movedFolderId !== folder.id &&
-                folderHierarchy
-                  .getDescendantIds(movedFolderId)
-                  .has(folder.id) === false
-              }
-              onOpen={() => setCurrentFolderId(folder.id)}
-              onMoveAsset={(assetId) => moveAsset(assetId, folder.id)}
-              onMoveFolder={(folderId) => moveFolder(folderId, folder.id)}
-            />
-          ))}
-          {filteredItems.map((assetContainer) => (
-            <AssetThumbnail
-              key={assetContainer.asset.id}
-              assetContainer={assetContainer}
-              onSelect={handleSelect}
-              onChange={(assetContainer) => {
-                onChange?.(assetContainer.asset.id);
-              }}
-              selected={
-                selection?.type === "asset" &&
-                selection.id === assetContainer.asset.id
-              }
-              folderPath={
-                searchProps.value.length > 0
-                  ? formatAssetFolderPath(
-                      folderHierarchy,
-                      assetContainer.asset.folderId
-                    )
-                  : undefined
-              }
-              canDrag={canManageFolders}
-            />
-          ))}
-        </AssetGrid>
+        {assetGrid(
+          <>
+            {backCard}
+            {visibleFolders.map((folder) => (
+              <FolderThumbnail
+                key={folder.id}
+                folder={folder}
+                selected={
+                  selection?.type === "folder" && selection.id === folder.id
+                }
+                onSelect={() => setSelection({ type: "folder", id: folder.id })}
+                canManage={canManageFolders}
+                canMoveFolder={(movedFolderId) =>
+                  movedFolderId !== folder.id &&
+                  folderHierarchy
+                    .getDescendantIds(movedFolderId)
+                    .has(folder.id) === false
+                }
+                onOpen={() => openFolder(folder.id)}
+                path={
+                  isSearching
+                    ? formatAssetFolderPath(folderHierarchy, folder.parentId)
+                    : undefined
+                }
+                onElementChange={(element) =>
+                  registerItemElement(
+                    { type: "folder", id: folder.id },
+                    element
+                  )
+                }
+                onMoveAsset={(assetId) => moveAsset(assetId, folder.id)}
+                onMoveFolder={(folderId) => moveFolder(folderId, folder.id)}
+              />
+            ))}
+            {filteredItems.map((assetContainer) => (
+              <AssetThumbnail
+                key={assetContainer.asset.id}
+                assetContainer={assetContainer}
+                onSelect={handleSelect}
+                onChange={(assetContainer) => {
+                  onChange?.(assetContainer.asset.id);
+                }}
+                selected={
+                  selection?.type === "asset" &&
+                  selection.id === assetContainer.asset.id
+                }
+                folderPath={
+                  isSearching
+                    ? formatAssetFolderPath(
+                        folderHierarchy,
+                        assetContainer.asset.folderId
+                      )
+                    : undefined
+                }
+                canDrag={canManageFolders}
+                onElementChange={(element) =>
+                  registerItemElement(
+                    { type: "asset", id: assetContainer.asset.id },
+                    element
+                  )
+                }
+              />
+            ))}
+          </>
+        )}
       </>
     </AssetsShell>
   );

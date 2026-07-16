@@ -12,6 +12,7 @@ export const AssetPanelState = ({
 }) => (
   <Flex
     align="center"
+    justify="center"
     direction="column"
     css={{
       flex: 1,
@@ -21,7 +22,6 @@ export const AssetPanelState = ({
         ? theme.colors.foregroundMain
         : theme.colors.foregroundSubtle,
       border: `1px dashed ${active ? theme.colors.foregroundMain : "transparent"}`,
-      paddingTop: "35%",
     }}
   >
     <Flex align="center" gap={1} shrink={false}>

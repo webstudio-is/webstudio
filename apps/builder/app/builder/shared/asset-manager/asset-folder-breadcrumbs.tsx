@@ -1,5 +1,7 @@
 import {
   Button,
+  ContextMenu,
+  ContextMenuTrigger,
   Flex,
   ScrollAreaNative,
   Separator,
@@ -8,16 +10,37 @@ import {
 } from "@webstudio-is/design-system";
 import type { AssetFolderHierarchy } from "@webstudio-is/sdk";
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactElement } from "react";
+import { AssetManagerItemContextMenuContent } from "./asset-manager-item-menu";
+
+const PasteTarget = ({
+  children,
+  onPaste,
+}: {
+  children: ReactElement;
+  onPaste?: () => void;
+}) => {
+  if (onPaste === undefined) {
+    return children;
+  }
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+      <AssetManagerItemContextMenuContent actions={{ paste: onPaste }} />
+    </ContextMenu>
+  );
+};
 
 export const AssetFolderBreadcrumbs = ({
   hierarchy,
   folderId,
   onChange,
+  onPaste,
 }: {
   hierarchy: AssetFolderHierarchy;
   folderId: string | undefined;
   onChange: (folderId: string | undefined) => void;
+  onPaste?: (folderId: string | undefined) => void;
 }) => {
   const path = hierarchy.getPath(folderId);
   const currentFolderRef = useRef<HTMLButtonElement>(null);
@@ -52,27 +75,31 @@ export const AssetFolderBreadcrumbs = ({
             paddingBlock: theme.spacing[2],
           }}
         >
-          <Button
-            ref={folderId === undefined ? currentFolderRef : undefined}
-            color="ghost"
-            aria-current={folderId === undefined ? "location" : undefined}
-            onClick={() => onChange(undefined)}
-          >
-            <Text css={{ minWidth: "5ch" }}>Root</Text>
-          </Button>
+          <PasteTarget onPaste={onPaste && (() => onPaste(undefined))}>
+            <Button
+              ref={folderId === undefined ? currentFolderRef : undefined}
+              color="ghost"
+              aria-current={folderId === undefined ? "location" : undefined}
+              onClick={() => onChange(undefined)}
+            >
+              <Text css={{ minWidth: "5ch" }}>Root</Text>
+            </Button>
+          </PasteTarget>
           {path.map((folder) => (
             <Flex key={folder.id} align="center" shrink={false}>
               <ChevronRightIcon size={12} />
-              <Button
-                ref={folder.id === folderId ? currentFolderRef : undefined}
-                color="ghost"
-                aria-current={folder.id === folderId ? "location" : undefined}
-                onClick={() => onChange(folder.id)}
-              >
-                <Text truncate css={{ minWidth: "5ch", maxWidth: 160 }}>
-                  {folder.name}
-                </Text>
-              </Button>
+              <PasteTarget onPaste={onPaste && (() => onPaste(folder.id))}>
+                <Button
+                  ref={folder.id === folderId ? currentFolderRef : undefined}
+                  color="ghost"
+                  aria-current={folder.id === folderId ? "location" : undefined}
+                  onClick={() => onChange(folder.id)}
+                >
+                  <Text truncate css={{ minWidth: "5ch", maxWidth: 160 }}>
+                    {folder.name}
+                  </Text>
+                </Button>
+              </PasteTarget>
             </Flex>
           ))}
         </Flex>

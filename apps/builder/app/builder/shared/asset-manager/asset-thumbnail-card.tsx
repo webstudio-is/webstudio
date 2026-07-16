@@ -1,16 +1,74 @@
 import {
   forwardRef,
   type ComponentProps,
+  type KeyboardEvent,
   type MouseEventHandler,
   type ReactNode,
   type Ref,
 } from "react";
-import { Box, Flex, styled, Text, theme } from "@webstudio-is/design-system";
+import {
+  ArrowFocus,
+  Box,
+  Flex,
+  styled,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 
-const assetInfoTriggerVisibility = "--ws-asset-info-trigger-visibility";
-const showAssetInfoTrigger = { [assetInfoTriggerVisibility]: "visible" };
+const thumbnailActionVisibility = "--ws-thumbnail-action-visibility";
+const showThumbnailAction = { [thumbnailActionVisibility]: "visible" };
+const focusOutline = {
+  outline: `1px solid ${theme.colors.borderFocus}`,
+  outlineOffset: -1,
+};
 
-export const assetInfoTriggerVisibilityValue = `var(${assetInfoTriggerVisibility}, hidden)`;
+export const thumbnailActionVisibilityValue = `var(${thumbnailActionVisibility}, hidden)`;
+
+const ThumbnailGroup = styled(Box, {
+  position: "relative",
+  minWidth: 0,
+  variants: {
+    selected: {
+      true: showThumbnailAction,
+    },
+  },
+  "&:hover, &:focus-within": showThumbnailAction,
+});
+
+type AssetThumbnailGroupProps = ComponentProps<typeof ThumbnailGroup> & {
+  selected?: boolean;
+};
+
+export const AssetThumbnailGroup = forwardRef<
+  HTMLDivElement,
+  AssetThumbnailGroupProps
+>(({ onKeyDown, ...props }, forwardedRef) => (
+  <ArrowFocus
+    render={({ handleKeyDown }) => (
+      <ThumbnailGroup
+        {...props}
+        ref={forwardedRef}
+        onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+          onKeyDown?.(event);
+          if (
+            event.defaultPrevented === false &&
+            (event.key === "ArrowLeft" || event.key === "ArrowRight")
+          ) {
+            handleKeyDown(event);
+          }
+        }}
+      />
+    )}
+  />
+));
+AssetThumbnailGroup.displayName = "AssetThumbnailGroup";
+
+export const AssetThumbnailAction = styled(Box, {
+  position: "absolute",
+  right: 4,
+  top: 4,
+  visibility: thumbnailActionVisibilityValue,
+});
 
 const Root = styled("div", {
   all: "unset",
@@ -28,16 +86,18 @@ const Root = styled("div", {
   overflow: "hidden",
   padding: 2,
   "&:hover, &:focus-visible": {
-    ...showAssetInfoTrigger,
+    ...showThumbnailAction,
     backgroundColor: theme.colors.backgroundAssetcardHover,
+  },
+  "&:focus-visible": {
+    ...focusOutline,
   },
   variants: {
     selected: {
       true: {
-        outline: `1px solid ${theme.colors.borderFocus}`,
-        outlineOffset: -1,
+        ...focusOutline,
         backgroundColor: theme.colors.backgroundAssetcardHover,
-        ...showAssetInfoTrigger,
+        ...showThumbnailAction,
       },
     },
     dropTarget: {

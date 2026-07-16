@@ -7,6 +7,8 @@ import {
 } from "react";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import {
+  ContextMenu,
+  ContextMenuTrigger,
   Flex,
   ScrollArea,
   SearchField,
@@ -44,6 +46,7 @@ type AssetsShellProps = {
   emptyMessage?: string;
   emptyContent?: JSX.Element;
   folderId?: string;
+  contextMenu?: JSX.Element;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -64,6 +67,7 @@ export const AssetsShell = ({
   children,
   footer,
   folderId,
+  contextMenu,
   type,
   accept,
 }: AssetsShellProps) => {
@@ -176,7 +180,7 @@ export const AssetsShell = ({
 
   const dragState = Math.max(monitorState, dropTargetState);
 
-  return (
+  const shell = (
     <Flex
       ref={ref}
       direction="column"
@@ -235,7 +239,6 @@ export const AssetsShell = ({
           inset: 0,
           display: dragState !== IDLE && isEmpty === false ? "flex" : "none",
           backgroundColor: theme.colors.backgroundPanel,
-          opacity: 0.85,
           color:
             dragState === OVER
               ? theme.colors.foregroundMain
@@ -249,5 +252,16 @@ export const AssetsShell = ({
         />
       </Flex>
     </Flex>
+  );
+
+  if (contextMenu === undefined) {
+    return shell;
+  }
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{shell}</ContextMenuTrigger>
+      {contextMenu}
+    </ContextMenu>
   );
 };

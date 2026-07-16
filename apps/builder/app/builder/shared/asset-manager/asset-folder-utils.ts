@@ -1,6 +1,7 @@
 import {
   type Asset,
   type AssetFolder,
+  type AssetFolders,
   type AssetFolderHierarchy,
 } from "@webstudio-is/sdk";
 import type { SortState } from "./utils";
@@ -47,4 +48,48 @@ export const formatAssetFolderPath = (
   return path.length === 0
     ? "No folder"
     : `Root / ${path.map(({ name }) => name).join(" / ")}`;
+};
+
+export const filterAssetFolders = ({
+  folders,
+  hierarchy,
+  currentFolderId,
+  searchQuery,
+  compatibleAssets,
+  hideEmptyFolders,
+}: {
+  folders: AssetFolders;
+  hierarchy: AssetFolderHierarchy;
+  currentFolderId: string | undefined;
+  searchQuery: string;
+  compatibleAssets: Iterable<Asset>;
+  hideEmptyFolders: boolean;
+}) => {
+  const normalizedSearch = searchQuery.trim().toLocaleLowerCase();
+  const candidates =
+    normalizedSearch === ""
+      ? hierarchy.getChildren(currentFolderId)
+      : Array.from(hierarchy.getDescendantIds(currentFolderId)).flatMap(
+          (folderId) => {
+            const folder = folders.get(folderId);
+            return folder !== undefined &&
+              folder.name.toLocaleLowerCase().includes(normalizedSearch)
+              ? [folder]
+              : [];
+          }
+        );
+
+  if (hideEmptyFolders === false) {
+    return [...candidates];
+  }
+
+  const foldersWithCompatibleAssets = new Set<string>();
+  for (const asset of compatibleAssets) {
+    for (const folder of hierarchy.getPath(asset.folderId)) {
+      foldersWithCompatibleAssets.add(folder.id);
+    }
+  }
+  return candidates.filter((folder) =>
+    foldersWithCompatibleAssets.has(folder.id)
+  );
 };

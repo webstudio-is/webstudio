@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { createAssetFolderSelectorLevels } from "./asset-folder-selector";
+import {
+  createAssetFolderSelectorLevels,
+  getAssetFolderSelectValue,
+} from "./asset-folder-selector";
 import {
   createAssetFolderFixture,
   createAssetFoldersFixture as folders,
@@ -69,5 +72,14 @@ describe("asset folder selector levels", () => {
       label: "No folder",
       folderId: undefined,
     });
+  });
+
+  test("uses non-empty unique select values for No folder and folders", () => {
+    expect(
+      getAssetFolderSelectValue({ label: "No folder", folderId: undefined })
+    ).toBe("no-folder");
+    expect(
+      getAssetFolderSelectValue({ label: "Folder", folderId: "no-folder" })
+    ).toBe("folder:no-folder");
   });
 });

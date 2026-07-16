@@ -48,6 +48,8 @@ import {
 import {
   createLocalUploadAssetInput,
   createLocalUploadAssetsInput,
+  downloadAssetFile,
+  getLocalAssetPath,
 } from "../asset-files";
 import {
   getVisionVerificationLoop,
@@ -938,6 +940,22 @@ const createCliMcpHost = async ({
       }
       markPreviewStale();
       return { imported: true as const };
+    },
+    async downloadAsset(input) {
+      const snapshot = getLoadedProjectSessionSnapshot(session);
+      const asset = snapshot.state.assets?.get(input.assetId);
+      if (asset === undefined) {
+        throw new Error(`Asset not found: ${input.assetId}`);
+      }
+      await downloadAssetFile({
+        asset,
+        assetsDirectory: input.assetsDir,
+        origin: connection.origin,
+      });
+      return {
+        assetId: asset.id,
+        path: getLocalAssetPath(asset.name, input.assetsDir),
+      };
     },
     async startPreview(input, progress) {
       const resolvedInput =

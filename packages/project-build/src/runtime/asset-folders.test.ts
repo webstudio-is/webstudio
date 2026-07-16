@@ -8,6 +8,7 @@ import {
 import {
   createAssetFolder,
   deleteAssetFolder,
+  duplicateAssetFolder,
   updateAssetFolder,
 } from "./asset-folders";
 
@@ -119,6 +120,63 @@ describe("asset folders", () => {
         patches: [
           { op: "remove", path: ["direct"] },
           { op: "remove", path: ["nested"] },
+        ],
+      },
+    ]);
+  });
+
+  test("duplicates a folder subtree and its assets", () => {
+    const ids = ["copy", "child-copy", "asset-copy"];
+    const result = duplicateAssetFolder(
+      {
+        assetFolders: folders(
+          folder("source", undefined, "Media"),
+          folder("existing-copy", undefined, "Media copy"),
+          folder("child", "source", "Photos")
+        ),
+        assets: new Map([["asset", asset("asset", "child")]]),
+      },
+      { folderId: "source", parentId: null },
+      { projectId: "project", createId: () => ids.shift()! }
+    );
+
+    expect(result.result).toEqual({ folderId: "copy" });
+    expect(result.payload).toEqual([
+      {
+        namespace: "assetFolders",
+        patches: [
+          {
+            op: "add",
+            path: ["copy"],
+            value: expect.objectContaining({
+              id: "copy",
+              name: "Media copy 2",
+              parentId: undefined,
+            }),
+          },
+          {
+            op: "add",
+            path: ["child-copy"],
+            value: expect.objectContaining({
+              id: "child-copy",
+              name: "Photos",
+              parentId: "copy",
+            }),
+          },
+        ],
+      },
+      {
+        namespace: "assets",
+        patches: [
+          {
+            op: "add",
+            path: ["asset-copy"],
+            value: expect.objectContaining({
+              id: "asset-copy",
+              filename: "asset copy",
+              folderId: "child-copy",
+            }),
+          },
         ],
       },
     ]);

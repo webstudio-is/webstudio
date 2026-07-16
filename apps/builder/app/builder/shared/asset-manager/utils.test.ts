@@ -7,6 +7,7 @@ import {
   filterAndSortAssets,
   findAssetIndex,
   getAssetManagerSelectionIndex,
+  getNearestAssetManagerSelection,
   isAssetManagerSelectionVisible,
   sortAssets,
   getAssetFormat,
@@ -184,6 +185,16 @@ describe("filterAndSortAssets", () => {
     expect(result[0].asset.name).toBe("apple.jpg");
   });
 
+  test("treats whitespace-only search as empty", () => {
+    const result = filterAndSortAssets({
+      assetContainers: containers,
+      selectedExtensions: "*",
+      searchQuery: "   ",
+      sortState: { sortBy: "createdAt", order: "asc" },
+    });
+    expect(result).toHaveLength(containers.length);
+  });
+
   test("applies both extension filter and search", () => {
     const sortState: SortState = { sortBy: "createdAt", order: "asc" };
     const result = filterAndSortAssets({
@@ -288,6 +299,23 @@ describe("asset manager selection", () => {
         [{ id: "sibling" }]
       )
     ).toBe(false);
+  });
+
+  test("selects the nearest remaining item after the focused item is removed", () => {
+    const first = { type: "folder", id: "first" } as const;
+    const removed = { type: "folder", id: "removed" } as const;
+    const last = { type: "asset", id: "last" } as const;
+
+    expect(
+      getNearestAssetManagerSelection(
+        [first, removed, last],
+        [first, last],
+        removed
+      )
+    ).toEqual(last);
+    expect(
+      getNearestAssetManagerSelection([first, last], [first], last)
+    ).toEqual(first);
   });
 });
 

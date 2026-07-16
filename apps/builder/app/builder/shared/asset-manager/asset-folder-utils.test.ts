@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { createAssetFolderHierarchy, type Asset } from "@webstudio-is/sdk";
-import { formatAssetFolderPath, sortAssetFolders } from "./asset-folder-utils";
+import {
+  filterAssetFolders,
+  formatAssetFolderPath,
+  sortAssetFolders,
+} from "./asset-folder-utils";
 import {
   createAssetFolderFixture,
   createAssetFoldersFixture,
@@ -54,5 +58,49 @@ describe("asset folder utilities", () => {
       sortState: { sortBy, order },
     });
     expect(sorted.map(({ id }) => id)).toEqual(expected);
+  });
+
+  test("searches folders throughout the current subtree", () => {
+    const nestedMatch = createAssetFolderFixture({
+      id: "nested-match",
+      parentId: child.id,
+      name: "Product photos",
+    });
+    const outsideMatch = createAssetFolderFixture({
+      id: "outside-match",
+      parentId: sibling.id,
+      name: "Product exports",
+    });
+    const searchableFolders = createAssetFoldersFixture(
+      parent,
+      child,
+      sibling,
+      nestedMatch,
+      outsideMatch
+    );
+
+    expect(
+      filterAssetFolders({
+        folders: searchableFolders,
+        hierarchy: createAssetFolderHierarchy(searchableFolders),
+        currentFolderId: parent.id,
+        searchQuery: "product",
+        compatibleAssets: [],
+        hideEmptyFolders: false,
+      }).map(({ id }) => id)
+    ).toEqual([nestedMatch.id]);
+  });
+
+  test("hides constrained-picker folders without compatible descendants", () => {
+    expect(
+      filterAssetFolders({
+        folders,
+        hierarchy,
+        currentFolderId: undefined,
+        searchQuery: "",
+        compatibleAssets: [asset("compatible", child.id, 20)],
+        hideEmptyFolders: true,
+      }).map(({ id }) => id)
+    ).toEqual([parent.id]);
   });
 });

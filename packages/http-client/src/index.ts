@@ -1555,6 +1555,13 @@ export const deleteAssetFolder = projectMutationInput<
   AuthProjectParams & { folderId: string }
 >("delete-asset-folder");
 
+export const duplicateAssetFolder = projectMutationInput<
+  AuthProjectParams & {
+    folderId: string;
+    parentId?: string | null;
+  }
+>("duplicate-asset-folder");
+
 export const listAssets = projectQueryInput<
   AuthProjectParams &
     PaginatedQueryInput & {
@@ -1584,6 +1591,13 @@ export const deleteAssets = projectConfirmedMutationInput<
     force?: boolean;
   }
 >("delete-asset");
+
+export const duplicateAsset = projectMutationInput<
+  AuthProjectParams & {
+    assetId: string;
+    folderId?: string | null;
+  }
+>("duplicate-asset");
 
 const getUploadIdFromUrl = (uploadUrl: string | null) => {
   if (uploadUrl === null) {

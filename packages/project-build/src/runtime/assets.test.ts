@@ -22,6 +22,7 @@ import {
   createAssetReplacementPayload,
   createAssetUsageList,
   deleteAssets,
+  duplicateAsset,
   findAsset,
   findAssetUsage,
   getAssetInfoFallback,
@@ -248,6 +249,47 @@ describe("asset runtime operations", () => {
     expect(() => addAsset(state, { asset }, { projectId })).toThrow(
       "Asset already exists"
     );
+  });
+
+  test("duplicates an asset into a target folder with a unique filename", () => {
+    const source = imageAsset("source", "hero.png");
+    const existingCopy = imageAsset("existing-copy", "other.png");
+    existingCopy.filename = "hero copy";
+    const result = duplicateAsset(
+      {
+        assets: new Map([
+          [source.id, source],
+          [existingCopy.id, existingCopy],
+        ]),
+        assetFolders: new Map([
+          [
+            "target",
+            {
+              id: "target",
+              projectId: "project",
+              name: "Target",
+              createdAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        ]),
+      },
+      { assetId: source.id, folderId: "target" },
+      { createId: () => "copy", projectId: "project" }
+    );
+
+    expect(result.result).toEqual({ assetId: "copy" });
+    expect(result.payload[0]?.patches).toEqual([
+      {
+        op: "add",
+        path: ["copy"],
+        value: {
+          ...source,
+          id: "copy",
+          filename: "hero copy 2",
+          folderId: "target",
+        },
+      },
+    ]);
   });
 
   test("lists assets with usage counts", () => {

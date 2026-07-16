@@ -772,7 +772,54 @@ describe("project session mcp adapter", () => {
       "reset-session",
     ]);
     expect(toolNames).toContain("insert-fragment");
+    const assetOperationTools = listProjectSessionMcpTools(
+      runtimeOperationContracts
+        .filter(
+          ({ id }) =>
+            id.startsWith("assetFolders.") || id === "assets.duplicate"
+        )
+        .map((contract) =>
+          publicOperation({
+            command: contract.command,
+            id: contract.id,
+            method: contract.kind === "read" ? "query" : "mutation",
+            permit: contract.kind === "read" ? "view" : "build",
+            description:
+              contract.id === "assetFolders.duplicate"
+                ? "Recursively duplicate an asset folder"
+                : contract.command,
+            inputSchema: contract.inputSchema,
+            readNamespaces: contract.readNamespaces,
+            writeNamespaces: contract.writeNamespaces,
+            invalidatesNamespaces: contract.invalidatesNamespaces,
+            retryOnConflict: contract.retryOnConflict,
+          })
+        )
+    );
+    const assetOperationToolNames = assetOperationTools.map(({ name }) => name);
+    expect(assetOperationToolNames).toEqual(
+      expect.arrayContaining([
+        "list-asset-folders",
+        "create-asset-folder",
+        "update-asset-folder",
+        "duplicate-asset-folder",
+        "delete-asset-folder",
+        "duplicate-asset",
+      ])
+    );
     expect(toolNames).not.toContain("copy-page");
+    expect(
+      assetOperationTools.find(({ name }) => name === "duplicate-asset-folder")
+    ).toMatchObject({
+      description: expect.stringContaining("Recursively duplicate"),
+      inputSchema: expect.objectContaining({ required: ["folderId"] }),
+    });
+    expect(
+      JSON.stringify(
+        assetOperationTools.find(({ name }) => name === "update-asset-folder")
+          ?.inputSchema
+      )
+    ).toContain('"type":"null"');
     for (const operation of publicMcpOperations) {
       if (
         hiddenMcpOperationCommands.has(operation.command) ||
@@ -810,11 +857,13 @@ describe("project session mcp adapter", () => {
     });
     const completeTools = listProjectSessionMcpTools(publicMcpOperations, {
       includeImport: true,
+      includeDownloadAsset: true,
       includeScreenshot: true,
       includeScreenshotDiff: true,
       includeInstallOcr: true,
       includePreview: true,
     });
+    expect(completeTools.map(({ name }) => name)).toContain("download-asset");
     for (const tool of completeTools) {
       expect(
         tool.inputSchema.additionalProperties,
@@ -1108,6 +1157,32 @@ describe("project session mcp adapter", () => {
     expect(JSON.stringify(details.structuredContent.data)).toContain(
       description
     );
+  });
+
+  test("downloads assets through the MCP host", async () => {
+    const downloadAsset = vi.fn(async ({ assetId }: { assetId: string }) => ({
+      assetId,
+      path: `/workspace/.webstudio/assets/${assetId}.png`,
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      downloadAsset,
+    });
+
+    const result = await adapter.callTool({
+      name: "download-asset",
+      input: { assetId: "hero" },
+    });
+
+    expect(downloadAsset).toHaveBeenCalledWith({ assetId: "hero" });
+    expect(result.structuredContent).toMatchObject({
+      data: {
+        assetId: "hero",
+        path: "/workspace/.webstudio/assets/hero.png",
+      },
+    });
   });
 
   test("exposes page expression input descriptions to MCP clients", async () => {

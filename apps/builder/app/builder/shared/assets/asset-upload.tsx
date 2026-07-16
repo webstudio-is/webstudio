@@ -1,4 +1,9 @@
-import { type ChangeEvent, useRef } from "react";
+import {
+  forwardRef,
+  type ChangeEvent,
+  useImperativeHandle,
+  useRef,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Tooltip, toast } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
@@ -108,48 +113,66 @@ type AssetUploadProps = {
   folderId?: string;
 };
 
-const EnabledAssetUpload = ({ accept, type, folderId }: AssetUploadProps) => {
-  const { inputRef, onChange } = useUpload(folderId);
-
-  return (
-    <form onChange={onChange}>
-      <input
-        accept={accept ?? acceptMap[type]}
-        type="file"
-        name={type}
-        multiple
-        ref={inputRef}
-        style={{ display: "none" }}
-      />
-      <Button
-        aria-label="Upload asset"
-        color="ghost"
-        type="button"
-        onClick={() => inputRef?.current?.click()}
-        prefix={<UploadIcon />}
-      ></Button>
-    </form>
-  );
+export type AssetUploadHandle = {
+  open: () => void;
 };
 
-export const AssetUpload = ({ type, accept, folderId }: AssetUploadProps) => {
-  const authPermit = useStore($authPermit);
+const EnabledAssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
+  ({ accept, type, folderId }, forwardedRef) => {
+    const { inputRef, onChange } = useUpload(folderId);
+    useImperativeHandle(forwardedRef, () => ({
+      open: () => inputRef.current?.click(),
+    }));
 
-  if (authPermit !== "view") {
-    // Split into a separate component to avoid using `useUpload` hook unnecessarily
-    // (It's hard to mock this hook in storybook)
     return (
-      <EnabledAssetUpload type={type} accept={accept} folderId={folderId} />
+      <form onChange={onChange}>
+        <input
+          accept={accept ?? acceptMap[type]}
+          type="file"
+          name={type}
+          multiple
+          ref={inputRef}
+          style={{ display: "none" }}
+        />
+        <Button
+          aria-label="Upload asset"
+          color="ghost"
+          type="button"
+          onClick={() => inputRef?.current?.click()}
+          prefix={<UploadIcon />}
+        ></Button>
+      </form>
     );
   }
+);
+EnabledAssetUpload.displayName = "EnabledAssetUpload";
 
-  return (
-    <Flex>
-      <Tooltip side="bottom" content="View mode. You can't upload assets.">
-        <Button css={{ flexGrow: 1 }} prefix={<UploadIcon />} disabled={true}>
-          Upload
-        </Button>
-      </Tooltip>
-    </Flex>
-  );
-};
+export const AssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
+  ({ type, accept, folderId }, forwardedRef) => {
+    const authPermit = useStore($authPermit);
+
+    if (authPermit !== "view") {
+      // Split into a separate component to avoid using `useUpload` hook unnecessarily
+      // (It's hard to mock this hook in storybook)
+      return (
+        <EnabledAssetUpload
+          ref={forwardedRef}
+          type={type}
+          accept={accept}
+          folderId={folderId}
+        />
+      );
+    }
+
+    return (
+      <Flex>
+        <Tooltip side="bottom" content="View mode. You can't upload assets.">
+          <Button css={{ flexGrow: 1 }} prefix={<UploadIcon />} disabled={true}>
+            Upload
+          </Button>
+        </Tooltip>
+      </Flex>
+    );
+  }
+);
+AssetUpload.displayName = "AssetUpload";

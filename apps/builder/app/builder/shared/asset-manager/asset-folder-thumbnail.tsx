@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useStore } from "@nanostores/react";
 import {
-  Box,
+  ContextMenu,
+  ContextMenuTrigger,
   SmallIconButton,
-  styled,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { ChevronLeftIcon, FolderIcon, GearIcon } from "@webstudio-is/icons";
+import { ChevronRightIcon, FolderIcon, GearIcon } from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
@@ -13,19 +14,22 @@ import {
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { AssetFolderSettingsDialog } from "./asset-folder-dialogs";
-import { AssetThumbnailCard } from "./asset-thumbnail-card";
-
-const Settings = styled(Box, {
-  position: "absolute",
-  right: 4,
-  top: 4,
-  opacity: 0,
-  pointerEvents: "none",
-  "[data-folder-thumbnail]:hover &, [data-folder-thumbnail]:focus-within &": {
-    opacity: 1,
-    pointerEvents: "auto",
-  },
-});
+import {
+  AssetThumbnailAction,
+  AssetThumbnailCard,
+  AssetThumbnailGroup,
+} from "./asset-thumbnail-card";
+import {
+  $assetManagerClipboard,
+  copyAssetManagerItem,
+  cutAssetManagerItem,
+  duplicateAssetManagerItem,
+  pasteAssetManagerItem,
+} from "./asset-manager-clipboard";
+import {
+  AssetManagerItemContextMenuContent,
+  type AssetManagerItemActions,
+} from "./asset-manager-item-menu";
 
 export const FolderThumbnail = ({
   folder,
@@ -36,6 +40,8 @@ export const FolderThumbnail = ({
   canMoveFolder,
   onMoveAsset,
   onMoveFolder,
+  path,
+  onElementChange,
 }: {
   folder: AssetFolder;
   selected: boolean;
@@ -45,10 +51,40 @@ export const FolderThumbnail = ({
   canMoveFolder: (folderId: string) => boolean;
   onMoveAsset: (assetId: string) => void;
   onMoveFolder: (folderId: string) => void;
+  path?: string;
+  onElementChange?: (element: HTMLElement | null) => void;
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
-  const elementRef = useRef<HTMLElement>(null);
+  const elementRef = useRef<HTMLElement | null>(null);
+  const clipboard = useStore($assetManagerClipboard);
+
+  const openSettings = (confirmDelete = false) => {
+    setDeleteConfirmationOpen(confirmDelete);
+    setSettingsOpen(true);
+  };
+  const item = {
+    type: "folder" as const,
+    id: folder.id,
+    projectId: folder.projectId,
+  };
+  const actions: AssetManagerItemActions = {
+    open: onOpen,
+    ...(canManage
+      ? {
+          rename: () => openSettings(),
+          cut: () => cutAssetManagerItem(item),
+          copy: () => copyAssetManagerItem(item),
+          paste:
+            clipboard === undefined
+              ? undefined
+              : () => pasteAssetManagerItem(folder.id),
+          duplicate: () => duplicateAssetManagerItem(item),
+          delete: () => openSettings(true),
+        }
+      : {}),
+  };
 
   useEffect(() => {
     const element = elementRef.current;
@@ -86,58 +122,82 @@ export const FolderThumbnail = ({
 
   return (
     <>
-      <Box data-folder-thumbnail css={{ position: "relative", minWidth: 0 }}>
-        <AssetThumbnailCard
-          ref={elementRef}
-          as="button"
-          type="button"
-          label={folder.name}
-          preview={<FolderIcon size={48} strokeWidth={0.5} />}
-          aria-label={`Folder ${folder.name}`}
-          aria-description="Double-click to open. Drag assets or folders here to move them."
-          aria-pressed={selected}
-          clickable
-          selected={selected}
-          dropTarget={isDropTarget}
-          onClick={onSelect}
-          onDoubleClick={onOpen}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              onOpen();
-            }
-          }}
-        />
-        {canManage && (
-          <Settings>
-            <Tooltip content="Folder settings">
-              <SmallIconButton
-                icon={<GearIcon />}
-                aria-label={`Settings for ${folder.name}`}
-                onClick={() => setSettingsOpen(true)}
-              />
-            </Tooltip>
-          </Settings>
-        )}
-      </Box>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <AssetThumbnailGroup selected={selected} onFocus={onSelect}>
+            <AssetThumbnailCard
+              ref={(element) => {
+                elementRef.current = element;
+                onElementChange?.(element);
+              }}
+              as="button"
+              type="button"
+              label={folder.name}
+              path={path}
+              preview={<FolderIcon size={40} />}
+              aria-label={`Folder ${folder.name}`}
+              aria-description="Double-click to open. Drag assets or folders here to move them."
+              aria-pressed={selected}
+              clickable
+              selected={selected}
+              dropTarget={isDropTarget}
+              onClick={onSelect}
+              onContextMenu={onSelect}
+              onDoubleClick={onOpen}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  onOpen();
+                }
+              }}
+            />
+            {canManage && (
+              <AssetThumbnailAction>
+                <Tooltip content="Folder settings">
+                  <SmallIconButton
+                    icon={<GearIcon />}
+                    aria-label={`Settings for ${folder.name}`}
+                    tabIndex={-1}
+                    onClick={() => openSettings()}
+                  />
+                </Tooltip>
+              </AssetThumbnailAction>
+            )}
+          </AssetThumbnailGroup>
+        </ContextMenuTrigger>
+        <AssetManagerItemContextMenuContent actions={actions} />
+      </ContextMenu>
       {canManage && (
         <AssetFolderSettingsDialog
           folder={folder}
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
+          initialDeleteConfirmation={deleteConfirmationOpen}
+          actions={actions}
         />
       )}
     </>
   );
 };
 
-export const BackThumbnail = ({ onOpen }: { onOpen: () => void }) => (
-  <AssetThumbnailCard
-    as="button"
-    type="button"
-    label="Back"
-    preview={<ChevronLeftIcon size={48} />}
-    clickable
-    onClick={onOpen}
-  />
+export const BackThumbnail = ({
+  onOpen,
+  onElementChange,
+}: {
+  onOpen: () => void;
+  onElementChange?: (element: HTMLElement | null) => void;
+}) => (
+  <AssetThumbnailGroup>
+    <AssetThumbnailCard
+      ref={onElementChange}
+      as="button"
+      type="button"
+      label="Back"
+      preview={
+        <ChevronRightIcon size={48} style={{ transform: "rotate(180deg)" }} />
+      }
+      clickable
+      onClick={onOpen}
+    />
+  </AssetThumbnailGroup>
 );

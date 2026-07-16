@@ -1853,6 +1853,19 @@ export const builderRuntimeOperations = [
     ({ state, input }) => assetFolders.deleteAssetFolder(state, input)
   ),
   runtimeOperation(
+    "assetFolders.duplicate",
+    api("duplicate-asset-folder", "duplicateAssetFolder"),
+    mutationContract({
+      readNamespaces: ["assetFolders", "assets"],
+      writeNamespaces: ["assetFolders", "assets"],
+      retryOnConflict: true,
+      requiresAssets: true,
+    }),
+    assetFolders.assetFolderDuplicateInput,
+    ({ state, input, context }) =>
+      assetFolders.duplicateAssetFolder(state, input, context)
+  ),
+  runtimeOperation(
     "assets.list",
     api("list-assets", "listAssets"),
     readContract(assetUsageNamespaces, { requiresAssets: true }),
@@ -1906,6 +1919,18 @@ export const builderRuntimeOperations = [
     }),
     assets.assetAddInput,
     ({ state, input, context }) => assets.addAsset(state, input, context)
+  ),
+  runtimeOperation(
+    "assets.duplicate",
+    api("duplicate-asset", "duplicateAsset"),
+    mutationContract({
+      readNamespaces: ["assets", "assetFolders"],
+      writeNamespaces: ["assets"],
+      retryOnConflict: true,
+      requiresAssets: true,
+    }),
+    assets.assetDuplicateInput,
+    ({ state, input, context }) => assets.duplicateAsset(state, input, context)
   ),
   runtimeOperation(
     "assets.replace",

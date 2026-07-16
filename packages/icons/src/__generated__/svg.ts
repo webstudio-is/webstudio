@@ -138,7 +138,7 @@ export const ChevronFilledUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill
 
 export const ChevronLeftIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><g id="c1893fb9d__icon/chevron left"><path id="c1893fb9d__vector" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="m9.256 4.499-3.512 3.5 3.512 3.502"/></g></svg>`;
 
-export const ChevronRightIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m6 12 4-4-4-4"/></svg>`;
+export const ChevronRightIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m6 12 4-4-4-4" vector-effect="non-scaling-stroke"/></svg>`;
 
 export const ChevronUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12 10 8 6l-4 4"/></svg>`;
 
@@ -202,7 +202,7 @@ export const EyedropperIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="non
 
 export const FacebookIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" d="M6.309 14.82v-4.655H4.866v-2.14h1.443v-.921c0-2.383 1.078-3.487 3.417-3.487.234 0 .557.024.856.06.225.023.447.061.666.114v1.94a5.032 5.032 0 0 0-.38-.022 15.632 15.632 0 0 0-.428-.005c-.413 0-.735.056-.978.18a.984.984 0 0 0-.396.363c-.15.245-.218.58-.218 1.022v.757h2.286l-.225 1.226-.167.913H8.848v4.81a7 7 0 1 0-2.54-.155Z"/></svg>`;
 
-export const FolderIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.333 13.333A1.333 1.333 0 0 0 14.667 12V5.333A1.334 1.334 0 0 0 13.333 4H8.067a1.333 1.333 0 0 1-1.127-.6l-.54-.8A1.333 1.333 0 0 0 5.287 2h-2.62a1.333 1.333 0 0 0-1.334 1.333V12a1.333 1.333 0 0 0 1.334 1.333h10.666Z"/></svg>`;
+export const FolderIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1.5 3.5c0-.55.45-1 1-1h3l1.5 2h6.5c.55 0 1 .45 1 1v7c0 .55-.45 1-1 1h-11c-.55 0-1-.45-1-1v-9Z" vector-effect="non-scaling-stroke"/></svg>`;
 
 export const FooterIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2ZM4 12h8"/></svg>`;
 
