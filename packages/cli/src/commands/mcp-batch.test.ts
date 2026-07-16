@@ -220,6 +220,45 @@ test("resume never retries successful calls or completed projects", async () => 
   });
 });
 
+test("never replays a mutation with an ambiguous interrupted result", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "mcp-batch-ambiguous-"));
+  tempDirs.push(directory);
+  const manifest = parseMcpProjectsManifest({
+    value: {
+      calls: [{ tool: "update-page" }],
+      projects: ["one"],
+      progressFile: "progress.json",
+    },
+    baseDirectory: directory,
+    defaultProgressDirectory: directory,
+    parseCalls,
+  });
+
+  await runMcpProjectBatch({
+    manifest,
+    resume: true,
+    runProject: async ({ callStarted }) => {
+      await callStarted(0, false);
+      throw new Error("connection closed after dispatch");
+    },
+  });
+  const resumedRun = vi.fn();
+  const reports = await runMcpProjectBatch({
+    manifest,
+    resume: true,
+    runProject: resumedRun,
+  });
+
+  expect(resumedRun).not.toHaveBeenCalled();
+  expect(reports).toEqual([
+    expect.objectContaining({
+      status: "failed",
+      completedCalls: 0,
+      error: expect.objectContaining({ code: "AMBIGUOUS_MUTATION_RESULT" }),
+    }),
+  ]);
+});
+
 test("resumes projects whose ids are object prototype names", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "mcp-batch-prototype-"));
   tempDirs.push(directory);

@@ -364,6 +364,31 @@ describe("project.verifyBindings", () => {
     );
   });
 
+  test("reports the full path for a page nested in a folder", () => {
+    const state = createState();
+    state.pages!.folders.get("root")!.children = ["home", "section"];
+    state.pages!.folders.set("section", {
+      id: "section",
+      name: "Section",
+      slug: "section",
+      children: ["other"],
+    });
+    state.pages!.pages.get("other")!.title =
+      encodeDataVariableId("global-title");
+
+    const result = verifyBindings(state, { pageId: "other" });
+
+    expect(result.findings).toContainEqual(
+      expect.objectContaining({
+        code: "out-of-scope-data-source",
+        location: expect.objectContaining({
+          pageId: "other",
+          pagePath: "/section/other",
+        }),
+      })
+    );
+  });
+
   test("is exposed through the canonical runtime operation", () => {
     const result = executeBuilderRuntimeOperation({
       id: "project.verifyBindings",

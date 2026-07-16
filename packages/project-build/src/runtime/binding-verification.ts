@@ -16,6 +16,7 @@ import { throwBuilderRuntimeError } from "./errors";
 import { findAvailableVariables, listResourceExpressions } from "./data";
 import {
   findSerializedPageByInput,
+  getSerializedPagePath,
   getSerializedPages,
   listPageMetadataExpressions,
 } from "./pages";
@@ -167,8 +168,6 @@ const createFinding = (
   ...details,
 });
 
-const getPagePath = (page: Page) => (page.path === "" ? "/" : page.path);
-
 const shouldVerifyPageMetadataExpression = (
   expression: string,
   availableVariables: ReadonlySet<string>
@@ -197,12 +196,16 @@ export const verifyBindings = (
 ) => {
   const { pages, instances, props, dataSources, resources } =
     getRequiredState(state);
+  const serializedPages = getSerializedPages({ pages });
+  const pagePathById = new Map(
+    serializedPages.pages.map((page) => [
+      page.id,
+      getSerializedPagePath(serializedPages, page) || "/",
+    ])
+  );
   let selectedPage: Page | undefined;
   if (input.pageId !== undefined || input.pagePath !== undefined) {
-    const serializedPage = findSerializedPageByInput(
-      getSerializedPages({ pages }),
-      input
-    );
+    const serializedPage = findSerializedPageByInput(serializedPages, input);
     selectedPage =
       serializedPage === undefined
         ? undefined
@@ -258,7 +261,11 @@ export const verifyBindings = (
     const page = pageByInstanceId.get(instanceId);
     return page === undefined
       ? location
-      : { pageId: page.id, pagePath: getPagePath(page), ...location };
+      : {
+          pageId: page.id,
+          pagePath: pagePathById.get(page.id) ?? "/",
+          ...location,
+        };
   };
 
   const findings: BindingVerificationFinding[] = [];
@@ -599,7 +606,7 @@ export const verifyBindings = (
         bindingKind: "page-metadata",
         location: {
           pageId: page.id,
-          pagePath: getPagePath(page),
+          pagePath: pagePathById.get(page.id) ?? "/",
           instanceId: page.rootInstanceId,
           path: ["pages", page.id, ...entry.path],
         },

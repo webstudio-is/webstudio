@@ -2315,7 +2315,7 @@ class ProjectSessionMcpCheckpointError extends Error {
   code = "CHECKPOINT_REQUIRED";
 }
 
-type ProjectSessionMcpCheckpoint = {
+export type ProjectSessionMcpCheckpoint = {
   tool: string;
   message: string;
   nextCommand?: string;
@@ -2421,7 +2421,7 @@ const toMetaResult = (data: unknown): ProjectSessionMcpToolResult => {
   };
 };
 
-const getMcpCheckpoint = (
+export const getProjectSessionMcpCheckpoint = (
   tool: string,
   data: unknown
 ): ProjectSessionMcpCheckpoint | undefined => {
@@ -5363,22 +5363,7 @@ const getImportInput = (input: unknown): ProjectSessionImportInput => {
   };
 };
 
-export const createProjectSessionMcpCore = <Command extends string = string>({
-  operations,
-  createProjectSession,
-  executeOperation,
-  importProject,
-  captureScreenshot,
-  capturePageScreenshots,
-  diffScreenshots,
-  installOcr,
-  startPreview,
-  getPreviewStatus,
-  stopPreview,
-  guidance,
-  reportToolProgress,
-  storeRenderedAuditArtifacts,
-}: {
+type ProjectSessionMcpCoreOptions<Command extends string> = {
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
@@ -5395,14 +5380,31 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   storeRenderedAuditArtifacts?: (
     manifest: RenderedAuditArtifactManifest
   ) => Promise<string>;
-}) => {
+};
+
+export const createProjectSessionMcpCore = <Command extends string = string>({
+  operations,
+  createProjectSession,
+  executeOperation,
+  importProject,
+  captureScreenshot,
+  capturePageScreenshots,
+  diffScreenshots,
+  installOcr,
+  startPreview,
+  getPreviewStatus,
+  stopPreview,
+  guidance,
+  reportToolProgress,
+  storeRenderedAuditArtifacts,
+}: ProjectSessionMcpCoreOptions<Command>) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
   const toCheckpointedMetaResult = (
     tool: string,
     data: unknown
   ): ProjectSessionMcpToolResult => {
-    pendingCheckpoint = getMcpCheckpoint(tool, data);
+    pendingCheckpoint = getProjectSessionMcpCheckpoint(tool, data);
     return toMetaResult(data);
   };
   const operationByCommand = new Map(
@@ -5999,24 +6001,9 @@ export const createProjectSessionMcpServer = async <
   storeRenderedAuditArtifacts,
   onInitialized,
   toolHeartbeatIntervalMs = 10_000,
-}: {
-  operations: readonly (PublicMcpOperation & { command: Command })[];
-  createProjectSession: CreateProjectSession;
-  executeOperation: ExecuteMcpOperation<Command>;
-  importProject?: ImportProject;
-  captureScreenshot?: CaptureScreenshot;
-  capturePageScreenshots?: CapturePageScreenshots;
-  diffScreenshots?: DiffScreenshots;
-  installOcr?: InstallOcr;
-  startPreview?: StartPreview;
-  getPreviewStatus?: GetPreviewStatus;
-  stopPreview?: StopPreview;
-  guidance?: ProjectSessionMcpGuidance;
+}: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
-  storeRenderedAuditArtifacts?: (
-    manifest: RenderedAuditArtifactManifest
-  ) => Promise<string>;
   onInitialized?: (clientName: string | undefined) => void;
   toolHeartbeatIntervalMs?: number;
 }) => {

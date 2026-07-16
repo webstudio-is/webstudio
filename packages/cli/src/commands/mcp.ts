@@ -5,6 +5,7 @@ import {
   connectProjectSessionMcpServer,
   createProjectSessionMcpCore,
   createMcpStdioTransport,
+  getProjectSessionMcpCheckpoint,
 } from "@webstudio-is/project-build/mcp";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
 import { diffPngFiles } from "@webstudio-is/project-build/visual";
@@ -286,24 +287,7 @@ const getResultCheckpoint = (tool: string, structuredContent: unknown) => {
     return;
   }
   const data = structuredContent.data;
-  if (isPlainRecord(data) === false) {
-    return;
-  }
-  const checkpoint = data.checkpoint;
-  if (
-    isPlainRecord(checkpoint) &&
-    checkpoint.required === true &&
-    typeof checkpoint.instruction === "string"
-  ) {
-    return {
-      tool,
-      message: checkpoint.instruction,
-      nextCommand:
-        typeof checkpoint.nextCommand === "string"
-          ? checkpoint.nextCommand
-          : undefined,
-    };
-  }
+  return getProjectSessionMcpCheckpoint(tool, data);
 };
 
 const updatePersistedMcpCheckpoint = async ({
@@ -1450,7 +1434,7 @@ const runMcpProjectsBatch = async ({
   const reports = await runMcpProjectBatch({
     manifest,
     resume: options.resume !== false,
-    runProject: async ({ project, startCall, callSucceeded }) => {
+    runProject: async ({ project, startCall, callStarted, callSucceeded }) => {
       stderr.write(
         `${formatMcpStatusLine(
           `batch project ${project.id} started at call ${startCall + 1}/${project.calls.length}`
@@ -1477,6 +1461,11 @@ const runMcpProjectsBatch = async ({
       }
       for (let index = startCall; index < project.calls.length; index++) {
         const call = project.calls[index]!;
+        const tool = tools.get(call.tool);
+        await callStarted(
+          index,
+          call.dryRun || tool?.annotations.method !== "mutation"
+        );
         const { checkpoint } = await executeMcpRunCall({
           core,
           call,

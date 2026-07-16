@@ -290,6 +290,41 @@ const renderedGeometryIssue = z.union([
   }),
 ]);
 
+const renderedImageMetric = z.object({
+  instanceId: z.string().optional(),
+  sourcePathname: z.string().optional(),
+  loading: z.string(),
+  complete: z.boolean(),
+  naturalWidth: z.number().nonnegative(),
+  naturalHeight: z.number().nonnegative(),
+  selectedSourceWidth: z.number().nonnegative().optional(),
+  selectedSourceHeight: z.number().nonnegative().optional(),
+  renderedWidth: z.number().nonnegative(),
+  renderedHeight: z.number().nonnegative(),
+  top: z.number(),
+});
+
+const renderedResourceMetric = z.object({
+  pathname: z.string(),
+  initiatorType: z.string(),
+  transferSize: z.number().nonnegative(),
+  encodedBodySize: z.number().nonnegative(),
+  decodedBodySize: z.number().nonnegative(),
+  duration: z.number().nonnegative(),
+  renderBlockingStatus: z.string().optional(),
+});
+
+const renderedContrastMetric = z.object({
+  instanceId: z.string(),
+  tagName: z.string(),
+  foreground: z.string(),
+  background: z.string(),
+  ratio: z.number().positive(),
+  requiredRatio: z.union([z.literal(3), z.literal(4.5)]),
+  fontSize: z.number().positive(),
+  fontWeight: z.number().nonnegative(),
+});
+
 export const renderedAuditCheck = z.object({
   pageId: z.string(),
   pagePath: z.string(),
@@ -311,93 +346,31 @@ export const renderedAuditCheck = z.object({
       truncated: z.boolean(),
       elements: z.array(renderedElementGeometry).max(250),
     }),
-    images: z.array(
-      z.object({
-        instanceId: z.string().optional(),
-        sourcePathname: z.string().optional(),
-        loading: z.string(),
-        complete: z.boolean(),
-        naturalWidth: z.number().nonnegative(),
-        naturalHeight: z.number().nonnegative(),
-        selectedSourceWidth: z.number().nonnegative().optional(),
-        selectedSourceHeight: z.number().nonnegative().optional(),
-        renderedWidth: z.number().nonnegative(),
-        renderedHeight: z.number().nonnegative(),
-        top: z.number(),
-      })
-    ),
-    resources: z.array(
-      z.object({
-        pathname: z.string(),
-        initiatorType: z.string(),
-        transferSize: z.number().nonnegative(),
-        encodedBodySize: z.number().nonnegative(),
-        decodedBodySize: z.number().nonnegative(),
-        duration: z.number().nonnegative(),
-        renderBlockingStatus: z.string().optional(),
-      })
-    ),
-    contrasts: z
-      .array(
-        z.object({
-          instanceId: z.string(),
-          tagName: z.string(),
-          foreground: z.string(),
-          background: z.string(),
-          ratio: z.number().positive(),
-          requiredRatio: z.union([z.literal(3), z.literal(4.5)]),
-          fontSize: z.number().positive(),
-          fontWeight: z.number().nonnegative(),
-        })
-      )
-      .optional(),
+    images: z.array(renderedImageMetric),
+    resources: z.array(renderedResourceMetric),
+    contrasts: z.array(renderedContrastMetric).optional(),
   }),
   issues: z.array(renderedAuditIssueKind),
   geometryIssues: z.array(renderedGeometryIssue),
   imageIssues: z.array(
-    z.object({
+    renderedImageMetric.omit({ complete: true }).extend({
       kind: z.enum([
         "broken-image",
         "eager-below-fold-image",
         "oversized-image",
       ]),
-      instanceId: z.string().optional(),
-      sourcePathname: z.string().optional(),
-      loading: z.string(),
-      naturalWidth: z.number().nonnegative(),
-      naturalHeight: z.number().nonnegative(),
-      selectedSourceWidth: z.number().nonnegative().optional(),
-      selectedSourceHeight: z.number().nonnegative().optional(),
-      renderedWidth: z.number().nonnegative(),
-      renderedHeight: z.number().nonnegative(),
-      top: z.number(),
     })
   ),
   resourceIssues: z.array(
-    z.object({
+    renderedResourceMetric.extend({
       kind: z.enum(["render-blocking-resource", "legacy-font-format"]),
-      pathname: z.string(),
-      initiatorType: z.string(),
-      transferSize: z.number().nonnegative(),
-      encodedBodySize: z.number().nonnegative(),
-      decodedBodySize: z.number().nonnegative(),
-      duration: z.number().nonnegative(),
-      renderBlockingStatus: z.string().optional(),
     })
   ),
   contrastIssues: z
     .array(
-      z.object({
+      renderedContrastMetric.extend({
         kind: z.literal("low-text-contrast"),
         confidence: z.literal("exact"),
-        instanceId: z.string(),
-        tagName: z.string(),
-        foreground: z.string(),
-        background: z.string(),
-        ratio: z.number().positive(),
-        requiredRatio: z.union([z.literal(3), z.literal(4.5)]),
-        fontSize: z.number().positive(),
-        fontWeight: z.number().nonnegative(),
       })
     )
     .optional(),

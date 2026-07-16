@@ -8,6 +8,11 @@ import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
 } from "@webstudio-is/protocol";
+import { serializePages } from "@webstudio-is/project-migrations/pages";
+import {
+  createSerializedBuilderStateSnapshotFromState,
+  type BuilderState,
+} from "@webstudio-is/project-build/state";
 
 export type RuntimeFixtureRequest = {
   request: IncomingMessage;
@@ -34,6 +39,68 @@ export const runtimeFixturePermissions = {
 export const publicApiCommandByOperationId = new Map(
   publicApiOperations.map((operation) => [operation.id, operation.command])
 );
+
+export const createRuntimeFixtureBuildSnapshot = ({
+  state,
+  projectId,
+  buildId,
+  version,
+}: {
+  state: BuilderState;
+  projectId: string;
+  buildId: string;
+  version: number;
+}) => {
+  if (state.pages === undefined) {
+    throw new Error("Runtime fixture pages are missing.");
+  }
+  const pages = serializePages(state.pages);
+  return {
+    projectId,
+    buildId,
+    version,
+    pages: pages.pages,
+    pageTemplates: pages.pageTemplates,
+    folders: pages.folders,
+    homePageId: pages.homePageId,
+    rootFolderId: pages.rootFolderId,
+    redirects: pages.redirects,
+    assets: Array.from(state.assets?.values() ?? []),
+    instances: Array.from(state.instances?.values() ?? []),
+    props: Array.from(state.props?.values() ?? []),
+    variables: Array.from(state.dataSources?.values() ?? []),
+    resources: Array.from(state.resources?.values() ?? []),
+    breakpoints: Array.from(state.breakpoints?.values() ?? []),
+    styles: Array.from(state.styles?.values() ?? []),
+    styleSources: Array.from(state.styleSources?.values() ?? []),
+    styleSourceSelections: Array.from(
+      state.styleSourceSelections?.values() ?? []
+    ),
+    marketplaceProduct: state.marketplaceProduct,
+    projectSettings: state.projectSettings,
+  };
+};
+
+export const createRuntimeFixtureSerializedBuild = ({
+  state,
+  baseBuild,
+  buildId,
+  version,
+}: {
+  state: BuilderState;
+  baseBuild: Record<string, unknown>;
+  buildId: string;
+  version: number;
+}) => {
+  const { assets: _assets, ...snapshot } =
+    createSerializedBuilderStateSnapshotFromState(state);
+  return {
+    ...baseBuild,
+    ...snapshot,
+    id: buildId,
+    version,
+  };
+};
 
 const readTrpcInput = async (request: IncomingMessage) => {
   const url = new URL(request.url ?? "", "http://127.0.0.1");

@@ -4,6 +4,7 @@ import { dirname, resolve } from "node:path";
 import type { HighImpactFixture } from "./fixtures";
 import type { HighImpactEvaluationResult } from "./validate";
 import { runAgentCommand } from "../../scripts/run-agent-command";
+import { boundedIdentifierPattern } from "../../src/type-utils";
 
 export type AgentCliTarget =
   | { kind: "source"; repositoryRoot: string }
@@ -26,7 +27,6 @@ export type AgentEvaluationResult = {
   checks: Record<string, "passed" | "failed">;
 };
 
-const safeIdentifier = /^[A-Za-z0-9._:/-]{1,128}$/;
 const forbiddenResultKeys =
   /(?:prompt|transcript|stdout|stderr|token|secret|credential|payload)/i;
 
@@ -65,8 +65,8 @@ export const createMinimalAgentTask = (
 
 const assertBoundedResult = (result: AgentEvaluationResult) => {
   if (
-    safeIdentifier.test(result.provider) === false ||
-    safeIdentifier.test(result.model) === false
+    boundedIdentifierPattern.test(result.provider) === false ||
+    boundedIdentifierPattern.test(result.model) === false
   ) {
     throw new Error("Agent provider and model must be bounded identifiers.");
   }

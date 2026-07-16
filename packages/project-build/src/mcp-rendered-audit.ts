@@ -33,6 +33,44 @@ type ExecuteRead = (
   input: unknown
 ) => Promise<ProjectSessionEnvelope>;
 
+const readAllPaginatedItems = async (
+  executeRead: ExecuteRead,
+  command: "list-pages" | "list-breakpoints",
+  key: "pages" | "breakpoints"
+) => {
+  const items: unknown[] = [];
+  const seenCursors = new Set<string>();
+  let cursor: string | undefined;
+  let firstEnvelope: ProjectSessionEnvelope | undefined;
+  do {
+    const envelope = await executeRead(command, { cursor, limit: 200 });
+    firstEnvelope ??= envelope;
+    if (isRecord(envelope.result) === false) {
+      throw new Error(`${command} returned an invalid result.`);
+    }
+    const page = envelope.result[key];
+    if (Array.isArray(page) === false) {
+      throw new Error(`${command} did not return ${key}.`);
+    }
+    items.push(...page);
+    const nextCursor = envelope.result.nextCursor;
+    cursor = typeof nextCursor === "string" ? nextCursor : undefined;
+    if (cursor !== undefined && seenCursors.has(cursor)) {
+      throw new Error(`${command} returned a repeated pagination cursor.`);
+    }
+    if (cursor !== undefined) {
+      seenCursors.add(cursor);
+    }
+  } while (cursor !== undefined);
+  if (firstEnvelope === undefined || isRecord(firstEnvelope.result) === false) {
+    throw new Error(`${command} returned no result.`);
+  }
+  return {
+    ...firstEnvelope,
+    result: { ...firstEnvelope.result, [key]: items, nextCursor: null },
+  };
+};
+
 type StartPreview = (
   input: { source: "session"; port: number; imageDomains?: string[] },
   progress: { report: (message: string) => void }
@@ -1123,8 +1161,8 @@ export const augmentAuditWithRenderedChecks = async ({
   let breakpointsEnvelope: ProjectSessionEnvelope;
   try {
     [pagesEnvelope, breakpointsEnvelope] = await Promise.all([
-      executeRead("list-pages", {}),
-      executeRead("list-breakpoints", {}),
+      readAllPaginatedItems(executeRead, "list-pages", "pages"),
+      readAllPaginatedItems(executeRead, "list-breakpoints", "breakpoints"),
     ]);
   } catch (error) {
     failures.push({

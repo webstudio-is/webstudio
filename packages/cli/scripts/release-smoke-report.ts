@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { z } from "zod";
+import { boundedIdentifierPattern } from "../src/type-utils";
 
 export const releaseSmokePhases = [
   "fixture-api",
@@ -45,7 +46,7 @@ const safeIdentifier = z
   .string()
   .min(1)
   .max(128)
-  .regex(/^[A-Za-z0-9._:/-]+$/);
+  .regex(boundedIdentifierPattern);
 
 export const countCompactTokens = (source: string) => {
   let tokens = 0;

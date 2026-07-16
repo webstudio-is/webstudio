@@ -1379,6 +1379,65 @@ describe("rendered audit evidence", () => {
     });
   });
 
+  test("reads every page of paginated audit planning data", async () => {
+    const pages = Array.from({ length: 205 }, (_, index) => ({
+      id: `page-${index}`,
+      path: `/page-${index}`,
+    }));
+    const executeRead = vi.fn(
+      async (command: "list-pages" | "list-breakpoints", input: unknown) => {
+        if (command === "list-breakpoints") {
+          return { result: { breakpoints: [], nextCursor: null } } as never;
+        }
+        const { cursor, limit } = input as {
+          cursor?: string;
+          limit: number;
+        };
+        const offset = Number(cursor ?? 0);
+        const items = pages.slice(offset, offset + limit);
+        return {
+          result: {
+            pages: items,
+            nextCursor:
+              offset + items.length < pages.length
+                ? String(offset + items.length)
+                : null,
+          },
+        } as never;
+      }
+    );
+
+    const result = await augmentAuditWithRenderedChecks({
+      envelope: {
+        operationId: "project.audit",
+        source: "remote",
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        committed: false,
+        result: { scopes: ["accessibility"], manualCheckCount: 1 },
+      } as never,
+      input: { rendered: true },
+      executeRead,
+      startPreview: createStartPreview(),
+      stopPreview: vi.fn(),
+      captureScreenshot: vi.fn(),
+    });
+
+    expect(executeRead).toHaveBeenCalledWith("list-pages", {
+      cursor: undefined,
+      limit: 200,
+    });
+    expect(executeRead).toHaveBeenCalledWith("list-pages", {
+      cursor: "200",
+      limit: 200,
+    });
+    expect(result.result).toMatchObject({
+      renderedState: "confirmation-required",
+      renderedPlan: { captureCount: 205 },
+    });
+  });
+
   test("requires and consumes confirmation for a large unchanged plan", async () => {
     const startPreview = createStartPreview();
     const stopPreview = vi.fn();

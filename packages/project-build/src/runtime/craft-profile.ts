@@ -62,6 +62,14 @@ export const craftOfficialReferenceSnapshot = {
 
 const craftSourceUrl = "https://docs.webstudio.is/university/craft";
 const craftCapturedAt = "2026-07-15T20:20:45.000Z";
+const { display, flexDirection, columnGap, rowGap } =
+  craftOfficialReferenceSnapshot.containerToken;
+const craftRequiredContainerDeclarations = {
+  display,
+  flexDirection,
+  columnGap,
+  rowGap,
+};
 
 export const craftProfile = {
   id: "craft",
@@ -160,12 +168,7 @@ export const craftProfile = {
       semanticVariables: [...craftOfficialReferenceSnapshot.semanticVariables],
       containerToken: {
         name: "container",
-        declarations: {
-          display: "flex",
-          flexDirection: "column",
-          columnGap: "var(--gap-m)",
-          rowGap: "var(--gap-m)",
-        },
+        declarations: craftRequiredContainerDeclarations,
       },
     },
     recommended: {

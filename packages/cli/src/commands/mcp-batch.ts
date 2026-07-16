@@ -26,6 +26,7 @@ export type McpProjectsManifest = {
 type PersistedProjectProgress = {
   nextCall: number;
   completed: boolean;
+  ambiguousMutationCall?: number;
 };
 
 type PersistedBatchProgress = {
@@ -225,6 +226,7 @@ export const runMcpProjectBatch = async ({
   runProject: (options: {
     project: McpBatchProject;
     startCall: number;
+    callStarted: (call: number, replaySafe: boolean) => Promise<void>;
     callSucceeded: (nextCall: number) => Promise<void>;
   }) => Promise<void>;
 }) => {
@@ -257,6 +259,20 @@ export const runMcpProjectBatch = async ({
         };
         continue;
       }
+      if (resume && saved?.ambiguousMutationCall !== undefined) {
+        reports[index] = {
+          id: project.id,
+          root: project.root,
+          status: "failed",
+          completedCalls: saved.nextCall,
+          totalCalls: project.calls.length,
+          error: {
+            code: "AMBIGUOUS_MUTATION_RESULT",
+            message: `Mutation call ${saved.ambiguousMutationCall + 1} may have committed before the previous run stopped. Inspect the project before deciding whether to continue; it will not be replayed automatically.`,
+          },
+        };
+        continue;
+      }
       const startCall = resume
         ? Math.min(saved?.nextCall ?? 0, project.calls.length)
         : 0;
@@ -264,6 +280,17 @@ export const runMcpProjectBatch = async ({
         await runProject({
           project,
           startCall,
+          callStarted: async (call, replaySafe) => {
+            if (replaySafe) {
+              return;
+            }
+            progress.projects[project.id] = {
+              nextCall: call,
+              completed: false,
+              ambiguousMutationCall: call,
+            };
+            await persist();
+          },
           callSucceeded: async (nextCall) => {
             progress.projects[project.id] = { nextCall, completed: false };
             await persist();

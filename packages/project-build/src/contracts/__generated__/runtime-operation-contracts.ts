@@ -35406,14 +35406,6 @@ export const runtimeOperationContractData = [
                     items: {
                       type: "object",
                       properties: {
-                        kind: {
-                          type: "string",
-                          enum: [
-                            "broken-image",
-                            "eager-below-fold-image",
-                            "oversized-image",
-                          ],
-                        },
                         instanceId: {
                           type: "string",
                         },
@@ -35450,15 +35442,23 @@ export const runtimeOperationContractData = [
                         top: {
                           type: "number",
                         },
+                        kind: {
+                          type: "string",
+                          enum: [
+                            "broken-image",
+                            "eager-below-fold-image",
+                            "oversized-image",
+                          ],
+                        },
                       },
                       required: [
-                        "kind",
                         "loading",
                         "naturalWidth",
                         "naturalHeight",
                         "renderedWidth",
                         "renderedHeight",
                         "top",
+                        "kind",
                       ],
                     },
                   },
@@ -35467,13 +35467,6 @@ export const runtimeOperationContractData = [
                     items: {
                       type: "object",
                       properties: {
-                        kind: {
-                          type: "string",
-                          enum: [
-                            "render-blocking-resource",
-                            "legacy-font-format",
-                          ],
-                        },
                         pathname: {
                           type: "string",
                         },
@@ -35499,15 +35492,22 @@ export const runtimeOperationContractData = [
                         renderBlockingStatus: {
                           type: "string",
                         },
+                        kind: {
+                          type: "string",
+                          enum: [
+                            "render-blocking-resource",
+                            "legacy-font-format",
+                          ],
+                        },
                       },
                       required: [
-                        "kind",
                         "pathname",
                         "initiatorType",
                         "transferSize",
                         "encodedBodySize",
                         "decodedBodySize",
                         "duration",
+                        "kind",
                       ],
                     },
                   },
@@ -35516,14 +35516,6 @@ export const runtimeOperationContractData = [
                     items: {
                       type: "object",
                       properties: {
-                        kind: {
-                          type: "string",
-                          const: "low-text-contrast",
-                        },
-                        confidence: {
-                          type: "string",
-                          const: "exact",
-                        },
                         instanceId: {
                           type: "string",
                         },
@@ -35560,10 +35552,16 @@ export const runtimeOperationContractData = [
                           type: "number",
                           minimum: 0,
                         },
+                        kind: {
+                          type: "string",
+                          const: "low-text-contrast",
+                        },
+                        confidence: {
+                          type: "string",
+                          const: "exact",
+                        },
                       },
                       required: [
-                        "kind",
-                        "confidence",
                         "instanceId",
                         "tagName",
                         "foreground",
@@ -35572,6 +35570,8 @@ export const runtimeOperationContractData = [
                         "requiredRatio",
                         "fontSize",
                         "fontWeight",
+                        "kind",
+                        "confidence",
                       ],
                     },
                   },

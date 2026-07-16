@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, test } from "vitest";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
+import { serializedBuild } from "@webstudio-is/project-build/contracts";
+import { createBuilderStateFromBuildData } from "@webstudio-is/project-build/state";
 import {
+  createRuntimeFixtureBuildSnapshot,
+  createRuntimeFixtureSerializedBuild,
   publicApiCommandByOperationId,
   runtimeFixturePermissions,
   startRuntimeFixtureApi,
@@ -12,6 +17,89 @@ afterEach(async () => {
 });
 
 describe("runtime fixture API", () => {
+  test("serializes build snapshots for their distinct API contracts", () => {
+    const state = createBuilderStateFromBuildData({
+      pages: migratePages({
+        meta: {},
+        compiler: {},
+        redirects: [],
+        homePageId: "home",
+        rootFolderId: "root",
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            path: "",
+            title: "Home",
+            rootInstanceId: "root-instance",
+            meta: {},
+          },
+        ],
+        folders: [
+          {
+            id: "root",
+            name: "Root",
+            slug: "",
+            children: ["home"],
+          },
+        ],
+      }),
+      instances: [
+        {
+          type: "instance",
+          id: "root-instance",
+          component: "Box",
+          children: [],
+        },
+      ],
+      props: [],
+      dataSources: [],
+      resources: [],
+      breakpoints: [],
+      styles: [],
+      styleSources: [],
+      styleSourceSelections: [],
+      assets: [],
+      projectSettings: { meta: {}, compiler: {} },
+    });
+    const baseBuild = {
+      id: "old-build",
+      projectId: "project",
+      version: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+
+    const snapshot = createRuntimeFixtureBuildSnapshot({
+      state,
+      projectId: "project",
+      buildId: "build",
+      version: 2,
+    });
+    expect(snapshot.pages).toEqual([expect.objectContaining({ id: "home" })]);
+    expect(snapshot.instances).toEqual([
+      expect.objectContaining({ id: "root-instance" }),
+    ]);
+    expect(snapshot.variables).toEqual([]);
+    expect(snapshot).not.toHaveProperty("dataSources");
+
+    const build = createRuntimeFixtureSerializedBuild({
+      state,
+      baseBuild,
+      buildId: "build",
+      version: 2,
+    });
+    expect(serializedBuild.parse(build)).toEqual(build);
+    expect(build.pages).toEqual(
+      expect.objectContaining({
+        pages: [expect.objectContaining({ id: "home" })],
+      })
+    );
+    expect(build.instances).toEqual([
+      ["root-instance", expect.objectContaining({ id: "root-instance" })],
+    ]);
+  });
+
   test.each([
     {
       method: "GET",

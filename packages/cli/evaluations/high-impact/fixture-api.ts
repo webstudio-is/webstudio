@@ -1,8 +1,5 @@
 import type { Server } from "node:http";
-import {
-  migratePages,
-  serializePages,
-} from "@webstudio-is/project-migrations/pages";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import React from "react";
 import type { BuilderState } from "@webstudio-is/project-build/state";
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
@@ -11,6 +8,7 @@ import type { BuilderPatchTransaction } from "@webstudio-is/project-build/contra
 import type { HighImpactFixture, EvaluationProject } from "./fixtures";
 import type { EvaluationToolCall } from "./validate";
 import {
+  createRuntimeFixtureBuildSnapshot,
   publicApiCommandByOperationId,
   runtimeFixturePermissions,
   startRuntimeFixtureApi,
@@ -159,29 +157,12 @@ export const startHighImpactFixtureApi = async (
         version += 1;
         data = { version };
       } else if (operationPath === "build.get") {
-        const pages = serializePages(state.pages!);
-        const snapshot = stateToProject(state);
-        data = {
-          ...build,
+        data = createRuntimeFixtureBuildSnapshot({
+          state,
+          projectId,
           buildId,
           version,
-          pages: pages.pages,
-          pageTemplates: pages.pageTemplates,
-          folders: pages.folders,
-          homePageId: pages.homePageId,
-          rootFolderId: pages.rootFolderId,
-          meta: pages.meta,
-          compiler: pages.compiler,
-          redirects: pages.redirects,
-          instances: snapshot.instances,
-          props: snapshot.props,
-          dataSources: snapshot.dataSources,
-          resources: snapshot.resources,
-          breakpoints: snapshot.breakpoints,
-          styleSources: snapshot.styleSources,
-          styleSourceSelections: snapshot.styleSourceSelections,
-          styles: snapshot.styles,
-        };
+        });
       } else if (
         operationPath === "projects.permissions" ||
         operationPath === ""

@@ -1107,7 +1107,7 @@ Commands:
 Notes:
 
 - Put shared `calls` and a `projects` array of independently linked project roots in the existing `mcp run` manifest. Project roots are relative to the manifest file.
-- Each project uses its own config, authentication, ProjectSession storage, checkpoint, and failure boundary. Successful calls are checkpointed and are not duplicated by a resumed run.
+- Each project uses its own config, authentication, ProjectSession storage, checkpoint, and failure boundary. Confirmed successful calls are checkpointed. Reads can resume automatically; a mutation interrupted after dispatch is reported as ambiguous and is not replayed automatically, preventing silent duplicate writes.
 - Focus the manifest on bounded reads or audits first. Use per-call `dryRun`, global `--dry-run`, or explicitly approve committed mutations with `--approve-mutations` after reviewing the manifest.
 
 # Known CLI Gaps

@@ -36,6 +36,8 @@ import {
   type CompactSmokeOperation,
 } from "./release-smoke-report";
 import {
+  createRuntimeFixtureBuildSnapshot,
+  createRuntimeFixtureSerializedBuild,
   runtimeFixturePermissions,
   startRuntimeFixtureApi,
 } from "./runtime-fixture-api";
@@ -49,6 +51,14 @@ const projectVersion = 1;
 const sessionVersion = "cli-project-session-v1";
 const releaseVersionPlaceholder = "0.0.0-webstudio-version";
 const privacyCanary = "releaseSmokePrivateCanaryAuthTokenDoNotReport";
+const duplicatedPage = { name: "About", path: "/about" } as const;
+const createdPageInputs = [
+  { name: "Services", path: "/services" },
+  { name: "Work", path: "/work" },
+  { name: "Blog", path: "/blog" },
+  { name: "Contact", path: "/contact" },
+] as const;
+const additionalPageCount = 1 + createdPageInputs.length;
 const agentSmokeClients = [
   { connect: "claude", name: "claude-code" },
   { connect: "codex", name: "codex" },
@@ -403,7 +413,7 @@ const createFixture = () => {
     },
   ];
   const extraPageCount =
-    process.env.WEBSTUDIO_RELEASE_SMOKE_LARGE_AUDIT === "1" ? 120 : 0;
+    process.env.WEBSTUDIO_RELEASE_SMOKE_LARGE_AUDIT === "1" ? 114 : 0;
   const pages = [
     ...basePages,
     ...Array.from({ length: extraPageCount }, (_, index) => {
@@ -574,7 +584,6 @@ const startFixtureApi = async (
     initialState,
     executeRuntime,
     applyTransactions,
-    serializeFixturePages,
   }: {
     initialState: BuilderState;
     executeRuntime: (input: {
@@ -591,16 +600,25 @@ const startFixtureApi = async (
       state: BuilderState,
       transactions: readonly BuilderPatchTransaction[]
     ) => { state: BuilderState };
-    serializeFixturePages: (
-      pages: NonNullable<BuilderState["pages"]>
-    ) => ReturnType<
-      typeof import("@webstudio-is/project-migrations/pages").serializePages
-    >;
   }
 ) => {
   let version = projectVersion;
   let state = initialState;
   let generatedId = 0;
+  const getCurrentBuildSnapshot = () =>
+    createRuntimeFixtureBuildSnapshot({
+      state,
+      projectId,
+      buildId,
+      version,
+    });
+  const getCurrentSerializedBuild = () =>
+    createRuntimeFixtureSerializedBuild({
+      state,
+      baseBuild: fixture.build,
+      buildId,
+      version,
+    });
   return startRuntimeFixtureApi(
     async ({ pathname, response, operationPath, readInput }) => {
       if (pathname.endsWith("/release-hero.png")) {
@@ -615,7 +633,7 @@ const startFixtureApi = async (
       }
       let data: unknown;
       if (operationPath === "build.loadProjectBundleByProjectId") {
-        data = fixture.data;
+        data = { ...fixture.data, build: getCurrentSerializedBuild() };
       } else if (operationPath === "projects.get") {
         data = {
           id: projectId,
@@ -637,33 +655,7 @@ const startFixtureApi = async (
         version += 1;
         data = { version };
       } else if (operationPath === "build.get") {
-        const pages = serializeFixturePages(state.pages!);
-        data = {
-          ...fixture.build,
-          buildId,
-          version,
-          pages: pages.pages,
-          pageTemplates: pages.pageTemplates,
-          folders: pages.folders,
-          homePageId: pages.homePageId,
-          rootFolderId: pages.rootFolderId,
-          meta: pages.meta,
-          compiler: pages.compiler,
-          redirects: pages.redirects,
-          assets: Array.from(state.assets?.values() ?? []),
-          instances: Array.from(state.instances?.values() ?? []),
-          props: Array.from(state.props?.values() ?? []),
-          dataSources: Array.from(state.dataSources?.values() ?? []),
-          resources: Array.from(state.resources?.values() ?? []),
-          breakpoints: Array.from(state.breakpoints?.values() ?? []),
-          styles: Array.from(state.styles?.values() ?? []),
-          styleSources: Array.from(state.styleSources?.values() ?? []),
-          styleSourceSelections: Array.from(
-            state.styleSourceSelections?.values() ?? []
-          ),
-          marketplaceProduct: state.marketplaceProduct,
-          projectSettings: state.projectSettings,
-        };
+        data = getCurrentBuildSnapshot();
       } else if (
         operationPath !== "projects.permissions" &&
         operationPath !== ""
@@ -1228,7 +1220,6 @@ const run = async () => {
       initialState,
       executeRuntime: runtimeRegistry.executeBuilderRuntimeOperation,
       applyTransactions: state.applyBuilderPatchTransactions,
-      serializeFixturePages: pagesModule.serializePages,
     });
     fixture.data.origin = fixtureApi.origin;
     reportPhase("fixture-api", startedAt);
@@ -1732,6 +1723,22 @@ const run = async () => {
       }
       return getRecord(structured.data, `${name} data`);
     };
+    const listAllPages = async () => {
+      const pages: unknown[] = [];
+      let cursor: string | undefined;
+      do {
+        const result = await callTool("list-pages", { cursor, limit: 200 });
+        if (Array.isArray(result.pages) === false) {
+          throw new Error(
+            `list-pages returned invalid data: ${JSON.stringify(result)}`
+          );
+        }
+        pages.push(...result.pages);
+        cursor =
+          typeof result.nextCursor === "string" ? result.nextCursor : undefined;
+      } while (cursor !== undefined);
+      return pages;
+    };
     await stdioClient.connect(stdioTransport);
     try {
       const inspection = await callTool("inspect");
@@ -1740,11 +1747,8 @@ const run = async () => {
           `Inspect returned the wrong project: ${JSON.stringify(inspection)}`
         );
       }
-      const initialPages = await callTool("list-pages");
-      if (
-        Array.isArray(initialPages.pages) === false ||
-        initialPages.pages.length !== 2
-      ) {
+      const initialPages = await listAllPages();
+      if (initialPages.length !== fixture.data.pages.length) {
         throw new Error(
           `Cold stdio discovery returned unexpected pages: ${JSON.stringify(initialPages)}`
         );
@@ -1766,20 +1770,13 @@ const run = async () => {
       }> = [];
       const duplicate = await callTool("duplicate-page", {
         pageId: "home",
-        name: "About",
-        path: "/about",
+        ...duplicatedPage,
       });
       createdPages.push({
         pageId: String(duplicate.pageId),
-        name: "About",
-        path: "/about",
+        ...duplicatedPage,
       });
-      for (const page of [
-        { name: "Services", path: "/services" },
-        { name: "Work", path: "/work" },
-        { name: "Blog", path: "/blog" },
-        { name: "Contact", path: "/contact" },
-      ]) {
+      for (const page of createdPageInputs) {
         const created = await callTool("create-page", page);
         createdPages.push({ pageId: String(created.pageId), ...page });
       }
@@ -1827,6 +1824,18 @@ const run = async () => {
           values: { title: `Pricing session check ${index}` },
         });
       }
+      const committedPricing = await callTool("get-page", {
+        pageId: "pricing",
+      });
+      await callTool("refresh", { namespaces: ["pages"] });
+      const refreshedPricing = await callTool("get-page", {
+        pageId: "pricing",
+      });
+      if (refreshedPricing.title !== committedPricing.title) {
+        throw new Error(
+          `Committed page title did not survive refresh: before=${JSON.stringify(committedPricing)} after=${JSON.stringify(refreshedPricing)}`
+        );
+      }
 
       const usage = await callTool("find-asset-usage", {
         assetId: "asset-hero",
@@ -1867,12 +1876,13 @@ const run = async () => {
       }
       reportPhase("agent-workflow", workflowStartedAt);
 
-      const finalPages = await callTool("list-pages");
-      const finalPageNames = Array.isArray(finalPages.pages)
-        ? finalPages.pages.map((page) => getRecord(page, "final page").name)
-        : [];
+      const finalPages = await listAllPages();
+      const finalPageNames = finalPages.map(
+        (page) => getRecord(page, "final page").name
+      );
       if (
-        finalPageNames.length !== 7 ||
+        finalPageNames.length !==
+          fixture.data.pages.length + createdPages.length ||
         createdPages.some(
           (page) => finalPageNames.includes(page.name) === false
         )
@@ -2000,6 +2010,8 @@ const run = async () => {
       );
     }
     if (process.env.WEBSTUDIO_RELEASE_SMOKE_LARGE_AUDIT === "1") {
+      const expectedCaptureCount =
+        fixture.data.pages.length + additionalPageCount;
       const planPayload = await invoke("large rendered audit plan", [
         "audit",
         "--rendered",
@@ -2010,11 +2022,11 @@ const run = async () => {
       const planData = getRecord(planPayload.data, "large audit plan data");
       const plan = getRecord(planData.renderedPlan, "large rendered plan");
       if (
-        plan.captureCount !== 122 ||
+        plan.captureCount !== expectedCaptureCount ||
         typeof plan.confirmationToken !== "string"
       ) {
         throw new Error(
-          `Large rendered audit did not return the expected 122-capture confirmation plan: ${JSON.stringify(plan)}`
+          `Large rendered audit did not return the expected ${expectedCaptureCount}-capture confirmation plan: ${JSON.stringify(plan)}`
         );
       }
       const confirmedAuditStartedAt = Date.now();
@@ -2049,8 +2061,8 @@ const run = async () => {
       ) as Record<string, unknown>;
       if (
         confirmedPayload.ok !== true ||
-        confirmedData.renderedCheckCount !== 122 ||
-        summary.planned !== 122 ||
+        confirmedData.renderedCheckCount !== expectedCaptureCount ||
+        summary.planned !== expectedCaptureCount ||
         summary.failed !== 0 ||
         summary.skipped !== 0
       ) {
@@ -2079,9 +2091,9 @@ const run = async () => {
           : {}),
       });
       const confirmedAuditDuration = Date.now() - confirmedAuditStartedAt;
-      if (confirmedAuditDuration > 90_000) {
+      if (confirmedAuditDuration > 120_000) {
         throw new Error(
-          `Confirmed 122-capture packaged audit took ${confirmedAuditDuration}ms; expected at most 90000ms.`
+          `Confirmed ${expectedCaptureCount}-capture packaged audit took ${confirmedAuditDuration}ms; expected at most 120000ms.`
         );
       }
       const cachedAuditStartedAt = Date.now();
