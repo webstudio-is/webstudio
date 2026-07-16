@@ -786,6 +786,60 @@ test("inserts webstudio jsx fragment with styles", async () => {
   ]);
 });
 
+test("remaps fragment breakpoint ids that conflict with existing breakpoints", () => {
+  const parent = createParent();
+  const state = createState(parent);
+  state.breakpoints.set("1", {
+    id: "1",
+    label: "Desktop",
+    minWidth: 1280,
+  });
+
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: {
+        ...createEmptyWebstudioFragment(),
+        children: [{ type: "id", value: "fragment-instance" }],
+        instances: [
+          {
+            type: "instance",
+            id: "fragment-instance",
+            component: elementComponent,
+            tag: "div",
+            children: [],
+          },
+        ],
+        styleSourceSelections: [
+          { instanceId: "fragment-instance", values: ["local-style"] },
+        ],
+        styleSources: [{ type: "local", id: "local-style" }],
+        breakpoints: [{ id: "1", label: "Tablet", maxWidth: 991 }],
+        styles: [
+          {
+            styleSourceId: "local-style",
+            breakpointId: "1",
+            property: "display",
+            value: { type: "keyword", value: "grid" },
+          },
+        ],
+      },
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
+  );
+
+  expect(getAddedValues<{ id: string }>(mutation, "breakpoints")).toEqual([
+    expect.objectContaining({ id: "generated-0", maxWidth: 991 }),
+  ]);
+  expect(getAddedValues<StyleDecl>(mutation, "styles")).toContainEqual(
+    expect.objectContaining({ breakpointId: "generated-0" })
+  );
+});
+
 test("inserts fragment into legacy Slot content by normalizing shared Fragment", async () => {
   const state = createState({
     type: "instance",

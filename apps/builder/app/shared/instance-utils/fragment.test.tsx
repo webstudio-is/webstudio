@@ -242,6 +242,7 @@ describe("fragment copy helpers", () => {
         ],
       }),
       breakpoints,
+      createId: () => "generated-breakpoint",
       onBreakpointLimitMerge: () => {
         didMergeDueToLimit = true;
       },
