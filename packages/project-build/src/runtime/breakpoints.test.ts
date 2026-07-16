@@ -8,6 +8,7 @@ import {
   groupBreakpoints,
   hasReachedBreakpointLimit,
   isBaseBreakpoint,
+  isBaseWidthBreakpoint,
   maxBreakpoints,
 } from "./breakpoints";
 
@@ -29,6 +30,10 @@ describe("breakpoint grouping and matching", () => {
     expect(isBaseBreakpoint({})).toBe(true);
     expect(isBaseBreakpoint({ minWidth: 768 })).toBe(false);
     expect(isBaseBreakpoint({ maxWidth: 767 })).toBe(false);
+    expect(isBaseWidthBreakpoint({})).toBe(true);
+    expect(
+      isBaseWidthBreakpoint({ condition: "(prefers-reduced-motion)" })
+    ).toBe(false);
   });
 
   test("groups width-based breakpoints separately from custom conditions", () => {

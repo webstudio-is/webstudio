@@ -8,6 +8,7 @@ import {
 import * as httpClient from "@webstudio-is/http-client";
 import {
   bundleVersion,
+  getPublicBuildIncludes,
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
@@ -29,6 +30,7 @@ import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
 import {
   createBuilderStateFromBuildData,
   createBuilderStateFromSerializedSnapshot,
+  createSerializedBuilderBuildDataFromState,
   createSerializedBuilderStateSnapshotFromState,
   type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
@@ -151,23 +153,6 @@ const createCliProjectSessionCompatibility = (
   apiCompatibilityVersion: connection.headers?.["x-webstudio-client-version"],
 });
 
-const toPublicApiInclude = (namespaces: readonly BuilderNamespace[]) => [
-  ...new Set(
-    namespaces.flatMap((namespace) => {
-      if (namespace === "dataSources") {
-        return ["variables"];
-      }
-      if (namespace === "pages") {
-        return ["pages", "folders"];
-      }
-      if (namespace === "projectSettings") {
-        return ["projectSettings"];
-      }
-      return [namespace];
-    })
-  ),
-];
-
 const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
   return (
@@ -177,7 +162,7 @@ const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
 };
 
 const getLegacyPublicApiInclude = (namespaces: readonly BuilderNamespace[]) =>
-  toPublicApiInclude([
+  getPublicBuildIncludes([
     ...namespaces.filter((namespace) => namespace !== "projectSettings"),
     "pages",
   ]);
@@ -340,7 +325,7 @@ export const createCliProjectSessionTransport = ({
       ) as Promise<PublicBuildSnapshot>;
     let snapshot: PublicBuildSnapshot;
     try {
-      snapshot = await fetchSnapshot(toPublicApiInclude(namespaces));
+      snapshot = await fetchSnapshot(getPublicBuildIncludes(namespaces));
     } catch (error) {
       if (
         namespaces.includes("projectSettings") === false ||
@@ -441,6 +426,8 @@ export const createLocalProjectBundleFromSessionSnapshot = (
     structuredClone(pages)
   );
   const serializedPages = serializePages(persistedPages);
+  const { pages: _pages, ...serializedBuildState } =
+    createSerializedBuilderBuildDataFromState(snapshot.state);
   const homePage = getHomePage(persistedPages);
   return {
     bundleVersion,
@@ -459,19 +446,8 @@ export const createLocalProjectBundleFromSessionSnapshot = (
       version: snapshot.version,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      ...serializedBuildState,
       pages: serializedPages,
-      breakpoints: Array.from(snapshot.state.breakpoints?.entries() ?? []),
-      styles: Array.from(snapshot.state.styles?.entries() ?? []),
-      styleSources: Array.from(snapshot.state.styleSources?.entries() ?? []),
-      styleSourceSelections: Array.from(
-        snapshot.state.styleSourceSelections?.entries() ?? []
-      ),
-      props: Array.from(snapshot.state.props?.entries() ?? []),
-      instances: Array.from(snapshot.state.instances?.entries() ?? []),
-      dataSources: Array.from(snapshot.state.dataSources?.entries() ?? []),
-      resources: Array.from(snapshot.state.resources?.entries() ?? []),
-      marketplaceProduct: snapshot.state.marketplaceProduct,
-      projectSettings,
     },
   };
 };

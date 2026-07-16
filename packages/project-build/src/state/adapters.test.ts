@@ -2,12 +2,14 @@ import { expect, test } from "vitest";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { build, pages } from "./fixtures.test-utils";
 import {
+  createBuilderBuildDataSnapshotFromState,
   createBuilderStateFromBuildData,
   createBuilderStateFromCompactBuild,
   createBuilderStateFromSerializedSnapshot,
   createBuilderStateFromSnapshot,
   createSerializedBuilderStateSnapshotFromState,
   createBuilderStateSnapshotFromState,
+  createSerializedBuilderBuildDataFromState,
   createBuilderStateFromStores,
 } from "./adapters";
 
@@ -129,10 +131,34 @@ test("serializes builder state into a persisted snapshot shape", () => {
   expect(snapshot.props).toEqual(build.props);
 });
 
+test("serializes builder state into detached array build data", () => {
+  const state = createBuilderStateFromSnapshot(build);
+  const snapshot = createBuilderBuildDataSnapshotFromState(state);
+
+  expect(snapshot.pages).toEqual(state.pages);
+  expect(snapshot.instances).toEqual(
+    Array.from(state.instances?.values() ?? [])
+  );
+  expect(snapshot.props).toEqual(Array.from(state.props?.values() ?? []));
+  expect(snapshot.instances?.[0]).not.toBe(
+    state.instances?.values().next().value
+  );
+});
+
 test("serializes builder state into a JSON-safe persisted snapshot shape", () => {
   const state = createBuilderStateFromSnapshot(build);
   const snapshot = createSerializedBuilderStateSnapshotFromState(state);
 
   expect(snapshot.pages).toEqual(serializePages(state.pages!));
   expect(snapshot.instances).toEqual(build.instances);
+});
+
+test("serializes complete build data with defaults for unloaded maps", () => {
+  const state = createBuilderStateFromSnapshot({ pages });
+  const buildData = createSerializedBuilderBuildDataFromState(state);
+
+  expect(buildData.pages).toEqual(serializePages(state.pages!));
+  expect(buildData.instances).toEqual([]);
+  expect(buildData.props).toEqual([]);
+  expect(buildData.breakpoints).toEqual([]);
 });

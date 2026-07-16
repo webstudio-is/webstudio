@@ -37,7 +37,7 @@ import { createRuntimeMutation } from "./mutation";
 import { serializeStyleDeclarations } from "./style-utils";
 import { createPropValue } from "./props";
 import { getStyleSourceStylesSignature } from "./style-copy";
-import { isBaseBreakpoint } from "./breakpoints";
+import { isBaseWidthBreakpoint } from "./breakpoints";
 
 export const serializeDesignTokens = ({
   styleSources,
@@ -243,8 +243,7 @@ const normalizeStyleProperty = (property: unknown): StyleDecl["property"] =>
 
 const getBaseBreakpointId = (breakpoints: Breakpoints | undefined) => {
   const breakpoint = Array.from(breakpoints?.values() ?? []).find(
-    (candidate) =>
-      candidate.condition === undefined && isBaseBreakpoint(candidate)
+    isBaseWidthBreakpoint
   );
   return breakpoint?.id ?? DEFAULT_BREAKPOINT_ID;
 };

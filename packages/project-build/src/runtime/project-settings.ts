@@ -17,7 +17,11 @@ import {
   validateProjectAuth,
 } from "../contracts/project-settings";
 import type { BuilderState } from "../state/builder-state";
-import { hasReachedBreakpointLimit, isBaseBreakpoint } from "./breakpoints";
+import {
+  hasReachedBreakpointLimit,
+  isBaseBreakpoint,
+  isBaseWidthBreakpoint,
+} from "./breakpoints";
 import type { BuilderRuntimeContext } from "./context";
 import {
   getZodValidationIssueOptions,
@@ -632,14 +636,10 @@ export const createBreakpoint = (
     return throwBuilderRuntimeError("CONFLICT", "Breakpoint already exists");
   }
   const value = parseBreakpoint({ ...input, id: breakpointId });
-  const canHaveOnlyOneBaseBreakpoint =
-    value.condition === undefined && isBaseBreakpoint(value);
+  const canHaveOnlyOneBaseBreakpoint = isBaseWidthBreakpoint(value);
   if (
     canHaveOnlyOneBaseBreakpoint &&
-    Array.from(breakpoints.values()).some(
-      (breakpoint) =>
-        breakpoint.condition === undefined && isBaseBreakpoint(breakpoint)
-    )
+    Array.from(breakpoints.values()).some(isBaseWidthBreakpoint)
   ) {
     return throwBuilderRuntimeError(
       "CONFLICT",
@@ -675,7 +675,7 @@ export const updateBreakpoint = (
   if (current === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Breakpoint not found");
   }
-  if (current.condition === undefined && isBaseBreakpoint(current)) {
+  if (isBaseWidthBreakpoint(current)) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Base breakpoint cannot be updated"
@@ -692,7 +692,7 @@ export const updateBreakpoint = (
     }
   }
   const value = parseBreakpoint(nextBreakpoint as Breakpoint);
-  if (value.condition === undefined && isBaseBreakpoint(value)) {
+  if (isBaseWidthBreakpoint(value)) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Breakpoint cannot be changed into the base breakpoint"
@@ -725,11 +725,7 @@ export const deleteBreakpoint = (
     return throwBuilderRuntimeError("NOT_FOUND", "Breakpoint not found");
   }
   const breakpoint = breakpoints.get(input.breakpointId);
-  if (
-    breakpoint !== undefined &&
-    breakpoint.condition === undefined &&
-    isBaseBreakpoint(breakpoint)
-  ) {
+  if (breakpoint !== undefined && isBaseWidthBreakpoint(breakpoint)) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Base breakpoint cannot be deleted"

@@ -10,7 +10,8 @@ import {
 } from "@webstudio-is/protocol";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import {
-  createSerializedBuilderStateSnapshotFromState,
+  createBuilderBuildDataSnapshotFromState,
+  createSerializedBuilderBuildDataFromState,
   type BuilderState,
 } from "@webstudio-is/project-build/state";
 
@@ -51,11 +52,17 @@ export const createRuntimeFixtureBuildSnapshot = ({
   buildId: string;
   version: number;
 }) => {
-  if (state.pages === undefined) {
+  const {
+    pages: hydratedPages,
+    dataSources,
+    ...buildData
+  } = createBuilderBuildDataSnapshotFromState(state);
+  if (hydratedPages === undefined) {
     throw new Error("Runtime fixture pages are missing.");
   }
-  const pages = serializePages(state.pages);
+  const pages = serializePages(hydratedPages);
   return {
+    ...buildData,
     projectId,
     buildId,
     version,
@@ -65,19 +72,7 @@ export const createRuntimeFixtureBuildSnapshot = ({
     homePageId: pages.homePageId,
     rootFolderId: pages.rootFolderId,
     redirects: pages.redirects,
-    assets: Array.from(state.assets?.values() ?? []),
-    instances: Array.from(state.instances?.values() ?? []),
-    props: Array.from(state.props?.values() ?? []),
-    variables: Array.from(state.dataSources?.values() ?? []),
-    resources: Array.from(state.resources?.values() ?? []),
-    breakpoints: Array.from(state.breakpoints?.values() ?? []),
-    styles: Array.from(state.styles?.values() ?? []),
-    styleSources: Array.from(state.styleSources?.values() ?? []),
-    styleSourceSelections: Array.from(
-      state.styleSourceSelections?.values() ?? []
-    ),
-    marketplaceProduct: state.marketplaceProduct,
-    projectSettings: state.projectSettings,
+    variables: dataSources,
   };
 };
 
@@ -92,11 +87,9 @@ export const createRuntimeFixtureSerializedBuild = ({
   buildId: string;
   version: number;
 }) => {
-  const { assets: _assets, ...snapshot } =
-    createSerializedBuilderStateSnapshotFromState(state);
   return {
     ...baseBuild,
-    ...snapshot,
+    ...createSerializedBuilderBuildDataFromState(state),
     id: buildId,
     version,
   };

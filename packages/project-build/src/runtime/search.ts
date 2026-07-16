@@ -11,7 +11,7 @@ import { computeExpression } from "./data";
 import { listAssets } from "./assets";
 import { listCssVariables, listDesignTokens } from "./styles";
 import { getInstanceDepths } from "./instances";
-import { isBaseBreakpoint } from "./breakpoints";
+import { isBaseWidthBreakpoint } from "./breakpoints";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { validatePageSelector } from "./page-selector";
 import { hasAccessibleName, isDynamicPropType } from "./accessibility-analysis";
@@ -648,10 +648,7 @@ export const analyzeProject = (
         }
       }
       for (const breakpoint of state.breakpoints.values()) {
-        if (
-          breakpoint.condition === undefined &&
-          isBaseBreakpoint(breakpoint)
-        ) {
+        if (isBaseWidthBreakpoint(breakpoint)) {
           continue;
         }
         if (breakpointIdsWithDeclarations.has(breakpoint.id) === false) {

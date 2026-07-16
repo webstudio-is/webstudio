@@ -22,6 +22,12 @@ export const isBaseBreakpoint = (breakpoint: {
   maxWidth?: number;
 }) => breakpoint.minWidth === undefined && breakpoint.maxWidth === undefined;
 
+export const isBaseWidthBreakpoint = (breakpoint: {
+  minWidth?: number;
+  maxWidth?: number;
+  condition?: string;
+}) => breakpoint.condition === undefined && isBaseBreakpoint(breakpoint);
+
 /**
  * Group breakpoints into width-based and custom condition categories.
  * Width-based breakpoints are ordered: min-width (largest to smallest), base, max-width (largest to smallest).
@@ -86,11 +92,7 @@ export const findClosestBreakpoint = (
 
   return (
     closestBreakpoint ??
-    existingBreakpoints.find(
-      (existingBreakpoint) =>
-        existingBreakpoint.condition === undefined &&
-        isBaseBreakpoint(existingBreakpoint)
-    ) ??
+    existingBreakpoints.find(isBaseWidthBreakpoint) ??
     existingBreakpoints[0]
   );
 };
