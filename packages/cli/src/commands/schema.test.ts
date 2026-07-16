@@ -233,6 +233,7 @@ test("prints full mcp tool input schemas when requested", () => {
     "fragment",
     "mode",
     "insertIndex",
+    "dryRun",
   ]);
   const fragmentSchema = insertFragmentTool.inputSchema.properties.fragment;
   expect(fragmentSchema.type).toBe("string");

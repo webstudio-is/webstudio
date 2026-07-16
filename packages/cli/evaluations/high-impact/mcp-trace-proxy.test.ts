@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { getMcpTraceRequest, getMcpTraceResponse } from "./mcp-trace-proxy";
 
 describe("bounded MCP tracing", () => {
-  test("retains only the tool name and screenshot viewport", () => {
+  test("retains only bounded verification fields", () => {
     expect(
       getMcpTraceRequest({
         jsonrpc: "2.0",
@@ -22,6 +22,34 @@ describe("bounded MCP tracing", () => {
       call: {
         name: "screenshot",
         arguments: { viewport: { width: 390, height: 844 } },
+      },
+    });
+  });
+
+  test("records confirmation flow without retaining its token", () => {
+    expect(
+      getMcpTraceRequest({
+        id: 8,
+        method: "tools/call",
+        params: {
+          name: "delete-instance",
+          arguments: {
+            instanceId: "private-instance-id",
+            dryRun: true,
+            confirmDestructive: true,
+            confirmationToken: "private-token",
+          },
+        },
+      })
+    ).toEqual({
+      id: 8,
+      call: {
+        name: "delete-instance",
+        arguments: {
+          dryRun: true,
+          confirmDestructive: true,
+          hasConfirmationToken: true,
+        },
       },
     });
   });

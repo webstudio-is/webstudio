@@ -68,6 +68,7 @@ const publicOperation = (
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
+    requiresConfirm: false,
     outputSchema: runtimeContractById.get(operation.id)?.outputSchema,
     ...operationFields,
   };
@@ -353,6 +354,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     ),
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
+    requiresConfirm: true,
   }),
   publicOperation({
     command: "move-instance",
@@ -803,7 +805,13 @@ describe("project session mcp adapter", () => {
     ]);
     expect(
       Object.keys(insertFragmentTool?.inputSchema.properties ?? {})
-    ).toEqual(["parentInstanceId", "fragment", "mode", "insertIndex"]);
+    ).toEqual([
+      "parentInstanceId",
+      "fragment",
+      "mode",
+      "insertIndex",
+      "dryRun",
+    ]);
     const fragmentSchema = insertFragmentTool?.inputSchema.properties?.fragment;
     expect(fragmentSchema).toEqual(expect.objectContaining({ type: "string" }));
     const jsxDescription =
@@ -929,6 +937,16 @@ describe("project session mcp adapter", () => {
       tools.find((tool) => tool.name === "delete-instance")?.annotations
         .requiredInputFields
     ).toEqual(["instanceIds"]);
+    expect(
+      tools.find((tool) => tool.name === "delete-instance")?.inputSchema
+        .properties
+    ).toEqual(
+      expect.objectContaining({
+        dryRun: expect.objectContaining({ type: "boolean" }),
+        confirmDestructive: expect.objectContaining({ type: "boolean" }),
+        confirmationToken: expect.objectContaining({ type: "string" }),
+      })
+    );
   });
 
   test("exposes page expression input descriptions to MCP clients", async () => {
@@ -1082,7 +1100,7 @@ describe("project session mcp adapter", () => {
 
     expect(tool?.inputSchema.required).toEqual(["settings"]);
     expect(tool?.annotations).toMatchObject({
-      inputFields: ["settings"],
+      inputFields: ["dryRun", "settings"],
       requiredInputFields: ["settings"],
     });
   });
@@ -1835,9 +1853,8 @@ describe("project session mcp adapter", () => {
     });
 
     const result = await adapter.callTool({
-      name: "list-pages",
-      input: {},
-      dryRun: true,
+      name: "move-instance",
+      input: { moves: [], dryRun: true },
     });
 
     expect(result.structuredContent).toMatchObject({
@@ -1850,6 +1867,97 @@ describe("project session mcp adapter", () => {
         },
       },
     });
+  });
+
+  test("plans and confirms destructive mutations without blind retries", async () => {
+    const transaction = {
+      id: "planned-delete",
+      payload: [
+        {
+          namespace: "instances" as const,
+          patches: [{ op: "remove" as const, path: ["target"] }],
+        },
+      ],
+    };
+    const executeOperation = createExecuteOperation(async ({ dryRun }) =>
+      createEnvelope({
+        operationId: "instances.delete",
+        source: dryRun ? "dry-run" : "remote",
+        result: { deletedInstanceIds: ["target"] },
+        state: { committed: dryRun === false, freshness: {} },
+        ...(dryRun ? { transaction } : {}),
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const planned = await adapter.callTool({
+      name: "delete-instance",
+      input: { instanceIds: ["target"] },
+    });
+
+    expect(planned).toMatchObject({
+      isError: true,
+      structuredContent: {
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_REQUIRED" },
+        meta: {
+          session: { source: "dry-run", committed: false, transaction },
+          confirmation: {
+            required: true,
+            operation: "delete-instance",
+            token: expect.any(String),
+            summary: {
+              namespaces: ["instances"],
+              changeCount: 1,
+              patchCount: 1,
+              patchOperations: { remove: 1 },
+            },
+          },
+        },
+      },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(1);
+
+    const confirmation = planned.structuredContent.meta.confirmation;
+    if (confirmation === undefined) {
+      throw new Error("Expected destructive confirmation");
+    }
+    const altered = await adapter.callTool({
+      name: "delete-instance",
+      input: {
+        instanceIds: ["other"],
+        confirmDestructive: true,
+        confirmationToken: confirmation.token,
+      },
+    });
+    expect(altered).toMatchObject({
+      structuredContent: {
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+      },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(2);
+
+    const committed = await adapter.callTool({
+      name: "delete-instance",
+      input: {
+        confirmationToken: confirmation.token,
+        instanceIds: ["target"],
+        confirmDestructive: true,
+      },
+    });
+
+    expect(committed).toMatchObject({
+      structuredContent: {
+        ok: true,
+        meta: { session: { committed: true } },
+      },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(4);
   });
 
   test("rejects unsupported operation input fields before execution", async () => {
@@ -2847,7 +2955,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledWith({
       command: "delete-instance",
       input: { instanceIds },
-      dryRun: false,
+      dryRun: true,
     });
   });
 
@@ -6104,7 +6212,7 @@ describe("project session mcp adapter", () => {
             name: "publish",
             annotations: expect.objectContaining({
               readOnlyHint: false,
-              destructiveHint: true,
+              destructiveHint: false,
               openWorldHint: true,
             }),
           }),
@@ -6133,6 +6241,13 @@ describe("project session mcp adapter", () => {
             name: "reset-session",
             annotations: expect.objectContaining({
               readOnlyHint: false,
+              destructiveHint: false,
+            }),
+          }),
+          expect.objectContaining({
+            name: "delete-instance",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
               destructiveHint: true,
             }),
           }),
@@ -6152,6 +6267,99 @@ describe("project session mcp adapter", () => {
             uri: "webstudio://project/components",
           }),
         ]),
+      });
+    } finally {
+      await close();
+    }
+  });
+
+  test("exposes dry-run and destructive confirmation through stdio MCP", async () => {
+    const transaction = {
+      id: "stdio-delete-plan",
+      payload: [
+        {
+          namespace: "instances" as const,
+          patches: [{ op: "remove" as const, path: ["target"] }],
+        },
+      ],
+    };
+    const executeOperation = createExecuteOperation(async ({ dryRun }) =>
+      createEnvelope({
+        operationId: "instances.delete",
+        source: dryRun ? "dry-run" : "remote",
+        result: { deletedInstanceIds: ["target"] },
+        state: { committed: dryRun === false, freshness: {} },
+        ...(dryRun ? { transaction } : {}),
+      })
+    );
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const tools = await client.listTools();
+      const deleteTool = tools.tools.find(
+        ({ name }) => name === "delete-instance"
+      );
+      expect(deleteTool).toMatchObject({
+        inputSchema: {
+          properties: expect.objectContaining({
+            dryRun: expect.objectContaining({ type: "boolean" }),
+            confirmDestructive: expect.objectContaining({ type: "boolean" }),
+            confirmationToken: expect.objectContaining({ type: "string" }),
+          }),
+        },
+        annotations: expect.objectContaining({ destructiveHint: true }),
+      });
+      expect(
+        tools.tools.find(({ name }) => name === "move-instance")
+      ).toMatchObject({
+        inputSchema: {
+          properties: expect.objectContaining({
+            dryRun: expect.objectContaining({ type: "boolean" }),
+          }),
+        },
+        annotations: expect.objectContaining({ destructiveHint: false }),
+      });
+      expect(
+        tools.tools.find(({ name }) => name === "publish")?.inputSchema
+          .properties
+      ).not.toHaveProperty("dryRun");
+
+      const planned = await client.callTool({
+        name: "delete-instance",
+        arguments: { instanceIds: ["target"] },
+      });
+      const plannedContent = planned.structuredContent as
+        | {
+            ok: boolean;
+            error?: { code: string };
+            meta: { confirmation?: { token: string } };
+          }
+        | undefined;
+      expect(plannedContent).toMatchObject({
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_REQUIRED" },
+      });
+      const confirmation = plannedContent?.meta.confirmation;
+      if (confirmation === undefined) {
+        throw new Error("Expected stdio destructive confirmation");
+      }
+
+      const committed = await client.callTool({
+        name: "delete-instance",
+        arguments: {
+          instanceIds: ["target"],
+          confirmDestructive: true,
+          confirmationToken: confirmation.token,
+        },
+      });
+      expect(committed.structuredContent).toMatchObject({
+        ok: true,
+        meta: { session: { committed: true } },
       });
     } finally {
       await close();

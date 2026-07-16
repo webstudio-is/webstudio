@@ -1787,6 +1787,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "redirects.setAll",
@@ -1834,6 +1835,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["pages"],
     invalidatesNamespaces: ["pages"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "breakpoints.list",
@@ -2071,6 +2073,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["breakpoints", "styles"],
     invalidatesNamespaces: ["breakpoints", "styles"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "pages.delete",
@@ -2127,6 +2130,7 @@ export const runtimeOperationContractData = [
       "styleSourceSelections",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "pages.duplicate",
@@ -2892,6 +2896,7 @@ export const runtimeOperationContractData = [
     ],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
   {
     id: "pageTemplates.duplicate",
@@ -3315,6 +3320,7 @@ export const runtimeOperationContractData = [
       "styleSourceSelections",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "folders.duplicate",
@@ -57961,6 +57967,7 @@ export const runtimeOperationContractData = [
       "styleSourceSelections",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "instances.deleteBySelector",
@@ -58037,6 +58044,7 @@ export const runtimeOperationContractData = [
     ],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
   {
     id: "instances.updateProps",
@@ -58569,6 +58577,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["props"],
     invalidatesNamespaces: ["props"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "instances.deleteProps",
@@ -58615,6 +58624,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["props", "resources"],
     invalidatesNamespaces: ["props", "resources"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "instances.bindProps",
@@ -59138,6 +59148,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "instances.setTextContent",
@@ -59775,6 +59786,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styles.updateSelectedDeclarations",
@@ -59899,6 +59911,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styles.replaceValues",
@@ -59945,6 +59958,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "designTokens.list",
@@ -60354,6 +60368,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles"],
     invalidatesNamespaces: ["styles"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "designTokens.attach",
@@ -60562,6 +60577,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
     invalidatesNamespaces: ["styles", "styleSources", "styleSourceSelections"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "styleSources.setLock",
@@ -64180,6 +64196,7 @@ export const runtimeOperationContractData = [
       "resources",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "variables.deleteUnused",
@@ -64226,6 +64243,7 @@ export const runtimeOperationContractData = [
       "resources",
     ],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "resources.list",
@@ -64943,6 +64961,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["resources"],
     invalidatesNamespaces: ["resources"],
     retryOnConflict: true,
+    requiresConfirm: true,
   },
   {
     id: "resources.upsert",
@@ -65390,6 +65409,7 @@ export const runtimeOperationContractData = [
     writeNamespaces: ["dataSources", "resources", "props"],
     invalidatesNamespaces: ["dataSources", "resources", "props"],
     retryOnConflict: false,
+    requiresConfirm: true,
   },
   {
     id: "assets.list",
@@ -66315,6 +66335,7 @@ export const runtimeOperationContractData = [
     ],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
   {
     id: "assets.delete",
@@ -66363,5 +66384,6 @@ export const runtimeOperationContractData = [
     invalidatesNamespaces: ["assets"],
     retryOnConflict: false,
     requiresAssets: true,
+    requiresConfirm: true,
   },
 ] as const;
