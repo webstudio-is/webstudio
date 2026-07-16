@@ -76,7 +76,6 @@ import {
 } from "./runtime/errors";
 import { z } from "zod";
 import {
-  canonicalizeConfirmationValue,
   createConfirmationToken,
   validateConfirmationToken,
 } from "./confirmation-token";
@@ -1088,8 +1087,7 @@ const getMcpOperationInputSchema = (
   }
 ) => {
   const schema = options.schema ?? getOperationInputSchema(operation);
-  const properties = {
-    ...(schema.properties ?? {}),
+  const transportProperties = {
     ...(operation.method === "mutation" && operation.localCapable
       ? { dryRun: dryRunInputProperty }
       : {}),
@@ -1103,15 +1101,12 @@ const getMcpOperationInputSchema = (
         }
       : {}),
   };
-  if (
-    Object.keys(properties).length ===
-    Object.keys(schema.properties ?? {}).length
-  ) {
+  if (Object.keys(transportProperties).length === 0) {
     return schema;
   }
   return {
     ...schema,
-    properties,
+    properties: { ...schema.properties, ...transportProperties },
   } satisfies InputJsonSchema;
 };
 
@@ -2349,26 +2344,16 @@ type DestructiveConfirmation = {
   };
 };
 
-type ProjectSessionMcpStructuredContent =
-  | {
-      ok: true;
-      data: unknown;
-      meta: {
-        session?: ReturnType<typeof serializeProjectSessionMeta>;
-        next?: string[];
-        confirmation?: DestructiveConfirmation;
-      };
-    }
-  | {
-      ok: false;
-      data: unknown;
-      error: McpStructuredError;
-      meta: {
-        session?: ReturnType<typeof serializeProjectSessionMeta>;
-        next?: string[];
-        confirmation?: DestructiveConfirmation;
-      };
-    };
+type ProjectSessionMcpMeta = {
+  session?: ReturnType<typeof serializeProjectSessionMeta>;
+  next?: string[];
+  confirmation?: DestructiveConfirmation;
+};
+
+type ProjectSessionMcpStructuredContent = {
+  data: unknown;
+  meta: ProjectSessionMcpMeta;
+} & ({ ok: true } | { ok: false; error: McpStructuredError });
 
 class ProjectSessionMcpCheckpointError extends Error {
   code = "CHECKPOINT_REQUIRED";
@@ -4904,9 +4889,6 @@ const isReadOnlyTool = (tool: ProjectSessionMcpTool) =>
   (tool.annotations.method === "session" &&
     readOnlySessionTools.has(tool.name));
 
-const isDestructiveTool = (tool: ProjectSessionMcpTool) =>
-  tool.annotations.requiresConfirm;
-
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
   description: tool.description,
@@ -4916,7 +4898,7 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
     : { outputSchema: tool.outputSchema }),
   annotations: {
     readOnlyHint: isReadOnlyTool(tool),
-    destructiveHint: isDestructiveTool(tool),
+    destructiveHint: tool.annotations.requiresConfirm,
     openWorldHint: tool.annotations.serverOnly,
   },
   _meta: {
@@ -4986,26 +4968,6 @@ export const listProjectSessionMcpResources =
 
 const destructiveConfirmationTtlMs = 5 * 60 * 1000;
 
-const getDestructiveConfirmationSignature = ({
-  operation,
-  input,
-  envelope,
-}: {
-  operation: string;
-  input: unknown;
-  envelope: ProjectSessionEnvelope;
-}) =>
-  JSON.stringify(
-    canonicalizeConfirmationValue({
-      operation,
-      input,
-      projectId: envelope.projectId,
-      buildId: envelope.buildId,
-      version: envelope.version,
-      payload: envelope.transaction?.payload,
-    })
-  );
-
 const getDestructivePlanSummary = (
   envelope: ProjectSessionEnvelope
 ): DestructiveConfirmation["summary"] => {
@@ -5020,28 +4982,6 @@ const getDestructivePlanSummary = (
     changeCount: changes.length,
     patchCount: patches.length,
     patchOperations,
-  };
-};
-
-const createDestructiveConfirmation = async ({
-  operation,
-  signature,
-  envelope,
-}: {
-  operation: string;
-  signature: string;
-  envelope: ProjectSessionEnvelope;
-}): Promise<DestructiveConfirmation> => {
-  const { token, expiresAt } = await createConfirmationToken(
-    signature,
-    destructiveConfirmationTtlMs
-  );
-  return {
-    required: true,
-    operation,
-    token,
-    expiresAt: new Date(expiresAt).toISOString(),
-    summary: getDestructivePlanSummary(envelope),
   };
 };
 
@@ -5086,6 +5026,85 @@ const toCallResult = (
     structuredContent,
     ...(options.error === undefined ? {} : { isError: true }),
   };
+};
+
+const executeDestructiveMcpOperation = async <Command extends string>({
+  command,
+  input,
+  dryRun,
+  confirmDestructive,
+  confirmationToken,
+  executeOperation,
+}: {
+  command: Command;
+  input: unknown;
+  dryRun: boolean;
+  confirmDestructive: boolean;
+  confirmationToken?: string;
+  executeOperation: ExecuteMcpOperation<Command>;
+}): Promise<[ProjectSessionEnvelope, ProjectSessionMcpToolResult?]> => {
+  const plannedEnvelope = await executeOperation({
+    command,
+    input,
+    dryRun: true,
+  });
+  if (plannedEnvelope.transaction === undefined) {
+    return [plannedEnvelope, toCallResult(plannedEnvelope)];
+  }
+  const confirmationPayload = {
+    operation: command,
+    input,
+    projectId: plannedEnvelope.projectId,
+    buildId: plannedEnvelope.buildId,
+    version: plannedEnvelope.version,
+    payload: plannedEnvelope.transaction.payload,
+  };
+  const confirmation = async (): Promise<DestructiveConfirmation> => {
+    const { token, expiresAt } = await createConfirmationToken(
+      confirmationPayload,
+      destructiveConfirmationTtlMs
+    );
+    return {
+      required: true,
+      operation: command,
+      token,
+      expiresAt: new Date(expiresAt).toISOString(),
+      summary: getDestructivePlanSummary(plannedEnvelope),
+    };
+  };
+  if (dryRun) {
+    return [
+      plannedEnvelope,
+      toCallResult(plannedEnvelope, {
+        confirmation: await confirmation(),
+        next: [
+          "Review the planned result and transaction. To commit the unchanged destructive operation, retry with confirmDestructive: true and this confirmationToken before it expires.",
+        ],
+      }),
+    ];
+  }
+  const isConfirmed =
+    confirmDestructive &&
+    (await validateConfirmationToken(confirmationToken, confirmationPayload));
+  if (isConfirmed === false) {
+    return [
+      plannedEnvelope,
+      toCallResult(plannedEnvelope, {
+        error: {
+          code: confirmDestructive
+            ? "DESTRUCTIVE_CONFIRMATION_INVALID"
+            : "DESTRUCTIVE_CONFIRMATION_REQUIRED",
+          message:
+            "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.",
+        },
+        confirmation: await confirmation(),
+        next: [
+          "Do not retry blindly. Review meta.session.transaction and meta.confirmation.summary, ask the user to confirm, then retry the unchanged operation with confirmDestructive: true and meta.confirmation.token.",
+        ],
+      }),
+    ];
+  }
+  return [await executeOperation({ command, input, dryRun: false })];
 };
 
 const getRenderedAuditError = (
@@ -5989,71 +6008,24 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             )
           : normalizedInput
       );
-      let envelope: ProjectSessionEnvelope;
-      if (operation.requiresConfirm) {
-        const plannedEnvelope = await executeOperation({
-          command: name as Command,
-          input: operationInput,
-          dryRun: true,
-        });
-        if (plannedEnvelope.transaction === undefined) {
-          return toCallResult(plannedEnvelope);
-        }
-        const signature = getDestructiveConfirmationSignature({
-          operation: name,
-          input: operationInput,
-          envelope: plannedEnvelope,
-        });
-        if (dryRun) {
-          return toCallResult(plannedEnvelope, {
-            confirmation: await createDestructiveConfirmation({
-              operation: name,
-              signature,
-              envelope: plannedEnvelope,
+      const [envelope, response] = operation.requiresConfirm
+        ? await executeDestructiveMcpOperation({
+            command: name as Command,
+            input: operationInput,
+            dryRun,
+            confirmDestructive: transportInput.confirmDestructive,
+            confirmationToken: transportInput.confirmationToken,
+            executeOperation,
+          })
+        : [
+            await executeOperation({
+              command: name as Command,
+              input: operationInput,
+              dryRun,
             }),
-            next: [
-              "Review the planned result and transaction. To commit the unchanged destructive operation, retry with confirmDestructive: true and this confirmationToken before it expires.",
-            ],
-          });
-        }
-        const confirmationIsValid =
-          transportInput.confirmDestructive === true &&
-          (await validateConfirmationToken(
-            transportInput.confirmationToken,
-            signature
-          ));
-        if (confirmationIsValid === false) {
-          const confirmation = await createDestructiveConfirmation({
-            operation: name,
-            signature,
-            envelope: plannedEnvelope,
-          });
-          return toCallResult(plannedEnvelope, {
-            error: {
-              code:
-                transportInput.confirmDestructive === true
-                  ? "DESTRUCTIVE_CONFIRMATION_INVALID"
-                  : "DESTRUCTIVE_CONFIRMATION_REQUIRED",
-              message:
-                "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.",
-            },
-            confirmation,
-            next: [
-              "Do not retry blindly. Review meta.session.transaction and meta.confirmation.summary, ask the user to confirm, then retry the unchanged operation with confirmDestructive: true and meta.confirmation.token.",
-            ],
-          });
-        }
-        envelope = await executeOperation({
-          command: name as Command,
-          input: operationInput,
-          dryRun: false,
-        });
-      } else {
-        envelope = await executeOperation({
-          command: name as Command,
-          input: operationInput,
-          dryRun,
-        });
+          ];
+      if (response !== undefined) {
+        return response;
       }
       if (name === "audit") {
         const auditedEnvelope = await augmentAuditWithRenderedChecks({
