@@ -493,10 +493,12 @@ const insertFragmentAssetsMutable = ({
 const insertFragmentBreakpointsMutable = ({
   fragment,
   breakpoints,
+  createId,
   onBreakpointLimitMerge,
 }: {
   fragment: WebstudioFragment;
   breakpoints: Breakpoints;
+  createId: () => string;
   onBreakpointLimitMerge?: () => void;
 }) => {
   let didMergeBreakpointsDueToLimit = false;
@@ -515,7 +517,17 @@ const insertFragmentBreakpointsMutable = ({
   }
   for (const newBreakpoint of fragment.breakpoints) {
     if (mergedBreakpointIds.has(newBreakpoint.id) === false) {
-      breakpoints.set(newBreakpoint.id, newBreakpoint);
+      let newBreakpointId = newBreakpoint.id;
+      while (breakpoints.has(newBreakpointId)) {
+        newBreakpointId = createId();
+      }
+      breakpoints.set(newBreakpointId, {
+        ...newBreakpoint,
+        id: newBreakpointId,
+      });
+      if (newBreakpointId !== newBreakpoint.id) {
+        mergedBreakpointIds.set(newBreakpoint.id, newBreakpointId);
+      }
     }
   }
   return { mergedBreakpointIds, didMergeBreakpointsDueToLimit };
@@ -591,6 +603,7 @@ export const insertWebstudioFragmentCopy = ({
       ? insertFragmentBreakpointsMutable({
           fragment,
           breakpoints,
+          createId,
           onBreakpointLimitMerge,
         })
       : {
