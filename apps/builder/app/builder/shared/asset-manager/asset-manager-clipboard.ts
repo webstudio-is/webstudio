@@ -2,27 +2,28 @@ import { atom } from "nanostores";
 import { createAssetFolderHierarchy } from "@webstudio-is/sdk";
 import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
 import {
+  canMoveAssetManagerItems,
   duplicateAssetManagerItems,
   moveAssetManagerItems,
   normalizeAssetManagerItems,
   type AssetManagerItem,
 } from "./asset-manager-operations";
+import type { AssetManagerSelection } from "./asset-manager-selection";
 
-export type AssetManagerClipboardItem = {
+type AssetManagerClipboard = {
   operation: "copy" | "cut";
-  items: AssetManagerItem[];
+  items: AssetManagerSelection[];
   projectId: string;
 };
 
-export const $assetManagerClipboard = atom<
-  AssetManagerClipboardItem | undefined
->(undefined);
+export const $assetManagerClipboard = atom<AssetManagerClipboard | undefined>(
+  undefined
+);
 
 const setAssetManagerClipboard = (
-  operation: AssetManagerClipboardItem["operation"],
-  itemOrItems: AssetManagerItem | readonly AssetManagerItem[]
+  operation: AssetManagerClipboard["operation"],
+  items: readonly AssetManagerItem[]
 ) => {
-  const items = Array.isArray(itemOrItems) ? [...itemOrItems] : [itemOrItems];
   const projectId = items[0]?.projectId;
   if (
     projectId === undefined ||
@@ -30,29 +31,23 @@ const setAssetManagerClipboard = (
   ) {
     return;
   }
-  $assetManagerClipboard.set({ operation, items, projectId });
+  $assetManagerClipboard.set({
+    operation,
+    items: items.map(({ type, id }) => ({ type, id })),
+    projectId,
+  });
 };
 
-export const copyAssetManagerItem = (
-  itemOrItems: AssetManagerItem | readonly AssetManagerItem[]
-) => setAssetManagerClipboard("copy", itemOrItems);
+export const copyAssetManagerItems = (items: readonly AssetManagerItem[]) =>
+  setAssetManagerClipboard("copy", items);
 
-export const cutAssetManagerItem = (
-  itemOrItems: AssetManagerItem | readonly AssetManagerItem[]
-) => setAssetManagerClipboard("cut", itemOrItems);
-
-export const duplicateAssetManagerItem = (
-  itemOrItems: AssetManagerItem | readonly AssetManagerItem[],
-  targetFolderId?: string | null
-) => {
-  const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-  return duplicateAssetManagerItems(items, targetFolderId);
-};
+export const cutAssetManagerItems = (items: readonly AssetManagerItem[]) =>
+  setAssetManagerClipboard("cut", items);
 
 export const createAssetManagerClipboardActions = (item: AssetManagerItem) => ({
-  cut: () => cutAssetManagerItem(item),
-  copy: () => copyAssetManagerItem(item),
-  duplicate: () => duplicateAssetManagerItem(item),
+  cut: () => cutAssetManagerItems([item]),
+  copy: () => copyAssetManagerItems([item]),
+  duplicate: () => duplicateAssetManagerItems([item]),
 });
 
 const getClipboardItems = () => {
@@ -72,31 +67,27 @@ const getClipboardItems = () => {
 
 const canPasteToFolder = (
   data: NonNullable<ReturnType<typeof getClipboardItems>>,
-  folderId: string | undefined
+  targetFolderId: string | undefined
 ) => {
-  if (
-    data.items.length === 0 ||
-    (folderId !== undefined && data.folders.has(folderId) === false)
-  ) {
-    return false;
+  if (data.clipboard.operation === "cut") {
+    return canMoveAssetManagerItems({
+      items: data.items,
+      targetFolderId,
+      hierarchy: createAssetFolderHierarchy(data.folders),
+    });
   }
-  if (data.clipboard.operation === "copy" || folderId === undefined) {
-    return true;
-  }
-  const hierarchy = createAssetFolderHierarchy(data.folders);
-  return data.items.every(
-    (item) =>
-      item.type === "asset" ||
-      hierarchy.getSubtreeIds(item.id).has(folderId) === false
+  return (
+    data.items.length > 0 &&
+    (targetFolderId === undefined || data.folders.has(targetFolderId))
   );
 };
 
-export const canPasteAssetManagerItem = (folderId: string | undefined) => {
+export const canPasteAssetManagerClipboard = (folderId: string | undefined) => {
   const data = getClipboardItems();
   return data !== undefined && canPasteToFolder(data, folderId);
 };
 
-export const pasteAssetManagerItem = (folderId: string | undefined) => {
+export const pasteAssetManagerClipboard = (folderId: string | undefined) => {
   const data = getClipboardItems();
   if (data === undefined) {
     const clipboard = $assetManagerClipboard.get();

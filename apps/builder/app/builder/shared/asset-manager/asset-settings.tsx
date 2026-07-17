@@ -73,7 +73,7 @@ import {
   parseAssetName,
 } from "@webstudio-is/project-build/runtime";
 import { AssetFolderSelector } from "./asset-folder-selector";
-import { moveAssetToFolder } from "./asset-folder-actions";
+import { moveAssetManagerItems } from "./asset-manager-operations";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -346,9 +346,8 @@ const AssetSettingsContent = ({
     }
   );
 
-  const moveToFolder = (newFolderId: string | undefined) => {
-    moveAssetToFolder(asset.id, newFolderId);
-  };
+  const moveToFolder = (newFolderId: string | undefined) =>
+    moveAssetManagerItems([{ type: "asset", id: asset.id }], newFolderId);
 
   const authPermit = useStore($authPermit);
   let downloadError: undefined | string;
@@ -422,6 +421,7 @@ const AssetSettingsContent = ({
           <InputField
             id="asset-manager-filename"
             autoFocus={focusName}
+            readOnly={authPermit === "view"}
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -447,6 +447,7 @@ const AssetSettingsContent = ({
         </Label>
         <TextArea
           id="asset-manager-description"
+          readOnly={authPermit === "view"}
           placeholder='Enter "alt" text'
           rows={1}
           maxRows={6}

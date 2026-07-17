@@ -24,6 +24,7 @@ export type AssetManagerItemActions = Partial<
     | "copy"
     | "paste"
     | "duplicate"
+    | "move"
     | "download"
     | "replace"
     | "createFolder"
@@ -57,6 +58,7 @@ const itemDefinitions: readonly ItemDefinition[] = [
   { name: "copy", label: "Copy", shortcut: ["meta", "c"] },
   { name: "paste", label: "Paste", shortcut: ["meta", "v"] },
   { name: "duplicate", label: "Duplicate", shortcut: ["meta", "d"] },
+  { name: "move", label: "Move" },
   { name: "download", label: "Download", separatorBefore: true },
   { name: "replace", label: "Replace file" },
   {

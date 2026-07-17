@@ -222,7 +222,7 @@ describe("Asset Manager multiselect interactions", () => {
     const options = getOptions(container);
     const listbox = container.querySelector<HTMLElement>('[role="listbox"]')!;
     const viewport = listbox.closest<HTMLElement>(
-      "[data-radix-scroll-area-viewport]"
+      "[data-asset-manager-scroll-area]"
     )!;
     viewport.getBoundingClientRect = () =>
       ({
@@ -477,8 +477,8 @@ describe("Asset Manager multiselect interactions", () => {
     expect($assetManagerClipboard.get()).toEqual({
       operation: "copy",
       items: [
-        { type: "folder", id: "charlie", projectId: "project" },
-        { type: "asset", id: "asset", projectId: "project" },
+        { type: "folder", id: "charlie" },
+        { type: "asset", id: "asset" },
       ],
       projectId: "project",
     });
@@ -553,8 +553,8 @@ describe("Asset Manager multiselect interactions", () => {
       expect($assetManagerClipboard.get()).toEqual({
         operation: action.toLowerCase(),
         items: [
-          { type: "folder", id: selectedFolderId, projectId: "project" },
-          { type: "asset", id: "asset", projectId: "project" },
+          { type: "folder", id: selectedFolderId },
+          { type: "asset", id: "asset" },
         ],
         projectId: "project",
       });
@@ -590,6 +590,27 @@ describe("Asset Manager multiselect interactions", () => {
     selectContextMenuItem(options[0]!.button, "Delete");
 
     expect(document.body.textContent).toContain("Delete 2 selected items?");
+  });
+
+  test("Move from the context menu targets the complete multiselection", () => {
+    const asset = createAsset("asset");
+    act(() => $assets.set(new Map([[asset.id, asset]])));
+    const container = renderManager();
+    const options = getOptions(container);
+    act(() => options[0]?.button.focus());
+    pointerDown(options.at(-1)!.button, { ctrlKey: true });
+
+    openContextMenu(options[0]!.button);
+    const moveItem = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Move");
+    expect(moveItem).toBeDefined();
+    act(() => moveItem?.click());
+
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.textContent).toContain("Move items");
+    expect(dialog.querySelectorAll("label")).toHaveLength(1);
+    expect(dialog.querySelector("label")?.textContent).toBe("Folder");
   });
 
   test("thumbnail context requests replace the panel actions", () => {
@@ -666,14 +687,14 @@ describe("Asset Manager shortcuts", () => {
     keyDown(button, "c", { metaKey: true });
     expect($assetManagerClipboard.get()).toEqual({
       operation: "copy",
-      items: [{ ...item, projectId: "project" }],
+      items: [item],
       projectId: "project",
     });
 
     keyDown(button, "x", { ctrlKey: true });
     expect($assetManagerClipboard.get()).toEqual({
       operation: "cut",
-      items: [{ ...item, projectId: "project" }],
+      items: [item],
       projectId: "project",
     });
   });
@@ -691,8 +712,8 @@ describe("Asset Manager shortcuts", () => {
 
     keyDown(assetButton, "c", { metaKey: true });
     expect($assetManagerClipboard.get()?.items).toEqual([
-      { type: "folder", id: "alpha", projectId: "project" },
-      { type: "asset", id: "asset", projectId: "project" },
+      { type: "folder", id: "alpha" },
+      { type: "asset", id: "asset" },
     ]);
 
     keyDown(assetButton, "d", { ctrlKey: true });
@@ -709,7 +730,7 @@ describe("Asset Manager shortcuts", () => {
       $assets.set(new Map([[asset.id, asset]]));
       $assetManagerClipboard.set({
         operation: "copy",
-        items: [{ type: "asset", id: asset.id, projectId: "project" }],
+        items: [{ type: "asset", id: asset.id }],
         projectId: "project",
       });
     });

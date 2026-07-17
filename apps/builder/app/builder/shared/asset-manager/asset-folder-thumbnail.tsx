@@ -14,9 +14,9 @@ import {
 } from "./asset-thumbnail-card";
 import {
   $assetManagerClipboard,
-  canPasteAssetManagerItem,
+  canPasteAssetManagerClipboard,
   createAssetManagerClipboardActions,
-  pasteAssetManagerItem,
+  pasteAssetManagerClipboard,
 } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
 import { getAssetManagerDragItems } from "./asset-manager-drag";
@@ -36,6 +36,7 @@ export const FolderThumbnail = ({
   canManage,
   canMoveItems,
   onMoveItems,
+  onMove,
   path,
   onElementChange,
   forcedSelection,
@@ -54,6 +55,7 @@ export const FolderThumbnail = ({
     items: readonly AssetManagerSelection[],
     folderId: string
   ) => void;
+  onMove?: () => void;
   path?: string;
   onElementChange?: (element: HTMLElement | null) => void;
   forcedSelection?: boolean;
@@ -81,11 +83,12 @@ export const FolderThumbnail = ({
       ? {
           settings: () => openSettings(),
           ...createAssetManagerClipboardActions(item),
+          move: onMove,
           paste:
             clipboard?.projectId !== folder.projectId ||
-            canPasteAssetManagerItem(folder.id) === false
+            canPasteAssetManagerClipboard(folder.id) === false
               ? undefined
-              : () => pasteAssetManagerItem(folder.id),
+              : () => pasteAssetManagerClipboard(folder.id),
           delete: () => openSettings(true),
         }
       : {}),
@@ -117,7 +120,7 @@ export const FolderThumbnail = ({
         element,
         canDrop: ({ source }) => {
           const items = getAssetManagerDragItems(source.data);
-          return items.length > 0 && canMoveItems(items, folder.id);
+          return canMoveItems(items, folder.id);
         },
         onDragEnter: () => setIsDropTarget(true),
         onDragLeave: () => setIsDropTarget(false),

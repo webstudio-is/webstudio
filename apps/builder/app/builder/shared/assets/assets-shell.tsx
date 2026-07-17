@@ -11,10 +11,11 @@ import {
   ContextMenu,
   ContextMenuTrigger,
   Flex,
-  ScrollArea,
+  ScrollAreaNative,
   SearchField,
   theme,
 } from "@webstudio-is/design-system";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import {
   acceptUploadType,
   groupFilesByAssetType,
@@ -59,6 +60,7 @@ type AssetsShellProps = {
   ) => void;
   onKeyDown?: ComponentProps<typeof Flex>["onKeyDown"];
   onElementChange?: (element: HTMLDivElement | null) => void;
+  autoScrollOnElementDrag?: boolean;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -85,6 +87,7 @@ export const AssetsShell = ({
   onPointerDown,
   onKeyDown,
   onElementChange,
+  autoScrollOnElementDrag = false,
   type,
   accept,
 }: AssetsShellProps) => {
@@ -94,6 +97,17 @@ export const AssetsShell = ({
     useState<ExternalMonitorDragState>(IDLE);
 
   const [dropTargetState, setDropTargetState] = useState<DropTargetState>(IDLE);
+
+  useEffect(() => {
+    const element = listViewportRef.current;
+    if (element === null || autoScrollOnElementDrag === false) {
+      return;
+    }
+    return autoScrollForElements({
+      element,
+      getAllowedAxis: () => "vertical",
+    });
+  }, [autoScrollOnElementDrag, isEmpty]);
 
   useExternalDragStateEffect((state) => {
     const element = ref.current;
@@ -236,8 +250,10 @@ export const AssetsShell = ({
           />
         </Flex>
       ) : (
-        <ScrollArea
+        <ScrollAreaNative
+          data-asset-manager-scroll-area=""
           ref={listViewportRef}
+          style={{ overflowY: "auto" }}
           css={{
             display: "flex",
             flexDirection: "column",
@@ -246,7 +262,7 @@ export const AssetsShell = ({
           }}
         >
           {children}
-        </ScrollArea>
+        </ScrollAreaNative>
       )}
       {interactionOverlay}
       {footer}

@@ -55,10 +55,13 @@ const createFolderThumbnail = (
   />
 );
 
-const createUploadedAssetThumbnail = () => (
+const createUploadedAssetThumbnail = (
+  props: Partial<ComponentProps<typeof AssetThumbnail>> = {}
+) => (
   <AssetThumbnail
     assetContainer={uploadedAssetContainer}
     interactions={createInteractions()}
+    {...props}
   />
 );
 
@@ -119,6 +122,37 @@ afterEach(() => {
 });
 
 describe("AssetThumbnail", () => {
+  test.each([
+    {
+      triggerLabel: "Actions for Documents",
+      render: (onMove: () => void) =>
+        createFolderThumbnail({ canManage: true, onMove }),
+    },
+    {
+      triggerLabel: "Actions for document.pdf",
+      render: (onMove: () => void) => createUploadedAssetThumbnail({ onMove }),
+    },
+  ])("moves from the $triggerLabel menu", ({ triggerLabel, render }) => {
+    const onMove = vi.fn();
+    const container = renderer.render(render(onMove));
+    const trigger = container.querySelector<HTMLButtonElement>(
+      `[aria-label="${triggerLabel}"]`
+    );
+    act(() => {
+      trigger?.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+      );
+    });
+    const move = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Move");
+    expect(move).toBeDefined();
+
+    act(() => move?.click());
+
+    expect(onMove).toHaveBeenCalledOnce();
+  });
+
   test("renders asset, folder, and Back components through the shared card", () => {
     const container = renderer.render(
       <Fragment>
@@ -272,7 +306,7 @@ describe("AssetThumbnail", () => {
     test("shows keyboard shortcuts in the actions menu", () => {
       $assetManagerClipboard.set({
         operation: "copy",
-        items: [{ type: "asset", id: "asset", projectId: "project" }],
+        items: [{ type: "asset", id: "asset" }],
         projectId: "project",
       });
       const container = render();
@@ -321,7 +355,6 @@ describe("AssetThumbnail", () => {
         {
           type: "asset",
           id: "asset",
-          projectId: "another-project",
         },
       ],
       projectId: "another-project",

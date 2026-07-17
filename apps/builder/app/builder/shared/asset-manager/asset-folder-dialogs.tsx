@@ -25,23 +25,19 @@ import {
 } from "@webstudio-is/sdk";
 import { TrashIcon } from "@webstudio-is/icons";
 import { $assetFolders } from "~/shared/sync/data-stores";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { AssetFolderSelector } from "./asset-folder-selector";
-import {
-  createAssetFolder,
-  deleteAssetFolder,
-  saveAssetFolder,
-} from "./asset-folder-actions";
 
 type AssetFolderFormValues = {
   name: string;
   parentId: string | undefined;
 };
 
-const runAndClose = (
-  action: () => unknown,
+const closeOnSuccess = (
+  result: unknown,
   onOpenChange: (open: boolean) => void
 ) => {
-  if (action() !== undefined) {
+  if (result !== undefined) {
     onOpenChange(false);
   }
 };
@@ -78,6 +74,11 @@ const AssetFolderForm = ({
     () => createAssetFolderHierarchy(folders),
     [folders]
   );
+  const excludedFolderIds = useMemo(
+    () =>
+      excludedFolderId === undefined ? undefined : new Set([excludedFolderId]),
+    [excludedFolderId]
+  );
   const [name, setName] = useState(initialName);
   const [parentId, setParentId] = useState(initialParentId);
 
@@ -93,10 +94,7 @@ const AssetFolderForm = ({
     hierarchy.findByName({
       name,
       parentId,
-      excludeIds:
-        excludedFolderId === undefined
-          ? undefined
-          : new Set([excludedFolderId]),
+      excludeIds: excludedFolderIds,
     }) !== undefined;
   const canSubmit = normalizedName.length > 0 && duplicate === false;
   const submit = () => {
@@ -130,7 +128,7 @@ const AssetFolderForm = ({
       <AssetFolderSelector
         value={parentId}
         onChange={setParentId}
-        excludedFolderId={excludedFolderId}
+        excludedFolderIds={excludedFolderIds}
         rootLabel="Parent folder"
       />
       <Flex justify="end" gap={2}>
@@ -157,7 +155,13 @@ export const CreateAssetFolderDialog = ({
   currentFolderId: string | undefined;
 }) => {
   const create = (values: AssetFolderFormValues) =>
-    runAndClose(() => createAssetFolder(values), onOpenChange);
+    closeOnSuccess(
+      executeRuntimeMutation({
+        id: "assetFolders.create",
+        input: values,
+      }),
+      onOpenChange
+    );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -199,10 +203,28 @@ export const AssetFolderSettingsDialog = ({
   }, [initialDeleteConfirmation, open]);
 
   const save = (values: AssetFolderFormValues) =>
-    runAndClose(() => saveAssetFolder(folder.id, values), onOpenChange);
+    closeOnSuccess(
+      executeRuntimeMutation({
+        id: "assetFolders.update",
+        input: {
+          folderId: folder.id,
+          values: {
+            name: values.name,
+            parentId: values.parentId ?? null,
+          },
+        },
+      }),
+      onOpenChange
+    );
 
   const remove = () =>
-    runAndClose(() => deleteAssetFolder(folder.id), onOpenChange);
+    closeOnSuccess(
+      executeRuntimeMutation({
+        id: "assetFolders.delete",
+        input: { folderId: folder.id },
+      }),
+      onOpenChange
+    );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -252,6 +274,62 @@ export const AssetFolderSettingsDialog = ({
             }
           />
         )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export const MoveAssetManagerItemsDialog = ({
+  open,
+  onOpenChange,
+  initialFolderId,
+  excludedFolderIds,
+  canMove,
+  onMove,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialFolderId: string | undefined;
+  excludedFolderIds?: ReadonlySet<string>;
+  canMove: (folderId: string | undefined) => boolean;
+  onMove: (folderId: string | undefined) => void;
+}) => {
+  const [folderId, setFolderId] = useState(initialFolderId);
+
+  useLayoutEffect(() => {
+    if (open) {
+      setFolderId(initialFolderId);
+    }
+  }, [initialFolderId, open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        minWidth={360}
+        aria-describedby={undefined}
+        onKeyDown={stopEscapePropagation}
+      >
+        <DialogTitle>Move items</DialogTitle>
+        <Grid gap={3} css={{ padding: theme.panel.padding }}>
+          <AssetFolderSelector
+            value={folderId}
+            onChange={setFolderId}
+            excludedFolderIds={excludedFolderIds}
+            rootLabel="Folder"
+          />
+          <Flex justify="end">
+            <Button
+              autoFocus
+              disabled={canMove(folderId) === false}
+              onClick={() => {
+                onMove(folderId);
+                onOpenChange(false);
+              }}
+            >
+              Move
+            </Button>
+          </Flex>
+        </Grid>
       </DialogContent>
     </Dialog>
   );
