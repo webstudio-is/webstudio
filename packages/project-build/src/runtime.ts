@@ -2,6 +2,7 @@ export * from "./build-integrity";
 export * from "./shared/graph-utils";
 export * from "./runtime/assets";
 export * from "./runtime/binding-verification";
+export * from "./runtime/asset-folders";
 export * from "./runtime/auth";
 export * from "./runtime/block";
 export * from "./runtime/breakpoints";

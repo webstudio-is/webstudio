@@ -1,4 +1,8 @@
-import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
+import {
+  getStyleDeclKey,
+  type AssetFolders,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
   type MarketplaceProduct,
@@ -7,24 +11,11 @@ import {
 import type { Project } from "@webstudio-is/project";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "~/services/trcp-router.server";
-import { $project } from "~/shared/sync/data-stores";
-import {
-  $assets,
-  $breakpoints,
-  $dataSources,
-  $instances,
-  $marketplaceProduct,
-  $projectSettings,
-  $pages,
-  $props,
-  $resources,
-  $styleSourceSelections,
-  $styleSources,
-  $styles,
-} from "~/shared/sync/data-stores";
+import { $project, readBuilderStateStores } from "~/shared/sync/data-stores";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 
-export type BuilderData = WebstudioData & {
+export type BuilderData = Omit<WebstudioData, "assetFolders"> & {
+  assetFolders: AssetFolders;
   marketplaceProduct: undefined | MarketplaceProduct;
   projectSettings: ProjectSettings;
   project: Project;
@@ -36,7 +27,8 @@ export type LoadedBuilderData = BuilderData &
   Pick<LoadDataOutput, "id" | "version" | "publisherHost" | "projectId">;
 
 export const getBuilderData = (): BuilderData => {
-  const pages = $pages.get();
+  const data = readBuilderStateStores();
+  const { pages, projectSettings } = data;
   if (pages === undefined) {
     throw Error(`Cannot get webstudio data with empty pages`);
   }
@@ -44,23 +36,13 @@ export const getBuilderData = (): BuilderData => {
   if (project === undefined) {
     throw Error(`Cannot get webstudio data with empty project`);
   }
-  const projectSettings = $projectSettings.get();
   if (projectSettings === undefined) {
     throw Error(`Cannot get webstudio data with empty project settings`);
   }
   return {
+    ...data,
     pages,
     project,
-    instances: $instances.get(),
-    props: $props.get(),
-    dataSources: $dataSources.get(),
-    resources: $resources.get(),
-    breakpoints: $breakpoints.get(),
-    styleSourceSelections: $styleSourceSelections.get(),
-    styleSources: $styleSources.get(),
-    styles: $styles.get(),
-    assets: $assets.get(),
-    marketplaceProduct: $marketplaceProduct.get(),
     projectSettings,
   };
 };
@@ -94,6 +76,7 @@ export const loadBuilderData = async ({
       project: data.project,
       publisherHost: data.publisherHost,
       assets: hydrateIdMap(data.assets),
+      assetFolders: hydrateIdMap(data.assetFolders),
       instances: hydrateIdMap(data.instances),
       dataSources: hydrateIdMap(data.dataSources),
       resources: hydrateIdMap(data.resources),

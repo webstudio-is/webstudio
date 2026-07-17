@@ -327,6 +327,17 @@ test("creates preview bundle from project session snapshot", () => {
         },
       ],
     ],
+    assetFolders: [
+      [
+        "asset-folder",
+        {
+          id: "asset-folder",
+          projectId: "project",
+          name: "Images",
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    ],
   });
 
   const bundle = createLocalProjectBundleFromSessionSnapshot(
@@ -356,6 +367,9 @@ test("creates preview bundle from project session snapshot", () => {
     "design-system-body",
   ]);
   expect(bundle.build.marketplaceProduct).toEqual(marketplaceProduct);
+  expect(bundle.assetFolders).toEqual([
+    expect.objectContaining({ id: "asset-folder", name: "Images" }),
+  ]);
 });
 
 describe("cli project session transport", () => {

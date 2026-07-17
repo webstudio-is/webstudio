@@ -3,7 +3,7 @@ import { waitForChangeToBeSaved } from "./sync-status";
 
 type Bounds = { x: number; y: number; width: number; height: number };
 
-const dragPointer = async ({
+export const dragPointer = async ({
   page,
   source,
   target,

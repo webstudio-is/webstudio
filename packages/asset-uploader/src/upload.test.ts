@@ -79,6 +79,7 @@ describe("createUploadTicket", () => {
           id: "asset-1",
           projectId: "project-1",
           name: expect.stringMatching(/^photo_.+\.png$/),
+          folderId: "campaign",
         });
         return empty({ status: 201 });
       })
@@ -89,6 +90,7 @@ describe("createUploadTicket", () => {
         projectId: "project-1",
         type: "image/png",
         filename: "photo.png",
+        folderId: "campaign",
       },
       createContext(),
       () => "asset-1"

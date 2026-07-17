@@ -16,6 +16,7 @@ import {
   attachDesignToken,
   bindProps,
   cloneInstance,
+  createAssetFolder,
   createBreakpoint,
   createPageFromTemplate,
   createDesignTokens,
@@ -29,6 +30,7 @@ import {
   createVariable,
   deleteDesignTokenStyles,
   deleteCssVariables,
+  deleteAssetFolder,
   deleteAssets,
   deleteBreakpoint,
   deleteDomain,
@@ -41,6 +43,8 @@ import {
   deleteRedirect,
   deleteVariable,
   duplicatePage,
+  duplicateAsset,
+  duplicateAssetFolder,
   extractDesignToken,
   findAssetUsage,
   getPublishJob,
@@ -61,6 +65,7 @@ import {
   importProjectBundle,
   importProjectBundleWithAssets,
   listAssets,
+  listAssetFolders,
   listBreakpoints,
   listDesignTokens,
   listDomains,
@@ -90,6 +95,7 @@ import {
   replaceStyleValues,
   rewriteCssVariableRefs,
   updateDesignTokenStyles,
+  updateAssetFolder,
   updateDomain,
   updateBreakpoint,
   updatePage,
@@ -787,6 +793,25 @@ test("wraps project api trpc calls in named functions", async () => {
       ...params,
       domainId: "domain-id",
     });
+    await listAssetFolders(params);
+    await createAssetFolder({
+      ...params,
+      name: "Images",
+    });
+    await updateAssetFolder({
+      ...params,
+      folderId: "folder-id",
+      values: { name: "Photos", parentId: null },
+    });
+    await deleteAssetFolder({
+      ...params,
+      folderId: "folder-id",
+    });
+    await duplicateAssetFolder({
+      ...params,
+      folderId: "folder-id",
+      parentId: null,
+    });
     await listAssets({
       ...params,
       type: "image",
@@ -805,6 +830,11 @@ test("wraps project api trpc calls in named functions", async () => {
       ...params,
       assetIdsOrPrefixes: ["asset-id"],
       force: true,
+    });
+    await duplicateAsset({
+      ...params,
+      assetId: "asset-id",
+      folderId: null,
     });
     await getProjectPermissions(params);
     await listFolders({
@@ -973,6 +1003,14 @@ test("wraps project api trpc calls in named functions", async () => {
     expectBodyRequest("/trpc/api.domains.update", '"domain":"www.example.com"'),
     expectBodyRequest("/trpc/api.domains.delete", '"confirm":true'),
     expectBodyRequest("/trpc/api.domains.verify", '"domainId":"domain-id"'),
+    expectRequest("/trpc/api.assetFolders.list"),
+    expectBodyRequest("/trpc/api.assetFolders.create", '"name":"Images"'),
+    expectBodyRequest("/trpc/api.assetFolders.update", '"parentId":null'),
+    expectBodyRequest(
+      "/trpc/api.assetFolders.delete",
+      '"folderId":"folder-id"'
+    ),
+    expectBodyRequest("/trpc/api.assetFolders.duplicate", '"parentId":null'),
     expectRequest("/trpc/api.assets.list"),
     expectRequest("/trpc/api.assets.findUsage"),
     expectBodyRequest("/trpc/api.assets.replace", '"confirm":true'),
@@ -980,6 +1018,7 @@ test("wraps project api trpc calls in named functions", async () => {
       "/trpc/api.assets.delete",
       '"assetIdsOrPrefixes":["asset-id"]'
     ),
+    expectBodyRequest("/trpc/api.assets.duplicate", '"folderId":null'),
     expectRequest("/trpc/api.projects.permissions"),
     expectRequest("/trpc/api.folders.list"),
     expectBodyRequest("/trpc/api.build.patch", '"baseVersion":2'),
@@ -1086,6 +1125,7 @@ test("uploads assets as binary requests", async () => {
         type: "image",
         name: "image.png",
         filename: "image.png",
+        folderId: "campaign",
         format: "png",
         size: 3,
         meta: { width: 10, height: 20 },
@@ -1098,7 +1138,7 @@ test("uploads assets as binary requests", async () => {
   expect(fetch).toHaveBeenCalledOnce();
   const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
   expect(url.href).toBe(
-    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&width=10&height=20&format=png"
+    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&folderId=campaign&width=10&height=20&format=png"
   );
   expect(init.method).toBe("POST");
   expect(init.body).toBe(file);
@@ -1262,6 +1302,7 @@ test("uploads project asset descriptors with local data readers", async () => {
         name: "image.png",
         type: "image",
         format: "png",
+        folderId: "campaign",
         meta: { width: 10, height: 20 },
       },
       readAssetData: async () => new Uint8Array([1, 2, 3]),
@@ -1284,6 +1325,9 @@ test("uploads project asset descriptors with local data readers", async () => {
   ).resolves.toEqual({ uploaded: [uploadedAsset] });
 
   const calls = fetch.mock.calls as unknown as Array<[URL]>;
+  expect(new URL(calls[0][0].toString()).searchParams.get("folderId")).toBe(
+    "campaign"
+  );
   for (const [request] of calls) {
     const url = new URL(request.toString());
     expect(url.searchParams.has("assetId")).toBe(false);
@@ -1293,6 +1337,14 @@ test("uploads project asset descriptors with local data readers", async () => {
 test("normalizes synced project bundles for local storage", () => {
   const bundle = createPublishedProjectBundleFixture({
     bundleVersion: "bundle-old",
+    assetFolders: [
+      {
+        id: "folder-1",
+        projectId: "project-1",
+        name: "Images",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
   });
 
   expect(toLocalProjectBundle(bundle)).toMatchObject({
@@ -1301,6 +1353,7 @@ test("normalizes synced project bundles for local storage", () => {
     page: bundle.page,
     pages: bundle.pages,
     assets: bundle.assets,
+    assetFolders: bundle.assetFolders,
     user: bundle.user,
     projectDomain: bundle.projectDomain,
     projectTitle: bundle.projectTitle,

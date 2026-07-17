@@ -3665,6 +3665,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -3798,6 +3802,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -3855,6 +3863,10 @@ export const runtimeOperationContractData = [
                                     type: "null",
                                   },
                                 ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
                               },
                               createdAt: {
                                 type: "string",
@@ -6787,6 +6799,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -6920,6 +6936,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -6977,6 +6997,10 @@ export const runtimeOperationContractData = [
                                     type: "null",
                                   },
                                 ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
                               },
                               createdAt: {
                                 type: "string",
@@ -9920,6 +9944,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -10053,6 +10081,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -10110,6 +10142,10 @@ export const runtimeOperationContractData = [
                                     type: "null",
                                   },
                                 ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
                               },
                               createdAt: {
                                 type: "string",
@@ -13042,6 +13078,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -13175,6 +13215,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -13232,6 +13276,10 @@ export const runtimeOperationContractData = [
                                     type: "null",
                                   },
                                 ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
                               },
                               createdAt: {
                                 type: "string",
@@ -18859,6 +18907,10 @@ export const runtimeOperationContractData = [
                                         },
                                       ],
                                     },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                    },
                                     createdAt: {
                                       type: "string",
                                     },
@@ -19000,6 +19052,10 @@ export const runtimeOperationContractData = [
                                         },
                                       ],
                                     },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                    },
                                     createdAt: {
                                       type: "string",
                                     },
@@ -19057,6 +19113,10 @@ export const runtimeOperationContractData = [
                                           type: "null",
                                         },
                                       ],
+                                    },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -22184,6 +22244,10 @@ export const runtimeOperationContractData = [
                                         },
                                       ],
                                     },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                    },
                                     createdAt: {
                                       type: "string",
                                     },
@@ -22325,6 +22389,10 @@ export const runtimeOperationContractData = [
                                         },
                                       ],
                                     },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
+                                    },
                                     createdAt: {
                                       type: "string",
                                     },
@@ -22382,6 +22450,10 @@ export const runtimeOperationContractData = [
                                           type: "null",
                                         },
                                       ],
+                                    },
+                                    folderId: {
+                                      type: "string",
+                                      minLength: 1,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -36577,6 +36649,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -36710,6 +36786,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -36767,6 +36847,10 @@ export const runtimeOperationContractData = [
                                     type: "null",
                                   },
                                 ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
                               },
                               createdAt: {
                                 type: "string",
@@ -39774,6 +39858,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -39907,6 +39995,10 @@ export const runtimeOperationContractData = [
                                   },
                                 ],
                               },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
+                              },
                               createdAt: {
                                 type: "string",
                               },
@@ -39964,6 +40056,10 @@ export const runtimeOperationContractData = [
                                     type: "null",
                                   },
                                 ],
+                              },
+                              folderId: {
+                                type: "string",
+                                minLength: 1,
                               },
                               createdAt: {
                                 type: "string",
@@ -46087,6 +46183,10 @@ export const runtimeOperationContractData = [
                           },
                         ],
                       },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                      },
                       createdAt: {
                         type: "string",
                       },
@@ -46215,6 +46315,10 @@ export const runtimeOperationContractData = [
                           },
                         ],
                       },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                      },
                       createdAt: {
                         type: "string",
                       },
@@ -46272,6 +46376,10 @@ export const runtimeOperationContractData = [
                             type: "null",
                           },
                         ],
+                      },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
                       },
                       createdAt: {
                         type: "string",
@@ -51898,6 +52006,10 @@ export const runtimeOperationContractData = [
                           },
                         ],
                       },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                      },
                       createdAt: {
                         type: "string",
                       },
@@ -52026,6 +52138,10 @@ export const runtimeOperationContractData = [
                           },
                         ],
                       },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
+                      },
                       createdAt: {
                         type: "string",
                       },
@@ -52083,6 +52199,10 @@ export const runtimeOperationContractData = [
                             type: "null",
                           },
                         ],
+                      },
+                      folderId: {
+                        type: "string",
+                        minLength: 1,
                       },
                       createdAt: {
                         type: "string",
@@ -65854,6 +65974,216 @@ export const runtimeOperationContractData = [
     requiresConfirm: true,
   },
   {
+    id: "assetFolders.list",
+    command: "list-asset-folders",
+    client: "listAssetFolders",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        folders: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+              },
+              projectId: {
+                type: "string",
+              },
+              name: {
+                type: "string",
+              },
+              parentId: {
+                type: "string",
+              },
+              createdAt: {
+                type: "string",
+              },
+            },
+            required: ["id", "projectId", "name", "createdAt"],
+            additionalProperties: {},
+          },
+        },
+      },
+      required: ["folders"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assetFolders"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "assetFolders.create",
+    command: "create-asset-folder",
+    client: "createAssetFolder",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          minLength: 1,
+        },
+        parentId: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["name"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+        },
+      },
+      required: ["folderId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assetFolders"],
+    writeNamespaces: ["assetFolders"],
+    invalidatesNamespaces: ["assetFolders"],
+    retryOnConflict: true,
+    requiresAssets: true,
+  },
+  {
+    id: "assetFolders.update",
+    command: "update-asset-folder",
+    client: "updateAssetFolder",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+          minLength: 1,
+        },
+        values: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              minLength: 1,
+            },
+            parentId: {
+              anyOf: [
+                {
+                  type: "string",
+                  minLength: 1,
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+          },
+          required: [],
+        },
+      },
+      required: ["folderId", "values"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+        },
+      },
+      required: ["folderId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assetFolders"],
+    writeNamespaces: ["assetFolders"],
+    invalidatesNamespaces: ["assetFolders"],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "assetFolders.delete",
+    command: "delete-asset-folder",
+    client: "deleteAssetFolder",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["folderId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+        },
+      },
+      required: ["folderId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assetFolders", "assets"],
+    writeNamespaces: ["assetFolders", "assets"],
+    invalidatesNamespaces: ["assetFolders", "assets"],
+    retryOnConflict: false,
+    requiresAssets: true,
+    requiresConfirm: true,
+  },
+  {
+    id: "assetFolders.duplicate",
+    command: "duplicate-asset-folder",
+    client: "duplicateAssetFolder",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+          minLength: 1,
+        },
+        parentId: {
+          anyOf: [
+            {
+              type: "string",
+              minLength: 1,
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+      },
+      required: ["folderId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        folderId: {
+          type: "string",
+        },
+      },
+      required: ["folderId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assetFolders", "assets"],
+    writeNamespaces: ["assetFolders", "assets"],
+    invalidatesNamespaces: ["assetFolders", "assets"],
+    retryOnConflict: true,
+    requiresAssets: true,
+  },
+  {
     id: "assets.list",
     command: "list-assets",
     client: "listAssets",
@@ -65905,6 +66235,9 @@ export const runtimeOperationContractData = [
               filename: {
                 type: "string",
               },
+              folderId: {
+                type: "string",
+              },
               type: {
                 type: "string",
                 enum: ["font", "image", "file"],
@@ -65944,6 +66277,9 @@ export const runtimeOperationContractData = [
                         type: "null",
                       },
                     ],
+                  },
+                  folderId: {
+                    type: "string",
                   },
                   type: {
                     type: "string",
@@ -66032,6 +66368,94 @@ export const runtimeOperationContractData = [
       "resources",
       "dataSources",
     ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "assets.get",
+    command: "get-asset",
+    client: "getAsset",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["assetId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        asset: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+            },
+            projectId: {
+              type: "string",
+            },
+            name: {
+              type: "string",
+            },
+            filename: {
+              type: "string",
+            },
+            description: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            folderId: {
+              type: "string",
+            },
+            type: {
+              type: "string",
+              enum: ["font", "image", "file"],
+            },
+            size: {
+              type: "number",
+            },
+            format: {
+              type: "string",
+            },
+            createdAt: {
+              type: "string",
+            },
+            meta: {
+              type: "object",
+              properties: {},
+              additionalProperties: {},
+              required: [],
+            },
+          },
+          required: [
+            "id",
+            "projectId",
+            "name",
+            "type",
+            "size",
+            "format",
+            "createdAt",
+            "meta",
+          ],
+          additionalProperties: {},
+        },
+      },
+      required: ["asset"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assets"],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,
@@ -66351,6 +66775,17 @@ export const runtimeOperationContractData = [
                 },
               ],
             },
+            folderId: {
+              anyOf: [
+                {
+                  type: "string",
+                  minLength: 1,
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
           },
           required: [],
         },
@@ -66367,7 +66802,7 @@ export const runtimeOperationContractData = [
       required: ["assetId"],
       additionalProperties: {},
     },
-    readNamespaces: ["assets"],
+    readNamespaces: ["assets", "assetFolders"],
     writeNamespaces: ["assets"],
     invalidatesNamespaces: ["assets"],
     retryOnConflict: false,
@@ -66493,6 +66928,10 @@ export const runtimeOperationContractData = [
                       type: "null",
                     },
                   ],
+                },
+                folderId: {
+                  type: "string",
+                  minLength: 1,
                 },
                 createdAt: {
                   type: "string",
@@ -66622,6 +67061,10 @@ export const runtimeOperationContractData = [
                     },
                   ],
                 },
+                folderId: {
+                  type: "string",
+                  minLength: 1,
+                },
                 createdAt: {
                   type: "string",
                 },
@@ -66680,6 +67123,10 @@ export const runtimeOperationContractData = [
                     },
                   ],
                 },
+                folderId: {
+                  type: "string",
+                  minLength: 1,
+                },
                 createdAt: {
                   type: "string",
                 },
@@ -66722,7 +67169,49 @@ export const runtimeOperationContractData = [
       required: ["assetId"],
       additionalProperties: {},
     },
-    readNamespaces: ["assets"],
+    readNamespaces: ["assets", "assetFolders"],
+    writeNamespaces: ["assets"],
+    invalidatesNamespaces: ["assets"],
+    retryOnConflict: true,
+    requiresAssets: true,
+  },
+  {
+    id: "assets.duplicate",
+    command: "duplicate-asset",
+    client: "duplicateAsset",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+          minLength: 1,
+        },
+        folderId: {
+          anyOf: [
+            {
+              type: "string",
+              minLength: 1,
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+      },
+      required: ["assetId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+        },
+      },
+      required: ["assetId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assets", "assetFolders"],
     writeNamespaces: ["assets"],
     invalidatesNamespaces: ["assets"],
     retryOnConflict: true,

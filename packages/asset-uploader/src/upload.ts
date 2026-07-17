@@ -15,6 +15,7 @@ type UploadData = {
   projectId: string;
   type: string;
   filename: string;
+  folderId?: string;
 };
 
 export type UploadTicket = {
@@ -35,7 +36,7 @@ export const createUploadTicket = async (
   context: AppContext,
   createId: () => Asset["id"] = nanoid
 ): Promise<UploadTicket> => {
-  const { projectId, type, filename } = data;
+  const { projectId, type, filename, folderId } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -120,6 +121,7 @@ export const createUploadTicket = async (
       id: assetId,
       projectId,
       name,
+      folderId,
     });
     if (assetInsert.error) {
       await context.postgrest.client.from("File").delete().eq("name", name);
@@ -191,7 +193,7 @@ export const uploadFile = async (
     }
     const asset = await context.postgrest.client
       .from("Asset")
-      .select("id, projectId, filename, description")
+      .select("id, projectId, filename, description, folderId")
       .eq("name", name)
       .eq("projectId", projectId)
       .single();
@@ -206,6 +208,7 @@ export const uploadFile = async (
       projectId: asset.data.projectId,
       filename: asset.data.filename,
       description: asset.data.description,
+      folderId: asset.data.folderId,
       file: file.data,
     });
   } catch (error) {

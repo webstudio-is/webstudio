@@ -1,5 +1,5 @@
 {
-  "bundleVersion": "bundle-19n82kd",
+  "bundleVersion": "bundle-1h06fyv",
   "build": {
     "id": "a2e8de30-03d5-4514-a3a6-406b3266a3af",
     "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
@@ -494,6 +494,7 @@
       "type": "image"
     }
   ],
+  "assetFolders": [],
   "user": {
     "email": "hello@webstudio.is"
   },

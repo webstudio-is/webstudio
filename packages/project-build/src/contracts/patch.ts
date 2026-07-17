@@ -14,6 +14,40 @@ export type BuilderPatch =
   | { op: "replace"; path: BuilderPatchPath; value: unknown }
   | { op: "remove"; path: BuilderPatchPath };
 
+type OptionalPropertyPatchInput = {
+  path: BuilderPatchPath;
+  previous: unknown;
+  next: unknown;
+};
+
+export const createOptionalPropertyPatch = ({
+  path,
+  previous,
+  next,
+}: OptionalPropertyPatchInput): BuilderPatch | undefined => {
+  if (Object.is(previous, next)) {
+    return;
+  }
+  if (next === undefined) {
+    return { op: "remove", path };
+  }
+  return {
+    op: previous === undefined ? "add" : "replace",
+    path,
+    value: next,
+  };
+};
+
+export const appendOptionalPropertyPatch = (
+  patches: BuilderPatch[],
+  input: OptionalPropertyPatchInput
+) => {
+  const patch = createOptionalPropertyPatch(input);
+  if (patch !== undefined) {
+    patches.push(patch);
+  }
+};
+
 const requireBuilderPatchValue = (
   patch: { value?: unknown },
   context: z.RefinementCtx

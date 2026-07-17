@@ -18,6 +18,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { blockComponent } from "@webstudio-is/sdk";
+import * as assetUploader from "@webstudio-is/asset-uploader/index.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import {
   getApiRouterProcedures,
@@ -100,6 +101,43 @@ describe("api router build operation adapters", () => {
       version: 1,
       pages: expect.any(Array),
     });
+  });
+
+  test("loads assets and folders together for build snapshots", async () => {
+    const build = {
+      id: "build-1",
+      projectId: "project-1",
+      version: 1,
+      pages: createDefaultPages({ rootInstanceId: "root" }),
+    } as unknown as Awaited<
+      ReturnType<typeof projectBuild.loadDevBuildByProjectId>
+    >;
+    const asset = { id: "asset-1", folderId: "folder-1" };
+    const folder = { id: "folder-1", name: "Images" };
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    const loadAssetData = vi
+      .spyOn(assetUploader, "loadAssetDataByProject")
+      .mockResolvedValue({ assets: [asset], assetFolders: [folder] } as never);
+    const loadFolders = vi.spyOn(assetUploader, "loadAssetFoldersByProject");
+
+    const caller = createCaller({
+      ...createContext(true),
+      apiClient: { type: "cli", version: "0.276.0" },
+    });
+
+    await expect(
+      caller.build.get({
+        projectId: "project-1",
+        include: ["assets", "assetFolders"],
+      })
+    ).resolves.toMatchObject({
+      assets: [asset],
+      assetFolders: [folder],
+    });
+    expect(loadAssetData).toHaveBeenCalledOnce();
+    expect(loadFolders).not.toHaveBeenCalled();
   });
 
   test("public operation catalog paths exist on the api router", () => {

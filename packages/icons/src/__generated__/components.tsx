@@ -1860,6 +1860,7 @@ export const ChevronRightIcon: IconComponent = forwardRef(
           strokeLinecap="round"
           strokeLinejoin="round"
           d="m6 12 4-4-4-4"
+          vectorEffect="non-scaling-stroke"
         />
       </svg>
     );
@@ -2681,7 +2682,7 @@ export const FacebookIcon: IconComponent = forwardRef(
 FacebookIcon.displayName = "FacebookIcon";
 
 export const FolderIcon: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+  ({ fill = "none", size = 16, strokeWidth = 1, ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -2689,6 +2690,7 @@ export const FolderIcon: IconComponent = forwardRef(
         width={size}
         height={size}
         fill={fill}
+        strokeWidth={strokeWidth}
         {...props}
         ref={forwardedRef}
       >
@@ -2696,7 +2698,8 @@ export const FolderIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M13.333 13.333A1.333 1.333 0 0 0 14.667 12V5.333A1.334 1.334 0 0 0 13.333 4H8.067a1.333 1.333 0 0 1-1.127-.6l-.54-.8A1.333 1.333 0 0 0 5.287 2h-2.62a1.333 1.333 0 0 0-1.334 1.333V12a1.333 1.333 0 0 0 1.334 1.333h10.666Z"
+          d="M1.5 3.5c0-.55.45-1 1-1h3l1.5 2h6.5c.55 0 1 .45 1 1v7c0 .55-.45 1-1 1h-11c-.55 0-1-.45-1-1v-9Z"
+          vectorEffect="non-scaling-stroke"
         />
       </svg>
     );

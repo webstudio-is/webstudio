@@ -66,6 +66,7 @@ import {
   $styleSources,
   $styleSourceSelections,
   $assets,
+  $assetFolders,
   $resources,
 } from "~/shared/sync/data-stores";
 import { $pointerPosition } from "../awareness";
@@ -104,6 +105,7 @@ const serverSyncStores = {
   dataSources: $dataSources,
   resources: $resources,
   assets: $assets,
+  assetFolders: $assetFolders,
   projectSettings: $projectSettings,
   marketplaceProduct: $marketplaceProduct,
 } as const;

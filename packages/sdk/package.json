@@ -45,6 +45,9 @@
     },
     "./router-path-test-data": {
       "webstudio": "./src/router-path-test-data.ts"
+    },
+    "./testing": {
+      "webstudio": "./src/testing.ts"
     }
   },
   "files": [

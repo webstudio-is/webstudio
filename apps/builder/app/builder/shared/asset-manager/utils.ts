@@ -5,6 +5,12 @@ import {
   doesAssetMatchMimePatterns,
 } from "@webstudio-is/sdk";
 import type { AssetContainer } from "../assets";
+import {
+  isSameAssetManagerSelection,
+  type AssetManagerSelection,
+} from "./asset-manager-selection";
+
+export type { AssetManagerSelection } from "./asset-manager-selection";
 
 export type SortField = "name" | "size" | "createdAt";
 export type SortOrder = "asc" | "desc";
@@ -140,8 +146,9 @@ export const filterAndSortAssets = ({
   }
 
   // Apply search
-  if (searchQuery !== "") {
-    filtered = matchSorter(filtered, searchQuery, {
+  const normalizedSearchQuery = searchQuery.trim();
+  if (normalizedSearchQuery !== "") {
+    filtered = matchSorter(filtered, normalizedSearchQuery, {
       keys: [(item) => item.asset.name],
     });
   }
@@ -161,4 +168,37 @@ export const findAssetIndex = (
     return -1;
   }
   return assetContainers.findIndex((item) => item.asset.id === assetId);
+};
+
+export const getAssetManagerSelectionIndex = (
+  items: AssetManagerSelection[],
+  selection: AssetManagerSelection | undefined
+) =>
+  selection === undefined
+    ? -1
+    : items.findIndex((item) => isSameAssetManagerSelection(item, selection));
+
+export const getNearestAssetManagerSelection = (
+  previousItems: AssetManagerSelection[],
+  nextItems: AssetManagerSelection[],
+  selection: AssetManagerSelection | undefined
+) => {
+  if (selection === undefined || nextItems.length === 0) {
+    return;
+  }
+  const previousIndex = getAssetManagerSelectionIndex(previousItems, selection);
+  return nextItems[Math.min(Math.max(previousIndex, 0), nextItems.length - 1)];
+};
+
+export const isAssetManagerSelectionVisible = (
+  selection: AssetManagerSelection | undefined,
+  assetContainers: AssetContainer[],
+  folders: Array<{ id: string }>
+) => {
+  if (selection === undefined) {
+    return true;
+  }
+  return selection.type === "asset"
+    ? findAssetIndex(assetContainers, selection.id) !== -1
+    : folders.some(({ id }) => id === selection.id);
 };

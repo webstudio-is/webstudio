@@ -10,10 +10,12 @@ import {
   isHiddenPublicApiInputField,
 } from "../contracts/input-schema";
 import { instanceFilterInput, type InputJsonSchema } from "@webstudio-is/sdk";
+import { pageCopyNamespaces } from "../contracts/namespaces";
 import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
 import * as bindingVerification from "./binding-verification";
+import * as assetFolders from "./asset-folders";
 import * as components from "./components";
 import * as collection from "./collection";
 import * as data from "./data";
@@ -324,19 +326,6 @@ const assetUsageNamespaces = [
   "resources",
   "dataSources",
 ] as const;
-const pageCopyNamespaces = [
-  "pages",
-  "assets",
-  "dataSources",
-  "resources",
-  "instances",
-  "props",
-  "breakpoints",
-  "styles",
-  "styleSources",
-  "styleSourceSelections",
-] as const;
-
 const emptyInput = z.object({});
 const pageListInput = z.object({
   ...paginatedOutputInputSchema.shape,
@@ -1822,11 +1811,73 @@ export const builderRuntimeOperations = [
     ({ state, input }) => data.deleteResource(state, input)
   ),
   runtimeOperation(
+    "assetFolders.list",
+    api("list-asset-folders", "listAssetFolders"),
+    readContract(["assetFolders"], { requiresAssets: true }),
+    assetFolders.assetFolderListInput,
+    ({ state, input }) => assetFolders.listAssetFolders(state, input)
+  ),
+  runtimeOperation(
+    "assetFolders.create",
+    api("create-asset-folder", "createAssetFolder"),
+    mutationContract({
+      readNamespaces: ["assetFolders"],
+      writeNamespaces: ["assetFolders"],
+      retryOnConflict: true,
+      requiresAssets: true,
+    }),
+    assetFolders.assetFolderCreateInput,
+    ({ state, input, context }) =>
+      assetFolders.createAssetFolder(state, input, context)
+  ),
+  runtimeOperation(
+    "assetFolders.update",
+    api("update-asset-folder", "updateAssetFolder"),
+    mutationContract({
+      readNamespaces: ["assetFolders"],
+      writeNamespaces: ["assetFolders"],
+      requiresAssets: true,
+    }),
+    assetFolders.assetFolderUpdateInput,
+    ({ state, input }) => assetFolders.updateAssetFolder(state, input)
+  ),
+  runtimeOperation(
+    "assetFolders.delete",
+    api("delete-asset-folder", "deleteAssetFolder"),
+    mutationContract({
+      readNamespaces: ["assetFolders", "assets"],
+      writeNamespaces: ["assetFolders", "assets"],
+      requiresAssets: true,
+    }),
+    assetFolders.assetFolderDeleteInput,
+    ({ state, input }) => assetFolders.deleteAssetFolder(state, input)
+  ),
+  runtimeOperation(
+    "assetFolders.duplicate",
+    api("duplicate-asset-folder", "duplicateAssetFolder"),
+    mutationContract({
+      readNamespaces: ["assetFolders", "assets"],
+      writeNamespaces: ["assetFolders", "assets"],
+      retryOnConflict: true,
+      requiresAssets: true,
+    }),
+    assetFolders.assetFolderDuplicateInput,
+    ({ state, input, context }) =>
+      assetFolders.duplicateAssetFolder(state, input, context)
+  ),
+  runtimeOperation(
     "assets.list",
     api("list-assets", "listAssets"),
     readContract(assetUsageNamespaces, { requiresAssets: true }),
     assetListInput,
     ({ state, input }) => assets.listAssets(state, input)
+  ),
+  runtimeOperation(
+    "assets.get",
+    api("get-asset", "getAsset"),
+    readContract(["assets"], { requiresAssets: true }),
+    assets.assetGetInput,
+    ({ state, input }) => assets.getAsset(state, input)
   ),
   runtimeOperation(
     "fonts.list",
@@ -1846,7 +1897,7 @@ export const builderRuntimeOperations = [
     "assets.update",
     api("update-asset", "updateAsset"),
     mutationContract({
-      readNamespaces: ["assets"],
+      readNamespaces: ["assets", "assetFolders"],
       writeNamespaces: ["assets"],
       requiresAssets: true,
     }),
@@ -1868,12 +1919,25 @@ export const builderRuntimeOperations = [
     "assets.add",
     api("add-asset", "addAsset"),
     mutationContract({
-      readNamespaces: ["assets"],
+      readNamespaces: ["assets", "assetFolders"],
       writeNamespaces: ["assets"],
       retryOnConflict: true,
+      requiresAssets: true,
     }),
     assets.assetAddInput,
     ({ state, input, context }) => assets.addAsset(state, input, context)
+  ),
+  runtimeOperation(
+    "assets.duplicate",
+    api("duplicate-asset", "duplicateAsset"),
+    mutationContract({
+      readNamespaces: ["assets", "assetFolders"],
+      writeNamespaces: ["assets"],
+      retryOnConflict: true,
+      requiresAssets: true,
+    }),
+    assets.assetDuplicateInput,
+    ({ state, input, context }) => assets.duplicateAsset(state, input, context)
   ),
   runtimeOperation(
     "assets.replace",

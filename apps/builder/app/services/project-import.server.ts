@@ -9,6 +9,10 @@ import {
   serializeStyles,
   serializeStyleSourceSelections,
 } from "@webstudio-is/project-build/persistence";
+import {
+  createAssetFolderRows,
+  createAssetRows,
+} from "@webstudio-is/asset-uploader/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
   migratePages,
@@ -28,7 +32,10 @@ import {
 } from "@webstudio-is/protocol";
 import {
   getHomePage,
+  normalizeAssetFolderData,
+  assetFolders as assetFoldersSchema,
   type Asset,
+  type AssetFolder,
   type Breakpoint,
   type DataSource,
   type Instance,
@@ -147,6 +154,21 @@ const assertImportedAssets = (assets: Asset[]) => {
   assertImportedAssetNames(assets);
 };
 
+const normalizeImportedAssetFolderData = (
+  folders: AssetFolder[],
+  assets: Asset[]
+) => {
+  const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
+  if (folderMap.size !== folders.length) {
+    throw new Error("Imported asset folder id is duplicated.");
+  }
+  const validatedFolders = assetFoldersSchema.parse(folderMap);
+  return normalizeAssetFolderData({
+    assets,
+    folders: Array.from(validatedFolders.values()),
+  });
+};
+
 const assertImportedAssetFilesUploaded = async ({
   assets,
   ctx,
@@ -201,10 +223,12 @@ const assertImportedAssetFilesUploaded = async ({
 
 const replaceProjectAssetRows = async ({
   assets,
+  assetFolders,
   ctx,
   projectId,
 }: {
   assets: Asset[];
+  assetFolders: AssetFolder[];
   ctx: AppContext;
   projectId: string;
 }) => {
@@ -224,32 +248,34 @@ const replaceProjectAssetRows = async ({
     throw deletedAssets.error;
   }
 
+  const deletedFolders = await ctx.postgrest.client
+    .from("AssetFolder")
+    .delete()
+    .eq("projectId", projectId);
+  if (deletedFolders.error) {
+    throw deletedFolders.error;
+  }
+
+  if (assetFolders.length > 0) {
+    const insertedFolder = await ctx.postgrest.client
+      .from("AssetFolder")
+      .insert(createAssetFolderRows(assetFolders, projectId));
+    if (insertedFolder.error) {
+      throw insertedFolder.error;
+    }
+  }
+
   if (assets.length === 0) {
     return;
   }
 
   const insertedAssets = await ctx.postgrest.client
     .from("Asset")
-    .insert(createImportedAssetRows({ assets, projectId }));
+    .insert(createAssetRows(assets, projectId));
   if (insertedAssets.error) {
     throw insertedAssets.error;
   }
 };
-
-const createImportedAssetRows = ({
-  assets,
-  projectId,
-}: {
-  assets: Asset[];
-  projectId: string;
-}) =>
-  assets.map((asset) => ({
-    id: asset.id,
-    projectId,
-    name: asset.name,
-    filename: asset.filename ?? null,
-    description: asset.description ?? null,
-  }));
 
 const updateProjectPreviewImage = async ({
   assetId,
@@ -300,9 +326,11 @@ export const importPublishedProjectBundle = async (
   const nextVersion = build.version + 1;
 
   assertImportedAssets(data.assets);
+  const { assets: importedAssets, folders: importedAssetFolders } =
+    normalizeImportedAssetFolderData(data.assetFolders ?? [], data.assets);
 
   await assertImportedAssetFilesUploaded({
-    assets: data.assets,
+    assets: importedAssets,
     ctx,
     projectId,
   });
@@ -331,7 +359,12 @@ export const importPublishedProjectBundle = async (
     throw new Error("Unable to import project bundle because build changed.");
   }
 
-  await replaceProjectAssetRows({ assets: data.assets, ctx, projectId });
+  await replaceProjectAssetRows({
+    assets: importedAssets,
+    assetFolders: importedAssetFolders,
+    ctx,
+    projectId,
+  });
 
   await updateProjectPreviewImage({
     assetId: getImportedPreviewImageAssetId(data),
@@ -345,10 +378,10 @@ export const importPublishedProjectBundle = async (
 export const __testing__ = {
   assertProjectBuildPermit,
   assertBundleVersion,
-  createImportedAssetRows,
   createBuildImportUpdate,
   getImportedPreviewImageAssetId,
   assertImportedAssetNames,
   assertImportedAssets,
+  normalizeImportedAssetFolderData,
   assertImportedAssetFilesUploaded,
 };

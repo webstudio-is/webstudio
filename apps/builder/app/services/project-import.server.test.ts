@@ -5,6 +5,7 @@ import {
   createPublishedProjectBundleFixture,
 } from "@webstudio-is/protocol/fixtures";
 import { type PublishedProjectBundle } from "@webstudio-is/protocol";
+import { createAssetRows } from "@webstudio-is/asset-uploader/index.server";
 import {
   __testing__,
   importPublishedProjectBundle,
@@ -13,10 +14,10 @@ import {
 const {
   assertBundleVersion,
   assertImportedAssetFilesUploaded,
+  normalizeImportedAssetFolderData,
   assertImportedAssetNames,
   assertProjectBuildPermit,
   createBuildImportUpdate,
-  createImportedAssetRows,
   getImportedPreviewImageAssetId,
 } = __testing__;
 
@@ -85,6 +86,7 @@ const createPostgrestClient = (
   options: {
     existingFileNames?: string[];
     fileFilters?: [string, string][];
+    insertedFolders?: Array<{ id: string; projectId: string }>;
   } = {}
 ) => ({
   from: (table: string) => {
@@ -155,6 +157,22 @@ const createPostgrestClient = (
         }),
         insert: async () => {
           calls.push("assets-insert");
+          return { error: undefined };
+        },
+      };
+    }
+
+    if (table === "AssetFolder") {
+      return {
+        delete: () => ({
+          eq: async () => {
+            calls.push("asset-folders-delete");
+            return { error: undefined };
+          },
+        }),
+        insert: async (rows: Array<{ id: string; projectId: string }>) => {
+          calls.push("asset-folders-insert");
+          options.insertedFolders?.push(...rows);
           return { error: undefined };
         },
       };
@@ -243,8 +261,8 @@ describe("build import helpers", () => {
 
   test("remaps imported asset rows to destination project", () => {
     expect(
-      createImportedAssetRows({
-        assets: [
+      createAssetRows(
+        [
           createData().assets[0],
           {
             ...createData().assets[0],
@@ -253,8 +271,8 @@ describe("build import helpers", () => {
             description: undefined,
           },
         ],
-        projectId: "destination-project",
-      })
+        "destination-project"
+      )
     ).toEqual([
       {
         id: "asset-1",
@@ -262,6 +280,7 @@ describe("build import helpers", () => {
         name: "image.png",
         filename: "Image",
         description: "Hero image",
+        folderId: null,
       },
       {
         id: "asset-2",
@@ -269,8 +288,54 @@ describe("build import helpers", () => {
         name: "image.png",
         filename: null,
         description: null,
+        folderId: null,
       },
     ]);
+  });
+
+  test("validates folder hierarchy and moves orphaned assets to root", () => {
+    const parent = {
+      id: "parent",
+      projectId: "source-project",
+      name: "Parent",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    const child = { ...parent, id: "child", name: "Child", parentId: "parent" };
+
+    expect(() =>
+      normalizeImportedAssetFolderData(
+        [child, parent],
+        [{ ...createData().assets[0], folderId: "child" }]
+      )
+    ).not.toThrow();
+    expect(() =>
+      normalizeImportedAssetFolderData(
+        [parent],
+        [{ ...createData().assets[0], folderId: "missing" }]
+      )
+    ).not.toThrow();
+    expect(
+      normalizeImportedAssetFolderData(
+        [parent],
+        [{ ...createData().assets[0], folderId: "missing" }]
+      ).assets[0]
+    ).not.toHaveProperty("folderId");
+  });
+
+  test("normalizes imported asset folder names", () => {
+    const normalized = normalizeImportedAssetFolderData(
+      [
+        {
+          id: "folder",
+          projectId: "source-project",
+          name: "  Media  ",
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+      []
+    );
+
+    expect(normalized.folders[0]?.name).toBe("Media");
   });
 
   test("updates the build before replacing asset rows", async () => {
@@ -300,8 +365,42 @@ describe("build import helpers", () => {
       "build-update",
       "project-preview-reset",
       "assets-delete",
+      "asset-folders-delete",
       "assets-insert",
       "project-preview-update",
+    ]);
+  });
+
+  test("inserts the complete folder hierarchy in one request", async () => {
+    const calls: string[] = [];
+    const insertedFolders: Array<{ id: string; projectId: string }> = [];
+    const parent = {
+      id: "parent",
+      projectId: "source-project",
+      name: "Parent",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    const child = { ...parent, id: "child", name: "Child", parentId: "parent" };
+
+    await importPublishedProjectBundle(
+      {
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient(calls, { insertedFolders }),
+          },
+        } as never,
+        data: createData({ assets: [], assetFolders: [child, parent] }),
+        projectId: "target-project",
+      },
+      { hasProjectPermit, loadDevBuildByProjectId }
+    );
+
+    expect(calls.filter((call) => call === "asset-folders-insert")).toEqual([
+      "asset-folders-insert",
+    ]);
+    expect(insertedFolders).toEqual([
+      { ...parent, projectId: "target-project", parentId: null },
+      { ...child, projectId: "target-project" },
     ]);
   });
 

@@ -8,6 +8,15 @@ Use the full command for CI-like validation:
 pnpm e2e:builder
 ```
 
+The first run after the migrations change applies the regular migration
+pipeline and writes an ignored schema cache under `.cache/builder-e2e`.
+Subsequent runs in the same checkout restore that cache. CI does not preserve
+it between runs. Refresh it explicitly with:
+
+```sh
+pnpm e2e:builder:refresh-schema-cache
+```
+
 For local test authoring, keep the e2e backend and Builder dev server running
 and rerun only the matching test. This avoids rebuilding Builder and avoids
 restarting Docker for every edit.

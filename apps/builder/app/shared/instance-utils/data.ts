@@ -14,21 +14,7 @@ import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
 import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
 import { createTransactionFromBuilderPatchPayload } from "../sync/builder-patch";
-import {
-  $assets,
-  $breakpoints,
-  $dataSources,
-  $instances,
-  $marketplaceProduct,
-  $pages,
-  $projectSettings,
-  $project,
-  $props,
-  $resources,
-  $styles,
-  $styleSourceSelections,
-  $styleSources,
-} from "../sync/data-stores";
+import { $project, readBuilderStateStores } from "../sync/data-stores";
 
 type RuntimeMutationResult<Id extends BuilderRuntimeMutationOperationId> =
   Extract<BuilderRuntimeOperationResult<Id>, BuilderRuntimeMutation>;
@@ -173,23 +159,15 @@ export const executeRuntimeMutationAsync = async <
 };
 
 export const getWebstudioData = () => {
-  const pages = $pages.get();
+  const data = readBuilderStateStores();
+  const { pages } = data;
   if (pages === undefined) {
     throw Error(`Cannot get webstudio data with empty pages`);
   }
-  const projectSettings = $projectSettings.get() ?? { meta: {}, compiler: {} };
+  const projectSettings = data.projectSettings ?? { meta: {}, compiler: {} };
   return {
+    ...data,
     pages,
-    instances: $instances.get(),
-    props: $props.get(),
-    dataSources: $dataSources.get(),
-    resources: $resources.get(),
-    breakpoints: $breakpoints.get(),
-    styleSourceSelections: $styleSourceSelections.get(),
-    styleSources: $styleSources.get(),
-    styles: $styles.get(),
-    assets: $assets.get(),
-    marketplaceProduct: $marketplaceProduct.get(),
     projectSettings,
   };
 };

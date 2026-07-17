@@ -1,4 +1,8 @@
-import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
+import {
+  deleteAssetFoldersWithClient,
+  patchAssetFoldersWithClient,
+  patchAssets,
+} from "@webstudio-is/asset-uploader/index.server";
 import type { Build } from "@webstudio-is/project-build";
 import { loadRawBuildById } from "@webstudio-is/project-build/server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
@@ -63,9 +67,21 @@ export const patchLoadedBuild = async (
   // Apply app-side asset mutations before marking the Build with
   // lastTransactionId so a failed asset mutation is not later treated as an
   // already-saved retry.
-  for (const patches of result.assetPatches) {
-    await patchAssets({ projectId }, patches, context);
+  const deletedAssetFolderIds =
+    result.assetFolderPatches.length === 0
+      ? []
+      : await patchAssetFoldersWithClient(
+          { projectId, client: context.postgrest.client },
+          result.assetFolderPatches.flat(),
+          { deferDeletes: true }
+        );
+  if (result.assetPatches.length > 0) {
+    await patchAssets({ projectId }, result.assetPatches.flat(), context);
   }
+  await deleteAssetFoldersWithClient(
+    { projectId, ids: deletedAssetFolderIds },
+    context.postgrest.client
+  );
 
   const update = await context.postgrest.client
     .from("Build")

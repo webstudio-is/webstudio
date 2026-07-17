@@ -873,13 +873,14 @@ test("adapts MCP upload asset input to public API upload input", () => {
       name: "image.png",
       type: "image",
       format: "png",
+      folderId: "campaign",
       meta: { width: 1200, height: 630 },
     },
     assetsDir: ".webstudio/assets",
   });
 
   expect(input).toMatchObject({
-    asset: { name: "image.png" },
+    asset: { name: "image.png", folderId: "campaign" },
   });
   expect(input).toHaveProperty("readAssetData", expect.any(Function));
 });

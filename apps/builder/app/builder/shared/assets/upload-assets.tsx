@@ -13,7 +13,7 @@ import {
   $uploadingFilesDataStore,
   type UploadingFileData,
 } from "~/shared/nano-states";
-import { $assets } from "~/shared/sync/data-stores";
+import { $assetFolders, $assets } from "~/shared/sync/data-stores";
 import { $project } from "~/shared/sync/data-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
@@ -54,9 +54,13 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
     return;
   }
 
+  const folderId =
+    asset.folderId !== undefined && $assetFolders.get().has(asset.folderId)
+      ? asset.folderId
+      : undefined;
   executeRuntimeMutation({
     id: "assets.add",
-    input: { asset },
+    input: { asset: { ...asset, folderId } },
   });
 
   onNextTransactionComplete(() => {
@@ -66,7 +70,8 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
 
 const getFilesData = async <T extends File | URL>(
   type: AssetType,
-  filesOrUrls: T[]
+  filesOrUrls: T[],
+  folderId?: string
 ): Promise<UploadingFileData[]> => {
   const filesData: UploadingFileData[] = [];
   for (const fileOrUrl of filesOrUrls) {
@@ -80,6 +85,7 @@ const getFilesData = async <T extends File | URL>(
         type,
         file: fileOrUrl,
         objectURL: URL.createObjectURL(fileOrUrl),
+        folderId,
       });
       continue;
     }
@@ -93,6 +99,7 @@ const getFilesData = async <T extends File | URL>(
       type,
       url: fileOrUrl.href,
       objectURL: fileOrUrl.href,
+      folderId,
     });
   }
 
@@ -260,7 +267,8 @@ const createUploadTicket = async ({
 const handleAfterSubmit = (
   assetId: string,
   data: AssetActionResponse,
-  projectId: string
+  projectId: string,
+  folderId?: string
 ) => {
   warnOnce(
     data.uploadedAssets?.length !== 1,
@@ -278,7 +286,7 @@ const handleAfterSubmit = (
 
   // update store with new asset and set current id
   safeSetAsset(
-    { ...uploadedAsset, id: uploadedAsset.id || assetId },
+    { ...uploadedAsset, id: uploadedAsset.id || assetId, folderId },
     projectId
   );
 };
@@ -348,7 +356,7 @@ const processUpload = async (
         onCompleted: (data) => {
           URL.revokeObjectURL(fileData.objectURL);
           deleteUploadingFileData(assetId);
-          handleAfterSubmit(assetId, data, projectId);
+          handleAfterSubmit(assetId, data, projectId, fileData.folderId);
         },
         onError: (error) => {
           URL.revokeObjectURL(fileData.objectURL);
@@ -364,7 +372,8 @@ const processUpload = async (
 
 export const uploadAssets = async <T extends File | URL>(
   type: AssetType,
-  filesOrUrls: T[]
+  filesOrUrls: T[],
+  options: { folderId?: string } = {}
 ): Promise<Map<T, string>> => {
   const projectId = $project.get()?.id;
   const authToken = $authToken.get();
@@ -372,7 +381,7 @@ export const uploadAssets = async <T extends File | URL>(
     return new Map();
   }
 
-  const filesData = await getFilesData(type, filesOrUrls);
+  const filesData = await getFilesData(type, filesOrUrls, options.folderId);
 
   // Filter out duplicates inside filesData
   const uniqFilesDataMap = new Map(
@@ -459,5 +468,6 @@ export const uploadAssets = async <T extends File | URL>(
 export const __testing__ = {
   createUploadTicket,
   deduplicateAssetName,
+  getFilesData,
   uploadAsset,
 };

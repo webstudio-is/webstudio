@@ -485,7 +485,9 @@ const insertFragmentAssetsMutable = ({
     // asset can be already present if pasting to the same project
     if (assets.has(asset.id) === false) {
       // we use the same asset.id so the references are preserved
-      assets.set(asset.id, { ...asset, projectId });
+      // Fragments do not contain asset-folder hierarchy. New assets therefore
+      // land at the target project root instead of retaining a dangling source id.
+      assets.set(asset.id, { ...asset, projectId, folderId: undefined });
     }
   }
 };

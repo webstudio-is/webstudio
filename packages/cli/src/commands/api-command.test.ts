@@ -387,6 +387,12 @@ const simpleCommandCases = [
     "getPageByPath",
     { path: "/pricing" },
   ],
+  [
+    "asset details",
+    { command: "get-asset", asset: "asset-1" },
+    "getAsset",
+    { assetId: "asset-1" },
+  ],
 ] satisfies Array<
   readonly [
     string,

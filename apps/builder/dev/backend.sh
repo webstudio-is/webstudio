@@ -2,7 +2,7 @@
 
 builder_backend_init() {
   ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
-  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/apps/builder/e2e/schema/current.sql}"
+  SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/.cache/builder-e2e/schema-$(builder_backend_migrations_fingerprint).sql}"
   COMPOSE_ENV=(
     --env-file "$ROOT_DIR/apps/builder/.env"
   )
@@ -13,6 +13,25 @@ builder_backend_init() {
     -f "$ROOT_DIR/apps/builder/docker-compose.yaml"
     -f "$COMPOSE_OVERRIDE_FILE"
   )
+}
+
+builder_backend_migrations_fingerprint() {
+  (
+    cd "$ROOT_DIR"
+    {
+      find packages/prisma-client/prisma/migrations \
+        -mindepth 1 -maxdepth 1 -type d -print
+      find packages/prisma-client/prisma/migrations \
+        -type f \( -name migration.sql -o -name migration.ts \) -print
+    } | LC_ALL=C sort | while IFS= read -r path; do
+      if [ -f "$path" ]; then
+        printf '%s ' "$path"
+        git hash-object "$path"
+      else
+        printf '%s directory\n' "$path"
+      fi
+    done
+  ) | git hash-object --stdin
 }
 
 builder_compose() {
@@ -104,10 +123,11 @@ builder_backend_bootstrap() {
     auto)
       if [ -f "$SCHEMA_SNAPSHOT" ]; then
         builder_backend_bootstrap_schema_snapshot
-        echo "Bootstrapped database from $SCHEMA_SNAPSHOT"
+        echo "Bootstrapped database from cached schema $SCHEMA_SNAPSHOT"
       else
-        echo "No schema snapshot found at $SCHEMA_SNAPSHOT; falling back to migrations"
+        echo "No cached schema found at $SCHEMA_SNAPSHOT; running migrations"
         builder_backend_migrate
+        builder_backend_write_schema_snapshot
       fi
       ;;
     *)
@@ -127,9 +147,15 @@ builder_backend_bootstrap_if_empty() {
 
 builder_backend_write_schema_snapshot() {
   mkdir -p "$(dirname "$SCHEMA_SNAPSHOT")"
-  builder_compose exec -T db \
+  local temporary_snapshot="${SCHEMA_SNAPSHOT}.tmp.$$"
+  if builder_compose exec -T db \
     sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema-only --no-owner --no-privileges' \
-    >"$SCHEMA_SNAPSHOT"
+    >"$temporary_snapshot"; then
+    mv "$temporary_snapshot" "$SCHEMA_SNAPSHOT"
+  else
+    rm -f "$temporary_snapshot"
+    return 1
+  fi
   echo "Wrote $SCHEMA_SNAPSHOT"
 }
 

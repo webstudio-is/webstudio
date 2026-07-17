@@ -128,13 +128,16 @@ jobs:
     outputs:
       development-builder-host: ${{ steps.host.outputs.value }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+
       - id: host
         shell: bash
         env:
           REF_NAME: ${{ github.event_name == 'pull_request_target' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
         run: |
-          clean_name="${REF_NAME/.staging/}"
-          clean_name=$(echo "${clean_name}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g')
+          clean_name=$(.github/actions/vercel/deployment-alias.sh "${REF_NAME}")
           echo "value=${clean_name}.development.webstudio.is" >> "$GITHUB_OUTPUT"
 
   fixtures-test:

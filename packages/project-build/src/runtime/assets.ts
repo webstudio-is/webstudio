@@ -20,7 +20,10 @@ import {
   fontAsset,
   imageAsset,
 } from "@webstudio-is/sdk";
-import type { BuilderPatchChange } from "../contracts/patch";
+import {
+  appendOptionalPropertyPatch,
+  type BuilderPatchChange,
+} from "../contracts/patch";
 import {
   paginateOutput,
   projectOutput,
@@ -35,6 +38,8 @@ import {
   throwBuilderRuntimeError,
 } from "./errors";
 import { createRuntimeMutation } from "./mutation";
+import { createCopyName } from "./copy-name";
+import type { BuilderRuntimeContext } from "./context";
 import {
   collectFontFamiliesFromStyleValue,
   traverseStyleValue,
@@ -75,6 +80,7 @@ export const assetUpdateInput = z.object({
         )
         .optional(),
       description: z.union([z.string(), z.null()]).optional(),
+      folderId: z.union([z.string().min(1), z.null()]).optional(),
     })
     .refine(
       (values) => Object.keys(values).length > 0,
@@ -145,6 +151,13 @@ const addableAsset = z.union([
 ]);
 
 export const assetAddInput = z.object({ asset: addableAsset });
+
+export const assetDuplicateInput = z.object({
+  assetId: z.string().min(1),
+  folderId: z.string().min(1).nullable().optional(),
+});
+
+export const assetGetInput = z.object({ assetId: z.string().min(1) });
 
 export const parseAssetType = (value: string | null) => {
   const result = assetType.safeParse(value);
@@ -356,6 +369,17 @@ const getRequiredAssets = (state: Pick<BuilderState, "assets">) => {
   return state.assets;
 };
 
+export const getAsset = (
+  state: Pick<BuilderState, "assets">,
+  input: z.infer<typeof assetGetInput>
+) => {
+  const asset = getRequiredAssets(state).get(input.assetId);
+  if (asset === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
+  }
+  return { asset };
+};
+
 const getRequiredAssetReferenceBuild = (
   state: Pick<
     BuilderState,
@@ -564,8 +588,17 @@ export const formatAssetName = (asset: Pick<Asset, "name" | "filename">) => {
 export const getAssetDisplayFilename = (asset: Asset) =>
   asset.filename ?? asset.name.replace(/\.[^/.]+$/, "");
 
+const assertAssetFolderExists = (
+  assetFolders: BuilderState["assetFolders"],
+  folderId: string | undefined
+) => {
+  if (folderId !== undefined && assetFolders?.has(folderId) !== true) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Asset folder not found");
+  }
+};
+
 export const addAsset = (
-  state: Pick<BuilderState, "assets">,
+  state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetAddInput>,
   context: { projectId?: string }
 ) => {
@@ -579,6 +612,7 @@ export const addAsset = (
   if (assets.has(input.asset.id)) {
     return throwBuilderRuntimeError("CONFLICT", "Asset already exists");
   }
+  assertAssetFolderExists(state.assetFolders, input.asset.folderId);
   const asset: Asset = { ...input.asset, projectId: context.projectId };
   return createRuntimeMutation({
     payload: [
@@ -592,17 +626,49 @@ export const addAsset = (
   });
 };
 
-const createAssetDescriptionPatch = (
-  asset: Asset,
-  description: string | null
-): BuilderPatchChange["patches"][number] => ({
-  op: asset.description === undefined ? "add" : "replace",
-  path: [asset.id, "description"],
-  value: description,
-});
+export const duplicateAsset = (
+  state: Pick<BuilderState, "assets" | "assetFolders">,
+  input: z.infer<typeof assetDuplicateInput>,
+  context: BuilderRuntimeContext
+) => {
+  const assets = getRequiredAssets(state);
+  const asset = assets.get(input.assetId);
+  if (asset === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
+  }
+  const folderId =
+    input.folderId === undefined
+      ? asset.folderId
+      : (input.folderId ?? undefined);
+  assertAssetFolderExists(state.assetFolders, folderId);
+
+  const displayFilenames = new Set(
+    Array.from(assets.values(), getAssetDisplayFilename)
+  );
+  const duplicatedAsset: Asset = {
+    ...asset,
+    id: context.createId(),
+    filename: createCopyName(getAssetDisplayFilename(asset), (candidate) =>
+      displayFilenames.has(candidate)
+    ),
+    folderId,
+  };
+  return createRuntimeMutation({
+    payload: [
+      {
+        namespace: "assets",
+        patches: [
+          { op: "add", path: [duplicatedAsset.id], value: duplicatedAsset },
+        ],
+      },
+    ],
+    result: { assetId: duplicatedAsset.id },
+    invalidatesNamespaces: ["assets"],
+  });
+};
 
 export const updateAsset = (
-  state: Pick<BuilderState, "assets">,
+  state: Pick<BuilderState, "assets" | "assetFolders">,
   input: z.infer<typeof assetUpdateInput>
 ) => {
   const assets = getRequiredAssets(state);
@@ -625,10 +691,10 @@ export const updateAsset = (
       }
     }
     if (asset.filename !== input.values.filename) {
-      patches.push({
-        op: asset.filename === undefined ? "add" : "replace",
+      appendOptionalPropertyPatch(patches, {
         path: [asset.id, "filename"],
-        value: input.values.filename,
+        previous: asset.filename,
+        next: input.values.filename,
       });
     }
   }
@@ -636,7 +702,20 @@ export const updateAsset = (
     input.values.description !== undefined &&
     asset.description !== input.values.description
   ) {
-    patches.push(createAssetDescriptionPatch(asset, input.values.description));
+    appendOptionalPropertyPatch(patches, {
+      path: [asset.id, "description"],
+      previous: asset.description,
+      next: input.values.description,
+    });
+  }
+  if (input.values.folderId !== undefined) {
+    const folderId = input.values.folderId ?? undefined;
+    assertAssetFolderExists(state.assetFolders, folderId);
+    appendOptionalPropertyPatch(patches, {
+      path: [asset.id, "folderId"],
+      previous: asset.folderId,
+      next: folderId,
+    });
   }
 
   return createRuntimeMutation({
@@ -670,7 +749,11 @@ export const setImageDescriptions = (
     }
     const description = update.decorative === true ? "" : update.description;
     if (asset.description !== description) {
-      patches.push(createAssetDescriptionPatch(asset, description));
+      appendOptionalPropertyPatch(patches, {
+        path: [asset.id, "description"],
+        previous: asset.description,
+        next: description,
+      });
       updated.push({
         assetId: asset.id,
         decorative: update.decorative === true,
@@ -759,6 +842,7 @@ const serializeAssetSummary = (asset: Asset) => ({
   id: asset.id,
   name: asset.name,
   filename: asset.filename,
+  folderId: asset.folderId,
   type: asset.type,
   size: asset.size,
   contentType: asset.format,

@@ -130,6 +130,7 @@ export type UploadingFileData = Simplify<
     uploadName: string;
     type: AssetType;
     objectURL: string;
+    folderId?: string;
   } & (
     | {
         source: "file";

@@ -6,32 +6,37 @@ import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime";
 import type { BuilderState } from "@webstudio-is/project-build/state";
 import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/state";
-import { type Asset } from "@webstudio-is/sdk";
+import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
 import { throwApiError } from "./api-errors.server";
 
 export const createBuilderRuntimeState = (
   build: CompactBuild,
-  assets?: Asset[]
+  assets?: Asset[],
+  assetFolders?: AssetFolder[]
 ): BuilderState =>
   createBuilderStateFromCompactBuild(
-    assets === undefined ? build : { ...build, assets }
+    assets === undefined && assetFolders === undefined
+      ? build
+      : { ...build, assets, assetFolders }
   );
 
 export const executeApiRuntimeOperation = async <Result>({
   id,
   build,
   assets,
+  assetFolders,
   input,
 }: {
   id: RuntimeOperationId;
   build: CompactBuild;
   assets?: Asset[];
+  assetFolders?: AssetFolder[];
   input: unknown;
 }): Promise<Result> => {
   try {
     return await executeBuilderRuntimeOperation<Result>({
       id,
-      state: createBuilderRuntimeState(build, assets),
+      state: createBuilderRuntimeState(build, assets, assetFolders),
       input,
       context: {
         createId: builderRuntimeContext.createId,
@@ -60,5 +65,6 @@ export const executeApiRuntimeMutation = <
   id: RuntimeOperationId;
   build: CompactBuild;
   assets?: Asset[];
+  assetFolders?: AssetFolder[];
   input: unknown;
 }) => executeApiRuntimeOperation<BuilderRuntimeMutation<Result>>(args);

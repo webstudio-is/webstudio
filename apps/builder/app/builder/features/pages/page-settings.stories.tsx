@@ -82,6 +82,7 @@ $project.set({
     name: "very-very-very-long-long-image-name.jpg",
     filename: null,
     description: null,
+    folderId: null,
   },
   latestBuildVirtual: null,
   domainsVirtual: [],

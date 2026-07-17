@@ -1,6 +1,6 @@
 import {
   deleteSelectedAsset,
-  openAssetDetails,
+  openAssetSettings,
   openAssetsPanel,
   replaceSelectedAsset,
   uploadAsset,
@@ -193,11 +193,11 @@ test("Editor can upload, replace, and delete asset in content mode", async () =>
 
     let replacementAssetTitle = "";
     await measure("content mode replace asset", async () => {
-      await openAssetDetails({ page, filename: uploadedAssetTitle });
+      await openAssetSettings({ page, filename: uploadedAssetTitle });
       const assetId = await page.locator("#asset-manager-id").inputValue();
       if (assetId.length === 0) {
         throw new Error(
-          "Expected Asset details to expose the uploaded asset id"
+          "Expected Asset settings to expose the uploaded asset id"
         );
       }
       await page.getByText("0 uses", { exact: true }).waitFor();
@@ -208,7 +208,7 @@ test("Editor can upload, replace, and delete asset in content mode", async () =>
     });
 
     await measure("content mode delete asset", async () => {
-      await openAssetDetails({ page, filename: replacementAssetTitle });
+      await openAssetSettings({ page, filename: replacementAssetTitle });
       await deleteSelectedAsset({
         page,
         filename: replacementAssetTitle,
@@ -291,7 +291,7 @@ test("Editor can replace image source with asset in content mode", async () => {
     let replacementAssetTitle = "";
     await measure("content mode replace used image source asset", async () => {
       await openAssetsPanel({ page });
-      await openAssetDetails({
+      await openAssetSettings({
         page,
         filename: uploadedAssetTitle,
       });

@@ -1,10 +1,10 @@
 import isValidFilename from "valid-filename";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { getMimeTypeByExtension, IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
+import { getMimeTypeByExtension } from "@webstudio-is/sdk";
 import type { Asset, Instance } from "@webstudio-is/sdk";
 import {
   Box,
@@ -13,7 +13,6 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogTrigger,
   Flex,
   Grid,
   IconButton,
@@ -21,12 +20,13 @@ import {
   InputField,
   Label,
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTitle,
-  PopoverTrigger,
   SmallIconButton,
   styled,
   Text,
+  TextArea,
   textVariants,
   theme,
   Tooltip,
@@ -37,7 +37,6 @@ import {
   CopyIcon,
   DimensionsIcon,
   DownloadIcon,
-  GearIcon,
   InfoCircleIcon,
   PageIcon,
   RefreshCcwIcon,
@@ -58,8 +57,7 @@ import { selectPage } from "~/shared/nano-states";
 import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime";
 import { $selectedPageId } from "~/shared/nano-states";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { deleteAssets, replaceAsset } from "~/builder/shared/assets";
-import { validateFiles } from "~/builder/shared/assets/asset-upload";
+import { deleteAssets } from "~/builder/shared/assets";
 import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
@@ -74,6 +72,8 @@ import {
   formatAssetName,
   parseAssetName,
 } from "@webstudio-is/project-build/runtime";
+import { AssetFolderSelector } from "./asset-folder-selector";
+import { moveAssetToFolder } from "./asset-folder-actions";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -236,12 +236,10 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
   );
 };
 
-const UsageDot = styled(Box, {
-  width: 6,
-  height: 6,
-  backgroundColor: "#000",
-  border: "1px solid white",
-  boxShadow: "0 0 3px rgb(0, 0, 0)",
+const AssetUsageIndicator = styled(Box, {
+  width: 4,
+  height: 4,
+  backgroundColor: theme.colors.backgroundStatusAttention,
   borderRadius: "50%",
   pointerEvents: "none",
 });
@@ -288,12 +286,18 @@ const useLocalValue = <Type extends string>(
   ] as const;
 };
 
-const AssetInfoContent = ({
+const AssetSettingsContent = ({
   asset,
   usages,
+  onDelete,
+  onReplace,
+  focusName,
 }: {
   asset: Asset;
   usages: AssetUsage[];
+  onDelete?: () => void;
+  onReplace?: () => void;
+  focusName: boolean;
 }) => {
   const { canDownloadAssets } = useStore($permissions);
   const { size, meta, id, name } = asset;
@@ -342,22 +346,11 @@ const AssetInfoContent = ({
     }
   );
 
+  const moveToFolder = (newFolderId: string | undefined) => {
+    moveAssetToFolder(asset.id, newFolderId);
+  };
+
   const authPermit = useStore($authPermit);
-  const replaceInputRef = useRef<HTMLInputElement>(null);
-
-  const handleReplaceFile = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = validateFiles(Array.from(event.target.files ?? []));
-      const file = files[0];
-      if (file) {
-        replaceAsset(id, file);
-      }
-      // Reset input so the same file can be selected again
-      event.target.value = "";
-    },
-    [id]
-  );
-
   let downloadError: undefined | string;
   if (authPermit === "view") {
     downloadError =
@@ -414,7 +407,7 @@ const AssetInfoContent = ({
                 alignItems: "center",
               }}
             >
-              <UsageDot />
+              <AssetUsageIndicator data-asset-settings-usage-indicator="" />
             </Flex>
             <Text variant="labels">{usages.length} uses</Text>
           </Flex>
@@ -428,6 +421,7 @@ const AssetInfoContent = ({
         >
           <InputField
             id="asset-manager-filename"
+            autoFocus={focusName}
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -451,11 +445,24 @@ const AssetInfoContent = ({
             <InfoCircleIcon />
           </Tooltip>
         </Label>
-        <InputField
+        <TextArea
           id="asset-manager-description"
           placeholder='Enter "alt" text'
+          rows={1}
+          maxRows={6}
+          autoGrow
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          onChange={setDescription}
+        />
+      </Grid>
+
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <AssetFolderSelector
+          value={asset.folderId}
+          onChange={moveToFolder}
+          rootLabel="Folder"
+          disabled={authPermit === "view"}
+          deferChangesUntilBlur
         />
       </Grid>
 
@@ -483,54 +490,17 @@ const AssetInfoContent = ({
             </Button>
           </Tooltip>
         ) : usages.length === 0 ? (
-          <Button
-            color="destructive"
-            onClick={() => deleteAssets([id])}
-            prefix={<TrashIcon />}
-          >
+          <Button color="destructive" onClick={onDelete} prefix={<TrashIcon />}>
             Delete
           </Button>
         ) : (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>Review & delete</Button>
-            </DialogTrigger>
-            <DialogContent minWidth={360}>
-              <DialogTitle>Delete asset?</DialogTitle>
-              <Box css={{ padding: theme.panel.padding }}>
-                <Text css={{ marginBottom: "1em" }}>
-                  This asset is used in following places:
-                </Text>
-                <AssetUsagesList usages={usages} />
-                <Flex>
-                  <Button
-                    css={{
-                      marginLeft: "auto",
-                      marginTop: theme.panel.paddingBlock,
-                    }}
-                    color="destructive"
-                    prefix={<TrashIcon />}
-                    onClick={() => deleteAssets([id])}
-                  >
-                    Delete
-                  </Button>
-                </Flex>
-              </Box>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={onDelete}>Review & delete</Button>
         )}
 
         <Flex gap="1">
           {isImage && (
             <>
-              <input
-                ref={replaceInputRef}
-                type="file"
-                accept={IMAGE_MIME_TYPES.join(", ")}
-                style={{ display: "none" }}
-                onChange={handleReplaceFile}
-              />
-              {replaceError ? (
+              {replaceError || onReplace === undefined ? (
                 <Tooltip side="bottom" content={replaceError}>
                   <IconButton disabled>
                     <RefreshCcwIcon />
@@ -538,10 +508,7 @@ const AssetInfoContent = ({
                 </Tooltip>
               ) : (
                 <Tooltip side="bottom" content="Replace asset">
-                  <IconButton
-                    aria-label="Replace asset"
-                    onClick={() => replaceInputRef.current?.click()}
-                  >
+                  <IconButton aria-label="Replace asset" onClick={onReplace}>
                     <RefreshCcwIcon />
                   </IconButton>
                 </Tooltip>
@@ -571,52 +538,93 @@ const AssetInfoContent = ({
   );
 };
 
-const triggerVisibilityVar = `--ws-asset-info-trigger-visibility`;
-
-export const assetInfoCssVars = ({ show }: { show: boolean }) => ({
-  [triggerVisibilityVar]: show ? "visible" : "hidden",
-});
-
-export const AssetInfo = ({ asset }: { asset: Asset }) => {
+export const AssetDeleteDialog = ({
+  asset,
+  open,
+  onOpenChange,
+}: {
+  asset: Asset;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) => {
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
   return (
-    <>
-      <Popover modal>
-        <PopoverTrigger asChild>
-          <SmallIconButton
-            title="Options"
-            tabIndex={-1}
-            css={{
-              visibility: `var(${triggerVisibilityVar}, hidden)`,
-              position: "absolute",
-              color: theme.colors.backgroundIconSubtle,
-              top: theme.spacing[3],
-              right: theme.spacing[3],
-              cursor: "pointer",
-              transition: "opacity 100ms ease",
-              "& svg": {
-                fill: `oklch(from ${theme.colors.white} l c h / 0.9)`,
-              },
-              "&:hover": {
-                color: theme.colors.backgroundIconSubtle,
-                background: "transparent",
-                "& svg": {
-                  fill: `oklch(from ${theme.colors.white} l c h / 1)`,
-                },
-              },
-            }}
-            icon={<GearIcon />}
-          />
-        </PopoverTrigger>
-        <PopoverContent css={{ minWidth: 250 }}>
-          <PopoverTitle>Asset details</PopoverTitle>
-          <AssetInfoContent asset={asset} usages={usages} />
-        </PopoverContent>
-      </Popover>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent minWidth={360} aria-describedby={undefined}>
+        <DialogTitle>Delete asset?</DialogTitle>
+        <Box css={{ padding: theme.panel.padding }}>
+          <Text>Delete “{formatAssetName(asset)}”?</Text>
+          {usages.length > 0 && (
+            <>
+              <Text css={{ marginTop: "1em", marginBottom: "1em" }}>
+                This asset is used in the following places:
+              </Text>
+              <AssetUsagesList usages={usages} />
+            </>
+          )}
+          <Flex justify="end" css={{ marginTop: theme.panel.paddingBlock }}>
+            <Button
+              autoFocus
+              color="destructive"
+              prefix={<TrashIcon />}
+              onClick={() => deleteAssets([asset.id])}
+            >
+              Delete
+            </Button>
+          </Flex>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export const AssetSettings = ({
+  asset,
+  open,
+  onOpenChange,
+  onDelete,
+  onReplace,
+  focusName = false,
+  children,
+}: {
+  asset: Asset;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDelete?: () => void;
+  onReplace?: () => void;
+  focusName?: boolean;
+  children: ReactNode;
+}) => {
+  const usagesByAssetId = useStore($usagesByAssetId);
+  const usages = usagesByAssetId.get(asset.id) ?? [];
+  const deleteAsset =
+    onDelete === undefined
+      ? undefined
+      : () => {
+          onOpenChange(false);
+          onDelete();
+        };
+  return (
+    <Popover modal open={open} onOpenChange={onOpenChange}>
       {usages.length === 0 && (
-        <UsageDot css={{ position: "absolute", top: 9, right: 9 }} />
+        <AssetUsageIndicator
+          role="img"
+          aria-label="Unused asset"
+          data-asset-thumbnail-indicator=""
+        />
       )}
-    </>
+      <PopoverAnchor asChild>{children}</PopoverAnchor>
+      <PopoverContent css={{ minWidth: 250 }}>
+        <PopoverTitle>Asset settings</PopoverTitle>
+        <AssetSettingsContent
+          asset={asset}
+          usages={usages}
+          onDelete={deleteAsset}
+          onReplace={onReplace}
+          focusName={focusName}
+        />
+      </PopoverContent>
+    </Popover>
   );
 };

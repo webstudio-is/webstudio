@@ -1,18 +1,22 @@
-import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
 import { type Asset, assets } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import { formatAsset } from "./utils/format-asset";
+import {
+  applyValidatedMapPatches,
+  assertPostgrestSuccess,
+  diffMaps,
+  type Patch,
+} from "./patch-utils";
 
-// This module applies Immer patches to Maps and can be imported directly,
-// so initialize the required Immer plugins next to the production patch use.
-enableMapSet();
-enablePatches();
-
-const assertPostgrestSuccess = (result: { error: unknown }) => {
-  if (result.error) {
-    throw result.error;
-  }
-};
+export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
+  Array.from(assets, (asset) => ({
+    id: asset.id,
+    projectId,
+    name: asset.name,
+    filename: asset.filename ?? null,
+    description: asset.description ?? null,
+    folderId: asset.folderId ?? null,
+  }));
 
 export const loadAssetsByProjectWithClient = async (
   projectId: string,
@@ -28,6 +32,7 @@ export const loadAssetsByProjectWithClient = async (
         projectId,
         filename,
         description,
+        folderId,
         file:File!inner (*)
       `
     )
@@ -44,11 +49,19 @@ export const loadAssetsByProjectWithClient = async (
     projectId,
     filename,
     description,
+    folderId,
     file,
   } of assets.data ?? []) {
     if (file) {
       result.push(
-        formatAsset({ assetId, projectId, filename, description, file })
+        formatAsset({
+          assetId,
+          projectId,
+          filename,
+          description,
+          folderId,
+          file,
+        })
       );
     }
   }
@@ -126,53 +139,51 @@ export const patchAssetsWithClient = async (
   for (const asset of assetsList) {
     assetsMap.set(asset.id, asset);
   }
-  const patchedAssets = applyPatches(assetsMap, patches);
-  // Validate assets without recreating objects.
-  assets.parse(patchedAssets);
-
-  const deletedAssetIds: Asset["id"][] = [];
-  for (const assetId of assetsMap.keys()) {
-    if (patchedAssets.has(assetId) === false) {
-      deletedAssetIds.push(assetId);
-    }
-  }
+  const patchedAssets = applyValidatedMapPatches(assetsMap, patches, (value) =>
+    assets.parse(value)
+  );
+  const {
+    added,
+    updated,
+    deletedKeys: deletedAssetIds,
+  } = diffMaps(
+    assetsMap,
+    patchedAssets,
+    (previous, asset) =>
+      previous.filename === asset.filename &&
+      previous.description === asset.description &&
+      previous.folderId === asset.folderId
+  );
   if (deletedAssetIds.length !== 0) {
     await deleteAssetsWithClient({ projectId, ids: deletedAssetIds }, client);
   }
 
-  for (const asset of assetsMap.values()) {
-    const patchedAsset = patchedAssets.get(asset.id);
-    const metadataChanged =
-      patchedAsset !== undefined &&
-      (asset.filename !== patchedAsset.filename ||
-        asset.description !== patchedAsset.description);
-    if (metadataChanged) {
-      const { filename, description } = patchedAsset;
-      const updatedAsset = await client
-        .from("Asset")
-        .update({ filename, description })
-        .eq("id", asset.id)
-        .eq("projectId", asset.projectId)
-        .select("filename, description")
-        .single();
-      assertPostgrestSuccess(updatedAsset);
-      if (
-        updatedAsset.data?.filename !== (filename ?? null) ||
-        updatedAsset.data?.description !== (description ?? null)
-      ) {
-        throw new Error(
-          `Asset metadata update was not persisted for ${asset.id}`
-        );
-      }
+  for (const asset of updated) {
+    const { filename, description, folderId } = asset;
+    const updatedAsset = await client
+      .from("Asset")
+      .update({
+        filename: filename ?? null,
+        description: description ?? null,
+        folderId: folderId ?? null,
+      })
+      .eq("id", asset.id)
+      .eq("projectId", asset.projectId)
+      .select("filename, description, folderId")
+      .single();
+    assertPostgrestSuccess(updatedAsset);
+    if (
+      updatedAsset.data?.filename !== (filename ?? null) ||
+      updatedAsset.data?.description !== (description ?? null) ||
+      (updatedAsset.data?.folderId ?? null) !== (folderId ?? null)
+    ) {
+      throw new Error(
+        `Asset metadata update was not persisted for ${asset.id}`
+      );
     }
   }
 
-  const addedAssets: Asset[] = [];
-  for (const [assetId, asset] of patchedAssets) {
-    if (assetsMap.has(assetId) === false) {
-      addedAssets.push(asset);
-    }
-  }
+  const addedAssets: Asset[] = added;
   if (addedAssets.length !== 0) {
     const files = await client
       .from("File")
@@ -193,14 +204,12 @@ export const patchAssetsWithClient = async (
     assertPostgrestSuccess(restoredFiles);
 
     const insertedAssets = await client.from("Asset").insert(
-      addedAssets
-        // making sure corresponding file exist before creating an asset that references it
-        .filter((asset) => fileNames.has(asset.name))
-        .map((asset) => ({
-          id: asset.id,
-          projectId,
-          name: asset.name,
-        }))
+      createAssetRows(
+        // Make sure the corresponding file exists before creating an asset
+        // that references it.
+        addedAssets.filter((asset) => fileNames.has(asset.name)),
+        projectId
+      )
     );
     assertPostgrestSuccess(insertedAssets);
   }

@@ -6,6 +6,9 @@ import {
   calculateFormatCounts,
   filterAndSortAssets,
   findAssetIndex,
+  getAssetManagerSelectionIndex,
+  getNearestAssetManagerSelection,
+  isAssetManagerSelectionVisible,
   sortAssets,
   getAssetFormat,
   type SortState,
@@ -182,6 +185,16 @@ describe("filterAndSortAssets", () => {
     expect(result[0].asset.name).toBe("apple.jpg");
   });
 
+  test("treats whitespace-only search as empty", () => {
+    const result = filterAndSortAssets({
+      assetContainers: containers,
+      selectedExtensions: "*",
+      searchQuery: "   ",
+      sortState: { sortBy: "createdAt", order: "asc" },
+    });
+    expect(result).toHaveLength(containers.length);
+  });
+
   test("applies both extension filter and search", () => {
     const sortState: SortState = { sortBy: "createdAt", order: "asc" };
     const result = filterAndSortAssets({
@@ -234,6 +247,75 @@ describe("findAssetIndex", () => {
 
   test("finds last asset", () => {
     expect(findAssetIndex(containers, "3")).toBe(2);
+  });
+});
+
+describe("asset manager selection", () => {
+  const first = createAssetContainer(
+    "first",
+    "first.png",
+    "png",
+    "image",
+    "2024-01-01"
+  );
+  const second = createAssetContainer(
+    "second",
+    "second.png",
+    "png",
+    "image",
+    "2024-01-02"
+  );
+
+  test("tracks mixed folder and asset selections by id", () => {
+    const folder = { type: "folder", id: "folder" } as const;
+    const firstAsset = { type: "asset", id: first.asset.id } as const;
+    const secondAsset = { type: "asset", id: second.asset.id } as const;
+    expect(
+      getAssetManagerSelectionIndex(
+        [folder, firstAsset, secondAsset],
+        secondAsset
+      )
+    ).toBe(2);
+    expect(
+      getAssetManagerSelectionIndex(
+        [secondAsset, folder, firstAsset],
+        secondAsset
+      )
+    ).toBe(0);
+  });
+
+  test("detects selections hidden by filtering", () => {
+    expect(
+      isAssetManagerSelectionVisible(
+        { type: "asset", id: "second" },
+        [first],
+        []
+      )
+    ).toBe(false);
+    expect(
+      isAssetManagerSelectionVisible(
+        { type: "folder", id: "nested" },
+        [],
+        [{ id: "sibling" }]
+      )
+    ).toBe(false);
+  });
+
+  test("selects the nearest remaining item after the focused item is removed", () => {
+    const first = { type: "folder", id: "first" } as const;
+    const removed = { type: "folder", id: "removed" } as const;
+    const last = { type: "asset", id: "last" } as const;
+
+    expect(
+      getNearestAssetManagerSelection(
+        [first, removed, last],
+        [first, last],
+        removed
+      )
+    ).toEqual(last);
+    expect(
+      getNearestAssetManagerSelection([first, last], [first], last)
+    ).toEqual(first);
   });
 });
 

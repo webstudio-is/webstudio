@@ -288,6 +288,14 @@ describe("public api operation catalog", () => {
     ).toEqual(["assets"]);
   });
 
+  test("allows MCP uploads to target asset folders", () => {
+    const upload = getPublicApiOperation("upload-asset");
+    const uploadMany = getPublicApiOperation("upload-assets");
+
+    expect(JSON.stringify(upload.inputSchema)).toContain('"folderId"');
+    expect(JSON.stringify(uploadMany.inputSchema)).toContain('"folderId"');
+  });
+
   test("keeps operation lookup and tRPC path lookup strict", () => {
     expect(getPublicApiOperation("list-pages").id).toBe("pages.list");
     expect(getPublicApiOperationPath("list-pages")).toBe("api.pages.list");

@@ -27,7 +27,10 @@ import {
   paginateOutput,
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
-import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
+import {
+  loadAssetDataByProject,
+  loadAssetFoldersByProject,
+} from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
   publicApiContractVersion,
@@ -40,7 +43,7 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import { type Asset } from "@webstudio-is/sdk";
+import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
@@ -299,12 +302,14 @@ const commitRuntimeMutation = async <
   id,
   build,
   assets,
+  assetFolders,
   input,
   commit,
 }: {
   id: RuntimeOperationId;
   build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
   assets?: Asset[];
+  assetFolders?: AssetFolder[];
   input: unknown;
   commit: BuildCommit;
 }) => {
@@ -312,6 +317,7 @@ const commitRuntimeMutation = async <
     id,
     build,
     assets,
+    assetFolders,
     input,
   });
   if (mutation.noop || mutation.payload.length === 0) {
@@ -417,16 +423,23 @@ const runtimeContentOrBuildMutation = <
       })
   );
 
+const loadRuntimeAssetData = async (ctx: AppContext, projectId: string) => {
+  return loadAssetDataByProject(projectId, ctx, {
+    skipPermissionsCheck: true,
+  });
+};
+
 const runtimeAssetsQuery = <Result = unknown>(id: RuntimeOperationId) =>
   projectQuery(runtimeProjectInput(id), "view", async ({ ctx, input }) => {
-    const assets = await loadAssetsByProject(input.projectId, ctx, {
-      skipPermissionsCheck: true,
-    });
-    const build = await loadDevBuildByProjectId(ctx, input.projectId);
+    const [{ assets, assetFolders }, build] = await Promise.all([
+      loadRuntimeAssetData(ctx, input.projectId),
+      loadDevBuildByProjectId(ctx, input.projectId),
+    ]);
     return executeApiRuntimeOperation<Result>({
       id,
       build,
       assets,
+      assetFolders,
       input,
     });
   });
@@ -437,13 +450,15 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
   buildMutation(
     runtimeMutationInput(id, true),
     async ({ ctx, input, build, commit }) => {
-      const assets = await loadAssetsByProject(input.projectId, ctx, {
-        skipPermissionsCheck: true,
-      });
+      const { assets, assetFolders } = await loadRuntimeAssetData(
+        ctx,
+        input.projectId
+      );
       return await commitRuntimeMutation<Result>({
         id,
         build,
         assets,
+        assetFolders,
         input,
         commit,
       });
@@ -633,7 +648,19 @@ export const apiRouter = router({
           projectId: input.projectId,
         });
         if (include.has("assets")) {
-          snapshot.assets = await loadAssetsByProject(input.projectId, ctx);
+          const { assets, assetFolders } = await loadAssetDataByProject(
+            input.projectId,
+            ctx
+          );
+          snapshot.assets = assets;
+          if (include.has("assetFolders")) {
+            snapshot.assetFolders = assetFolders;
+          }
+        } else if (include.has("assetFolders")) {
+          snapshot.assetFolders = await loadAssetFoldersByProject(
+            input.projectId,
+            ctx
+          );
         }
 
         return snapshot;

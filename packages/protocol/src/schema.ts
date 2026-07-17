@@ -1,4 +1,4 @@
-import { asset, page } from "@webstudio-is/sdk/schema";
+import { asset, assetFolder, page } from "@webstudio-is/sdk/schema";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import {
   builderPatchSchema as internalBuilderPatchSchema,
@@ -63,6 +63,7 @@ export const projectBundle = z.object({
   pages: z.array(page),
   build: serializedBuild,
   assets: z.array(asset),
+  assetFolders: z.array(assetFolder).optional(),
   origin: z.string().optional(),
 });
 export type ProjectBundle = z.infer<typeof projectBundle>;

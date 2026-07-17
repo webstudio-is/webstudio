@@ -116,35 +116,21 @@ export const uploadingFileDataToAsset = (
   }
 
   const assetType = detectAssetType(fileName);
-
-  if (assetType === "video") {
-    // Videos should be file type, not image type
-    const asset: Asset = {
-      id: fileData.assetId,
-      name: fileName,
-      format,
-      type: "file",
-      description: "",
-      createdAt: "",
-      projectId: "",
-      size: 0,
-      meta: {},
-    };
-
-    return asset;
-  }
+  const base = {
+    id: fileData.assetId,
+    name: fileName,
+    description: "",
+    createdAt: "",
+    projectId: "",
+    size: 0,
+    folderId: fileData.folderId,
+  };
 
   if (assetType === "image") {
     const asset: ImageAsset = {
-      id: fileData.assetId,
-      name: fileName,
+      ...base,
       format,
       type: "image",
-      description: "",
-      createdAt: "",
-      projectId: "",
-      size: 0,
-
       meta: {
         width: Number.NaN,
         height: Number.NaN,
@@ -156,14 +142,9 @@ export const uploadingFileDataToAsset = (
 
   if (assetType === "font") {
     const asset: FontAsset = {
-      id: fileData.assetId,
-      name: fileName,
+      ...base,
       format: format as FontAsset["format"],
       type: "font",
-      description: "",
-      createdAt: "",
-      projectId: "",
-      size: 0,
       meta: {
         family: "system",
         style: "normal",
@@ -174,16 +155,11 @@ export const uploadingFileDataToAsset = (
     return asset;
   }
 
-  // Default to file type for all other types (documents, code, audio, etc.)
+  // Videos and other non-image/font uploads use the generic file type.
   const asset: Asset = {
-    id: fileData.assetId,
-    name: fileName,
+    ...base,
     format,
     type: "file",
-    description: "",
-    createdAt: "",
-    projectId: "",
-    size: 0,
     meta: {},
   };
 

@@ -3011,6 +3011,13 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "get-asset": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "get-asset",
+      { assetId: requireSingleOption(options.asset, "--asset") },
+      connection,
+      dependencies
+    ),
   "list-fonts": async (options, connection, dependencies) =>
     runProjectSessionCommand(
       "list-fonts",

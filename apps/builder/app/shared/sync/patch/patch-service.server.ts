@@ -41,6 +41,7 @@ const namespaceBuildColumns = {
   instances: ["instances"],
   props: ["props"],
   assets: [],
+  assetFolders: [],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
   styles: ["styles"],

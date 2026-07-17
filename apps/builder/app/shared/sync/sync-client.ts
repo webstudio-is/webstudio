@@ -17,6 +17,7 @@ import {
   $project,
   $pages,
   $assets,
+  $assetFolders,
   $instances,
   $props,
   $dataSources,
@@ -70,6 +71,7 @@ const applyBuilderData = (data: LoadedBuilderData) => {
   applyBuilderMetadata(data);
   $pages.set(data.pages);
   $assets.set(data.assets);
+  $assetFolders.set(data.assetFolders);
   $instances.set(data.instances);
   $props.set(data.props);
   $dataSources.set(data.dataSources);

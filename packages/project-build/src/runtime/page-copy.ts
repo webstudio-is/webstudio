@@ -35,7 +35,7 @@ import {
 import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
 import { paginateOutput, type PaginatedOutputInput } from "./output";
-import { webstudioDataNamespaces } from "../contracts/namespaces";
+import { pageCopyNamespaces } from "../contracts/namespaces";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import { getStaticStringLiteral } from "./text-replacement";
@@ -90,7 +90,7 @@ const isHydratedWebstudioData = (value: unknown): value is WebstudioData => {
     return false;
   }
   const data = value as Partial<WebstudioData>;
-  return webstudioDataNamespaces.every((namespace) => {
+  return pageCopyNamespaces.every((namespace) => {
     if (namespace === "pages") {
       return (
         data.pages?.pages instanceof Map && data.pages.folders instanceof Map
@@ -175,7 +175,7 @@ const contentModePageMetaFields = new Set([
 ]);
 
 const getRequiredWebstudioData = (state: BuilderState): WebstudioData => {
-  for (const namespace of webstudioDataNamespaces) {
+  for (const namespace of pageCopyNamespaces) {
     if (state[namespace] === undefined) {
       return throwBuilderRuntimeError(
         "BAD_REQUEST",
@@ -185,8 +185,6 @@ const getRequiredWebstudioData = (state: BuilderState): WebstudioData => {
   }
   return state as WebstudioData;
 };
-
-const pageCopyInvalidatesNamespaces = webstudioDataNamespaces;
 
 const parseCopyNumberSuffix = (value: string) => {
   const { name = value, copyNumber = "0" } =
@@ -854,7 +852,7 @@ export const duplicatePage = (
   return createRuntimeMutation({
     payload: duplicate.payload,
     result: { pageId: duplicate.pageId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -888,7 +886,7 @@ export const copyPage = (
   return createRuntimeMutation({
     payload,
     result: { pageId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -938,7 +936,7 @@ export const duplicateFolder = (
   return createRuntimeMutation({
     payload,
     result: { folderId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -982,7 +980,7 @@ export const createPageTemplate = (
   return createRuntimeMutation({
     payload,
     result: { templateId, rootInstanceId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -1030,7 +1028,7 @@ export const updatePageTemplate = (
   return createRuntimeMutation({
     payload,
     result: { templateId: input.templateId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -1061,7 +1059,7 @@ export const deletePageTemplate = (
       }),
     ],
     result: { templateId: input.templateId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -1105,7 +1103,7 @@ export const duplicatePageTemplate = (
   return createRuntimeMutation({
     payload,
     result: { templateId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -1268,7 +1266,7 @@ export const createPageFromTemplate = (
   return createRuntimeMutation({
     payload,
     result: { pageId },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 
@@ -1581,7 +1579,7 @@ export const insertPageTransferItem = (
       type: input.item.type,
       didReachBreakpointLimit,
     },
-    invalidatesNamespaces: pageCopyInvalidatesNamespaces,
+    invalidatesNamespaces: pageCopyNamespaces,
   });
 };
 

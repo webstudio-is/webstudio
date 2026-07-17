@@ -45,8 +45,7 @@ runs:
   steps:
     - id: branch
       run: |
-        CLEAN_NAME="${REF_NAME/.staging/}"
-        CLEAN_NAME=$( echo "${CLEAN_NAME}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g' )
+        CLEAN_NAME=$(.github/actions/vercel/deployment-alias.sh "${REF_NAME}")
         echo "value=${CLEAN_NAME}" >> $GITHUB_OUTPUT
       shell: bash
       env:
