@@ -283,6 +283,7 @@ export const builderRuntimeCutoverManifests = [
     family: "asset-reference-operations",
     operationIds: [
       "assets.list",
+      "assets.get",
       "assets.findUsage",
       "assets.update",
       "assets.setImageDescriptions",
