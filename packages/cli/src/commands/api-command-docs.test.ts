@@ -51,6 +51,10 @@ const createMetadataOnlyMcpAdapter = () =>
       throw new Error("MCP metadata reads must not execute operations.");
     },
     importProject: async () => ({ imported: true }),
+    downloadAsset: async ({ assetId }) => ({
+      assetId,
+      path: `.webstudio/assets/${assetId}`,
+    }),
     captureScreenshot: async () => ({
       output: "current.png",
       browserPath: "/browser",
