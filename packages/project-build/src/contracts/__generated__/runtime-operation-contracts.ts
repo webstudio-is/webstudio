@@ -60368,7 +60368,30 @@ export const runtimeOperationContractData = [
                   type: "string",
                   const: "dtcg",
                 },
-                document: {},
+                document: {
+                  description:
+                    "DTCG token document or 2025.10 resolver document. Resolver documents may use sets, modifiers, and resolutionOrder.",
+                },
+                contexts: {
+                  description:
+                    "Resolver modifier contexts keyed by modifier name",
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                  },
+                  additionalProperties: {
+                    type: "string",
+                  },
+                },
+                documents: {
+                  description:
+                    "Bundled DTCG documents keyed by resolver source path",
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                  },
+                  additionalProperties: {},
+                },
               },
               required: ["format"],
             },
@@ -60379,9 +60402,19 @@ export const runtimeOperationContractData = [
                   type: "string",
                   const: "figma",
                 },
-                document: {},
-                modeId: {
+                document: {
+                  description:
+                    "Figma Variables API document containing variables and optional variableCollections",
+                },
+                mode: {
+                  description: "Optional Figma mode name or id",
                   type: "string",
+                  minLength: 1,
+                },
+                allModes: {
+                  description:
+                    "Import every Figma mode under mode-qualified token names",
+                  type: "boolean",
                 },
               },
               required: ["format"],
@@ -60417,6 +60450,8 @@ export const runtimeOperationContractData = [
                   property: {
                     type: "string",
                     minLength: 1,
+                    description:
+                      "Style property for primitive tokens. Composite tokens use their canonical style properties.",
                   },
                 },
                 required: ["target", "property"],
@@ -60446,6 +60481,8 @@ export const runtimeOperationContractData = [
                 property: {
                   type: "string",
                   minLength: 1,
+                  description:
+                    "Style property for primitive tokens. Composite tokens use their canonical style properties.",
                 },
               },
               required: ["target", "property"],
@@ -60496,6 +60533,22 @@ export const runtimeOperationContractData = [
               cssValue: {
                 type: "string",
               },
+              declarations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    property: {
+                      type: "string",
+                    },
+                    cssValue: {
+                      type: "string",
+                    },
+                  },
+                  required: ["property", "cssValue"],
+                  additionalProperties: {},
+                },
+              },
               action: {
                 type: "string",
                 enum: ["create", "overwrite", "skip"],
@@ -60508,6 +60561,7 @@ export const runtimeOperationContractData = [
               "target",
               "outputName",
               "cssValue",
+              "declarations",
               "action",
             ],
             additionalProperties: {},

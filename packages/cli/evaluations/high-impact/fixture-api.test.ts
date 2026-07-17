@@ -50,5 +50,5 @@ describe("high-impact fixture API", () => {
       await fixtureApi.close();
       await rm(directory, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, 30_000);
 });

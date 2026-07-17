@@ -1,6 +1,6 @@
 import { cwd, exit } from "node:process";
 import { dirname, join } from "node:path";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { cancel, isCancel, log, text } from "@clack/prompts";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import {
@@ -10,41 +10,11 @@ import {
   jsonToGlobalConfig,
   type LocalConfig,
 } from "../config";
-import { writeFileAtomic } from "../fs-utils";
+import { withFileLock, writeFileAtomic } from "../fs-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
-
-const wait = (duration: number) =>
-  new Promise((resolve) => setTimeout(resolve, duration));
-
-const withConfigLock = async <Result>(callback: () => Promise<Result>) => {
-  const lockPath = `${GLOBAL_CONFIG_FILE}.lock`;
-  const start = Date.now();
-
-  while (true) {
-    try {
-      await mkdir(lockPath);
-      break;
-    } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-      if (code !== "EEXIST") {
-        throw error;
-      }
-      if (Date.now() - start > 10_000) {
-        throw new Error(`Timed out waiting for config lock ${lockPath}`);
-      }
-      await wait(50);
-    }
-  }
-
-  try {
-    return await callback();
-  } finally {
-    await rm(lockPath, { recursive: true, force: true });
-  }
-};
 
 const writeConfigFile = async (content: string) => {
   await writeFileAtomic(GLOBAL_CONFIG_FILE, content);
@@ -106,7 +76,7 @@ export const linkOptions = (yargs: CommonYargsArgv) =>
 export const saveShareLink = async (shareLink: string) => {
   const { origin, projectId, token } = parseShareLink(shareLink);
 
-  await withConfigLock(async () => {
+  await withFileLock(GLOBAL_CONFIG_FILE, async () => {
     const currentConfig = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
     const currentConfigJson = jsonToGlobalConfig(JSON.parse(currentConfig));
 

@@ -138,6 +138,13 @@ const setupToastError = () => {
   return toastError;
 };
 
+const setupToastSuccess = () => {
+  initBuilderApi();
+  const toastSuccess = vi.fn();
+  window.__webstudio__$__builderApi.toast.success = toastSuccess;
+  return toastSuccess;
+};
+
 const waitForClipboardEvent = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -507,6 +514,175 @@ test("reports malformed Webflow json through generic paste", async () => {
   expect(event.defaultPrevented).toBe(true);
   expect($instances.get().get("body-id")?.children).toEqual([]);
   expect(toastError).toHaveBeenCalledWith(expect.any(String));
+  abortController.abort();
+});
+
+test("imports pasted DTCG tokens through the runtime mutation pipeline", async () => {
+  resetStores();
+  setupPage();
+  const abortController = new AbortController();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  initCopyPaste({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    JSON.stringify({
+      color: {
+        $type: "color",
+        primary: { $value: "#123456" },
+        action: { $ref: "#/color/primary" },
+      },
+    })
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(true);
+  expect(
+    Array.from($styles.get().values()).map((style) => [
+      style.property,
+      style.value,
+    ])
+  ).toEqual(
+    expect.arrayContaining([
+      ["--color-primary", { type: "unparsed", value: "#123456" }],
+      ["--color-action", { type: "unparsed", value: "#123456" }],
+    ])
+  );
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 2 design tokens.");
+  abortController.abort();
+});
+
+test("imports the default mode from pasted Figma variables", async () => {
+  resetStores();
+  setupPage();
+  const abortController = new AbortController();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  initCopyPaste({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    JSON.stringify({
+      meta: {
+        variableCollections: {
+          palette: {
+            defaultModeId: "dark",
+            modes: [
+              { modeId: "light", name: "Light" },
+              { modeId: "dark", name: "Dark" },
+            ],
+          },
+        },
+        variables: {
+          primary: {
+            name: "Color/Primary",
+            resolvedType: "COLOR",
+            variableCollectionId: "palette",
+            valuesByMode: {
+              light: { r: 1, g: 1, b: 1 },
+              dark: { r: 0, g: 0, b: 0 },
+            },
+          },
+        },
+      },
+    })
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(
+    Array.from($styles.get().values()).find(
+      (style) => style.property === "--color-primary"
+    )?.value
+  ).toEqual({ type: "unparsed", value: "rgb(0 0 0 / 1)" });
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 1 design token.");
+  abortController.abort();
+});
+
+test("imports pasted DTCG resolver documents and composite tokens", async () => {
+  resetStores();
+  setupPage();
+  const abortController = new AbortController();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  initCopyPaste({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    JSON.stringify({
+      version: "2025.10",
+      resolutionOrder: [
+        {
+          type: "set",
+          name: "Base",
+          sources: [
+            {
+              body: {
+                $type: "typography",
+                $value: {
+                  fontFamily: "Inter",
+                  fontSize: { value: 16, unit: "px" },
+                  fontWeight: 500,
+                  letterSpacing: { value: 0, unit: "px" },
+                  lineHeight: 1.5,
+                },
+              },
+            },
+          ],
+        },
+      ],
+    })
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(true);
+  expect(
+    Array.from($styles.get().values()).map((style) => [
+      style.property,
+      style.value,
+    ])
+  ).toEqual(
+    expect.arrayContaining([
+      ["--body-font-family", { type: "unparsed", value: '"Inter"' }],
+      ["--body-font-size", { type: "unparsed", value: "16px" }],
+      ["--body-font-weight", { type: "unparsed", value: "500" }],
+      ["--body-letter-spacing", { type: "unparsed", value: "0px" }],
+      ["--body-line-height", { type: "unparsed", value: "1.5" }],
+    ])
+  );
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 5 design tokens.");
+  abortController.abort();
+});
+
+test("reports invalid pasted design token documents", async () => {
+  resetStores();
+  setupPage();
+  const abortController = new AbortController();
+  const toastError = setupToastError();
+  initCopyPaste({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    JSON.stringify({ spacing: { $value: { value: 8, unit: "px" } } })
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(event.defaultPrevented).toBe(true);
+  expect($styles.get()).toEqual(new Map());
+  expect(toastError).toHaveBeenCalledWith(
+    expect.stringContaining("spacing is missing $type")
+  );
   abortController.abort();
 });
 

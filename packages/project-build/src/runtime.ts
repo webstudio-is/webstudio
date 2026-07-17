@@ -12,6 +12,7 @@ export * from "./runtime/content-mode-permissions";
 export * from "./runtime/content-model";
 export * from "./runtime/context";
 export * from "./runtime/data";
+export * from "./runtime/design-token-import";
 export * from "./runtime/errors";
 export * from "./runtime/expression-validation";
 export * from "./runtime/fragment";

@@ -226,7 +226,17 @@ export const attachSharedSlot = (
         "Source Slot has no shareable content"
       );
     }
-    const parent = draft.instances.get(input.parentInstanceId);
+    const target = getSlotFragmentDropTargetMutable(
+      draft.instances,
+      {
+        parentSelector: [input.parentInstanceId],
+        position: "end",
+      },
+      context.createId,
+      new Set([fragmentId])
+    );
+    const parentSelector = target?.parentSelector ?? [input.parentInstanceId];
+    const parent = draft.instances.get(parentSelector[0]);
     if (parent === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Target parent not found");
     }
@@ -250,7 +260,7 @@ export const attachSharedSlot = (
     assertValidSlotPlacement({
       instances: draft.instances,
       props: draft.props,
-      instanceSelector: [slot.id, parent.id],
+      instanceSelector: [slot.id, ...parentSelector],
     });
   });
   const sharedFragmentId =
@@ -404,7 +414,8 @@ export const findClosestSlot = (
 export const getSlotFragmentDropTargetMutable = (
   instances: Instances,
   dropTarget: SlotDropTarget,
-  createId: () => string
+  createId: () => string,
+  excludedFragmentIds: ReadonlySet<Instance["id"]> = new Set()
 ): SlotDropTarget | undefined => {
   const [parentId] = dropTarget.parentSelector;
   const instance = instances.get(parentId);
@@ -423,6 +434,7 @@ export const getSlotFragmentDropTargetMutable = (
       const fragment = instances.get(candidate.children[0].value);
       if (
         fragment?.component === "Fragment" &&
+        excludedFragmentIds.has(fragment.id) === false &&
         areInstanceChildrenEqual(fragment.children, legacyChildren)
       ) {
         return fragment.id;

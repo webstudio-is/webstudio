@@ -15,6 +15,7 @@ import { html } from "./plugin-html";
 import { jsx } from "./plugin-jsx";
 import { markdown } from "./plugin-markdown";
 import { webflow } from "./plugin-webflow/plugin-webflow";
+import { designTokens } from "./plugin-design-tokens";
 import { builderApi } from "../builder-api";
 import { readClipboardText } from "../clipboard";
 
@@ -182,6 +183,7 @@ export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
       pageText,
       instanceJson,
       instanceText,
+      designTokens,
       jsx,
       html,
       markdown,

@@ -501,6 +501,9 @@ export const runtimeOutputSchemas = {
         outputName: z.string(),
         property: z.string().optional(),
         cssValue: z.string(),
+        declarations: z.array(
+          looseObject({ property: z.string(), cssValue: z.string() })
+        ),
         action: z.enum(["create", "overwrite", "skip"]),
       })
     ),

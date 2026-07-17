@@ -77,6 +77,22 @@ describe("cli project session storage", () => {
     expect(
       (await storage.get(created.id))?.snapshot.state.instances
     ).toBeInstanceOf(Map);
+
+    const concurrentNames = Array.from(
+      { length: 20 },
+      (_, index) => `Concurrent ${index}`
+    );
+    const secondStorage = createCliProjectRestorePointStorage(
+      join(directory, ".webstudio", "restore-points.json")
+    );
+    await Promise.all(
+      concurrentNames.map((name, index) =>
+        (index % 2 === 0 ? storage : secondStorage).create(name, snapshot)
+      )
+    );
+    expect((await storage.list()).map((point) => point.name).sort()).toEqual(
+      ["Before redesign", ...concurrentNames].sort()
+    );
   });
 
   test("persists builder state snapshots as JSON and checks revisions", async () => {

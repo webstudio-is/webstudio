@@ -41,7 +41,7 @@ import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
-import { writeFileAtomic } from "./fs-utils";
+import { withFileLock, writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
 
 export { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
@@ -360,25 +360,27 @@ export const createCliProjectRestorePointStorage = (
   }: PersistedCliProjectRestorePoint) => summary;
   return {
     async create(name: string, snapshot: ProjectSessionSnapshot) {
-      const persisted = await load();
-      const point: PersistedCliProjectRestorePoint = {
-        id: crypto.randomUUID(),
-        name,
-        createdAt: new Date().toISOString(),
-        projectId: snapshot.projectId,
-        buildId: snapshot.buildId,
-        version: snapshot.version,
-        snapshot: serializePersistedSnapshot(snapshot),
-      };
-      await writeFileAtomic(
-        path,
-        `${JSON.stringify(
-          { version: 1, points: [...persisted.points, point] },
-          undefined,
-          2
-        )}\n`
-      );
-      return getSummary(point);
+      return await withFileLock(path, async () => {
+        const persisted = await load();
+        const point: PersistedCliProjectRestorePoint = {
+          id: crypto.randomUUID(),
+          name,
+          createdAt: new Date().toISOString(),
+          projectId: snapshot.projectId,
+          buildId: snapshot.buildId,
+          version: snapshot.version,
+          snapshot: serializePersistedSnapshot(snapshot),
+        };
+        await writeFileAtomic(
+          path,
+          `${JSON.stringify(
+            { version: 1, points: [...persisted.points, point] },
+            undefined,
+            2
+          )}\n`
+        );
+        return getSummary(point);
+      });
     },
     async list() {
       return (await load()).points.map(getSummary);

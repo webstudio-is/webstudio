@@ -79,6 +79,75 @@ describe("runtime slot utilities", () => {
     ]);
   });
 
+  test("attaches a shared slot inside another slot content fragment", () => {
+    const instances = new Map([
+      ["body", instance("body", "Body")],
+      [
+        "source",
+        instance("source", "Slot", [{ type: "id", value: "source-fragment" }]),
+      ],
+      [
+        "source-fragment",
+        instance("source-fragment", "Fragment", [
+          { type: "id", value: "heading" },
+        ]),
+      ],
+      ["heading", instance("heading", "Heading")],
+      [
+        "target",
+        instance("target", "Slot", [{ type: "id", value: "target-fragment" }]),
+      ],
+      ["target-fragment", instance("target-fragment", "Fragment")],
+    ]);
+    const mutation = attachSharedSlot(
+      { instances, props: new Map() },
+      { sourceSlotId: "source", parentInstanceId: "target" },
+      { createId: () => "nested" }
+    );
+    const updated = applyBuilderPatchTransactions(
+      { instances, props: new Map() },
+      [{ id: "attach-nested-slot", payload: mutation.payload }]
+    ).state.instances;
+
+    expect(updated?.get("target")?.children).toEqual([
+      { type: "id", value: "target-fragment" },
+    ]);
+    expect(updated?.get("target-fragment")?.children).toEqual([
+      { type: "id", value: "nested" },
+    ]);
+    expect(updated?.get("nested")?.children).toEqual([
+      { type: "id", value: "source-fragment" },
+    ]);
+  });
+
+  test("normalizes an empty target slot before nesting a shared slot", () => {
+    const instances = new Map([
+      [
+        "source",
+        instance("source", "Slot", [{ type: "id", value: "source-fragment" }]),
+      ],
+      ["source-fragment", instance("source-fragment", "Fragment")],
+      ["target", instance("target", "Slot")],
+    ]);
+    const ids = ["nested", "target-fragment"];
+    const mutation = attachSharedSlot(
+      { instances, props: new Map() },
+      { sourceSlotId: "source", parentInstanceId: "target" },
+      { createId: () => ids.shift() ?? "unexpected" }
+    );
+    const updated = applyBuilderPatchTransactions(
+      { instances, props: new Map() },
+      [{ id: "attach-empty-slot", payload: mutation.payload }]
+    ).state.instances;
+
+    expect(updated?.get("target")?.children).toEqual([
+      { type: "id", value: "target-fragment" },
+    ]);
+    expect(updated?.get("target-fragment")?.children).toEqual([
+      { type: "id", value: "nested" },
+    ]);
+  });
+
   test("extracts a subtree into canonical shared slot content", () => {
     const instances = new Map([
       ["body", instance("body", "Body", [{ type: "id", value: "section" }])],

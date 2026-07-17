@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test } from "vitest";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { loadJSONFile, writeFileAtomic } from "./fs-utils";
+import { loadJSONFile, withFileLock, writeFileAtomic } from "./fs-utils";
 
 const originalCwd = process.cwd();
 let tempDir: string;
@@ -38,4 +38,17 @@ test("writes files atomically without leaving temporary files", async () => {
 
   await expect(readFile("nested/data.txt", "utf8")).resolves.toBe("hello");
   await expect(readdir("nested")).resolves.toEqual(["data.txt"]);
+});
+
+test("releases file locks when an operation fails", async () => {
+  await expect(
+    withFileLock("nested/data.json", async () => {
+      throw new Error("failed write");
+    })
+  ).rejects.toThrow("failed write");
+
+  await expect(
+    withFileLock("nested/data.json", async () => "next write")
+  ).resolves.toBe("next write");
+  await expect(readdir("nested")).resolves.toEqual([]);
 });
