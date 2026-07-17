@@ -186,7 +186,6 @@ export const createBuildPatchUpdate = async ({
   } = {};
 
   let previewImageAssetId: string | null | undefined = undefined;
-  let didPatchMarketplaceProduct = false;
   const touchedBreakpoints = createTouchedKeys();
   const touchedDataSources = createTouchedKeys();
   const touchedInstances = createTouchedKeys();
@@ -343,7 +342,6 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "marketplaceProduct") {
-        didPatchMarketplaceProduct = true;
         const marketplaceProduct =
           buildData.marketplaceProduct ??
           parseConfig<MarketplaceProduct>(build.marketplaceProduct);
@@ -426,7 +424,7 @@ export const createBuildPatchUpdate = async ({
     update.styles = serializeStyles(stylesData);
   }
 
-  if (didPatchMarketplaceProduct) {
+  if (Object.hasOwn(buildData, "marketplaceProduct")) {
     update.marketplaceProduct =
       buildData.marketplaceProduct === undefined
         ? serializeConfig({})

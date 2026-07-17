@@ -65,7 +65,7 @@ const serializedBuildShape = {
 export const serializedBuild: z.ZodObject<typeof serializedBuildShape> =
   z.object(serializedBuildShape);
 
-export const serializedBuilderState = serializedBuild
+const serializedBuilderState = serializedBuild
   .omit({
     id: true,
     projectId: true,

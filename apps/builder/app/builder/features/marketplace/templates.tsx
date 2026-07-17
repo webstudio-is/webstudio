@@ -1,7 +1,6 @@
 import { findClosestInsertable } from "~/shared/instance-utils/insert";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import {
-  detectFragmentTokenConflicts,
   detectPageTokenConflicts,
   extractWebstudioFragment,
 } from "@webstudio-is/project-build/runtime";
@@ -37,7 +36,10 @@ import { $project } from "~/shared/sync/data-stores";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { selectPage } from "~/shared/nano-states";
-import { resolveTokenConflicts } from "~/shared/resolve-token-conflicts";
+import {
+  resolveFragmentTokenConflicts,
+  resolveTokenConflicts,
+} from "~/shared/resolve-token-conflicts";
 
 const isBody = (instance: Instance) =>
   instance.component === "Body" ||
@@ -71,11 +73,7 @@ const insertSection = async ({
     if (insertable.position === "end") {
       insertable.position = "after";
     }
-    const conflicts = detectFragmentTokenConflicts({
-      fragment,
-      targetData: getWebstudioData(),
-    });
-    const conflictResolution = await resolveTokenConflicts(conflicts);
+    const conflictResolution = await resolveFragmentTokenConflicts(fragment);
     if (conflictResolution === "cancel") {
       return;
     }

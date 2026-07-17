@@ -154,29 +154,6 @@ const getRequiredSlotState = (
   return { instances: state.instances, props: state.props };
 };
 
-const insertChildReferenceMutable = ({
-  parent,
-  childId,
-  insertIndex,
-}: {
-  parent: Instance;
-  childId: Instance["id"];
-  insertIndex?: number;
-}) => {
-  const child = { type: "id" as const, value: childId };
-  if (insertIndex === undefined) {
-    parent.children.push(child);
-    return;
-  }
-  if (insertIndex > parent.children.length) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Insert index is outside parent children"
-    );
-  }
-  parent.children.splice(insertIndex, 0, child);
-};
-
 const assertValidSlotPlacement = ({
   instances,
   props,
@@ -252,10 +229,18 @@ export const attachSharedSlot = (
       label: input.label ?? sourceSlot.label,
     });
     draft.instances.set(slot.id, slot);
-    insertChildReferenceMutable({
-      parent,
-      childId: slot.id,
-      insertIndex: input.insertIndex,
+    if (
+      input.insertIndex !== undefined &&
+      input.insertIndex > parent.children.length
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Insert index is outside parent children"
+      );
+    }
+    parent.children.splice(input.insertIndex ?? parent.children.length, 0, {
+      type: "id",
+      value: slot.id,
     });
     assertValidSlotPlacement({
       instances: draft.instances,

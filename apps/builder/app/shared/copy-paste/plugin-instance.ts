@@ -43,7 +43,7 @@ import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { builderApi } from "../builder-api";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
-import { resolveFragmentTokenConflicts } from "./fragment-utils";
+import { resolveFragmentTokenConflicts } from "../resolve-token-conflicts";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid.";

@@ -41,11 +41,8 @@ const handlePasteDesignTokens = async (value: string): Promise<PasteResult> => {
     });
     const conflicts = plan
       .filter((entry) => entry.conflict)
-      .map((entry) => ({
-        tokenName: entry.outputName,
-        fragmentTokenId: `${entry.target}:${entry.outputName}`,
-      }));
-    const resolution = await resolveTokenConflicts(conflicts, "ours");
+      .map((entry) => ({ tokenName: entry.outputName }));
+    const resolution = await resolveTokenConflicts(conflicts);
     if (resolution === "cancel") {
       return pasteHandled;
     }

@@ -17,9 +17,11 @@ import {
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {
+  projectSessionRestorePointSummarySchema,
   projectSessionBusyMessage,
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
+  type ProjectSessionRestorePointSummary,
 } from "./project-session";
 import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
@@ -740,19 +742,22 @@ const getHandshakeInputSchema = (
   };
 };
 
-const getZodMcpInputSchema = (schema: z.ZodTypeAny) => {
+const getZodObjectSchema = (schema: z.ZodTypeAny) => {
   const inputSchema = toInputJsonSchemaObject(
     getInputSchemaMetadata(schema).inputJsonSchema
   );
   if (inputSchema?.type !== "object") {
-    throw new Error("MCP tool input schema must be an object");
+    throw new Error("MCP schema must be an object");
   }
-  return getHandshakeInputSchema({
+  return {
     ...inputSchema,
     type: "object",
     additionalProperties: inputSchema.additionalProperties ?? false,
-  }).inputSchema;
+  } as const;
 };
+
+const getZodMcpInputSchema = (schema: z.ZodTypeAny) =>
+  getHandshakeInputSchema(getZodObjectSchema(schema)).inputSchema;
 
 const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
@@ -1942,19 +1947,9 @@ const previewDataSchema = {
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
-const restorePointSummaryDataSchema = {
-  type: "object",
-  properties: {
-    id: { type: "string" },
-    name: { type: "string" },
-    createdAt: { type: "string" },
-    projectId: { type: "string" },
-    buildId: { type: "string" },
-    version: { type: "integer" },
-  },
-  required: ["id", "name", "createdAt", "projectId", "buildId", "version"],
-  additionalProperties: false,
-} as const satisfies InputJsonSchema;
+const restorePointSummaryDataSchema = getZodObjectSchema(
+  projectSessionRestorePointSummarySchema
+);
 
 const restorePointCreateInput = z.object({ name: z.string().trim().min(1) });
 const restorePointRevertInput = z.object({ id: z.string().min(1) });
@@ -5925,16 +5920,7 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   restorePoints?: ProjectSessionRestorePointHandlers;
 };
 
-export type ProjectSessionRestorePointSummary = {
-  id: string;
-  name: string;
-  createdAt: string;
-  projectId: string;
-  buildId: string;
-  version: number;
-};
-
-export type ProjectSessionRestorePointHandlers = {
+type ProjectSessionRestorePointHandlers = {
   create: (input: {
     name: string;
   }) => Promise<ProjectSessionRestorePointSummary>;

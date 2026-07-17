@@ -131,11 +131,15 @@ const createTransport = (
 ): ProjectSessionTransport & {
   loadedNamespaces: BuilderNamespace[][];
   commits: BuilderPatchTransaction[][];
+  patchCommits: BuilderPatchTransaction[][];
+  restoreCommits: BuilderPatchTransaction[][];
   serverOperations: Array<{ operationId: string; input: unknown }>;
   permissionReads: number;
 } => ({
   loadedNamespaces: [],
   commits: [],
+  patchCommits: [],
+  restoreCommits: [],
   serverOperations: [],
   permissionReads: 0,
   async fetchNamespaces(input) {
@@ -144,6 +148,12 @@ const createTransport = (
   },
   async commitPatch(input) {
     this.commits.push([...input.transactions]);
+    this.patchCommits.push([...input.transactions]);
+    return { version: input.baseVersion + 1 };
+  },
+  async commitRestorePoint(input) {
+    this.commits.push([...input.transactions]);
+    this.restoreCommits.push([...input.transactions]);
     return { version: input.baseVersion + 1 };
   },
   async getPermissions() {
@@ -173,7 +183,7 @@ const createMutableTransport = (
 ) => {
   let remote = initialRemote;
   const transport = createTransport(remote);
-  transport.commitPatch = async (input) => {
+  const commit = async (input: Parameters<typeof transport.commitPatch>[0]) => {
     transport.commits.push([...input.transactions]);
     const applied = applyBuilderPatchTransactions(
       remote.state,
@@ -185,6 +195,14 @@ const createMutableTransport = (
       state: applied.state,
     };
     return { version: remote.version };
+  };
+  transport.commitPatch = async (input) => {
+    transport.patchCommits.push([...input.transactions]);
+    return await commit(input);
+  };
+  transport.commitRestorePoint = async (input) => {
+    transport.restoreCommits.push([...input.transactions]);
+    return await commit(input);
   };
   transport.fetchNamespaces = async (input) => {
     transport.loadedNamespaces.push([...input.namespaces]);
@@ -392,6 +410,8 @@ describe("project session", () => {
       meta: { siteName: "Persisted site" },
     });
     expect(transport.commits).toHaveLength(1);
+    expect(transport.patchCommits).toHaveLength(1);
+    expect(transport.restoreCommits).toHaveLength(0);
     expect(transport.loadedNamespaces).toEqual([
       ["projectSettings"],
       ["projectSettings"],
@@ -1325,6 +1345,8 @@ describe("project session", () => {
       target.state.pages?.pages.get("page-home")?.name
     );
     expect(transport.commits).toHaveLength(1);
+    expect(transport.patchCommits).toHaveLength(0);
+    expect(transport.restoreCommits).toHaveLength(1);
   });
 
   test("keeps separately persisted assets outside restore points", async () => {

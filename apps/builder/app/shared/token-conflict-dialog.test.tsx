@@ -47,18 +47,14 @@ const renderAndCancelDialog = () => {
 };
 
 test("settles the pending request when the dialog is cancelled", async () => {
-  const result = showTokenConflictDialog([
-    { tokenName: "Primary", fragmentTokenId: "incoming-primary" },
-  ]);
+  const result = showTokenConflictDialog([{ tokenName: "Primary" }]);
   renderAndCancelDialog();
 
   await expect(result).resolves.toBe("cancel");
 });
 
 test("cancels a pending request when a newer conflict dialog replaces it", async () => {
-  const first = showTokenConflictDialog([
-    { tokenName: "Primary", fragmentTokenId: "incoming-primary" },
-  ]);
+  const first = showTokenConflictDialog([{ tokenName: "Primary" }]);
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -72,9 +68,7 @@ test("cancels a pending request when a newer conflict dialog replaces it", async
 
   let second!: ReturnType<typeof showTokenConflictDialog>;
   act(() => {
-    second = showTokenConflictDialog([
-      { tokenName: "Secondary", fragmentTokenId: "incoming-secondary" },
-    ]);
+    second = showTokenConflictDialog([{ tokenName: "Secondary" }]);
     staleCancel.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
 

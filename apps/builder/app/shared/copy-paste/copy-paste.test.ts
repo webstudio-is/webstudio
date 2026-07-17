@@ -172,6 +172,17 @@ const setupToastSuccess = () => {
 const waitForClipboardEvent = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
+const pastePlainText = async (value: unknown) => {
+  const abortController = new AbortController();
+  initCopyPaste({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData("text/plain", JSON.stringify(value));
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+  abortController.abort();
+  return event;
+};
+
 afterEach(() => {
   resetStores();
   vi.restoreAllMocks();
@@ -545,24 +556,15 @@ test("reports malformed Webflow json through generic paste", async () => {
 test("imports pasted DTCG tokens through the runtime mutation pipeline", async () => {
   resetStores();
   setupPage();
-  const abortController = new AbortController();
   const toastError = setupToastError();
   const toastSuccess = setupToastSuccess();
-  initCopyPaste({ signal: abortController.signal });
-  const { clipboardData, event } = createClipboardEvent("paste");
-  clipboardData.setData(
-    "text/plain",
-    JSON.stringify({
-      color: {
-        $type: "color",
-        primary: { $value: "#123456" },
-        action: { $ref: "#/color/primary" },
-      },
-    })
-  );
-
-  document.dispatchEvent(event);
-  await waitForClipboardEvent();
+  const event = await pastePlainText({
+    color: {
+      $type: "color",
+      primary: { $value: "#123456" },
+      action: { $ref: "#/color/primary" },
+    },
+  });
 
   expect(toastError).not.toHaveBeenCalled();
   expect(event.defaultPrevented).toBe(true);
@@ -578,7 +580,6 @@ test("imports pasted DTCG tokens through the runtime mutation pipeline", async (
     ])
   );
   expect(toastSuccess).toHaveBeenCalledWith("Imported 2 design tokens.");
-  abortController.abort();
 });
 
 test("resolves token conflicts for fragments through the shared paste helper", async () => {
@@ -688,28 +689,18 @@ test.each([
     resetStores();
     setupPage();
     setupRootCssVariable("--color", "old");
-    const abortController = new AbortController();
     setupToastError();
     setupToastSuccess();
     const conflictDialog = vi
       .spyOn(window.__webstudio__$__builderApi, "showTokenConflictDialog")
       .mockResolvedValue(resolution);
-    initCopyPaste({ signal: abortController.signal });
-    const { clipboardData, event } = createClipboardEvent("paste");
-    clipboardData.setData(
-      "text/plain",
-      JSON.stringify({
-        color: { $type: "color", $value: "#123456" },
-      })
-    );
-
-    document.dispatchEvent(event);
-    await waitForClipboardEvent();
+    await pastePlainText({
+      color: { $type: "color", $value: "#123456" },
+    });
 
     expect(conflictDialog).toHaveBeenCalledWith([
       {
         tokenName: "--color",
-        fragmentTokenId: "css-variable:--color",
       },
     ]);
     expect($styles.get().get("root-local:base:--color:")?.value).toEqual({
@@ -721,7 +712,6 @@ test.each([
         ? undefined
         : { type: "unparsed", value: expectedRenamedValue }
     );
-    abortController.abort();
   }
 );
 
@@ -729,69 +719,52 @@ test("silently reuses an identical pasted design value", async () => {
   resetStores();
   setupPage();
   setupRootCssVariable("--color", "#123456");
-  const abortController = new AbortController();
   setupToastError();
   const toastSuccess = setupToastSuccess();
   const conflictDialog = vi.spyOn(
     window.__webstudio__$__builderApi,
     "showTokenConflictDialog"
   );
-  initCopyPaste({ signal: abortController.signal });
-  const { clipboardData, event } = createClipboardEvent("paste");
-  clipboardData.setData(
-    "text/plain",
-    JSON.stringify({ color: { $type: "color", $value: "#123456" } })
-  );
-
-  document.dispatchEvent(event);
-  await waitForClipboardEvent();
+  await pastePlainText({
+    color: { $type: "color", $value: "#123456" },
+  });
 
   expect(conflictDialog).not.toHaveBeenCalled();
   expect($styles.get().size).toBe(1);
   expect(toastSuccess).toHaveBeenCalledWith(
     "Imported 0 design tokens; skipped 1 existing."
   );
-  abortController.abort();
 });
 
 test("imports the default mode from pasted Figma variables", async () => {
   resetStores();
   setupPage();
-  const abortController = new AbortController();
   const toastError = setupToastError();
   const toastSuccess = setupToastSuccess();
-  initCopyPaste({ signal: abortController.signal });
-  const { clipboardData, event } = createClipboardEvent("paste");
-  clipboardData.setData(
-    "text/plain",
-    JSON.stringify({
-      meta: {
-        variableCollections: {
-          palette: {
-            defaultModeId: "dark",
-            modes: [
-              { modeId: "light", name: "Light" },
-              { modeId: "dark", name: "Dark" },
-            ],
-          },
+  await pastePlainText({
+    meta: {
+      variableCollections: {
+        palette: {
+          defaultModeId: "dark",
+          modes: [
+            { modeId: "light", name: "Light" },
+            { modeId: "dark", name: "Dark" },
+          ],
         },
-        variables: {
-          primary: {
-            name: "Color/Primary",
-            resolvedType: "COLOR",
-            variableCollectionId: "palette",
-            valuesByMode: {
-              light: { r: 1, g: 1, b: 1 },
-              dark: { r: 0, g: 0, b: 0 },
-            },
+      },
+      variables: {
+        primary: {
+          name: "Color/Primary",
+          resolvedType: "COLOR",
+          variableCollectionId: "palette",
+          valuesByMode: {
+            light: { r: 1, g: 1, b: 1 },
+            dark: { r: 0, g: 0, b: 0 },
           },
         },
       },
-    })
-  );
-
-  document.dispatchEvent(event);
-  await waitForClipboardEvent();
+    },
+  });
 
   expect(toastError).not.toHaveBeenCalled();
   expect(
@@ -800,46 +773,36 @@ test("imports the default mode from pasted Figma variables", async () => {
     )?.value
   ).toEqual({ type: "unparsed", value: "rgb(0 0 0 / 1)" });
   expect(toastSuccess).toHaveBeenCalledWith("Imported 1 design token.");
-  abortController.abort();
 });
 
 test("imports pasted DTCG resolver documents and composite tokens", async () => {
   resetStores();
   setupPage();
-  const abortController = new AbortController();
   const toastError = setupToastError();
   const toastSuccess = setupToastSuccess();
-  initCopyPaste({ signal: abortController.signal });
-  const { clipboardData, event } = createClipboardEvent("paste");
-  clipboardData.setData(
-    "text/plain",
-    JSON.stringify({
-      version: "2025.10",
-      resolutionOrder: [
-        {
-          type: "set",
-          name: "Base",
-          sources: [
-            {
-              body: {
-                $type: "typography",
-                $value: {
-                  fontFamily: "Inter",
-                  fontSize: { value: 16, unit: "px" },
-                  fontWeight: 500,
-                  letterSpacing: { value: 0, unit: "px" },
-                  lineHeight: 1.5,
-                },
+  const event = await pastePlainText({
+    version: "2025.10",
+    resolutionOrder: [
+      {
+        type: "set",
+        name: "Base",
+        sources: [
+          {
+            body: {
+              $type: "typography",
+              $value: {
+                fontFamily: "Inter",
+                fontSize: { value: 16, unit: "px" },
+                fontWeight: 500,
+                letterSpacing: { value: 0, unit: "px" },
+                lineHeight: 1.5,
               },
             },
-          ],
-        },
-      ],
-    })
-  );
-
-  document.dispatchEvent(event);
-  await waitForClipboardEvent();
+          },
+        ],
+      },
+    ],
+  });
 
   expect(toastError).not.toHaveBeenCalled();
   expect(event.defaultPrevented).toBe(true);
@@ -858,35 +821,24 @@ test("imports pasted DTCG resolver documents and composite tokens", async () => 
     ])
   );
   expect(toastSuccess).toHaveBeenCalledWith("Imported 5 design tokens.");
-  abortController.abort();
 });
 
 test("reports invalid pasted design token documents", async () => {
   resetStores();
   setupPage();
-  const abortController = new AbortController();
   const toastError = setupToastError();
-  initCopyPaste({ signal: abortController.signal });
-  const { clipboardData, event } = createClipboardEvent("paste");
-  clipboardData.setData(
-    "text/plain",
-    JSON.stringify({
-      spacing: {
-        $type: "dimension",
-        $value: { value: 8, unit: "invalid" },
-      },
-    })
-  );
-
-  document.dispatchEvent(event);
-  await waitForClipboardEvent();
+  const event = await pastePlainText({
+    spacing: {
+      $type: "dimension",
+      $value: { value: 8, unit: "invalid" },
+    },
+  });
 
   expect(event.defaultPrevented).toBe(true);
   expect($styles.get()).toEqual(new Map());
   expect(toastError).toHaveBeenCalledWith(
     expect.stringContaining("invalid dimension unit invalid")
   );
-  abortController.abort();
 });
 
 test("does not intercept native paste while editing text", async () => {

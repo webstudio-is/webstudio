@@ -15,13 +15,38 @@ import {
   Radio,
   Label,
 } from "@webstudio-is/design-system";
-import type { ConflictResolution } from "@webstudio-is/project-build/runtime";
+import type {
+  ConflictResolution,
+  TokenConflict,
+} from "@webstudio-is/project-build/runtime";
 
 export type TokenConflictDialogResult = ConflictResolution | "cancel";
-export type TokenConflictDialogConflict = {
-  tokenName: string;
-  fragmentTokenId: string;
-};
+export type TokenConflictDialogConflict = Pick<TokenConflict, "tokenName">;
+
+const conflictResolutionOptions = [
+  {
+    value: "theirs",
+    label: "Theirs",
+    description:
+      'Keep incoming tokens with a suffix added to their names (e.g., "primary-color-1")',
+  },
+  {
+    value: "ours",
+    label: "Ours",
+    description:
+      "Discard incoming tokens and use your existing project tokens instead",
+  },
+  {
+    value: "merge",
+    label: "Merge",
+    description:
+      "Combine both into your existing token (incoming styles override existing ones)",
+  },
+] as const satisfies ReadonlyArray<{
+  value: ConflictResolution;
+  label: string;
+  description: string;
+}>;
 
 type DialogState =
   | {
@@ -115,74 +140,27 @@ export const TokenConflictDialog = () => {
             }
           >
             <Flex direction="column" gap="1">
-              <Label>
-                <Flex
-                  gap="2"
-                  css={{
-                    padding: theme.spacing[3],
-                    cursor: "pointer",
-                    borderRadius: theme.borderRadius[4],
-                    "&:hover": {
-                      backgroundColor: theme.colors.backgroundHover,
-                    },
-                  }}
-                >
-                  <Radio value="theirs" />
-                  <Flex direction="column" gap="1">
-                    <Text variant="labels">Theirs</Text>
-                    <Text color="subtle">
-                      Keep incoming tokens with a suffix added to their names
-                      (e.g., "primary-color-1")
-                    </Text>
+              {conflictResolutionOptions.map((option) => (
+                <Label key={option.value}>
+                  <Flex
+                    gap="2"
+                    css={{
+                      padding: theme.spacing[3],
+                      cursor: "pointer",
+                      borderRadius: theme.borderRadius[4],
+                      "&:hover": {
+                        backgroundColor: theme.colors.backgroundHover,
+                      },
+                    }}
+                  >
+                    <Radio value={option.value} />
+                    <Flex direction="column" gap="1">
+                      <Text variant="labels">{option.label}</Text>
+                      <Text color="subtle">{option.description}</Text>
+                    </Flex>
                   </Flex>
-                </Flex>
-              </Label>
-
-              <Label>
-                <Flex
-                  gap="2"
-                  css={{
-                    padding: theme.spacing[3],
-                    cursor: "pointer",
-                    borderRadius: theme.borderRadius[4],
-                    "&:hover": {
-                      backgroundColor: theme.colors.backgroundHover,
-                    },
-                  }}
-                >
-                  <Radio value="ours" />
-                  <Flex direction="column" gap="1">
-                    <Text variant="labels">Ours</Text>
-                    <Text color="subtle">
-                      Discard incoming tokens and use your existing project
-                      tokens instead
-                    </Text>
-                  </Flex>
-                </Flex>
-              </Label>
-
-              <Label>
-                <Flex
-                  gap="2"
-                  css={{
-                    padding: theme.spacing[3],
-                    cursor: "pointer",
-                    borderRadius: theme.borderRadius[4],
-                    "&:hover": {
-                      backgroundColor: theme.colors.backgroundHover,
-                    },
-                  }}
-                >
-                  <Radio value="merge" />
-                  <Flex direction="column" gap="1">
-                    <Text variant="labels">Merge</Text>
-                    <Text color="subtle">
-                      Combine both into your existing token (incoming styles
-                      override existing ones)
-                    </Text>
-                  </Flex>
-                </Flex>
-              </Label>
+                </Label>
+              ))}
             </Flex>
           </RadioGroup>
 

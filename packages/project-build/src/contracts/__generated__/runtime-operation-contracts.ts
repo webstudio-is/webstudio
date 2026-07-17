@@ -60514,9 +60514,6 @@ export const runtimeOperationContractData = [
               path: {
                 type: "string",
               },
-              name: {
-                type: "string",
-              },
               type: {
                 type: "string",
               },
@@ -60546,7 +60543,6 @@ export const runtimeOperationContractData = [
                     },
                   },
                   required: ["property", "cssValue"],
-                  additionalProperties: {},
                 },
               },
               action: {
@@ -60559,7 +60555,6 @@ export const runtimeOperationContractData = [
             },
             required: [
               "path",
-              "name",
               "type",
               "target",
               "outputName",
@@ -60568,7 +60563,6 @@ export const runtimeOperationContractData = [
               "action",
               "conflict",
             ],
-            additionalProperties: {},
           },
         },
         counts: {

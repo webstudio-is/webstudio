@@ -905,7 +905,7 @@ const createCliMcpHost = async ({
             code: "NOT_FOUND",
           });
         }
-        return await session.restoreSnapshot(restorePoint.snapshot, { dryRun });
+        return await session.restoreSnapshot(restorePoint, { dryRun });
       },
     },
     async importProject(input) {

@@ -1,4 +1,4 @@
-import { readFile, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import {
@@ -23,6 +23,7 @@ import {
   type ProjectSessionPersistedSnapshot,
   type ProjectSessionPermissions,
   type ProjectSessionRemoteSnapshot,
+  type ProjectSessionRestorePointSummary,
   type ProjectSessionSnapshot,
   type ProjectSessionStorage,
   type ProjectSessionTransport,
@@ -41,10 +42,8 @@ import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
-import { withFileLock, writeFileAtomic } from "./fs-utils";
+import { loadJSONFile, withFileLock, writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
-
-export { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -281,19 +280,8 @@ export const createCliProjectSessionStorage = (
   path = getCliProjectSessionFile()
 ): ProjectSessionStorage => ({
   async load() {
-    try {
-      const value = JSON.parse(await readFile(path, "utf-8"));
-      return parsePersistedSnapshot(value);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as { code?: unknown }).code === "ENOENT"
-      ) {
-        return undefined;
-      }
-      throw error;
-    }
+    const value = await loadJSONFile<PersistedCliProjectSessionSnapshot>(path);
+    return value === null ? undefined : parsePersistedSnapshot(value);
   },
   async save(snapshot, options) {
     const current = await this.load();
@@ -319,16 +307,10 @@ export const createCliProjectSessionStorage = (
   },
 });
 
-export type CliProjectRestorePointSummary = {
-  id: string;
-  name: string;
-  createdAt: string;
-  projectId: string;
-  buildId: string;
-  version: number;
-};
-
-type PersistedCliProjectRestorePoint = CliProjectRestorePointSummary & {
+type PersistedCliProjectRestorePoint = Pick<
+  ProjectSessionRestorePointSummary,
+  "id" | "name" | "createdAt"
+> & {
   snapshot: PersistedCliProjectSessionSnapshot;
 };
 
@@ -337,7 +319,7 @@ type PersistedCliProjectRestorePoints = {
   points: PersistedCliProjectRestorePoint[];
 };
 
-export const maxCliProjectRestorePoints = 20;
+const maxCliProjectRestorePoints = 20;
 
 export const createCliProjectRestorePointStorage = (
   path = getCliProjectRestorePointsFile(),
@@ -346,24 +328,30 @@ export const createCliProjectRestorePointStorage = (
   if (Number.isInteger(maxPoints) === false || maxPoints < 1) {
     throw new Error("Restore point retention must be a positive integer");
   }
-  const load = async (): Promise<PersistedCliProjectRestorePoints> => {
-    try {
-      return JSON.parse(await readFile(path, "utf-8"));
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as { code?: unknown }).code === "ENOENT"
-      ) {
-        return { version: 1, points: [] };
-      }
-      throw error;
-    }
-  };
+  const load = async (): Promise<PersistedCliProjectRestorePoints> =>
+    (await loadJSONFile<PersistedCliProjectRestorePoints>(path)) ?? {
+      version: 1,
+      points: [],
+    };
   const getSummary = ({
-    snapshot: _snapshot,
-    ...summary
-  }: PersistedCliProjectRestorePoint) => summary;
+    id,
+    name,
+    createdAt,
+    snapshot,
+  }: PersistedCliProjectRestorePoint): ProjectSessionRestorePointSummary => ({
+    id,
+    name,
+    createdAt,
+    projectId: snapshot.projectId,
+    buildId: snapshot.buildId,
+    version: snapshot.version,
+  });
+  const save = async (points: PersistedCliProjectRestorePoint[]) => {
+    await writeFileAtomic(
+      path,
+      `${JSON.stringify({ version: 1, points }, undefined, 2)}\n`
+    );
+  };
   return {
     async create(name: string, snapshot: ProjectSessionSnapshot) {
       return await withFileLock(path, async () => {
@@ -372,22 +360,9 @@ export const createCliProjectRestorePointStorage = (
           id: crypto.randomUUID(),
           name,
           createdAt: new Date().toISOString(),
-          projectId: snapshot.projectId,
-          buildId: snapshot.buildId,
-          version: snapshot.version,
           snapshot: serializePersistedSnapshot(snapshot),
         };
-        await writeFileAtomic(
-          path,
-          `${JSON.stringify(
-            {
-              version: 1,
-              points: [...persisted.points, point].slice(-maxPoints),
-            },
-            undefined,
-            2
-          )}\n`
-        );
+        await save([...persisted.points, point].slice(-maxPoints));
         return getSummary(point);
       });
     },
@@ -401,10 +376,7 @@ export const createCliProjectRestorePointStorage = (
       if (point === undefined) {
         return;
       }
-      return {
-        summary: getSummary(point),
-        snapshot: parsePersistedSnapshot(point.snapshot),
-      };
+      return parsePersistedSnapshot(point.snapshot);
     },
     async delete(id: string) {
       return await withFileLock(path, async () => {
@@ -413,10 +385,7 @@ export const createCliProjectRestorePointStorage = (
         if (points.length === persisted.points.length) {
           return false;
         }
-        await writeFileAtomic(
-          path,
-          `${JSON.stringify({ version: 1, points }, undefined, 2)}\n`
-        );
+        await save(points);
         return true;
       });
     },

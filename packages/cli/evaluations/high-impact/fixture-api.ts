@@ -79,18 +79,18 @@ export const startHighImpactFixtureApi = async (
   fixture: HighImpactFixture
 ): Promise<HighImpactFixtureApi> => {
   Object.assign(globalThis, { React });
-  const [stateAdapters, runtime, projectSession] = await Promise.all([
-    import("@webstudio-is/project-build/state"),
-    import("@webstudio-is/project-build/runtime"),
-    import("../../src/project-session"),
-  ]);
+  const [stateAdapters, runtime, projectSession, restorePoints] =
+    await Promise.all([
+      import("@webstudio-is/project-build/state"),
+      import("@webstudio-is/project-build/runtime"),
+      import("../../src/project-session"),
+      import("@webstudio-is/project-build/project-session"),
+    ]);
   const { createBuilderStateFromBuildData, applyBuilderPatchTransactions } =
     stateAdapters;
   const { executeBuilderRuntimeOperation } = runtime;
-  const {
-    createLocalProjectBundleFromSessionSnapshot,
-    hydrateRestorePointTransaction,
-  } = projectSession;
+  const { createLocalProjectBundleFromSessionSnapshot } = projectSession;
+  const { hydrateRestorePointTransaction } = restorePoints;
   const persistedPages = createPersistedPages(fixture.project);
   const build = {
     id: buildId,

@@ -23,6 +23,7 @@ import {
   fragmentInsertResult,
 } from "./component-insert-contract";
 import { expressionWarningSchema } from "./expression-validation";
+import { designTokenImportPlanEntrySchema } from "./design-token-import";
 
 const looseObject = <Shape extends z.ZodRawShape>(shape: Shape) =>
   z.looseObject(shape);
@@ -492,22 +493,7 @@ export const runtimeOutputSchemas = {
   "designTokens.list": looseObject({ tokens: z.array(token), ...outputPage }),
   "designTokens.create": looseObject({ tokenIds: stringArray }),
   "designTokens.import": looseObject({
-    plan: z.array(
-      looseObject({
-        path: z.string(),
-        name: z.string(),
-        type: z.string(),
-        target: z.enum(["css-variable", "design-token"]),
-        outputName: z.string(),
-        property: z.string().optional(),
-        cssValue: z.string(),
-        declarations: z.array(
-          looseObject({ property: z.string(), cssValue: z.string() })
-        ),
-        action: z.enum(["create", "overwrite", "skip"]),
-        conflict: z.boolean(),
-      })
-    ),
+    plan: z.array(designTokenImportPlanEntrySchema),
     counts: looseObject({
       create: z.number().int(),
       overwrite: z.number().int(),

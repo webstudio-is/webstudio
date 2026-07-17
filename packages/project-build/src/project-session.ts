@@ -1,5 +1,6 @@
 import hash from "@emotion/hash";
 import deepEqual from "fast-deep-equal";
+import { z } from "zod";
 import type {
   RuntimeOperationContract,
   RuntimeOperationId,
@@ -67,6 +68,19 @@ export type ProjectSessionSnapshot = {
   compatibility: ProjectSessionCompatibility;
 };
 
+export const projectSessionRestorePointSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  createdAt: z.string(),
+  projectId: z.string(),
+  buildId: z.string(),
+  version: z.number().int(),
+});
+
+export type ProjectSessionRestorePointSummary = z.infer<
+  typeof projectSessionRestorePointSummarySchema
+>;
+
 export type ProjectSessionPersistedSnapshot = ProjectSessionSnapshot & {
   revision?: string;
 };
@@ -111,7 +125,7 @@ export type ProjectSessionTransport = {
     baseVersion: number;
     transactions: readonly BuilderPatchTransaction[];
   }) => Promise<ProjectSessionCommitResult>;
-  commitRestorePoint?: (input: {
+  commitRestorePoint: (input: {
     projectId: string;
     buildId: string;
     baseVersion: number;
@@ -797,10 +811,7 @@ export class ProjectSession {
           transaction,
         });
       }
-      const commit = await (
-        this.#options.transport.commitRestorePoint ??
-        this.#options.transport.commitPatch
-      )({
+      const commit = await this.#options.transport.commitRestorePoint({
         projectId: snapshot.projectId,
         buildId: snapshot.buildId,
         baseVersion: snapshot.version,

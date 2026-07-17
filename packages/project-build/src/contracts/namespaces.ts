@@ -37,5 +37,3 @@ export const restorePointNamespaces = builderNamespaces.filter(
   (namespace): namespace is Exclude<BuilderNamespace, "assets"> =>
     namespace !== "assets"
 );
-
-export type RestorePointNamespace = (typeof restorePointNamespaces)[number];

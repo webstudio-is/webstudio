@@ -83,9 +83,9 @@ describe("cli project session storage", () => {
 
     const created = await storage.create("Before redesign", snapshot);
     expect(await storage.list()).toEqual([created]);
-    expect(
-      (await storage.get(created.id))?.snapshot.state.instances
-    ).toBeInstanceOf(Map);
+    expect((await storage.get(created.id))?.state.instances).toBeInstanceOf(
+      Map
+    );
 
     const concurrentNames = Array.from(
       { length: 20 },

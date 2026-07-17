@@ -2,7 +2,6 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { loadById, patchBuild } from "@webstudio-is/project/index.server";
 import type { CompactBuild } from "@webstudio-is/project-build";
-import { builderPatchTransactionBaseSchema } from "@webstudio-is/project-build/contracts";
 import {
   loadBuildById,
   loadDevBuildByProjectId,
@@ -65,23 +64,10 @@ const buildPatchInputBase = {
   baseVersion: z.number().int(),
 };
 
-export const buildPatchInput = z
-  .object({
-    ...buildPatchInputBase,
-    transactions: z.array(builderPatchTransactionBaseSchema).min(1),
-  })
-  .superRefine((input, context) => {
-    const result = z.array(buildPatchTransaction).safeParse(input.transactions);
-    if (result.success === false) {
-      for (const issue of result.error.issues) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["transactions", ...issue.path],
-          message: issue.message,
-        });
-      }
-    }
-  });
+export const buildPatchInput = z.object({
+  ...buildPatchInputBase,
+  transactions: z.array(buildPatchTransaction).min(1),
+});
 
 export const buildRestorePointInput = z.object({
   ...buildPatchInputBase,

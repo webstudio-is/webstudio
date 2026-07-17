@@ -1,7 +1,8 @@
 import { z } from "zod";
 import {
+  color as colorEngine,
+  toColorSpace,
   toValue,
-  type ColorValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { fontWeightNames } from "@webstudio-is/fonts";
@@ -19,7 +20,7 @@ import {
   updateDesignTokenStyles,
 } from "./styles";
 
-export const designTokenSourceInput = z
+const designTokenSourceInput = z
   .discriminatedUnion("format", [
     z.object({
       format: z.literal("dtcg"),
@@ -90,9 +91,22 @@ export const designTokenImportInput = z.object({
   collision: z.enum(["skip", "overwrite", "rename"]).default("skip"),
 });
 
+export const designTokenImportPlanEntrySchema = z.object({
+  path: z.string(),
+  type: z.string(),
+  target: z.enum(["css-variable", "design-token"]),
+  outputName: z.string(),
+  property: z.string().optional(),
+  cssValue: z.string(),
+  declarations: z.array(
+    z.object({ property: z.string(), cssValue: z.string() })
+  ),
+  action: z.enum(["create", "overwrite", "skip"]),
+  conflict: z.boolean(),
+});
+
 type NormalizedToken = {
   path: string;
-  name: string;
   type: string;
   value: unknown;
 };
@@ -103,18 +117,24 @@ type CssDeclaration = {
   cssValue: string;
 };
 
-type NormalizedImportEntry = Omit<NormalizedToken, "value"> & {
-  target: "css-variable" | "design-token";
-  outputName: string;
-  property?: string;
-  cssValue: string;
-  declarations: Array<Required<Pick<CssDeclaration, "property" | "cssValue">>>;
-};
+type ImportPlanEntry = z.infer<typeof designTokenImportPlanEntrySchema>;
+type NormalizedImportEntry = Omit<ImportPlanEntry, "action" | "conflict">;
 
-type ImportPlanEntry = NormalizedImportEntry & {
-  action: "create" | "overwrite" | "skip";
-  conflict: boolean;
-};
+const withDeclarationSummary = (
+  entry: Omit<NormalizedImportEntry, "property" | "cssValue">
+): NormalizedImportEntry => ({
+  ...entry,
+  property:
+    entry.declarations.length === 1
+      ? entry.declarations[0].property
+      : undefined,
+  cssValue:
+    entry.declarations.length === 1
+      ? entry.declarations[0].cssValue
+      : entry.declarations
+          .map(({ property, cssValue }) => `${property}: ${cssValue}`)
+          .join("; "),
+});
 
 type ImportState = Pick<
   BuilderState,
@@ -139,14 +159,7 @@ const dtcgTokenTypeInput = z.enum([
 
 type DtcgTokenType = z.infer<typeof dtcgTokenTypeInput>;
 
-const dimensionValueInput = z
-  .object({
-    value: z.number(),
-    unit: z.string(),
-  })
-  .strict();
-
-const durationValueInput = z
+const numberWithUnitInput = z
   .object({
     value: z.number(),
     unit: z.string(),
@@ -233,61 +246,47 @@ const strokeStyleValueInput = z.union([
   ]),
   z
     .object({
-      dashArray: z.array(dimensionValueInput).min(1),
+      dashArray: z.array(numberWithUnitInput).min(1),
       lineCap: z.enum(["round", "butt", "square"]),
     })
     .strict(),
 ]);
 
+const shadowValueInput = z
+  .object({
+    color: colorValueInput,
+    offsetX: numberWithUnitInput,
+    offsetY: numberWithUnitInput,
+    blur: numberWithUnitInput,
+    spread: numberWithUnitInput,
+    inset: z.boolean().optional(),
+  })
+  .strict();
+
 const dtcgValueInputs = {
   color: colorValueInput,
-  dimension: dimensionValueInput,
+  dimension: numberWithUnitInput,
   fontFamily: fontFamilyValueInput,
   fontWeight: fontWeightValueInput,
-  duration: durationValueInput,
+  duration: numberWithUnitInput,
   cubicBezier: cubicBezierValueInput,
   number: z.number(),
   strokeStyle: strokeStyleValueInput,
   border: z
     .object({
       color: colorValueInput,
-      width: dimensionValueInput,
+      width: numberWithUnitInput,
       style: strokeStyleValueInput,
     })
     .strict(),
   transition: z
     .object({
-      duration: durationValueInput,
-      delay: durationValueInput,
+      duration: numberWithUnitInput,
+      delay: numberWithUnitInput,
       timingFunction: cubicBezierValueInput,
     })
     .strict(),
-  shadow: z.union([
-    z
-      .object({
-        color: colorValueInput,
-        offsetX: dimensionValueInput,
-        offsetY: dimensionValueInput,
-        blur: dimensionValueInput,
-        spread: dimensionValueInput,
-        inset: z.boolean().optional(),
-      })
-      .strict(),
-    z
-      .array(
-        z
-          .object({
-            color: colorValueInput,
-            offsetX: dimensionValueInput,
-            offsetY: dimensionValueInput,
-            blur: dimensionValueInput,
-            spread: dimensionValueInput,
-            inset: z.boolean().optional(),
-          })
-          .strict()
-      )
-      .min(1),
-  ]),
+  shadow: z.union([shadowValueInput, z.array(shadowValueInput).min(1)]),
   gradient: z
     .array(
       z
@@ -301,15 +300,33 @@ const dtcgValueInputs = {
   typography: z
     .object({
       fontFamily: fontFamilyValueInput,
-      fontSize: dimensionValueInput,
+      fontSize: numberWithUnitInput,
       fontWeight: fontWeightValueInput,
-      letterSpacing: dimensionValueInput,
+      letterSpacing: numberWithUnitInput,
       lineHeight: z.number(),
     })
     .strict(),
 } satisfies Partial<Record<DtcgTokenType, z.ZodType>>;
 
 type DtcgColor = Exclude<z.infer<(typeof dtcgValueInputs)["color"]>, string>;
+
+const dtcgMetadataProperties = [
+  "$deprecated",
+  "$description",
+  "$extensions",
+  "$type",
+] as const;
+const dtcgTokenProperties = new Set([
+  ...dtcgMetadataProperties,
+  "$ref",
+  "$value",
+]);
+const dtcgGroupProperties = new Set([
+  ...dtcgMetadataProperties,
+  "$extends",
+  "$root",
+  "$schema",
+]);
 
 const getFigmaDocumentData = (document: unknown) => {
   if (isRecord(document) === false) {
@@ -684,7 +701,6 @@ const getDtcgTokens = ({
   );
   type RawToken = {
     path: string;
-    name: string;
     type?: DtcgTokenType;
     value: unknown;
   };
@@ -707,24 +723,7 @@ const getDtcgTokens = ({
     token: boolean
   ) => {
     const location = path.join(".") || "<root>";
-    const knownProperties = token
-      ? new Set([
-          "$deprecated",
-          "$description",
-          "$extensions",
-          "$ref",
-          "$type",
-          "$value",
-        ])
-      : new Set([
-          "$deprecated",
-          "$description",
-          "$extends",
-          "$extensions",
-          "$root",
-          "$schema",
-          "$type",
-        ]);
+    const knownProperties = token ? dtcgTokenProperties : dtcgGroupProperties;
     for (const [name, metadata] of Object.entries(value)) {
       if (name.startsWith("$") === false) {
         continue;
@@ -805,7 +804,6 @@ const getDtcgTokens = ({
       const tokenPath = path.join(".");
       const token = {
         path: tokenPath,
-        name: tokenPath,
         type,
         value: hasValue ? value.$value : { $ref: value.$ref },
       };
@@ -985,9 +983,6 @@ const getDtcgTokens = ({
   });
 };
 
-const figmaType = (value: unknown) =>
-  typeof value === "string" ? value.toLowerCase() : "unknown";
-
 const genericFontFamilies = new Set([
   "cursive",
   "emoji",
@@ -1007,23 +1002,8 @@ const genericFontFamilies = new Set([
 const toCssFontFamily = (value: string) =>
   genericFontFamilies.has(value) ? value : JSON.stringify(value);
 
-const toInternalColorSpace = (
-  colorSpace: DtcgColor["colorSpace"]
-): ColorValue["colorSpace"] => {
-  switch (colorSpace) {
-    case "display-p3":
-      return "p3";
-    case "a98-rgb":
-      return "a98rgb";
-    case "prophoto-rgb":
-      return "prophoto";
-    default:
-      return colorSpace;
-  }
-};
-
 const toDtcgColorCss = (color: DtcgColor) => {
-  const colorSpace = toInternalColorSpace(color.colorSpace);
+  const colorSpace = toColorSpace(colorEngine.ColorSpace.get(color.colorSpace));
   const alpha = color.alpha ?? 1;
   if (color.components.every((component) => typeof component === "number")) {
     return toValue({
@@ -1195,8 +1175,10 @@ const getFigmaTokens = (
           : variableName;
         return {
           path: name,
-          name,
-          type: figmaType(variable.resolvedType),
+          type:
+            typeof variable.resolvedType === "string"
+              ? variable.resolvedType.toLowerCase()
+              : "unknown",
           value: resolveVariable(id, selected.mode, [id]),
         };
       });
@@ -1409,9 +1391,7 @@ const toCssVariableName = (name: string) => {
   const normalized = name
     .trim()
     .toLowerCase()
-    .split("")
-    .map((character) => (/[a-z0-9_-]/.test(character) ? character : "-"))
-    .join("")
+    .replace(/[^a-z0-9_-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
   if (normalized.length === 0) {
@@ -1441,7 +1421,7 @@ export const normalizeDesignTokenImport = (
       input.defaultTarget ??
       ({ target: "css-variable" } as const);
     const baseOutputName =
-      prefix === undefined ? token.name : `${prefix}.${token.name}`;
+      prefix === undefined ? token.path : `${prefix}.${token.path}`;
     const { value: _value, ...summary } = token;
     const declarations = toCssDeclarations(token);
     if (target.target === "css-variable") {
@@ -1451,16 +1431,14 @@ export const normalizeDesignTokenImport = (
             ? baseOutputName
             : `${baseOutputName}.${declaration.key}`
         );
-        return {
+        return withDeclarationSummary({
           ...summary,
           target: target.target,
           outputName,
-          property: outputName,
-          cssValue: declaration.cssValue,
           declarations: [
             { property: outputName, cssValue: declaration.cssValue },
           ],
-        };
+        });
       });
     }
     const normalizedDeclarations = declarations.map((declaration) => ({
@@ -1471,25 +1449,12 @@ export const normalizeDesignTokenImport = (
       cssValue: declaration.cssValue,
     }));
     return [
-      {
+      withDeclarationSummary({
         ...summary,
         target: target.target,
         outputName: baseOutputName,
-        property:
-          normalizedDeclarations.length === 1
-            ? normalizedDeclarations[0].property
-            : undefined,
-        cssValue:
-          normalizedDeclarations.length === 1
-            ? normalizedDeclarations[0].cssValue
-            : normalizedDeclarations
-                .map(
-                  (declaration) =>
-                    `${declaration.property}: ${declaration.cssValue}`
-                )
-                .join("; "),
         declarations: normalizedDeclarations,
-      },
+      }),
     ];
   });
 };
@@ -1588,15 +1553,14 @@ const renameImportEntry = (
   if (entry.target === "design-token") {
     return { ...entry, outputName };
   }
-  return {
+  return withDeclarationSummary({
     ...entry,
     outputName,
-    property: outputName,
     declarations: entry.declarations.map((declaration) => ({
       ...declaration,
       property: outputName,
     })),
-  };
+  });
 };
 
 const createImportPlan = (
@@ -1666,6 +1630,16 @@ export const planDesignTokenImport = (
   input: z.infer<typeof designTokenImportInput>
 ) => createImportPlan(state, input, getImportState(state, input.breakpoint));
 
+const toDesignTokenStyles = (
+  entry: ImportPlanEntry,
+  breakpoint: string | undefined
+) =>
+  entry.declarations.map(({ property, cssValue }) => ({
+    property,
+    value: { type: "unparsed" as const, value: cssValue },
+    breakpoint,
+  }));
+
 export const importDesignTokens = (
   state: ImportState,
   input: z.infer<typeof designTokenImportInput>,
@@ -1705,11 +1679,7 @@ export const importDesignTokens = (
         {
           tokens: created.map((entry) => ({
             name: entry.outputName,
-            declarations: entry.declarations.map((declaration) => ({
-              property: declaration.property,
-              value: { type: "unparsed", value: declaration.cssValue },
-              breakpoint: input.breakpoint,
-            })),
+            declarations: toDesignTokenStyles(entry, input.breakpoint),
           })),
         },
         context
@@ -1725,11 +1695,7 @@ export const importDesignTokens = (
       accumulator.stage(
         updateDesignTokenStyles(accumulator.state, {
           designTokenId,
-          updates: entry.declarations.map((declaration) => ({
-            property: declaration.property,
-            value: { type: "unparsed", value: declaration.cssValue },
-            breakpoint: input.breakpoint,
-          })),
+          updates: toDesignTokenStyles(entry, input.breakpoint),
         })
       );
     }
