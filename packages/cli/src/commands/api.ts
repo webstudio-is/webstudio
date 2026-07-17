@@ -12,7 +12,7 @@ export const apiCompatibilityHeaders = createApiClientHeaders({
 
 const updateCliCommand = "npm install -g webstudio@latest";
 
-const getCliCompatibilityMessage = (error: unknown, command: string) => {
+export const getCliCompatibilityMessage = (error: unknown, command: string) => {
   return getApiCompatibilityMessage(error, {
     updateCommand: updateCliCommand,
     runLatestCommand: `npx webstudio@latest ${command}`,

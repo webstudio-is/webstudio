@@ -5,6 +5,7 @@ import { expect, test, vi } from "vitest";
 import {
   connect,
   mergeServerConfig,
+  verifyProjectAccess,
   type ConnectDependencies,
 } from "./connect";
 import { HandledCliError } from "../errors";
@@ -29,7 +30,8 @@ const createDependencies = (
     }
     return content;
   }),
-  verifyProjectAccess: vi.fn(async () => undefined),
+  registerCodexServer: vi.fn(async () => undefined),
+  verifyProjectAccess: vi.fn(async () => ({ ok: true as const })),
   writeFileAtomic: vi.fn(async () => undefined),
 });
 
@@ -113,9 +115,10 @@ test("blocks on invalid json without touching the file", async () => {
 
 test("does not configure a client when project access cannot be verified", async () => {
   const dependencies = createDependencies(linkedProject);
-  vi.mocked(dependencies.verifyProjectAccess).mockRejectedValue(
-    new Error("credential included by upstream error")
-  );
+  vi.mocked(dependencies.verifyProjectAccess).mockResolvedValue({
+    ok: false,
+    message: "Project access was rejected without exposing its credential.",
+  });
   const error = vi.spyOn(log, "error").mockImplementation(() => {});
 
   await expect(
@@ -124,7 +127,7 @@ test("does not configure a client when project access cannot be verified", async
 
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
   expect(error).toHaveBeenCalledWith(
-    expect.not.stringContaining("credential included by upstream error")
+    "Project access was rejected without exposing its credential."
   );
   error.mockRestore();
 });
@@ -181,28 +184,54 @@ test.each(["claude", "cursor", "vscode"] as const)(
   }
 );
 
-test("prints the Codex registration command without writing files", async () => {
+test("registers the Codex server without writing files", async () => {
   const dependencies = createDependencies(linkedProject);
-  const message = vi.spyOn(log, "message");
 
   await connect({ client: "codex", print: false }, dependencies);
 
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
-  expect(message).toHaveBeenCalledWith(
-    expect.stringContaining(
-      "codex mcp add webstudio -- npx -y webstudio@latest mcp"
-    )
-  );
-  message.mockRestore();
+  expect(dependencies.registerCodexServer).toHaveBeenCalledWith({
+    command: "npx",
+    args: ["-y", "webstudio@latest", "mcp"],
+  });
 });
 
-test("prints configuration without writing when print is requested", async () => {
+test("reports a bounded error when Codex registration fails", async () => {
   const dependencies = createDependencies(linkedProject);
+  vi.mocked(dependencies.registerCodexServer).mockRejectedValue(
+    new Error("private subprocess detail")
+  );
+  const error = vi.spyOn(log, "error").mockImplementation(() => {});
 
-  await connect({ client: "claude", print: true }, dependencies);
+  await expect(
+    connect({ client: "codex", print: false }, dependencies)
+  ).rejects.toThrow(HandledCliError);
 
-  expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+  expect(error).toHaveBeenCalledWith(
+    expect.not.stringContaining("private subprocess detail")
+  );
+  error.mockRestore();
 });
+
+test.each(["claude", "codex"] as const)(
+  "prints %s configuration without project access or writes",
+  async (client) => {
+    const dependencies = createDependencies();
+    const message = vi.spyOn(log, "message").mockImplementation(() => {});
+
+    await connect({ client, print: true }, dependencies);
+
+    expect(dependencies.verifyProjectAccess).not.toHaveBeenCalled();
+    expect(dependencies.registerCodexServer).not.toHaveBeenCalled();
+    expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+    if (client === "codex") {
+      expect(message).toHaveBeenCalledWith(
+        "codex mcp add webstudio -- npx -y webstudio@latest mcp"
+      );
+    }
+    message.mockRestore();
+  }
+);
 
 test("lists supported clients when no client is provided", async () => {
   const dependencies = createDependencies(linkedProject);
@@ -277,4 +306,73 @@ test("merge keeps result unchanged only for a deep-equal server entry", () => {
       serverEntry,
     }).result
   ).toBe("created");
+});
+
+test("project access verification uses the linked API connection and compatibility headers", async () => {
+  const connection = {
+    origin: "https://builder.example.com",
+    authToken: "secret",
+    projectId: "project-id",
+  };
+  const resolveConnection = vi.fn(async () => connection);
+  const getPermissions = vi.fn(async () => ({ canRead: true }));
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: resolveConnection,
+      getProjectPermissions: getPermissions,
+    })
+  ).resolves.toEqual({ ok: true });
+
+  expect(getPermissions).toHaveBeenCalledWith({
+    ...connection,
+    headers: expect.objectContaining({
+      "x-webstudio-client": "cli",
+      "x-webstudio-client-version": expect.any(String),
+    }),
+  });
+});
+
+test("project access verification classifies local, authorization, and reachability failures", async () => {
+  const connection = {
+    origin: "https://builder.example.com",
+    authToken: "secret",
+    projectId: "project-id",
+  };
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: vi.fn(async () => {
+        throw new Error("secret local config detail");
+      }),
+      getProjectPermissions: vi.fn(),
+    })
+  ).resolves.toEqual({
+    ok: false,
+    message: expect.stringContaining("This folder is not linked"),
+  });
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: vi.fn(async () => connection),
+      getProjectPermissions: vi.fn(async () => {
+        throw { data: { code: "UNAUTHORIZED" } };
+      }),
+    })
+  ).resolves.toEqual({
+    ok: false,
+    message: expect.stringContaining("credential was rejected"),
+  });
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: vi.fn(async () => connection),
+      getProjectPermissions: vi.fn(async () => {
+        throw new Error("secret network detail");
+      }),
+    })
+  ).resolves.toEqual({
+    ok: false,
+    message: expect.stringContaining("could not verify project access"),
+  });
 });

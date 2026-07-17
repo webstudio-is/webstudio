@@ -3,15 +3,17 @@ import { dirname, join } from "node:path";
 import { cwd } from "node:process";
 import { log } from "@clack/prompts";
 import { getProjectPermissions } from "@webstudio-is/http-client";
+import { x } from "tinyexec";
 import {
   createFolderIfNotExists,
   isFileExists,
   writeFileAtomic,
 } from "../fs-utils";
 import { resolveApiConnection } from "../api-connection";
+import { getStableErrorCode, isMissingApiAccessError } from "../error-codes";
 import { HandledCliError } from "../errors";
 import { isPlainRecord } from "../type-utils";
-import { apiCompatibilityHeaders } from "./api";
+import { apiCompatibilityHeaders, getCliCompatibilityMessage } from "./api";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -59,10 +61,24 @@ const parseServerCommand = (serverCommand: string) => {
   return { command, args };
 };
 
+type ServerCommand = ReturnType<typeof parseServerCommand>;
+
 const createServerEntry = (
-  serverCommand: string,
+  serverCommand: ServerCommand,
   serverFields?: Record<string, unknown>
-) => ({ ...serverFields, ...parseServerCommand(serverCommand) });
+) => ({ ...serverFields, ...serverCommand });
+
+const getCodexRegistrationArgs = ({ command, args }: ServerCommand) => [
+  "mcp",
+  "add",
+  agentServerName,
+  "--",
+  command,
+  ...args,
+];
+
+const getCodexRegistrationCommand = (serverCommand: ServerCommand) =>
+  ["codex", ...getCodexRegistrationArgs(serverCommand)].join(" ");
 
 export type ConnectFileResult =
   | "created"
@@ -115,22 +131,76 @@ export type ConnectDependencies = {
   createFolderIfNotExists: typeof createFolderIfNotExists;
   isFileExists: typeof isFileExists;
   readFile: (path: string, encoding: "utf8") => Promise<string>;
-  verifyProjectAccess: () => Promise<void>;
+  registerCodexServer: (serverCommand: ServerCommand) => Promise<void>;
+  verifyProjectAccess: () => Promise<ProjectAccessResult>;
   writeFileAtomic: typeof writeFileAtomic;
 };
 
-const verifyProjectAccess = async () => {
-  const connection = await resolveApiConnection();
-  await getProjectPermissions({
-    ...connection,
-    headers: apiCompatibilityHeaders,
-  });
+export type ProjectAccessResult = { ok: true } | { ok: false; message: string };
+
+type VerifyProjectAccessDependencies = {
+  getProjectPermissions: typeof getProjectPermissions;
+  resolveApiConnection: typeof resolveApiConnection;
+};
+
+const defaultVerifyProjectAccessDependencies: VerifyProjectAccessDependencies =
+  { getProjectPermissions, resolveApiConnection };
+
+export const verifyProjectAccess = async (
+  dependencies = defaultVerifyProjectAccessDependencies
+): Promise<ProjectAccessResult> => {
+  let connection;
+  try {
+    connection = await dependencies.resolveApiConnection();
+  } catch {
+    return {
+      ok: false,
+      message:
+        "This folder is not linked to a Webstudio project. Run `webstudio init --link <share-link>` with a current editable share link, then retry.",
+    };
+  }
+
+  try {
+    await dependencies.getProjectPermissions({
+      ...connection,
+      headers: apiCompatibilityHeaders,
+    });
+    return { ok: true };
+  } catch (error) {
+    const compatibilityMessage = getCliCompatibilityMessage(error, "connect");
+    if (compatibilityMessage !== undefined) {
+      return { ok: false, message: compatibilityMessage };
+    }
+    const code = getStableErrorCode(error);
+    if (
+      code === "UNAUTHORIZED" ||
+      code === "FORBIDDEN" ||
+      isMissingApiAccessError(error)
+    ) {
+      return {
+        ok: false,
+        message:
+          "The saved project credential was rejected. Run `webstudio init --link <share-link>` with a current editable share link, then retry.",
+      };
+    }
+    return {
+      ok: false,
+      message:
+        "The linked Builder could not verify project access. Check that it is reachable and retry. If access has changed, relink with `webstudio init --link <share-link>`.",
+    };
+  }
+};
+
+const registerCodexServer = async (serverCommand: ServerCommand) => {
+  await x("codex", getCodexRegistrationArgs(serverCommand));
+  await x("codex", ["mcp", "get", agentServerName]);
 };
 
 const defaultDependencies: ConnectDependencies = {
   createFolderIfNotExists,
   isFileExists,
   readFile,
+  registerCodexServer,
   verifyProjectAccess,
   writeFileAtomic,
 };
@@ -159,7 +229,7 @@ export const connectOptions = (yargs: CommonYargsArgv) =>
     )
     .example(
       "webstudio connect codex",
-      "Print the command that registers Webstudio MCP with Codex"
+      "Register Webstudio MCP in Codex's global configuration"
     )
     .example(
       "webstudio connect cursor --print",
@@ -170,7 +240,7 @@ export const connectOptions = (yargs: CommonYargsArgv) =>
         "Connect configures the selected MCP client from the linked project directory.",
         "Project access is verified before client configuration is written.",
         "Existing config files are merged: only the webstudio server entry is created or replaced.",
-        "Codex uses global configuration, so this command prints the exact codex mcp add command instead of changing it silently.",
+        "Codex uses global configuration, so connect registers and verifies the server with the codex CLI.",
         "Run webstudio init --link and webstudio sync first so the MCP server can operate the project.",
       ].join("\n")
     );
@@ -196,44 +266,55 @@ export const connect = async (
     return;
   }
 
-  try {
-    await dependencies.verifyProjectAccess();
-  } catch {
-    log.error(
-      "Cannot verify this linked Webstudio project. Make sure its Builder is reachable, then run `webstudio init --link <share-link>` with a current editable share link and retry."
+  const parsedServerCommand = parseServerCommand(serverCommand);
+
+  if (client === "codex") {
+    if (options.print === true) {
+      log.message(getCodexRegistrationCommand(parsedServerCommand));
+      return;
+    }
+  } else if (options.print === true) {
+    const target = clientTargets[client];
+    const serverEntry = createServerEntry(
+      parsedServerCommand,
+      "serverFields" in target ? target.serverFields : undefined
     );
+    const configuration = `${JSON.stringify(
+      { [target.rootKey]: { [agentServerName]: serverEntry } },
+      null,
+      2
+    )}\n`;
+    log.message(`${target.path}\n\n${configuration}`);
+    return;
+  }
+
+  const access = await dependencies.verifyProjectAccess();
+  if (access.ok === false) {
+    log.error(access.message);
     throw new HandledCliError();
   }
 
   if (client === "codex") {
-    log.message(
-      [
-        "Register the Webstudio MCP server with Codex:",
-        "",
-        `  codex mcp add ${agentServerName} -- ${serverCommand}`,
-        "",
-        "Restart Codex, then ask it to use Webstudio MCP and list the project pages.",
-      ].join("\n")
+    try {
+      await dependencies.registerCodexServer(parsedServerCommand);
+    } catch {
+      log.error(
+        "Codex could not register the Webstudio MCP server. Make sure the `codex` command is installed and available, or run `webstudio connect codex --print` for the exact command."
+      );
+      throw new HandledCliError();
+    }
+    log.success(
+      "Registered and verified the webstudio MCP server in Codex. Restart Codex, then ask it to use Webstudio MCP and list the project pages."
     );
     return;
   }
 
   const target = clientTargets[client];
   const serverEntry = createServerEntry(
-    serverCommand,
+    parsedServerCommand,
     "serverFields" in target ? target.serverFields : undefined
   );
-  const configuration = `${JSON.stringify(
-    { [target.rootKey]: { [agentServerName]: serverEntry } },
-    null,
-    2
-  )}\n`;
   const completionHint = `${target.hint} Ask your agent to use Webstudio MCP and list the project pages.`;
-
-  if (options.print === true) {
-    log.message(`${target.path}\n\n${configuration}`);
-    return;
-  }
 
   const path = join(cwd(), target.path);
   const current = (await dependencies.isFileExists(path))
