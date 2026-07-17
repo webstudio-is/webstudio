@@ -50,7 +50,7 @@ export const openAssetDetails = async ({
 }) => {
   const asset = page.getByTitle(filename);
   await asset.hover();
-  await asset.getByRole("button", { name: "Options" }).click();
+  await asset.locator("..").getByTitle("Options").click();
   await page.getByText("Asset details").waitFor();
 };
 
@@ -78,8 +78,11 @@ export const deleteSelectedAsset = async ({
   page: Page;
   filename: string;
 }) => {
-  const save = waitForChangeToBeSaved({ page });
   await page.getByRole("button", { name: "Delete" }).click();
+  const deleteDialog = page.getByRole("dialog", { name: "Delete asset?" });
+  await deleteDialog.waitFor();
+  const save = waitForChangeToBeSaved({ page });
+  await deleteDialog.getByRole("button", { name: "Delete" }).click();
   await page.getByTitle(filename).waitFor({ state: "hidden" });
   await save;
 };
