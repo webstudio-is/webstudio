@@ -5,6 +5,7 @@ test("uses one ordered command model for context and dropdown menus", () => {
   const action = vi.fn();
   const items = getAssetManagerItemMenuItems({
     open: action,
+    settings: action,
     createFolder: action,
     upload: action,
     rename: action,
@@ -22,6 +23,7 @@ test("uses one ordered command model for context and dropdown menus", () => {
     "createFolder",
     "upload",
     "open",
+    "settings",
     "rename",
     "cut",
     "copy",
@@ -62,8 +64,18 @@ test("keeps unavailable panel actions visible but disabled", () => {
   const action = vi.fn();
   const items = getAssetManagerItemMenuItems(
     { paste: action },
-    new Set(["paste"])
+    { disabledActions: new Set(["paste"]) }
   );
 
   expect(items).toMatchObject([{ name: "paste", disabled: true }]);
+});
+
+test("omits actions hidden by a menu surface", () => {
+  const action = vi.fn();
+  const items = getAssetManagerItemMenuItems(
+    { settings: action, rename: action },
+    { hiddenActions: new Set(["rename"]) }
+  );
+
+  expect(items.map(({ name }) => name)).toEqual(["settings"]);
 });

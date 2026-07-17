@@ -1,6 +1,7 @@
 import {
   forwardRef,
   type ComponentProps,
+  type FocusEvent,
   type KeyboardEvent,
   type MouseEventHandler,
   type ReactNode,
@@ -22,7 +23,7 @@ const focusOutline = {
   outlineOffset: -1,
 };
 
-export const thumbnailActionVisibilityValue = `var(${thumbnailActionVisibility}, hidden)`;
+const thumbnailActionVisibilityValue = `var(${thumbnailActionVisibility}, hidden)`;
 
 const ThumbnailGroup = styled(Box, {
   position: "relative",
@@ -33,21 +34,37 @@ const ThumbnailGroup = styled(Box, {
     },
   },
   "&:hover, &:focus-within": showThumbnailAction,
+  "&:hover > [data-asset-thumbnail]": {
+    backgroundColor: theme.colors.backgroundAssetcardHover,
+  },
 });
 
 type AssetThumbnailGroupProps = ComponentProps<typeof ThumbnailGroup> & {
   selected?: boolean;
+  onFocusChange?: (focused: boolean) => void;
 };
 
 export const AssetThumbnailGroup = forwardRef<
   HTMLDivElement,
   AssetThumbnailGroupProps
->(({ onKeyDown, ...props }, forwardedRef) => (
+>(({ onFocusChange, onFocus, onBlur, onKeyDown, ...props }, forwardedRef) => (
   <ArrowFocus
     render={({ handleKeyDown }) => (
       <ThumbnailGroup
         {...props}
         ref={forwardedRef}
+        onFocus={(event: FocusEvent<HTMLDivElement>) => {
+          onFocus?.(event);
+          if (event.currentTarget.contains(event.relatedTarget) === false) {
+            onFocusChange?.(true);
+          }
+        }}
+        onBlur={(event: FocusEvent<HTMLDivElement>) => {
+          onBlur?.(event);
+          if (event.currentTarget.contains(event.relatedTarget) === false) {
+            onFocusChange?.(false);
+          }
+        }}
         onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
           onKeyDown?.(event);
           if (
@@ -63,11 +80,30 @@ export const AssetThumbnailGroup = forwardRef<
 ));
 AssetThumbnailGroup.displayName = "AssetThumbnailGroup";
 
-export const AssetThumbnailAction = styled(Box, {
+export const AssetThumbnailHeader = styled("header", {
   position: "absolute",
-  right: 4,
-  top: 4,
+  zIndex: 1,
+  top: 0,
+  left: 0,
+  right: 0,
+  boxSizing: "border-box",
+  display: "flex",
+  alignItems: "flex-start",
+  padding: theme.spacing[3],
+  paddingRight: theme.spacing[4],
+  pointerEvents: "none",
+});
+
+export const AssetThumbnailMenu = styled(Box, {
+  marginLeft: "auto",
   visibility: thumbnailActionVisibilityValue,
+  pointerEvents: "auto",
+  "& button": {
+    borderRadius: theme.borderRadius[3],
+  },
+  "& svg": {
+    filter: "drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))",
+  },
 });
 
 const Root = styled("div", {

@@ -386,6 +386,7 @@ export const color = {
   backgroundDestructiveNotification: "#ffe9e9",
   backgroundSuccessMain: "#00894a",
   backgroundSuccessNotification: "#e9f9ee",
+  backgroundStatusAttention: "#f4c430",
   backgroundAlertMain: "#f5d90a",
   backgroundAlertNotification: "#fffbd1",
   backgroundInfoMain: "#0175dc",

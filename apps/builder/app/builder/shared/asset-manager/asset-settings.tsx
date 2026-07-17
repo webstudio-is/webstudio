@@ -1,5 +1,5 @@
 import isValidFilename from "valid-filename";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { computed } from "nanostores";
@@ -20,11 +20,9 @@ import {
   InputField,
   Label,
   Popover,
-  PopoverClose,
+  PopoverAnchor,
   PopoverContent,
   PopoverTitle,
-  PopoverTitleActions,
-  PopoverTrigger,
   SmallIconButton,
   styled,
   Text,
@@ -39,7 +37,6 @@ import {
   CopyIcon,
   DimensionsIcon,
   DownloadIcon,
-  GearIcon,
   InfoCircleIcon,
   PageIcon,
   RefreshCcwIcon,
@@ -77,7 +74,6 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { AssetFolderSelector } from "./asset-folder-selector";
 import { moveAssetToFolder } from "./asset-folder-actions";
-import { thumbnailActionVisibilityValue } from "./asset-thumbnail-card";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
@@ -85,10 +81,6 @@ import {
   calculateUsagesByAssetId,
   type AssetUsage,
 } from "@webstudio-is/project-build/runtime";
-import {
-  AssetManagerItemActionsDropdown,
-  type AssetManagerItemActions,
-} from "./asset-manager-item-menu";
 
 const $usagesByAssetId = computed(
   [$pages, $projectSettings, $props, $styles, $assets],
@@ -252,6 +244,17 @@ const UsageDot = styled(Box, {
   boxShadow: "0 0 3px rgb(0, 0, 0)",
   borderRadius: "50%",
   pointerEvents: "none",
+  variants: {
+    unused: {
+      true: {
+        width: 4,
+        height: 4,
+        backgroundColor: theme.colors.backgroundStatusAttention,
+        border: "none",
+        boxShadow: "none",
+      },
+    },
+  },
 });
 
 const useLocalValue = <Type extends string>(
@@ -296,15 +299,17 @@ const useLocalValue = <Type extends string>(
   ] as const;
 };
 
-const AssetInfoContent = ({
+const AssetSettingsContent = ({
   asset,
   usages,
-  actions,
+  onDelete,
+  onReplace,
   focusName,
 }: {
   asset: Asset;
   usages: AssetUsage[];
-  actions: AssetManagerItemActions;
+  onDelete?: () => void;
+  onReplace?: () => void;
   focusName: boolean;
 }) => {
   const { canDownloadAssets } = useStore($permissions);
@@ -497,21 +502,17 @@ const AssetInfoContent = ({
             </Button>
           </Tooltip>
         ) : usages.length === 0 ? (
-          <Button
-            color="destructive"
-            onClick={actions.delete}
-            prefix={<TrashIcon />}
-          >
+          <Button color="destructive" onClick={onDelete} prefix={<TrashIcon />}>
             Delete
           </Button>
         ) : (
-          <Button onClick={actions.delete}>Review & delete</Button>
+          <Button onClick={onDelete}>Review & delete</Button>
         )}
 
         <Flex gap="1">
           {isImage && (
             <>
-              {replaceError || actions.replace === undefined ? (
+              {replaceError || onReplace === undefined ? (
                 <Tooltip side="bottom" content={replaceError}>
                   <IconButton disabled>
                     <RefreshCcwIcon />
@@ -519,10 +520,7 @@ const AssetInfoContent = ({
                 </Tooltip>
               ) : (
                 <Tooltip side="bottom" content="Replace asset">
-                  <IconButton
-                    aria-label="Replace asset"
-                    onClick={actions.replace}
-                  >
+                  <IconButton aria-label="Replace asset" onClick={onReplace}>
                     <RefreshCcwIcon />
                   </IconButton>
                 </Tooltip>
@@ -594,84 +592,53 @@ export const AssetDeleteDialog = ({
   );
 };
 
-export const AssetInfo = ({
+export const AssetSettings = ({
   asset,
   open,
   onOpenChange,
-  actions,
+  onDelete,
+  onReplace,
   focusName = false,
+  children,
 }: {
   asset: Asset;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  actions: AssetManagerItemActions;
+  onDelete?: () => void;
+  onReplace?: () => void;
   focusName?: boolean;
+  children: ReactNode;
 }) => {
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
-  const detailsActions: AssetManagerItemActions = {
-    ...actions,
-    delete:
-      actions.delete === undefined
-        ? undefined
-        : () => {
-            onOpenChange(false);
-            actions.delete?.();
-          },
-  };
+  const deleteAsset =
+    onDelete === undefined
+      ? undefined
+      : () => {
+          onOpenChange(false);
+          onDelete();
+        };
   return (
-    <>
-      <Popover modal open={open} onOpenChange={onOpenChange}>
-        <PopoverTrigger asChild>
-          <SmallIconButton
-            title="Options"
-            tabIndex={-1}
-            css={{
-              visibility: thumbnailActionVisibilityValue,
-              position: "absolute",
-              color: theme.colors.backgroundIconSubtle,
-              top: theme.spacing[3],
-              right: theme.spacing[3],
-              cursor: "pointer",
-              transition: "opacity 100ms ease",
-              "& svg": {
-                fill: `oklch(from ${theme.colors.white} l c h / 0.9)`,
-              },
-              "&:hover": {
-                color: theme.colors.backgroundIconSubtle,
-                background: "transparent",
-                "& svg": {
-                  fill: `oklch(from ${theme.colors.white} l c h / 1)`,
-                },
-              },
-            }}
-            icon={<GearIcon />}
-          />
-        </PopoverTrigger>
-        <PopoverContent css={{ minWidth: 250 }}>
-          <PopoverTitle
-            suffix={
-              <PopoverTitleActions>
-                <AssetManagerItemActionsDropdown
-                  actions={{ ...detailsActions, rename: undefined }}
-                />
-                <PopoverClose />
-              </PopoverTitleActions>
-            }
-          >
-            Asset details
-          </PopoverTitle>
-          <AssetInfoContent
-            asset={asset}
-            usages={usages}
-            actions={detailsActions}
-            focusName={focusName}
-          />
-        </PopoverContent>
-      </Popover>
+    <Popover modal open={open} onOpenChange={onOpenChange}>
       {usages.length === 0 && (
-        <UsageDot css={{ position: "absolute", top: 9, right: 9 }} />
+        <UsageDot
+          unused
+          role="img"
+          aria-label="Unused asset"
+          data-asset-thumbnail-indicator=""
+        />
       )}
-    </>
+      <PopoverAnchor asChild>{children}</PopoverAnchor>
+      <PopoverContent css={{ minWidth: 250 }}>
+        <PopoverTitle>Asset settings</PopoverTitle>
+        <AssetSettingsContent
+          asset={asset}
+          usages={usages}
+          onDelete={deleteAsset}
+          onReplace={onReplace}
+          focusName={focusName}
+        />
+      </PopoverContent>
+    </Popover>
   );
 };

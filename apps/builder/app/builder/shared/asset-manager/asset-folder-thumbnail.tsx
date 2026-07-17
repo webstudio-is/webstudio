@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  SmallIconButton,
-  Tooltip,
-} from "@webstudio-is/design-system";
-import { ChevronRightIcon, FolderIcon, GearIcon } from "@webstudio-is/icons";
+import { ChevronRightIcon, FolderIcon } from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
@@ -15,26 +9,24 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { AssetFolderSettingsDialog } from "./asset-folder-dialogs";
 import {
-  AssetThumbnailAction,
   AssetThumbnailCard,
   AssetThumbnailGroup,
 } from "./asset-thumbnail-card";
 import {
   $assetManagerClipboard,
-  copyAssetManagerItem,
-  cutAssetManagerItem,
-  duplicateAssetManagerItem,
+  createAssetManagerClipboardActions,
   pasteAssetManagerItem,
 } from "./asset-manager-clipboard";
+import { type AssetManagerItemActions } from "./asset-manager-item-menu";
 import {
-  AssetManagerItemContextMenuContent,
-  type AssetManagerItemActions,
-} from "./asset-manager-item-menu";
+  AssetManagerThumbnail,
+  AssetManagerThumbnailMenu,
+} from "./asset-manager-thumbnail";
 
 export const FolderThumbnail = ({
   folder,
   selected,
-  onSelect,
+  onSelectionChange,
   onOpen,
   canManage,
   canMoveFolder,
@@ -45,7 +37,7 @@ export const FolderThumbnail = ({
 }: {
   folder: AssetFolder;
   selected: boolean;
-  onSelect: () => void;
+  onSelectionChange: (selected: boolean) => void;
   onOpen: () => void;
   canManage: boolean;
   canMoveFolder: (folderId: string) => boolean;
@@ -73,14 +65,13 @@ export const FolderThumbnail = ({
     open: onOpen,
     ...(canManage
       ? {
+          settings: () => openSettings(),
           rename: () => openSettings(),
-          cut: () => cutAssetManagerItem(item),
-          copy: () => copyAssetManagerItem(item),
+          ...createAssetManagerClipboardActions(item),
           paste:
-            clipboard === undefined
+            clipboard?.projectId !== folder.projectId
               ? undefined
               : () => pasteAssetManagerItem(folder.id),
-          duplicate: () => duplicateAssetManagerItem(item),
           delete: () => openSettings(true),
         }
       : {}),
@@ -122,58 +113,43 @@ export const FolderThumbnail = ({
 
   return (
     <>
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <AssetThumbnailGroup selected={selected} onFocus={onSelect}>
-            <AssetThumbnailCard
-              ref={(element) => {
-                elementRef.current = element;
-                onElementChange?.(element);
-              }}
-              as="button"
-              type="button"
-              label={folder.name}
-              path={path}
-              preview={<FolderIcon size={40} />}
-              aria-label={`Folder ${folder.name}`}
-              aria-description="Double-click to open. Drag assets or folders here to move them."
-              aria-pressed={selected}
-              clickable
-              selected={selected}
-              dropTarget={isDropTarget}
-              onClick={onSelect}
-              onContextMenu={onSelect}
-              onDoubleClick={onOpen}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  onOpen();
-                }
-              }}
+      <AssetManagerThumbnail
+        actions={actions}
+        selected={selected}
+        onSelectionChange={onSelectionChange}
+        thumbnailRef={(element) => {
+          elementRef.current = element;
+          onElementChange?.(element);
+        }}
+        label={folder.name}
+        path={path}
+        preview={<FolderIcon size={40} />}
+        aria-label={`Folder ${folder.name}`}
+        aria-description="Double-click to open. Drag assets or folders here to move them."
+        clickable
+        dropTarget={isDropTarget}
+        onDoubleClick={onOpen}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onOpen();
+          }
+        }}
+        header={
+          canManage ? (
+            <AssetManagerThumbnailMenu
+              actions={actions}
+              label={`Actions for ${folder.name}`}
             />
-            {canManage && (
-              <AssetThumbnailAction>
-                <Tooltip content="Folder settings">
-                  <SmallIconButton
-                    icon={<GearIcon />}
-                    aria-label={`Settings for ${folder.name}`}
-                    tabIndex={-1}
-                    onClick={() => openSettings()}
-                  />
-                </Tooltip>
-              </AssetThumbnailAction>
-            )}
-          </AssetThumbnailGroup>
-        </ContextMenuTrigger>
-        <AssetManagerItemContextMenuContent actions={actions} />
-      </ContextMenu>
+          ) : undefined
+        }
+      />
       {canManage && (
         <AssetFolderSettingsDialog
           folder={folder}
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
           initialDeleteConfirmation={deleteConfirmationOpen}
-          actions={actions}
         />
       )}
     </>

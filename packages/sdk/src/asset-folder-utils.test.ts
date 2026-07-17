@@ -17,6 +17,9 @@ describe("asset folder utilities", () => {
     expect(hierarchy.getDescendantIds("root")).toEqual(
       new Set(["child", "grandchild"])
     );
+    expect(hierarchy.getSubtreeIds("root")).toEqual(
+      new Set(["root", "child", "grandchild"])
+    );
     expect(hierarchy.getPath("grandchild")).toEqual([root, child, grandchild]);
   });
 

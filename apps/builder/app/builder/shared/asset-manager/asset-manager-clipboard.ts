@@ -10,20 +10,20 @@ export type AssetManagerClipboardItem = {
   projectId: string;
 };
 
+type AssetManagerItem = Omit<AssetManagerClipboardItem, "operation">;
+
 export const $assetManagerClipboard = atom<
   AssetManagerClipboardItem | undefined
 >(undefined);
 
-export const copyAssetManagerItem = (
-  item: Omit<AssetManagerClipboardItem, "operation">
-) => $assetManagerClipboard.set({ ...item, operation: "copy" });
+export const copyAssetManagerItem = (item: AssetManagerItem) =>
+  $assetManagerClipboard.set({ ...item, operation: "copy" });
 
-export const cutAssetManagerItem = (
-  item: Omit<AssetManagerClipboardItem, "operation">
-) => $assetManagerClipboard.set({ ...item, operation: "cut" });
+export const cutAssetManagerItem = (item: AssetManagerItem) =>
+  $assetManagerClipboard.set({ ...item, operation: "cut" });
 
 export const duplicateAssetManagerItem = (
-  item: Omit<AssetManagerClipboardItem, "operation">,
+  item: AssetManagerItem,
   targetFolderId?: string | null
 ) =>
   item.type === "asset"
@@ -41,6 +41,12 @@ export const duplicateAssetManagerItem = (
           ...(targetFolderId === undefined ? {} : { parentId: targetFolderId }),
         },
       });
+
+export const createAssetManagerClipboardActions = (item: AssetManagerItem) => ({
+  cut: () => cutAssetManagerItem(item),
+  copy: () => copyAssetManagerItem(item),
+  duplicate: () => duplicateAssetManagerItem(item),
+});
 
 export const pasteAssetManagerItem = (folderId: string | undefined) => {
   const clipboard = $assetManagerClipboard.get();

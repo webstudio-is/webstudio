@@ -72,19 +72,24 @@ export const createAssetFolderHierarchy = (folders: AssetFolders) => {
     return descendants;
   };
 
+  const getSubtreeIds = (folderId: string) =>
+    getDescendantIds(folderId).add(folderId);
+
+  const sortByDepth = (items: Iterable<AssetFolder>) =>
+    Array.from(items).toSorted(
+      (left, right) =>
+        getTraversal(left.id).path.length - getTraversal(right.id).path.length
+    );
+
   return {
     getChildren,
     getDescendantIds,
+    getSubtreeIds,
     resolveFolderId,
     getPath: (folderId: string | undefined) =>
       folderId === undefined ? [] : getTraversal(folderId).path,
-    getDepth: (folderId: string) => getTraversal(folderId).path.length - 1,
     hasCycle: (folderId: string) => getTraversal(folderId).hasCycle,
-    sortByDepth: (items: Iterable<AssetFolder>) =>
-      Array.from(items).toSorted(
-        (left, right) =>
-          getTraversal(left.id).path.length - getTraversal(right.id).path.length
-      ),
+    sortByDepth,
     getAggregateAssetSizes: (assets: Iterable<Asset>) => {
       const sizes = new Map<string, number>();
       for (const asset of assets) {
@@ -93,10 +98,7 @@ export const createAssetFolderHierarchy = (folders: AssetFolders) => {
           sizes.set(folderId, (sizes.get(folderId) ?? 0) + asset.size);
         }
       }
-      for (const folder of Array.from(folders.values()).toSorted(
-        (left, right) =>
-          getTraversal(right.id).path.length - getTraversal(left.id).path.length
-      )) {
+      for (const folder of sortByDepth(folders.values()).reverse()) {
         if (folder.parentId !== undefined) {
           sizes.set(
             folder.parentId,

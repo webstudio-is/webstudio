@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { createAssetManagerTestRenderer } from "./test-utils";
-import { AssetDeleteDialog, AssetInfo } from "./asset-info";
+import { AssetDeleteDialog, AssetSettings } from "./asset-settings";
 
 const renderer = createAssetManagerTestRenderer();
 vi.stubGlobal(
@@ -40,10 +40,9 @@ test("describes an unused asset in the delete confirmation", () => {
 test("uses an auto-growing textarea for the asset description", () => {
   renderer.render(
     <TooltipProvider>
-      <AssetInfo
+      <AssetSettings
         open
         onOpenChange={vi.fn()}
-        actions={{}}
         asset={{
           id: "asset",
           projectId: "project",
@@ -55,7 +54,9 @@ test("uses an auto-growing textarea for the asset description", () => {
           description: "A useful description",
           createdAt: "2026-01-01T00:00:00.000Z",
         }}
-      />
+      >
+        <button>Anchor</button>
+      </AssetSettings>
     </TooltipProvider>
   );
 
@@ -67,4 +68,5 @@ test("uses an auto-growing textarea for the asset description", () => {
   expect(
     document.querySelector('label[for="asset-manager-description"]')
   ).toBeInstanceOf(HTMLLabelElement);
+  expect(document.body.textContent).toContain("Asset settings");
 });

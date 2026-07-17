@@ -1,12 +1,95 @@
-import { Fragment } from "react";
+import { Fragment, type ComponentProps } from "react";
+import { act } from "react-dom/test-utils";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
+import { createAssetFolderFixture } from "./asset-folder.test-fixtures";
+import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import { createAssetManagerTestRenderer } from "./test-utils";
 
+const folder = createAssetFolderFixture({ id: "folder", name: "Documents" });
+const uploadedAssetContainer: ComponentProps<
+  typeof AssetThumbnail
+>["assetContainer"] = {
+  status: "uploaded",
+  asset: {
+    id: "asset",
+    projectId: "project",
+    name: "document.pdf",
+    format: "pdf",
+    size: 100,
+    type: "file",
+    meta: {},
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+};
+
+const createFolderThumbnail = (
+  props: Partial<ComponentProps<typeof FolderThumbnail>> = {}
+) => (
+  <FolderThumbnail
+    folder={folder}
+    selected={false}
+    canManage={false}
+    onSelectionChange={vi.fn()}
+    canMoveFolder={() => false}
+    onOpen={vi.fn()}
+    onMoveAsset={vi.fn()}
+    onMoveFolder={vi.fn()}
+    {...props}
+  />
+);
+
+const createUploadedAssetThumbnail = () => (
+  <AssetThumbnail
+    assetContainer={uploadedAssetContainer}
+    onSelectionChange={vi.fn()}
+  />
+);
+
+const openSettingsFromActionsMenu = ({
+  container,
+  triggerLabel,
+  settingsTitle,
+}: {
+  container: HTMLElement;
+  triggerLabel: string;
+  settingsTitle: string;
+}) => {
+  const actions = container.querySelector<HTMLButtonElement>(
+    `[aria-label="${triggerLabel}"]`
+  );
+  act(() => {
+    actions?.dispatchEvent(
+      new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+    );
+  });
+
+  expect(document.body.textContent).not.toContain(settingsTitle);
+  const menuItems = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  );
+  const settings = menuItems.find((item) => item.textContent === "Settings");
+  const rename = menuItems.find((item) => item.textContent === "Rename");
+  expect(settings).toBeDefined();
+  expect(rename).toBeUndefined();
+  act(() => settings?.click());
+};
+
 const renderer = createAssetManagerTestRenderer();
-afterEach(renderer.cleanup);
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+);
+afterEach(() => {
+  renderer.cleanup();
+  $assetManagerClipboard.set(undefined);
+});
 
 describe("AssetThumbnail", () => {
   test("renders asset, folder, and Back components through the shared card", () => {
@@ -26,29 +109,19 @@ describe("AssetThumbnail", () => {
               folderId: "folder",
             },
           }}
-          onSelect={vi.fn()}
+          onSelectionChange={vi.fn()}
         />
-        <FolderThumbnail
-          folder={{
-            id: "folder",
-            projectId: "project",
-            name: "Documents",
-            createdAt: "2026-01-01T00:00:00.000Z",
-          }}
-          selected={false}
-          canManage={false}
-          onSelect={vi.fn()}
-          canMoveFolder={() => false}
-          onOpen={vi.fn()}
-          onMoveAsset={vi.fn()}
-          onMoveFolder={vi.fn()}
-        />
+        {createFolderThumbnail()}
         <BackThumbnail onOpen={vi.fn()} />
       </Fragment>
     );
 
     const thumbnails = container.querySelectorAll("[data-asset-thumbnail]");
+    const managedThumbnails = container.querySelectorAll(
+      "[data-asset-manager-thumbnail]"
+    );
     expect(thumbnails).toHaveLength(3);
+    expect(managedThumbnails).toHaveLength(2);
     expect(thumbnails[0]?.tagName).toBe("BUTTON");
     expect(thumbnails[1]?.tagName).toBe("BUTTON");
     expect(thumbnails[2]?.tagName).toBe("BUTTON");
@@ -64,31 +137,27 @@ describe("AssetThumbnail", () => {
     );
   });
 
-  test("opens folders on double-click or keyboard activation only", () => {
+  test("uses focus for folder selection and opens only on activation", () => {
     const onOpen = vi.fn();
-    const onSelect = vi.fn();
+    const onSelectionChange = vi.fn();
     const container = renderer.render(
-      <FolderThumbnail
-        selected
-        folder={{
-          id: "folder",
-          projectId: "project",
-          name: "Documents",
-          createdAt: "2026-01-01T00:00:00.000Z",
-        }}
-        canManage={false}
-        onSelect={onSelect}
-        canMoveFolder={() => false}
-        onOpen={onOpen}
-        onMoveAsset={vi.fn()}
-        onMoveFolder={vi.fn()}
-      />
+      createFolderThumbnail({
+        selected: true,
+        onSelectionChange,
+        onOpen,
+      })
     );
 
     const button = container.querySelector("button");
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
     expect(button?.getAttribute("aria-pressed")).toBe("true");
+    button?.focus();
+    expect(onSelectionChange).toHaveBeenLastCalledWith(true);
+    outside.focus();
+    expect(onSelectionChange).toHaveBeenLastCalledWith(false);
+
     button?.click();
-    expect(onSelect).toHaveBeenCalledOnce();
     expect(onOpen).not.toHaveBeenCalled();
 
     button?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
@@ -105,87 +174,111 @@ describe("AssetThumbnail", () => {
     expect(onOpen).toHaveBeenCalledTimes(2);
   });
 
-  test("skips folder settings with Tab and reaches it with arrow keys", () => {
-    const container = renderer.render(
-      <TooltipProvider>
-        <FolderThumbnail
-          selected={false}
-          folder={{
-            id: "folder",
-            projectId: "project",
-            name: "Documents",
-            createdAt: "2026-01-01T00:00:00.000Z",
-          }}
-          canManage
-          onSelect={vi.fn()}
-          canMoveFolder={() => false}
-          onOpen={vi.fn()}
-          onMoveAsset={vi.fn()}
-          onMoveFolder={vi.fn()}
-        />
-      </TooltipProvider>
-    );
+  describe.each([
+    {
+      variant: "folder",
+      thumbnailLabel: "Folder Documents",
+      triggerLabel: "Actions for Documents",
+      settingsTitle: "Folder settings",
+      render: () => createFolderThumbnail({ canManage: true }),
+    },
+    {
+      variant: "asset",
+      thumbnailLabel: undefined,
+      triggerLabel: "Actions for document.pdf",
+      settingsTitle: "Asset settings",
+      render: createUploadedAssetThumbnail,
+    },
+  ])("$variant thumbnail actions", (thumbnail) => {
+    const render = () =>
+      renderer.render(<TooltipProvider>{thumbnail.render()}</TooltipProvider>);
 
-    const thumbnail = container.querySelector<HTMLButtonElement>(
-      '[aria-label="Folder Documents"]'
-    );
-    const settings = container.querySelector<HTMLButtonElement>(
-      '[aria-label="Settings for Documents"]'
-    );
+    test("skips actions with Tab and reaches them with arrow keys", () => {
+      const container = render();
+      const card = container.querySelector<HTMLButtonElement>(
+        thumbnail.thumbnailLabel === undefined
+          ? "[data-asset-thumbnail]"
+          : `[aria-label="${thumbnail.thumbnailLabel}"]`
+      );
+      const actions = container.querySelector<HTMLButtonElement>(
+        `[aria-label="${thumbnail.triggerLabel}"]`
+      );
 
-    expect(thumbnail?.tabIndex).toBe(0);
-    expect(settings?.tabIndex).toBe(-1);
+      expect(card?.tabIndex).toBe(0);
+      expect(actions?.tabIndex).toBe(-1);
+      expect(
+        actions?.closest("header")?.getAttribute("data-asset-thumbnail-header")
+      ).toBe("");
 
-    thumbnail?.focus();
-    thumbnail?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })
-    );
-    expect(document.activeElement).toBe(settings);
+      card?.focus();
+      card?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })
+      );
+      expect(document.activeElement).toBe(actions);
 
-    settings?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true })
-    );
-    expect(document.activeElement).toBe(thumbnail);
+      actions?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true })
+      );
+      expect(document.activeElement).toBe(card);
+    });
+
+    test("opens settings from the actions menu", () => {
+      const container = render();
+      openSettingsFromActionsMenu({
+        container,
+        triggerLabel: thumbnail.triggerLabel,
+        settingsTitle: thumbnail.settingsTitle,
+      });
+      expect(document.body.textContent).toContain(thumbnail.settingsTitle);
+      expect(
+        document
+          .querySelector('[role="dialog"]')
+          ?.querySelector('[aria-label="Actions"]')
+      ).toBeNull();
+    });
   });
 
-  test("skips asset details with Tab and reaches it with arrow keys", () => {
+  test("shows the unused asset indicator in the thumbnail", () => {
     const container = renderer.render(
-      <AssetThumbnail
-        assetContainer={{
-          status: "uploaded",
-          asset: {
-            id: "asset",
-            projectId: "project",
-            name: "document.pdf",
-            format: "pdf",
-            size: 100,
-            type: "file",
-            meta: {},
-            createdAt: "2026-01-01T00:00:00.000Z",
-          },
-        }}
-        onSelect={vi.fn()}
-      />
+      <TooltipProvider>{createUploadedAssetThumbnail()}</TooltipProvider>
     );
 
-    const thumbnail = container.querySelector<HTMLButtonElement>(
-      "[data-asset-thumbnail]"
+    const header = container.querySelector<HTMLElement>(
+      "header[data-asset-thumbnail-header]"
     );
-    const details =
-      container.querySelector<HTMLButtonElement>('[title="Options"]');
+    expect(
+      header?.querySelector('[role="img"][aria-label="Unused asset"]')
+    ).toBeInstanceOf(HTMLElement);
+    expect(
+      header?.querySelector('[aria-label="Actions for document.pdf"]')
+    ).toBeInstanceOf(HTMLButtonElement);
+  });
 
-    expect(thumbnail?.tabIndex).toBe(0);
-    expect(details?.tabIndex).toBe(-1);
-
-    thumbnail?.focus();
-    thumbnail?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })
+  test("does not offer paste from another project on a folder", () => {
+    $assetManagerClipboard.set({
+      operation: "copy",
+      type: "asset",
+      id: "asset",
+      projectId: "another-project",
+    });
+    const container = renderer.render(
+      <TooltipProvider>
+        {createFolderThumbnail({ canManage: true })}
+      </TooltipProvider>
     );
-    expect(document.activeElement).toBe(details);
-
-    details?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true })
+    const actions = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Actions for Documents"]'
     );
-    expect(document.activeElement).toBe(thumbnail);
+    act(() => {
+      actions?.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+      );
+    });
+
+    expect(
+      Array.from(document.body.querySelectorAll('[role="menuitem"]')).some(
+        (item) => item.textContent === "Paste"
+      )
+    ).toBe(false);
   });
 });

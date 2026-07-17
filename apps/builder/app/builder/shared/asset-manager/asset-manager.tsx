@@ -23,7 +23,7 @@ import {
   type Asset,
   type AllowedFileExtension,
 } from "@webstudio-is/sdk";
-import { AssetsShell, type AssetContainer, useAssets } from "../assets";
+import { AssetsShell, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
 import { AssetFilters } from "./asset-filters";
@@ -97,6 +97,7 @@ export const AssetManager = ({
     () => createAssetFolderHierarchy(folders),
     [folders]
   );
+  const mimePatterns = useMemo(() => acceptToMimePatterns(accept), [accept]);
   const [internalFolderId, setInternalFolderId] = useState(folderId);
   const [selection, setSelection] = useState<AssetManagerSelection>();
   const [announcement, setAnnouncement] = useState("");
@@ -134,14 +135,13 @@ export const AssetManager = ({
   // Only show assets that match the accept constraint so incompatible types
   // (e.g. video files) can never be selected from an image picker.
   const compatibleContainers = useMemo(() => {
-    const patterns = acceptToMimePatterns(accept);
-    if (patterns === "*") {
+    if (mimePatterns === "*") {
       return assetContainers;
     }
     return assetContainers.filter((container) =>
-      doesAssetMatchMimePatterns(container.asset, patterns)
+      doesAssetMatchMimePatterns(container.asset, mimePatterns)
     );
-  }, [accept, assetContainers]);
+  }, [assetContainers, mimePatterns]);
 
   const [selectedExtensions, setSelectedExtensions] = useState<
     AllowedFileExtension[] | "*"
@@ -233,7 +233,7 @@ export const AssetManager = ({
       currentFolderId,
       searchQuery,
       compatibleAssets: uploadedCompatibleAssets,
-      hideEmptyFolders: acceptToMimePatterns(accept) !== "*",
+      hideEmptyFolders: mimePatterns !== "*",
     });
     return sortAssetFolders({
       folders: matchingFolders,
@@ -242,10 +242,10 @@ export const AssetManager = ({
       sortState,
     });
   }, [
-    accept,
     currentFolderId,
     folders,
     folderHierarchy,
+    mimePatterns,
     searchQuery,
     sortState,
     uploadedCompatibleAssets,
@@ -317,12 +317,11 @@ export const AssetManager = ({
     setCurrentFolderId(folderId);
   };
 
-  const handleSelect = (assetContainer?: AssetContainer) => {
-    setSelection(
-      assetContainer === undefined
-        ? undefined
-        : { type: "asset", id: assetContainer.asset.id }
-    );
+  const handleSelectionChange = (
+    item: AssetManagerSelection,
+    selected: boolean
+  ) => {
+    setSelection(selected ? item : undefined);
   };
 
   const getFolderName = (folderId: string | undefined) =>
@@ -364,7 +363,6 @@ export const AssetManager = ({
       />
     );
 
-  const assetGrid = (children: ReactNode) => <AssetGrid>{children}</AssetGrid>;
   const panelContextMenuActions: AssetManagerItemActions = {
     ...panelActions,
     ...(canManageFolders
@@ -375,6 +373,10 @@ export const AssetManager = ({
   if (clipboard === undefined || clipboard.projectId !== project?.id) {
     disabledPanelActions.add("paste");
   }
+  const canPaste =
+    canManageFolders &&
+    clipboard !== undefined &&
+    clipboard.projectId === project?.id;
   const hasPanelContextMenuActions = Object.values(
     panelContextMenuActions
   ).some((action) => action !== undefined);
@@ -394,7 +396,9 @@ export const AssetManager = ({
       searchProps={searchProps}
       isEmpty={filteredItems.length === 0 && visibleFolders.length === 0}
       emptyMessage={isSearching ? "No matching assets or folders" : undefined}
-      emptyContent={backCard === undefined ? undefined : assetGrid(backCard)}
+      emptyContent={
+        backCard === undefined ? undefined : <AssetGrid>{backCard}</AssetGrid>
+      }
       type="file"
       accept={accept}
       folderId={currentFolderId}
@@ -411,11 +415,7 @@ export const AssetManager = ({
           hierarchy={folderHierarchy}
           folderId={currentFolderId}
           onChange={setCurrentFolderId}
-          onPaste={
-            canManageFolders && clipboard !== undefined
-              ? pasteAssetManagerItem
-              : undefined
-          }
+          onPaste={canPaste ? pasteAssetManagerItem : undefined}
         />
       }
     >
@@ -433,7 +433,7 @@ export const AssetManager = ({
         >
           {announcement}
         </Box>
-        {assetGrid(
+        <AssetGrid>
           <>
             {backCard}
             {visibleFolders.map((folder) => (
@@ -443,12 +443,16 @@ export const AssetManager = ({
                 selected={
                   selection?.type === "folder" && selection.id === folder.id
                 }
-                onSelect={() => setSelection({ type: "folder", id: folder.id })}
+                onSelectionChange={(selected) =>
+                  handleSelectionChange(
+                    { type: "folder", id: folder.id },
+                    selected
+                  )
+                }
                 canManage={canManageFolders}
                 canMoveFolder={(movedFolderId) =>
-                  movedFolderId !== folder.id &&
                   folderHierarchy
-                    .getDescendantIds(movedFolderId)
+                    .getSubtreeIds(movedFolderId)
                     .has(folder.id) === false
                 }
                 onOpen={() => openFolder(folder.id)}
@@ -471,7 +475,12 @@ export const AssetManager = ({
               <AssetThumbnail
                 key={assetContainer.asset.id}
                 assetContainer={assetContainer}
-                onSelect={handleSelect}
+                onSelectionChange={(selected) =>
+                  handleSelectionChange(
+                    { type: "asset", id: assetContainer.asset.id },
+                    selected
+                  )
+                }
                 onChange={(assetContainer) => {
                   onChange?.(assetContainer.asset.id);
                 }}
@@ -497,7 +506,7 @@ export const AssetManager = ({
               />
             ))}
           </>
-        )}
+        </AssetGrid>
       </>
     </AssetsShell>
   );

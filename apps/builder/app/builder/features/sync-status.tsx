@@ -14,7 +14,7 @@ import { OfflineIcon } from "@webstudio-is/icons";
 import { $hasUnsavedSyncChanges, $syncStatus } from "@webstudio-is/sync-client";
 
 const syncStatusDotSavedDuration = 2000;
-const syncStatusDotPendingColor = "#f4c430";
+const syncStatusDotPendingColor = theme.colors.backgroundStatusAttention;
 const $isOnline = atom(false);
 const syncStatusDotConfig = {
   idle: {

@@ -1,22 +1,10 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type FocusEvent,
-} from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  Box,
-  ContextMenu,
-  ContextMenuTrigger,
-  styled,
-  Text,
-} from "@webstudio-is/design-system";
+import { Box, styled, Text } from "@webstudio-is/design-system";
 import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
 import { wsVideoLoader } from "@webstudio-is/image";
 import { UploadingAnimation } from "./uploading-animation";
-import { AssetDeleteDialog, AssetInfo } from "./asset-info";
+import { AssetDeleteDialog, AssetSettings } from "./asset-settings";
 import type { AssetContainer } from "~/builder/shared/assets";
 import { Image } from "./image";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
@@ -33,24 +21,16 @@ import {
 } from "@webstudio-is/sdk";
 import type { MimeCategory } from "@webstudio-is/sdk";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import {
-  AssetThumbnailAction,
-  AssetThumbnailCard,
-  AssetThumbnailGroup,
-} from "./asset-thumbnail-card";
 import { $authPermit, $permissions } from "~/shared/nano-states";
 import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
+import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
+import { type AssetManagerItemActions } from "./asset-manager-item-menu";
 import {
-  copyAssetManagerItem,
-  cutAssetManagerItem,
-  duplicateAssetManagerItem,
-} from "./asset-manager-clipboard";
-import {
-  AssetManagerItemContextMenuContent,
-  type AssetManagerItemActions,
-} from "./asset-manager-item-menu";
+  AssetManagerThumbnail,
+  AssetManagerThumbnailMenu,
+} from "./asset-manager-thumbnail";
 
 const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
@@ -134,7 +114,7 @@ const GenericFilePreview = ({
 
 type AssetThumbnailProps = {
   assetContainer: AssetContainer;
-  onSelect: (assetContainer?: AssetContainer) => void;
+  onSelectionChange: (selected: boolean) => void;
   onChange?: (assetContainer: AssetContainer) => void;
   selected?: boolean;
   folderPath?: string;
@@ -144,7 +124,7 @@ type AssetThumbnailProps = {
 
 export const AssetThumbnail = ({
   assetContainer,
-  onSelect,
+  onSelectionChange,
   onChange,
   selected,
   folderPath,
@@ -153,7 +133,7 @@ export const AssetThumbnail = ({
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [focusName, setFocusName] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const authPermit = useStore($authPermit);
@@ -184,16 +164,18 @@ export const AssetThumbnail = ({
     assetContainer.status === "uploading"
       ? {}
       : {
+          settings: () => {
+            setFocusName(false);
+            setSettingsOpen(true);
+          },
           ...(authPermit === "view"
             ? {}
             : {
                 rename: () => {
                   setFocusName(true);
-                  setDetailsOpen(true);
+                  setSettingsOpen(true);
                 },
-                cut: () => cutAssetManagerItem(item),
-                copy: () => copyAssetManagerItem(item),
-                duplicate: () => duplicateAssetManagerItem(item),
+                ...createAssetManagerClipboardActions(item),
                 delete: () => setDeleteOpen(true),
                 ...(asset.type === "image"
                   ? { replace: () => replaceInputRef.current?.click() }
@@ -230,84 +212,74 @@ export const AssetThumbnail = ({
         hidden
         onChange={handleReplaceFile}
       />
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <AssetThumbnailGroup
-            selected={selected}
-            onFocus={() => onSelect(assetContainer)}
-            onBlur={(event: FocusEvent) => {
-              if (event.currentTarget.contains(event.relatedTarget) === false) {
-                onSelect();
+      <AssetManagerThumbnail
+        actions={actions}
+        selected={selected}
+        onSelectionChange={onSelectionChange}
+        thumbnailRef={(element) => {
+          elementRef.current = element;
+          onElementChange?.(element);
+        }}
+        title={alt}
+        preview={
+          assetType === "image" ? (
+            <StyledWebstudioImage
+              assetId={asset.id}
+              name={asset.name}
+              objectURL={
+                assetContainer.status === "uploading"
+                  ? assetContainer.objectURL
+                  : undefined
               }
-            }}
-          >
-            <AssetThumbnailCard
-              ref={(element) => {
-                elementRef.current = element;
-                onElementChange?.(element);
-              }}
-              as="button"
-              type="button"
-              title={alt}
-              selected={selected}
-              preview={
-                assetType === "image" ? (
-                  <StyledWebstudioImage
-                    assetId={asset.id}
-                    name={asset.name}
-                    objectURL={
-                      assetContainer.status === "uploading"
-                        ? assetContainer.objectURL
-                        : undefined
-                    }
-                    alt={alt}
-                    width={64}
-                  />
-                ) : assetType === "video" ? (
-                  <StyledWebstudioVideo
-                    src={
-                      assetContainer.status === "uploading"
-                        ? assetContainer.objectURL
-                        : wsVideoLoader({ src: asset.name })
-                    }
-                  />
-                ) : (
-                  <GenericFilePreview ext={ext} format={asset.format} />
-                )
+              alt={alt}
+              width={64}
+            />
+          ) : assetType === "video" ? (
+            <StyledWebstudioVideo
+              src={
+                assetContainer.status === "uploading"
+                  ? assetContainer.objectURL
+                  : wsVideoLoader({ src: asset.name })
               }
-              label={asset.filename ?? basename}
-              labelSuffix={`.${ext}`}
-              path={folderPath}
-              onContextMenu={() => onSelect(assetContainer)}
-              onPreviewClick={() => onChange?.(assetContainer)}
-              onKeyDown={(event: KeyboardEvent) => {
-                if (event.code === "Enter") {
-                  onChange?.(assetContainer);
+            />
+          ) : (
+            <GenericFilePreview ext={ext} format={asset.format} />
+          )
+        }
+        label={asset.filename ?? basename}
+        labelSuffix={`.${ext}`}
+        path={folderPath}
+        onPreviewClick={() => onChange?.(assetContainer)}
+        onKeyDown={(event: KeyboardEvent) => {
+          if (event.code === "Enter") {
+            onChange?.(assetContainer);
+          }
+        }}
+        header={
+          assetContainer.status === "uploaded" ? (
+            <AssetSettings
+              asset={assetContainer.asset}
+              open={settingsOpen}
+              onOpenChange={(open) => {
+                setSettingsOpen(open);
+                if (open === false) {
+                  setFocusName(false);
                 }
               }}
+              onDelete={actions.delete}
+              onReplace={actions.replace}
+              focusName={focusName}
             >
-              {isUploading && <UploadingAnimation />}
-            </AssetThumbnailCard>
-            {assetContainer.status === "uploaded" && (
-              <AssetThumbnailAction>
-                <AssetInfo
-                  asset={assetContainer.asset}
-                  open={detailsOpen}
-                  onOpenChange={(open) => {
-                    setDetailsOpen(open);
-                    if (open === false) {
-                      setFocusName(false);
-                    }
-                  }}
-                  actions={actions}
-                  focusName={focusName}
-                />
-              </AssetThumbnailAction>
-            )}
-          </AssetThumbnailGroup>
-        </ContextMenuTrigger>
-        <AssetManagerItemContextMenuContent actions={actions} />
-      </ContextMenu>
+              <AssetManagerThumbnailMenu
+                actions={actions}
+                label={`Actions for ${formatAssetName(asset)}`}
+              />
+            </AssetSettings>
+          ) : undefined
+        }
+      >
+        {isUploading && <UploadingAnimation />}
+      </AssetManagerThumbnail>
       {assetContainer.status === "uploaded" && (
         <AssetDeleteDialog
           asset={assetContainer.asset}

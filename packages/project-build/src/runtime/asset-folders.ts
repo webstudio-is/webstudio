@@ -181,7 +181,7 @@ export const duplicateAssetFolder = (
   }
 
   const hierarchy = createAssetFolderHierarchy(folders);
-  const sourceFolderIds = hierarchy.getDescendantIds(source.id).add(source.id);
+  const sourceFolderIds = hierarchy.getSubtreeIds(source.id);
   const sourceFolders = hierarchy.sortByDepth(
     Array.from(sourceFolderIds, (folderId) => folders.get(folderId)!)
   );
@@ -275,10 +275,9 @@ export const deleteAssetFolder = (
     return throwBuilderRuntimeError("NOT_FOUND", "Folder not found");
   }
 
-  const deletedFolderIds = createAssetFolderHierarchy(folders).getDescendantIds(
+  const deletedFolderIds = createAssetFolderHierarchy(folders).getSubtreeIds(
     folder.id
   );
-  deletedFolderIds.add(folder.id);
   const folderPatches: BuilderPatch[] = Array.from(deletedFolderIds).map(
     (folderId) => ({ op: "remove", path: [folderId] })
   );

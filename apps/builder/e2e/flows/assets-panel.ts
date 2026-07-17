@@ -41,7 +41,7 @@ export const uploadAsset = async ({
   return title;
 };
 
-export const openAssetDetails = async ({
+export const openAssetSettings = async ({
   page,
   filename,
 }: {
@@ -50,8 +50,12 @@ export const openAssetDetails = async ({
 }) => {
   const asset = page.getByTitle(filename);
   await asset.hover();
-  await asset.locator("..").getByTitle("Options").click();
-  await page.getByText("Asset details").waitFor();
+  await asset
+    .locator("..")
+    .getByRole("button", { name: `Actions for ${filename}` })
+    .click();
+  await page.getByRole("menuitem", { name: "Settings" }).click();
+  await page.getByText("Asset settings").waitFor();
 };
 
 export const replaceSelectedAsset = async ({

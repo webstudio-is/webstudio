@@ -29,7 +29,7 @@ export const createAssetFolderSelectorLevels = ({
   const excludedIds =
     excludedFolderId === undefined
       ? new Set<string>()
-      : hierarchy.getDescendantIds(excludedFolderId).add(excludedFolderId);
+      : hierarchy.getSubtreeIds(excludedFolderId);
   const getChildren = (parentId: string | undefined) =>
     hierarchy
       .getChildren(parentId)

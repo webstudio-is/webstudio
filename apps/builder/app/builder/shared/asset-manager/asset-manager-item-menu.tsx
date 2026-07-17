@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment } from "react";
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -9,13 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   SmallIconButton,
-  Tooltip,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 
 export type AssetManagerItemActions = Partial<
   Record<
     | "open"
+    | "settings"
     | "rename"
     | "cut"
     | "copy"
@@ -43,6 +43,7 @@ const itemDefinitions: readonly ItemDefinition[] = [
   { name: "createFolder", label: "Create folder" },
   { name: "upload", label: "Upload asset" },
   { name: "open", label: "Open" },
+  { name: "settings", label: "Settings" },
   { name: "rename", label: "Rename" },
   { name: "cut", label: "Cut", separatorBefore: true },
   { name: "copy", label: "Copy" },
@@ -60,10 +61,17 @@ const itemDefinitions: readonly ItemDefinition[] = [
 
 export const getAssetManagerItemMenuItems = (
   actions: AssetManagerItemActions,
-  disabledActions?: ReadonlySet<AssetManagerItemActionName>
+  {
+    disabledActions,
+    hiddenActions,
+  }: {
+    disabledActions?: ReadonlySet<AssetManagerItemActionName>;
+    hiddenActions?: ReadonlySet<AssetManagerItemActionName>;
+  } = {}
 ) =>
   itemDefinitions.flatMap((definition) =>
-    actions[definition.name] === undefined
+    actions[definition.name] === undefined ||
+    hiddenActions?.has(definition.name)
       ? []
       : [
           {
@@ -74,6 +82,37 @@ export const getAssetManagerItemMenuItems = (
         ]
   );
 
+const AssetManagerItemMenuItems = ({
+  actions,
+  disabledActions,
+  hiddenActions,
+  variant,
+}: {
+  actions: AssetManagerItemActions;
+  disabledActions?: ReadonlySet<AssetManagerItemActionName>;
+  hiddenActions?: ReadonlySet<AssetManagerItemActionName>;
+  variant: "context" | "dropdown";
+}) => {
+  const Item = variant === "context" ? ContextMenuItem : DropdownMenuItem;
+  const Separator =
+    variant === "context" ? ContextMenuSeparator : DropdownMenuSeparator;
+  return getAssetManagerItemMenuItems(actions, {
+    disabledActions,
+    hiddenActions,
+  }).map((item, index) => (
+    <Fragment key={item.name}>
+      {item.separatorBefore && index > 0 && <Separator />}
+      <Item
+        disabled={item.disabled}
+        destructive={item.destructive}
+        onSelect={item.action}
+      >
+        {item.label}
+      </Item>
+    </Fragment>
+  ));
+};
+
 export const AssetManagerItemContextMenuContent = ({
   actions,
   disabledActions,
@@ -82,55 +121,42 @@ export const AssetManagerItemContextMenuContent = ({
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
 }) => (
   <ContextMenuContent>
-    {getAssetManagerItemMenuItems(actions, disabledActions).map(
-      (item, index) => (
-        <Fragment key={item.name}>
-          {item.separatorBefore && index > 0 && <ContextMenuSeparator />}
-          <ContextMenuItem
-            disabled={item.disabled}
-            destructive={item.destructive}
-            onSelect={item.action}
-          >
-            {item.label}
-          </ContextMenuItem>
-        </Fragment>
-      )
-    )}
+    <AssetManagerItemMenuItems
+      actions={actions}
+      disabledActions={disabledActions}
+      variant="context"
+    />
   </ContextMenuContent>
 );
 
 export const AssetManagerItemActionsDropdown = ({
   actions,
   disabledActions,
-  children,
+  hiddenActions,
+  triggerLabel = "Actions",
+  triggerTabIndex,
 }: {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
-  children?: ReactNode;
+  hiddenActions?: ReadonlySet<AssetManagerItemActionName>;
+  triggerLabel?: string;
+  triggerTabIndex?: number;
 }) => (
   <DropdownMenu>
-    <Tooltip content="Actions" side="bottom">
-      <DropdownMenuTrigger asChild>
-        {children ?? (
-          <SmallIconButton aria-label="Actions" icon={<EllipsesIcon />} />
-        )}
-      </DropdownMenuTrigger>
-    </Tooltip>
-    <DropdownMenuContent align="end">
-      {getAssetManagerItemMenuItems(actions, disabledActions).map(
-        (item, index) => (
-          <Fragment key={item.name}>
-            {item.separatorBefore && index > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuItem
-              disabled={item.disabled}
-              destructive={item.destructive}
-              onSelect={item.action}
-            >
-              {item.label}
-            </DropdownMenuItem>
-          </Fragment>
-        )
-      )}
+    <DropdownMenuTrigger asChild>
+      <SmallIconButton
+        aria-label={triggerLabel}
+        tabIndex={triggerTabIndex}
+        icon={<EllipsesIcon />}
+      />
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" css={{ minWidth: 120 }}>
+      <AssetManagerItemMenuItems
+        actions={actions}
+        disabledActions={disabledActions}
+        hiddenActions={hiddenActions}
+        variant="dropdown"
+      />
     </DropdownMenuContent>
   </DropdownMenu>
 );
