@@ -5,17 +5,28 @@ import {
   useRef,
   useState,
   useMemo,
+  type ComponentProps,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Flex,
   Grid,
+  Text,
   findNextListItemIndex,
   theme,
   useSearchFieldKeys,
 } from "@webstudio-is/design-system";
+import { TrashIcon } from "@webstudio-is/icons";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
   acceptToMimePatterns,
   createAssetFolderHierarchy,
@@ -48,12 +59,36 @@ import {
 } from "./utils";
 import {
   $assetManagerClipboard,
+  copyAssetManagerItem,
+  cutAssetManagerItem,
+  duplicateAssetManagerItem,
   pasteAssetManagerItem,
 } from "./asset-manager-clipboard";
 import {
   AssetManagerItemContextMenuContent,
   type AssetManagerItemActions,
 } from "./asset-manager-item-menu";
+import {
+  addAssetManagerSelection,
+  getAdjacentAssetManagerSelection,
+  getAssetManagerSelectionKey,
+  getAssetManagerSelectionRange,
+  includesAssetManagerSelection,
+  isSameAssetManagerSelection,
+  toggleAssetManagerSelection,
+} from "./asset-manager-selection";
+import {
+  startAssetManagerMarquee,
+  type AssetManagerMarqueeRect,
+} from "./asset-manager-marquee";
+import {
+  deleteAssetManagerItems,
+  moveAssetManagerItems,
+  normalizeAssetManagerItems,
+  type AssetManagerItem,
+} from "./asset-manager-operations";
+import { getAssetManagerDragItems } from "./asset-manager-drag";
+import { $authPermit } from "~/shared/nano-states";
 
 type FolderNavigationProps =
   | { folderId?: never; onFolderChange?: never }
@@ -75,8 +110,20 @@ type AssetManagerProps = FolderNavigationProps & {
   >;
 };
 
-const AssetGrid = ({ children }: { children: ReactNode }) => (
-  <Grid columns={3} gap="2" css={{ paddingInline: theme.panel.paddingInline }}>
+const AssetGrid = ({
+  children,
+  ...props
+}: { children: ReactNode } & Omit<ComponentProps<typeof Grid>, "children">) => (
+  <Grid
+    {...props}
+    columns={3}
+    gap="2"
+    css={{
+      minHeight: "100%",
+      alignContent: "start",
+      paddingInline: theme.panel.paddingInline,
+    }}
+  >
     {children}
   </Grid>
 );
@@ -92,6 +139,7 @@ export const AssetManager = ({
   const { assetContainers } = useAssets();
   const folders = useStore($assetFolders);
   const project = useStore($project);
+  const authPermit = useStore($authPermit);
   const clipboard = useStore($assetManagerClipboard);
   const folderHierarchy = useMemo(
     () => createAssetFolderHierarchy(folders),
@@ -100,9 +148,18 @@ export const AssetManager = ({
   const mimePatterns = useMemo(() => acceptToMimePatterns(accept), [accept]);
   const [internalFolderId, setInternalFolderId] = useState(folderId);
   const [selection, setSelection] = useState<AssetManagerSelection>();
+  const [forcedSelection, setForcedSelection] =
+    useState<AssetManagerSelection[]>();
+  const [selectionAnchor, setSelectionAnchor] =
+    useState<AssetManagerSelection>();
+  const [pendingDeleteItems, setPendingDeleteItems] =
+    useState<AssetManagerSelection[]>();
   const [announcement, setAnnouncement] = useState("");
+  const [marqueeRect, setMarqueeRect] = useState<AssetManagerMarqueeRect>();
   const itemElements = useRef(new Map<string, HTMLElement>());
+  const panelElement = useRef<HTMLDivElement | null>(null);
   const backElement = useRef<HTMLElement | null>(null);
+  const cleanupMarquee = useRef<() => void>();
   const pendingFocus = useRef<"back" | AssetManagerSelection>();
   const currentFolderId =
     onFolderChange === undefined ? internalFolderId : folderId;
@@ -114,6 +171,8 @@ export const AssetManager = ({
         onFolderChange(nextFolderId);
       }
       setSelection(undefined);
+      setForcedSelection(undefined);
+      setSelectionAnchor(undefined);
       setAnnouncement(
         nextFolderId === undefined
           ? "Opened Root."
@@ -184,6 +243,8 @@ export const AssetManager = ({
         direction
       );
       setSelection(navigableItems[nextIndex]);
+      setForcedSelection(undefined);
+      setSelectionAnchor(undefined);
     },
   });
   const searchQuery = searchProps.value.trim();
@@ -265,6 +326,19 @@ export const AssetManager = ({
   const previousNavigableItems = useRef(navigableItems);
   useLayoutEffect(() => {
     if (
+      forcedSelection?.some(
+        (item) =>
+          isAssetManagerSelectionVisible(
+            item,
+            filteredItems,
+            visibleFolders
+          ) === false
+      )
+    ) {
+      setForcedSelection(undefined);
+      setSelectionAnchor(undefined);
+    }
+    if (
       isAssetManagerSelectionVisible(
         selection,
         filteredItems,
@@ -288,7 +362,13 @@ export const AssetManager = ({
       }
     }
     previousNavigableItems.current = navigableItems;
-  }, [filteredItems, navigableItems, selection, visibleFolders]);
+  }, [
+    filteredItems,
+    forcedSelection,
+    navigableItems,
+    selection,
+    visibleFolders,
+  ]);
 
   useLayoutEffect(() => {
     const target = pendingFocus.current;
@@ -317,17 +397,137 @@ export const AssetManager = ({
     setCurrentFolderId(folderId);
   };
 
-  const handleSelectionChange = (
-    item: AssetManagerSelection,
-    selected: boolean
-  ) => {
-    setSelection(selected ? item : undefined);
+  const handleFocusChange = (item: AssetManagerSelection, focused: boolean) => {
+    if (focused) {
+      setSelection(item);
+    } else if (
+      forcedSelection === undefined &&
+      isSameAssetManagerSelection(selection, item)
+    ) {
+      setSelection(undefined);
+    }
   };
 
-  const getFolderName = (folderId: string | undefined) =>
-    folderId === undefined
-      ? "No folder"
-      : (folders.get(folderId)?.name ?? "folder");
+  const announceSelection = (items: readonly AssetManagerSelection[]) =>
+    setAnnouncement(
+      `${items.length} ${items.length === 1 ? "item" : "items"} selected.`
+    );
+
+  const exitMultiselect = () => {
+    if (forcedSelection === undefined) {
+      return;
+    }
+    setForcedSelection(undefined);
+    setSelectionAnchor(undefined);
+    setAnnouncement("Multiselect ended.");
+  };
+
+  const handleItemPointerDown = (
+    item: AssetManagerSelection,
+    event: ReactPointerEvent<HTMLElement>
+  ) => {
+    if (canManageFolders === false || event.button !== 0) {
+      return;
+    }
+    const hasToggleModifier = event.metaKey || event.ctrlKey;
+    if (event.shiftKey === false && hasToggleModifier === false) {
+      if (
+        forcedSelection !== undefined &&
+        includesAssetManagerSelection(forcedSelection, item)
+      ) {
+        return;
+      }
+      exitMultiselect();
+      setSelection(item);
+      return;
+    }
+    const anchor = selectionAnchor ?? selection;
+    if (
+      anchor === undefined ||
+      (forcedSelection === undefined &&
+        isSameAssetManagerSelection(anchor, item))
+    ) {
+      return;
+    }
+    const nextSelection = event.shiftKey
+      ? getAssetManagerSelectionRange(navigableItems, anchor, item)
+      : toggleAssetManagerSelection(forcedSelection ?? [anchor], item);
+    setForcedSelection(nextSelection);
+    setSelectionAnchor(anchor);
+    announceSelection(nextSelection);
+  };
+
+  const handleItemClick = (
+    item: AssetManagerSelection,
+    event: MouseEvent<HTMLElement>
+  ) => {
+    if (
+      forcedSelection === undefined ||
+      event.shiftKey ||
+      event.metaKey ||
+      event.ctrlKey ||
+      includesAssetManagerSelection(forcedSelection, item) === false
+    ) {
+      return;
+    }
+    exitMultiselect();
+    setSelection(item);
+  };
+
+  const handleModifiedArrow = (
+    item: AssetManagerSelection,
+    event: KeyboardEvent<HTMLElement>
+  ) => {
+    if (canManageFolders === false) {
+      return;
+    }
+    const nextItem = getAdjacentAssetManagerSelection({
+      items: navigableItems,
+      current: item,
+      direction:
+        event.key === "ArrowLeft" || event.key === "ArrowUp"
+          ? "previous"
+          : "next",
+    });
+    if (nextItem === undefined) {
+      return;
+    }
+    event.preventDefault();
+    const anchor = selectionAnchor ?? item;
+    const nextSelection = event.shiftKey
+      ? getAssetManagerSelectionRange(navigableItems, anchor, nextItem)
+      : addAssetManagerSelection(forcedSelection ?? [item], nextItem);
+    setForcedSelection(nextSelection);
+    setSelectionAnchor(anchor);
+    setSelection(nextItem);
+    announceSelection(nextSelection);
+    itemElements.current.get(`${nextItem.type}:${nextItem.id}`)?.focus();
+  };
+
+  const handleContextMenuSelection = (item: AssetManagerSelection) => {
+    if (
+      forcedSelection !== undefined &&
+      includesAssetManagerSelection(forcedSelection, item)
+    ) {
+      return;
+    }
+    setForcedSelection(undefined);
+    setSelectionAnchor(undefined);
+    setSelection(item);
+  };
+
+  const isItemSelected = (item: AssetManagerSelection) =>
+    forcedSelection === undefined
+      ? isSameAssetManagerSelection(selection, item)
+      : includesAssetManagerSelection(forcedSelection, item);
+
+  const getFolderName = useCallback(
+    (folderId: string | undefined) =>
+      folderId === undefined
+        ? "Root"
+        : (folders.get(folderId)?.name ?? "folder"),
+    [folders]
+  );
 
   const moveAsset = (assetId: string, nextFolderId: string | undefined) => {
     if (moveAssetToFolder(assetId, nextFolderId) === undefined) {
@@ -346,9 +546,121 @@ export const AssetManager = ({
       return;
     }
     setAnnouncement(
-      `${folders.get(movedFolderId)?.name ?? "Folder"} moved to ${getFolderName(parentId)}.`
+      `${folders.get(movedFolderId)?.name ?? "Folder"} moved to ${getFolderName(
+        parentId
+      )}.`
     );
   };
+
+  const normalizeItems = useCallback(
+    (items: readonly AssetManagerSelection[]) =>
+      normalizeAssetManagerItems({
+        items,
+        folders,
+        assets: new Map(
+          assetContainers.flatMap((container) =>
+            container.status === "uploaded"
+              ? [[container.asset.id, container.asset] as const]
+              : []
+          )
+        ),
+      }),
+    [assetContainers, folders]
+  );
+
+  const normalizedForcedSelection =
+    forcedSelection === undefined ? [] : normalizeItems(forcedSelection);
+  const normalizedShortcutSelection = normalizeItems(
+    forcedSelection ?? (selection === undefined ? [] : [selection])
+  ).filter((item) => item.type === "asset" || canManageFolders);
+  const shortcutItems =
+    project === undefined || authPermit === "view"
+      ? []
+      : normalizedShortcutSelection.map((item) => ({
+          ...item,
+          projectId: project.id,
+        }));
+  const getItemCountLabel = (items: readonly AssetManagerSelection[]) =>
+    `${items.length} ${items.length === 1 ? "item" : "items"}`;
+  const copyItems = (items: readonly AssetManagerItem[]) => {
+    copyAssetManagerItem(items);
+    setAnnouncement(`${getItemCountLabel(items)} copied.`);
+  };
+  const cutItems = (items: readonly AssetManagerItem[]) => {
+    cutAssetManagerItem(items);
+    setAnnouncement(`${getItemCountLabel(items)} cut.`);
+  };
+  const duplicateItems = (items: readonly AssetManagerItem[]) => {
+    duplicateAssetManagerItem(items);
+    setAnnouncement(`${getItemCountLabel(items)} duplicated.`);
+  };
+  const selectedProjectItems =
+    project === undefined
+      ? []
+      : normalizedForcedSelection.map((item) => ({
+          ...item,
+          projectId: project.id,
+        }));
+  const selectionActions: AssetManagerItemActions =
+    selectedProjectItems.length === 0
+      ? {}
+      : {
+          cut: () => cutItems(selectedProjectItems),
+          copy: () => copyItems(selectedProjectItems),
+          duplicate: () => duplicateItems(selectedProjectItems),
+          delete: () => setPendingDeleteItems(normalizedForcedSelection),
+        };
+
+  const moveItems = useCallback(
+    (items: readonly AssetManagerSelection[], parentId: string | undefined) => {
+      const normalizedItems = normalizeItems(items);
+      moveAssetManagerItems(normalizedItems, parentId);
+      setForcedSelection(undefined);
+      setSelectionAnchor(undefined);
+      setAnnouncement(
+        `${normalizedItems.length} items moved to ${getFolderName(parentId)}.`
+      );
+    },
+    [getFolderName, normalizeItems]
+  );
+
+  useEffect(() => {
+    const element = panelElement.current;
+    if (element === null || canManageFolders === false) {
+      return;
+    }
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => {
+        const items = getAssetManagerDragItems(source.data);
+        return (
+          items.length > 0 &&
+          items.every(
+            (item) =>
+              item.type === "asset" ||
+              currentFolderId === undefined ||
+              folderHierarchy.getSubtreeIds(item.id).has(currentFolderId) ===
+                false
+          )
+        );
+      },
+      onDrop: ({ source, location }) => {
+        if (location.current.dropTargets[0]?.element !== element) {
+          return;
+        }
+        const items = getAssetManagerDragItems(source.data);
+        if (items.length > 0) {
+          moveItems(items, currentFolderId);
+        }
+      },
+    });
+  }, [canManageFolders, currentFolderId, folderHierarchy, moveItems]);
+
+  const getDragItems = (item: AssetManagerSelection) => () =>
+    forcedSelection !== undefined &&
+    includesAssetManagerSelection(forcedSelection, item)
+      ? forcedSelection
+      : [item];
 
   const backCard =
     currentFolderId === undefined ? undefined : (
@@ -377,137 +689,398 @@ export const AssetManager = ({
     canManageFolders &&
     clipboard !== undefined &&
     clipboard.projectId === project?.id;
+  const handleShortcut = (event: KeyboardEvent<HTMLElement>) => {
+    if (panelElement.current?.contains(event.target as Node) === false) {
+      return;
+    }
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      (target.matches("input, textarea, select") ||
+        target.isContentEditable ||
+        target.closest("[contenteditable]") !== null)
+    ) {
+      return;
+    }
+    const key = event.key.toLowerCase();
+    const hasCommandModifier = event.metaKey || event.ctrlKey;
+    const isItemCommand =
+      hasCommandModifier &&
+      event.altKey === false &&
+      event.shiftKey === false &&
+      ["c", "x", "v", "d"].includes(key);
+    const isDeleteCommand =
+      hasCommandModifier === false &&
+      event.altKey === false &&
+      event.shiftKey === false &&
+      ["backspace", "delete"].includes(key);
+    if (isItemCommand === false && isDeleteCommand === false) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (key === "c" && shortcutItems.length > 0) {
+      copyItems(shortcutItems);
+    } else if (key === "x" && shortcutItems.length > 0) {
+      cutItems(shortcutItems);
+    } else if (key === "d" && shortcutItems.length > 0) {
+      duplicateItems(shortcutItems);
+    } else if (key === "v" && canPaste) {
+      const pastedItemCount = clipboard.items.length;
+      pasteAssetManagerItem(currentFolderId);
+      setAnnouncement(
+        `${pastedItemCount} ${
+          pastedItemCount === 1 ? "item" : "items"
+        } pasted into ${getFolderName(currentFolderId)}.`
+      );
+    } else if (isDeleteCommand && normalizedShortcutSelection.length > 0) {
+      setPendingDeleteItems(normalizedShortcutSelection);
+    }
+  };
   const hasPanelContextMenuActions = Object.values(
     panelContextMenuActions
   ).some((action) => action !== undefined);
 
+  useEffect(() => () => cleanupMarquee.current?.(), []);
+
+  const handlePanelPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (
+      canManageFolders === false ||
+      event.button !== 0 ||
+      event.pointerType === "touch" ||
+      event.target instanceof Element === false ||
+      event.target.closest("[data-asset-manager-thumbnail]") !== null
+    ) {
+      return;
+    }
+
+    const listbox = event.target.closest<HTMLElement>('[role="listbox"]');
+    if (listbox === null) {
+      setSelection(undefined);
+      exitMultiselect();
+      return;
+    }
+
+    cleanupMarquee.current?.();
+    const panel = panelElement.current;
+    if (panel === null) {
+      return;
+    }
+
+    const hasAddModifier = event.shiftKey || event.metaKey || event.ctrlKey;
+    const initialSelection = hasAddModifier
+      ? (forcedSelection ?? (selection === undefined ? [] : [selection]))
+      : [];
+    if (hasAddModifier === false) {
+      setSelection(undefined);
+      setForcedSelection(undefined);
+      setSelectionAnchor(undefined);
+    }
+
+    cleanupMarquee.current = startAssetManagerMarquee({
+      pointerId: event.pointerId,
+      start: { x: event.clientX, y: event.clientY },
+      panel,
+      listbox,
+      items: navigableItems,
+      initialSelection,
+      getItemElement: (item) =>
+        itemElements.current.get(getAssetManagerSelectionKey(item)),
+      onSelectionChange: setForcedSelection,
+      onRectChange: setMarqueeRect,
+      onFinish: (items, active) => {
+        cleanupMarquee.current = undefined;
+        if (active === false) {
+          return;
+        }
+        if (items.length === 0) {
+          setForcedSelection(undefined);
+          setSelectionAnchor(undefined);
+          setSelection(undefined);
+          announceSelection([]);
+          return;
+        }
+        const focusedItem = items[0];
+        setForcedSelection(items);
+        setSelectionAnchor(focusedItem);
+        setSelection(focusedItem);
+        announceSelection(items);
+        itemElements.current
+          .get(getAssetManagerSelectionKey(focusedItem))
+          ?.focus({ preventScroll: true });
+      },
+      onCancel: () => {
+        cleanupMarquee.current = undefined;
+        setForcedSelection(
+          initialSelection.length === 0 ? undefined : [...initialSelection]
+        );
+      },
+    });
+  };
+
   return (
-    <AssetsShell
-      filters={
-        <Flex gap="2" grow>
-          <AssetFilters
-            formatCounts={formatCounts}
-            value={selectedExtensions}
-            onChange={setSelectedExtensions}
+    <>
+      <AssetsShell
+        filters={
+          <Flex gap="2" grow>
+            <AssetFilters
+              formatCounts={formatCounts}
+              value={selectedExtensions}
+              onChange={setSelectedExtensions}
+            />
+            <AssetSortSelect value={sortState} onValueChange={setSortState} />
+          </Flex>
+        }
+        searchProps={searchProps}
+        isEmpty={filteredItems.length === 0 && visibleFolders.length === 0}
+        emptyMessage={isSearching ? "No matching assets or folders" : undefined}
+        emptyContent={
+          backCard === undefined ? undefined : (
+            <AssetGrid role="listbox" aria-multiselectable={canManageFolders}>
+              {backCard}
+            </AssetGrid>
+          )
+        }
+        interactionOverlay={
+          marqueeRect === undefined ? undefined : (
+            <Box
+              data-asset-manager-marquee=""
+              css={{
+                position: "absolute",
+                left: marqueeRect.left,
+                top: marqueeRect.top,
+                width: marqueeRect.width,
+                height: marqueeRect.height,
+                pointerEvents: "none",
+                backgroundColor: `color-mix(in srgb, ${theme.colors.backgroundPrimary} 12%, transparent)`,
+                border: `1px solid ${theme.colors.borderFocus}`,
+                zIndex: 1,
+              }}
+            />
+          )
+        }
+        type="file"
+        accept={accept}
+        folderId={currentFolderId}
+        onElementChange={(element) => {
+          panelElement.current = element;
+        }}
+        onPointerDown={handlePanelPointerDown}
+        onKeyDown={handleShortcut}
+        contextMenu={
+          hasPanelContextMenuActions ? (
+            <AssetManagerItemContextMenuContent
+              actions={panelContextMenuActions}
+              disabledActions={disabledPanelActions}
+            />
+          ) : undefined
+        }
+        footer={
+          <AssetFolderBreadcrumbs
+            hierarchy={folderHierarchy}
+            folderId={currentFolderId}
+            onChange={setCurrentFolderId}
+            onPaste={canPaste ? pasteAssetManagerItem : undefined}
           />
-          <AssetSortSelect value={sortState} onValueChange={setSortState} />
-        </Flex>
-      }
-      searchProps={searchProps}
-      isEmpty={filteredItems.length === 0 && visibleFolders.length === 0}
-      emptyMessage={isSearching ? "No matching assets or folders" : undefined}
-      emptyContent={
-        backCard === undefined ? undefined : <AssetGrid>{backCard}</AssetGrid>
-      }
-      type="file"
-      accept={accept}
-      folderId={currentFolderId}
-      contextMenu={
-        hasPanelContextMenuActions ? (
-          <AssetManagerItemContextMenuContent
-            actions={panelContextMenuActions}
-            disabledActions={disabledPanelActions}
-          />
-        ) : undefined
-      }
-      footer={
-        <AssetFolderBreadcrumbs
-          hierarchy={folderHierarchy}
-          folderId={currentFolderId}
-          onChange={setCurrentFolderId}
-          onPaste={canPaste ? pasteAssetManagerItem : undefined}
-        />
-      }
-    >
-      <>
-        <Box
-          role="status"
-          aria-live="polite"
-          css={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            overflow: "hidden",
-            clip: "rect(0 0 0 0)",
-          }}
-        >
-          {announcement}
-        </Box>
-        <AssetGrid>
-          <>
-            {backCard}
-            {visibleFolders.map((folder) => (
-              <FolderThumbnail
-                key={folder.id}
-                folder={folder}
-                selected={
-                  selection?.type === "folder" && selection.id === folder.id
-                }
-                onSelectionChange={(selected) =>
-                  handleSelectionChange(
-                    { type: "folder", id: folder.id },
-                    selected
-                  )
-                }
-                canManage={canManageFolders}
-                canMoveFolder={(movedFolderId) =>
-                  folderHierarchy
-                    .getSubtreeIds(movedFolderId)
-                    .has(folder.id) === false
-                }
-                onOpen={() => openFolder(folder.id)}
-                path={
-                  isSearching
-                    ? formatAssetFolderPath(folderHierarchy, folder.parentId)
-                    : undefined
-                }
-                onElementChange={(element) =>
-                  registerItemElement(
-                    { type: "folder", id: folder.id },
-                    element
-                  )
-                }
-                onMoveAsset={(assetId) => moveAsset(assetId, folder.id)}
-                onMoveFolder={(folderId) => moveFolder(folderId, folder.id)}
-              />
-            ))}
-            {filteredItems.map((assetContainer) => (
-              <AssetThumbnail
-                key={assetContainer.asset.id}
-                assetContainer={assetContainer}
-                onSelectionChange={(selected) =>
-                  handleSelectionChange(
-                    { type: "asset", id: assetContainer.asset.id },
-                    selected
-                  )
-                }
-                onChange={(assetContainer) => {
-                  onChange?.(assetContainer.asset.id);
+        }
+      >
+        <>
+          <Box
+            role="status"
+            aria-live="polite"
+            css={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              overflow: "hidden",
+              clip: "rect(0 0 0 0)",
+            }}
+          >
+            {announcement}
+          </Box>
+          <AssetGrid role="listbox" aria-multiselectable={canManageFolders}>
+            <>
+              {backCard}
+              {visibleFolders.map((folder) => (
+                <FolderThumbnail
+                  key={folder.id}
+                  folder={folder}
+                  selected={isItemSelected({ type: "folder", id: folder.id })}
+                  forcedSelection={forcedSelection !== undefined}
+                  selectionActions={
+                    forcedSelection === undefined ? undefined : selectionActions
+                  }
+                  onSelectionChange={(focused) =>
+                    handleFocusChange(
+                      { type: "folder", id: folder.id },
+                      focused
+                    )
+                  }
+                  onItemPointerDown={(event) =>
+                    handleItemPointerDown(
+                      { type: "folder", id: folder.id },
+                      event
+                    )
+                  }
+                  onItemClick={(event) =>
+                    handleItemClick({ type: "folder", id: folder.id }, event)
+                  }
+                  onModifiedArrow={(event) =>
+                    handleModifiedArrow(
+                      { type: "folder", id: folder.id },
+                      event
+                    )
+                  }
+                  onExitMultiselect={
+                    forcedSelection === undefined ? undefined : exitMultiselect
+                  }
+                  onContextMenuSelection={() =>
+                    handleContextMenuSelection({
+                      type: "folder",
+                      id: folder.id,
+                    })
+                  }
+                  getDragItems={getDragItems({
+                    type: "folder",
+                    id: folder.id,
+                  })}
+                  canManage={canManageFolders}
+                  canMoveFolder={(movedFolderId) =>
+                    folderHierarchy
+                      .getSubtreeIds(movedFolderId)
+                      .has(folder.id) === false
+                  }
+                  onOpen={() => openFolder(folder.id)}
+                  path={
+                    isSearching
+                      ? formatAssetFolderPath(folderHierarchy, folder.parentId)
+                      : undefined
+                  }
+                  onElementChange={(element) =>
+                    registerItemElement(
+                      { type: "folder", id: folder.id },
+                      element
+                    )
+                  }
+                  onMoveAsset={(assetId) => moveAsset(assetId, folder.id)}
+                  onMoveFolder={(folderId) => moveFolder(folderId, folder.id)}
+                  onMoveItems={(items) => moveItems(items, folder.id)}
+                />
+              ))}
+              {filteredItems.map((assetContainer) => (
+                <AssetThumbnail
+                  key={assetContainer.asset.id}
+                  assetContainer={assetContainer}
+                  onSelectionChange={(focused) =>
+                    handleFocusChange(
+                      { type: "asset", id: assetContainer.asset.id },
+                      focused
+                    )
+                  }
+                  onItemPointerDown={(event) =>
+                    handleItemPointerDown(
+                      { type: "asset", id: assetContainer.asset.id },
+                      event
+                    )
+                  }
+                  onItemClick={(event) =>
+                    handleItemClick(
+                      { type: "asset", id: assetContainer.asset.id },
+                      event
+                    )
+                  }
+                  onModifiedArrow={(event) =>
+                    handleModifiedArrow(
+                      { type: "asset", id: assetContainer.asset.id },
+                      event
+                    )
+                  }
+                  onExitMultiselect={
+                    forcedSelection === undefined ? undefined : exitMultiselect
+                  }
+                  onContextMenuSelection={() =>
+                    handleContextMenuSelection({
+                      type: "asset",
+                      id: assetContainer.asset.id,
+                    })
+                  }
+                  selectionActions={
+                    forcedSelection === undefined ? undefined : selectionActions
+                  }
+                  onChange={(assetContainer) => {
+                    onChange?.(assetContainer.asset.id);
+                  }}
+                  selected={isItemSelected({
+                    type: "asset",
+                    id: assetContainer.asset.id,
+                  })}
+                  forcedSelection={forcedSelection !== undefined}
+                  folderPath={
+                    isSearching
+                      ? formatAssetFolderPath(
+                          folderHierarchy,
+                          assetContainer.asset.folderId
+                        )
+                      : undefined
+                  }
+                  canDrag={canManageFolders}
+                  getDragItems={getDragItems({
+                    type: "asset",
+                    id: assetContainer.asset.id,
+                  })}
+                  onElementChange={(element) =>
+                    registerItemElement(
+                      { type: "asset", id: assetContainer.asset.id },
+                      element
+                    )
+                  }
+                />
+              ))}
+            </>
+          </AssetGrid>
+        </>
+      </AssetsShell>
+      <Dialog
+        open={pendingDeleteItems !== undefined}
+        onOpenChange={(open) => {
+          if (open === false) {
+            setPendingDeleteItems(undefined);
+          }
+        }}
+      >
+        <DialogContent minWidth={360} aria-describedby={undefined}>
+          <DialogTitle>Delete selected items</DialogTitle>
+          <Box css={{ padding: theme.panel.padding }}>
+            <Text>
+              Delete {pendingDeleteItems?.length ?? 0} selected
+              {pendingDeleteItems?.length === 1 ? " item" : " items"}?
+              Everything inside selected folders will also be deleted.
+            </Text>
+            <Flex justify="end" css={{ marginTop: theme.panel.paddingBlock }}>
+              <Button
+                autoFocus
+                color="destructive"
+                prefix={<TrashIcon />}
+                onClick={() => {
+                  const items = pendingDeleteItems ?? [];
+                  deleteAssetManagerItems(items);
+                  setPendingDeleteItems(undefined);
+                  setForcedSelection(undefined);
+                  setSelectionAnchor(undefined);
+                  setAnnouncement(
+                    `${items.length} ${
+                      items.length === 1 ? "item" : "items"
+                    } deleted.`
+                  );
                 }}
-                selected={
-                  selection?.type === "asset" &&
-                  selection.id === assetContainer.asset.id
-                }
-                folderPath={
-                  isSearching
-                    ? formatAssetFolderPath(
-                        folderHierarchy,
-                        assetContainer.asset.folderId
-                      )
-                    : undefined
-                }
-                canDrag={canManageFolders}
-                onElementChange={(element) =>
-                  registerItemElement(
-                    { type: "asset", id: assetContainer.asset.id },
-                    element
-                  )
-                }
-              />
-            ))}
-          </>
-        </AssetGrid>
-      </>
-    </AssetsShell>
+              >
+                Delete
+              </Button>
+            </Flex>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

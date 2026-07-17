@@ -8,7 +8,6 @@ test("uses one ordered command model for context and dropdown menus", () => {
     settings: action,
     createFolder: action,
     upload: action,
-    rename: action,
     cut: action,
     copy: action,
     paste: action,
@@ -24,7 +23,6 @@ test("uses one ordered command model for context and dropdown menus", () => {
     "upload",
     "open",
     "settings",
-    "rename",
     "cut",
     "copy",
     "paste",
@@ -41,6 +39,19 @@ test("uses one ordered command model for context and dropdown menus", () => {
   expect(items.find(({ name }) => name === "deleteUnusedAssets")).toMatchObject(
     { separatorBefore: true }
   );
+  expect(
+    Object.fromEntries(
+      items
+        .filter(({ shortcut }) => shortcut !== undefined)
+        .map(({ name, shortcut }) => [name, shortcut])
+    )
+  ).toEqual({
+    cut: ["meta", "x"],
+    copy: ["meta", "c"],
+    paste: ["meta", "v"],
+    duplicate: ["meta", "d"],
+    delete: ["backspace"],
+  });
 });
 
 test("orders panel actions independently of unavailable item actions", () => {
@@ -68,14 +79,4 @@ test("keeps unavailable panel actions visible but disabled", () => {
   );
 
   expect(items).toMatchObject([{ name: "paste", disabled: true }]);
-});
-
-test("omits actions hidden by a menu surface", () => {
-  const action = vi.fn();
-  const items = getAssetManagerItemMenuItems(
-    { settings: action, rename: action },
-    { hiddenActions: new Set(["rename"]) }
-  );
-
-  expect(items.map(({ name }) => name)).toEqual(["settings"]);
 });

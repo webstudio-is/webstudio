@@ -1125,6 +1125,7 @@ test("uploads assets as binary requests", async () => {
         type: "image",
         name: "image.png",
         filename: "image.png",
+        folderId: "campaign",
         format: "png",
         size: 3,
         meta: { width: 10, height: 20 },
@@ -1137,7 +1138,7 @@ test("uploads assets as binary requests", async () => {
   expect(fetch).toHaveBeenCalledOnce();
   const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
   expect(url.href).toBe(
-    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&width=10&height=20&format=png"
+    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&folderId=campaign&width=10&height=20&format=png"
   );
   expect(init.method).toBe("POST");
   expect(init.body).toBe(file);
@@ -1301,6 +1302,7 @@ test("uploads project asset descriptors with local data readers", async () => {
         name: "image.png",
         type: "image",
         format: "png",
+        folderId: "campaign",
         meta: { width: 10, height: 20 },
       },
       readAssetData: async () => new Uint8Array([1, 2, 3]),
@@ -1323,6 +1325,9 @@ test("uploads project asset descriptors with local data readers", async () => {
   ).resolves.toEqual({ uploaded: [uploadedAsset] });
 
   const calls = fetch.mock.calls as unknown as Array<[URL]>;
+  expect(new URL(calls[0][0].toString()).searchParams.get("folderId")).toBe(
+    "campaign"
+  );
   for (const [request] of calls) {
     const url = new URL(request.toString());
     expect(url.searchParams.has("assetId")).toBe(false);

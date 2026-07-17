@@ -12,8 +12,7 @@ test("tracks copy and cut operations independently from item selection", () => {
   copyAssetManagerItem({ type: "asset", id: "asset", projectId: "project" });
   expect($assetManagerClipboard.get()).toEqual({
     operation: "copy",
-    type: "asset",
-    id: "asset",
+    items: [{ type: "asset", id: "asset", projectId: "project" }],
     projectId: "project",
   });
 
@@ -24,8 +23,7 @@ test("tracks copy and cut operations independently from item selection", () => {
   });
   expect($assetManagerClipboard.get()).toEqual({
     operation: "cut",
-    type: "folder",
-    id: "folder",
+    items: [{ type: "folder", id: "folder", projectId: "project" }],
     projectId: "project",
   });
 });

@@ -108,6 +108,7 @@ export const AssetThumbnailMenu = styled(Box, {
 
 const Root = styled("div", {
   all: "unset",
+  WebkitUserDrag: "element",
   boxSizing: "border-box",
   position: "relative",
   display: "flex",

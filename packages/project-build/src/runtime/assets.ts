@@ -157,6 +157,8 @@ export const assetDuplicateInput = z.object({
   folderId: z.string().min(1).nullable().optional(),
 });
 
+export const assetGetInput = z.object({ assetId: z.string().min(1) });
+
 export const parseAssetType = (value: string | null) => {
   const result = assetType.safeParse(value);
   return result.success ? result.data : undefined;
@@ -365,6 +367,17 @@ const getRequiredAssets = (state: Pick<BuilderState, "assets">) => {
     );
   }
   return state.assets;
+};
+
+export const getAsset = (
+  state: Pick<BuilderState, "assets">,
+  input: z.infer<typeof assetGetInput>
+) => {
+  const asset = getRequiredAssets(state).get(input.assetId);
+  if (asset === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
+  }
+  return { asset };
 };
 
 const getRequiredAssetReferenceBuild = (
@@ -829,6 +842,7 @@ const serializeAssetSummary = (asset: Asset) => ({
   id: asset.id,
   name: asset.name,
   filename: asset.filename,
+  folderId: asset.folderId,
   type: asset.type,
   size: asset.size,
   contentType: asset.format,

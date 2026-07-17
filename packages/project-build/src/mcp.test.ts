@@ -776,7 +776,9 @@ describe("project session mcp adapter", () => {
       runtimeOperationContracts
         .filter(
           ({ id }) =>
-            id.startsWith("assetFolders.") || id === "assets.duplicate"
+            id.startsWith("assetFolders.") ||
+            id === "assets.get" ||
+            id === "assets.duplicate"
         )
         .map((contract) =>
           publicOperation({
@@ -804,6 +806,7 @@ describe("project session mcp adapter", () => {
         "update-asset-folder",
         "duplicate-asset-folder",
         "delete-asset-folder",
+        "get-asset",
         "duplicate-asset",
       ])
     );

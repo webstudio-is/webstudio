@@ -107,7 +107,7 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 - Create HTTP, GraphQL, and system resources.
 - Use system resources for sitemap, current date, and assets.
 - Bind resources to rendered data or form/action props.
-- Upload, replace, delete, and inspect asset usage.
+- Manage nested asset folders and upload, inspect, move, duplicate, download, replace, delete, and inspect usage for assets.
 - Publish, unpublish, inspect publish jobs, and manage custom domains.
 - Start preview, capture screenshots, compare screenshot diffs, and use OCR when installed.
 
@@ -724,11 +724,65 @@ Commands:
 Commands:
 
 - MCP tool: list-assets {"withUsage":true}
+- MCP tool: list-assets {"verbose":true}
 
 Notes:
 
+- Compact results include each asset's folder id. Use `verbose:true` to include complete records for a page of assets, or `get-asset` to read one complete record including description, folder, creation time, and image/font metadata.
 - Image asset descriptions are the default alt text for asset-backed Image components.
 - To generate missing descriptions, inspect the image in its rendered page or asset source, write a concise description of its purpose, and save it on the asset rather than duplicating it on each Image instance.
+
+## Get asset
+
+Commands:
+
+- MCP tool: get-asset {"assetId":"<assetId>"}
+
+## List asset folders
+
+Commands:
+
+- MCP tool: list-asset-folders {}
+
+## Create asset folder
+
+Commands:
+
+- MCP tool: create-asset-folder {"name":"Marketing"}
+- MCP tool: create-asset-folder {"name":"Photos","parentId":"<parentFolderId>"}
+
+## Update asset folder
+
+Commands:
+
+- MCP tool: update-asset-folder {"folderId":"<folderId>","values":{"name":"Brand"}}
+- MCP tool: update-asset-folder {"folderId":"<folderId>","values":{"parentId":"<parentFolderId>"}}
+- MCP tool: update-asset-folder {"folderId":"<folderId>","values":{"parentId":null}}
+
+Notes:
+
+- Updating `parentId` is the folder equivalent of cut and paste. Use `null` to move a folder to Root.
+
+## Duplicate asset folder
+
+Commands:
+
+- MCP tool: duplicate-asset-folder {"folderId":"<folderId>"}
+- MCP tool: duplicate-asset-folder {"folderId":"<folderId>","parentId":"<targetFolderId>"}
+
+Notes:
+
+- Duplication recursively copies descendant folders and assets. This is the folder equivalent of copy and paste.
+
+## Delete asset folder
+
+Commands:
+
+- MCP tool: delete-asset-folder {"folderId":"<folderId>"}
+
+Notes:
+
+- Deleting a folder recursively deletes its descendant folders and assets.
 
 ## Update asset metadata
 
@@ -774,12 +828,31 @@ Notes:
 Commands:
 
 - MCP tool: upload-asset {"asset":{"name":"image.png","type":"image","format":"png","meta":{"width":1200,"height":630}},"assetsDir":".webstudio/assets"}
+- MCP tool: upload-asset {"asset":{"name":"image.png","type":"image","format":"png","folderId":"<folderId>","meta":{"width":1200,"height":630}},"assetsDir":".webstudio/assets"}
 
 ## Upload asset batch
 
 Commands:
 
 - MCP tool: upload-assets {"assets":[{"name":"image.png","type":"image","format":"png","meta":{"width":1200,"height":630}}],"assetsDir":".webstudio/assets"}
+
+## Duplicate asset
+
+Commands:
+
+- MCP tool: duplicate-asset {"assetId":"<assetId>"}
+- MCP tool: duplicate-asset {"assetId":"<assetId>","folderId":"<targetFolderId>"}
+- MCP tool: duplicate-asset {"assetId":"<assetId>","folderId":null}
+
+Notes:
+
+- Duplication is the asset equivalent of copy and paste. Updating `folderId` is the equivalent of cut and paste; use `null` for Root.
+
+## Download asset
+
+Commands:
+
+- MCP tool: download-asset {"assetId":"<assetId>"}
 
 ## Find asset usage
 

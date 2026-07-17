@@ -25,6 +25,7 @@ import {
   duplicateAsset,
   findAsset,
   findAssetUsage,
+  getAsset,
   getAssetInfoFallback,
   getBrowserAssetFormat,
   imageDescriptionsSetInput,
@@ -303,6 +304,19 @@ describe("asset runtime operations", () => {
     });
   });
 
+  test("gets the complete asset record", () => {
+    const asset = imageAsset("nested");
+    asset.description = "Campaign hero";
+    asset.folderId = "campaign";
+
+    expect(
+      getAsset({ assets: new Map([[asset.id, asset]]) }, { assetId: asset.id })
+    ).toEqual({ asset });
+    expect(() =>
+      getAsset({ assets: new Map() }, { assetId: "missing" })
+    ).toThrow("Asset not found");
+  });
+
   test("expands asset descriptions only in verbose output", () => {
     const asset = imageAsset("described");
     asset.description = `Team collaborating around a whiteboard. ${"Detailed visual context. ".repeat(
@@ -350,6 +364,15 @@ describe("asset runtime operations", () => {
         },
       ],
     });
+  });
+
+  test("includes folder placement in compact asset lists", () => {
+    const asset = imageAsset("nested");
+    asset.folderId = "campaign";
+
+    expect(
+      listAssets({ ...state, assets: new Map([[asset.id, asset]]) })
+    ).toMatchObject({ items: [{ id: "nested", folderId: "campaign" }] });
   });
 
   test("paginates assets and rejects invalid cursors", () => {

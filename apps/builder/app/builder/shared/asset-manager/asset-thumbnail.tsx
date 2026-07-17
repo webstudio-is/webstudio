@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { Box, styled, Text } from "@webstudio-is/design-system";
 import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
@@ -26,6 +33,7 @@ import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
+import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
 import { type AssetManagerItemActions } from "./asset-manager-item-menu";
 import {
   AssetManagerThumbnail,
@@ -117,9 +125,17 @@ type AssetThumbnailProps = {
   onSelectionChange: (selected: boolean) => void;
   onChange?: (assetContainer: AssetContainer) => void;
   selected?: boolean;
+  forcedSelection?: boolean;
   folderPath?: string;
   canDrag?: boolean;
   onElementChange?: (element: HTMLElement | null) => void;
+  selectionActions?: AssetManagerItemActions;
+  onItemPointerDown?: (event: PointerEvent<HTMLElement>) => void;
+  onItemClick?: (event: MouseEvent<HTMLElement>) => void;
+  onModifiedArrow?: (event: KeyboardEvent<HTMLElement>) => void;
+  onExitMultiselect?: () => void;
+  onContextMenuSelection?: () => void;
+  getDragItems?: () => Array<{ type: "asset" | "folder"; id: string }>;
 };
 
 export const AssetThumbnail = ({
@@ -127,14 +143,21 @@ export const AssetThumbnail = ({
   onSelectionChange,
   onChange,
   selected,
+  forcedSelection,
   folderPath,
   canDrag = false,
   onElementChange,
+  selectionActions,
+  onItemPointerDown,
+  onItemClick,
+  onModifiedArrow,
+  onExitMultiselect,
+  onContextMenuSelection,
+  getDragItems,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [focusName, setFocusName] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const authPermit = useStore($authPermit);
   const { canDownloadAssets } = useStore($permissions);
@@ -164,17 +187,10 @@ export const AssetThumbnail = ({
     assetContainer.status === "uploading"
       ? {}
       : {
-          settings: () => {
-            setFocusName(false);
-            setSettingsOpen(true);
-          },
+          settings: () => setSettingsOpen(true),
           ...(authPermit === "view"
             ? {}
             : {
-                rename: () => {
-                  setFocusName(true);
-                  setSettingsOpen(true);
-                },
                 ...createAssetManagerClipboardActions(item),
                 delete: () => setDeleteOpen(true),
                 ...(asset.type === "image"
@@ -199,9 +215,23 @@ export const AssetThumbnail = ({
     }
     return draggable({
       element,
-      getInitialData: () => ({ kind: "asset", id: asset.id }),
+      onGenerateDragPreview: ({ nativeSetDragImage, location }) => {
+        setAssetManagerDragPreview({
+          nativeSetDragImage,
+          sourceElement: element,
+          input: location.initial.input,
+          items: getDragItems?.() ?? [],
+        });
+      },
+      getInitialData: () => ({
+        kind: "asset",
+        id: asset.id,
+        items: getDragItems?.(),
+      }),
     });
-  }, [asset.id, canDrag, isUploading]);
+  }, [asset.id, canDrag, getDragItems, isUploading]);
+
+  const displayedActions = selectionActions ?? actions;
 
   return (
     <>
@@ -213,9 +243,16 @@ export const AssetThumbnail = ({
         onChange={handleReplaceFile}
       />
       <AssetManagerThumbnail
-        actions={actions}
+        item={{ type: "asset", id: asset.id }}
+        actions={displayedActions}
         selected={selected}
+        forcedSelection={forcedSelection}
         onSelectionChange={onSelectionChange}
+        onItemPointerDown={onItemPointerDown}
+        onItemClick={onItemClick}
+        onModifiedArrow={onModifiedArrow}
+        onExitMultiselect={onExitMultiselect}
+        onContextMenuSelection={onContextMenuSelection}
         thumbnailRef={(element) => {
           elementRef.current = element;
           onElementChange?.(element);
@@ -262,17 +299,14 @@ export const AssetThumbnail = ({
               open={settingsOpen}
               onOpenChange={(open) => {
                 setSettingsOpen(open);
-                if (open === false) {
-                  setFocusName(false);
-                }
               }}
               onDelete={actions.delete}
               onReplace={actions.replace}
-              focusName={focusName}
             >
               <AssetManagerThumbnailMenu
-                actions={actions}
+                actions={displayedActions}
                 label={`Actions for ${formatAssetName(asset)}`}
+                onPointerDown={onContextMenuSelection}
               />
             </AssetSettings>
           ) : undefined

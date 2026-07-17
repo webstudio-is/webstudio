@@ -1,4 +1,11 @@
-import { useId, useMemo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { Flex, Grid, Label, Select } from "@webstudio-is/design-system";
 import { ChevronRightIcon } from "@webstudio-is/icons";
@@ -39,7 +46,7 @@ export const createAssetFolderSelectorLevels = ({
     .getPath(value)
     .filter(({ id }) => excludedIds.has(id) === false);
   const topOptions: Option[] = [
-    { label: "No folder", folderId: undefined },
+    { label: "Root", folderId: undefined },
     ...getChildren(undefined).map((folder) => ({
       label: folder.name,
       folderId: folder.id,
@@ -87,28 +94,77 @@ export const AssetFolderSelector = ({
   excludedFolderId,
   rootLabel = defaultRootLabel,
   disabled,
+  deferChangesUntilBlur = false,
 }: {
   value: string | undefined;
   onChange: (folderId: string | undefined) => void;
   excludedFolderId?: string;
   rootLabel?: string;
   disabled?: boolean;
+  deferChangesUntilBlur?: boolean;
 }) => {
   const folders = useStore($assetFolders);
   const selectId = useId();
+  const [draftValue, setDraftValue] = useState(value);
+  const pendingValue = useRef<{ folderId: string | undefined }>();
+  const openSelects = useRef(new Set<number>());
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const commitPendingValue = useCallback(() => {
+    const pending = pendingValue.current;
+    if (pending === undefined) {
+      return;
+    }
+    pendingValue.current = undefined;
+    onChangeRef.current(pending.folderId);
+  }, []);
+
+  useEffect(() => {
+    if (pendingValue.current === undefined) {
+      setDraftValue(value);
+    }
+  }, [value]);
+
+  useEffect(
+    () => () => {
+      if (deferChangesUntilBlur) {
+        commitPendingValue();
+      }
+    },
+    [commitPendingValue, deferChangesUntilBlur]
+  );
+
   const levels = useMemo(
     () =>
       createAssetFolderSelectorLevels({
         folders,
-        value,
+        value: draftValue,
         excludedFolderId,
         rootLabel,
       }),
-    [excludedFolderId, folders, rootLabel, value]
+    [draftValue, excludedFolderId, folders, rootLabel]
   );
 
   return (
-    <Grid gap={1}>
+    <Grid
+      gap={1}
+      onBlurCapture={(event) => {
+        if (deferChangesUntilBlur === false) {
+          return;
+        }
+        const selector = event.currentTarget;
+        queueMicrotask(() => {
+          if (
+            openSelects.current.size > 0 ||
+            selector.contains(document.activeElement)
+          ) {
+            return;
+          }
+          commitPendingValue();
+        });
+      }}
+    >
       <Label htmlFor={`${selectId}-0`}>{rootLabel}</Label>
       <Flex align="center" gap={1} wrap="wrap">
         {levels.map((level, index) => (
@@ -122,7 +178,21 @@ export const AssetFolderSelector = ({
               disabled={disabled}
               getLabel={(option: Option) => option.label}
               getValue={getAssetFolderSelectValue}
-              onChange={(option: Option) => onChange(option.folderId)}
+              onOpenChange={(open) => {
+                if (open) {
+                  openSelects.current.add(index);
+                } else {
+                  openSelects.current.delete(index);
+                }
+              }}
+              onChange={(option: Option) => {
+                setDraftValue(option.folderId);
+                if (deferChangesUntilBlur) {
+                  pendingValue.current = { folderId: option.folderId };
+                } else {
+                  onChange(option.folderId);
+                }
+              }}
               css={{ width: "auto", minWidth: "8ch", maxWidth: "18ch" }}
             />
           </Flex>

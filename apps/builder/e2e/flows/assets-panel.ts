@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { Page } from "playwright";
 import { waitForChangeToBeSaved } from "./sync-status";
+import { dragPointer } from "./drag";
 
 const assetFixturePath = (filename: string) =>
   path.join(process.cwd(), "e2e", "fixtures", "assets", filename);
@@ -22,6 +23,50 @@ export const openAssetsPanel = async ({ page }: { page: Page }) => {
     .getByRole("tabpanel", { name: "Assets" })
     .getByRole("button", { name: "Upload asset" })
     .waitFor();
+};
+
+export const createAssetFolder = async ({
+  page,
+  name,
+}: {
+  page: Page;
+  name: string;
+}) => {
+  await page.getByRole("button", { name: "Create asset folder" }).click();
+  const dialog = page.getByRole("dialog", { name: "New folder" });
+  await dialog.getByLabel("Folder", { exact: true }).fill(name);
+  await Promise.all([
+    waitForChangeToBeSaved({ page }),
+    dialog.getByRole("button", { name: "Create folder" }).click(),
+  ]);
+  return page.getByRole("button", { name: `Folder ${name}`, exact: true });
+};
+
+export const dragAssetToFolder = async ({
+  page,
+  assetTitle,
+  folderName,
+}: {
+  page: Page;
+  assetTitle: string;
+  folderName: string;
+}) => {
+  const asset = page.getByTitle(assetTitle);
+  const folder = page.getByRole("button", {
+    name: `Folder ${folderName}`,
+    exact: true,
+  });
+  await Promise.all([
+    waitForChangeToBeSaved({ page, timeout: 30_000 }),
+    dragPointer({
+      page,
+      source: asset,
+      target: folder,
+      ready: async () =>
+        (await folder.getAttribute("data-is-drop-over")) === "true",
+    }),
+  ]);
+  await asset.waitFor({ state: "hidden" });
 };
 
 export const uploadAsset = async ({

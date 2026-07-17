@@ -1560,6 +1560,32 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     },
   ],
   "download-asset": [{ assetId: "asset-id" }],
+  "upload-asset": [
+    {
+      asset: {
+        name: "hero.png",
+        type: "image",
+        format: "png",
+        folderId: "folder-id",
+        meta: { width: 1200, height: 630 },
+      },
+      assetsDir: ".webstudio/assets",
+    },
+  ],
+  "upload-assets": [
+    {
+      assets: [
+        {
+          name: "hero.png",
+          type: "image",
+          format: "png",
+          folderId: "folder-id",
+          meta: { width: 1200, height: 630 },
+        },
+      ],
+      assetsDir: ".webstudio/assets",
+    },
+  ],
   "list-asset-folders": [{}],
   "create-asset-folder": [
     { name: "Marketing" },
@@ -1574,6 +1600,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     { folderId: "folder-id", parentId: "target-folder-id" },
   ],
   "delete-asset-folder": [{ folderId: "folder-id" }],
+  "get-asset": [{ assetId: "asset-id" }],
   "duplicate-asset": [
     { assetId: "asset-id" },
     { assetId: "asset-id", folderId: "target-folder-id" },
@@ -3025,6 +3052,7 @@ const capabilityAreas = [
       "duplicate-asset-folder",
       "delete-asset-folder",
       "list-assets",
+      "get-asset",
       "list-fonts",
       "upload-asset",
       "upload-assets",

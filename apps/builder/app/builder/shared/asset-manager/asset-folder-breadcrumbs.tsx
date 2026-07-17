@@ -82,7 +82,7 @@ export const AssetFolderBreadcrumbs = ({
               aria-current={folderId === undefined ? "location" : undefined}
               onClick={() => onChange(undefined)}
             >
-              <Text css={{ minWidth: "5ch" }}>Root</Text>
+              <Text css={{ minWidth: "3ch" }}>Root</Text>
             </Button>
           </PasteTarget>
           {path.map((folder) => (
@@ -95,7 +95,7 @@ export const AssetFolderBreadcrumbs = ({
                   aria-current={folder.id === folderId ? "location" : undefined}
                   onClick={() => onChange(folder.id)}
                 >
-                  <Text truncate css={{ minWidth: "5ch", maxWidth: 160 }}>
+                  <Text truncate css={{ minWidth: "3ch", maxWidth: 160 }}>
                     {folder.name}
                   </Text>
                 </Button>

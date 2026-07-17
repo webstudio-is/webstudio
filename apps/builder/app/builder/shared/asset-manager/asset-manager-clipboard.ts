@@ -1,46 +1,52 @@
 import { atom } from "nanostores";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { $project } from "~/shared/sync/data-stores";
-import { moveAssetFolder, moveAssetToFolder } from "./asset-folder-actions";
+import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
+import {
+  duplicateAssetManagerItems,
+  moveAssetManagerItems,
+  normalizeAssetManagerItems,
+  type AssetManagerItem,
+} from "./asset-manager-operations";
 
 export type AssetManagerClipboardItem = {
   operation: "copy" | "cut";
-  type: "asset" | "folder";
-  id: string;
+  items: AssetManagerItem[];
   projectId: string;
 };
-
-type AssetManagerItem = Omit<AssetManagerClipboardItem, "operation">;
 
 export const $assetManagerClipboard = atom<
   AssetManagerClipboardItem | undefined
 >(undefined);
 
-export const copyAssetManagerItem = (item: AssetManagerItem) =>
-  $assetManagerClipboard.set({ ...item, operation: "copy" });
+const setAssetManagerClipboard = (
+  operation: AssetManagerClipboardItem["operation"],
+  itemOrItems: AssetManagerItem | readonly AssetManagerItem[]
+) => {
+  const items = Array.isArray(itemOrItems) ? [...itemOrItems] : [itemOrItems];
+  const projectId = items[0]?.projectId;
+  if (
+    projectId === undefined ||
+    items.some((item) => item.projectId !== projectId)
+  ) {
+    return;
+  }
+  $assetManagerClipboard.set({ operation, items, projectId });
+};
 
-export const cutAssetManagerItem = (item: AssetManagerItem) =>
-  $assetManagerClipboard.set({ ...item, operation: "cut" });
+export const copyAssetManagerItem = (
+  itemOrItems: AssetManagerItem | readonly AssetManagerItem[]
+) => setAssetManagerClipboard("copy", itemOrItems);
+
+export const cutAssetManagerItem = (
+  itemOrItems: AssetManagerItem | readonly AssetManagerItem[]
+) => setAssetManagerClipboard("cut", itemOrItems);
 
 export const duplicateAssetManagerItem = (
-  item: AssetManagerItem,
+  itemOrItems: AssetManagerItem | readonly AssetManagerItem[],
   targetFolderId?: string | null
-) =>
-  item.type === "asset"
-    ? executeRuntimeMutation({
-        id: "assets.duplicate",
-        input: {
-          assetId: item.id,
-          ...(targetFolderId === undefined ? {} : { folderId: targetFolderId }),
-        },
-      })
-    : executeRuntimeMutation({
-        id: "assetFolders.duplicate",
-        input: {
-          folderId: item.id,
-          ...(targetFolderId === undefined ? {} : { parentId: targetFolderId }),
-        },
-      });
+) => {
+  const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+  return duplicateAssetManagerItems(items, targetFolderId);
+};
 
 export const createAssetManagerClipboardActions = (item: AssetManagerItem) => ({
   cut: () => cutAssetManagerItem(item),
@@ -57,14 +63,15 @@ export const pasteAssetManagerItem = (folderId: string | undefined) => {
     $assetManagerClipboard.set(undefined);
     return;
   }
-  const result =
-    clipboard.operation === "copy"
-      ? duplicateAssetManagerItem(clipboard, folderId ?? null)
-      : clipboard.type === "asset"
-        ? moveAssetToFolder(clipboard.id, folderId)
-        : moveAssetFolder(clipboard.id, folderId);
-  if (result !== undefined && clipboard.operation === "cut") {
+  const items = normalizeAssetManagerItems({
+    items: clipboard.items,
+    folders: $assetFolders.get(),
+    assets: $assets.get(),
+  });
+  if (clipboard.operation === "copy") {
+    duplicateAssetManagerItems(items, folderId ?? null);
+  } else {
+    moveAssetManagerItems(items, folderId);
     $assetManagerClipboard.set(undefined);
   }
-  return result;
 };

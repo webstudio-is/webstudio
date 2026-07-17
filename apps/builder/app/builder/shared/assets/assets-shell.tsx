@@ -39,6 +39,7 @@ type AssetsShellProps = {
   filters?: JSX.Element;
   searchProps: ComponentProps<typeof SearchField>;
   children: JSX.Element;
+  interactionOverlay?: JSX.Element;
   footer?: JSX.Element;
   type: AssetType;
   accept?: string;
@@ -47,6 +48,9 @@ type AssetsShellProps = {
   emptyContent?: JSX.Element;
   folderId?: string;
   contextMenu?: JSX.Element;
+  onPointerDown?: ComponentProps<typeof Flex>["onPointerDown"];
+  onKeyDown?: ComponentProps<typeof Flex>["onKeyDown"];
+  onElementChange?: (element: HTMLDivElement | null) => void;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -65,13 +69,17 @@ export const AssetsShell = ({
   emptyMessage = "Drop files here",
   emptyContent,
   children,
+  interactionOverlay,
   footer,
   folderId,
   contextMenu,
+  onPointerDown,
+  onKeyDown,
+  onElementChange,
   type,
   accept,
 }: AssetsShellProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
   const [monitorState, setMonitorState] =
     useState<ExternalMonitorDragState>(IDLE);
 
@@ -182,7 +190,12 @@ export const AssetsShell = ({
 
   const shell = (
     <Flex
-      ref={ref}
+      ref={(element) => {
+        ref.current = element;
+        onElementChange?.(element);
+      }}
+      onPointerDown={onPointerDown}
+      onKeyDown={onKeyDown}
       direction="column"
       css={{
         overflow: "hidden",
@@ -232,6 +245,7 @@ export const AssetsShell = ({
           {children}
         </ScrollArea>
       )}
+      {interactionOverlay}
       {footer}
       <Flex
         css={{

@@ -2,13 +2,17 @@ import { Fragment } from "react";
 import {
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuItemRightSlot,
   ContextMenuSeparator,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuItemRightSlot,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Kbd,
   SmallIconButton,
+  theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 
@@ -16,7 +20,6 @@ export type AssetManagerItemActions = Partial<
   Record<
     | "open"
     | "settings"
-    | "rename"
     | "cut"
     | "copy"
     | "paste"
@@ -35,6 +38,7 @@ export type AssetManagerItemActionName = keyof AssetManagerItemActions;
 type ItemDefinition = {
   name: keyof AssetManagerItemActions;
   label: string;
+  shortcut?: readonly string[];
   separatorBefore?: boolean;
   destructive?: boolean;
 };
@@ -44,11 +48,15 @@ const itemDefinitions: readonly ItemDefinition[] = [
   { name: "upload", label: "Upload asset" },
   { name: "open", label: "Open" },
   { name: "settings", label: "Settings" },
-  { name: "rename", label: "Rename" },
-  { name: "cut", label: "Cut", separatorBefore: true },
-  { name: "copy", label: "Copy" },
-  { name: "paste", label: "Paste" },
-  { name: "duplicate", label: "Duplicate" },
+  {
+    name: "cut",
+    label: "Cut",
+    shortcut: ["meta", "x"],
+    separatorBefore: true,
+  },
+  { name: "copy", label: "Copy", shortcut: ["meta", "c"] },
+  { name: "paste", label: "Paste", shortcut: ["meta", "v"] },
+  { name: "duplicate", label: "Duplicate", shortcut: ["meta", "d"] },
   { name: "download", label: "Download", separatorBefore: true },
   { name: "replace", label: "Replace file" },
   {
@@ -56,22 +64,28 @@ const itemDefinitions: readonly ItemDefinition[] = [
     label: "Delete unused assets",
     separatorBefore: true,
   },
-  { name: "delete", label: "Delete", separatorBefore: true, destructive: true },
+  {
+    name: "delete",
+    label: "Delete",
+    shortcut: ["backspace"],
+    separatorBefore: true,
+    destructive: true,
+  },
 ] as const;
+
+const menuContentStyle = { minWidth: 120 };
+const shortcutStyle = { paddingLeft: theme.spacing[5] };
 
 export const getAssetManagerItemMenuItems = (
   actions: AssetManagerItemActions,
   {
     disabledActions,
-    hiddenActions,
   }: {
     disabledActions?: ReadonlySet<AssetManagerItemActionName>;
-    hiddenActions?: ReadonlySet<AssetManagerItemActionName>;
   } = {}
 ) =>
   itemDefinitions.flatMap((definition) =>
-    actions[definition.name] === undefined ||
-    hiddenActions?.has(definition.name)
+    actions[definition.name] === undefined
       ? []
       : [
           {
@@ -85,20 +99,21 @@ export const getAssetManagerItemMenuItems = (
 const AssetManagerItemMenuItems = ({
   actions,
   disabledActions,
-  hiddenActions,
   variant,
 }: {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
-  hiddenActions?: ReadonlySet<AssetManagerItemActionName>;
   variant: "context" | "dropdown";
 }) => {
   const Item = variant === "context" ? ContextMenuItem : DropdownMenuItem;
+  const ItemRightSlot =
+    variant === "context"
+      ? ContextMenuItemRightSlot
+      : DropdownMenuItemRightSlot;
   const Separator =
     variant === "context" ? ContextMenuSeparator : DropdownMenuSeparator;
   return getAssetManagerItemMenuItems(actions, {
     disabledActions,
-    hiddenActions,
   }).map((item, index) => (
     <Fragment key={item.name}>
       {item.separatorBefore && index > 0 && <Separator />}
@@ -108,6 +123,11 @@ const AssetManagerItemMenuItems = ({
         onSelect={item.action}
       >
         {item.label}
+        {item.shortcut !== undefined && (
+          <ItemRightSlot css={shortcutStyle}>
+            <Kbd value={item.shortcut} />
+          </ItemRightSlot>
+        )}
       </Item>
     </Fragment>
   ));
@@ -120,7 +140,7 @@ export const AssetManagerItemContextMenuContent = ({
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
 }) => (
-  <ContextMenuContent>
+  <ContextMenuContent css={menuContentStyle}>
     <AssetManagerItemMenuItems
       actions={actions}
       disabledActions={disabledActions}
@@ -132,13 +152,11 @@ export const AssetManagerItemContextMenuContent = ({
 export const AssetManagerItemActionsDropdown = ({
   actions,
   disabledActions,
-  hiddenActions,
   triggerLabel = "Actions",
   triggerTabIndex,
 }: {
   actions: AssetManagerItemActions;
   disabledActions?: ReadonlySet<AssetManagerItemActionName>;
-  hiddenActions?: ReadonlySet<AssetManagerItemActionName>;
   triggerLabel?: string;
   triggerTabIndex?: number;
 }) => (
@@ -150,11 +168,10 @@ export const AssetManagerItemActionsDropdown = ({
         icon={<EllipsesIcon />}
       />
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" css={{ minWidth: 120 }}>
+    <DropdownMenuContent align="end" css={menuContentStyle}>
       <AssetManagerItemMenuItems
         actions={actions}
         disabledActions={disabledActions}
-        hiddenActions={hiddenActions}
         variant="dropdown"
       />
     </DropdownMenuContent>

@@ -334,6 +334,7 @@ type AssetUploadDescriptor = {
   format?: string;
   meta?: Record<string, unknown>;
   description?: string | null;
+  folderId?: string;
 };
 
 type AssetUploadResult = { uploadedAssets?: Asset[] };
@@ -368,6 +369,9 @@ const getAssetUploadUrl = ({
   );
   url.searchParams.set("projectId", projectId);
   url.searchParams.set("type", asset.type);
+  if (asset.folderId !== undefined) {
+    url.searchParams.set("folderId", asset.folderId);
+  }
   if (asset.type === "image") {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
@@ -475,6 +479,7 @@ const toUploadAsset = ({
     name: descriptor.name,
     filename: descriptor.name,
     description: descriptor.description ?? null,
+    folderId: descriptor.folderId,
     size: 0,
     createdAt: new Date().toISOString(),
   };
@@ -1570,6 +1575,10 @@ export const listAssets = projectQueryInput<
       withUsage?: boolean;
     }
 >("list-assets");
+
+export const getAsset = projectQueryInput<
+  AuthProjectParams & { assetId: string }
+>("get-asset");
 
 export const findAssetUsage = projectQueryInput<
   AuthProjectParams &

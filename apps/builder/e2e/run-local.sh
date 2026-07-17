@@ -3,6 +3,20 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 COMPOSE_OVERRIDE_FILE="$ROOT_DIR/apps/builder/docker-compose.e2e.yaml"
+
+# Keep the disposable E2E backend independent from the persistent local
+# development backend. In particular, E2E cleanup must never remove the local
+# database volume.
+export COMPOSE_PROJECT_NAME="${E2E_COMPOSE_PROJECT_NAME:-builder-e2e}"
+export PGPORT="${E2E_PGPORT:-55434}"
+export POSTGREST_PORT="${E2E_POSTGREST_PORT:-55435}"
+export POSTGRES_DB="${E2E_POSTGRES_DB:-webstudio}"
+export POSTGRES_USER="${E2E_POSTGRES_USER:-postgres}"
+export POSTGRES_PASSWORD="${E2E_POSTGRES_PASSWORD:-pass}"
+export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}?pgbouncer=true}"
+export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}}"
+export POSTGREST_URL="${E2E_POSTGREST_URL:-http://localhost:${POSTGREST_PORT}}"
+
 source "$ROOT_DIR/apps/builder/dev/backend.sh"
 builder_backend_init
 

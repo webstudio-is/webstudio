@@ -35,7 +35,7 @@ describe("asset folder selector levels", () => {
       "parent",
       "sibling",
     ]);
-    expect(levels[0].options[0].label).toBe("No folder");
+    expect(levels[0].options[0].label).toBe("Root");
   });
 
   test("excludes a folder and all descendants when choosing its parent", () => {
@@ -62,21 +62,21 @@ describe("asset folder selector levels", () => {
     expect(level.ariaLabel).toBe("Parent folder");
   });
 
-  test("falls back to No folder when the selected folder no longer exists", () => {
+  test("falls back to Root when the selected folder no longer exists", () => {
     const [level] = createAssetFolderSelectorLevels({
       folders: values,
       value: "missing",
     });
 
     expect(level.selected).toEqual({
-      label: "No folder",
+      label: "Root",
       folderId: undefined,
     });
   });
 
-  test("uses non-empty unique select values for No folder and folders", () => {
+  test("uses non-empty unique select values for Root and folders", () => {
     expect(
-      getAssetFolderSelectValue({ label: "No folder", folderId: undefined })
+      getAssetFolderSelectValue({ label: "Root", folderId: undefined })
     ).toBe("no-folder");
     expect(
       getAssetFolderSelectValue({ label: "Folder", folderId: "no-folder" })

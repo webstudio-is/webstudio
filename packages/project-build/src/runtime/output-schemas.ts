@@ -192,6 +192,7 @@ const asset = looseObject({
   id,
   name: z.string(),
   filename: z.string().optional(),
+  folderId: id.optional(),
   type: assetType,
   size: z.number(),
   contentType: z.string(),
@@ -299,6 +300,7 @@ export const runtimeOutputSchemas = {
   "assetFolders.update": folderIdResult,
   "assetFolders.delete": folderIdResult,
   "assetFolders.duplicate": folderIdResult,
+  "assets.get": looseObject({ asset: assetRecord }),
   "pages.list": looseObject({
     pages: z.array(pageSummary),
     ...outputPage,

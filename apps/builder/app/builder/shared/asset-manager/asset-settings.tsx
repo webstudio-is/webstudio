@@ -236,25 +236,12 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
   );
 };
 
-const UsageDot = styled(Box, {
-  width: 6,
-  height: 6,
-  backgroundColor: "#000",
-  border: "1px solid white",
-  boxShadow: "0 0 3px rgb(0, 0, 0)",
+const AssetUsageIndicator = styled(Box, {
+  width: 4,
+  height: 4,
+  backgroundColor: theme.colors.backgroundStatusAttention,
   borderRadius: "50%",
   pointerEvents: "none",
-  variants: {
-    unused: {
-      true: {
-        width: 4,
-        height: 4,
-        backgroundColor: theme.colors.backgroundStatusAttention,
-        border: "none",
-        boxShadow: "none",
-      },
-    },
-  },
 });
 
 const useLocalValue = <Type extends string>(
@@ -420,7 +407,7 @@ const AssetSettingsContent = ({
                 alignItems: "center",
               }}
             >
-              <UsageDot />
+              <AssetUsageIndicator data-asset-settings-usage-indicator="" />
             </Flex>
             <Text variant="labels">{usages.length} uses</Text>
           </Flex>
@@ -475,6 +462,7 @@ const AssetSettingsContent = ({
           onChange={moveToFolder}
           rootLabel="Folder"
           disabled={authPermit === "view"}
+          deferChangesUntilBlur
         />
       </Grid>
 
@@ -566,9 +554,7 @@ export const AssetDeleteDialog = ({
       <DialogContent minWidth={360} aria-describedby={undefined}>
         <DialogTitle>Delete asset?</DialogTitle>
         <Box css={{ padding: theme.panel.padding }}>
-          <Text>
-            Delete “{formatAssetName(asset)}”? This action cannot be undone.
-          </Text>
+          <Text>Delete “{formatAssetName(asset)}”?</Text>
           {usages.length > 0 && (
             <>
               <Text css={{ marginTop: "1em", marginBottom: "1em" }}>
@@ -579,6 +565,7 @@ export const AssetDeleteDialog = ({
           )}
           <Flex justify="end" css={{ marginTop: theme.panel.paddingBlock }}>
             <Button
+              autoFocus
               color="destructive"
               prefix={<TrashIcon />}
               onClick={() => deleteAssets([asset.id])}
@@ -621,8 +608,7 @@ export const AssetSettings = ({
   return (
     <Popover modal open={open} onOpenChange={onOpenChange}>
       {usages.length === 0 && (
-        <UsageDot
-          unused
+        <AssetUsageIndicator
           role="img"
           aria-label="Unused asset"
           data-asset-thumbnail-indicator=""

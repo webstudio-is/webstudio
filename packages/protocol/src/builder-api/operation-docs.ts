@@ -714,8 +714,15 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "list-assets",
     description:
-      "List project assets, including their Asset Manager folder ids",
+      "List project assets with folder ids; use verbose output for complete records",
     examples: ["webstudio list-assets --type image --with-usage --json"],
+  },
+  {
+    command: "get-asset",
+    description:
+      "Get one complete asset record, including description, folder, creation time, and type-specific metadata",
+    requiredOptions: ["asset", "json"],
+    examples: ["webstudio get-asset --asset asset-id --json"],
   },
   {
     command: "list-fonts",
@@ -725,7 +732,8 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "upload-asset",
-    description: "Upload one local asset file from an asset descriptor",
+    description:
+      "Upload one local asset file from a descriptor, optionally into an Asset Manager folder",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio upload-asset --input asset.json --assets-dir .webstudio/assets --json",
@@ -733,7 +741,8 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "upload-assets",
-    description: "Upload local asset files from asset descriptors",
+    description:
+      "Upload local asset files from descriptors, optionally into Asset Manager folders",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio upload-assets --input assets.json --assets-dir .webstudio/assets --json",

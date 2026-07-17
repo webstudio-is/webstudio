@@ -1,12 +1,13 @@
 import { Fragment, type ComponentProps } from "react";
 import { act } from "react-dom/test-utils";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
 import { createAssetFolderFixture } from "./asset-folder.test-fixtures";
 import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import { createAssetManagerTestRenderer } from "./test-utils";
+import { $authPermit } from "~/shared/nano-states";
 
 const folder = createAssetFolderFixture({ id: "folder", name: "Documents" });
 const uploadedAssetContainer: ComponentProps<
@@ -86,6 +87,7 @@ vi.stubGlobal(
     disconnect() {}
   }
 );
+beforeEach(() => $authPermit.set("build"));
 afterEach(() => {
   renderer.cleanup();
   $assetManagerClipboard.set(undefined);
@@ -143,6 +145,7 @@ describe("AssetThumbnail", () => {
     const container = renderer.render(
       createFolderThumbnail({
         selected: true,
+        forcedSelection: true,
         onSelectionChange,
         onOpen,
       })
@@ -151,7 +154,9 @@ describe("AssetThumbnail", () => {
     const button = container.querySelector("button");
     const outside = document.createElement("button");
     document.body.appendChild(outside);
-    expect(button?.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      button?.closest('[role="option"]')?.getAttribute("aria-selected")
+    ).toBe("true");
     button?.focus();
     expect(onSelectionChange).toHaveBeenLastCalledWith(true);
     outside.focus();
@@ -180,6 +185,7 @@ describe("AssetThumbnail", () => {
       thumbnailLabel: "Folder Documents",
       triggerLabel: "Actions for Documents",
       settingsTitle: "Folder settings",
+      shortcutActions: ["Cut", "Copy", "Paste", "Duplicate", "Delete"],
       render: () => createFolderThumbnail({ canManage: true }),
     },
     {
@@ -187,6 +193,7 @@ describe("AssetThumbnail", () => {
       thumbnailLabel: undefined,
       triggerLabel: "Actions for document.pdf",
       settingsTitle: "Asset settings",
+      shortcutActions: ["Cut", "Copy", "Duplicate", "Delete"],
       render: createUploadedAssetThumbnail,
     },
   ])("$variant thumbnail actions", (thumbnail) => {
@@ -236,6 +243,34 @@ describe("AssetThumbnail", () => {
           ?.querySelector('[aria-label="Actions"]')
       ).toBeNull();
     });
+
+    test("shows keyboard shortcuts in the actions menu", () => {
+      $assetManagerClipboard.set({
+        operation: "copy",
+        items: [{ type: "asset", id: "source", projectId: "project" }],
+        projectId: "project",
+      });
+      const container = render();
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(
+            `[aria-label="${thumbnail.triggerLabel}"]`
+          )
+          ?.dispatchEvent(
+            new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+          );
+      });
+      const menuItems = Array.from(
+        document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+      );
+
+      for (const label of thumbnail.shortcutActions) {
+        const item = menuItems.find((item) =>
+          item.textContent?.startsWith(label)
+        );
+        expect(item?.querySelector("kbd"), label).toBeInstanceOf(HTMLElement);
+      }
+    });
   });
 
   test("shows the unused asset indicator in the thumbnail", () => {
@@ -257,8 +292,13 @@ describe("AssetThumbnail", () => {
   test("does not offer paste from another project on a folder", () => {
     $assetManagerClipboard.set({
       operation: "copy",
-      type: "asset",
-      id: "asset",
+      items: [
+        {
+          type: "asset",
+          id: "asset",
+          projectId: "another-project",
+        },
+      ],
       projectId: "another-project",
     });
     const container = renderer.render(

@@ -66235,6 +66235,9 @@ export const runtimeOperationContractData = [
               filename: {
                 type: "string",
               },
+              folderId: {
+                type: "string",
+              },
               type: {
                 type: "string",
                 enum: ["font", "image", "file"],
@@ -66365,6 +66368,94 @@ export const runtimeOperationContractData = [
       "resources",
       "dataSources",
     ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "assets.get",
+    command: "get-asset",
+    client: "getAsset",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        assetId: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["assetId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        asset: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+            },
+            projectId: {
+              type: "string",
+            },
+            name: {
+              type: "string",
+            },
+            filename: {
+              type: "string",
+            },
+            description: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            folderId: {
+              type: "string",
+            },
+            type: {
+              type: "string",
+              enum: ["font", "image", "file"],
+            },
+            size: {
+              type: "number",
+            },
+            format: {
+              type: "string",
+            },
+            createdAt: {
+              type: "string",
+            },
+            meta: {
+              type: "object",
+              properties: {},
+              additionalProperties: {},
+              required: [],
+            },
+          },
+          required: [
+            "id",
+            "projectId",
+            "name",
+            "type",
+            "size",
+            "format",
+            "createdAt",
+            "meta",
+          ],
+          additionalProperties: {},
+        },
+      },
+      required: ["asset"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["assets"],
     writeNamespaces: [],
     invalidatesNamespaces: [],
     retryOnConflict: false,

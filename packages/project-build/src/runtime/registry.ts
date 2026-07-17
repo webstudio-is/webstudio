@@ -1873,6 +1873,13 @@ export const builderRuntimeOperations = [
     ({ state, input }) => assets.listAssets(state, input)
   ),
   runtimeOperation(
+    "assets.get",
+    api("get-asset", "getAsset"),
+    readContract(["assets"], { requiresAssets: true }),
+    assets.assetGetInput,
+    ({ state, input }) => assets.getAsset(state, input)
+  ),
+  runtimeOperation(
     "fonts.list",
     api("list-fonts", "listFonts"),
     readContract(["assets"]),

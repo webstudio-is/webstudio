@@ -46,7 +46,7 @@ export const formatAssetFolderPath = (
 ) => {
   const path = hierarchy.getPath(folderId);
   return path.length === 0
-    ? "No folder"
+    ? "Root"
     : `Root / ${path.map(({ name }) => name).join(" / ")}`;
 };
 

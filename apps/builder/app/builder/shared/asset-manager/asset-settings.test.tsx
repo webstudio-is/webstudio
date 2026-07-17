@@ -32,9 +32,9 @@ test("describes an unused asset in the delete confirmation", () => {
     />
   );
 
-  expect(document.body.textContent).toContain(
-    "Delete “document.pdf”? This action cannot be undone."
-  );
+  expect(document.body.textContent).toContain("Delete “document.pdf”?");
+  expect(document.body.textContent).not.toContain("cannot be undone");
+  expect(document.activeElement?.textContent).toBe("Delete");
 });
 
 test("uses an auto-growing textarea for the asset description", () => {
@@ -69,4 +69,12 @@ test("uses an auto-growing textarea for the asset description", () => {
     document.querySelector('label[for="asset-manager-description"]')
   ).toBeInstanceOf(HTMLLabelElement);
   expect(document.body.textContent).toContain("Asset settings");
+  const settingsIndicator = document.querySelector<HTMLElement>(
+    "[data-asset-settings-usage-indicator]"
+  );
+  const thumbnailIndicator = document.querySelector<HTMLElement>(
+    "[data-asset-thumbnail-indicator]"
+  );
+  expect(settingsIndicator).toBeInstanceOf(HTMLElement);
+  expect(settingsIndicator?.className).toBe(thumbnailIndicator?.className);
 });

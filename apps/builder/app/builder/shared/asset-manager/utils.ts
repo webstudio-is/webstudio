@@ -5,6 +5,12 @@ import {
   doesAssetMatchMimePatterns,
 } from "@webstudio-is/sdk";
 import type { AssetContainer } from "../assets";
+import {
+  isSameAssetManagerSelection,
+  type AssetManagerSelection,
+} from "./asset-manager-selection";
+
+export type { AssetManagerSelection } from "./asset-manager-selection";
 
 export type SortField = "name" | "size" | "createdAt";
 export type SortOrder = "asc" | "desc";
@@ -13,10 +19,6 @@ export type SortState = {
   sortBy: SortField;
   order: SortOrder;
 };
-
-export type AssetManagerSelection =
-  | { type: "asset"; id: string }
-  | { type: "folder"; id: string };
 
 /**
  * Safely gets the asset format as a lowercase extension.
@@ -174,9 +176,7 @@ export const getAssetManagerSelectionIndex = (
 ) =>
   selection === undefined
     ? -1
-    : items.findIndex(
-        (item) => item.type === selection.type && item.id === selection.id
-      );
+    : items.findIndex((item) => isSameAssetManagerSelection(item, selection));
 
 export const getNearestAssetManagerSelection = (
   previousItems: AssetManagerSelection[],

@@ -40,7 +40,7 @@ describe("asset folder utilities", () => {
     expect(formatAssetFolderPath(hierarchy, "child")).toBe(
       "Root / parent / child"
     );
-    expect(formatAssetFolderPath(hierarchy, undefined)).toBe("No folder");
+    expect(formatAssetFolderPath(hierarchy, undefined)).toBe("Root");
   });
 
   test.each([

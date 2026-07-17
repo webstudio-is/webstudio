@@ -1,4 +1,10 @@
-import { useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { useStore } from "@nanostores/react";
 import {
   Box,
@@ -40,12 +46,19 @@ const runAndClose = (
   }
 };
 
+const stopEscapePropagation = (event: KeyboardEvent) => {
+  if (event.key === "Escape") {
+    event.stopPropagation();
+  }
+};
+
 const AssetFolderForm = ({
   id,
   open,
   initialName,
   initialParentId,
   excludedFolderId,
+  autoFocusSubmit = false,
   submitLabel,
   secondaryAction,
   onSubmit,
@@ -55,6 +68,7 @@ const AssetFolderForm = ({
   initialName: string;
   initialParentId: string | undefined;
   excludedFolderId?: string;
+  autoFocusSubmit?: boolean;
   submitLabel: string;
   secondaryAction?: ReactNode;
   onSubmit: (values: AssetFolderFormValues) => void;
@@ -97,7 +111,7 @@ const AssetFolderForm = ({
         <Label htmlFor={id}>Folder</Label>
         <InputField
           id={id}
-          autoFocus
+          autoFocus={autoFocusSubmit === false}
           value={name}
           color={duplicate ? "error" : undefined}
           onChange={(event) => setName(event.target.value)}
@@ -121,7 +135,11 @@ const AssetFolderForm = ({
       />
       <Flex justify="end" gap={2}>
         {secondaryAction}
-        <Button disabled={canSubmit === false} onClick={submit}>
+        <Button
+          autoFocus={autoFocusSubmit}
+          disabled={canSubmit === false}
+          onClick={submit}
+        >
           {submitLabel}
         </Button>
       </Flex>
@@ -143,7 +161,11 @@ export const CreateAssetFolderDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent minWidth={360} aria-describedby={undefined}>
+      <DialogContent
+        minWidth={360}
+        aria-describedby={undefined}
+        onKeyDown={stopEscapePropagation}
+      >
         <DialogTitle>New folder</DialogTitle>
         <AssetFolderForm
           id="asset-folder-name"
@@ -184,7 +206,11 @@ export const AssetFolderSettingsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent minWidth={360} aria-describedby={undefined}>
+      <DialogContent
+        minWidth={360}
+        aria-describedby={undefined}
+        onKeyDown={stopEscapePropagation}
+      >
         <DialogTitle>
           {confirmDelete ? "Delete folder" : "Folder settings"}
         </DialogTitle>
@@ -196,6 +222,7 @@ export const AssetFolderSettingsDialog = ({
             </Text>
             <Flex justify="end" gap={2} css={{ marginTop: theme.spacing[4] }}>
               <Button
+                autoFocus
                 color="destructive"
                 prefix={<TrashIcon />}
                 onClick={remove}
@@ -211,6 +238,7 @@ export const AssetFolderSettingsDialog = ({
             initialName={folder.name}
             initialParentId={folder.parentId}
             excludedFolderId={folder.id}
+            autoFocusSubmit
             submitLabel="Save"
             onSubmit={save}
             secondaryAction={
