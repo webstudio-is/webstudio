@@ -57,7 +57,7 @@ export const findPageAndSelectorByInstanceId = (
   if (parentInstanceById === undefined) {
     parentInstanceById = new Map<Instance["id"], Instance["id"]>();
     for (const instance of instances.values()) {
-      for (const child of instance.children) {
+      for (const child of instance.children ?? []) {
         if (child.type === "id") {
           parentInstanceById.set(child.value, instance.id);
         }

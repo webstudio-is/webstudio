@@ -1933,6 +1933,63 @@ test("rejects known provider child components without standalone templates", asy
   );
 });
 
+test.each(["AnimateText", "StaggerAnimation"])(
+  "inserts animation part %s into an Animation Group",
+  (name) => {
+    const parent: Instance = {
+      type: "instance",
+      id: "animation-group",
+      component: "@webstudio-is/sdk-components-animation:AnimateChildren",
+      children: [],
+    };
+    const component = `@webstudio-is/sdk-components-animation:${name}`;
+
+    const mutation = insertComponent(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        component,
+      },
+      {
+        createId: createIdFactory(),
+      }
+    );
+
+    expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+      expect.objectContaining({ component })
+    );
+  }
+);
+
+test("inserts a component part allowed by an ancestor content model", () => {
+  const parent = createParent();
+  const ancestor: Instance = {
+    type: "instance",
+    id: "checkbox",
+    component: "@webstudio-is/sdk-components-react-radix:Checkbox",
+    children: [{ type: "id", value: parent.id }],
+  };
+  const component =
+    "@webstudio-is/sdk-components-react-radix:CheckboxIndicator";
+  const state = createState(ancestor);
+  state.instances.set(parent.id, parent);
+
+  const mutation = insertComponent(
+    state,
+    {
+      parentInstanceId: parent.id,
+      component,
+    },
+    {
+      createId: createIdFactory(),
+    }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({ component })
+  );
+});
+
 test("rejects native option outside select and suggests select", async () => {
   const parent = createParent();
 
