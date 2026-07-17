@@ -4,19 +4,33 @@
 
 ## Startup
 
-1. Configure a project with `webstudio init --link <api-share-link> --json`.
-2. Generate the client configuration with `webstudio connect claude`,
-   `webstudio connect codex`, `webstudio connect cursor`, or
-   `webstudio connect vscode`. Use `--print` to preview file-based config.
-3. Check capabilities with `webstudio permissions --json`.
-4. For shell-driven agents, use shortcut calls such as `webstudio meta.index` and `webstudio insert-fragment '<json>' --dry-run` for individual MCP tool calls. Use the explicit equivalent `webstudio mcp single-op-call <tool> '<json>'` when you need to force the MCP path, or `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'` for bounded multi-call workflows. Use `webstudio mcp run .temp/mcp-calls.json` for large batches.
-5. For MCP clients, start the server with `webstudio mcp`.
-6. Start discovery with `meta.index`, then call focused tools with concrete JSON, for example `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`.
+If you are already working with an agent, ask it to connect the current folder
+to Webstudio. Give the editable Builder share link only when the trusted agent
+asks for it. The agent should perform the steps below, follow any
+client-specific output from `webstudio connect`, and verify the connection by
+listing the project pages. Treat the share link as a credential: do not include
+it in committed files, screenshots, logs, or issue reports.
 
-Every supported client follows the same generated quickstart: link the project,
-sync it, run `webstudio connect <client>`, reload or restart the client, then ask
-the agent to use Webstudio MCP to list the project pages. The supported client
-names are `claude`, `codex`, `cursor`, and `vscode`.
+1. Configure a project with `webstudio init --link <api-share-link> --json`.
+2. Synchronize it with `webstudio sync`.
+3. Generate the client configuration with `webstudio connect claude`,
+   `webstudio connect codex`, `webstudio connect cursor`, or
+   `webstudio connect vscode`. Use `--print` to preview the generated setup.
+4. Check capabilities with `webstudio permissions --json`.
+5. For shell-driven agents, use shortcut calls such as `webstudio meta.index` and `webstudio insert-fragment '<json>' --dry-run` for individual MCP tool calls. Use the explicit equivalent `webstudio mcp single-op-call <tool> '<json>'` when you need to force the MCP path, or `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'` for bounded multi-call workflows. Use `webstudio mcp run .temp/mcp-calls.json` for large batches.
+6. For MCP clients, start the server with `webstudio mcp`.
+7. Start discovery with `meta.index`, then call focused tools with concrete JSON, for example `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`.
+
+After linking and synchronization, run `webstudio connect <client>`, reload or
+restart the client, then ask the agent to use Webstudio MCP to list the project
+pages. The supported client names are `claude`, `codex`, `cursor`, and `vscode`.
+For Codex, `connect` registers and verifies the server through the Codex CLI;
+the resulting server appears in Codex settings. Use `--print` to inspect the
+exact registration command without changing configuration or requiring project
+access. Before changing client configuration, `connect` verifies that the saved
+project endpoint is reachable and its credential is accepted. If verification
+fails, follow the specific connection, compatibility, or relinking guidance in
+the error.
 
 Start MCP from the linked Webstudio project root. The lifecycle status line prints that absolute root; create local scripts, screenshots, and temporary artifacts under that root, for example `<project root>/.temp/script.mjs`. If the shell starts in a parent workspace, `cd` into the project root first or use absolute paths.
 

@@ -1,9 +1,11 @@
 import { join } from "node:path";
 import { cwd } from "node:process";
+import { log } from "@clack/prompts";
 import { expect, test, vi } from "vitest";
 import {
   connect,
   mergeServerConfig,
+  verifyProjectAccess,
   type ConnectDependencies,
 } from "./connect";
 import { HandledCliError } from "../errors";
@@ -28,6 +30,8 @@ const createDependencies = (
     }
     return content;
   }),
+  registerCodexServer: vi.fn(async () => undefined),
+  verifyProjectAccess: vi.fn(async () => ({ ok: true as const })),
   writeFileAtomic: vi.fn(async () => undefined),
 });
 
@@ -109,6 +113,25 @@ test("blocks on invalid json without touching the file", async () => {
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
 });
 
+test("does not configure a client when project access cannot be verified", async () => {
+  const dependencies = createDependencies(linkedProject);
+  vi.mocked(dependencies.verifyProjectAccess).mockResolvedValue({
+    ok: false,
+    message: "Project access was rejected without exposing its credential.",
+  });
+  const error = vi.spyOn(log, "error").mockImplementation(() => {});
+
+  await expect(
+    connect({ client: "vscode", print: false }, dependencies)
+  ).rejects.toThrow(HandledCliError);
+
+  expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+  expect(error).toHaveBeenCalledWith(
+    "Project access was rejected without exposing its credential."
+  );
+  error.mockRestore();
+});
+
 test("writes the vscode schema with servers root key and stdio type", async () => {
   const dependencies = createDependencies(linkedProject);
 
@@ -148,32 +171,67 @@ test.each(["claude", "cursor", "vscode"] as const)(
   async (client) => {
     const writeDependencies = createDependencies(linkedProject);
     const printDependencies = createDependencies(linkedProject);
+    const message = vi.spyOn(log, "message").mockImplementation(() => {});
 
     await connect({ client, print: false }, writeDependencies);
     await connect({ client, print: true }, printDependencies);
 
     const [, written] = vi.mocked(writeDependencies.writeFileAtomic).mock
       .calls[0];
-    expect(written).toContain("webstudio@latest");
+    expect(message).toHaveBeenCalledWith(expect.stringContaining(written));
     expect(printDependencies.writeFileAtomic).not.toHaveBeenCalled();
+    message.mockRestore();
   }
 );
 
-test("prints codex snippet without writing files", async () => {
+test("registers the Codex server without writing files", async () => {
   const dependencies = createDependencies(linkedProject);
 
   await connect({ client: "codex", print: false }, dependencies);
 
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+  expect(dependencies.registerCodexServer).toHaveBeenCalledWith({
+    command: "npx",
+    args: ["-y", "webstudio@latest", "mcp"],
+  });
 });
 
-test("prints configuration without writing when print is requested", async () => {
+test("reports a bounded error when Codex registration fails", async () => {
   const dependencies = createDependencies(linkedProject);
+  vi.mocked(dependencies.registerCodexServer).mockRejectedValue(
+    new Error("private subprocess detail")
+  );
+  const error = vi.spyOn(log, "error").mockImplementation(() => {});
 
-  await connect({ client: "claude", print: true }, dependencies);
+  await expect(
+    connect({ client: "codex", print: false }, dependencies)
+  ).rejects.toThrow(HandledCliError);
 
-  expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+  expect(error).toHaveBeenCalledWith(
+    expect.not.stringContaining("private subprocess detail")
+  );
+  error.mockRestore();
 });
+
+test.each(["claude", "codex"] as const)(
+  "prints %s configuration without project access or writes",
+  async (client) => {
+    const dependencies = createDependencies();
+    const message = vi.spyOn(log, "message").mockImplementation(() => {});
+
+    await connect({ client, print: true }, dependencies);
+
+    expect(dependencies.verifyProjectAccess).not.toHaveBeenCalled();
+    expect(dependencies.registerCodexServer).not.toHaveBeenCalled();
+    expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
+    if (client === "codex") {
+      expect(message).toHaveBeenCalledWith(
+        "codex mcp add webstudio -- npx -y webstudio@latest mcp"
+      );
+    }
+    message.mockRestore();
+  }
+);
 
 test("lists supported clients when no client is provided", async () => {
   const dependencies = createDependencies(linkedProject);
@@ -181,7 +239,7 @@ test("lists supported clients when no client is provided", async () => {
   await connect({ client: undefined, print: false }, dependencies);
 
   expect(dependencies.writeFileAtomic).not.toHaveBeenCalled();
-  expect(dependencies.isFileExists).not.toHaveBeenCalled();
+  expect(dependencies.verifyProjectAccess).not.toHaveBeenCalled();
 });
 
 test("uses a custom server command", async () => {
@@ -248,4 +306,73 @@ test("merge keeps result unchanged only for a deep-equal server entry", () => {
       serverEntry,
     }).result
   ).toBe("created");
+});
+
+test("project access verification uses the linked API connection and compatibility headers", async () => {
+  const connection = {
+    origin: "https://builder.example.com",
+    authToken: "secret",
+    projectId: "project-id",
+  };
+  const resolveConnection = vi.fn(async () => connection);
+  const getPermissions = vi.fn(async () => ({ canRead: true }));
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: resolveConnection,
+      getProjectPermissions: getPermissions,
+    })
+  ).resolves.toEqual({ ok: true });
+
+  expect(getPermissions).toHaveBeenCalledWith({
+    ...connection,
+    headers: expect.objectContaining({
+      "x-webstudio-client": "cli",
+      "x-webstudio-client-version": expect.any(String),
+    }),
+  });
+});
+
+test("project access verification classifies local, authorization, and reachability failures", async () => {
+  const connection = {
+    origin: "https://builder.example.com",
+    authToken: "secret",
+    projectId: "project-id",
+  };
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: vi.fn(async () => {
+        throw new Error("secret local config detail");
+      }),
+      getProjectPermissions: vi.fn(),
+    })
+  ).resolves.toEqual({
+    ok: false,
+    message: expect.stringContaining("This folder is not linked"),
+  });
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: vi.fn(async () => connection),
+      getProjectPermissions: vi.fn(async () => {
+        throw { data: { code: "UNAUTHORIZED" } };
+      }),
+    })
+  ).resolves.toEqual({
+    ok: false,
+    message: expect.stringContaining("credential was rejected"),
+  });
+
+  await expect(
+    verifyProjectAccess({
+      resolveApiConnection: vi.fn(async () => connection),
+      getProjectPermissions: vi.fn(async () => {
+        throw new Error("secret network detail");
+      }),
+    })
+  ).resolves.toEqual({
+    ok: false,
+    message: expect.stringContaining("could not verify project access"),
+  });
 });
