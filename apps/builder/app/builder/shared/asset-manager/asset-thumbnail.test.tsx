@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { BackThumbnail, FolderThumbnail } from "./asset-folder-thumbnail";
-import { createAssetFolderFixture } from "./asset-folder.test-fixtures";
+import { createAssetFolderFixture } from "@webstudio-is/sdk/testing";
 import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import { createAssetManagerTestRenderer } from "./test-utils";
 import { $authPermit } from "~/shared/nano-states";
+import type { AssetManagerThumbnailInteractions } from "./asset-manager-thumbnail";
+import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
 
 const folder = createAssetFolderFixture({ id: "folder", name: "Documents" });
 const uploadedAssetContainer: ComponentProps<
@@ -26,6 +28,18 @@ const uploadedAssetContainer: ComponentProps<
   },
 };
 
+const createInteractions = (
+  onSelectionChange = vi.fn()
+): AssetManagerThumbnailInteractions => ({
+  onSelectionChange: (_item, selected) => onSelectionChange(selected),
+  onItemPointerDown: vi.fn(),
+  onItemClick: vi.fn(),
+  onModifiedArrow: vi.fn(),
+  onContextMenuSelection: vi.fn(),
+  onContextMenuActions: vi.fn(),
+  getDragItems: (item) => [item],
+});
+
 const createFolderThumbnail = (
   props: Partial<ComponentProps<typeof FolderThumbnail>> = {}
 ) => (
@@ -33,11 +47,10 @@ const createFolderThumbnail = (
     folder={folder}
     selected={false}
     canManage={false}
-    onSelectionChange={vi.fn()}
-    canMoveFolder={() => false}
+    interactions={createInteractions()}
+    canMoveItems={() => false}
     onOpen={vi.fn()}
-    onMoveAsset={vi.fn()}
-    onMoveFolder={vi.fn()}
+    onMoveItems={vi.fn()}
     {...props}
   />
 );
@@ -45,7 +58,7 @@ const createFolderThumbnail = (
 const createUploadedAssetThumbnail = () => (
   <AssetThumbnail
     assetContainer={uploadedAssetContainer}
-    onSelectionChange={vi.fn()}
+    interactions={createInteractions()}
   />
 );
 
@@ -87,10 +100,22 @@ vi.stubGlobal(
     disconnect() {}
   }
 );
-beforeEach(() => $authPermit.set("build"));
+beforeEach(() => {
+  $authPermit.set("build");
+  $project.set({ id: "project" } as never);
+  $assetFolders.set(new Map([[folder.id, folder]]));
+  if (uploadedAssetContainer.status === "uploaded") {
+    $assets.set(
+      new Map([[uploadedAssetContainer.asset.id, uploadedAssetContainer.asset]])
+    );
+  }
+});
 afterEach(() => {
   renderer.cleanup();
   $assetManagerClipboard.set(undefined);
+  $assetFolders.set(new Map());
+  $assets.set(new Map());
+  $project.set(undefined);
 });
 
 describe("AssetThumbnail", () => {
@@ -111,7 +136,7 @@ describe("AssetThumbnail", () => {
               folderId: "folder",
             },
           }}
-          onSelectionChange={vi.fn()}
+          interactions={createInteractions()}
         />
         {createFolderThumbnail()}
         <BackThumbnail onOpen={vi.fn()} />
@@ -146,7 +171,7 @@ describe("AssetThumbnail", () => {
       createFolderThumbnail({
         selected: true,
         forcedSelection: true,
-        onSelectionChange,
+        interactions: createInteractions(onSelectionChange),
         onOpen,
       })
     );
@@ -247,7 +272,7 @@ describe("AssetThumbnail", () => {
     test("shows keyboard shortcuts in the actions menu", () => {
       $assetManagerClipboard.set({
         operation: "copy",
-        items: [{ type: "asset", id: "source", projectId: "project" }],
+        items: [{ type: "asset", id: "asset", projectId: "project" }],
         projectId: "project",
       });
       const container = render();

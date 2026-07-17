@@ -24,7 +24,7 @@ import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   createAssetFoldersFixture,
   createAssetFolderFixture,
-} from "./asset-folder.test-fixtures";
+} from "@webstudio-is/sdk/testing";
 import {
   deleteAssetManagerItems,
   duplicateAssetManagerItems,
@@ -72,6 +72,19 @@ test("normalizes bulk operations to independent roots", () => {
     { type: "folder", id: sibling.id },
     { type: "asset", id: rootAsset.id },
   ]);
+});
+
+test("removes items that no longer exist", () => {
+  expect(
+    normalizeAssetManagerItems({
+      items: [
+        { type: "folder", id: "missing-folder" },
+        { type: "asset", id: "missing-asset" },
+      ],
+      folders: new Map(),
+      assets: new Map(),
+    })
+  ).toEqual([]);
 });
 
 registerContainers();

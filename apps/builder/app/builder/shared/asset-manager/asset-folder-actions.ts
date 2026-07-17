@@ -23,11 +23,6 @@ export const saveAssetFolder = (
     parentId: values.parentId ?? null,
   });
 
-export const moveAssetFolder = (
-  folderId: string,
-  parentId: string | undefined
-) => updateAssetFolder(folderId, { parentId: parentId ?? null });
-
 export const deleteAssetFolder = (folderId: string) =>
   executeRuntimeMutation({
     id: "assetFolders.delete",

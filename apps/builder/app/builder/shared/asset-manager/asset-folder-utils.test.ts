@@ -8,7 +8,7 @@ import {
 import {
   createAssetFolderFixture,
   createAssetFoldersFixture,
-} from "./asset-folder.test-fixtures";
+} from "@webstudio-is/sdk/testing";
 
 const folder = (
   id: string,

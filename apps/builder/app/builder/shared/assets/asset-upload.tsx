@@ -26,6 +26,17 @@ export const validateFiles = (files: File[]) => {
   return files.filter((file) => file.size <= maxSize);
 };
 
+export const groupFilesByAssetType = (files: readonly File[]) => {
+  const filesByType = new Map<AssetType, File[]>();
+  for (const file of files) {
+    const type = detectAssetType(file.name);
+    const groupedFiles = filesByType.get(type) ?? [];
+    groupedFiles.push(file);
+    filesByType.set(type, groupedFiles);
+  }
+  return filesByType;
+};
+
 const useUpload = (folderId?: string) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -37,18 +48,7 @@ const useUpload = (folderId?: string) => {
     }
     const files = validateFiles(Array.from(input?.files ?? []));
 
-    // Group files by their detected type
-    const filesByType = new Map<AssetType, File[]>();
-    for (const file of files) {
-      const detectedType = detectAssetType(file.name);
-      if (!filesByType.has(detectedType)) {
-        filesByType.set(detectedType, []);
-      }
-      filesByType.get(detectedType)!.push(file);
-    }
-
-    // Upload each group with the correct type
-    for (const [detectedType, filesOfType] of filesByType) {
+    for (const [detectedType, filesOfType] of groupFilesByAssetType(files)) {
       uploadAssets(detectedType, filesOfType, { folderId });
     }
 

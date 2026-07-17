@@ -17,8 +17,14 @@ const getAssetTitleLocator = ({
   return page.locator(`[title^="${name}"]`).first();
 };
 
-export const openAssetsPanel = async ({ page }: { page: Page }) => {
-  await page.getByRole("tab", { name: "Assets" }).click();
+export const openAssetsPanel = async ({
+  page,
+  force = false,
+}: {
+  page: Page;
+  force?: boolean;
+}) => {
+  await page.getByRole("tab", { name: "Assets" }).click({ force });
   await page
     .getByRole("tabpanel", { name: "Assets" })
     .getByRole("button", { name: "Upload asset" })

@@ -6,13 +6,72 @@ import {
   uploadAsset,
 } from "../flows/assets-panel";
 import { openProjectBuilder } from "../flows/builder";
+import { loginWithSecret } from "../flows/dashboard";
 import { dragPointer } from "../flows/drag";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
 } from "../flows/sync-status";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { newIsolatedPage, test } from "../harness";
+import { dashboardUrl, newIsolatedPage, newPage, test } from "../harness";
+
+test("Cloning a project preserves nested asset folders", async () => {
+  const email = "asset-folder-clone-e2e@webstudio.test";
+  const sourceTitle = "Asset Folder Clone Source";
+  const cloneTitle = "Asset Folder Clone Result";
+  const fixture = await createContentModeProject({
+    email,
+    title: sourceTitle,
+    builderToken: "asset-folder-clone-e2e-builder-token",
+  });
+  const page = await newPage();
+
+  try {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+    await waitForSyncStatus({ page, status: "idle" });
+    await openAssetsPanel({ page });
+    const parent = await createAssetFolder({ page, name: "Clone parent" });
+    await parent.dblclick();
+    const child = await createAssetFolder({ page, name: "Clone child" });
+    await child.dblclick();
+    const assetTitle = await uploadAsset({
+      page,
+      filename: "upload-image.svg",
+    });
+
+    await loginWithSecret({ page, email });
+    const cloneUrl = new URL("/dashboard", dashboardUrl);
+    cloneUrl.searchParams.set("projectToCloneAuthToken", fixture.builderToken);
+    await page.goto(cloneUrl.href);
+    const cloneDialog = page.getByRole("dialog", { name: "Clone project" });
+    await cloneDialog.locator('input[name="title"]').fill(cloneTitle);
+    await cloneDialog
+      .getByRole("button", { name: "Clone", exact: true })
+      .click();
+
+    const clonedProjectTitle = page.getByText(cloneTitle, { exact: true });
+    await clonedProjectTitle.waitFor();
+    const clonedProjectCard = clonedProjectTitle.locator(
+      "xpath=ancestor::div[.//a][1]"
+    );
+    await clonedProjectCard.locator("a").first().click();
+    await page.waitForURL(/https:\/\/p-[^.]+\.wstd\.dev:\d+\//);
+    await openAssetsPanel({ page, force: true });
+    await page
+      .getByRole("button", { name: "Folder Clone parent", exact: true })
+      .press("Enter");
+    await page
+      .getByRole("button", { name: "Folder Clone child", exact: true })
+      .press("Enter");
+    await page.getByTitle(assetTitle).waitFor();
+  } finally {
+    await page.close();
+  }
+});
 
 test("Asset can be dragged into a folder", async () => {
   const fixture = await createContentModeProject({

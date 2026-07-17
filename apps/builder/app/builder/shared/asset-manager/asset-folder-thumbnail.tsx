@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MouseEvent,
-  type PointerEvent,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { ChevronRightIcon, FolderIcon } from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
@@ -21,67 +14,57 @@ import {
 } from "./asset-thumbnail-card";
 import {
   $assetManagerClipboard,
+  canPasteAssetManagerItem,
   createAssetManagerClipboardActions,
   pasteAssetManagerItem,
 } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
 import { getAssetManagerDragItems } from "./asset-manager-drag";
 import { type AssetManagerItemActions } from "./asset-manager-item-menu";
+import type { AssetManagerSelection } from "./asset-manager-selection";
 import {
   AssetManagerThumbnail,
   AssetManagerThumbnailMenu,
+  type AssetManagerThumbnailInteractions,
 } from "./asset-manager-thumbnail";
 
 export const FolderThumbnail = ({
   folder,
   selected,
-  onSelectionChange,
+  interactions,
   onOpen,
   canManage,
-  canMoveFolder,
-  onMoveAsset,
-  onMoveFolder,
+  canMoveItems,
   onMoveItems,
   path,
   onElementChange,
   forcedSelection,
   selectionActions,
-  onItemPointerDown,
-  onItemClick,
-  onModifiedArrow,
-  onExitMultiselect,
-  onContextMenuSelection,
-  onContextMenuActions,
-  getDragItems,
 }: {
   folder: AssetFolder;
   selected: boolean;
-  onSelectionChange: (selected: boolean) => void;
+  interactions: AssetManagerThumbnailInteractions;
   onOpen: () => void;
   canManage: boolean;
-  canMoveFolder: (folderId: string) => boolean;
-  onMoveAsset: (assetId: string) => void;
-  onMoveFolder: (folderId: string) => void;
-  onMoveItems?: (
-    items: Array<{ type: "asset" | "folder"; id: string }>
+  canMoveItems: (
+    items: readonly AssetManagerSelection[],
+    folderId: string
+  ) => boolean;
+  onMoveItems: (
+    items: readonly AssetManagerSelection[],
+    folderId: string
   ) => void;
   path?: string;
   onElementChange?: (element: HTMLElement | null) => void;
   forcedSelection?: boolean;
   selectionActions?: AssetManagerItemActions;
-  onItemPointerDown?: (event: PointerEvent<HTMLElement>) => void;
-  onItemClick?: (event: MouseEvent<HTMLElement>) => void;
-  onModifiedArrow?: (event: KeyboardEvent<HTMLElement>) => void;
-  onExitMultiselect?: () => void;
-  onContextMenuSelection?: () => void;
-  onContextMenuActions?: (actions: AssetManagerItemActions) => void;
-  getDragItems?: () => Array<{ type: "asset" | "folder"; id: string }>;
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
   const clipboard = useStore($assetManagerClipboard);
+  const getDragItems = interactions.getDragItems;
 
   const openSettings = (confirmDelete = false) => {
     setDeleteConfirmationOpen(confirmDelete);
@@ -99,7 +82,8 @@ export const FolderThumbnail = ({
           settings: () => openSettings(),
           ...createAssetManagerClipboardActions(item),
           paste:
-            clipboard?.projectId !== folder.projectId
+            clipboard?.projectId !== folder.projectId ||
+            canPasteAssetManagerItem(folder.id) === false
               ? undefined
               : () => pasteAssetManagerItem(folder.id),
           delete: () => openSettings(true),
@@ -120,25 +104,20 @@ export const FolderThumbnail = ({
             nativeSetDragImage,
             sourceElement: element,
             input: location.initial.input,
-            items: getDragItems?.() ?? [],
+            items: getDragItems({ type: "folder", id: folder.id }),
           });
         },
         getInitialData: () => ({
           kind: "asset-folder",
           id: folder.id,
-          items: getDragItems?.(),
+          items: getDragItems({ type: "folder", id: folder.id }),
         }),
       }),
       dropTargetForElements({
         element,
         canDrop: ({ source }) => {
           const items = getAssetManagerDragItems(source.data);
-          return (
-            items.length > 0 &&
-            items.every(
-              (item) => item.type === "asset" || canMoveFolder(item.id)
-            )
-          );
+          return items.length > 0 && canMoveItems(items, folder.id);
         },
         onDragEnter: () => setIsDropTarget(true),
         onDragLeave: () => setIsDropTarget(false),
@@ -148,28 +127,11 @@ export const FolderThumbnail = ({
           if (items.length === 0) {
             return;
           }
-          if (items.length > 1) {
-            onMoveItems?.(items);
-            return;
-          }
-          const item = items[0]!;
-          if (item.type === "asset") {
-            onMoveAsset(item.id);
-          } else {
-            onMoveFolder(item.id);
-          }
+          onMoveItems(items, folder.id);
         },
       })
     );
-  }, [
-    canManage,
-    canMoveFolder,
-    folder.id,
-    getDragItems,
-    onMoveAsset,
-    onMoveFolder,
-    onMoveItems,
-  ]);
+  }, [canManage, canMoveItems, folder.id, getDragItems, onMoveItems]);
 
   const displayedActions =
     forcedSelection && selected ? (selectionActions ?? actions) : actions;
@@ -179,15 +141,9 @@ export const FolderThumbnail = ({
       <AssetManagerThumbnail
         item={{ type: "folder", id: folder.id }}
         actions={displayedActions}
+        interactions={interactions}
         selected={selected}
         forcedSelection={forcedSelection}
-        onSelectionChange={onSelectionChange}
-        onItemPointerDown={onItemPointerDown}
-        onItemClick={onItemClick}
-        onModifiedArrow={onModifiedArrow}
-        onExitMultiselect={onExitMultiselect}
-        onContextMenuSelection={onContextMenuSelection}
-        onContextMenuActions={onContextMenuActions}
         thumbnailRef={(element) => {
           elementRef.current = element;
           onElementChange?.(element);
@@ -212,7 +168,7 @@ export const FolderThumbnail = ({
             <AssetManagerThumbnailMenu
               actions={displayedActions}
               label={`Actions for ${folder.name}`}
-              onPointerDown={onContextMenuSelection}
+              onPointerDown={() => interactions.onContextMenuSelection(item)}
             />
           ) : undefined
         }

@@ -1,4 +1,5 @@
 import { atom } from "nanostores";
+import { createAssetFolderHierarchy } from "@webstudio-is/sdk";
 import { $assetFolders, $assets, $project } from "~/shared/sync/data-stores";
 import {
   duplicateAssetManagerItems,
@@ -54,20 +55,64 @@ export const createAssetManagerClipboardActions = (item: AssetManagerItem) => ({
   duplicate: () => duplicateAssetManagerItem(item),
 });
 
-export const pasteAssetManagerItem = (folderId: string | undefined) => {
+const getClipboardItems = () => {
   const clipboard = $assetManagerClipboard.get();
-  if (clipboard === undefined) {
+  const projectId = $project.get()?.id;
+  if (clipboard === undefined || clipboard.projectId !== projectId) {
     return;
   }
-  if (clipboard.projectId !== $project.get()?.id) {
+  const folders = $assetFolders.get();
+  const items = normalizeAssetManagerItems({
+    items: clipboard.items,
+    folders,
+    assets: $assets.get(),
+  });
+  return { clipboard, folders, items };
+};
+
+const canPasteToFolder = (
+  data: NonNullable<ReturnType<typeof getClipboardItems>>,
+  folderId: string | undefined
+) => {
+  if (
+    data.items.length === 0 ||
+    (folderId !== undefined && data.folders.has(folderId) === false)
+  ) {
+    return false;
+  }
+  if (data.clipboard.operation === "copy" || folderId === undefined) {
+    return true;
+  }
+  const hierarchy = createAssetFolderHierarchy(data.folders);
+  return data.items.every(
+    (item) =>
+      item.type === "asset" ||
+      hierarchy.getSubtreeIds(item.id).has(folderId) === false
+  );
+};
+
+export const canPasteAssetManagerItem = (folderId: string | undefined) => {
+  const data = getClipboardItems();
+  return data !== undefined && canPasteToFolder(data, folderId);
+};
+
+export const pasteAssetManagerItem = (folderId: string | undefined) => {
+  const data = getClipboardItems();
+  if (data === undefined) {
+    const clipboard = $assetManagerClipboard.get();
+    if (clipboard !== undefined && clipboard.projectId !== $project.get()?.id) {
+      $assetManagerClipboard.set(undefined);
+    }
+    return;
+  }
+  if (data.items.length === 0) {
     $assetManagerClipboard.set(undefined);
     return;
   }
-  const items = normalizeAssetManagerItems({
-    items: clipboard.items,
-    folders: $assetFolders.get(),
-    assets: $assets.get(),
-  });
+  if (canPasteToFolder(data, folderId) === false) {
+    return;
+  }
+  const { clipboard, items } = data;
   if (clipboard.operation === "copy") {
     duplicateAssetManagerItems(items, folderId ?? null);
   } else {

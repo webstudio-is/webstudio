@@ -20,39 +20,47 @@ import {
 } from "./asset-manager-item-menu";
 import type { AssetManagerSelection } from "./asset-manager-selection";
 
+export type AssetManagerThumbnailInteractions = {
+  onSelectionChange: (item: AssetManagerSelection, selected: boolean) => void;
+  onItemPointerDown: (
+    item: AssetManagerSelection,
+    event: PointerEvent<HTMLElement>
+  ) => void;
+  onItemClick: (
+    item: AssetManagerSelection,
+    event: MouseEvent<HTMLElement>
+  ) => void;
+  onModifiedArrow: (
+    item: AssetManagerSelection,
+    event: KeyboardEvent<HTMLElement>
+  ) => void;
+  onExitMultiselect?: () => void;
+  onContextMenuSelection: (item: AssetManagerSelection) => void;
+  onContextMenuActions: (actions: AssetManagerItemActions) => void;
+  getDragItems: (item: AssetManagerSelection) => AssetManagerSelection[];
+};
+
 type AssetManagerThumbnailProps = Omit<
   ComponentProps<typeof AssetThumbnailCard>,
   "aria-pressed" | "as" | "onContextMenu" | "ref" | "selected" | "type"
 > & {
   actions: AssetManagerItemActions;
+  interactions: AssetManagerThumbnailInteractions;
   item: AssetManagerSelection;
   header?: ReactNode;
   selected?: boolean;
   forcedSelection?: boolean;
   thumbnailRef?: Ref<HTMLElement>;
-  onSelectionChange: (selected: boolean) => void;
-  onItemPointerDown?: (event: PointerEvent<HTMLElement>) => void;
-  onItemClick?: (event: MouseEvent<HTMLElement>) => void;
-  onModifiedArrow?: (event: KeyboardEvent<HTMLElement>) => void;
-  onExitMultiselect?: () => void;
-  onContextMenuSelection?: () => void;
-  onContextMenuActions?: (actions: AssetManagerItemActions) => void;
 };
 
 export const AssetManagerThumbnail = ({
   actions,
+  interactions,
   item,
   header,
   selected,
   forcedSelection = false,
   thumbnailRef,
-  onSelectionChange,
-  onItemPointerDown,
-  onItemClick,
-  onModifiedArrow,
-  onExitMultiselect,
-  onContextMenuSelection,
-  onContextMenuActions,
   ...cardProps
 }: AssetManagerThumbnailProps) => {
   const { onClick, onKeyDown, onPointerDown, ...restCardProps } = cardProps;
@@ -62,10 +70,12 @@ export const AssetManagerThumbnail = ({
       role="option"
       aria-selected={forcedSelection ? selected : undefined}
       selected={selected}
-      onFocusChange={onSelectionChange}
+      onFocusChange={(selected) =>
+        interactions.onSelectionChange(item, selected)
+      }
       onContextMenu={(event) => {
-        onContextMenuSelection?.();
-        onContextMenuActions?.(actions);
+        interactions.onContextMenuSelection(item);
+        interactions.onContextMenuActions(actions);
         event.currentTarget
           .querySelector<HTMLElement>("[data-asset-manager-thumbnail-button]")
           ?.focus();
@@ -82,13 +92,13 @@ export const AssetManagerThumbnail = ({
         onPointerDown={(event) => {
           onPointerDown?.(event);
           if (event.defaultPrevented === false) {
-            onItemPointerDown?.(event);
+            interactions.onItemPointerDown(item, event);
           }
         }}
         onClick={(event) => {
           onClick?.(event);
           if (event.defaultPrevented === false) {
-            onItemClick?.(event);
+            interactions.onItemClick(item, event);
           }
         }}
         onKeyDown={(event) => {
@@ -98,14 +108,14 @@ export const AssetManagerThumbnail = ({
               event.key
             )
           ) {
-            onModifiedArrow?.(event);
+            interactions.onModifiedArrow(item, event);
           } else if (
             event.key === "Escape" &&
-            onExitMultiselect !== undefined
+            interactions.onExitMultiselect !== undefined
           ) {
             event.preventDefault();
             event.stopPropagation();
-            onExitMultiselect?.();
+            interactions.onExitMultiselect();
           }
           if (event.defaultPrevented === false) {
             onKeyDown?.(event);

@@ -8,7 +8,7 @@ import {
 import {
   createAssetFolderFixture,
   createAssetFoldersFixture,
-} from "./asset-folder.test-fixtures";
+} from "@webstudio-is/sdk/testing";
 import { createAssetManagerTestRenderer } from "./test-utils";
 
 const renderer = createAssetManagerTestRenderer();

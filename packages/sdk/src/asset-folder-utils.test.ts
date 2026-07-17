@@ -7,9 +7,9 @@ import {
 } from "./asset-folder.test-fixtures";
 
 describe("asset folder utilities", () => {
-  const root = folder("root");
-  const child = folder("child", "root");
-  const grandchild = folder("grandchild", "child");
+  const root = folder({ id: "root" });
+  const child = folder({ id: "child", parentId: "root" });
+  const grandchild = folder({ id: "grandchild", parentId: "child" });
   const folders = createFolders(grandchild, child, root);
   const hierarchy = createAssetFolderHierarchy(folders);
 
@@ -33,8 +33,8 @@ describe("asset folder utilities", () => {
 
   test("handles cyclic hierarchy traversal without looping", () => {
     const cyclic = createFolders(
-      folder("left", "right"),
-      folder("right", "left")
+      folder({ id: "left", parentId: "right" }),
+      folder({ id: "right", parentId: "left" })
     );
 
     const cyclicHierarchy = createAssetFolderHierarchy(cyclic);
@@ -44,8 +44,11 @@ describe("asset folder utilities", () => {
   });
 
   test("finds sibling names case-insensitively and respects exclusions", () => {
-    const photos = folder("photos", undefined, "Photos");
-    const folders = createFolders(photos, folder("nested", "photos", "Photos"));
+    const photos = folder({ id: "photos", name: "Photos" });
+    const folders = createFolders(
+      photos,
+      folder({ id: "nested", parentId: "photos", name: "Photos" })
+    );
 
     expect(
       createAssetFolderHierarchy(folders).findByName({

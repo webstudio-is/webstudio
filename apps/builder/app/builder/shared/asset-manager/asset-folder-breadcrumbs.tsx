@@ -15,18 +15,24 @@ import { AssetManagerItemContextMenuContent } from "./asset-manager-item-menu";
 
 const PasteTarget = ({
   children,
+  folderId,
+  canPaste,
   onPaste,
 }: {
   children: ReactElement;
-  onPaste?: () => void;
+  folderId: string | undefined;
+  canPaste?: (folderId: string | undefined) => boolean;
+  onPaste?: (folderId: string | undefined) => void;
 }) => {
-  if (onPaste === undefined) {
+  if (onPaste === undefined || canPaste?.(folderId) === false) {
     return children;
   }
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <AssetManagerItemContextMenuContent actions={{ paste: onPaste }} />
+      <AssetManagerItemContextMenuContent
+        actions={{ paste: () => onPaste(folderId) }}
+      />
     </ContextMenu>
   );
 };
@@ -35,11 +41,13 @@ export const AssetFolderBreadcrumbs = ({
   hierarchy,
   folderId,
   onChange,
+  canPaste,
   onPaste,
 }: {
   hierarchy: AssetFolderHierarchy;
   folderId: string | undefined;
   onChange: (folderId: string | undefined) => void;
+  canPaste?: (folderId: string | undefined) => boolean;
   onPaste?: (folderId: string | undefined) => void;
 }) => {
   const path = hierarchy.getPath(folderId);
@@ -75,7 +83,11 @@ export const AssetFolderBreadcrumbs = ({
             paddingBlock: theme.spacing[2],
           }}
         >
-          <PasteTarget onPaste={onPaste && (() => onPaste(undefined))}>
+          <PasteTarget
+            folderId={undefined}
+            canPaste={canPaste}
+            onPaste={onPaste}
+          >
             <Button
               ref={folderId === undefined ? currentFolderRef : undefined}
               color="ghost"
@@ -88,7 +100,11 @@ export const AssetFolderBreadcrumbs = ({
           {path.map((folder) => (
             <Flex key={folder.id} align="center" shrink={false}>
               <ChevronRightIcon size={12} />
-              <PasteTarget onPaste={onPaste && (() => onPaste(folder.id))}>
+              <PasteTarget
+                folderId={folder.id}
+                canPaste={canPaste}
+                onPaste={onPaste}
+              >
                 <Button
                   ref={folder.id === folderId ? currentFolderRef : undefined}
                   color="ghost"

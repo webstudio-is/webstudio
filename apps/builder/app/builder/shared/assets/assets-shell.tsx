@@ -15,8 +15,11 @@ import {
   SearchField,
   theme,
 } from "@webstudio-is/design-system";
-import { acceptUploadType, validateFiles } from "./asset-upload";
-import { detectAssetType } from "@webstudio-is/sdk";
+import {
+  acceptUploadType,
+  groupFilesByAssetType,
+  validateFiles,
+} from "./asset-upload";
 import { AssetPanelState } from "./asset-panel-state";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -172,19 +175,10 @@ export const AssetsShell = ({
               return false;
             });
 
-          // Group files by their detected type
-          const filesByType = new Map<string, File[]>();
-          for (const file of files) {
-            const detectedType = detectAssetType(file.name);
-            if (!filesByType.has(detectedType)) {
-              filesByType.set(detectedType, []);
-            }
-            filesByType.get(detectedType)!.push(file);
-          }
-
-          // Upload each group with the correct type
-          for (const [detectedType, filesOfType] of filesByType) {
-            uploadAssets(detectedType as AssetType, filesOfType, { folderId });
+          for (const [detectedType, filesOfType] of groupFilesByAssetType(
+            files
+          )) {
+            uploadAssets(detectedType, filesOfType, { folderId });
           }
 
           uploadAssets(type, droppedUrls, { folderId });

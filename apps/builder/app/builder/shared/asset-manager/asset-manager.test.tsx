@@ -29,7 +29,7 @@ import { $assetManagerClipboard } from "./asset-manager-clipboard";
 import {
   createAssetFolderFixture,
   createAssetFoldersFixture,
-} from "./asset-folder.test-fixtures";
+} from "@webstudio-is/sdk/testing";
 import { createAssetManagerTestRenderer } from "./test-utils";
 
 const renderer = createAssetManagerTestRenderer();
@@ -121,10 +121,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const renderManager = () =>
+const renderManager = (canManageFolders = true) =>
   renderer.render(
     <TooltipProvider>
-      <AssetManager canManageFolders />
+      <AssetManager canManageFolders={canManageFolders} />
     </TooltipProvider>
   );
 
@@ -741,6 +741,22 @@ describe("Asset Manager shortcuts", () => {
       expect($assets.get()).toHaveLength(1);
     }
   );
+
+  test("does not expose the delete shortcut in view mode", () => {
+    const asset = createAsset("asset");
+    act(() => {
+      $assets.set(new Map([[asset.id, asset]]));
+      $authPermit.set("view");
+    });
+    const container = renderManager(false);
+    const button = getOptions(container).at(-1)!.button;
+    act(() => button.focus());
+
+    keyDown(button, "Delete");
+
+    expect(document.body.textContent).not.toContain("Delete selected items");
+    expect($assets.get()).toHaveLength(1);
+  });
 
   test("leaves native editing shortcuts available in the search field", () => {
     const container = renderManager();

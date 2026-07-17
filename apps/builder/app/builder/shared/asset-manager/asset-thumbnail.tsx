@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MouseEvent,
-  type PointerEvent,
-} from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
 import { Box, styled, Text } from "@webstudio-is/design-system";
 import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
@@ -38,6 +31,7 @@ import { type AssetManagerItemActions } from "./asset-manager-item-menu";
 import {
   AssetManagerThumbnail,
   AssetManagerThumbnailMenu,
+  type AssetManagerThumbnailInteractions,
 } from "./asset-manager-thumbnail";
 
 const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
@@ -122,7 +116,7 @@ const GenericFilePreview = ({
 
 type AssetThumbnailProps = {
   assetContainer: AssetContainer;
-  onSelectionChange: (selected: boolean) => void;
+  interactions: AssetManagerThumbnailInteractions;
   onChange?: (assetContainer: AssetContainer) => void;
   selected?: boolean;
   forcedSelection?: boolean;
@@ -130,18 +124,11 @@ type AssetThumbnailProps = {
   canDrag?: boolean;
   onElementChange?: (element: HTMLElement | null) => void;
   selectionActions?: AssetManagerItemActions;
-  onItemPointerDown?: (event: PointerEvent<HTMLElement>) => void;
-  onItemClick?: (event: MouseEvent<HTMLElement>) => void;
-  onModifiedArrow?: (event: KeyboardEvent<HTMLElement>) => void;
-  onExitMultiselect?: () => void;
-  onContextMenuSelection?: () => void;
-  onContextMenuActions?: (actions: AssetManagerItemActions) => void;
-  getDragItems?: () => Array<{ type: "asset" | "folder"; id: string }>;
 };
 
 export const AssetThumbnail = ({
   assetContainer,
-  onSelectionChange,
+  interactions,
   onChange,
   selected,
   forcedSelection,
@@ -149,13 +136,6 @@ export const AssetThumbnail = ({
   canDrag = false,
   onElementChange,
   selectionActions,
-  onItemPointerDown,
-  onItemClick,
-  onModifiedArrow,
-  onExitMultiselect,
-  onContextMenuSelection,
-  onContextMenuActions,
-  getDragItems,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -164,6 +144,7 @@ export const AssetThumbnail = ({
   const authPermit = useStore($authPermit);
   const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
+  const getDragItems = interactions.getDragItems;
   const { basename, ext } = parseAssetName(asset.name);
   const alt = asset.description ?? formatAssetName(asset);
   const isUploading = assetContainer.status === "uploading";
@@ -222,13 +203,13 @@ export const AssetThumbnail = ({
           nativeSetDragImage,
           sourceElement: element,
           input: location.initial.input,
-          items: getDragItems?.() ?? [],
+          items: getDragItems({ type: "asset", id: asset.id }),
         });
       },
       getInitialData: () => ({
         kind: "asset",
         id: asset.id,
-        items: getDragItems?.(),
+        items: getDragItems({ type: "asset", id: asset.id }),
       }),
     });
   }, [asset.id, canDrag, getDragItems, isUploading]);
@@ -248,15 +229,9 @@ export const AssetThumbnail = ({
       <AssetManagerThumbnail
         item={{ type: "asset", id: asset.id }}
         actions={displayedActions}
+        interactions={interactions}
         selected={selected}
         forcedSelection={forcedSelection}
-        onSelectionChange={onSelectionChange}
-        onItemPointerDown={onItemPointerDown}
-        onItemClick={onItemClick}
-        onModifiedArrow={onModifiedArrow}
-        onExitMultiselect={onExitMultiselect}
-        onContextMenuSelection={onContextMenuSelection}
-        onContextMenuActions={onContextMenuActions}
         thumbnailRef={(element) => {
           elementRef.current = element;
           onElementChange?.(element);
@@ -310,7 +285,7 @@ export const AssetThumbnail = ({
               <AssetManagerThumbnailMenu
                 actions={displayedActions}
                 label={`Actions for ${formatAssetName(asset)}`}
-                onPointerDown={onContextMenuSelection}
+                onPointerDown={() => interactions.onContextMenuSelection(item)}
               />
             </AssetSettings>
           ) : undefined

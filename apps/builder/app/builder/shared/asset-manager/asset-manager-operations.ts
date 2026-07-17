@@ -29,6 +29,8 @@ export const normalizeAssetManagerItems = ({
     new Map(
       items.map((item) => [getAssetManagerSelectionKey(item), item])
     ).values()
+  ).filter((item) =>
+    item.type === "folder" ? folders.has(item.id) : assets.has(item.id)
   );
   const selectedFolderIds = new Set(
     uniqueItems.flatMap((item) => (item.type === "folder" ? [item.id] : []))
@@ -51,9 +53,9 @@ export const normalizeAssetManagerItems = ({
     if (item.type === "folder") {
       return rootFolderIds.has(item.id);
     }
-    const asset = assets.get(item.id);
+    const asset = assets.get(item.id)!;
     return (
-      asset?.folderId === undefined ||
+      asset.folderId === undefined ||
       coveredFolderIds.has(asset.folderId) === false
     );
   });

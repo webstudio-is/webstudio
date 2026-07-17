@@ -2,7 +2,11 @@ import { createRef } from "react";
 import { afterEach, expect, test, vi } from "vitest";
 import { $authPermit } from "~/shared/nano-states";
 import { createAssetManagerTestRenderer } from "../asset-manager/test-utils";
-import { AssetUpload, type AssetUploadHandle } from "./asset-upload";
+import {
+  AssetUpload,
+  groupFilesByAssetType,
+  type AssetUploadHandle,
+} from "./asset-upload";
 
 const renderer = createAssetManagerTestRenderer();
 afterEach(() => {
@@ -22,4 +26,20 @@ test("opens the same file input from its imperative action", () => {
   ref.current?.open();
 
   expect(inputClick).toHaveBeenCalledOnce();
+});
+
+test("groups upload files by their detected asset type", () => {
+  const image = new File([], "image.png", { type: "image/png" });
+  const video = new File([], "video.mp4", { type: "video/mp4" });
+  const document = new File([], "document.pdf", {
+    type: "application/pdf",
+  });
+
+  expect(groupFilesByAssetType([image, video, document])).toEqual(
+    new Map([
+      ["image", [image]],
+      ["video", [video]],
+      ["file", [document]],
+    ])
+  );
 });
