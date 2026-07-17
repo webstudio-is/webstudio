@@ -53,7 +53,6 @@ import {
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
 import type { BuilderApiCapability } from "@webstudio-is/project-build/contracts";
-import { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
 import {
   buildGetInput,
   buildPatchInput,
@@ -652,10 +651,7 @@ export const apiRouter = router({
           projectId: input.projectId,
           buildId: build.id,
           clientVersion: input.baseVersion,
-          transactions:
-            input.restorePoint === true
-              ? input.transactions.map(hydrateRestorePointTransaction)
-              : input.transactions,
+          transactions: input.transactions,
         });
       },
       {

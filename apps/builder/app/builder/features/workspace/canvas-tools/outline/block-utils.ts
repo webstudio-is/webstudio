@@ -13,7 +13,7 @@ import {
   $selectedInstanceSelector,
   selectInstance,
 } from "~/shared/nano-states";
-import { builderApi } from "~/shared/builder-api";
+import { resolveTokenConflicts } from "~/shared/resolve-token-conflicts";
 import {
   $registeredComponentMetas,
   $isContentMode,
@@ -158,10 +158,10 @@ export const insertTemplateAt = async (
       targetData: getWebstudioData(),
       contentMode,
     });
-    const conflictResolution =
-      conflicts.length > 0
-        ? await builderApi.showTokenConflictDialog(conflicts)
-        : "theirs";
+    const conflictResolution = await resolveTokenConflicts(conflicts);
+    if (conflictResolution === "cancel") {
+      return;
+    }
 
     const didInsert = await insertWebstudioFragmentAt(
       fragment,

@@ -15,6 +15,7 @@ import {
   buildPatchTransaction,
   getPublicBuildIncludes,
   publicBuildIncludes,
+  projectSessionRestorePointPath,
 } from "./schema";
 import { createPublishedProjectBundleFixture } from "./fixtures";
 
@@ -22,6 +23,7 @@ describe("project bundle contract", () => {
   test("defines staged upload transport details", () => {
     expect(stagedUploadPath).toBe("/rest/staged-upload");
     expect(stagedUploadProjectIdHeader).toBe("x-webstudio-project-id");
+    expect(projectSessionRestorePointPath).toBe("build.restorePoint");
   });
 
   test("validates asset file names", () => {

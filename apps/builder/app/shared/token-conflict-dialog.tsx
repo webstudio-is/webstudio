@@ -15,43 +15,30 @@ import {
   Radio,
   Label,
 } from "@webstudio-is/design-system";
-import type { TokenConflict } from "@webstudio-is/project-build/runtime";
+import type { ConflictResolution } from "@webstudio-is/project-build/runtime";
 
-export type ConflictResolution = "ours" | "theirs" | "merge";
+export type TokenConflictDialogResult = ConflictResolution | "cancel";
+export type TokenConflictDialogConflict = {
+  tokenName: string;
+  fragmentTokenId: string;
+};
 
 type DialogState =
   | {
-      conflicts: TokenConflict[];
-      resolve: (resolution: ConflictResolution) => void;
+      conflicts: TokenConflictDialogConflict[];
+      resolve: (resolution: TokenConflictDialogResult) => void;
     }
   | undefined;
 
 const $tokenConflictDialogState = atom<DialogState>(undefined);
 
 export const showTokenConflictDialog = (
-  conflicts: Array<{
-    tokenName: string;
-    fragmentTokenId: string;
-  }>
-): Promise<ConflictResolution> => {
+  conflicts: TokenConflictDialogConflict[]
+): Promise<TokenConflictDialogResult> => {
   return new Promise((resolve) => {
-    const fullConflicts: TokenConflict[] = conflicts.map((c) => ({
-      tokenName: c.tokenName,
-      fragmentTokenId: c.fragmentTokenId,
-      fragmentToken: {
-        type: "token" as const,
-        id: c.fragmentTokenId,
-        name: c.tokenName,
-      },
-      existingToken: {
-        type: "token" as const,
-        id: "existing",
-        name: c.tokenName,
-      },
-    }));
-
+    $tokenConflictDialogState.get()?.resolve("cancel");
     $tokenConflictDialogState.set({
-      conflicts: fullConflicts,
+      conflicts,
       resolve,
     });
   });
@@ -70,7 +57,9 @@ export const TokenConflictDialog = () => {
   const { conflicts, resolve } = dialogState;
 
   const handleClose = () => {
-    $tokenConflictDialogState.set(undefined);
+    if ($tokenConflictDialogState.get()?.resolve === resolve) {
+      $tokenConflictDialogState.set(undefined);
+    }
     setResolution("theirs");
   };
 
@@ -82,6 +71,7 @@ export const TokenConflictDialog = () => {
   };
 
   const handleCancel = () => {
+    resolve("cancel");
     handleClose();
   };
 

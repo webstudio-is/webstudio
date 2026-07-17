@@ -149,15 +149,17 @@ export const startHighImpactFixtureApi = async (
           homePageId: "home",
           features: {},
         };
-      } else if (operationPath === "build.patch") {
+      } else if (
+        operationPath === "build.patch" ||
+        operationPath === "build.restorePoint"
+      ) {
         const input = (await readInput()) as {
           transactions?: BuilderPatchTransaction[];
-          restorePoint?: boolean;
         };
         const transactions = input.transactions ?? [];
         state = applyBuilderPatchTransactions(
           state,
-          input.restorePoint === true
+          operationPath === "build.restorePoint"
             ? transactions.map(hydrateRestorePointTransaction)
             : transactions
         ).state;

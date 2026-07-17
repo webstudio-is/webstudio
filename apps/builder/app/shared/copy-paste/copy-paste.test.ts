@@ -640,6 +640,44 @@ test("resolves token conflicts for fragments through the shared paste helper", a
   });
 });
 
+test("does not insert a fragment when token conflict resolution is cancelled", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  $project.set({ id: "project-id" } as Project);
+  $styleSources.set(
+    new Map([
+      [
+        "existing-token",
+        { id: "existing-token", type: "token", name: "Primary" },
+      ],
+    ])
+  );
+  const fragment = createEmptyWebstudioFragment();
+  fragment.styleSources.push({
+    id: "incoming-token",
+    type: "token",
+    name: "Primary",
+  });
+  fragment.styles.push({
+    styleSourceId: "incoming-token",
+    breakpointId: "base",
+    property: "color",
+    value: { type: "unparsed", value: "blue" },
+  });
+  vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showTokenConflictDialog"
+  ).mockResolvedValue("cancel");
+
+  const inserted = await insertFragmentWithBreakpointWarning(fragment);
+
+  expect(inserted).toBe(false);
+  expect(Array.from($styleSources.get().values())).toEqual([
+    { id: "existing-token", type: "token", name: "Primary" },
+  ]);
+});
+
 test.each([
   ["ours", "old", undefined],
   ["theirs", "old", "#123456"],
@@ -832,7 +870,12 @@ test("reports invalid pasted design token documents", async () => {
   const { clipboardData, event } = createClipboardEvent("paste");
   clipboardData.setData(
     "text/plain",
-    JSON.stringify({ spacing: { $value: { value: 8, unit: "px" } } })
+    JSON.stringify({
+      spacing: {
+        $type: "dimension",
+        $value: { value: 8, unit: "invalid" },
+      },
+    })
   );
 
   document.dispatchEvent(event);
@@ -841,7 +884,7 @@ test("reports invalid pasted design token documents", async () => {
   expect(event.defaultPrevented).toBe(true);
   expect($styles.get()).toEqual(new Map());
   expect(toastError).toHaveBeenCalledWith(
-    expect.stringContaining("spacing is missing $type")
+    expect.stringContaining("invalid dimension unit invalid")
   );
   abortController.abort();
 });

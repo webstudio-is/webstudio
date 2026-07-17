@@ -337,9 +337,15 @@ type PersistedCliProjectRestorePoints = {
   points: PersistedCliProjectRestorePoint[];
 };
 
+export const maxCliProjectRestorePoints = 20;
+
 export const createCliProjectRestorePointStorage = (
-  path = getCliProjectRestorePointsFile()
+  path = getCliProjectRestorePointsFile(),
+  maxPoints = maxCliProjectRestorePoints
 ) => {
+  if (Number.isInteger(maxPoints) === false || maxPoints < 1) {
+    throw new Error("Restore point retention must be a positive integer");
+  }
   const load = async (): Promise<PersistedCliProjectRestorePoints> => {
     try {
       return JSON.parse(await readFile(path, "utf-8"));
@@ -374,7 +380,10 @@ export const createCliProjectRestorePointStorage = (
         await writeFileAtomic(
           path,
           `${JSON.stringify(
-            { version: 1, points: [...persisted.points, point] },
+            {
+              version: 1,
+              points: [...persisted.points, point].slice(-maxPoints),
+            },
             undefined,
             2
           )}\n`
@@ -396,6 +405,20 @@ export const createCliProjectRestorePointStorage = (
         summary: getSummary(point),
         snapshot: parsePersistedSnapshot(point.snapshot),
       };
+    },
+    async delete(id: string) {
+      return await withFileLock(path, async () => {
+        const persisted = await load();
+        const points = persisted.points.filter((point) => point.id !== id);
+        if (points.length === persisted.points.length) {
+          return false;
+        }
+        await writeFileAtomic(
+          path,
+          `${JSON.stringify({ version: 1, points }, undefined, 2)}\n`
+        );
+        return true;
+      });
     },
   };
 };

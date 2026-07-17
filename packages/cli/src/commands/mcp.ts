@@ -895,6 +895,9 @@ const createCliMcpHost = async ({
       async list() {
         return { points: await restorePointStorage.list() };
       },
+      async delete({ id }) {
+        return { deleted: await restorePointStorage.delete(id) };
+      },
       async revert({ id }, { dryRun }) {
         const restorePoint = await restorePointStorage.get(id);
         if (restorePoint === undefined) {

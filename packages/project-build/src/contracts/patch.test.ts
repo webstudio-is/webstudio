@@ -46,6 +46,29 @@ describe("builder patch contracts", () => {
         ],
       }).success
     ).toBe(false);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [
+          {
+            namespace: "assets",
+            patches: [{ op: "replace", path: [], value: new Map() }],
+          },
+        ],
+      }).success
+    ).toBe(false);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [],
+      }).success
+    ).toBe(false);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [transaction.payload[0], transaction.payload[0]],
+      }).success
+    ).toBe(false);
   });
 
   test("requires values for add and replace patches", () => {

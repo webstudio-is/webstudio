@@ -17,6 +17,7 @@ import {
   stagedUploadPath,
   stagedUploadProjectIdHeader,
   parseBuilderUrl,
+  projectSessionRestorePointPath,
   type BuildPatchTransaction,
   getPublicApiOperation,
   getPublicApiOperationPath,
@@ -739,10 +740,9 @@ export const applyRestorePointPatch = async (
     transactions: unknown;
   }
 ) =>
-  await mutateProjectApi(params, getPublicApiOperationPath("apply-patch"), {
+  await mutateProjectApi(params, projectSessionRestorePointPath, {
     baseVersion: params.baseVersion,
     transactions: parseRestorePointPatchTransactions(params.transactions),
-    restorePoint: true,
   });
 
 type PageMetaInput = {

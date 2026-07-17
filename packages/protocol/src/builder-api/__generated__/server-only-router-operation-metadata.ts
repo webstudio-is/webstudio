@@ -238,9 +238,6 @@ export const serverOnlyRouterOperationMetadata = {
             required: ["id", "payload"],
           },
         },
-        restorePoint: {
-          type: "boolean",
-        },
       },
       required: ["baseVersion", "transactions"],
     },

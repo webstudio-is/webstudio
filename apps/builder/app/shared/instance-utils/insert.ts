@@ -4,7 +4,7 @@
 // in mutation.ts.
 import { toast } from "@webstudio-is/design-system";
 import { type WebstudioFragment, elementComponent } from "@webstudio-is/sdk";
-import type { ConflictResolution } from "../token-conflict-dialog";
+import type { ConflictResolution } from "@webstudio-is/project-build/runtime";
 import {
   $registeredComponentMetas,
   $registeredTemplates,

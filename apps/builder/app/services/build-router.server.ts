@@ -30,6 +30,7 @@ import {
   publishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { removeAgentInstructionsFromProjectSettings } from "@webstudio-is/project-build";
+import { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
 import {
   loadProjectBundleByBuildId,
   loadPublishedProjectBundleByProjectId,
@@ -43,6 +44,11 @@ import {
   removeStagedUpload,
 } from "./staged-upload.server";
 import { throwApiClientUpdateRequired } from "./api-compatibility.server";
+import {
+  buildRestorePointInput,
+  commitBuildTransactions,
+} from "./api-build.server";
+import { assertApiProjectPermit } from "./api-permits.server";
 
 const projectBundleInput = z.object({
   projectId: z.string(),
@@ -289,6 +295,20 @@ export const buildRouter = router({
       removeStagedUpload,
     })
   ),
+
+  restorePoint: procedure
+    .input(buildRestorePointInput)
+    .mutation(async ({ ctx, input }) => {
+      await assertApiProjectPermit(ctx, input.projectId, "build");
+      const build = await loadDevBuildByProjectId(ctx, input.projectId);
+      return await commitBuildTransactions({
+        ctx,
+        projectId: input.projectId,
+        buildId: build.id,
+        clientVersion: input.baseVersion,
+        transactions: input.transactions.map(hydrateRestorePointTransaction),
+      });
+    }),
 
   createCollabToken: procedure
     .input(

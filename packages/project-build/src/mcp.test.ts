@@ -635,6 +635,7 @@ describe("project session mcp adapter", () => {
     const restorePointToolNames = new Set([
       "create-restore-point",
       "list-restore-points",
+      "delete-restore-point",
       "revert-to-restore-point",
     ]);
     expect(
@@ -651,8 +652,41 @@ describe("project session mcp adapter", () => {
     ).toEqual([
       "create-restore-point",
       "list-restore-points",
+      "delete-restore-point",
       "revert-to-restore-point",
     ]);
+  });
+
+  test("requires explicit confirmation before deleting a restore point", async () => {
+    const deleteRestorePoint = vi.fn(async () => ({ deleted: true }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      restorePoints: {
+        create: vi.fn(),
+        list: vi.fn(),
+        delete: deleteRestorePoint,
+        revert: vi.fn(),
+      },
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "delete-restore-point",
+        input: { id: "point-1" },
+      })
+    ).rejects.toThrow();
+
+    const result = await adapter.callTool({
+      name: "delete-restore-point",
+      input: { id: "point-1", confirm: true },
+    });
+    expect(result.structuredContent).toMatchObject({
+      ok: true,
+      data: { deleted: true },
+    });
+    expect(deleteRestorePoint).toHaveBeenCalledWith({ id: "point-1" });
   });
 
   test("requires a matching confirmation token before reverting", async () => {
@@ -681,6 +715,7 @@ describe("project session mcp adapter", () => {
       restorePoints: {
         create: vi.fn(),
         list: vi.fn(),
+        delete: vi.fn(),
         revert,
       },
     });

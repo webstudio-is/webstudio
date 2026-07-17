@@ -209,6 +209,9 @@ const insertPastedFragment = async ({
 }) => {
   try {
     const conflictResolution = await resolveFragmentTokenConflicts(fragment);
+    if (conflictResolution === "cancel") {
+      return;
+    }
     const result = await executeRuntimeMutationAsync({
       id: "instances.insertFragment",
       input: {

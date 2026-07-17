@@ -248,6 +248,50 @@ describe("project session", () => {
     expect(getPatchValue(1)).toBeInstanceOf(Map);
   });
 
+  test("round-trips an explicitly empty marketplace product", () => {
+    const transaction: BuilderPatchTransaction = {
+      id: "restore",
+      payload: [
+        {
+          namespace: "marketplaceProduct",
+          patches: [{ op: "replace", path: [], value: undefined }],
+        },
+      ],
+    };
+
+    const serialized = JSON.parse(
+      JSON.stringify(serializeRestorePointTransaction(transaction))
+    );
+    expect(serialized.payload[0].patches[0].value).toBeNull();
+
+    const hydrated = hydrateRestorePointTransaction(serialized);
+    expect(hydrated.payload[0]?.patches[0]).toEqual({
+      op: "replace",
+      path: [],
+      value: undefined,
+    });
+  });
+
+  test("rejects malformed serialized restore namespace values", () => {
+    expect(() =>
+      hydrateRestorePointTransaction({
+        id: "restore",
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "replace",
+                path: [],
+                value: [["broken", { id: "broken" }]],
+              },
+            ],
+          },
+        ],
+      })
+    ).toThrow();
+  });
+
   test("derives default compatibility from the full runtime contract shape", () => {
     const compatibility =
       createDefaultProjectSessionCompatibility("test-session");
@@ -1247,7 +1291,7 @@ describe("project session", () => {
     expect(storage.saved.at(-1)?.version).toBe(5);
   });
 
-  test("plans and atomically restores a complete project snapshot", async () => {
+  test("plans and atomically restores a versioned Build snapshot", async () => {
     const target = createPersistedSnapshot();
     const current = structuredClone(target);
     current.version = 2;
@@ -1283,6 +1327,45 @@ describe("project session", () => {
     expect(transport.commits).toHaveLength(1);
   });
 
+  test("keeps separately persisted assets outside restore points", async () => {
+    const current = createPersistedSnapshot();
+    current.state.assets = new Map([
+      [
+        "asset-current",
+        {
+          id: "asset-current",
+          projectId: current.projectId,
+          name: "current.png",
+          type: "image",
+          size: 1,
+          format: "png",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          meta: { width: 1, height: 1 },
+        },
+      ],
+    ]);
+    current.freshness = createBuilderStateFreshness({
+      state: current.state,
+      version: current.version,
+    });
+    const session = createSession({ storage: createStorage(current) });
+
+    await session.initialize();
+    const restorePoint = await session.captureRestorePointSnapshot();
+    expect(restorePoint.state.assets).toBeUndefined();
+    expect(restorePoint.freshness.assets).toBeUndefined();
+
+    const result = await session.restoreSnapshot({
+      ...restorePoint,
+      state: {
+        ...restorePoint.state,
+        assets: new Map(),
+      },
+    });
+    expect(result.result.restoredNamespaces).not.toContain("assets");
+    expect(session.snapshot?.state.assets?.has("asset-current")).toBe(true);
+  });
+
   test("rejects restore points from another editable build", async () => {
     const current = createPersistedSnapshot();
     const session = createSession({ storage: createStorage(current) });
@@ -1303,12 +1386,63 @@ describe("project session", () => {
       throw new Error("Home page fixture is missing");
     }
     currentHome.name = "Edited after restore point";
-    const session = createSession({ storage: createStorage(current) });
+    const transport = createMutableTransport({
+      projectId: current.projectId,
+      buildId: current.buildId,
+      version: current.version,
+      state: current.state,
+    });
+    const session = createSession({
+      storage: createStorage(current),
+      transport,
+    });
     await session.initialize();
 
     const result = await session.restoreSnapshot(target, { dryRun: true });
 
     expect(result.result.restoredNamespaces).toEqual(["pages"]);
+  });
+
+  test("restores marketplace product presence and absence", async () => {
+    const withProduct = createPersistedSnapshot();
+    const withoutProduct = structuredClone(withProduct);
+    withoutProduct.state.marketplaceProduct = undefined;
+    withoutProduct.freshness = createBuilderStateFreshness({
+      state: withoutProduct.state,
+      version: withoutProduct.version,
+    });
+
+    const clearTransport = createMutableTransport({
+      projectId: withProduct.projectId,
+      buildId: withProduct.buildId,
+      version: withProduct.version,
+      state: withProduct.state,
+    });
+    const clearSession = createSession({
+      storage: createStorage(withProduct),
+      transport: clearTransport,
+    });
+    await clearSession.initialize();
+    const cleared = await clearSession.restoreSnapshot(withoutProduct);
+    expect(cleared.result.restoredNamespaces).toEqual(["marketplaceProduct"]);
+    expect(clearSession.snapshot?.state.marketplaceProduct).toBeUndefined();
+
+    const restoreTransport = createMutableTransport({
+      projectId: withoutProduct.projectId,
+      buildId: withoutProduct.buildId,
+      version: withoutProduct.version,
+      state: withoutProduct.state,
+    });
+    const restoreSession = createSession({
+      storage: createStorage(withoutProduct),
+      transport: restoreTransport,
+    });
+    await restoreSession.initialize();
+    const restored = await restoreSession.restoreSnapshot(withProduct);
+    expect(restored.result.restoredNamespaces).toEqual(["marketplaceProduct"]);
+    expect(restoreSession.snapshot?.state.marketplaceProduct).toEqual(
+      withProduct.state.marketplaceProduct
+    );
   });
 
   test("redacts sensitive diagnostic values", () => {

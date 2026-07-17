@@ -7,6 +7,7 @@ import {
   getWebstudioData,
 } from "../instance-utils/data";
 import { builderApi } from "../builder-api";
+import { resolveTokenConflicts } from "../resolve-token-conflicts";
 import {
   pasteHandled,
   pasteIgnored,
@@ -44,12 +45,11 @@ const handlePasteDesignTokens = async (value: string): Promise<PasteResult> => {
         tokenName: entry.outputName,
         fragmentTokenId: `${entry.target}:${entry.outputName}`,
       }));
-    const collision =
-      conflicts.length === 0
-        ? "skip"
-        : collisionByResolution[
-            await builderApi.showTokenConflictDialog(conflicts)
-          ];
+    const resolution = await resolveTokenConflicts(conflicts, "ours");
+    if (resolution === "cancel") {
+      return pasteHandled;
+    }
+    const collision = collisionByResolution[resolution];
     const mutation = executeRuntimeMutation({
       id: "designTokens.import",
       input: { source, collision },

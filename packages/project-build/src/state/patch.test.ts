@@ -9,6 +9,34 @@ import {
   MissingBuilderStateNamespaceError,
 } from "./patch";
 
+test("root-replaces an optional marketplace product from missing state", () => {
+  const state: BuilderState = {};
+  const marketplaceProduct = {
+    category: "sectionTemplates" as const,
+    name: "Example section",
+    thumbnailAssetId: "thumbnail",
+    author: "Webstudio",
+    email: "hello@example.com",
+    website: "",
+    issues: "",
+    description: "Example marketplace product",
+  };
+
+  expect(
+    applyBuilderPatchTransactions(state, [
+      {
+        id: "restore-marketplace-product",
+        payload: [
+          {
+            namespace: "marketplaceProduct",
+            patches: [{ op: "replace", path: [], value: marketplaceProduct }],
+          },
+        ],
+      },
+    ]).state.marketplaceProduct
+  ).toEqual(marketplaceProduct);
+});
+
 test("applies namespace patches", () => {
   const nextProps = applyBuilderNamespacePatches<Props>(new Map(build.props), [
     {

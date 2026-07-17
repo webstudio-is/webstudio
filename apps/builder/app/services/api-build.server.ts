@@ -69,13 +69,9 @@ export const buildPatchInput = z
   .object({
     ...buildPatchInputBase,
     transactions: z.array(builderPatchTransactionBaseSchema).min(1),
-    restorePoint: z.boolean().optional(),
   })
   .superRefine((input, context) => {
-    const schema = input.restorePoint
-      ? restorePointPatchTransaction
-      : buildPatchTransaction;
-    const result = z.array(schema).safeParse(input.transactions);
+    const result = z.array(buildPatchTransaction).safeParse(input.transactions);
     if (result.success === false) {
       for (const issue of result.error.issues) {
         context.addIssue({
@@ -86,6 +82,11 @@ export const buildPatchInput = z
       }
     }
   });
+
+export const buildRestorePointInput = z.object({
+  ...buildPatchInputBase,
+  transactions: z.array(restorePointPatchTransaction).length(1),
+});
 
 export const createBuildSnapshot = ({
   build,

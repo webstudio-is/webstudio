@@ -30,3 +30,12 @@ export const builderNamespaces = [
 ] as const;
 
 export type BuilderNamespace = (typeof builderNamespaces)[number];
+
+// Assets are persisted separately from the versioned Build row and cannot be
+// restored in the same atomic transaction.
+export const restorePointNamespaces = builderNamespaces.filter(
+  (namespace): namespace is Exclude<BuilderNamespace, "assets"> =>
+    namespace !== "assets"
+);
+
+export type RestorePointNamespace = (typeof restorePointNamespaces)[number];

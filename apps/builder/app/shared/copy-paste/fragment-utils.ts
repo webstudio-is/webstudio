@@ -10,13 +10,14 @@ import {
 } from "../instance-utils/insert";
 import { getWebstudioData } from "../instance-utils/data";
 import { builderApi } from "../builder-api";
+import { resolveTokenConflicts } from "../resolve-token-conflicts";
 
 export const hasFragmentData = (fragment: WebstudioFragment) =>
   fragment.children.length > 0 || fragment.styleSources.length > 0;
 
 export const resolveFragmentTokenConflicts = async (
   fragment: WebstudioFragment
-): Promise<ConflictResolution> => {
+): Promise<ConflictResolution | "cancel"> => {
   if (
     fragment.styleSources.some((source) => source.type === "token") === false
   ) {
@@ -26,9 +27,7 @@ export const resolveFragmentTokenConflicts = async (
     fragment,
     targetData: getWebstudioData(),
   });
-  return conflicts.length > 0
-    ? await builderApi.showTokenConflictDialog(conflicts)
-    : "theirs";
+  return await resolveTokenConflicts(conflicts);
 };
 
 export const insertFragmentWithBreakpointWarning = async (
@@ -36,6 +35,9 @@ export const insertFragmentWithBreakpointWarning = async (
   insertable?: Insertable
 ) => {
   const conflictResolution = await resolveFragmentTokenConflicts(fragment);
+  if (conflictResolution === "cancel") {
+    return false;
+  }
   return insertWebstudioFragmentAt(fragment, insertable, conflictResolution, {
     onBreakpointLimitMerge: () => {
       builderApi.toast.warn(breakpointPasteLimitWarning);

@@ -328,17 +328,25 @@ const getFigmaDocumentData = (document: unknown) => {
   };
 };
 
-const hasDtcgToken = (value: unknown): boolean => {
+const hasDtcgToken = (
+  value: unknown,
+  inheritedType?: DtcgTokenType
+): boolean => {
   if (isRecord(value) === false) {
     return false;
   }
-  if ("$value" in value || typeof value.$ref === "string") {
+  const parsedType = dtcgTokenTypeInput.safeParse(value.$type);
+  const type = parsedType.success ? parsedType.data : inheritedType;
+  if (
+    type !== undefined &&
+    ("$value" in value || typeof value.$ref === "string")
+  ) {
     return true;
   }
   return Object.entries(value).some(
     ([name, child]) =>
       (name.startsWith("$") === false || name === "$root") &&
-      hasDtcgToken(child)
+      hasDtcgToken(child, type)
   );
 };
 

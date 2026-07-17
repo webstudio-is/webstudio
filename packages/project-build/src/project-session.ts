@@ -6,7 +6,7 @@ import type {
 } from "./contracts/builder-runtime";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import {
-  builderNamespaces,
+  restorePointNamespaces,
   type BuilderNamespace,
 } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
@@ -39,8 +39,8 @@ import { applyBuilderPatchTransactions } from "./state/patch";
 import {
   createBuilderStateFromSerializedSnapshot,
   createSerializedBuilderStateSnapshotFromState,
-  type SerializedBuilderStateSnapshot,
 } from "./state/adapters";
+import { serializedRestorePointState } from "./schema";
 
 type ProjectSessionSource = "local" | "remote" | "dry-run" | "server";
 type ProjectSessionEnvelopeContract = Pick<
@@ -172,24 +172,33 @@ const transformRestorePointTransaction = (
 export const serializeRestorePointTransaction = (
   transaction: BuilderPatchTransaction
 ) =>
-  transformRestorePointTransaction(
-    transaction,
-    (state) =>
-      createSerializedBuilderStateSnapshotFromState(
-        state as BuilderState
-      ) as Record<string, unknown>
-  );
+  transformRestorePointTransaction(transaction, (state) => {
+    const serialized = createSerializedBuilderStateSnapshotFromState(
+      state as BuilderState
+    ) as Record<string, unknown>;
+    if (
+      Object.hasOwn(state, "marketplaceProduct") &&
+      state.marketplaceProduct === undefined
+    ) {
+      serialized.marketplaceProduct = null;
+    }
+    return serialized;
+  });
 
 export const hydrateRestorePointTransaction = (
   transaction: BuilderPatchTransaction
 ) =>
-  transformRestorePointTransaction(
-    transaction,
-    (state) =>
-      createBuilderStateFromSerializedSnapshot(
-        state as SerializedBuilderStateSnapshot
-      ) as Record<string, unknown>
-  );
+  transformRestorePointTransaction(transaction, (state) => {
+    const serialized = serializedRestorePointState.parse(state);
+    const hydrated = createBuilderStateFromSerializedSnapshot({
+      ...serialized,
+      marketplaceProduct: serialized.marketplaceProduct ?? undefined,
+    }) as Record<string, unknown>;
+    if (serialized.marketplaceProduct === null) {
+      hydrated.marketplaceProduct = undefined;
+    }
+    return hydrated;
+  });
 
 export type ProjectSessionOptions = {
   projectId: string;
@@ -687,7 +696,12 @@ export class ProjectSession {
   }
 
   async captureRestorePointSnapshot() {
-    return structuredClone(await this.ensureNamespaces(builderNamespaces));
+    const snapshot = structuredClone(
+      await this.ensureNamespaces(restorePointNamespaces)
+    );
+    delete snapshot.state.assets;
+    delete snapshot.freshness.assets;
+    return snapshot;
   }
 
   async restoreSnapshot(
@@ -695,7 +709,7 @@ export class ProjectSession {
     options: { dryRun?: boolean } = {}
   ) {
     return await this.enqueueMutation(async () => {
-      const snapshot = await this.ensureNamespaces(builderNamespaces);
+      const snapshot = await this.ensureNamespaces(restorePointNamespaces);
       await this.assertPermit("edit");
       if (target.projectId !== snapshot.projectId) {
         throw new BuilderRuntimeError(
@@ -721,22 +735,22 @@ export class ProjectSession {
       const targetSerialized = createSerializedBuilderStateSnapshotFromState(
         target.state
       );
-      const payload = builderNamespaces.flatMap((namespace) => {
+      const payload = restorePointNamespaces.flatMap((namespace) => {
         const currentValue = snapshot.state[namespace];
         const targetValue = target.state[namespace];
-        if (namespace === "marketplaceProduct" && targetValue === undefined) {
-          return [];
-        }
-        if (currentValue === undefined || targetValue === undefined) {
-          throw new BuilderRuntimeError(
-            "BAD_REQUEST",
-            `Restore point is missing the ${namespace} namespace`
-          );
-        }
         if (
           deepEqual(currentSerialized[namespace], targetSerialized[namespace])
         ) {
           return [];
+        }
+        if (
+          namespace !== "marketplaceProduct" &&
+          (currentValue === undefined || targetValue === undefined)
+        ) {
+          throw new BuilderRuntimeError(
+            "BAD_REQUEST",
+            `Restore point is missing the ${namespace} namespace`
+          );
         }
         return [
           {
@@ -757,8 +771,8 @@ export class ProjectSession {
       };
       const contract: ProjectSessionEnvelopeContract = {
         id: "project-session.restore-point.revert",
-        readNamespaces: builderNamespaces,
-        writeNamespaces: builderNamespaces,
+        readNamespaces: restorePointNamespaces,
+        writeNamespaces: restorePointNamespaces,
         invalidatesNamespaces: [],
       };
       const result = {
@@ -810,7 +824,7 @@ export class ProjectSession {
       };
       const persisted = await this.#synchronizeAfterCommit({
         snapshot: committedSnapshot,
-        namespaces: builderNamespaces,
+        namespaces: restorePointNamespaces,
         diagnostics: [],
       });
       return this.createEnvelope({

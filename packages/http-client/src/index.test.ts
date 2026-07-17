@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/protocol/fixtures";
 import {
   applyBuildPatch,
+  applyRestorePointPatch,
   attachDesignToken,
   bindProps,
   cloneInstance,
@@ -834,6 +835,21 @@ test("wraps project api trpc calls in named functions", async () => {
         ],
       },
     });
+    await applyRestorePointPatch({
+      ...params,
+      baseVersion: 3,
+      transactions: [
+        {
+          id: "restore-1",
+          payload: [
+            {
+              namespace: "pages",
+              patches: [{ op: "replace", path: [], value: {} }],
+            },
+          ],
+        },
+      ],
+    });
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
@@ -967,6 +983,7 @@ test("wraps project api trpc calls in named functions", async () => {
     expectRequest("/trpc/api.projects.permissions"),
     expectRequest("/trpc/api.folders.list"),
     expectBodyRequest("/trpc/api.build.patch", '"baseVersion":2'),
+    expectBodyRequest("/trpc/build.restorePoint", '"baseVersion":3'),
   ]);
   expect(decodeURIComponent(requests[0]?.search ?? "")).toContain(
     '"include":["pages"]'

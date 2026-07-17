@@ -1,5 +1,6 @@
 import {
   builderNamespaces,
+  restorePointNamespaces,
   type BuilderNamespace,
 } from "./contracts/namespaces";
 import {
@@ -1957,12 +1958,16 @@ const restorePointSummaryDataSchema = {
 
 const restorePointCreateInput = z.object({ name: z.string().trim().min(1) });
 const restorePointRevertInput = z.object({ id: z.string().min(1) });
+const restorePointDeleteInput = z.object({
+  id: z.string().min(1),
+  confirm: z.literal(true),
+});
 
 const restorePointTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "create-restore-point",
     description:
-      "Create a named local restore point for every synchronized project namespace before risky agent work.",
+      "Create a named local restore point for versioned Build data before risky agent work. Asset records remain unchanged by restore points.",
     inputSchema: getZodMcpInputSchema(restorePointCreateInput),
     outputSchema: getMcpOutputSchema(restorePointSummaryDataSchema),
     annotations: {
@@ -1972,7 +1977,7 @@ const restorePointTools: readonly ProjectSessionMcpTool[] = [
       permit: "edit",
       localCapable: true,
       serverOnly: false,
-      readNamespaces: builderNamespaces,
+      readNamespaces: restorePointNamespaces,
       writeNamespaces: [],
       invalidatesNamespaces: [],
       retryOnConflict: false,
@@ -2004,16 +2009,40 @@ const restorePointTools: readonly ProjectSessionMcpTool[] = [
     },
   }),
   createProjectSessionMcpTool({
+    name: "delete-restore-point",
+    description:
+      "Permanently delete one local restore point after explicit confirmation.",
+    inputSchema: getZodMcpInputSchema(restorePointDeleteInput),
+    outputSchema: getMcpOutputSchema({
+      type: "object",
+      properties: { deleted: { type: "boolean" } },
+      required: ["deleted"],
+      additionalProperties: false,
+    }),
+    annotations: {
+      command: "delete-restore-point",
+      operationId: "project-session.restore-point.delete",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
     name: "revert-to-restore-point",
     description:
-      "Revert every synchronized namespace to a named restore point. This is destructive and requires a reviewed dry-run confirmation token.",
+      "Revert versioned Build data to a named restore point without changing assets. This is destructive and requires a reviewed dry-run confirmation token.",
     inputSchema: getZodMcpInputSchema(restorePointRevertInput),
     outputSchema: getMcpOutputSchema({
       type: "object",
       properties: {
         restoredNamespaces: {
           type: "array",
-          items: { type: "string", enum: builderNamespaces },
+          items: { type: "string", enum: restorePointNamespaces },
         },
       },
       required: ["restoredNamespaces"],
@@ -2026,8 +2055,8 @@ const restorePointTools: readonly ProjectSessionMcpTool[] = [
       permit: "edit",
       localCapable: true,
       serverOnly: false,
-      readNamespaces: builderNamespaces,
-      writeNamespaces: builderNamespaces,
+      readNamespaces: restorePointNamespaces,
+      writeNamespaces: restorePointNamespaces,
       invalidatesNamespaces: [],
       retryOnConflict: false,
       requiresConfirm: true,
@@ -5910,6 +5939,7 @@ export type ProjectSessionRestorePointHandlers = {
     name: string;
   }) => Promise<ProjectSessionRestorePointSummary>;
   list: () => Promise<{ points: ProjectSessionRestorePointSummary[] }>;
+  delete: (input: { id: string }) => Promise<{ deleted: boolean }>;
   revert: (
     input: { id: string },
     options: { dryRun: boolean }
@@ -6250,6 +6280,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (name === "list-restore-points" && restorePoints !== undefined) {
         return toMetaResult(await restorePoints.list());
+      }
+      if (name === "delete-restore-point" && restorePoints !== undefined) {
+        const { id } = restorePointDeleteInput.parse(input);
+        return toMetaResult(await restorePoints.delete({ id }));
       }
       if (name === "revert-to-restore-point" && restorePoints !== undefined) {
         const transportInput = getToolCallInput(input, true);

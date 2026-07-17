@@ -18,6 +18,7 @@ import { createContractVersion } from "./contract-version";
 export const maxProjectBundleSize = 20 * 1024 * 1024;
 export const stagedUploadPath = "/rest/staged-upload";
 export const stagedUploadProjectIdHeader = "x-webstudio-project-id";
+export const projectSessionRestorePointPath = "build.restorePoint";
 
 const assetFileName = z
   .string()

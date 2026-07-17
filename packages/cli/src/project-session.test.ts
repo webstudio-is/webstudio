@@ -45,6 +45,15 @@ afterEach(async () => {
 });
 
 describe("cli project session storage", () => {
+  test.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects invalid restore point retention %s",
+    (maxPoints) => {
+      expect(() =>
+        createCliProjectRestorePointStorage("restore-points.json", maxPoints)
+      ).toThrow("Restore point retention must be a positive integer");
+    }
+  );
+
   test("persists named restore points and hydrates Map namespaces", async () => {
     const directory = await createTemporaryDirectory();
     const storage = createCliProjectRestorePointStorage(
@@ -90,9 +99,15 @@ describe("cli project session storage", () => {
         (index % 2 === 0 ? storage : secondStorage).create(name, snapshot)
       )
     );
-    expect((await storage.list()).map((point) => point.name).sort()).toEqual(
-      ["Before redesign", ...concurrentNames].sort()
+    const retained = await storage.list();
+    expect(retained).toHaveLength(20);
+    expect(retained.map((point) => point.name).sort()).toEqual(
+      concurrentNames.sort()
     );
+
+    expect(await storage.delete(retained[0].id)).toBe(true);
+    expect(await storage.delete(retained[0].id)).toBe(false);
+    expect(await storage.list()).toHaveLength(19);
   });
 
   test("persists builder state snapshots as JSON and checks revisions", async () => {

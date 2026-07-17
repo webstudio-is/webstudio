@@ -153,6 +153,14 @@ describe("design token import", () => {
       document: figma,
     });
     expect(detectDesignTokenSource({ color: "red" })).toBeUndefined();
+    expect(
+      detectDesignTokenSource({
+        properties: { user: { $ref: "#/definitions/User" } },
+      })
+    ).toBeUndefined();
+    expect(
+      detectDesignTokenSource({ metadata: { $value: "not-a-token" } })
+    ).toBeUndefined();
   });
 
   test("supports DTCG root tokens, inherited types, and both alias syntaxes", () => {
