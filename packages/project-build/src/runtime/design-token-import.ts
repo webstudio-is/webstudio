@@ -1387,7 +1387,7 @@ const toCssDeclarations = (token: NormalizedToken): CssDeclaration[] => {
   return [{ cssValue: toCssValue(token) }];
 };
 
-const toCssVariableName = (name: string) => {
+const toImportedTokenName = (name: string) => {
   const normalized = name
     .trim()
     .toLowerCase()
@@ -1397,11 +1397,13 @@ const toCssVariableName = (name: string) => {
   if (normalized.length === 0) {
     return throwBuilderRuntimeError(
       "INVALID_INPUT",
-      `Token name ${JSON.stringify(name)} cannot form a CSS variable name`
+      `Token name ${JSON.stringify(name)} cannot form an imported token name`
     );
   }
-  return `--${normalized}`;
+  return normalized;
 };
+
+const toCssVariableName = (name: string) => `--${toImportedTokenName(name)}`;
 
 export const normalizeDesignTokenImport = (
   input: z.infer<typeof designTokenImportInput>
@@ -1420,7 +1422,7 @@ export const normalizeDesignTokenImport = (
       input.mapping?.[token.type] ??
       input.defaultTarget ??
       ({ target: "css-variable" } as const);
-    const baseOutputName =
+    const sourceName =
       prefix === undefined ? token.path : `${prefix}.${token.path}`;
     const { value: _value, ...summary } = token;
     const declarations = toCssDeclarations(token);
@@ -1428,8 +1430,8 @@ export const normalizeDesignTokenImport = (
       return declarations.map((declaration) => {
         const outputName = toCssVariableName(
           declaration.key === undefined
-            ? baseOutputName
-            : `${baseOutputName}.${declaration.key}`
+            ? sourceName
+            : `${sourceName}.${declaration.key}`
         );
         return withDeclarationSummary({
           ...summary,
@@ -1452,7 +1454,7 @@ export const normalizeDesignTokenImport = (
       withDeclarationSummary({
         ...summary,
         target: target.target,
-        outputName: baseOutputName,
+        outputName: toImportedTokenName(sourceName),
         declarations: normalizedDeclarations,
       }),
     ];

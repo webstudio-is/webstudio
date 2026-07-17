@@ -1471,7 +1471,7 @@ describe("design token import", () => {
       Array.from(updated.styleSources?.values() ?? []).find(
         (source) => source.type === "token"
       )
-    ).toMatchObject({ name: "color.primary" });
+    ).toMatchObject({ name: "color-primary" });
     expect(
       Array.from(updated.styles?.values() ?? []).map((style) => [
         style.property,

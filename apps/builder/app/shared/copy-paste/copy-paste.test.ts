@@ -172,7 +172,15 @@ const setupToastSuccess = () => {
 const waitForClipboardEvent = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
-const pastePlainText = async (value: unknown) => {
+const pastePlainText = async (
+  value: unknown,
+  target: "design-token" | "css-variable" | "cancel" = "css-variable"
+) => {
+  initBuilderApi();
+  vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showDesignTokenImportDialog"
+  ).mockResolvedValue(target);
   const abortController = new AbortController();
   initCopyPaste({ signal: abortController.signal });
   const { clipboardData, event } = createClipboardEvent("paste");
@@ -579,7 +587,96 @@ test("imports pasted DTCG tokens through the runtime mutation pipeline", async (
       ["--color-action", { type: "unparsed", value: "#123456" }],
     ])
   );
-  expect(toastSuccess).toHaveBeenCalledWith("Imported 2 design tokens.");
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 2 tokens.");
+});
+
+test("imports a pasted DTCG composite as one Webstudio design token", async () => {
+  resetStores();
+  setupPage();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  const event = await pastePlainText(
+    {
+      typography: {
+        $type: "typography",
+        body: {
+          $value: {
+            fontFamily: ["Inter", "sans-serif"],
+            fontSize: { value: 16, unit: "px" },
+            fontWeight: 400,
+            letterSpacing: { value: 0, unit: "px" },
+            lineHeight: 1.5,
+          },
+        },
+      },
+    },
+    "design-token"
+  );
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(true);
+  const token = Array.from($styleSources.get().values()).find(
+    (source) => source.type === "token"
+  );
+  expect(token).toMatchObject({ name: "typography-body" });
+  expect(
+    Array.from($styles.get().values())
+      .filter((style) => style.styleSourceId === token?.id)
+      .map((style) => style.property)
+  ).toEqual(
+    expect.arrayContaining([
+      "fontFamily",
+      "fontSize",
+      "fontWeight",
+      "letterSpacing",
+      "lineHeight",
+    ])
+  );
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 1 token.");
+});
+
+test("keeps ambiguous primitives as CSS variables when importing design tokens", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  await pastePlainText(
+    {
+      color: {
+        $type: "color",
+        primary: { $value: "#123456" },
+      },
+      spacing: {
+        $type: "dimension",
+        small: { $value: { value: 8, unit: "px" } },
+      },
+    },
+    "design-token"
+  );
+
+  expect(
+    Array.from($styleSources.get().values()).find(
+      (source) => source.type === "token"
+    )
+  ).toMatchObject({ name: "color-primary" });
+  expect(
+    Array.from($styles.get().values()).find(
+      (style) => style.property === "--spacing-small"
+    )?.value
+  ).toEqual({ type: "unparsed", value: "8px" });
+});
+
+test("cancels a pasted token import without changing project styles", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  const event = await pastePlainText(
+    { color: { $type: "color", $value: "#123456" } },
+    "cancel"
+  );
+
+  expect(event.defaultPrevented).toBe(true);
+  expect($styleSources.get().size).toBe(0);
+  expect($styles.get().size).toBe(0);
 });
 
 test("resolves token conflicts for fragments through the shared paste helper", async () => {
@@ -732,7 +829,7 @@ test("silently reuses an identical pasted design value", async () => {
   expect(conflictDialog).not.toHaveBeenCalled();
   expect($styles.get().size).toBe(1);
   expect(toastSuccess).toHaveBeenCalledWith(
-    "Imported 0 design tokens; skipped 1 existing."
+    "Imported 0 tokens; skipped 1 existing."
   );
 });
 
@@ -772,7 +869,7 @@ test("imports the default mode from pasted Figma variables", async () => {
       (style) => style.property === "--color-primary"
     )?.value
   ).toEqual({ type: "unparsed", value: "rgb(0 0 0 / 1)" });
-  expect(toastSuccess).toHaveBeenCalledWith("Imported 1 design token.");
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 1 token.");
 });
 
 test("imports pasted DTCG resolver documents and composite tokens", async () => {
@@ -820,7 +917,7 @@ test("imports pasted DTCG resolver documents and composite tokens", async () => 
       ["--body-line-height", { type: "unparsed", value: "1.5" }],
     ])
   );
-  expect(toastSuccess).toHaveBeenCalledWith("Imported 5 design tokens.");
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 5 tokens.");
 });
 
 test("reports invalid pasted design token documents", async () => {

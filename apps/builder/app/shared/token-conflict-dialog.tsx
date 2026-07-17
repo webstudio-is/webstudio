@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -11,14 +10,12 @@ import {
   Flex,
   Text,
   theme,
-  RadioGroup,
-  Radio,
-  Label,
 } from "@webstudio-is/design-system";
 import type {
   ConflictResolution,
   TokenConflict,
 } from "@webstudio-is/project-build/runtime";
+import { DialogRadioOptions } from "./dialog-radio-options";
 
 export type TokenConflictDialogResult = ConflictResolution | "cancel";
 export type TokenConflictDialogConflict = Pick<TokenConflict, "tokenName">;
@@ -51,48 +48,39 @@ const conflictResolutionOptions = [
 type DialogState =
   | {
       conflicts: TokenConflictDialogConflict[];
-      resolve: (resolution: TokenConflictDialogResult) => void;
+      resolution: ConflictResolution;
+      resolve: (result: TokenConflictDialogResult) => void;
     }
   | undefined;
 
-const $tokenConflictDialogState = atom<DialogState>(undefined);
+const $dialogState = atom<DialogState>(undefined);
 
 export const showTokenConflictDialog = (
   conflicts: TokenConflictDialogConflict[]
-): Promise<TokenConflictDialogResult> => {
-  return new Promise((resolve) => {
-    $tokenConflictDialogState.get()?.resolve("cancel");
-    $tokenConflictDialogState.set({
-      conflicts,
-      resolve,
-    });
+): Promise<TokenConflictDialogResult> =>
+  new Promise((resolve) => {
+    $dialogState.get()?.resolve("cancel");
+    $dialogState.set({ conflicts, resolution: "theirs", resolve });
   });
-};
 
 export const TokenConflictDialog = () => {
-  const dialogState = useStore($tokenConflictDialogState);
-  const [resolution, setResolution] = useState<ConflictResolution | undefined>(
-    "theirs"
-  );
+  const dialogState = useStore($dialogState);
 
   if (!dialogState) {
     return;
   }
 
-  const { conflicts, resolve } = dialogState;
+  const { conflicts, resolution, resolve } = dialogState;
 
   const handleClose = () => {
-    if ($tokenConflictDialogState.get()?.resolve === resolve) {
-      $tokenConflictDialogState.set(undefined);
+    if ($dialogState.get()?.resolve === resolve) {
+      $dialogState.set(undefined);
     }
-    setResolution("theirs");
   };
 
   const handleResolve = () => {
-    if (resolution) {
-      resolve(resolution);
-      handleClose();
-    }
+    resolve(resolution);
+    handleClose();
   };
 
   const handleCancel = () => {
@@ -133,36 +121,15 @@ export const TokenConflictDialog = () => {
             </Text>
           </DialogDescription>
 
-          <RadioGroup
+          <DialogRadioOptions
             value={resolution}
-            onValueChange={(value) =>
-              setResolution(value as ConflictResolution)
-            }
-          >
-            <Flex direction="column" gap="1">
-              {conflictResolutionOptions.map((option) => (
-                <Label key={option.value}>
-                  <Flex
-                    gap="2"
-                    css={{
-                      padding: theme.spacing[3],
-                      cursor: "pointer",
-                      borderRadius: theme.borderRadius[4],
-                      "&:hover": {
-                        backgroundColor: theme.colors.backgroundHover,
-                      },
-                    }}
-                  >
-                    <Radio value={option.value} />
-                    <Flex direction="column" gap="1">
-                      <Text variant="labels">{option.label}</Text>
-                      <Text color="subtle">{option.description}</Text>
-                    </Flex>
-                  </Flex>
-                </Label>
-              ))}
-            </Flex>
-          </RadioGroup>
+            options={conflictResolutionOptions}
+            onValueChange={(resolution) => {
+              if ($dialogState.get()?.resolve === resolve) {
+                $dialogState.set({ conflicts, resolution, resolve });
+              }
+            }}
+          />
 
           <Flex as="details" direction="column" gap="1">
             <Text as="summary">Show conflicting tokens</Text>
