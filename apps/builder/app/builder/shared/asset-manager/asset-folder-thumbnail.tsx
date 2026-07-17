@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useStore } from "@nanostores/react";
 import { ChevronRightIcon, FolderIcon } from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -13,10 +12,9 @@ import {
   AssetThumbnailGroup,
 } from "./asset-thumbnail-card";
 import {
-  $assetManagerClipboard,
-  canPasteAssetManagerItem,
+  canPasteAssetManagerClipboard,
   createAssetManagerClipboardActions,
-  pasteAssetManagerItem,
+  pasteAssetManagerClipboard,
 } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
 import { getAssetManagerDragItems } from "./asset-manager-drag";
@@ -36,6 +34,7 @@ export const FolderThumbnail = ({
   canManage,
   canMoveItems,
   onMoveItems,
+  onMove,
   path,
   onElementChange,
   forcedSelection,
@@ -54,6 +53,7 @@ export const FolderThumbnail = ({
     items: readonly AssetManagerSelection[],
     folderId: string
   ) => void;
+  onMove?: () => void;
   path?: string;
   onElementChange?: (element: HTMLElement | null) => void;
   forcedSelection?: boolean;
@@ -63,7 +63,6 @@ export const FolderThumbnail = ({
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
-  const clipboard = useStore($assetManagerClipboard);
   const getDragItems = interactions.getDragItems;
 
   const openSettings = (confirmDelete = false) => {
@@ -81,11 +80,10 @@ export const FolderThumbnail = ({
       ? {
           settings: () => openSettings(),
           ...createAssetManagerClipboardActions(item),
-          paste:
-            clipboard?.projectId !== folder.projectId ||
-            canPasteAssetManagerItem(folder.id) === false
-              ? undefined
-              : () => pasteAssetManagerItem(folder.id),
+          move: onMove,
+          paste: canPasteAssetManagerClipboard(folder.id)
+            ? () => pasteAssetManagerClipboard(folder.id)
+            : undefined,
           delete: () => openSettings(true),
         }
       : {}),
@@ -117,7 +115,7 @@ export const FolderThumbnail = ({
         element,
         canDrop: ({ source }) => {
           const items = getAssetManagerDragItems(source.data);
-          return items.length > 0 && canMoveItems(items, folder.id);
+          return canMoveItems(items, folder.id);
         },
         onDragEnter: () => setIsDropTarget(true),
         onDragLeave: () => setIsDropTarget(false),

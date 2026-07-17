@@ -46,7 +46,7 @@ export const startAssetManagerMarquee = ({
   let disposed = false;
   const previousUserSelect = document.documentElement.style.userSelect;
   const scrollViewport = listbox.closest<HTMLElement>(
-    "[data-radix-scroll-area-viewport]"
+    "[data-asset-manager-scroll-area]"
   );
   const getBounds = () =>
     scrollViewport?.getBoundingClientRect() ?? panel.getBoundingClientRect();

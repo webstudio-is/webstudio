@@ -4,6 +4,7 @@ import { $assetFolders } from "~/shared/sync/data-stores";
 import {
   AssetFolderSettingsDialog,
   CreateAssetFolderDialog,
+  MoveAssetManagerItemsDialog,
 } from "./asset-folder-dialogs";
 import {
   createAssetFolderFixture,
@@ -111,4 +112,36 @@ test("focuses the folder name while the rightmost Create action is disabled", ()
       (button) => button.textContent === "Create folder"
     )?.disabled
   ).toBe(true);
+});
+
+test("moves items to the selected folder from the folder-only dialog", () => {
+  const destination = createAssetFolderFixture({
+    id: "destination",
+    name: "Destination",
+  });
+  $assetFolders.set(createAssetFoldersFixture(destination));
+  const onMove = vi.fn();
+  const onClose = vi.fn();
+
+  renderer.render(
+    <MoveAssetManagerItemsDialog
+      initialFolderId={destination.id}
+      canMove={() => true}
+      onMove={onMove}
+      onClose={onClose}
+    />
+  );
+
+  expect(document.querySelectorAll("label")).toHaveLength(1);
+  expect(document.querySelector("label")?.textContent).toBe("Folder");
+  expect(document.activeElement?.textContent).toBe("Move");
+
+  act(() => {
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "Move")
+      ?.click();
+  });
+
+  expect(onMove).toHaveBeenCalledWith(destination.id);
+  expect(onClose).toHaveBeenCalledOnce();
 });

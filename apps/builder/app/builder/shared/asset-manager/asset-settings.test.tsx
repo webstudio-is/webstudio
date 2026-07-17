@@ -1,9 +1,26 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
+import type { Asset } from "@webstudio-is/sdk";
+import { $authPermit } from "~/shared/nano-states";
 import { createAssetManagerTestRenderer } from "./test-utils";
 import { AssetDeleteDialog, AssetSettings } from "./asset-settings";
 
 const renderer = createAssetManagerTestRenderer();
+type ImageAsset = Extract<Asset, { type: "image" }>;
+const assetBase = {
+  id: "asset",
+  projectId: "project",
+  size: 100,
+  createdAt: "2026-01-01T00:00:00.000Z",
+} as const;
+const createImageAsset = (values: Partial<ImageAsset> = {}): ImageAsset => ({
+  ...assetBase,
+  name: "image.png",
+  format: "png",
+  type: "image",
+  meta: { width: 100, height: 100 },
+  ...values,
+});
 vi.stubGlobal(
   "ResizeObserver",
   class {
@@ -12,7 +29,10 @@ vi.stubGlobal(
     disconnect() {}
   }
 );
-afterEach(renderer.cleanup);
+afterEach(() => {
+  renderer.cleanup();
+  $authPermit.set("build");
+});
 
 test("describes an unused asset in the delete confirmation", () => {
   renderer.render(
@@ -20,14 +40,11 @@ test("describes an unused asset in the delete confirmation", () => {
       open
       onOpenChange={vi.fn()}
       asset={{
-        id: "asset",
-        projectId: "project",
+        ...assetBase,
         name: "document.pdf",
         format: "pdf",
-        size: 100,
         type: "file",
         meta: {},
-        createdAt: "2026-01-01T00:00:00.000Z",
       }}
     />
   );
@@ -43,17 +60,9 @@ test("uses an auto-growing textarea for the asset description", () => {
       <AssetSettings
         open
         onOpenChange={vi.fn()}
-        asset={{
-          id: "asset",
-          projectId: "project",
-          name: "image.png",
-          format: "png",
-          size: 100,
-          type: "image",
-          meta: { width: 100, height: 100 },
+        asset={createImageAsset({
           description: "A useful description",
-          createdAt: "2026-01-01T00:00:00.000Z",
-        }}
+        })}
       >
         <button>Anchor</button>
       </AssetSettings>
@@ -77,4 +86,28 @@ test("uses an auto-growing textarea for the asset description", () => {
   );
   expect(settingsIndicator).toBeInstanceOf(HTMLElement);
   expect(settingsIndicator?.className).toBe(thumbnailIndicator?.className);
+});
+
+test("keeps asset metadata read-only in View mode", () => {
+  $authPermit.set("view");
+  renderer.render(
+    <TooltipProvider>
+      <AssetSettings
+        open
+        onOpenChange={vi.fn()}
+        asset={createImageAsset({ description: "A useful description" })}
+      >
+        <button>Anchor</button>
+      </AssetSettings>
+    </TooltipProvider>
+  );
+
+  expect(
+    document.querySelector<HTMLInputElement>("#asset-manager-filename")
+      ?.readOnly
+  ).toBe(true);
+  expect(
+    document.querySelector<HTMLTextAreaElement>("#asset-manager-description")
+      ?.readOnly
+  ).toBe(true);
 });

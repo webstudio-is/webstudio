@@ -24,19 +24,21 @@ export const getAssetFolderSelectValue = (option: Option) =>
 export const createAssetFolderSelectorLevels = ({
   folders,
   value,
-  excludedFolderId,
+  excludedFolderIds,
   rootLabel = defaultRootLabel,
 }: {
   folders: AssetFolders;
   value: string | undefined;
-  excludedFolderId?: string;
+  excludedFolderIds?: ReadonlySet<string>;
   rootLabel?: string;
 }) => {
   const hierarchy = createAssetFolderHierarchy(folders);
-  const excludedIds =
-    excludedFolderId === undefined
-      ? new Set<string>()
-      : hierarchy.getSubtreeIds(excludedFolderId);
+  const excludedIds = new Set<string>();
+  for (const folderId of excludedFolderIds ?? []) {
+    for (const descendantId of hierarchy.getSubtreeIds(folderId)) {
+      excludedIds.add(descendantId);
+    }
+  }
   const getChildren = (parentId: string | undefined) =>
     hierarchy
       .getChildren(parentId)
@@ -91,14 +93,14 @@ export const createAssetFolderSelectorLevels = ({
 export const AssetFolderSelector = ({
   value,
   onChange,
-  excludedFolderId,
+  excludedFolderIds,
   rootLabel = defaultRootLabel,
   disabled,
   deferChangesUntilBlur = false,
 }: {
   value: string | undefined;
   onChange: (folderId: string | undefined) => void;
-  excludedFolderId?: string;
+  excludedFolderIds?: ReadonlySet<string>;
   rootLabel?: string;
   disabled?: boolean;
   deferChangesUntilBlur?: boolean;
@@ -140,10 +142,10 @@ export const AssetFolderSelector = ({
       createAssetFolderSelectorLevels({
         folders,
         value: draftValue,
-        excludedFolderId,
+        excludedFolderIds,
         rootLabel,
       }),
-    [draftValue, excludedFolderId, folders, rootLabel]
+    [draftValue, excludedFolderIds, folders, rootLabel]
   );
 
   return (

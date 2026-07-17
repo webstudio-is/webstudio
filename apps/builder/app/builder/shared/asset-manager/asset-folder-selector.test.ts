@@ -42,13 +42,25 @@ describe("asset folder selector levels", () => {
     const levels = createAssetFolderSelectorLevels({
       folders: values,
       value: undefined,
-      excludedFolderId: "parent",
+      excludedFolderIds: new Set(["parent"]),
     });
 
     expect(levels).toHaveLength(1);
     expect(levels[0].options.map(({ folderId }) => folderId)).toEqual([
       undefined,
       "sibling",
+    ]);
+  });
+
+  test("excludes multiple folders and all of their descendants", () => {
+    const levels = createAssetFolderSelectorLevels({
+      folders: values,
+      value: undefined,
+      excludedFolderIds: new Set(["parent", "sibling"]),
+    });
+
+    expect(levels[0].options.map(({ folderId }) => folderId)).toEqual([
+      undefined,
     ]);
   });
 

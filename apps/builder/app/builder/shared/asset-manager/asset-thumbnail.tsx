@@ -124,6 +124,7 @@ type AssetThumbnailProps = {
   canDrag?: boolean;
   onElementChange?: (element: HTMLElement | null) => void;
   selectionActions?: AssetManagerItemActions;
+  onMove?: () => void;
 };
 
 export const AssetThumbnail = ({
@@ -136,6 +137,7 @@ export const AssetThumbnail = ({
   canDrag = false,
   onElementChange,
   selectionActions,
+  onMove,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -175,6 +177,7 @@ export const AssetThumbnail = ({
             ? {}
             : {
                 ...createAssetManagerClipboardActions(item),
+                move: onMove,
                 delete: () => setDeleteOpen(true),
                 ...(asset.type === "image"
                   ? { replace: () => replaceInputRef.current?.click() }

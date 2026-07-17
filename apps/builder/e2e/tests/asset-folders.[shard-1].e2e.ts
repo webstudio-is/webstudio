@@ -350,7 +350,7 @@ test("Assets can be selected by dragging across the panel", async () => {
     const firstBounds = await firstAsset.boundingBox();
     const secondBounds = await secondAsset.boundingBox();
     const viewport = firstAsset.locator(
-      "xpath=ancestor::*[@data-radix-scroll-area-viewport]"
+      "xpath=ancestor::*[@data-asset-manager-scroll-area]"
     );
     const viewportBounds = await viewport.boundingBox();
     if (
@@ -444,6 +444,182 @@ test("Multiselected folders can be dragged into a folder", async () => {
     await page
       .getByRole("button", { name: "Folder Bravo", exact: true })
       .waitFor();
+  } finally {
+    await close();
+  }
+});
+
+test("Dragging an asset auto-scrolls a long folder list", async () => {
+  const fixture = await createContentModeProject({
+    email: "asset-folder-autoscroll-e2e@webstudio.test",
+    title: "Asset Folder Autoscroll E2E",
+    builderToken: "asset-folder-autoscroll-e2e-builder-token",
+  });
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+    await waitForSyncStatus({ page, status: "idle" });
+    await openAssetsPanel({ page });
+    const assetTitle = await uploadAsset({
+      page,
+      filename: "upload-image.svg",
+    });
+    const scrollArea = page.locator("[data-asset-manager-scroll-area]");
+    for (let index = 0; index < 24; index += 1) {
+      await createAssetFolder({
+        page,
+        name: `Filler ${String(index).padStart(2, "0")}`,
+      });
+      const overflows = await scrollArea.evaluate(
+        (element) => element.scrollHeight > element.clientHeight + 80
+      );
+      if (overflows) {
+        break;
+      }
+    }
+    const destination = await createAssetFolder({
+      page,
+      name: "Destination",
+    });
+    const asset = page.getByTitle(assetTitle);
+    await asset.scrollIntoViewIfNeeded();
+    if ((await scrollArea.evaluate((element) => element.scrollTop)) === 0) {
+      throw new Error("Expected the long asset list to be scrolled");
+    }
+
+    const assetBounds = await asset.boundingBox();
+    const scrollBounds = await scrollArea.boundingBox();
+    if (assetBounds === null || scrollBounds === null) {
+      throw new Error("Expected visible asset and native scroll area");
+    }
+    const from = {
+      x: assetBounds.x + assetBounds.width / 2,
+      y: assetBounds.y + assetBounds.height / 2,
+    };
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    try {
+      await page.mouse.move(from.x + 8, from.y + 8, { steps: 4 });
+      const deadline = Date.now() + 10_000;
+      let destinationBounds = await destination.boundingBox();
+      while (
+        Date.now() < deadline &&
+        (destinationBounds === null ||
+          destinationBounds.y < scrollBounds.y ||
+          destinationBounds.y + destinationBounds.height >
+            scrollBounds.y + scrollBounds.height)
+      ) {
+        await page.mouse.move(
+          scrollBounds.x + scrollBounds.width / 2,
+          scrollBounds.y + 4,
+          { steps: 2 }
+        );
+        await page.waitForTimeout(120);
+        destinationBounds = await destination.boundingBox();
+      }
+      if (
+        destinationBounds === null ||
+        destinationBounds.y < scrollBounds.y ||
+        destinationBounds.y + destinationBounds.height >
+          scrollBounds.y + scrollBounds.height
+      ) {
+        throw new Error(
+          "Expected auto-scroll to reveal the destination folder"
+        );
+      }
+      await page.mouse.move(
+        destinationBounds.x + destinationBounds.width / 2,
+        destinationBounds.y + destinationBounds.height / 2,
+        { steps: 4 }
+      );
+      const dropDeadline = Date.now() + 5_000;
+      while (
+        Date.now() < dropDeadline &&
+        (await destination.getAttribute("data-is-drop-over")) !== "true"
+      ) {
+        await page.mouse.move(
+          destinationBounds.x + destinationBounds.width / 2 + 1,
+          destinationBounds.y + destinationBounds.height / 2,
+          { steps: 2 }
+        );
+        await page.waitForTimeout(100);
+      }
+      if ((await destination.getAttribute("data-is-drop-over")) !== "true") {
+        throw new Error("Expected the destination folder to accept the drop");
+      }
+      const save = waitForChangeToBeSaved({ page, timeout: 30_000 });
+      await page.mouse.up();
+      await save;
+    } catch (error) {
+      await page.mouse.up();
+      throw error;
+    }
+
+    await asset.waitFor({ state: "hidden" });
+    await destination.dblclick();
+    await page.getByTitle(assetTitle).waitFor();
+  } finally {
+    await close();
+  }
+});
+
+test("Multiselected assets can be moved from the context menu", async () => {
+  const fixture = await createContentModeProject({
+    email: "asset-folder-menu-move-e2e@webstudio.test",
+    title: "Asset Folder Menu Move E2E",
+    builderToken: "asset-folder-menu-move-e2e-builder-token",
+  });
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+    await waitForSyncStatus({ page, status: "idle" });
+    await openAssetsPanel({ page });
+    const destination = await createAssetFolder({
+      page,
+      name: "Destination",
+    });
+    const firstAssetTitle = await uploadAsset({
+      page,
+      filename: "upload-image.svg",
+    });
+    const secondAssetTitle = await uploadAsset({
+      page,
+      filename: "replacement-image.svg",
+    });
+    const firstAsset = page.getByTitle(firstAssetTitle);
+    const secondAsset = page.getByTitle(secondAssetTitle);
+
+    await firstAsset.click();
+    await secondAsset.click({
+      modifiers: [process.platform === "darwin" ? "Meta" : "Control"],
+    });
+    await secondAsset.click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Move", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Move items" });
+    await dialog.getByRole("combobox", { name: "Folder" }).click();
+    await page
+      .getByRole("option", { name: "Destination", exact: true })
+      .click();
+    await Promise.all([
+      waitForChangeToBeSaved({ page, timeout: 30_000 }),
+      dialog.getByRole("button", { name: "Move", exact: true }).click(),
+    ]);
+
+    await firstAsset.waitFor({ state: "hidden" });
+    await secondAsset.waitFor({ state: "hidden" });
+    await destination.dblclick();
+    await page.getByTitle(firstAssetTitle).waitFor();
+    await page.getByTitle(secondAssetTitle).waitFor();
   } finally {
     await close();
   }

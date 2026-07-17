@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import type { Asset } from "@webstudio-is/sdk";
+import { createAssetFolderHierarchy, type Asset } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $assetFolders,
@@ -26,6 +26,7 @@ import {
   createAssetFolderFixture,
 } from "@webstudio-is/sdk/testing";
 import {
+  canMoveAssetManagerItems,
   deleteAssetManagerItems,
   duplicateAssetManagerItems,
   moveAssetManagerItems,
@@ -85,6 +86,43 @@ test("removes items that no longer exist", () => {
       assets: new Map(),
     })
   ).toEqual([]);
+});
+
+test("validates folder move targets in one hierarchy", () => {
+  const parent = createAssetFolderFixture({ id: "parent" });
+  const child = createAssetFolderFixture({ id: "child", parentId: parent.id });
+  const sibling = createAssetFolderFixture({ id: "sibling" });
+  const hierarchy = createAssetFolderHierarchy(
+    createAssetFoldersFixture(parent, child, sibling)
+  );
+  const items = [{ type: "folder" as const, id: parent.id }];
+
+  expect(
+    canMoveAssetManagerItems({ items, targetFolderId: child.id, hierarchy })
+  ).toBe(false);
+  expect(
+    canMoveAssetManagerItems({ items, targetFolderId: sibling.id, hierarchy })
+  ).toBe(true);
+  expect(
+    canMoveAssetManagerItems({ items, targetFolderId: undefined, hierarchy })
+  ).toBe(true);
+  expect(
+    canMoveAssetManagerItems({ items, targetFolderId: "missing", hierarchy })
+  ).toBe(false);
+  expect(
+    canMoveAssetManagerItems({
+      items: [{ type: "folder", id: "missing" }],
+      targetFolderId: sibling.id,
+      hierarchy,
+    })
+  ).toBe(false);
+  expect(
+    canMoveAssetManagerItems({
+      items: [],
+      targetFolderId: sibling.id,
+      hierarchy,
+    })
+  ).toBe(false);
 });
 
 registerContainers();

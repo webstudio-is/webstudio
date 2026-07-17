@@ -2,6 +2,7 @@ import {
   createAssetFolderHierarchy,
   type Asset,
   type AssetFolder,
+  type AssetFolderHierarchy,
 } from "@webstudio-is/sdk";
 import {
   executeRuntimeMutationSequence,
@@ -15,6 +16,41 @@ import {
 } from "./asset-manager-selection";
 
 export type AssetManagerItem = AssetManagerSelection & { projectId: string };
+
+export const canMoveAssetManagerItems = ({
+  items,
+  targetFolderId,
+  hierarchy,
+}: {
+  items: readonly AssetManagerSelection[];
+  targetFolderId: string | undefined;
+  hierarchy: AssetFolderHierarchy;
+}) => {
+  if (items.length === 0) {
+    return false;
+  }
+  if (
+    targetFolderId !== undefined &&
+    hierarchy.resolveFolderId(targetFolderId) !== targetFolderId
+  ) {
+    return false;
+  }
+  for (const item of items) {
+    if (item.type === "asset") {
+      continue;
+    }
+    if (hierarchy.resolveFolderId(item.id) !== item.id) {
+      return false;
+    }
+    if (
+      targetFolderId !== undefined &&
+      hierarchy.getSubtreeIds(item.id).has(targetFolderId)
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
 
 export const normalizeAssetManagerItems = ({
   items,
