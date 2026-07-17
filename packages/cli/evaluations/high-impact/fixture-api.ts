@@ -79,15 +79,18 @@ export const startHighImpactFixtureApi = async (
   fixture: HighImpactFixture
 ): Promise<HighImpactFixtureApi> => {
   Object.assign(globalThis, { React });
-  const [stateAdapters, runtime, projectSession] = await Promise.all([
-    import("@webstudio-is/project-build/state"),
-    import("@webstudio-is/project-build/runtime"),
-    import("../../src/project-session"),
-  ]);
+  const [stateAdapters, runtime, projectSession, restorePoints] =
+    await Promise.all([
+      import("@webstudio-is/project-build/state"),
+      import("@webstudio-is/project-build/runtime"),
+      import("../../src/project-session"),
+      import("@webstudio-is/project-build/project-session"),
+    ]);
   const { createBuilderStateFromBuildData, applyBuilderPatchTransactions } =
     stateAdapters;
   const { executeBuilderRuntimeOperation } = runtime;
   const { createLocalProjectBundleFromSessionSnapshot } = projectSession;
+  const { hydrateRestorePointTransaction } = restorePoints;
   const persistedPages = createPersistedPages(fixture.project);
   const build = {
     id: buildId,
@@ -146,13 +149,19 @@ export const startHighImpactFixtureApi = async (
           homePageId: "home",
           features: {},
         };
-      } else if (operationPath === "build.patch") {
+      } else if (
+        operationPath === "build.patch" ||
+        operationPath === "build.restorePoint"
+      ) {
         const input = (await readInput()) as {
           transactions?: BuilderPatchTransaction[];
         };
+        const transactions = input.transactions ?? [];
         state = applyBuilderPatchTransactions(
           state,
-          input.transactions ?? []
+          operationPath === "build.restorePoint"
+            ? transactions.map(hydrateRestorePointTransaction)
+            : transactions
         ).state;
         version += 1;
         data = { version };

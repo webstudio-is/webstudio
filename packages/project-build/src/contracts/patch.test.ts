@@ -5,10 +5,72 @@ import {
   builderPatchTransactionSchema,
   compactBuilderPatchPayload,
   hasGeneratedRecordWritePatch,
+  restorePointPatchTransactionSchema,
 } from "./patch";
 import { builderNamespaces } from "./namespaces";
 
 describe("builder patch contracts", () => {
+  test("restore point transactions only replace namespace roots", () => {
+    const transaction = {
+      id: "restore",
+      payload: [
+        {
+          namespace: "pages",
+          patches: [{ op: "replace", path: [], value: {} }],
+        },
+      ],
+    };
+
+    expect(
+      restorePointPatchTransactionSchema.safeParse(transaction).success
+    ).toBe(true);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [
+          {
+            namespace: "pages",
+            patches: [{ op: "replace", path: ["pages"], value: new Map() }],
+          },
+        ],
+      }).success
+    ).toBe(false);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [
+          {
+            namespace: "pages",
+            patches: [{ op: "add", path: [], value: {} }],
+          },
+        ],
+      }).success
+    ).toBe(false);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [
+          {
+            namespace: "assets",
+            patches: [{ op: "replace", path: [], value: new Map() }],
+          },
+        ],
+      }).success
+    ).toBe(false);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [],
+      }).success
+    ).toBe(false);
+    expect(
+      restorePointPatchTransactionSchema.safeParse({
+        ...transaction,
+        payload: [transaction.payload[0], transaction.payload[0]],
+      }).success
+    ).toBe(false);
+  });
+
   test("requires values for add and replace patches", () => {
     expect(
       builderPatchSchema.safeParse({ op: "add", path: ["prop-subtitle"] })

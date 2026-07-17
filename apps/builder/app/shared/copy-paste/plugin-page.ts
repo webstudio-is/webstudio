@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/sdk";
 import { $pages, $project } from "~/shared/sync/data-stores";
 import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime";
-import { builderApi } from "../builder-api";
+import { resolveTokenConflicts } from "../resolve-token-conflicts";
 import {
   createFolderCopyData,
   createPageCopyData,
@@ -192,10 +192,10 @@ export const handlePastePage = async (
         targetData,
       })
     );
-    const conflictResolution =
-      conflicts.length > 0
-        ? await builderApi.showTokenConflictDialog(conflicts)
-        : "theirs";
+    const conflictResolution = await resolveTokenConflicts(conflicts);
+    if (conflictResolution === "cancel") {
+      return pasteHandled;
+    }
 
     const result = executeRuntimeMutation({
       id: "pageTransfer.insert",

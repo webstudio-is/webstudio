@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
 import { coreMetas, type Instance } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Project } from "@webstudio-is/project";
@@ -35,6 +36,7 @@ import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
 } from "./copy-paste";
+import { insertFragmentWithBreakpointWarning } from "./fragment-utils";
 
 enableMapSet();
 registerContainers();
@@ -78,6 +80,28 @@ const setupPage = () => {
           id: "body-id",
           component: "Body",
           children: [],
+        },
+      ],
+    ])
+  );
+};
+
+const setupRootCssVariable = (property: `--${string}`, value: string) => {
+  $styleSources.set(
+    new Map([["root-local", { id: "root-local", type: "local" }]])
+  );
+  $styleSourceSelections.set(
+    new Map([["body-id", { instanceId: "body-id", values: ["root-local"] }]])
+  );
+  $styles.set(
+    new Map([
+      [
+        `root-local:base:${property}:`,
+        {
+          styleSourceId: "root-local",
+          breakpointId: "base",
+          property,
+          value: { type: "unparsed", value },
         },
       ],
     ])
@@ -138,11 +162,38 @@ const setupToastError = () => {
   return toastError;
 };
 
+const setupToastSuccess = () => {
+  initBuilderApi();
+  const toastSuccess = vi.fn();
+  window.__webstudio__$__builderApi.toast.success = toastSuccess;
+  return toastSuccess;
+};
+
 const waitForClipboardEvent = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
+const pastePlainText = async (
+  value: unknown,
+  target: "design-token" | "css-variable" | "cancel" = "css-variable"
+) => {
+  initBuilderApi();
+  vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showDesignTokenImportDialog"
+  ).mockResolvedValue(target);
+  const abortController = new AbortController();
+  initCopyPaste({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData("text/plain", JSON.stringify(value));
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+  abortController.abort();
+  return event;
+};
+
 afterEach(() => {
   resetStores();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -508,6 +559,383 @@ test("reports malformed Webflow json through generic paste", async () => {
   expect($instances.get().get("body-id")?.children).toEqual([]);
   expect(toastError).toHaveBeenCalledWith(expect.any(String));
   abortController.abort();
+});
+
+test("imports pasted DTCG tokens through the runtime mutation pipeline", async () => {
+  resetStores();
+  setupPage();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  const event = await pastePlainText({
+    color: {
+      $type: "color",
+      primary: { $value: "#123456" },
+      action: { $ref: "#/color/primary" },
+    },
+  });
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(true);
+  expect(
+    Array.from($styles.get().values()).map((style) => [
+      style.property,
+      style.value,
+    ])
+  ).toEqual(
+    expect.arrayContaining([
+      ["--color-primary", { type: "unparsed", value: "#123456" }],
+      ["--color-action", { type: "unparsed", value: "#123456" }],
+    ])
+  );
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 2 tokens.");
+});
+
+test("imports a pasted DTCG composite as one Webstudio design token", async () => {
+  resetStores();
+  setupPage();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  const event = await pastePlainText(
+    {
+      typography: {
+        $type: "typography",
+        body: {
+          $value: {
+            fontFamily: ["Inter", "sans-serif"],
+            fontSize: { value: 16, unit: "px" },
+            fontWeight: 400,
+            letterSpacing: { value: 0, unit: "px" },
+            lineHeight: 1.5,
+          },
+        },
+      },
+    },
+    "design-token"
+  );
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(true);
+  const token = Array.from($styleSources.get().values()).find(
+    (source) => source.type === "token"
+  );
+  expect(token).toMatchObject({ name: "typography-body" });
+  expect(
+    Array.from($styles.get().values())
+      .filter((style) => style.styleSourceId === token?.id)
+      .map((style) => style.property)
+  ).toEqual(
+    expect.arrayContaining([
+      "fontFamily",
+      "fontSize",
+      "fontWeight",
+      "letterSpacing",
+      "lineHeight",
+    ])
+  );
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 1 token.");
+});
+
+test("keeps ambiguous primitives as CSS variables when importing design tokens", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  await pastePlainText(
+    {
+      color: {
+        $type: "color",
+        primary: { $value: "#123456" },
+      },
+      spacing: {
+        $type: "dimension",
+        small: { $value: { value: 8, unit: "px" } },
+      },
+    },
+    "design-token"
+  );
+
+  expect(
+    Array.from($styleSources.get().values()).find(
+      (source) => source.type === "token"
+    )
+  ).toMatchObject({ name: "color-primary" });
+  expect(
+    Array.from($styles.get().values()).find(
+      (style) => style.property === "--spacing-small"
+    )?.value
+  ).toEqual({ type: "unparsed", value: "8px" });
+});
+
+test("cancels a pasted token import without changing project styles", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  const event = await pastePlainText(
+    { color: { $type: "color", $value: "#123456" } },
+    "cancel"
+  );
+
+  expect(event.defaultPrevented).toBe(true);
+  expect($styleSources.get().size).toBe(0);
+  expect($styles.get().size).toBe(0);
+});
+
+test("resolves token conflicts for fragments through the shared paste helper", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  $project.set({ id: "project-id" } as Project);
+  $styleSources.set(
+    new Map([
+      [
+        "existing-token",
+        { id: "existing-token", type: "token", name: "Primary" },
+      ],
+    ])
+  );
+  $styles.set(
+    new Map([
+      [
+        "existing-token:base:color:",
+        {
+          styleSourceId: "existing-token",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "unparsed", value: "red" },
+        },
+      ],
+    ])
+  );
+  const fragment = createEmptyWebstudioFragment();
+  fragment.styleSources.push({
+    id: "incoming-token",
+    type: "token",
+    name: "Primary",
+  });
+  fragment.styles.push({
+    styleSourceId: "incoming-token",
+    breakpointId: "base",
+    property: "color",
+    value: { type: "unparsed", value: "blue" },
+  });
+  const conflictDialog = vi
+    .spyOn(window.__webstudio__$__builderApi, "showTokenConflictDialog")
+    .mockResolvedValue("ours");
+
+  await insertFragmentWithBreakpointWarning(fragment);
+
+  expect(conflictDialog).toHaveBeenCalledWith([
+    expect.objectContaining({
+      tokenName: "Primary",
+      fragmentTokenId: "incoming-token",
+    }),
+  ]);
+  expect(Array.from($styleSources.get().values())).toEqual([
+    { id: "existing-token", type: "token", name: "Primary" },
+  ]);
+  expect($styles.get().get("existing-token:base:color:")?.value).toEqual({
+    type: "unparsed",
+    value: "red",
+  });
+});
+
+test("does not insert a fragment when token conflict resolution is cancelled", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  $project.set({ id: "project-id" } as Project);
+  $styleSources.set(
+    new Map([
+      [
+        "existing-token",
+        { id: "existing-token", type: "token", name: "Primary" },
+      ],
+    ])
+  );
+  const fragment = createEmptyWebstudioFragment();
+  fragment.styleSources.push({
+    id: "incoming-token",
+    type: "token",
+    name: "Primary",
+  });
+  fragment.styles.push({
+    styleSourceId: "incoming-token",
+    breakpointId: "base",
+    property: "color",
+    value: { type: "unparsed", value: "blue" },
+  });
+  vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showTokenConflictDialog"
+  ).mockResolvedValue("cancel");
+
+  const inserted = await insertFragmentWithBreakpointWarning(fragment);
+
+  expect(inserted).toBe(false);
+  expect(Array.from($styleSources.get().values())).toEqual([
+    { id: "existing-token", type: "token", name: "Primary" },
+  ]);
+});
+
+test.each([
+  ["ours", "old", undefined],
+  ["theirs", "old", "#123456"],
+  ["merge", "#123456", undefined],
+] as const)(
+  "resolves pasted design token collisions with %s",
+  async (resolution, expectedValue, expectedRenamedValue) => {
+    resetStores();
+    setupPage();
+    setupRootCssVariable("--color", "old");
+    setupToastError();
+    setupToastSuccess();
+    const conflictDialog = vi
+      .spyOn(window.__webstudio__$__builderApi, "showTokenConflictDialog")
+      .mockResolvedValue(resolution);
+    await pastePlainText({
+      color: { $type: "color", $value: "#123456" },
+    });
+
+    expect(conflictDialog).toHaveBeenCalledWith([
+      {
+        tokenName: "--color",
+      },
+    ]);
+    expect($styles.get().get("root-local:base:--color:")?.value).toEqual({
+      type: "unparsed",
+      value: expectedValue,
+    });
+    expect($styles.get().get("root-local:base:--color-1:")?.value).toEqual(
+      expectedRenamedValue === undefined
+        ? undefined
+        : { type: "unparsed", value: expectedRenamedValue }
+    );
+  }
+);
+
+test("silently reuses an identical pasted design value", async () => {
+  resetStores();
+  setupPage();
+  setupRootCssVariable("--color", "#123456");
+  setupToastError();
+  const toastSuccess = setupToastSuccess();
+  const conflictDialog = vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showTokenConflictDialog"
+  );
+  await pastePlainText({
+    color: { $type: "color", $value: "#123456" },
+  });
+
+  expect(conflictDialog).not.toHaveBeenCalled();
+  expect($styles.get().size).toBe(1);
+  expect(toastSuccess).toHaveBeenCalledWith(
+    "Imported 0 tokens; skipped 1 existing."
+  );
+});
+
+test("imports the default mode from pasted Figma variables", async () => {
+  resetStores();
+  setupPage();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  await pastePlainText({
+    meta: {
+      variableCollections: {
+        palette: {
+          defaultModeId: "dark",
+          modes: [
+            { modeId: "light", name: "Light" },
+            { modeId: "dark", name: "Dark" },
+          ],
+        },
+      },
+      variables: {
+        primary: {
+          name: "Color/Primary",
+          resolvedType: "COLOR",
+          variableCollectionId: "palette",
+          valuesByMode: {
+            light: { r: 1, g: 1, b: 1 },
+            dark: { r: 0, g: 0, b: 0 },
+          },
+        },
+      },
+    },
+  });
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(
+    Array.from($styles.get().values()).find(
+      (style) => style.property === "--color-primary"
+    )?.value
+  ).toEqual({ type: "unparsed", value: "rgb(0 0 0 / 1)" });
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 1 token.");
+});
+
+test("imports pasted DTCG resolver documents and composite tokens", async () => {
+  resetStores();
+  setupPage();
+  const toastError = setupToastError();
+  const toastSuccess = setupToastSuccess();
+  const event = await pastePlainText({
+    version: "2025.10",
+    resolutionOrder: [
+      {
+        type: "set",
+        name: "Base",
+        sources: [
+          {
+            body: {
+              $type: "typography",
+              $value: {
+                fontFamily: "Inter",
+                fontSize: { value: 16, unit: "px" },
+                fontWeight: 500,
+                letterSpacing: { value: 0, unit: "px" },
+                lineHeight: 1.5,
+              },
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  expect(toastError).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(true);
+  expect(
+    Array.from($styles.get().values()).map((style) => [
+      style.property,
+      style.value,
+    ])
+  ).toEqual(
+    expect.arrayContaining([
+      ["--body-font-family", { type: "unparsed", value: '"Inter"' }],
+      ["--body-font-size", { type: "unparsed", value: "16px" }],
+      ["--body-font-weight", { type: "unparsed", value: "500" }],
+      ["--body-letter-spacing", { type: "unparsed", value: "0px" }],
+      ["--body-line-height", { type: "unparsed", value: "1.5" }],
+    ])
+  );
+  expect(toastSuccess).toHaveBeenCalledWith("Imported 5 tokens.");
+});
+
+test("reports invalid pasted design token documents", async () => {
+  resetStores();
+  setupPage();
+  const toastError = setupToastError();
+  const event = await pastePlainText({
+    spacing: {
+      $type: "dimension",
+      $value: { value: 8, unit: "invalid" },
+    },
+  });
+
+  expect(event.defaultPrevented).toBe(true);
+  expect($styles.get()).toEqual(new Map());
+  expect(toastError).toHaveBeenCalledWith(
+    expect.stringContaining("invalid dimension unit invalid")
+  );
 });
 
 test("does not intercept native paste while editing text", async () => {

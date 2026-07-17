@@ -183,6 +183,7 @@ const apiCommandOptionsByCommand: Partial<
   "replace-styles": apiCommand.replaceStylesCommandOptions,
   "list-design-tokens": apiCommand.designTokensCommandOptions,
   "create-design-token": apiCommand.createDesignTokenCommandOptions,
+  "import-design-tokens": apiCommand.importDesignTokensCommandOptions,
   "update-design-token-styles":
     apiCommand.updateDesignTokenStylesCommandOptions,
   "delete-design-token-styles":

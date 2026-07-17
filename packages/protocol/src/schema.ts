@@ -3,6 +3,7 @@ import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import {
   builderPatchSchema as internalBuilderPatchSchema,
   builderPatchTransactionSchema as internalBuilderPatchTransactionSchema,
+  restorePointPatchTransactionSchema as internalRestorePointPatchTransactionSchema,
 } from "@webstudio-is/project-build/contracts";
 import { serializedBuild } from "@webstudio-is/project-build/contracts";
 import { wsAuthConfig } from "@webstudio-is/wsauth/schema";
@@ -17,6 +18,7 @@ import { createContractVersion } from "./contract-version";
 export const maxProjectBundleSize = 20 * 1024 * 1024;
 export const stagedUploadPath = "/rest/staged-upload";
 export const stagedUploadProjectIdHeader = "x-webstudio-project-id";
+export const projectSessionRestorePointPath = "build.restorePoint";
 
 const assetFileName = z
   .string()
@@ -146,6 +148,11 @@ export const buildPatch: z.ZodType<BuildPatch, unknown> =
   internalBuilderPatchSchema;
 export const buildPatchTransaction: z.ZodType<BuildPatchTransaction, unknown> =
   internalBuilderPatchTransactionSchema;
+
+export const restorePointPatchTransaction: z.ZodType<
+  BuildPatchTransaction,
+  unknown
+> = internalRestorePointPatchTransactionSchema;
 
 export const bundleVersion = createContractVersion(publishedProjectBundle, [
   wsAuthConfig,

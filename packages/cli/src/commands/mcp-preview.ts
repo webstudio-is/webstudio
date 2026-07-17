@@ -68,6 +68,7 @@ const prepareDefaultPreviewProject = (
     source,
     syncIfMissing: true,
     silent: true,
+    includeDraftPages: true,
     prepareSessionDataFile,
   });
 

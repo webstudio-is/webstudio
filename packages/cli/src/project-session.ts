@@ -1,4 +1,4 @@
-import { readFile, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import {
@@ -18,10 +18,12 @@ import { getHomePage } from "@webstudio-is/sdk";
 import {
   createProjectSession,
   createDefaultProjectSessionCompatibility,
+  serializeRestorePointTransaction,
   type ProjectSessionCompatibility,
   type ProjectSessionPersistedSnapshot,
   type ProjectSessionPermissions,
   type ProjectSessionRemoteSnapshot,
+  type ProjectSessionRestorePointSummary,
   type ProjectSessionSnapshot,
   type ProjectSessionStorage,
   type ProjectSessionTransport,
@@ -40,7 +42,7 @@ import type { BuilderStateFreshness } from "@webstudio-is/project-build/state";
 import { getLocalProjectStateDirectory, LOCAL_DATA_FILE } from "./config";
 import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
-import { writeFileAtomic } from "./fs-utils";
+import { loadJSONFile, withFileLock, writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
 
 export type CliServerApiContract = {
@@ -149,6 +151,15 @@ export const getCliProjectSessionFile = (
   join(
     getLocalProjectStateDirectory(projectRoot, projectId),
     "project-session.json"
+  );
+
+export const getCliProjectRestorePointsFile = (
+  projectRoot = cwd(),
+  projectId?: string
+) =>
+  join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    "restore-points.json"
   );
 const compatibilityVersion = "cli-project-session-v1";
 
@@ -269,19 +280,8 @@ export const createCliProjectSessionStorage = (
   path = getCliProjectSessionFile()
 ): ProjectSessionStorage => ({
   async load() {
-    try {
-      const value = JSON.parse(await readFile(path, "utf-8"));
-      return parsePersistedSnapshot(value);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as { code?: unknown }).code === "ENOENT"
-      ) {
-        return undefined;
-      }
-      throw error;
-    }
+    const value = await loadJSONFile<PersistedCliProjectSessionSnapshot>(path);
+    return value === null ? undefined : parsePersistedSnapshot(value);
   },
   async save(snapshot, options) {
     const current = await this.load();
@@ -306,6 +306,91 @@ export const createCliProjectSessionStorage = (
     await rm(path, { force: true });
   },
 });
+
+type PersistedCliProjectRestorePoint = Pick<
+  ProjectSessionRestorePointSummary,
+  "id" | "name" | "createdAt"
+> & {
+  snapshot: PersistedCliProjectSessionSnapshot;
+};
+
+type PersistedCliProjectRestorePoints = {
+  version: 1;
+  points: PersistedCliProjectRestorePoint[];
+};
+
+const maxCliProjectRestorePoints = 20;
+
+export const createCliProjectRestorePointStorage = (
+  path = getCliProjectRestorePointsFile(),
+  maxPoints = maxCliProjectRestorePoints
+) => {
+  if (Number.isInteger(maxPoints) === false || maxPoints < 1) {
+    throw new Error("Restore point retention must be a positive integer");
+  }
+  const load = async (): Promise<PersistedCliProjectRestorePoints> =>
+    (await loadJSONFile<PersistedCliProjectRestorePoints>(path)) ?? {
+      version: 1,
+      points: [],
+    };
+  const getSummary = ({
+    id,
+    name,
+    createdAt,
+    snapshot,
+  }: PersistedCliProjectRestorePoint): ProjectSessionRestorePointSummary => ({
+    id,
+    name,
+    createdAt,
+    projectId: snapshot.projectId,
+    buildId: snapshot.buildId,
+    version: snapshot.version,
+  });
+  const save = async (points: PersistedCliProjectRestorePoint[]) => {
+    await writeFileAtomic(
+      path,
+      `${JSON.stringify({ version: 1, points }, undefined, 2)}\n`
+    );
+  };
+  return {
+    async create(name: string, snapshot: ProjectSessionSnapshot) {
+      return await withFileLock(path, async () => {
+        const persisted = await load();
+        const point: PersistedCliProjectRestorePoint = {
+          id: crypto.randomUUID(),
+          name,
+          createdAt: new Date().toISOString(),
+          snapshot: serializePersistedSnapshot(snapshot),
+        };
+        await save([...persisted.points, point].slice(-maxPoints));
+        return getSummary(point);
+      });
+    },
+    async list() {
+      return (await load()).points.map(getSummary);
+    },
+    async get(id: string) {
+      const point = (await load()).points.find(
+        (candidate) => candidate.id === id
+      );
+      if (point === undefined) {
+        return;
+      }
+      return parsePersistedSnapshot(point.snapshot);
+    },
+    async delete(id: string) {
+      return await withFileLock(path, async () => {
+        const persisted = await load();
+        const points = persisted.points.filter((point) => point.id !== id);
+        if (points.length === persisted.points.length) {
+          return false;
+        }
+        await save(points);
+        return true;
+      });
+    },
+  };
+};
 
 export const createCliProjectSessionTransport = ({
   connection,
@@ -349,6 +434,15 @@ export const createCliProjectSessionTransport = ({
         ...connection,
         baseVersion,
         transactions,
+      })
+    )) as { version: number };
+  },
+  async commitRestorePoint({ baseVersion, transactions }) {
+    return (await withMappedRemoteError(() =>
+      httpClient.applyRestorePointPatch({
+        ...connection,
+        baseVersion,
+        transactions: transactions.map(serializeRestorePointTransaction),
       })
     )) as { version: number };
   },

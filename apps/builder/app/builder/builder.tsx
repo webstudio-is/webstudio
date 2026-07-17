@@ -68,6 +68,7 @@ import { DeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-ut
 import { DeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
+import { DesignTokenImportDialog } from "~/shared/design-token-import-dialog";
 import type { User } from "~/shared/db/user.server";
 
 import {
@@ -524,6 +525,7 @@ export const Builder = (props: BuilderProps) => {
         <DeleteUnusedCssVariablesDialog />
         <DeleteUnusedAssetsDialog />
         <KeyboardShortcutsDialog />
+        <DesignTokenImportDialog />
         <TokenConflictDialog />
         <RemoteDialog />
         <Toaster />

@@ -261,6 +261,36 @@ const withValidatedBreakpoint = <Input extends { breakpoint?: string }>(
         : input.breakpoint,
 });
 
+export const getCssVariableRootTarget = (
+  state: Pick<
+    BuilderState,
+    "breakpoints" | "pages" | "styleSources" | "styleSourceSelections"
+  >,
+  breakpoint?: string
+) => {
+  const rootInstanceId =
+    state.pages === undefined
+      ? undefined
+      : getHomePageRootInstanceId(state.pages);
+  if (rootInstanceId === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Home page not found");
+  }
+  return {
+    rootInstanceId,
+    breakpointId: withValidatedBreakpoint({ breakpoint }, state.breakpoints)
+      .breakpoint,
+    styleSourceId:
+      state.styleSources === undefined ||
+      state.styleSourceSelections === undefined
+        ? undefined
+        : getLocalStyleSourceId({
+            styleSources: state.styleSources,
+            styleSourceSelection:
+              state.styleSourceSelections.get(rootInstanceId),
+          }),
+  };
+};
+
 const styleStateInput = z.string().superRefine((state, context) => {
   const result = validateSelector(state);
   if (result.success === false) {
@@ -416,6 +446,7 @@ export const cssVariableValueInput = z.union([z.string(), styleValue]);
 export const cssVariableDefineInput = z.object({
   vars: z.record(z.string(), cssVariableValueInput),
   overwrite: z.boolean().optional(),
+  breakpoint: z.string().optional(),
 });
 
 export const cssVariableDeleteInput = z.object({
@@ -692,7 +723,10 @@ const createCssVariableDefinePayload = ({
 
   for (const [property, value] of Object.entries(vars)) {
     const existingDeclarations = stylesList.filter(
-      (declaration) => declaration.property === property
+      (declaration) =>
+        declaration.styleSourceId === rootStyleSourceId &&
+        declaration.breakpointId === breakpointId &&
+        declaration.property === property
     );
     if (existingDeclarations.length > 0 && overwrite !== true) {
       conflicts.push(property);
@@ -3403,25 +3437,19 @@ export const defineCssVariables = (
   input: z.infer<typeof cssVariableDefineInput>,
   context: { createId: () => string }
 ) => {
-  const rootInstanceId =
-    state.pages === undefined
-      ? undefined
-      : getHomePageRootInstanceId(state.pages);
-  if (rootInstanceId === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Home page not found");
-  }
+  const target = getCssVariableRootTarget(state, input.breakpoint);
   for (const [property] of Object.entries(input.vars)) {
     assertCssVariableName(property);
   }
   const styleState = getRequiredStyleState(state);
   const resultPayload = createCssVariableRootDefinePayload({
-    rootInstanceId,
+    rootInstanceId: target.rootInstanceId,
     vars: input.vars,
     styleSources: styleState.styleSources,
     styleSourceSelections: styleState.styleSourceSelections.values(),
     styles: styleState.styles.values(),
     overwrite: input.overwrite,
-    breakpointId: getBaseBreakpointId(state.breakpoints),
+    breakpointId: target.breakpointId,
     createId: context.createId,
   });
   if (resultPayload.missingRootStyleSource) {

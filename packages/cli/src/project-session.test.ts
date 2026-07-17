@@ -6,10 +6,12 @@ import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/stat
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
 import {
   createLocalProjectBundleFromSessionSnapshot,
+  createCliProjectRestorePointStorage,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
   getCliServerApiContract,
   getCliProjectSessionFile,
+  getCliProjectRestorePointsFile,
   getSupportedPublicApiOperations,
 } from "./project-session";
 
@@ -19,6 +21,9 @@ test("scopes project session files for explicitly selected projects", () => {
   );
   expect(getCliProjectSessionFile("/workspace")).toBe(
     "/workspace/.webstudio/project-session.json"
+  );
+  expect(getCliProjectRestorePointsFile("/workspace", "project/a")).toBe(
+    "/workspace/.webstudio/projects/project%2Fa/restore-points.json"
   );
 });
 
@@ -40,6 +45,71 @@ afterEach(async () => {
 });
 
 describe("cli project session storage", () => {
+  test.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects invalid restore point retention %s",
+    (maxPoints) => {
+      expect(() =>
+        createCliProjectRestorePointStorage("restore-points.json", maxPoints)
+      ).toThrow("Restore point retention must be a positive integer");
+    }
+  );
+
+  test("persists named restore points and hydrates Map namespaces", async () => {
+    const directory = await createTemporaryDirectory();
+    const storage = createCliProjectRestorePointStorage(
+      join(directory, ".webstudio", "restore-points.json")
+    );
+    const state = createBuilderStateFromSnapshot({
+      instances: [
+        [
+          "body",
+          { type: "instance", id: "body", component: "Body", children: [] },
+        ],
+      ],
+    });
+    const snapshot = {
+      projectId: "project-1",
+      buildId: "build-1",
+      version: 3,
+      state,
+      freshness: createBuilderStateFreshness({ state, version: 3 }),
+      compatibilityVersion: "test",
+      compatibility: {
+        sessionVersion: "test",
+        runtimeContractVersion: "test-runtime",
+        projectSchemaVersion: "test-schema",
+      },
+    };
+
+    const created = await storage.create("Before redesign", snapshot);
+    expect(await storage.list()).toEqual([created]);
+    expect((await storage.get(created.id))?.state.instances).toBeInstanceOf(
+      Map
+    );
+
+    const concurrentNames = Array.from(
+      { length: 20 },
+      (_, index) => `Concurrent ${index}`
+    );
+    const secondStorage = createCliProjectRestorePointStorage(
+      join(directory, ".webstudio", "restore-points.json")
+    );
+    await Promise.all(
+      concurrentNames.map((name, index) =>
+        (index % 2 === 0 ? storage : secondStorage).create(name, snapshot)
+      )
+    );
+    const retained = await storage.list();
+    expect(retained).toHaveLength(20);
+    expect(retained.map((point) => point.name).sort()).toEqual(
+      concurrentNames.sort()
+    );
+
+    expect(await storage.delete(retained[0].id)).toBe(true);
+    expect(await storage.delete(retained[0].id)).toBe(false);
+    expect(await storage.list()).toHaveLength(19);
+  });
+
   test("persists builder state snapshots as JSON and checks revisions", async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, ".webstudio", "project-session.json");

@@ -378,11 +378,13 @@ export const getPreviewBuildCacheKey = async ({
   projectDir,
   assets,
   template,
+  includeDraftPages = false,
   cliVersion = packageJson.version,
 }: {
   projectDir: string;
   assets: boolean;
   template: string[];
+  includeDraftPages?: boolean;
   cliVersion?: string;
 }) => {
   if (cliVersion === developmentCliVersion) {
@@ -395,6 +397,7 @@ export const getPreviewBuildCacheKey = async ({
       cliVersion,
       assets,
       template: getPreviewTemplates(template),
+      includeDraftPages,
     })
   );
   for (const file of localPreviewFiles) {
@@ -425,6 +428,7 @@ export const preparePreviewProject = async ({
   ensureDependencies = ensurePreviewDependencies,
   getBuildCacheKey = getPreviewBuildCacheKey,
   silent = false,
+  includeDraftPages = false,
   prepareSessionDataFile = async () => {
     const connection = await resolveApiConnection();
     const session = createCliProjectSession({ connection });
@@ -446,6 +450,7 @@ export const preparePreviewProject = async ({
   ensureDependencies?: typeof ensurePreviewDependencies;
   getBuildCacheKey?: typeof getPreviewBuildCacheKey;
   silent?: boolean;
+  includeDraftPages?: boolean;
   prepareSessionDataFile?: () => Promise<void>;
 }): Promise<{
   cwd: string;
@@ -488,6 +493,7 @@ export const preparePreviewProject = async ({
     projectDir,
     assets,
     template,
+    includeDraftPages,
   });
   if (buildCacheKey !== undefined) {
     const cachedBuildKey = await readFile(
@@ -508,6 +514,7 @@ export const preparePreviewProject = async ({
           assets,
           template: getPreviewTemplates(template),
           ...(silent ? { silent: true } : {}),
+          ...(includeDraftPages ? { includeDraftPages: true } : {}),
         });
       });
       await ensureDependencies(previewProjectDir);

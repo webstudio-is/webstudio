@@ -335,6 +335,42 @@ describe("patchBuild", () => {
     }
   });
 
+  test("persists an explicitly cleared marketplace product", async () => {
+    const result = await createBuildPatchUpdate({
+      build: {
+        ...buildRow,
+        marketplaceProduct: JSON.stringify({
+          category: "sectionTemplates",
+          name: "Example section",
+          thumbnailAssetId: "thumbnail",
+          author: "Webstudio",
+          email: "hello@example.com",
+          website: "",
+          issues: "",
+          description: "Example marketplace product",
+        }),
+      },
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "marketplaceProduct",
+              patches: [{ op: "replace", path: [], value: undefined }],
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(JSON.parse(result.update?.marketplaceProduct ?? "null")).toEqual(
+        {}
+      );
+    }
+  });
+
   test("validates only touched props while preserving untouched props", async () => {
     const buildWithInvalidUntouchedProp = {
       ...buildRow,

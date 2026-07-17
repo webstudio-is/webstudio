@@ -9,6 +9,7 @@ import {
 import {
   buildPatchTransaction,
   publicBuildIncludes,
+  restorePointPatchTransaction,
 } from "@webstudio-is/protocol/schema";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
@@ -58,10 +59,19 @@ export const buildGetInput = z.object({
   version: z.number().int().optional(),
 });
 
-export const buildPatchInput = z.object({
+const buildPatchInputBase = {
   projectId: z.string(),
   baseVersion: z.number().int(),
+};
+
+export const buildPatchInput = z.object({
+  ...buildPatchInputBase,
   transactions: z.array(buildPatchTransaction).min(1),
+});
+
+export const buildRestorePointInput = z.object({
+  ...buildPatchInputBase,
+  transactions: z.array(restorePointPatchTransaction).length(1),
 });
 
 export const createBuildSnapshot = ({

@@ -54,6 +54,37 @@ export const writeFileAtomic = async (filePath: string, content: string) => {
   }
 };
 
+const wait = (duration: number) =>
+  new Promise((resolve) => setTimeout(resolve, duration));
+
+export const withFileLock = async <Result>(
+  filePath: string,
+  callback: () => Promise<Result>
+) => {
+  const lockPath = `${filePath}.lock`;
+  await createFolderIfNotExists(dirname(filePath));
+  const start = Date.now();
+  while (true) {
+    try {
+      await mkdir(lockPath, { recursive: false });
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
+        throw error;
+      }
+      if (Date.now() - start > 10_000) {
+        throw new Error(`Timed out waiting for file lock ${lockPath}`);
+      }
+      await wait(50);
+    }
+  }
+  try {
+    return await callback();
+  } finally {
+    await rm(lockPath, { recursive: true, force: true });
+  }
+};
+
 export const loadJSONFile = async <T>(filePath: string): Promise<T | null> => {
   try {
     const content = await readFile(filePath, "utf8");

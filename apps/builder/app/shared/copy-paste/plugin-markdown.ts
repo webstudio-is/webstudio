@@ -32,7 +32,7 @@ const handlePasteMarkdown = async (clipboardData: string) => {
     return pasteIgnored;
   }
   fragment = await denormalizeSrcProps(fragment);
-  insertFragmentWithBreakpointWarning(fragment);
+  await insertFragmentWithBreakpointWarning(fragment);
   return pasteHandled;
 };
 

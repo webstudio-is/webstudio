@@ -57469,6 +57469,96 @@ export const runtimeOperationContractData = [
     requiresAssets: true,
   },
   {
+    id: "slots.attach",
+    command: "attach-slot",
+    client: "attachSharedSlot",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sourceSlotId: {
+          type: "string",
+          minLength: 1,
+        },
+        parentInstanceId: {
+          type: "string",
+          minLength: 1,
+        },
+        insertIndex: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        label: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["sourceSlotId", "parentInstanceId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        slotId: {
+          type: "string",
+        },
+        fragmentId: {
+          type: "string",
+        },
+      },
+      required: ["slotId", "fragmentId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["instances", "props"],
+    writeNamespaces: ["instances"],
+    invalidatesNamespaces: ["instances"],
+    retryOnConflict: false,
+  },
+  {
+    id: "slots.extract",
+    command: "extract-slot",
+    client: "extractSharedSlot",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        instanceSelector: {
+          minItems: 2,
+          type: "array",
+          items: {
+            type: "string",
+            minLength: 1,
+          },
+        },
+        label: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["instanceSelector"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        slotId: {
+          type: "string",
+        },
+        fragmentId: {
+          type: "string",
+        },
+        instanceId: {
+          type: "string",
+        },
+      },
+      required: ["slotId", "fragmentId", "instanceId"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["instances", "props"],
+    writeNamespaces: ["instances"],
+    invalidatesNamespaces: ["instances"],
+    retryOnConflict: false,
+  },
+  {
     id: "instances.move",
     command: "move-instance",
     client: "moveInstance",
@@ -60262,6 +60352,257 @@ export const runtimeOperationContractData = [
     retryOnConflict: false,
   },
   {
+    id: "designTokens.import",
+    command: "import-design-tokens",
+    client: "importDesignTokens",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        source: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                format: {
+                  type: "string",
+                  const: "dtcg",
+                },
+                document: {
+                  description:
+                    "DTCG token document or 2025.10 resolver document. Resolver documents may use sets, modifiers, and resolutionOrder.",
+                },
+                contexts: {
+                  description:
+                    "Resolver modifier contexts keyed by modifier name",
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                  },
+                  additionalProperties: {
+                    type: "string",
+                  },
+                },
+                documents: {
+                  description:
+                    "Bundled DTCG documents keyed by resolver source path",
+                  type: "object",
+                  propertyNames: {
+                    type: "string",
+                  },
+                  additionalProperties: {},
+                },
+              },
+              required: ["format"],
+            },
+            {
+              type: "object",
+              properties: {
+                format: {
+                  type: "string",
+                  const: "figma",
+                },
+                document: {
+                  description:
+                    "Figma Variables API document containing variables and optional variableCollections",
+                },
+                mode: {
+                  description: "Optional Figma mode name or id",
+                  type: "string",
+                  minLength: 1,
+                },
+                allModes: {
+                  description:
+                    "Import every Figma mode under mode-qualified token names",
+                  type: "boolean",
+                },
+              },
+              required: ["format"],
+            },
+          ],
+        },
+        mapping: {
+          description:
+            "Optional targets keyed by token type, such as color or dimension. Keys are token types, not token paths or names.",
+          type: "object",
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {
+            oneOf: [
+              {
+                type: "object",
+                properties: {
+                  target: {
+                    type: "string",
+                    const: "css-variable",
+                  },
+                },
+                required: ["target"],
+              },
+              {
+                type: "object",
+                properties: {
+                  target: {
+                    type: "string",
+                    const: "design-token",
+                  },
+                  property: {
+                    type: "string",
+                    minLength: 1,
+                    description:
+                      "Style property for primitive tokens. Composite tokens use their canonical style properties.",
+                  },
+                },
+                required: ["target", "property"],
+              },
+            ],
+          },
+        },
+        defaultTarget: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                target: {
+                  type: "string",
+                  const: "css-variable",
+                },
+              },
+              required: ["target"],
+            },
+            {
+              type: "object",
+              properties: {
+                target: {
+                  type: "string",
+                  const: "design-token",
+                },
+                property: {
+                  type: "string",
+                  minLength: 1,
+                  description:
+                    "Style property for primitive tokens. Composite tokens use their canonical style properties.",
+                },
+              },
+              required: ["target", "property"],
+            },
+          ],
+        },
+        prefix: {
+          type: "string",
+        },
+        breakpoint: {
+          type: "string",
+        },
+        collision: {
+          default: "skip",
+          type: "string",
+          enum: ["skip", "overwrite", "rename"],
+        },
+      },
+      required: ["source"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        plan: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+              },
+              type: {
+                type: "string",
+              },
+              target: {
+                type: "string",
+                enum: ["css-variable", "design-token"],
+              },
+              outputName: {
+                type: "string",
+              },
+              property: {
+                type: "string",
+              },
+              cssValue: {
+                type: "string",
+              },
+              declarations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    property: {
+                      type: "string",
+                    },
+                    cssValue: {
+                      type: "string",
+                    },
+                  },
+                  required: ["property", "cssValue"],
+                },
+              },
+              action: {
+                type: "string",
+                enum: ["create", "overwrite", "skip"],
+              },
+              conflict: {
+                type: "boolean",
+              },
+            },
+            required: [
+              "path",
+              "type",
+              "target",
+              "outputName",
+              "cssValue",
+              "declarations",
+              "action",
+              "conflict",
+            ],
+          },
+        },
+        counts: {
+          type: "object",
+          properties: {
+            create: {
+              type: "integer",
+              minimum: -9007199254740991,
+              maximum: 9007199254740991,
+            },
+            overwrite: {
+              type: "integer",
+              minimum: -9007199254740991,
+              maximum: 9007199254740991,
+            },
+            skip: {
+              type: "integer",
+              minimum: -9007199254740991,
+              maximum: 9007199254740991,
+            },
+          },
+          required: ["create", "overwrite", "skip"],
+          additionalProperties: {},
+        },
+      },
+      required: ["plan", "counts"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "breakpoints",
+    ],
+    writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    invalidatesNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    retryOnConflict: false,
+  },
+  {
     id: "designTokens.createAttached",
     command: "create-attached-design-token",
     client: "createAttachedDesignTokens",
@@ -61002,6 +61343,9 @@ export const runtimeOperationContractData = [
         },
         overwrite: {
           type: "boolean",
+        },
+        breakpoint: {
+          type: "string",
         },
       },
       required: ["vars"],

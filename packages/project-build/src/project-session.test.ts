@@ -6,9 +6,11 @@ import {
   createDefaultProjectSessionCompatibility,
   createProjectSession,
   hasProjectSessionPermit,
+  hydrateRestorePointTransaction,
   projectSessionBusyMessage,
   redactProjectSessionValue,
   serializeProjectSessionMeta,
+  serializeRestorePointTransaction,
 } from "./project-session";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type {
@@ -129,11 +131,15 @@ const createTransport = (
 ): ProjectSessionTransport & {
   loadedNamespaces: BuilderNamespace[][];
   commits: BuilderPatchTransaction[][];
+  patchCommits: BuilderPatchTransaction[][];
+  restoreCommits: BuilderPatchTransaction[][];
   serverOperations: Array<{ operationId: string; input: unknown }>;
   permissionReads: number;
 } => ({
   loadedNamespaces: [],
   commits: [],
+  patchCommits: [],
+  restoreCommits: [],
   serverOperations: [],
   permissionReads: 0,
   async fetchNamespaces(input) {
@@ -142,6 +148,12 @@ const createTransport = (
   },
   async commitPatch(input) {
     this.commits.push([...input.transactions]);
+    this.patchCommits.push([...input.transactions]);
+    return { version: input.baseVersion + 1 };
+  },
+  async commitRestorePoint(input) {
+    this.commits.push([...input.transactions]);
+    this.restoreCommits.push([...input.transactions]);
     return { version: input.baseVersion + 1 };
   },
   async getPermissions() {
@@ -171,7 +183,7 @@ const createMutableTransport = (
 ) => {
   let remote = initialRemote;
   const transport = createTransport(remote);
-  transport.commitPatch = async (input) => {
+  const commit = async (input: Parameters<typeof transport.commitPatch>[0]) => {
     transport.commits.push([...input.transactions]);
     const applied = applyBuilderPatchTransactions(
       remote.state,
@@ -183,6 +195,14 @@ const createMutableTransport = (
       state: applied.state,
     };
     return { version: remote.version };
+  };
+  transport.commitPatch = async (input) => {
+    transport.patchCommits.push([...input.transactions]);
+    return await commit(input);
+  };
+  transport.commitRestorePoint = async (input) => {
+    transport.restoreCommits.push([...input.transactions]);
+    return await commit(input);
   };
   transport.fetchNamespaces = async (input) => {
     transport.loadedNamespaces.push([...input.namespaces]);
@@ -211,6 +231,85 @@ const createSession = ({
 };
 
 describe("project session", () => {
+  test("round-trips hydrated restore transactions through JSON", () => {
+    const state = createSnapshot().state;
+    const transaction: BuilderPatchTransaction = {
+      id: "restore",
+      payload: ["pages", "props"].map((namespace) => ({
+        namespace: namespace as "pages" | "props",
+        patches: [
+          {
+            op: "replace",
+            path: [],
+            value: state[namespace as "pages" | "props"],
+          },
+        ],
+      })),
+    };
+
+    const serialized = JSON.parse(
+      JSON.stringify(serializeRestorePointTransaction(transaction))
+    );
+    const hydrated = hydrateRestorePointTransaction(serialized);
+    const getPatchValue = (namespaceIndex: number) => {
+      const patch = hydrated.payload[namespaceIndex]?.patches[0];
+      if (patch?.op !== "replace") {
+        throw new Error("Expected a root replacement patch");
+      }
+      return patch.value;
+    };
+
+    expect(getPatchValue(0)).toMatchObject({
+      pages: expect.any(Map),
+      folders: expect.any(Map),
+    });
+    expect(getPatchValue(1)).toBeInstanceOf(Map);
+  });
+
+  test("round-trips an explicitly empty marketplace product", () => {
+    const transaction: BuilderPatchTransaction = {
+      id: "restore",
+      payload: [
+        {
+          namespace: "marketplaceProduct",
+          patches: [{ op: "replace", path: [], value: undefined }],
+        },
+      ],
+    };
+
+    const serialized = JSON.parse(
+      JSON.stringify(serializeRestorePointTransaction(transaction))
+    );
+    expect(serialized.payload[0].patches[0].value).toBeNull();
+
+    const hydrated = hydrateRestorePointTransaction(serialized);
+    expect(hydrated.payload[0]?.patches[0]).toEqual({
+      op: "replace",
+      path: [],
+      value: undefined,
+    });
+  });
+
+  test("rejects malformed serialized restore namespace values", () => {
+    expect(() =>
+      hydrateRestorePointTransaction({
+        id: "restore",
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "replace",
+                path: [],
+                value: [["broken", { id: "broken" }]],
+              },
+            ],
+          },
+        ],
+      })
+    ).toThrow();
+  });
+
   test("derives default compatibility from the full runtime contract shape", () => {
     const compatibility =
       createDefaultProjectSessionCompatibility("test-session");
@@ -311,6 +410,8 @@ describe("project session", () => {
       meta: { siteName: "Persisted site" },
     });
     expect(transport.commits).toHaveLength(1);
+    expect(transport.patchCommits).toHaveLength(1);
+    expect(transport.restoreCommits).toHaveLength(0);
     expect(transport.loadedNamespaces).toEqual([
       ["projectSettings"],
       ["projectSettings"],
@@ -1208,6 +1309,162 @@ describe("project session", () => {
     expect(result.state.freshness.assets?.status).toBe("fresh");
     expect(transport.loadedNamespaces).toEqual([["assets"]]);
     expect(storage.saved.at(-1)?.version).toBe(5);
+  });
+
+  test("plans and atomically restores a versioned Build snapshot", async () => {
+    const target = createPersistedSnapshot();
+    const current = structuredClone(target);
+    current.version = 2;
+    current.revision = "rev-2";
+    const currentHome = current.state.pages?.pages.get("page-home");
+    if (currentHome === undefined) {
+      throw new Error("Home page fixture is missing");
+    }
+    currentHome.name = "Edited after restore point";
+    const storage = createStorage(current);
+    const transport = createMutableTransport({
+      projectId: current.projectId,
+      buildId: current.buildId,
+      version: current.version,
+      state: current.state,
+    });
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const planned = await session.restoreSnapshot(target, { dryRun: true });
+    expect(planned.source).toBe("dry-run");
+    expect(planned.transaction?.payload).toContainEqual({
+      namespace: "pages",
+      patches: [expect.objectContaining({ op: "replace", path: [] })],
+    });
+
+    const restored = await session.restoreSnapshot(target);
+    expect(restored.state.committed).toBe(true);
+    expect(restored.result.restoredNamespaces).toEqual(["pages"]);
+    expect(session.snapshot?.state.pages?.pages.get("page-home")?.name).toBe(
+      target.state.pages?.pages.get("page-home")?.name
+    );
+    expect(transport.commits).toHaveLength(1);
+    expect(transport.patchCommits).toHaveLength(0);
+    expect(transport.restoreCommits).toHaveLength(1);
+  });
+
+  test("keeps separately persisted assets outside restore points", async () => {
+    const current = createPersistedSnapshot();
+    current.state.assets = new Map([
+      [
+        "asset-current",
+        {
+          id: "asset-current",
+          projectId: current.projectId,
+          name: "current.png",
+          type: "image",
+          size: 1,
+          format: "png",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          meta: { width: 1, height: 1 },
+        },
+      ],
+    ]);
+    current.freshness = createBuilderStateFreshness({
+      state: current.state,
+      version: current.version,
+    });
+    const session = createSession({ storage: createStorage(current) });
+
+    await session.initialize();
+    const restorePoint = await session.captureRestorePointSnapshot();
+    expect(restorePoint.state.assets).toBeUndefined();
+    expect(restorePoint.freshness.assets).toBeUndefined();
+
+    const result = await session.restoreSnapshot({
+      ...restorePoint,
+      state: {
+        ...restorePoint.state,
+        assets: new Map(),
+      },
+    });
+    expect(result.result.restoredNamespaces).not.toContain("assets");
+    expect(session.snapshot?.state.assets?.has("asset-current")).toBe(true);
+  });
+
+  test("rejects restore points from another editable build", async () => {
+    const current = createPersistedSnapshot();
+    const session = createSession({ storage: createStorage(current) });
+    await session.initialize();
+
+    await expect(
+      session.restoreSnapshot({ ...current, buildId: "another-build" })
+    ).rejects.toThrow("different editable build");
+  });
+
+  test("restores snapshots with optional namespaces absent on both sides", async () => {
+    const target = createPersistedSnapshot();
+    const current = structuredClone(target);
+    target.state.marketplaceProduct = undefined;
+    current.state.marketplaceProduct = undefined;
+    const currentHome = current.state.pages?.pages.get("page-home");
+    if (currentHome === undefined) {
+      throw new Error("Home page fixture is missing");
+    }
+    currentHome.name = "Edited after restore point";
+    const transport = createMutableTransport({
+      projectId: current.projectId,
+      buildId: current.buildId,
+      version: current.version,
+      state: current.state,
+    });
+    const session = createSession({
+      storage: createStorage(current),
+      transport,
+    });
+    await session.initialize();
+
+    const result = await session.restoreSnapshot(target, { dryRun: true });
+
+    expect(result.result.restoredNamespaces).toEqual(["pages"]);
+  });
+
+  test("restores marketplace product presence and absence", async () => {
+    const withProduct = createPersistedSnapshot();
+    const withoutProduct = structuredClone(withProduct);
+    withoutProduct.state.marketplaceProduct = undefined;
+    withoutProduct.freshness = createBuilderStateFreshness({
+      state: withoutProduct.state,
+      version: withoutProduct.version,
+    });
+
+    const clearTransport = createMutableTransport({
+      projectId: withProduct.projectId,
+      buildId: withProduct.buildId,
+      version: withProduct.version,
+      state: withProduct.state,
+    });
+    const clearSession = createSession({
+      storage: createStorage(withProduct),
+      transport: clearTransport,
+    });
+    await clearSession.initialize();
+    const cleared = await clearSession.restoreSnapshot(withoutProduct);
+    expect(cleared.result.restoredNamespaces).toEqual(["marketplaceProduct"]);
+    expect(clearSession.snapshot?.state.marketplaceProduct).toBeUndefined();
+
+    const restoreTransport = createMutableTransport({
+      projectId: withoutProduct.projectId,
+      buildId: withoutProduct.buildId,
+      version: withoutProduct.version,
+      state: withoutProduct.state,
+    });
+    const restoreSession = createSession({
+      storage: createStorage(withoutProduct),
+      transport: restoreTransport,
+    });
+    await restoreSession.initialize();
+    const restored = await restoreSession.restoreSnapshot(withProduct);
+    expect(restored.result.restoredNamespaces).toEqual(["marketplaceProduct"]);
+    expect(restoreSession.snapshot?.state.marketplaceProduct).toEqual(
+      withProduct.state.marketplaceProduct
+    );
   });
 
   test("redacts sensitive diagnostic values", () => {

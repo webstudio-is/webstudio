@@ -27,6 +27,7 @@ import type {
 import {
   createScope,
   findTreeInstanceIds,
+  getAllPages,
   getPagePath,
   getPublishablePages,
   generateResources,
@@ -261,6 +262,8 @@ export const prebuild = async (options: {
   template: string[];
   /** Keep generated-project progress off stdout for JSON and MCP callers. */
   silent?: boolean;
+  /** Generate draft routes for local verification without publishing them. */
+  includeDraftPages?: boolean;
 }) => {
   const buildRoot = cwd();
   const feedback = options.silent
@@ -352,6 +355,9 @@ export const prebuild = async (options: {
   );
   const pages = migratePages(siteData.build.pages);
   const publishablePages = getPublishablePages(pages);
+  const generatedPages = options.includeDraftPages
+    ? getAllPages(pages)
+    : publishablePages;
   await writeWsAuthResources(
     generatedDir,
     pages,
@@ -371,7 +377,7 @@ export const prebuild = async (options: {
     source: "prebuild",
   });
 
-  for (const page of publishablePages) {
+  for (const page of generatedPages) {
     const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIds(
       instanceMap,
@@ -514,7 +520,7 @@ export const prebuild = async (options: {
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
 
-  for (const page of publishablePages) {
+  for (const page of generatedPages) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",

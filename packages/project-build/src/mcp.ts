@@ -1,5 +1,6 @@
 import {
   builderNamespaces,
+  restorePointNamespaces,
   type BuilderNamespace,
 } from "./contracts/namespaces";
 import {
@@ -16,9 +17,11 @@ import {
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {
+  projectSessionRestorePointSummarySchema,
   projectSessionBusyMessage,
   serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
+  type ProjectSessionRestorePointSummary,
 } from "./project-session";
 import type { ScreenshotVisualExpectation } from "./visual/screenshot-diff";
 import { isPlainRecord, isRecord } from "./shared/type-utils";
@@ -738,6 +741,23 @@ const getHandshakeInputSchema = (
     detailedInputSchema: schema,
   };
 };
+
+const getZodObjectSchema = (schema: z.ZodTypeAny) => {
+  const inputSchema = toInputJsonSchemaObject(
+    getInputSchemaMetadata(schema).inputJsonSchema
+  );
+  if (inputSchema?.type !== "object") {
+    throw new Error("MCP schema must be an object");
+  }
+  return {
+    ...inputSchema,
+    type: "object",
+    additionalProperties: inputSchema.additionalProperties ?? false,
+  } as const;
+};
+
+const getZodMcpInputSchema = (schema: z.ZodTypeAny) =>
+  getHandshakeInputSchema(getZodObjectSchema(schema)).inputSchema;
 
 const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
@@ -1927,6 +1947,118 @@ const previewDataSchema = {
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
+const restorePointSummaryDataSchema = getZodObjectSchema(
+  projectSessionRestorePointSummarySchema
+);
+
+const restorePointCreateInput = z.object({ name: z.string().trim().min(1) });
+const restorePointRevertInput = z.object({ id: z.string().min(1) });
+const restorePointDeleteInput = z.object({
+  id: z.string().min(1),
+  confirm: z.literal(true),
+});
+
+const restorePointTools: readonly ProjectSessionMcpTool[] = [
+  createProjectSessionMcpTool({
+    name: "create-restore-point",
+    description:
+      "Create a named local restore point for versioned Build data before risky agent work. Asset records remain unchanged by restore points.",
+    inputSchema: getZodMcpInputSchema(restorePointCreateInput),
+    outputSchema: getMcpOutputSchema(restorePointSummaryDataSchema),
+    annotations: {
+      command: "create-restore-point",
+      operationId: "project-session.restore-point.create",
+      method: "session",
+      permit: "edit",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: restorePointNamespaces,
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "list-restore-points",
+    description: "List named local restore points for the configured project.",
+    inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema({
+      type: "object",
+      properties: {
+        points: { type: "array", items: restorePointSummaryDataSchema },
+      },
+      required: ["points"],
+      additionalProperties: false,
+    }),
+    annotations: {
+      command: "list-restore-points",
+      operationId: "project-session.restore-point.list",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "delete-restore-point",
+    description:
+      "Permanently delete one local restore point after explicit confirmation.",
+    inputSchema: getZodMcpInputSchema(restorePointDeleteInput),
+    outputSchema: getMcpOutputSchema({
+      type: "object",
+      properties: { deleted: { type: "boolean" } },
+      required: ["deleted"],
+      additionalProperties: false,
+    }),
+    annotations: {
+      command: "delete-restore-point",
+      operationId: "project-session.restore-point.delete",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "revert-to-restore-point",
+    description:
+      "Revert versioned Build data to a named restore point without changing assets. This is destructive and requires a reviewed dry-run confirmation token.",
+    inputSchema: getZodMcpInputSchema(restorePointRevertInput),
+    outputSchema: getMcpOutputSchema({
+      type: "object",
+      properties: {
+        restoredNamespaces: {
+          type: "array",
+          items: { type: "string", enum: restorePointNamespaces },
+        },
+      },
+      required: ["restoredNamespaces"],
+      additionalProperties: false,
+    }),
+    annotations: {
+      command: "revert-to-restore-point",
+      operationId: "project-session.restore-point.revert",
+      method: "session",
+      permit: "edit",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: restorePointNamespaces,
+      writeNamespaces: restorePointNamespaces,
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+      requiresConfirm: true,
+    },
+  }),
+];
+
 const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "meta.index",
@@ -2567,6 +2699,7 @@ export const listProjectSessionMcpTools = (
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
     includePreview?: boolean;
+    includeRestorePoints?: boolean;
   } = {}
 ): ProjectSessionMcpTool[] => [
   ...operations
@@ -2614,6 +2747,7 @@ export const listProjectSessionMcpTools = (
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
   })),
+  ...(options.includeRestorePoints ? restorePointTools : []),
   ...(options.includeImport ? [importTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
@@ -5783,6 +5917,19 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   storeRenderedAuditArtifacts?: (
     manifest: RenderedAuditArtifactManifest
   ) => Promise<string>;
+  restorePoints?: ProjectSessionRestorePointHandlers;
+};
+
+type ProjectSessionRestorePointHandlers = {
+  create: (input: {
+    name: string;
+  }) => Promise<ProjectSessionRestorePointSummary>;
+  list: () => Promise<{ points: ProjectSessionRestorePointSummary[] }>;
+  delete: (input: { id: string }) => Promise<{ deleted: boolean }>;
+  revert: (
+    input: { id: string },
+    options: { dryRun: boolean }
+  ) => Promise<ProjectSessionEnvelope>;
 };
 
 export const createProjectSessionMcpCore = <Command extends string = string>({
@@ -5800,6 +5947,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   guidance,
   reportToolProgress,
   storeRenderedAuditArtifacts,
+  restorePoints,
 }: ProjectSessionMcpCoreOptions<Command>) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
@@ -5821,6 +5969,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       includeInstallOcr: installOcr !== undefined,
       includePreview:
         startPreview !== undefined && getPreviewStatus !== undefined,
+      includeRestorePoints: restorePoints !== undefined,
     });
   const getSession = () => {
     session ??= createProjectSession();
@@ -6109,6 +6258,36 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "reset-session") {
         const session = getSession();
         return toCallResult(await session.reset());
+      }
+      if (name === "create-restore-point" && restorePoints !== undefined) {
+        return toMetaResult(
+          await restorePoints.create(restorePointCreateInput.parse(input))
+        );
+      }
+      if (name === "list-restore-points" && restorePoints !== undefined) {
+        return toMetaResult(await restorePoints.list());
+      }
+      if (name === "delete-restore-point" && restorePoints !== undefined) {
+        const { id } = restorePointDeleteInput.parse(input);
+        return toMetaResult(await restorePoints.delete({ id }));
+      }
+      if (name === "revert-to-restore-point" && restorePoints !== undefined) {
+        const transportInput = getToolCallInput(input, true);
+        const restoreInput = restorePointRevertInput.parse(
+          transportInput.input
+        );
+        const [envelope, response] = await executeDestructiveMcpOperation({
+          command: "revert-to-restore-point",
+          input: restoreInput,
+          dryRun: dryRun || transportInput.dryRun,
+          confirmDestructive: transportInput.confirmDestructive,
+          confirmationToken: transportInput.confirmationToken,
+          executeOperation: async ({ input, dryRun }) =>
+            await restorePoints.revert(restorePointRevertInput.parse(input), {
+              dryRun,
+            }),
+        });
+        return response ?? toCallResult(envelope);
       }
       if (name === "import" && importProject !== undefined) {
         return toMetaResult(await importProject(getImportInput(input)));
@@ -6451,6 +6630,7 @@ export const createProjectSessionMcpServer = async <
   getErrorCode,
   reportLog,
   storeRenderedAuditArtifacts,
+  restorePoints,
   onInitialized,
   toolHeartbeatIntervalMs = 10_000,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
@@ -6492,6 +6672,7 @@ export const createProjectSessionMcpServer = async <
     stopPreview,
     guidance,
     storeRenderedAuditArtifacts,
+    restorePoints,
     reportToolProgress: (message) => {
       sendLog("info", message);
     },

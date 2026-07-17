@@ -172,6 +172,9 @@ const assertReplacePatchTargetsExistingPath = (
   if (patch.op !== "replace") {
     return;
   }
+  if (patch.path.length === 0) {
+    return;
+  }
   const { parent, key } = getPatchParent(namespaceData, patch);
   if (hasPathValue(parent, key) === false) {
     throw Error(`Cannot replace missing patch path "${String(key)}"`);
@@ -226,6 +229,18 @@ export const applyBuilderPatchTransactions = (
       }
       const namespaceState = nextState[change.namespace];
       if (namespaceState === undefined) {
+        const patch = change.patches[0];
+        if (
+          change.namespace === "marketplaceProduct" &&
+          change.patches.length === 1 &&
+          patch?.op === "replace" &&
+          patch.path.length === 0
+        ) {
+          (nextState as Record<string, unknown>).marketplaceProduct =
+            structuredClone(patch.value);
+          changedNamespaces.add(change.namespace);
+          continue;
+        }
         throw new MissingBuilderStateNamespaceError(change.namespace);
       }
       (nextState as Record<string, unknown>)[change.namespace] =

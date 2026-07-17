@@ -336,6 +336,48 @@ describe("prebuild", () => {
     ).resolves.not.toContain('"path": "/draft"');
   });
 
+  test("generates draft routes for local verification without publishing them", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "draft",
+            name: "Draft",
+            title: "Draft",
+            path: "/draft",
+            rootInstanceId: "root",
+            meta: {},
+            isDraft: true,
+          },
+        ],
+      })
+    );
+
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      includeDraftPages: true,
+    });
+
+    await expect(
+      readFile("app/routes/[draft]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[draft]._index");
+    await expect(
+      readFile("app/__generated__/[draft]._index.tsx", "utf8")
+    ).resolves.toContain('export const siteName = "Site"');
+    await expect(
+      readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
+    ).resolves.not.toContain('"path": "/draft"');
+  });
+
   test("scaffolds generated files and stores redirects as data", async () => {
     await mkdir("app/__generated__", { recursive: true });
     await mkdir("app/routes", { recursive: true });

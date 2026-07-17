@@ -1,7 +1,6 @@
 import { findClosestInsertable } from "~/shared/instance-utils/insert";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import {
-  detectFragmentTokenConflicts,
   detectPageTokenConflicts,
   extractWebstudioFragment,
 } from "@webstudio-is/project-build/runtime";
@@ -33,11 +32,14 @@ import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
 import { getWebstudioData } from "~/shared/instance-utils/data";
-import { builderApi } from "~/shared/builder-api";
 import { $project } from "~/shared/sync/data-stores";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { selectPage } from "~/shared/nano-states";
+import {
+  resolveFragmentTokenConflicts,
+  resolveTokenConflicts,
+} from "~/shared/resolve-token-conflicts";
 
 const isBody = (instance: Instance) =>
   instance.component === "Body" ||
@@ -71,14 +73,10 @@ const insertSection = async ({
     if (insertable.position === "end") {
       insertable.position = "after";
     }
-    const conflicts = detectFragmentTokenConflicts({
-      fragment,
-      targetData: getWebstudioData(),
-    });
-    const conflictResolution =
-      conflicts.length > 0
-        ? await builderApi.showTokenConflictDialog(conflicts)
-        : "theirs";
+    const conflictResolution = await resolveFragmentTokenConflicts(fragment);
+    if (conflictResolution === "cancel") {
+      return;
+    }
     await insertWebstudioFragmentAt(fragment, insertable, conflictResolution);
   }
 };
@@ -95,10 +93,10 @@ const insertPage = async ({
     targetData: getWebstudioData(),
     pageId,
   });
-  const conflictResolution =
-    conflicts.length > 0
-      ? await builderApi.showTokenConflictDialog(conflicts)
-      : "theirs";
+  const conflictResolution = await resolveTokenConflicts(conflicts);
+  if (conflictResolution === "cancel") {
+    return;
+  }
   const projectId = $project.get()?.id;
   if (projectId === undefined) {
     return;

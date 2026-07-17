@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -11,77 +10,81 @@ import {
   Flex,
   Text,
   theme,
-  RadioGroup,
-  Radio,
-  Label,
 } from "@webstudio-is/design-system";
-import type { TokenConflict } from "@webstudio-is/project-build/runtime";
+import type {
+  ConflictResolution,
+  TokenConflict,
+} from "@webstudio-is/project-build/runtime";
+import { DialogRadioOptions } from "./dialog-radio-options";
 
-export type ConflictResolution = "ours" | "theirs" | "merge";
+export type TokenConflictDialogResult = ConflictResolution | "cancel";
+export type TokenConflictDialogConflict = Pick<TokenConflict, "tokenName">;
+
+const conflictResolutionOptions = [
+  {
+    value: "theirs",
+    label: "Theirs",
+    description:
+      'Keep incoming tokens with a suffix added to their names (e.g., "primary-color-1")',
+  },
+  {
+    value: "ours",
+    label: "Ours",
+    description:
+      "Discard incoming tokens and use your existing project tokens instead",
+  },
+  {
+    value: "merge",
+    label: "Merge",
+    description:
+      "Combine both into your existing token (incoming styles override existing ones)",
+  },
+] as const satisfies ReadonlyArray<{
+  value: ConflictResolution;
+  label: string;
+  description: string;
+}>;
 
 type DialogState =
   | {
-      conflicts: TokenConflict[];
-      resolve: (resolution: ConflictResolution) => void;
+      conflicts: TokenConflictDialogConflict[];
+      resolution: ConflictResolution;
+      resolve: (result: TokenConflictDialogResult) => void;
     }
   | undefined;
 
-const $tokenConflictDialogState = atom<DialogState>(undefined);
+const $dialogState = atom<DialogState>(undefined);
 
 export const showTokenConflictDialog = (
-  conflicts: Array<{
-    tokenName: string;
-    fragmentTokenId: string;
-  }>
-): Promise<ConflictResolution> => {
-  return new Promise((resolve) => {
-    const fullConflicts: TokenConflict[] = conflicts.map((c) => ({
-      tokenName: c.tokenName,
-      fragmentTokenId: c.fragmentTokenId,
-      fragmentToken: {
-        type: "token" as const,
-        id: c.fragmentTokenId,
-        name: c.tokenName,
-      },
-      existingToken: {
-        type: "token" as const,
-        id: "existing",
-        name: c.tokenName,
-      },
-    }));
-
-    $tokenConflictDialogState.set({
-      conflicts: fullConflicts,
-      resolve,
-    });
+  conflicts: TokenConflictDialogConflict[]
+): Promise<TokenConflictDialogResult> =>
+  new Promise((resolve) => {
+    $dialogState.get()?.resolve("cancel");
+    $dialogState.set({ conflicts, resolution: "theirs", resolve });
   });
-};
 
 export const TokenConflictDialog = () => {
-  const dialogState = useStore($tokenConflictDialogState);
-  const [resolution, setResolution] = useState<ConflictResolution | undefined>(
-    "theirs"
-  );
+  const dialogState = useStore($dialogState);
 
   if (!dialogState) {
     return;
   }
 
-  const { conflicts, resolve } = dialogState;
+  const { conflicts, resolution, resolve } = dialogState;
 
   const handleClose = () => {
-    $tokenConflictDialogState.set(undefined);
-    setResolution("theirs");
-  };
-
-  const handleResolve = () => {
-    if (resolution) {
-      resolve(resolution);
-      handleClose();
+    if ($dialogState.get()?.resolve === resolve) {
+      $dialogState.set(undefined);
     }
   };
 
+  const handleResolve = () => {
+    resolve(resolution);
+    handleClose();
+  };
+
   const handleCancel = () => {
+    resolve("cancel");
     handleClose();
   };
 
@@ -118,83 +121,15 @@ export const TokenConflictDialog = () => {
             </Text>
           </DialogDescription>
 
-          <RadioGroup
+          <DialogRadioOptions
             value={resolution}
-            onValueChange={(value) =>
-              setResolution(value as ConflictResolution)
-            }
-          >
-            <Flex direction="column" gap="1">
-              <Label>
-                <Flex
-                  gap="2"
-                  css={{
-                    padding: theme.spacing[3],
-                    cursor: "pointer",
-                    borderRadius: theme.borderRadius[4],
-                    "&:hover": {
-                      backgroundColor: theme.colors.backgroundHover,
-                    },
-                  }}
-                >
-                  <Radio value="theirs" />
-                  <Flex direction="column" gap="1">
-                    <Text variant="labels">Theirs</Text>
-                    <Text color="subtle">
-                      Keep incoming tokens with a suffix added to their names
-                      (e.g., "primary-color-1")
-                    </Text>
-                  </Flex>
-                </Flex>
-              </Label>
-
-              <Label>
-                <Flex
-                  gap="2"
-                  css={{
-                    padding: theme.spacing[3],
-                    cursor: "pointer",
-                    borderRadius: theme.borderRadius[4],
-                    "&:hover": {
-                      backgroundColor: theme.colors.backgroundHover,
-                    },
-                  }}
-                >
-                  <Radio value="ours" />
-                  <Flex direction="column" gap="1">
-                    <Text variant="labels">Ours</Text>
-                    <Text color="subtle">
-                      Discard incoming tokens and use your existing project
-                      tokens instead
-                    </Text>
-                  </Flex>
-                </Flex>
-              </Label>
-
-              <Label>
-                <Flex
-                  gap="2"
-                  css={{
-                    padding: theme.spacing[3],
-                    cursor: "pointer",
-                    borderRadius: theme.borderRadius[4],
-                    "&:hover": {
-                      backgroundColor: theme.colors.backgroundHover,
-                    },
-                  }}
-                >
-                  <Radio value="merge" />
-                  <Flex direction="column" gap="1">
-                    <Text variant="labels">Merge</Text>
-                    <Text color="subtle">
-                      Combine both into your existing token (incoming styles
-                      override existing ones)
-                    </Text>
-                  </Flex>
-                </Flex>
-              </Label>
-            </Flex>
-          </RadioGroup>
+            options={conflictResolutionOptions}
+            onValueChange={(resolution) => {
+              if ($dialogState.get()?.resolve === resolve) {
+                $dialogState.set({ conflicts, resolution, resolve });
+              }
+            }}
+          />
 
           <Flex as="details" direction="column" gap="1">
             <Text as="summary">Show conflicting tokens</Text>

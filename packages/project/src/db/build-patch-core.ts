@@ -424,11 +424,13 @@ export const createBuildPatchUpdate = async ({
     update.styles = serializeStyles(stylesData);
   }
 
-  if (buildData.marketplaceProduct) {
-    const marketplaceProductData = buildData.marketplaceProduct;
-    update.marketplaceProduct = serializeConfig<MarketplaceProduct>(
-      marketplaceProduct.parse(marketplaceProductData)
-    );
+  if (Object.hasOwn(buildData, "marketplaceProduct")) {
+    update.marketplaceProduct =
+      buildData.marketplaceProduct === undefined
+        ? serializeConfig({})
+        : serializeConfig<MarketplaceProduct>(
+            marketplaceProduct.parse(buildData.marketplaceProduct)
+          );
   }
 
   if (buildData.projectSettings) {

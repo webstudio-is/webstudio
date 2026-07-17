@@ -19,7 +19,7 @@ const handlePasteJsx = async (source: string) => {
       projectId: project.id,
       source,
     });
-    insertFragmentWithBreakpointWarning(fragment);
+    await insertFragmentWithBreakpointWarning(fragment);
     return pasteHandled;
   } catch (error) {
     return {

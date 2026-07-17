@@ -64,3 +64,18 @@ const serializedBuildShape = {
 // API packages compose this schema; they should not copy or maintain it.
 export const serializedBuild: z.ZodObject<typeof serializedBuildShape> =
   z.object(serializedBuildShape);
+
+const serializedBuilderState = serializedBuild
+  .omit({
+    id: true,
+    projectId: true,
+    version: true,
+    createdAt: true,
+    updatedAt: true,
+    deployment: true,
+  })
+  .partial();
+
+export const serializedRestorePointState = serializedBuilderState.extend({
+  marketplaceProduct: marketplaceProduct.nullable().optional(),
+});

@@ -22,7 +22,9 @@ const handlePasteHtml = async (html: string) => {
   if (html.includes(inceptionMark)) {
     fragment = await generateFragmentFromTailwind(fragment);
   }
-  insertFragmentWithBreakpointWarning(fragment);
+  if ((await insertFragmentWithBreakpointWarning(fragment)) === false) {
+    return pasteHandled;
+  }
   if (skippedSelectors.length > 0) {
     builderApi.toast.info(
       `Skipped nested selectors (no matching elements): ${skippedSelectors.join(", ")}`

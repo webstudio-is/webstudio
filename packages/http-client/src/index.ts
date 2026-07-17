@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/trpc-interface/api-compatibility";
 import {
   buildPatchTransaction,
+  restorePointPatchTransaction,
   buildPatchNamespaces,
   bundleVersion as currentBundleVersion,
   importProjectBundleResult,
@@ -16,6 +17,7 @@ import {
   stagedUploadPath,
   stagedUploadProjectIdHeader,
   parseBuilderUrl,
+  projectSessionRestorePointPath,
   type BuildPatchTransaction,
   getPublicApiOperation,
   getPublicApiOperationPath,
@@ -666,6 +668,16 @@ export const parseBuildPatchTransactions = (transactions: unknown) => {
   return result.data;
 };
 
+const parseRestorePointPatchTransactions = (transactions: unknown) => {
+  const result = restorePointPatchTransaction.array().safeParse(transactions);
+  if (result.success === false) {
+    throw new Error(
+      `Invalid restore point transaction: ${formatSchemaIssues(result.error.issues)}`
+    );
+  }
+  return result.data;
+};
+
 export const getBuildPatchSummary = (transactions: BuildPatchTransaction[]) => {
   const namespaces = new Set<(typeof buildPatchNamespaces)[number]>();
   let patchCount = 0;
@@ -721,6 +733,17 @@ export const applyBuildPatch = async (
     }
   );
 };
+
+export const applyRestorePointPatch = async (
+  params: AuthProjectParams & {
+    baseVersion: number;
+    transactions: unknown;
+  }
+) =>
+  await mutateProjectApi(params, projectSessionRestorePointPath, {
+    baseVersion: params.baseVersion,
+    transactions: parseRestorePointPatchTransactions(params.transactions),
+  });
 
 type PageMetaInput = {
   description?: string;
@@ -1123,6 +1146,10 @@ export const insertComponent = projectMutationInput<
 
 export const insertCollection = runtimeProjectMutation("insert-collection");
 
+export const attachSharedSlot = runtimeProjectMutation("attach-slot");
+
+export const extractSharedSlot = runtimeProjectMutation("extract-slot");
+
 export const insertFragment = projectMutationInput<
   AuthProjectParams & {
     parentInstanceId: string;
@@ -1302,6 +1329,10 @@ export const createDesignTokens = projectMutationInput<
     }>;
   }
 >("create-design-token");
+
+export const importDesignTokens = runtimeProjectMutation(
+  "import-design-tokens"
+);
 
 export const updateDesignTokenStyles = projectMutationInput<
   AuthProjectParams & {

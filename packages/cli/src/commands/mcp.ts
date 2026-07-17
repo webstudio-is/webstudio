@@ -31,7 +31,9 @@ import { HandledCliError, isHandledCliError } from "../errors";
 import { loadJSONFile } from "../fs-utils";
 import {
   assertCliServerOperationSupported,
+  createCliProjectRestorePointStorage,
   createCliProjectSession,
+  getCliProjectRestorePointsFile,
   getCliServerApiContract,
   getSupportedPublicApiOperations,
   type CliServerApiContract,
@@ -829,6 +831,9 @@ const createCliMcpHost = async ({
     projectRoot,
     sessionProjectId: projectId,
   });
+  const restorePointStorage = createCliProjectRestorePointStorage(
+    getCliProjectRestorePointsFile(projectRoot, projectId)
+  );
   await prepareMcpProjectSession(session);
   const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
   let isPreviewStale = true;
@@ -879,6 +884,29 @@ const createCliMcpHost = async ({
         markPreviewStale();
       }
       return result;
+    },
+    restorePoints: {
+      async create({ name }) {
+        return await restorePointStorage.create(
+          name,
+          await session.captureRestorePointSnapshot()
+        );
+      },
+      async list() {
+        return { points: await restorePointStorage.list() };
+      },
+      async delete({ id }) {
+        return { deleted: await restorePointStorage.delete(id) };
+      },
+      async revert({ id }, { dryRun }) {
+        const restorePoint = await restorePointStorage.get(id);
+        if (restorePoint === undefined) {
+          throw Object.assign(new Error("Restore point not found"), {
+            code: "NOT_FOUND",
+          });
+        }
+        return await session.restoreSnapshot(restorePoint, { dryRun });
+      },
     },
     async importProject(input) {
       importErrorMessage = "Project import failed.";

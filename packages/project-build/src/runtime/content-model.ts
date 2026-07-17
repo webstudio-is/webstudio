@@ -102,6 +102,10 @@ const getElementChildren = (
   tag: undefined | string,
   allowedCategories: undefined | string[]
 ) => {
+  // A transparent component without a known parent imposes no constraint.
+  if (tag === undefined && allowedCategories === undefined) {
+    return;
+  }
   // components without tag behave like transparent category
   // and pass through parent constraints
   let elementChildren: string[] =

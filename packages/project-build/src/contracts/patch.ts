@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { builderNamespaces, type BuilderNamespace } from "./namespaces";
+import {
+  builderNamespaces,
+  restorePointNamespaces,
+  type BuilderNamespace,
+} from "./namespaces";
 
 const builderPatchPath = z.array(z.union([z.string(), z.number()]));
 
@@ -196,6 +200,42 @@ export const builderPatchTransactionSchema: z.ZodType<
 > = z.object({
   id: z.string().min(1),
   payload: z.array(builderPatchChangeSchema),
+});
+
+const restorePointPatchSchema = z
+  .object({
+    op: z.literal("replace"),
+    path: z.tuple([]),
+    value: z.unknown(),
+  })
+  .superRefine(requireBuilderPatchValue);
+
+export const restorePointPatchTransactionSchema: z.ZodType<
+  BuilderPatchTransaction,
+  unknown
+> = z.object({
+  id: z.string().min(1),
+  payload: z
+    .array(
+      z.object({
+        namespace: z.enum(restorePointNamespaces),
+        patches: z.array(restorePointPatchSchema).length(1),
+      })
+    )
+    .min(1)
+    .superRefine((changes, context) => {
+      const namespaces = new Set<string>();
+      for (const [index, change] of changes.entries()) {
+        if (namespaces.has(change.namespace)) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, "namespace"],
+            message: `Restore point namespace ${change.namespace} appears more than once`,
+          });
+        }
+        namespaces.add(change.namespace);
+      }
+    }),
 });
 
 export type BuilderPatchChange = {

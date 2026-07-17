@@ -96,6 +96,13 @@ test("keys packaged preview builds to project inputs and asset metadata", async 
       template: [],
       cliVersion: "1.2.3",
     });
+    const withDraftPages = await getPreviewBuildCacheKey({
+      projectDir,
+      assets: true,
+      template: [],
+      includeDraftPages: true,
+      cliVersion: "1.2.3",
+    });
     await writeFile(join(projectDir, ".webstudio", "data.json"), "second");
     const changed = await getPreviewBuildCacheKey({
       projectDir,
@@ -105,6 +112,7 @@ test("keys packaged preview builds to project inputs and asset metadata", async 
     });
 
     expect(first).toBe(same);
+    expect(withDraftPages).not.toBe(first);
     expect(changed).not.toBe(first);
     await expect(
       getPreviewBuildCacheKey({
@@ -163,6 +171,34 @@ test("prepares preview by syncing missing data and generating the app template",
     template: ["defaults", "react-router"],
   });
   expect(result.cwd).toBe(getPreviewProjectDir());
+});
+
+test("prepares local verification previews with draft routes", async () => {
+  const prebuildProject = vi.fn(async () => undefined);
+  const getBuildCacheKey = vi.fn(async () => "draft-cache-key");
+
+  await preparePreviewProject({
+    assets: true,
+    template: [],
+    generate: true,
+    includeDraftPages: true,
+    accessLocalDataFile: vi.fn(async () => undefined),
+    prebuildProject,
+    ensureDependencies: vi.fn(async () => undefined),
+    getBuildCacheKey,
+  });
+
+  expect(getBuildCacheKey).toHaveBeenCalledWith({
+    projectDir: cwd(),
+    assets: true,
+    template: [],
+    includeDraftPages: true,
+  });
+  expect(prebuildProject).toHaveBeenCalledWith({
+    assets: true,
+    template: ["defaults", "react-router"],
+    includeDraftPages: true,
+  });
 });
 
 test("generates preview project in isolated directory", async () => {

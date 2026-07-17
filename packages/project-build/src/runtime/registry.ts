@@ -27,6 +27,8 @@ import * as projectSettings from "./project-settings";
 import * as props from "./props";
 import * as runtimeUi from "./runtime-ui";
 import * as search from "./search";
+import * as slot from "./slot";
+import * as designTokenImport from "./design-token-import";
 import * as audit from "./audit";
 import * as styles from "./styles";
 import { getZodValidationIssues, throwBuilderValidationError } from "./errors";
@@ -951,6 +953,26 @@ export const builderRuntimeOperations = [
       components.insertFragment(state, input, context)
   ),
   runtimeOperation(
+    "slots.attach",
+    api("attach-slot", "attachSharedSlot"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["instances"],
+    }),
+    slot.attachSharedSlotInput,
+    ({ state, input, context }) => slot.attachSharedSlot(state, input, context)
+  ),
+  runtimeOperation(
+    "slots.extract",
+    api("extract-slot", "extractSharedSlot"),
+    mutationContract({
+      readNamespaces: ["instances", "props"],
+      writeNamespaces: ["instances"],
+    }),
+    slot.extractSharedSlotInput,
+    ({ state, input, context }) => slot.extractSharedSlot(state, input, context)
+  ),
+  runtimeOperation(
     "instances.move",
     api("move-instance", "moveInstance"),
     mutationContract({
@@ -1426,6 +1448,17 @@ export const builderRuntimeOperations = [
     styles.designTokenCreateManyInput,
     ({ state, input, context }) =>
       styles.createDesignTokens(state, input, context)
+  ),
+  runtimeOperation(
+    "designTokens.import",
+    api("import-design-tokens", "importDesignTokens"),
+    mutationContract({
+      readNamespaces: ["pages", ...styleNamespaces, "breakpoints"],
+      writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
+    }),
+    designTokenImport.designTokenImportInput,
+    ({ state, input, context }) =>
+      designTokenImport.importDesignTokens(state, input, context)
   ),
   runtimeOperation(
     "designTokens.createAttached",

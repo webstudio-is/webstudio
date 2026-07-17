@@ -1,5 +1,4 @@
 import {
-  detectFragmentTokenConflicts,
   extractWebstudioFragment,
   findSafeFragmentPasteTarget,
   getCommonAncestorSelector,
@@ -44,6 +43,7 @@ import { getInstancePath } from "@webstudio-is/project-build/runtime";
 import { builderApi } from "../builder-api";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime";
+import { resolveFragmentTokenConflicts } from "../resolve-token-conflicts";
 
 const invalidPasteDataMessage =
   "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid.";
@@ -198,16 +198,6 @@ const findPasteTarget = (
   return findSelectionPasteTarget(data);
 };
 
-const resolveFragmentTokenConflicts = async (fragment: WebstudioFragment) => {
-  const conflicts = detectFragmentTokenConflicts({
-    fragment,
-    targetData: getWebstudioData(),
-  });
-  return conflicts.length > 0
-    ? await builderApi.showTokenConflictDialog(conflicts)
-    : "theirs";
-};
-
 const insertPastedFragment = async ({
   fragment,
   pasteTarget,
@@ -219,6 +209,9 @@ const insertPastedFragment = async ({
 }) => {
   try {
     const conflictResolution = await resolveFragmentTokenConflicts(fragment);
+    if (conflictResolution === "cancel") {
+      return;
+    }
     const result = await executeRuntimeMutationAsync({
       id: "instances.insertFragment",
       input: {

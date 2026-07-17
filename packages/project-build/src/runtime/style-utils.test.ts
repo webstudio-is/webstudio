@@ -12,11 +12,25 @@ import {
   collectFontFamiliesFromStyleValue,
   cloneStyles,
   createStyleClonePayload,
+  getUniqueNameWithSuffix,
   isAutoGridPlacement,
   resetGridChildPlacement,
   serializeStyleDeclarations,
   traverseStyleValue,
 } from "./style-utils";
+
+test("creates a unique name after the highest numeric suffix", () => {
+  expect(
+    getUniqueNameWithSuffix("color", [
+      "color",
+      "color-1",
+      "color-3",
+      "color-01",
+      "color-copy",
+      "background-color-4",
+    ])
+  ).toBe("color-4");
+});
 
 const createStyleDecl = (
   styleSourceId: string,

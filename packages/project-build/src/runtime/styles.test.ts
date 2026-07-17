@@ -812,6 +812,28 @@ describe("css variable usage", () => {
     ]);
   });
 
+  test("scopes css variable conflicts to the root source and breakpoint", () => {
+    const result = createCssVariableRootDefinePayload({
+      rootInstanceId: "body",
+      vars: { "--color": "blue" },
+      styleSources: new Map([
+        ["root-local", { id: "root-local", type: "local" }],
+      ]),
+      styleSourceSelections: [{ instanceId: "body", values: ["root-local"] }],
+      styles: [
+        createCssVariableStyleDecl("component-local", "--color", "red"),
+        {
+          ...createCssVariableStyleDecl("root-local", "--color", "green"),
+          breakpointId: "mobile",
+        },
+      ],
+      createId: createCssVariableId,
+    });
+
+    expect(result.conflicts).toEqual([]);
+    expect(result.styleKeys).toEqual(["root-local:base:--color:"]);
+  });
+
   test("creates css variable delete patches and reports references", () => {
     const styles = [
       createCssVariableStyleDecl("local", "--color", "red"),
