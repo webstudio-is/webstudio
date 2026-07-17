@@ -1065,18 +1065,15 @@ export const AssetManager = ({
           </Box>
         </DialogContent>
       </Dialog>
-      <MoveAssetManagerItemsDialog
-        open={pendingMoveItems !== undefined}
-        onOpenChange={(open) => {
-          if (open === false) {
-            setPendingMoveItems(undefined);
-          }
-        }}
-        initialFolderId={currentFolderId}
-        excludedFolderIds={moveExcludedFolderIds}
-        canMove={(folderId) => canMoveItems(pendingMoveItems ?? [], folderId)}
-        onMove={(folderId) => moveItems(pendingMoveItems ?? [], folderId)}
-      />
+      {pendingMoveItems !== undefined && (
+        <MoveAssetManagerItemsDialog
+          initialFolderId={currentFolderId}
+          excludedFolderIds={moveExcludedFolderIds}
+          canMove={(folderId) => canMoveItems(pendingMoveItems, folderId)}
+          onMove={(folderId) => moveItems(pendingMoveItems, folderId)}
+          onClose={() => setPendingMoveItems(undefined)}
+        />
+      )}
     </>
   );
 };

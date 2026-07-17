@@ -469,18 +469,24 @@ test("Dragging an asset auto-scrolls a long folder list", async () => {
       page,
       filename: "upload-image.svg",
     });
+    const scrollArea = page.locator("[data-asset-manager-scroll-area]");
     for (let index = 0; index < 24; index += 1) {
       await createAssetFolder({
         page,
         name: `Filler ${String(index).padStart(2, "0")}`,
       });
+      const overflows = await scrollArea.evaluate(
+        (element) => element.scrollHeight > element.clientHeight + 80
+      );
+      if (overflows) {
+        break;
+      }
     }
     const destination = await createAssetFolder({
       page,
       name: "Destination",
     });
     const asset = page.getByTitle(assetTitle);
-    const scrollArea = page.locator("[data-asset-manager-scroll-area]");
     await asset.scrollIntoViewIfNeeded();
     if ((await scrollArea.evaluate((element) => element.scrollTop)) === 0) {
       throw new Error("Expected the long asset list to be scrolled");

@@ -121,15 +121,14 @@ test("moves items to the selected folder from the folder-only dialog", () => {
   });
   $assetFolders.set(createAssetFoldersFixture(destination));
   const onMove = vi.fn();
-  const onOpenChange = vi.fn();
+  const onClose = vi.fn();
 
   renderer.render(
     <MoveAssetManagerItemsDialog
-      open
-      onOpenChange={onOpenChange}
       initialFolderId={destination.id}
       canMove={() => true}
       onMove={onMove}
+      onClose={onClose}
     />
   );
 
@@ -144,5 +143,5 @@ test("moves items to the selected folder from the folder-only dialog", () => {
   });
 
   expect(onMove).toHaveBeenCalledWith(destination.id);
-  expect(onOpenChange).toHaveBeenCalledWith(false);
+  expect(onClose).toHaveBeenCalledOnce();
 });

@@ -33,11 +33,12 @@ export const createAssetFolderSelectorLevels = ({
   rootLabel?: string;
 }) => {
   const hierarchy = createAssetFolderHierarchy(folders);
-  const excludedIds = new Set(
-    Array.from(excludedFolderIds ?? []).flatMap((folderId) =>
-      Array.from(hierarchy.getSubtreeIds(folderId))
-    )
-  );
+  const excludedIds = new Set<string>();
+  for (const folderId of excludedFolderIds ?? []) {
+    for (const descendantId of hierarchy.getSubtreeIds(folderId)) {
+      excludedIds.add(descendantId);
+    }
+  }
   const getChildren = (parentId: string | undefined) =>
     hierarchy
       .getChildren(parentId)

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useStore } from "@nanostores/react";
 import { ChevronRightIcon, FolderIcon } from "@webstudio-is/icons";
 import type { AssetFolder } from "@webstudio-is/sdk";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -13,7 +12,6 @@ import {
   AssetThumbnailGroup,
 } from "./asset-thumbnail-card";
 import {
-  $assetManagerClipboard,
   canPasteAssetManagerClipboard,
   createAssetManagerClipboardActions,
   pasteAssetManagerClipboard,
@@ -65,7 +63,6 @@ export const FolderThumbnail = ({
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
-  const clipboard = useStore($assetManagerClipboard);
   const getDragItems = interactions.getDragItems;
 
   const openSettings = (confirmDelete = false) => {
@@ -84,11 +81,9 @@ export const FolderThumbnail = ({
           settings: () => openSettings(),
           ...createAssetManagerClipboardActions(item),
           move: onMove,
-          paste:
-            clipboard?.projectId !== folder.projectId ||
-            canPasteAssetManagerClipboard(folder.id) === false
-              ? undefined
-              : () => pasteAssetManagerClipboard(folder.id),
+          paste: canPasteAssetManagerClipboard(folder.id)
+            ? () => pasteAssetManagerClipboard(folder.id)
+            : undefined,
           delete: () => openSettings(true),
         }
       : {}),

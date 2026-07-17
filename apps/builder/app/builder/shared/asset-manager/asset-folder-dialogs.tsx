@@ -280,30 +280,29 @@ export const AssetFolderSettingsDialog = ({
 };
 
 export const MoveAssetManagerItemsDialog = ({
-  open,
-  onOpenChange,
   initialFolderId,
   excludedFolderIds,
   canMove,
   onMove,
+  onClose,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   initialFolderId: string | undefined;
   excludedFolderIds?: ReadonlySet<string>;
   canMove: (folderId: string | undefined) => boolean;
   onMove: (folderId: string | undefined) => void;
+  onClose: () => void;
 }) => {
   const [folderId, setFolderId] = useState(initialFolderId);
 
-  useLayoutEffect(() => {
-    if (open) {
-      setFolderId(initialFolderId);
-    }
-  }, [initialFolderId, open]);
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (open === false) {
+          onClose();
+        }
+      }}
+    >
       <DialogContent
         minWidth={360}
         aria-describedby={undefined}
@@ -323,7 +322,7 @@ export const MoveAssetManagerItemsDialog = ({
               disabled={canMove(folderId) === false}
               onClick={() => {
                 onMove(folderId);
-                onOpenChange(false);
+                onClose();
               }}
             >
               Move
