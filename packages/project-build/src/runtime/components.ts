@@ -56,6 +56,7 @@ import {
 import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { ConflictResolution } from "./style-copy";
+import { findPageAndSelectorByInstanceId } from "./lookup";
 import { z } from "zod";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
@@ -142,9 +143,28 @@ const canContainDescendant = (
   );
 };
 
-const getStandaloneInsertError = (component: Instance["component"]) => {
-  const meta = componentMetas.get(component);
-  if (meta?.contentModel?.category !== "none") {
+const getComponentPartInsertError = ({
+  component,
+  ancestors,
+}: {
+  component: Instance["component"];
+  ancestors: readonly Instance[];
+}) => {
+  const [parent] = ancestors;
+  const allowedChildren =
+    parent === undefined
+      ? []
+      : (componentMetas.get(parent.component)?.contentModel?.children ?? []);
+  const allowedByAncestor = ancestors.some((ancestor) => {
+    const descendants =
+      componentMetas.get(ancestor.component)?.contentModel?.descendants ?? [];
+    return descendants.includes(component) || descendants.includes("none");
+  });
+  if (
+    allowedChildren.includes(component) ||
+    allowedChildren.includes("none") ||
+    allowedByAncestor
+  ) {
     return;
   }
   const suggestions = Array.from(componentMetas.entries())
@@ -884,7 +904,21 @@ export const insertComponent = (
   const fragment = createComponentTemplateFragment({
     component: input.component,
     templates,
-    getFallbackError: getStandaloneInsertError,
+    getFallbackError: (component) => {
+      if (componentMetas.get(component)?.contentModel?.category !== "none") {
+        return;
+      }
+      const { instanceSelector } = findPageAndSelectorByInstanceId(
+        mutationState.pages,
+        mutationState.instances,
+        parent.id
+      );
+      const ancestors = instanceSelector.flatMap((instanceId) => {
+        const instance = mutationState.instances.get(instanceId);
+        return instance === undefined ? [] : [instance];
+      });
+      return getComponentPartInsertError({ component, ancestors });
+    },
     createId: context.createId,
   });
   if (input.component === elementComponent) {

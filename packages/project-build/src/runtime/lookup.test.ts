@@ -72,6 +72,29 @@ describe("getInstancePath", () => {
 });
 
 describe("findPageAndSelectorByInstanceId", () => {
+  test("supports legacy instances without a children field", () => {
+    const pages = createDefaultPages({
+      homePageId: "homePageId",
+      rootInstanceId: "root",
+    });
+    const legacyRoot = {
+      type: "instance",
+      id: "root",
+      component: "Body",
+    } as Instance;
+
+    expect(
+      findPageAndSelectorByInstanceId(
+        pages,
+        new Map([[legacyRoot.id, legacyRoot]]),
+        legacyRoot.id
+      )
+    ).toEqual({
+      pageId: "homePageId",
+      instanceSelector: [legacyRoot.id],
+    });
+  });
+
   test("returns page id and selector for instances in nested pages", () => {
     const pages = createDefaultPages({
       homePageId: "homePageId",
