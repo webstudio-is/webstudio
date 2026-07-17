@@ -49,6 +49,28 @@ beforeEach(() => {
     callback(0);
     return 0;
   });
+  vi.stubGlobal(
+    "DOMRect",
+    class {
+      static fromRect(rect: Partial<DOMRect> = {}) {
+        const x = rect.x ?? 0;
+        const y = rect.y ?? 0;
+        const width = rect.width ?? 0;
+        const height = rect.height ?? 0;
+        return {
+          x,
+          y,
+          width,
+          height,
+          top: y,
+          right: x + width,
+          bottom: y + height,
+          left: x,
+          toJSON: () => ({}),
+        };
+      }
+    }
+  );
   $assets.set(new Map());
   $assetManagerClipboard.set(undefined);
   $authPermit.set("build");
@@ -147,6 +169,42 @@ const keyDown = (
   });
 };
 
+const openContextMenu = (element: HTMLElement) => {
+  act(() => {
+    element.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        button: 2,
+        cancelable: true,
+      })
+    );
+  });
+};
+
+const dismissContextMenu = () => {
+  act(() => {
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  });
+};
+
+const selectContextMenuItem = (
+  element: HTMLElement,
+  label: "Copy" | "Cut" | "Duplicate" | "Delete"
+) => {
+  openContextMenu(element);
+  const item = Array.from(
+    document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  ).find((candidate) => candidate.textContent?.startsWith(label));
+  expect(item).toBeDefined();
+  act(() => item?.click());
+};
+
 const createAsset = (id: string): Asset => ({
   id,
   projectId: "project",
@@ -195,7 +253,7 @@ describe("Asset Manager multiselect interactions", () => {
     });
 
     act(() => {
-      listbox.dispatchEvent(
+      viewport.dispatchEvent(
         new MouseEvent("pointerdown", {
           bubbles: true,
           button: 0,
@@ -472,6 +530,94 @@ describe("Asset Manager multiselect interactions", () => {
       deleteItem?.click();
     });
     expect(document.body.textContent).toContain("Delete selected items");
+  });
+
+  test.each(["Copy", "Cut"] as const)(
+    "%s from the context menu targets the complete multiselection",
+    (action) => {
+      const asset = createAsset("asset");
+      act(() => $assets.set(new Map([[asset.id, asset]])));
+      const container = renderManager();
+      const options = getOptions(container);
+      openContextMenu(options[0]!.button);
+      dismissContextMenu();
+      act(() => options[0]?.button.focus());
+      pointerDown(options.at(-1)!.button, { ctrlKey: true });
+
+      selectContextMenuItem(options[0]!.button, action);
+
+      const selectedFolderId = options[0]!.button
+        .getAttribute("aria-label")
+        ?.replace("Folder ", "")
+        .toLowerCase();
+      expect($assetManagerClipboard.get()).toEqual({
+        operation: action.toLowerCase(),
+        items: [
+          { type: "folder", id: selectedFolderId, projectId: "project" },
+          { type: "asset", id: "asset", projectId: "project" },
+        ],
+        projectId: "project",
+      });
+    }
+  );
+
+  test("Duplicate from the context menu targets the complete multiselection", () => {
+    const asset = createAsset("asset");
+    act(() => $assets.set(new Map([[asset.id, asset]])));
+    const container = renderManager();
+    const options = getOptions(container);
+    openContextMenu(options[0]!.button);
+    dismissContextMenu();
+    act(() => options[0]?.button.focus());
+    pointerDown(options.at(-1)!.button, { ctrlKey: true });
+
+    selectContextMenuItem(options[0]!.button, "Duplicate");
+
+    expect($assetFolders.get()).toHaveLength(4);
+    expect($assets.get()).toHaveLength(2);
+  });
+
+  test("Delete from the context menu targets the complete multiselection", () => {
+    const asset = createAsset("asset");
+    act(() => $assets.set(new Map([[asset.id, asset]])));
+    const container = renderManager();
+    const options = getOptions(container);
+    openContextMenu(options[0]!.button);
+    dismissContextMenu();
+    act(() => options[0]?.button.focus());
+    pointerDown(options.at(-1)!.button, { ctrlKey: true });
+
+    selectContextMenuItem(options[0]!.button, "Delete");
+
+    expect(document.body.textContent).toContain("Delete 2 selected items?");
+  });
+
+  test("thumbnail context requests replace the panel actions", () => {
+    const upload = vi.fn();
+    const container = renderer.render(
+      <TooltipProvider>
+        <AssetManager canManageFolders panelActions={{ upload }} />
+      </TooltipProvider>
+    );
+    const options = getOptions(container);
+    act(() => options[0]?.button.focus());
+    pointerDown(options[2]!.button, { ctrlKey: true });
+
+    act(() => {
+      options[0]!.option.dispatchEvent(
+        new MouseEvent("contextmenu", {
+          bubbles: true,
+          button: 2,
+          cancelable: true,
+        })
+      );
+    });
+
+    const labels = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).map((item) => item.textContent);
+    expect(labels.some((label) => label?.startsWith("Copy"))).toBe(true);
+    expect(labels).not.toContain("Upload asset");
   });
 });
 

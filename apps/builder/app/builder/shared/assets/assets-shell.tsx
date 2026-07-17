@@ -4,6 +4,7 @@ import {
   useState,
   type ComponentProps,
   type JSX,
+  type PointerEvent,
 } from "react";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import {
@@ -48,7 +49,11 @@ type AssetsShellProps = {
   emptyContent?: JSX.Element;
   folderId?: string;
   contextMenu?: JSX.Element;
-  onPointerDown?: ComponentProps<typeof Flex>["onPointerDown"];
+  onContextMenu?: ComponentProps<typeof Flex>["onContextMenu"];
+  onPointerDown?: (
+    event: PointerEvent<HTMLElement>,
+    listViewport: HTMLElement | null
+  ) => void;
   onKeyDown?: ComponentProps<typeof Flex>["onKeyDown"];
   onElementChange?: (element: HTMLDivElement | null) => void;
 };
@@ -73,6 +78,7 @@ export const AssetsShell = ({
   footer,
   folderId,
   contextMenu,
+  onContextMenu,
   onPointerDown,
   onKeyDown,
   onElementChange,
@@ -80,6 +86,7 @@ export const AssetsShell = ({
   accept,
 }: AssetsShellProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
+  const listViewportRef = useRef<HTMLDivElement | null>(null);
   const [monitorState, setMonitorState] =
     useState<ExternalMonitorDragState>(IDLE);
 
@@ -194,7 +201,8 @@ export const AssetsShell = ({
         ref.current = element;
         onElementChange?.(element);
       }}
-      onPointerDown={onPointerDown}
+      onPointerDown={(event) => onPointerDown?.(event, listViewportRef.current)}
+      onContextMenu={onContextMenu}
       onKeyDown={onKeyDown}
       direction="column"
       css={{
@@ -235,6 +243,7 @@ export const AssetsShell = ({
         </Flex>
       ) : (
         <ScrollArea
+          ref={listViewportRef}
           css={{
             display: "flex",
             flexDirection: "column",

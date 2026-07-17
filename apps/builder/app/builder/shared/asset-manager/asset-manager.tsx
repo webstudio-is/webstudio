@@ -11,6 +11,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { useStore } from "@nanostores/react";
 import {
   Box,
@@ -156,6 +157,10 @@ export const AssetManager = ({
     useState<AssetManagerSelection[]>();
   const [announcement, setAnnouncement] = useState("");
   const [marqueeRect, setMarqueeRect] = useState<AssetManagerMarqueeRect>();
+  const [itemContextMenu, setItemContextMenu] = useState<{
+    actions?: AssetManagerItemActions;
+    instance: number;
+  }>({ instance: 0 });
   const itemElements = useRef(new Map<string, HTMLElement>());
   const panelElement = useRef<HTMLDivElement | null>(null);
   const backElement = useRef<HTMLElement | null>(null);
@@ -741,10 +746,21 @@ export const AssetManager = ({
   const hasPanelContextMenuActions = Object.values(
     panelContextMenuActions
   ).some((action) => action !== undefined);
+  const showItemContextMenu = (actions: AssetManagerItemActions) => {
+    flushSync(() => {
+      setItemContextMenu(({ instance }) => ({
+        actions,
+        instance: instance + 1,
+      }));
+    });
+  };
 
   useEffect(() => () => cleanupMarquee.current?.(), []);
 
-  const handlePanelPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+  const handlePanelPointerDown = (
+    event: ReactPointerEvent<HTMLElement>,
+    listViewport: HTMLElement | null
+  ) => {
     if (
       canManageFolders === false ||
       event.button !== 0 ||
@@ -755,10 +771,14 @@ export const AssetManager = ({
       return;
     }
 
-    const listbox = event.target.closest<HTMLElement>('[role="listbox"]');
-    if (listbox === null) {
+    if (listViewport?.contains(event.target) !== true) {
       setSelection(undefined);
       exitMultiselect();
+      return;
+    }
+
+    const listbox = listViewport.querySelector<HTMLElement>('[role="listbox"]');
+    if (listbox === null) {
       return;
     }
 
@@ -867,12 +887,29 @@ export const AssetManager = ({
           panelElement.current = element;
         }}
         onPointerDown={handlePanelPointerDown}
+        onContextMenu={(event) => {
+          if (
+            event.target instanceof Element === false ||
+            event.target.closest("[data-asset-manager-thumbnail]") === null
+          ) {
+            flushSync(() => {
+              setItemContextMenu(({ instance }) => ({
+                instance: instance + 1,
+              }));
+            });
+          }
+        }}
         onKeyDown={handleShortcut}
         contextMenu={
           hasPanelContextMenuActions ? (
             <AssetManagerItemContextMenuContent
-              actions={panelContextMenuActions}
-              disabledActions={disabledPanelActions}
+              key={itemContextMenu.instance}
+              actions={itemContextMenu.actions ?? panelContextMenuActions}
+              disabledActions={
+                itemContextMenu.actions === undefined
+                  ? disabledPanelActions
+                  : undefined
+              }
             />
           ) : undefined
         }
@@ -941,6 +978,7 @@ export const AssetManager = ({
                       id: folder.id,
                     })
                   }
+                  onContextMenuActions={showItemContextMenu}
                   getDragItems={getDragItems({
                     type: "folder",
                     id: folder.id,
@@ -1005,6 +1043,7 @@ export const AssetManager = ({
                       id: assetContainer.asset.id,
                     })
                   }
+                  onContextMenuActions={showItemContextMenu}
                   selectionActions={
                     forcedSelection === undefined ? undefined : selectionActions
                   }

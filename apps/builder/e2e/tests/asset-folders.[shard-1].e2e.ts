@@ -262,6 +262,76 @@ test("Multiselected assets can be dragged into a folder", async () => {
   }
 });
 
+test("Assets can be selected by dragging across the panel", async () => {
+  const fixture = await createContentModeProject({
+    email: "asset-folder-lasso-select-e2e@webstudio.test",
+    title: "Asset Folder Lasso Select E2E",
+    builderToken: "asset-folder-lasso-select-e2e-builder-token",
+  });
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+    });
+    await waitForSyncStatus({ page, status: "idle" });
+    await openAssetsPanel({ page });
+    const firstAssetTitle = await uploadAsset({
+      page,
+      filename: "upload-image.svg",
+    });
+    const secondAssetTitle = await uploadAsset({
+      page,
+      filename: "replacement-image.svg",
+    });
+    const firstAsset = page.getByTitle(firstAssetTitle);
+    const secondAsset = page.getByTitle(secondAssetTitle);
+    const firstBounds = await firstAsset.boundingBox();
+    const secondBounds = await secondAsset.boundingBox();
+    const viewport = firstAsset.locator(
+      "xpath=ancestor::*[@data-radix-scroll-area-viewport]"
+    );
+    const viewportBounds = await viewport.boundingBox();
+    if (
+      firstBounds === null ||
+      secondBounds === null ||
+      viewportBounds === null
+    ) {
+      throw new Error("Expected visible assets and asset-list viewport");
+    }
+
+    const start = {
+      x: viewportBounds.x + viewportBounds.width - 2,
+      y: viewportBounds.y + viewportBounds.height - 2,
+    };
+    const end = {
+      x: Math.min(firstBounds.x, secondBounds.x) - 2,
+      y: Math.min(firstBounds.y, secondBounds.y) - 2,
+    };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    try {
+      await page.mouse.move(end.x, end.y, { steps: 10 });
+      await page.locator("[data-asset-manager-marquee]").waitFor();
+    } finally {
+      await page.mouse.up();
+    }
+
+    for (const asset of [firstAsset, secondAsset]) {
+      const option = asset.locator("xpath=ancestor::*[@role='option']");
+      if ((await option.getAttribute("aria-selected")) !== "true") {
+        throw new Error(
+          "Expected dragging across the panel to select both assets"
+        );
+      }
+    }
+  } finally {
+    await close();
+  }
+});
+
 test("Multiselected folders can be dragged into a folder", async () => {
   const fixture = await createContentModeProject({
     email: "asset-folder-multifolder-drag-e2e@webstudio.test",
@@ -341,6 +411,10 @@ test("Folders can be multiselected and deleted as one operation", async () => {
     for (const name of folderNames) {
       folders.push(await createAssetFolder({ page, name }));
     }
+
+    await folders[1]!.click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Settings" }).waitFor();
+    await page.keyboard.press("Escape");
 
     await folders[0]!.click();
     await folders[2]!.click({ modifiers: ["Shift"] });

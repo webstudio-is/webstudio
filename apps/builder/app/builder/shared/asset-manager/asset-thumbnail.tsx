@@ -135,6 +135,7 @@ type AssetThumbnailProps = {
   onModifiedArrow?: (event: KeyboardEvent<HTMLElement>) => void;
   onExitMultiselect?: () => void;
   onContextMenuSelection?: () => void;
+  onContextMenuActions?: (actions: AssetManagerItemActions) => void;
   getDragItems?: () => Array<{ type: "asset" | "folder"; id: string }>;
 };
 
@@ -153,6 +154,7 @@ export const AssetThumbnail = ({
   onModifiedArrow,
   onExitMultiselect,
   onContextMenuSelection,
+  onContextMenuActions,
   getDragItems,
 }: AssetThumbnailProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
@@ -231,7 +233,8 @@ export const AssetThumbnail = ({
     });
   }, [asset.id, canDrag, getDragItems, isUploading]);
 
-  const displayedActions = selectionActions ?? actions;
+  const displayedActions =
+    forcedSelection && selected ? (selectionActions ?? actions) : actions;
 
   return (
     <>
@@ -253,6 +256,7 @@ export const AssetThumbnail = ({
         onModifiedArrow={onModifiedArrow}
         onExitMultiselect={onExitMultiselect}
         onContextMenuSelection={onContextMenuSelection}
+        onContextMenuActions={onContextMenuActions}
         thumbnailRef={(element) => {
           elementRef.current = element;
           onElementChange?.(element);
