@@ -631,6 +631,84 @@ const createConnectedClient = async (
 };
 
 describe("project session mcp adapter", () => {
+  test("lists restore-point tools only when the host supports them", () => {
+    const restorePointToolNames = new Set([
+      "create-restore-point",
+      "list-restore-points",
+      "revert-to-restore-point",
+    ]);
+    expect(
+      listProjectSessionMcpTools(publicMcpOperations).some((tool) =>
+        restorePointToolNames.has(tool.name)
+      )
+    ).toBe(false);
+    expect(
+      listProjectSessionMcpTools(publicMcpOperations, {
+        includeRestorePoints: true,
+      })
+        .filter((tool) => restorePointToolNames.has(tool.name))
+        .map((tool) => tool.name)
+    ).toEqual([
+      "create-restore-point",
+      "list-restore-points",
+      "revert-to-restore-point",
+    ]);
+  });
+
+  test("requires a matching confirmation token before reverting", async () => {
+    const revert = vi.fn(
+      async (_input: { id: string }, options: { dryRun: boolean }) =>
+        createEnvelope({
+          operationId: "project-session.restore-point.revert",
+          result: { restoredNamespaces: ["pages"] },
+          source: options.dryRun ? "dry-run" : "local",
+          state: { committed: options.dryRun === false, freshness: {} },
+          transaction: {
+            id: "restore",
+            payload: [
+              {
+                namespace: "pages",
+                patches: [{ op: "replace", path: [], value: {} }],
+              },
+            ],
+          },
+        })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      restorePoints: {
+        create: vi.fn(),
+        list: vi.fn(),
+        revert,
+      },
+    });
+
+    const planned = await adapter.callTool({
+      name: "revert-to-restore-point",
+      input: { id: "point-1", dryRun: true },
+    });
+    const confirmation = planned.structuredContent.meta.confirmation as {
+      token: string;
+    };
+    expect(confirmation.token).toBeTypeOf("string");
+    const committed = await adapter.callTool({
+      name: "revert-to-restore-point",
+      input: {
+        id: "point-1",
+        confirmDestructive: true,
+        confirmationToken: confirmation.token,
+      },
+    });
+
+    expect(committed.structuredContent.ok).toBe(true);
+    expect(revert).toHaveBeenLastCalledWith(
+      { id: "point-1" },
+      { dryRun: false }
+    );
+  });
+
   test("lists tools from the public operation catalog", () => {
     const tools = listProjectSessionMcpTools(publicMcpOperations);
     const toolNames = tools.map((tool) => tool.name);

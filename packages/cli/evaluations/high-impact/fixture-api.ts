@@ -87,7 +87,10 @@ export const startHighImpactFixtureApi = async (
   const { createBuilderStateFromBuildData, applyBuilderPatchTransactions } =
     stateAdapters;
   const { executeBuilderRuntimeOperation } = runtime;
-  const { createLocalProjectBundleFromSessionSnapshot } = projectSession;
+  const {
+    createLocalProjectBundleFromSessionSnapshot,
+    hydrateRestorePointTransaction,
+  } = projectSession;
   const persistedPages = createPersistedPages(fixture.project);
   const build = {
     id: buildId,
@@ -149,10 +152,14 @@ export const startHighImpactFixtureApi = async (
       } else if (operationPath === "build.patch") {
         const input = (await readInput()) as {
           transactions?: BuilderPatchTransaction[];
+          restorePoint?: boolean;
         };
+        const transactions = input.transactions ?? [];
         state = applyBuilderPatchTransactions(
           state,
-          input.transactions ?? []
+          input.restorePoint === true
+            ? transactions.map(hydrateRestorePointTransaction)
+            : transactions
         ).state;
         version += 1;
         data = { version };

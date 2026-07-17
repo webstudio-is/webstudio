@@ -1,10 +1,14 @@
 import hash from "@emotion/hash";
+import deepEqual from "fast-deep-equal";
 import type {
   RuntimeOperationContract,
   RuntimeOperationId,
 } from "./contracts/builder-runtime";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
-import type { BuilderNamespace } from "./contracts/namespaces";
+import {
+  builderNamespaces,
+  type BuilderNamespace,
+} from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import { hasGeneratedRecordWritePatch } from "./contracts/patch";
 import type { BuilderApiCapability } from "./contracts/permissions";
@@ -32,6 +36,11 @@ import {
   type BuilderStateNamespaceSource,
 } from "./state/freshness";
 import { applyBuilderPatchTransactions } from "./state/patch";
+import {
+  createBuilderStateFromSerializedSnapshot,
+  createSerializedBuilderStateSnapshotFromState,
+  type SerializedBuilderStateSnapshot,
+} from "./state/adapters";
 
 type ProjectSessionSource = "local" | "remote" | "dry-run" | "server";
 type ProjectSessionEnvelopeContract = Pick<
@@ -102,6 +111,12 @@ export type ProjectSessionTransport = {
     baseVersion: number;
     transactions: readonly BuilderPatchTransaction[];
   }) => Promise<ProjectSessionCommitResult>;
+  commitRestorePoint?: (input: {
+    projectId: string;
+    buildId: string;
+    baseVersion: number;
+    transactions: readonly BuilderPatchTransaction[];
+  }) => Promise<ProjectSessionCommitResult>;
   executeServerOperation?: <Result>(input: {
     operationId: string;
     input: unknown;
@@ -119,6 +134,62 @@ export type ProjectSessionStorage = {
   ) => Promise<{ revision?: string } | undefined>;
   clear: () => Promise<void>;
 };
+
+const transformRestorePointTransaction = (
+  transaction: BuilderPatchTransaction,
+  transform: (state: Record<string, unknown>) => Record<string, unknown>
+): BuilderPatchTransaction => {
+  const state: Record<string, unknown> = {};
+  for (const change of transaction.payload) {
+    const patch = change.patches[0];
+    if (
+      change.patches.length !== 1 ||
+      patch?.op !== "replace" ||
+      patch.path.length !== 0
+    ) {
+      throw new Error(
+        "Restore point transactions must replace namespace roots"
+      );
+    }
+    state[change.namespace] = patch.value;
+  }
+  const transformed = transform(state);
+  return {
+    ...transaction,
+    payload: transaction.payload.map((change) => ({
+      namespace: change.namespace,
+      patches: [
+        {
+          op: "replace",
+          path: [],
+          value: transformed[change.namespace],
+        },
+      ],
+    })),
+  };
+};
+
+export const serializeRestorePointTransaction = (
+  transaction: BuilderPatchTransaction
+) =>
+  transformRestorePointTransaction(
+    transaction,
+    (state) =>
+      createSerializedBuilderStateSnapshotFromState(
+        state as BuilderState
+      ) as Record<string, unknown>
+  );
+
+export const hydrateRestorePointTransaction = (
+  transaction: BuilderPatchTransaction
+) =>
+  transformRestorePointTransaction(
+    transaction,
+    (state) =>
+      createBuilderStateFromSerializedSnapshot(
+        state as SerializedBuilderStateSnapshot
+      ) as Record<string, unknown>
+  );
 
 export type ProjectSessionOptions = {
   projectId: string;
@@ -612,6 +683,145 @@ export class ProjectSession {
         readNamespaces: namespaces,
       },
       snapshot,
+    });
+  }
+
+  async captureRestorePointSnapshot() {
+    return structuredClone(await this.ensureNamespaces(builderNamespaces));
+  }
+
+  async restoreSnapshot(
+    target: ProjectSessionSnapshot,
+    options: { dryRun?: boolean } = {}
+  ) {
+    return await this.enqueueMutation(async () => {
+      const snapshot = await this.ensureNamespaces(builderNamespaces);
+      await this.assertPermit("edit");
+      if (target.projectId !== snapshot.projectId) {
+        throw new BuilderRuntimeError(
+          "BAD_REQUEST",
+          "Restore point belongs to a different project"
+        );
+      }
+      if (target.buildId !== snapshot.buildId) {
+        throw new BuilderRuntimeError(
+          "CONFLICT",
+          "Restore point belongs to a different editable build"
+        );
+      }
+      if (isCompatible(target, snapshot.compatibility) === false) {
+        throw new BuilderRuntimeError(
+          "BAD_REQUEST",
+          "Restore point is incompatible with this CLI project session"
+        );
+      }
+      const currentSerialized = createSerializedBuilderStateSnapshotFromState(
+        snapshot.state
+      );
+      const targetSerialized = createSerializedBuilderStateSnapshotFromState(
+        target.state
+      );
+      const payload = builderNamespaces.flatMap((namespace) => {
+        const currentValue = snapshot.state[namespace];
+        const targetValue = target.state[namespace];
+        if (namespace === "marketplaceProduct" && targetValue === undefined) {
+          return [];
+        }
+        if (currentValue === undefined || targetValue === undefined) {
+          throw new BuilderRuntimeError(
+            "BAD_REQUEST",
+            `Restore point is missing the ${namespace} namespace`
+          );
+        }
+        if (
+          deepEqual(currentSerialized[namespace], targetSerialized[namespace])
+        ) {
+          return [];
+        }
+        return [
+          {
+            namespace,
+            patches: [
+              {
+                op: "replace" as const,
+                path: [],
+                value: structuredClone(targetValue),
+              },
+            ],
+          },
+        ];
+      });
+      const transaction: BuilderPatchTransaction = {
+        id: this.#options.runtimeContext.createId(),
+        payload,
+      };
+      const contract: ProjectSessionEnvelopeContract = {
+        id: "project-session.restore-point.revert",
+        readNamespaces: builderNamespaces,
+        writeNamespaces: builderNamespaces,
+        invalidatesNamespaces: [],
+      };
+      const result = {
+        restoredNamespaces: payload.map((change) => change.namespace),
+      };
+      if (payload.length === 0) {
+        return this.createEnvelope({
+          source: "local",
+          result,
+          committed: false,
+          contract,
+          snapshot,
+        });
+      }
+      if (options.dryRun === true) {
+        return this.createEnvelope({
+          source: "dry-run",
+          result,
+          committed: false,
+          contract,
+          snapshot,
+          transaction,
+        });
+      }
+      const commit = await (
+        this.#options.transport.commitRestorePoint ??
+        this.#options.transport.commitPatch
+      )({
+        projectId: snapshot.projectId,
+        buildId: snapshot.buildId,
+        baseVersion: snapshot.version,
+        transactions: [transaction],
+      });
+      const applied = applyBuilderPatchTransactions(snapshot.state, [
+        transaction,
+      ]);
+      const committedSnapshot: ProjectSessionSnapshot = {
+        ...snapshot,
+        version: commit.version,
+        state: applied.state,
+        freshness: mergeFreshness({
+          current: snapshot.freshness,
+          state: applied.state,
+          namespaces: result.restoredNamespaces,
+          version: commit.version,
+          loadedAt: new Date().toISOString(),
+          source: "local",
+        }),
+      };
+      const persisted = await this.#synchronizeAfterCommit({
+        snapshot: committedSnapshot,
+        namespaces: builderNamespaces,
+        diagnostics: [],
+      });
+      return this.createEnvelope({
+        source: "local",
+        result,
+        committed: true,
+        contract,
+        snapshot: persisted.snapshot,
+        transaction,
+        diagnostics: persisted.diagnostics,
+      });
     });
   }
 

@@ -18,6 +18,7 @@ import { getHomePage } from "@webstudio-is/sdk";
 import {
   createProjectSession,
   createDefaultProjectSessionCompatibility,
+  serializeRestorePointTransaction,
   type ProjectSessionCompatibility,
   type ProjectSessionPersistedSnapshot,
   type ProjectSessionPermissions,
@@ -42,6 +43,8 @@ import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
 import { writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
+
+export { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -149,6 +152,15 @@ export const getCliProjectSessionFile = (
   join(
     getLocalProjectStateDirectory(projectRoot, projectId),
     "project-session.json"
+  );
+
+export const getCliProjectRestorePointsFile = (
+  projectRoot = cwd(),
+  projectId?: string
+) =>
+  join(
+    getLocalProjectStateDirectory(projectRoot, projectId),
+    "restore-points.json"
   );
 const compatibilityVersion = "cli-project-session-v1";
 
@@ -307,6 +319,85 @@ export const createCliProjectSessionStorage = (
   },
 });
 
+export type CliProjectRestorePointSummary = {
+  id: string;
+  name: string;
+  createdAt: string;
+  projectId: string;
+  buildId: string;
+  version: number;
+};
+
+type PersistedCliProjectRestorePoint = CliProjectRestorePointSummary & {
+  snapshot: PersistedCliProjectSessionSnapshot;
+};
+
+type PersistedCliProjectRestorePoints = {
+  version: 1;
+  points: PersistedCliProjectRestorePoint[];
+};
+
+export const createCliProjectRestorePointStorage = (
+  path = getCliProjectRestorePointsFile()
+) => {
+  const load = async (): Promise<PersistedCliProjectRestorePoints> => {
+    try {
+      return JSON.parse(await readFile(path, "utf-8"));
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as { code?: unknown }).code === "ENOENT"
+      ) {
+        return { version: 1, points: [] };
+      }
+      throw error;
+    }
+  };
+  const getSummary = ({
+    snapshot: _snapshot,
+    ...summary
+  }: PersistedCliProjectRestorePoint) => summary;
+  return {
+    async create(name: string, snapshot: ProjectSessionSnapshot) {
+      const persisted = await load();
+      const point: PersistedCliProjectRestorePoint = {
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        projectId: snapshot.projectId,
+        buildId: snapshot.buildId,
+        version: snapshot.version,
+        snapshot: serializePersistedSnapshot(snapshot),
+      };
+      await writeFileAtomic(
+        path,
+        `${JSON.stringify(
+          { version: 1, points: [...persisted.points, point] },
+          undefined,
+          2
+        )}\n`
+      );
+      return getSummary(point);
+    },
+    async list() {
+      return (await load()).points.map(getSummary);
+    },
+    async get(id: string) {
+      const point = (await load()).points.find(
+        (candidate) => candidate.id === id
+      );
+      if (point === undefined) {
+        return;
+      }
+      return {
+        summary: getSummary(point),
+        snapshot: parsePersistedSnapshot(point.snapshot),
+      };
+    },
+  };
+};
+
 export const createCliProjectSessionTransport = ({
   connection,
   executeServerOperation,
@@ -349,6 +440,15 @@ export const createCliProjectSessionTransport = ({
         ...connection,
         baseVersion,
         transactions,
+      })
+    )) as { version: number };
+  },
+  async commitRestorePoint({ baseVersion, transactions }) {
+    return (await withMappedRemoteError(() =>
+      httpClient.applyRestorePointPatch({
+        ...connection,
+        baseVersion,
+        transactions: transactions.map(serializeRestorePointTransaction),
       })
     )) as { version: number };
   },

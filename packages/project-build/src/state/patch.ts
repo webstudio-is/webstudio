@@ -172,6 +172,9 @@ const assertReplacePatchTargetsExistingPath = (
   if (patch.op !== "replace") {
     return;
   }
+  if (patch.path.length === 0) {
+    return;
+  }
   const { parent, key } = getPatchParent(namespaceData, patch);
   if (hasPathValue(parent, key) === false) {
     throw Error(`Cannot replace missing patch path "${String(key)}"`);

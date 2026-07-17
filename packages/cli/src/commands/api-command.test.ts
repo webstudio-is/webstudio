@@ -2005,6 +2005,28 @@ test("creates design tokens from input file", async () => {
   });
 });
 
+test("imports design tokens from input file", async () => {
+  const inputJson = {
+    source: {
+      format: "dtcg",
+      document: {
+        color: {
+          brand: { $type: "color", $value: "#0066ff" },
+        },
+      },
+    },
+    mapping: {
+      color: { target: "design-token", property: "color" },
+    },
+  };
+  await expectCommandCall({
+    options: { command: "import-design-tokens", input: "tokens.json" },
+    call: apiCalls.importDesignTokens,
+    inputJson,
+    connection: inputJson,
+  });
+});
+
 test("updates design token styles from input file", async () => {
   const updates = [
     { property: "color", value: { type: "keyword", value: "blue" } },

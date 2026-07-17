@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { Instance } from "@webstudio-is/sdk";
+import { applyBuilderPatchTransactions } from "../state/patch";
 import {
+  attachSharedSlot,
+  extractSharedSlot,
   findClosestSlot,
   getDirectSharedSlotChildBoundary,
   getSharedSlotBoundary,
@@ -40,6 +43,97 @@ const expectSlotsShareFragment = (
 };
 
 describe("runtime slot utilities", () => {
+  test("attaches another occurrence of a shared slot", () => {
+    const instances = new Map([
+      ["body", instance("body", "Body", [{ type: "id", value: "source" }])],
+      [
+        "source",
+        instance("source", "Slot", [{ type: "id", value: "fragment" }]),
+      ],
+      [
+        "fragment",
+        instance("fragment", "Fragment", [{ type: "id", value: "heading" }]),
+      ],
+      ["heading", instance("heading", "Heading")],
+      ["target", instance("target", "Box")],
+    ]);
+    const mutation = attachSharedSlot(
+      { instances, props: new Map() },
+      { sourceSlotId: "source", parentInstanceId: "target" },
+      { createId: () => "attached" }
+    );
+    const updated = applyBuilderPatchTransactions(
+      { instances, props: new Map() },
+      [{ id: "attach-slot", payload: mutation.payload }]
+    ).state.instances;
+
+    expect(mutation.result).toEqual({
+      slotId: "attached",
+      fragmentId: "fragment",
+    });
+    expect(updated?.get("attached")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(updated?.get("target")?.children).toEqual([
+      { type: "id", value: "attached" },
+    ]);
+  });
+
+  test("extracts a subtree into canonical shared slot content", () => {
+    const instances = new Map([
+      ["body", instance("body", "Body", [{ type: "id", value: "section" }])],
+      [
+        "section",
+        instance("section", "Box", [{ type: "id", value: "heading" }]),
+      ],
+      ["heading", instance("heading", "Heading")],
+    ]);
+    const ids = ["slot", "fragment"];
+    const mutation = extractSharedSlot(
+      { instances, props: new Map() },
+      { instanceSelector: ["section", "body"], label: "Shared section" },
+      { createId: () => ids.shift() ?? "unexpected" }
+    );
+    const updated = applyBuilderPatchTransactions(
+      { instances, props: new Map() },
+      [{ id: "extract-slot", payload: mutation.payload }]
+    ).state.instances;
+
+    expect(updated?.get("body")?.children).toEqual([
+      { type: "id", value: "slot" },
+    ]);
+    expect(updated?.get("slot")).toMatchObject({
+      component: "Slot",
+      label: "Shared section",
+      children: [{ type: "id", value: "fragment" }],
+    });
+    expect(updated?.get("fragment")?.children).toEqual([
+      { type: "id", value: "section" },
+    ]);
+  });
+
+  test("rejects attaching shared content inside itself", () => {
+    const instances = new Map([
+      [
+        "source",
+        instance("source", "Slot", [{ type: "id", value: "fragment" }]),
+      ],
+      [
+        "fragment",
+        instance("fragment", "Fragment", [{ type: "id", value: "section" }]),
+      ],
+      ["section", instance("section", "Box")],
+    ]);
+
+    expect(() =>
+      attachSharedSlot(
+        { instances, props: new Map() },
+        { sourceSlotId: "source", parentInstanceId: "section" },
+        { createId: () => "attached" }
+      )
+    ).toThrow("Shared Slot cannot be attached inside its own content");
+  });
+
   test("finds closest slot and shared slot boundary", () => {
     const slot = instance("slot", "Slot");
     expect(

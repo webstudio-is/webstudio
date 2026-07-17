@@ -15,6 +15,7 @@ import * as projectApi from "@webstudio-is/project/index.server";
 import * as projectBuild from "@webstudio-is/project-build/server";
 import type { z } from "zod";
 import {
+  buildPatchInput,
   commitBuildPatch,
   commitBuildTransactions,
   createBuildSnapshot,
@@ -22,6 +23,46 @@ import {
   loadReadableDevBuild,
   serializeProjectSummary,
 } from "./api-build.server";
+
+test("allows namespace root replacement only for restore points", () => {
+  const input = {
+    projectId: "project-1",
+    baseVersion: 1,
+    transactions: [
+      {
+        id: "restore-1",
+        payload: [
+          {
+            namespace: "instances" as const,
+            patches: [{ op: "replace" as const, path: [], value: [] }],
+          },
+        ],
+      },
+    ],
+  };
+
+  expect(buildPatchInput.safeParse(input).success).toBe(false);
+  expect(
+    buildPatchInput.safeParse({ ...input, restorePoint: true }).success
+  ).toBe(true);
+  expect(
+    buildPatchInput.safeParse({
+      ...input,
+      restorePoint: true,
+      transactions: [
+        {
+          id: "restore-1",
+          payload: [
+            {
+              namespace: "instances",
+              patches: [{ op: "add", path: [], value: [] }],
+            },
+          ],
+        },
+      ],
+    }).success
+  ).toBe(false);
+});
 
 const server = createTestServer();
 

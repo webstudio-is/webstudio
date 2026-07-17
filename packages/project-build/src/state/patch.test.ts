@@ -168,6 +168,27 @@ test("fails when replacing a missing patch target", () => {
   ).toThrow('Cannot replace missing patch path "missing"');
 });
 
+test("replaces a complete namespace at its root", () => {
+  const replacement = new Map([
+    [
+      "replacement",
+      {
+        id: "replacement",
+        instanceId: "instance-root",
+        name: "Title",
+        type: "string" as const,
+        value: "Restored",
+      },
+    ],
+  ]);
+
+  expect(
+    applyBuilderNamespacePatches<Props>(new Map(build.props), [
+      { op: "replace", path: [], value: replacement },
+    ])
+  ).toEqual(replacement);
+});
+
 test("applies transactions without mutating the input state object", () => {
   const state: BuilderState = {
     props: new Map(build.props),

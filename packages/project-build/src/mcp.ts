@@ -739,6 +739,20 @@ const getHandshakeInputSchema = (
   };
 };
 
+const getZodMcpInputSchema = (schema: z.ZodTypeAny) => {
+  const inputSchema = toInputJsonSchemaObject(
+    getInputSchemaMetadata(schema).inputJsonSchema
+  );
+  if (inputSchema?.type !== "object") {
+    throw new Error("MCP tool input schema must be an object");
+  }
+  return getHandshakeInputSchema({
+    ...inputSchema,
+    type: "object",
+    additionalProperties: inputSchema.additionalProperties ?? false,
+  }).inputSchema;
+};
+
 const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
 });
@@ -1927,6 +1941,100 @@ const previewDataSchema = {
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
+const restorePointSummaryDataSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    name: { type: "string" },
+    createdAt: { type: "string" },
+    projectId: { type: "string" },
+    buildId: { type: "string" },
+    version: { type: "integer" },
+  },
+  required: ["id", "name", "createdAt", "projectId", "buildId", "version"],
+  additionalProperties: false,
+} as const satisfies InputJsonSchema;
+
+const restorePointCreateInput = z.object({ name: z.string().trim().min(1) });
+const restorePointRevertInput = z.object({ id: z.string().min(1) });
+
+const restorePointTools: readonly ProjectSessionMcpTool[] = [
+  createProjectSessionMcpTool({
+    name: "create-restore-point",
+    description:
+      "Create a named local restore point for every synchronized project namespace before risky agent work.",
+    inputSchema: getZodMcpInputSchema(restorePointCreateInput),
+    outputSchema: getMcpOutputSchema(restorePointSummaryDataSchema),
+    annotations: {
+      command: "create-restore-point",
+      operationId: "project-session.restore-point.create",
+      method: "session",
+      permit: "edit",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: builderNamespaces,
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "list-restore-points",
+    description: "List named local restore points for the configured project.",
+    inputSchema: emptyInputSchema,
+    outputSchema: getMcpOutputSchema({
+      type: "object",
+      properties: {
+        points: { type: "array", items: restorePointSummaryDataSchema },
+      },
+      required: ["points"],
+      additionalProperties: false,
+    }),
+    annotations: {
+      command: "list-restore-points",
+      operationId: "project-session.restore-point.list",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "revert-to-restore-point",
+    description:
+      "Revert every synchronized namespace to a named restore point. This is destructive and requires a reviewed dry-run confirmation token.",
+    inputSchema: getZodMcpInputSchema(restorePointRevertInput),
+    outputSchema: getMcpOutputSchema({
+      type: "object",
+      properties: {
+        restoredNamespaces: {
+          type: "array",
+          items: { type: "string", enum: builderNamespaces },
+        },
+      },
+      required: ["restoredNamespaces"],
+      additionalProperties: false,
+    }),
+    annotations: {
+      command: "revert-to-restore-point",
+      operationId: "project-session.restore-point.revert",
+      method: "session",
+      permit: "edit",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: builderNamespaces,
+      writeNamespaces: builderNamespaces,
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+      requiresConfirm: true,
+    },
+  }),
+];
+
 const sessionTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "meta.index",
@@ -2567,6 +2675,7 @@ export const listProjectSessionMcpTools = (
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
     includePreview?: boolean;
+    includeRestorePoints?: boolean;
   } = {}
 ): ProjectSessionMcpTool[] => [
   ...operations
@@ -2614,6 +2723,7 @@ export const listProjectSessionMcpTools = (
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
   })),
+  ...(options.includeRestorePoints ? restorePointTools : []),
   ...(options.includeImport ? [importTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
@@ -5783,6 +5893,27 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   storeRenderedAuditArtifacts?: (
     manifest: RenderedAuditArtifactManifest
   ) => Promise<string>;
+  restorePoints?: ProjectSessionRestorePointHandlers;
+};
+
+export type ProjectSessionRestorePointSummary = {
+  id: string;
+  name: string;
+  createdAt: string;
+  projectId: string;
+  buildId: string;
+  version: number;
+};
+
+export type ProjectSessionRestorePointHandlers = {
+  create: (input: {
+    name: string;
+  }) => Promise<ProjectSessionRestorePointSummary>;
+  list: () => Promise<{ points: ProjectSessionRestorePointSummary[] }>;
+  revert: (
+    input: { id: string },
+    options: { dryRun: boolean }
+  ) => Promise<ProjectSessionEnvelope>;
 };
 
 export const createProjectSessionMcpCore = <Command extends string = string>({
@@ -5800,6 +5931,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   guidance,
   reportToolProgress,
   storeRenderedAuditArtifacts,
+  restorePoints,
 }: ProjectSessionMcpCoreOptions<Command>) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
@@ -5821,6 +5953,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       includeInstallOcr: installOcr !== undefined,
       includePreview:
         startPreview !== undefined && getPreviewStatus !== undefined,
+      includeRestorePoints: restorePoints !== undefined,
     });
   const getSession = () => {
     session ??= createProjectSession();
@@ -6109,6 +6242,32 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "reset-session") {
         const session = getSession();
         return toCallResult(await session.reset());
+      }
+      if (name === "create-restore-point" && restorePoints !== undefined) {
+        return toMetaResult(
+          await restorePoints.create(restorePointCreateInput.parse(input))
+        );
+      }
+      if (name === "list-restore-points" && restorePoints !== undefined) {
+        return toMetaResult(await restorePoints.list());
+      }
+      if (name === "revert-to-restore-point" && restorePoints !== undefined) {
+        const transportInput = getToolCallInput(input, true);
+        const restoreInput = restorePointRevertInput.parse(
+          transportInput.input
+        );
+        const [envelope, response] = await executeDestructiveMcpOperation({
+          command: "revert-to-restore-point",
+          input: restoreInput,
+          dryRun: dryRun || transportInput.dryRun,
+          confirmDestructive: transportInput.confirmDestructive,
+          confirmationToken: transportInput.confirmationToken,
+          executeOperation: async ({ input, dryRun }) =>
+            await restorePoints.revert(restorePointRevertInput.parse(input), {
+              dryRun,
+            }),
+        });
+        return response ?? toCallResult(envelope);
       }
       if (name === "import" && importProject !== undefined) {
         return toMetaResult(await importProject(getImportInput(input)));
@@ -6451,6 +6610,7 @@ export const createProjectSessionMcpServer = async <
   getErrorCode,
   reportLog,
   storeRenderedAuditArtifacts,
+  restorePoints,
   onInitialized,
   toolHeartbeatIntervalMs = 10_000,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
@@ -6492,6 +6652,7 @@ export const createProjectSessionMcpServer = async <
     stopPreview,
     guidance,
     storeRenderedAuditArtifacts,
+    restorePoints,
     reportToolProgress: (message) => {
       sendLog("info", message);
     },

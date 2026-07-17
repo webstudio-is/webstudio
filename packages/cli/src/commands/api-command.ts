@@ -823,6 +823,12 @@ export const createDesignTokenCommandOptions = (yargs: CommonYargsArgv) =>
     "Required JSON file containing an array of design tokens with name, styles object, or declarations array"
   );
 
+export const importDesignTokensCommandOptions = (yargs: CommonYargsArgv) =>
+  requiredInputOption(
+    apiCommandOptions(yargs),
+    "Required JSON file containing DTCG tokens, Figma variables, and import mapping options"
+  );
+
 export const updateDesignTokenStylesCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
     apiCommandOptions(yargs).option("design-token", {
@@ -1430,6 +1436,10 @@ type StyleReplaceInput = Omit<
 type CreateDesignTokensInput = Parameters<
   typeof httpClient.createDesignTokens
 >[0]["tokens"];
+type ImportDesignTokensInput = Omit<
+  Parameters<typeof httpClient.importDesignTokens>[0],
+  "authToken" | "headers" | "origin" | "projectId"
+>;
 type UpdateDesignTokenStylesInput = Parameters<
   typeof httpClient.updateDesignTokenStyles
 >[0]["updates"];
@@ -2627,6 +2637,18 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     };
     return runProjectSessionCommand(
       "create-design-token",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "import-design-tokens": async (options, connection, dependencies) => {
+    const input = await readInputObject<ImportDesignTokensInput>(
+      dependencies,
+      options
+    );
+    return runProjectSessionCommand(
+      "import-design-tokens",
       input,
       connection,
       dependencies

@@ -6,9 +6,11 @@ import {
   createDefaultProjectSessionCompatibility,
   createProjectSession,
   hasProjectSessionPermit,
+  hydrateRestorePointTransaction,
   projectSessionBusyMessage,
   redactProjectSessionValue,
   serializeProjectSessionMeta,
+  serializeRestorePointTransaction,
 } from "./project-session";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type {
@@ -211,6 +213,41 @@ const createSession = ({
 };
 
 describe("project session", () => {
+  test("round-trips hydrated restore transactions through JSON", () => {
+    const state = createSnapshot().state;
+    const transaction: BuilderPatchTransaction = {
+      id: "restore",
+      payload: ["pages", "props"].map((namespace) => ({
+        namespace: namespace as "pages" | "props",
+        patches: [
+          {
+            op: "replace",
+            path: [],
+            value: state[namespace as "pages" | "props"],
+          },
+        ],
+      })),
+    };
+
+    const serialized = JSON.parse(
+      JSON.stringify(serializeRestorePointTransaction(transaction))
+    );
+    const hydrated = hydrateRestorePointTransaction(serialized);
+    const getPatchValue = (namespaceIndex: number) => {
+      const patch = hydrated.payload[namespaceIndex]?.patches[0];
+      if (patch?.op !== "replace") {
+        throw new Error("Expected a root replacement patch");
+      }
+      return patch.value;
+    };
+
+    expect(getPatchValue(0)).toMatchObject({
+      pages: expect.any(Map),
+      folders: expect.any(Map),
+    });
+    expect(getPatchValue(1)).toBeInstanceOf(Map);
+  });
+
   test("derives default compatibility from the full runtime contract shape", () => {
     const compatibility =
       createDefaultProjectSessionCompatibility("test-session");
@@ -1208,6 +1245,70 @@ describe("project session", () => {
     expect(result.state.freshness.assets?.status).toBe("fresh");
     expect(transport.loadedNamespaces).toEqual([["assets"]]);
     expect(storage.saved.at(-1)?.version).toBe(5);
+  });
+
+  test("plans and atomically restores a complete project snapshot", async () => {
+    const target = createPersistedSnapshot();
+    const current = structuredClone(target);
+    current.version = 2;
+    current.revision = "rev-2";
+    const currentHome = current.state.pages?.pages.get("page-home");
+    if (currentHome === undefined) {
+      throw new Error("Home page fixture is missing");
+    }
+    currentHome.name = "Edited after restore point";
+    const storage = createStorage(current);
+    const transport = createMutableTransport({
+      projectId: current.projectId,
+      buildId: current.buildId,
+      version: current.version,
+      state: current.state,
+    });
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const planned = await session.restoreSnapshot(target, { dryRun: true });
+    expect(planned.source).toBe("dry-run");
+    expect(planned.transaction?.payload).toContainEqual({
+      namespace: "pages",
+      patches: [expect.objectContaining({ op: "replace", path: [] })],
+    });
+
+    const restored = await session.restoreSnapshot(target);
+    expect(restored.state.committed).toBe(true);
+    expect(restored.result.restoredNamespaces).toEqual(["pages"]);
+    expect(session.snapshot?.state.pages?.pages.get("page-home")?.name).toBe(
+      target.state.pages?.pages.get("page-home")?.name
+    );
+    expect(transport.commits).toHaveLength(1);
+  });
+
+  test("rejects restore points from another editable build", async () => {
+    const current = createPersistedSnapshot();
+    const session = createSession({ storage: createStorage(current) });
+    await session.initialize();
+
+    await expect(
+      session.restoreSnapshot({ ...current, buildId: "another-build" })
+    ).rejects.toThrow("different editable build");
+  });
+
+  test("restores snapshots with optional namespaces absent on both sides", async () => {
+    const target = createPersistedSnapshot();
+    const current = structuredClone(target);
+    target.state.marketplaceProduct = undefined;
+    current.state.marketplaceProduct = undefined;
+    const currentHome = current.state.pages?.pages.get("page-home");
+    if (currentHome === undefined) {
+      throw new Error("Home page fixture is missing");
+    }
+    currentHome.name = "Edited after restore point";
+    const session = createSession({ storage: createStorage(current) });
+    await session.initialize();
+
+    const result = await session.restoreSnapshot(target, { dryRun: true });
+
+    expect(result.result.restoredNamespaces).toEqual(["pages"]);
   });
 
   test("redacts sensitive diagnostic values", () => {

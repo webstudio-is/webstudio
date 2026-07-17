@@ -1,5 +1,17 @@
-import type { Instance, Instances, WebstudioData } from "@webstudio-is/sdk";
-import { findAvailableVariables } from "./data";
+import {
+  findTreeInstanceIds,
+  portalComponent,
+  type Instance,
+  type Instances,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { z } from "zod";
+import type { BuilderState } from "../state/builder-state";
+import { findAvailableVariables, produceWebstudioDataMutation } from "./data";
+import { isTreeSatisfyingContentModel } from "./content-model";
+import type { BuilderRuntimeContext } from "./context";
+import { throwBuilderRuntimeError } from "./errors";
 import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
@@ -9,6 +21,7 @@ import type {
   InstancePathItem,
   InstanceSelector,
 } from "./instance-path";
+import { createRuntimeMutation } from "./mutation";
 
 export type { InstancePath, InstancePathItem } from "./instance-path";
 
@@ -16,6 +29,41 @@ type SlotDropTarget = {
   parentSelector: Instance["id"][];
   position: number | "end";
 };
+
+const insertIndexInput = z.number().int().nonnegative();
+
+const createSharedSlot = ({
+  id,
+  fragmentId,
+  label,
+}: {
+  id: Instance["id"];
+  fragmentId: Instance["id"];
+  label?: string;
+}) => {
+  const instance: Instance = {
+    type: "instance",
+    id,
+    component: portalComponent,
+    children: [{ type: "id", value: fragmentId }],
+  };
+  if (label !== undefined) {
+    instance.label = label;
+  }
+  return instance;
+};
+
+export const attachSharedSlotInput = z.object({
+  sourceSlotId: z.string().min(1),
+  parentInstanceId: z.string().min(1),
+  insertIndex: insertIndexInput.optional(),
+  label: z.string().min(1).optional(),
+});
+
+export const extractSharedSlotInput = z.object({
+  instanceSelector: z.array(z.string().min(1)).min(2),
+  label: z.string().min(1).optional(),
+});
 
 export type SharedSlotBoundary = {
   slotIndex: number;
@@ -86,6 +134,196 @@ export const getSlotFragmentId = (slot: undefined | Instance) => {
     return;
   }
   return slot.children[0].value;
+};
+
+const getRequiredSlotState = (
+  state: Pick<BuilderState, "instances" | "props">
+) => {
+  if (state.instances === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Instances namespace is missing"
+    );
+  }
+  if (state.props === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Props namespace is missing"
+    );
+  }
+  return { instances: state.instances, props: state.props };
+};
+
+const insertChildReferenceMutable = ({
+  parent,
+  childId,
+  insertIndex,
+}: {
+  parent: Instance;
+  childId: Instance["id"];
+  insertIndex?: number;
+}) => {
+  const child = { type: "id" as const, value: childId };
+  if (insertIndex === undefined) {
+    parent.children.push(child);
+    return;
+  }
+  if (insertIndex > parent.children.length) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Insert index is outside parent children"
+    );
+  }
+  parent.children.splice(insertIndex, 0, child);
+};
+
+const assertValidSlotPlacement = ({
+  instances,
+  props,
+  instanceSelector,
+}: {
+  instances: Instances;
+  props: NonNullable<BuilderState["props"]>;
+  instanceSelector: InstanceSelector;
+}) => {
+  if (
+    isTreeSatisfyingContentModel({
+      instances,
+      props,
+      metas: componentMetas,
+      instanceSelector,
+    }) === false
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Shared Slot violates the target content model"
+    );
+  }
+};
+
+export const attachSharedSlot = (
+  state: Pick<BuilderState, "instances" | "props">,
+  input: z.infer<typeof attachSharedSlotInput>,
+  context: BuilderRuntimeContext
+) => {
+  const before = getRequiredSlotState(state);
+  const slotId = context.createId();
+  let fragmentId: Instance["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    const sourceSlot = draft.instances.get(input.sourceSlotId);
+    if (sourceSlot?.component !== portalComponent) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Source Slot not found");
+    }
+    getSlotFragmentDropTargetMutable(
+      draft.instances,
+      { parentSelector: [sourceSlot.id], position: "end" },
+      context.createId
+    );
+    fragmentId = getSlotFragmentId(sourceSlot);
+    if (fragmentId === undefined) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Source Slot has no shareable content"
+      );
+    }
+    const parent = draft.instances.get(input.parentInstanceId);
+    if (parent === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Target parent not found");
+    }
+    if (findTreeInstanceIds(draft.instances, fragmentId).has(parent.id)) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Shared Slot cannot be attached inside its own content"
+      );
+    }
+    const slot = createSharedSlot({
+      id: slotId,
+      fragmentId,
+      label: input.label ?? sourceSlot.label,
+    });
+    draft.instances.set(slot.id, slot);
+    insertChildReferenceMutable({
+      parent,
+      childId: slot.id,
+      insertIndex: input.insertIndex,
+    });
+    assertValidSlotPlacement({
+      instances: draft.instances,
+      props: draft.props,
+      instanceSelector: [slot.id, parent.id],
+    });
+  });
+  const sharedFragmentId =
+    fragmentId ??
+    throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Source Slot has no shareable content"
+    );
+  return createRuntimeMutation({
+    payload,
+    result: { slotId, fragmentId: sharedFragmentId },
+    invalidatesNamespaces: ["instances"],
+  });
+};
+
+export const extractSharedSlot = (
+  state: Pick<BuilderState, "instances" | "props">,
+  input: z.infer<typeof extractSharedSlotInput>,
+  context: BuilderRuntimeContext
+) => {
+  const before = getRequiredSlotState(state);
+  const slotId = context.createId();
+  const fragmentId = context.createId();
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    const [instanceId, parentId] = input.instanceSelector;
+    const selected = draft.instances.get(instanceId);
+    const parent = draft.instances.get(parentId);
+    if (selected === undefined || parent === undefined) {
+      return throwBuilderRuntimeError(
+        "NOT_FOUND",
+        "Instance or parent not found"
+      );
+    }
+    if (selected.component === portalComponent) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Instance is already a Slot"
+      );
+    }
+    const childIndex = parent.children.findIndex(
+      (child) => child.type === "id" && child.value === selected.id
+    );
+    if (childIndex === -1) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Instance selector does not identify a direct parent"
+      );
+    }
+    const fragment: Instance = {
+      type: "instance",
+      id: fragmentId,
+      component: "Fragment",
+      children: [{ type: "id", value: selected.id }],
+    };
+    const slot = createSharedSlot({
+      id: slotId,
+      fragmentId: fragment.id,
+      label: input.label ?? selected.label,
+    });
+    draft.instances.set(fragment.id, fragment);
+    draft.instances.set(slot.id, slot);
+    parent.children[childIndex] = { type: "id", value: slot.id };
+    assertValidSlotPlacement({
+      instances: draft.instances,
+      props: draft.props,
+      instanceSelector: [slot.id, ...input.instanceSelector.slice(1)],
+    });
+  });
+  return createRuntimeMutation({
+    payload,
+    result: { slotId, fragmentId, instanceId: input.instanceSelector[0] },
+    invalidatesNamespaces: ["instances"],
+  });
 };
 
 const getInstancePathFromInstances = (

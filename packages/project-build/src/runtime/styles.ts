@@ -416,6 +416,7 @@ export const cssVariableValueInput = z.union([z.string(), styleValue]);
 export const cssVariableDefineInput = z.object({
   vars: z.record(z.string(), cssVariableValueInput),
   overwrite: z.boolean().optional(),
+  breakpoint: z.string().optional(),
 });
 
 export const cssVariableDeleteInput = z.object({
@@ -3421,7 +3422,10 @@ export const defineCssVariables = (
     styleSourceSelections: styleState.styleSourceSelections.values(),
     styles: styleState.styles.values(),
     overwrite: input.overwrite,
-    breakpointId: getBaseBreakpointId(state.breakpoints),
+    breakpointId: withValidatedBreakpoint(
+      { breakpoint: input.breakpoint },
+      state.breakpoints
+    ).breakpoint,
     createId: context.createId,
   });
   if (resultPayload.missingRootStyleSource) {

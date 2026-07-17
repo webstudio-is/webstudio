@@ -159,43 +159,82 @@ const isGeneratedRecordIdFieldPatch = (
   );
 };
 
+const builderPatchChangeBaseSchema = z.object({
+  namespace: z.enum(builderNamespaces),
+  patches: z.array(builderPatchSchema),
+});
+
 export const builderPatchChangeSchema: z.ZodType<BuilderPatchChange, unknown> =
-  z
-    .object({
-      namespace: z.enum(builderNamespaces),
-      patches: z.array(builderPatchSchema),
-    })
-    .superRefine((change, context) => {
-      for (const [index, patch] of change.patches.entries()) {
-        if (isGeneratedRecordWritePatch(change.namespace, patch)) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["patches", index, "path"],
-            message:
-              `Raw patches cannot create or replace generated record collections or records in ` +
-              `namespace "${change.namespace}". Use semantic operations so Webstudio generates and preserves runtime ids.`,
-          });
-          continue;
-        }
-        if (isGeneratedRecordIdFieldPatch(change.namespace, patch) === false) {
-          continue;
-        }
+  builderPatchChangeBaseSchema.superRefine((change, context) => {
+    for (const [index, patch] of change.patches.entries()) {
+      if (isGeneratedRecordWritePatch(change.namespace, patch)) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["patches", index, "path"],
           message:
-            `Raw patches cannot change record id fields in namespace ` +
-            `"${change.namespace}". Use semantic operations so Webstudio preserves system ids.`,
+            `Raw patches cannot create or replace generated record collections or records in ` +
+            `namespace "${change.namespace}". Use semantic operations so Webstudio generates and preserves runtime ids.`,
         });
+        continue;
       }
-    });
+      if (isGeneratedRecordIdFieldPatch(change.namespace, patch) === false) {
+        continue;
+      }
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["patches", index, "path"],
+        message:
+          `Raw patches cannot change record id fields in namespace ` +
+          `"${change.namespace}". Use semantic operations so Webstudio preserves system ids.`,
+      });
+    }
+  });
 
-export const builderPatchTransactionSchema: z.ZodType<
+export const builderPatchTransactionBaseSchema: z.ZodType<
   BuilderPatchTransaction,
   unknown
 > = z.object({
   id: z.string().min(1),
-  payload: z.array(builderPatchChangeSchema),
+  payload: z.array(builderPatchChangeBaseSchema),
+});
+
+export const builderPatchTransactionSchema: z.ZodType<
+  BuilderPatchTransaction,
+  unknown
+> = builderPatchTransactionBaseSchema.superRefine((transaction, context) => {
+  const result = z
+    .array(builderPatchChangeSchema)
+    .safeParse(transaction.payload);
+  if (result.success === false) {
+    for (const issue of result.error.issues) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["payload", ...issue.path],
+        message: issue.message,
+      });
+    }
+  }
+});
+
+const restorePointPatchSchema = z
+  .object({
+    op: z.literal("replace"),
+    path: z.tuple([]),
+    value: z.unknown(),
+  })
+  .superRefine(requireBuilderPatchValue);
+
+export const restorePointPatchTransactionSchema: z.ZodType<
+  BuilderPatchTransaction,
+  unknown
+> = z.object({
+  id: z.string().min(1),
+  payload: z.array(
+    z.object({
+      namespace: z.enum(builderNamespaces),
+      patches: z.array(restorePointPatchSchema).length(1),
+    })
+  ),
 });
 
 export type BuilderPatchChange = {

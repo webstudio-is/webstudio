@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { loadById, patchBuild } from "@webstudio-is/project/index.server";
 import type { CompactBuild } from "@webstudio-is/project-build";
+import { builderPatchTransactionBaseSchema } from "@webstudio-is/project-build/contracts";
 import {
   loadBuildById,
   loadDevBuildByProjectId,
@@ -9,6 +10,7 @@ import {
 import {
   buildPatchTransaction,
   publicBuildIncludes,
+  restorePointPatchTransaction,
 } from "@webstudio-is/protocol/schema";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
@@ -58,11 +60,32 @@ export const buildGetInput = z.object({
   version: z.number().int().optional(),
 });
 
-export const buildPatchInput = z.object({
+const buildPatchInputBase = {
   projectId: z.string(),
   baseVersion: z.number().int(),
-  transactions: z.array(buildPatchTransaction).min(1),
-});
+};
+
+export const buildPatchInput = z
+  .object({
+    ...buildPatchInputBase,
+    transactions: z.array(builderPatchTransactionBaseSchema).min(1),
+    restorePoint: z.boolean().optional(),
+  })
+  .superRefine((input, context) => {
+    const schema = input.restorePoint
+      ? restorePointPatchTransaction
+      : buildPatchTransaction;
+    const result = z.array(schema).safeParse(input.transactions);
+    if (result.success === false) {
+      for (const issue of result.error.issues) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["transactions", ...issue.path],
+          message: issue.message,
+        });
+      }
+    }
+  });
 
 export const createBuildSnapshot = ({
   build,

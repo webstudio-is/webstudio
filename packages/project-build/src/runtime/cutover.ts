@@ -135,11 +135,14 @@ export const builderRuntimeCutoverManifests = [
       "instances.insertComponent",
       "instances.insertCollection",
       "instances.insertFragment",
+      "slots.attach",
+      "slots.extract",
     ] as const,
     callers: [
       "appRouter.api.instances",
       "MCP insert-collection",
       "MCP insert-fragment",
+      "MCP shared Slot authoring",
       "Builder components panel",
     ] as const,
   },
@@ -206,6 +209,7 @@ export const builderRuntimeCutoverManifests = [
     family: "design-token-mutations",
     operationIds: [
       "designTokens.create",
+      "designTokens.import",
       "designTokens.updateStyles",
       "designTokens.deleteStyles",
       "designTokens.attach",

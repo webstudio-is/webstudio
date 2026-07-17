@@ -333,6 +333,22 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "attach-slot",
+    description:
+      "Attach another Slot occurrence that references the same shared content; use this for headers, footers, and other content edited once across pages",
+    examples: [
+      'MCP tool: attach-slot {"sourceSlotId":"slot-id","parentInstanceId":"parent-id"}',
+    ],
+  },
+  {
+    command: "extract-slot",
+    description:
+      "Convert an existing instance subtree into shared Slot content without cloning it",
+    examples: [
+      'MCP tool: extract-slot {"instanceSelector":["instance-id","parent-id","root-id"],"label":"Site header"}',
+    ],
+  },
+  {
     command: "move-instance",
     description: "Move element instances to another parent or position",
     examples: [
@@ -450,6 +466,15 @@ const curatedPublicApiOperationDocumentation = [
     description: "Create reusable style tokens",
     requiredOptions: ["input", "json"],
     examples: ["webstudio create-design-token --input tokens.json --json"],
+  },
+  {
+    command: "import-design-tokens",
+    description:
+      "Import DTCG and Figma Variables as design tokens or CSS variables; mapping keys are token types such as color or dimension, not token paths",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio import-design-tokens --input brand-tokens.json --json",
+    ],
   },
   {
     command: "update-design-token-styles",
