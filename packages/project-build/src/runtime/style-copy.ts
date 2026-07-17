@@ -12,6 +12,7 @@ import {
   type StyleSources,
   type Styles,
 } from "@webstudio-is/sdk";
+import { getUniqueNameWithSuffix } from "./style-utils";
 
 export type ConflictResolution = "ours" | "theirs" | "merge";
 
@@ -282,21 +283,12 @@ export const insertStyleSources = ({
           continue;
         } else {
           // Default: add counter suffix
-          let maxCounter = 0;
-          const baseNamePattern = new RegExp(
-            `^${styleSource.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:-(\\d+))?$`
+          const newName = getUniqueNameWithSuffix(
+            styleSource.name,
+            Array.from(updatedStyleSources.values())
+              .filter((source) => source.type === "token")
+              .map((source) => source.name)
           );
-          for (const existing of updatedStyleSources.values()) {
-            if (existing.type !== "token") {
-              continue;
-            }
-            const match = existing.name.match(baseNamePattern);
-            if (match) {
-              const counter = match[1] ? parseInt(match[1], 10) : 0;
-              maxCounter = Math.max(maxCounter, counter);
-            }
-          }
-          const newName = `${styleSource.name}-${maxCounter + 1}`;
           const newStyleSource = {
             ...styleSource,
             id: newTokenId,

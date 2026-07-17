@@ -203,7 +203,7 @@ const handlePasteWebflow = async (clipboardData: string) => {
     return pasteHandled;
   }
 
-  insertFragmentWithBreakpointWarning(fragment, insertable);
+  await insertFragmentWithBreakpointWarning(fragment, insertable);
   return pasteHandled;
 };
 

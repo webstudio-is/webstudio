@@ -505,6 +505,7 @@ export const runtimeOutputSchemas = {
           looseObject({ property: z.string(), cssValue: z.string() })
         ),
         action: z.enum(["create", "overwrite", "skip"]),
+        conflict: z.boolean(),
       })
     ),
     counts: looseObject({

@@ -6,6 +6,7 @@ import {
   designTokenImportInput,
   importDesignTokens,
   normalizeDesignTokenImport,
+  planDesignTokenImport,
 } from "./design-token-import";
 
 const createState = (): BuilderState => ({
@@ -36,6 +37,17 @@ const createState = (): BuilderState => ({
 const createId = () => {
   let id = 0;
   return () => `generated-${++id}`;
+};
+
+const setupRootStyleSource = (state: BuilderState) => {
+  state.styleSources?.set("root-local", {
+    id: "root-local",
+    type: "local",
+  });
+  state.styleSourceSelections?.set("root", {
+    instanceId: "root",
+    values: ["root-local"],
+  });
 };
 
 describe("design token import", () => {
@@ -1216,14 +1228,7 @@ describe("design token import", () => {
 
   test("skips collisions without changing the project", () => {
     const state = createState();
-    state.styleSources?.set("root-local", {
-      id: "root-local",
-      type: "local",
-    });
-    state.styleSourceSelections?.set("root", {
-      instanceId: "root",
-      values: ["root-local"],
-    });
+    setupRootStyleSource(state);
     state.styles?.set("root-local:base:--brand-color:", {
       styleSourceId: "root-local",
       breakpointId: "base",
@@ -1249,6 +1254,174 @@ describe("design token import", () => {
       overwrite: 0,
       skip: 1,
     });
+  });
+
+  test("preflights and deterministically renames CSS variable collisions", () => {
+    const state = createState();
+    setupRootStyleSource(state);
+    for (const property of ["--color", "--color-1"] as const) {
+      state.styles?.set(`root-local:base:${property}:`, {
+        styleSourceId: "root-local",
+        breakpointId: "base",
+        property,
+        value: { type: "unparsed", value: "old" },
+      });
+    }
+    const input = {
+      source: {
+        format: "dtcg" as const,
+        document: {
+          color: { $type: "color", $value: "#123456" },
+          "color-2": { $type: "color", $value: "#abcdef" },
+        },
+      },
+      collision: "rename" as const,
+    };
+
+    const plan = planDesignTokenImport(state, input);
+
+    expect(plan).toEqual([
+      expect.objectContaining({ outputName: "--color-3", action: "create" }),
+      expect.objectContaining({ outputName: "--color-2", action: "create" }),
+    ]);
+    expect(state.styles?.has("root-local:base:--color-3:")).toBe(false);
+
+    const mutation = importDesignTokens(state, input, { createId: createId() });
+    const updated = applyBuilderPatchTransactions(state, [
+      { id: "import", payload: mutation.payload },
+    ]).state;
+    expect(updated.styles?.get("root-local:base:--color:")?.value).toEqual({
+      type: "unparsed",
+      value: "old",
+    });
+    expect(updated.styles?.get("root-local:base:--color-3:")?.value).toEqual({
+      type: "unparsed",
+      value: "#123456",
+    });
+  });
+
+  test("renames colliding design tokens and overwrites CSS variables", () => {
+    const state = createState();
+    setupRootStyleSource(state);
+    state.styles?.set("root-local:base:--spacing:", {
+      styleSourceId: "root-local",
+      breakpointId: "base",
+      property: "--spacing",
+      value: { type: "unparsed", value: "4px" },
+    });
+    state.styleSources?.set("color-token", {
+      id: "color-token",
+      type: "token",
+      name: "color",
+    });
+
+    const overwrite = importDesignTokens(
+      state,
+      {
+        source: {
+          format: "dtcg",
+          document: {
+            spacing: {
+              $type: "dimension",
+              $value: { value: 8, unit: "px" },
+            },
+          },
+        },
+        collision: "overwrite",
+      },
+      { createId: createId() }
+    );
+    const overwritten = applyBuilderPatchTransactions(state, [
+      { id: "overwrite", payload: overwrite.payload },
+    ]).state;
+    expect(
+      overwritten.styles?.get("root-local:base:--spacing:")?.value
+    ).toEqual({ type: "unparsed", value: "8px" });
+
+    const rename = importDesignTokens(
+      state,
+      {
+        source: {
+          format: "dtcg",
+          document: { color: { $type: "color", $value: "#123456" } },
+        },
+        mapping: { color: { target: "design-token", property: "color" } },
+        collision: "rename",
+      },
+      { createId: createId() }
+    );
+    const renamed = applyBuilderPatchTransactions(state, [
+      { id: "rename", payload: rename.payload },
+    ]).state;
+    expect(
+      Array.from(renamed.styleSources?.values() ?? []).find(
+        (source) => source.type === "token" && source.name === "color-1"
+      )
+    ).toBeDefined();
+  });
+
+  test("distinguishes matching values from conflicts during preflight", () => {
+    const state = createState();
+    setupRootStyleSource(state);
+    state.styles?.set("root-local:base:--color:", {
+      styleSourceId: "root-local",
+      breakpointId: "base",
+      property: "--color",
+      value: { type: "unparsed", value: "#123456" },
+    });
+    const plan = planDesignTokenImport(state, {
+      source: {
+        format: "dtcg",
+        document: { color: { $type: "color", $value: "#123456" } },
+      },
+      collision: "rename",
+    });
+
+    expect(plan).toEqual([
+      expect.objectContaining({
+        outputName: "--color",
+        action: "skip",
+        conflict: false,
+      }),
+    ]);
+  });
+
+  test("treats extra design token declarations as a conflict", () => {
+    const state = createState();
+    state.styleSources?.set("color-token", {
+      id: "color-token",
+      type: "token",
+      name: "color",
+    });
+    state.styles?.set("color-token:base:color:", {
+      styleSourceId: "color-token",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "unparsed", value: "#123456" },
+    });
+    state.styles?.set("color-token:base:backgroundColor:", {
+      styleSourceId: "color-token",
+      breakpointId: "base",
+      property: "backgroundColor",
+      value: { type: "unparsed", value: "#123456" },
+    });
+
+    const plan = planDesignTokenImport(state, {
+      source: {
+        format: "dtcg",
+        document: { color: { $type: "color", $value: "#123456" } },
+      },
+      mapping: { color: { target: "design-token", property: "color" } },
+      collision: "skip",
+    });
+
+    expect(plan).toEqual([
+      expect.objectContaining({
+        outputName: "color",
+        action: "skip",
+        conflict: true,
+      }),
+    ]);
   });
 
   test("imports mapped families through existing mutation operations", () => {
@@ -1404,17 +1577,10 @@ describe("design token import", () => {
       label: "Mobile",
       maxWidth: 767,
     });
-    state.styleSources?.set("root-local", {
-      id: "root-local",
-      type: "local",
-    });
+    setupRootStyleSource(state);
     state.styleSources?.set("component-local", {
       id: "component-local",
       type: "local",
-    });
-    state.styleSourceSelections?.set("root", {
-      instanceId: "root",
-      values: ["root-local"],
     });
     state.styles?.set("component-local:base:--color:", {
       styleSourceId: "component-local",

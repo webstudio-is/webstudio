@@ -75,7 +75,7 @@ describe("jsx paste plugin", () => {
     expect(mocks.insertWebstudioFragmentAt).toHaveBeenCalledWith(
       fragment,
       undefined,
-      undefined,
+      "theirs",
       expect.objectContaining({
         onBreakpointLimitMerge: expect.any(Function),
       })

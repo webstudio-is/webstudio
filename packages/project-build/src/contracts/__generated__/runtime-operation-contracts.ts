@@ -60498,7 +60498,7 @@ export const runtimeOperationContractData = [
         collision: {
           default: "skip",
           type: "string",
-          enum: ["skip", "overwrite"],
+          enum: ["skip", "overwrite", "rename"],
         },
       },
       required: ["source"],
@@ -60553,6 +60553,9 @@ export const runtimeOperationContractData = [
                 type: "string",
                 enum: ["create", "overwrite", "skip"],
               },
+              conflict: {
+                type: "boolean",
+              },
             },
             required: [
               "path",
@@ -60563,6 +60566,7 @@ export const runtimeOperationContractData = [
               "cssValue",
               "declarations",
               "action",
+              "conflict",
             ],
             additionalProperties: {},
           },

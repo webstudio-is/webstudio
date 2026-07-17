@@ -1,11 +1,17 @@
 import { z } from "zod";
-import { toValue, type ColorValue } from "@webstudio-is/css-engine";
+import {
+  toValue,
+  type ColorValue,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import { fontWeightNames } from "@webstudio-is/fonts";
+import { getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import { isPlainRecord as isRecord } from "../shared/type-utils";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutationAccumulator } from "./mutation";
+import { getUniqueNameWithSuffix } from "./style-utils";
 import {
   createDesignTokens,
   defineCssVariables,
@@ -81,7 +87,7 @@ export const designTokenImportInput = z.object({
   defaultTarget: targetInput.optional(),
   prefix: z.string().optional(),
   breakpoint: z.string().optional(),
-  collision: z.enum(["skip", "overwrite"]).default("skip"),
+  collision: z.enum(["skip", "overwrite", "rename"]).default("skip"),
 });
 
 type NormalizedToken = {
@@ -107,7 +113,13 @@ type NormalizedImportEntry = Omit<NormalizedToken, "value"> & {
 
 type ImportPlanEntry = NormalizedImportEntry & {
   action: "create" | "overwrite" | "skip";
+  conflict: boolean;
 };
+
+type ImportState = Pick<
+  BuilderState,
+  "breakpoints" | "pages" | "styles" | "styleSources" | "styleSourceSelections"
+>;
 
 const dtcgTokenTypeInput = z.enum([
   "color",
@@ -1474,18 +1486,7 @@ export const normalizeDesignTokenImport = (
   });
 };
 
-export const importDesignTokens = (
-  state: Pick<
-    BuilderState,
-    | "breakpoints"
-    | "pages"
-    | "styles"
-    | "styleSources"
-    | "styleSourceSelections"
-  >,
-  input: z.infer<typeof designTokenImportInput>,
-  context: BuilderRuntimeContext
-) => {
+const getImportState = (state: ImportState, breakpoint: string | undefined) => {
   if (
     state.styles === undefined ||
     state.styleSources === undefined ||
@@ -1496,7 +1497,7 @@ export const importDesignTokens = (
       "Style namespaces are missing"
     );
   }
-  const cssVariableTarget = getCssVariableRootTarget(state, input.breakpoint);
+  const cssVariableTarget = getCssVariableRootTarget(state, breakpoint);
   const existingCssVariables = new Set<string>(
     Array.from(state.styles.values())
       .filter(
@@ -1512,9 +1513,97 @@ export const importDesignTokens = (
       .filter((source) => source.type === "token")
       .map((source) => [source.name, source])
   );
+  const propertiesByStyleSource = new Map<string, Set<string>>();
+  for (const style of state.styles.values()) {
+    if (
+      style.breakpointId !== cssVariableTarget.breakpointId ||
+      style.state !== undefined
+    ) {
+      continue;
+    }
+    const properties =
+      propertiesByStyleSource.get(style.styleSourceId) ?? new Set<string>();
+    properties.add(style.property);
+    propertiesByStyleSource.set(style.styleSourceId, properties);
+  }
+  return {
+    cssVariableTarget,
+    existingCssVariables,
+    existingTokens,
+    propertiesByStyleSource,
+  };
+};
+
+const isMatchingImportEntry = ({
+  state,
+  entry,
+  importState,
+}: {
+  state: ImportState;
+  entry: NormalizedImportEntry;
+  importState: ReturnType<typeof getImportState>;
+}) => {
+  const { cssVariableTarget, existingTokens, propertiesByStyleSource } =
+    importState;
+  const styleSourceId =
+    entry.target === "css-variable"
+      ? cssVariableTarget.styleSourceId
+      : existingTokens.get(entry.outputName)?.id;
+  if (styleSourceId === undefined) {
+    return false;
+  }
+  const declarationsMatch = entry.declarations.every((declaration) => {
+    const style = state.styles?.get(
+      getStyleDeclKey({
+        styleSourceId,
+        breakpointId: cssVariableTarget.breakpointId as string,
+        property: declaration.property as StyleProperty,
+        state: undefined,
+      })
+    );
+    return style !== undefined && toValue(style.value) === declaration.cssValue;
+  });
+  if (entry.target === "css-variable") {
+    return declarationsMatch;
+  }
+  return (
+    declarationsMatch &&
+    propertiesByStyleSource.get(styleSourceId)?.size ===
+      entry.declarations.length
+  );
+};
+
+const renameImportEntry = (
+  entry: NormalizedImportEntry,
+  outputName: string
+): NormalizedImportEntry => {
+  if (entry.target === "design-token") {
+    return { ...entry, outputName };
+  }
+  return {
+    ...entry,
+    outputName,
+    property: outputName,
+    declarations: entry.declarations.map((declaration) => ({
+      ...declaration,
+      property: outputName,
+    })),
+  };
+};
+
+const createImportPlan = (
+  state: ImportState,
+  input: z.infer<typeof designTokenImportInput>,
+  importState: ReturnType<typeof getImportState>
+): ImportPlanEntry[] => {
+  const { existingCssVariables, existingTokens } = importState;
   const normalized = normalizeDesignTokenImport(input);
   const seen = new Set<string>();
-  const plan: ImportPlanEntry[] = normalized.map((token) => {
+  const occupiedNames = {
+    "css-variable": new Set(existingCssVariables),
+    "design-token": new Set(existingTokens.keys()),
+  };
+  for (const token of normalized) {
     const key = `${token.target}:${token.outputName}`;
     if (seen.has(key)) {
       return throwBuilderRuntimeError(
@@ -1523,15 +1612,60 @@ export const importDesignTokens = (
       );
     }
     seen.add(key);
+    occupiedNames[token.target].add(token.outputName);
+  }
+  return normalized.map((token) => {
     const exists =
       token.target === "css-variable"
         ? existingCssVariables.has(token.outputName)
         : existingTokens.has(token.outputName);
+    const conflict =
+      exists &&
+      isMatchingImportEntry({
+        state,
+        entry: token,
+        importState,
+      }) === false;
+    if (exists && conflict === false) {
+      return { ...token, action: "skip" as const, conflict };
+    }
+    if (conflict && input.collision === "rename") {
+      const outputName = getUniqueNameWithSuffix(
+        token.outputName,
+        occupiedNames[token.target]
+      );
+      occupiedNames[token.target].add(outputName);
+      return {
+        ...renameImportEntry(token, outputName),
+        action: "create" as const,
+        conflict,
+      };
+    }
     return {
       ...token,
-      action: exists ? input.collision : "create",
+      action: exists
+        ? input.collision === "overwrite"
+          ? "overwrite"
+          : "skip"
+        : "create",
+      conflict,
     };
   });
+};
+
+export const planDesignTokenImport = (
+  state: ImportState,
+  input: z.infer<typeof designTokenImportInput>
+) => createImportPlan(state, input, getImportState(state, input.breakpoint));
+
+export const importDesignTokens = (
+  state: ImportState,
+  input: z.infer<typeof designTokenImportInput>,
+  context: BuilderRuntimeContext
+) => {
+  const importState = getImportState(state, input.breakpoint);
+  const plan = createImportPlan(state, input, importState);
+  const { existingTokens } = importState;
   const accumulator = createRuntimeMutationAccumulator(state);
   const cssVariables = Object.fromEntries(
     plan

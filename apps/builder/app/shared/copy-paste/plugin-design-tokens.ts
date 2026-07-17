@@ -1,5 +1,11 @@
-import { detectDesignTokenSource } from "@webstudio-is/project-build/runtime";
-import { executeRuntimeMutation } from "../instance-utils/data";
+import {
+  detectDesignTokenSource,
+  planDesignTokenImport,
+} from "@webstudio-is/project-build/runtime";
+import {
+  executeRuntimeMutation,
+  getWebstudioData,
+} from "../instance-utils/data";
 import { builderApi } from "../builder-api";
 import {
   pasteHandled,
@@ -16,15 +22,37 @@ const parseJson = (value: string) => {
   }
 };
 
-const handlePasteDesignTokens = (value: string): PasteResult => {
+const collisionByResolution = {
+  ours: "skip",
+  theirs: "rename",
+  merge: "overwrite",
+} as const;
+
+const handlePasteDesignTokens = async (value: string): Promise<PasteResult> => {
   const source = detectDesignTokenSource(parseJson(value));
   if (source === undefined) {
     return pasteIgnored;
   }
   try {
+    const plan = planDesignTokenImport(getWebstudioData(), {
+      source,
+      collision: "skip",
+    });
+    const conflicts = plan
+      .filter((entry) => entry.conflict)
+      .map((entry) => ({
+        tokenName: entry.outputName,
+        fragmentTokenId: `${entry.target}:${entry.outputName}`,
+      }));
+    const collision =
+      conflicts.length === 0
+        ? "skip"
+        : collisionByResolution[
+            await builderApi.showTokenConflictDialog(conflicts)
+          ];
     const mutation = executeRuntimeMutation({
       id: "designTokens.import",
-      input: { source, collision: "skip" },
+      input: { source, collision },
     });
     if (mutation === undefined) {
       return {

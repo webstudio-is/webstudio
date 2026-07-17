@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
 import { coreMetas, type Instance } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Project } from "@webstudio-is/project";
@@ -35,6 +36,7 @@ import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
 } from "./copy-paste";
+import { insertFragmentWithBreakpointWarning } from "./fragment-utils";
 
 enableMapSet();
 registerContainers();
@@ -78,6 +80,28 @@ const setupPage = () => {
           id: "body-id",
           component: "Body",
           children: [],
+        },
+      ],
+    ])
+  );
+};
+
+const setupRootCssVariable = (property: `--${string}`, value: string) => {
+  $styleSources.set(
+    new Map([["root-local", { id: "root-local", type: "local" }]])
+  );
+  $styleSourceSelections.set(
+    new Map([["body-id", { instanceId: "body-id", values: ["root-local"] }]])
+  );
+  $styles.set(
+    new Map([
+      [
+        `root-local:base:${property}:`,
+        {
+          styleSourceId: "root-local",
+          breakpointId: "base",
+          property,
+          value: { type: "unparsed", value },
         },
       ],
     ])
@@ -150,6 +174,7 @@ const waitForClipboardEvent = () =>
 
 afterEach(() => {
   resetStores();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -553,6 +578,141 @@ test("imports pasted DTCG tokens through the runtime mutation pipeline", async (
     ])
   );
   expect(toastSuccess).toHaveBeenCalledWith("Imported 2 design tokens.");
+  abortController.abort();
+});
+
+test("resolves token conflicts for fragments through the shared paste helper", async () => {
+  resetStores();
+  setupPage();
+  setupToastError();
+  $project.set({ id: "project-id" } as Project);
+  $styleSources.set(
+    new Map([
+      [
+        "existing-token",
+        { id: "existing-token", type: "token", name: "Primary" },
+      ],
+    ])
+  );
+  $styles.set(
+    new Map([
+      [
+        "existing-token:base:color:",
+        {
+          styleSourceId: "existing-token",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "unparsed", value: "red" },
+        },
+      ],
+    ])
+  );
+  const fragment = createEmptyWebstudioFragment();
+  fragment.styleSources.push({
+    id: "incoming-token",
+    type: "token",
+    name: "Primary",
+  });
+  fragment.styles.push({
+    styleSourceId: "incoming-token",
+    breakpointId: "base",
+    property: "color",
+    value: { type: "unparsed", value: "blue" },
+  });
+  const conflictDialog = vi
+    .spyOn(window.__webstudio__$__builderApi, "showTokenConflictDialog")
+    .mockResolvedValue("ours");
+
+  await insertFragmentWithBreakpointWarning(fragment);
+
+  expect(conflictDialog).toHaveBeenCalledWith([
+    expect.objectContaining({
+      tokenName: "Primary",
+      fragmentTokenId: "incoming-token",
+    }),
+  ]);
+  expect(Array.from($styleSources.get().values())).toEqual([
+    { id: "existing-token", type: "token", name: "Primary" },
+  ]);
+  expect($styles.get().get("existing-token:base:color:")?.value).toEqual({
+    type: "unparsed",
+    value: "red",
+  });
+});
+
+test.each([
+  ["ours", "old", undefined],
+  ["theirs", "old", "#123456"],
+  ["merge", "#123456", undefined],
+] as const)(
+  "resolves pasted design token collisions with %s",
+  async (resolution, expectedValue, expectedRenamedValue) => {
+    resetStores();
+    setupPage();
+    setupRootCssVariable("--color", "old");
+    const abortController = new AbortController();
+    setupToastError();
+    setupToastSuccess();
+    const conflictDialog = vi
+      .spyOn(window.__webstudio__$__builderApi, "showTokenConflictDialog")
+      .mockResolvedValue(resolution);
+    initCopyPaste({ signal: abortController.signal });
+    const { clipboardData, event } = createClipboardEvent("paste");
+    clipboardData.setData(
+      "text/plain",
+      JSON.stringify({
+        color: { $type: "color", $value: "#123456" },
+      })
+    );
+
+    document.dispatchEvent(event);
+    await waitForClipboardEvent();
+
+    expect(conflictDialog).toHaveBeenCalledWith([
+      {
+        tokenName: "--color",
+        fragmentTokenId: "css-variable:--color",
+      },
+    ]);
+    expect($styles.get().get("root-local:base:--color:")?.value).toEqual({
+      type: "unparsed",
+      value: expectedValue,
+    });
+    expect($styles.get().get("root-local:base:--color-1:")?.value).toEqual(
+      expectedRenamedValue === undefined
+        ? undefined
+        : { type: "unparsed", value: expectedRenamedValue }
+    );
+    abortController.abort();
+  }
+);
+
+test("silently reuses an identical pasted design value", async () => {
+  resetStores();
+  setupPage();
+  setupRootCssVariable("--color", "#123456");
+  const abortController = new AbortController();
+  setupToastError();
+  const toastSuccess = setupToastSuccess();
+  const conflictDialog = vi.spyOn(
+    window.__webstudio__$__builderApi,
+    "showTokenConflictDialog"
+  );
+  initCopyPaste({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    JSON.stringify({ color: { $type: "color", $value: "#123456" } })
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(conflictDialog).not.toHaveBeenCalled();
+  expect($styles.get().size).toBe(1);
+  expect(toastSuccess).toHaveBeenCalledWith(
+    "Imported 0 design tokens; skipped 1 existing."
+  );
   abortController.abort();
 });
 

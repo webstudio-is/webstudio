@@ -11,6 +11,32 @@ import type {
 import { getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderPatchChange } from "../contracts/patch";
 
+export const getUniqueNameWithSuffix = (
+  name: string,
+  existingNames: Iterable<string>
+) => {
+  const prefix = `${name}-`;
+  let maxCounter = 0;
+  for (const existingName of existingNames) {
+    if (existingName === name) {
+      continue;
+    }
+    if (existingName.startsWith(prefix) === false) {
+      continue;
+    }
+    const suffix = existingName.slice(prefix.length);
+    const counter = Number(suffix);
+    if (
+      Number.isInteger(counter) &&
+      counter > 0 &&
+      String(counter) === suffix
+    ) {
+      maxCounter = Math.max(maxCounter, counter);
+    }
+  }
+  return `${name}-${maxCounter + 1}`;
+};
+
 export const traverseStyleValue = (
   value: StyleValue,
   callback: (value: StyleValue) => void
