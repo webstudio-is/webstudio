@@ -24,6 +24,8 @@ export const parseTestPartition = (
 };
 
 export const isTestInPartition = (
-  testIndex: number,
+  distributionIndex: number,
   partition: TestPartition | undefined
-) => partition === undefined || testIndex % partition.total === partition.index;
+) =>
+  partition === undefined ||
+  distributionIndex % partition.total === partition.index;

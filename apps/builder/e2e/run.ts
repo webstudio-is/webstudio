@@ -213,10 +213,14 @@ const getRunnableSuites = () => {
       }
       return suite.fileName.includes(`[${testShard}]`);
     })
-    .map((suite) => ({
+    .map((suite, suiteIndex) => ({
       suite,
       tests: suite.tests.filter((test, testIndex) => {
-        if (isTestInPartition(testIndex, testPartition) === false) {
+        // Offset each suite so odd test counts do not always give the extra
+        // test to the same worker.
+        if (
+          isTestInPartition(testIndex + suiteIndex, testPartition) === false
+        ) {
           return false;
         }
         if (testFilters.length === 0) {

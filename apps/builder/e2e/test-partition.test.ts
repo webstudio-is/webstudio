@@ -10,7 +10,7 @@ test("parses one-based test partitions", () => {
   expect(() => parseTestPartition("first/2")).toThrow("form 1/2");
 });
 
-test("distributes tests deterministically by registration order", () => {
+test("distributes indexes deterministically", () => {
   const first = parseTestPartition("1/2");
   const second = parseTestPartition("2/2");
   expect(
