@@ -4,6 +4,8 @@ import { $uploadingFilesDataStore } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
 import { __testing__ } from "./replace-asset";
 
+const { waitForAsset } = __testing__;
+
 const asset = {
   id: "replacement",
   type: "file",
@@ -23,12 +25,12 @@ beforeEach(() => {
 test("resolves an existing replacement asset", async () => {
   $assets.set(new Map([[asset.id, asset]]));
 
-  await expect(__testing__.waitForAsset(asset.id)).resolves.toBe(asset);
+  await expect(waitForAsset(asset.id)).resolves.toBe(asset);
 });
 
 test("waits for a replacement asset to finish uploading", async () => {
   $uploadingFilesDataStore.set([{ assetId: asset.id } as never]);
-  const result = __testing__.waitForAsset(asset.id);
+  const result = waitForAsset(asset.id);
 
   $assets.set(new Map([[asset.id, asset]]));
 
@@ -37,7 +39,7 @@ test("waits for a replacement asset to finish uploading", async () => {
 
 test("rejects when a replacement upload fails", async () => {
   $uploadingFilesDataStore.set([{ assetId: asset.id } as never]);
-  const result = __testing__.waitForAsset(asset.id);
+  const result = waitForAsset(asset.id);
 
   $uploadingFilesDataStore.set([]);
 
