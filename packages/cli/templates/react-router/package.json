@@ -14,6 +14,7 @@
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "@webstudio-is/image": "0.0.0-webstudio-version",
+    "@webstudio-is/asset-resource": "0.0.0-webstudio-version",
     "@webstudio-is/react-sdk": "0.0.0-webstudio-version",
     "@webstudio-is/sdk": "0.0.0-webstudio-version",
     "@webstudio-is/sdk-components-animation": "0.0.0-webstudio-version",

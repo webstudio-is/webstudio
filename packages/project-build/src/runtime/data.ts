@@ -31,6 +31,7 @@ import {
 import { z } from "zod";
 import { produceWithPatches } from "immer";
 import {
+  assetsQueryResourceUrl,
   createJsonStringifyProxy,
   isLocalResource,
   isPlainObject,
@@ -1571,7 +1572,7 @@ const normalizeResourceUrlInput = (value: string) => {
   return value;
 };
 
-const resourceExpressionInput = z
+export const resourceExpressionInput = z
   .union([
     z.string(),
     z.object({ type: z.literal("literal"), value: z.string() }),
@@ -1928,7 +1929,7 @@ const getResourceWarnings = ({
 }: {
   fields: Pick<
     Resource,
-    "method" | "url" | "body" | "headers" | "searchParams"
+    "control" | "method" | "url" | "body" | "headers" | "searchParams"
   >;
   state: Pick<BuilderState, "instances" | "dataSources">;
   scopeInstanceId?: string;
@@ -1957,7 +1958,12 @@ const getResourceWarnings = ({
         resourceId,
       })
   );
-  if (exposeAsDataSource && fields.method !== "get") {
+  const isRenderTimeRead =
+    fields.method === "get" ||
+    (fields.control === "system" &&
+      fields.method === "post" &&
+      getStaticStringLiteral(fields.url) === assetsQueryResourceUrl);
+  if (exposeAsDataSource && isRenderTimeRead === false) {
     warnings.push({
       severity: "warning",
       code: "render_time_mutation_resource",
@@ -2603,8 +2609,10 @@ export const updateResource = (
     | "styles"
   >,
   input: z.infer<typeof resourceUpdateInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options?: { clearBody?: boolean }
 ) => {
+  const clearBody = options?.clearBody === true;
   const values = normalizeResourceFieldsUpdateInput(input.values);
   validateResourceFields(values, ["values"]);
   const build = getRequiredBuildData(state);
@@ -2613,6 +2621,7 @@ export const updateResource = (
     return throwBuilderRuntimeError("NOT_FOUND", "Resource not found");
   }
   if (
+    clearBody === false &&
     Object.values(values).every((value) => value === undefined) &&
     input.dataSourceName === undefined &&
     input.scopeInstanceId === undefined &&
@@ -2627,6 +2636,7 @@ export const updateResource = (
   const nextResource = createResourceValue({
     ...resource,
     ...values,
+    ...(clearBody ? { body: undefined } : {}),
   });
   const dataSource = build.dataSources.find(
     (dataSource) =>

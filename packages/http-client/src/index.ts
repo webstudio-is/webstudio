@@ -1560,12 +1560,88 @@ type ResourceFieldsInput = {
   body?: string;
 };
 
+type AssetResourceContentOptions =
+  | { mode: "none" }
+  | { mode: "full"; maxBytes?: number }
+  | { mode: "range"; offset: number; length: number }
+  | { mode: "markdown-body"; maxBytes?: number };
+
+type AssetResourceParameterBinding = {
+  name: string;
+  value: string | { type: "literal"; value: string };
+};
+
+type AssetsQueryConfigurationInput = {
+  groq: string;
+  parameters?: AssetResourceParameterBinding[];
+  resultLimit?: number;
+  content?: AssetResourceContentOptions;
+};
+
 export const listResources = projectQueryInput<
   AuthProjectParams &
     PaginatedQueryInput & {
       scopeInstanceId?: string;
     }
 >("list-resources");
+
+export const listAssetsResources = projectQueryInput<
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      scopeInstanceId?: string;
+    }
+>("list-assets-resources");
+
+export const getAssetsResource = projectQueryInput<
+  AuthProjectParams & { resourceId: string }
+>("get-assets-resource");
+
+export const createAssetsResource = projectMutationInput<
+  AuthProjectParams & {
+    name: string;
+    query?: AssetsQueryConfigurationInput;
+    scopeInstanceId: string;
+    dataSourceName?: string;
+  }
+>("create-assets-resource");
+
+export const updateAssetsResource = projectMutationInput<
+  AuthProjectParams & {
+    resourceId: string;
+    values: {
+      name?: string;
+      query?: AssetsQueryConfigurationInput | null;
+    };
+    scopeInstanceId?: string;
+    dataSourceName?: string;
+  }
+>("update-assets-resource");
+
+export const validateAssetQuery = projectQueryInput<
+  AuthProjectParams & { query: string }
+>("validate-asset-query");
+
+export const previewAssetQuery = projectQueryInput<
+  AuthProjectParams & {
+    query: string;
+    parameters?: Record<string, unknown>;
+    resultLimit?: number;
+    indexRevision?: string;
+    content?: AssetResourceContentOptions;
+  }
+>("preview-asset-query");
+
+export const getAssetFieldCatalog = projectQueryInput<AuthProjectParams>(
+  "get-asset-field-catalog"
+);
+
+export const getAssetResourceIndexStatus = projectQueryInput<
+  AuthProjectParams & { resourceId: string }
+>("get-asset-resource-index-status");
+
+export const rebuildAssetResourceIndex = projectMutationInput<
+  AuthProjectParams & { resourceId: string }
+>("rebuild-asset-resource-index");
 
 export const createResource = projectMutationInput<
   AuthProjectParams & {

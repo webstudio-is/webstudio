@@ -65115,6 +65115,876 @@ export const runtimeOperationContractData = [
     retryOnConflict: false,
   },
   {
+    id: "assetsResources.list",
+    command: "list-assets-resources",
+    client: "listAssetsResources",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        scopeInstanceId: {
+          type: "string",
+        },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        resources: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              resourceId: {
+                type: "string",
+              },
+              name: {
+                type: "string",
+              },
+              scopeInstanceId: {
+                type: "string",
+              },
+              dataSourceId: {
+                type: "string",
+              },
+              dataSourceName: {
+                type: "string",
+              },
+              mode: {
+                type: "string",
+                enum: ["all", "query", "invalid"],
+              },
+              query: {
+                type: "object",
+                properties: {
+                  groq: {
+                    type: "string",
+                  },
+                  parameters: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: {
+                          type: "string",
+                        },
+                        value: {
+                          type: "string",
+                        },
+                      },
+                      required: ["name", "value"],
+                      additionalProperties: {},
+                    },
+                  },
+                  resultLimit: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  content: {
+                    oneOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "none",
+                          },
+                        },
+                        required: ["mode"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "full",
+                          },
+                          maxBytes: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 1048576,
+                          },
+                        },
+                        required: ["mode"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "range",
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          length: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 262144,
+                          },
+                        },
+                        required: ["mode", "offset", "length"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "markdown-body",
+                          },
+                          maxBytes: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 1048576,
+                          },
+                        },
+                        required: ["mode"],
+                      },
+                    ],
+                  },
+                },
+                required: ["groq", "parameters", "resultLimit", "content"],
+                additionalProperties: {},
+              },
+              configurationError: {
+                type: "string",
+              },
+            },
+            required: ["resourceId", "name", "mode"],
+            additionalProperties: {},
+          },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
+      },
+      required: [
+        "resources",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: ["dataSources", "resources"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
+    id: "assetsResources.get",
+    command: "get-assets-resource",
+    client: "getAssetsResource",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        resourceId: {
+          type: "string",
+        },
+      },
+      required: ["resourceId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        resource: {
+          type: "object",
+          properties: {
+            resourceId: {
+              type: "string",
+            },
+            name: {
+              type: "string",
+            },
+            scopeInstanceId: {
+              type: "string",
+            },
+            dataSourceId: {
+              type: "string",
+            },
+            dataSourceName: {
+              type: "string",
+            },
+            mode: {
+              type: "string",
+              enum: ["all", "query", "invalid"],
+            },
+            query: {
+              type: "object",
+              properties: {
+                groq: {
+                  type: "string",
+                },
+                parameters: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: {
+                        type: "string",
+                      },
+                      value: {
+                        type: "string",
+                      },
+                    },
+                    required: ["name", "value"],
+                    additionalProperties: {},
+                  },
+                },
+                resultLimit: {
+                  type: "integer",
+                  exclusiveMinimum: 0,
+                  maximum: 9007199254740991,
+                },
+                content: {
+                  oneOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "none",
+                        },
+                      },
+                      required: ["mode"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "full",
+                        },
+                        maxBytes: {
+                          type: "integer",
+                          exclusiveMinimum: 0,
+                          maximum: 1048576,
+                        },
+                      },
+                      required: ["mode"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "range",
+                        },
+                        offset: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        length: {
+                          type: "integer",
+                          exclusiveMinimum: 0,
+                          maximum: 262144,
+                        },
+                      },
+                      required: ["mode", "offset", "length"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "markdown-body",
+                        },
+                        maxBytes: {
+                          type: "integer",
+                          exclusiveMinimum: 0,
+                          maximum: 1048576,
+                        },
+                      },
+                      required: ["mode"],
+                    },
+                  ],
+                },
+              },
+              required: ["groq", "parameters", "resultLimit", "content"],
+              additionalProperties: {},
+            },
+            configurationError: {
+              type: "string",
+            },
+          },
+          required: ["resourceId", "name", "mode"],
+          additionalProperties: {},
+        },
+      },
+      required: ["resource"],
+      additionalProperties: {},
+    },
+    readNamespaces: ["dataSources", "resources"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
+    id: "assetsResources.create",
+    command: "create-assets-resource",
+    client: "createAssetsResource",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          minLength: 1,
+        },
+        query: {
+          type: "object",
+          properties: {
+            groq: {
+              type: "string",
+              minLength: 1,
+              maxLength: 32768,
+              description: "GROQ query evaluated against asset.file documents.",
+            },
+            parameters: {
+              default: [],
+              description:
+                "Runtime GROQ parameters. Each value is a Webstudio expression evaluated in the resource scope.",
+              maxItems: 32,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                    pattern: "^[A-Za-z_][A-Za-z0-9_]*$",
+                  },
+                  value: {
+                    anyOf: [
+                      {
+                        type: "string",
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            const: "literal",
+                          },
+                          value: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "value"],
+                      },
+                    ],
+                    description:
+                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                  },
+                },
+                required: ["name", "value"],
+              },
+            },
+            resultLimit: {
+              default: 100,
+              type: "integer",
+              exclusiveMinimum: 0,
+              maximum: 1000,
+            },
+            content: {
+              default: {
+                mode: "none",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "none",
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "full",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "range",
+                    },
+                    offset: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    length: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 262144,
+                    },
+                  },
+                  required: ["mode", "offset", "length"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "markdown-body",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+              ],
+            },
+          },
+          required: ["groq"],
+        },
+        scopeInstanceId: {
+          type: "string",
+        },
+        dataSourceName: {
+          type: "string",
+        },
+      },
+      required: ["name", "scopeInstanceId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        resourceId: {
+          type: "string",
+        },
+        dataSourceId: {
+          type: "string",
+        },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
+        },
+      },
+      required: ["resourceId", "warnings"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "breakpoints",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "breakpoints",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "breakpoints",
+    ],
+    retryOnConflict: false,
+  },
+  {
+    id: "assetsResources.update",
+    command: "update-assets-resource",
+    client: "updateAssetsResource",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        resourceId: {
+          type: "string",
+        },
+        values: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              minLength: 1,
+            },
+            query: {
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    groq: {
+                      type: "string",
+                      minLength: 1,
+                      maxLength: 32768,
+                      description:
+                        "GROQ query evaluated against asset.file documents.",
+                    },
+                    parameters: {
+                      default: [],
+                      description:
+                        "Runtime GROQ parameters. Each value is a Webstudio expression evaluated in the resource scope.",
+                      maxItems: 32,
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          name: {
+                            type: "string",
+                            pattern: "^[A-Za-z_][A-Za-z0-9_]*$",
+                          },
+                          value: {
+                            anyOf: [
+                              {
+                                type: "string",
+                              },
+                              {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    const: "literal",
+                                  },
+                                  value: {
+                                    type: "string",
+                                  },
+                                },
+                                required: ["type", "value"],
+                              },
+                            ],
+                            description:
+                              'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                          },
+                        },
+                        required: ["name", "value"],
+                      },
+                    },
+                    resultLimit: {
+                      default: 100,
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1000,
+                    },
+                    content: {
+                      default: {
+                        mode: "none",
+                      },
+                      oneOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "none",
+                            },
+                          },
+                          required: ["mode"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "full",
+                            },
+                            maxBytes: {
+                              type: "integer",
+                              exclusiveMinimum: 0,
+                              maximum: 1048576,
+                            },
+                          },
+                          required: ["mode"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "range",
+                            },
+                            offset: {
+                              type: "integer",
+                              minimum: 0,
+                              maximum: 9007199254740991,
+                            },
+                            length: {
+                              type: "integer",
+                              exclusiveMinimum: 0,
+                              maximum: 262144,
+                            },
+                          },
+                          required: ["mode", "offset", "length"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "markdown-body",
+                            },
+                            maxBytes: {
+                              type: "integer",
+                              exclusiveMinimum: 0,
+                              maximum: 1048576,
+                            },
+                          },
+                          required: ["mode"],
+                        },
+                      ],
+                    },
+                  },
+                  required: ["groq"],
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+          },
+          required: [],
+        },
+        scopeInstanceId: {
+          type: "string",
+        },
+        dataSourceName: {
+          type: "string",
+        },
+      },
+      required: ["resourceId", "values"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        resourceId: {
+          type: "string",
+        },
+        dataSourceId: {
+          type: "string",
+        },
+        warnings: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                const: "warning",
+              },
+              code: {
+                type: "string",
+              },
+              path: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              message: {
+                type: "string",
+              },
+              range: {
+                type: "object",
+                properties: {
+                  from: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  to: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                required: ["from", "to"],
+              },
+              remediation: {
+                type: "string",
+              },
+              instanceId: {
+                type: "string",
+              },
+              resourceId: {
+                type: "string",
+              },
+            },
+            required: [
+              "severity",
+              "code",
+              "path",
+              "message",
+              "range",
+              "remediation",
+            ],
+          },
+        },
+      },
+      required: ["resourceId"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "breakpoints",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "breakpoints",
+    ],
+    invalidatesNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+      "breakpoints",
+    ],
+    retryOnConflict: false,
+  },
+  {
     id: "resources.create",
     command: "create-resource",
     client: "createResource",

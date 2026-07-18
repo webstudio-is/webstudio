@@ -5,6 +5,13 @@ const authorizePatchEntries = vi.hoisted(() => vi.fn());
 const createContentModeCapabilities = vi.hoisted(() =>
   vi.fn(() => ({ capabilities: true }))
 );
+const synchronizeAssetResourceIndexQueries = vi.hoisted(() => vi.fn());
+const synchronizeAllCanonicalAssetStandardMetadata = vi.hoisted(() => vi.fn());
+const updateAssetResourceIndexesAfterCanonicalChange = vi.hoisted(() =>
+  vi.fn()
+);
+const createAssetResourceIndexStore = vi.hoisted(() => vi.fn(() => ({})));
+const createAssetClient = vi.hoisted(() => vi.fn(() => ({})));
 
 vi.mock("@webstudio-is/project/index.server", () => ({
   patchLoadedBuild,
@@ -15,6 +22,15 @@ vi.mock("./patch-auth.server", () => ({
   authorizePatchEntries,
   createContentModeCapabilities,
   createWriterContext: vi.fn(),
+}));
+vi.mock("@webstudio-is/asset-uploader/index.server", () => ({
+  synchronizeAssetResourceIndexQueries,
+  synchronizeAllCanonicalAssetStandardMetadata,
+  updateAssetResourceIndexesAfterCanonicalChange,
+}));
+vi.mock("../../asset-client", () => ({
+  createAssetClient,
+  createAssetResourceIndexStore,
 }));
 
 import {
@@ -34,6 +50,7 @@ const buildRow = {
   styleSourceSelections: JSON.stringify([]),
   styles: JSON.stringify([]),
   breakpoints: JSON.stringify([]),
+  resources: JSON.stringify([]),
 };
 
 const createContext = () => {
@@ -95,6 +112,101 @@ describe("applyPatchRequest", () => {
     patchLoadedBuild.mockReset();
     authorizePatchEntries.mockReset();
     createContentModeCapabilities.mockClear();
+    synchronizeAssetResourceIndexQueries.mockReset().mockResolvedValue({
+      deletedResourceIds: [],
+      updatedResourceIds: [],
+    });
+    synchronizeAllCanonicalAssetStandardMetadata
+      .mockReset()
+      .mockResolvedValue(0);
+    updateAssetResourceIndexesAfterCanonicalChange
+      .mockReset()
+      .mockResolvedValue({
+        changedAssetIds: [],
+        updatedResourceIds: [],
+      });
+    createAssetResourceIndexStore.mockClear();
+  });
+
+  test("synchronizes query indexes after a committed resource patch", async () => {
+    const resourceEntry = {
+      ...patch.entries[0],
+      transaction: transaction("tx-resource", "resources") as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: resourceEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    const nextResources = JSON.stringify([
+      {
+        id: "posts",
+        name: "Posts",
+        control: "system",
+        method: "post",
+        url: JSON.stringify("/$resources/assets/query"),
+        headers: [],
+        body: '{query:"*[]"}',
+      },
+    ]);
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4, resources: nextResources },
+    }));
+
+    await expect(
+      applyPatchRequest(createContext(), {
+        ...patch,
+        entries: [resourceEntry],
+      })
+    ).resolves.toMatchObject({ status: "ok" });
+    expect(synchronizeAssetResourceIndexQueries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project-1",
+        previousResources: [],
+        resources: [expect.objectContaining({ id: "posts" })],
+      })
+    );
+  });
+
+  test("maintains canonical paths and indexes after asset-folder patches", async () => {
+    const folderEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-folder",
+        payload: [
+          {
+            namespace: "assetFolders",
+            patches: [
+              { op: "replace", path: ["folder-1", "name"], value: "News" },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: folderEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await expect(
+      applyPatchRequest(createContext(), { ...patch, entries: [folderEntry] })
+    ).resolves.toMatchObject({ status: "ok" });
+    expect(synchronizeAllCanonicalAssetStandardMetadata).toHaveBeenCalledWith({
+      client: expect.anything(),
+      projectId: "project-1",
+    });
+    expect(updateAssetResourceIndexesAfterCanonicalChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project-1",
+        changedAssetIds: ["folder-1"],
+      })
+    );
   });
 
   test("returns per-entry partial results while applying authorized entries", async () => {

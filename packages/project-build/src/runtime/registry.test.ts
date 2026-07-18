@@ -84,6 +84,7 @@ const paginatedReadOperationIds = [
   "cssVariables.list",
   "variables.list",
   "resources.list",
+  "assetsResources.list",
   "assets.list",
   "fonts.list",
 ] as const;
@@ -1689,6 +1690,182 @@ describe("builder runtime read families", () => {
     });
   });
 
+  test("preserves fetch-all Assets behavior and enables query configuration explicitly", () => {
+    expectRuntimeValidationError(
+      "assetsResources.create",
+      {
+        name: "Invalid parameters",
+        scopeInstanceId: "heading",
+        query: {
+          groq: "*[_type == $type]",
+          parameters: [
+            { name: "type", value: '"asset.file"' },
+            { name: "type", value: '"asset.file"' },
+          ],
+        },
+      },
+      { path: ["query", "parameters", "1", "name"] }
+    );
+
+    const fetchAll = executeBuilderRuntimeOperation({
+      id: "assetsResources.create",
+      state,
+      input: {
+        name: "All assets",
+        scopeInstanceId: "heading",
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["all-assets-resource", "all-assets-data-source"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    }) as {
+      payload: Array<{
+        namespace: string;
+        patches: Array<{ op: string; value?: unknown }>;
+      }>;
+    };
+    expect(
+      fetchAll.payload
+        .find(({ namespace }) => namespace === "resources")
+        ?.patches.find(({ op }) => op === "add")?.value
+    ).toMatchObject({
+      id: "all-assets-resource",
+      control: "system",
+      method: "get",
+      url: '"/$resources/assets"',
+      headers: [],
+    });
+
+    const created = executeBuilderRuntimeOperation({
+      id: "assetsResources.create",
+      state,
+      input: {
+        name: "Blog posts",
+        scopeInstanceId: "heading",
+        query: {
+          groq: '*[_type == "asset.file" && properties.slug == $slug][0]',
+          parameters: [{ name: "slug", value: "system.params.slug" }],
+          resultLimit: 1,
+          content: { mode: "markdown-body", maxBytes: 65536 },
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["asset-resource", "asset-data-source"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+    expect(created).toMatchObject({
+      result: {
+        resourceId: "asset-resource",
+        dataSourceId: "asset-data-source",
+        warnings: [],
+      },
+    });
+    const createdMutation = created as {
+      payload: Array<{
+        namespace: string;
+        patches: Array<{ op: string; value?: unknown }>;
+      }>;
+    };
+    const resourcePatch = createdMutation.payload
+      .find(({ namespace }) => namespace === "resources")
+      ?.patches.find(({ op }) => op === "add");
+    const dataSourcePatch = createdMutation.payload
+      .find(({ namespace }) => namespace === "dataSources")
+      ?.patches.find(({ op }) => op === "add");
+    expect(resourcePatch?.value).toMatchObject({
+      id: "asset-resource",
+      control: "system",
+      method: "post",
+      url: '"/$resources/assets/query"',
+    });
+    expect(resourcePatch?.value).toHaveProperty(
+      "body",
+      expect.stringContaining("properties.slug == $slug")
+    );
+
+    const queryState = {
+      ...state,
+      resources: new Map([
+        ...state.resources,
+        ["asset-resource", resourcePatch?.value],
+      ]),
+      dataSources: new Map([
+        ...state.dataSources,
+        ["asset-data-source", dataSourcePatch?.value],
+      ]),
+    } as BuilderState;
+    const inspected = executeBuilderRuntimeOperation({
+      id: "assetsResources.get",
+      state: queryState,
+      input: { resourceId: "asset-resource" },
+    });
+    expect(inspected).toEqual({
+      resource: expect.objectContaining({
+        resourceId: "asset-resource",
+        name: "Blog posts",
+        scopeInstanceId: "heading",
+        mode: "query",
+        query: {
+          groq: '*[_type == "asset.file" && properties.slug == $slug][0]',
+          parameters: [{ name: "slug", value: "system.params.slug" }],
+          resultLimit: 1,
+          content: { mode: "markdown-body", maxBytes: 65536 },
+        },
+      }),
+    });
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "assetsResources.list",
+        state: queryState,
+        input: {},
+      })
+    ).toMatchObject({ total: 1, returnedCount: 1 });
+
+    const updated = executeBuilderRuntimeOperation({
+      id: "assetsResources.update",
+      state: queryState,
+      input: {
+        resourceId: "asset-resource",
+        values: {
+          query: {
+            groq: '*[_type == "asset.file"][0...2]',
+            resultLimit: 2,
+            content: { mode: "none" },
+          },
+        },
+      },
+      context,
+    });
+    expect((updated as { payload: unknown }).payload).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ namespace: "resources" }),
+      ])
+    );
+
+    const disabled = executeBuilderRuntimeOperation({
+      id: "assetsResources.update",
+      state: queryState,
+      input: {
+        resourceId: "asset-resource",
+        values: { query: null },
+      },
+      context,
+    });
+    expect(
+      JSON.stringify((disabled as { payload: unknown }).payload)
+    ).toContain('\\"/$resources/assets\\"');
+    expect(
+      JSON.stringify((disabled as { payload: unknown }).payload)
+    ).not.toContain("/$resources/assets/query");
+  });
+
   test("replaces bounded fixed resource URLs without changing expressions", () => {
     const resource = state.resources.get("resource");
     if (resource === undefined) {
@@ -2157,6 +2334,8 @@ describe("builder runtime registry", () => {
       ["variables.update", {}],
       ["variables.delete", {}],
       ["variables.deleteUnused", []],
+      ["assetsResources.create", {}],
+      ["assetsResources.update", {}],
       ["resources.create", {}],
       ["resources.update", {}],
       ["resources.replaceText", {}],

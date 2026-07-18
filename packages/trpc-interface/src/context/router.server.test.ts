@@ -79,3 +79,35 @@ test("includes structured validation issues in formatted tRPC errors", async () 
     },
   });
 });
+
+test("does not classify a domain not-found error as API incompatibility", async () => {
+  const appRouter = router({
+    fail: procedure.query(() => {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        cause: Object.assign(new Error("Index was not found"), {
+          webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND",
+        }),
+      });
+    }),
+  });
+
+  const response = await fetchRequestHandler({
+    endpoint: "/trpc",
+    req: new Request("http://localhost/trpc/fail"),
+    router: appRouter,
+    createContext,
+  });
+
+  expect(response.status).toBe(404);
+  const body = await response.json();
+  expect(body).toMatchObject({
+    error: {
+      data: {
+        code: "NOT_FOUND",
+        webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND",
+      },
+    },
+  });
+  expect(JSON.stringify(body)).not.toContain("apiCompatibility");
+});

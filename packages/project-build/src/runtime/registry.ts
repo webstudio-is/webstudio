@@ -18,6 +18,7 @@ import { pageCopyNamespaces } from "../contracts/namespaces";
 import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
+import * as assetResources from "./asset-resources";
 import * as bindingVerification from "./binding-verification";
 import * as assetFolders from "./asset-folders";
 import * as components from "./components";
@@ -1695,6 +1696,70 @@ export const builderRuntimeOperations = [
     readContract(dataNamespaces),
     scopedInstanceListInput,
     ({ state, input }) => data.listResources(state, input)
+  ),
+  runtimeOperation(
+    "assetsResources.list",
+    api("list-assets-resources", "listAssetsResources"),
+    readContract(dataNamespaces),
+    assetResources.assetsResourceListInput,
+    ({ state, input }) => assetResources.listAssetsResources(state, input)
+  ),
+  runtimeOperation(
+    "assetsResources.get",
+    api("get-assets-resource", "getAssetsResource"),
+    readContract(dataNamespaces),
+    assetResources.assetsResourceGetInput,
+    ({ state, input }) => assetResources.getAssetsResource(state, input)
+  ),
+  runtimeOperation(
+    "assetsResources.create",
+    api("create-assets-resource", "createAssetsResource"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+    }),
+    assetResources.assetsResourceCreateInput,
+    ({ state, input, context }) =>
+      assetResources.createAssetsResource(state, input, context)
+  ),
+  runtimeOperation(
+    "assetsResources.update",
+    api("update-assets-resource", "updateAssetsResource"),
+    mutationContract({
+      readNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+      writeNamespaces: [
+        "pages",
+        "instances",
+        "props",
+        ...dataNamespaces,
+        ...styleNamespaces,
+        "breakpoints",
+      ],
+    }),
+    assetResources.assetsResourceUpdateInput,
+    ({ state, input, context }) =>
+      assetResources.updateAssetsResource(state, input, context)
   ),
   runtimeOperation(
     "resources.create",

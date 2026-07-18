@@ -1,4 +1,5 @@
 export * from "./schema/assets";
+export * from "./schema/asset-resource";
 export * from "./schema/asset-folders";
 export * from "./schema/pages";
 export * from "./schema/instances";

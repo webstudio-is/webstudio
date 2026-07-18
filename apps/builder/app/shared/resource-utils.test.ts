@@ -209,4 +209,32 @@ describe("getResourceKey - pure function tests", () => {
     expect(key1).toBe(key2);
     expect(key1).toBeTruthy();
   });
+
+  test("asset query cache separates query, parameters, index, and content", () => {
+    const createRequest = (body: Record<string, unknown>): ResourceRequest => ({
+      name: "assets-query",
+      control: "system",
+      method: "post",
+      url: "/$resources/assets/query",
+      searchParams: [],
+      headers: [{ name: "content-type", value: "application/json" }],
+      body,
+    });
+    const base = {
+      query: "*[]",
+      parameters: { slug: "first" },
+      indexRevision: "index-1",
+      content: { mode: "none" },
+    };
+    const requests = [
+      base,
+      { ...base, query: "*[_type == 'asset.file']" },
+      { ...base, parameters: { slug: "second" } },
+      { ...base, indexRevision: "index-2" },
+      { ...base, content: { mode: "full", maxBytes: 4096 } },
+    ];
+    const keys = requests.map((body) => getResourceKey(createRequest(body)));
+
+    expect(new Set(keys).size).toBe(requests.length);
+  });
 });

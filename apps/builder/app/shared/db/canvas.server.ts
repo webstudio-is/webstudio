@@ -8,7 +8,13 @@ import {
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/server";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
-import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/index.server";
+import {
+  loadAssetDataByProject,
+  loadCanonicalAssetFileEntries,
+  loadAssetResourceIndexSnapshots,
+  getAssetResourceQuery,
+  synchronizeCanonicalAssets,
+} from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   findPageByIdOrPath,
@@ -17,9 +23,14 @@ import {
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
+import {
+  computeAssetResourceQueryHash,
+  computeCanonicalAssetRevision,
+} from "@webstudio-is/asset-resource";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
+import { createAssetClient } from "../asset-client";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
   item.id,
@@ -153,12 +164,55 @@ const addProjectMetadata = async (
       ? undefined
       : await getUserById(context, project.userId);
 
+  const assetQueryResources = data.build.resources
+    .map(([, resource]) => resource)
+    .flatMap((resource) => {
+      const query = getAssetResourceQuery(resource);
+      return query === undefined ? [] : [{ resourceId: resource.id, query }];
+    });
+  let assetResourceIndexes: PublishedProjectBundle["assetResourceIndexes"];
+  let protectedAssetIds: PublishedProjectBundle["protectedAssetIds"];
+  if (assetQueryResources.length > 0) {
+    const assetClient = createAssetClient();
+    await synchronizeCanonicalAssets({
+      client: context.postgrest.client,
+      projectId: project.id,
+      assetClient,
+    });
+    const canonicalEntries = await loadCanonicalAssetFileEntries({
+      client: context.postgrest.client,
+      projectId: project.id,
+    });
+    protectedAssetIds = canonicalEntries
+      .filter(
+        ({ document }) =>
+          document.properties.draft === true ||
+          document.properties.private === true
+      )
+      .map(({ assetId }) => assetId);
+    assetResourceIndexes = await loadAssetResourceIndexSnapshots({
+      client: context.postgrest.client,
+      projectId: project.id,
+      resources: await Promise.all(
+        assetQueryResources.map(async ({ resourceId, query }) => ({
+          resourceId,
+          queryHash: await computeAssetResourceQueryHash(query),
+        }))
+      ),
+      read: assetClient.readFile,
+      expectedAssetRevision:
+        await computeCanonicalAssetRevision(canonicalEntries),
+    });
+  }
+
   return {
     ...data,
     bundleVersion,
     user: user ? { email: user.email } : undefined,
     projectDomain: project.domain,
     projectTitle: project.title,
+    assetResourceIndexes,
+    protectedAssetIds,
   };
 };
 

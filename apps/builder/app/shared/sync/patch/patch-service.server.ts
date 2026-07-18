@@ -15,6 +15,16 @@ import type {
   NormalizedPatchRequest,
   PatchEntry,
 } from "./patch-normalize.server";
+import {
+  synchronizeAllCanonicalAssetStandardMetadata,
+  synchronizeAssetResourceIndexQueries,
+  updateAssetResourceIndexesAfterCanonicalChange,
+} from "@webstudio-is/asset-uploader/index.server";
+import {
+  createAssetClient,
+  createAssetResourceIndexStore,
+} from "../../asset-client";
+import type { Resource } from "@webstudio-is/sdk";
 
 type BuildRow = Database["public"]["Tables"]["Build"]["Row"];
 type BuildColumn = keyof BuildRow;
@@ -245,6 +255,7 @@ const applyAuthorizedEntries = async ({
       version,
       entries: [] satisfies PatchEntryResult[],
       status: "ok" as const,
+      build: undefined,
     };
   }
   if (build === undefined) {
@@ -275,6 +286,7 @@ const applyAuthorizedEntries = async ({
         status: "ok" as const,
         version: batchResult.version,
         entries: authorized.map(({ entry }) => acceptedResult(entry)),
+        build: currentBuild,
       };
     }
 
@@ -314,8 +326,11 @@ const applyAuthorizedEntries = async ({
     status: "partial" as const,
     version: currentVersion,
     entries,
+    build: currentBuild,
   };
 };
+
+const parseResources = (value: string) => JSON.parse(value) as Resource[];
 
 export const applyPatchRequest = async (
   context: AppContext,
@@ -338,23 +353,82 @@ export const applyPatchRequest = async (
       });
     }
   );
+  const build =
+    authorized.length === 0
+      ? undefined
+      : await loadBuildForPatch({
+          authorized,
+          context,
+          state,
+          buildId: patch.buildId,
+        });
   const applied = await applyAuthorizedEntries({
     authorized,
-    build:
-      authorized.length === 0
-        ? undefined
-        : await loadBuildForPatch({
-            authorized,
-            context,
-            state,
-            buildId: patch.buildId,
-          }),
+    build,
     patch,
     version: authorized.length === 0 ? state.version : patch.clientVersion,
   });
 
   if (applied.status === "version_mismatched") {
     return applied;
+  }
+
+  if (
+    build?.resources !== undefined &&
+    applied.build?.resources !== undefined &&
+    build.resources !== applied.build.resources
+  ) {
+    try {
+      await synchronizeAssetResourceIndexQueries({
+        client: context.postgrest.client,
+        assetClient: createAssetClient(),
+        store: createAssetResourceIndexStore(),
+        projectId: patch.projectId,
+        previousResources: parseResources(build.resources),
+        resources: parseResources(applied.build.resources),
+      });
+    } catch (error) {
+      // The resource patch is already committed. Keep its response successful;
+      // index status exposes build failures without encouraging a duplicate patch.
+      console.error("Asset resource index synchronization failed", error);
+    }
+  }
+
+  const assetChanges = authorized.flatMap(({ entry }) =>
+    entry.transaction.payload.filter(
+      ({ namespace }) => namespace === "assets" || namespace === "assetFolders"
+    )
+  );
+  if (assetChanges.length > 0) {
+    try {
+      const hasFolderChanges = assetChanges.some(
+        ({ namespace }) => namespace === "assetFolders"
+      );
+      if (hasFolderChanges) {
+        await synchronizeAllCanonicalAssetStandardMetadata({
+          client: context.postgrest.client,
+          projectId: patch.projectId,
+        });
+      }
+      const changedAssetIds = [
+        ...new Set(
+          assetChanges.flatMap(({ patches }) =>
+            patches
+              .map(({ path }) => path[0])
+              .filter((id): id is string => typeof id === "string")
+          )
+        ),
+      ];
+      await updateAssetResourceIndexesAfterCanonicalChange({
+        client: context.postgrest.client,
+        store: createAssetResourceIndexStore(),
+        projectId: patch.projectId,
+        changedAssetIds:
+          changedAssetIds.length === 0 ? ["project-assets"] : changedAssetIds,
+      });
+    } catch (error) {
+      console.error("Asset resource index maintenance failed", error);
+    }
   }
 
   const entriesByTransactionId = new Map<string, PatchEntryResult[]>();

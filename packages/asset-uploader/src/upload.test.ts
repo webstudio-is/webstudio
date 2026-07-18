@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   createTestServer,
   db,
@@ -744,6 +744,109 @@ describe("createUploadTicket", () => {
 });
 
 describe("uploadFile", () => {
+  test("indexes only the newly uploaded Markdown asset after commit", async () => {
+    const source = "---\ntitle: New post\n---\nPost body";
+    const sourceBytes = new TextEncoder().encode(source);
+    let persisted: Record<string, unknown> | undefined;
+    const uploadedFile = {
+      name: "post.md",
+      format: "md",
+      size: sourceBytes.byteLength,
+      status: "UPLOADED",
+      uploaderProjectId: "project-1",
+      isDeleted: false,
+      description: null,
+      meta: "{}",
+      createdAt: "2026-07-18T00:00:00.000Z",
+      updatedAt: "2026-07-18T01:00:00.000Z",
+    };
+    const readFile = vi.fn(async () => ({
+      data: {
+        async *[Symbol.asyncIterator]() {
+          yield sourceBytes;
+        },
+      },
+    }));
+    server.use(
+      db.get("File", () =>
+        json({
+          ...uploadedFile,
+          size: 0,
+          status: "UPLOADING",
+          updatedAt: "2026-07-18T00:00:00.000Z",
+        })
+      ),
+      db.patch("File", () => json(uploadedFile)),
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("name")) {
+          return json({
+            id: "asset-1",
+            projectId: "project-1",
+            filename: null,
+            description: null,
+            folderId: null,
+          });
+        }
+        expect(url.searchParams.get("id")).toBe("in.(asset-1)");
+        return json([
+          {
+            id: "asset-1",
+            projectId: "project-1",
+            filename: null,
+            folderId: null,
+            file: uploadedFile,
+          },
+        ]);
+      }),
+      db.get("AssetFolder", () => json([])),
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        const value = (await request.json()) as {
+          p_project_id: string;
+          p_asset_id: string;
+          p_document: Record<string, unknown>;
+        };
+        persisted = {
+          projectId: value.p_project_id,
+          assetId: value.p_asset_id,
+          document: value.p_document,
+        };
+        return json(true);
+      })
+    );
+
+    await expect(
+      uploadFile(
+        "post.md",
+        new Blob([source]).stream(),
+        {
+          uploadFile: async () => ({
+            format: "md",
+            size: sourceBytes.byteLength,
+            meta: {},
+          }),
+          readFile,
+        },
+        createContext(),
+        undefined
+      )
+    ).resolves.toMatchObject({
+      id: "asset-1",
+      name: "post.md",
+      type: "file",
+    });
+    expect(readFile).toHaveBeenCalledOnce();
+    expect(persisted).toMatchObject({
+      projectId: "project-1",
+      assetId: "asset-1",
+      document: {
+        name: "post.md",
+        properties: { title: "New post" },
+        excerpt: "Post body",
+      },
+    });
+  });
+
   test("returns uploaded asset with reserved asset row id", async () => {
     server.use(
       db.get("File", () =>
@@ -774,6 +877,21 @@ describe("uploadFile", () => {
       ),
       db.get("Asset", ({ request }) => {
         const url = new URL(request.url);
+        if (url.searchParams.has("file.status")) {
+          return json([
+            {
+              id: "asset-1",
+              projectId: "project-1",
+              filename: "photo",
+              folderId: null,
+              file: {
+                name: "existing.png",
+                size: 5,
+                updatedAt: "2024-01-01T00:00:00.000Z",
+              },
+            },
+          ]);
+        }
         expect(url.searchParams.get("name")).toBe("eq.existing.png");
         expect(url.searchParams.get("projectId")).toBe("eq.project-1");
         return json({
@@ -782,7 +900,9 @@ describe("uploadFile", () => {
           filename: "photo",
           description: "Photo",
         });
-      })
+      }),
+      db.get("AssetFolder", () => json([])),
+      db.post("rpc/replace_asset_file_metadata", () => json(true))
     );
 
     await expect(
@@ -794,6 +914,9 @@ describe("uploadFile", () => {
             format: "png",
             size: 5,
             meta: { width: 10, height: 20 },
+          }),
+          readFile: async () => ({
+            data: { async *[Symbol.asyncIterator]() {} },
           }),
         },
         createContext(),
@@ -846,6 +969,9 @@ describe("uploadFile", () => {
           uploadFile: async () => {
             throw new Error("Storage upload failed");
           },
+          readFile: async () => ({
+            data: { async *[Symbol.asyncIterator]() {} },
+          }),
         },
         createContext(),
         undefined,
