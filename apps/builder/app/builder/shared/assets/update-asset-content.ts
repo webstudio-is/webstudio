@@ -1,7 +1,5 @@
 import type { Asset } from "@webstudio-is/sdk";
-import { getMimeTypeByExtension } from "@webstudio-is/sdk";
-import type { AssetContentActionResponse } from "~/routes/rest.assets.$assetId.content";
-import { restAssetContentPath } from "~/shared/router-utils";
+import { updateProjectAssetContent } from "@webstudio-is/http-client";
 import { fetch } from "~/shared/fetch.client";
 import { $authToken } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
@@ -22,25 +20,16 @@ export const updateAssetContent = async ({
     throw new Error("Project not found");
   }
 
-  const headers = new Headers({
-    "Content-Type": getMimeTypeByExtension(asset.format) ?? "text/plain",
-  });
   const authToken = $authToken.get();
-  if (authToken !== undefined) {
-    headers.set("x-auth-token", authToken);
-  }
-  const response = await fetch(
-    restAssetContentPath({
-      assetId: asset.id,
-      projectId,
-      expectedName: asset.name,
-    }),
-    { method: "PUT", body: content, headers }
-  );
-  const result = (await response.json()) as AssetContentActionResponse;
-  if ("errors" in result) {
-    throw new Error(result.errors);
-  }
+  const { asset: updatedAsset } = await updateProjectAssetContent({
+    assetId: asset.id,
+    projectId,
+    expectedName: asset.name,
+    origin: window.location.origin,
+    authToken,
+    readAssetData: async () => content,
+    request: fetch,
+  });
 
   createTransactionFromBuilderPatchPayload({
     data: getWebstudioData(),
@@ -50,13 +39,13 @@ export const updateAssetContent = async ({
         patches: [
           {
             op: "replace",
-            path: [result.asset.id],
-            value: result.asset,
+            path: [updatedAsset.id],
+            value: updatedAsset,
           },
         ],
       },
     ],
   });
   onNextTransactionComplete(invalidateAssets);
-  return result.asset;
+  return updatedAsset;
 };

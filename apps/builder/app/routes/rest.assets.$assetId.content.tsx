@@ -15,7 +15,9 @@ export type AssetContentActionResponse = { asset: Asset } | { errors: string };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
-  await checkCsrf(request);
+  if (request.headers.has("x-auth-token") === false) {
+    await checkCsrf(request);
+  }
 
   try {
     if (request.method !== "PUT" || request.body === null) {

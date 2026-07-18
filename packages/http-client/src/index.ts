@@ -322,6 +322,7 @@ const formatMebibytes = (bytes: number) =>
 
 type Asset = PublishedProjectBundle["assets"][number];
 type BinaryAssetData = Blob | ArrayBuffer | ArrayBufferView<ArrayBuffer>;
+type AssetContentData = BinaryAssetData | string;
 
 type AssetUpload = {
   asset: Asset;
@@ -565,6 +566,67 @@ export const uploadProjectAssets = async (
     },
   });
   return { uploaded };
+};
+
+type AssetContentUpdateResult =
+  | { asset: Asset }
+  | {
+      errors: string;
+    };
+
+const getAssetContentUpdateUrl = ({
+  assetId,
+  expectedName,
+  origin,
+  projectId,
+}: {
+  assetId: string;
+  expectedName: string;
+  origin: string;
+  projectId: string;
+}) => {
+  const { sourceOrigin } = parseBuilderUrl(origin);
+  const url = new URL(
+    `/rest/assets/${encodeURIComponent(assetId)}/content`,
+    sourceOrigin
+  );
+  url.searchParams.set("projectId", projectId);
+  url.searchParams.set("expectedName", expectedName);
+  return url;
+};
+
+export const updateProjectAssetContent = async (
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
+    assetId: string;
+    expectedName: string;
+    readAssetData: () => Promise<AssetContentData>;
+    request?: typeof fetch;
+  }
+): Promise<{ asset: Asset }> => {
+  const request = params.request ?? fetch;
+  const response = await request(
+    getAssetContentUpdateUrl({
+      assetId: params.assetId,
+      expectedName: params.expectedName,
+      origin: params.origin,
+      projectId: params.projectId,
+    }),
+    {
+      method: "PUT",
+      body: await params.readAssetData(),
+      headers: createHeaders({
+        ...params.headers,
+        "x-auth-token": params.authToken,
+        "content-type": "application/octet-stream",
+      }),
+    }
+  );
+  const result = (await response.json()) as AssetContentUpdateResult;
+  if ("errors" in result) {
+    throw Object.assign(new Error(result.errors), { status: response.status });
+  }
+  return result;
 };
 
 export const loadProjectBundleByBuildId = async (

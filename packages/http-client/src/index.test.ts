@@ -96,6 +96,7 @@ import {
   rewriteCssVariableRefs,
   updateDesignTokenStyles,
   updateAssetFolder,
+  updateProjectAssetContent,
   updateDomain,
   updateBreakpoint,
   updatePage,
@@ -1332,6 +1333,61 @@ test("uploads project asset descriptors with local data readers", async () => {
     const url = new URL(request.toString());
     expect(url.searchParams.has("assetId")).toBe(false);
   }
+});
+
+test("updates asset content through the stable asset revision endpoint", async () => {
+  const revision = {
+    ...createImageAssetFixture({ id: "asset-id", name: "old_hash.png" }),
+    type: "file" as const,
+    format: "json",
+    meta: {},
+    name: "new_hash.json",
+  };
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ asset: revision }), {
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset/id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).resolves.toEqual({ asset: revision });
+
+  const [url, init] = request.mock.calls[0] as unknown as [URL, RequestInit];
+  expect(url.pathname).toBe("/rest/assets/asset%2Fid/content");
+  expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
+  expect(url.searchParams.get("expectedName")).toBe("old_hash.json");
+  expect(init).toMatchObject({ method: "PUT", body: '{"theme":"dark"}' });
+  expect(new Headers(init.headers).get("x-auth-token")).toBe(
+    apiParams.authToken
+  );
+});
+
+test("surfaces asset content revision conflicts", async () => {
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ errors: "File changed" }), {
+        status: 409,
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => "stale",
+      request,
+    })
+  ).rejects.toMatchObject({ message: "File changed", status: 409 });
 });
 
 test("normalizes synced project bundles for local storage", () => {

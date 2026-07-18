@@ -938,3 +938,40 @@ test("adapts MCP upload assets input to public API upload input", () => {
   });
   expect(input).toHaveProperty("readAssetData", expect.any(Function));
 });
+
+test("adapts MCP asset content input to the shared revision client", async () => {
+  const input = getMcpOperationInput("update-asset-content", {
+    assetId: "asset-id",
+    expectedName: "settings_hash.json",
+    content: '{"theme":"dark"}',
+  }) as {
+    assetId: string;
+    expectedName: string;
+    readAssetData: () => Promise<unknown>;
+  };
+
+  expect(input).toMatchObject({
+    assetId: "asset-id",
+    expectedName: "settings_hash.json",
+  });
+  await expect(input.readAssetData()).resolves.toBe('{"theme":"dark"}');
+});
+
+test("exposes asset content editing through MCP discovery", () => {
+  const tool = listProjectSessionMcpTools(publicApiOperations).find(
+    ({ name }) => name === "update-asset-content"
+  );
+
+  expect(tool).toMatchObject({
+    name: "update-asset-content",
+    inputSchema: {
+      required: ["assetId", "expectedName"],
+      properties: {
+        assetId: expect.any(Object),
+        expectedName: expect.any(Object),
+        path: expect.any(Object),
+        content: expect.any(Object),
+      },
+    },
+  });
+});

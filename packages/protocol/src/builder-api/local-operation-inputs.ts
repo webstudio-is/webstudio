@@ -22,6 +22,13 @@ const localUploadAssetsInput = z.object({
   assetsDir: z.string().optional(),
 });
 
+const localUpdateAssetContentInput = z.object({
+  assetId: z.string().min(1),
+  expectedName: z.string().min(1),
+  path: z.string().min(1).optional(),
+  content: z.string().optional(),
+});
+
 const localOperation = <
   const Operation extends {
     command: string;
@@ -58,5 +65,16 @@ export const localOnlyOperationInputs = [
       invalidatesNamespaces: ["assets"] as const,
     },
     localUploadAssetsInput
+  ),
+  localOperation(
+    {
+      command: "update-asset-content",
+      id: "assets.updateContent",
+      method: "mutation",
+      client: "updateProjectAssetContent",
+      permit: "edit" as const,
+      invalidatesNamespaces: ["assets"] as const,
+    },
+    localUpdateAssetContentInput
   ),
 ] as const;

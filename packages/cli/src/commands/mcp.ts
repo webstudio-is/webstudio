@@ -48,6 +48,7 @@ import {
 import {
   createLocalUploadAssetInput,
   createLocalUploadAssetsInput,
+  createLocalUpdateAssetContentInput,
   downloadAssetFile,
   getLocalAssetPath,
 } from "../asset-files";
@@ -183,6 +184,25 @@ const getMcpUploadAssetsInput = (input: unknown) => {
   });
 };
 
+const getMcpUpdateAssetContentInput = (input: unknown) => {
+  if (
+    isPlainRecord(input) === false ||
+    typeof input.assetId !== "string" ||
+    typeof input.expectedName !== "string"
+  ) {
+    throw new Error(
+      "update-asset-content requires assetId and expectedName strings."
+    );
+  }
+  return createLocalUpdateAssetContentInput({
+    assetId: input.assetId,
+    expectedName: input.expectedName,
+    path: typeof input.path === "string" ? input.path : undefined,
+    content: typeof input.content === "string" ? input.content : undefined,
+    readFile,
+  });
+};
+
 type PersistedMcpCheckpoint = {
   tool: string;
   message: string;
@@ -283,6 +303,9 @@ const getMcpOperationInput = (command: string, input: unknown) => {
   }
   if (command === "upload-assets") {
     return getMcpUploadAssetsInput(input);
+  }
+  if (command === "update-asset-content") {
+    return getMcpUpdateAssetContentInput(input);
   }
   return input;
 };

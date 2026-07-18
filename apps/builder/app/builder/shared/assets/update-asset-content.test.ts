@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { fetch } from "~/shared/fetch.client";
+import { updateProjectAssetContent } from "@webstudio-is/http-client";
 import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { $authToken } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { updateAssetContent } from "./update-asset-content";
 
+vi.mock("@webstudio-is/http-client", () => ({
+  updateProjectAssetContent: vi.fn(),
+}));
 vi.mock("~/shared/fetch.client", () => ({ fetch: vi.fn() }));
 vi.mock("~/shared/sync/builder-patch", () => ({
   createTransactionFromBuilderPatchPayload: vi.fn(),
@@ -20,7 +23,7 @@ vi.mock("~/shared/sync/project-queue", () => ({
   onNextTransactionComplete: vi.fn(),
 }));
 
-const fetchMock = vi.mocked(fetch);
+const updateProjectAssetContentMock = vi.mocked(updateProjectAssetContent);
 const createTransaction = vi.mocked(createTransactionFromBuilderPatchPayload);
 
 const asset = {
@@ -35,7 +38,7 @@ const asset = {
 };
 
 beforeEach(() => {
-  fetchMock.mockReset();
+  updateProjectAssetContentMock.mockReset();
   createTransaction.mockReset();
   $project.set({ id: "project" } as never);
   $authToken.set("token");
@@ -53,25 +56,23 @@ test("commits a content revision without changing the asset id", async () => {
     size: 7,
     createdAt: "2026-07-18T00:00:00.000Z",
   };
-  fetchMock.mockResolvedValue(
-    new Response(JSON.stringify({ asset: revision }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    })
-  );
+  updateProjectAssetContentMock.mockResolvedValue({ asset: revision });
 
   await expect(
     updateAssetContent({ asset, content: '{"a":1}' })
   ).resolves.toEqual(revision);
 
-  const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-  expect(url).toContain("/rest/assets/asset/content?");
-  expect(url).toContain("expectedName=settings_old.json");
-  expect(init).toMatchObject({ method: "PUT", body: '{"a":1}' });
-  expect(new Headers(init.headers).get("Content-Type")).toBe(
-    "application/json"
+  expect(updateProjectAssetContentMock).toHaveBeenCalledWith(
+    expect.objectContaining({
+      assetId: "asset",
+      projectId: "project",
+      expectedName: "settings_old.json",
+      authToken: "token",
+    })
   );
-  expect(new Headers(init.headers).get("x-auth-token")).toBe("token");
+  await expect(
+    updateProjectAssetContentMock.mock.calls[0]?.[0].readAssetData()
+  ).resolves.toBe('{"a":1}');
   expect(createTransaction).toHaveBeenCalledWith({
     data: { assets: new Map() },
     payload: [
@@ -90,12 +91,7 @@ test("commits a content revision without changing the asset id", async () => {
 });
 
 test("does not commit a conflicting revision", async () => {
-  fetchMock.mockResolvedValue(
-    new Response(JSON.stringify({ errors: "File changed" }), {
-      status: 409,
-      headers: { "Content-Type": "application/json" },
-    })
-  );
+  updateProjectAssetContentMock.mockRejectedValue(new Error("File changed"));
 
   await expect(updateAssetContent({ asset, content: "stale" })).rejects.toThrow(
     "File changed"
