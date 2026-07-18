@@ -1,5 +1,4 @@
 import type { Asset } from "@webstudio-is/sdk";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
 import { $uploadingFilesDataStore } from "~/shared/nano-states";
@@ -19,19 +18,15 @@ import { uploadAssets } from "./upload-assets";
  */
 export const replaceAsset = async (
   oldAssetId: Asset["id"],
-  file: File,
-  options: {
-    type?: AssetType;
-    successMessage?: string;
-  } = {}
-): Promise<Asset["id"] | undefined> => {
+  file: File
+): Promise<void> => {
   const oldAsset = $assets.get().get(oldAssetId);
   if (!oldAsset) {
     toast.error("Original asset not found");
     return;
   }
 
-  const fileToAssetId = await uploadAssets(options.type ?? "image", [file], {
+  const fileToAssetId = await uploadAssets("image", [file], {
     folderId: oldAsset.folderId,
   });
   const newAssetId = fileToAssetId.get(file);
@@ -70,8 +65,7 @@ export const replaceAsset = async (
     invalidateAssets();
   });
 
-  toast.success(options.successMessage ?? "Asset replaced successfully");
-  return newAssetId;
+  toast.success("Asset replaced successfully");
 };
 
 const waitForAsset = (assetId: string): Promise<Asset> => {

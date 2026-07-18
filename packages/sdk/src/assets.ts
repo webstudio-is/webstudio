@@ -168,24 +168,6 @@ export const RESIZABLE_IMAGE_MIME_TYPES: readonly string[] = [
 ];
 
 /**
- * Image extensions supported as input by the image resizing pipeline.
- * Other allowed image formats are served directly from asset storage.
- */
-export const RESIZABLE_IMAGE_EXTENSIONS: readonly AllowedFileExtension[] = [
-  "jpg",
-  "jpeg",
-  "png",
-  "gif",
-  "webp",
-  "svg",
-];
-
-export const isResizableImageFileName = (fileName: string): boolean => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  return RESIZABLE_IMAGE_EXTENSIONS.includes(extension as AllowedFileExtension);
-};
-
-/**
  * All video file extensions
  */
 export const VIDEO_EXTENSIONS: readonly AllowedFileExtension[] =
@@ -211,6 +193,14 @@ export const getMimeTypeByExtension = (
   extension: string
 ): string | undefined => {
   return ALLOWED_FILE_TYPES[extension.toLowerCase() as AllowedFileExtension];
+};
+
+export const isResizableImageFileName = (fileName: string): boolean => {
+  const extension = fileName.split(".").pop();
+  const mimeType = extension && getMimeTypeByExtension(extension);
+  return (
+    mimeType !== undefined && RESIZABLE_IMAGE_MIME_TYPES.includes(mimeType)
+  );
 };
 
 export const isTextFileAsset = (asset: Pick<Asset, "format">): boolean => {
@@ -441,17 +431,6 @@ export const decodePathFragment = (fragment: string): string => {
 };
 
 /**
- * Generates the appropriate path for an asset based on its format.
- * Resizable images use /cgi/image/ and all other assets use /cgi/asset/.
- */
-export const getAssetPath = (asset: Pick<Asset, "name">): string => {
-  if (isResizableImageFileName(asset.name)) {
-    return `/cgi/image/${asset.name}?format=raw`;
-  }
-  return `/cgi/asset/${asset.name}?format=raw`;
-};
-
-/**
  * Generates the appropriate URL for an asset based on its format.
  *
  * @param asset - The asset to generate URL for
@@ -462,7 +441,10 @@ export const getAssetUrl = (
   asset: Pick<Asset, "name">,
   origin: string
 ): URL => {
-  return new URL(getAssetPath(asset), origin);
+  const path = isResizableImageFileName(asset.name)
+    ? `/cgi/image/${asset.name}?format=raw`
+    : `/cgi/asset/${asset.name}?format=raw`;
+  return new URL(path, origin);
 };
 
 /**

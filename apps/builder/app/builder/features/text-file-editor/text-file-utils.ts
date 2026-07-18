@@ -21,13 +21,10 @@ const languageSupportByMimeType = new Map<string, () => Extension>([
   ["text/markdown", () => markdown()],
 ]);
 
-const getAssetMimeType = (asset: Pick<Asset, "format">) =>
-  getMimeTypeByExtension(asset.format);
-
 export const getTextFileEditorExtensions = (
   asset: Pick<Asset, "format">
 ): Extension[] => {
-  const mimeType = getAssetMimeType(asset);
+  const mimeType = getMimeTypeByExtension(asset.format);
   if (mimeType === undefined) {
     return [];
   }

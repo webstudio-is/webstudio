@@ -168,6 +168,15 @@ export const updateAssetContent = async (
       }
     }
   );
+  const formatRevision = () =>
+    formatAsset({
+      assetId: currentAsset.id,
+      projectId: currentAsset.projectId,
+      filename: currentAsset.filename,
+      description: currentAsset.description,
+      folderId: currentAsset.folderId,
+      file,
+    });
 
   try {
     await swapAssetFileWithClient(
@@ -186,14 +195,15 @@ export const updateAssetContent = async (
         projectId,
         client: context.postgrest.client,
       });
-      if (current.name !== revisionName) {
-        const discardedRevision = await context.postgrest.client
-          .from("File")
-          .update({ isDeleted: true })
-          .eq("name", revisionName);
-        if (discardedRevision.error) {
-          throw discardedRevision.error;
-        }
+      if (current.name === revisionName) {
+        return formatRevision();
+      }
+      const discardedRevision = await context.postgrest.client
+        .from("File")
+        .update({ isDeleted: true })
+        .eq("name", revisionName);
+      if (discardedRevision.error) {
+        throw discardedRevision.error;
       }
     } catch (cleanupError) {
       console.error("Unable to discard an asset revision", cleanupError);
@@ -201,14 +211,7 @@ export const updateAssetContent = async (
     throw error;
   }
 
-  return formatAsset({
-    assetId: currentAsset.id,
-    projectId: currentAsset.projectId,
-    filename: currentAsset.filename,
-    description: currentAsset.description,
-    folderId: currentAsset.folderId,
-    file,
-  });
+  return formatRevision();
 };
 
 export const __testing__ = { getRevisionFilename };

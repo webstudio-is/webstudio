@@ -37,6 +37,7 @@ import {
 import { $assetFolders } from "~/shared/sync/data-stores";
 import { createAssetFolderHierarchy } from "@webstudio-is/sdk";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import {
   IDLE,
   isBlockedByBackdrop,
@@ -220,6 +221,7 @@ export const AssetsShell = ({
               droppedItemsPromise,
               droppedUrlsPromise,
             ]);
+            let didCreateFolder = false;
             const fileGroups = allowFolderDrop
               ? await createDroppedAssetFolderStructure({
                   directories: droppedItems.directories,
@@ -232,6 +234,7 @@ export const AssetsShell = ({
                     if (existing !== undefined) {
                       return existing.id;
                     }
+                    didCreateFolder = true;
                     const result = executeRuntimeMutation({
                       id: "assetFolders.create",
                       input: { name, parentId },
@@ -253,20 +256,28 @@ export const AssetsShell = ({
               toast.error("Folder upload is only available in Assets.");
             }
 
+            const uploadFolderFiles = () => {
+              for (const group of fileGroups) {
+                uploadDroppedFiles({
+                  files: group.files,
+                  type,
+                  accept,
+                  folderId: group.folderId,
+                });
+              }
+            };
+            if (didCreateFolder && fileGroups.length > 0) {
+              onNextTransactionComplete(uploadFolderFiles);
+            } else {
+              uploadFolderFiles();
+            }
+
             uploadDroppedFiles({
               files: droppedItems.files,
               type,
               accept,
               folderId,
             });
-            for (const group of fileGroups) {
-              uploadDroppedFiles({
-                files: group.files,
-                type,
-                accept,
-                folderId: group.folderId,
-              });
-            }
             uploadAssets(type, droppedUrls, { folderId });
           } catch (error) {
             toast.error(error instanceof Error ? error.message : String(error));

@@ -232,4 +232,61 @@ describe("asset content revisions", () => {
     ).rejects.toBeInstanceOf(AssetRevisionConflictError);
     expect(discardedRevision).toBe(true);
   });
+
+  test("accepts a revision when the swap commits without a response", async () => {
+    let assetLoadCount = 0;
+    let revisionName = "";
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => {
+        assetLoadCount += 1;
+        return json(
+          assetLoadCount === 1 ? assetRow : { ...assetRow, name: revisionName }
+        );
+      }),
+      db.post("File", async ({ request }) => {
+        revisionName = ((await request.json()) as { name: string }).name;
+        return empty({ status: 201 });
+      }),
+      db.get("File", () =>
+        json({
+          ...oldFile,
+          name: revisionName,
+          format: "file",
+          status: "UPLOADING",
+        })
+      ),
+      db.patch("File", () =>
+        json({
+          ...oldFile,
+          name: revisionName,
+          format: "json",
+          size: 7,
+          createdAt: "2026-07-18T00:00:00.000Z",
+        })
+      ),
+      http.post("http://test-postgrest/rpc/swap_asset_file", () =>
+        HttpResponse.error()
+      )
+    );
+
+    await expect(
+      updateAssetContent(
+        {
+          assetId: "asset",
+          projectId: "project",
+          expectedName: oldFile.name,
+          data: new Blob(["updated"]).stream(),
+        },
+        {
+          uploadFile: async () => ({ format: "json", size: 7, meta: {} }),
+        },
+        createContext()
+      )
+    ).resolves.toMatchObject({
+      id: "asset",
+      name: expect.stringMatching(/^settings_.+\.json$/),
+      format: "json",
+    });
+  });
 });
