@@ -1,4 +1,5 @@
 import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
+import { getAssetPath, isResizableImageFileName } from "@webstudio-is/sdk";
 
 type ImageProps = {
   assetId: string;
@@ -23,7 +24,8 @@ export const Image = ({
   // Possible optimisation, we can set it to "sync" only if asset.path has changed or add isNew prop to UploadedAssetContainer
   const decoding = "sync";
 
-  const src = objectURL ?? name;
+  const canResize = isResizableImageFileName(name);
+  const src = objectURL ?? (canResize ? name : getAssetPath({ name }));
 
   return (
     <WebstudioImage
@@ -42,7 +44,7 @@ export const Image = ({
       decoding={decoding}
       src={src}
       width={width}
-      optimize={optimize}
+      optimize={optimize && canResize}
       alt={alt}
     />
   );

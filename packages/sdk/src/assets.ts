@@ -168,6 +168,24 @@ export const RESIZABLE_IMAGE_MIME_TYPES: readonly string[] = [
 ];
 
 /**
+ * Image extensions supported as input by the image resizing pipeline.
+ * Other allowed image formats are served directly from asset storage.
+ */
+export const RESIZABLE_IMAGE_EXTENSIONS: readonly AllowedFileExtension[] = [
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "svg",
+];
+
+export const isResizableImageFileName = (fileName: string): boolean => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  return RESIZABLE_IMAGE_EXTENSIONS.includes(extension as AllowedFileExtension);
+};
+
+/**
  * All video file extensions
  */
 export const VIDEO_EXTENSIONS: readonly AllowedFileExtension[] =
@@ -423,26 +441,28 @@ export const decodePathFragment = (fragment: string): string => {
 };
 
 /**
- * Generates the appropriate URL for an asset based on its type and format.
- * - Images use /cgi/image/ with format=raw
- * - All other assets (videos, audio, fonts, documents) use /cgi/asset/ with format=raw
+ * Generates the appropriate path for an asset based on its format.
+ * Resizable images use /cgi/image/ and all other assets use /cgi/asset/.
+ */
+export const getAssetPath = (asset: Pick<Asset, "name">): string => {
+  if (isResizableImageFileName(asset.name)) {
+    return `/cgi/image/${asset.name}?format=raw`;
+  }
+  return `/cgi/asset/${asset.name}?format=raw`;
+};
+
+/**
+ * Generates the appropriate URL for an asset based on its format.
  *
  * @param asset - The asset to generate URL for
  * @param origin - Origin to prepend (e.g., "https://example.com"). When provided, returns an absolute URL.
  * @returns A URL object. Use .pathname for relative paths, .href for absolute URLs
  */
-export const getAssetUrl = (asset: Asset, origin: string): URL => {
-  let path: string;
-  const assetType = detectAssetType(asset.name);
-
-  if (assetType === "image") {
-    path = `/cgi/image/${asset.name}?format=raw`;
-  } else {
-    // Videos, audio, fonts, documents all use /cgi/asset/
-    path = `/cgi/asset/${asset.name}?format=raw`;
-  }
-
-  return new URL(path, origin);
+export const getAssetUrl = (
+  asset: Pick<Asset, "name">,
+  origin: string
+): URL => {
+  return new URL(getAssetPath(asset), origin);
 };
 
 /**

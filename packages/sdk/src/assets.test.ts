@@ -469,6 +469,23 @@ describe("allowed-file-types", () => {
       expect(url.search).toBe("?format=raw");
     });
 
+    test.each(["tiff", "tif", "bmp", "ico", "avif"])(
+      "serves %s images directly without resizing",
+      (format) => {
+        const url = getAssetUrl(
+          {
+            ...mockImageAsset,
+            name: `photo.${format}`,
+          },
+          "https://example.com"
+        );
+
+        expect(url.href).toBe(
+          `https://example.com/cgi/asset/photo.${format}?format=raw`
+        );
+      }
+    );
+
     test("generates correct URL for video assets", () => {
       const url = getAssetUrl(mockVideoAsset, "https://example.com");
       expect(url.href).toBe(
