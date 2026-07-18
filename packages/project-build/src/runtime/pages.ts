@@ -1980,7 +1980,11 @@ export const getPageSettingsUpdateData = ({
   if (values.language !== undefined) {
     meta.language = values.language;
   }
-  if (values.status !== undefined) {
+  // Unlike the other string meta fields, the Builder's Status code input
+  // clears to `undefined` (it is numeric; empty means "no status"). We must
+  // forward that cleared key so the patch removes `meta.status`, instead of
+  // skipping it like an untouched field and leaving the old status stuck.
+  if (Object.hasOwn(values, "status")) {
     meta.status = values.status;
   }
   if (values.redirect !== undefined) {

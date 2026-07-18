@@ -241,6 +241,40 @@ describe("page settings values", () => {
       shouldSetHomePage: true,
     });
   });
+
+  test("forwards a cleared status code so the patch removes it", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page")!;
+    page.meta.status = "302";
+
+    // The Builder clears the numeric Status code input to `undefined`; the
+    // cleared key must be forwarded (not skipped like an untouched field).
+    const result = getPageSettingsUpdateData({
+      page,
+      pages,
+      values: { status: undefined },
+    });
+    expect(Object.hasOwn(result.pageValues.meta ?? {}, "status")).toBe(true);
+    expect(result.pageValues.meta?.status).toBeUndefined();
+
+    // ...so the resulting patch removes the existing status.
+    expect(
+      createPageUpdatePatches({ input: result.pageValues, page, pages })
+    ).toEqual([{ op: "remove", path: ["pages", "page", "meta", "status"] }]);
+  });
+
+  test("does not touch status when it is not part of the update", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page")!;
+    page.meta.status = "302";
+
+    const result = getPageSettingsUpdateData({
+      page,
+      pages,
+      values: { title: "Landing" },
+    });
+    expect(Object.hasOwn(result.pageValues.meta ?? {}, "status")).toBe(false);
+  });
 });
 
 describe("page drop targets", () => {
