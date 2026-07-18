@@ -52,6 +52,7 @@ import {
   $isCloneDialogOpen,
   $isUiHidden,
   $loadingState,
+  $openedTextAssetId,
 } from "./shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { CloneProjectDialog } from "~/shared/clone-project";
@@ -85,6 +86,7 @@ import {
 import type { SidebarPanelName } from "./sidebar-left/types";
 import { SidebarLeft } from "./sidebar-left/sidebar-left";
 import { useDisableContextMenu } from "./shared/use-disable-context-menu";
+import { TextFileEditor } from "./features/text-file-editor/text-file-editor";
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
@@ -323,6 +325,7 @@ export const Builder = (props: BuilderProps) => {
 
   useUnmount(() => {
     $pages.set(undefined);
+    $openedTextAssetId.set(undefined);
   });
 
   useSyncPageUrl();
@@ -340,6 +343,9 @@ export const Builder = (props: BuilderProps) => {
   const isUiHidden = useStore($isUiHidden);
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
+  const openedTextAssetId = useStore($openedTextAssetId);
+  const isTextFileEditorOpen =
+    openedTextAssetId !== undefined && isPreviewMode === false;
 
   useSetWindowTitle();
 
@@ -436,19 +442,25 @@ export const Builder = (props: BuilderProps) => {
 
           {/* Main must be after left sidebar panels because in content mode the Plus button must be above the left sidebar, otherwise it won't be visible when content is full width */}
           <Main>
-            <Workspace>
-              {dataLoadingState === "loaded" && project && (
-                <CanvasIframe
-                  ref={iframeRefCallback}
-                  src={canvasUrl}
-                  title={project.title}
-                />
-              )}
-            </Workspace>
+            {isTextFileEditorOpen ? (
+              <TextFileEditor assetId={openedTextAssetId} />
+            ) : (
+              <Workspace>
+                {dataLoadingState === "loaded" && project && (
+                  <CanvasIframe
+                    ref={iframeRefCallback}
+                    src={canvasUrl}
+                    title={project.title}
+                  />
+                )}
+              </Workspace>
+            )}
           </Main>
-          <Main css={{ pointerEvents: "none" }}>
-            <CanvasToolsContainer />
-          </Main>
+          {isTextFileEditorOpen === false ? (
+            <Main css={{ pointerEvents: "none" }}>
+              <CanvasToolsContainer />
+            </Main>
+          ) : null}
           <SidePanel
             gridArea="sidebar"
             css={{
@@ -479,9 +491,11 @@ export const Builder = (props: BuilderProps) => {
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
-          <Main css={{ pointerEvents: "none" }}>
-            <CanvasToolsContainer />
-          </Main>
+          {isTextFileEditorOpen === false ? (
+            <Main css={{ pointerEvents: "none" }}>
+              <CanvasToolsContainer />
+            </Main>
+          ) : null}
           {project ? (
             <Topbar
               project={project}
@@ -499,9 +513,11 @@ export const Builder = (props: BuilderProps) => {
               }
             />
           ) : null}
-          <Main css={{ pointerEvents: "none" }}>
-            <TextToolbar />
-          </Main>
+          {isTextFileEditorOpen === false ? (
+            <Main css={{ pointerEvents: "none" }}>
+              <TextToolbar />
+            </Main>
+          ) : null}
           {isFooterVisible && <Footer />}
           {project ? (
             <CloneProjectDialog

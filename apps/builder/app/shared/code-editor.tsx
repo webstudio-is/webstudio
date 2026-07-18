@@ -36,7 +36,11 @@ import {
   foldGutterExtension,
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
-import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
+import {
+  css as cssLanguageSupport,
+  cssCompletionSource,
+  cssLanguage,
+} from "@codemirror/lang-css";
 
 const wrapperStyle = css({
   position: "relative",
@@ -136,7 +140,13 @@ const getCssPropertiesExtensions = () => [
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-    lang?: "html" | "json" | "markdown" | "css-properties";
+    lang?:
+      | "html"
+      | "json"
+      | "markdown"
+      | "javascript"
+      | "css"
+      | "css-properties";
     title?: ReactNode;
     size?: "default" | "small" | "full";
   }
@@ -152,6 +162,14 @@ export const CodeEditor = forwardRef<
 
     if (lang === "json") {
       return getJsonExtensions();
+    }
+
+    if (lang === "javascript") {
+      return [javascript()];
+    }
+
+    if (lang === "css") {
+      return [cssLanguageSupport()];
     }
 
     if (lang === "css-properties") {
