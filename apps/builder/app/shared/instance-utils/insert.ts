@@ -3,8 +3,20 @@
 // while fragment cloning stays in fragment.ts and existing-instance moves stay
 // in mutation.ts.
 import { toast } from "@webstudio-is/design-system";
-import { type WebstudioFragment, elementComponent } from "@webstudio-is/sdk";
-import type { ConflictResolution } from "@webstudio-is/project-build/runtime";
+import invariant from "tiny-invariant";
+import {
+  type Prop,
+  type WebstudioFragment,
+  elementComponent,
+} from "@webstudio-is/sdk";
+import {
+  builderRuntimeContext,
+  createComponentTemplateFragment,
+  type ConflictResolution,
+  resolveComponentInsertTarget,
+  resolveFragmentInsertTarget,
+  type InsertTarget,
+} from "@webstudio-is/project-build/runtime";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
@@ -13,13 +25,6 @@ import {
   selectInstance,
 } from "../nano-states";
 import { $instances, $project, $props } from "../sync/data-stores";
-import {
-  resolveComponentInsertTarget,
-  resolveFragmentInsertTarget,
-  type InsertTarget,
-} from "@webstudio-is/project-build/runtime";
-import { createComponentTemplateFragment } from "@webstudio-is/project-build/runtime";
-import { builderRuntimeContext } from "@webstudio-is/project-build/runtime";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { executeRuntimeMutation } from "./data";
 
@@ -224,6 +229,36 @@ export const getComponentTemplateData = (
     createId: builderRuntimeContext.createId,
   });
 };
+
+export const getImageAssetFragment = (assetId: string): WebstudioFragment => {
+  const fragment = getComponentTemplateData("Image");
+  const imageInstance = fragment.instances.find(
+    (instance) => instance.component === "Image"
+  );
+  invariant(imageInstance, "Expected the Image template to contain an Image");
+  const sourceIndex = fragment.props.findIndex(
+    (prop) => prop.instanceId === imageInstance.id && prop.name === "src"
+  );
+  const source: Prop = {
+    ...(sourceIndex === -1
+      ? { id: builderRuntimeContext.createId() }
+      : fragment.props[sourceIndex]),
+    instanceId: imageInstance.id,
+    name: "src",
+    type: "asset",
+    value: assetId,
+  };
+  const props = [...fragment.props];
+  if (sourceIndex === -1) {
+    props.push(source);
+  } else {
+    props[sourceIndex] = source;
+  }
+  return { ...fragment, props };
+};
+
+export const insertImageAssetAt = (assetId: string, insertable?: Insertable) =>
+  insertWebstudioFragmentAt(getImageAssetFragment(assetId), insertable);
 
 export type Insertable = InsertTarget;
 

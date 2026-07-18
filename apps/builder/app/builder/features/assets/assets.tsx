@@ -12,12 +12,20 @@ import { AssetUpload, type AssetUploadHandle } from "~/builder/shared/assets";
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { CreateAssetFolderDialog } from "~/builder/shared/asset-manager/asset-folder-dialogs";
 import { $authPermit } from "~/shared/nano-states";
+import type { Publish } from "~/shared/pubsub";
+import { useImageAssetCanvasDrag } from "./use-image-asset-canvas-drag";
 
-export const AssetsPanel = (_props: { onClose: () => void }) => {
+export const AssetsPanel = ({
+  publish,
+}: {
+  publish: Publish;
+  onClose: () => void;
+}) => {
   const [folderId, setFolderId] = useState<string>();
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const uploadRef = useRef<AssetUploadHandle>(null);
   const authPermit = useStore($authPermit);
+  useImageAssetCanvasDrag(publish);
   return (
     <>
       <PanelTitle

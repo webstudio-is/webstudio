@@ -197,8 +197,10 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
   const returnTabRef = useRef<SidebarPanelName | undefined>(undefined);
 
-  useSubscribe("dragEnd", () => {
-    setActiveSidebarPanel("auto");
+  useSubscribe("dragEnd", ({ isCanceled }) => {
+    if (isCanceled === false) {
+      setActiveSidebarPanel("auto");
+    }
   });
 
   useOnDropEffect(() => {

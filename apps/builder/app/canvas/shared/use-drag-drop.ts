@@ -1,4 +1,9 @@
-import { insertWebstudioComponentAt } from "~/shared/instance-utils/insert";
+import {
+  getComponentTemplateData,
+  getImageAssetFragment,
+  insertImageAssetAt,
+  insertWebstudioComponentAt,
+} from "~/shared/instance-utils/insert";
 import { reparentInstance } from "~/shared/instance-utils/mutation";
 import { useLayoutEffect, useRef } from "react";
 import { elementComponent, type Instance } from "@webstudio-is/sdk";
@@ -17,7 +22,6 @@ import {
 } from "~/shared/nano-states";
 import { $instances, $props } from "~/shared/sync/data-stores";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import {
   getElementByInstanceSelector,
   getInstanceIdFromElement,
@@ -27,8 +31,8 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
   findClosestDroppableInstanceSelector,
+  findClosestRichText,
 } from "@webstudio-is/project-build/runtime";
-import { findClosestRichText } from "@webstudio-is/project-build/runtime";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -44,6 +48,7 @@ type Origin = "canvas" | "panel";
 
 export type DragStartPayload =
   | { origin: Origin; type: "insert"; dragComponent: Instance["component"] }
+  | { origin: Origin; type: "insertImageAsset"; assetId: string }
   | {
       origin: Origin;
       type: "reparent";
@@ -55,6 +60,32 @@ export type DragEndPayload = {
 };
 
 export type DragMovePayload = { canvasCoordinates: Point };
+
+const getRuntimeDragPayload = (dragPayload: DragStartPayload) => {
+  if (dragPayload.type === "reparent") {
+    return {
+      type: "reparent" as const,
+      instanceSelector: dragPayload.dragInstanceSelector,
+    };
+  }
+
+  if (dragPayload.type === "insertImageAsset") {
+    return {
+      type: "insert" as const,
+      component: "Image",
+      fragment: getImageAssetFragment(dragPayload.assetId),
+    };
+  }
+
+  return {
+    type: "insert" as const,
+    component: dragPayload.dragComponent,
+    fragment:
+      dragPayload.dragComponent === elementComponent
+        ? undefined
+        : getComponentTemplateData(dragPayload.dragComponent),
+  };
+};
 
 const findClosestCanvasDroppableInstanceSelector = (
   instanceSelector: InstanceSelector,
@@ -71,20 +102,7 @@ const findClosestCanvasDroppableInstanceSelector = (
     props,
     metas,
     htmlTagsByInstanceId,
-    dragPayload:
-      dragPayload.type === "insert"
-        ? {
-            type: "insert",
-            component: dragPayload.dragComponent,
-            fragment:
-              dragPayload.dragComponent === elementComponent
-                ? undefined
-                : getComponentTemplateData(dragPayload.dragComponent),
-          }
-        : {
-            type: "reparent",
-            instanceSelector: dragPayload.dragInstanceSelector,
-          },
+    dragPayload: getRuntimeDragPayload(dragPayload),
   });
 };
 
@@ -113,6 +131,9 @@ export const commitCanvasDragDrop = ({
   };
   if (dragPayload.type === "insert") {
     return insertWebstudioComponentAt(dragPayload.dragComponent, insertable);
+  }
+  if (dragPayload.type === "insertImageAsset") {
+    return insertImageAssetAt(dragPayload.assetId, insertable);
   }
   if (dragPayload.type === "reparent") {
     reparentInstance(dragPayload.dragInstanceSelector, insertable);
