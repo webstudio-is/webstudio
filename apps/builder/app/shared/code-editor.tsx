@@ -149,8 +149,9 @@ export const CodeEditor = forwardRef<
       | "css-properties";
     title?: ReactNode;
     size?: "default" | "small" | "full";
+    expandable?: boolean;
   }
->(({ lang, title, size, ...editorContentProps }, ref) => {
+>(({ lang, title, size, expandable = true, ...editorContentProps }, ref) => {
   const extensions = useMemo(() => {
     if (lang === "html") {
       return getHtmlExtensions();
@@ -209,20 +210,24 @@ export const CodeEditor = forwardRef<
   }, []);
   return (
     <div className={wrapperStyle({ size })} ref={ref}>
-      <EditorDialogControl>
+      {expandable === false ? (
         <EditorContent {...editorContentProps} extensions={extensions} />
-        <EditorDialog
-          title={title}
-          content={
-            <EditorContent
-              {...editorContentProps}
-              extensions={dialogExtensions}
-            />
-          }
-        >
-          <EditorDialogButton />
-        </EditorDialog>
-      </EditorDialogControl>
+      ) : (
+        <EditorDialogControl>
+          <EditorContent {...editorContentProps} extensions={extensions} />
+          <EditorDialog
+            title={title}
+            content={
+              <EditorContent
+                {...editorContentProps}
+                extensions={dialogExtensions}
+              />
+            }
+          >
+            <EditorDialogButton />
+          </EditorDialog>
+        </EditorDialogControl>
+      )}
     </div>
   );
 });

@@ -13,10 +13,10 @@ import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/del
 import { CreateAssetFolderDialog } from "~/builder/shared/asset-manager/asset-folder-dialogs";
 import { $authPermit } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
-import { $openedTextAssetId } from "~/builder/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { useImageAssetCanvasDrag } from "./use-image-asset-canvas-drag";
 import { isTextFileAsset } from "~/builder/features/text-file-editor/text-file-utils";
+import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
 
 export const AssetsPanel = ({
   publish,
@@ -26,6 +26,7 @@ export const AssetsPanel = ({
 }) => {
   const [folderId, setFolderId] = useState<string>();
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [openedTextAssetId, setOpenedTextAssetId] = useState<string>();
   const uploadRef = useRef<AssetUploadHandle>(null);
   const authPermit = useStore($authPermit);
   useImageAssetCanvasDrag(publish);
@@ -61,7 +62,7 @@ export const AssetsPanel = ({
         onChange={(assetId) => {
           const asset = $assets.get().get(assetId);
           if (asset !== undefined && isTextFileAsset(asset)) {
-            $openedTextAssetId.set(assetId);
+            setOpenedTextAssetId(assetId);
           }
         }}
         canManageFolders={authPermit !== "view"}
@@ -80,6 +81,17 @@ export const AssetsPanel = ({
         onOpenChange={setCreateFolderOpen}
         currentFolderId={folderId}
       />
+      {openedTextAssetId !== undefined && (
+        <TextFileEditor
+          key={openedTextAssetId}
+          assetId={openedTextAssetId}
+          onOpenChange={(open) => {
+            if (open === false) {
+              setOpenedTextAssetId(undefined);
+            }
+          }}
+        />
+      )}
     </>
   );
 };

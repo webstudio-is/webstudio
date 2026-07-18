@@ -17,8 +17,6 @@ export const $isCloneDialogOpen = atom<boolean>(false);
 
 export const $isUiHidden = atom<boolean>(false);
 
-export const $openedTextAssetId = atom<string | undefined>();
-
 export const $canvasRect = atom<DOMRect | undefined>();
 
 export const $workspaceRect = atom<DOMRect | undefined>();

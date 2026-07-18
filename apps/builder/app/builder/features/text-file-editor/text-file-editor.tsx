@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  Box,
-  Flex,
-  IconButton,
-  rawTheme,
-  Text,
-  theme,
-  toast,
-} from "@webstudio-is/design-system";
-import { SpinnerIcon, XIcon } from "@webstudio-is/icons";
+import { Box, Flex, rawTheme, Text, toast } from "@webstudio-is/design-system";
+import { SpinnerIcon } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import { CodeEditor } from "~/shared/code-editor";
+import { EditorDialog } from "~/shared/code-editor-base";
 import { $assets } from "~/shared/sync/data-stores";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
-import { $openedTextAssetId } from "~/builder/shared/nano-states";
 import { getTextFileEditorLanguage } from "./text-file-utils";
 
 type TextFileState =
@@ -22,7 +14,13 @@ type TextFileState =
   | { status: "loaded"; content: string }
   | { status: "error" };
 
-export const TextFileEditor = ({ assetId }: { assetId: string }) => {
+export const TextFileEditor = ({
+  assetId,
+  onOpenChange,
+}: {
+  assetId: string;
+  onOpenChange: (open: boolean) => void;
+}) => {
   const assets = useStore($assets);
   const asset = assets.get(assetId);
   const [state, setState] = useState<TextFileState>({ status: "loading" });
@@ -64,49 +62,37 @@ export const TextFileEditor = ({ assetId }: { assetId: string }) => {
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
 
   return (
-    <Flex
-      direction="column"
-      css={{ height: "100%", background: theme.colors.backgroundPanel }}
+    <EditorDialog
+      title={title}
+      open
+      onOpenChange={onOpenChange}
+      content={
+        <Box css={{ height: "100%", minHeight: 0 }}>
+          {state.status === "loading" && (
+            <Flex align="center" justify="center" css={{ height: "100%" }}>
+              <SpinnerIcon size={rawTheme.spacing[15]} />
+            </Flex>
+          )}
+          {state.status === "error" && (
+            <Flex align="center" justify="center" css={{ height: "100%" }}>
+              <Text color="subtle">Unable to load this file.</Text>
+            </Flex>
+          )}
+          {state.status === "loaded" && asset !== undefined && (
+            <CodeEditor
+              value={state.content}
+              lang={getTextFileEditorLanguage(asset)}
+              size="full"
+              expandable={false}
+              readOnly
+              onChange={() => {}}
+              onChangeComplete={() => {}}
+            />
+          )}
+        </Box>
+      }
     >
-      <Flex
-        align="center"
-        justify="between"
-        css={{
-          minHeight: theme.sizes.controlHeight,
-          px: 2,
-          borderBottom: `1px solid ${theme.colors.borderMain}`,
-        }}
-      >
-        <Text variant="labels">{title}</Text>
-        <IconButton
-          aria-label="Close text editor"
-          onClick={() => $openedTextAssetId.set(undefined)}
-        >
-          <XIcon />
-        </IconButton>
-      </Flex>
-      <Box css={{ flexGrow: 1, minHeight: 0 }}>
-        {state.status === "loading" && (
-          <Flex align="center" justify="center" css={{ height: "100%" }}>
-            <SpinnerIcon size={rawTheme.spacing[15]} />
-          </Flex>
-        )}
-        {state.status === "error" && (
-          <Flex align="center" justify="center" css={{ height: "100%" }}>
-            <Text color="subtle">Unable to load this file.</Text>
-          </Flex>
-        )}
-        {state.status === "loaded" && asset !== undefined && (
-          <CodeEditor
-            value={state.content}
-            lang={getTextFileEditorLanguage(asset)}
-            size="full"
-            readOnly
-            onChange={() => {}}
-            onChangeComplete={() => {}}
-          />
-        )}
-      </Box>
-    </Flex>
+      <button type="button" hidden tabIndex={-1} />
+    </EditorDialog>
   );
 };
