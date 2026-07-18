@@ -125,6 +125,17 @@ build_e2e_apps() {
   pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/sdk-components-react-router build
 }
 
+verify_e2e_apps_built() {
+  local builder_server="$ROOT_DIR/apps/builder/build/server"
+  local builder_assets="$ROOT_DIR/apps/builder/build/client/assets"
+  local preview_router="$ROOT_DIR/packages/sdk-components-react-router/lib/components.js"
+
+  if [ ! -d "$builder_server" ] || [ ! -d "$builder_assets" ] || [ ! -f "$preview_router" ]; then
+    echo "E2E_SKIP_BUILDER_BUILD requires prebuilt Builder artifacts" >&2
+    return 1
+  fi
+}
+
 run_builder_e2e_tests() {
   (
     cd "$ROOT_DIR/apps/builder"
@@ -169,8 +180,13 @@ if [ "$E2E_RUN_TESTS" = "true" ]; then
     install_playwright_chromium
 
   if [ "${E2E_BUILDER_URL:-}" = "" ]; then
-    run_step "build builder and generated preview dependencies" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \
-      build_e2e_apps
+    if [ "${E2E_SKIP_BUILDER_BUILD:-false}" = "true" ]; then
+      run_step "verify prebuilt builder artifacts" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \
+        verify_e2e_apps_built
+    else
+      run_step "build builder and generated preview dependencies" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \
+        build_e2e_apps
+    fi
   fi
 
   run_step "run builder e2e tests" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
