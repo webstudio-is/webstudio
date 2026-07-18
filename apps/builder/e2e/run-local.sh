@@ -127,9 +127,8 @@ build_e2e_apps() {
 verify_e2e_apps_built() {
   local builder_server="$ROOT_DIR/apps/builder/build/server"
   local builder_assets="$ROOT_DIR/apps/builder/build/client/assets"
-  local preview_router="$ROOT_DIR/packages/sdk-components-react-router/lib/components.js"
 
-  if [ ! -d "$builder_server" ] || [ ! -d "$builder_assets" ] || [ ! -f "$preview_router" ]; then
+  if [ ! -d "$builder_server" ] || [ ! -d "$builder_assets" ]; then
     echo "E2E_SKIP_BUILDER_BUILD requires prebuilt Builder artifacts" >&2
     return 1
   fi
