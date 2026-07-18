@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { Box, Flex, rawTheme, Text, toast } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
+import { getMimeTypeByExtension } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog } from "~/shared/code-editor-base";
 import { $assets } from "~/shared/sync/data-stores";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
+import { replaceAsset } from "~/builder/shared/assets";
 import { getTextFileEditorLanguage } from "./text-file-utils";
 
 type TextFileState =
@@ -22,8 +24,13 @@ export const TextFileEditor = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const assets = useStore($assets);
-  const asset = assets.get(assetId);
+  const [currentAssetId, setCurrentAssetId] = useState(assetId);
+  const currentAssetIdRef = useRef(assetId);
+  const asset = assets.get(currentAssetId);
   const [state, setState] = useState<TextFileState>({ status: "loading" });
+  const persistedContentRef = useRef<string>();
+  const requestedContentRef = useRef<string>();
+  const saveQueueRef = useRef(Promise.resolve());
 
   useEffect(() => {
     if (asset === undefined) {
@@ -43,7 +50,10 @@ export const TextFileEditor = ({
         if (response.ok === false) {
           throw new Error(`Unable to load asset: ${response.status}`);
         }
-        setState({ status: "loaded", content: await response.text() });
+        const content = await response.text();
+        persistedContentRef.current = content;
+        requestedContentRef.current = content;
+        setState({ status: "loaded", content });
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -58,6 +68,46 @@ export const TextFileEditor = ({
     void load();
     return () => controller.abort();
   }, [asset]);
+
+  const save = (content: string) => {
+    requestedContentRef.current = content;
+    saveQueueRef.current = saveQueueRef.current.then(async () => {
+      const requestedContent = requestedContentRef.current;
+      if (
+        requestedContent === undefined ||
+        requestedContent === persistedContentRef.current
+      ) {
+        return;
+      }
+
+      const currentAsset = $assets.get().get(currentAssetIdRef.current);
+      if (currentAsset === undefined) {
+        toast.error("Unable to save: asset not found");
+        return;
+      }
+
+      const file = new File([requestedContent], formatAssetName(currentAsset), {
+        type: getMimeTypeByExtension(currentAsset.format) ?? "text/plain",
+      });
+      let newAssetId: string | undefined;
+      try {
+        newAssetId = await replaceAsset(currentAsset.id, file, {
+          type: "file",
+          successMessage: "File saved successfully",
+        });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to save");
+        return;
+      }
+      if (newAssetId === undefined) {
+        return;
+      }
+
+      persistedContentRef.current = requestedContent;
+      currentAssetIdRef.current = newAssetId;
+      setCurrentAssetId(newAssetId);
+    });
+  };
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
 
@@ -87,7 +137,7 @@ export const TextFileEditor = ({
               onChange={(content) => {
                 setState({ status: "loaded", content });
               }}
-              onChangeComplete={() => {}}
+              onChangeComplete={save}
             />
           )}
         </Box>
