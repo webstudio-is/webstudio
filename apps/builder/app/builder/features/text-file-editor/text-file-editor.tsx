@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { Box, Flex, rawTheme, Text, toast } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
@@ -9,7 +9,7 @@ import { EditorDialog } from "~/shared/code-editor-base";
 import { $assets } from "~/shared/sync/data-stores";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { replaceAsset } from "~/builder/shared/assets";
-import { getTextFileEditorLanguage } from "./text-file-utils";
+import { getTextFileEditorExtensions } from "./text-file-utils";
 
 type TextFileState =
   | { status: "loading" }
@@ -31,6 +31,10 @@ export const TextFileEditor = ({
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const saveQueueRef = useRef(Promise.resolve());
+  const languageExtensions = useMemo(
+    () => (asset === undefined ? [] : getTextFileEditorExtensions(asset)),
+    [asset]
+  );
 
   useEffect(() => {
     if (asset === undefined) {
@@ -131,7 +135,7 @@ export const TextFileEditor = ({
           {state.status === "loaded" && asset !== undefined && (
             <CodeEditor
               value={state.content}
-              lang={getTextFileEditorLanguage(asset)}
+              languageExtensions={languageExtensions}
               size="full"
               expandable={false}
               onChange={(content) => {

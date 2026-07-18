@@ -5,6 +5,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import type { Extension } from "@codemirror/state";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
@@ -36,11 +37,7 @@ import {
   foldGutterExtension,
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
-import {
-  css as cssLanguageSupport,
-  cssCompletionSource,
-  cssLanguage,
-} from "@codemirror/lang-css";
+import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 
 const wrapperStyle = css({
   position: "relative",
@@ -62,6 +59,8 @@ const wrapperStyle = css({
     size: "default",
   },
 });
+
+const noLanguageExtensions: Extension[] = [];
 
 const getHtmlExtensions = () => [
   highlightActiveLine(),
@@ -140,19 +139,22 @@ const getCssPropertiesExtensions = () => [
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-    lang?:
-      | "html"
-      | "json"
-      | "markdown"
-      | "javascript"
-      | "css"
-      | "css-properties";
+    lang?: "html" | "json" | "markdown" | "css-properties";
+    languageExtensions?: Extension[];
     title?: ReactNode;
     size?: "default" | "small" | "full";
     expandable?: boolean;
   }
->(({ lang, title, size, expandable = true, ...editorContentProps }, ref) => {
-  const extensions = useMemo(() => {
+>((props, ref) => {
+  const {
+    lang,
+    languageExtensions = noLanguageExtensions,
+    title,
+    size,
+    expandable = true,
+    ...editorContentProps
+  } = props;
+  const builtInExtensions = useMemo(() => {
     if (lang === "html") {
       return getHtmlExtensions();
     }
@@ -163,14 +165,6 @@ export const CodeEditor = forwardRef<
 
     if (lang === "json") {
       return getJsonExtensions();
-    }
-
-    if (lang === "javascript") {
-      return [javascript()];
-    }
-
-    if (lang === "css") {
-      return [cssLanguageSupport()];
     }
 
     if (lang === "css-properties") {
@@ -185,6 +179,11 @@ export const CodeEditor = forwardRef<
 
     return [];
   }, [lang]);
+
+  const extensions = useMemo(
+    () => [...builtInExtensions, ...languageExtensions],
+    [builtInExtensions, languageExtensions]
+  );
 
   const dialogExtensions = useMemo(
     () => [...extensions, foldGutterExtension],
