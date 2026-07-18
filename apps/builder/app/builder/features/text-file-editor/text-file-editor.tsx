@@ -7,6 +7,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog } from "~/shared/code-editor-base";
 import { $assets } from "~/shared/sync/data-stores";
+import { $authPermit } from "~/shared/nano-states";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { updateAssetContent } from "~/builder/shared/assets";
 import { getTextFileEditorExtensions } from "./text-file-utils";
@@ -24,10 +25,10 @@ export const TextFileEditor = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const assets = useStore($assets);
+  const canEdit = useStore($authPermit) !== "view";
   const asset = assets.get(assetId);
   const [state, setState] = useState<TextFileState>({ status: "loading" });
   const currentAssetRef = useRef<Asset>();
-  const currentContentRef = useRef<string>();
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const saveQueueRef = useRef(Promise.resolve());
@@ -59,7 +60,6 @@ export const TextFileEditor = ({
         const content = await response.text();
         persistedContentRef.current = content;
         requestedContentRef.current = content;
-        currentContentRef.current = content;
         setState({ status: "loaded", content });
       } catch (error) {
         if (controller.signal.aborted) {
@@ -77,6 +77,9 @@ export const TextFileEditor = ({
   }, [assetId]);
 
   const save = (content: string) => {
+    if (canEdit === false) {
+      return;
+    }
     requestedContentRef.current = content;
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       const requestedContent = requestedContentRef.current;
@@ -114,8 +117,8 @@ export const TextFileEditor = ({
       title={title}
       open
       onOpenChange={(open) => {
-        if (open === false && currentContentRef.current !== undefined) {
-          save(currentContentRef.current);
+        if (open === false && state.status === "loaded") {
+          save(state.content);
         }
         onOpenChange(open);
       }}
@@ -137,8 +140,8 @@ export const TextFileEditor = ({
               languageExtensions={languageExtensions}
               size="full"
               expandable={false}
+              readOnly={canEdit === false}
               onChange={(content) => {
-                currentContentRef.current = content;
                 setState({ status: "loaded", content });
               }}
               onChangeComplete={save}

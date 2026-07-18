@@ -60,9 +60,9 @@ export const readDroppedAssetItems = async (
 ): Promise<DroppedAssetItems> => {
   const files: File[] = [];
   const directories: DroppedAssetDirectory[] = [];
-  const entries = items.map((item) => ({ item, entry: getEntry(item) }));
 
-  for (const { item, entry } of entries) {
+  for (const item of items) {
+    const entry = getEntry(item);
     if (entry?.isDirectory) {
       directories.push(
         await readDirectoryEntry(entry as FileSystemDirectoryEntry)

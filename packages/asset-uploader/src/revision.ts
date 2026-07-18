@@ -1,10 +1,9 @@
-import * as path from "node:path";
-import type { Asset } from "@webstudio-is/sdk";
-import { isTextFileAsset } from "@webstudio-is/sdk";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { basename, extname } from "node:path";
+import { isTextFileAsset, type Asset } from "@webstudio-is/sdk";
 import {
   authorizeProject,
   AuthorizationError,
+  type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
@@ -22,13 +21,13 @@ const getRevisionFilename = ({
   name: string;
   filename: string | null;
 }) => {
-  const extension = path.extname(name);
-  const storedBasename = path.basename(name, extension);
+  const extension = extname(name);
+  const storedBasename = basename(name, extension);
   const suffixAt = storedBasename.lastIndexOf("_");
-  const basename =
+  const displayBasename =
     filename ??
     (suffixAt === -1 ? storedBasename : storedBasename.slice(0, suffixAt));
-  return sanitizeS3Key(`${basename}${extension}`);
+  return sanitizeS3Key(`${displayBasename}${extension}`);
 };
 
 export const swapAssetFileWithClient = async (

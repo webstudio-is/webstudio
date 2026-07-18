@@ -8,7 +8,7 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { uploadAssets } from "./upload-assets";
 
 /**
- * Replace an asset with a new file.
+ * Replace an image asset with a new file.
  *
  * 1. Uploads the new file via the existing upload pipeline
  * 2. Waits for the upload to complete (new asset appears in $assets)
