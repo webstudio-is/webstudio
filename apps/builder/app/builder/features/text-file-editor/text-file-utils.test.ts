@@ -1,9 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { ALLOWED_FILE_TYPES } from "@webstudio-is/sdk";
-import {
-  getTextFileEditorExtensions,
-  isTextFileAsset,
-} from "./text-file-utils";
+import { ALLOWED_FILE_TYPES, isTextFileAsset } from "@webstudio-is/sdk";
+import { getTextFileEditorExtensions } from "./text-file-utils";
 
 describe("text file assets", () => {
   const supportedTextFormats = Object.entries(ALLOWED_FILE_TYPES)

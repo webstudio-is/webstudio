@@ -24,9 +24,8 @@ export const TextFileEditor = ({
   assetId: string;
   onOpenChange: (open: boolean) => void;
 }) => {
-  const assets = useStore($assets);
+  const asset = useStore($assets).get(assetId);
   const canEdit = useStore($authPermit) !== "view";
-  const asset = assets.get(assetId);
   const [state, setState] = useState<TextFileState>({ status: "loading" });
   const currentAssetRef = useRef<Asset>();
   const persistedContentRef = useRef<string>();

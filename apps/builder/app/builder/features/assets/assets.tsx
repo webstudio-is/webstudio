@@ -7,6 +7,7 @@ import {
 import { BrushCleaningIcon, NewFolderIcon } from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
+import { isTextFileAsset } from "@webstudio-is/sdk";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { AssetUpload, type AssetUploadHandle } from "~/builder/shared/assets";
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
@@ -15,7 +16,6 @@ import { $authPermit } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
 import type { Publish } from "~/shared/pubsub";
 import { useImageAssetCanvasDrag } from "./use-image-asset-canvas-drag";
-import { isTextFileAsset } from "~/builder/features/text-file-editor/text-file-utils";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 
