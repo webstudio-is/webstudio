@@ -79,6 +79,15 @@ expensive files into the fastest shard, and rebalance later by renaming files.
 CI retries a failed shard once because a single shard rerun is cheap enough to
 absorb occasional browser/backend flakes.
 
+CI discovers its shard matrix directly from these filename tags. When one test
+file contains enough serial work to dominate a shard, add more shard tags to
+that filename. Its tests are distributed deterministically across those shards
+without duplicating the file or its helpers:
+
+```txt
+large-workflow.[shard-2].[shard-5].[shard-6].e2e.ts
+```
+
 `pnpm e2e:builder:dev` defaults to `E2E_BUILDER_URL=https://127.0.0.1:3000`,
 so it runs against the already-running Vite dev server instead of building and
 serving the production bundle. Override `E2E_BUILDER_URL` when the dev server is

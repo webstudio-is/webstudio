@@ -1,6 +1,7 @@
 import {
   findClosestInsertable,
   getComponentTemplateData,
+  getImageAssetFragment,
   insertWebstudioComponentAt,
   insertWebstudioFragmentAt,
 } from "./insert";
@@ -979,6 +980,50 @@ describe("getComponentTemplateData", () => {
       },
     ]);
   });
+});
+
+test("binds an Image template source to an asset without mutating the template", () => {
+  const template = createFragment({
+    children: [{ type: "id", value: "image" }],
+    instances: [
+      { type: "instance", id: "image", component: "Image", children: [] },
+    ],
+    props: [
+      {
+        id: "source",
+        instanceId: "image",
+        name: "src",
+        type: "string",
+        value: "placeholder.png",
+      },
+      {
+        id: "alt",
+        instanceId: "image",
+        name: "alt",
+        type: "string",
+        value: "Placeholder",
+      },
+    ],
+  });
+  $registeredTemplates.set(
+    new Map([["Image", { category: "media", order: 0, template }]])
+  );
+
+  const fragment = getImageAssetFragment("asset-id");
+
+  expect(fragment.props).toEqual([
+    {
+      id: "source",
+      instanceId: "image",
+      name: "src",
+      type: "asset",
+      value: "asset-id",
+    },
+    template.props[1],
+  ]);
+  expect(template.props[0]).toEqual(
+    expect.objectContaining({ type: "string", value: "placeholder.png" })
+  );
 });
 
 test("get undefined instead of instance path when no instances found", () => {

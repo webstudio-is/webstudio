@@ -3,8 +3,8 @@ import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
 import type { Instance } from "@webstudio-is/sdk";
 import {
-  type Point,
   Flex,
+  type Point,
   useDrag,
   ComponentCard,
   useDisableCanvasPointerEvents,
@@ -16,6 +16,7 @@ import {
   InstanceIcon,
   getInstanceLabel,
 } from "~/builder/shared/instance-label";
+import { toCanvasCoordinates } from "~/builder/shared/canvas-drag";
 
 const DragLayer = ({
   component,
@@ -49,21 +50,6 @@ const DragLayer = ({
 };
 
 export const dragItemAttribute = "data-drag-component";
-
-const toCanvasCoordinates = (
-  { x, y }: Point,
-  scale: number,
-  canvasRect?: DOMRect
-) => {
-  if (canvasRect === undefined) {
-    return { x: 0, y: 0 };
-  }
-  const scaleFraction = scale / 100;
-  return {
-    x: (x - canvasRect.x) / scaleFraction,
-    y: (y - canvasRect.y) / scaleFraction,
-  };
-};
 
 const elementToComponentName = (
   element: Element,

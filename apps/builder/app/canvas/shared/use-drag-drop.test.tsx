@@ -240,6 +240,37 @@ describe("commitCanvasDragDrop", () => {
     expect($instances.get().get("body")?.children[0]?.value).toEqual(buttonId);
   });
 
+  test("inserts an Image with its source bound to the dragged asset", () => {
+    const data = renderData(<$.Body ws:id="body"></$.Body>);
+    $instances.set(data.instances);
+    serverSyncStore.popAll();
+
+    expect(
+      commitCanvasDragDrop({
+        dragPayload: {
+          origin: "panel",
+          type: "insertImageAsset",
+          assetId: "asset-id",
+        },
+        dropTarget: createDropTarget(["body"]),
+      })
+    ).toBe(true);
+
+    const imageId = $instances.get().get("body")?.children[0]?.value;
+    expect($instances.get().get(imageId ?? "")).toMatchObject({
+      component: "Image",
+    });
+    expect(
+      [...$props.get().values()].find(
+        (prop) => prop.instanceId === imageId && prop.name === "src"
+      )
+    ).toMatchObject({ type: "asset", value: "asset-id" });
+
+    serverSyncStore.undo();
+    expect($instances.get()).toEqual(data.instances);
+    expect($props.get()).toEqual(new Map());
+  });
+
   test("does not commit incomplete drag state", () => {
     const data = renderData(<$.Body ws:id="body"></$.Body>);
     $instances.set(data.instances);

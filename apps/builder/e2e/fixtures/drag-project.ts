@@ -1,5 +1,5 @@
 import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
-import type { Instance } from "@webstudio-is/sdk";
+import type { Instance, Prop } from "@webstudio-is/sdk";
 import { loadDevBuild } from "../db";
 import { createSeededBuilderProject } from "./builder-project";
 
@@ -117,10 +117,16 @@ export const createDragProject = async (name: string) => {
   });
 };
 
-export const loadInstances = async (projectId: string) => {
+export const loadDragProjectData = async (projectId: string) => {
   const build = await loadDevBuild({ projectId });
-  return JSON.parse(build.instances) as Instance[];
+  return {
+    instances: JSON.parse(build.instances) as Instance[],
+    props: JSON.parse(build.props) as Prop[],
+  };
 };
+
+export const loadInstances = async (projectId: string) =>
+  (await loadDragProjectData(projectId)).instances;
 
 export const getChildIds = (instances: Instance[], parentId: string) =>
   instances

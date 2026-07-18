@@ -47,7 +47,7 @@ const suitesByFile = new Map<string, Suite>();
 
 const formatSuiteName = (filePath: string) => {
   return basename(filePath, ".e2e.ts")
-    .replace(/\.\[shard-\d+\]$/, "")
+    .replace(/(\.\[shard-\d+\])+$/, "")
     .replaceAll("-", " ");
 };
 

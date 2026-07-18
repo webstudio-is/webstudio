@@ -15,7 +15,7 @@ import {
 } from "./harness";
 import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
-import { getE2eTestModules } from "./test-modules";
+import { getE2eTestModules, isE2eTestInShard } from "./test-modules";
 import { stopChildProcess } from "./process";
 import { runWithTimeout } from "./timeout";
 
@@ -211,9 +211,20 @@ const getRunnableSuites = () => {
       }
       return suite.fileName.includes(`[${testShard}]`);
     })
-    .map((suite) => ({
+    .map((suite, suiteIndex) => ({
       suite,
-      tests: suite.tests.filter((test) => {
+      tests: suite.tests.filter((test, testIndex) => {
+        // Offset each suite so odd test counts do not always give the extra
+        // test to the same worker.
+        if (
+          isE2eTestInShard({
+            fileName: suite.fileName,
+            shard: testShard,
+            distributionIndex: testIndex + suiteIndex,
+          }) === false
+        ) {
+          return false;
+        }
         if (testFilters.length === 0) {
           return true;
         }
