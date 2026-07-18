@@ -543,7 +543,9 @@ export const AssetManager = ({
 
   const getFolderName = useCallback(
     (folderId: string | undefined) =>
-      folderId === undefined ? "Root" : folders.get(folderId)?.name ?? "folder",
+      folderId === undefined
+        ? "Root"
+        : (folders.get(folderId)?.name ?? "folder"),
     [folders]
   );
 
@@ -809,7 +811,7 @@ export const AssetManager = ({
 
     const hasAddModifier = event.shiftKey || event.metaKey || event.ctrlKey;
     const initialSelection = hasAddModifier
-      ? forcedSelection ?? (selection === undefined ? [] : [selection])
+      ? (forcedSelection ?? (selection === undefined ? [] : [selection]))
       : [];
     if (hasAddModifier === false) {
       clearSelection();
@@ -916,6 +918,7 @@ export const AssetManager = ({
         }}
         onKeyDown={handleShortcut}
         autoScrollOnElementDrag={canManageFolders}
+        allowFolderDrop={canManageFolders}
         contextMenu={
           hasPanelContextMenuActions ? (
             <AssetManagerItemContextMenuContent
