@@ -1203,6 +1203,18 @@ describe("page input schemas", () => {
     expect(() => pageMetaInput.parse({ documentType: "json" })).toThrow();
   });
 
+  test("stores a numeric status code as a number literal", () => {
+    // A plain numeric status must become the number literal `302`, not the
+    // string literal `"302"` that would trip the Builder's numeric validation.
+    expect(pageFieldsInput.parse({ meta: { status: "302" } })).toEqual({
+      meta: { status: "302" },
+    });
+    // Non-numeric status stays an expression for dynamic status handling.
+    expect(
+      pageFieldsInput.parse({ meta: { status: "system.status" } }).meta?.status
+    ).toBe("system.status");
+  });
+
   test("reports page expression errors", () => {
     expect(
       getPageExpressionErrors({

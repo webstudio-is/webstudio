@@ -860,10 +860,38 @@ const normalizePageExpressionInput = (value: string) => {
   return JSON.stringify(value);
 };
 
+// The status code is validated as a number, so a plain numeric value must be
+// stored as a number literal (`302`), not the string literal (`"302"`) that the
+// generic normalizer would produce and the Builder then rejects as "invalid
+// input". Non-numeric values stay expressions for dynamic status handling.
+// Mirrors the Builder Status code input (features/pages Status field).
+const normalizePageStatusInput = (value: string) => {
+  const number = Number(value);
+  if (Number.isNaN(number) === false && String(number) === value) {
+    return value;
+  }
+  return normalizePageExpressionInput(value);
+};
+
 const pageExpressionStringInput = z
   .preprocess(
     (value) =>
       typeof value === "string" ? normalizePageExpressionInput(value) : value,
+    z.string({
+      error: (issue) =>
+        issue.input !== null &&
+        typeof issue.input === "object" &&
+        Array.isArray(issue.input) === false
+          ? `${pageExpressionFieldHint} Pass it as a string, not as a prop value object like {"type":"string","value":"..."}.`
+          : undefined,
+    })
+  )
+  .describe(pageExpressionFieldHint);
+
+const pageStatusExpressionInput = z
+  .preprocess(
+    (value) =>
+      typeof value === "string" ? normalizePageStatusInput(value) : value,
     z.string({
       error: (issue) =>
         issue.input !== null &&
@@ -930,7 +958,10 @@ const normalizePageMetaExpressionInputs = (
   for (const name of pageMetaExpressionFields) {
     const value = normalized[name];
     if (typeof value === "string" && value !== "") {
-      normalized[name] = normalizePageExpressionInput(value);
+      normalized[name] =
+        name === "status"
+          ? normalizePageStatusInput(value)
+          : normalizePageExpressionInput(value);
     }
   }
   normalized.custom = normalized.custom?.map((customMeta) => ({
@@ -964,7 +995,7 @@ const pageMetaInputBase = z.object({
     .optional(),
   documentType: z.enum(["html", "xml", "text"]).optional(),
   content: pageExpressionStringInput.optional(),
-  status: pageExpressionStringInput.optional(),
+  status: pageStatusExpressionInput.optional(),
   auth: pageAuth.optional(),
   custom: z
     .array(
