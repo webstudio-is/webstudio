@@ -343,9 +343,10 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "extract-slot",
     description:
-      "Convert an existing instance subtree into shared Slot content without cloning it",
+      "Convert an existing instance subtree into shared Slot content without cloning it. instanceSelector is a leaf-to-root occurrence path: start with the instance to extract, then its direct parent, then each successive ancestor toward the page root. Use the id and parentId relationships returned by list-instances. The first example extracts a section directly under Body; the second extracts a section nested in a page wrapper.",
     examples: [
-      'MCP tool: extract-slot {"instanceSelector":["instance-id","parent-id","root-id"],"label":"Site header"}',
+      'MCP tool: extract-slot {"instanceSelector":["header-section-id","body-id"],"label":"Site header"}',
+      'MCP tool: extract-slot {"instanceSelector":["header-section-id","page-wrapper-id","body-id"],"label":"Site header"}',
     ],
   },
   {

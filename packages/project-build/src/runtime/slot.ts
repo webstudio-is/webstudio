@@ -61,7 +61,12 @@ export const attachSharedSlotInput = z.object({
 });
 
 export const extractSharedSlotInput = z.object({
-  instanceSelector: z.array(z.string().min(1)).min(2),
+  instanceSelector: z
+    .array(z.string().min(1))
+    .min(2)
+    .describe(
+      'Leaf-to-root occurrence path. The first id is the instance to extract, the second is its direct parent, and any remaining ids are successive ancestors toward the page root. Use the id and parentId returned by list-instances; for a section directly under Body, pass ["section-id", "body-id"].'
+    ),
   label: z.string().min(1).optional(),
 });
 
@@ -291,7 +296,7 @@ export const extractSharedSlot = (
     if (childIndex === -1) {
       return throwBuilderRuntimeError(
         "BAD_REQUEST",
-        "Instance selector does not identify a direct parent"
+        'instanceSelector must use leaf-to-root order: instanceSelector[1] must be the direct parent of instanceSelector[0]. Use the selected instance id followed by its parentId from list-instances, for example ["section-id", "body-id"].'
       );
     }
     const fragment: Instance = {

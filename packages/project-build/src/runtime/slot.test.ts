@@ -181,6 +181,23 @@ describe("runtime slot utilities", () => {
     ]);
   });
 
+  test("explains the required selector order when the parent is invalid", () => {
+    const instances = new Map([
+      ["body", instance("body", "Body", [{ type: "id", value: "section" }])],
+      ["section", instance("section", "Box")],
+    ]);
+
+    expect(() =>
+      extractSharedSlot(
+        { instances, props: new Map() },
+        { instanceSelector: ["body", "section"] },
+        { createId: () => "unused" }
+      )
+    ).toThrow(
+      "instanceSelector must use leaf-to-root order: instanceSelector[1] must be the direct parent of instanceSelector[0]"
+    );
+  });
+
   test("rejects attaching shared content inside itself", () => {
     const instances = new Map([
       [

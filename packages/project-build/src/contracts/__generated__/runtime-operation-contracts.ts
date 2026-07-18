@@ -57649,6 +57649,8 @@ export const runtimeOperationContractData = [
             type: "string",
             minLength: 1,
           },
+          description:
+            'Leaf-to-root occurrence path. The first id is the instance to extract, the second is its direct parent, and any remaining ids are successive ancestors toward the page root. Use the id and parentId returned by list-instances; for a section directly under Body, pass ["section-id", "body-id"].',
         },
         label: {
           type: "string",
