@@ -27,6 +27,28 @@ const renderer = createAssetManagerTestRenderer();
 afterEach(renderer.cleanup);
 
 describe("AssetsShell", () => {
+  test("centers the empty state independently from empty folder content", () => {
+    const container = renderer.render(
+      <AssetsShell
+        searchProps={{}}
+        isEmpty
+        type="file"
+        emptyContent={<button type="button">Back</button>}
+      >
+        <div />
+      </AssetsShell>
+    );
+
+    expect(
+      container.querySelector("[data-asset-panel-state-overlay]")
+    ).not.toBeNull();
+    expect(
+      Array.from(container.querySelectorAll("button")).some(
+        (button) => button.textContent === "Back"
+      )
+    ).toBe(true);
+  });
+
   test("opens its context menu from panel chrome outside the asset list", () => {
     const container = renderer.render(
       <AssetsShell

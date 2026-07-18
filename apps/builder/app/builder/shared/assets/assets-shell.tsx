@@ -237,9 +237,13 @@ export const AssetsShell = ({
       </Flex>
       <Separator />
       {isEmpty ? (
-        <Flex direction="column" css={{ flex: 1, minHeight: 0 }}>
+        <Flex
+          direction="column"
+          css={{ flex: 1, minHeight: 0, position: "relative" }}
+        >
           {emptyContent}
           <AssetPanelState
+            overlay={emptyContent !== undefined}
             message={emptyMessage}
             active={dragState === OVER}
             description={
