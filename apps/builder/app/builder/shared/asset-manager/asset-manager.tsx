@@ -103,6 +103,8 @@ type FolderNavigationProps =
 
 type AssetManagerProps = FolderNavigationProps & {
   onChange?: (assetId: Asset["id"]) => void;
+  onOpen?: (assetId: Asset["id"]) => void;
+  isOpenable?: (asset: Asset) => boolean;
   /** acceptable file types in the `<input accept>` attribute format */
   accept?: string;
   canManageFolders?: boolean;
@@ -140,6 +142,8 @@ const getItemCountLabel = (count: number, qualifier?: string) =>
 export const AssetManager = ({
   accept = "*",
   onChange,
+  onOpen,
+  isOpenable,
   folderId,
   onFolderChange,
   canManageFolders = false,
@@ -539,9 +543,7 @@ export const AssetManager = ({
 
   const getFolderName = useCallback(
     (folderId: string | undefined) =>
-      folderId === undefined
-        ? "Root"
-        : (folders.get(folderId)?.name ?? "folder"),
+      folderId === undefined ? "Root" : folders.get(folderId)?.name ?? "folder",
     [folders]
   );
 
@@ -807,7 +809,7 @@ export const AssetManager = ({
 
     const hasAddModifier = event.shiftKey || event.metaKey || event.ctrlKey;
     const initialSelection = hasAddModifier
-      ? (forcedSelection ?? (selection === undefined ? [] : [selection]))
+      ? forcedSelection ?? (selection === undefined ? [] : [selection])
       : [];
     if (hasAddModifier === false) {
       clearSelection();
@@ -997,6 +999,13 @@ export const AssetManager = ({
                   onChange={(assetContainer) => {
                     onChange?.(assetContainer.asset.id);
                   }}
+                  onOpen={
+                    assetContainer.status === "uploaded" &&
+                    onOpen !== undefined &&
+                    (isOpenable?.(assetContainer.asset) ?? true)
+                      ? () => onOpen(assetContainer.asset.id)
+                      : undefined
+                  }
                   selected={isItemSelected({
                     type: "asset",
                     id: assetContainer.asset.id,

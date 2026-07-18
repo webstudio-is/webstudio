@@ -118,6 +118,7 @@ type AssetThumbnailProps = {
   assetContainer: AssetContainer;
   interactions: AssetManagerThumbnailInteractions;
   onChange?: (assetContainer: AssetContainer) => void;
+  onOpen?: () => void;
   selected?: boolean;
   forcedSelection?: boolean;
   folderPath?: string;
@@ -131,6 +132,7 @@ export const AssetThumbnail = ({
   assetContainer,
   interactions,
   onChange,
+  onOpen,
   selected,
   forcedSelection,
   folderPath,
@@ -172,6 +174,7 @@ export const AssetThumbnail = ({
     assetContainer.status === "uploading"
       ? {}
       : {
+          open: onOpen,
           settings: () => setSettingsOpen(true),
           ...(authPermit === "view"
             ? {}
@@ -218,7 +221,7 @@ export const AssetThumbnail = ({
   }, [asset.id, canDrag, getDragItems, isUploading]);
 
   const displayedActions =
-    forcedSelection && selected ? (selectionActions ?? actions) : actions;
+    forcedSelection && selected ? selectionActions ?? actions : actions;
 
   return (
     <>
@@ -269,9 +272,14 @@ export const AssetThumbnail = ({
         labelSuffix={`.${ext}`}
         path={folderPath}
         onPreviewClick={() => onChange?.(assetContainer)}
+        onDoubleClick={onOpen}
         onKeyDown={(event: KeyboardEvent) => {
-          if (event.code === "Enter") {
-            onChange?.(assetContainer);
+          if (event.key === "Enter") {
+            if (onOpen !== undefined) {
+              onOpen();
+            } else {
+              onChange?.(assetContainer);
+            }
           }
         }}
         header={
