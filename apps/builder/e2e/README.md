@@ -57,6 +57,11 @@ CI shards the full e2e suite by file name tags such as
 The goal is to keep all coverage while preventing one long serial e2e command
 from hitting the command timeout.
 
+When a shard contains one dominant test file, CI can split every suite in that
+shard deterministically by test registration order with `E2E_TEST_PARTITION`,
+for example `1/2` and `2/2`. Prefer moving whole files between shards first;
+partition only when moving a file cannot improve the longest worker.
+
 When adding a new e2e file, include one shard tag in the filename:
 
 ```txt

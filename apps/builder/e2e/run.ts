@@ -17,11 +17,13 @@ import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
 import { getE2eTestModules } from "./test-modules";
 import { stopChildProcess } from "./process";
+import { isTestInPartition, parseTestPartition } from "./test-partition";
 import { runWithTimeout } from "./timeout";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
 const testShard = process.env.E2E_TEST_SHARD?.trim();
+const testPartition = parseTestPartition(process.env.E2E_TEST_PARTITION);
 const testFilters = [
   ...(process.env.E2E_TEST_FILTERS ?? "")
     .split("\n")
@@ -213,7 +215,10 @@ const getRunnableSuites = () => {
     })
     .map((suite) => ({
       suite,
-      tests: suite.tests.filter((test) => {
+      tests: suite.tests.filter((test, testIndex) => {
+        if (isTestInPartition(testIndex, testPartition) === false) {
+          return false;
+        }
         if (testFilters.length === 0) {
           return true;
         }

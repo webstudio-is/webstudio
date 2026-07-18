@@ -19,18 +19,19 @@ const getDraggedImageAssetId = (data: Record<string, unknown>) => {
 };
 
 export const useImageAssetCanvasDrag = (publish: Publish) => {
-  const isActiveRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const isCanvasDragRef = useRef(false);
   const { disableCanvasPointerEvents, enableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
   const finish = useCallback(
     (isCanceled: boolean) => {
-      if (isActiveRef.current === false) {
-        return;
+      if (isCanvasDragRef.current) {
+        isCanvasDragRef.current = false;
+        publish({ type: "dragEnd", payload: { isCanceled } });
       }
-      isActiveRef.current = false;
+      isDraggingRef.current = false;
       enableCanvasPointerEvents();
-      publish({ type: "dragEnd", payload: { isCanceled } });
     },
     [enableCanvasPointerEvents, publish]
   );
@@ -46,18 +47,39 @@ export const useImageAssetCanvasDrag = (publish: Publish) => {
         if (assetId === undefined) {
           return;
         }
-        isActiveRef.current = true;
+        isDraggingRef.current = true;
         disableCanvasPointerEvents();
-        publish({
-          type: "dragStart",
-          payload: { origin: "panel", type: "insertImageAsset", assetId },
-        });
       },
-      onDrag: ({ location }) => {
-        if (isActiveRef.current === false) {
+      onDrag: ({ source, location }) => {
+        if (isDraggingRef.current === false) {
           return;
         }
         const { clientX: x, clientY: y } = location.current.input;
+        const rect = $canvasRect.get();
+        const isOverCanvas =
+          rect !== undefined &&
+          x >= rect.left &&
+          x <= rect.right &&
+          y >= rect.top &&
+          y <= rect.bottom;
+        if (isOverCanvas === false) {
+          if (isCanvasDragRef.current) {
+            isCanvasDragRef.current = false;
+            publish({ type: "dragEnd", payload: { isCanceled: true } });
+          }
+          return;
+        }
+        if (isCanvasDragRef.current === false) {
+          const assetId = getDraggedImageAssetId(source.data);
+          if (assetId === undefined) {
+            return;
+          }
+          isCanvasDragRef.current = true;
+          publish({
+            type: "dragStart",
+            payload: { origin: "panel", type: "insertImageAsset", assetId },
+          });
+        }
         publish({
           type: "dragMove",
           payload: {
@@ -69,17 +91,7 @@ export const useImageAssetCanvasDrag = (publish: Publish) => {
           },
         });
       },
-      onDrop: ({ location }) => {
-        const rect = $canvasRect.get();
-        const { clientX, clientY } = location.current.input;
-        const droppedOnCanvas =
-          rect !== undefined &&
-          clientX >= rect.left &&
-          clientX <= rect.right &&
-          clientY >= rect.top &&
-          clientY <= rect.bottom;
-        finish(droppedOnCanvas === false);
-      },
+      onDrop: () => finish(false),
     });
 
     return () => {
