@@ -1634,6 +1634,16 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       component: "@webstudio-is/sdk-components-react-radix:Switch",
     },
   ],
+  "extract-slot": [
+    {
+      instanceSelector: ["header-section-id", "body-id"],
+      label: "Site header",
+    },
+    {
+      instanceSelector: ["header-section-id", "page-wrapper-id", "body-id"],
+      label: "Site header",
+    },
+  ],
   "insert-collection": [
     {
       parentInstanceId: "parent-id",

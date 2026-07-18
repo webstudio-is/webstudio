@@ -2,7 +2,10 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
-import { listProjectSessionMcpTools } from "@webstudio-is/project-build/mcp";
+import {
+  createProjectSessionMcpCore,
+  listProjectSessionMcpTools,
+} from "@webstudio-is/project-build/mcp";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
 
@@ -467,6 +470,38 @@ test("applies batch dry-run to every MCP run call", () => {
       dryRun: true,
     },
   ]);
+});
+
+test("explains extract-slot selectors in focused MCP discovery", async () => {
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "extract-slot"
+  );
+  if (operation === undefined) {
+    throw Error("Expected extract-slot operation");
+  }
+  const core = createProjectSessionMcpCore({
+    operations: [operation],
+    createProjectSession: () => {
+      throw Error("meta.get_more_tools must not initialize a project session");
+    },
+    executeOperation: async () => {
+      throw Error("meta.get_more_tools must not execute a project operation");
+    },
+  });
+
+  const result = await core.callTool({
+    name: "meta.get_more_tools",
+    input: { tools: ["extract-slot"] },
+  });
+  const details = JSON.stringify(result.structuredContent.data);
+
+  expect(details).toContain("leaf-to-root");
+  expect(details).toContain(
+    "The first id is the instance to extract, the second is its direct parent"
+  );
+  expect(details).toContain(
+    '"instanceSelector":["header-section-id","body-id"]'
+  );
 });
 
 test("persists MCP checkpoints across single-op-call processes", async () => {

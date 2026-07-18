@@ -79,3 +79,24 @@ test("documents JSX insertion through the fragment field", () => {
   expect(text).not.toContain("structured Webstudio fragment");
   expect(text).not.toContain('"jsx"');
 });
+
+test("documents extract-slot selector order with valid examples", () => {
+  const docs = publicApiOperationDocumentation.find(
+    ({ command }) => command === "extract-slot"
+  );
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "extract-slot"
+  );
+  const text = `${docs?.description}\n${docs?.examples.join("\n")}`;
+
+  expect(text).toContain("leaf-to-root");
+  expect(text).toContain("direct parent");
+  expect(text).toContain("list-instances");
+  expect(text).toContain('"instanceSelector":["header-section-id","body-id"]');
+  expect(text).toContain(
+    '"instanceSelector":["header-section-id","page-wrapper-id","body-id"]'
+  );
+  expect(JSON.stringify(operation?.inputSchema)).toContain(
+    "The first id is the instance to extract, the second is its direct parent"
+  );
+});
