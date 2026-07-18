@@ -243,13 +243,16 @@ jobs:
           - name: shard-1
             shard: shard-1
           # A single serial suite dominates shard 2, so split its tests across
-          # two workers instead of duplicating its shared fixtures.
+          # workers instead of duplicating its shared fixtures.
           - name: shard-2a
             shard: shard-2
-            partition: 1/2
+            partition: 1/3
           - name: shard-2b
             shard: shard-2
-            partition: 2/2
+            partition: 2/3
+          - name: shard-2c
+            shard: shard-2
+            partition: 3/3
           - name: shard-3
             shard: shard-3
           - name: shard-4
