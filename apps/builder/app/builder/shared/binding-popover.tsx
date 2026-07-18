@@ -189,8 +189,8 @@ const BindingPanel = ({
             updateExpression(value);
             setTouched(false);
           }}
-          onChangeComplete={() => {
-            onSave(expression, errorsCount > 0);
+          onChangeComplete={(value) => {
+            onSave(value, errorsCount > 0);
             setTouched(true);
           }}
         />

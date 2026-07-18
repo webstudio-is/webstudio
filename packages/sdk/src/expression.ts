@@ -7,6 +7,7 @@ import {
   parseExpressionAt,
 } from "acorn";
 import { simple } from "acorn-walk";
+import { generate } from "astring";
 import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Scope } from "./scope";
 import { ROOT_INSTANCE_ID } from "./instances-utils";
@@ -102,6 +103,35 @@ export const allowedStringMethods = new Set(
 );
 
 export const allowedArrayMethods = new Set(arrayMethodReturnKindByName.keys());
+
+export const formatExpression = (expression: string) => {
+  let hasComments = false;
+  try {
+    const program = parse(`(${expression})`, {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      onComment: () => {
+        hasComments = true;
+      },
+    });
+    const statement = program.body[0];
+    if (
+      hasComments ||
+      statement?.type !== "ExpressionStatement" ||
+      program.body.length !== 1
+    ) {
+      return expression;
+    }
+
+    const formatted = generate(statement.expression);
+    if (statement.expression.type === "ObjectExpression") {
+      return `(${formatted})`;
+    }
+    return formatted;
+  } catch {
+    return expression;
+  }
+};
 
 const getVariableValue = (
   variableValues: undefined | VariableValues,
