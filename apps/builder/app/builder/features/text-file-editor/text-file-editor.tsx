@@ -84,8 +84,9 @@ export const TextFileEditor = ({
               lang={getTextFileEditorLanguage(asset)}
               size="full"
               expandable={false}
-              readOnly
-              onChange={() => {}}
+              onChange={(content) => {
+                setState({ status: "loaded", content });
+              }}
               onChangeComplete={() => {}}
             />
           )}
