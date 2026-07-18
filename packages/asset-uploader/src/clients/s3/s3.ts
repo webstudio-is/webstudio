@@ -3,14 +3,8 @@ import { SignatureV4 } from "@smithy/signature-v4";
 import type { AssetClient } from "../../client";
 import { uploadToS3 } from "./upload";
 import { readFromS3 } from "./read";
-import {
-  deleteImmutableObjectFromS3,
-  putImmutableObjectToS3,
-} from "./immutable-object";
-import type {
-  AssetResourceIndexGarbageCollectionStore,
-  ImmutableAssetResourceIndexStore,
-} from "@webstudio-is/asset-resource";
+import { putImmutableObjectToS3 } from "./immutable-object";
+import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resource";
 
 type S3ClientOptions = {
   endpoint: string;
@@ -99,30 +93,6 @@ export const createS3ImmutableResourceIndexStore = (
         endpoint: options.endpoint,
         bucket: options.bucket,
         object,
-      }),
-  };
-};
-
-export const createS3ResourceIndexGarbageCollectionStore = (
-  options: Omit<S3ClientOptions, "acl" | "maxUploadSize">
-): AssetResourceIndexGarbageCollectionStore => {
-  const signer = new SignatureV4({
-    credentials: {
-      accessKeyId: options.accessKeyId,
-      secretAccessKey: options.secretAccessKey,
-    },
-    region: options.region,
-    service: "s3",
-    sha256: Sha256,
-    uriEscapePath: false,
-  });
-  return {
-    delete: (key) =>
-      deleteImmutableObjectFromS3({
-        signer,
-        endpoint: options.endpoint,
-        bucket: options.bucket,
-        key,
       }),
   };
 };

@@ -16,14 +16,6 @@ export type ImmutableAssetResourceIndexStore = {
   }>;
 };
 
-export type AssetResourceIndexGarbageCollectionStore = {
-  delete: (key: string) => Promise<"deleted" | "missing">;
-};
-
-export type AssetResourceIndexAuditStore = {
-  listKeys: (prefix: string) => Promise<string[]>;
-};
-
 const encodeKeySegment = (value: string) => {
   if (value.length === 0) {
     throw new Error("Resource index key segment cannot be empty");

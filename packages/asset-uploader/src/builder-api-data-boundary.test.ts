@@ -4,20 +4,20 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import {
-  backfillCanonicalMarkdownAssets,
-  rebuildCanonicalMarkdownMetadata,
-  recoverCanonicalMarkdownMetadata,
-  synchronizeCanonicalMarkdownAssets,
+  backfillCanonicalAssets,
+  rebuildCanonicalAssetMetadata,
+  recoverCanonicalAssetMetadata,
+  synchronizeCanonicalAssets,
 } from "./canonical-metadata-backfill";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
 import { previewAssetResourceQuery } from "./query-preview";
 
 const rescanOperations = vi.hoisted(() => ({
-  backfillCanonicalMarkdownAssets: vi.fn(),
-  rebuildCanonicalMarkdownMetadata: vi.fn(),
-  recoverCanonicalMarkdownMetadata: vi.fn(),
-  synchronizeCanonicalMarkdownAssets: vi.fn(),
+  backfillCanonicalAssets: vi.fn(),
+  rebuildCanonicalAssetMetadata: vi.fn(),
+  recoverCanonicalAssetMetadata: vi.fn(),
+  synchronizeCanonicalAssets: vi.fn(),
 }));
 
 vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
@@ -55,9 +55,9 @@ describe("Builder asset-resource API data boundary", () => {
     });
 
     expect(loadCanonicalAssetFileEntries).toHaveBeenCalledTimes(2);
-    expect(backfillCanonicalMarkdownAssets).not.toHaveBeenCalled();
-    expect(synchronizeCanonicalMarkdownAssets).not.toHaveBeenCalled();
-    expect(recoverCanonicalMarkdownMetadata).not.toHaveBeenCalled();
-    expect(rebuildCanonicalMarkdownMetadata).not.toHaveBeenCalled();
+    expect(backfillCanonicalAssets).not.toHaveBeenCalled();
+    expect(synchronizeCanonicalAssets).not.toHaveBeenCalled();
+    expect(recoverCanonicalAssetMetadata).not.toHaveBeenCalled();
+    expect(rebuildCanonicalAssetMetadata).not.toHaveBeenCalled();
   });
 });
