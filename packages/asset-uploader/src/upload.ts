@@ -19,6 +19,8 @@ import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
+import { synchronizeCanonicalAsset } from "./canonical-metadata-backfill";
+import { updateAssetResourceIndexesAfterCanonicalChange } from "./resource-index-maintenance";
 
 type UploadData = {
   projectId: string;
@@ -509,12 +511,13 @@ export const uploadFile = async (
     assetDataOverride,
     onUploadError
   );
+  let uploadedAsset: Asset;
   try {
     const projectId = file.uploaderProjectId;
     if (typeof projectId !== "string") {
       throw Error("File uploader project is missing");
     }
-    return await getUploadedAsset({
+    uploadedAsset = await getUploadedAsset({
       name,
       projectId,
       context,
@@ -524,4 +527,19 @@ export const uploadFile = async (
     await cleanupUploadError(name, context, onUploadError);
     throw error;
   }
+  await synchronizeCanonicalAsset({
+    projectId: uploadedAsset.projectId,
+    assetId: uploadedAsset.id,
+    client: context.postgrest.client,
+    assetClient: client,
+  });
+  if (client.resourceIndexStore !== undefined) {
+    await updateAssetResourceIndexesAfterCanonicalChange({
+      client: context.postgrest.client,
+      store: client.resourceIndexStore,
+      projectId: uploadedAsset.projectId,
+      changedAssetIds: [uploadedAsset.id],
+    });
+  }
+  return uploadedAsset;
 };

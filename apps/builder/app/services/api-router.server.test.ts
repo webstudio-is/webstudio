@@ -74,6 +74,128 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("exposes query validation and persisted asset query reads to API clients", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(assetUploader, "previewAssetResourceQuery").mockResolvedValue({
+      ok: true,
+      result: [{ _id: "post" }],
+      content: {},
+      meta: {
+        queryHash: "sha256:query",
+        indexRevision: "metadata:revision",
+        assetRevision: "sha256:assets",
+        resultCount: 1,
+        hydratedFileCount: 0,
+        hydratedBytes: 0,
+      },
+    } as never);
+    vi.spyOn(assetUploader, "loadBuilderAssetFieldCatalog").mockResolvedValue({
+      format: "webstudio-builder-asset-field-catalog",
+      version: 1,
+      canonicalRevision: `sha256:${"a".repeat(64)}`,
+      documentCount: 1,
+      fields: {
+        "properties.slug": { types: ["string"], occurrences: 1 },
+      },
+    });
+    vi.spyOn(assetUploader, "loadAssetResourceIndexStatus").mockResolvedValue({
+      resourceId: "resource-1",
+      state: "active",
+      queryHash: `sha256:${"b".repeat(64)}`,
+      assetRevision: `sha256:${"c".repeat(64)}`,
+      activeRevision: `sha256:${"d".repeat(64)}`,
+      updatedAt: "2026-07-18T12:00:00.000Z",
+    });
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.assetQueries.validate({
+        projectId: "project-1",
+        query: '*[_type == "asset.file" && properties.slug == $slug][0]',
+      })
+    ).resolves.toMatchObject({
+      valid: true,
+      queryMode: "parameterized",
+      parameterNames: ["slug"],
+      referencedFieldPaths: expect.arrayContaining(["properties.slug"]),
+    });
+    await expect(
+      caller.assetQueries.validate({
+        projectId: "project-1",
+        query: "*[",
+      })
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      cause: { webstudioCode: "INVALID_QUERY" },
+    });
+    await expect(
+      caller.assetQueries.preview({
+        projectId: "project-1",
+        query: '*[_type == "asset.file"]',
+        parameters: {},
+        resultLimit: 10,
+        content: { mode: "none" },
+      })
+    ).resolves.toMatchObject({ ok: true, result: [{ _id: "post" }] });
+    await expect(
+      caller.assetQueries.fieldCatalog({ projectId: "project-1" })
+    ).resolves.toMatchObject({
+      fields: { "properties.slug": { types: ["string"] } },
+    });
+    await expect(
+      caller.assetQueries.indexStatus({
+        projectId: "project-1",
+        resourceId: "resource-1",
+      })
+    ).resolves.toMatchObject({ status: { state: "active" } });
+
+    vi.mocked(assetUploader.loadAssetResourceIndexStatus).mockResolvedValueOnce(
+      undefined
+    );
+    await expect(
+      caller.assetQueries.indexStatus({
+        projectId: "project-1",
+        resourceId: "missing-resource",
+      })
+    ).rejects.toMatchObject({
+      code: "NOT_FOUND",
+      cause: { webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND" },
+    });
+  });
+
+  test("rebuilds a query index through the authenticated recovery operation", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(assetUploader, "rebuildAssetResourceIndex").mockResolvedValue({
+      index: {},
+      persisted: { revision: "revision-2", key: "indexes/revision-2.json" },
+    } as never);
+    vi.spyOn(assetUploader, "loadAssetResourceIndexStatus").mockResolvedValue({
+      resourceId: "resource-1",
+      state: "active",
+      queryHash: `sha256:${"b".repeat(64)}`,
+      assetRevision: `sha256:${"c".repeat(64)}`,
+      activeRevision: `sha256:${"d".repeat(64)}`,
+      updatedAt: "2026-07-18T12:00:00.000Z",
+    });
+    const caller = createCaller({
+      ...createContext(true),
+      postgrest: { client: {} },
+    } as AppContext);
+
+    await expect(
+      caller.assetQueries.rebuildIndex({
+        projectId: "project-1",
+        resourceId: "resource-1",
+      })
+    ).resolves.toMatchObject({
+      resourceId: "resource-1",
+      revision: "revision-2",
+      status: { state: "active" },
+    });
+  });
+
   test("allows CLI clients to refresh pages without project settings", async () => {
     const build = {
       id: "build-1",

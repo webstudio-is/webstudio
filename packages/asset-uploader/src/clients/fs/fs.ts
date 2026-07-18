@@ -1,5 +1,7 @@
 import type { AssetClient } from "../../client";
 import { uploadToFs } from "./upload";
+import { readFromFs } from "./read";
+import { createFsImmutableResourceIndexStore } from "./immutable-object";
 
 type FsClientOptions = {
   fileDirectory: string;
@@ -8,6 +10,9 @@ type FsClientOptions = {
 
 export const createFsClient = (options: FsClientOptions): AssetClient => {
   return {
+    resourceIndexStore: createFsImmutableResourceIndexStore(
+      options.fileDirectory
+    ),
     uploadFile: (name, type, data, _assetInfoFallback, assetDataOverride) =>
       uploadToFs({
         name,
@@ -17,5 +22,7 @@ export const createFsClient = (options: FsClientOptions): AssetClient => {
         fileDirectory: options.fileDirectory,
         assetDataOverride,
       }),
+    readFile: (name, range) =>
+      readFromFs({ name, range, fileDirectory: options.fileDirectory }),
   };
 };

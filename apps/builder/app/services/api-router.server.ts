@@ -28,8 +28,20 @@ import {
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
 import {
+  AssetResourceHydrationError,
+  AssetResourceQueryExecutionError,
+  AssetResourceQueryValidationError,
+  getAssetResourceReferencedFieldPaths,
+  validateAssetResourceQuery,
+} from "@webstudio-is/asset-resource";
+import {
+  AssetResourceIndexNotFoundError,
+  loadAssetResourceIndexStatus,
+  loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
+  previewAssetResourceQuery,
+  rebuildAssetResourceIndex,
 } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -43,7 +55,11 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
+import {
+  assetResourceQueryRequest,
+  type Asset,
+  type AssetFolder,
+} from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
@@ -72,6 +88,10 @@ import {
   executeApiRuntimeMutation,
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
+import {
+  createAssetClient,
+  createAssetResourceIndexStore,
+} from "../shared/asset-client";
 
 const assertApiPublishDomains = ({
   auth,
@@ -99,6 +119,27 @@ const assertApiPublishDomains = ({
 };
 
 const projectIdInput = z.object({ projectId: z.string() });
+
+const assetQueryInput = projectIdInput.extend(assetResourceQueryRequest.shape);
+const assetQueryValidationInput = projectIdInput.extend({
+  query: assetResourceQueryRequest.shape.query,
+});
+const assetResourceIdInput = projectIdInput.extend({
+  resourceId: z.string().min(1),
+});
+
+const throwAssetQueryApiError = (error: unknown): never => {
+  if (
+    error instanceof AssetResourceQueryValidationError ||
+    error instanceof AssetResourceQueryExecutionError ||
+    error instanceof AssetResourceHydrationError
+  ) {
+    return throwApiError("BAD_REQUEST", error.message, {
+      webstudioCode: error.code,
+    });
+  }
+  throw error;
+};
 
 const paginatedProjectInput = projectIdInput.extend(
   paginatedOutputInputSchema.shape
@@ -690,6 +731,126 @@ export const apiRouter = router({
   }),
 
   ...runtimeOperationRouters,
+
+  assetQueries: router({
+    validate: projectQuery(
+      assetQueryValidationInput,
+      "view",
+      async ({ input }) => {
+        try {
+          const validated = validateAssetResourceQuery(input.query);
+          return {
+            valid: true as const,
+            queryMode: validated.queryMode,
+            parameterNames: validated.parameterNames,
+            referencedFieldPaths: getAssetResourceReferencedFieldPaths(
+              input.query
+            ),
+            astNodes: validated.astNodes,
+            astDepth: validated.astDepth,
+          };
+        } catch (error) {
+          return throwAssetQueryApiError(error);
+        }
+      },
+      {
+        command: "validate-asset-query",
+        client: "validateAssetQuery",
+      }
+    ),
+    preview: projectQuery(
+      assetQueryInput,
+      "view",
+      async ({ ctx, input }) => {
+        try {
+          const { projectId, ...request } = input;
+          return await previewAssetResourceQuery({
+            projectId,
+            request,
+            context: ctx,
+            assetClient: createAssetClient(),
+          });
+        } catch (error) {
+          return throwAssetQueryApiError(error);
+        }
+      },
+      {
+        command: "preview-asset-query",
+        client: "previewAssetQuery",
+      }
+    ),
+    fieldCatalog: projectQuery(
+      projectIdInput,
+      "view",
+      async ({ ctx, input }) =>
+        await loadBuilderAssetFieldCatalog({
+          projectId: input.projectId,
+          context: ctx,
+        }),
+      {
+        command: "get-asset-field-catalog",
+        client: "getAssetFieldCatalog",
+      }
+    ),
+    indexStatus: projectQuery(
+      assetResourceIdInput,
+      "view",
+      async ({ ctx, input }) => {
+        const status = await loadAssetResourceIndexStatus({
+          projectId: input.projectId,
+          resourceId: input.resourceId,
+          context: ctx,
+        });
+        if (status === undefined) {
+          return throwApiError(
+            "NOT_FOUND",
+            "Queryable asset resource index status was not found",
+            { webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND" }
+          );
+        }
+        return { status };
+      },
+      {
+        command: "get-asset-resource-index-status",
+        client: "getAssetResourceIndexStatus",
+      }
+    ),
+    rebuildIndex: projectMutation(
+      assetResourceIdInput,
+      "build",
+      async ({ ctx, input }) => {
+        try {
+          const result = await rebuildAssetResourceIndex({
+            client: ctx.postgrest.client,
+            store: createAssetResourceIndexStore(),
+            projectId: input.projectId,
+            resourceId: input.resourceId,
+          });
+          const status = await loadAssetResourceIndexStatus({
+            projectId: input.projectId,
+            resourceId: input.resourceId,
+            context: ctx,
+          });
+          return {
+            resourceId: input.resourceId,
+            revision: result.persisted.revision,
+            status,
+          };
+        } catch (error) {
+          if (error instanceof AssetResourceIndexNotFoundError) {
+            return throwApiError("NOT_FOUND", error.message, {
+              webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND",
+            });
+          }
+          return throwAssetQueryApiError(error);
+        }
+      },
+      {
+        command: "rebuild-asset-resource-index",
+        client: "rebuildAssetResourceIndex",
+      }
+    ),
+  }),
 
   publish: router({
     list: projectQuery(

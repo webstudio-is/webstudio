@@ -588,6 +588,80 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "list-assets-resources",
+    description:
+      "List Assets system resources, including legacy fetch-all mode and optional decoded query configuration.",
+    examples: [
+      "webstudio list-assets-resources --json",
+      "webstudio list-assets-resources --scope-instance body-id --json",
+    ],
+  },
+  {
+    command: "get-assets-resource",
+    description:
+      "Inspect one Assets system resource and whether it fetches all assets or uses optional query configuration.",
+    requiredOptions: ["resource", "json"],
+    examples: ["webstudio get-assets-resource --resource resource-id --json"],
+  },
+  {
+    command: "create-assets-resource",
+    description:
+      "Create a scoped Assets resource. Omit query to preserve legacy fetch-all behavior, or provide query configuration explicitly.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio create-assets-resource --input assets-resource.json --json",
+    ],
+  },
+  {
+    command: "update-assets-resource",
+    description:
+      "Update an Assets resource. Set query to null to restore legacy fetch-all behavior.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio update-assets-resource --input assets-resource-update.json --json",
+    ],
+  },
+  {
+    command: "validate-asset-query",
+    description:
+      "Validate GROQ for queryable assets and return parameters, referenced fields, and bounded syntax-tree metrics.",
+    examples: [
+      'webstudio validate-asset-query \'{"query":"*[_type == \\"asset.file\\" && properties.slug == $slug][0]"}\'',
+    ],
+  },
+  {
+    command: "preview-asset-query",
+    description:
+      "Run an authenticated queryable asset preview against persisted metadata, with concrete parameter values and optional selected-file content hydration.",
+    examples: [
+      "webstudio preview-asset-query --input asset-query-preview.json --json",
+    ],
+  },
+  {
+    command: "get-asset-field-catalog",
+    description:
+      "Get standard and dynamic Markdown frontmatter fields with observed types, occurrence counts, optionality, and mixed-type state.",
+    examples: ["webstudio get-asset-field-catalog --json"],
+  },
+  {
+    command: "get-asset-resource-index-status",
+    description:
+      "Get the active, indexing, stale, or failed index state for one Assets resource with query configuration.",
+    requiredOptions: ["resource", "json"],
+    examples: [
+      "webstudio get-asset-resource-index-status --resource resource-id --json",
+    ],
+  },
+  {
+    command: "rebuild-asset-resource-index",
+    description:
+      "Explicitly rebuild and atomically activate the index for one Assets resource with query configuration from persisted canonical metadata.",
+    requiredOptions: ["resource", "json"],
+    examples: [
+      "webstudio rebuild-asset-resource-index --resource resource-id --json",
+    ],
+  },
+  {
     command: "create-resource",
     description:
       "Create a resource. Add --scope-instance and --data-source-name only when the resource should be exposed as read data; for form/action resources, create it unscoped and bind a prop with bind-props.",

@@ -245,6 +245,215 @@ export const serverOnlyRouterOperationMetadata = {
       required: ["baseVersion", "transactions"],
     },
   },
+  "assetQueries.validate": {
+    id: "assetQueries.validate",
+    command: "validate-asset-query",
+    method: "query",
+    path: "api.assetQueries.validate",
+    client: "validateAssetQuery",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          minLength: 1,
+          maxLength: 32768,
+        },
+      },
+      required: ["query"],
+    },
+  },
+  "assetQueries.preview": {
+    id: "assetQueries.preview",
+    command: "preview-asset-query",
+    method: "query",
+    path: "api.assetQueries.preview",
+    client: "previewAssetQuery",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          minLength: 1,
+          maxLength: 32768,
+        },
+        parameters: {
+          default: {},
+          type: "object",
+          propertyNames: {
+            type: "string",
+            pattern: "^[A-Za-z_][A-Za-z0-9_]*$",
+          },
+          additionalProperties: {
+            $ref: "#/$defs/__schema0",
+          },
+        },
+        resultLimit: {
+          default: 100,
+          type: "integer",
+          exclusiveMinimum: 0,
+          maximum: 1000,
+        },
+        indexRevision: {
+          type: "string",
+          minLength: 1,
+        },
+        content: {
+          default: {
+            mode: "none",
+          },
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                mode: {
+                  type: "string",
+                  const: "none",
+                },
+              },
+              required: ["mode"],
+            },
+            {
+              type: "object",
+              properties: {
+                mode: {
+                  type: "string",
+                  const: "full",
+                },
+                maxBytes: {
+                  type: "integer",
+                  exclusiveMinimum: 0,
+                  maximum: 1048576,
+                },
+              },
+              required: ["mode"],
+            },
+            {
+              type: "object",
+              properties: {
+                mode: {
+                  type: "string",
+                  const: "range",
+                },
+                offset: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 9007199254740991,
+                },
+                length: {
+                  type: "integer",
+                  exclusiveMinimum: 0,
+                  maximum: 262144,
+                },
+              },
+              required: ["mode", "offset", "length"],
+            },
+            {
+              type: "object",
+              properties: {
+                mode: {
+                  type: "string",
+                  const: "markdown-body",
+                },
+                maxBytes: {
+                  type: "integer",
+                  exclusiveMinimum: 0,
+                  maximum: 1048576,
+                },
+              },
+              required: ["mode"],
+            },
+          ],
+        },
+      },
+      required: ["query"],
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+  "assetQueries.fieldCatalog": {
+    id: "assetQueries.fieldCatalog",
+    command: "get-asset-field-catalog",
+    method: "query",
+    path: "api.assetQueries.fieldCatalog",
+    client: "getAssetFieldCatalog",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
+  },
+  "assetQueries.indexStatus": {
+    id: "assetQueries.indexStatus",
+    command: "get-asset-resource-index-status",
+    method: "query",
+    path: "api.assetQueries.indexStatus",
+    client: "getAssetResourceIndexStatus",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        resourceId: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["resourceId"],
+    },
+  },
+  "assetQueries.rebuildIndex": {
+    id: "assetQueries.rebuildIndex",
+    command: "rebuild-asset-resource-index",
+    method: "mutation",
+    path: "api.assetQueries.rebuildIndex",
+    client: "rebuildAssetResourceIndex",
+    permit: "build",
+    inputSchema: {
+      type: "object",
+      properties: {
+        resourceId: {
+          type: "string",
+          minLength: 1,
+        },
+      },
+      required: ["resourceId"],
+    },
+  },
   "publish.list": {
     id: "publish.list",
     command: "list-publishes",
