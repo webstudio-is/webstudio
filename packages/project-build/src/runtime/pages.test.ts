@@ -241,6 +241,37 @@ describe("page settings values", () => {
       shouldSetHomePage: true,
     });
   });
+
+  test("forwards a cleared status code so the patch removes it", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page")!;
+    page.meta.status = "302";
+
+    const result = getPageSettingsUpdateData({
+      page,
+      pages,
+      values: { status: undefined },
+    });
+    expect(Object.hasOwn(result.pageValues.meta ?? {}, "status")).toBe(true);
+    expect(result.pageValues.meta?.status).toBeUndefined();
+
+    expect(
+      createPageUpdatePatches({ input: result.pageValues, page, pages })
+    ).toEqual([{ op: "remove", path: ["pages", "page", "meta", "status"] }]);
+  });
+
+  test("does not touch status when it is not part of the update", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page")!;
+    page.meta.status = "302";
+
+    const result = getPageSettingsUpdateData({
+      page,
+      pages,
+      values: { title: "Landing" },
+    });
+    expect(Object.hasOwn(result.pageValues.meta ?? {}, "status")).toBe(false);
+  });
 });
 
 describe("page drop targets", () => {
@@ -1201,6 +1232,24 @@ describe("page input schemas", () => {
   test("reject empty page names and invalid document types", () => {
     expect(() => pageFieldsInput.parse({ name: "" })).toThrow();
     expect(() => pageMetaInput.parse({ documentType: "json" })).toThrow();
+  });
+
+  test("accepts fixed numeric and dynamic expression status codes", () => {
+    expect(pageFieldsInput.parse({ meta: { status: 302 } })).toEqual({
+      meta: { status: "302" },
+    });
+    expect(pageFieldsInput.parse({ meta: { status: "302" } })).toEqual({
+      meta: { status: "302" },
+    });
+    expect(
+      pageFieldsInput.parse({ meta: { status: "system.status" } }).meta?.status
+    ).toBe("system.status");
+    expect(pageFieldsInput.safeParse({ meta: { status: 199 } }).success).toBe(
+      false
+    );
+    expect(pageFieldsInput.safeParse({ meta: { status: 600 } }).success).toBe(
+      false
+    );
   });
 
   test("reports page expression errors", () => {

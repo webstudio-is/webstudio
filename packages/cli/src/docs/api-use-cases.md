@@ -195,13 +195,14 @@ Notes:
 
 Commands:
 
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans","status":"200"}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans","status":200}}}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"method":"basic","login":"<login>","password":"<password>"}}}}
 
 Notes:
 
 - Page `title` and metadata text fields accept plain fixed values.
 - For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
+- Page `status` accepts a fixed HTTP status code as a number from 200 through 599 or a JavaScript expression string for a dynamic status.
 
 ## Read project settings
 
