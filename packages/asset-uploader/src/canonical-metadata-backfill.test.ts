@@ -8,13 +8,13 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AssetClient } from "./client";
 import {
-  backfillCanonicalMarkdownAssets,
+  backfillCanonicalAssets,
   createAssetContentRevision,
-  rebuildCanonicalMarkdownMetadata,
-  recoverCanonicalMarkdownMetadata,
+  rebuildCanonicalAssetMetadata,
+  recoverCanonicalAssetMetadata,
   synchronizeCanonicalAssetStandardMetadata,
-  synchronizeCanonicalMarkdownAsset,
-  synchronizeCanonicalMarkdownAssets,
+  synchronizeCanonicalAsset,
+  synchronizeCanonicalAssets,
 } from "./canonical-metadata-backfill";
 
 const server = createTestServer();
@@ -38,7 +38,7 @@ const entryFromReplaceRpc = (value: ReplaceMetadataRpcArgs) => ({
   source: value.p_source,
 });
 
-describe("canonical Markdown metadata backfill", () => {
+describe("canonical asset metadata backfill", () => {
   test("indexes every asset and reads content only for Markdown files", async () => {
     const contents = new Map([
       ["stored-one.md", "---\ntitle: One\n---\n# First post"],
@@ -118,7 +118,7 @@ describe("canonical Markdown metadata backfill", () => {
       })
     );
 
-    const result = await backfillCanonicalMarkdownAssets({
+    const result = await backfillCanonicalAssets({
       projectId: "project-1",
       client: testContext.postgrest.client,
       assetClient: {
@@ -172,7 +172,7 @@ describe("canonical Markdown metadata backfill", () => {
 
   test("does not allow backfills to exceed shared read concurrency", async () => {
     await expect(
-      backfillCanonicalMarkdownAssets({
+      backfillCanonicalAssets({
         projectId: "project-1",
         client: testContext.postgrest.client,
         assetClient: {
@@ -233,7 +233,7 @@ describe("canonical Markdown metadata backfill", () => {
     );
 
     await expect(
-      synchronizeCanonicalMarkdownAsset({
+      synchronizeCanonicalAsset({
         projectId: "project-1",
         assetId: "asset-1",
         client: testContext.postgrest.client,
@@ -280,7 +280,7 @@ describe("canonical Markdown metadata backfill", () => {
     );
 
     await expect(
-      synchronizeCanonicalMarkdownAsset({
+      synchronizeCanonicalAsset({
         projectId: "project-1",
         assetId: "asset-1",
         client: testContext.postgrest.client,
@@ -320,7 +320,7 @@ describe("canonical Markdown metadata backfill", () => {
     );
 
     await expect(
-      synchronizeCanonicalMarkdownAsset({
+      synchronizeCanonicalAsset({
         projectId: "project-1",
         assetId: "asset-1",
         client: testContext.postgrest.client,
@@ -568,7 +568,7 @@ describe("canonical Markdown metadata backfill", () => {
     );
 
     await expect(
-      synchronizeCanonicalMarkdownAssets({
+      synchronizeCanonicalAssets({
         projectId: "project-1",
         client: testContext.postgrest.client,
         assetClient: { uploadFile: vi.fn(), readFile },
@@ -663,7 +663,7 @@ describe("canonical Markdown metadata backfill", () => {
     );
 
     await expect(
-      recoverCanonicalMarkdownMetadata({
+      recoverCanonicalAssetMetadata({
         projectId: "project-1",
         client: testContext.postgrest.client,
         assetClient: { uploadFile: vi.fn(), readFile },
@@ -770,7 +770,7 @@ describe("canonical Markdown metadata backfill", () => {
     );
 
     await expect(
-      rebuildCanonicalMarkdownMetadata({
+      rebuildCanonicalAssetMetadata({
         projectId: "project-1",
         client: testContext.postgrest.client,
         assetClient: { uploadFile: vi.fn(), readFile },

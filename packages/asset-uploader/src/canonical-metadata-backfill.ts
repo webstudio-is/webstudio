@@ -540,12 +540,3 @@ export const synchronizeAllCanonicalAssetStandardMetadata = async ({
     assetIds: [...new Set(entries.map(({ assetId }) => assetId))],
   });
 };
-
-// Preserve the experimental names while callers migrate to the all-assets model.
-export {
-  backfillCanonicalAssets as backfillCanonicalMarkdownAssets,
-  rebuildCanonicalAssetMetadata as rebuildCanonicalMarkdownMetadata,
-  recoverCanonicalAssetMetadata as recoverCanonicalMarkdownMetadata,
-  synchronizeCanonicalAsset as synchronizeCanonicalMarkdownAsset,
-  synchronizeCanonicalAssets as synchronizeCanonicalMarkdownAssets,
-};
