@@ -18,6 +18,7 @@ import {
   FILE_EXTENSIONS_BY_CATEGORY,
   IMAGE_MIME_TYPES,
   detectAssetType,
+  isResizableImageFileName,
 } from "@webstudio-is/sdk";
 import type { MimeCategory } from "@webstudio-is/sdk";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -221,7 +222,7 @@ export const AssetThumbnail = ({
   }, [asset.id, canDrag, getDragItems, isUploading]);
 
   const displayedActions =
-    forcedSelection && selected ? selectionActions ?? actions : actions;
+    forcedSelection && selected ? (selectionActions ?? actions) : actions;
 
   return (
     <>
@@ -244,7 +245,7 @@ export const AssetThumbnail = ({
         }}
         title={alt}
         preview={
-          assetType === "image" ? (
+          assetType === "image" && isResizableImageFileName(asset.name) ? (
             <StyledWebstudioImage
               assetId={asset.id}
               name={asset.name}
