@@ -7,6 +7,7 @@ import {
 import {
   pageDraftFieldHint,
   pageExpressionFieldHint,
+  pageStatusFieldHint,
   pagePathFieldHint,
 } from "../runtime/pages";
 import { pageDraftOutputHint } from "../runtime/output-schemas";
@@ -23,6 +24,16 @@ const getSchemaProperties = (schema: unknown) =>
 
 const getSchemaItems = (schema: unknown) =>
   (schema as { items?: unknown }).items;
+
+const expectPageStatusInputSchema = (schema: unknown) => {
+  expect(schema).toMatchObject({
+    description: pageStatusFieldHint,
+    anyOf: expect.arrayContaining([
+      expect.objectContaining({ type: "number" }),
+      expect.objectContaining({ type: "string" }),
+    ]),
+  });
+};
 
 describe("builder runtime operation contracts", () => {
   const getContract = (id: RuntimeOperationId) => {
@@ -125,6 +136,7 @@ describe("builder runtime operation contracts", () => {
       type: "string",
       description: pageExpressionFieldHint,
     });
+    expectPageStatusInputSchema(createPageMetaProperties.status);
     expect(createPageCustomItemProperties.content).toMatchObject({
       type: "string",
       description: pageExpressionFieldHint,
@@ -147,6 +159,7 @@ describe("builder runtime operation contracts", () => {
       type: "string",
       description: pageExpressionFieldHint,
     });
+    expectPageStatusInputSchema(updatePageMetaProperties.status);
   });
 
   test("normalizes fixed page metadata text before runtime operation execution", () => {

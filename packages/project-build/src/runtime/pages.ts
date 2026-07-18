@@ -841,6 +841,20 @@ export const listPageMetadataExpressions = (
 export const pageExpressionFieldHint =
   'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.';
 
+export const pageStatusFieldHint =
+  "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.";
+
+const pageStatusCodeInput = z.number().refine(
+  (value) => /^[2345]\d\d$/.test(String(value)),
+  getZodValidationIssueOptions({
+    code: "invalid_page_status",
+    path: [],
+    message: "Status code expects 2xx, 3xx, 4xx or 5xx",
+    constraint: "http_status:200-599",
+    example: 200,
+  })
+);
+
 const jsExpressionStartPattern =
   /^\s*(?:["'`[{(]|(?:await|new|typeof|void)\b|(?:undefined|null|true|false)\s*$)/;
 const jsExpressionOperatorPattern =
@@ -860,6 +874,14 @@ const normalizePageExpressionInput = (value: string) => {
   return JSON.stringify(value);
 };
 
+const normalizePageStatusInput = (value: string) => {
+  const number = Number(value);
+  if (Number.isNaN(number) === false && String(number) === value) {
+    return value;
+  }
+  return normalizePageExpressionInput(value);
+};
+
 const pageExpressionStringInput = z
   .preprocess(
     (value) =>
@@ -874,6 +896,13 @@ const pageExpressionStringInput = z
     })
   )
   .describe(pageExpressionFieldHint);
+
+const pageStatusExpressionInput = z
+  .union([
+    pageStatusCodeInput.transform((value) => String(value)),
+    z.string().transform(normalizePageStatusInput),
+  ])
+  .describe(pageStatusFieldHint);
 
 export const pagePathFieldHint =
   'Plain page path. For a new non-home page, start with "/", for example "/pricing". The home page path is the empty string ""; do not use an empty path when creating a new page.';
@@ -930,7 +959,10 @@ const normalizePageMetaExpressionInputs = (
   for (const name of pageMetaExpressionFields) {
     const value = normalized[name];
     if (typeof value === "string" && value !== "") {
-      normalized[name] = normalizePageExpressionInput(value);
+      normalized[name] =
+        name === "status"
+          ? normalizePageStatusInput(value)
+          : normalizePageExpressionInput(value);
     }
   }
   normalized.custom = normalized.custom?.map((customMeta) => ({
@@ -964,7 +996,7 @@ const pageMetaInputBase = z.object({
     .optional(),
   documentType: z.enum(["html", "xml", "text"]).optional(),
   content: pageExpressionStringInput.optional(),
-  status: pageExpressionStringInput.optional(),
+  status: pageStatusExpressionInput.optional(),
   auth: pageAuth.optional(),
   custom: z
     .array(
@@ -1073,17 +1105,6 @@ export const pageTemplateSettingsInput = z.object({
   name: pageName,
   title: pageTitle,
 });
-
-const pageStatusCodeInput = z.number().refine(
-  (value) => /^[2345]\d\d$/.test(String(value)),
-  getZodValidationIssueOptions({
-    code: "invalid_page_status",
-    path: [],
-    message: "Status code expects 2xx, 3xx, 4xx or 5xx",
-    constraint: "http_status:200-599",
-    example: 200,
-  })
-);
 
 export const pageGeneralSettingsInput = z.object({
   name: pageName,
@@ -1949,7 +1970,7 @@ export const getPageSettingsUpdateData = ({
   if (values.language !== undefined) {
     meta.language = values.language;
   }
-  if (values.status !== undefined) {
+  if (Object.hasOwn(values, "status")) {
     meta.status = values.status;
   }
   if (values.redirect !== undefined) {

@@ -12,7 +12,7 @@ import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { builderPatchTransactionSchema } from "./contracts/patch";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
-import { pageExpressionFieldHint } from "./runtime/pages";
+import { pageExpressionFieldHint, pageStatusFieldHint } from "./runtime/pages";
 import { imageDescriptionsSetInput } from "./runtime/assets";
 import { BuilderRuntimeError } from "./runtime/errors";
 import {
@@ -80,6 +80,16 @@ const getTestInputSchema = (inputSchema: z.ZodTypeAny) =>
 
 const getSchemaProperties = (schema: unknown) =>
   (schema as { properties?: Record<string, unknown> }).properties ?? {};
+
+const expectPageStatusInputSchema = (schema: unknown) => {
+  expect(schema).toMatchObject({
+    description: pageStatusFieldHint,
+    anyOf: expect.arrayContaining([
+      expect.objectContaining({ type: "number" }),
+      expect.objectContaining({ type: "string" }),
+    ]),
+  });
+};
 
 const getSuccessfulOutputDataSchema = (schema: unknown) => {
   const variants = (schema as { oneOf?: unknown[] }).oneOf ?? [];
@@ -1219,6 +1229,7 @@ describe("project session mcp adapter", () => {
       type: "string",
       description: pageExpressionFieldHint,
     });
+    expectPageStatusInputSchema(toolMetaProperties.status);
 
     const adapter = createProjectSessionMcpCore({
       operations: [createPageOperation],
@@ -1247,6 +1258,7 @@ describe("project session mcp adapter", () => {
       type: "string",
       description: pageExpressionFieldHint,
     });
+    expectPageStatusInputSchema(toolDetailsMetaProperties.status);
   });
 
   test("lists OCR installer only when host provides installer", () => {

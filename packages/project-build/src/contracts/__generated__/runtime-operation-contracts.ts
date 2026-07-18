@@ -686,9 +686,16 @@ export const runtimeOperationContractData = [
               type: "string",
             },
             status: {
+              anyOf: [
+                {
+                  type: "number",
+                },
+                {
+                  type: "string",
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.",
             },
             auth: {
               anyOf: [
@@ -858,9 +865,16 @@ export const runtimeOperationContractData = [
                   type: "string",
                 },
                 status: {
+                  anyOf: [
+                    {
+                      type: "number",
+                    },
+                    {
+                      type: "string",
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.",
                 },
                 auth: {
                   anyOf: [
@@ -2630,9 +2644,16 @@ export const runtimeOperationContractData = [
               type: "string",
             },
             status: {
+              anyOf: [
+                {
+                  type: "number",
+                },
+                {
+                  type: "string",
+                },
+              ],
               description:
-                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-              type: "string",
+                "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.",
             },
             auth: {
               anyOf: [
@@ -2816,9 +2837,16 @@ export const runtimeOperationContractData = [
                   type: "string",
                 },
                 status: {
+                  anyOf: [
+                    {
+                      type: "number",
+                    },
+                    {
+                      type: "string",
+                    },
+                  ],
                   description:
-                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass one Webstudio JavaScript expression such as `pageTitle ?? "Plans for teams"`. Read webstudio://project/expressions for syntax and scope rules.',
-                  type: "string",
+                    "Pass a fixed HTTP status code as a number from 200 through 599, for example 302. For a dynamic status, pass one Webstudio JavaScript expression as a string, for example `system.status`.",
                 },
                 auth: {
                   anyOf: [
