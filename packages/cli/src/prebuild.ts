@@ -134,6 +134,57 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   );
 };
 
+const getResourceIndexPublicPath = (resourceId: string, revision: string) =>
+  `/resource-indexes/${encodeURIComponent(resourceId)}.${encodeURIComponent(revision)}.json`;
+
+export const materializeAssetResourceIndexes = async ({
+  snapshots,
+  publicDirectory,
+  generatedDirectory,
+  deploymentId,
+}: {
+  snapshots: NonNullable<PublishedProjectBundle["assetResourceIndexes"]>;
+  publicDirectory: string;
+  generatedDirectory: string;
+  deploymentId: string;
+}) => {
+  const targetDirectory = join(publicDirectory, "resource-indexes");
+  await createFolderIfNotExists(targetDirectory);
+  const manifest = snapshots.map(({ resourceId, revision, index }) => {
+    if (
+      resourceId !== index.resourceId ||
+      revision !== index.integrity.checksum
+    ) {
+      throw new Error("Published asset resource snapshot identity is invalid");
+    }
+    const indexPath = getResourceIndexPublicPath(resourceId, revision);
+    return {
+      resourceId,
+      revision,
+      queryHash: index.queryHash,
+      assetRevision: index.assetRevision,
+      indexPath,
+      index,
+    };
+  });
+  for (const { indexPath, index } of manifest) {
+    await writeFile(
+      join(publicDirectory, indexPath.slice(1)),
+      JSON.stringify(index),
+      "utf8"
+    );
+  }
+  await writeFile(
+    join(generatedDirectory, "$resources.asset-query-manifest.ts"),
+    `export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};\nexport const assetQueryManifest = ${JSON.stringify(
+      manifest.map(({ index: _index, ...entry }) => entry),
+      null,
+      2
+    )};\n`,
+    "utf8"
+  );
+};
+
 const writeWsAuthResources = async (
   generatedDir: string,
   pages: Pages,
@@ -753,6 +804,13 @@ export const prebuild = async (options: {
           importFrom(`./app/__generated__/$resources.assets`, file)
         )
         .replaceAll(
+          "__ASSET_QUERY_MANIFEST__",
+          importFrom(
+            `./app/__generated__/$resources.asset-query-manifest`,
+            file
+          )
+        )
+        .replaceAll(
           "__AUTH__",
           importFrom(`./app/__generated__/$resources.wsauth.server`, file)
         )
@@ -792,6 +850,13 @@ export const prebuild = async (options: {
     `
   );
 
+  await materializeAssetResourceIndexes({
+    snapshots: siteData.assetResourceIndexes ?? [],
+    publicDirectory: join(buildRoot, "public"),
+    generatedDirectory: generatedDir,
+    deploymentId: siteData.build.id,
+  });
+
   // Generate assets resource file
   // Assets use /cgi/ endpoints on both builder and published sites
   // Use a placeholder origin for URL construction, result will be relative paths
@@ -826,8 +891,12 @@ export const prebuild = async (options: {
   if (options.assets === true && siteData.assets.length > 0) {
     const downloading = createProgress();
     downloading.start("Downloading fonts and images");
+    const protectedAssetIds = new Set(siteData.protectedAssetIds ?? []);
+    const assetsToMaterialize = siteData.assets.filter(
+      (asset) => protectedAssetIds.has(asset.id) === false
+    );
     await materializeAssetFiles({
-      assets: siteData.assets,
+      assets: assetsToMaterialize,
       continueOnError: true,
       origin: siteData.origin || "",
       sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),

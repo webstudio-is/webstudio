@@ -40,18 +40,33 @@ model File {
 }
 
 model Asset {
-  id               String             @default(uuid()) // not unique!
+  id               String              @default(uuid()) // not unique!
   projectId        String
-  file             File               @relation(fields: [name], references: [name])
+  file             File                @relation(fields: [name], references: [name])
   name             String
   filename         String?
   description      String?
   folderId         String?
-  folder           AssetFolder?       @relation(fields: [folderId, projectId], references: [id, projectId], onDelete: NoAction)
+  folder           AssetFolder?        @relation(fields: [folderId, projectId], references: [id, projectId], onDelete: NoAction)
+  fileMetadata     AssetFileMetadata[]
   Project          Project[]
   DashboardProject DashboardProject[]
 
   @@id([id, projectId])
+}
+
+model AssetFileMetadata {
+  projectId          String
+  assetId            String
+  revision           String
+  document           Json
+  fieldContributions Json     @default("[]")
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  asset              Asset    @relation(fields: [assetId, projectId], references: [id, projectId], onDelete: Cascade)
+
+  @@id([projectId, assetId, revision])
+  @@index([projectId, assetId])
 }
 
 model AssetFolder {
@@ -168,6 +183,8 @@ model Project {
   isDeleted                 Boolean                      @default(false)
   files                     File[]
   assetFolders              AssetFolder[]
+  assetResourceIndexStates  AssetResourceIndexState[]
+  assetResourceIndexes      AssetResourceIndexRevision[]
   projectDomain             ProjectDomain[]
   authorizationToken        AuthorizationToken[]
   previewImageAsset         Asset?                       @relation(fields: [previewImageAssetId, id], references: [id, projectId])
@@ -180,6 +197,75 @@ model Project {
   @@unique([id, domain])
   // ApprovedMarketplaceProduct view performance index
   @@index([isDeleted, marketplaceApprovalStatus])
+}
+
+enum AssetResourceIndexBuildStatus {
+  PENDING
+  BUILDING
+  ACTIVE
+  STALE
+  FAILED
+}
+
+enum AssetResourceIndexReferenceType {
+  RESOURCE
+  BUILD
+  DEPLOYMENT
+}
+
+model AssetResourceIndexState {
+  projectId      String
+  resourceId     String
+  query          String
+  queryHash      String
+  assetRevision  String
+  buildStatus    AssetResourceIndexBuildStatus @default(PENDING)
+  activeRevision String?
+  buildError     Json?
+  deletedAt      DateTime?                     @db.Timestamptz(3)
+  createdAt      DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime                      @default(now()) @updatedAt @db.Timestamptz(3)
+  project        Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revisions      AssetResourceIndexRevision[]
+  activeIndex    AssetResourceIndexRevision?   @relation("ActiveAssetResourceIndex", fields: [projectId, resourceId, activeRevision], references: [projectId, resourceId, revision], onDelete: NoAction)
+
+  @@id([projectId, resourceId])
+  @@index([projectId, buildStatus])
+}
+
+model AssetResourceIndexRevision {
+  projectId     String
+  resourceId    String
+  revision      String
+  queryHash     String
+  assetRevision String
+  checksum      String
+  objectKey     String
+  unreferencedAt DateTime?                @db.Timestamptz(3)
+  gcClaimId      String?
+  gcStartedAt    DateTime?                @db.Timestamptz(3)
+  createdAt      DateTime                 @default(now()) @db.Timestamptz(3)
+  project       Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  resource      AssetResourceIndexState   @relation(fields: [projectId, resourceId], references: [projectId, resourceId], onDelete: Cascade)
+  activeFor     AssetResourceIndexState[] @relation("ActiveAssetResourceIndex")
+  references    AssetResourceIndexReference[]
+
+  @@id([projectId, resourceId, revision])
+  @@unique([projectId, objectKey])
+  @@index([projectId, resourceId, queryHash, assetRevision])
+}
+
+model AssetResourceIndexReference {
+  projectId   String
+  resourceId  String
+  revision    String
+  type        AssetResourceIndexReferenceType
+  referenceId String
+  createdAt   DateTime                   @default(now()) @db.Timestamptz(3)
+  index       AssetResourceIndexRevision @relation(fields: [projectId, resourceId, revision], references: [projectId, resourceId, revision], onDelete: Cascade)
+
+  @@id([projectId, resourceId, revision, type, referenceId])
+  @@index([projectId, type, referenceId])
 }
 
 enum PublishStatus {

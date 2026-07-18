@@ -1872,6 +1872,65 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       exposeAsDataSource: false,
     },
   ],
+  "list-assets-resources": [{}],
+  "get-assets-resource": [{ resourceId: "resource-id" }],
+  "create-assets-resource": [
+    {
+      name: "All assets",
+      scopeInstanceId: "body-id",
+      dataSourceName: "assets",
+    },
+    {
+      name: "Published posts",
+      scopeInstanceId: "body-id",
+      dataSourceName: "posts",
+      query: {
+        groq: '*[_type == "asset.file" && extension == "md" && properties.draft != true] | order(properties.publishedAt desc, _id asc)[0...20]{_id, path, properties, excerpt}',
+        resultLimit: 20,
+        content: { mode: "none" },
+      },
+    },
+    {
+      name: "Post by slug",
+      scopeInstanceId: "body-id",
+      dataSourceName: "post",
+      query: {
+        groq: '*[_type == "asset.file" && extension == "md" && properties.slug == $slug][0]',
+        parameters: [{ name: "slug", value: "system.params.slug" }],
+        resultLimit: 1,
+        content: { mode: "markdown-body", maxBytes: 1048576 },
+      },
+    },
+  ],
+  "update-assets-resource": [
+    {
+      resourceId: "resource-id",
+      values: {
+        query: {
+          groq: '*[_type == "asset.file"][0...50]',
+          resultLimit: 50,
+          content: { mode: "none" },
+        },
+      },
+    },
+    { resourceId: "resource-id", values: { query: null } },
+  ],
+  "validate-asset-query": [
+    {
+      query: '*[_type == "asset.file" && properties.slug == $slug][0]',
+    },
+  ],
+  "preview-asset-query": [
+    {
+      query: '*[_type == "asset.file" && properties.slug == $slug][0]',
+      parameters: { slug: "hello-world" },
+      resultLimit: 1,
+      content: { mode: "markdown-body", maxBytes: 1048576 },
+    },
+  ],
+  "get-asset-field-catalog": [{}],
+  "get-asset-resource-index-status": [{ resourceId: "resource-id" }],
+  "rebuild-asset-resource-index": [{ resourceId: "resource-id" }],
   "update-asset": [
     {
       assetId: "font-asset-id",

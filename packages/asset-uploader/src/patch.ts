@@ -23,7 +23,11 @@ export const patchAssets = async (
   }
 
   await patchAssetsWithClient(
-    { projectId, client: context.postgrest.client },
+    {
+      projectId,
+      client: context.postgrest.client,
+      synchronizeCanonicalMetadata: true,
+    },
     patches
   );
 };

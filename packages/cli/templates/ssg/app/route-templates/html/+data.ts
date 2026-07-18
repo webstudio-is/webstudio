@@ -52,7 +52,8 @@ export const data = async (pageContext: PageContextServer) => {
 
   const resources = await loadResources(
     customFetch,
-    getResources({ system }).data
+    getResources({ system }).data,
+    url
   );
   const pageMeta = getPageMeta({ system, resources });
 

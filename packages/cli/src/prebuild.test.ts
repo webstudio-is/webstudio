@@ -12,7 +12,12 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { bundleVersion } from "@webstudio-is/protocol";
-import { generateRedirectsModule, prebuild } from "./prebuild";
+import { createAssetResourceIndex } from "@webstudio-is/asset-resource";
+import {
+  generateRedirectsModule,
+  materializeAssetResourceIndexes,
+  prebuild,
+} from "./prebuild";
 
 const originalCwd = process.cwd();
 const originalFetch = globalThis.fetch;
@@ -286,6 +291,46 @@ describe("generateRedirectsModule", () => {
   });
 });
 
+test("materializes immutable resource indexes as public JSON with a reference-only module", async () => {
+  const index = await createAssetResourceIndex({
+    format: "webstudio-resource-index",
+    version: 1,
+    resourceId: "blog/posts",
+    query: "*[]",
+    assetRevision: `sha256:${"a".repeat(64)}`,
+    queryMode: "static",
+    parameterNames: [],
+    documents: [],
+  });
+  await mkdir("public", { recursive: true });
+  await mkdir("app/__generated__", { recursive: true });
+
+  await materializeAssetResourceIndexes({
+    snapshots: [
+      {
+        resourceId: index.resourceId,
+        revision: index.integrity.checksum,
+        index,
+      },
+    ],
+    publicDirectory: "public",
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-1",
+  });
+
+  const files = await getFilePaths("public/resource-indexes");
+  expect(files).toHaveLength(1);
+  expect(JSON.parse(await readFile(files[0], "utf8"))).toEqual(index);
+  const manifestModule = await readFile(
+    "app/__generated__/$resources.asset-query-manifest.ts",
+    "utf8"
+  );
+  expect(manifestModule).toContain('assetQueryDeploymentId = "build-1"');
+  expect(manifestModule).toContain("/resource-indexes/");
+  expect(manifestModule).not.toContain('"documents"');
+  expect(manifestModule).not.toContain('"properties"');
+});
+
 describe("prebuild", () => {
   test("excludes draft pages from published output", async () => {
     await writeSiteData(
@@ -407,9 +452,15 @@ describe("prebuild", () => {
       ])
     );
 
-    await expect(
-      readFile("app/__generated__/$resources.assets.ts", "utf8")
-    ).resolves.toContain("image.png");
+    const legacyAssetsModule = await readFile(
+      "app/__generated__/$resources.assets.ts",
+      "utf8"
+    );
+    expect(legacyAssetsModule).toContain("export const assets");
+    expect(legacyAssetsModule).toContain('"asset-image"');
+    expect(legacyAssetsModule).toContain("image.png");
+    expect(legacyAssetsModule).not.toContain("assets/query");
+    expect(legacyAssetsModule).not.toContain("properties");
     await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.toContain('"path": "/"');
@@ -534,6 +585,107 @@ describe("prebuild", () => {
       readFile("app/routes/[blog].$slug._index.tsx", "utf8")
     ).resolves.toContain("../__generated__/[blog].$slug._index");
     await expectGeneratedRedirectFallback("app/routes/$.tsx");
+  });
+
+  test("generates one dynamic SSR blog route with external index and published Markdown assets", async () => {
+    const source = "# Published post\n";
+    const index = await createAssetResourceIndex({
+      format: "webstudio-resource-index",
+      version: 1,
+      resourceId: "posts",
+      query: "*[properties.slug == $slug][0]{_id, revision, contentRef}",
+      assetRevision: `sha256:${"a".repeat(64)}`,
+      queryMode: "parameterized",
+      parameterNames: ["slug"],
+      documents: [
+        {
+          _id: "post-1",
+          _type: "asset.file",
+          name: "post.md",
+          path: "blog/post.md",
+          key: "post",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: new TextEncoder().encode(source).byteLength,
+          revision: "post-revision",
+          contentRef: "post.md",
+          properties: { slug: "post" },
+        },
+      ],
+    });
+    const siteData = {
+      ...createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      }),
+      assets: ["post.md", "draft.md"].map((name) => ({
+        id: name,
+        projectId: "project-id",
+        name,
+        type: "file" as const,
+        format: "md",
+        size: source.length,
+        meta: {},
+        description: "",
+        createdAt: "2024-01-01T00:00:00.000Z",
+      })),
+      assetResourceIndexes: [
+        {
+          resourceId: index.resourceId,
+          revision: index.integrity.checksum,
+          index,
+        },
+      ],
+      protectedAssetIds: ["draft.md"],
+    };
+    await writeSiteData(
+      siteData as unknown as ReturnType<typeof createSiteData>
+    );
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/post.md", source, "utf8");
+    await writeFile(".webstudio/assets/draft.md", "draft secret", "utf8");
+
+    await prebuild({ assets: true, template: ["react-router"] });
+
+    await expect(
+      readFile("app/routes/[blog].$slug._index.tsx", "utf8")
+    ).resolves.toContain("createGeneratedAssetResourceFetch");
+    await expect(readFile("public/assets/post.md", "utf8")).resolves.toBe(
+      source
+    );
+    await expect(readFile("public/assets/draft.md", "utf8")).rejects.toThrow(
+      "ENOENT"
+    );
+    const manifest = await readFile(
+      "app/__generated__/$resources.asset-query-manifest.ts",
+      "utf8"
+    );
+    expect(manifest).not.toContain("Published post");
+    expect(manifest).not.toContain("draft secret");
+    const assetRuntime = await readFile("app/asset-resource-fetch.ts", "utf8");
+    expect(assetRuntime).toContain('Reflect.get(env, "ASSETS")');
+    expect(assetRuntime).toContain("binding?.fetch(assetRequest)");
+    expect(
+      (await getFilePaths("app/routes")).filter((path) =>
+        path.includes("$slug")
+      )
+    ).toHaveLength(1);
   });
 
   test("uses pass-through images in the base react-router template", async () => {

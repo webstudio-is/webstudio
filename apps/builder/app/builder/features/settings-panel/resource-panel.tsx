@@ -30,6 +30,7 @@ import {
   sitemapResourceUrl,
   currentDateResourceUrl,
   assetsResourceUrl,
+  assetsQueryResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -46,6 +47,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
@@ -76,6 +78,7 @@ import {
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";
+import { AssetQueryForm } from "./asset-query-form";
 
 export const UrlField = ({
   scope,
@@ -912,13 +915,22 @@ export const SystemResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
+  const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
 
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
+  const isStoredAssetQuery =
+    resource?.url === JSON.stringify(assetsQueryResourceUrl);
 
+  const assetsLocalResource = {
+    label: "Assets",
+    value: JSON.stringify(assetsResourceUrl),
+    description:
+      "Loads all project assets by default, with optional GROQ querying and selected-file content.",
+  };
   const localResources = [
     {
       label: "Sitemap",
@@ -931,22 +943,26 @@ export const SystemResourceForm = forwardRef<
       description:
         "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
-    {
-      label: "Assets",
-      value: JSON.stringify(assetsResourceUrl),
-      description:
-        "Resource that loads the list of assets of the current project.",
-    },
+    assetsLocalResource,
   ];
 
   const [localResource, setLocalResource] = useState(() => {
+    if (isStoredAssetQuery) {
+      return assetsLocalResource;
+    }
     return (
       localResources.find(
         (localResource) => localResource.value === resource?.url
       ) ?? localResources[0]
     );
   });
-
+  const isAssetsResource =
+    localResource.value === JSON.stringify(assetsResourceUrl);
+  const canConfigureAssetQuery =
+    isFeatureEnabled("assetResource") || isStoredAssetQuery;
+  const [isAssetQueryEnabled, setIsAssetQueryEnabled] =
+    useState(isStoredAssetQuery);
+  const isAssetQuery = isAssetsResource && isAssetQueryEnabled;
   useImperativeHandle(ref, () => ({
     save: (formData) => {
       // preserve existing instance scope when edit
@@ -973,11 +989,24 @@ export const SystemResourceForm = forwardRef<
   }));
 
   const resourceId = useId();
+  const assetQueryEnabledId = useId();
 
   return (
     <>
-      <input type="hidden" name="method" value="get" />
-      <input type="hidden" name="url" value={localResource.value} />
+      <input
+        type="hidden"
+        name="method"
+        value={isAssetQuery ? "post" : "get"}
+      />
+      <input
+        type="hidden"
+        name="url"
+        value={
+          isAssetQuery
+            ? JSON.stringify(assetsQueryResourceUrl)
+            : localResource.value
+        }
+      />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={resourceId}>Resource</Label>
         <Select
@@ -994,6 +1023,16 @@ export const SystemResourceForm = forwardRef<
           value={localResource}
           onChange={setLocalResource}
         />
+        {isAssetsResource && canConfigureAssetQuery && (
+          <AssetQueryForm
+            resource={resource}
+            scope={scope}
+            aliases={aliases}
+            enabled={isAssetQuery}
+            enabledId={assetQueryEnabledId}
+            onEnabledChange={setIsAssetQueryEnabled}
+          />
+        )}
       </Flex>
     </>
   );

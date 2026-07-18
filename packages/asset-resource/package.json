@@ -1,0 +1,44 @@
+{
+  "name": "@webstudio-is/asset-resource",
+  "version": "0.0.0-webstudio-version",
+  "description": "Queryable Webstudio asset metadata and content runtime",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "benchmark:groq": "node scripts/benchmark-groq.mjs",
+    "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
+    "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@webstudio-is/sdk": "workspace:*",
+    "groq-js": "1.30.3",
+    "remark-frontmatter": "4.0.1",
+    "remark-parse": "10.0.2",
+    "unified": "10.1.2",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "esbuild": "^0.25.3",
+    "vitest": "^3.1.2"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": [
+    "lib/*",
+    "!*.test.*"
+  ]
+}
