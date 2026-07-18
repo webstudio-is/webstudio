@@ -3,12 +3,12 @@ import { useStore } from "@nanostores/react";
 import { Box, Flex, rawTheme, Text, toast } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
-import { getMimeTypeByExtension } from "@webstudio-is/sdk";
+import type { Asset } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog } from "~/shared/code-editor-base";
 import { $assets } from "~/shared/sync/data-stores";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
-import { replaceAsset } from "~/builder/shared/assets";
+import { updateAssetContent } from "~/builder/shared/assets";
 import { getTextFileEditorExtensions } from "./text-file-utils";
 
 type TextFileState =
@@ -24,10 +24,10 @@ export const TextFileEditor = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const assets = useStore($assets);
-  const [currentAssetId, setCurrentAssetId] = useState(assetId);
-  const currentAssetIdRef = useRef(assetId);
-  const asset = assets.get(currentAssetId);
+  const asset = assets.get(assetId);
   const [state, setState] = useState<TextFileState>({ status: "loading" });
+  const currentAssetRef = useRef<Asset>();
+  const currentContentRef = useRef<string>();
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const saveQueueRef = useRef(Promise.resolve());
@@ -37,10 +37,12 @@ export const TextFileEditor = ({
   );
 
   useEffect(() => {
-    if (asset === undefined) {
+    const assetToLoad = $assets.get().get(assetId);
+    if (assetToLoad === undefined) {
       setState({ status: "error" });
       return;
     }
+    currentAssetRef.current = assetToLoad;
 
     const controller = new AbortController();
     setState({ status: "loading" });
@@ -48,7 +50,7 @@ export const TextFileEditor = ({
     const load = async () => {
       try {
         const response = await fetch(
-          getAssetUrl(asset, window.location.origin),
+          getAssetUrl(assetToLoad, window.location.origin),
           { signal: controller.signal }
         );
         if (response.ok === false) {
@@ -57,6 +59,7 @@ export const TextFileEditor = ({
         const content = await response.text();
         persistedContentRef.current = content;
         requestedContentRef.current = content;
+        currentContentRef.current = content;
         setState({ status: "loaded", content });
       } catch (error) {
         if (controller.signal.aborted) {
@@ -71,7 +74,7 @@ export const TextFileEditor = ({
 
     void load();
     return () => controller.abort();
-  }, [asset]);
+  }, [assetId]);
 
   const save = (content: string) => {
     requestedContentRef.current = content;
@@ -84,32 +87,23 @@ export const TextFileEditor = ({
         return;
       }
 
-      const currentAsset = $assets.get().get(currentAssetIdRef.current);
+      const currentAsset = currentAssetRef.current;
       if (currentAsset === undefined) {
         toast.error("Unable to save: asset not found");
         return;
       }
 
-      const file = new File([requestedContent], formatAssetName(currentAsset), {
-        type: getMimeTypeByExtension(currentAsset.format) ?? "text/plain",
-      });
-      let newAssetId: string | undefined;
       try {
-        newAssetId = await replaceAsset(currentAsset.id, file, {
-          type: "file",
-          successMessage: "File saved successfully",
+        const updatedAsset = await updateAssetContent({
+          asset: currentAsset,
+          content: requestedContent,
         });
+        currentAssetRef.current = updatedAsset;
+        persistedContentRef.current = requestedContent;
+        toast.success("File saved successfully");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Unable to save");
-        return;
       }
-      if (newAssetId === undefined) {
-        return;
-      }
-
-      persistedContentRef.current = requestedContent;
-      currentAssetIdRef.current = newAssetId;
-      setCurrentAssetId(newAssetId);
     });
   };
 
@@ -119,7 +113,12 @@ export const TextFileEditor = ({
     <EditorDialog
       title={title}
       open
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        if (open === false && currentContentRef.current !== undefined) {
+          save(currentContentRef.current);
+        }
+        onOpenChange(open);
+      }}
       content={
         <Box css={{ height: "100%", minHeight: 0 }}>
           {state.status === "loading" && (
@@ -139,6 +138,7 @@ export const TextFileEditor = ({
               size="full"
               expandable={false}
               onChange={(content) => {
+                currentContentRef.current = content;
                 setState({ status: "loaded", content });
               }}
               onChangeComplete={save}

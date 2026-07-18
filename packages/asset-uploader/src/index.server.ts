@@ -4,5 +4,6 @@ export * from "./delete";
 export * from "./patch";
 export * from "./asset-patch-core";
 export * from "./folder-persistence";
+export * from "./revision";
 export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";

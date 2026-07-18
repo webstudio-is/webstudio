@@ -151,6 +151,20 @@ export const restAssetsUploadPath = ({
   return `/rest/assets/${name}`;
 };
 
+export const restAssetContentPath = ({
+  assetId,
+  projectId,
+  expectedName,
+}: {
+  assetId: string;
+  projectId: string;
+  expectedName: string;
+}) =>
+  `/rest/assets/${assetId}/content${searchParams({
+    projectId,
+    expectedName,
+  })}`;
+
 export const getCanvasUrl = () => {
   return `/canvas`;
 };

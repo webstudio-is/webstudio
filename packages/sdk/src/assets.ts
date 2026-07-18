@@ -195,6 +195,16 @@ export const getMimeTypeByExtension = (
   return ALLOWED_FILE_TYPES[extension.toLowerCase() as AllowedFileExtension];
 };
 
+export const isTextFileAsset = (asset: Pick<Asset, "format">): boolean => {
+  const mimeType = getMimeTypeByExtension(asset.format);
+  return (
+    mimeType?.startsWith("text/") === true ||
+    mimeType === "application/json" ||
+    mimeType === "application/xml" ||
+    mimeType === "image/svg+xml"
+  );
+};
+
 /**
  * Get MIME type from a filename
  */

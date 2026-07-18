@@ -3,7 +3,13 @@ import { css } from "@codemirror/lang-css";
 import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
-import { getMimeTypeByExtension, type Asset } from "@webstudio-is/sdk";
+import {
+  getMimeTypeByExtension,
+  isTextFileAsset,
+  type Asset,
+} from "@webstudio-is/sdk";
+
+export { isTextFileAsset };
 
 const languageSupportByMimeType = new Map<string, () => Extension>([
   ["application/json", () => javascript()],
@@ -27,14 +33,4 @@ export const getTextFileEditorExtensions = (
   }
   const createLanguageSupport = languageSupportByMimeType.get(mimeType);
   return createLanguageSupport === undefined ? [] : [createLanguageSupport()];
-};
-
-export const isTextFileAsset = (asset: Pick<Asset, "format">) => {
-  const mimeType = getAssetMimeType(asset);
-  return (
-    mimeType?.startsWith("text/") === true ||
-    mimeType === "application/json" ||
-    mimeType === "application/xml" ||
-    mimeType === "image/svg+xml"
-  );
 };
