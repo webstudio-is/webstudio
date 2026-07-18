@@ -121,8 +121,7 @@ install_playwright_chromium() {
 }
 
 build_e2e_apps() {
-  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder build
-  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/sdk-components-react-router build
+  pnpm --dir "$ROOT_DIR" e2e:builder:build
 }
 
 verify_e2e_apps_built() {

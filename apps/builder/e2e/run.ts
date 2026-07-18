@@ -204,36 +204,29 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
 };
 
 const getRunnableSuites = () => {
-  const suites = getSuites()
-    .filter((suite) => {
-      if (testShard === undefined || testShard === "") {
+  const suites = getSuites().map((suite, suiteIndex) => ({
+    suite,
+    tests: suite.tests.filter((test, testIndex) => {
+      // Offset each suite so odd test counts do not always give the extra
+      // test to the same worker.
+      if (
+        isE2eTestInShard({
+          fileName: suite.fileName,
+          shard: testShard,
+          distributionIndex: testIndex + suiteIndex,
+        }) === false
+      ) {
+        return false;
+      }
+      if (testFilters.length === 0) {
         return true;
       }
-      return suite.fileName.includes(`[${testShard}]`);
-    })
-    .map((suite, suiteIndex) => ({
-      suite,
-      tests: suite.tests.filter((test, testIndex) => {
-        // Offset each suite so odd test counts do not always give the extra
-        // test to the same worker.
-        if (
-          isE2eTestInShard({
-            fileName: suite.fileName,
-            shard: testShard,
-            distributionIndex: testIndex + suiteIndex,
-          }) === false
-        ) {
-          return false;
-        }
-        if (testFilters.length === 0) {
-          return true;
-        }
-        const fullName = `${suite.name} › ${test.name}`;
-        return testFilters.some(
-          (filter) => test.name.includes(filter) || fullName.includes(filter)
-        );
-      }),
-    }));
+      const fullName = `${suite.name} › ${test.name}`;
+      return testFilters.some(
+        (filter) => test.name.includes(filter) || fullName.includes(filter)
+      );
+    }),
+  }));
 
   const runnableSuites = suites.filter(({ tests }) => tests.length > 0);
 

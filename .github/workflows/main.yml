@@ -189,24 +189,16 @@ jobs:
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/ci-setup
         with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Pnpm install
-        run: pnpm install
+          run-scripts: "true"
 
       - name: Discover builder e2e shards
         id: shards
         run: echo "value=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)" >> "$GITHUB_OUTPUT"
 
       - name: Build builder and generated preview dependencies
-        run: |
-          pnpm --filter=@webstudio-is/builder build
-          pnpm --filter=@webstudio-is/sdk-components-react-router build
+        run: pnpm e2e:builder:build
 
       # Generate this from the current migrations for this workflow run only.
       # Shards consume the snapshot as a fast, disposable schema cache.
@@ -257,15 +249,9 @@ jobs:
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/ci-setup
         with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Pnpm install
-        run: pnpm install
+          run-scripts: "true"
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
