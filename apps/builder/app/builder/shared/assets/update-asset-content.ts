@@ -29,6 +29,7 @@ export const updateAssetContent = async ({
     authToken,
     readAssetData: async () => content,
     request: fetch,
+    requestOrigin: window.location.origin,
   });
 
   createTransactionFromBuilderPatchPayload({

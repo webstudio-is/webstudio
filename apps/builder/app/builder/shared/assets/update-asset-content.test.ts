@@ -68,6 +68,7 @@ test("commits a content revision without changing the asset id", async () => {
       projectId: "project",
       expectedName: "settings_old.json",
       authToken: "token",
+      requestOrigin: window.location.origin,
     })
   );
   await expect(

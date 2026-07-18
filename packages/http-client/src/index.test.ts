@@ -1390,6 +1390,38 @@ test("surfaces asset content revision conflicts", async () => {
   ).rejects.toMatchObject({ message: "File changed", status: 409 });
 });
 
+test("keeps browser asset content updates on the requested origin", async () => {
+  const revision = {
+    ...createImageAssetFixture({ id: "asset-id" }),
+    type: "file" as const,
+    format: "md",
+    meta: {},
+  };
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ asset: revision }), {
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await updateProjectAssetContent({
+    ...apiParams,
+    origin:
+      "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-vite.wstd.dev:5175",
+    requestOrigin:
+      "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-vite.wstd.dev:5175",
+    assetId: "asset-id",
+    expectedName: "readme_hash.md",
+    readAssetData: async () => "# Readme",
+    request,
+  });
+
+  const [url] = request.mock.calls[0] as unknown as [URL];
+  expect(url.origin).toBe(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-vite.wstd.dev:5175"
+  );
+});
+
 test("normalizes synced project bundles for local storage", () => {
   const bundle = createPublishedProjectBundleFixture({
     bundleVersion: "bundle-old",

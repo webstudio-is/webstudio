@@ -579,16 +579,18 @@ const getAssetContentUpdateUrl = ({
   expectedName,
   origin,
   projectId,
+  requestOrigin,
 }: {
   assetId: string;
   expectedName: string;
   origin: string;
   projectId: string;
+  requestOrigin?: string;
 }) => {
   const { sourceOrigin } = parseBuilderUrl(origin);
   const url = new URL(
     `/rest/assets/${encodeURIComponent(assetId)}/content`,
-    sourceOrigin
+    requestOrigin ?? sourceOrigin
   );
   url.searchParams.set("projectId", projectId);
   url.searchParams.set("expectedName", expectedName);
@@ -602,6 +604,7 @@ export const updateProjectAssetContent = async (
     expectedName: string;
     readAssetData: () => Promise<AssetContentData>;
     request?: typeof fetch;
+    requestOrigin?: string;
   }
 ): Promise<{ asset: Asset }> => {
   const request = params.request ?? fetch;
@@ -611,6 +614,7 @@ export const updateProjectAssetContent = async (
       expectedName: params.expectedName,
       origin: params.origin,
       projectId: params.projectId,
+      requestOrigin: params.requestOrigin,
     }),
     {
       method: "PUT",
