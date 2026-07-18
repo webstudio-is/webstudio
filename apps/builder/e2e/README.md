@@ -57,11 +57,6 @@ CI shards the full e2e suite by file name tags such as
 The goal is to keep all coverage while preventing one long serial e2e command
 from hitting the command timeout.
 
-When a shard contains one dominant test file, CI can split every suite in that
-shard deterministically by test registration order with `E2E_TEST_PARTITION`,
-for example `1/2` and `2/2`. Prefer moving whole files between shards first;
-partition only when moving a file cannot improve the longest worker.
-
 When adding a new e2e file, include one shard tag in the filename:
 
 ```txt
@@ -83,6 +78,15 @@ Choose the shard by current CI timing, not by feature ownership. Put new or
 expensive files into the fastest shard, and rebalance later by renaming files.
 CI retries a failed shard once because a single shard rerun is cheap enough to
 absorb occasional browser/backend flakes.
+
+CI discovers its shard matrix directly from these filename tags. When one test
+file contains enough serial work to dominate a shard, add more shard tags to
+that filename. Its tests are distributed deterministically across those shards
+without duplicating the file or its helpers:
+
+```txt
+large-workflow.[shard-2].[shard-5].[shard-6].e2e.ts
+```
 
 `pnpm e2e:builder:dev` defaults to `E2E_BUILDER_URL=https://127.0.0.1:3000`,
 so it runs against the already-running Vite dev server instead of building and

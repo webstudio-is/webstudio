@@ -177,6 +177,9 @@ jobs:
     environment:
       name: development
 
+    outputs:
+      shards: ${{ steps.shards.outputs.value }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -195,6 +198,10 @@ jobs:
 
       - name: Pnpm install
         run: pnpm install
+
+      - name: Discover builder e2e shards
+        id: shards
+        run: echo "value=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)" >> "$GITHUB_OUTPUT"
 
       - name: Build builder and generated preview dependencies
         run: |
@@ -218,7 +225,7 @@ jobs:
             .cache/builder-e2e/schema-*.sql
 
   builder-e2e:
-    name: builder-e2e (${{ matrix.name }})
+    name: builder-e2e (${{ matrix.shard }})
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
     if: |
       github.event_name == 'push' ||
@@ -233,30 +240,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Builder e2e shards are assigned by filename tags, for example
-        # `pages-actions.[shard-3].e2e.ts`. Use one of these shard names in
-        # each e2e filename. If one workflow module gets too slow, split it
-        # into same-base files with different shard tags, such as
-        # `pages-actions.[shard-1].e2e.ts` and
-        # `pages-actions.[shard-2].e2e.ts`.
-        include:
-          - name: shard-1
-            shard: shard-1
-          # A single serial suite dominates shard 2, so split its tests across
-          # workers instead of duplicating its shared fixtures.
-          - name: shard-2a
-            shard: shard-2
-            partition: 1/3
-          - name: shard-2b
-            shard: shard-2
-            partition: 2/3
-          - name: shard-2c
-            shard: shard-2
-            partition: 3/3
-          - name: shard-3
-            shard: shard-3
-          - name: shard-4
-            shard: shard-4
+        shard: ${{ fromJSON(needs.builder-e2e-build.outputs.shards) }}
 
     environment:
       name: development
@@ -299,7 +283,6 @@ jobs:
         env:
           E2E_SKIP_BUILDER_BUILD: true
           E2E_TEST_SHARD: ${{ matrix.shard }}
-          E2E_TEST_PARTITION: ${{ matrix.partition }}
         run: |
           run_builder_e2e() {
             E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder

@@ -15,15 +15,13 @@ import {
 } from "./harness";
 import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
-import { getE2eTestModules } from "./test-modules";
+import { getE2eTestModules, isE2eTestInShard } from "./test-modules";
 import { stopChildProcess } from "./process";
-import { isTestInPartition, parseTestPartition } from "./test-partition";
 import { runWithTimeout } from "./timeout";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
 const testShard = process.env.E2E_TEST_SHARD?.trim();
-const testPartition = parseTestPartition(process.env.E2E_TEST_PARTITION);
 const testFilters = [
   ...(process.env.E2E_TEST_FILTERS ?? "")
     .split("\n")
@@ -219,7 +217,11 @@ const getRunnableSuites = () => {
         // Offset each suite so odd test counts do not always give the extra
         // test to the same worker.
         if (
-          isTestInPartition(testIndex + suiteIndex, testPartition) === false
+          isE2eTestInShard({
+            fileName: suite.fileName,
+            shard: testShard,
+            distributionIndex: testIndex + suiteIndex,
+          }) === false
         ) {
           return false;
         }
