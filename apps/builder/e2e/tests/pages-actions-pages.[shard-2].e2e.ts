@@ -403,15 +403,18 @@ test("Builder can copy, duplicate, and delete a folder from the context menu", a
       action: "Copy",
     });
     await waitForCopiedPageTransferData({ page });
+    const pasteSave = waitForChangeToBeSaved({ page });
     await selectContextAction({ page, itemName: "Home", action: "Paste" });
-    await waitForSyncStatus({ page, status: "idle" });
+    await pasteSave;
     await waitForFolderRow({ page, folderName: copiedFolderName });
 
+    const duplicateSave = waitForChangeToBeSaved({ page });
     await selectContextAction({
       page,
       itemName: renamedFolderName,
       action: "Duplicate",
     });
+    await duplicateSave;
     await waitForFolderRow({ page, folderName: duplicatedFolderName });
 
     await selectContextAction({
@@ -419,7 +422,9 @@ test("Builder can copy, duplicate, and delete a folder from the context menu", a
       itemName: duplicatedFolderName,
       action: "Delete",
     });
+    const deleteSave = waitForChangeToBeSaved({ page });
     await confirmDialogAction({ page, action: "Delete" });
+    await deleteSave;
     await expectTextHidden({ page, text: duplicatedFolderName });
 
     await measure(
