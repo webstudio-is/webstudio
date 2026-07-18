@@ -182,7 +182,7 @@ jobs:
         # into same-base files with different shard tags, such as
         # `pages-actions.[shard-1].e2e.ts` and
         # `pages-actions.[shard-2].e2e.ts`.
-        shard: [shard-1, shard-2, shard-3]
+        shard: [shard-1, shard-2, shard-3, shard-4]
 
     environment:
       name: development

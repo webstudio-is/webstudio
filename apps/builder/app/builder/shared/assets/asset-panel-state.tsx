@@ -5,18 +5,24 @@ export const AssetPanelState = ({
   message,
   description,
   active = false,
+  overlay = false,
 }: {
   message: string;
   description?: string;
   active?: boolean;
+  overlay?: boolean;
 }) => (
   <Flex
+    data-asset-panel-state-overlay={overlay ? "" : undefined}
     align="center"
     justify="center"
     direction="column"
     css={{
       flex: 1,
       minHeight: 0,
+      ...(overlay
+        ? { position: "absolute", inset: 0, pointerEvents: "none" }
+        : {}),
       margin: theme.spacing[4],
       color: active
         ? theme.colors.foregroundMain
