@@ -355,8 +355,8 @@ const processUpload = async (
           fileData.source === "file" ? fileData.file : new URL(fileData.url),
         onCompleted: (data) => {
           URL.revokeObjectURL(fileData.objectURL);
-          deleteUploadingFileData(assetId);
           handleAfterSubmit(assetId, data, projectId, fileData.folderId);
+          deleteUploadingFileData(assetId);
         },
         onError: (error) => {
           URL.revokeObjectURL(fileData.objectURL);

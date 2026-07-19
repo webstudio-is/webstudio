@@ -642,6 +642,13 @@ export const AssetSettings = ({
           onOpenChange(false);
           onDelete();
         };
+  const replaceAsset =
+    onReplace === undefined
+      ? undefined
+      : () => {
+          onOpenChange(false);
+          onReplace();
+        };
   return (
     <Popover modal open={open} onOpenChange={onOpenChange}>
       {usages.length === 0 && (
@@ -658,7 +665,7 @@ export const AssetSettings = ({
           asset={asset}
           usages={usages}
           onDelete={deleteAsset}
-          onReplace={onReplace}
+          onReplace={replaceAsset}
           focusName={focusName}
         />
       </PopoverContent>
