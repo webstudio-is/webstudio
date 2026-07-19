@@ -226,11 +226,11 @@ export const uploadFile = async (
     assetInfoFallback,
     onUploadError
   );
-  const projectId = file.uploaderProjectId;
-  if (typeof projectId !== "string") {
-    throw Error("File uploader project is missing");
-  }
   try {
+    const projectId = file.uploaderProjectId;
+    if (typeof projectId !== "string") {
+      throw Error("File uploader project is missing");
+    }
     const asset = await context.postgrest.client
       .from("Asset")
       .select("id, projectId, filename, description, folderId")

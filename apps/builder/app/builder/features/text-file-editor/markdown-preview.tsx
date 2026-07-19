@@ -146,11 +146,13 @@ export const MarkdownSplitView = ({
       ref={containerRef}
       css={{
         display: "grid",
+        height: "100%",
+        minHeight: 0,
+      }}
+      style={{
         gridTemplateColumns: open
           ? `minmax(0, ${ratio}fr) 5px minmax(0, ${1 - ratio}fr)`
           : "minmax(0, 1fr)",
-        height: "100%",
-        minHeight: 0,
       }}
     >
       <Box css={{ minWidth: 0, minHeight: 0, overflow: "hidden" }}>
