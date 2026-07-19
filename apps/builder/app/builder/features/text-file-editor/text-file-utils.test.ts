@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { ALLOWED_FILE_TYPES, isTextFileAsset } from "@webstudio-is/sdk";
-import { getTextFileEditorExtensions } from "./text-file-utils";
+import {
+  getTextFileEditorExtensions,
+  isMarkdownAsset,
+} from "./text-file-utils";
 
 describe("text file assets", () => {
   const supportedTextFormats = Object.entries(ALLOWED_FILE_TYPES)
@@ -35,5 +38,10 @@ describe("text file assets", () => {
 
   test.each(["txt", "csv"])("uses plain text editing for %s", (format) => {
     expect(getTextFileEditorExtensions({ format })).toEqual([]);
+  });
+
+  test("identifies Markdown files case-insensitively", () => {
+    expect(isMarkdownAsset({ format: "MD" })).toBe(true);
+    expect(isMarkdownAsset({ format: "txt" })).toBe(false);
   });
 });

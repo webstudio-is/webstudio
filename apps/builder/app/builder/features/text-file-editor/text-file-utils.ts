@@ -25,3 +25,6 @@ export const getTextFileEditorExtensions = (
   }
   return languageExtensionsByMimeType.get(mimeType) ?? noLanguageExtensions;
 };
+
+export const isMarkdownAsset = (asset: Pick<Asset, "format">) =>
+  getMimeTypeByExtension(asset.format) === "text/markdown";

@@ -1,21 +1,130 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useStore } from "@nanostores/react";
-import { Box, Flex, rawTheme, Text, toast } from "@webstudio-is/design-system";
-import { SpinnerIcon } from "@webstudio-is/icons";
+import {
+  Box,
+  Flex,
+  rawTheme,
+  Text,
+  theme,
+  toast,
+  Toolbar,
+  ToolbarButton,
+  Tooltip,
+} from "@webstudio-is/design-system";
+import {
+  BlockquoteIcon,
+  BoldIcon,
+  HeadingIcon,
+  LinkIcon,
+  ListIcon,
+  SpinnerIcon,
+  TextItalicIcon,
+} from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
-import { EditorDialog } from "~/shared/code-editor-base";
+import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
 import { $assets } from "~/shared/sync/data-stores";
 import { $authPermit } from "~/shared/nano-states";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { updateAssetContent } from "~/builder/shared/assets";
-import { getTextFileEditorExtensions } from "./text-file-utils";
+import {
+  getTextFileEditorExtensions,
+  isMarkdownAsset,
+} from "./text-file-utils";
 
 type TextFileState =
   | { status: "loading" }
   | { status: "loaded"; content: string }
   | { status: "error" };
+
+const markdownActions = [
+  {
+    label: "Heading",
+    icon: <HeadingIcon />,
+    template: { prefix: "## ", placeholder: "Heading" },
+  },
+  {
+    label: "Bold",
+    icon: <BoldIcon />,
+    template: { prefix: "**", suffix: "**", placeholder: "bold text" },
+  },
+  {
+    label: "Italic",
+    icon: <TextItalicIcon />,
+    template: { prefix: "_", suffix: "_", placeholder: "italic text" },
+  },
+  {
+    label: "Link",
+    icon: <LinkIcon />,
+    template: {
+      prefix: "[",
+      suffix: "](https://)",
+      placeholder: "link text",
+    },
+  },
+  {
+    label: "Blockquote",
+    icon: <BlockquoteIcon />,
+    template: { prefix: "> ", placeholder: "Quote" },
+  },
+  {
+    label: "Inline code",
+    icon: (
+      <Text as="span" variant="mono">
+        &lt;/&gt;
+      </Text>
+    ),
+    template: { prefix: "`", suffix: "`", placeholder: "code" },
+  },
+  {
+    label: "Bulleted list",
+    icon: <ListIcon />,
+    template: { prefix: "- ", placeholder: "List item" },
+  },
+  {
+    label: "Numbered list",
+    icon: (
+      <Text as="span" variant="mono">
+        1.
+      </Text>
+    ),
+    template: { prefix: "1. ", placeholder: "List item" },
+  },
+];
+
+const MarkdownToolbar = ({
+  editorApiRef,
+  disabled,
+}: {
+  editorApiRef: RefObject<EditorApi | undefined>;
+  disabled: boolean;
+}) => (
+  <Toolbar
+    aria-label="Markdown formatting"
+    css={{
+      paddingInline: theme.spacing[3],
+      borderBottom: `1px solid ${theme.colors.borderMain}`,
+      gap: theme.spacing[1],
+    }}
+  >
+    {markdownActions.map(({ label, icon, template }) => (
+      <Tooltip key={label} content={label}>
+        <ToolbarButton asChild>
+          <button
+            type="button"
+            aria-label={label}
+            disabled={disabled}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editorApiRef.current?.insertTemplate(template)}
+          >
+            {icon}
+          </button>
+        </ToolbarButton>
+      </Tooltip>
+    ))}
+  </Toolbar>
+);
 
 export const TextFileEditor = ({
   assetId,
@@ -31,6 +140,7 @@ export const TextFileEditor = ({
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const saveQueueRef = useRef(Promise.resolve());
+  const editorApiRef = useRef<EditorApi>();
 
   useEffect(() => {
     const assetToLoad = $assets.get().get(assetId);
@@ -105,6 +215,7 @@ export const TextFileEditor = ({
   };
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
+  const isMarkdown = asset !== undefined && isMarkdownAsset(asset);
 
   return (
     <EditorDialog
@@ -129,17 +240,34 @@ export const TextFileEditor = ({
             </Flex>
           )}
           {state.status === "loaded" && asset !== undefined && (
-            <CodeEditor
-              value={state.content}
-              languageExtensions={getTextFileEditorExtensions(asset)}
-              size="full"
-              expandable={false}
-              readOnly={canEdit === false}
-              onChange={(content) => {
-                setState({ status: "loaded", content });
+            <Box
+              css={{
+                display: "grid",
+                gridTemplateRows: isMarkdown
+                  ? "auto minmax(0, 1fr)"
+                  : "minmax(0, 1fr)",
+                height: "100%",
               }}
-              onChangeComplete={save}
-            />
+            >
+              {isMarkdown && (
+                <MarkdownToolbar
+                  editorApiRef={editorApiRef}
+                  disabled={canEdit === false}
+                />
+              )}
+              <CodeEditor
+                editorApiRef={editorApiRef}
+                value={state.content}
+                languageExtensions={getTextFileEditorExtensions(asset)}
+                size="full"
+                expandable={false}
+                readOnly={canEdit === false}
+                onChange={(content) => {
+                  setState({ status: "loaded", content });
+                }}
+                onChangeComplete={save}
+              />
+            </Box>
           )}
         </Box>
       }

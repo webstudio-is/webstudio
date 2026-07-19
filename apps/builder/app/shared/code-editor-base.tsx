@@ -231,7 +231,36 @@ export const foldGutterExtension = foldGutter({
 
 export type EditorApi = {
   replaceSelection: (string: string) => void;
+  insertTemplate: (template: {
+    prefix: string;
+    suffix?: string;
+    placeholder: string;
+  }) => void;
   focus: () => void;
+};
+
+export const getTemplateInsertion = ({
+  from,
+  selectedText,
+  prefix,
+  suffix = "",
+  placeholder,
+}: {
+  from: number;
+  selectedText: string;
+  prefix: string;
+  suffix?: string;
+  placeholder: string;
+}) => {
+  const content = selectedText || placeholder;
+  const selectionFrom = from + prefix.length;
+  return {
+    text: `${prefix}${content}${suffix}`,
+    selection: EditorSelection.range(
+      selectionFrom,
+      selectionFrom + content.length
+    ),
+  };
 };
 
 type EditorContentProps = {
@@ -409,6 +438,25 @@ export const EditorContent = ({
       }
 
       view.dispatch(view.state.replaceSelection(string));
+      view.focus();
+    },
+    insertTemplate({ prefix, suffix, placeholder }) {
+      const view = viewRef.current;
+      if (view === undefined) {
+        return;
+      }
+      const { from, to } = view.state.selection.main;
+      const insertion = getTemplateInsertion({
+        from,
+        selectedText: view.state.doc.sliceString(from, to),
+        prefix,
+        suffix,
+        placeholder,
+      });
+      view.dispatch({
+        changes: { from, to, insert: insertion.text },
+        selection: insertion.selection,
+      });
       view.focus();
     },
     focus() {
