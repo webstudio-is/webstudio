@@ -216,6 +216,8 @@ const MarkdownToolbar = ({
       borderBottom: `1px solid ${theme.colors.borderMain}`,
       gap: theme.spacing[1],
       overflowX: "auto",
+      scrollbarWidth: "none",
+      "&::-webkit-scrollbar": { display: "none" },
       flexShrink: 0,
       color: theme.colors.foregroundMain,
       background: theme.colors.backgroundControls,
