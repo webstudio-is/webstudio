@@ -26,6 +26,7 @@ import { Separator } from "./separator";
 import { Text } from "./text";
 
 const DIALOG_TITLE_HEIGHT = 40;
+const DIALOG_MAXIMIZED_MARGIN = 20;
 
 export const DialogTrigger = Primitive.Trigger;
 
@@ -189,13 +190,20 @@ const calculateDialogStyle = (
   } = options;
 
   if (isMaximized) {
+    const horizontalMargin = Math.min(
+      DIALOG_MAXIMIZED_MARGIN,
+      bounds.width / 2
+    );
+    const verticalMargin = Math.min(DIALOG_MAXIMIZED_MARGIN, bounds.height / 2);
+    const maximizedWidth = bounds.width - horizontalMargin * 2;
+    const maximizedHeight = bounds.height - verticalMargin * 2;
     return {
-      top: bounds.y,
-      left: bounds.x,
-      width: bounds.width,
-      height: bounds.height,
-      maxWidth: bounds.width,
-      maxHeight: bounds.height,
+      top: bounds.y + verticalMargin,
+      left: bounds.x + horizontalMargin,
+      width: maximizedWidth,
+      height: maximizedHeight,
+      maxWidth: maximizedWidth,
+      maxHeight: maximizedHeight,
     };
   }
 
