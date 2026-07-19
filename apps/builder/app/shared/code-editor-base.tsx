@@ -113,12 +113,10 @@ const editorContentStyle = css({
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
   },
-  '&[data-focus-ring="hidden"]:focus-within': {
-    borderColor: "transparent",
-  },
-  '&[data-focus-ring="hidden"]:focus-within:hover': {
-    borderColor: theme.colors.borderMain,
-  },
+  '&[data-border="hidden"]:not([data-invalid="true"]):is(:hover, :focus-within)':
+    {
+      borderColor: "transparent",
+    },
   '&[data-invalid="true"]': {
     borderColor: theme.colors.borderDestructiveMain,
     outlineColor: theme.colors.borderDestructiveMain,
@@ -276,7 +274,7 @@ type EditorContentProps = {
   autoFocus?: boolean;
   invalid?: boolean;
   showShortcuts?: boolean;
-  showFocusRing?: boolean;
+  showBorder?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
@@ -289,7 +287,7 @@ export const EditorContent = ({
   autoFocus = false,
   invalid = false,
   showShortcuts = false,
-  showFocusRing = true,
+  showBorder = true,
   value,
   onChange,
   onChangeComplete,
@@ -476,7 +474,7 @@ export const EditorContent = ({
     <div
       className={editorContentStyle()}
       data-invalid={invalid}
-      data-focus-ring={showFocusRing ? undefined : "hidden"}
+      data-border={showBorder ? undefined : "hidden"}
       ref={editorRef}
     >
       {showShortcuts && (

@@ -378,7 +378,7 @@ export const TextFileEditor = ({
                 languageExtensions={getTextFileEditorExtensions(asset)}
                 size="full"
                 expandable={false}
-                showFocusRing={isMarkdown === false}
+                showBorder={false}
                 readOnly={canEdit === false}
                 onChange={(content) => {
                   setState({ status: "loaded", content });
