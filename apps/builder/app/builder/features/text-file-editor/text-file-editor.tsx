@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Flex,
+  FloatingPanel,
   rawTheme,
   Text,
   theme,
@@ -43,8 +44,9 @@ import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
 import { $assets } from "~/shared/sync/data-stores";
 import { $authPermit } from "~/shared/nano-states";
+import { AssetManager } from "~/builder/shared/asset-manager";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
-import { updateAssetContent } from "~/builder/shared/assets";
+import { AssetUpload, updateAssetContent } from "~/builder/shared/assets";
 import {
   getTextFileEditorExtensions,
   isMarkdownAsset,
@@ -132,15 +134,6 @@ const markdownActions = [
     template: { prefix: "- [ ] ", placeholder: "Task" },
   },
   {
-    label: "Image",
-    icon: <ImageIcon />,
-    template: {
-      prefix: "![",
-      suffix: "](https://)",
-      placeholder: "alt text",
-    },
-  },
-  {
     label: "Horizontal rule",
     icon: <MinusIcon />,
     template: { prefix: "\n\n---\n\n", placeholder: "" },
@@ -211,6 +204,51 @@ const MarkdownHeadingMenu = ({
   </DropdownMenu>
 );
 
+const MarkdownImagePicker = ({
+  editorApiRef,
+  disabled,
+}: {
+  editorApiRef: RefObject<EditorApi | undefined>;
+  disabled: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <FloatingPanel
+      title="Images"
+      titleSuffix={<AssetUpload type="image" accept="image/*" />}
+      placement="bottom-within"
+      open={open}
+      onOpenChange={setOpen}
+      content={
+        <AssetManager
+          accept="image/*"
+          onChange={(assetId) => {
+            editorApiRef.current?.insertTemplate({
+              prefix: "![",
+              suffix: `](${assetId})`,
+              placeholder: "alt text",
+            });
+            setOpen(false);
+          }}
+        />
+      }
+    >
+      <ToolbarButton asChild css={markdownToolbarButtonStyle}>
+        <button
+          type="button"
+          aria-label="Image"
+          title="Image"
+          disabled={disabled}
+          onMouseDown={(event) => event.preventDefault()}
+        >
+          <ImageIcon />
+        </button>
+      </ToolbarButton>
+    </FloatingPanel>
+  );
+};
+
 const MarkdownToolbar = ({
   editorApiRef,
   disabled,
@@ -264,6 +302,7 @@ const MarkdownToolbar = ({
         </ToolbarButton>
       </Tooltip>
     ))}
+    <MarkdownImagePicker editorApiRef={editorApiRef} disabled={disabled} />
   </Toolbar>
 );
 
@@ -389,7 +428,10 @@ export const TextFileEditor = ({
         onOpenChange(open);
       }}
       content={
-        <Box css={{ height: "100%", minHeight: 0 }}>
+        <Box
+          data-floating-panel-container
+          css={{ height: "100%", minHeight: 0 }}
+        >
           {state.status === "loading" && (
             <Flex align="center" justify="center" css={{ height: "100%" }}>
               <SpinnerIcon size={rawTheme.spacing[15]} />
