@@ -69,6 +69,8 @@ describe("calculateDialogStyle", () => {
       left: 100,
       width: 800,
       height: 600,
+      maxWidth: 800,
+      maxHeight: 600,
     });
   });
 

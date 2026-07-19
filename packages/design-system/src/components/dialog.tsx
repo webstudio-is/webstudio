@@ -194,6 +194,8 @@ const calculateDialogStyle = (
       left: bounds.x,
       width: bounds.width,
       height: bounds.height,
+      maxWidth: bounds.width,
+      maxHeight: bounds.height,
     };
   }
 
