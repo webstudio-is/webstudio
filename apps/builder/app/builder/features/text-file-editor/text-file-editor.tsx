@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { Box, Flex, rawTheme, Text, toast } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
@@ -31,10 +31,6 @@ export const TextFileEditor = ({
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
   const saveQueueRef = useRef(Promise.resolve());
-  const languageExtensions = useMemo(
-    () => (asset === undefined ? [] : getTextFileEditorExtensions(asset)),
-    [asset]
-  );
 
   useEffect(() => {
     const assetToLoad = $assets.get().get(assetId);
@@ -135,7 +131,7 @@ export const TextFileEditor = ({
           {state.status === "loaded" && asset !== undefined && (
             <CodeEditor
               value={state.content}
-              languageExtensions={languageExtensions}
+              languageExtensions={getTextFileEditorExtensions(asset)}
               size="full"
               expandable={false}
               readOnly={canEdit === false}

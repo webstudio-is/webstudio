@@ -5,14 +5,15 @@ import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { getMimeTypeByExtension, type Asset } from "@webstudio-is/sdk";
 
-const languageSupportByMimeType = new Map<string, Extension>([
-  ["application/json", javascript()],
-  ["application/xml", html()],
-  ["image/svg+xml", html()],
-  ["text/css", css()],
-  ["text/html", html()],
-  ["text/javascript", javascript()],
-  ["text/markdown", markdown()],
+const noLanguageExtensions: Extension[] = [];
+const languageExtensionsByMimeType = new Map<string, Extension[]>([
+  ["application/json", [javascript()]],
+  ["application/xml", [html()]],
+  ["image/svg+xml", [html()]],
+  ["text/css", [css()]],
+  ["text/html", [html()]],
+  ["text/javascript", [javascript()]],
+  ["text/markdown", [markdown()]],
 ]);
 
 export const getTextFileEditorExtensions = (
@@ -20,8 +21,7 @@ export const getTextFileEditorExtensions = (
 ): Extension[] => {
   const mimeType = getMimeTypeByExtension(asset.format);
   if (mimeType === undefined) {
-    return [];
+    return noLanguageExtensions;
   }
-  const languageSupport = languageSupportByMimeType.get(mimeType);
-  return languageSupport === undefined ? [] : [languageSupport];
+  return languageExtensionsByMimeType.get(mimeType) ?? noLanguageExtensions;
 };
