@@ -11,7 +11,8 @@ const assetBase = {
   id: "asset",
   projectId: "project",
   size: 100,
-  createdAt: "2026-01-01T00:00:00.000Z",
+  createdAt: "2026-01-15T12:00:00.000Z",
+  updatedAt: "2026-02-15T12:00:00.000Z",
 } as const;
 const createImageAsset = (values: Partial<ImageAsset> = {}): ImageAsset => ({
   ...assetBase,
@@ -86,6 +87,10 @@ test("uses an auto-growing textarea for the asset description", () => {
   );
   expect(settingsIndicator).toBeInstanceOf(HTMLElement);
   expect(settingsIndicator?.className).toBe(thumbnailIndicator?.className);
+  expect(document.body.textContent).toContain("Created");
+  expect(document.body.textContent).toContain("Last modified");
+  expect(document.body.textContent).toContain("Jan 15, 2026");
+  expect(document.body.textContent).toContain("Feb 15, 2026");
 });
 
 test("keeps asset metadata read-only in View mode", () => {

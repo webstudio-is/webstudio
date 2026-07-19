@@ -101,6 +101,7 @@ describe("asset content revisions", () => {
           name: revisionName,
           size: 7,
           createdAt: "2026-07-18T00:00:00.000Z",
+          updatedAt: "2026-07-18T00:00:01.000Z",
         })
       ),
       http.post(
@@ -139,6 +140,8 @@ describe("asset content revisions", () => {
       description: "Settings",
       folderId: "data",
       format: "json",
+      createdAt: "2026-07-18T00:00:00.000Z",
+      updatedAt: "2026-07-18T00:00:01.000Z",
     });
     expect(swapInput).toEqual({
       project_id: "project",

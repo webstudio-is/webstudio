@@ -40,6 +40,7 @@ const assetRow = {
     description: null,
     size: 12345,
     createdAt: "2024-01-01T00:00:00.000Z",
+    updatedAt: "2024-02-01T00:00:00.000Z",
     meta: JSON.stringify({ width: 800, height: 600 }),
     status: "UPLOADED",
   },
@@ -65,6 +66,8 @@ describe("loadAssetsByProject (msw)", () => {
       projectId: "proj-1",
       type: "image",
       meta: { width: 800, height: 600 },
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-02-01T00:00:00.000Z",
     });
   });
 
