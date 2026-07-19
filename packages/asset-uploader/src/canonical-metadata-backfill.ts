@@ -222,48 +222,6 @@ const indexCanonicalAsset = async ({
   return revision;
 };
 
-export const backfillCanonicalAssets = async ({
-  projectId,
-  client,
-  assetClient,
-  concurrency = assetResourceLimits.concurrentContentReads,
-}: {
-  projectId: string;
-  client: Client;
-  assetClient: AssetClient;
-  concurrency?: number;
-}) => {
-  if (Number.isInteger(concurrency) === false || concurrency <= 0) {
-    throw new Error(
-      "Canonical metadata concurrency must be a positive integer"
-    );
-  }
-  if (concurrency > assetResourceLimits.concurrentContentReads) {
-    throw new Error("Canonical metadata concurrency exceeds the shared limit");
-  }
-  const [assets, folders] = await Promise.all([
-    loadUploadedAssets(projectId, client),
-    loadAssetFoldersByProjectWithClient(projectId, client),
-  ]);
-  const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
-  const hierarchy = createAssetFolderHierarchy(folderMap);
-  await runBounded(assets, concurrency, async (asset) => {
-    await indexCanonicalAsset({
-      projectId,
-      asset,
-      hierarchy,
-      client,
-      assetClient,
-    });
-  });
-
-  return {
-    scanned: assets.length,
-    indexed: assets.length,
-    skipped: 0,
-  };
-};
-
 export const synchronizeCanonicalAsset = async ({
   projectId,
   assetId,
@@ -407,72 +365,6 @@ export const synchronizeCanonicalAssets = async ({
     removed,
     skipped: 0,
     inconsistent: inconsistentAssetIds.length,
-  };
-};
-
-export const recoverCanonicalAssetMetadata = async (
-  options: Parameters<typeof synchronizeCanonicalAssets>[0]
-) => await synchronizeCanonicalAssets(options);
-
-export const rebuildCanonicalAssetMetadata = async ({
-  projectId,
-  client,
-  assetClient,
-  concurrency = assetResourceLimits.concurrentContentReads,
-}: {
-  projectId: string;
-  client: Client;
-  assetClient: AssetClient;
-  concurrency?: number;
-}) => {
-  if (Number.isInteger(concurrency) === false || concurrency <= 0) {
-    throw new Error(
-      "Canonical metadata concurrency must be a positive integer"
-    );
-  }
-  if (concurrency > assetResourceLimits.concurrentContentReads) {
-    throw new Error("Canonical metadata concurrency exceeds the shared limit");
-  }
-
-  const [assets, folders, recoveryState] = await Promise.all([
-    loadUploadedAssets(projectId, client),
-    loadAssetFoldersByProjectWithClient(projectId, client),
-    loadCanonicalAssetFileEntriesForRecovery({ client, projectId }),
-  ]);
-  const hierarchy = createAssetFolderHierarchy(
-    new Map(folders.map((folder) => [folder.id, folder]))
-  );
-  await runBounded(assets, concurrency, async (asset) => {
-    await indexCanonicalAsset({
-      projectId,
-      asset,
-      hierarchy,
-      client,
-      assetClient,
-    });
-  });
-
-  const uploadedAssetIds = new Set(assets.map((asset) => asset.id));
-  const staleAssetIds = Array.from(
-    new Set(
-      [
-        ...recoveryState.entries.map((entry) => entry.assetId),
-        ...recoveryState.inconsistentAssetIds,
-      ].filter((assetId) => uploadedAssetIds.has(assetId) === false)
-    )
-  );
-  const removed = await deleteStaleCanonicalAssetFileEntries({
-    client,
-    projectId,
-    assetIds: staleAssetIds,
-  });
-
-  return {
-    scanned: assets.length,
-    rebuilt: assets.length,
-    removed,
-    skipped: 0,
-    inconsistent: recoveryState.inconsistentAssetIds.length,
   };
 };
 
