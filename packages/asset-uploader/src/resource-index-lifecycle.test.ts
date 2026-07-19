@@ -65,8 +65,7 @@ describe("asset resource query lifecycle", () => {
     await expect(
       synchronizeAssetResourceIndexQueries({
         client: {} as never,
-        assetClient: {} as never,
-        store: {} as never,
+        assetClient: { resourceIndexStore: {} } as never,
         projectId: "project-1",
         previousResources: previous,
         resources: current,
@@ -88,8 +87,7 @@ describe("asset resource query lifecycle", () => {
     await expect(
       synchronizeAssetResourceIndexQueries({
         client: {} as never,
-        assetClient: {} as never,
-        store: {} as never,
+        assetClient: { resourceIndexStore: {} } as never,
         projectId: "project-1",
         previousResources: [
           resource("deleted", "*[]"),

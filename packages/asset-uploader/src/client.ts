@@ -37,3 +37,7 @@ export type AssetClient = AssetUploadClient & {
     contentLength?: number;
   }>;
 };
+
+export type AssetClientWithResourceIndexStore = AssetClient & {
+  resourceIndexStore: ImmutableAssetResourceIndexStore;
+};

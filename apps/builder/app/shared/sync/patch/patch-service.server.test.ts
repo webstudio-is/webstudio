@@ -10,8 +10,9 @@ const synchronizeAllCanonicalAssetStandardMetadata = vi.hoisted(() => vi.fn());
 const updateAssetResourceIndexesAfterCanonicalChange = vi.hoisted(() =>
   vi.fn()
 );
-const createAssetResourceIndexStore = vi.hoisted(() => vi.fn(() => ({})));
-const createAssetClient = vi.hoisted(() => vi.fn(() => ({})));
+const createAssetClient = vi.hoisted(() =>
+  vi.fn(() => ({ resourceIndexStore: {} }))
+);
 
 vi.mock("@webstudio-is/project/index.server", () => ({
   patchLoadedBuild,
@@ -30,7 +31,6 @@ vi.mock("@webstudio-is/asset-uploader/index.server", () => ({
 }));
 vi.mock("../../asset-client", () => ({
   createAssetClient,
-  createAssetResourceIndexStore,
 }));
 
 import {
@@ -125,7 +125,7 @@ describe("applyPatchRequest", () => {
         changedAssetIds: [],
         updatedResourceIds: [],
       });
-    createAssetResourceIndexStore.mockClear();
+    createAssetClient.mockClear();
   });
 
   test("synchronizes query indexes after a committed resource patch", async () => {

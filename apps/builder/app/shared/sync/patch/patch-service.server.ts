@@ -20,10 +20,7 @@ import {
   synchronizeAssetResourceIndexQueries,
   updateAssetResourceIndexesAfterCanonicalChange,
 } from "@webstudio-is/asset-uploader/index.server";
-import {
-  createAssetClient,
-  createAssetResourceIndexStore,
-} from "../../asset-client";
+import { createAssetClient } from "../../asset-client";
 import type { Resource } from "@webstudio-is/sdk";
 
 type BuildRow = Database["public"]["Tables"]["Build"]["Row"];
@@ -382,7 +379,6 @@ export const applyPatchRequest = async (
       await synchronizeAssetResourceIndexQueries({
         client: context.postgrest.client,
         assetClient: createAssetClient(),
-        store: createAssetResourceIndexStore(),
         projectId: patch.projectId,
         previousResources: parseResources(build.resources),
         resources: parseResources(applied.build.resources),
@@ -421,7 +417,7 @@ export const applyPatchRequest = async (
       ];
       await updateAssetResourceIndexesAfterCanonicalChange({
         client: context.postgrest.client,
-        store: createAssetResourceIndexStore(),
+        store: createAssetClient().resourceIndexStore,
         projectId: patch.projectId,
         changedAssetIds:
           changedAssetIds.length === 0 ? ["project-assets"] : changedAssetIds,

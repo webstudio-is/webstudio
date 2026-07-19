@@ -1,7 +1,6 @@
 import { parseObjectExpression, type Resource } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
-import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resource";
-import type { AssetClient } from "./client";
+import type { AssetClientWithResourceIndexStore } from "./client";
 import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { buildPersistAndActivateAssetResourceIndex } from "./resource-index-build";
@@ -29,14 +28,12 @@ export const getAssetResourceQuery = (resource: Resource) => {
 export const synchronizeAssetResourceIndexQueries = async ({
   client,
   assetClient,
-  store,
   projectId,
   previousResources,
   resources,
 }: {
   client: Client;
-  assetClient: AssetClient;
-  store: ImmutableAssetResourceIndexStore;
+  assetClient: AssetClientWithResourceIndexStore;
   projectId: string;
   previousResources: readonly Resource[];
   resources: readonly Resource[];
@@ -77,7 +74,7 @@ export const synchronizeAssetResourceIndexQueries = async ({
   for (const { resourceId, query } of changed) {
     await buildPersistAndActivateAssetResourceIndex({
       client,
-      store,
+      store: assetClient.resourceIndexStore,
       projectId,
       resourceId,
       query,

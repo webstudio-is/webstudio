@@ -1,4 +1,4 @@
-import type { AssetClient } from "../../client";
+import type { AssetClientWithResourceIndexStore } from "../../client";
 import { uploadToFs } from "./upload";
 import { readFromFs } from "./read";
 import { createFsImmutableResourceIndexStore } from "./immutable-object";
@@ -8,7 +8,9 @@ type FsClientOptions = {
   maxUploadSize: number;
 };
 
-export const createFsClient = (options: FsClientOptions): AssetClient => {
+export const createFsClient = (
+  options: FsClientOptions
+): AssetClientWithResourceIndexStore => {
   return {
     resourceIndexStore: createFsImmutableResourceIndexStore(
       options.fileDirectory
