@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { useStore } from "@nanostores/react";
 import {
   Box,
@@ -24,6 +30,7 @@ import {
   ImageIcon,
   LinkIcon,
   ListIcon,
+  MarkdownEmbedIcon,
   MinusIcon,
   RepeatGridIcon,
   SpinnerIcon,
@@ -42,6 +49,7 @@ import {
   getTextFileEditorExtensions,
   isMarkdownAsset,
 } from "./text-file-utils";
+import { MarkdownSplitView } from "./markdown-preview";
 
 type TextFileState =
   | { status: "loading" }
@@ -152,6 +160,7 @@ const headingLevels = [1, 2, 3, 4, 5, 6] as const;
 
 const markdownToolbarButtonStyle = {
   "&:hover": { background: theme.colors.backgroundHover },
+  "&[data-state=on]": { background: theme.colors.backgroundInputSelected },
   "&:disabled": { color: theme.colors.foregroundDisabled },
 };
 
@@ -205,9 +214,13 @@ const MarkdownHeadingMenu = ({
 const MarkdownToolbar = ({
   editorApiRef,
   disabled,
+  previewOpen,
+  onPreviewOpenChange,
 }: {
   editorApiRef: RefObject<EditorApi | undefined>;
   disabled: boolean;
+  previewOpen: boolean;
+  onPreviewOpenChange: (open: boolean) => void;
 }) => (
   <Toolbar
     aria-label="Markdown formatting"
@@ -223,6 +236,18 @@ const MarkdownToolbar = ({
       background: theme.colors.backgroundControls,
     }}
   >
+    <Tooltip content={previewOpen ? "Hide preview" : "Show preview"}>
+      <ToolbarButton
+        aria-label={previewOpen ? "Hide preview" : "Show preview"}
+        aria-pressed={previewOpen}
+        data-state={previewOpen ? "on" : "off"}
+        css={markdownToolbarButtonStyle}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => onPreviewOpenChange(previewOpen === false)}
+      >
+        <MarkdownEmbedIcon />
+      </ToolbarButton>
+    </Tooltip>
     <MarkdownHeadingMenu editorApiRef={editorApiRef} disabled={disabled} />
     {markdownActions.map(({ label, icon, template }) => (
       <Tooltip key={label} content={label}>
@@ -252,6 +277,7 @@ export const TextFileEditor = ({
   const asset = useStore($assets).get(assetId);
   const canEdit = useStore($authPermit) !== "view";
   const [state, setState] = useState<TextFileState>({ status: "loading" });
+  const [previewOpen, setPreviewOpen] = useState(false);
   const currentAssetRef = useRef<Asset>();
   const persistedContentRef = useRef<string>();
   const requestedContentRef = useRef<string>();
@@ -332,6 +358,24 @@ export const TextFileEditor = ({
 
   const title = asset === undefined ? "Text file" : formatAssetName(asset);
   const isMarkdown = asset !== undefined && isMarkdownAsset(asset);
+  let editor: ReactNode;
+  if (state.status === "loaded" && asset !== undefined) {
+    editor = (
+      <CodeEditor
+        editorApiRef={editorApiRef}
+        value={state.content}
+        languageExtensions={getTextFileEditorExtensions(asset)}
+        size="full"
+        expandable={false}
+        showBorder={false}
+        readOnly={canEdit === false}
+        onChange={(content) => {
+          setState({ status: "loaded", content });
+        }}
+        onChangeComplete={save}
+      />
+    );
+  }
 
   return (
     <EditorDialog
@@ -370,21 +414,17 @@ export const TextFileEditor = ({
                 <MarkdownToolbar
                   editorApiRef={editorApiRef}
                   disabled={canEdit === false}
+                  previewOpen={previewOpen}
+                  onPreviewOpenChange={setPreviewOpen}
                 />
               )}
-              <CodeEditor
-                editorApiRef={editorApiRef}
-                value={state.content}
-                languageExtensions={getTextFileEditorExtensions(asset)}
-                size="full"
-                expandable={false}
-                showBorder={false}
-                readOnly={canEdit === false}
-                onChange={(content) => {
-                  setState({ status: "loaded", content });
-                }}
-                onChangeComplete={save}
-              />
+              {isMarkdown ? (
+                <MarkdownSplitView open={previewOpen} source={state.content}>
+                  {editor}
+                </MarkdownSplitView>
+              ) : (
+                editor
+              )}
             </Box>
           )}
         </Box>

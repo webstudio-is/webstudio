@@ -3,6 +3,8 @@ import { css } from "@codemirror/lang-css";
 import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
+import { micromark } from "micromark";
+import { gfm, gfmHtml } from "micromark-extension-gfm";
 import { getMimeTypeByExtension, type Asset } from "@webstudio-is/sdk";
 
 const noLanguageExtensions: Extension[] = [];
@@ -28,3 +30,9 @@ export const getTextFileEditorExtensions = (
 
 export const isMarkdownAsset = (asset: Pick<Asset, "format">) =>
   getMimeTypeByExtension(asset.format) === "text/markdown";
+
+export const renderMarkdown = (source: string) =>
+  micromark(source, {
+    extensions: [gfm()],
+    htmlExtensions: [gfmHtml()],
+  });

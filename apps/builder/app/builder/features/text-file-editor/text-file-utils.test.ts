@@ -3,6 +3,7 @@ import { ALLOWED_FILE_TYPES, isTextFileAsset } from "@webstudio-is/sdk";
 import {
   getTextFileEditorExtensions,
   isMarkdownAsset,
+  renderMarkdown,
 } from "./text-file-utils";
 
 describe("text file assets", () => {
@@ -43,5 +44,15 @@ describe("text file assets", () => {
   test("identifies Markdown files case-insensitively", () => {
     expect(isMarkdownAsset({ format: "MD" })).toBe(true);
     expect(isMarkdownAsset({ format: "txt" })).toBe(false);
+  });
+
+  test("renders a safe GFM preview", () => {
+    const html = renderMarkdown(
+      "~~done~~\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n<script>alert(1)</script>\n\n[unsafe](javascript:alert(1))"
+    );
+    expect(html).toContain("<del>done</del>");
+    expect(html).toContain("<table>");
+    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(html).not.toContain('href="javascript:');
   });
 });
