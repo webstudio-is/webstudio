@@ -657,15 +657,32 @@ const titleStyle = css({
 export const DialogTitle = ({
   children,
   suffix,
+  maximizable = false,
+  onDoubleClick,
   ...rest
 }: ComponentProps<typeof PanelTitle> & {
   suffix?: ReactNode;
   closeLabel?: string;
+  maximizable?: boolean;
 }) => {
-  const { draggable } = useContext(DialogContext);
+  const { draggable, isMaximized, setIsMaximized } = useContext(DialogContext);
 
   return (
-    <div className={titleSlotStyle()}>
+    <div
+      className={titleSlotStyle()}
+      onDoubleClick={(event) => {
+        onDoubleClick?.(event);
+        if (
+          event.defaultPrevented ||
+          maximizable === false ||
+          (event.target instanceof Element &&
+            event.target.closest("button, a, input, textarea, select"))
+        ) {
+          return;
+        }
+        setIsMaximized(isMaximized === false);
+      }}
+    >
       <PanelTitle {...rest} suffix={suffix ?? <DialogClose />}>
         <Primitive.Title asChild>
           <Text
