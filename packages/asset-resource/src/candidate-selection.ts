@@ -1,7 +1,7 @@
 import { evaluate, type ExprNode } from "groq-js/1";
 import type { AssetFileDocument } from "@webstudio-is/sdk";
 
-export const assetResourceCandidatePolicyV1 = {
+const assetResourceCandidatePolicyV1 = {
   records: "safe-static-filter-superset",
   fields: "complete-lightweight-document",
   content: "reference-only",

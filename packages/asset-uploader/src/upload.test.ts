@@ -1060,6 +1060,9 @@ describe("uploadFile", () => {
         new Blob(["orphan"]).stream(),
         {
           uploadFile: async () => ({ format: "txt", size: 6, meta: {} }),
+          readFile: async () => {
+            throw new Error("read should not run");
+          },
         },
         createContext(),
         undefined
