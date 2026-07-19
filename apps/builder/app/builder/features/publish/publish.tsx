@@ -47,7 +47,9 @@ import {
 } from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
+  $authToken,
   $authTokenPermissions,
+  $builderMode,
   $editingPageId,
   $permissions,
   $stagingUsername,
@@ -89,14 +91,78 @@ import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
+import { builderUrl } from "~/shared/router-utils";
 import {
   getRestrictedFeatures,
   type RestrictedFeature,
 } from "./restricted-features";
 import {
+  findPageAndSelectorByInstanceId,
   formatPrePublishAuditFinding,
   runPrePublishAudit,
+  type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
+
+const PrePublishAuditError = ({
+  finding,
+}: {
+  finding: PrePublishAuditFinding;
+}) => {
+  const message = formatPrePublishAuditFinding(finding);
+  const { instanceId } = finding.location;
+  const pages = $pages.get();
+  const instances = $instances.get();
+  const project = $project.get();
+
+  if (
+    instanceId === undefined ||
+    pages === undefined ||
+    project === undefined ||
+    instances.has(instanceId) === false
+  ) {
+    return message;
+  }
+
+  const { pageId, instanceSelector } = findPageAndSelectorByInstanceId(
+    pages,
+    instances,
+    instanceId
+  );
+  const href = builderUrl({
+    projectId: project.id,
+    pageId: pageId === pages.homePageId ? undefined : pageId,
+    instanceId,
+    origin: window.location.origin,
+    authToken: $authToken.get(),
+    mode: $builderMode.get(),
+  });
+
+  return (
+    <>
+      {message}{" "}
+      <Link
+        href={href}
+        onClick={(event) => {
+          if (
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          ) {
+            return;
+          }
+          event.preventDefault();
+          $selectedPageId.set(pageId);
+          selectInstance(instanceSelector);
+          $publishDialog.set("none");
+        }}
+      >
+        Show element
+      </Link>
+    </>
+  );
+};
 
 const getPrePublishAuditError = () => {
   const findings = runPrePublishAudit({
@@ -108,7 +174,7 @@ const getPrePublishAuditError = () => {
     metas: $registeredComponentMetas.get(),
   });
   const finding = findings.find(({ severity }) => severity === "error");
-  return finding && formatPrePublishAuditFinding(finding);
+  return finding && <PrePublishAuditError finding={finding} />;
 };
 
 type ChangeProjectDomainProps = {
@@ -645,7 +711,7 @@ const PublishStatic = ({
 }) => {
   const project = useStore($project);
   const [_, startTransition] = useTransition();
-  const [publishError, setPublishError] = useState<string>();
+  const [publishError, setPublishError] = useState<JSX.Element | string>();
 
   if (project == null) {
     throw new Error("Project not found");
