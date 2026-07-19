@@ -426,7 +426,8 @@ export const TextFileEditor = ({
   assetId: string;
   onOpenChange: (open: boolean) => void;
 }) => {
-  const asset = useStore($assets).get(assetId);
+  const assets = useStore($assets);
+  const asset = assets.get(assetId);
   const canEdit = useStore($authPermit) !== "view";
   const [state, setState] = useState<TextFileState>({ status: "loading" });
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -574,7 +575,11 @@ export const TextFileEditor = ({
                 />
               )}
               {isMarkdown ? (
-                <MarkdownSplitView open={previewOpen} source={state.content}>
+                <MarkdownSplitView
+                  open={previewOpen}
+                  source={state.content}
+                  assets={assets}
+                >
                   {editor}
                 </MarkdownSplitView>
               ) : (

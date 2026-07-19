@@ -5,6 +5,8 @@ import {
   numericScrubControl,
   theme,
 } from "@webstudio-is/design-system";
+import type { Assets } from "@webstudio-is/sdk";
+import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { renderMarkdown } from "./text-file-utils";
 
 const minimumPaneWidth = 160;
@@ -90,23 +92,62 @@ const splitHandleStyle = css({
 
 const clampRatio = (ratio: number) => Math.min(0.8, Math.max(0.2, ratio));
 
+const resolveAssetReferences = ({
+  html,
+  assets,
+  origin,
+}: {
+  html: string;
+  assets: Assets;
+  origin: string;
+}) => {
+  if (typeof DOMParser === "undefined") {
+    return html;
+  }
+
+  const document = new DOMParser().parseFromString(html, "text/html");
+  for (const image of document.querySelectorAll("img[src]")) {
+    const asset = assets.get(image.getAttribute("src") ?? "");
+    if (asset?.type === "image") {
+      image.setAttribute("src", getAssetUrl(asset, origin).href);
+    }
+  }
+  for (const link of document.querySelectorAll("a[href]")) {
+    const asset = assets.get(link.getAttribute("href") ?? "");
+    if (asset !== undefined) {
+      link.setAttribute("href", getAssetUrl(asset, origin).href);
+    }
+  }
+  return document.body.innerHTML;
+};
+
+export const __testing__ = { resolveAssetReferences };
+
 export const MarkdownSplitView = ({
   open,
   source,
+  assets,
   children,
 }: {
   open: boolean;
   source: string;
+  assets: Assets;
   children: ReactNode;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const ratioRef = useRef(0.5);
   const [ratio, setRatio] = useState(ratioRef.current);
-  const html = useMemo(
-    () => (open ? renderMarkdown(source) : ""),
-    [open, source]
-  );
+  const html = useMemo(() => {
+    if (open === false) {
+      return "";
+    }
+    return resolveAssetReferences({
+      html: renderMarkdown(source),
+      assets,
+      origin: window.location.origin,
+    });
+  }, [assets, open, source]);
 
   const updateRatio = (nextRatio: number) => {
     ratioRef.current = clampRatio(nextRatio);
