@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build": "vite build && vike prerender",
-    "postbuild": "cd dist && oxfmt '**/*.html'",
+    "build:debug": "pnpm build && cd dist && oxfmt '**/*.html'",
     "dev": "vite dev",
     "typecheck": "tsc --noEmit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",

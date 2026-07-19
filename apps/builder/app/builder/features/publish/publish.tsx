@@ -41,7 +41,10 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { selectInstance } from "~/shared/nano-states";
+import {
+  $registeredComponentMetas,
+  selectInstance,
+} from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
   $authTokenPermissions,
@@ -91,9 +94,22 @@ import {
   type RestrictedFeature,
 } from "./restricted-features";
 import {
-  formatBuildIntegrityError,
-  getBuildIntegrityIssues,
+  formatPrePublishAuditFinding,
+  runPrePublishAudit,
 } from "@webstudio-is/project-build/runtime";
+
+const getPrePublishAuditError = () => {
+  const findings = runPrePublishAudit({
+    pages: $pages.get(),
+    instances: $instances.get(),
+    props: $props.get(),
+    dataSources: $dataSources.get(),
+    resources: $resources.get(),
+    metas: $registeredComponentMetas.get(),
+  });
+  const finding = findings.find(({ severity }) => severity === "error");
+  return finding && formatPrePublishAuditFinding(finding);
+};
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -432,17 +448,10 @@ const Publish = ({
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
 
-    const integrityIssues = getBuildIntegrityIssues({
-      dataSources: $dataSources.get().values(),
-      props: $props.get().values(),
-      resources: $resources.get().values(),
-    });
-    const integrityError =
-      integrityIssues[0] &&
-      formatBuildIntegrityError(integrityIssues[0], "Cannot publish");
-    if (integrityError !== undefined) {
-      toast.error(integrityError);
-      setPublishError(integrityError);
+    const auditError = getPrePublishAuditError();
+    if (auditError !== undefined) {
+      toast.error(auditError);
+      setPublishError(auditError);
       return;
     }
 
@@ -636,6 +645,7 @@ const PublishStatic = ({
 }) => {
   const project = useStore($project);
   const [_, startTransition] = useTransition();
+  const [publishError, setPublishError] = useState<string>();
 
   if (project == null) {
     throw new Error("Project not found");
@@ -652,6 +662,7 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
+      {publishError && <Text color="destructive">{publishError}</Text>}
       {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
 
       <Tooltip
@@ -664,6 +675,14 @@ const PublishStatic = ({
           onClick={() => {
             startTransition(async () => {
               try {
+                setPublishError(undefined);
+                const auditError = getPrePublishAuditError();
+                if (auditError !== undefined) {
+                  toast.error(auditError);
+                  setPublishError(auditError);
+                  return;
+                }
+
                 setIsPendingOptimistic(true);
 
                 const result = await nativeClient.domain.publish.mutate({
