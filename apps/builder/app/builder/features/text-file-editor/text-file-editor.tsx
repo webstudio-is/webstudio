@@ -298,7 +298,11 @@ const MarkdownLinkPicker = ({
       }}
       content={
         open && (
-          <Box css={{ padding: theme.spacing[3] }}>
+          <Flex
+            direction="column"
+            gap={5}
+            css={{ padding: theme.panel.padding }}
+          >
             <UrlInput
               instanceId="markdown-link"
               prop={value}
@@ -308,7 +312,7 @@ const MarkdownLinkPicker = ({
                 setValue(value);
               }}
             />
-            <Flex justify="end" css={{ paddingTop: theme.spacing[3] }}>
+            <Flex justify="end">
               <Button
                 type="button"
                 onClick={() => {
@@ -327,7 +331,7 @@ const MarkdownLinkPicker = ({
                 Insert link
               </Button>
             </Flex>
-          </Box>
+          </Flex>
         )
       }
     >
