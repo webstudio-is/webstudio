@@ -11,6 +11,7 @@ export * from "./runtime/component-template";
 export * from "./runtime/content-mode-copy-policy";
 export * from "./runtime/content-mode-permissions";
 export * from "./runtime/content-model";
+export * from "./runtime/pre-publish-audit";
 export * from "./runtime/context";
 export * from "./runtime/data";
 export * from "./runtime/design-token-import";
