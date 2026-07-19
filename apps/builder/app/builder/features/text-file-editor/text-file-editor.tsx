@@ -368,14 +368,42 @@ const MarkdownToolbar = ({
       paddingInline: theme.spacing[3],
       borderBottom: `1px solid ${theme.colors.borderMain}`,
       gap: theme.spacing[1],
-      overflowX: "auto",
-      scrollbarWidth: "none",
-      "&::-webkit-scrollbar": { display: "none" },
+      overflow: "hidden",
       flexShrink: 0,
       color: theme.colors.foregroundMain,
       background: theme.colors.backgroundControls,
     }}
   >
+    <Flex
+      align="center"
+      css={{
+        minWidth: 0,
+        flex: 1,
+        gap: theme.spacing[1],
+        overflowX: "auto",
+        scrollbarWidth: "none",
+        "&::-webkit-scrollbar": { display: "none" },
+      }}
+    >
+      <MarkdownHeadingMenu editorApiRef={editorApiRef} disabled={disabled} />
+      {markdownActions.map(({ label, icon, template }) => (
+        <Tooltip key={label} content={label}>
+          <ToolbarButton asChild css={markdownToolbarButtonStyle}>
+            <button
+              type="button"
+              aria-label={label}
+              disabled={disabled}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => editorApiRef.current?.insertTemplate(template)}
+            >
+              {icon}
+            </button>
+          </ToolbarButton>
+        </Tooltip>
+      ))}
+      <MarkdownLinkPicker editorApiRef={editorApiRef} disabled={disabled} />
+      <MarkdownImagePicker editorApiRef={editorApiRef} disabled={disabled} />
+    </Flex>
     <Tooltip content={previewOpen ? "Hide preview" : "Show preview"}>
       <ToolbarButton
         aria-label={previewOpen ? "Hide preview" : "Show preview"}
@@ -388,24 +416,6 @@ const MarkdownToolbar = ({
         <MarkdownEmbedIcon />
       </ToolbarButton>
     </Tooltip>
-    <MarkdownHeadingMenu editorApiRef={editorApiRef} disabled={disabled} />
-    {markdownActions.map(({ label, icon, template }) => (
-      <Tooltip key={label} content={label}>
-        <ToolbarButton asChild css={markdownToolbarButtonStyle}>
-          <button
-            type="button"
-            aria-label={label}
-            disabled={disabled}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => editorApiRef.current?.insertTemplate(template)}
-          >
-            {icon}
-          </button>
-        </ToolbarButton>
-      </Tooltip>
-    ))}
-    <MarkdownLinkPicker editorApiRef={editorApiRef} disabled={disabled} />
-    <MarkdownImagePicker editorApiRef={editorApiRef} disabled={disabled} />
   </Toolbar>
 );
 
