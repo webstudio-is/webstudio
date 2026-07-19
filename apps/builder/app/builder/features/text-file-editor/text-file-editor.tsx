@@ -15,12 +15,11 @@ import {
   DropdownMenuTrigger,
   Flex,
   FloatingPanel,
+  IconButton,
   rawTheme,
   Text,
   theme,
   toast,
-  Toolbar,
-  ToolbarButton,
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
@@ -151,12 +150,6 @@ const markdownActions = [
 
 const headingLevels = [1, 2, 3, 4, 5, 6] as const;
 
-const markdownToolbarButtonStyle = {
-  "&:hover": { background: theme.colors.backgroundHover },
-  "&[data-state=on]": { background: theme.colors.backgroundInputSelected },
-  "&:disabled": { color: theme.colors.foregroundDisabled },
-};
-
 const MarkdownHeadingMenu = ({
   editorApiRef,
   disabled,
@@ -167,15 +160,15 @@ const MarkdownHeadingMenu = ({
   <DropdownMenu>
     <Tooltip content="Heading">
       <DropdownMenuTrigger asChild>
-        <ToolbarButton
-          asChild
-          css={{ ...markdownToolbarButtonStyle, gap: theme.spacing[1] }}
+        <IconButton
+          type="button"
+          aria-label="Heading"
+          disabled={disabled}
+          css={{ gap: theme.spacing[1], paddingInline: theme.spacing[2] }}
         >
-          <button type="button" aria-label="Heading" disabled={disabled}>
-            <HeadingIcon />
-            <ChevronDownIcon size={12} />
-          </button>
-        </ToolbarButton>
+          <HeadingIcon />
+          <ChevronDownIcon size={12} />
+        </IconButton>
       </DropdownMenuTrigger>
     </Tooltip>
     <DropdownMenuContent
@@ -234,17 +227,15 @@ const MarkdownImagePicker = ({
         />
       }
     >
-      <ToolbarButton asChild css={markdownToolbarButtonStyle}>
-        <button
-          type="button"
-          aria-label="Image"
-          title="Image"
-          disabled={disabled}
-          onMouseDown={(event) => event.preventDefault()}
-        >
-          <ImageIcon />
-        </button>
-      </ToolbarButton>
+      <IconButton
+        type="button"
+        aria-label="Image"
+        title="Image"
+        disabled={disabled}
+        onMouseDown={(event) => event.preventDefault()}
+      >
+        <ImageIcon />
+      </IconButton>
     </FloatingPanel>
   );
 };
@@ -340,17 +331,15 @@ const MarkdownLinkPicker = ({
         )
       }
     >
-      <ToolbarButton asChild css={markdownToolbarButtonStyle}>
-        <button
-          type="button"
-          aria-label="Link"
-          title="Link"
-          disabled={disabled}
-          onMouseDown={(event) => event.preventDefault()}
-        >
-          <LinkIcon />
-        </button>
-      </ToolbarButton>
+      <IconButton
+        type="button"
+        aria-label="Link"
+        title="Link"
+        disabled={disabled}
+        onMouseDown={(event) => event.preventDefault()}
+      >
+        <LinkIcon />
+      </IconButton>
     </FloatingPanel>
   );
 };
@@ -366,24 +355,25 @@ const MarkdownToolbar = ({
   previewOpen: boolean;
   onPreviewOpenChange: (open: boolean) => void;
 }) => (
-  <Toolbar
+  <Flex
+    role="toolbar"
     aria-label="Markdown formatting"
+    align="center"
+    gap={2}
     css={{
-      paddingInline: theme.spacing[3],
+      padding: theme.spacing[3],
       borderBottom: `1px solid ${theme.colors.borderMain}`,
-      gap: theme.spacing[1],
       overflow: "hidden",
       flexShrink: 0,
-      color: theme.colors.foregroundMain,
-      background: theme.colors.backgroundControls,
+      background: theme.colors.backgroundPanel,
     }}
   >
     <Flex
       align="center"
+      gap={2}
       css={{
         minWidth: 0,
         flex: 1,
-        gap: theme.spacing[1],
         overflowX: "auto",
         scrollbarWidth: "none",
         "&::-webkit-scrollbar": { display: "none" },
@@ -392,35 +382,33 @@ const MarkdownToolbar = ({
       <MarkdownHeadingMenu editorApiRef={editorApiRef} disabled={disabled} />
       {markdownActions.map(({ label, icon, template }) => (
         <Tooltip key={label} content={label}>
-          <ToolbarButton asChild css={markdownToolbarButtonStyle}>
-            <button
-              type="button"
-              aria-label={label}
-              disabled={disabled}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => editorApiRef.current?.insertTemplate(template)}
-            >
-              {icon}
-            </button>
-          </ToolbarButton>
+          <IconButton
+            type="button"
+            aria-label={label}
+            disabled={disabled}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editorApiRef.current?.insertTemplate(template)}
+          >
+            {icon}
+          </IconButton>
         </Tooltip>
       ))}
       <MarkdownLinkPicker editorApiRef={editorApiRef} disabled={disabled} />
       <MarkdownImagePicker editorApiRef={editorApiRef} disabled={disabled} />
     </Flex>
     <Tooltip content={previewOpen ? "Hide preview" : "Show preview"}>
-      <ToolbarButton
+      <IconButton
+        type="button"
         aria-label={previewOpen ? "Hide preview" : "Show preview"}
         aria-pressed={previewOpen}
-        data-state={previewOpen ? "on" : "off"}
-        css={markdownToolbarButtonStyle}
+        variant={previewOpen ? "local" : "default"}
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => onPreviewOpenChange(previewOpen === false)}
       >
         <MarkdownEmbedIcon />
-      </ToolbarButton>
+      </IconButton>
     </Tooltip>
-  </Toolbar>
+  </Flex>
 );
 
 export const TextFileEditor = ({
