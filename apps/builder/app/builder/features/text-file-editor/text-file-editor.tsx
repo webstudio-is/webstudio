@@ -285,6 +285,7 @@ export const TextFileEditor = ({
   return (
     <EditorDialog
       title={title}
+      contentPadding={false}
       open
       onOpenChange={(open) => {
         if (open === false && state.status === "loaded") {

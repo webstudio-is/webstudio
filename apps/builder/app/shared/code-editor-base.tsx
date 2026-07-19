@@ -518,6 +518,7 @@ export const EditorDialog = ({
   placement = "center",
   width = 640,
   height = 480,
+  contentPadding = true,
   ...panelProps
 }: {
   title: ReactNode;
@@ -525,6 +526,7 @@ export const EditorDialog = ({
   children: ReactNode;
   width?: number;
   height?: number;
+  contentPadding?: boolean;
   placement?: ComponentProps<typeof FloatingPanel>["placement"];
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
@@ -542,7 +544,7 @@ export const EditorDialog = ({
         <Grid
           align="stretch"
           css={{
-            padding: theme.panel.padding,
+            padding: contentPadding ? theme.panel.padding : 0,
             height: "100%",
             overflow: "hidden",
             boxSizing: "content-box",
