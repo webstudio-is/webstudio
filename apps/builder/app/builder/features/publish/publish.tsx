@@ -103,18 +103,6 @@ import {
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
 
-const getPrePublishAuditFinding = () => {
-  const findings = runPrePublishAudit({
-    pages: $pages.get(),
-    instances: $instances.get(),
-    props: $props.get(),
-    dataSources: $dataSources.get(),
-    resources: $resources.get(),
-    metas: $registeredComponentMetas.get(),
-  });
-  return findings.find(({ severity }) => severity === "error");
-};
-
 const PrePublishAuditError = ({
   finding,
 }: {
@@ -174,6 +162,19 @@ const PrePublishAuditError = ({
       </Link>
     </>
   );
+};
+
+const getPrePublishAuditError = () => {
+  const findings = runPrePublishAudit({
+    pages: $pages.get(),
+    instances: $instances.get(),
+    props: $props.get(),
+    dataSources: $dataSources.get(),
+    resources: $resources.get(),
+    metas: $registeredComponentMetas.get(),
+  });
+  const finding = findings.find(({ severity }) => severity === "error");
+  return finding && <PrePublishAuditError finding={finding} />;
 };
 
 type ChangeProjectDomainProps = {
@@ -513,11 +514,10 @@ const Publish = ({
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
 
-    const auditError = getPrePublishAuditFinding();
+    const auditError = getPrePublishAuditError();
     if (auditError !== undefined) {
-      const error = <PrePublishAuditError finding={auditError} />;
-      toast.error(error);
-      setPublishError(error);
+      toast.error(auditError);
+      setPublishError(auditError);
       return;
     }
 
@@ -742,11 +742,10 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setPublishError(undefined);
-                const auditError = getPrePublishAuditFinding();
+                const auditError = getPrePublishAuditError();
                 if (auditError !== undefined) {
-                  const error = <PrePublishAuditError finding={auditError} />;
-                  toast.error(error);
-                  setPublishError(error);
+                  toast.error(auditError);
+                  setPublishError(auditError);
                   return;
                 }
 

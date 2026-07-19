@@ -157,18 +157,13 @@ export const useSyncPageUrl = () => {
         ? undefined
         : selectedInstanceId;
 
-    const isOnlyInstanceChange =
+    const isSamePageState =
       searchParamsPageId === page.id &&
       searchParamsPageHash === pageHash.hash &&
       searchParamsMode === builderModeParam;
 
     // Do not navigate on popstate change or if params match
-    if (
-      searchParamsPageId === page.id &&
-      searchParamsPageHash === pageHash.hash &&
-      searchParamsMode === builderModeParam &&
-      searchParamsInstanceId === instanceId
-    ) {
+    if (isSamePageState && searchParamsInstanceId === instanceId) {
       return;
     }
 
@@ -181,7 +176,7 @@ export const useSyncPageUrl = () => {
         mode: builderModeParam,
         safemode: searchParamsSafemode === "true",
       }),
-      { replace: isOnlyInstanceChange }
+      { replace: isSamePageState }
     );
   }, [builderMode, navigate, page, pageHash, selectedInstanceSelector]);
 
