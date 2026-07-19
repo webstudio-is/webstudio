@@ -106,7 +106,7 @@ const markdownActions = [
   },
   {
     label: "Bulleted list",
-    icon: <ListIcon />,
+    icon: <ListIcon fill="currentColor" />,
     template: { prefix: "- ", placeholder: "List item" },
   },
   {
