@@ -21,7 +21,7 @@ test("resolves asset IDs in Markdown images and links", () => {
     html: renderMarkdown(
       "![Local image](image-id)\n\n[Download image](image-id)\n\n![Remote image](https://example.com/image.png)"
     ),
-    assets: new Map([[image.id, image]]),
+    assetContainers: [{ status: "uploaded", asset: image }],
     origin: "https://builder.example",
   });
 
@@ -32,4 +32,20 @@ test("resolves asset IDs in Markdown images and links", () => {
     'href="https://builder.example/cgi/image/image.png?format=raw"'
   );
   expect(html).toContain('src="https://example.com/image.png"');
+});
+
+test("uses an object URL while an inserted image is uploading", () => {
+  const html = resolveAssetReferences({
+    html: renderMarkdown("![Uploading](image-id)"),
+    assetContainers: [
+      {
+        status: "uploading",
+        asset: image,
+        objectURL: "blob:https://builder.example/upload",
+      },
+    ],
+    origin: "https://builder.example",
+  });
+
+  expect(html).toContain('src="blob:https://builder.example/upload"');
 });

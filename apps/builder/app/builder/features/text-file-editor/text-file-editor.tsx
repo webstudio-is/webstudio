@@ -47,7 +47,11 @@ import { $assets, $pages, $props } from "~/shared/sync/data-stores";
 import { $authPermit } from "~/shared/nano-states";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
-import { AssetUpload, updateAssetContent } from "~/builder/shared/assets";
+import {
+  AssetUpload,
+  updateAssetContent,
+  useAssets,
+} from "~/builder/shared/assets";
 import {
   UrlInput,
   type UrlInputValue,
@@ -428,6 +432,7 @@ export const TextFileEditor = ({
 }) => {
   const assets = useStore($assets);
   const asset = assets.get(assetId);
+  const { assetContainers } = useAssets();
   const canEdit = useStore($authPermit) !== "view";
   const [state, setState] = useState<TextFileState>({ status: "loading" });
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -578,7 +583,7 @@ export const TextFileEditor = ({
                 <MarkdownSplitView
                   open={previewOpen}
                   source={state.content}
-                  assets={assets}
+                  assetContainers={assetContainers}
                 >
                   {editor}
                 </MarkdownSplitView>

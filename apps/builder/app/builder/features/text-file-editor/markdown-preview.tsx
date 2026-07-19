@@ -5,7 +5,7 @@ import {
   numericScrubControl,
   theme,
 } from "@webstudio-is/design-system";
-import type { Assets } from "@webstudio-is/sdk";
+import type { AssetContainer } from "~/builder/shared/assets";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { renderMarkdown } from "./text-file-utils";
 
@@ -94,11 +94,11 @@ const clampRatio = (ratio: number) => Math.min(0.8, Math.max(0.2, ratio));
 
 const resolveAssetReferences = ({
   html,
-  assets,
+  assetContainers,
   origin,
 }: {
   html: string;
-  assets: Assets;
+  assetContainers: AssetContainer[];
   origin: string;
 }) => {
   if (typeof DOMParser === "undefined") {
@@ -106,16 +106,24 @@ const resolveAssetReferences = ({
   }
 
   const document = new DOMParser().parseFromString(html, "text/html");
+  const urls = new Map(
+    assetContainers.map((container) => [
+      container.asset.id,
+      container.status === "uploading"
+        ? container.objectURL
+        : getAssetUrl(container.asset, origin).href,
+    ])
+  );
   for (const image of document.querySelectorAll("img[src]")) {
-    const asset = assets.get(image.getAttribute("src") ?? "");
-    if (asset?.type === "image") {
-      image.setAttribute("src", getAssetUrl(asset, origin).href);
+    const url = urls.get(image.getAttribute("src") ?? "");
+    if (url !== undefined) {
+      image.setAttribute("src", url);
     }
   }
   for (const link of document.querySelectorAll("a[href]")) {
-    const asset = assets.get(link.getAttribute("href") ?? "");
-    if (asset !== undefined) {
-      link.setAttribute("href", getAssetUrl(asset, origin).href);
+    const url = urls.get(link.getAttribute("href") ?? "");
+    if (url !== undefined) {
+      link.setAttribute("href", url);
     }
   }
   return document.body.innerHTML;
@@ -126,12 +134,12 @@ export const __testing__ = { resolveAssetReferences };
 export const MarkdownSplitView = ({
   open,
   source,
-  assets,
+  assetContainers,
   children,
 }: {
   open: boolean;
   source: string;
-  assets: Assets;
+  assetContainers: AssetContainer[];
   children: ReactNode;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,10 +152,10 @@ export const MarkdownSplitView = ({
     }
     return resolveAssetReferences({
       html: renderMarkdown(source),
-      assets,
+      assetContainers,
       origin: window.location.origin,
     });
-  }, [assets, open, source]);
+  }, [assetContainers, open, source]);
 
   const updateRatio = (nextRatio: number) => {
     ratioRef.current = clampRatio(nextRatio);
