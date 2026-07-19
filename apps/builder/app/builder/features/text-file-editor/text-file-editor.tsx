@@ -14,11 +14,16 @@ import {
 import {
   BlockquoteIcon,
   BoldIcon,
+  CheckboxCheckedIcon,
   HeadingIcon,
+  ImageIcon,
   LinkIcon,
   ListIcon,
+  MinusIcon,
+  RepeatGridIcon,
   SpinnerIcon,
   TextItalicIcon,
+  TextStrikethroughIcon,
 } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import type { Asset } from "@webstudio-is/sdk";
@@ -55,6 +60,15 @@ const markdownActions = [
     template: { prefix: "_", suffix: "_", placeholder: "italic text" },
   },
   {
+    label: "Strikethrough",
+    icon: <TextStrikethroughIcon />,
+    template: {
+      prefix: "~~",
+      suffix: "~~",
+      placeholder: "strikethrough text",
+    },
+  },
+  {
     label: "Link",
     icon: <LinkIcon />,
     template: {
@@ -78,6 +92,19 @@ const markdownActions = [
     template: { prefix: "`", suffix: "`", placeholder: "code" },
   },
   {
+    label: "Code block",
+    icon: (
+      <Text as="span" variant="mono">
+        ```
+      </Text>
+    ),
+    template: {
+      prefix: "\n\n```\n",
+      suffix: "\n```\n\n",
+      placeholder: "code",
+    },
+  },
+  {
     label: "Bulleted list",
     icon: <ListIcon />,
     template: { prefix: "- ", placeholder: "List item" },
@@ -90,6 +117,34 @@ const markdownActions = [
       </Text>
     ),
     template: { prefix: "1. ", placeholder: "List item" },
+  },
+  {
+    label: "Task list",
+    icon: <CheckboxCheckedIcon />,
+    template: { prefix: "- [ ] ", placeholder: "Task" },
+  },
+  {
+    label: "Image",
+    icon: <ImageIcon />,
+    template: {
+      prefix: "![",
+      suffix: "](https://)",
+      placeholder: "alt text",
+    },
+  },
+  {
+    label: "Horizontal rule",
+    icon: <MinusIcon />,
+    template: { prefix: "\n\n---\n\n", placeholder: "" },
+  },
+  {
+    label: "Table",
+    icon: <RepeatGridIcon />,
+    template: {
+      prefix: "\n\n| Column 1 | Column 2 |\n| --- | --- |\n| ",
+      suffix: " | Value |\n\n",
+      placeholder: "Value",
+    },
   },
 ];
 
@@ -106,6 +161,8 @@ const MarkdownToolbar = ({
       paddingInline: theme.spacing[3],
       borderBottom: `1px solid ${theme.colors.borderMain}`,
       gap: theme.spacing[1],
+      overflowX: "auto",
+      flexShrink: 0,
     }}
   >
     {markdownActions.map(({ label, icon, template }) => (
