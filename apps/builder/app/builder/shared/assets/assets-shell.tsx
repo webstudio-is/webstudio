@@ -257,12 +257,12 @@ export const AssetsShell = ({
             }
 
             const uploadFolderFiles = () => {
-              for (const group of fileGroups) {
+              for (const { files, folderId } of fileGroups) {
                 uploadDroppedFiles({
-                  files: group.files,
+                  files,
                   type,
                   accept,
-                  folderId: group.folderId,
+                  folderId,
                 });
               }
             };

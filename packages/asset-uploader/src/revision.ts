@@ -11,6 +11,7 @@ import { uploadFileData } from "./upload";
 import { getUniqueFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
+import { assertPostgrestSuccess } from "./patch-utils";
 
 export class AssetRevisionConflictError extends Error {}
 
@@ -50,21 +51,20 @@ export const swapAssetFileWithClient = async (
     expected_name: expectedName,
     replacement_name: replacementName,
   });
-  if (result.error) {
-    throw result.error;
-  }
-  if (result.data === "conflict") {
+  assertPostgrestSuccess(result);
+  const { data } = result;
+  if (data === "conflict") {
     throw new AssetRevisionConflictError(
       "This file changed since it was opened. Reload it before saving again."
     );
   }
-  if (result.data === "not_found") {
+  if (data === "not_found") {
     throw new Error("Asset not found");
   }
-  if (result.data === "invalid_revision") {
+  if (data === "invalid_revision") {
     throw new Error("Asset revision is not available");
   }
-  if (result.data !== "updated") {
+  if (data !== "updated") {
     throw new Error("Unable to update asset content");
   }
 };
@@ -86,13 +86,12 @@ const loadAsset = async ({
     .eq("id", assetId)
     .eq("projectId", projectId)
     .single();
-  if (result.error) {
-    throw result.error;
-  }
-  if (result.data === null || result.data.file === null) {
+  assertPostgrestSuccess(result);
+  const { data } = result;
+  if (data === null || data.file === null) {
     throw new Error("Asset not found");
   }
-  return result.data;
+  return data;
 };
 
 export const updateAssetContent = async (
@@ -147,9 +146,7 @@ export const updateAssetContent = async (
     size: 0,
     uploaderProjectId: projectId,
   });
-  if (insertedFile.error) {
-    throw insertedFile.error;
-  }
+  assertPostgrestSuccess(insertedFile);
 
   const file = await uploadFileData(
     revisionName,
@@ -157,14 +154,12 @@ export const updateAssetContent = async (
     assetClient,
     context,
     undefined,
-    async (name, uploadContext) => {
-      const deletedFile = await uploadContext.postgrest.client
+    async (name, { postgrest }) => {
+      const deletedFile = await postgrest.client
         .from("File")
         .delete()
         .eq("name", name);
-      if (deletedFile.error) {
-        throw deletedFile.error;
-      }
+      assertPostgrestSuccess(deletedFile);
     }
   );
   const revision = formatAsset({
@@ -200,9 +195,7 @@ export const updateAssetContent = async (
         .from("File")
         .update({ isDeleted: true })
         .eq("name", revisionName);
-      if (discardedRevision.error) {
-        throw discardedRevision.error;
-      }
+      assertPostgrestSuccess(discardedRevision);
     } catch (cleanupError) {
       console.error("Unable to discard an asset revision", cleanupError);
     }
