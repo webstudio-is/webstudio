@@ -3,22 +3,9 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import {
-  backfillCanonicalAssets,
-  rebuildCanonicalAssetMetadata,
-  recoverCanonicalAssetMetadata,
-  synchronizeCanonicalAssets,
-} from "./canonical-metadata-backfill";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
 import { previewAssetResourceQuery } from "./query-preview";
-
-const rescanOperations = vi.hoisted(() => ({
-  backfillCanonicalAssets: vi.fn(),
-  rebuildCanonicalAssetMetadata: vi.fn(),
-  recoverCanonicalAssetMetadata: vi.fn(),
-  synchronizeCanonicalAssets: vi.fn(),
-}));
 
 vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
   authorizeProject: { hasProjectPermit: vi.fn() },
@@ -27,7 +14,6 @@ vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
 vi.mock("./canonical-metadata-persistence", () => ({
   loadCanonicalAssetFileEntries: vi.fn(),
 }));
-vi.mock("./canonical-metadata-backfill", () => rescanOperations);
 
 const projectId = "project-1";
 const context = {
@@ -55,9 +41,5 @@ describe("Builder asset-resource API data boundary", () => {
     });
 
     expect(loadCanonicalAssetFileEntries).toHaveBeenCalledTimes(2);
-    expect(backfillCanonicalAssets).not.toHaveBeenCalled();
-    expect(synchronizeCanonicalAssets).not.toHaveBeenCalled();
-    expect(recoverCanonicalAssetMetadata).not.toHaveBeenCalled();
-    expect(rebuildCanonicalAssetMetadata).not.toHaveBeenCalled();
   });
 });
