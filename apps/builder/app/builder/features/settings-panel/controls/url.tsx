@@ -44,6 +44,7 @@ import {
   $selectedInstanceScope,
   useBindingState,
   humanizeAttribute,
+  type PropValue,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 import { createRootFolder } from "@webstudio-is/project-build";
@@ -51,13 +52,23 @@ import { PropertyLabel } from "../property-label";
 
 type UrlControlProps = ControlProps<"url">;
 
+export type UrlInputValue = Extract<
+  PropValue,
+  { type: "string" | "page" | "asset" }
+>;
+
+type UrlInputProp =
+  | UrlInputValue
+  | { type: "expression"; value: string }
+  | undefined;
+
 type BaseControlProps = {
   id: string;
   instanceId: string;
   readOnly: boolean;
-  prop: UrlControlProps["prop"];
+  prop: UrlInputProp;
   value: string;
-  onChange: UrlControlProps["onChange"];
+  onChange: (value: UrlInputValue) => void;
 };
 
 const Row = ({ children }: { children: ReactNode }) => (
@@ -442,10 +453,7 @@ const modes = {
 
 type Mode = keyof typeof modes;
 
-const propToMode = (
-  prop: undefined | UrlControlProps["prop"],
-  value: string
-): Mode => {
+const propToMode = (prop: UrlInputProp, value: string): Mode => {
   if (prop === undefined) {
     return "url";
   }
@@ -469,34 +477,40 @@ const propToMode = (
   return "url";
 };
 
-export const UrlControl = ({
+export const UrlInput = ({
   instanceId,
-  meta,
   prop,
-  propName,
-  computedValue,
+  value,
+  readOnly = false,
   onChange,
-}: UrlControlProps) => {
-  const value = String(computedValue ?? "");
+  suffix,
+}: {
+  instanceId: string;
+  prop: UrlInputProp;
+  value: string;
+  readOnly?: boolean;
+  onChange: (value: UrlInputValue) => void;
+  suffix?: ReactNode;
+}) => {
   const { value: mode, set: setMode } = useDraftValue<Mode>(
     propToMode(prop, value),
     () => {}
   );
-
   const id = useId();
-
   const BaseControl = modes[mode].control;
-
-  const label = humanizeAttribute(meta.label || propName);
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable, variant } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
+  const control = (
+    <BaseControl
+      id={id}
+      instanceId={instanceId}
+      readOnly={readOnly}
+      prop={prop}
+      value={value}
+      onChange={onChange}
+    />
   );
 
   return (
-    <VerticalLayout label={<PropertyLabel name={propName} />}>
+    <>
       <Flex
         css={{
           py: theme.spacing[2],
@@ -508,7 +522,7 @@ export const UrlControl = ({
       >
         <ToggleGroup
           type="single"
-          disabled={overwritable === false}
+          disabled={readOnly}
           value={mode}
           onValueChange={(value) => {
             // too tricky to prove to TS that value is a Mode
@@ -523,30 +537,66 @@ export const UrlControl = ({
           ))}
         </ToggleGroup>
       </Flex>
+      {suffix === undefined ? (
+        control
+      ) : (
+        <BindingControl>
+          {control}
+          {suffix}
+        </BindingControl>
+      )}
+    </>
+  );
+};
 
-      <BindingControl>
-        <BaseControl
-          id={id}
-          instanceId={instanceId}
-          readOnly={overwritable === false}
-          prop={prop}
-          value={value}
-          onChange={onChange}
-        />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          validate={(value) => validatePrimitiveValue(value, label)}
-          variant={variant}
-          value={expression}
-          onChange={(newExpression) =>
-            onChange({ type: "expression", value: newExpression })
-          }
-          onRemove={(evaluatedValue) =>
-            onChange({ type: "string", value: String(evaluatedValue) })
-          }
-        />
-      </BindingControl>
+export const UrlControl = ({
+  instanceId,
+  meta,
+  prop,
+  propName,
+  computedValue,
+  onChange,
+}: UrlControlProps) => {
+  const value = String(computedValue ?? "");
+  const label = humanizeAttribute(meta.label || propName);
+  const { scope, aliases } = useStore($selectedInstanceScope);
+  const expression =
+    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
+
+  return (
+    <VerticalLayout label={<PropertyLabel name={propName} />}>
+      <UrlInput
+        instanceId={instanceId}
+        prop={
+          prop?.type === "string" ||
+          prop?.type === "page" ||
+          prop?.type === "asset" ||
+          prop?.type === "expression"
+            ? prop
+            : undefined
+        }
+        value={value}
+        readOnly={overwritable === false}
+        onChange={onChange}
+        suffix={
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            validate={(value) => validatePrimitiveValue(value, label)}
+            variant={variant}
+            value={expression}
+            onChange={(newExpression) =>
+              onChange({ type: "expression", value: newExpression })
+            }
+            onRemove={(evaluatedValue) =>
+              onChange({ type: "string", value: String(evaluatedValue) })
+            }
+          />
+        }
+      />
     </VerticalLayout>
   );
 };

@@ -8,6 +8,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -39,14 +40,18 @@ import {
   TextStrikethroughIcon,
 } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
-import type { Asset } from "@webstudio-is/sdk";
+import { getPagePath, type Asset } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
-import { $assets } from "~/shared/sync/data-stores";
+import { $assets, $pages, $props } from "~/shared/sync/data-stores";
 import { $authPermit } from "~/shared/nano-states";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { AssetUpload, updateAssetContent } from "~/builder/shared/assets";
+import {
+  UrlInput,
+  type UrlInputValue,
+} from "~/builder/features/settings-panel/controls/url";
 import {
   getTextFileEditorExtensions,
   isMarkdownAsset,
@@ -76,15 +81,6 @@ const markdownActions = [
       prefix: "~~",
       suffix: "~~",
       placeholder: "strikethrough text",
-    },
-  },
-  {
-    label: "Link",
-    icon: <LinkIcon />,
-    template: {
-      prefix: "[",
-      suffix: "](https://)",
-      placeholder: "link text",
     },
   },
   {
@@ -249,6 +245,112 @@ const MarkdownImagePicker = ({
   );
 };
 
+const getMarkdownHref = (value: UrlInputValue) => {
+  if (value.type === "string" || value.type === "asset") {
+    return value.value;
+  }
+
+  const pages = $pages.get();
+  if (pages === undefined) {
+    return "";
+  }
+
+  const pageId =
+    typeof value.value === "string" ? value.value : value.value.pageId;
+  if (pages.pages.has(pageId) === false) {
+    return "";
+  }
+
+  const url = new URL(getPagePath(pageId, pages), "https://any-valid.url");
+  if (typeof value.value === "string") {
+    return url.pathname;
+  }
+
+  const section = value.value;
+  const idProp = Array.from($props.get().values()).find(
+    (prop) => prop.instanceId === section.instanceId && prop.name === "id"
+  );
+  if (idProp?.type === "string") {
+    url.hash = encodeURIComponent(idProp.value);
+  }
+  return `${url.pathname}${url.hash}`;
+};
+
+const initialLinkValue: UrlInputValue = { type: "string", value: "" };
+
+const MarkdownLinkPicker = ({
+  editorApiRef,
+  disabled,
+}: {
+  editorApiRef: RefObject<EditorApi | undefined>;
+  disabled: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState<UrlInputValue>(initialLinkValue);
+  const valueRef = useRef<UrlInputValue>(initialLinkValue);
+
+  return (
+    <FloatingPanel
+      title="Link"
+      placement="bottom-within"
+      open={open}
+      onOpenChange={(open) => {
+        if (open) {
+          valueRef.current = initialLinkValue;
+          setValue(initialLinkValue);
+        }
+        setOpen(open);
+      }}
+      content={
+        open && (
+          <Box css={{ padding: theme.spacing[3] }}>
+            <UrlInput
+              instanceId="markdown-link"
+              prop={value}
+              value={value.type === "string" ? value.value : ""}
+              onChange={(value) => {
+                valueRef.current = value;
+                setValue(value);
+              }}
+            />
+            <Flex justify="end" css={{ paddingTop: theme.spacing[3] }}>
+              <Button
+                type="button"
+                onClick={() => {
+                  const href = getMarkdownHref(valueRef.current);
+                  if (href === "") {
+                    return;
+                  }
+                  editorApiRef.current?.insertTemplate({
+                    prefix: "[",
+                    suffix: `](${href})`,
+                    placeholder: "link text",
+                  });
+                  setOpen(false);
+                }}
+              >
+                Insert link
+              </Button>
+            </Flex>
+          </Box>
+        )
+      }
+    >
+      <ToolbarButton asChild css={markdownToolbarButtonStyle}>
+        <button
+          type="button"
+          aria-label="Link"
+          title="Link"
+          disabled={disabled}
+          onMouseDown={(event) => event.preventDefault()}
+        >
+          <LinkIcon />
+        </button>
+      </ToolbarButton>
+    </FloatingPanel>
+  );
+};
+
 const MarkdownToolbar = ({
   editorApiRef,
   disabled,
@@ -302,6 +404,7 @@ const MarkdownToolbar = ({
         </ToolbarButton>
       </Tooltip>
     ))}
+    <MarkdownLinkPicker editorApiRef={editorApiRef} disabled={disabled} />
     <MarkdownImagePicker editorApiRef={editorApiRef} disabled={disabled} />
   </Toolbar>
 );
