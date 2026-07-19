@@ -5,7 +5,6 @@ import {
   buildAssetResourceIndex,
   createAssetFieldCatalog,
   createCanonicalAssetFileEntry,
-  createScaleMarkdownFixture,
   executeAssetResourceQuery,
   extractMarkdownFrontmatter,
   hydrateAssetResourceResult,
@@ -14,6 +13,7 @@ import {
   serializeAssetResourceIndex,
   verifyAssetResourceIndex,
 } from "../src/index.ts";
+import { createScaleMarkdownFixture } from "../src/scale-fixture.ts";
 
 const projectId = "scale-project";
 const resourceId = "blog-posts";

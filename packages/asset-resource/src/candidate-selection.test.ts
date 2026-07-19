@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import { parse } from "groq-js/1";
 import type { AssetFileDocument } from "@webstudio-is/sdk";
 import {
-  assetResourceCandidatePolicyV1,
   getAssetResourceParameterNames,
   selectAssetResourceCandidates,
 } from "./candidate-selection";
@@ -52,7 +51,11 @@ describe("asset resource candidate selection", () => {
       queryMode: "parameterized",
       parameterNames: ["slug"],
       appliedStaticPrefilter: true,
-      policy: assetResourceCandidatePolicyV1,
+      policy: {
+        records: "safe-static-filter-superset",
+        fields: "complete-lightweight-document",
+        content: "reference-only",
+      },
     });
     expect(selection.documents).toEqual([documents[1], documents[2]]);
     expect(selection.documents[0]).toMatchObject({

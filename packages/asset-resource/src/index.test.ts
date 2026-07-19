@@ -4,9 +4,7 @@ import { loadResource } from "@webstudio-is/sdk/runtime";
 import {
   AssetResourceQueryExecutionError,
   createAssetResourceRequest,
-  evaluateAssetResourceQuery,
   executeAssetResourceQuery,
-  parseAssetResourceQuery,
 } from "./index";
 
 const createDocument = (
@@ -62,72 +60,6 @@ const documents = [
     }
   ),
 ];
-
-describe("GROQ feasibility", () => {
-  test("filters, orders, slices, and projects schema-less fields", async () => {
-    const tree = parseAssetResourceQuery(`
-      *[
-        _type == "asset.file" &&
-        folderId == $folderId &&
-        extension == "md" &&
-        properties.draft != true
-      ]
-      | order(properties.publishedAt desc, _id asc)
-      [0...2] {
-        _id,
-        "title": properties.title,
-        "slug": properties.slug,
-        "author": coalesce(properties.author.name, "Unknown"),
-        excerpt
-      }
-    `);
-
-    await expect(
-      evaluateAssetResourceQuery({
-        tree,
-        documents,
-        parameters: { folderId: "blog" },
-      })
-    ).resolves.toEqual([
-      {
-        _id: "beta",
-        title: "Beta",
-        slug: "beta",
-        author: "Ben",
-        excerpt: "Excerpt beta",
-      },
-      {
-        _id: "alpha",
-        title: "Alpha",
-        slug: "alpha",
-        author: "Ada",
-        excerpt: "Excerpt alpha",
-      },
-    ]);
-  });
-
-  test("selects one document with a runtime slug", async () => {
-    const tree = parseAssetResourceQuery(
-      `*[properties.slug == $slug][0]{_id, revision, contentRef}`
-    );
-
-    await expect(
-      evaluateAssetResourceQuery({
-        tree,
-        documents,
-        parameters: { slug: "beta" },
-      })
-    ).resolves.toEqual({
-      _id: "beta",
-      revision: "revision-beta",
-      contentRef: "content-beta",
-    });
-  });
-
-  test("rejects invalid GROQ during parsing", () => {
-    expect(() => parseAssetResourceQuery("*[invalid ==")).toThrow();
-  });
-});
 
 describe("asset resource request transport", () => {
   test("serializes nested runtime parameters and hydration options in POST JSON", async () => {

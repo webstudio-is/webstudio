@@ -20,7 +20,6 @@ export * from "./index-storage";
 export * from "./query-validation";
 export * from "./hydration";
 export * from "./published-runtime";
-export * from "./scale-fixture";
 
 export const createAssetResourceRequest = (
   request: AssetResourceQueryInput
@@ -34,10 +33,7 @@ export const createAssetResourceRequest = (
   body: assetResourceQueryRequest.parse(request),
 });
 
-export const parseAssetResourceQuery = (query: string): ExprNode =>
-  validateAssetResourceQuery(query).tree;
-
-export const evaluateAssetResourceQuery = async ({
+const evaluateAssetResourceQuery = async ({
   tree,
   documents,
   parameters = {},
