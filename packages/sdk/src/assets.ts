@@ -195,14 +195,6 @@ export const getMimeTypeByExtension = (
   return ALLOWED_FILE_TYPES[extension.toLowerCase() as AllowedFileExtension];
 };
 
-export const isResizableImageFileName = (fileName: string): boolean => {
-  const extension = fileName.split(".").pop();
-  const mimeType = extension && getMimeTypeByExtension(extension);
-  return (
-    mimeType !== undefined && RESIZABLE_IMAGE_MIME_TYPES.includes(mimeType)
-  );
-};
-
 export const isTextFileAsset = (asset: Pick<Asset, "format">): boolean => {
   const mimeType = getMimeTypeByExtension(asset.format);
   return (
@@ -223,6 +215,9 @@ export const getMimeTypeByFilename = (fileName: string): string => {
   }
   return getMimeTypeByExtension(extension) ?? "application/octet-stream";
 };
+
+export const isResizableImageFileName = (fileName: string): boolean =>
+  RESIZABLE_IMAGE_MIME_TYPES.includes(getMimeTypeByFilename(fileName));
 
 /**
  * Check if a file extension is allowed

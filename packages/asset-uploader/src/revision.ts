@@ -167,15 +167,14 @@ export const updateAssetContent = async (
       }
     }
   );
-  const formatRevision = () =>
-    formatAsset({
-      assetId: currentAsset.id,
-      projectId: currentAsset.projectId,
-      filename: currentAsset.filename,
-      description: currentAsset.description,
-      folderId: currentAsset.folderId,
-      file,
-    });
+  const revision = formatAsset({
+    assetId: currentAsset.id,
+    projectId: currentAsset.projectId,
+    filename: currentAsset.filename,
+    description: currentAsset.description,
+    folderId: currentAsset.folderId,
+    file,
+  });
 
   try {
     await swapAssetFileWithClient(
@@ -195,7 +194,7 @@ export const updateAssetContent = async (
         client: context.postgrest.client,
       });
       if (current.name === revisionName) {
-        return formatRevision();
+        return revision;
       }
       const discardedRevision = await context.postgrest.client
         .from("File")
@@ -210,7 +209,7 @@ export const updateAssetContent = async (
     throw error;
   }
 
-  return formatRevision();
+  return revision;
 };
 
 export const __testing__ = { getRevisionFilename };

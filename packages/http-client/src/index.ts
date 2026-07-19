@@ -574,29 +574,6 @@ type AssetContentUpdateResult =
       errors: string;
     };
 
-const getAssetContentUpdateUrl = ({
-  assetId,
-  expectedName,
-  origin,
-  projectId,
-  requestOrigin,
-}: {
-  assetId: string;
-  expectedName: string;
-  origin: string;
-  projectId: string;
-  requestOrigin?: string;
-}) => {
-  const { sourceOrigin } = parseBuilderUrl(origin);
-  const url = new URL(
-    `/rest/assets/${encodeURIComponent(assetId)}/content`,
-    requestOrigin ?? sourceOrigin
-  );
-  url.searchParams.set("projectId", projectId);
-  url.searchParams.set("expectedName", expectedName);
-  return url;
-};
-
 export const updateProjectAssetContent = async (
   params: Omit<AuthProjectParams, "authToken"> & {
     authToken?: string;
@@ -608,24 +585,22 @@ export const updateProjectAssetContent = async (
   }
 ): Promise<{ asset: Asset }> => {
   const request = params.request ?? fetch;
-  const response = await request(
-    getAssetContentUpdateUrl({
-      assetId: params.assetId,
-      expectedName: params.expectedName,
-      origin: params.origin,
-      projectId: params.projectId,
-      requestOrigin: params.requestOrigin,
-    }),
-    {
-      method: "PUT",
-      body: await params.readAssetData(),
-      headers: createHeaders({
-        ...params.headers,
-        "x-auth-token": params.authToken,
-        "content-type": "application/octet-stream",
-      }),
-    }
+  const { sourceOrigin } = parseBuilderUrl(params.origin);
+  const url = new URL(
+    `/rest/assets/${encodeURIComponent(params.assetId)}/content`,
+    params.requestOrigin ?? sourceOrigin
   );
+  url.searchParams.set("projectId", params.projectId);
+  url.searchParams.set("expectedName", params.expectedName);
+  const response = await request(url, {
+    method: "PUT",
+    body: await params.readAssetData(),
+    headers: createHeaders({
+      ...params.headers,
+      "x-auth-token": params.authToken,
+      "content-type": "application/octet-stream",
+    }),
+  });
   const result = (await response.json()) as AssetContentUpdateResult;
   if ("errors" in result) {
     throw Object.assign(new Error(result.errors), { status: response.status });

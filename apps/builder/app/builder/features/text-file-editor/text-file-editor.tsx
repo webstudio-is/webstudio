@@ -58,7 +58,6 @@ export const TextFileEditor = ({
         }
         const content = await response.text();
         persistedContentRef.current = content;
-        requestedContentRef.current = content;
         setState({ status: "loaded", content });
       } catch (error) {
         if (controller.signal.aborted) {
