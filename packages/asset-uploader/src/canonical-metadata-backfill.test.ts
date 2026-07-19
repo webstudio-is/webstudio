@@ -8,10 +8,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AssetClient } from "./client";
 import {
-  backfillCanonicalAssets,
   createAssetContentRevision,
-  rebuildCanonicalAssetMetadata,
-  recoverCanonicalAssetMetadata,
   synchronizeCanonicalAssetStandardMetadata,
   synchronizeCanonicalAsset,
   synchronizeCanonicalAssets,
@@ -38,7 +35,7 @@ const entryFromReplaceRpc = (value: ReplaceMetadataRpcArgs) => ({
   source: value.p_source,
 });
 
-describe("canonical asset metadata backfill", () => {
+describe("canonical asset metadata synchronization", () => {
   test("indexes every asset and reads content only for Markdown files", async () => {
     const contents = new Map([
       ["stored-one.md", "---\ntitle: One\n---\n# First post"],
@@ -111,6 +108,7 @@ describe("canonical asset metadata backfill", () => {
           },
         ])
       ),
+      db.get("AssetFileMetadata", () => json([])),
       db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
         const value = (await request.json()) as ReplaceMetadataRpcArgs;
         persisted.push(entryFromReplaceRpc(value));
@@ -118,7 +116,7 @@ describe("canonical asset metadata backfill", () => {
       })
     );
 
-    const result = await backfillCanonicalAssets({
+    const result = await synchronizeCanonicalAssets({
       projectId: "project-1",
       client: testContext.postgrest.client,
       assetClient: {
@@ -128,7 +126,15 @@ describe("canonical asset metadata backfill", () => {
       concurrency: 2,
     });
 
-    expect(result).toEqual({ scanned: 3, indexed: 3, skipped: 0 });
+    expect(result).toEqual({
+      scanned: 3,
+      indexed: 3,
+      metadataUpdated: 0,
+      unchanged: 0,
+      removed: 0,
+      skipped: 0,
+      inconsistent: 0,
+    });
     expect(readFile).toHaveBeenCalledTimes(2);
     expect(persisted).toHaveLength(3);
     expect(persisted).toEqual(
@@ -170,9 +176,9 @@ describe("canonical asset metadata backfill", () => {
     ).toBe("file:folder%2Fpost.md:2026-07-18T00:00:00.000Z:42");
   });
 
-  test("does not allow backfills to exceed shared read concurrency", async () => {
+  test("does not exceed shared read concurrency", async () => {
     await expect(
-      backfillCanonicalAssets({
+      synchronizeCanonicalAssets({
         projectId: "project-1",
         client: testContext.postgrest.client,
         assetClient: {
@@ -663,7 +669,7 @@ describe("canonical asset metadata backfill", () => {
     );
 
     await expect(
-      recoverCanonicalAssetMetadata({
+      synchronizeCanonicalAssets({
         projectId: "project-1",
         client: testContext.postgrest.client,
         assetClient: { uploadFile: vi.fn(), readFile },
@@ -676,111 +682,6 @@ describe("canonical asset metadata backfill", () => {
       removed: 0,
       skipped: 0,
       inconsistent: 1,
-    });
-    expect(readFile).toHaveBeenCalledOnce();
-  });
-
-  test("full rebuild rereads unchanged Markdown and removes stale entries", async () => {
-    const source = "---\ntitle: Rebuilt\n---\nRebuilt body";
-    const bytes = encoder.encode(source);
-    const revision = `file:stable.md:2026-07-18T07:00:00.000Z:${bytes.byteLength}`;
-    const stableEntry = createCanonicalAssetFileEntry({
-      projectId: "project-1",
-      document: {
-        _id: "stable",
-        _type: "asset.file",
-        name: "stable.md",
-        path: "stable.md",
-        key: "stable",
-        extension: "md",
-        mimeType: "text/markdown",
-        size: bytes.byteLength,
-        revision,
-        contentRef: "stable.md",
-        properties: { title: "Rebuilt" },
-        excerpt: "Rebuilt body",
-      },
-    });
-    const staleEntry = createCanonicalAssetFileEntry({
-      projectId: "project-1",
-      document: {
-        ...stableEntry.document,
-        _id: "stale",
-        name: "stale.md",
-        path: "stale.md",
-        key: "stale",
-        revision: "file:stale.md:old:10",
-        contentRef: "stale.md",
-      },
-    });
-    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
-      data: {
-        async *[Symbol.asyncIterator]() {
-          yield bytes;
-        },
-      },
-    }));
-    server.use(
-      db.get("Asset", () =>
-        json([
-          {
-            id: "stable",
-            projectId: "project-1",
-            filename: null,
-            folderId: null,
-            file: {
-              name: "stable.md",
-              size: bytes.byteLength,
-              updatedAt: "2026-07-18T07:00:00.000Z",
-              status: "UPLOADED",
-            },
-          },
-          {
-            id: "image",
-            projectId: "project-1",
-            filename: null,
-            folderId: null,
-            file: {
-              name: "image.png",
-              size: 10,
-              updatedAt: "2026-07-18T07:00:00.000Z",
-              status: "UPLOADED",
-            },
-          },
-        ])
-      ),
-      db.get("AssetFolder", () => json([])),
-      db.get("AssetFileMetadata", () =>
-        json(
-          [stableEntry, staleEntry].map((metadataEntry) => ({
-            ...metadataEntry,
-            createdAt: "2026-07-18T00:00:00.000Z",
-            updatedAt: "2026-07-18T00:00:00.000Z",
-          }))
-        )
-      ),
-      db.post("rpc/replace_asset_file_metadata", () => json(true)),
-      db.post("rpc/delete_stale_asset_file_metadata", async ({ request }) => {
-        expect(await request.json()).toEqual({
-          p_project_id: "project-1",
-          p_asset_ids: ["stale"],
-        });
-        return json(1);
-      })
-    );
-
-    await expect(
-      rebuildCanonicalAssetMetadata({
-        projectId: "project-1",
-        client: testContext.postgrest.client,
-        assetClient: { uploadFile: vi.fn(), readFile },
-      })
-    ).resolves.toEqual({
-      scanned: 2,
-      rebuilt: 2,
-      removed: 1,
-      skipped: 0,
-      inconsistent: 0,
     });
     expect(readFile).toHaveBeenCalledOnce();
   });
