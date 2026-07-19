@@ -1,10 +1,12 @@
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SignatureV4 } from "@smithy/signature-v4";
-import type { AssetClient } from "../../client";
+import type {
+  AssetClient,
+  AssetClientWithResourceIndexStore,
+} from "../../client";
 import { uploadToS3 } from "./upload";
 import { readFromS3 } from "./read";
 import { putImmutableObjectToS3 } from "./immutable-object";
-import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resource";
 
 type S3ClientOptions = {
   endpoint: string;
@@ -16,7 +18,9 @@ type S3ClientOptions = {
   maxUploadSize: number;
 };
 
-export const createS3Client = (options: S3ClientOptions): AssetClient => {
+export const createS3Client = (
+  options: S3ClientOptions
+): AssetClientWithResourceIndexStore => {
   const signer = new SignatureV4({
     credentials: {
       accessKeyId: options.accessKeyId,
@@ -68,31 +72,6 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
         range,
         endpoint: options.endpoint,
         bucket: options.bucket,
-      }),
-  };
-};
-
-/** The configured bucket must not have public object access. */
-export const createS3ImmutableResourceIndexStore = (
-  options: Omit<S3ClientOptions, "acl" | "maxUploadSize">
-): ImmutableAssetResourceIndexStore => {
-  const signer = new SignatureV4({
-    credentials: {
-      accessKeyId: options.accessKeyId,
-      secretAccessKey: options.secretAccessKey,
-    },
-    region: options.region,
-    service: "s3",
-    sha256: Sha256,
-    uriEscapePath: false,
-  });
-  return {
-    putIfAbsent: (object) =>
-      putImmutableObjectToS3({
-        signer,
-        endpoint: options.endpoint,
-        bucket: options.bucket,
-        object,
       }),
   };
 };

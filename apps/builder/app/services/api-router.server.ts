@@ -88,10 +88,7 @@ import {
   executeApiRuntimeMutation,
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
-import {
-  createAssetClient,
-  createAssetResourceIndexStore,
-} from "../shared/asset-client";
+import { createAssetClient } from "../shared/asset-client";
 
 const assertApiPublishDomains = ({
   auth,
@@ -822,7 +819,7 @@ export const apiRouter = router({
         try {
           const result = await rebuildAssetResourceIndex({
             client: ctx.postgrest.client,
-            store: createAssetResourceIndexStore(),
+            store: createAssetClient().resourceIndexStore,
             projectId: input.projectId,
             resourceId: input.resourceId,
           });
