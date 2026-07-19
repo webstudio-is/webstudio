@@ -163,11 +163,19 @@ const MarkdownToolbar = ({
       gap: theme.spacing[1],
       overflowX: "auto",
       flexShrink: 0,
+      color: theme.colors.foregroundMain,
+      background: theme.colors.backgroundControls,
     }}
   >
     {markdownActions.map(({ label, icon, template }) => (
       <Tooltip key={label} content={label}>
-        <ToolbarButton asChild>
+        <ToolbarButton
+          asChild
+          css={{
+            "&:hover": { background: theme.colors.backgroundHover },
+            "&:disabled": { color: theme.colors.foregroundDisabled },
+          }}
+        >
           <button
             type="button"
             aria-label={label}
