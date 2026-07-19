@@ -2,6 +2,10 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Flex,
   rawTheme,
   Text,
@@ -14,6 +18,7 @@ import {
 import {
   BlockquoteIcon,
   BoldIcon,
+  ChevronDownIcon,
   CheckboxCheckedIcon,
   HeadingIcon,
   ImageIcon,
@@ -44,11 +49,6 @@ type TextFileState =
   | { status: "error" };
 
 const markdownActions = [
-  {
-    label: "Heading",
-    icon: <HeadingIcon />,
-    template: { prefix: "## ", placeholder: "Heading" },
-  },
   {
     label: "Bold",
     icon: <BoldIcon />,
@@ -148,6 +148,60 @@ const markdownActions = [
   },
 ];
 
+const headingLevels = [1, 2, 3, 4, 5, 6] as const;
+
+const markdownToolbarButtonStyle = {
+  "&:hover": { background: theme.colors.backgroundHover },
+  "&:disabled": { color: theme.colors.foregroundDisabled },
+};
+
+const MarkdownHeadingMenu = ({
+  editorApiRef,
+  disabled,
+}: {
+  editorApiRef: RefObject<EditorApi | undefined>;
+  disabled: boolean;
+}) => (
+  <DropdownMenu>
+    <Tooltip content="Heading">
+      <DropdownMenuTrigger asChild>
+        <ToolbarButton
+          asChild
+          css={{ ...markdownToolbarButtonStyle, gap: theme.spacing[1] }}
+        >
+          <button type="button" aria-label="Heading" disabled={disabled}>
+            <HeadingIcon />
+            <ChevronDownIcon size={12} />
+          </button>
+        </ToolbarButton>
+      </DropdownMenuTrigger>
+    </Tooltip>
+    <DropdownMenuContent
+      align="start"
+      sideOffset={4}
+      onCloseAutoFocus={(event) => {
+        event.preventDefault();
+        editorApiRef.current?.focus();
+      }}
+    >
+      {headingLevels.map((level) => (
+        <DropdownMenuItem
+          key={level}
+          withIndicator={false}
+          onSelect={() =>
+            editorApiRef.current?.insertTemplate({
+              prefix: `${"#".repeat(level)} `,
+              placeholder: `Heading ${level}`,
+            })
+          }
+        >
+          Heading {level}
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
 const MarkdownToolbar = ({
   editorApiRef,
   disabled,
@@ -167,15 +221,10 @@ const MarkdownToolbar = ({
       background: theme.colors.backgroundControls,
     }}
   >
+    <MarkdownHeadingMenu editorApiRef={editorApiRef} disabled={disabled} />
     {markdownActions.map(({ label, icon, template }) => (
       <Tooltip key={label} content={label}>
-        <ToolbarButton
-          asChild
-          css={{
-            "&:hover": { background: theme.colors.backgroundHover },
-            "&:disabled": { color: theme.colors.foregroundDisabled },
-          }}
-        >
+        <ToolbarButton asChild css={markdownToolbarButtonStyle}>
           <button
             type="button"
             aria-label={label}
