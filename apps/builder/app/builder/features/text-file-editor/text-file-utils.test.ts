@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { ALLOWED_FILE_TYPES, isTextFileAsset } from "@webstudio-is/sdk";
+import {
+  ALLOWED_FILE_TYPES,
+  getAssetTextEditorLanguage,
+  isTextFileAsset,
+} from "@webstudio-is/sdk";
 import {
   getTextFileEditorExtensions,
   isMarkdownAsset,
@@ -7,20 +11,6 @@ import {
 } from "./text-file-utils";
 
 describe("text file assets", () => {
-  const supportedTextFormats = Object.entries(ALLOWED_FILE_TYPES)
-    .filter(
-      ([, mimeType]) =>
-        mimeType.startsWith("text/") ||
-        mimeType === "application/json" ||
-        mimeType === "application/xml" ||
-        mimeType === "image/svg+xml"
-    )
-    .map(([format]) => format);
-
-  test.each(supportedTextFormats)("supports %s files", (format) => {
-    expect(isTextFileAsset({ format })).toBe(true);
-  });
-
   test("detects formats case-insensitively", () => {
     expect(isTextFileAsset({ format: "JSON" })).toBe(true);
     expect(getTextFileEditorExtensions({ format: "JSON" })).toHaveLength(1);
@@ -40,6 +30,17 @@ describe("text file assets", () => {
   test.each(["txt", "csv"])("uses plain text editing for %s", (format) => {
     expect(getTextFileEditorExtensions({ format })).toEqual([]);
   });
+
+  test.each(Object.keys(ALLOWED_FILE_TYPES))(
+    "defines editor behavior for %s files",
+    (format) => {
+      const language = getAssetTextEditorLanguage({ format });
+      expect(isTextFileAsset({ format })).toBe(language !== undefined);
+      expect(getTextFileEditorExtensions({ format })).toHaveLength(
+        language === undefined || language === "plain" ? 0 : 1
+      );
+    }
+  );
 
   test("identifies Markdown files case-insensitively", () => {
     expect(isMarkdownAsset({ format: "MD" })).toBe(true);
