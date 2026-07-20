@@ -14,6 +14,7 @@ import {
 } from "./index";
 import { AssetResourceHydrationError } from "./hydration";
 import { verifyAssetResourceIndex } from "./resource-index";
+import { sha256Hex } from "./sha256";
 
 export type PublishedAssetResourceManifestEntry = {
   resourceId: string;
@@ -118,15 +119,9 @@ export const getPublishedAssetResourceCacheKey = async ({
   request: Request;
 }) => {
   const body = await request.clone().text();
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(
-      `${deploymentId}\n${entry.resourceId}\n${entry.revision}\n${body}`
-    )
+  const hash = await sha256Hex(
+    `${deploymentId}\n${entry.resourceId}\n${entry.revision}\n${body}`
   );
-  const hash = Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0")
-  ).join("");
   const url = new URL(request.url);
   url.searchParams.set("ws-asset-resource", hash);
   return new Request(url, { method: "GET" });

@@ -6,10 +6,7 @@ import {
   json,
   testContext,
 } from "@webstudio-is/postgrest/testing";
-import {
-  AssetResourceIndexNotFoundError,
-  rebuildAssetResourceIndex,
-} from "./resource-index-rebuild";
+import { rebuildAssetResourceIndex } from "./resource-index-rebuild";
 
 const server = createTestServer();
 const document = {
@@ -33,9 +30,6 @@ const entry = createCanonicalAssetFileEntry({
 describe("explicit resource index rebuild", () => {
   test("rebuilds the persisted query from canonical metadata", async () => {
     server.use(
-      db.get("AssetResourceIndexState", () =>
-        json({ query: `*[properties.slug == $slug]` })
-      ),
       db.get("AssetFileMetadata", () =>
         json([
           {
@@ -58,51 +52,11 @@ describe("explicit resource index rebuild", () => {
       store: { putIfAbsent },
       projectId: "project-1",
       resourceId: "posts",
+      query: `*[properties.slug == $slug]`,
     });
 
     expect(result.index.parameterNames).toEqual(["slug"]);
     expect(result.index.documents).toHaveLength(1);
     expect(putIfAbsent).toHaveBeenCalledOnce();
-  });
-
-  test("fails clearly when the resource has no persisted index state", async () => {
-    server.use(
-      db.get("AssetResourceIndexState", ({ request }) => {
-        expect(new URL(request.url).searchParams.get("deletedAt")).toBe(
-          "is.null"
-        );
-        return json(null);
-      })
-    );
-    await expect(
-      rebuildAssetResourceIndex({
-        client: testContext.postgrest.client,
-        store: { putIfAbsent: vi.fn() },
-        projectId: "project-1",
-        resourceId: "missing",
-      })
-    ).rejects.toBeInstanceOf(AssetResourceIndexNotFoundError);
-  });
-
-  test("treats a deleted resource index state as not found", async () => {
-    const putIfAbsent = vi.fn();
-    server.use(
-      db.get("AssetResourceIndexState", ({ request }) => {
-        const search = new URL(request.url).searchParams;
-        return search.get("deletedAt") === "is.null"
-          ? json(null)
-          : json({ query: "*[]" });
-      })
-    );
-
-    await expect(
-      rebuildAssetResourceIndex({
-        client: testContext.postgrest.client,
-        store: { putIfAbsent },
-        projectId: "project-1",
-        resourceId: "deleted",
-      })
-    ).rejects.toBeInstanceOf(AssetResourceIndexNotFoundError);
-    expect(putIfAbsent).not.toHaveBeenCalled();
   });
 });

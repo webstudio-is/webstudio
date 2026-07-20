@@ -57,6 +57,7 @@ import {
 import { componentMetas } from "~/shared/component-metas.server";
 import {
   assetResourceQueryRequest,
+  getAssetResourceQuery,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
@@ -784,6 +785,7 @@ export const apiRouter = router({
         await loadBuilderAssetFieldCatalog({
           projectId: input.projectId,
           context: ctx,
+          assetClient: createAssetClient(),
         }),
       {
         command: "get-asset-field-catalog",
@@ -818,11 +820,23 @@ export const apiRouter = router({
       "build",
       async ({ ctx, input }) => {
         try {
+          const build = await loadDevBuildByProjectId(ctx, input.projectId);
+          const resource = build.resources.find(
+            ({ id }) => id === input.resourceId
+          );
+          const query =
+            resource === undefined
+              ? undefined
+              : getAssetResourceQuery(resource);
+          if (query === undefined) {
+            throw new AssetResourceIndexNotFoundError();
+          }
           const result = await rebuildAssetResourceIndex({
             client: ctx.postgrest.client,
             store: createAssetClient().resourceIndexStore,
             projectId: input.projectId,
             resourceId: input.resourceId,
+            query,
           });
           const status = await loadAssetResourceIndexStatus({
             projectId: input.projectId,

@@ -247,7 +247,8 @@ describe("api build patch commits", () => {
         clientVersion: 1,
         transactions: [transaction],
       },
-      ctx
+      ctx,
+      expect.any(Function)
     );
     expect(patchBuild).toHaveBeenNthCalledWith(
       2,
@@ -262,7 +263,8 @@ describe("api build patch commits", () => {
           },
         ],
       },
-      ctx
+      ctx,
+      expect.any(Function)
     );
   });
 

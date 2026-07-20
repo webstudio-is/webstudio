@@ -14,6 +14,9 @@ vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
 vi.mock("./canonical-metadata-persistence", () => ({
   loadCanonicalAssetFileEntries: vi.fn(),
 }));
+vi.mock("./canonical-metadata-backfill", () => ({
+  synchronizeCanonicalAssets: vi.fn(),
+}));
 
 const projectId = "project-1";
 const postgrestClient = { from: vi.fn() } as never;
@@ -86,6 +89,7 @@ describe("previewAssetResourceQuery", () => {
           content: { mode: "none" },
         },
         context,
+        assetClient: { readFile: vi.fn() },
       })
     ).rejects.toBeInstanceOf(AuthorizationError);
     expect(loadCanonicalAssetFileEntries).not.toHaveBeenCalled();

@@ -24,6 +24,8 @@ import {
 } from "./canonical-metadata-persistence";
 
 const markdownExtension = /\.md$/i;
+type CanonicalAssetClient = Pick<AssetClient, "readFile"> &
+  Partial<Omit<AssetClient, "readFile">>;
 
 export const createAssetContentRevision = ({
   storageName,
@@ -182,7 +184,7 @@ const indexCanonicalAsset = async ({
   asset: UploadedAssetRow;
   hierarchy: AssetFolderHierarchy;
   client: Client;
-  assetClient: AssetClient;
+  assetClient: CanonicalAssetClient;
 }) => {
   let properties: Record<string, unknown> = {};
   let excerpt: string | undefined;
@@ -233,7 +235,7 @@ export const synchronizeCanonicalAsset = async ({
   projectId: string;
   assetId: string;
   client: Client;
-  assetClient: AssetClient;
+  assetClient: CanonicalAssetClient;
 }) => {
   const assets = await loadUploadedAssets(projectId, client, [assetId]);
   const asset = assets[0];
@@ -267,7 +269,7 @@ export const synchronizeCanonicalAssets = async ({
 }: {
   projectId: string;
   client: Client;
-  assetClient: AssetClient;
+  assetClient: CanonicalAssetClient;
   concurrency?: number;
 }) => {
   if (Number.isInteger(concurrency) === false || concurrency <= 0) {

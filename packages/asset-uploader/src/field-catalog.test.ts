@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
+import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
 
 vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
   authorizeProject: { hasProjectPermit: vi.fn() },
@@ -14,12 +15,16 @@ vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
 vi.mock("./canonical-metadata-persistence", () => ({
   loadCanonicalAssetFileEntries: vi.fn(),
 }));
+vi.mock("./canonical-metadata-backfill", () => ({
+  synchronizeCanonicalAssets: vi.fn(),
+}));
 
 const projectId = "project-1";
 const postgrestClient = { from: vi.fn() } as never;
 const context = {
   postgrest: { client: postgrestClient },
 } as unknown as AppContext;
+const assetClient = { readFile: vi.fn() };
 
 describe("loadBuilderAssetFieldCatalog", () => {
   beforeEach(() => {
@@ -51,7 +56,11 @@ describe("loadBuilderAssetFieldCatalog", () => {
       },
     ]);
 
-    const result = await loadBuilderAssetFieldCatalog({ projectId, context });
+    const result = await loadBuilderAssetFieldCatalog({
+      projectId,
+      context,
+      assetClient,
+    });
 
     expect(authorizeProject.hasProjectPermit).toHaveBeenCalledWith(
       { projectId, permit: "view" },
@@ -61,6 +70,7 @@ describe("loadBuilderAssetFieldCatalog", () => {
       client: postgrestClient,
       projectId,
     });
+    expect(synchronizeCanonicalAssets).toHaveBeenCalledOnce();
     expect(result.fields["properties.title"]).toEqual({
       types: ["string"],
       occurrences: 1,
@@ -71,7 +81,7 @@ describe("loadBuilderAssetFieldCatalog", () => {
     vi.mocked(authorizeProject.hasProjectPermit).mockResolvedValue(false);
 
     await expect(
-      loadBuilderAssetFieldCatalog({ projectId, context })
+      loadBuilderAssetFieldCatalog({ projectId, context, assetClient })
     ).rejects.toBeInstanceOf(AuthorizationError);
     expect(loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
   });

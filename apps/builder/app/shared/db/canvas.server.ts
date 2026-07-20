@@ -11,9 +11,8 @@ import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/r
 import {
   loadAssetDataByProject,
   loadCanonicalAssetFileEntries,
-  loadAssetResourceIndexSnapshots,
+  prepareAssetResourceIndexSnapshotsForPublication,
   getAssetResourceQuery,
-  reconcileAssetResourceIndexesForPublication,
   synchronizeCanonicalAssets,
 } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -192,26 +191,17 @@ const addProjectMetadata = async (
     );
     const expectedAssetRevision =
       await computeCanonicalAssetRevision(canonicalEntries);
-    await reconcileAssetResourceIndexesForPublication({
-      client: context.postgrest.client,
-      store: assetClient.resourceIndexStore,
-      projectId: project.id,
-      resources: indexedResources,
-      entries: canonicalEntries,
-      assetRevision: expectedAssetRevision,
-    });
-    assetResourceIndexes = await loadAssetResourceIndexSnapshots({
-      client: context.postgrest.client,
-      projectId: project.id,
-      resources: indexedResources,
-      read: assetClient.readFile,
-      referenceId: data.build.id,
-      garbageCollectionStore:
-        assetClient.resourceIndexStore.delete === undefined
-          ? undefined
-          : { delete: assetClient.resourceIndexStore.delete },
-      expectedAssetRevision,
-    });
+    assetResourceIndexes =
+      await prepareAssetResourceIndexSnapshotsForPublication({
+        client: context.postgrest.client,
+        store: assetClient.resourceIndexStore,
+        projectId: project.id,
+        resources: indexedResources,
+        entries: canonicalEntries,
+        read: assetClient.readFile,
+        referenceId: data.build.id,
+        assetRevision: expectedAssetRevision,
+      });
   }
 
   return {

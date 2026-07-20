@@ -1,6 +1,7 @@
 import { parse, type ExprNode } from "groq-js/1";
 import { assetResourceLimits } from "@webstudio-is/sdk";
 import { getAssetResourceParameterNames } from "./candidate-selection";
+import { visitGroqAst } from "./groq-ast";
 
 export class AssetResourceQueryValidationError extends Error {
   readonly code: "INVALID_QUERY" | "QUERY_COMPLEXITY_EXCEEDED";
@@ -22,19 +23,11 @@ export class AssetResourceQueryValidationError extends Error {
   }
 }
 
-type AstNode = { type: string };
-
-const isAstNode = (value: unknown): value is AstNode =>
-  typeof value === "object" &&
-  value !== null &&
-  "type" in value &&
-  typeof value.type === "string";
-
 const measureAst = (tree: ExprNode) => {
   let nodes = 0;
   let maxDepth = 0;
   let datasetScans = 0;
-  const visit = (node: AstNode, depth: number) => {
+  visitGroqAst(tree, (node, depth) => {
     nodes += 1;
     maxDepth = Math.max(maxDepth, depth);
     if (node.type === "Everything") {
@@ -42,26 +35,11 @@ const measureAst = (tree: ExprNode) => {
     }
     if (
       nodes > assetResourceLimits.queryAstNodes ||
-      maxDepth > assetResourceLimits.queryAstDepth ||
-      node.type === "Value"
+      maxDepth > assetResourceLimits.queryAstDepth
     ) {
-      return;
+      return false;
     }
-    for (const value of Object.values(node)) {
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          if (isAstNode(item)) {
-            visit(item, depth + 1);
-          }
-        }
-        continue;
-      }
-      if (isAstNode(value)) {
-        visit(value, depth + 1);
-      }
-    }
-  };
-  visit(tree, 1);
+  });
   return { nodes, depth: maxDepth, datasetScans };
 };
 
@@ -171,24 +149,11 @@ const getAttributePath = (node: unknown): string | undefined => {
 export const getAssetResourceReferencedFieldPaths = (query: string) => {
   const { tree } = validateAssetResourceQuery(query);
   const paths = new Set<string>();
-  const visited = new Set<object>();
-  const visit = (value: unknown) => {
-    if (typeof value !== "object" || value === null || visited.has(value)) {
-      return;
-    }
-    visited.add(value);
-    const path = getAttributePath(value);
+  visitGroqAst(tree, (node) => {
+    const path = getAttributePath(node);
     if (path !== undefined) {
       paths.add(path);
     }
-    for (const child of Object.values(value)) {
-      if (Array.isArray(child)) {
-        child.forEach(visit);
-      } else {
-        visit(child);
-      }
-    }
-  };
-  visit(tree);
+  });
   return Array.from(paths).sort();
 };

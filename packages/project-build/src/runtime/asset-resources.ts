@@ -4,7 +4,7 @@ import {
   assetResourceQueryRequest,
   createAssetQueryResourceBody,
   decodeDataSourceVariable,
-  isAssetsResource as isSdkAssetsResource,
+  isAssetsResource,
   isStoredAssetQueryResource,
   parseAssetQueryResourceBody,
   SYSTEM_VARIABLE_ID,
@@ -146,9 +146,6 @@ const parseJsonExpression = (expression: string | undefined) => {
     return;
   }
 };
-
-export const isAssetsResource = (resource: Resource) =>
-  isSdkAssetsResource(resource);
 
 export const parseAssetResourceConfiguration = (
   resource: Resource
