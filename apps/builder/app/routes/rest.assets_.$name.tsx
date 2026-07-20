@@ -1,15 +1,20 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
-import { createHash } from "node:crypto";
+import { arrayBuffer } from "node:stream/consumers";
 import {
   createUploadTicket,
+  createSizeLimiter,
   assetDataOverride,
+  getContentHash,
   getUploadedAsset,
   uploadFile,
   type UploadErrorCleanup,
 } from "@webstudio-is/asset-uploader/index.server";
 import { isAssetFileName } from "@webstudio-is/protocol";
 import type { AssetActionResponse } from "~/builder/shared/assets";
-import { createAssetClient } from "~/shared/asset-client";
+import {
+  createAssetClient,
+  getMaxAssetUploadSize,
+} from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
@@ -86,8 +91,18 @@ const createDeduplicatedAssetResponse = async ({
 const createRequestBody = (data: Uint8Array) =>
   new Blob([data as Uint8Array<ArrayBuffer>]).stream();
 
-const getContentHash = (data: Uint8Array) =>
-  createHash("sha256").update(data).digest("hex");
+const readRequestBody = async (
+  body: ReadableStream<Uint8Array>,
+  name: string
+) =>
+  new Uint8Array(
+    await arrayBuffer(
+      createSizeLimiter(
+        getMaxAssetUploadSize(),
+        name
+      )(body as unknown as AsyncIterable<Uint8Array>)
+    )
+  );
 
 const createApiUploadErrorCleanup =
   (assetId: string, projectId: string): UploadErrorCleanup =>
@@ -165,7 +180,7 @@ export const action = async (props: ActionFunctionArgs) => {
 
       const context = await createContext(request);
       await assertApiProjectPermit(context, projectId, "build");
-      const data = new Uint8Array(await request.arrayBuffer());
+      const data = await readRequestBody(request.body, params.name);
       const force = url.searchParams.get("force") === "true";
       const ticket = await createUploadTicket(
         {
@@ -174,7 +189,7 @@ export const action = async (props: ActionFunctionArgs) => {
           filename: params.name,
           description,
           folderId,
-          contentHash: force ? undefined : getContentHash(data),
+          contentHash: force ? undefined : await getContentHash(data),
         },
         context
       );

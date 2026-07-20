@@ -260,6 +260,7 @@ export const cliDiff = async () => {
       "--script",
     ],
     {
+      throwOnError: true,
       nodeOptions: { cwd: prismaDir },
     }
   );
@@ -272,6 +273,7 @@ export const cliExecute = async (filePath: string) => {
     "prisma",
     ["db", "execute", `--file=${filePath}`, `--schema=${schemaFilePath}`],
     {
+      throwOnError: true,
       nodeOptions: { cwd: prismaDir },
     }
   );
@@ -299,6 +301,7 @@ export const generateMigrationClient = async (migrationName: string) => {
 
   // https://www.prisma.io/docs/reference/api-reference/command-reference#generate
   await x("prisma", ["generate", `--schema=${schemaPath}`], {
+    throwOnError: true,
     nodeOptions: { cwd: prismaDir },
   });
 };

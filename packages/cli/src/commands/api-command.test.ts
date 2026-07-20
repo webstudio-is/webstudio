@@ -302,6 +302,7 @@ test("prints project permissions without json output", async () => {
     canView: true,
     canEdit: true,
     canBuild: true,
+    canUseApi: true,
     canPublish: false,
     canAdmin: false,
   });
@@ -312,8 +313,26 @@ test("prints project permissions without json output", async () => {
   expect(console.info).toHaveBeenCalledWith("View: yes");
   expect(console.info).toHaveBeenCalledWith("Edit: yes");
   expect(console.info).toHaveBeenCalledWith("Build: yes");
+  expect(console.info).toHaveBeenCalledWith("API: yes");
   expect(console.info).toHaveBeenCalledWith("Publish: no");
   expect(console.info).toHaveBeenCalledWith("Admin: no");
+});
+
+test("selects a previously linked project explicitly", async () => {
+  readFile.mockResolvedValueOnce(
+    JSON.stringify({
+      "project-2": { origin: "https://example.com", token: "token-1" },
+    })
+  );
+
+  await apiCommand(
+    { command: "permissions", project: "project-2", json: true },
+    dependencies
+  );
+
+  expect(apiCalls.getProjectPermissions).toHaveBeenCalledWith(
+    expect.objectContaining({ projectId: "project-2" })
+  );
 });
 
 test("explains mcp-only editing commands should use shortcut or single-op-call", async () => {

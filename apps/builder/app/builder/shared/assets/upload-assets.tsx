@@ -1,7 +1,7 @@
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
-import type { AssetType } from "@webstudio-is/asset-uploader";
+import type { AssetType, UploadTicket } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { Image, wsImageLoader } from "@webstudio-is/image";
@@ -24,6 +24,7 @@ import {
   getFileUploadFingerprint,
   getMimeType,
   getSha256Hash,
+  getSha256HashOfFile,
 } from "./asset-utils";
 
 const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
@@ -71,12 +72,17 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
 const getFilesData = async <T extends File | URL>(
   type: AssetType,
   filesOrUrls: T[],
-  folderId?: string
+  folderId?: string,
+  createObjectURL = URL.createObjectURL
 ): Promise<UploadingFileData[]> => {
   const filesData: UploadingFileData[] = [];
   for (const fileOrUrl of filesOrUrls) {
     if (fileOrUrl instanceof File) {
-      const fingerprintId = await getFileUploadFingerprint(fileOrUrl);
+      const contentHash = await getSha256HashOfFile(fileOrUrl);
+      const fingerprintId = await getFileUploadFingerprint(
+        fileOrUrl,
+        contentHash
+      );
       filesData.push({
         source: "file" as const,
         assetId: "",
@@ -84,7 +90,8 @@ const getFilesData = async <T extends File | URL>(
         uploadName: "",
         type,
         file: fileOrUrl,
-        objectURL: URL.createObjectURL(fileOrUrl),
+        contentHash,
+        objectURL: createObjectURL(fileOrUrl),
         folderId,
       });
       continue;
@@ -265,21 +272,18 @@ const submitAssetUpload = async ({
   }
 };
 
-type UploadTicket = {
-  assetId: Asset["id"];
-  name: string;
-};
-
 const createUploadTicket = async ({
   authToken,
   projectId,
   fileOrUrl,
+  contentHash,
   assetType,
   request = fetch,
 }: {
   authToken: undefined | string;
   projectId: string;
   fileOrUrl: File | URL;
+  contentHash?: string;
   assetType: AssetType;
   request?: typeof fetch;
 }): Promise<UploadTicket> => {
@@ -287,6 +291,9 @@ const createUploadTicket = async ({
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
   metaFormData.append("type", assetType);
+  if (contentHash !== undefined) {
+    metaFormData.append("contentHash", contentHash);
+  }
   const existingNames = new Set<string>();
   for (const asset of $assets.get().values()) {
     existingNames.add(formatAssetName(asset));
@@ -478,11 +485,21 @@ export const uploadAssets = async <T extends File | URL>(
         projectId,
         fileOrUrl:
           fileData.source === "file" ? fileData.file : new URL(fileData.url),
+        contentHash:
+          fileData.source === "file" ? fileData.contentHash : undefined,
         assetType: fileData.type,
       });
       fileData.assetId = ticket.assetId;
       fileData.uploadName = ticket.name;
       uploadTickets.set(fileData.fingerprintId, ticket);
+      if (ticket.deduplicated) {
+        URL.revokeObjectURL(fileData.objectURL);
+        if (ticket.asset !== undefined) {
+          safeSetAsset(ticket.asset, projectId);
+        }
+        toast.info("Asset already exists");
+        continue;
+      }
       ticketedFilesData.push(fileData);
     } catch (error) {
       URL.revokeObjectURL(fileData.objectURL);

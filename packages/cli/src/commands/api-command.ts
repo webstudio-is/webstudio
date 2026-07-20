@@ -69,6 +69,11 @@ export const apiCommandOptions = (yargs: CommonYargsArgv) =>
       type: "boolean",
       describe:
         "Refresh required local project namespaces from the remote project before running a local-capable command.",
+    })
+    .option("project", {
+      type: "string",
+      describe:
+        "Use a previously linked project instead of the project linked to the current directory",
     });
 
 export const permissionsCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1294,6 +1299,7 @@ export const deleteAssetCommandOptions = (yargs: CommonYargsArgv) =>
 
 export type ApiCommandOptions = {
   command: ApiCommandName;
+  project?: string;
   json?: boolean;
   include?: string[];
   version?: number;
@@ -3115,6 +3121,7 @@ const printPermissions = (result: unknown) => {
     ["View", "canView"],
     ["Edit", "canEdit"],
     ["Build", "canBuild"],
+    ["API", "canUseApi"],
     ["Publish", "canPublish"],
     ["Admin", "canAdmin"],
   ] as const) {
@@ -3137,7 +3144,11 @@ export const apiCommand = async (
       throw new Error(`${options.command} currently requires --json.`);
     }
 
-    const connection = await resolveApiConnection(dependencies);
+    const connection = await resolveApiConnection(
+      dependencies,
+      undefined,
+      options.project
+    );
     projectId = connection.projectId;
     const apiConnection = {
       ...connection,

@@ -17,6 +17,7 @@ import type { BuilderState } from "../state/builder-state";
 import {
   addAsset,
   assetAddInput,
+  assetDeleteInput,
   calculateUsagesByAssetId,
   createAssetDeletePayload,
   createAssetReplacementPayload,
@@ -403,6 +404,13 @@ describe("asset runtime operations", () => {
     expect(() =>
       deleteAssets(state, { assetIdsOrPrefixes: ["asset"] })
     ).toThrow("Assets are still referenced: asset");
+  });
+
+  test("rejects empty asset id prefixes", () => {
+    expect(() => assetDeleteInput.parse({ assetIdPrefixes: [""] })).toThrow();
+    expect(() =>
+      assetDeleteInput.parse({ assetIdsOrPrefixes: ["  "] })
+    ).toThrow();
   });
 
   test("builds asset delete mutations", () => {

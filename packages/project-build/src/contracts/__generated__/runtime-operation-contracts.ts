@@ -67489,6 +67489,7 @@ export const runtimeOperationContractData = [
           type: "array",
           items: {
             type: "string",
+            minLength: 1,
           },
         },
         assetIdPrefixes: {
@@ -67496,6 +67497,7 @@ export const runtimeOperationContractData = [
           type: "array",
           items: {
             type: "string",
+            minLength: 1,
           },
         },
         assetIdsOrPrefixes: {
@@ -67503,6 +67505,7 @@ export const runtimeOperationContractData = [
           type: "array",
           items: {
             type: "string",
+            minLength: 1,
           },
           description:
             "Deprecated compatibility alias. Use assetIds for exact ids or assetIdPrefixes for prefixes.",

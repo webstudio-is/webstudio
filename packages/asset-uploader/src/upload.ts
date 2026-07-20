@@ -4,6 +4,7 @@ import {
   AuthorizationError,
   getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
+import { createHash } from "node:crypto";
 import { nanoid } from "nanoid";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
@@ -13,6 +14,7 @@ import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
+import type { UploadTicket } from "./types";
 
 type UploadData = {
   projectId: string;
@@ -24,30 +26,61 @@ type UploadData = {
   contentHash?: string;
 };
 
-export type UploadTicket = {
-  assetId: Asset["id"];
-  name: string;
-  deduplicated: boolean;
-};
-
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 const maxCreateUploadTicketAttempts = 3;
 const contentHashUploadPollInterval = 100;
 const contentHashUploadPollAttempts = 50;
 
-const findContentHashUploadTicket = async ({
+const getRestoredAssetId = (projectId: string, name: string) =>
+  createHash("sha256")
+    .update(projectId)
+    .update("\0")
+    .update(name)
+    .digest("base64url")
+    .slice(0, 21);
+
+const findAssetByFileName = async ({
   projectId,
-  contentHash,
+  name,
   context,
 }: {
   projectId: string;
-  contentHash: string;
+  name: string;
+  context: AppContext;
+}) => {
+  const asset = await context.postgrest.client
+    .from("Asset")
+    .select("id, projectId, filename, description, folderId")
+    .eq("projectId", projectId)
+    .eq("name", name)
+    .order("id")
+    .limit(1)
+    .maybeSingle();
+  if (asset.error) {
+    throw new Error(asset.error.message);
+  }
+  return asset.data ?? undefined;
+};
+
+const findContentHashUploadTicket = async ({
+  data,
+  context,
+}: {
+  data: UploadData & { contentHash: string };
   context: AppContext;
 }): Promise<UploadTicket | undefined> => {
+  const {
+    projectId,
+    contentHash,
+    filename,
+    displayFilename = getFileNameParts(filename).basename,
+    description,
+    folderId,
+  } = data;
   for (let attempt = 0; attempt < contentHashUploadPollAttempts; attempt += 1) {
     const file = await context.postgrest.client
       .from("File")
-      .select("name, status, createdAt")
+      .select("*")
       .eq("uploaderProjectId", projectId)
       .eq("contentHash", contentHash)
       .maybeSingle();
@@ -58,22 +91,57 @@ const findContentHashUploadTicket = async ({
       return;
     }
     if (file.data.status === "UPLOADED") {
-      const asset = await context.postgrest.client
-        .from("Asset")
-        .select("id")
-        .eq("projectId", projectId)
-        .eq("name", file.data.name)
-        .maybeSingle();
-      if (asset.error) {
-        throw new Error(asset.error.message);
+      let asset = await findAssetByFileName({
+        projectId,
+        name: file.data.name,
+        context,
+      });
+      if (asset === undefined) {
+        const restoredAsset = {
+          id: getRestoredAssetId(projectId, file.data.name),
+          projectId,
+          filename: displayFilename,
+          description: description ?? null,
+          folderId: folderId ?? null,
+        };
+        const insertedAsset = await context.postgrest.client
+          .from("Asset")
+          .insert({ ...restoredAsset, name: file.data.name });
+        if (insertedAsset.error?.code === "23505") {
+          asset = await findAssetByFileName({
+            projectId,
+            name: file.data.name,
+            context,
+          });
+          if (asset === undefined) {
+            throw new Error("Concurrent deduplicated asset is missing.");
+          }
+        } else {
+          assertPostgrestSuccess(insertedAsset);
+          asset = restoredAsset;
+        }
       }
-      if (asset.data === null) {
-        throw new Error("Deduplicated asset record is missing.");
+      if (file.data.isDeleted) {
+        const restoredFile = await context.postgrest.client
+          .from("File")
+          .update({ isDeleted: false })
+          .eq("name", file.data.name)
+          .eq("uploaderProjectId", projectId);
+        assertPostgrestSuccess(restoredFile);
       }
+      const formattedAsset = formatAsset({
+        assetId: asset.id,
+        projectId: asset.projectId,
+        filename: asset.filename,
+        description: asset.description,
+        folderId: asset.folderId,
+        file: file.data,
+      });
       return {
-        assetId: asset.data.id,
+        assetId: asset.id,
         name: file.data.name,
         deduplicated: true,
+        asset: formattedAsset,
       };
     }
     if (
@@ -147,8 +215,7 @@ export const createUploadTicket = async (
 
   if (contentHash !== undefined) {
     const existing = await findContentHashUploadTicket({
-      projectId,
-      contentHash,
+      data: { ...data, contentHash },
       context,
     });
     if (existing !== undefined) {
@@ -226,8 +293,7 @@ export const createUploadTicket = async (
     if (fileInsert.error) {
       if (fileInsert.error.code === "23505" && contentHash !== undefined) {
         const existing = await findContentHashUploadTicket({
-          projectId,
-          contentHash,
+          data: { ...data, contentHash },
           context,
         });
         if (existing !== undefined) {
@@ -288,14 +354,30 @@ export const uploadFileData = async (
   }
 
   try {
+    const expectedContentHash = file.data.contentHash ?? undefined;
+    const contentHasher =
+      expectedContentHash === undefined ? undefined : createHash("sha256");
+    const uploadData = async function* () {
+      for await (const chunk of data as unknown as AsyncIterable<Uint8Array>) {
+        contentHasher?.update(chunk);
+        yield chunk;
+      }
+    };
     const assetData = await client.uploadFile(
       name,
       file.data.format,
-      // global web streams types do not define ReadableStream as async iterable
-      data as unknown as AsyncIterable<Uint8Array>,
+      uploadData(),
       assetInfoFallback,
       assetDataOverride
     );
+    if (
+      expectedContentHash !== undefined &&
+      contentHasher?.digest("hex") !== expectedContentHash
+    ) {
+      throw new Error(
+        "Uploaded asset content does not match its upload ticket."
+      );
+    }
     const { meta, format, size } = assetData;
     file = await context.postgrest.client
       .from("File")
@@ -342,21 +424,16 @@ export const getUploadedAsset = async ({
     }
     file = result.data;
   }
-  const asset = await context.postgrest.client
-    .from("Asset")
-    .select("id, projectId, filename, description, folderId")
-    .eq("name", name)
-    .eq("projectId", projectId)
-    .single();
-  if (asset.error || asset.data === null) {
-    throw new Error(asset.error?.message ?? "Asset not found");
+  const asset = await findAssetByFileName({ projectId, name, context });
+  if (asset === undefined) {
+    throw new Error("Asset not found");
   }
   return formatAsset({
-    assetId: asset.data.id,
-    projectId: asset.data.projectId,
-    filename: asset.data.filename,
-    description: asset.data.description,
-    folderId: asset.data.folderId,
+    assetId: asset.id,
+    projectId: asset.projectId,
+    filename: asset.filename,
+    description: asset.description,
+    folderId: asset.folderId,
     file,
   });
 };

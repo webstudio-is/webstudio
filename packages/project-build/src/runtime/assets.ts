@@ -70,10 +70,10 @@ export const assetReplaceInput = z.object({
 
 export const assetDeleteInput = z
   .object({
-    assetIds: z.array(z.string()).min(1).optional(),
-    assetIdPrefixes: z.array(z.string()).min(1).optional(),
+    assetIds: z.array(z.string().trim().min(1)).min(1).optional(),
+    assetIdPrefixes: z.array(z.string().trim().min(1)).min(1).optional(),
     assetIdsOrPrefixes: z
-      .array(z.string())
+      .array(z.string().trim().min(1))
       .min(1)
       .describe(
         "Deprecated compatibility alias. Use assetIds for exact ids or assetIdPrefixes for prefixes."

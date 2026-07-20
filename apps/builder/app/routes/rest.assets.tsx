@@ -29,10 +29,14 @@ export const action = async (props: ActionFunctionArgs) => {
       const type = formData.get("type");
       const filename = formData.get("filename");
       const displayFilename = formData.get("displayFilename");
+      const contentHash = formData.get("contentHash");
       if (
         typeof projectId !== "string" ||
         typeof type !== "string" ||
         typeof filename !== "string" ||
+        (contentHash !== null &&
+          (typeof contentHash !== "string" ||
+            /^[a-f0-9]{64}$/.test(contentHash) === false)) ||
         (displayFilename !== null &&
           (typeof displayFilename !== "string" ||
             isValidFilename(displayFilename) === false))
@@ -45,6 +49,7 @@ export const action = async (props: ActionFunctionArgs) => {
           type,
           filename,
           displayFilename: displayFilename ?? undefined,
+          contentHash: contentHash ?? undefined,
         },
         context
       );
