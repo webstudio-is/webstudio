@@ -40,7 +40,7 @@ import {
   generateCss,
   ROOT_INSTANCE_ID,
   elementComponent,
-  toAssetResourceItem,
+  toRuntimeAsset,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
@@ -798,16 +798,14 @@ export const prebuild = async (options: {
   const assetsById = Object.fromEntries(
     siteData.assets.map((asset) => [
       asset.id,
-      toAssetResourceItem(asset, "https://placeholder.local"),
+      toRuntimeAsset(asset, "https://placeholder.local"),
     ])
   );
 
   await createFileIfNotExists(
     join(generatedDir, "$resources.assets.ts"),
     `
-    import type { AssetResourceItem } from "@webstudio-is/sdk/runtime";
-
-    export const assets = ${JSON.stringify(assetsById, null, 2)} satisfies Record<string, AssetResourceItem>;
+    export const assets = ${JSON.stringify(assetsById, null, 2)};
     `
   );
 

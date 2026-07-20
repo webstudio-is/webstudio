@@ -15,7 +15,6 @@ import {
   loadResource,
   loadResources,
   cachedFetch,
-  loadAssetResource,
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk/runtime";
@@ -66,7 +65,7 @@ const authenticateProductionRequest = (request: Request) => {
   return authenticateRequest(request, authRoutes);
 };
 
-const createCustomFetch = (origin: string): typeof fetch => (input, init) => {
+const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
     return cachedFetch(projectId, input, init);
   }
@@ -97,11 +96,9 @@ const createCustomFetch = (origin: string): typeof fetch => (input, init) => {
   }
 
   if (isLocalResource(input, "assets")) {
-    return loadAssetResource({
-      assets,
-      requestUrl: input,
-      fetchAsset: (url) => cachedFetch(projectId, new URL(url, origin)),
-    }).then(Response.json);
+    const response = new Response(JSON.stringify(assets));
+    response.headers.set("content-type", "application/json; charset=utf-8");
+    return Promise.resolve(response);
   }
 
   return cachedFetch(projectId, input, init);
@@ -127,7 +124,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   };
 
   const resources = await loadResources(
-    createCustomFetch(url.origin),
+    customFetch,
     getResources({ system }).data
   );
   const pageMeta = getPageMeta({ system, resources });

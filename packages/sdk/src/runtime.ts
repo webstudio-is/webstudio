@@ -1,5 +1,4 @@
 export * from "./resource-loader";
-export * from "./asset-resource";
 export * from "./to-string";
 export * from "./form-fields";
 export * from "./json-ld";

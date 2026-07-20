@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach, vi, type Mock } from "vitest";
 
-import { isLocalResource, loadResource } from "./resource-loader";
+import { loadResource } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 
 // Mock the fetch function
@@ -102,29 +102,6 @@ describe("loadResource", () => {
         headers: new Headers(),
       }
     );
-  });
-
-  test("appends search params to local resources", async () => {
-    const fetchResource = vi.fn(async () => Response.json({}));
-
-    await loadResource(fetchResource, {
-      name: "assets",
-      url: "/$resources/assets",
-      searchParams: [{ name: "extension", value: "json,md" }],
-      method: "get",
-      headers: [],
-    });
-
-    expect(fetchResource).toHaveBeenCalledWith(
-      "/$resources/assets?extension=json%2Cmd",
-      expect.any(Object)
-    );
-    expect(
-      isLocalResource("/$resources/assets?extension=json%2Cmd", "assets")
-    ).toBe(true);
-    expect(
-      isLocalResource("https://example.com/$resources/assets", "assets")
-    ).toBe(false);
   });
 
   test("should fetch resource with JSON search params", async () => {

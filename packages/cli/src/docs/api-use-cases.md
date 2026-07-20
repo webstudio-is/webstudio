@@ -111,21 +111,6 @@ MCP lets agents work on one configured Webstudio project. Agents can:
 - Publish, unpublish, inspect publish jobs, and manage custom domains.
 - Start preview, capture screenshots, compare screenshot diffs, and use OCR when installed.
 
-## Query and bind asset data
-
-Commands:
-
-- MCP tool: create-resource {"resource":{"control":"system","name":"Markdown assets","method":"get","url":"/$resources/assets","searchParams":[{"name":"extension","value":{"type":"literal","value":"md"}}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"markdownAssets"}
-- MCP tool: create-resource {"resource":{"control":"system","name":"Site data","method":"get","url":"/$resources/assets","searchParams":[{"name":"filename","value":{"type":"literal","value":"site-data.json"}},{"name":"include","value":{"type":"literal","value":"content"}}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"siteData"}
-
-Notes:
-
-- The Assets system resource returns an object keyed by asset id. Each item includes its URL, filename, description, folder, type, format, size, and timestamps.
-- Filter by a case-insensitive filename substring with `filename`. Filter by one or more extensions with `extension`; separate extensions with commas or repeat the parameter.
-- Asset contents are omitted by default. Set `include=content` to include editable text contents and parse valid JSON contents into structured values.
-- A content query accepts at most 20 matching assets and 256 KiB per asset. Binary and oversized assets include `contentError` instead of content.
-- Bind the resource data or any nested metadata/content field with the existing resource binding controls.
-
 ## Inspect and refresh MCP session cache
 
 Commands:
