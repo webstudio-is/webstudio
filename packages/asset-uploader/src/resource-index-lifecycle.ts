@@ -1,3 +1,4 @@
+import { computeCanonicalAssetRevision } from "@webstudio-is/asset-resource";
 import { getAssetResourceQuery, type Resource } from "@webstudio-is/sdk";
 export { getAssetResourceQuery } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
@@ -62,6 +63,7 @@ export const synchronizeAssetResourceIndexQueries = async ({
   }
   await synchronizeCanonicalAssets({ projectId, client, assetClient });
   const entries = await loadCanonicalAssetFileEntries({ client, projectId });
+  const assetRevision = await computeCanonicalAssetRevision(entries);
   const updatedResourceIds: string[] = [];
   for (const { resourceId, query } of changed) {
     await buildPersistAndActivateAssetResourceIndex({
@@ -71,6 +73,7 @@ export const synchronizeAssetResourceIndexQueries = async ({
       resourceId,
       query,
       entries,
+      assetRevision,
     });
     updatedResourceIds.push(resourceId);
   }

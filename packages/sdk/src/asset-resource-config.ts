@@ -7,6 +7,8 @@ export type AssetQueryParameterBinding = {
   value: string;
 };
 
+export const normalizeAssetQueryParameterName = (name: string) => name.trim();
+
 const getStaticStringLiteral = (expression: string) => {
   try {
     const value = JSON.parse(expression);
@@ -48,7 +50,11 @@ export const createAssetQueryResourceBody = ({
         generateObjectExpression(
           new Map(
             parameters
-              .filter(({ name }) => name.trim().length > 0)
+              .map(({ name, value }) => ({
+                name: normalizeAssetQueryParameterName(name),
+                value,
+              }))
+              .filter(({ name }) => name.length > 0)
               .map(({ name, value }) => [name, value])
           )
         ),

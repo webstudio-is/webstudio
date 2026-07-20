@@ -76,6 +76,24 @@ describe("resource index build", () => {
     await expect(verifyAssetResourceIndex(index)).resolves.toEqual(index);
   });
 
+  test("reuses a canonical revision prepared for a batch", async () => {
+    const entry = createCanonicalAssetFileEntry({
+      projectId: "project-1",
+      document: createDocument("post", {}),
+    });
+    const assetRevision = `sha256:${"a".repeat(64)}`;
+
+    const index = await buildAssetResourceIndex({
+      projectId: "project-1",
+      resourceId: "resource-1",
+      query: "*[]",
+      entries: [entry],
+      assetRevision,
+    });
+
+    expect(index.assetRevision).toBe(assetRevision);
+  });
+
   test("treats all frontmatter fields as schemaless query data", async () => {
     const entries = [
       createCanonicalAssetFileEntry({

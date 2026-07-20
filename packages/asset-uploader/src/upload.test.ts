@@ -744,7 +744,7 @@ describe("createUploadTicket", () => {
 });
 
 describe("uploadFile", () => {
-  test("indexes only the newly uploaded Markdown asset after commit", async () => {
+  test("leaves asset resource maintenance to the committed asset patch", async () => {
     const source = "---\ntitle: New post\n---\nPost body";
     const sourceBytes = new TextEncoder().encode(source);
     let persisted: Record<string, unknown> | undefined;
@@ -815,18 +815,19 @@ describe("uploadFile", () => {
       })
     );
 
+    const storage = {
+      uploadFile: async () => ({
+        format: "md",
+        size: sourceBytes.byteLength,
+        meta: {},
+      }),
+      readFile,
+    };
     await expect(
       uploadFile(
         "post.md",
         new Blob([source]).stream(),
-        {
-          uploadFile: async () => ({
-            format: "md",
-            size: sourceBytes.byteLength,
-            meta: {},
-          }),
-          readFile,
-        },
+        storage,
         createContext(),
         undefined
       )
@@ -835,19 +836,11 @@ describe("uploadFile", () => {
       name: "post.md",
       type: "file",
     });
-    expect(readFile).toHaveBeenCalledOnce();
-    expect(persisted).toMatchObject({
-      projectId: "project-1",
-      assetId: "asset-1",
-      document: {
-        name: "post.md",
-        properties: { title: "New post" },
-        excerpt: "Post body",
-      },
-    });
+    expect(readFile).not.toHaveBeenCalled();
+    expect(persisted).toBeUndefined();
   });
 
-  test("keeps a committed upload when resource synchronization fails", async () => {
+  test("accepts an upload-only storage client", async () => {
     const source = "Post body";
     const uploadedFile = {
       name: "post.md",
@@ -887,8 +880,6 @@ describe("uploadFile", () => {
       }),
       db.get("AssetFolder", () => json([]))
     );
-    const logError = vi.spyOn(console, "error").mockImplementation(() => {});
-
     await expect(
       uploadFile(
         "post.md",
@@ -899,19 +890,11 @@ describe("uploadFile", () => {
             size: source.length,
             meta: {},
           }),
-          readFile: async () => {
-            throw new Error("Storage read failed");
-          },
         },
         createContext(),
         undefined
       )
     ).resolves.toMatchObject({ id: "asset-1", name: "post.md" });
-    expect(logError).toHaveBeenCalledWith(
-      "Uploaded asset resource synchronization failed",
-      expect.any(Error)
-    );
-    logError.mockRestore();
   });
 
   test("returns uploaded asset with reserved asset row id", async () => {
@@ -991,9 +974,6 @@ describe("uploadFile", () => {
             size: 5,
             meta: { width: 10, height: 20 },
           }),
-          readFile: async () => ({
-            data: { async *[Symbol.asyncIterator]() {} },
-          }),
         },
         createContext(),
         undefined
@@ -1045,9 +1025,6 @@ describe("uploadFile", () => {
           uploadFile: async () => {
             throw new Error("Storage upload failed");
           },
-          readFile: async () => ({
-            data: { async *[Symbol.asyncIterator]() {} },
-          }),
         },
         createContext(),
         undefined,
@@ -1136,9 +1113,6 @@ describe("uploadFile", () => {
         new Blob(["orphan"]).stream(),
         {
           uploadFile: async () => ({ format: "txt", size: 6, meta: {} }),
-          readFile: async () => {
-            throw new Error("read should not run");
-          },
         },
         createContext(),
         undefined

@@ -37,6 +37,17 @@ describe("asset query resource configuration", () => {
     );
   });
 
+  test("normalizes parameter names before serialization", () => {
+    const body = createAssetQueryResourceBody({
+      query: "*[properties.slug == $slug]",
+      parameters: [{ name: "  slug  ", value: '"post"' }],
+    });
+
+    expect(parseAssetQueryResourceBody(body).parameters).toEqual([
+      { name: "slug", value: '"post"' },
+    ]);
+  });
+
   test("only recognizes exact system Assets resource contracts", () => {
     expect(isStoredAssetQueryResource(createResource())).toBe(true);
     expect(isAssetsResource(createResource())).toBe(true);

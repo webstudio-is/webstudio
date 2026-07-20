@@ -379,7 +379,7 @@ describe("patchAssets (msw)", () => {
     let localAssetRow = {
       ...assetRow,
       projectId,
-      filename: "post.md",
+      filename: "post",
       folderId: "folder" as string | null,
       file: {
         ...assetRow.file,
