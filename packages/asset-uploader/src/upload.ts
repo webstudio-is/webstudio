@@ -1,4 +1,3 @@
-import * as path from "node:path";
 import {
   type AppContext,
   authorizeProject,
@@ -9,7 +8,7 @@ import { nanoid } from "nanoid";
 import type { Asset } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
-import { getUniqueFilename } from "./utils/get-unique-filename";
+import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 
@@ -54,8 +53,6 @@ export const createUploadTicket = async (
 ): Promise<UploadTicket> => {
   const { projectId, type, filename, description, folderId } = data;
   const sanitizedFilename = sanitizeS3Key(filename);
-  const extension = path.extname(sanitizedFilename);
-  const displayFilename = path.basename(sanitizedFilename, extension);
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -122,7 +119,8 @@ export const createUploadTicket = async (
     attempt += 1
   ) {
     const assetId = createId();
-    const name = getUniqueFilename(sanitizedFilename);
+    const { name, basename: displayFilename } =
+      createUniqueAssetFilename(sanitizedFilename);
 
     const fileInsert = await context.postgrest.client.from("File").insert({
       name,

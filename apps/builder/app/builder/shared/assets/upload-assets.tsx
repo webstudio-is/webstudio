@@ -192,7 +192,7 @@ const createAssetUploadHeaders = (authToken: undefined | string) => {
   return headers;
 };
 
-const uploadAsset = async ({
+const submitAssetUpload = async ({
   authToken,
   uploadName,
   fileOrUrl,
@@ -389,7 +389,7 @@ const processUpload = async (
         continue;
       }
 
-      await uploadAsset({
+      await submitAssetUpload({
         authToken,
         uploadName: fileData.uploadName,
         fileOrUrl:
@@ -506,9 +506,18 @@ export const uploadAssets = async <T extends File | URL>(
   return res;
 };
 
+export const uploadSingleAsset = async (
+  type: AssetType,
+  file: File,
+  options: { folderId?: string } = {}
+): Promise<Asset | undefined> => {
+  const assetId = (await uploadAssets(type, [file], options)).get(file);
+  return assetId === undefined ? undefined : waitForAssetUpload(assetId);
+};
+
 export const __testing__ = {
   createUploadTicket,
   deduplicateAssetName,
   getFilesData,
-  uploadAsset,
+  submitAssetUpload,
 };

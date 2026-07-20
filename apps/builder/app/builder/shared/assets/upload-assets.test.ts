@@ -1,8 +1,12 @@
 import { beforeEach, describe, test, expect, vi } from "vitest";
 import { __testing__ } from "./upload-assets";
 
-const { createUploadTicket, deduplicateAssetName, getFilesData, uploadAsset } =
-  __testing__;
+const {
+  createUploadTicket,
+  deduplicateAssetName,
+  getFilesData,
+  submitAssetUpload,
+} = __testing__;
 const request = vi.fn<typeof fetch>();
 
 describe("upload-assets", () => {
@@ -46,7 +50,7 @@ describe("upload-assets", () => {
     const onCompleted = vi.fn();
     const onError = vi.fn();
 
-    await uploadAsset({
+    await submitAssetUpload({
       authToken: undefined,
       uploadName: "upload-name",
       fileOrUrl: new URL("https://example.com/image.png"),

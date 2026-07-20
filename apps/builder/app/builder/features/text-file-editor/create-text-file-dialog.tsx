@@ -20,10 +20,7 @@ import {
   type Asset,
 } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/sync/data-stores";
-import {
-  uploadAssets,
-  waitForAssetUpload,
-} from "~/builder/shared/assets/upload-assets";
+import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
 
 export const getTextFileNameError = ({
   name,
@@ -67,8 +64,7 @@ export const createTextFile = async ({
   const file = new File([""], name, {
     type: getMimeTypeByExtension(format),
   });
-  const assetId = (await uploadAssets("file", [file], { folderId })).get(file);
-  return assetId === undefined ? undefined : await waitForAssetUpload(assetId);
+  return uploadSingleAsset("file", file, { folderId });
 };
 
 const stopEscapePropagation = (event: KeyboardEvent) => {

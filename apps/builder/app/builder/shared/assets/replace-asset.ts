@@ -4,7 +4,7 @@ import { $assets } from "~/shared/sync/data-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { uploadAssets, waitForAssetUpload } from "./upload-assets";
+import { uploadSingleAsset } from "./upload-assets";
 
 /**
  * Replace an image asset with a new file.
@@ -25,21 +25,19 @@ export const replaceAsset = async (
     return;
   }
 
-  const fileToAssetId = await uploadAssets("image", [file], {
-    folderId: oldAsset.folderId,
-  });
-  const newAssetId = fileToAssetId.get(file);
-
-  if (!newAssetId) {
-    toast.error("Failed to upload replacement asset");
-    return;
-  }
-
+  let newAsset: Asset | undefined;
   try {
-    await waitForAssetUpload(newAssetId);
+    newAsset = await uploadSingleAsset("image", file, {
+      folderId: oldAsset.folderId,
+    });
   } catch {
     return;
   }
+  if (newAsset === undefined) {
+    toast.error("Failed to upload replacement asset");
+    return;
+  }
+  const newAssetId = newAsset.id;
 
   try {
     const result = executeRuntimeMutation({

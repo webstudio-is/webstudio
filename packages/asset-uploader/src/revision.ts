@@ -11,7 +11,7 @@ import {
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
 import { uploadFileData } from "./upload";
-import { getUniqueFilename } from "./utils/get-unique-filename";
+import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
@@ -130,7 +130,7 @@ export const updateAssetContent = async (
     throw new Error("This asset is not an editable text file");
   }
 
-  const revisionName = getUniqueFilename(
+  const { name: revisionName } = createUniqueAssetFilename(
     getRevisionFilename({
       name: currentAsset.name,
       filename: currentAsset.filename,
