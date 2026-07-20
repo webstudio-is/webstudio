@@ -15,17 +15,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test("opens the same file input from its imperative action", () => {
+test("opens the hidden file input from its imperative action", () => {
   $authPermit.set("build");
   const inputClick = vi
     .spyOn(HTMLInputElement.prototype, "click")
     .mockImplementation(() => {});
   const ref = createRef<AssetUploadHandle>();
 
-  renderer.render(<AssetUpload ref={ref} type="file" folderId="folder" />);
+  const container = renderer.render(
+    <AssetUpload ref={ref} type="file" folderId="folder" showTrigger={false} />
+  );
   ref.current?.open();
 
   expect(inputClick).toHaveBeenCalledOnce();
+  expect(container.querySelector("button")).toBeNull();
 });
 
 test("groups upload files by their detected asset type", () => {

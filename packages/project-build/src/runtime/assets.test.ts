@@ -31,7 +31,6 @@ import {
   imageDescriptionsSetInput,
   listAssets,
   formatAssetName,
-  parseAssetName,
   parseAssetType,
   replaceAsset,
   replaceAssetInStyleValueMutable,
@@ -106,46 +105,6 @@ const state = {
 } satisfies BuilderState;
 
 describe("asset name helpers", () => {
-  test("parses name with hash and extension", () => {
-    expect(parseAssetName("hello_hash.ext")).toEqual({
-      basename: "hello",
-      hash: "hash",
-      ext: "ext",
-    });
-  });
-
-  test("parses name without hash", () => {
-    expect(parseAssetName("hello.ext")).toEqual({
-      basename: "hello",
-      hash: "",
-      ext: "ext",
-    });
-  });
-
-  test("parses name with multiple underscores", () => {
-    expect(parseAssetName("hello_hash1.ext_hash2")).toEqual({
-      basename: "hello",
-      hash: "hash1",
-      ext: "ext_hash2",
-    });
-  });
-
-  test("keeps underscores inside the storage id out of the display name", () => {
-    expect(parseAssetName("test_nCEugJxJwUd_MJcgPodZr.md")).toEqual({
-      basename: "test",
-      hash: "nCEugJxJwUd_MJcgPodZr",
-      ext: "md",
-    });
-  });
-
-  test("parses name with hash but no extension", () => {
-    expect(parseAssetName("hello_hash1_hash2")).toEqual({
-      basename: "hello_hash1",
-      hash: "hash2",
-      ext: "",
-    });
-  });
-
   test("formats asset with filename", () => {
     expect(
       formatAssetName({
@@ -170,7 +129,7 @@ describe("asset name helpers", () => {
         name: "uploaded_abc123",
         filename: "document",
       })
-    ).toBe("document.");
+    ).toBe("document");
   });
 });
 

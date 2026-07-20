@@ -17,11 +17,17 @@ import {
   isTextFileAsset,
   type Asset,
 } from "@webstudio-is/sdk";
+import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import { $assets } from "~/shared/sync/data-stores";
-import { uploadAssets } from "~/builder/shared/assets/upload-assets";
-import { waitForAsset } from "~/builder/shared/assets/replace-asset";
+import {
+  uploadAssets,
+  waitForAssetUpload,
+} from "~/builder/shared/assets/upload-assets";
 
-const getFormat = (name: string) => name.split(".").at(-1)?.toLowerCase() ?? "";
+const getFormat = (name: string) => {
+  const extensionAt = name.lastIndexOf(".");
+  return extensionAt > 0 ? name.slice(extensionAt + 1).toLowerCase() : "";
+};
 
 export const getTextFileNameError = ({
   name,
@@ -38,13 +44,13 @@ export const getTextFileNameError = ({
   if (isTextFileAsset({ format: getFormat(name) }) === false) {
     return "Use a supported editable text extension.";
   }
-  const duplicate = Array.from(assets).some(
-    (asset) =>
+  for (const asset of assets) {
+    if (
       asset.folderId === folderId &&
-      (asset.filename ?? asset.name).toLowerCase() === name.toLowerCase()
-  );
-  if (duplicate) {
-    return "A file with this name already exists here.";
+      formatAssetName(asset).toLowerCase() === name.toLowerCase()
+    ) {
+      return "A file with this name already exists here.";
+    }
   }
 };
 
@@ -63,7 +69,7 @@ export const createTextFile = async ({
     type: getMimeTypeByExtension(format),
   });
   const assetId = (await uploadAssets("file", [file], { folderId })).get(file);
-  return assetId === undefined ? undefined : await waitForAsset(assetId);
+  return assetId === undefined ? undefined : await waitForAssetUpload(assetId);
 };
 
 const stopEscapePropagation = (event: KeyboardEvent) => {
@@ -97,6 +103,9 @@ export const CreateTextFileDialog = ({
 
   const normalizedName = name.trim();
   const submit = async () => {
+    if (creating) {
+      return;
+    }
     const validationError = getTextFileNameError({
       name: normalizedName,
       folderId,
@@ -140,6 +149,7 @@ export const CreateTextFileDialog = ({
             <InputField
               id="asset-text-file-name"
               autoFocus
+              disabled={creating}
               value={name}
               color={error === undefined ? undefined : "error"}
               onChange={(event) => {

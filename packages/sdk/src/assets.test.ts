@@ -22,7 +22,50 @@ import {
   doesAssetMatchMimePatterns,
   getAssetTextEditorLanguage,
   isTextFileAsset,
+  parseAssetName,
 } from "./assets";
+
+describe("parseAssetName", () => {
+  test("parses a storage name with an extension", () => {
+    expect(parseAssetName("hello_hash.ext")).toEqual({
+      basename: "hello",
+      hash: "hash",
+      ext: "ext",
+    });
+  });
+
+  test("parses a name without a storage id", () => {
+    expect(parseAssetName("hello.ext")).toEqual({
+      basename: "hello",
+      hash: "",
+      ext: "ext",
+    });
+  });
+
+  test("supports legacy storage ids", () => {
+    expect(parseAssetName("hello_hash1.ext_hash2")).toEqual({
+      basename: "hello",
+      hash: "hash1",
+      ext: "ext_hash2",
+    });
+  });
+
+  test("keeps underscores inside a Nano ID out of the display name", () => {
+    expect(parseAssetName("test_nCEugJxJwUd_MJcgPodZr.md")).toEqual({
+      basename: "test",
+      hash: "nCEugJxJwUd_MJcgPodZr",
+      ext: "md",
+    });
+  });
+
+  test("parses a storage name without an extension", () => {
+    expect(parseAssetName("hello_hash1_hash2")).toEqual({
+      basename: "hello_hash1",
+      hash: "hash2",
+      ext: "",
+    });
+  });
+});
 
 describe("allowed-file-types", () => {
   describe("text editor support", () => {

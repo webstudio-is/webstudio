@@ -563,7 +563,7 @@ export { parseAssetName };
 
 export const formatAssetName = (asset: Pick<Asset, "name" | "filename">) => {
   const { basename, ext } = parseAssetName(asset.name);
-  return `${asset.filename ?? basename}.${ext}`;
+  return `${asset.filename ?? basename}${ext === "" ? "" : `.${ext}`}`;
 };
 
 export const getAssetDisplayFilename = (asset: Asset) =>

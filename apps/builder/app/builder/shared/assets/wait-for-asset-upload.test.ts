@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import { $uploadingFilesDataStore } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
-import { waitForAsset } from "./replace-asset";
+import { waitForAssetUpload } from "./upload-assets";
 
 const asset = {
   id: "replacement",
@@ -20,24 +20,24 @@ beforeEach(() => {
   $uploadingFilesDataStore.set([]);
 });
 
-test("resolves an existing replacement asset", async () => {
+test("resolves an existing asset", async () => {
   $assets.set(new Map([[asset.id, asset]]));
 
-  await expect(waitForAsset(asset.id)).resolves.toBe(asset);
+  await expect(waitForAssetUpload(asset.id)).resolves.toBe(asset);
 });
 
-test("waits for a replacement asset to finish uploading", async () => {
+test("waits for an asset to finish uploading", async () => {
   $uploadingFilesDataStore.set([{ assetId: asset.id } as never]);
-  const result = waitForAsset(asset.id);
+  const result = waitForAssetUpload(asset.id);
 
   $assets.set(new Map([[asset.id, asset]]));
 
   await expect(result).resolves.toBe(asset);
 });
 
-test("rejects when a replacement upload fails", async () => {
+test("rejects when an upload fails", async () => {
   $uploadingFilesDataStore.set([{ assetId: asset.id } as never]);
-  const result = waitForAsset(asset.id);
+  const result = waitForAssetUpload(asset.id);
 
   $uploadingFilesDataStore.set([]);
 

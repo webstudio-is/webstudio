@@ -118,6 +118,39 @@ const deleteUploadingFileData = (id: UploadingFileData["assetId"]) => {
   );
 };
 
+export const waitForAssetUpload = (assetId: string): Promise<Asset> => {
+  const existingAsset = $assets.get().get(assetId);
+  if (existingAsset !== undefined) {
+    return Promise.resolve(existingAsset);
+  }
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      unsubscribeAssets();
+      unsubscribeUploads();
+    };
+    const check = () => {
+      const asset = $assets.get().get(assetId);
+      if (asset !== undefined) {
+        cleanup();
+        resolve(asset);
+        return;
+      }
+
+      const isUploading = $uploadingFilesDataStore
+        .get()
+        .some((fileData) => fileData.assetId === assetId);
+      if (isUploading === false) {
+        cleanup();
+        reject(new Error("Failed to upload asset"));
+      }
+    };
+    const unsubscribeAssets = $assets.listen(check);
+    const unsubscribeUploads = $uploadingFilesDataStore.listen(check);
+    check();
+  });
+};
+
 const getVideoDimensions = async (file: File) => {
   return new Promise<{ width: number; height: number }>((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -332,7 +365,10 @@ const processUpload = async (
     const currentProjectId = $project.get()?.id;
     if (currentProjectId !== projectId) {
       toast.error("Project has been changed, files will not be uploaded");
-      // Can cause data corrupiton
+      for (const fileData of filesData) {
+        URL.revokeObjectURL(fileData.objectURL);
+        deleteUploadingFileData(fileData.assetId);
+      }
       continue;
     }
 

@@ -6,7 +6,6 @@ const existing: Asset = {
   id: "existing",
   projectId: "project",
   name: "readme_hash.md",
-  filename: "Readme.md",
   folderId: "docs",
   type: "file",
   format: "md",
@@ -22,6 +21,9 @@ test("accepts supported text names and rejects invalid or duplicate names", () =
   expect(getTextFileNameError({ name: "image.png", assets: [] })).toBe(
     "Use a supported editable text extension."
   );
+  expect(getTextFileNameError({ name: ".md", assets: [] })).toBe(
+    "Use a supported editable text extension."
+  );
   expect(getTextFileNameError({ name: "bad/name.md", assets: [] })).toBe(
     "Enter a valid file name."
   );
@@ -30,6 +32,16 @@ test("accepts supported text names and rejects invalid or duplicate names", () =
       name: "readme.md",
       folderId: "docs",
       assets: [existing],
+    })
+  ).toBe("A file with this name already exists here.");
+});
+
+test("compares the complete display name after an asset is renamed", () => {
+  expect(
+    getTextFileNameError({
+      name: "guide.md",
+      folderId: "docs",
+      assets: [{ ...existing, filename: "Guide" }],
     })
   ).toBe("A file with this name already exists here.");
 });

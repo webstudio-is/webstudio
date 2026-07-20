@@ -456,19 +456,23 @@ const AssetSettingsContent = ({
         >
           <InputField
             id="asset-manager-filename"
-            aria-describedby="asset-manager-filename-extension"
+            aria-describedby={
+              ext === "" ? undefined : "asset-manager-filename-extension"
+            }
             autoFocus={focusName}
             readOnly={authPermit === "view"}
             color={filenameError ? "error" : undefined}
             value={filename}
             suffix={
-              <Text
-                id="asset-manager-filename-extension"
-                color="subtle"
-                variant="labels"
-              >
-                .{ext}
-              </Text>
+              ext === "" ? undefined : (
+                <Text
+                  id="asset-manager-filename-extension"
+                  color="subtle"
+                  variant="labels"
+                >
+                  .{ext}
+                </Text>
+              )
             }
             onChange={(event) => {
               setFilename(event.target.value);
