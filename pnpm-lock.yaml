@@ -2220,9 +2220,6 @@ importers:
       acorn-walk:
         specifier: ^8.3.4
         version: 8.3.4
-      astring:
-        specifier: ^1.9.0
-        version: 1.9.0
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -6723,10 +6720,6 @@ packages:
 
   astring@1.8.4:
     resolution: {integrity: sha512-97a+l2LBU3Op3bBQEff79i/E4jMD2ZLFD8rHx9B6mXyB2uQwhJQYfiDqUwtfjF4QA1F2qs//N6Cw8LetMbQjcw==}
-    hasBin: true
-
-  astring@1.9.0:
-    resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
   asynckit@0.4.0:
@@ -15560,8 +15553,6 @@ snapshots:
       tslib: 2.8.1
 
   astring@1.8.4: {}
-
-  astring@1.9.0: {}
 
   asynckit@0.4.0: {}
 

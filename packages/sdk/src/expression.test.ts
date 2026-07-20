@@ -5,7 +5,6 @@ import {
   decodeDataVariableId,
   encodeDataVariableId,
   executeExpression,
-  formatExpression,
   isLiteralExpression,
   lintExpression,
   transpileExpression,
@@ -16,41 +15,6 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "./expression";
-
-describe("format expression", () => {
-  test("formats complex expressions", () => {
-    expect(
-      formatExpression(
-        `condition?{title:"Hello",items:[1,2,3]}:{title:"Goodbye",items:[]}`
-      )
-    ).toMatchInlineSnapshot(`
-      "condition ? {
-        title: \"Hello\",
-        items: [1, 2, 3]
-      } : {
-        title: \"Goodbye\",
-        items: []
-      }"
-    `);
-  });
-
-  test("preserves parentheses around object expressions", () => {
-    expect(formatExpression(`({title:"Hello",items:[1,2,3]})`))
-      .toMatchInlineSnapshot(`
-      "({
-        title: \"Hello\",
-        items: [1, 2, 3]
-      })"
-    `);
-  });
-
-  test("leaves invalid and commented expressions unchanged", () => {
-    expect(formatExpression("value +")).toEqual("value +");
-    expect(formatExpression("value /* keep this comment */ + 1")).toEqual(
-      "value /* keep this comment */ + 1"
-    );
-  });
-});
 
 describe("lint expression", () => {
   const error = (from: number, to: number, message: string): Diagnostic => ({

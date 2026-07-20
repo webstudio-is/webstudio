@@ -117,7 +117,7 @@ export const UrlField = ({
           <InfoCircleIcon tabIndex={0} />
         </Tooltip>
       </Label>
-      <input hidden={true} readOnly={true} name="url" value={value} />
+      <input type="hidden" readOnly={true} name="url" value={value} />
       <BindingControl>
         <InputErrorsTooltip errors={error ? [error] : undefined}>
           <TextArea

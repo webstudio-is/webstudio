@@ -73,23 +73,6 @@ export const clampEditorSelection = (
 
 export const normalizeEditorValue = (value: undefined | string) => value ?? "";
 
-export const formatEditorValueForSync = ({
-  value,
-  format,
-  isInitialValue,
-  hasFocus,
-}: {
-  value: string;
-  format: undefined | ((value: string) => string);
-  isInitialValue: boolean;
-  hasFocus: boolean;
-}) => {
-  if (format && (isInitialValue || hasFocus === false)) {
-    return format(value);
-  }
-  return value;
-};
-
 export const getCodeEditorCssVars = ({
   minHeight,
   maxHeight,
@@ -258,29 +241,9 @@ type EditorContentProps = {
   autoFocus?: boolean;
   invalid?: boolean;
   showShortcuts?: boolean;
-  format?: (value: string) => string;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
-};
-
-export const formatEditorValue = (
-  view: EditorView,
-  format: undefined | ((value: string) => string)
-) => {
-  const value = view.state.doc.toString();
-  const formattedValue = format?.(value) ?? value;
-  if (formattedValue === value) {
-    return value;
-  }
-  view.dispatch({
-    changes: {
-      from: 0,
-      to: view.state.doc.length,
-      insert: formattedValue,
-    },
-  });
-  return formattedValue;
 };
 
 export const EditorContent = ({
@@ -290,7 +253,6 @@ export const EditorContent = ({
   autoFocus = false,
   invalid = false,
   showShortcuts = false,
-  format,
   value,
   onChange,
   onChangeComplete,
@@ -299,14 +261,11 @@ export const EditorContent = ({
 
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>(undefined);
-  const hasInitialValueRef = useRef(false);
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const onChangeCompleteRef = useRef(onChangeComplete);
   onChangeCompleteRef.current = onChangeComplete;
-  const formatRef = useRef(format);
-  formatRef.current = format;
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -409,9 +368,7 @@ export const EditorContent = ({
         }),
         EditorView.domEventHandlers({
           blur() {
-            onChangeCompleteRef.current(
-              formatEditorValue(view, formatRef.current)
-            );
+            onChangeCompleteRef.current(view.state.doc.toString());
           },
           cut(event) {
             // prevent catching cut by global copy paste
@@ -430,13 +387,7 @@ export const EditorContent = ({
     if (view === undefined) {
       return;
     }
-    const nextValue = formatEditorValueForSync({
-      value: normalizeEditorValue(value),
-      format: formatRef.current,
-      isInitialValue: hasInitialValueRef.current === false,
-      hasFocus: view.hasFocus,
-    });
-    hasInitialValueRef.current = true;
+    const nextValue = normalizeEditorValue(value);
     // prevent updating when editor has the same state
     // and can be the source of new value
     if (nextValue === view.state.doc.toString()) {

@@ -29,7 +29,6 @@ import { javascript } from "@codemirror/lang-javascript";
 import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
 import {
   decodeDataVariableId,
-  formatExpression,
   lintExpression,
   allowedStringMethods,
   allowedArrayMethods,
@@ -669,7 +668,6 @@ export const ExpressionEditor = ({
       invalid={color === "error"}
       readOnly={readOnly}
       autoFocus={autoFocus}
-      format={formatExpression}
       value={expressionWithUnsetVariables}
       onChange={(newValue: string) => {
         const expressionWithRestoredVariables = restoreExpressionVariables({
