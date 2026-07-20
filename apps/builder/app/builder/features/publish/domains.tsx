@@ -77,8 +77,8 @@ export const getPublishStatusAndText = ({
     status === "PUBLISHED"
       ? "Published"
       : status === "FAILED"
-      ? "Publish failed"
-      : "Publishing started";
+        ? "Publish failed"
+        : "Publishing started";
 
   const statusText = (
     <>
@@ -327,8 +327,8 @@ const DomainItem = ({
               isStatusLoading
                 ? "pending"
                 : isVerifiedActive
-                ? "success"
-                : "error"
+                  ? "success"
+                  : "error"
             }
           />
 

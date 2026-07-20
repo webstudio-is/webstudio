@@ -205,7 +205,7 @@ const projectQuery = <Schema extends z.ZodType<{ projectId: string }>, Result>(
 
 const projectMutation = <
   Schema extends z.ZodType<{ projectId: string }>,
-  Result
+  Result,
 >(
   input: Schema,
   permit: ProjectApiCapability,
@@ -325,7 +325,7 @@ type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
 ) => Promise<{ version: number } & CommitResult>;
 
 const commitRuntimeMutation = async <
-  Result extends Record<string, unknown> = Record<string, unknown>
+  Result extends Record<string, unknown> = Record<string, unknown>,
 >({
   id,
   build,
@@ -393,7 +393,7 @@ const assertContentOrBuildPayload = ({
 
 const contentOrBuildMutation = <
   Schema extends z.ZodType<{ projectId: string }>,
-  Result
+  Result,
 >(
   input: Schema,
   handler: (args: {
@@ -435,7 +435,7 @@ const contentOrBuildMutation = <
     });
 
 const runtimeContentOrBuildMutation = <
-  Result extends Record<string, unknown> = {}
+  Result extends Record<string, unknown> = {},
 >(
   id: RuntimeOperationId,
   requiresConfirm: boolean

@@ -245,9 +245,9 @@ export const listProjectPublishes = async (
                   attempt.status === "SUCCEEDED"
                     ? "ready"
                     : attempt.status === "FAILED" ||
-                      attempt.status === "BLOCKED"
-                    ? "failed"
-                    : "pending",
+                        attempt.status === "BLOCKED"
+                      ? "failed"
+                      : "pending",
               }
             : undefined,
         createdAt: attempt.createdAt,
@@ -284,14 +284,14 @@ export const listProjectPublishes = async (
             build.publishStatus === "FAILED"
               ? "failed"
               : build.publishStatus === "PENDING"
-              ? "building"
-              : "succeeded",
+                ? "building"
+                : "succeeded",
           summary:
             build.publishStatus === "FAILED"
               ? "Publish failed"
               : build.publishStatus === "PENDING"
-              ? "Publish in progress"
-              : "Published successfully",
+                ? "Publish in progress"
+                : "Published successfully",
           auditErrorCount: 0,
           auditWarningCount: 0,
           diagnosticErrors: 0,
@@ -338,8 +338,8 @@ export const getProjectPublishJob = async (
                 attempt.status === "SUCCEEDED"
                   ? "ready"
                   : attempt.status === "FAILED" || attempt.status === "BLOCKED"
-                  ? "failed"
-                  : "pending",
+                    ? "failed"
+                    : "pending",
             }
           : undefined,
       createdAt: attempt.createdAt,
@@ -369,10 +369,10 @@ export const getProjectPublishJob = async (
       deployment === undefined
         ? "removed"
         : publishJob.publishStatus === "FAILED"
-        ? "failed"
-        : publishJob.publishStatus === "PENDING"
-        ? "building"
-        : "succeeded",
+          ? "failed"
+          : publishJob.publishStatus === "PENDING"
+            ? "building"
+            : "succeeded",
     domains:
       deployment !== undefined && deployment.destination !== "static"
         ? deployment.domains
