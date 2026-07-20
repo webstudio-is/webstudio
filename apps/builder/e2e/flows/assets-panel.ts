@@ -17,6 +17,13 @@ const getAssetTitleLocator = ({
   return page.locator(`[title^="${name}"]`).first();
 };
 
+const getAssetsPanel = (page: Page) =>
+  page.getByRole("tabpanel", { name: "Assets" });
+
+const openAddAssetMenu = async (page: Page) => {
+  await getAssetsPanel(page).getByRole("button", { name: "Add asset" }).click();
+};
+
 export const openAssetsPanel = async ({
   page,
   force = false,
@@ -25,9 +32,8 @@ export const openAssetsPanel = async ({
   force?: boolean;
 }) => {
   await page.getByRole("tab", { name: "Assets" }).click({ force });
-  await page
-    .getByRole("tabpanel", { name: "Assets" })
-    .getByRole("button", { name: "Upload asset" })
+  await getAssetsPanel(page)
+    .getByRole("button", { name: "Add asset" })
     .waitFor();
 };
 
@@ -38,7 +44,8 @@ export const createAssetFolder = async ({
   page: Page;
   name: string;
 }) => {
-  await page.getByRole("button", { name: "Create asset folder" }).click();
+  await openAddAssetMenu(page);
+  await page.getByRole("menuitem", { name: "Create folder" }).click();
   const dialog = page.getByRole("dialog", { name: "New folder" });
   await dialog.getByLabel("Folder", { exact: true }).fill(name);
   await Promise.all([
@@ -83,7 +90,8 @@ export const uploadAsset = async ({
   filename: string;
 }) => {
   const fileChooserPromise = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "Upload asset" }).click();
+  await openAddAssetMenu(page);
+  await page.getByRole("menuitem", { name: "Upload", exact: true }).click();
   const fileChooser = await fileChooserPromise;
   const save = waitForChangeToBeSaved({ page });
   await fileChooser.setFiles(assetFixturePath(filename));
