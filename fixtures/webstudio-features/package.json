@@ -32,7 +32,8 @@
     "vite": "^6.3.4",
     "webstudio": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
-    "@react-router/serve": "^7.5.3"
+    "@react-router/serve": "^7.5.3",
+    "@webstudio-is/asset-resource": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",

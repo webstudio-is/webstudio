@@ -528,6 +528,9 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -598,6 +601,9 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -674,6 +680,9 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -744,6 +753,9 @@ importers:
       '@vercel/react-router':
         specifier: ^1.1.0
         version: 1.1.0(@react-router/dev@7.5.3(@react-router/serve@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@4.14.1)(yaml@2.9.0))(@react-router/node@7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2))(isbot@5.1.25)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -799,6 +811,9 @@ importers:
 
   fixtures/ssg-cloudflare-pages:
     dependencies:
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -854,6 +869,9 @@ importers:
 
   fixtures/ssg-netlify-by-project-id:
     dependencies:
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -924,6 +942,9 @@ importers:
       '@remix-run/server-runtime':
         specifier: 2.16.5
         version: 2.16.5(typescript@7.0.2)
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -1009,6 +1030,9 @@ importers:
       '@react-router/serve':
         specifier: ^7.5.3
         version: 7.5.3(react-router@7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@7.0.2)
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image

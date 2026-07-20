@@ -30,7 +30,8 @@
     "react-router": "^7.5.3",
     "vite": "^6.3.4",
     "webstudio": "workspace:*",
-    "@webstudio-is/wsauth": "workspace:*"
+    "@webstudio-is/wsauth": "workspace:*",
+    "@webstudio-is/asset-resource": "workspace:*"
   },
   "private": true,
   "sideEffects": false,

@@ -68,9 +68,7 @@ describe("asset resource candidate selection", () => {
 
   test("does not split a parameter-dependent disjunction", async () => {
     const selection = await selectAssetResourceCandidates({
-      tree: parse(
-        `*[properties.locale == "en" || properties.slug == $slug]`
-      ),
+      tree: parse(`*[properties.locale == "en" || properties.slug == $slug]`),
       documents,
     });
 
