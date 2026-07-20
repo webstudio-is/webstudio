@@ -13,21 +13,17 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import {
+  formatAssetName,
+  getFileExtension,
   getMimeTypeByExtension,
   isTextFileAsset,
   type Asset,
 } from "@webstudio-is/sdk";
-import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import { $assets } from "~/shared/sync/data-stores";
 import {
   uploadAssets,
   waitForAssetUpload,
 } from "~/builder/shared/assets/upload-assets";
-
-const getFormat = (name: string) => {
-  const extensionAt = name.lastIndexOf(".");
-  return extensionAt > 0 ? name.slice(extensionAt + 1).toLowerCase() : "";
-};
 
 export const getTextFileNameError = ({
   name,
@@ -41,7 +37,10 @@ export const getTextFileNameError = ({
   if (isValidFilename(name) === false) {
     return "Enter a valid file name.";
   }
-  if (isTextFileAsset({ format: getFormat(name) }) === false) {
+  if (
+    isTextFileAsset({ format: getFileExtension(name)?.toLowerCase() ?? "" }) ===
+    false
+  ) {
     return "Use a supported editable text extension.";
   }
   for (const asset of assets) {
@@ -61,7 +60,7 @@ export const createTextFile = async ({
   name: string;
   folderId?: string;
 }): Promise<Asset | undefined> => {
-  const format = getFormat(name);
+  const format = getFileExtension(name)?.toLowerCase() ?? "";
   if (isTextFileAsset({ format }) === false) {
     return;
   }

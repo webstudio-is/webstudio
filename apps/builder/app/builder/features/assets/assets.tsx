@@ -36,6 +36,11 @@ export const AssetsPanel = ({
   const [openedTextAssetId, setOpenedTextAssetId] = useState<string>();
   const uploadRef = useRef<AssetUploadHandle>(null);
   const authPermit = useStore($authPermit);
+  const addActions = {
+    upload: () => uploadRef.current?.open(),
+    createFile: () => setCreateTextFileOpen(true),
+    createFolder: () => setCreateFolderOpen(true),
+  };
   const openAsset = (assetId: string) => {
     const asset = $assets.get().get(assetId);
     if (asset === undefined) {
@@ -83,13 +88,13 @@ export const AssetsPanel = ({
                 </DropdownMenuTrigger>
               </Tooltip>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => uploadRef.current?.open()}>
+                <DropdownMenuItem onSelect={addActions.upload}>
                   Upload
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setCreateTextFileOpen(true)}>
+                <DropdownMenuItem onSelect={addActions.createFile}>
                   Create text file
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setCreateFolderOpen(true)}>
+                <DropdownMenuItem onSelect={addActions.createFolder}>
                   Create folder
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -106,13 +111,7 @@ export const AssetsPanel = ({
         onOpen={openAsset}
         canManageFolders={authPermit !== "view"}
         panelActions={{
-          ...(authPermit === "view"
-            ? {}
-            : {
-                createFolder: () => setCreateFolderOpen(true),
-                createFile: () => setCreateTextFileOpen(true),
-                upload: () => uploadRef.current?.open(),
-              }),
+          ...(authPermit === "view" ? {} : addActions),
           deleteUnusedAssets: openDeleteUnusedAssetsDialog,
         }}
       />

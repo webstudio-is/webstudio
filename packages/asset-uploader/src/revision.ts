@@ -1,4 +1,8 @@
-import { isTextFileAsset, parseAssetName, type Asset } from "@webstudio-is/sdk";
+import {
+  formatAssetName,
+  isTextFileAsset,
+  type Asset,
+} from "@webstudio-is/sdk";
 import {
   authorizeProject,
   AuthorizationError,
@@ -21,9 +25,7 @@ const getRevisionFilename = ({
   name: string;
   filename: string | null;
 }) => {
-  const { basename, ext } = parseAssetName(name);
-  const displayBasename = filename ?? basename;
-  return sanitizeS3Key(`${displayBasename}${ext === "" ? "" : `.${ext}`}`);
+  return sanitizeS3Key(formatAssetName({ name, filename }));
 };
 
 export const swapAssetFileWithClient = async (

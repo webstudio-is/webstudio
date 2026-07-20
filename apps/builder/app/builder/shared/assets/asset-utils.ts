@@ -7,6 +7,7 @@ import type {
 import { nanoid } from "nanoid";
 import {
   getMimeTypeByExtension,
+  getFileExtension,
   IMAGE_EXTENSIONS,
   detectAssetType,
   getAssetUrl,
@@ -16,8 +17,7 @@ import type { UploadingFileData } from "~/shared/nano-states";
 export { detectAssetType, getAssetUrl };
 
 export const getImageNameAndType = (fileName: string) => {
-  // Extract extension from filename
-  const extractedExt = fileName.split(".").pop()?.toLowerCase();
+  const extractedExt = getFileExtension(fileName)?.toLowerCase();
 
   if (!extractedExt) {
     return;

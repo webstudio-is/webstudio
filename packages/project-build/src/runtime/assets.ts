@@ -7,6 +7,8 @@ import {
   getAllPages,
   getStyleDeclKey,
   isAllowedMimeCategory,
+  formatAssetName,
+  getAssetDisplayNameParts,
   parseAssetName,
   type Asset,
   type DataSource,
@@ -559,15 +561,10 @@ export const findAsset = (assets: Iterable<Asset>, assetId: Asset["id"]) => {
   }
 };
 
-export { parseAssetName };
-
-export const formatAssetName = (asset: Pick<Asset, "name" | "filename">) => {
-  const { basename, ext } = parseAssetName(asset.name);
-  return `${asset.filename ?? basename}${ext === "" ? "" : `.${ext}`}`;
-};
+export { formatAssetName, getAssetDisplayNameParts, parseAssetName };
 
 export const getAssetDisplayFilename = (asset: Asset) =>
-  asset.filename ?? asset.name.replace(/\.[^/.]+$/, "");
+  getAssetDisplayNameParts(asset).basename;
 
 const assertAssetFolderExists = (
   assetFolders: BuilderState["assetFolders"],

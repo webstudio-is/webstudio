@@ -10,7 +10,7 @@ import { Image } from "./image";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import {
   formatAssetName,
-  parseAssetName,
+  getAssetDisplayNameParts,
 } from "@webstudio-is/project-build/runtime";
 import type { IconComponent } from "@webstudio-is/icons";
 import type { AllowedFileExtension } from "@webstudio-is/sdk";
@@ -150,7 +150,7 @@ export const AssetThumbnail = ({
   const { canDownloadAssets } = useStore($permissions);
   const { asset } = assetContainer;
   const getDragItems = interactions.getDragItems;
-  const { basename, ext } = parseAssetName(asset.name);
+  const { basename, ext } = getAssetDisplayNameParts(asset);
   const alt = asset.description ?? formatAssetName(asset);
   const isUploading = assetContainer.status === "uploading";
   const assetType = detectAssetType(asset.name);
@@ -269,8 +269,8 @@ export const AssetThumbnail = ({
             <GenericFilePreview ext={ext} format={asset.format} />
           )
         }
-        label={asset.filename ?? basename}
-        labelSuffix={`.${ext}`}
+        label={basename}
+        labelSuffix={ext === "" ? undefined : `.${ext}`}
         path={folderPath}
         onPreviewClick={() => onChange?.(assetContainer)}
         onDoubleClick={onOpen}

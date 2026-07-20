@@ -30,7 +30,6 @@ import {
   getBrowserAssetFormat,
   imageDescriptionsSetInput,
   listAssets,
-  formatAssetName,
   parseAssetType,
   replaceAsset,
   replaceAssetInStyleValueMutable,
@@ -103,35 +102,6 @@ const state = {
   resources: new Map(),
   dataSources: new Map(),
 } satisfies BuilderState;
-
-describe("asset name helpers", () => {
-  test("formats asset with filename", () => {
-    expect(
-      formatAssetName({
-        name: "uploaded_abc123.jpg",
-        filename: "myimage",
-      })
-    ).toBe("myimage.jpg");
-  });
-
-  test("formats asset without filename", () => {
-    expect(
-      formatAssetName({
-        name: "uploaded_abc123.jpg",
-        filename: undefined,
-      })
-    ).toBe("uploaded.jpg");
-  });
-
-  test("formats asset with no extension", () => {
-    expect(
-      formatAssetName({
-        name: "uploaded_abc123",
-        filename: "document",
-      })
-    ).toBe("document");
-  });
-});
 
 describe("asset upload helpers", () => {
   test("preserves browser asset format detection", () => {

@@ -21,9 +21,25 @@ import {
   getAssetMime,
   doesAssetMatchMimePatterns,
   getAssetTextEditorLanguage,
+  formatAssetName,
+  getFileExtension,
   isTextFileAsset,
   parseAssetName,
 } from "./assets";
+
+describe("getFileExtension", () => {
+  test.each([
+    ["file.md", "md"],
+    ["FILE.MD", "MD"],
+    ["archive.tar.gz", "gz"],
+    ["/folder.with-dot/file.md", "md"],
+    [".md", undefined],
+    ["file.", undefined],
+    ["file", undefined],
+  ])("extracts the extension from %s", (fileName, expected) => {
+    expect(getFileExtension(fileName)).toBe(expected);
+  });
+});
 
 describe("parseAssetName", () => {
   test("parses a storage name with an extension", () => {
@@ -64,6 +80,32 @@ describe("parseAssetName", () => {
       hash: "hash2",
       ext: "",
     });
+  });
+});
+
+describe("formatAssetName", () => {
+  test("uses a persisted display basename", () => {
+    expect(
+      formatAssetName({
+        name: "uploaded_abc123.jpg",
+        filename: "myimage",
+      })
+    ).toBe("myimage.jpg");
+  });
+
+  test("derives the display basename for a legacy asset", () => {
+    expect(formatAssetName({ name: "uploaded_abc123.jpg" })).toBe(
+      "uploaded.jpg"
+    );
+  });
+
+  test("does not append a dot without an extension", () => {
+    expect(
+      formatAssetName({
+        name: "uploaded_abc123",
+        filename: "document",
+      })
+    ).toBe("document");
   });
 });
 
@@ -217,7 +259,7 @@ describe("allowed-file-types", () => {
 
     test("throws error for files without extension", () => {
       expect(() => validateFileName("filename")).toThrow(
-        'File type "filename" is not allowed'
+        "File must have an extension"
       );
       // Empty string results in no extension either
       expect(() => validateFileName("file.")).toThrow(

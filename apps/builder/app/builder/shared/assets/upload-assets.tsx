@@ -1,6 +1,6 @@
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
-import type { Asset } from "@webstudio-is/sdk";
+import { getFileExtension, type Asset } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
@@ -173,10 +173,11 @@ const deduplicateAssetName = (name: string, existingNames: Set<string>) => {
   // eslint-disable-next-line no-constant-condition
   for (let index = 0; true; index += 1) {
     const suffix = index === 0 ? "" : `_${index}`;
-    const lastDotAt = name.lastIndexOf(".");
-    const basename = lastDotAt === -1 ? name : name.slice(0, lastDotAt);
-    const ext = lastDotAt === -1 ? "" : name.slice(lastDotAt);
-    const nameWithSuffix = basename + suffix + ext;
+    const extension = getFileExtension(name);
+    const extensionWithDot =
+      extension === undefined ? "" : name.slice(-extension.length - 1);
+    const basename = name.slice(0, name.length - extensionWithDot.length);
+    const nameWithSuffix = basename + suffix + extensionWithDot;
     if (!existingNames.has(nameWithSuffix)) {
       return nameWithSuffix;
     }
@@ -197,12 +198,14 @@ const uploadAsset = async ({
   fileOrUrl,
   onCompleted,
   onError,
+  request = fetch,
 }: {
   authToken: undefined | string;
   uploadName: string;
   fileOrUrl: File | URL;
   onCompleted: (data: AssetActionResponse) => void;
   onError: (error: string) => void;
+  request?: typeof fetch;
 }) => {
   try {
     const mimeType = getMimeType(fileOrUrl);
@@ -228,7 +231,7 @@ const uploadAsset = async ({
       height = videoSize.height;
     }
 
-    const uploadResponse = await fetch(
+    const uploadResponse = await request(
       restAssetsUploadPath({ name: uploadName, width, height }),
       {
         method: "POST",
@@ -259,11 +262,13 @@ const createUploadTicket = async ({
   projectId,
   fileOrUrl,
   assetType,
+  request = fetch,
 }: {
   authToken: undefined | string;
   projectId: string;
   fileOrUrl: File | URL;
   assetType: AssetType;
+  request?: typeof fetch;
 }): Promise<UploadTicket> => {
   const fileName = getFileName(fileOrUrl);
   const metaFormData = new FormData();
@@ -282,7 +287,7 @@ const createUploadTicket = async ({
 
   const authHeaders = createAssetUploadHeaders(authToken);
 
-  const metaResponse = await fetch(restAssetsPath(), {
+  const metaResponse = await request(restAssetsPath(), {
     method: "POST",
     body: metaFormData,
     headers: authHeaders,

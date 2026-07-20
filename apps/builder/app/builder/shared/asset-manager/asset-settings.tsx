@@ -70,7 +70,7 @@ import {
 } from "~/shared/sync/data-stores";
 import {
   formatAssetName,
-  parseAssetName,
+  getAssetDisplayNameParts,
 } from "@webstudio-is/project-build/runtime";
 import { AssetFolderSelector } from "./asset-folder-selector";
 import { moveAssetManagerItems } from "./asset-manager-operations";
@@ -313,38 +313,34 @@ const AssetSettingsContent = ({
   focusName: boolean;
 }) => {
   const { canDownloadAssets } = useStore($permissions);
-  const { size, meta, id, name } = asset;
-  const { basename, ext } = parseAssetName(name);
+  const { size, meta, id } = asset;
+  const { basename, ext } = getAssetDisplayNameParts(asset);
   const [filenameError, setFilenameError] = useState<string>();
-  const [filename, setFilename] = useLocalValue(
-    asset.filename ?? basename,
-    (newFilename) => {
-      const assetId = asset.id;
-      // validate filename
-      if (!isValidFilename(newFilename)) {
-        setFilenameError("Invalid filename");
-        return;
-      }
-      // validate duplicates
-      for (const asset of $assets.get().values()) {
-        if (asset.id !== assetId) {
-          const filename =
-            asset.filename ?? parseAssetName(asset.name).basename;
-          if (newFilename === filename) {
-            setFilenameError("Filename already used");
-            return;
-          }
+  const [filename, setFilename] = useLocalValue(basename, (newFilename) => {
+    const assetId = asset.id;
+    // validate filename
+    if (!isValidFilename(newFilename)) {
+      setFilenameError("Invalid filename");
+      return;
+    }
+    // validate duplicates
+    for (const asset of $assets.get().values()) {
+      if (asset.id !== assetId) {
+        const { basename: filename } = getAssetDisplayNameParts(asset);
+        if (newFilename === filename) {
+          setFilenameError("Filename already used");
+          return;
         }
       }
-      executeRuntimeMutation({
-        id: "assets.update",
-        input: {
-          assetId,
-          values: { filename: newFilename },
-        },
-      });
     }
-  );
+    executeRuntimeMutation({
+      id: "assets.update",
+      input: {
+        assetId,
+        values: { filename: newFilename },
+      },
+    });
+  });
   const [description, setDescription] = useLocalValue(
     asset.description ?? "",
     (newDescription) => {
