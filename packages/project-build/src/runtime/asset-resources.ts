@@ -2,9 +2,11 @@ import {
   assetResourceContentOptions,
   assetResourceLimits,
   assetResourceQueryRequest,
+  createAssetQueryResourceBody,
   decodeDataSourceVariable,
-  generateObjectExpression,
-  parseObjectExpression,
+  isAssetsResource as isSdkAssetsResource,
+  isStoredAssetQueryResource,
+  parseAssetQueryResourceBody,
   SYSTEM_VARIABLE_ID,
   transpileExpression,
   type Resource,
@@ -23,7 +25,6 @@ import {
 } from "./data";
 import { throwBuilderRuntimeError } from "./errors";
 import { paginateOutput, paginatedOutputInputSchema } from "./output";
-import { getStaticStringLiteral } from "./text-replacement";
 
 const parameterName = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
 
@@ -125,24 +126,15 @@ export const createAssetResourceBody = ({
   resultLimit,
   content,
 }: AssetResourceConfiguration) =>
-  generateObjectExpression(
-    new Map([
-      ["query", JSON.stringify(query)],
-      [
-        "parameters",
-        generateObjectExpression(
-          new Map(
-            parameters.map(({ name, value }) => [
-              name,
-              normalizeExpression(value),
-            ])
-          )
-        ),
-      ],
-      ["resultLimit", JSON.stringify(resultLimit)],
-      ["content", JSON.stringify(content)],
-    ])
-  );
+  createAssetQueryResourceBody({
+    query,
+    parameters: parameters.map(({ name, value }) => ({
+      name,
+      value: normalizeExpression(value),
+    })),
+    resultLimit,
+    contentExpression: JSON.stringify(content),
+  });
 
 const parseJsonExpression = (expression: string | undefined) => {
   if (expression === undefined) {
@@ -155,16 +147,8 @@ const parseJsonExpression = (expression: string | undefined) => {
   }
 };
 
-const isStoredAssetQueryResource = (resource: Resource) =>
-  resource.control === "system" &&
-  resource.method === "post" &&
-  getStaticStringLiteral(resource.url) === assetsQueryResourceUrl;
-
 export const isAssetsResource = (resource: Resource) =>
-  isStoredAssetQueryResource(resource) ||
-  (resource.control === "system" &&
-    resource.method === "get" &&
-    getStaticStringLiteral(resource.url) === assetsResourceUrl);
+  isSdkAssetsResource(resource);
 
 export const parseAssetResourceConfiguration = (
   resource: Resource
@@ -172,16 +156,12 @@ export const parseAssetResourceConfiguration = (
   if (isStoredAssetQueryResource(resource) === false) {
     return;
   }
-  const fields = parseObjectExpression(resource.body ?? "");
-  const parameterFields = parseObjectExpression(fields.get("parameters") ?? "");
+  const fields = parseAssetQueryResourceBody(resource.body);
   const parsed = storedAssetQueryConfigurationInput.safeParse({
-    query: parseJsonExpression(fields.get("query")),
-    parameters: Array.from(parameterFields, ([name, value]) => ({
-      name,
-      value,
-    })),
-    resultLimit: parseJsonExpression(fields.get("resultLimit")),
-    content: parseJsonExpression(fields.get("content")),
+    query: parseJsonExpression(fields.queryExpression),
+    parameters: fields.parameters,
+    resultLimit: parseJsonExpression(fields.resultLimitExpression),
+    content: parseJsonExpression(fields.contentExpression),
   });
   if (parsed.success === false) {
     return;

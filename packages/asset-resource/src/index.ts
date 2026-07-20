@@ -10,6 +10,10 @@ import {
 } from "@webstudio-is/sdk";
 import { assetsQueryResourceUrl } from "@webstudio-is/sdk/runtime";
 import { validateAssetResourceQuery } from "./query-validation";
+import {
+  hydrateAssetResourceResult,
+  type AssetResourceContentReader,
+} from "./hydration";
 
 export * from "./markdown";
 export * from "./canonical";
@@ -52,7 +56,6 @@ const evaluateAssetResourceQuery = async ({
 export class AssetResourceQueryExecutionError extends Error {
   readonly code:
     | "MISSING_PARAMETER"
-    | "QUERY_TIMEOUT"
     | "RESULT_LIMIT_EXCEEDED"
     | "RESULT_SIZE_EXCEEDED";
   readonly details?: Record<string, number | string>;
@@ -86,14 +89,12 @@ export const executeAssetResourceQuery = async ({
   queryHash,
   indexRevision,
   assetRevision,
-  now = Date.now,
 }: {
   request: AssetResourceQueryRequest;
   documents: readonly AssetFileDocument[];
   queryHash: string;
   indexRevision: string;
   assetRevision: string;
-  now?: () => number;
 }) => {
   const validated = validateAssetResourceQuery(request.query);
   for (const parameterName of validated.parameterNames) {
@@ -116,24 +117,11 @@ export const executeAssetResourceQuery = async ({
     });
   }
 
-  const startedAt = now();
   const rawResult = await evaluateAssetResourceQuery({
     tree: validated.tree,
     documents,
     parameters: request.parameters,
   });
-  const elapsedMs = now() - startedAt;
-  if (elapsedMs > assetResourceLimits.queryRuntimeMs) {
-    throw new AssetResourceQueryExecutionError({
-      code: "QUERY_TIMEOUT",
-      message: "Asset resource query exceeded the runtime limit",
-      details: {
-        elapsedMs,
-        runtimeLimitMs: assetResourceLimits.queryRuntimeMs,
-      },
-    });
-  }
-
   const result = rawResult ?? null;
   const resultCount = getResultCount(result);
   if (resultCount > request.resultLimit) {
@@ -168,4 +156,34 @@ export const executeAssetResourceQuery = async ({
       hydratedBytes: 0,
     },
   });
+};
+
+export const executeAndHydrateAssetResourceQuery = async ({
+  read,
+  ...input
+}: Parameters<typeof executeAssetResourceQuery>[0] & {
+  read?: AssetResourceContentReader;
+}) => {
+  const response = await executeAssetResourceQuery(input);
+  if (input.request.content.mode === "none") {
+    return response;
+  }
+  if (read === undefined) {
+    throw new Error("Asset content reader is required for hydration");
+  }
+  const hydration = await hydrateAssetResourceResult({
+    result: response.result,
+    documents: input.documents,
+    options: input.request.content,
+    read,
+  });
+  return {
+    ...response,
+    content: hydration.content,
+    meta: {
+      ...response.meta,
+      hydratedFileCount: hydration.hydratedFileCount,
+      hydratedBytes: hydration.hydratedBytes,
+    },
+  };
 };

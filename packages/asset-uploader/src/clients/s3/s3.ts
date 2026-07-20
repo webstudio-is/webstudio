@@ -6,7 +6,10 @@ import type {
 } from "../../client";
 import { uploadToS3 } from "./upload";
 import { readFromS3 } from "./read";
-import { putImmutableObjectToS3 } from "./immutable-object";
+import {
+  deleteImmutableObjectFromS3,
+  putImmutableObjectToS3,
+} from "./immutable-object";
 
 type S3ClientOptions = {
   endpoint: string;
@@ -62,6 +65,13 @@ export const createS3Client = (
           endpoint: options.endpoint,
           bucket: options.bucket,
           object,
+        }),
+      delete: (key) =>
+        deleteImmutableObjectFromS3({
+          signer,
+          endpoint: options.endpoint,
+          bucket: options.bucket,
+          key,
         }),
     },
     uploadFile,

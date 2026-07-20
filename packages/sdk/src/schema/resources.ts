@@ -40,6 +40,7 @@ export type Resource = z.infer<typeof resource>;
 
 // evaluated variant of resource
 export const resourceRequest = z.object({
+  resourceId: z.string().optional(),
   name: z.string(),
   control: z.optional(z.union([z.literal("system"), z.literal("graphql")])),
   method: method,

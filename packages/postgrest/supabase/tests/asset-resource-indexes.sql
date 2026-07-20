@@ -198,14 +198,32 @@ SELECT is(
 );
 
 SELECT is(
-  finalize_asset_resource_index_garbage(
-    (SELECT "projectId" FROM claimed_resource_index_garbage),
-    (SELECT "resourceId" FROM claimed_resource_index_garbage),
-    (SELECT revision FROM claimed_resource_index_garbage),
-    (SELECT "gcClaimId" FROM claimed_resource_index_garbage)
+  (
+    SELECT count(*)::INTEGER
+    FROM claim_asset_resource_index_garbage('2100-01-01', 10)
   ),
-  TRUE,
-  'The matching garbage claim finalizes revision cleanup'
+  0,
+  'A fresh garbage claim cannot be claimed by another worker'
+);
+
+UPDATE "AssetResourceIndexRevision"
+SET "gcStartedAt" = CURRENT_TIMESTAMP - INTERVAL '16 minutes'
+WHERE "projectId" = 'resource-index-test-project'
+  AND "resourceId" = 'posts';
+
+CREATE TEMP TABLE reclaimed_resource_index_garbage AS
+SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10);
+
+SELECT is(
+  (SELECT count(*)::INTEGER FROM reclaimed_resource_index_garbage),
+  1,
+  'An expired garbage claim is reclaimed after its lease'
+);
+
+SELECT isnt(
+  (SELECT "gcClaimId" FROM reclaimed_resource_index_garbage),
+  (SELECT "gcClaimId" FROM claimed_resource_index_garbage),
+  'Reclaiming an expired garbage claim rotates its claim id'
 );
 
 SELECT is(
@@ -214,6 +232,28 @@ SELECT is(
     (SELECT "resourceId" FROM claimed_resource_index_garbage),
     (SELECT revision FROM claimed_resource_index_garbage),
     (SELECT "gcClaimId" FROM claimed_resource_index_garbage)
+  ),
+  FALSE,
+  'An expired claim cannot finalize after another worker reclaims it'
+);
+
+SELECT is(
+  finalize_asset_resource_index_garbage(
+    (SELECT "projectId" FROM reclaimed_resource_index_garbage),
+    (SELECT "resourceId" FROM reclaimed_resource_index_garbage),
+    (SELECT revision FROM reclaimed_resource_index_garbage),
+    (SELECT "gcClaimId" FROM reclaimed_resource_index_garbage)
+  ),
+  TRUE,
+  'The matching garbage claim finalizes revision cleanup'
+);
+
+SELECT is(
+  finalize_asset_resource_index_garbage(
+    (SELECT "projectId" FROM reclaimed_resource_index_garbage),
+    (SELECT "resourceId" FROM reclaimed_resource_index_garbage),
+    (SELECT revision FROM reclaimed_resource_index_garbage),
+    (SELECT "gcClaimId" FROM reclaimed_resource_index_garbage)
   ),
   FALSE,
   'Repeated cleanup is idempotent'

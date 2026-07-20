@@ -30,6 +30,7 @@ describe("asset resource query validation", () => {
       parameterNames: ["slug"],
       astNodes: expect.any(Number),
       astDepth: expect.any(Number),
+      datasetScans: 1,
     });
   });
 
@@ -80,6 +81,13 @@ describe("asset resource query validation", () => {
             (_, index) => `$parameter_${index}`
           ).join(" && ")}]`
         ),
+      "QUERY_COMPLEXITY_EXCEEDED"
+    );
+  });
+
+  test("rejects more than one dataset scan", () => {
+    expectValidationCode(
+      () => validateAssetResourceQuery(`{"first": *[], "second": *[]}`),
       "QUERY_COMPLEXITY_EXCEEDED"
     );
   });

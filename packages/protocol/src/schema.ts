@@ -87,7 +87,6 @@ export const publishedProjectBundle = projectBundle.extend({
       })
     )
     .optional(),
-  protectedAssetIds: z.array(z.string().min(1)).optional(),
 });
 export type PublishedProjectBundle = z.infer<typeof publishedProjectBundle>;
 

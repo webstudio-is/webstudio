@@ -1,5 +1,10 @@
 import { atom, computed } from "nanostores";
-import type { DataSource, Resource, ResourceRequest } from "@webstudio-is/sdk";
+import {
+  isStoredAssetQueryResource,
+  type DataSource,
+  type Resource,
+  type ResourceRequest,
+} from "@webstudio-is/sdk";
 import { restResourcesLoader } from "./router-utils";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
@@ -107,6 +112,9 @@ export const computeResourceRequest = (
   values: Map<DataSource["id"], unknown>
 ): ResourceRequest => {
   const request: ResourceRequest = {
+    ...(isStoredAssetQueryResource(resource)
+      ? { resourceId: resource.id }
+      : {}),
     name: resource.name,
     method: resource.method,
     url: computeExpression(resource.url, values),

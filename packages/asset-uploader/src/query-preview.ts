@@ -1,8 +1,7 @@
 import {
   computeAssetResourceQueryHash,
   computeCanonicalAssetRevision,
-  executeAssetResourceQuery,
-  hydrateAssetResourceResult,
+  executeAndHydrateAssetResourceQuery,
 } from "@webstudio-is/asset-resource";
 import type { AssetResourceQueryRequest } from "@webstudio-is/sdk";
 import type { AssetClient } from "./client";
@@ -38,33 +37,12 @@ export const previewAssetResourceQuery = async ({
     projectId,
   });
   const assetRevision = await computeCanonicalAssetRevision(entries);
-  const response = await executeAssetResourceQuery({
+  return await executeAndHydrateAssetResourceQuery({
     request,
     documents: entries.map(({ document }) => document),
     queryHash: await computeAssetResourceQueryHash(request.query),
     indexRevision: `metadata:${assetRevision}`,
     assetRevision,
+    read: assetClient?.readFile,
   });
-  if (request.content.mode === "none") {
-    return response;
-  }
-  if (assetClient === undefined) {
-    throw new Error("Asset client is required for content hydration");
-  }
-  const hydration = await hydrateAssetResourceResult({
-    result: response.result,
-    documents: entries.map(({ document }) => document),
-    options: request.content,
-    read: assetClient.readFile,
-    allowProtected: true,
-  });
-  return {
-    ...response,
-    content: hydration.content,
-    meta: {
-      ...response.meta,
-      hydratedFileCount: hydration.hydratedFileCount,
-      hydratedBytes: hydration.hydratedBytes,
-    },
-  };
 };

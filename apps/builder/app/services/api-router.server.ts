@@ -745,6 +745,7 @@ export const apiRouter = router({
             ),
             astNodes: validated.astNodes,
             astDepth: validated.astDepth,
+            datasetScans: validated.datasetScans,
           };
         } catch (error) {
           return throwAssetQueryApiError(error);

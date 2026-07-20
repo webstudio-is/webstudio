@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createAssetResourceIndex } from "./resource-index";
 import {
   __testing,
+  createGeneratedAssetResourceFetch,
   createPublishedAssetResourceFetch,
   getPublishedAssetResourceCacheKey,
 } from "./published-runtime";
@@ -78,6 +79,12 @@ const createQueryRequest = (content: unknown = { mode: "none" }) =>
     }),
   });
 
+const withResourceId = (request: Request, resourceId: string) => {
+  const headers = new Headers(request.headers);
+  headers.set("x-webstudio-resource-id", resourceId);
+  return new Request(request, { headers });
+};
+
 describe("published asset resource runtime", () => {
   beforeEach(() => __testing.clearParsedIndexCache());
 
@@ -114,6 +121,159 @@ describe("published asset resource runtime", () => {
     expect(fetchAsset).toHaveBeenCalledWith("/assets/post.md", {
       headers: expect.any(Headers),
     });
+  });
+
+  test("uses the generated runtime adapter for asset queries and delegates other requests", async () => {
+    const { index, manifest } = await createRuntime();
+    const assetBindingFetch = vi.fn(async (request: Request) => {
+      if (new URL(request.url).pathname === manifest[0].indexPath) {
+        return Response.json(index);
+      }
+      return new Response(null, { status: 404 });
+    });
+    const fallback = vi.fn<typeof fetch>(async () => new Response("fallback"));
+    const generatedFetch = await createGeneratedAssetResourceFetch({
+      request: new Request("https://site.example/blog/post"),
+      context: {
+        cloudflare: { env: { ASSETS: { fetch: assetBindingFetch } } },
+      },
+      deploymentId: "build-1",
+      manifest,
+      fallback,
+    });
+
+    const queryResponse = await generatedFetch(createQueryRequest());
+    expect(await queryResponse.json()).toMatchObject({
+      ok: true,
+      result: { _id: "post-1", title: "Post" },
+    });
+    expect(assetBindingFetch).toHaveBeenCalledOnce();
+
+    const fallbackResponse = await generatedFetch(
+      "https://external.example/data"
+    );
+    expect(await fallbackResponse.text()).toBe("fallback");
+    expect(fallback).toHaveBeenCalledOnce();
+  });
+
+  test("isolates parsed indexes for deployments that use the same public path", async () => {
+    const first = await createRuntime();
+    const secondIndex = await createAssetResourceIndex({
+      format: "webstudio-resource-index",
+      version: 1,
+      resourceId: "posts",
+      query,
+      assetRevision: `sha256:${"b".repeat(64)}`,
+      queryMode: "parameterized",
+      parameterNames: ["slug"],
+      documents: [
+        {
+          ...first.index.documents[0],
+          revision: `sha256:${"b".repeat(64)}`,
+          properties: { slug: "post", title: "Other deployment" },
+        },
+      ],
+    });
+    const secondManifest = [
+      {
+        ...first.manifest[0],
+        revision: secondIndex.integrity.checksum,
+        assetRevision: secondIndex.assetRevision,
+      },
+    ];
+    const secondFetchAsset = vi.fn(async () => Response.json(secondIndex));
+    const secondRuntime = createPublishedAssetResourceFetch({
+      deploymentId: "build-2",
+      manifest: secondManifest,
+      fetchAsset: secondFetchAsset,
+    });
+
+    expect(
+      await (await first.runtimeFetch(createQueryRequest()))?.json()
+    ).toMatchObject({ result: { title: "Post" } });
+    expect(
+      await (await secondRuntime(createQueryRequest()))?.json()
+    ).toMatchObject({ result: { title: "Other deployment" } });
+    expect(secondFetchAsset).toHaveBeenCalledOnce();
+  });
+
+  test("selects identical queries by resource identity", async () => {
+    const first = await createRuntime();
+    const secondIndex = await createAssetResourceIndex({
+      format: "webstudio-resource-index",
+      version: 1,
+      resourceId: "other-posts",
+      query,
+      assetRevision: revision,
+      queryMode: "parameterized",
+      parameterNames: ["slug"],
+      documents: first.index.documents,
+    });
+    const manifest = [
+      first.manifest[0],
+      {
+        resourceId: "other-posts",
+        revision: secondIndex.integrity.checksum,
+        queryHash: secondIndex.queryHash,
+        assetRevision: secondIndex.assetRevision,
+        indexPath: "/resource-indexes/other-posts.json",
+      },
+    ];
+    const fetchAsset = vi.fn(async (path: string) =>
+      Response.json(
+        path === "/resource-indexes/other-posts.json"
+          ? secondIndex
+          : first.index
+      )
+    );
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      deploymentId: "build-1",
+      manifest,
+      fetchAsset,
+    });
+
+    const ambiguous = await runtimeFetch(createQueryRequest());
+    expect(await ambiguous?.json()).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_REQUEST" },
+    });
+    const selected = await runtimeFetch(
+      withResourceId(createQueryRequest(), "other-posts")
+    );
+    expect((await selected?.json())?.ok).toBe(true);
+    expect(fetchAsset).toHaveBeenCalledWith(
+      "/resource-indexes/other-posts.json"
+    );
+  });
+
+  test("executes successfully when the optional result cache fails", async () => {
+    const { manifest, fetchAsset } = await createRuntime();
+    const cache = {
+      match: vi.fn(async () => {
+        throw new Error("Cache read failed");
+      }),
+      put: vi.fn(async () => {
+        throw new Error("Cache write failed");
+      }),
+    };
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      deploymentId: "build-1",
+      manifest,
+      fetchAsset,
+      cache,
+    });
+    const request = createQueryRequest();
+    request.headers.set("cache-control", "public, max-age=60");
+
+    const response = await runtimeFetch(request);
+
+    expect(response?.status).toBe(200);
+    expect(await response?.json()).toMatchObject({
+      ok: true,
+      result: { title: "Post" },
+    });
+    expect(cache.match).toHaveBeenCalledOnce();
+    expect(cache.put).toHaveBeenCalledOnce();
   });
 
   test("rejects stale revisions and keys caches by deployment, revision, parameters, and hydration", async () => {

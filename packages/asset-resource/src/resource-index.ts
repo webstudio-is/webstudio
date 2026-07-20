@@ -20,10 +20,6 @@ const compareStrings = (left: string, right: string) => {
   return 0;
 };
 
-export const isPublicAssetResourceDocument = (
-  document: AssetResourceIndexV1["documents"][number]
-) => document.properties.draft !== true && document.properties.private !== true;
-
 export type AssetResourceIndexInput = Omit<
   AssetResourceIndexV1,
   "parameterNames" | "documents"
@@ -125,9 +121,7 @@ export const buildAssetResourceIndex = async ({
 
   const selection = await selectAssetResourceCandidates({
     tree: validatedQuery.tree,
-    documents: entries
-      .map(({ document }) => document)
-      .filter(isPublicAssetResourceDocument),
+    documents: entries.map(({ document }) => document),
   });
   return await createAssetResourceIndex({
     format: "webstudio-resource-index",

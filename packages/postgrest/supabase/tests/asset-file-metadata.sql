@@ -139,5 +139,49 @@ SELECT is(
   'Stale cleanup removed the canonical row'
 );
 
+INSERT INTO "File" ("name", "format", "size", "updatedAt", "status")
+VALUES ('metadata-image.png', 'png', 20, '2026-07-18T12:00:00Z', 'UPLOADED');
+
+INSERT INTO "Asset" ("id", "projectId", "name", "filename")
+VALUES (
+  'metadata-image-asset',
+  'metadata-test-project',
+  'metadata-image.png',
+  'cover.png'
+);
+
+SELECT is(
+  replace_asset_file_metadata(
+    'metadata-test-project',
+    'metadata-image-asset',
+    'image-revision',
+    '{"_id":"metadata-image-asset","revision":"image-revision"}'::JSONB,
+    '[]'::JSONB,
+    '{"storageName":"metadata-image.png","fileUpdatedAt":"2026-07-18T12:00:00Z","fileSize":20,"filename":"cover.png","folderId":null}'::JSONB
+  ),
+  TRUE,
+  'Canonical metadata supports any uploaded asset type'
+);
+
+SELECT is(
+  delete_stale_asset_file_metadata(
+    'metadata-test-project',
+    ARRAY['metadata-image-asset']
+  ),
+  0,
+  'Stale cleanup preserves metadata for an uploaded non-Markdown asset'
+);
+
+SELECT is(
+  (
+    SELECT count(*)::INTEGER
+    FROM "AssetFileMetadata"
+    WHERE "projectId" = 'metadata-test-project'
+      AND "assetId" = 'metadata-image-asset'
+  ),
+  1,
+  'Non-Markdown canonical metadata remains available'
+);
+
 SELECT * FROM finish();
 ROLLBACK;

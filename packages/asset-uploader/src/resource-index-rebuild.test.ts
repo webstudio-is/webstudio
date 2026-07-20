@@ -66,7 +66,14 @@ describe("explicit resource index rebuild", () => {
   });
 
   test("fails clearly when the resource has no persisted index state", async () => {
-    server.use(db.get("AssetResourceIndexState", () => json(null)));
+    server.use(
+      db.get("AssetResourceIndexState", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("deletedAt")).toBe(
+          "is.null"
+        );
+        return json(null);
+      })
+    );
     await expect(
       rebuildAssetResourceIndex({
         client: testContext.postgrest.client,
@@ -75,5 +82,27 @@ describe("explicit resource index rebuild", () => {
         resourceId: "missing",
       })
     ).rejects.toBeInstanceOf(AssetResourceIndexNotFoundError);
+  });
+
+  test("treats a deleted resource index state as not found", async () => {
+    const putIfAbsent = vi.fn();
+    server.use(
+      db.get("AssetResourceIndexState", ({ request }) => {
+        const search = new URL(request.url).searchParams;
+        return search.get("deletedAt") === "is.null"
+          ? json(null)
+          : json({ query: "*[]" });
+      })
+    );
+
+    await expect(
+      rebuildAssetResourceIndex({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent },
+        projectId: "project-1",
+        resourceId: "deleted",
+      })
+    ).rejects.toBeInstanceOf(AssetResourceIndexNotFoundError);
+    expect(putIfAbsent).not.toHaveBeenCalled();
   });
 });
