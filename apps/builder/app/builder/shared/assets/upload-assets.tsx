@@ -1,6 +1,6 @@
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
-import type { Asset } from "@webstudio-is/sdk";
+import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
@@ -21,9 +21,9 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import {
   getFileName,
+  getFileUploadFingerprint,
   getMimeType,
   getSha256Hash,
-  getSha256HashOfFile,
 } from "./asset-utils";
 
 const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
@@ -76,7 +76,7 @@ const getFilesData = async <T extends File | URL>(
   const filesData: UploadingFileData[] = [];
   for (const fileOrUrl of filesOrUrls) {
     if (fileOrUrl instanceof File) {
-      const fingerprintId = await getSha256HashOfFile(fileOrUrl);
+      const fingerprintId = await getFileUploadFingerprint(fileOrUrl);
       filesData.push({
         source: "file" as const,
         assetId: "",
@@ -118,6 +118,54 @@ const deleteUploadingFileData = (id: UploadingFileData["assetId"]) => {
   );
 };
 
+const getUniqueFilesData = (
+  filesData: UploadingFileData[],
+  revokeObjectURL = URL.revokeObjectURL
+) => {
+  const uniqueFilesData = new Map<string, UploadingFileData>();
+  for (const fileData of filesData) {
+    if (uniqueFilesData.has(fileData.fingerprintId)) {
+      revokeObjectURL(fileData.objectURL);
+      continue;
+    }
+    uniqueFilesData.set(fileData.fingerprintId, fileData);
+  }
+  return uniqueFilesData;
+};
+
+export const waitForAssetUpload = (assetId: string): Promise<Asset> => {
+  const existingAsset = $assets.get().get(assetId);
+  if (existingAsset !== undefined) {
+    return Promise.resolve(existingAsset);
+  }
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      unsubscribeAssets();
+      unsubscribeUploads();
+    };
+    const check = () => {
+      const asset = $assets.get().get(assetId);
+      if (asset !== undefined) {
+        cleanup();
+        resolve(asset);
+        return;
+      }
+
+      const isUploading = $uploadingFilesDataStore
+        .get()
+        .some((fileData) => fileData.assetId === assetId);
+      if (isUploading === false) {
+        cleanup();
+        reject(new Error("Failed to upload asset"));
+      }
+    };
+    const unsubscribeAssets = $assets.listen(check);
+    const unsubscribeUploads = $uploadingFilesDataStore.listen(check);
+    check();
+  });
+};
+
 const getVideoDimensions = async (file: File) => {
   return new Promise<{ width: number; height: number }>((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -137,13 +185,12 @@ const getVideoDimensions = async (file: File) => {
 };
 
 const deduplicateAssetName = (name: string, existingNames: Set<string>) => {
+  const { basename, extension } = getFileNameParts(name);
+  const extensionWithDot = extension === "" ? "" : `.${extension}`;
   // eslint-disable-next-line no-constant-condition
   for (let index = 0; true; index += 1) {
     const suffix = index === 0 ? "" : `_${index}`;
-    const lastDotAt = name.lastIndexOf(".");
-    const basename = lastDotAt === -1 ? name : name.slice(0, lastDotAt);
-    const ext = lastDotAt === -1 ? "" : name.slice(lastDotAt);
-    const nameWithSuffix = basename + suffix + ext;
+    const nameWithSuffix = basename + suffix + extensionWithDot;
     if (!existingNames.has(nameWithSuffix)) {
       return nameWithSuffix;
     }
@@ -158,18 +205,20 @@ const createAssetUploadHeaders = (authToken: undefined | string) => {
   return headers;
 };
 
-const uploadAsset = async ({
+const submitAssetUpload = async ({
   authToken,
   uploadName,
   fileOrUrl,
   onCompleted,
   onError,
+  request = fetch,
 }: {
   authToken: undefined | string;
   uploadName: string;
   fileOrUrl: File | URL;
   onCompleted: (data: AssetActionResponse) => void;
   onError: (error: string) => void;
+  request?: typeof fetch;
 }) => {
   try {
     const mimeType = getMimeType(fileOrUrl);
@@ -195,7 +244,7 @@ const uploadAsset = async ({
       height = videoSize.height;
     }
 
-    const uploadResponse = await fetch(
+    const uploadResponse = await request(
       restAssetsUploadPath({ name: uploadName, width, height }),
       {
         method: "POST",
@@ -226,30 +275,34 @@ const createUploadTicket = async ({
   projectId,
   fileOrUrl,
   assetType,
+  request = fetch,
 }: {
   authToken: undefined | string;
   projectId: string;
   fileOrUrl: File | URL;
   assetType: AssetType;
+  request?: typeof fetch;
 }): Promise<UploadTicket> => {
   const fileName = getFileName(fileOrUrl);
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
   metaFormData.append("type", assetType);
-  // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
-  // should be removed after fix
   const existingNames = new Set<string>();
   for (const asset of $assets.get().values()) {
     existingNames.add(formatAssetName(asset));
   }
+  const deduplicatedFilename = deduplicateAssetName(fileName, existingNames);
+  // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
+  // should be removed after fix
+  metaFormData.append("filename", sanitizeS3Key(deduplicatedFilename));
   metaFormData.append(
-    "filename",
-    deduplicateAssetName(sanitizeS3Key(fileName), existingNames)
+    "displayFilename",
+    getFileNameParts(deduplicatedFilename).basename
   );
 
   const authHeaders = createAssetUploadHeaders(authToken);
 
-  const metaResponse = await fetch(restAssetsPath(), {
+  const metaResponse = await request(restAssetsPath(), {
     method: "POST",
     body: metaFormData,
     headers: authHeaders,
@@ -332,7 +385,10 @@ const processUpload = async (
     const currentProjectId = $project.get()?.id;
     if (currentProjectId !== projectId) {
       toast.error("Project has been changed, files will not be uploaded");
-      // Can cause data corrupiton
+      for (const fileData of filesData) {
+        URL.revokeObjectURL(fileData.objectURL);
+        deleteUploadingFileData(fileData.assetId);
+      }
       continue;
     }
 
@@ -348,7 +404,7 @@ const processUpload = async (
         continue;
       }
 
-      await uploadAsset({
+      await submitAssetUpload({
         authToken,
         uploadName: fileData.uploadName,
         fileOrUrl:
@@ -384,9 +440,7 @@ export const uploadAssets = async <T extends File | URL>(
   const filesData = await getFilesData(type, filesOrUrls, options.folderId);
 
   // Filter out duplicates inside filesData
-  const uniqFilesDataMap = new Map(
-    filesData.map((fileData) => [fileData.fingerprintId, fileData])
-  );
+  const uniqueFilesDataByFingerprint = getUniqueFilesData(filesData);
 
   // Filter out duplicates already being uploaded
   const existingUploadsByFingerprint = new Map(
@@ -395,24 +449,29 @@ export const uploadAssets = async <T extends File | URL>(
       .map((fileData) => [fileData.fingerprintId, fileData])
   );
 
-  for (const [fingerprintId] of existingUploadsByFingerprint) {
-    if (uniqFilesDataMap.has(fingerprintId)) {
-      const fileData = uniqFilesDataMap.get(fingerprintId)!;
-      uniqFilesDataMap.delete(fingerprintId);
-      toast.info("Asset already exists", {
-        icon: <ToastImageInfo objectURL={fileData.objectURL} />,
-      });
+  for (const [
+    fingerprintId,
+    existingFileData,
+  ] of existingUploadsByFingerprint) {
+    const fileData = uniqueFilesDataByFingerprint.get(fingerprintId);
+    if (fileData === undefined) {
+      continue;
     }
+    uniqueFilesDataByFingerprint.delete(fingerprintId);
+    URL.revokeObjectURL(fileData.objectURL);
+    toast.info("Asset already exists", {
+      icon: <ToastImageInfo objectURL={existingFileData.objectURL} />,
+    });
   }
 
-  const uniqFilesData = [...uniqFilesDataMap.values()];
+  const uniqueFilesData = [...uniqueFilesDataByFingerprint.values()];
 
   const uploadTickets = new Map<
     UploadingFileData["fingerprintId"],
     UploadTicket
   >();
   const ticketedFilesData: UploadingFileData[] = [];
-  for (const fileData of uniqFilesData) {
+  for (const fileData of uniqueFilesData) {
     try {
       const ticket = await createUploadTicket({
         authToken,
@@ -465,9 +524,19 @@ export const uploadAssets = async <T extends File | URL>(
   return res;
 };
 
+export const uploadSingleAsset = async (
+  type: AssetType,
+  file: File,
+  options: { folderId?: string } = {}
+): Promise<Asset | undefined> => {
+  const assetId = (await uploadAssets(type, [file], options)).get(file);
+  return assetId === undefined ? undefined : waitForAssetUpload(assetId);
+};
+
 export const __testing__ = {
   createUploadTicket,
   deduplicateAssetName,
   getFilesData,
-  uploadAsset,
+  getUniqueFilesData,
+  submitAssetUpload,
 };

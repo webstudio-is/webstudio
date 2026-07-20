@@ -7,6 +7,7 @@ import {
   type VariationAxes,
   type FontStyle,
 } from "@webstudio-is/fonts";
+import { getFileNameParts } from "@webstudio-is/sdk";
 
 // same default fontkit uses internally
 const defaultLanguage = "en";
@@ -54,8 +55,7 @@ const normalizeFamily = (
     return familyPartsNormalized.join(" ");
   }
   // Broken fonts may lack any family information, so last resort is to use the file name
-  const extensionIndex = fileName.lastIndexOf(".");
-  return extensionIndex === -1 ? fileName : fileName.slice(0, extensionIndex);
+  return getFileNameParts(fileName).basename;
 };
 
 type FontDataStatic = {

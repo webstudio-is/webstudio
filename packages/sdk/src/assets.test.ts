@@ -21,8 +21,105 @@ import {
   getAssetMime,
   doesAssetMatchMimePatterns,
   getAssetTextEditorLanguage,
+  formatAssetName,
+  getFileExtension,
+  getFileNameParts,
   isTextFileAsset,
+  parseAssetName,
 } from "./assets";
+
+describe("getFileExtension", () => {
+  test.each([
+    ["file.md", "md"],
+    ["FILE.MD", "MD"],
+    ["archive.tar.gz", "gz"],
+    ["/folder.with-dot/file.md", "md"],
+    [".md", undefined],
+    ["file.", undefined],
+    ["file", undefined],
+  ])("extracts the extension from %s", (fileName, expected) => {
+    expect(getFileExtension(fileName)).toBe(expected);
+  });
+});
+
+describe("getFileNameParts", () => {
+  test.each([
+    ["file.md", { basename: "file", extension: "md" }],
+    ["archive.tar.GZ", { basename: "archive.tar", extension: "GZ" }],
+    [".env", { basename: ".env", extension: "" }],
+    ["README", { basename: "README", extension: "" }],
+  ])("splits %s", (fileName, expected) => {
+    expect(getFileNameParts(fileName)).toEqual(expected);
+  });
+});
+
+describe("parseAssetName", () => {
+  test("parses a storage name with an extension", () => {
+    expect(parseAssetName("hello_hash.ext")).toEqual({
+      basename: "hello",
+      hash: "hash",
+      ext: "ext",
+    });
+  });
+
+  test("parses a name without a storage id", () => {
+    expect(parseAssetName("hello.ext")).toEqual({
+      basename: "hello",
+      hash: "",
+      ext: "ext",
+    });
+  });
+
+  test("supports legacy storage ids", () => {
+    expect(parseAssetName("hello_hash1.ext_hash2")).toEqual({
+      basename: "hello",
+      hash: "hash1",
+      ext: "ext_hash2",
+    });
+  });
+
+  test("keeps underscores inside a Nano ID out of the display name", () => {
+    expect(parseAssetName("test_nCEugJxJwUd_MJcgPodZr.md")).toEqual({
+      basename: "test",
+      hash: "nCEugJxJwUd_MJcgPodZr",
+      ext: "md",
+    });
+  });
+
+  test("parses a storage name without an extension", () => {
+    expect(parseAssetName("hello_hash1_hash2")).toEqual({
+      basename: "hello_hash1",
+      hash: "hash2",
+      ext: "",
+    });
+  });
+});
+
+describe("formatAssetName", () => {
+  test("uses a persisted display basename", () => {
+    expect(
+      formatAssetName({
+        name: "uploaded_abc123.jpg",
+        filename: "myimage",
+      })
+    ).toBe("myimage.jpg");
+  });
+
+  test("derives the display basename for a legacy asset", () => {
+    expect(formatAssetName({ name: "uploaded_abc123.jpg" })).toBe(
+      "uploaded.jpg"
+    );
+  });
+
+  test("does not append a dot without an extension", () => {
+    expect(
+      formatAssetName({
+        name: "uploaded_abc123",
+        filename: "document",
+      })
+    ).toBe("document");
+  });
+});
 
 describe("allowed-file-types", () => {
   describe("text editor support", () => {
@@ -174,7 +271,7 @@ describe("allowed-file-types", () => {
 
     test("throws error for files without extension", () => {
       expect(() => validateFileName("filename")).toThrow(
-        'File type "filename" is not allowed'
+        "File must have an extension"
       );
       // Empty string results in no extension either
       expect(() => validateFileName("file.")).toThrow(

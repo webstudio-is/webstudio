@@ -5,8 +5,12 @@ import { z } from "zod";
 import {
   ALLOWED_FILE_TYPES,
   getAllPages,
+  getFileExtension,
   getStyleDeclKey,
   isAllowedMimeCategory,
+  formatAssetName,
+  getAssetDisplayNameParts,
+  parseAssetName,
   type Asset,
   type DataSource,
   type Pages,
@@ -194,7 +198,7 @@ export const getBrowserAssetFormat = ({
   contentType: string | null;
   name: string;
 }) => {
-  const fileExtension = name.split(".").pop()?.toLowerCase();
+  const fileExtension = getFileExtension(name)?.toLowerCase();
   const correctMimeType =
     ALLOWED_FILE_TYPES[fileExtension as keyof typeof ALLOWED_FILE_TYPES] ??
     contentType?.split(";")[0];
@@ -558,35 +562,10 @@ export const findAsset = (assets: Iterable<Asset>, assetId: Asset["id"]) => {
   }
 };
 
-export type ParsedAssetName = {
-  basename: string;
-  hash: string;
-  ext: string;
-};
-
-export const parseAssetName = (name: string): ParsedAssetName => {
-  let hash = "";
-  let ext = "";
-  const lastDotAt = name.lastIndexOf(".");
-  if (lastDotAt > -1) {
-    ext = name.slice(lastDotAt + 1);
-    name = name.slice(0, lastDotAt);
-  }
-  const lastUnderscoreAt = name.lastIndexOf("_");
-  if (lastUnderscoreAt > -1) {
-    hash = name.slice(lastUnderscoreAt + 1);
-    name = name.slice(0, lastUnderscoreAt);
-  }
-  return { basename: name, hash, ext };
-};
-
-export const formatAssetName = (asset: Pick<Asset, "name" | "filename">) => {
-  const { basename, ext } = parseAssetName(asset.name);
-  return `${asset.filename ?? basename}.${ext}`;
-};
+export { formatAssetName, getAssetDisplayNameParts, parseAssetName };
 
 export const getAssetDisplayFilename = (asset: Asset) =>
-  asset.filename ?? asset.name.replace(/\.[^/.]+$/, "");
+  getAssetDisplayNameParts(asset).basename;
 
 const assertAssetFolderExists = (
   assetFolders: BuilderState["assetFolders"],

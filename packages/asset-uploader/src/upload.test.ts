@@ -79,6 +79,7 @@ describe("createUploadTicket", () => {
           id: "asset-1",
           projectId: "project-1",
           name: expect.stringMatching(/^photo_.+\.png$/),
+          filename: "photo",
           description: "Campaign photo",
           folderId: "campaign",
         });
@@ -105,6 +106,37 @@ describe("createUploadTicket", () => {
       status: "UPLOADING",
       uploaderProjectId: "project-1",
     });
+  });
+
+  test("preserves the requested display name while sanitizing storage", async () => {
+    server.use(
+      ownershipHandler,
+      db.head("Asset", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.head("File", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.post("File", async ({ request }) => {
+        expect(await request.json()).toMatchObject({
+          name: expect.stringMatching(/^Campaign_photo_.+\.png$/),
+        });
+        return empty({ status: 201 });
+      }),
+      db.post("Asset", async ({ request }) => {
+        expect(await request.json()).toMatchObject({
+          filename: "Campaign photo",
+        });
+        return empty({ status: 201 });
+      })
+    );
+
+    await createUploadTicket(
+      {
+        projectId: "project-1",
+        type: "image/png",
+        filename: "Campaign_photo.png",
+        displayFilename: "Campaign photo",
+      },
+      createContext(),
+      () => "asset-1"
+    );
   });
 
   test("throws when uploaded assets and recent uploads reach the limit", async () => {
@@ -225,11 +257,13 @@ describe("createUploadTicket", () => {
         id: "asset-collision",
         projectId: "project-4",
         name: (insertedFiles[0] as { name: string }).name,
+        filename: "renamed-photo",
       },
       {
         id: "asset-retry",
         projectId: "project-4",
         name: (insertedFiles[1] as { name: string }).name,
+        filename: "renamed-photo",
       },
     ]);
     expect(deletedFiles).toEqual([

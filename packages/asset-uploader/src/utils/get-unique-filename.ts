@@ -1,9 +1,7 @@
-import * as path from "node:path";
 import { nanoid } from "nanoid";
+import { getFileNameParts } from "@webstudio-is/sdk";
 
-export const getUniqueFilename = (filename: string): string => {
-  const id = nanoid();
-  const extension = path.extname(filename);
-  const name = path.basename(filename, extension);
-  return `${name}_${id}${extension}`;
+export const createUniqueAssetFilename = (filename: string) => {
+  const { basename, extension } = getFileNameParts(filename);
+  return `${basename}_${nanoid()}${extension === "" ? "" : `.${extension}`}`;
 };

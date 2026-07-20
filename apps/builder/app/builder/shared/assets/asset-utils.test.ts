@@ -2,9 +2,19 @@ import { expect, test, describe } from "vitest";
 import {
   getImageNameAndType,
   getSha256Hash,
-  detectAssetType,
+  getFileUploadFingerprint,
   uploadingFileDataToAsset,
 } from "./asset-utils";
+
+test("distinguishes upload fingerprints for equal files with different names", async () => {
+  const first = new File([""], "first.md");
+  const second = new File([""], "second.md");
+
+  const firstFingerprint = await getFileUploadFingerprint(first);
+  const secondFingerprint = await getFileUploadFingerprint(second);
+
+  expect(firstFingerprint).not.toBe(secondFingerprint);
+});
 
 describe("getImageNameAndType", () => {
   test("returns MIME type and filename for valid image", () => {
@@ -77,55 +87,6 @@ describe("getSha256Hash", () => {
     expect(hash).toBe(
       "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
     );
-  });
-});
-
-describe("detectAssetType", () => {
-  test("detects image files", () => {
-    expect(detectAssetType("photo.jpg")).toBe("image");
-    expect(detectAssetType("image.png")).toBe("image");
-    expect(detectAssetType("graphic.gif")).toBe("image");
-    expect(detectAssetType("vector.svg")).toBe("image");
-    expect(detectAssetType("picture.webp")).toBe("image");
-  });
-
-  test("detects font files", () => {
-    expect(detectAssetType("font.woff")).toBe("font");
-    expect(detectAssetType("font.woff2")).toBe("font");
-    expect(detectAssetType("font.ttf")).toBe("font");
-    expect(detectAssetType("font.otf")).toBe("font");
-  });
-
-  test("detects video files", () => {
-    expect(detectAssetType("video.mp4")).toBe("video");
-    expect(detectAssetType("video.webm")).toBe("video");
-    expect(detectAssetType("video.mov")).toBe("video");
-    expect(detectAssetType("video.avi")).toBe("video");
-  });
-
-  test("returns file for other types", () => {
-    expect(detectAssetType("document.pdf")).toBe("file");
-    expect(detectAssetType("audio.mp3")).toBe("file");
-    expect(detectAssetType("data.json")).toBe("file");
-    expect(detectAssetType("doc.docx")).toBe("file");
-  });
-
-  test("is case-insensitive", () => {
-    expect(detectAssetType("PHOTO.JPG")).toBe("image");
-    expect(detectAssetType("FONT.WOFF2")).toBe("font");
-    expect(detectAssetType("VIDEO.MP4")).toBe("video");
-    expect(detectAssetType("DOC.PDF")).toBe("file");
-  });
-
-  test("handles files without extension", () => {
-    expect(detectAssetType("filename")).toBe("file");
-  });
-
-  test("handles files with multiple dots", () => {
-    expect(detectAssetType("my.photo.file.png")).toBe("image");
-    expect(detectAssetType("my.font.file.woff2")).toBe("font");
-    expect(detectAssetType("my.video.file.mp4")).toBe("video");
-    expect(detectAssetType("my.doc.file.pdf")).toBe("file");
   });
 });
 

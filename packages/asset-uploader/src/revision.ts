@@ -1,5 +1,8 @@
-import { basename, extname } from "node:path";
-import { isTextFileAsset, type Asset } from "@webstudio-is/sdk";
+import {
+  formatAssetName,
+  isTextFileAsset,
+  type Asset,
+} from "@webstudio-is/sdk";
 import {
   authorizeProject,
   AuthorizationError,
@@ -8,7 +11,7 @@ import {
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
 import { uploadFileData } from "./upload";
-import { getUniqueFilename } from "./utils/get-unique-filename";
+import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
@@ -22,13 +25,7 @@ const getRevisionFilename = ({
   name: string;
   filename: string | null;
 }) => {
-  const extension = extname(name);
-  const storedBasename = basename(name, extension);
-  const suffixAt = storedBasename.lastIndexOf("_");
-  const displayBasename =
-    filename ??
-    (suffixAt === -1 ? storedBasename : storedBasename.slice(0, suffixAt));
-  return sanitizeS3Key(`${displayBasename}${extension}`);
+  return sanitizeS3Key(formatAssetName({ name, filename }));
 };
 
 export const swapAssetFileWithClient = async (
@@ -133,7 +130,7 @@ export const updateAssetContent = async (
     throw new Error("This asset is not an editable text file");
   }
 
-  const revisionName = getUniqueFilename(
+  const revisionName = createUniqueAssetFilename(
     getRevisionFilename({
       name: currentAsset.name,
       filename: currentAsset.filename,

@@ -7,6 +7,7 @@ test("uses one ordered command model for context and dropdown menus", () => {
     open: action,
     settings: action,
     createFolder: action,
+    createFile: action,
     upload: action,
     cut: action,
     copy: action,
@@ -21,6 +22,7 @@ test("uses one ordered command model for context and dropdown menus", () => {
 
   expect(items.map(({ name }) => name)).toEqual([
     "createFolder",
+    "createFile",
     "upload",
     "open",
     "settings",
@@ -60,6 +62,7 @@ test("orders panel actions independently of unavailable item actions", () => {
   const action = vi.fn();
   const items = getAssetManagerItemMenuItems({
     createFolder: action,
+    createFile: action,
     upload: action,
     paste: action,
     deleteUnusedAssets: action,
@@ -67,6 +70,7 @@ test("orders panel actions independently of unavailable item actions", () => {
 
   expect(items.map(({ name }) => name)).toEqual([
     "createFolder",
+    "createFile",
     "upload",
     "paste",
     "deleteUnusedAssets",

@@ -1,11 +1,10 @@
 import type { Asset } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
-import { $uploadingFilesDataStore } from "~/shared/nano-states";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import { uploadAssets } from "./upload-assets";
+import { uploadSingleAsset } from "./upload-assets";
 
 /**
  * Replace an image asset with a new file.
@@ -26,21 +25,19 @@ export const replaceAsset = async (
     return;
   }
 
-  const fileToAssetId = await uploadAssets("image", [file], {
-    folderId: oldAsset.folderId,
-  });
-  const newAssetId = fileToAssetId.get(file);
-
-  if (!newAssetId) {
-    toast.error("Failed to upload replacement asset");
-    return;
-  }
-
+  let newAsset: Asset | undefined;
   try {
-    await waitForAsset(newAssetId);
+    newAsset = await uploadSingleAsset("image", file, {
+      folderId: oldAsset.folderId,
+    });
   } catch {
     return;
   }
+  if (newAsset === undefined) {
+    toast.error("Failed to upload replacement asset");
+    return;
+  }
+  const newAssetId = newAsset.id;
 
   try {
     const result = executeRuntimeMutation({
@@ -67,40 +64,3 @@ export const replaceAsset = async (
 
   toast.success("Asset replaced successfully");
 };
-
-const waitForAsset = (assetId: string): Promise<Asset> => {
-  // Check if asset already exists (avoids TDZ with synchronous subscribe callback)
-  const existingAsset = $assets.get().get(assetId);
-  if (existingAsset !== undefined) {
-    return Promise.resolve(existingAsset);
-  }
-
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      unsubscribeAssets();
-      unsubscribeUploads();
-    };
-    const check = () => {
-      const assets = $assets.get();
-      const asset = assets.get(assetId);
-      if (asset !== undefined) {
-        cleanup();
-        resolve(asset);
-        return;
-      }
-
-      const isUploading = $uploadingFilesDataStore
-        .get()
-        .some((fileData) => fileData.assetId === assetId);
-      if (isUploading === false) {
-        cleanup();
-        reject(new Error("Failed to upload replacement asset"));
-      }
-    };
-    const unsubscribeAssets = $assets.listen(check);
-    const unsubscribeUploads = $uploadingFilesDataStore.listen(check);
-    check();
-  });
-};
-
-export const __testing__ = { waitForAsset };

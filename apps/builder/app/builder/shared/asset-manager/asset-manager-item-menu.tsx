@@ -28,6 +28,7 @@ export type AssetManagerItemActions = Partial<
     | "download"
     | "replace"
     | "createFolder"
+    | "createFile"
     | "upload"
     | "deleteUnusedAssets"
     | "delete",
@@ -46,6 +47,7 @@ type ItemDefinition = {
 
 const itemDefinitions: readonly ItemDefinition[] = [
   { name: "createFolder", label: "Create folder" },
+  { name: "createFile", label: "Create text file" },
   { name: "upload", label: "Upload asset" },
   { name: "open", label: "Open" },
   { name: "settings", label: "Settings" },

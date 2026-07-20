@@ -110,7 +110,7 @@ type AssetManagerProps = FolderNavigationProps & {
   panelActions?: Partial<
     Pick<
       AssetManagerItemActions,
-      "createFolder" | "upload" | "deleteUnusedAssets"
+      "createFolder" | "createFile" | "upload" | "deleteUnusedAssets"
     >
   >;
 };

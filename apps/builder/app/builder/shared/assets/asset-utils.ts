@@ -7,17 +7,17 @@ import type {
 import { nanoid } from "nanoid";
 import {
   getMimeTypeByExtension,
+  getFileExtension,
   IMAGE_EXTENSIONS,
   detectAssetType,
   getAssetUrl,
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
 
-export { detectAssetType, getAssetUrl };
+export { getAssetUrl };
 
 export const getImageNameAndType = (fileName: string) => {
-  // Extract extension from filename
-  const extractedExt = fileName.split(".").pop()?.toLowerCase();
+  const extractedExt = getFileExtension(fileName)?.toLowerCase();
 
   if (!extractedExt) {
     return;
@@ -77,11 +77,14 @@ const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> =>
     reader.readAsArrayBuffer(file);
   });
 
-export const getSha256HashOfFile = async (file: File) => {
+const getSha256HashOfFile = async (file: File) => {
   const arrayBuffer = await readFileAsArrayBuffer(file);
   const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
   return bufferToHex(hashBuffer);
 };
+
+export const getFileUploadFingerprint = async (file: File) =>
+  JSON.stringify([file.name, await getSha256HashOfFile(file)]);
 
 export const getMimeType = (file: File | URL) => {
   if (file instanceof File) {
@@ -110,9 +113,7 @@ export const uploadingFileDataToAsset = (
   // Extract format from MIME type if available, otherwise from filename extension
   let format = mimeType.split("/")[1];
   if (!format) {
-    // Fallback to file extension if MIME type doesn't provide format
-    const match = fileName.match(/\.([^.]+)$/);
-    format = match ? match[1].toLowerCase() : "";
+    format = getFileExtension(fileName)?.toLowerCase() ?? "";
   }
 
   const assetType = detectAssetType(fileName);

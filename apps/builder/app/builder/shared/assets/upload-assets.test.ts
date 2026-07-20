@@ -1,22 +1,22 @@
 import { beforeEach, describe, test, expect, vi } from "vitest";
-import { fetch } from "~/shared/fetch.client";
 import { __testing__ } from "./upload-assets";
 
-vi.mock("~/shared/fetch.client", () => ({
-  fetch: vi.fn(),
-}));
-
-const { createUploadTicket, deduplicateAssetName, getFilesData, uploadAsset } =
-  __testing__;
-const fetchMock = vi.mocked(fetch);
+const {
+  createUploadTicket,
+  deduplicateAssetName,
+  getFilesData,
+  getUniqueFilesData,
+  submitAssetUpload,
+} = __testing__;
+const request = vi.fn<typeof fetch>();
 
 describe("upload-assets", () => {
   beforeEach(() => {
-    fetchMock.mockReset();
+    request.mockReset();
   });
 
   test("requests upload tickets without client-supplied asset ids", async () => {
-    fetchMock.mockResolvedValue(
+    request.mockResolvedValue(
       new Response(
         JSON.stringify({ assetId: "server-asset-id", name: "upload-name" })
       )
@@ -28,34 +28,60 @@ describe("upload-assets", () => {
         projectId: "project-id",
         fileOrUrl: new File(["content"], "image.png", { type: "image/png" }),
         assetType: "image",
+        request,
       })
     ).resolves.toEqual({
       assetId: "server-asset-id",
       name: "upload-name",
     });
 
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const [_url, init] = fetchMock.mock.calls[0] as [
+    expect(request).toHaveBeenCalledOnce();
+    const [_url, init] = request.mock.calls[0] as [
       string,
       { body: FormData; headers: Headers },
     ];
     expect(init.body.has("assetId")).toBe(false);
     expect(init.body.get("projectId")).toBe("project-id");
     expect(init.body.get("type")).toBe("image");
+    expect(init.body.get("filename")).toBe("image.png");
+    expect(init.body.get("displayFilename")).toBe("image");
     expect(init.headers.get("x-auth-token")).toBe("token");
   });
 
+  test("keeps the display name separate from the sanitized storage name", async () => {
+    request.mockResolvedValue(
+      new Response(
+        JSON.stringify({ assetId: "server-asset-id", name: "upload-name" })
+      )
+    );
+
+    await createUploadTicket({
+      authToken: undefined,
+      projectId: "project-id",
+      fileOrUrl: new File(["content"], "Campaign photo.png", {
+        type: "image/png",
+      }),
+      assetType: "image",
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("filename")).toBe("Campaign_photo.png");
+    expect(init.body.get("displayFilename")).toBe("Campaign photo");
+  });
+
   test("reports non-error upload failures", async () => {
-    fetchMock.mockRejectedValue("network down");
+    request.mockRejectedValue("network down");
     const onCompleted = vi.fn();
     const onError = vi.fn();
 
-    await uploadAsset({
+    await submitAssetUpload({
       authToken: undefined,
       uploadName: "upload-name",
       fileOrUrl: new URL("https://example.com/image.png"),
       onCompleted,
       onError,
+      request,
     });
 
     expect(onCompleted).not.toHaveBeenCalled();
@@ -74,6 +100,18 @@ describe("upload-assets", () => {
       folderId: "folder-id",
       url: "https://example.com/image.png",
     });
+  });
+
+  test("releases object URLs discarded during deduplication", async () => {
+    const url = new URL("https://example.com/image.png");
+    const filesData = await getFilesData("image", [url, url]);
+    const revokeObjectURL = vi.fn();
+
+    const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
+
+    expect(uniqueFilesData.size).toBe(1);
+    expect(revokeObjectURL).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith(url.href);
   });
 
   describe("deduplicateAssetName", () => {
@@ -105,6 +143,16 @@ describe("upload-assets", () => {
       const existingNames = new Set(["no-extension"]);
       const result = deduplicateAssetName("no-extension", existingNames);
       expect(result).toBe("no-extension_1");
+    });
+
+    test("treats a dotfile as a name without an extension", () => {
+      expect(deduplicateAssetName(".env", new Set([".env"]))).toBe(".env_1");
+    });
+
+    test("preserves extension casing", () => {
+      expect(deduplicateAssetName("photo.PNG", new Set(["photo.PNG"]))).toBe(
+        "photo_1.PNG"
+      );
     });
 
     test("handles empty existing names set", () => {
