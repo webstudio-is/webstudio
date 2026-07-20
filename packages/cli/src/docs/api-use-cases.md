@@ -891,6 +891,12 @@ Commands:
 
 - webstudio publish status --job <buildId> --json
 
+## Inspect publish report
+
+Commands:
+
+- webstudio publish report --attempt-id <publishAttemptId> --json
+
 ## Unpublish
 
 Commands:

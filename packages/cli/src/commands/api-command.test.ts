@@ -1693,6 +1693,17 @@ test("gets publish job", async () => {
   });
 });
 
+test("gets publish report", async () => {
+  await expectCommandCall({
+    options: {
+      command: "get-publish-report",
+      attemptId: "attempt-id",
+    },
+    call: apiCalls.getPublishReport,
+    connection: { attemptId: "attempt-id" },
+  });
+});
+
 test("unpublishes project with confirmation", async () => {
   await expectCommandCall({
     options: {
