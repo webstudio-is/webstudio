@@ -2618,6 +2618,10 @@ describe("builder runtime registry", () => {
           },
         },
       ],
+      [
+        "assetsResources.create",
+        { name: "All assets", scopeInstanceId: "heading" },
+      ],
       ["resources.delete", { resourceId: "resource", force: true }],
       [
         "assetFolders.update",

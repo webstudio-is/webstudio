@@ -104,6 +104,12 @@ export const buildAssetResourceIndex = async ({
   assetRevision?: string;
 }) => {
   const validatedQuery = validateAssetResourceQuery(query);
+  const preparedAssetRevision = await computeCanonicalAssetRevision(entries);
+  if (assetRevision !== undefined && assetRevision !== preparedAssetRevision) {
+    throw new Error(
+      "Prepared canonical entries do not match the supplied asset revision"
+    );
+  }
   const assetIds = new Set<string>();
   for (const entry of entries) {
     if (entry.projectId !== projectId) {
@@ -130,8 +136,7 @@ export const buildAssetResourceIndex = async ({
     version: 1,
     resourceId,
     query,
-    assetRevision:
-      assetRevision ?? (await computeCanonicalAssetRevision(entries)),
+    assetRevision: preparedAssetRevision,
     queryMode: selection.queryMode,
     parameterNames: selection.parameterNames,
     documents: selection.documents,

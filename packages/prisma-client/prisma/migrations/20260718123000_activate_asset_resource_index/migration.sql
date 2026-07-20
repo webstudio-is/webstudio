@@ -3,7 +3,8 @@ CREATE FUNCTION begin_asset_resource_index_build(
   p_resource_id TEXT,
   p_query TEXT,
   p_query_hash TEXT,
-  p_asset_revision TEXT
+  p_asset_revision TEXT,
+  p_build_attempt_id TEXT
 )
 RETURNS VOID
 LANGUAGE plpgsql
@@ -22,6 +23,7 @@ BEGIN
     "query",
     "queryHash",
     "assetRevision",
+    "buildAttemptId",
     "buildStatus",
     "buildError",
     "deletedAt",
@@ -32,6 +34,7 @@ BEGIN
     p_query,
     p_query_hash,
     p_asset_revision,
+    p_build_attempt_id,
     'BUILDING',
     NULL,
     NULL,
@@ -42,6 +45,7 @@ BEGIN
     "query" = EXCLUDED."query",
     "queryHash" = EXCLUDED."queryHash",
     "assetRevision" = EXCLUDED."assetRevision",
+    "buildAttemptId" = EXCLUDED."buildAttemptId",
     "buildStatus" = 'BUILDING',
     "buildError" = NULL,
     "deletedAt" = NULL,
@@ -55,6 +59,7 @@ CREATE FUNCTION activate_asset_resource_index(
   p_revision TEXT,
   p_query_hash TEXT,
   p_asset_revision TEXT,
+  p_build_attempt_id TEXT,
   p_checksum TEXT,
   p_object_key TEXT
 )
@@ -77,6 +82,7 @@ BEGIN
     AND "resourceId" = p_resource_id
     AND "queryHash" = p_query_hash
     AND "assetRevision" = p_asset_revision
+    AND "buildAttemptId" = p_build_attempt_id
     AND "buildStatus" = 'BUILDING'
   FOR UPDATE;
 

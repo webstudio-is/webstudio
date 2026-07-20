@@ -265,6 +265,88 @@ describe("applyPatchRequest", () => {
     );
   });
 
+  test("reparses a swapped asset revision before rebuilding indexes", async () => {
+    const assetEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-asset-revision",
+        payload: [
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "replace",
+                path: ["asset-1", "name"],
+                value: "post-revision.md",
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await applyPatchRequest(createContext(), {
+      ...patch,
+      entries: [assetEntry],
+    });
+
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ assetId: "asset-1" })
+    );
+    expect(synchronizeCanonicalAsset.mock.invocationCallOrder[0]).toBeLessThan(
+      updateAssetResourceIndexesAfterCanonicalChange.mock.invocationCallOrder[0]
+    );
+  });
+
+  test("skips index maintenance for asset descriptions", async () => {
+    const assetEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-asset-description",
+        payload: [
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "replace",
+                path: ["asset-1", "description"],
+                value: "Decorative description",
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await applyPatchRequest(createContext(), {
+      ...patch,
+      entries: [assetEntry],
+    });
+
+    expect(synchronizeCanonicalAsset).not.toHaveBeenCalled();
+    expect(
+      updateAssetResourceIndexesAfterCanonicalChange
+    ).not.toHaveBeenCalled();
+  });
+
   test("returns per-entry partial results while applying authorized entries", async () => {
     authorizePatchEntries.mockResolvedValue({
       authorized: [{ entry: patch.entries[1], context: { writer: 2 } }],

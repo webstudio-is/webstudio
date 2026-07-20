@@ -5,42 +5,32 @@ import {
 } from "@webstudio-is/asset-resource";
 import type { AssetResourceQueryRequest } from "@webstudio-is/sdk";
 import type { AssetClient } from "./client";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
-  authorizeProject,
-  AuthorizationError,
-  type AppContext,
-} from "@webstudio-is/trpc-interface/index.server";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
-import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
+  loadAuthorizedBuilderCanonicalEntries,
+  type BuilderCanonicalEntriesDependencies,
+} from "./builder-canonical-entries";
 
 export const previewAssetResourceQuery = async ({
   projectId,
   request,
   context,
   assetClient,
+  dependencies = {},
 }: {
   projectId: string;
   request: AssetResourceQueryRequest;
   context: AppContext;
   assetClient: Pick<AssetClient, "readFile">;
+  dependencies?: BuilderCanonicalEntriesDependencies;
 }) => {
-  const canView = await authorizeProject.hasProjectPermit(
-    { projectId, permit: "view" },
-    context
-  );
-  if (canView === false) {
-    throw new AuthorizationError(
-      "You don't have access to preview this project's asset resources"
-    );
-  }
-  await synchronizeCanonicalAssets({
+  const entries = await loadAuthorizedBuilderCanonicalEntries({
     projectId,
-    client: context.postgrest.client,
+    context,
     assetClient,
-  });
-  const entries = await loadCanonicalAssetFileEntries({
-    client: context.postgrest.client,
-    projectId,
+    authorizationError:
+      "You don't have access to preview this project's asset resources",
+    dependencies,
   });
   const assetRevision = await computeCanonicalAssetRevision(entries);
   return await executeAndHydrateAssetResourceQuery({

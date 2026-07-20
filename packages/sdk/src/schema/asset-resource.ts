@@ -152,6 +152,10 @@ export const assetResourceLimits = {
 
 const sha256Revision = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 
+export const assetResourceParameterName = z
+  .string()
+  .regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
+
 export const assetResourceIndexV1 = z
   .strictObject({
     format: z.literal("webstudio-resource-index"),
@@ -161,7 +165,7 @@ export const assetResourceIndexV1 = z
     assetRevision: sha256Revision,
     queryMode: z.enum(["static", "parameterized"]),
     parameterNames: z
-      .array(z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/))
+      .array(assetResourceParameterName)
       .max(assetResourceLimits.parameterCount),
     documents: z.array(assetFileDocument),
     integrity: z.strictObject({
@@ -261,7 +265,7 @@ export const assetResourceQueryRequest = z.object({
       { error: "Asset resource query exceeds the UTF-8 byte limit" }
     ),
   parameters: z
-    .record(z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/), z.json())
+    .record(assetResourceParameterName, z.json())
     .refine(
       (parameters) =>
         Object.keys(parameters).length <= assetResourceLimits.parameterCount,

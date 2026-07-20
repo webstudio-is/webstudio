@@ -1,4 +1,5 @@
 import {
+  assetResourceParameterName,
   assetResourceContentOptions,
   assetResourceLimits,
   normalizeAssetQueryParameterName,
@@ -63,7 +64,11 @@ export const getAssetQueryConfigurationError = ({
   const names = parameters.map(({ name }) =>
     normalizeAssetQueryParameterName(name)
   );
-  if (names.some((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) === false)) {
+  if (
+    names.some(
+      (name) => assetResourceParameterName.safeParse(name).success === false
+    )
+  ) {
     return "Runtime parameter names must be valid identifiers.";
   }
   if (new Set(names).size !== names.length) {

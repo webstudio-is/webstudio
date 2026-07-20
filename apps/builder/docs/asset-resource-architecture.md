@@ -232,6 +232,7 @@ final runtime evaluation:
 
 Index construction accepts only persisted `CanonicalAssetFileEntry` values.
 It derives the asset revision and candidate documents from those entries and
+rejects a caller-provided revision that does not match that exact entry set. It
 has no asset-storage reader, so creating or changing a resource query cannot
 reopen Markdown files. Content is read only by the separate post-selection
 hydration path.
@@ -251,6 +252,9 @@ An active revision is usable only when all four values agree:
 
 Building a replacement never mutates the active revision. Validation and any
 static evaluation finish first; activation is one atomic reference change. A
+unique attempt ID guards activation, failure, and cancellation, so concurrent
+builds with the same query and asset revisions cannot complete each other's
+state transitions. A
 failed or superseded build leaves the previous valid revision active but marks
 the resource stale until a matching revision can be activated. Publication
 cannot proceed while it is stale.
@@ -267,8 +271,9 @@ shares one object accidentally. The active state protects the current revision,
 and publication holds a temporary `BUILD` reference while it reads an immutable
 snapshot. Published deployments contain their own static copy and no longer
 depend on the private object. After activation, query deletion, and snapshot
-release, best-effort cleanup claims unreferenced revisions, deletes their private
-objects, and then removes their database rows. Garbage claims are 15-minute
+release, best-effort cleanup runs once per mutation or publication batch,
+claims unreferenced revisions, deletes their private objects, and then removes
+their database rows. Garbage claims are 15-minute
 leases. A later cleanup worker rotates and resumes an expired claim, so a crash
 before or after object deletion cannot permanently strand the revision row.
 

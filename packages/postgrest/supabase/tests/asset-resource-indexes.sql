@@ -12,7 +12,8 @@ SELECT lives_ok(
       'posts',
       '*[]',
       'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      'attempt-active'
     )
   $$,
   'A valid query and asset revision begin an index build'
@@ -25,6 +26,7 @@ SELECT is(
     'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
     'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    'attempt-active',
     'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
     'projects/test/resources/posts/index.json'
   ),
@@ -53,7 +55,17 @@ SELECT begin_asset_resource_index_build(
   'posts',
   '*[]',
   'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
-  'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+  'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+  'attempt-old'
+);
+
+SELECT begin_asset_resource_index_build(
+  'resource-index-test-project',
+  'posts',
+  '*[]',
+  'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+  'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+  'attempt-current'
 );
 
 SELECT is(
@@ -62,6 +74,20 @@ SELECT is(
     'posts',
     'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
     'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    'attempt-old',
+    '{"code":"INDEX_BUILD_FAILED","message":"Old attempt failed"}'::JSONB
+  ),
+  FALSE,
+  'An older identical attempt cannot fail the current build'
+);
+
+SELECT is(
+  fail_asset_resource_index_build(
+    'resource-index-test-project',
+    'posts',
+    'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+    'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    'attempt-current',
     '{"code":"INDEX_BUILD_FAILED","message":"Resource index build failed"}'::JSONB
   ),
   TRUE,
