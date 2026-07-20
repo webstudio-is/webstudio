@@ -195,8 +195,8 @@ const ChangeProjectDomain = ({
               error !== undefined || status === "FAILED"
                 ? "error"
                 : status === "PENDING"
-                ? "pending"
-                : "success"
+                  ? "pending"
+                  : "success"
             }
           />
 
@@ -596,8 +596,8 @@ const Publish = ({
           isPublishInProgress
             ? "Publish process in progress"
             : hasSelectedDomains
-            ? undefined
-            : "Select at least one domain to publish"
+              ? undefined
+              : "Select at least one domain to publish"
         }
       >
         <Button
@@ -647,8 +647,8 @@ const getStaticPublishStatusAndText = ({
     status === "PUBLISHED"
       ? "Downloaded"
       : status === "FAILED"
-      ? "Download failed"
-      : "Download started";
+        ? "Download failed"
+        : "Download started";
 
   const statusText = (
     <>
@@ -693,10 +693,10 @@ const PublishStatic = ({
             isPublishInProgress
               ? "pending"
               : status === "FAILED"
-              ? "error"
-              : status === "PUBLISHED"
-              ? "success"
-              : "warning"
+                ? "error"
+                : status === "PUBLISHED"
+                  ? "success"
+                  : "warning"
           }
         />
         <Tooltip

@@ -229,8 +229,8 @@ const Activity = ({
                   {value === "all"
                     ? "All"
                     : value === "error"
-                    ? "Errors"
-                    : "Warnings"}
+                      ? "Errors"
+                      : "Warnings"}
                 </Button>
               ))}
             </Flex>
@@ -353,8 +353,8 @@ const Activity = ({
             {value === "all"
               ? "All"
               : value === "error"
-              ? "Errors"
-              : "Warnings"}
+                ? "Errors"
+                : "Warnings"}
           </Button>
         ))}
       </Flex>
@@ -630,10 +630,7 @@ export const PublishStatusButton = ({
     };
     update();
     const handleInvalidation = (event: Event) => {
-      if (
-        event instanceof CustomEvent &&
-        event.detail === project.id
-      ) {
+      if (event instanceof CustomEvent && event.detail === project.id) {
         update(true);
       }
     };
@@ -645,7 +642,8 @@ export const PublishStatusButton = ({
   }, [label, project, status]);
 
   const activityStatus = getPublishActivityStatus(latestActivity);
-  const displayedStatus = status === "pending"
+  const displayedStatus =
+    status === "pending"
       ? status
       : status === "error"
         ? status
@@ -655,7 +653,7 @@ export const PublishStatusButton = ({
             ? "pending"
             : activityStatus === "warning"
               ? "warning"
-        : status;
+              : status;
   const Icon = displayedStatus === "success" ? CheckCircleIcon : AlertIcon;
   const color =
     displayedStatus === "success"
@@ -665,13 +663,14 @@ export const PublishStatusButton = ({
         : displayedStatus === "pending"
           ? theme.colors.foregroundDisabled
           : theme.colors.foregroundDestructive;
-  const statusLabel = displayedStatus === "pending"
-        ? "Publish in progress"
-        : displayedStatus === "error"
-          ? "Publish failed"
-          : displayedStatus === "warning"
-            ? "Published with warnings"
-            : "Published";
+  const statusLabel =
+    displayedStatus === "pending"
+      ? "Publish in progress"
+      : displayedStatus === "error"
+        ? "Publish failed"
+        : displayedStatus === "warning"
+          ? "Published with warnings"
+          : "Published";
   const accessibleLabel = `${label}: ${statusLabel}. Open publish details`;
 
   return (

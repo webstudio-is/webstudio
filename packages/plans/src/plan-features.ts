@@ -34,12 +34,10 @@ export type PlanFeatures = z.infer<typeof planFeatures>;
 
 // Compile-time guard: all PlanFeatures values must be boolean or number.
 // If a new field with a different type is added to planFeatures, this line will error.
-type _AssertBooleanOrNumber = PlanFeatures extends Record<
-  string,
-  boolean | number | undefined
->
-  ? true
-  : never;
+type _AssertBooleanOrNumber =
+  PlanFeatures extends Record<string, boolean | number | undefined>
+    ? true
+    : never;
 const _checkPlanFeaturesValueTypes: _AssertBooleanOrNumber = true;
 void _checkPlanFeaturesValueTypes;
 
