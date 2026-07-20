@@ -111,6 +111,7 @@ type AssetUploadProps = {
   type: AssetType;
   accept?: string;
   folderId?: string;
+  showTrigger?: boolean;
 };
 
 export type AssetUploadHandle = {
@@ -118,7 +119,7 @@ export type AssetUploadHandle = {
 };
 
 const EnabledAssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
-  ({ accept, type, folderId }, forwardedRef) => {
+  ({ accept, type, folderId, showTrigger = true }, forwardedRef) => {
     const { inputRef, onChange } = useUpload(folderId);
     useImperativeHandle(forwardedRef, () => ({
       open: () => inputRef.current?.click(),
@@ -134,13 +135,15 @@ const EnabledAssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
           ref={inputRef}
           style={{ display: "none" }}
         />
-        <Button
-          aria-label="Upload asset"
-          color="ghost"
-          type="button"
-          onClick={() => inputRef?.current?.click()}
-          prefix={<UploadIcon />}
-        ></Button>
+        {showTrigger && (
+          <Button
+            aria-label="Upload asset"
+            color="ghost"
+            type="button"
+            onClick={() => inputRef?.current?.click()}
+            prefix={<UploadIcon />}
+          />
+        )}
       </form>
     );
   }
@@ -148,7 +151,7 @@ const EnabledAssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
 EnabledAssetUpload.displayName = "EnabledAssetUpload";
 
 export const AssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
-  ({ type, accept, folderId }, forwardedRef) => {
+  ({ type, accept, folderId, showTrigger }, forwardedRef) => {
     const authPermit = useStore($authPermit);
 
     if (authPermit !== "view") {
@@ -160,8 +163,13 @@ export const AssetUpload = forwardRef<AssetUploadHandle, AssetUploadProps>(
           type={type}
           accept={accept}
           folderId={folderId}
+          showTrigger={showTrigger}
         />
       );
+    }
+
+    if (showTrigger === false) {
+      return null;
     }
 
     return (

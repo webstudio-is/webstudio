@@ -1,4 +1,8 @@
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   IconButton,
   PanelTitle,
   Separator,
@@ -8,6 +12,8 @@ import {
   BrushCleaningIcon,
   NewFolderIcon,
   NewPageIcon,
+  PlusIcon,
+  UploadIcon,
 } from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
@@ -54,33 +60,49 @@ export const AssetsPanel = ({
   useImageAssetCanvasDrag(publish);
   return (
     <>
+      <AssetUpload
+        ref={uploadRef}
+        type="file"
+        folderId={folderId}
+        showTrigger={false}
+      />
       <PanelTitle
         suffix={
           <>
-            <Tooltip content="Create folder">
-              <IconButton
-                disabled={authPermit === "view"}
-                aria-label="Create asset folder"
-                onClick={() => setCreateFolderOpen(true)}
-              >
-                <NewFolderIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip content="Create text file">
-              <IconButton
-                disabled={authPermit === "view"}
-                aria-label="Create text file"
-                onClick={() => setCreateTextFileOpen(true)}
-              >
-                <NewPageIcon />
-              </IconButton>
-            </Tooltip>
             <Tooltip content="Delete unused assets">
-              <IconButton onClick={openDeleteUnusedAssetsDialog}>
+              <IconButton
+                aria-label="Delete unused assets"
+                onClick={openDeleteUnusedAssetsDialog}
+              >
                 <BrushCleaningIcon />
               </IconButton>
             </Tooltip>
-            <AssetUpload ref={uploadRef} type="file" folderId={folderId} />
+            <DropdownMenu>
+              <Tooltip content="Add asset">
+                <DropdownMenuTrigger asChild>
+                  <IconButton
+                    disabled={authPermit === "view"}
+                    aria-label="Add asset"
+                  >
+                    <PlusIcon />
+                  </IconButton>
+                </DropdownMenuTrigger>
+              </Tooltip>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => uploadRef.current?.open()}>
+                  <UploadIcon />
+                  Upload
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setCreateTextFileOpen(true)}>
+                  <NewPageIcon />
+                  Create text file
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setCreateFolderOpen(true)}>
+                  <NewFolderIcon />
+                  Create folder
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       >
