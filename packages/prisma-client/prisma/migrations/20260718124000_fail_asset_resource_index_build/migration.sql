@@ -3,6 +3,7 @@ CREATE FUNCTION fail_asset_resource_index_build(
   p_resource_id TEXT,
   p_query_hash TEXT,
   p_asset_revision TEXT,
+  p_build_attempt_id TEXT,
   p_build_error JSONB
 )
 RETURNS BOOLEAN
@@ -28,6 +29,7 @@ BEGIN
     AND "resourceId" = p_resource_id
     AND "queryHash" = p_query_hash
     AND "assetRevision" = p_asset_revision
+    AND "buildAttemptId" = p_build_attempt_id
     AND "buildStatus" = 'BUILDING';
 
   RETURN FOUND;

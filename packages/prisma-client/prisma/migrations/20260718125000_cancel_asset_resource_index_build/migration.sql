@@ -2,7 +2,8 @@ CREATE FUNCTION cancel_asset_resource_index_build(
   p_project_id TEXT,
   p_resource_id TEXT,
   p_query_hash TEXT,
-  p_asset_revision TEXT
+  p_asset_revision TEXT,
+  p_build_attempt_id TEXT
 )
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -23,6 +24,7 @@ BEGIN
     AND "resourceId" = p_resource_id
     AND "queryHash" = p_query_hash
     AND "assetRevision" = p_asset_revision
+    AND "buildAttemptId" = p_build_attempt_id
     AND "buildStatus" = 'BUILDING';
 
   RETURN FOUND;

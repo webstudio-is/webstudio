@@ -207,7 +207,7 @@ const retainedCopies = Array.from({ length: 10 }, () => JSON.parse(serialized));
 const memoryAfter = process.memoryUsage().heapUsed;
 void retainedCopies;
 
-console.log(
+console.info(
   JSON.stringify(
     {
       environment: { node: process.version, platform: process.platform },

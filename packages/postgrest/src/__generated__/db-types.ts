@@ -7,31 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       _prisma_migrations: {
@@ -109,6 +84,44 @@ export type Database = {
           },
         ];
       };
+      AssetFileMetadata: {
+        Row: {
+          assetId: string;
+          createdAt: string;
+          document: Json;
+          fieldContributions: Json;
+          projectId: string;
+          revision: string;
+          updatedAt: string;
+        };
+        Insert: {
+          assetId: string;
+          createdAt?: string;
+          document: Json;
+          fieldContributions?: Json;
+          projectId: string;
+          revision: string;
+          updatedAt?: string;
+        };
+        Update: {
+          assetId?: string;
+          createdAt?: string;
+          document?: Json;
+          fieldContributions?: Json;
+          projectId?: string;
+          revision?: string;
+          updatedAt?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "AssetFileMetadata_assetId_projectId_fkey";
+            columns: ["assetId", "projectId"];
+            isOneToOne: false;
+            referencedRelation: "Asset";
+            referencedColumns: ["id", "projectId"];
+          },
+        ];
+      };
       AssetFolder: {
         Row: {
           createdAt: string;
@@ -148,6 +161,172 @@ export type Database = {
           },
           {
             foreignKeyName: "AssetFolder_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "Project";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      AssetResourceIndexReference: {
+        Row: {
+          createdAt: string;
+          projectId: string;
+          referenceId: string;
+          resourceId: string;
+          revision: string;
+          type: Database["public"]["Enums"]["AssetResourceIndexReferenceType"];
+        };
+        Insert: {
+          createdAt?: string;
+          projectId: string;
+          referenceId: string;
+          resourceId: string;
+          revision: string;
+          type: Database["public"]["Enums"]["AssetResourceIndexReferenceType"];
+        };
+        Update: {
+          createdAt?: string;
+          projectId?: string;
+          referenceId?: string;
+          resourceId?: string;
+          revision?: string;
+          type?: Database["public"]["Enums"]["AssetResourceIndexReferenceType"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "AssetResourceIndexReference_index_fkey";
+            columns: ["projectId", "resourceId", "revision"];
+            isOneToOne: false;
+            referencedRelation: "AssetResourceIndexRevision";
+            referencedColumns: ["projectId", "resourceId", "revision"];
+          },
+        ];
+      };
+      AssetResourceIndexRevision: {
+        Row: {
+          assetRevision: string;
+          checksum: string;
+          createdAt: string;
+          gcClaimId: string | null;
+          gcStartedAt: string | null;
+          objectKey: string;
+          projectId: string;
+          queryHash: string;
+          resourceId: string;
+          revision: string;
+          unreferencedAt: string | null;
+        };
+        Insert: {
+          assetRevision: string;
+          checksum: string;
+          createdAt?: string;
+          gcClaimId?: string | null;
+          gcStartedAt?: string | null;
+          objectKey: string;
+          projectId: string;
+          queryHash: string;
+          resourceId: string;
+          revision: string;
+          unreferencedAt?: string | null;
+        };
+        Update: {
+          assetRevision?: string;
+          checksum?: string;
+          createdAt?: string;
+          gcClaimId?: string | null;
+          gcStartedAt?: string | null;
+          objectKey?: string;
+          projectId?: string;
+          queryHash?: string;
+          resourceId?: string;
+          revision?: string;
+          unreferencedAt?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "AssetResourceIndexRevision_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "DashboardProject";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "AssetResourceIndexRevision_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "Project";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "AssetResourceIndexRevision_resource_fkey";
+            columns: ["projectId", "resourceId"];
+            isOneToOne: false;
+            referencedRelation: "AssetResourceIndexState";
+            referencedColumns: ["projectId", "resourceId"];
+          },
+        ];
+      };
+      AssetResourceIndexState: {
+        Row: {
+          activeRevision: string | null;
+          assetRevision: string;
+          buildAttemptId: string;
+          buildError: Json | null;
+          buildStatus: Database["public"]["Enums"]["AssetResourceIndexBuildStatus"];
+          createdAt: string;
+          deletedAt: string | null;
+          projectId: string;
+          query: string;
+          queryHash: string;
+          resourceId: string;
+          updatedAt: string;
+        };
+        Insert: {
+          activeRevision?: string | null;
+          assetRevision: string;
+          buildAttemptId: string;
+          buildError?: Json | null;
+          buildStatus?: Database["public"]["Enums"]["AssetResourceIndexBuildStatus"];
+          createdAt?: string;
+          deletedAt?: string | null;
+          projectId: string;
+          query: string;
+          queryHash: string;
+          resourceId: string;
+          updatedAt?: string;
+        };
+        Update: {
+          activeRevision?: string | null;
+          assetRevision?: string;
+          buildAttemptId?: string;
+          buildError?: Json | null;
+          buildStatus?: Database["public"]["Enums"]["AssetResourceIndexBuildStatus"];
+          createdAt?: string;
+          deletedAt?: string | null;
+          projectId?: string;
+          query?: string;
+          queryHash?: string;
+          resourceId?: string;
+          updatedAt?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "AssetResourceIndexState_activeRevision_fkey";
+            columns: ["projectId", "resourceId", "activeRevision"];
+            isOneToOne: false;
+            referencedRelation: "AssetResourceIndexRevision";
+            referencedColumns: ["projectId", "resourceId", "revision"];
+          },
+          {
+            foreignKeyName: "AssetResourceIndexState_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "DashboardProject";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "AssetResourceIndexState_projectId_fkey";
             columns: ["projectId"];
             isOneToOne: false;
             referencedRelation: "Project";
@@ -418,7 +597,6 @@ export type Database = {
       };
       File: {
         Row: {
-          contentHash: string | null;
           createdAt: string;
           description: string | null;
           format: string;
@@ -431,7 +609,6 @@ export type Database = {
           uploaderProjectId: string | null;
         };
         Insert: {
-          contentHash?: string | null;
           createdAt?: string;
           description?: string | null;
           format: string;
@@ -444,7 +621,6 @@ export type Database = {
           uploaderProjectId?: string | null;
         };
         Update: {
-          contentHash?: string | null;
           createdAt?: string;
           description?: string | null;
           format?: string;
@@ -1070,6 +1246,60 @@ export type Database = {
       };
     };
     Functions: {
+      activate_asset_resource_index: {
+        Args: {
+          p_asset_revision: string;
+          p_build_attempt_id: string;
+          p_checksum: string;
+          p_object_key: string;
+          p_project_id: string;
+          p_query_hash: string;
+          p_resource_id: string;
+          p_revision: string;
+        };
+        Returns: boolean;
+      };
+      add_asset_resource_index_reference: {
+        Args: {
+          p_project_id: string;
+          p_reference_id: string;
+          p_resource_id: string;
+          p_revision: string;
+          p_type: Database["public"]["Enums"]["AssetResourceIndexReferenceType"];
+        };
+        Returns: undefined;
+      };
+      begin_asset_resource_index_build: {
+        Args: {
+          p_asset_revision: string;
+          p_build_attempt_id: string;
+          p_project_id: string;
+          p_query: string;
+          p_query_hash: string;
+          p_resource_id: string;
+        };
+        Returns: undefined;
+      };
+      cancel_asset_resource_index_build: {
+        Args: {
+          p_asset_revision: string;
+          p_build_attempt_id: string;
+          p_project_id: string;
+          p_query_hash: string;
+          p_resource_id: string;
+        };
+        Returns: boolean;
+      };
+      claim_asset_resource_index_garbage: {
+        Args: { p_before: string; p_limit: number };
+        Returns: {
+          gcClaimId: string;
+          objectKey: string;
+          projectId: string;
+          resourceId: string;
+          revision: string;
+        }[];
+      };
       clone_project: {
         Args: {
           domain: string;
@@ -1104,6 +1334,14 @@ export type Database = {
         Args: { from_date?: string; to_date?: string };
         Returns: undefined;
       };
+      delete_asset_resource_index_query: {
+        Args: { p_project_id: string; p_resource_id: string };
+        Returns: boolean;
+      };
+      delete_stale_asset_file_metadata: {
+        Args: { p_asset_ids: string[]; p_project_id: string };
+        Returns: number;
+      };
       domainsVirtual: {
         Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
         Returns: {
@@ -1126,6 +1364,34 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      fail_asset_resource_index_build: {
+        Args: {
+          p_asset_revision: string;
+          p_build_attempt_id: string;
+          p_build_error: Json;
+          p_project_id: string;
+          p_query_hash: string;
+          p_resource_id: string;
+        };
+        Returns: boolean;
+      };
+      finalize_asset_resource_index_garbage: {
+        Args: {
+          p_gc_claim_id: string;
+          p_project_id: string;
+          p_resource_id: string;
+          p_revision: string;
+        };
+        Returns: boolean;
+      };
+      get_unpublishable_asset_resource_indexes: {
+        Args: {
+          p_asset_revision: string;
+          p_project_id: string;
+          p_resources: Json;
+        };
+        Returns: Json;
       };
       latestBuildVirtual:
         | {
@@ -1202,6 +1468,34 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      release_asset_resource_index_garbage_claim: {
+        Args: {
+          p_gc_claim_id: string;
+          p_project_id: string;
+          p_resource_id: string;
+          p_revision: string;
+        };
+        Returns: boolean;
+      };
+      remove_asset_resource_index_reference: {
+        Args: {
+          p_project_id: string;
+          p_reference_id: string;
+          p_type: Database["public"]["Enums"]["AssetResourceIndexReferenceType"];
+        };
+        Returns: number;
+      };
+      replace_asset_file_metadata: {
+        Args: {
+          p_asset_id: string;
+          p_document: Json;
+          p_field_contributions: Json;
+          p_project_id: string;
+          p_revision: string;
+          p_source: Json;
+        };
+        Returns: boolean;
+      };
       restore_development_build: {
         Args: { from_build_id: string; project_id: string };
         Returns: string;
@@ -1215,8 +1509,31 @@ export type Database = {
         };
         Returns: string;
       };
+      uuid_generate_v1: { Args: never; Returns: string };
+      uuid_generate_v1mc: { Args: never; Returns: string };
+      uuid_generate_v3: {
+        Args: { name: string; namespace: string };
+        Returns: string;
+      };
+      uuid_generate_v4: { Args: never; Returns: string };
+      uuid_generate_v5: {
+        Args: { name: string; namespace: string };
+        Returns: string;
+      };
+      uuid_nil: { Args: never; Returns: string };
+      uuid_ns_dns: { Args: never; Returns: string };
+      uuid_ns_oid: { Args: never; Returns: string };
+      uuid_ns_url: { Args: never; Returns: string };
+      uuid_ns_x500: { Args: never; Returns: string };
     };
     Enums: {
+      AssetResourceIndexBuildStatus:
+        | "PENDING"
+        | "BUILDING"
+        | "ACTIVE"
+        | "STALE"
+        | "FAILED";
+      AssetResourceIndexReferenceType: "RESOURCE" | "BUILD" | "DEPLOYMENT";
       AuthorizationRelation:
         | "viewers"
         | "editors"
@@ -1358,11 +1675,16 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
+      AssetResourceIndexBuildStatus: [
+        "PENDING",
+        "BUILDING",
+        "ACTIVE",
+        "STALE",
+        "FAILED",
+      ],
+      AssetResourceIndexReferenceType: ["RESOURCE", "BUILD", "DEPLOYMENT"],
       AuthorizationRelation: [
         "viewers",
         "editors",

@@ -6613,13 +6613,25 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toMetaResult(await downloadAsset(getDownloadAssetInput(input)));
       }
       if (name === "screenshot" && captureScreenshot !== undefined) {
-        return toMetaResult(
-          await captureScreenshot(getScreenshotInput(input), {
-            report: (message) => {
-              reportToolProgress?.(message);
-            },
-          })
-        );
+        const screenshotInput = getScreenshotInput(input);
+        try {
+          return toMetaResult(
+            await captureScreenshot(screenshotInput, {
+              report: (message) => {
+                reportToolProgress?.(message);
+              },
+            })
+          );
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          throw Object.assign(
+            new Error(
+              `Screenshot capture failed: ${message}. Check preview.status, verify that the route loads, and retry with an installed browser or explicit browserPath.`
+            ),
+            { code: "SCREENSHOT_CAPTURE_FAILED", cause: error }
+          );
+        }
       }
       if (name === "screenshot.diff" && diffScreenshots !== undefined) {
         return toMetaResult(

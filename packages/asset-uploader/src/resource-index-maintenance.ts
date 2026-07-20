@@ -17,6 +17,7 @@ import {
   loadAssetResourceIndexSnapshots,
   type AssetResourceIndexSnapshot,
 } from "./resource-index-snapshot";
+import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
 
 export const synchronizeAssetResourceStateAfterAssetChange = async ({
   client,
@@ -94,6 +95,12 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
     } catch (error) {
       errors.push(error);
     }
+  }
+  if (store.delete !== undefined) {
+    await collectAssetResourceIndexGarbageBestEffort({
+      client,
+      store: { delete: store.delete },
+    });
   }
   if (errors.length > 0) {
     throw new AggregateError(

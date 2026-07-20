@@ -1,6 +1,7 @@
 import {
   assetResourceContentOptions,
   assetResourceLimits,
+  assetResourceParameterName,
   assetResourceQueryRequest,
   createAssetQueryResourceBody,
   decodeDataSourceVariable,
@@ -26,10 +27,8 @@ import {
 import { throwBuilderRuntimeError } from "./errors";
 import { paginateOutput, paginatedOutputInputSchema } from "./output";
 
-const parameterName = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
-
 export const assetsQueryParameterBindingInput = z.object({
-  name: parameterName,
+  name: assetResourceParameterName,
   value: resourceExpressionInput,
 });
 

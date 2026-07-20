@@ -15,13 +15,33 @@ export const synchronizeAssetResourceIndexQueries = async ({
   projectId,
   previousResources,
   resources,
+  dependencies = {},
 }: {
   client: Client;
   assetClient: AssetClientWithResourceIndexStore;
   projectId: string;
   previousResources: readonly Resource[];
   resources: readonly Resource[];
+  dependencies?: {
+    synchronizeCanonicalAssets?: typeof synchronizeCanonicalAssets;
+    loadCanonicalAssetFileEntries?: typeof loadCanonicalAssetFileEntries;
+    buildPersistAndActivateAssetResourceIndex?: typeof buildPersistAndActivateAssetResourceIndex;
+    deleteAssetResourceIndexQuery?: typeof deleteAssetResourceIndexQuery;
+    collectAssetResourceIndexGarbageBestEffort?: typeof collectAssetResourceIndexGarbageBestEffort;
+  };
 }) => {
+  const synchronize =
+    dependencies.synchronizeCanonicalAssets ?? synchronizeCanonicalAssets;
+  const loadEntries =
+    dependencies.loadCanonicalAssetFileEntries ?? loadCanonicalAssetFileEntries;
+  const buildIndex =
+    dependencies.buildPersistAndActivateAssetResourceIndex ??
+    buildPersistAndActivateAssetResourceIndex;
+  const deleteQuery =
+    dependencies.deleteAssetResourceIndexQuery ?? deleteAssetResourceIndexQuery;
+  const collectGarbage =
+    dependencies.collectAssetResourceIndexGarbageBestEffort ??
+    collectAssetResourceIndexGarbageBestEffort;
   const previous = new Map(
     previousResources.map((resource) => [
       resource.id,
@@ -47,26 +67,26 @@ export const synchronizeAssetResourceIndexQueries = async ({
     .sort((left, right) => left.resourceId.localeCompare(right.resourceId));
 
   for (const resourceId of deletedResourceIds) {
-    await deleteAssetResourceIndexQuery({ client, projectId, resourceId });
-  }
-  if (
-    deletedResourceIds.length > 0 &&
-    assetClient.resourceIndexStore.delete !== undefined
-  ) {
-    await collectAssetResourceIndexGarbageBestEffort({
-      client,
-      store: { delete: assetClient.resourceIndexStore.delete },
-    });
+    await deleteQuery({ client, projectId, resourceId });
   }
   if (changed.length === 0) {
+    if (
+      deletedResourceIds.length > 0 &&
+      assetClient.resourceIndexStore.delete !== undefined
+    ) {
+      await collectGarbage({
+        client,
+        store: { delete: assetClient.resourceIndexStore.delete },
+      });
+    }
     return { deletedResourceIds, updatedResourceIds: [] };
   }
-  await synchronizeCanonicalAssets({ projectId, client, assetClient });
-  const entries = await loadCanonicalAssetFileEntries({ client, projectId });
+  await synchronize({ projectId, client, assetClient });
+  const entries = await loadEntries({ client, projectId });
   const assetRevision = await computeCanonicalAssetRevision(entries);
   const updatedResourceIds: string[] = [];
   for (const { resourceId, query } of changed) {
-    await buildPersistAndActivateAssetResourceIndex({
+    await buildIndex({
       client,
       store: assetClient.resourceIndexStore,
       projectId,
@@ -76,6 +96,12 @@ export const synchronizeAssetResourceIndexQueries = async ({
       assetRevision,
     });
     updatedResourceIds.push(resourceId);
+  }
+  if (assetClient.resourceIndexStore.delete !== undefined) {
+    await collectGarbage({
+      client,
+      store: { delete: assetClient.resourceIndexStore.delete },
+    });
   }
   return { deletedResourceIds, updatedResourceIds };
 };

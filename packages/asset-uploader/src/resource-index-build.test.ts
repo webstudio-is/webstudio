@@ -57,10 +57,6 @@ describe("resource index build and activation", () => {
           ),
         });
         return json(true);
-      }),
-      db.post("rpc/claim_asset_resource_index_garbage", () => {
-        events.push("cleanup");
-        return json([]);
       })
     );
     const result = await buildPersistAndActivateAssetResourceIndex({
@@ -78,7 +74,7 @@ describe("resource index build and activation", () => {
       entries: [entry],
     });
 
-    expect(events).toEqual(["begin", "persist", "activate", "cleanup"]);
+    expect(events).toEqual(["begin", "persist", "activate"]);
     expect(result.index.documents).toHaveLength(1);
   });
 
@@ -103,6 +99,47 @@ describe("resource index build and activation", () => {
         entries: [entry],
       })
     ).rejects.toBeInstanceOf(AssetResourceIndexBuildSupersededError);
+  });
+
+  test("uses a unique identity for each otherwise identical build attempt", async () => {
+    const begun: string[] = [];
+    const activated: string[] = [];
+    server.use(
+      db.post("rpc/begin_asset_resource_index_build", async ({ request }) => {
+        const body = (await request.json()) as {
+          p_build_attempt_id: string;
+        };
+        begun.push(body.p_build_attempt_id);
+        return json(null);
+      }),
+      db.post("rpc/activate_asset_resource_index", async ({ request }) => {
+        const body = (await request.json()) as {
+          p_build_attempt_id: string;
+        };
+        activated.push(body.p_build_attempt_id);
+        return json(true);
+      })
+    );
+    const input = {
+      client: testContext.postgrest.client,
+      store: {
+        putIfAbsent: async ({ checksum }: { checksum: string }) => ({
+          status: "created" as const,
+          checksum,
+        }),
+      },
+      projectId: "project-1",
+      resourceId: "posts",
+      query: "*[]",
+      entries: [entry],
+    };
+
+    await buildPersistAndActivateAssetResourceIndex(input);
+    await buildPersistAndActivateAssetResourceIndex(input);
+
+    expect(begun).toHaveLength(2);
+    expect(new Set(begun).size).toBe(2);
+    expect(activated).toEqual(begun);
   });
 
   test("marks a current failed attempt without trying to activate it", async () => {

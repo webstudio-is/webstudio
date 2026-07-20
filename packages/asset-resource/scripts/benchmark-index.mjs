@@ -85,4 +85,4 @@ const result = {
   verify: await measure(20, () => verifyAssetResourceIndex(parsed)),
 };
 
-console.log(JSON.stringify(result, null, 2));
+console.info(JSON.stringify(result, null, 2));

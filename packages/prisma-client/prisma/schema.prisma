@@ -219,6 +219,7 @@ model AssetResourceIndexState {
   query          String
   queryHash      String
   assetRevision  String
+  buildAttemptId String
   buildStatus    AssetResourceIndexBuildStatus @default(PENDING)
   activeRevision String?
   buildError     Json?
