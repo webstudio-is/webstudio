@@ -288,7 +288,7 @@ describe("asset content revisions", () => {
 
     expect(canonicalDocument).toMatchObject({
       _id: "asset",
-      name: "post",
+      name: "post.md",
       contentRef: revisionName,
       properties: { title: "Updated post" },
       excerpt: "Updated body",

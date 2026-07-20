@@ -106,9 +106,7 @@ const failure = ({
   );
 
 const getRequest = (input: RequestInfo | URL, init?: RequestInit) =>
-  input instanceof Request
-    ? new Request(input, init)
-    : new Request(input, init);
+  new Request(input, init);
 
 export const getPublishedAssetResourceCacheKey = async ({
   deploymentId,
