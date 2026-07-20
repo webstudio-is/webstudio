@@ -1678,6 +1678,23 @@ test("publishes project", async () => {
   });
 });
 
+test("publishes static export", async () => {
+  await expectCommandCall({
+    options: {
+      command: "publish",
+      target: "static",
+      template: "ssg,vercel",
+      idempotencyKey: "publish-key",
+    },
+    call: apiCalls.publish,
+    connection: {
+      target: "static",
+      templates: ["ssg", "vercel"],
+      idempotencyKey: "publish-key",
+    },
+  });
+});
+
 test("lists publishes", async () => {
   await expectCommandCall({
     options: { command: "list-publishes" },
