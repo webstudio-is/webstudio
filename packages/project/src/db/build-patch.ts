@@ -23,6 +23,12 @@ export type PatchBuildResult =
   | { status: "version_mismatched"; errors: string }
   | { status: "error"; errors: string };
 
+export type BuildPatchCommitted = {
+  previousBuild: Database["public"]["Tables"]["Build"]["Row"];
+  build: Database["public"]["Tables"]["Build"]["Row"];
+  changes: BuildPatchChange[];
+};
+
 type PatchLoadedBuildResult =
   | {
       status: "ok";
@@ -131,7 +137,8 @@ export const patchBuild = async (
     transactions: BuildPatchTransaction[];
     clientVersion: number;
   },
-  context: AppContext
+  context: AppContext,
+  onCommitted?: (result: BuildPatchCommitted) => Promise<void>
 ): Promise<PatchBuildResult> => {
   const build = await loadRawBuildById(context, buildId);
   const result = await patchLoadedBuild(
@@ -141,6 +148,14 @@ export const patchBuild = async (
 
   if (result.status !== "ok") {
     return result;
+  }
+
+  if (result.build !== build) {
+    await onCommitted?.({
+      previousBuild: build,
+      build: result.build,
+      changes: transactions.flatMap(({ payload }) => payload),
+    });
   }
 
   return { status: "ok", version: result.version };

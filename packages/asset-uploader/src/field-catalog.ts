@@ -8,13 +8,17 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import type { AssetClient } from "./client";
+import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
 
 export const loadBuilderAssetFieldCatalog = async ({
   projectId,
   context,
+  assetClient,
 }: {
   projectId: string;
   context: AppContext;
+  assetClient: Pick<AssetClient, "readFile">;
 }) => {
   const canView = await authorizeProject.hasProjectPermit(
     { projectId, permit: "view" },
@@ -26,6 +30,11 @@ export const loadBuilderAssetFieldCatalog = async ({
     );
   }
 
+  await synchronizeCanonicalAssets({
+    projectId,
+    client: context.postgrest.client,
+    assetClient,
+  });
   const entries = await loadCanonicalAssetFileEntries({
     client: context.postgrest.client,
     projectId,

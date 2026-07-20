@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import {
   reconcileAssetResourceIndexesForPublication,
+  prepareAssetResourceIndexSnapshotsForPublication,
   updateAssetResourceIndexesAfterCanonicalChange,
 } from "./resource-index-maintenance";
 
@@ -172,5 +173,47 @@ describe("incremental resource index maintenance", () => {
       })
     ).resolves.toEqual(["posts"]);
     expect(putIfAbsent).toHaveBeenCalledOnce();
+  });
+
+  test("builds a historical query snapshot without replacing current state", async () => {
+    const historicalQuery = `*[extension == "md"]`;
+    const historicalQueryHash =
+      await computeAssetResourceQueryHash(historicalQuery);
+    const assetRevision = await computeCanonicalAssetRevision([entry]);
+    server.use(
+      db.get("AssetResourceIndexState", () =>
+        json([
+          {
+            resourceId: "posts",
+            queryHash: `sha256:${"1".repeat(64)}`,
+            deletedAt: null,
+          },
+        ])
+      )
+    );
+    const putIfAbsent = vi.fn();
+    const read = vi.fn();
+
+    const snapshots = await prepareAssetResourceIndexSnapshotsForPublication({
+      client: testContext.postgrest.client,
+      store: { putIfAbsent },
+      projectId: "project-1",
+      resources: [
+        {
+          resourceId: "posts",
+          query: historicalQuery,
+          queryHash: historicalQueryHash,
+        },
+      ],
+      entries: [entry],
+      assetRevision,
+      read,
+      referenceId: "historical-build",
+    });
+
+    expect(snapshots).toHaveLength(1);
+    expect(snapshots[0]?.index.queryHash).toBe(historicalQueryHash);
+    expect(putIfAbsent).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
   });
 });
