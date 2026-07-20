@@ -13,6 +13,8 @@ import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 import {
   getVerifiedPublishDomains,
+  getProjectPublishReport,
+  listProjectPublishes,
   createProjectDomainResult,
   deleteProjectDomainResult,
   publishProject,
@@ -22,6 +24,32 @@ import {
 } from "../project-domain-api.server";
 
 export const domainRouter = router({
+  publishActivity: procedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        await projectApi.loadById(input.projectId, ctx);
+        return {
+          success: true as const,
+          ...(await listProjectPublishes(input.projectId, ctx)),
+        };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
+  publishReport: procedure
+    .input(z.object({ projectId: z.string(), attemptId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        await projectApi.loadById(input.projectId, ctx);
+        return {
+          success: true as const,
+          result: await getProjectPublishReport(input, ctx),
+        };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
   getEntriToken: procedure.query(async ({ ctx }) => {
     try {
       const result = await ctx.entri.entryApi.getEntriToken();

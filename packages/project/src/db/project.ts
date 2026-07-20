@@ -220,6 +220,41 @@ export const softDeleteProject = async (
   projectId: string,
   context: AppContext
 ) => {
+  let attemptRows: { id: string; retentionDays: number }[] = [];
+  try {
+    const attempts = await (
+      context.postgrest.client as unknown as {
+        from: (relation: string) => {
+          select: (columns: string) => {
+            eq: (
+              column: string,
+              value: string
+            ) => Promise<{
+              data: { id: string; retentionDays: number }[] | null;
+              error: unknown;
+            }>;
+          };
+        };
+      }
+    )
+      .from("PublishAttempt")
+      .select("id, retentionDays")
+      .eq("projectId", projectId);
+    attemptRows = attempts.data ?? [];
+  } catch {
+    // The R2 lifecycle remains the deletion fallback during rollout.
+  }
+  const reports = attemptRows.flatMap(({ id, retentionDays }) =>
+    retentionDays === 1 || retentionDays === 30
+      ? [{ attemptId: id, retentionDays: retentionDays as 1 | 30 }]
+      : []
+  );
+  if (reports.length > 0) {
+    await context.deployment.deploymentTrpc.deletePublishReports
+      .mutate({ reports: reports.slice(0, 1000) })
+      .catch(() => undefined);
+  }
+
   const result = await context.postgrest.client
     .from("Project")
     .update({

@@ -239,6 +239,15 @@ describe("remove (msw)", () => {
       createContext({
         deployment: {
           deploymentTrpc: {
+            getPublishReport: {
+              query: () => Promise.resolve({ availability: "not_found" }),
+            },
+            storePublishReport: {
+              mutate: () => Promise.resolve({ success: true }),
+            },
+            deletePublishReports: {
+              mutate: () => Promise.resolve({ success: true }),
+            },
             publish: {
               mutate: () => Promise.resolve({ success: true }),
             },
@@ -293,6 +302,15 @@ describe("remove (msw)", () => {
       createContext({
         deployment: {
           deploymentTrpc: {
+            getPublishReport: {
+              query: () => Promise.resolve({ availability: "not_found" }),
+            },
+            storePublishReport: {
+              mutate: () => Promise.resolve({ success: true }),
+            },
+            deletePublishReports: {
+              mutate: () => Promise.resolve({ success: true }),
+            },
             publish: {
               mutate: () => Promise.resolve({ success: true }),
             },

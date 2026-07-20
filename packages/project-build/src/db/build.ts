@@ -15,7 +15,9 @@ import {
   type Breakpoint,
   type StyleSourceSelection,
   type StyleDecl,
+  getStyleDeclKey,
 } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   migratePages,
   serializePages,
@@ -34,6 +36,10 @@ import { serializeStyles } from "./styles";
 import { serializeStyleSourceSelections } from "./style-source-selections";
 import { parseConfig, serializeData } from "./build-parser";
 import { assertBuildIntegrity } from "../build-integrity";
+import {
+  PrePublishAuditError,
+  runPrePublishAudit,
+} from "../runtime/pre-publish-audit";
 
 export {
   parseConfig,
@@ -372,24 +378,52 @@ export const createProductionBuild = async (
     }
   }
 
-  const devBuild = await loadDevBuildByProjectId(context, props.projectId);
-  assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const devBuild = await loadDevBuildByProjectId(context, props.projectId);
+    assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
+    const findings = runPrePublishAudit({
+      pages: devBuild.pages,
+      instances: new Map(devBuild.instances.map((item) => [item.id, item])),
+      props: new Map(devBuild.props.map((item) => [item.id, item])),
+      dataSources: new Map(devBuild.dataSources.map((item) => [item.id, item])),
+      resources: new Map(devBuild.resources.map((item) => [item.id, item])),
+      metas: componentMetas,
+      assets: new Map(),
+      breakpoints: new Map(devBuild.breakpoints.map((item) => [item.id, item])),
+      styles: new Map(
+        devBuild.styles.map((item) => [getStyleDeclKey(item), item])
+      ),
+      styleSourceSelections: new Map(
+        devBuild.styleSourceSelections.map((item) => [item.instanceId, item])
+      ),
+    });
+    if (findings.some(({ severity }) => severity === "error")) {
+      throw new PrePublishAuditError(findings);
+    }
 
-  const build = await context.postgrest.client.rpc("create_production_build", {
-    project_id: props.projectId,
-    deployment: JSON.stringify(props.deployment),
-  });
-  const buildId = build.data;
-  if (build.error) {
-    throw build.error;
-  }
-  if (buildId === null) {
-    throw Error(`Project ${props.projectId} not found`);
+    const build = await (
+      context.postgrest.client as unknown as {
+        rpc: (
+          name: string,
+          args: Record<string, unknown>
+        ) => Promise<{ data: string | null; error: unknown }>;
+      }
+    ).rpc("create_production_build_expected", {
+      project_id: props.projectId,
+      deployment: JSON.stringify(props.deployment),
+      expected_version: devBuild.version,
+    });
+    if (build.error) {
+      throw build.error;
+    }
+    if (build.data !== null) {
+      return { id: build.data, auditFindings: findings };
+    }
   }
 
-  return {
-    id: build.data,
-  };
+  throw Error(
+    "The project changed during validation. Review the latest audit and publish again."
+  );
 };
 
 export const __testing__ = { canTokenPublishDeployment };

@@ -173,6 +173,7 @@ model Project {
   previewImageAssetId       String?
   marketplaceApprovalStatus MarketplaceApprovalStatus    @default(UNLISTED)
   latestStaticBuild         LatestStaticBuildPerProject?
+  publishAttempts           PublishAttempt[]
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -185,6 +186,60 @@ enum PublishStatus {
   PENDING
   PUBLISHED
   FAILED
+}
+
+enum PublishAttemptTarget {
+  STAGING
+  PRODUCTION
+  STATIC
+}
+
+enum PublishAttemptStatus {
+  VALIDATING
+  BLOCKED
+  QUEUED
+  BUILDING
+  SUCCEEDED
+  FAILED
+}
+
+enum PublishReportAvailability {
+  NOT_CREATED
+  PENDING
+  AVAILABLE
+  UNAVAILABLE
+}
+
+model PublishAttempt {
+  id                 String                    @id @default(uuid())
+  project            Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId          String
+  buildId            String?
+  artifactName       String?                   @db.VarChar(255)
+  target             PublishAttemptTarget
+  targetKeys         String[]
+  targetLabels       String[]
+  status             PublishAttemptStatus      @default(VALIDATING)
+  failureCode        String?
+  auditErrorCount    Int                       @default(0)
+  auditWarningCount  Int                       @default(0)
+  diagnosticErrors   Int                       @default(0)
+  diagnosticWarnings Int                       @default(0)
+  summary            String                    @db.VarChar(512)
+  retentionDays      Int                       @default(0)
+  expiresAt          DateTime?                 @db.Timestamptz(3)
+  reportAvailability PublishReportAvailability @default(NOT_CREATED)
+  idempotencyHash    String?
+  createdAt          DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                  @default(now()) @updatedAt @db.Timestamptz(3)
+  startedAt          DateTime?                 @db.Timestamptz(3)
+  completedAt        DateTime?                 @db.Timestamptz(3)
+
+  @@unique([projectId, idempotencyHash])
+  @@index([projectId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([targetKeys], type: Gin)
+  @@index([buildId])
+  @@index([expiresAt])
 }
 
 enum MarketplaceApprovalStatus {

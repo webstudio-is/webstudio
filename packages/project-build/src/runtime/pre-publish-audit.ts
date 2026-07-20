@@ -1,13 +1,19 @@
 import {
+  generateCss,
   getPagePath,
   getPublishablePages,
+  type Assets,
+  type Breakpoints,
   type DataSources,
   type Instances,
   type Pages,
   type Props,
   type Resources,
+  type StyleSourceSelections,
+  type Styles,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
+import { parse as parseCss } from "css-tree";
 import {
   formatBuildIntegrityIssue,
   getBuildIntegrityIssues,
@@ -29,6 +35,22 @@ export type PrePublishAuditFinding = {
   };
 };
 
+export class PrePublishAuditError extends Error {
+  findings: PrePublishAuditFinding[];
+  attemptId?: string;
+
+  constructor(findings: PrePublishAuditFinding[]) {
+    const firstError = findings.find(({ severity }) => severity === "error");
+    super(
+      firstError === undefined
+        ? "Pre-publish audit failed."
+        : formatPrePublishAuditFinding(firstError)
+    );
+    this.name = "PrePublishAuditError";
+    this.findings = findings;
+  }
+}
+
 type PrePublishAuditContext = {
   pages: Pages;
   instances: Instances;
@@ -36,6 +58,10 @@ type PrePublishAuditContext = {
   dataSources: DataSources;
   resources: Resources;
   metas: Map<string, WsComponentMeta>;
+  assets?: Assets;
+  breakpoints?: Breakpoints;
+  styles?: Styles;
+  styleSourceSelections?: StyleSourceSelections;
 };
 
 type PrePublishAuditCheck = (
@@ -51,31 +77,44 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
   const findings: PrePublishAuditFinding[] = [];
 
   for (const page of getPublishablePages(pages)) {
-    let message: string | undefined;
-    let instanceId: string | undefined;
+    const pageFindings: PrePublishAuditFinding[] = [];
     const isValid = isTreeSatisfyingContentModel({
       instances,
       props,
       metas,
       instanceSelector: [page.rootInstanceId],
       onError: (error, instanceSelector) => {
-        message ??= error;
-        instanceId ??= instanceSelector[0];
+        pageFindings.push({
+          ruleId: "html-content-model",
+          severity: "error",
+          message: error,
+          location: {
+            pageId: page.id,
+            pageName: page.name,
+            pagePath: getPagePath(page.id, pages) || "/",
+            instanceId: instanceSelector[0],
+          },
+        });
       },
     });
 
     if (isValid === false) {
-      findings.push({
-        ruleId: "html-content-model",
-        severity: "error",
-        message: message ?? "The page contains invalid element nesting.",
-        location: {
-          pageId: page.id,
-          pageName: page.name,
-          pagePath: getPagePath(page.id, pages) || "/",
-          instanceId,
-        },
-      });
+      findings.push(
+        ...(pageFindings.length > 0
+          ? pageFindings
+          : [
+              {
+                ruleId: "html-content-model",
+                severity: "error" as const,
+                message: "The page contains invalid element nesting.",
+                location: {
+                  pageId: page.id,
+                  pageName: page.name,
+                  pagePath: getPagePath(page.id, pages) || "/",
+                },
+              },
+            ])
+      );
     }
   }
 
@@ -103,9 +142,87 @@ const checkResourceIntegrity: PrePublishAuditCheck = ({
     },
   }));
 
+const checkGeneratedStylesheet: PrePublishAuditCheck = ({
+  assets,
+  breakpoints,
+  instances,
+  props,
+  styles,
+  styleSourceSelections,
+  metas,
+}) => {
+  if (
+    assets === undefined ||
+    breakpoints === undefined ||
+    styles === undefined ||
+    styleSourceSelections === undefined
+  ) {
+    return [];
+  }
+
+  try {
+    const { cssText } = generateCss({
+      assets,
+      breakpoints,
+      instances,
+      props,
+      styles,
+      styleSourceSelections,
+      componentMetas: metas,
+      assetBaseUrl: "/cgi/asset/",
+      atomic: false,
+    });
+    return getGeneratedStylesheetFindings(cssText);
+  } catch (error) {
+    const details =
+      error instanceof Error && error.message.trim().length > 0
+        ? ` ${error.message}`
+        : "";
+    return [
+      {
+        ruleId: "generated-stylesheet",
+        severity: "error",
+        message: `The generated stylesheet contains invalid CSS.${details}`,
+        location: {},
+      },
+    ];
+  }
+};
+
+export const getGeneratedStylesheetFindings = (
+  cssText: string
+): PrePublishAuditFinding[] => {
+  const errors: string[] = [];
+  try {
+    parseCss(cssText, {
+      positions: true,
+      onParseError: (error) => {
+        errors.push(error.message);
+      },
+    });
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : "");
+  }
+  return Array.from(new Set(errors))
+    .slice(0, 500)
+    .map((error) => {
+      const details = error.trim().length > 0 ? ` ${error}` : "";
+      return {
+        ruleId: "generated-stylesheet",
+        severity: "error" as const,
+        message: `The generated stylesheet contains invalid CSS.${details}`,
+        location: {},
+      };
+    });
+};
+
+export const getGeneratedStylesheetFinding = (cssText: string) =>
+  getGeneratedStylesheetFindings(cssText)[0];
+
 const prePublishAuditChecks: PrePublishAuditCheck[] = [
   checkHtmlContentModel,
   checkResourceIntegrity,
+  checkGeneratedStylesheet,
 ];
 
 export const runPrePublishAudit = ({

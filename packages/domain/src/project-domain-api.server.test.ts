@@ -118,6 +118,12 @@ const createPublishContext = (
     authorization: { type: "user", userId: "user-1" },
     deployment: {
       deploymentTrpc: {
+        getPublishReport: {
+          query: vi.fn().mockResolvedValue({ availability: "not_found" }),
+        },
+        storePublishReport: {
+          mutate: vi.fn().mockResolvedValue({ success: true }),
+        },
         publish: {
           mutate: publish,
         },
@@ -132,20 +138,57 @@ const createPublishContext = (
         PUBLISHER_HOST: "wstd.io",
       },
     },
-  }) as unknown as AppContext;
+    planFeatures: {
+      allowAdvancedPublishDiagnostics: true,
+      publishLogRetentionDays: 1,
+    },
+  } as unknown as AppContext);
 
 const productionBuildHandler = (
   onRequest: (body: { project_id: string; deployment: string }) => void
 ) =>
   http.post(
-    `${postgrestUrl}/rpc/create_production_build`,
+    `${postgrestUrl}/rpc/create_production_build_expected`,
     async ({ request }) => {
-      onRequest(
-        (await request.json()) as { project_id: string; deployment: string }
-      );
+      const body = (await request.json()) as {
+        project_id: string;
+        deployment: string;
+      };
+      onRequest(body);
       return json("build-prod");
     }
   );
+
+const publishAttemptHandlers = () => {
+  let attempt: Record<string, unknown> | undefined;
+  return [
+    http.get(`${postgrestUrl}/PublishAttempt`, () =>
+      attempt === undefined ? empty({ status: 204 }) : json(attempt)
+    ),
+    http.post(`${postgrestUrl}/PublishAttempt`, async ({ request }) => {
+      attempt = {
+        ...((await request.json()) as Record<string, unknown>),
+        buildId: null,
+        status: "VALIDATING",
+        failureCode: null,
+        auditErrorCount: 0,
+        auditWarningCount: 0,
+        diagnosticErrors: 0,
+        diagnosticWarnings: 0,
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        startedAt: null,
+        completedAt: null,
+      };
+      return json(attempt);
+    }),
+    http.patch(`${postgrestUrl}/PublishAttempt`, async ({ request }) => {
+      attempt = { ...attempt, ...((await request.json()) as object) };
+      return json(attempt);
+    }),
+    db.get("User", () => json({ username: "Publisher" })),
+  ];
+};
 
 test("publishes saas project through shared domain service", async () => {
   const publish = vi.fn().mockResolvedValue({ success: true });
@@ -153,6 +196,7 @@ test("publishes saas project through shared domain service", async () => {
     | { project_id: string; deployment: string }
     | undefined;
   server.use(
+    ...publishAttemptHandlers(),
     projectHandler,
     devBuildHandler(),
     productionBuildHandler((body) => {
@@ -177,18 +221,22 @@ test("publishes saas project through shared domain service", async () => {
     assetsDomain: "project.wstd.io",
     excludeWstdDomainFromSearch: true,
   });
-  expect(publish).toHaveBeenCalledWith({
-    builderOrigin: "https://apps.webstudio.is",
-    githubSha: "sha-1",
-    buildId: "build-prod",
-    branchName: "main",
-    destination: "saas",
-    logProjectName: "Project One - project-1",
-  });
+  expect(publish).toHaveBeenCalledWith(
+    expect.objectContaining({
+      builderOrigin: "https://apps.webstudio.is",
+      githubSha: "sha-1",
+      buildId: "build-prod",
+      branchName: "main",
+      destination: "saas",
+      logProjectName: "Project One - project-1",
+      reportRetentionDays: 1,
+    })
+  );
 });
 
 test("reports local-dev publish when deployment publisher is unavailable", async () => {
   server.use(
+    ...publishAttemptHandlers(),
     projectHandler,
     devBuildHandler(),
     productionBuildHandler(() => {})
@@ -207,12 +255,42 @@ test("reports local-dev publish when deployment publisher is unavailable", async
   });
 });
 
+test("replays an idempotent publish without creating another build", async () => {
+  const publish = vi.fn().mockResolvedValue({ success: true });
+  let productionBuildCount = 0;
+  server.use(
+    ...publishAttemptHandlers(),
+    projectHandler,
+    devBuildHandler(),
+    productionBuildHandler(() => {
+      productionBuildCount += 1;
+    })
+  );
+  const publishOnce = () =>
+    publishProject(
+      {
+        project: loadedProject,
+        domains: ["project.wstd.io"],
+        idempotencyKey: "request-1",
+      },
+      createPublishContext(publish)
+    );
+
+  const first = await publishOnce();
+  const replay = await publishOnce();
+
+  expect(replay.attempt.id).toBe(first.attempt.id);
+  expect(productionBuildCount).toBe(1);
+  expect(publish).toHaveBeenCalledTimes(1);
+});
+
 test("publishes static project through shared domain service", async () => {
   const publish = vi.fn().mockResolvedValue({ success: true });
   let productionBuildRequest:
     | { project_id: string; deployment: string }
     | undefined;
   server.use(
+    ...publishAttemptHandlers(),
     projectHandler,
     devBuildHandler(),
     productionBuildHandler((body) => {
@@ -241,20 +319,24 @@ test("publishes static project through shared domain service", async () => {
     assetsDomain: "project.wstd.io",
     templates: [],
   });
-  expect(publish).toHaveBeenCalledWith({
-    builderOrigin: "https://apps.webstudio.is",
-    githubSha: "sha-1",
-    buildId: "build-prod",
-    branchName: "main",
-    destination: "static",
-    logProjectName: "Project One - project-1",
-  });
+  expect(publish).toHaveBeenCalledWith(
+    expect.objectContaining({
+      builderOrigin: "https://apps.webstudio.is",
+      githubSha: "sha-1",
+      buildId: "build-prod",
+      branchName: "main",
+      destination: "static",
+      logProjectName: "Project One - project-1",
+      reportRetentionDays: 1,
+    })
+  );
 });
 
 test("rejects publishing when dev build has orphan resource references", async () => {
   const publish = vi.fn().mockResolvedValue({ success: true });
   let didCreateProductionBuild = false;
   server.use(
+    ...publishAttemptHandlers(),
     projectHandler,
     devBuildHandler({
       ...devBuildRow,
@@ -342,6 +424,8 @@ test("lists non-static project publishes", async () => {
           id: "build-prod",
           version: 3,
           createdAt: "2024-01-03T00:00:00.000Z",
+          updatedAt: "2024-01-03T00:01:00.000Z",
+          publishStatus: "PUBLISHED",
           deployment: JSON.stringify({
             destination: "saas",
             domains: ["example.com", "www.example.com"],
@@ -371,10 +455,18 @@ test("lists non-static project publishes", async () => {
       {
         id: "build-prod",
         jobId: "build-prod",
+        buildId: "build-prod",
         version: 3,
         target: "production",
         domains: ["example.com", "www.example.com"],
+        status: "succeeded",
+        summary: "Published successfully",
+        auditErrorCount: 0,
+        auditWarningCount: 0,
+        reportAvailability: "not_created",
+        artifact: undefined,
         createdAt: "2024-01-03T00:00:00.000Z",
+        completedAt: "2024-01-03T00:01:00.000Z",
       },
     ],
   });
@@ -382,11 +474,14 @@ test("lists non-static project publishes", async () => {
 
 test("returns publish job status from deployment record", async () => {
   server.use(
+    http.get(`${postgrestUrl}/PublishAttempt`, () => empty({ status: 204 })),
     db.get("Build", () =>
       json({
         id: "build-prod",
         version: 3,
         createdAt: "2024-01-03T00:00:00.000Z",
+        updatedAt: "2024-01-03T00:01:00.000Z",
+        publishStatus: "PUBLISHED",
         deployment: JSON.stringify({
           destination: "saas",
           domains: ["example.com"],
@@ -403,15 +498,18 @@ test("returns publish job status from deployment record", async () => {
   ).resolves.toEqual({
     id: "build-prod",
     version: 3,
-    status: "success",
+    status: "succeeded",
     domains: ["example.com"],
     createdAt: "2024-01-03T00:00:00.000Z",
-    completedAt: "2024-01-03T00:00:00.000Z",
+    completedAt: "2024-01-03T00:01:00.000Z",
   });
 });
 
 test("returns undefined when publish job is missing", async () => {
-  server.use(db.get("Build", () => empty({ status: 204 })));
+  server.use(
+    http.get(`${postgrestUrl}/PublishAttempt`, () => empty({ status: 204 })),
+    db.get("Build", () => empty({ status: 204 }))
+  );
 
   await expect(
     getProjectPublishJob({ projectId: "project-1", jobId: "missing" }, context)
