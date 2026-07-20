@@ -145,6 +145,7 @@ export const updateAssetContent = async (
     format: "file",
     size: 0,
     uploaderProjectId: projectId,
+    createdAt: currentAsset.file.createdAt,
   });
   assertPostgrestSuccess(insertedFile);
 

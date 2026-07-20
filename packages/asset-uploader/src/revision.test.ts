@@ -84,6 +84,7 @@ describe("asset content revisions", () => {
           name: expect.stringMatching(/^settings_.+\.json$/),
           status: "UPLOADING",
           uploaderProjectId: "project",
+          createdAt: oldFile.createdAt,
         });
         return empty({ status: 201 });
       }),
@@ -100,7 +101,6 @@ describe("asset content revisions", () => {
           ...oldFile,
           name: revisionName,
           size: 7,
-          createdAt: "2026-07-18T00:00:00.000Z",
           updatedAt: "2026-07-18T00:00:01.000Z",
         })
       ),
@@ -140,7 +140,7 @@ describe("asset content revisions", () => {
       description: "Settings",
       folderId: "data",
       format: "json",
-      createdAt: "2026-07-18T00:00:00.000Z",
+      createdAt: oldFile.createdAt,
       updatedAt: "2026-07-18T00:00:01.000Z",
     });
     expect(swapInput).toEqual({
