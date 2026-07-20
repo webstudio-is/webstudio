@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { SignatureV4 } from "@smithy/signature-v4";
-import { putImmutableObjectToS3 } from "./immutable-object";
+import {
+  deleteImmutableObjectFromS3,
+  putImmutableObjectToS3,
+} from "./immutable-object";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -98,5 +101,26 @@ describe("immutable S3 object persistence", () => {
         object,
       })
     ).rejects.toThrow("has no checksum");
+  });
+
+  test("deletes an immutable object idempotently", async () => {
+    const { signer, sign } = createSigner();
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+    vi.stubGlobal("fetch", fetch);
+    const input = {
+      signer,
+      endpoint: "https://storage.example",
+      bucket: "private-indexes",
+      key: object.key,
+    };
+
+    await expect(deleteImmutableObjectFromS3(input)).resolves.toBe("deleted");
+    await expect(deleteImmutableObjectFromS3(input)).resolves.toBe("missing");
+    expect(sign).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "DELETE" })
+    );
   });
 });

@@ -135,7 +135,40 @@ const readAssetBaseUrl = async (constantsPath: string) => {
 };
 
 const getResourceIndexPublicPath = (resourceId: string, revision: string) =>
-  `/resource-indexes/${encodeURIComponent(resourceId)}.${encodeURIComponent(revision)}.json`;
+  `/resource-indexes/${encodeURIComponent(resourceId)}.${encodeURIComponent(
+    revision
+  )}.json`;
+
+export const generateAssetQueryRuntimeModule = ({
+  deploymentId,
+  manifest,
+}: {
+  deploymentId: string;
+  manifest: readonly {
+    resourceId: string;
+    revision: string;
+    queryHash: string;
+    assetRevision: string;
+    indexPath: string;
+  }[];
+}) => {
+  const inputType = `{
+    request: Request;
+    context: unknown;
+    fallback: typeof fetch;
+  }`;
+  if (manifest.length === 0) {
+    return `export const createGeneratedAssetResourceFetch = async ({ fallback }: ${inputType}): Promise<typeof fetch> => fallback;\n`;
+  }
+  return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/asset-resource";
+
+const deploymentId = ${JSON.stringify(deploymentId)};
+const manifest = ${JSON.stringify(manifest, null, 2)};
+
+export const createGeneratedAssetResourceFetch = ({ request, context, fallback }: ${inputType}) =>
+  createRuntimeFetch({ request, context, deploymentId, manifest, fallback });
+`;
+};
 
 export const materializeAssetResourceIndexes = async ({
   snapshots,
@@ -176,11 +209,21 @@ export const materializeAssetResourceIndexes = async ({
   }
   await writeFile(
     join(generatedDirectory, "$resources.asset-query-manifest.ts"),
-    `export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};\nexport const assetQueryManifest = ${JSON.stringify(
+    `export const assetQueryDeploymentId = ${JSON.stringify(
+      deploymentId
+    )};\nexport const assetQueryManifest = ${JSON.stringify(
       manifest.map(({ index: _index, ...entry }) => entry),
       null,
       2
     )};\n`,
+    "utf8"
+  );
+  await writeFile(
+    join(generatedDirectory, "$resources.asset-query-runtime.ts"),
+    generateAssetQueryRuntimeModule({
+      deploymentId,
+      manifest: manifest.map(({ index: _index, ...entry }) => entry),
+    }),
     "utf8"
   );
 };
@@ -285,7 +328,9 @@ const generateRedirectFallbackRoute = (runtime: "remix" | "react-router") => {
     runtime === "react-router" ? "react-router" : "@remix-run/server-runtime";
 
   return `
-    import { type LoaderFunctionArgs } from ${JSON.stringify(loaderFunctionArgs)};
+    import { type LoaderFunctionArgs } from ${JSON.stringify(
+      loaderFunctionArgs
+    )};
     import { redirectRequest } from "../redirect-url";
     // @todo think about how to make __generated__ typeable
     // @ts-ignore
@@ -396,7 +441,10 @@ export const prebuild = async (options: {
   const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
   if (parsedSiteData.success === false) {
     throw new Error(
-      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(parsedSiteData.error.issues, loadedSiteData)}`
+      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
+        parsedSiteData.error.issues,
+        loadedSiteData
+      )}`
     );
   }
   const siteData = parsedSiteData.data;
@@ -707,7 +755,9 @@ export const prebuild = async (options: {
 
       export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
 
-      export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
+      export const lastPublished = "${new Date(
+        siteData.build.createdAt
+      ).toISOString()}";
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
 
@@ -748,7 +798,9 @@ export const prebuild = async (options: {
             }
 
             export const CustomCode = () => {
-              return (<>${projectMeta?.code ? htmlToJsx(projectMeta.code) : ""}</>);
+              return (<>${
+                projectMeta?.code ? htmlToJsx(projectMeta.code) : ""
+              }</>);
             }
           `
           : ""
@@ -809,6 +861,14 @@ export const prebuild = async (options: {
             `./app/__generated__/$resources.asset-query-manifest`,
             file
           )
+        )
+        .replaceAll(
+          "__ASSET_QUERY_RUNTIME__",
+          importFrom(`./app/__generated__/$resources.asset-query-runtime`, file)
+        )
+        .replaceAll(
+          "__ASSET_RESOURCE_FETCH__",
+          importFrom("./app/asset-resource-fetch", file)
         )
         .replaceAll(
           "__AUTH__",
@@ -891,12 +951,8 @@ export const prebuild = async (options: {
   if (options.assets === true && siteData.assets.length > 0) {
     const downloading = createProgress();
     downloading.start("Downloading fonts and images");
-    const protectedAssetIds = new Set(siteData.protectedAssetIds ?? []);
-    const assetsToMaterialize = siteData.assets.filter(
-      (asset) => protectedAssetIds.has(asset.id) === false
-    );
     await materializeAssetFiles({
-      assets: assetsToMaterialize,
+      assets: siteData.assets,
       continueOnError: true,
       origin: siteData.origin || "",
       sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),

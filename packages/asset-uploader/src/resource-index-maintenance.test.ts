@@ -1,12 +1,19 @@
 import { describe, expect, test, vi } from "vitest";
-import { createCanonicalAssetFileEntry } from "@webstudio-is/asset-resource";
+import {
+  computeAssetResourceQueryHash,
+  computeCanonicalAssetRevision,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/asset-resource";
 import {
   createTestServer,
   db,
   json,
   testContext,
 } from "@webstudio-is/postgrest/testing";
-import { updateAssetResourceIndexesAfterCanonicalChange } from "./resource-index-maintenance";
+import {
+  reconcileAssetResourceIndexesForPublication,
+  updateAssetResourceIndexesAfterCanonicalChange,
+} from "./resource-index-maintenance";
 
 const server = createTestServer();
 const document = {
@@ -40,9 +47,9 @@ describe("incremental resource index maintenance", () => {
     const activated: string[] = [];
     server.use(
       db.get("AssetResourceIndexState", ({ request }) => {
-        expect(new URL(request.url).searchParams.get("projectId")).toBe(
-          "eq.project-1"
-        );
+        const search = new URL(request.url).searchParams;
+        expect(search.get("projectId")).toBe("eq.project-1");
+        expect(search.get("deletedAt")).toBe("is.null");
         return json([
           { resourceId: "listing", query: `*[extension == "md"]` },
           { resourceId: "post", query: `*[properties.slug == $slug]` },
@@ -96,5 +103,74 @@ describe("incremental resource index maintenance", () => {
       })
     ).resolves.toEqual({ changedAssetIds: [], updatedResourceIds: [] });
     expect(putIfAbsent).not.toHaveBeenCalled();
+  });
+
+  test("does not rebuild deleted resource queries", async () => {
+    let metadataLoaded = false;
+    server.use(
+      db.get("AssetResourceIndexState", ({ request }) => {
+        const search = new URL(request.url).searchParams;
+        return search.get("deletedAt") === "is.null"
+          ? json([])
+          : json([{ resourceId: "deleted", query: "*[]" }]);
+      }),
+      db.get("AssetFileMetadata", () => {
+        metadataLoaded = true;
+        return json([metadataRow]);
+      })
+    );
+    const putIfAbsent = vi.fn();
+
+    await expect(
+      updateAssetResourceIndexesAfterCanonicalChange({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent },
+        projectId: "project-1",
+        changedAssetIds: ["post-1"],
+      })
+    ).resolves.toEqual({
+      changedAssetIds: ["post-1"],
+      updatedResourceIds: [],
+    });
+    expect(metadataLoaded).toBe(false);
+    expect(putIfAbsent).not.toHaveBeenCalled();
+  });
+
+  test("repairs a stale current-query index before publication", async () => {
+    const query = `*[extension == "md"]`;
+    const queryHash = await computeAssetResourceQueryHash(query);
+    const assetRevision = await computeCanonicalAssetRevision([entry]);
+    server.use(
+      db.get("AssetResourceIndexState", () =>
+        json([
+          {
+            resourceId: "posts",
+            queryHash,
+            assetRevision: `sha256:${"0".repeat(64)}`,
+            buildStatus: "FAILED",
+            activeRevision: null,
+            deletedAt: null,
+          },
+        ])
+      ),
+      db.post("rpc/begin_asset_resource_index_build", () => json(null)),
+      db.post("rpc/activate_asset_resource_index", () => json(true))
+    );
+    const putIfAbsent = vi.fn(async ({ checksum }) => ({
+      status: "created" as const,
+      checksum,
+    }));
+
+    await expect(
+      reconcileAssetResourceIndexesForPublication({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent },
+        projectId: "project-1",
+        resources: [{ resourceId: "posts", query, queryHash }],
+        entries: [entry],
+        assetRevision,
+      })
+    ).resolves.toEqual(["posts"]);
+    expect(putIfAbsent).toHaveBeenCalledOnce();
   });
 });

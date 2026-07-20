@@ -4,6 +4,7 @@ import {
   createAssetQueryResourceBody,
   getAssetIndexStatusLabel,
   getAssetFileTypeGroqPredicate,
+  getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
   parseAssetQueryResourceBody,
 } from "./asset-query-form-utils";
@@ -93,5 +94,40 @@ describe("asset query resource body", () => {
 
   test("file-type helpers produce visible GROQ source", () => {
     expect(getAssetFileTypeGroqPredicate("md")).toBe('extension == "md"');
+  });
+
+  test("rejects invalid and duplicate query options before saving", () => {
+    expect(
+      getAssetQueryConfigurationError({
+        query: "*[]",
+        parameters: [{ name: "slug" }, { name: "slug" }],
+        resultLimit: 1,
+        content: { mode: "none" },
+      })
+    ).toContain("unique");
+    expect(
+      getAssetQueryConfigurationError({
+        query: "*[]",
+        parameters: [],
+        resultLimit: 0,
+        content: { mode: "none" },
+      })
+    ).toContain("Result limit");
+    expect(
+      getAssetQueryConfigurationError({
+        query: "*[properties.slug == $slug]",
+        parameters: [{ name: "slug" }],
+        resultLimit: 1,
+        content: { mode: "range", offset: 0, length: 10 },
+      })
+    ).toBeUndefined();
+    expect(
+      getAssetQueryConfigurationError({
+        query: "*[properties.slug == $slug]",
+        parameters: [],
+        resultLimit: 1,
+        content: { mode: "none" },
+      })
+    ).toContain("$slug");
   });
 });

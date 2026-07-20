@@ -13,6 +13,7 @@ import {
   loadCanonicalAssetFileEntries,
   loadAssetResourceIndexSnapshots,
   getAssetResourceQuery,
+  reconcileAssetResourceIndexesForPublication,
   synchronizeCanonicalAssets,
 } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -171,7 +172,6 @@ const addProjectMetadata = async (
       return query === undefined ? [] : [{ resourceId: resource.id, query }];
     });
   let assetResourceIndexes: PublishedProjectBundle["assetResourceIndexes"];
-  let protectedAssetIds: PublishedProjectBundle["protectedAssetIds"];
   if (assetQueryResources.length > 0) {
     const assetClient = createAssetClient();
     await synchronizeCanonicalAssets({
@@ -183,25 +183,34 @@ const addProjectMetadata = async (
       client: context.postgrest.client,
       projectId: project.id,
     });
-    protectedAssetIds = canonicalEntries
-      .filter(
-        ({ document }) =>
-          document.properties.draft === true ||
-          document.properties.private === true
-      )
-      .map(({ assetId }) => assetId);
+    const indexedResources = await Promise.all(
+      assetQueryResources.map(async ({ resourceId, query }) => ({
+        resourceId,
+        query,
+        queryHash: await computeAssetResourceQueryHash(query),
+      }))
+    );
+    const expectedAssetRevision =
+      await computeCanonicalAssetRevision(canonicalEntries);
+    await reconcileAssetResourceIndexesForPublication({
+      client: context.postgrest.client,
+      store: assetClient.resourceIndexStore,
+      projectId: project.id,
+      resources: indexedResources,
+      entries: canonicalEntries,
+      assetRevision: expectedAssetRevision,
+    });
     assetResourceIndexes = await loadAssetResourceIndexSnapshots({
       client: context.postgrest.client,
       projectId: project.id,
-      resources: await Promise.all(
-        assetQueryResources.map(async ({ resourceId, query }) => ({
-          resourceId,
-          queryHash: await computeAssetResourceQueryHash(query),
-        }))
-      ),
+      resources: indexedResources,
       read: assetClient.readFile,
-      expectedAssetRevision:
-        await computeCanonicalAssetRevision(canonicalEntries),
+      referenceId: data.build.id,
+      garbageCollectionStore:
+        assetClient.resourceIndexStore.delete === undefined
+          ? undefined
+          : { delete: assetClient.resourceIndexStore.delete },
+      expectedAssetRevision,
     });
   }
 
@@ -212,7 +221,6 @@ const addProjectMetadata = async (
     projectDomain: project.domain,
     projectTitle: project.title,
     assetResourceIndexes,
-    protectedAssetIds,
   };
 };
 

@@ -166,6 +166,50 @@ describe("canonical asset metadata synchronization", () => {
     );
   });
 
+  test("indexes an empty Markdown file without a storage range read", async () => {
+    const readFile = vi.fn<AssetClient["readFile"]>();
+    let document: Record<string, unknown> | undefined;
+    server.use(
+      db.get("Asset", () =>
+        json([
+          {
+            id: "empty",
+            projectId: "project-1",
+            filename: "empty.md",
+            folderId: null,
+            file: {
+              name: "empty.md",
+              size: 0,
+              updatedAt: "2026-07-18T01:00:00.000Z",
+              status: "UPLOADED",
+            },
+          },
+        ])
+      ),
+      db.get("AssetFolder", () => json([])),
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        document = ((await request.json()) as ReplaceMetadataRpcArgs)
+          .p_document;
+        return json(true);
+      })
+    );
+
+    await expect(
+      synchronizeCanonicalAsset({
+        projectId: "project-1",
+        assetId: "empty",
+        client: testContext.postgrest.client,
+        assetClient: { uploadFile: vi.fn(), readFile },
+      })
+    ).resolves.toMatchObject({ status: "indexed" });
+    expect(readFile).not.toHaveBeenCalled();
+    expect(document).toMatchObject({
+      properties: {},
+      size: 0,
+      contentRef: "empty.md",
+    });
+  });
+
   test("creates a stable revision from immutable storage identity", () => {
     expect(
       createAssetContentRevision({

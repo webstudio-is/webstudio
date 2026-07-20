@@ -132,7 +132,7 @@ describe("asset query preview system resource", () => {
     });
   });
 
-  test("maps query validation and timeout errors", async () => {
+  test("maps query validation and execution errors", async () => {
     vi.mocked(previewAssetResourceQuery).mockRejectedValueOnce(
       new AssetResourceQueryValidationError({
         code: "INVALID_QUERY",
@@ -150,17 +150,17 @@ describe("asset query preview system resource", () => {
 
     vi.mocked(previewAssetResourceQuery).mockRejectedValueOnce(
       new AssetResourceQueryExecutionError({
-        code: "QUERY_TIMEOUT",
-        message: "Timed out",
+        code: "RESULT_LIMIT_EXCEEDED",
+        message: "Too many results",
       })
     );
-    const timeout = await loader({
+    const excessive = await loader({
       request: outerRequest(),
       resourceRequest: innerRequest({ query: "*[]" }),
     });
-    expect(timeout.status).toBe(504);
-    await expect(timeout.json()).resolves.toMatchObject({
-      error: { code: "QUERY_TIMEOUT" },
+    expect(excessive.status).toBe(400);
+    await expect(excessive.json()).resolves.toMatchObject({
+      error: { code: "RESULT_LIMIT_EXCEEDED" },
     });
   });
 });

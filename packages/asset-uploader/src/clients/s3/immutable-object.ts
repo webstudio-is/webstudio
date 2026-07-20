@@ -71,3 +71,41 @@ export const putImmutableObjectToS3 = async ({
   }
   return { status: "exists", checksum };
 };
+
+export const deleteImmutableObjectFromS3 = async ({
+  signer,
+  endpoint,
+  bucket,
+  key,
+}: {
+  signer: SignatureV4;
+  endpoint: string;
+  bucket: string;
+  key: string;
+}) => {
+  const url = new URL(
+    `/${bucket}/${extendedEncodeURIComponent(key)}`,
+    endpoint
+  );
+  const request = await signer.sign({
+    method: "DELETE",
+    protocol: url.protocol,
+    hostname: url.hostname,
+    path: url.pathname,
+    headers: {
+      "x-amz-date": new Date().toISOString(),
+      "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+    },
+  });
+  const response = await fetch(url, {
+    method: request.method,
+    headers: request.headers,
+  });
+  if (response.status === 404) {
+    return "missing" as const;
+  }
+  if (response.ok === false) {
+    throw new Error("Cannot delete immutable resource index");
+  }
+  return "deleted" as const;
+};

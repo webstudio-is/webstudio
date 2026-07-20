@@ -12,8 +12,7 @@ export class AssetResourceHydrationError extends Error {
     | "CONTENT_IDENTITY_REQUIRED"
     | "CONTENT_NOT_TEXT"
     | "CONTENT_DECODING_FAILED"
-    | "CONTENT_LIMIT_EXCEEDED"
-    | "PROTECTED_CONTENT";
+    | "CONTENT_LIMIT_EXCEEDED";
   readonly details?: Record<string, string | number>;
 
   constructor({
@@ -174,13 +173,11 @@ export const hydrateAssetResourceResult = async ({
   documents,
   options,
   read,
-  allowProtected = false,
 }: {
   result: unknown;
   documents: readonly AssetFileDocument[];
   options: AssetResourceContentOptions;
   read: AssetResourceContentReader;
-  allowProtected?: boolean;
 }) => {
   if (options.mode === "none") {
     return { content: {}, hydratedFileCount: 0, hydratedBytes: 0 };
@@ -209,13 +206,6 @@ export const hydrateAssetResourceResult = async ({
       throw new AssetResourceHydrationError({
         code: "CONTENT_IDENTITY_REQUIRED",
         message: "Selected asset content identity is stale or unavailable",
-        details: { assetId: identity._id },
-      });
-    }
-    if (document.properties.private === true && allowProtected === false) {
-      throw new AssetResourceHydrationError({
-        code: "PROTECTED_CONTENT",
-        message: "Selected asset content is protected",
         details: { assetId: identity._id },
       });
     }

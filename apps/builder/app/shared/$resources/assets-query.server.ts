@@ -109,7 +109,7 @@ export const loader = async ({
         code: error.code,
         message: error.message,
         details: error.details,
-        status: error.code === "QUERY_TIMEOUT" ? 504 : 400,
+        status: 400,
       });
     }
     if (error instanceof AssetResourceHydrationError) {
@@ -117,7 +117,7 @@ export const loader = async ({
         code: error.code,
         message: error.message,
         details: error.details,
-        status: error.code === "PROTECTED_CONTENT" ? 403 : 400,
+        status: 400,
       });
     }
     return failure({

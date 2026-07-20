@@ -18,6 +18,7 @@ export * from "./schema/component-meta";
 export * from "./assets";
 export * from "./asset-folder-hierarchy";
 export * from "./asset-folder-normalization";
+export * from "./asset-resource-config";
 export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";

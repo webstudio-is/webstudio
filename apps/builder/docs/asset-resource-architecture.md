@@ -263,51 +263,26 @@ object access, separate from public asset-delivery storage.
 
 V1 does not deduplicate index objects across resources: `resourceId` is part of
 both object identity and the revision primary key. Cleanup therefore never
-shares one object accidentally. Durable resource, Builder-build, and deployment
-reference rows still provide an exact per-revision owner count; cross-resource
-content-addressed deduplication can use those counts if introduced later.
+shares one object accidentally. The active state protects the current revision,
+and publication holds a temporary `BUILD` reference while it reads an immutable
+snapshot. Published deployments contain their own static copy and no longer
+depend on the private object. After activation, query deletion, and snapshot
+release, best-effort cleanup claims unreferenced revisions, deletes their private
+objects, and then removes their database rows. Garbage claims are 15-minute
+leases. A later cleanup worker rotates and resumes an expired claim, so a crash
+before or after object deletion cannot permanently strand the revision row.
 
-## Draft and private publication policy
+## Schemaless frontmatter and publication
 
-V1 treats publication visibility as a mandatory policy applied before GROQ,
-not as a convention that each resource query must remember to implement.
+Frontmatter fields have no built-in publication meaning. Names such as `draft`,
+`private`, `published`, or `status` are ordinary values below `properties` and
+remain available to GROQ like any other user-defined field.
 
-Markdown frontmatter classifies a file as follows:
-
-| Frontmatter           | Builder preview                                                | Public deployment                                                       |
-| --------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| No visibility flag    | Available to authorized project viewers                        | Eligible for indexes and static asset materialization                   |
-| `draft: true`         | Available to authorized project viewers with a draft indicator | Excluded from public indexes and public static assets                   |
-| `private: true`       | Available only through authenticated project APIs              | Excluded from public indexes, static assets, and public hydration paths |
-| Both flags are `true` | Uses the stricter `private` behavior                           | Excluded                                                                |
-
-Only the Boolean value `true` activates either flag. Other observed types are
-reported as field-catalog mixed-type diagnostics and do not accidentally hide
-or publish based on truthiness. A project can opt into stricter validation,
-but a query can never opt out of publication exclusion.
-
-The publication snapshot applies the policy to canonical metadata before
-building deployable resource indexes. It also filters Markdown
-materialization, so knowing an old content reference or generated filename
-cannot retrieve excluded bytes from the deployment. Public index manifests,
-checksums, logs, and errors must not reveal excluded frontmatter values.
-
-Builder previews execute through authenticated project APIs and may select
-drafts. Private files require the same project authorization used to read the
-underlying asset and cannot use a public deployment URL for hydration. Preview
-responses are private and non-cacheable by shared caches.
-
-This policy applies to Markdown content selected by Assets resource queries.
-The legacy Assets system resource and publication behavior for existing image,
-font, and generic-file references remain compatible. If a published page or
-resource would require an excluded Markdown file, publication fails with the
-asset ID and a visibility error instead of silently deploying it or producing
-a broken public URL.
-
-Changing either visibility flag changes the canonical asset revision and
-invalidates every affected resource index. Re-publishing removes newly
-excluded files and metadata from the new immutable deployment; existing
-immutable deployments follow their original snapshot until retired.
+All uploaded assets follow the existing asset publication behavior. To exclude
+documents from a blog resource, the user must express that policy in its query,
+for example `*[properties.draft != true]`. Index construction and content
+hydration never apply an additional hidden filter. This keeps the resource
+schemaless and lets projects choose their own field names and publication model.
 
 ## V1 limits and errors
 
@@ -318,11 +293,11 @@ single source for Builder, indexer, generated runtime, and test limits. V1 uses:
 | ----------------------------- | -------------------------- |
 | Query source                  | 32 KiB UTF-8               |
 | Query syntax tree             | 1,000 nodes, depth 64      |
-| Query evaluation              | 250 ms                     |
+| Dataset scans per query       | 1                          |
 | Runtime parameters            | 32 values, 64 KiB JSON     |
 | Results                       | 100 default, 1,000 maximum |
 | Serialized result             | 1 MiB                      |
-| Candidate documents           | 5,000                      |
+| Candidate documents           | 1,000                      |
 | Serialized index              | 16 MiB                     |
 | Frontmatter per file          | 64 KiB                     |
 | Frontmatter structure         | Depth 8, 256 fields        |
@@ -336,33 +311,32 @@ single source for Builder, indexer, generated runtime, and test limits. V1 uses:
 Byte limits are measured after UTF-8 encoding; JSON limits use the serialized
 UTF-8 representation. A request can lower result or hydration limits but cannot
 raise these ceilings. Index and query work stops before allocating or returning
-data beyond a boundary. Query AST checks protect the synchronous evaluator;
-the runtime deadline is an additional guard and not the only complexity
-control.
+data beyond a boundary. Query AST checks protect the synchronous evaluator. V1
+permits one dataset scan per query and evaluates at most 1,000 candidate
+documents, avoiding nested dataset scans and unbounded cross-products that
+cannot be interrupted safely.
 
 All endpoint failures use `AssetResourceQueryFailure`, with `ok: false`, a
 stable error `code`, safe human-readable `message`, `retryable`, optional safe
 JSON `details`, and any known query/index/asset revisions. Responses never
-include source content, private frontmatter, storage credentials, or internal
+include source content, frontmatter values, storage credentials, or internal
 stack traces.
 
 The status and retry contract is:
 
-| HTTP    | Codes                                                                                                                                      | Retry behavior                                          |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| 400     | `INVALID_REQUEST`, `INVALID_QUERY`, `MISSING_PARAMETER`, `QUERY_COMPLEXITY_EXCEEDED`, `RESULT_LIMIT_EXCEEDED`, `CONTENT_IDENTITY_REQUIRED` | Change the resource or request                          |
-| 401/403 | `FORBIDDEN`, `PROTECTED_CONTENT`                                                                                                           | Reauthenticate or change publication visibility         |
-| 404     | `NOT_FOUND`, `INDEX_NOT_FOUND`                                                                                                             | Rebuild or correct the referenced resource              |
-| 409     | `STALE_INDEX`, `INDEX_BUILD_FAILED`                                                                                                        | Retry only when `retryable` is true after indexing      |
-| 413     | `RESULT_SIZE_EXCEEDED`, `CONTENT_LIMIT_EXCEEDED`                                                                                           | Lower the result or hydration request                   |
-| 415     | `CONTENT_NOT_TEXT`, `CONTENT_DECODING_FAILED`                                                                                              | Use an asset URL or supported UTF-8 content             |
-| 504     | `QUERY_TIMEOUT`                                                                                                                            | Simplify the query; automatic retry is false by default |
-| 500     | `INTERNAL_ERROR`                                                                                                                           | Retry only when explicitly marked retryable             |
+| HTTP    | Codes                                                                                                                                      | Retry behavior                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| 400     | `INVALID_REQUEST`, `INVALID_QUERY`, `MISSING_PARAMETER`, `QUERY_COMPLEXITY_EXCEEDED`, `RESULT_LIMIT_EXCEEDED`, `CONTENT_IDENTITY_REQUIRED` | Change the resource or request                     |
+| 401/403 | `FORBIDDEN`                                                                                                                                | Reauthenticate                                     |
+| 404     | `NOT_FOUND`, `INDEX_NOT_FOUND`                                                                                                             | Rebuild or correct the referenced resource         |
+| 409     | `STALE_INDEX`, `INDEX_BUILD_FAILED`                                                                                                        | Retry only when `retryable` is true after indexing |
+| 413     | `RESULT_SIZE_EXCEEDED`, `CONTENT_LIMIT_EXCEEDED`                                                                                           | Lower the result or hydration request              |
+| 415     | `CONTENT_NOT_TEXT`, `CONTENT_DECODING_FAILED`                                                                                              | Use an asset URL or supported UTF-8 content        |
+| 500     | `INTERNAL_ERROR`                                                                                                                           | Retry only when explicitly marked retryable        |
 
 Builder UI states and generated applications branch on `code`, never parse the
 message. Validation errors may include bounded field paths and limits in
-`details`. Missing parameters list names only; protected-content errors expose
-the asset ID but no metadata or content.
+`details`. Missing parameters list names only.
 
 ## GROQ feasibility and cost
 
@@ -490,6 +464,12 @@ options in the request body. The adapter applies schema defaults before the
 generic resource serializer runs, so Builder preview and generated apps send
 identical JSON rather than environment-specific query strings.
 
+Saved query resources also carry their resource ID through the internal
+transport. Published runtimes use that identity together with the query hash,
+so two resources may intentionally use identical GROQ without one manifest
+entry shadowing the other. Requests without an identity remain compatible when
+the published manifest contains only one matching query.
+
 Both cache layers hash the complete normalized POST body. Builder
 `getResourceKey` and generated-runtime `getResourceCacheKey` have collision
 tests that independently vary the GROQ query, runtime parameters, pinned index
@@ -564,6 +544,12 @@ The event consumer must be idempotent and revision-aware. Client-side
 `invalidateAssets` remains responsible only for refreshing the legacy Builder
 resource; it is not a durability boundary for index maintenance.
 
+Asset mutations commit independently from derived-index maintenance. A derived
+failure therefore never turns an already committed upload or content revision
+into a failed primary mutation. Publication synchronizes canonical metadata and
+rebuilds a missing, stale, or failed index for the current saved query before
+snapshotting it, providing a retry boundary after transient maintenance errors.
+
 After canonical metadata commits, v1 conservatively treats every saved asset
 query in that project as affected because GROQ may depend on collection count,
 ordering, or any schema-less field. The maintenance pass loads persisted
@@ -590,6 +576,10 @@ The editor provides:
   Markdown body without frontmatter.
 - Explicit preview execution and active, indexing, stale, failed, empty, and
   limit-error states.
+
+The form rejects invalid GROQ, missing, invalid, or duplicate parameter
+bindings, and content/result limits outside the runtime contract before saving
+the resource.
 
 A listing resource should leave content hydration off:
 
@@ -628,16 +618,28 @@ TypeScript contains only the deployment ID and immutable index paths.
 
 The generated route runtime resolves those paths through Cloudflare's `ASSETS`
 binding when present, with a same-origin static fetch fallback for other
-platforms. Parsed immutable indexes are cached per isolate. Opt-in query-result
-cache keys include deployment ID, resource ID, index revision, complete request
-body (query, parameters, limits, and hydration), and therefore cannot collide
-across revisions or runtime parameters.
+platforms. Parsed immutable indexes are cached per isolate by deployment ID,
+resource ID, index revision, and public path. Multiple domains that point to the
+same deployment reuse that immutable data. Domains or previews backed by
+different deployments have separate cache identities, even when their public
+paths happen to match. Opt-in query-result cache keys include deployment ID,
+resource ID, index revision, complete request body (query, parameters, limits,
+and hydration), and therefore cannot collide across deployments, revisions, or
+runtime parameters. Cache API reads and writes are best-effort optimizations;
+cache unavailability never changes a successful query into a runtime failure.
 
-Public index construction excludes Boolean `draft: true` and `private: true`
-documents before GROQ candidate selection. Prebuild materializes only Markdown
-content references retained by public snapshots. Builder preview remains an
-authenticated canonical-metadata path and can apply the documented draft and
-private authorization behavior independently.
+Vike SSG evaluates the same published query runtime while prerendering. Its
+server-only adapter reads immutable indexes and ranged Markdown bytes from the
+generated `public` directory, so prerendering requires neither a live HTTP
+endpoint nor bundling content into JavaScript. Range hydration uses positioned
+file reads rather than loading the complete source asset before slicing it.
+
+Public index construction applies only the configured GROQ candidate selection.
+Prebuild materializes Markdown through the same static asset pipeline as other
+assets; frontmatter fields do not silently remove files from a deployment. For
+dynamic applications without query-enabled Assets resources, prebuild emits a
+no-op generated adapter with no import of the GROQ runtime, keeping it out of
+the application bundle.
 
 ## Scale benchmark baseline
 

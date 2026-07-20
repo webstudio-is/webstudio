@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { assetResourceLimits, type AssetFileDocument } from "@webstudio-is/sdk";
 import {
-  AssetResourceHydrationError,
   hydrateAssetResourceResult,
   type AssetResourceContentReader,
 } from "./hydration";
@@ -207,7 +206,7 @@ describe("selected asset content hydration", () => {
     expect(read).not.toHaveBeenCalled();
   });
 
-  test("rejects binary, invalid UTF-8, and protected content clearly", async () => {
+  test("rejects binary and invalid UTF-8 while treating frontmatter as data", async () => {
     const binary = createDocument("binary", "png", {
       name: "binary.png",
       extension: "png",
@@ -245,14 +244,8 @@ describe("selected asset content hydration", () => {
         options: { mode: "full" },
         read,
       })
-    ).rejects.toBeInstanceOf(AssetResourceHydrationError);
-    await expect(
-      hydrateAssetResourceResult({
-        result: identity(protectedDocument),
-        documents: [protectedDocument],
-        options: { mode: "full" },
-        read,
-      })
-    ).rejects.toMatchObject({ code: "PROTECTED_CONTENT" });
+    ).resolves.toMatchObject({
+      content: { private: { text: "secret" } },
+    });
   });
 });
