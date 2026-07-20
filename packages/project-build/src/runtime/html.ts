@@ -65,31 +65,18 @@ const voidElementNames = new Set([
   "wbr",
 ]);
 
-const hasUnclosedElement = (
-  node: DefaultTreeAdapterMap["node"],
-  source: string
-): boolean => {
-  if (defaultTreeAdapter.isElementNode(node)) {
-    const location = node.sourceCodeLocation;
-    const selfClosing =
-      location?.startTag !== undefined &&
-      source
-        .slice(location.startTag.startOffset, location.startTag.endOffset)
-        .trimEnd()
-        .endsWith("/>");
-    if (
-      location?.startTag !== undefined &&
-      location.endTag === undefined &&
-      selfClosing === false &&
-      voidElementNames.has(node.tagName) === false
-    ) {
-      return true;
-    }
-  }
-  return (
-    "childNodes" in node ? defaultTreeAdapter.getChildNodes(node) : []
-  ).some((child) => hasUnclosedElement(child, source));
-};
+const normalizeHtmlForComparison = (value: string) =>
+  value
+    .replaceAll(
+      /<([a-zA-Z][\w:-]*)([^<>]*)\/>/g,
+      (_match, tag: string, attributes: string) =>
+        voidElementNames.has(tag.toLowerCase())
+          ? `<${tag}${attributes}>`
+          : `<${tag}${attributes}></${tag}>`
+    )
+    .replaceAll(/\s/g, "")
+    .replaceAll('=""', "")
+    .replaceAll('xmlns="http://www.w3.org/2000/svg"', "");
 
 export const validateHtmlEmbedCode = (
   value: string
@@ -104,14 +91,16 @@ export const validateHtmlEmbedCode = (
 
   const parseErrors: string[] = [];
   const parsed = parseFragment(value, {
-    sourceCodeLocationInfo: true,
     onParseError: (error) => {
       parseErrors.push(error.code);
     },
   });
   const expected = serialize(parsed);
 
-  if (parseErrors.length === 0 && hasUnclosedElement(parsed, value) === false) {
+  if (
+    parseErrors.length === 0 &&
+    normalizeHtmlForComparison(expected) === normalizeHtmlForComparison(value)
+  ) {
     return;
   }
 

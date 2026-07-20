@@ -28,6 +28,10 @@ describe("validateHtmlEmbedCode", () => {
     ).toBeUndefined();
   });
 
+  test("accepts self-closing html void elements", () => {
+    expect(validateHtmlEmbedCode("<input />")).toBeUndefined();
+  });
+
   test("accepts svg syntax that the html serializer normalizes", () => {
     expect(
       validateHtmlEmbedCode(
@@ -51,6 +55,24 @@ describe("validateHtmlEmbedCode", () => {
       message: "Entered HTML has a validation error.",
       value: "<div><span></div>",
       expected: "<div><span></span></div>",
+    });
+  });
+
+  test("reports html moved outside of a table by the parser", () => {
+    const value = "<table><div>moved</div></table>";
+    expect(validateHtmlEmbedCode(value)).toEqual({
+      message: "Entered HTML has a validation error.",
+      value,
+      expected: "<div>moved</div><table></table>",
+    });
+  });
+
+  test("reports invalid select children rewritten by the parser", () => {
+    const value = "<select><div>discarded</div></select>";
+    expect(validateHtmlEmbedCode(value)).toEqual({
+      message: "Entered HTML has a validation error.",
+      value,
+      expected: "<select>discarded</select>",
     });
   });
 

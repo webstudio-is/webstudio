@@ -1766,6 +1766,9 @@ importers:
       '@webstudio-is/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface

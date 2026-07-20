@@ -362,6 +362,14 @@ export const uploadFileData = async (
         contentHasher?.update(chunk);
         yield chunk;
       }
+      if (
+        expectedContentHash !== undefined &&
+        contentHasher?.digest("hex") !== expectedContentHash
+      ) {
+        throw new Error(
+          "Uploaded asset content does not match its upload ticket."
+        );
+      }
     };
     const assetData = await client.uploadFile(
       name,
@@ -370,14 +378,6 @@ export const uploadFileData = async (
       assetInfoFallback,
       assetDataOverride
     );
-    if (
-      expectedContentHash !== undefined &&
-      contentHasher?.digest("hex") !== expectedContentHash
-    ) {
-      throw new Error(
-        "Uploaded asset content does not match its upload ticket."
-      );
-    }
     const { meta, format, size } = assetData;
     file = await context.postgrest.client
       .from("File")

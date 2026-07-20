@@ -673,6 +673,7 @@ describe("uploadFile", () => {
 
   test("rejects content that does not match the upload ticket hash", async () => {
     let customCleanupCalled = false;
+    let storageWriteCompleted = false;
     server.use(
       db.get("File", () =>
         json({
@@ -693,6 +694,7 @@ describe("uploadFile", () => {
             for await (const _chunk of data) {
               // Consume the upload stream as a real storage client would.
             }
+            storageWriteCompleted = true;
             return { format: "png", size: 5, meta: {} };
           },
         },
@@ -706,6 +708,7 @@ describe("uploadFile", () => {
     ).rejects.toThrow("does not match its upload ticket");
 
     expect(customCleanupCalled).toBe(true);
+    expect(storageWriteCompleted).toBe(false);
   });
 
   test("cleans up an uploaded file without an uploader project", async () => {

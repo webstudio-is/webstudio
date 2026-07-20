@@ -1,5 +1,6 @@
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
+import { getAssetContentHash } from "@webstudio-is/sdk";
 import {
   apiClientHeader,
   apiClientVersionHeader,
@@ -360,6 +361,12 @@ const retryOnce = async <Result>(task: () => Promise<Result>) => {
   }
 };
 
+const getBinaryAssetDataHash = async (data: BinaryAssetData) => {
+  return getAssetContentHash(
+    data instanceof Blob ? await data.arrayBuffer() : data
+  );
+};
+
 const getAssetUploadUrl = ({
   asset,
   force,
@@ -449,26 +456,57 @@ export const uploadAssets = async (
     force?: (asset: Asset) => boolean;
   }
 ): Promise<UploadedAsset[]> => {
-  const results: AssetUploadBatchResult[] = await Promise.all(
-    params.assets.map(async (asset) => {
+  const results: AssetUploadBatchResult[] = Array(params.assets.length);
+  const prepared = await Promise.all(
+    params.assets.map(async (asset, index) => {
       try {
-        const uploadedAssets = await retryOnce(async () => {
-          const data = await params.readAssetData(asset);
-          return await uploadAsset({
-            authToken: params.authToken,
-            headers: params.headers,
-            origin: params.origin,
-            projectId: params.projectId,
-            upload: {
-              asset,
-              data,
-              force: params.force?.(asset),
-            },
-          });
-        });
-        return { status: "fulfilled", uploadedAssets };
+        const data = await retryOnce(() => params.readAssetData(asset));
+        const force = params.force?.(asset);
+        return {
+          asset,
+          data,
+          force,
+          index,
+          group:
+            force === true
+              ? `force:${index}`
+              : await getBinaryAssetDataHash(data),
+        };
       } catch (error) {
-        return { status: "rejected", asset, error };
+        results[index] = { status: "rejected", asset, error };
+      }
+    })
+  );
+  const uploads = prepared.flatMap((upload) =>
+    upload === undefined ? [] : [upload]
+  );
+  const groups = new Map<string, typeof uploads>();
+  for (const upload of uploads) {
+    const group = groups.get(upload.group) ?? [];
+    group.push(upload);
+    groups.set(upload.group, group);
+  }
+  await Promise.all(
+    Array.from(groups.values(), async (uploads) => {
+      for (const { asset, data, force, index } of uploads) {
+        try {
+          const uploadedAssets = await retryOnce(async () => {
+            return await uploadAsset({
+              authToken: params.authToken,
+              headers: params.headers,
+              origin: params.origin,
+              projectId: params.projectId,
+              upload: {
+                asset,
+                data,
+                force,
+              },
+            });
+          });
+          results[index] = { status: "fulfilled", uploadedAssets };
+        } catch (error) {
+          results[index] = { status: "rejected", asset, error };
+        }
       }
     })
   );

@@ -46,6 +46,15 @@ export const getFileNameParts = (fileName: string) => {
   };
 };
 
+export const getAssetContentHash = async (
+  data: ArrayBuffer | ArrayBufferView<ArrayBuffer>
+) => {
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+};
+
 export type ParsedAssetName = {
   basename: string;
   hash: string;
