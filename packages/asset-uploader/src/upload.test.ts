@@ -79,6 +79,7 @@ describe("createUploadTicket", () => {
           id: "asset-1",
           projectId: "project-1",
           name: expect.stringMatching(/^photo_.+\.png$/),
+          filename: "photo",
           description: "Campaign photo",
           folderId: "campaign",
         });
@@ -225,11 +226,13 @@ describe("createUploadTicket", () => {
         id: "asset-collision",
         projectId: "project-4",
         name: (insertedFiles[0] as { name: string }).name,
+        filename: "renamed-photo",
       },
       {
         id: "asset-retry",
         projectId: "project-4",
         name: (insertedFiles[1] as { name: string }).name,
+        filename: "renamed-photo",
       },
     ]);
     expect(deletedFiles).toEqual([
