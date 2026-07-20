@@ -79,8 +79,7 @@ const listingQuery = `*[
   "slug": properties.slug,
   excerpt
 }`;
-const detailQuery =
-  `*[properties.slug == $slug][0]{_id, revision, contentRef, "title": properties.title}`;
+const detailQuery = `*[properties.slug == $slug][0]{_id, revision, contentRef, "title": properties.title}`;
 const buildIndex = (query = listingQuery) =>
   buildAssetResourceIndex({ projectId, resourceId, query, entries });
 
@@ -173,10 +172,12 @@ const detailAndHydration = await measure(50, async () => {
       if (file === undefined) {
         throw new Error("Scale fixture content is missing");
       }
-      const bytes = encoder.encode(file.source).subarray(
-        range?.offset ?? 0,
-        range === undefined ? undefined : range.offset + range.length
-      );
+      const bytes = encoder
+        .encode(file.source)
+        .subarray(
+          range?.offset ?? 0,
+          range === undefined ? undefined : range.offset + range.length
+        );
       return {
         data: {
           async *[Symbol.asyncIterator]() {
@@ -189,7 +190,9 @@ const detailAndHydration = await measure(50, async () => {
 });
 
 const workerBundle = await bundle({
-  entryPoints: [new URL("../src/published-runtime.ts", import.meta.url).pathname],
+  entryPoints: [
+    new URL("../src/published-runtime.ts", import.meta.url).pathname,
+  ],
   bundle: true,
   format: "esm",
   minify: true,
