@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   ALLOWED_FILE_TYPES,
   getAllPages,
+  getFileExtension,
   getStyleDeclKey,
   isAllowedMimeCategory,
   formatAssetName,
@@ -197,7 +198,7 @@ export const getBrowserAssetFormat = ({
   contentType: string | null;
   name: string;
 }) => {
-  const fileExtension = name.split(".").pop()?.toLowerCase();
+  const fileExtension = getFileExtension(name)?.toLowerCase();
   const correctMimeType =
     ALLOWED_FILE_TYPES[fileExtension as keyof typeof ALLOWED_FILE_TYPES] ??
     contentType?.split(";")[0];

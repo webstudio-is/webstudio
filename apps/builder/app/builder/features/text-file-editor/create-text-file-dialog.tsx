@@ -50,7 +50,7 @@ export const getTextFileNameError = ({
   }
 };
 
-export const createTextFile = async ({
+const createTextFile = async ({
   name,
   folderId,
 }: {

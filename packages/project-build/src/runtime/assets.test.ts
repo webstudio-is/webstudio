@@ -117,6 +117,12 @@ describe("asset upload helpers", () => {
         name: "video.mp4",
       })
     ).toBe("mp4");
+    expect(
+      getBrowserAssetFormat({
+        contentType: "application/octet-stream",
+        name: ".mp4",
+      })
+    ).toBeUndefined();
     expect(() =>
       getBrowserAssetFormat({
         contentType: "script/javascript",
