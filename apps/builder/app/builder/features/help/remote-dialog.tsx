@@ -39,6 +39,7 @@ export const RemoteDialog = () => {
          * to make the close button last in the tab order
          */}
         <DialogTitle
+          maximizable
           suffix={
             <DialogTitleActions>
               <IconButton

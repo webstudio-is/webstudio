@@ -90,6 +90,14 @@ const paginatedReadOperationIds = [
 
 const maxCompactListBytes = 16 * 1024;
 
+test("assets.list accepts every stored asset type", () => {
+  const operation = getBuilderRuntimeOperation("assets.list");
+
+  expect(operation.inputSchema.parse({ type: "file" })).toEqual({
+    type: "file",
+  });
+});
+
 test.each(paginatedReadOperationIds)(
   "%s uses the shared paginated compact/verbose contract",
   (operationId) => {

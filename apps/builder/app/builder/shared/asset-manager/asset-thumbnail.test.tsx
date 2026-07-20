@@ -238,6 +238,58 @@ describe("AssetThumbnail", () => {
     expect(onOpen).toHaveBeenCalledTimes(2);
   });
 
+  test("opens an asset from double click, keyboard, context, and dropdown actions", () => {
+    const onOpen = vi.fn();
+    const interactions = createInteractions();
+    const container = renderer.render(
+      <TooltipProvider>
+        {createUploadedAssetThumbnail({ interactions, onOpen })}
+      </TooltipProvider>
+    );
+    const card = container.querySelector<HTMLButtonElement>(
+      "[data-asset-manager-thumbnail-button]"
+    );
+
+    card?.click();
+    expect(onOpen).not.toHaveBeenCalled();
+
+    card?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    expect(onOpen).toHaveBeenCalledOnce();
+
+    card?.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+    );
+    expect(onOpen).toHaveBeenCalledTimes(2);
+
+    card?.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        button: 2,
+        cancelable: true,
+      })
+    );
+    expect(interactions.onContextMenuActions).toHaveBeenCalledWith(
+      expect.objectContaining({ open: onOpen })
+    );
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Actions for document.pdf"]'
+        )
+        ?.dispatchEvent(
+          new MouseEvent("pointerdown", { bubbles: true, button: 0 })
+        );
+    });
+    const open = Array.from(
+      document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Open");
+    expect(open).toBeDefined();
+
+    act(() => open?.click());
+    expect(onOpen).toHaveBeenCalledTimes(3);
+  });
+
   describe.each([
     {
       variant: "folder",

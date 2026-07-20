@@ -49,6 +49,16 @@ describe("AssetsShell", () => {
     ).toBe(true);
   });
 
+  test("advertises folder drops only when folder management is enabled", () => {
+    const container = renderer.render(
+      <AssetsShell searchProps={{}} isEmpty type="file" allowFolderDrop>
+        <div />
+      </AssetsShell>
+    );
+
+    expect(container.textContent).toContain("Drop files or folders here");
+  });
+
   test("opens its context menu from panel chrome outside the asset list", () => {
     const container = renderer.render(
       <AssetsShell

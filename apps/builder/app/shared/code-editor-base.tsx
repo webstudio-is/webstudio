@@ -113,6 +113,10 @@ const editorContentStyle = css({
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
   },
+  '&[data-border="hidden"]:not([data-invalid="true"]):is(:hover, :focus-within)':
+    {
+      borderColor: "transparent",
+    },
   '&[data-invalid="true"]': {
     borderColor: theme.colors.borderDestructiveMain,
     outlineColor: theme.colors.borderDestructiveMain,
@@ -231,7 +235,36 @@ export const foldGutterExtension = foldGutter({
 
 export type EditorApi = {
   replaceSelection: (string: string) => void;
+  insertTemplate: (template: {
+    prefix: string;
+    suffix?: string;
+    placeholder: string;
+  }) => void;
   focus: () => void;
+};
+
+export const getTemplateInsertion = ({
+  from,
+  selectedText,
+  prefix,
+  suffix = "",
+  placeholder,
+}: {
+  from: number;
+  selectedText: string;
+  prefix: string;
+  suffix?: string;
+  placeholder: string;
+}) => {
+  const content = selectedText || placeholder;
+  const selectionFrom = from + prefix.length;
+  return {
+    text: `${prefix}${content}${suffix}`,
+    selection: EditorSelection.range(
+      selectionFrom,
+      selectionFrom + content.length
+    ),
+  };
 };
 
 type EditorContentProps = {
@@ -241,6 +274,7 @@ type EditorContentProps = {
   autoFocus?: boolean;
   invalid?: boolean;
   showShortcuts?: boolean;
+  showBorder?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
@@ -253,6 +287,7 @@ export const EditorContent = ({
   autoFocus = false,
   invalid = false,
   showShortcuts = false,
+  showBorder = true,
   value,
   onChange,
   onChangeComplete,
@@ -411,6 +446,25 @@ export const EditorContent = ({
       view.dispatch(view.state.replaceSelection(string));
       view.focus();
     },
+    insertTemplate({ prefix, suffix, placeholder }) {
+      const view = viewRef.current;
+      if (view === undefined) {
+        return;
+      }
+      const { from, to } = view.state.selection.main;
+      const insertion = getTemplateInsertion({
+        from,
+        selectedText: view.state.doc.sliceString(from, to),
+        prefix,
+        suffix,
+        placeholder,
+      });
+      view.dispatch({
+        changes: { from, to, insert: insertion.text },
+        selection: insertion.selection,
+      });
+      view.focus();
+    },
     focus() {
       viewRef.current?.focus();
     },
@@ -420,6 +474,7 @@ export const EditorContent = ({
     <div
       className={editorContentStyle()}
       data-invalid={invalid}
+      data-border={showBorder ? undefined : "hidden"}
       ref={editorRef}
     >
       {showShortcuts && (
@@ -470,6 +525,7 @@ export const EditorDialog = ({
   placement = "center",
   width = 640,
   height = 480,
+  contentPadding = true,
   ...panelProps
 }: {
   title: ReactNode;
@@ -477,6 +533,7 @@ export const EditorDialog = ({
   children: ReactNode;
   width?: number;
   height?: number;
+  contentPadding?: boolean;
   placement?: ComponentProps<typeof FloatingPanel>["placement"];
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
@@ -494,7 +551,7 @@ export const EditorDialog = ({
         <Grid
           align="stretch"
           css={{
-            padding: theme.panel.padding,
+            padding: contentPadding ? theme.panel.padding : 0,
             height: "100%",
             overflow: "hidden",
             boxSizing: "content-box",

@@ -26,6 +26,7 @@ import { Separator } from "./separator";
 import { Text } from "./text";
 
 const DIALOG_TITLE_HEIGHT = 40;
+const DIALOG_MAXIMIZED_MARGIN = 20;
 
 export const DialogTrigger = Primitive.Trigger;
 
@@ -189,11 +190,20 @@ const calculateDialogStyle = (
   } = options;
 
   if (isMaximized) {
+    const horizontalMargin = Math.min(
+      DIALOG_MAXIMIZED_MARGIN,
+      bounds.width / 2
+    );
+    const verticalMargin = Math.min(DIALOG_MAXIMIZED_MARGIN, bounds.height / 2);
+    const maximizedWidth = bounds.width - horizontalMargin * 2;
+    const maximizedHeight = bounds.height - verticalMargin * 2;
     return {
-      top: bounds.y,
-      left: bounds.x,
-      width: bounds.width,
-      height: bounds.height,
+      top: bounds.y + verticalMargin,
+      left: bounds.x + horizontalMargin,
+      width: maximizedWidth,
+      height: maximizedHeight,
+      maxWidth: maximizedWidth,
+      maxHeight: maximizedHeight,
     };
   }
 
@@ -647,15 +657,32 @@ const titleStyle = css({
 export const DialogTitle = ({
   children,
   suffix,
+  maximizable = false,
+  onDoubleClick,
   ...rest
 }: ComponentProps<typeof PanelTitle> & {
   suffix?: ReactNode;
   closeLabel?: string;
+  maximizable?: boolean;
 }) => {
-  const { draggable } = useContext(DialogContext);
+  const { draggable, isMaximized, setIsMaximized } = useContext(DialogContext);
 
   return (
-    <div className={titleSlotStyle()}>
+    <div
+      className={titleSlotStyle()}
+      onDoubleClick={(event) => {
+        onDoubleClick?.(event);
+        if (
+          event.defaultPrevented ||
+          maximizable === false ||
+          (event.target instanceof Element &&
+            event.target.closest("button, a, input, textarea, select"))
+        ) {
+          return;
+        }
+        setIsMaximized(isMaximized === false);
+      }}
+    >
       <PanelTitle {...rest} suffix={suffix ?? <DialogClose />}>
         <Primitive.Title asChild>
           <Text

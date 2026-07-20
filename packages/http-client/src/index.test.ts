@@ -96,6 +96,7 @@ import {
   rewriteCssVariableRefs,
   updateDesignTokenStyles,
   updateAssetFolder,
+  updateProjectAssetContent,
   updateDomain,
   updateBreakpoint,
   updatePage,
@@ -1125,6 +1126,7 @@ test("uploads assets as binary requests", async () => {
         type: "image",
         name: "image.png",
         filename: "image.png",
+        description: "Campaign photo",
         folderId: "campaign",
         format: "png",
         size: 3,
@@ -1144,6 +1146,9 @@ test("uploads assets as binary requests", async () => {
   expect(init.body).toBe(file);
   expect(init.headers).toBeInstanceOf(Headers);
   expect((init.headers as Headers).get("x-auth-token")).toBe("token");
+  expect((init.headers as Headers).get("x-webstudio-asset-description")).toBe(
+    "Campaign photo"
+  );
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
   );
@@ -1302,6 +1307,7 @@ test("uploads project asset descriptors with local data readers", async () => {
         name: "image.png",
         type: "image",
         format: "png",
+        description: "Campaign photo",
         folderId: "campaign",
         meta: { width: 10, height: 20 },
       },
@@ -1332,6 +1338,93 @@ test("uploads project asset descriptors with local data readers", async () => {
     const url = new URL(request.toString());
     expect(url.searchParams.has("assetId")).toBe(false);
   }
+});
+
+test("updates asset content through the stable asset revision endpoint", async () => {
+  const revision = {
+    ...createImageAssetFixture({ id: "asset-id", name: "old_hash.png" }),
+    type: "file" as const,
+    format: "json",
+    meta: {},
+    name: "new_hash.json",
+  };
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ asset: revision }), {
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset/id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => '{"theme":"dark"}',
+      request,
+    })
+  ).resolves.toEqual({ asset: revision });
+
+  const [url, init] = request.mock.calls[0] as unknown as [URL, RequestInit];
+  expect(url.pathname).toBe("/rest/assets/asset%2Fid/content");
+  expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
+  expect(url.searchParams.get("expectedName")).toBe("old_hash.json");
+  expect(init).toMatchObject({ method: "PUT", body: '{"theme":"dark"}' });
+  expect(new Headers(init.headers).get("x-auth-token")).toBe(
+    apiParams.authToken
+  );
+});
+
+test("surfaces asset content revision conflicts", async () => {
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ errors: "File changed" }), {
+        status: 409,
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await expect(
+    updateProjectAssetContent({
+      ...apiParams,
+      assetId: "asset-id",
+      expectedName: "old_hash.json",
+      readAssetData: async () => "stale",
+      request,
+    })
+  ).rejects.toMatchObject({ message: "File changed", status: 409 });
+});
+
+test("keeps browser asset content updates on the requested origin", async () => {
+  const revision = {
+    ...createImageAssetFixture({ id: "asset-id" }),
+    type: "file" as const,
+    format: "md",
+    meta: {},
+  };
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ asset: revision }), {
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await updateProjectAssetContent({
+    ...apiParams,
+    origin:
+      "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-vite.wstd.dev:5175",
+    requestOrigin:
+      "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-vite.wstd.dev:5175",
+    assetId: "asset-id",
+    expectedName: "readme_hash.md",
+    readAssetData: async () => "# Readme",
+    request,
+  });
+
+  const [url] = request.mock.calls[0] as unknown as [URL];
+  expect(url.origin).toBe(
+    "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb-dot-vite.wstd.dev:5175"
+  );
 });
 
 test("normalizes synced project bundles for local storage", () => {

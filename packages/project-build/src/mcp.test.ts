@@ -3296,6 +3296,41 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("categorizes text asset editing with asset capabilities", async () => {
+    const updateAssetContent = publicOperation({
+      command: "update-asset-content",
+      id: "assets.updateContent",
+      method: "mutation",
+      permit: "edit",
+      description: "Update text asset content",
+      inputSchema: getTestInputSchema(
+        z.object({
+          assetId: z.string(),
+          expectedName: z.string(),
+          content: z.string(),
+        })
+      ),
+      readNamespaces: ["assets"],
+      writeNamespaces: ["assets"],
+      invalidatesNamespaces: ["assets"],
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [...publicMcpOperations, updateAssetContent],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const index = await adapter.callTool({ name: "meta.index" });
+    const capabilities = (
+      index.structuredContent.data as {
+        capabilities: { area: string; tools: string[] }[];
+      }
+    ).capabilities;
+    const assets = capabilities.find(({ area }) => area === "assets");
+
+    expect(assets?.tools).toContain("update-asset-content");
+  });
+
   test("rejects import without destination share link", async () => {
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,

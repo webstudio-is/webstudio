@@ -327,6 +327,7 @@ export const FloatingPanel = ({
         {content}
         {typeof title === "string" ? (
           <DialogTitle
+            maximizable={maximizable}
             suffix={
               <DialogTitleActions>
                 {titleSuffix}

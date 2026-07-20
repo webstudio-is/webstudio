@@ -750,6 +750,15 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "update-asset-content",
+    description:
+      "Replace a text asset's content while preserving its stable asset id; provide exactly one of path or content and use the current asset name as expectedName",
+    examples: [
+      'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"settings_hash.json","content":"{\\"theme\\":\\"dark\\"}"}',
+      'MCP/API: update-asset-content {"assetId":"asset-id","expectedName":"styles_hash.css","path":"./styles.css"}',
+    ],
+  },
+  {
     command: "find-asset-usage",
     description: "Find where an asset is referenced in the project",
     requiredOptions: ["asset", "json"],

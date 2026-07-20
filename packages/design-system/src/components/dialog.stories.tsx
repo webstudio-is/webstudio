@@ -99,6 +99,7 @@ export const WithMaximize = () => (
           </DialogDescription>
         </div>
         <DialogTitle
+          maximizable
           suffix={
             <DialogTitleActions>
               <DialogMaximize />

@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   createLocalAssetDataReader,
+  createLocalUpdateAssetContentInput,
   getLocalAssetPath,
   materializeAssetFile,
 } from "./asset-files";
@@ -60,6 +61,48 @@ test("creates a local asset data reader", async () => {
   expect(
     Buffer.from(data.buffer, data.byteOffset, data.byteLength).toString()
   ).toBe("asset");
+});
+
+test("creates asset content readers from inline content or a file", async () => {
+  await writeFile("content.json", '{"source":"file"}', "utf8");
+  const fromContent = createLocalUpdateAssetContentInput({
+    assetId: "asset",
+    expectedName: "content_old.json",
+    content: '{"source":"inline"}',
+    readFile,
+  });
+  const fromPath = createLocalUpdateAssetContentInput({
+    assetId: "asset",
+    expectedName: "content_old.json",
+    path: "content.json",
+    readFile,
+  });
+
+  await expect(fromContent.readAssetData()).resolves.toBe(
+    '{"source":"inline"}'
+  );
+  await expect(fromPath.readAssetData()).resolves.toEqual(
+    Buffer.from('{"source":"file"}')
+  );
+});
+
+test("requires exactly one asset content source", () => {
+  const base = {
+    assetId: "asset",
+    expectedName: "content_old.json",
+    readFile,
+  };
+
+  expect(() => createLocalUpdateAssetContentInput(base)).toThrow(
+    "requires exactly one"
+  );
+  expect(() =>
+    createLocalUpdateAssetContentInput({
+      ...base,
+      path: "content.json",
+      content: "content",
+    })
+  ).toThrow("requires exactly one");
 });
 
 test("materializes asset files from the synced asset cache before fetching", async () => {

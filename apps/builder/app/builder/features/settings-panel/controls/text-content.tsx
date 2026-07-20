@@ -127,6 +127,7 @@ export const TextContent = ({
         <CodeEditor
           title={
             <DialogTitle
+              maximizable
               suffix={
                 <DialogTitleActions>
                   <DialogMaximize />

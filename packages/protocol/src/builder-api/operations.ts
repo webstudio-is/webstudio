@@ -120,7 +120,8 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
         : operation.id === "build.patch"
           ? "raw-build-patch"
           : operation.id === "assets.upload" ||
-              operation.id === "assets.uploadMany"
+              operation.id === "assets.uploadMany" ||
+              operation.id === "assets.updateContent"
             ? "local-side-effect"
             : "server-infrastructure",
     runtimeOperationId: runtimeOperation?.id,

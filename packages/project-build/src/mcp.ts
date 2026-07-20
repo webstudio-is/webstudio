@@ -3054,7 +3054,7 @@ const capabilityAreas = [
   },
   {
     area: "assets",
-    goal: "Manage asset folders and uploaded assets, including listing, creating, renaming, moving, duplicating, downloading, uploading, replacing, and deleting.",
+    goal: "Manage asset folders and uploaded assets, including listing, creating, renaming, moving, duplicating, downloading, uploading, editing text content, replacing, and deleting.",
     tools: [
       "list-asset-folders",
       "create-asset-folder",
@@ -3067,6 +3067,7 @@ const capabilityAreas = [
       "upload-asset",
       "upload-assets",
       "download-asset",
+      "update-asset-content",
       "update-asset",
       "duplicate-asset",
       "set-image-descriptions",

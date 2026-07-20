@@ -13,6 +13,7 @@ const baseAsset = {
   description: z.union([z.string().optional(), z.null()]),
   folderId: assetFolderId.optional(),
   createdAt: z.string(),
+  updatedAt: z.string().optional(),
 };
 
 export const assetType = z.enum(["font", "image", "file"]);
