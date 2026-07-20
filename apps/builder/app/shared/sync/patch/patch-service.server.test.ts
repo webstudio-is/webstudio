@@ -210,7 +210,7 @@ describe("applyPatchRequest", () => {
     expect(updateAssetResourceIndexesAfterCanonicalChange).toHaveBeenCalledWith(
       expect.objectContaining({
         projectId: "project-1",
-        changedAssetIds: ["folder-1"],
+        changedAssetIds: ["project-assets"],
       })
     );
   });

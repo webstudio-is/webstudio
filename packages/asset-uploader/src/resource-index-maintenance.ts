@@ -1,4 +1,5 @@
 import {
+  buildAssetResourceIndex,
   computeCanonicalAssetRevision,
   type CanonicalAssetFileEntry,
   type ImmutableAssetResourceIndexStore,
@@ -12,6 +13,10 @@ import {
   AssetResourceIndexBuildSupersededError,
   buildPersistAndActivateAssetResourceIndex,
 } from "./resource-index-build";
+import {
+  loadAssetResourceIndexSnapshots,
+  type AssetResourceIndexSnapshot,
+} from "./resource-index-snapshot";
 
 export const synchronizeAssetResourceStateAfterAssetChange = async ({
   client,
@@ -175,4 +180,91 @@ export const reconcileAssetResourceIndexesForPublication = async ({
     rebuilt.push(resource.resourceId);
   }
   return rebuilt;
+};
+
+export const prepareAssetResourceIndexSnapshotsForPublication = async ({
+  client,
+  store,
+  projectId,
+  resources,
+  entries,
+  assetRevision,
+  read,
+  referenceId,
+}: {
+  client: Client;
+  store: ImmutableAssetResourceIndexStore;
+  projectId: string;
+  resources: readonly {
+    resourceId: string;
+    query: string;
+    queryHash: string;
+  }[];
+  entries: readonly CanonicalAssetFileEntry[];
+  assetRevision: string;
+  read: (name: string) => Promise<{ data: AsyncIterable<Uint8Array> }>;
+  referenceId: string;
+}): Promise<AssetResourceIndexSnapshot[]> => {
+  if (resources.length === 0) {
+    return [];
+  }
+  const statesResult = await client
+    .from("AssetResourceIndexState")
+    .select("resourceId, queryHash, deletedAt")
+    .eq("projectId", projectId)
+    .in(
+      "resourceId",
+      [...new Set(resources.map(({ resourceId }) => resourceId))].sort()
+    );
+  assertPostgrestSuccess(statesResult);
+  const states = new Map(
+    (statesResult.data ?? []).map((state) => [state.resourceId, state])
+  );
+  const currentResources = resources.filter((resource) => {
+    const state = states.get(resource.resourceId);
+    return (
+      state !== undefined &&
+      state.deletedAt === null &&
+      state.queryHash === resource.queryHash
+    );
+  });
+  await reconcileAssetResourceIndexesForPublication({
+    client,
+    store,
+    projectId,
+    resources: currentResources,
+    entries,
+    assetRevision,
+  });
+  const currentSnapshots = await loadAssetResourceIndexSnapshots({
+    client,
+    projectId,
+    resources: currentResources,
+    read,
+    expectedAssetRevision: assetRevision,
+    referenceId,
+    garbageCollectionStore:
+      store.delete === undefined ? undefined : { delete: store.delete },
+  });
+  const snapshots = new Map(
+    currentSnapshots.map((snapshot) => [snapshot.resourceId, snapshot])
+  );
+  for (const resource of resources) {
+    if (snapshots.has(resource.resourceId)) {
+      continue;
+    }
+    const index = await buildAssetResourceIndex({
+      projectId,
+      resourceId: resource.resourceId,
+      query: resource.query,
+      entries,
+      assetRevision,
+    });
+    snapshots.set(resource.resourceId, {
+      resourceId: resource.resourceId,
+      revision: index.integrity.checksum,
+      index,
+    });
+  }
+  return resources.map(({ resourceId }) => snapshots.get(resourceId)!);
 };

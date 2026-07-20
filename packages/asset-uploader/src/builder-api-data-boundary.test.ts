@@ -6,6 +6,7 @@ import {
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
 import { previewAssetResourceQuery } from "./query-preview";
+import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
 
 vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
   authorizeProject: { hasProjectPermit: vi.fn() },
@@ -13,6 +14,9 @@ vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
 }));
 vi.mock("./canonical-metadata-persistence", () => ({
   loadCanonicalAssetFileEntries: vi.fn(),
+}));
+vi.mock("./canonical-metadata-backfill", () => ({
+  synchronizeCanonicalAssets: vi.fn(),
 }));
 
 const projectId = "project-1";
@@ -27,8 +31,9 @@ describe("Builder asset-resource API data boundary", () => {
     vi.mocked(loadCanonicalAssetFileEntries).mockResolvedValue([]);
   });
 
-  test("catalog and preview requests use persisted rows without rescanning files", async () => {
-    await loadBuilderAssetFieldCatalog({ projectId, context });
+  test("catalog and preview synchronize before reading persisted rows", async () => {
+    const assetClient = { readFile: vi.fn() };
+    await loadBuilderAssetFieldCatalog({ projectId, context, assetClient });
     await previewAssetResourceQuery({
       projectId,
       request: {
@@ -38,8 +43,10 @@ describe("Builder asset-resource API data boundary", () => {
         content: { mode: "none" },
       },
       context,
+      assetClient,
     });
 
+    expect(synchronizeCanonicalAssets).toHaveBeenCalledTimes(2);
     expect(loadCanonicalAssetFileEntries).toHaveBeenCalledTimes(2);
   });
 });

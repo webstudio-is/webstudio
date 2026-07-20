@@ -5,6 +5,7 @@ import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { createContext } from "../context.server";
 import { isBuilder } from "../router-utils";
+import { createAssetClient } from "../asset-client";
 
 export const loader = async ({ request }: { request: Request }) => {
   if (isBuilder(request) === false) {
@@ -20,7 +21,11 @@ export const loader = async ({ request }: { request: Request }) => {
 
   try {
     const context = await createContext(request);
-    const catalog = await loadBuilderAssetFieldCatalog({ projectId, context });
+    const catalog = await loadBuilderAssetFieldCatalog({
+      projectId,
+      context,
+      assetClient: createAssetClient(),
+    });
     return json(catalog, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
     if (error instanceof AuthorizationError) {

@@ -15,14 +15,7 @@ import type {
   NormalizedPatchRequest,
   PatchEntry,
 } from "./patch-normalize.server";
-import {
-  synchronizeAllCanonicalAssetStandardMetadata,
-  synchronizeCanonicalAsset,
-  synchronizeAssetResourceIndexQueries,
-  updateAssetResourceIndexesAfterCanonicalChange,
-} from "@webstudio-is/asset-uploader/index.server";
-import { createAssetClient } from "../../asset-client";
-import type { Resource } from "@webstudio-is/sdk";
+import { synchronizeAssetResourcesAfterBuildPatch } from "../../synchronize-asset-resource-patch.server";
 
 type BuildRow = Database["public"]["Tables"]["Build"]["Row"];
 type BuildColumn = keyof BuildRow;
@@ -328,8 +321,6 @@ const applyAuthorizedEntries = async ({
   };
 };
 
-const parseResources = (value: string) => JSON.parse(value) as Resource[];
-
 export const applyPatchRequest = async (
   context: AppContext,
   patch: NormalizedPatchRequest
@@ -371,84 +362,13 @@ export const applyPatchRequest = async (
     return applied;
   }
 
-  if (
-    build?.resources !== undefined &&
-    applied.build?.resources !== undefined &&
-    build.resources !== applied.build.resources
-  ) {
-    try {
-      await synchronizeAssetResourceIndexQueries({
-        client: context.postgrest.client,
-        assetClient: createAssetClient(),
-        projectId: patch.projectId,
-        previousResources: parseResources(build.resources),
-        resources: parseResources(applied.build.resources),
-      });
-    } catch (error) {
-      // The resource patch is already committed. Keep its response successful;
-      // index status exposes build failures without encouraging a duplicate patch.
-      console.error("Asset resource index synchronization failed", error);
-    }
-  }
-
-  const assetChanges = authorized.flatMap(({ entry }) =>
-    entry.transaction.payload.filter(
-      ({ namespace }) => namespace === "assets" || namespace === "assetFolders"
-    )
-  );
-  if (assetChanges.length > 0) {
-    try {
-      const assetClient = createAssetClient();
-      const hasFolderChanges = assetChanges.some(
-        ({ namespace }) => namespace === "assetFolders"
-      );
-      if (hasFolderChanges) {
-        await synchronizeAllCanonicalAssetStandardMetadata({
-          client: context.postgrest.client,
-          projectId: patch.projectId,
-        });
-      }
-      const addedAssetIds = [
-        ...new Set(
-          assetChanges
-            .filter(({ namespace }) => namespace === "assets")
-            .flatMap(({ patches }) =>
-              patches.flatMap(({ op, path }) =>
-                op === "add" && path.length === 1 && typeof path[0] === "string"
-                  ? [path[0]]
-                  : []
-              )
-            )
-        ),
-      ];
-      for (const assetId of addedAssetIds) {
-        await synchronizeCanonicalAsset({
-          client: context.postgrest.client,
-          assetClient,
-          projectId: patch.projectId,
-          assetId,
-        });
-      }
-      const changedAssetIds = [
-        ...new Set(
-          assetChanges.flatMap(({ patches }) =>
-            patches
-              .map(({ path }) => path[0])
-              .filter((id): id is string => typeof id === "string")
-          )
-        ),
-      ];
-      await updateAssetResourceIndexesAfterCanonicalChange({
-        client: context.postgrest.client,
-        store: assetClient.resourceIndexStore,
-        projectId: patch.projectId,
-        changedAssetIds:
-          changedAssetIds.length === 0 ? ["project-assets"] : changedAssetIds,
-      });
-    } catch (error) {
-      console.error("Asset resource index maintenance failed", error);
-    }
-  }
+  await synchronizeAssetResourcesAfterBuildPatch({
+    context,
+    projectId: patch.projectId,
+    previousResources: build?.resources,
+    resources: applied.build?.resources,
+    changes: authorized.flatMap(({ entry }) => entry.transaction.payload),
+  });
 
   const entriesByTransactionId = new Map<string, PatchEntryResult[]>();
   for (const entryResult of [

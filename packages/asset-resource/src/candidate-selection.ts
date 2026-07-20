@@ -1,21 +1,12 @@
 import { evaluate, type ExprNode } from "groq-js/1";
 import type { AssetFileDocument } from "@webstudio-is/sdk";
+import { isGroqAstNode, visitGroqAst } from "./groq-ast";
 
 const assetResourceCandidatePolicyV1 = {
   records: "safe-static-filter-superset",
   fields: "complete-lightweight-document",
   content: "reference-only",
 } as const;
-
-type AstNode = {
-  type: string;
-};
-
-const isAstNode = (value: unknown): value is AstNode =>
-  typeof value === "object" &&
-  value !== null &&
-  "type" in value &&
-  typeof value.type === "string";
 
 const compareStrings = (left: string, right: string) => {
   if (left < right) {
@@ -27,29 +18,9 @@ const compareStrings = (left: string, right: string) => {
   return 0;
 };
 
-const visitAst = (node: AstNode, visit: (node: AstNode) => void) => {
-  visit(node);
-  if (node.type === "Value") {
-    return;
-  }
-  for (const value of Object.values(node)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (isAstNode(item)) {
-          visitAst(item, visit);
-        }
-      }
-      continue;
-    }
-    if (isAstNode(value)) {
-      visitAst(value, visit);
-    }
-  }
-};
-
 export const getAssetResourceParameterNames = (tree: ExprNode) => {
   const names = new Set<string>();
-  visitAst(tree, (node) => {
+  visitGroqAst(tree, (node) => {
     if (
       node.type === "Parameter" &&
       "name" in node &&
@@ -82,7 +53,7 @@ const stableStaticNodeTypes = new Set([
 
 const isStableStaticExpression = (tree: ExprNode) => {
   let stable = true;
-  visitAst(tree, (node) => {
+  visitGroqAst(tree, (node) => {
     if (stableStaticNodeTypes.has(node.type) === false) {
       stable = false;
     }
@@ -131,7 +102,7 @@ const collectDatasetFilters = (node: ExprNode): DatasetFilterAnalysis => {
     return { expressions: [], isUntransformedDataset: true };
   }
 
-  if ("base" in node && isAstNode(node.base)) {
+  if ("base" in node && isGroqAstNode(node.base)) {
     const analysis = collectDatasetFilters(node.base as ExprNode);
     if (node.type === "Filter" && analysis.isUntransformedDataset) {
       return {
