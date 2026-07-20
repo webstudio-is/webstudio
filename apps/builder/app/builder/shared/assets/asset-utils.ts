@@ -14,7 +14,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
 
-export { detectAssetType, getAssetUrl };
+export { getAssetUrl };
 
 export const getImageNameAndType = (fileName: string) => {
   const extractedExt = getFileExtension(fileName)?.toLowerCase();

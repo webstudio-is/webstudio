@@ -5,6 +5,7 @@ const {
   createUploadTicket,
   deduplicateAssetName,
   getFilesData,
+  getUniqueFilesData,
   submitAssetUpload,
 } = __testing__;
 const request = vi.fn<typeof fetch>();
@@ -75,6 +76,18 @@ describe("upload-assets", () => {
       folderId: "folder-id",
       url: "https://example.com/image.png",
     });
+  });
+
+  test("releases object URLs discarded during deduplication", async () => {
+    const url = new URL("https://example.com/image.png");
+    const filesData = await getFilesData("image", [url, url]);
+    const revokeObjectURL = vi.fn();
+
+    const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
+
+    expect(uniqueFilesData.size).toBe(1);
+    expect(revokeObjectURL).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith(url.href);
   });
 
   describe("deduplicateAssetName", () => {

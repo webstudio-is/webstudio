@@ -37,6 +37,15 @@ export const getFileExtension = (fileName: string): string | undefined => {
   return fileName.slice(extensionAt + 1);
 };
 
+export const getFileNameParts = (fileName: string) => {
+  const extension = getFileExtension(fileName) ?? "";
+  const extensionLength = extension === "" ? 0 : extension.length + 1;
+  return {
+    basename: fileName.slice(0, fileName.length - extensionLength),
+    extension,
+  };
+};
+
 export type ParsedAssetName = {
   basename: string;
   hash: string;
@@ -44,11 +53,8 @@ export type ParsedAssetName = {
 };
 
 export const parseAssetName = (assetName: string): ParsedAssetName => {
-  let name = assetName;
-  const ext = getFileExtension(name) ?? "";
-  if (ext !== "") {
-    name = name.slice(0, -ext.length - 1);
-  }
+  const { basename, extension: ext } = getFileNameParts(assetName);
+  let name = basename;
 
   let hash = "";
   let separatorAt = name.length - legacyNanoIdLength - 1;

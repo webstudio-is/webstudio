@@ -23,6 +23,7 @@ import {
   getAssetTextEditorLanguage,
   formatAssetName,
   getFileExtension,
+  getFileNameParts,
   isTextFileAsset,
   parseAssetName,
 } from "./assets";
@@ -38,6 +39,17 @@ describe("getFileExtension", () => {
     ["file", undefined],
   ])("extracts the extension from %s", (fileName, expected) => {
     expect(getFileExtension(fileName)).toBe(expected);
+  });
+});
+
+describe("getFileNameParts", () => {
+  test.each([
+    ["file.md", { basename: "file", extension: "md" }],
+    ["archive.tar.GZ", { basename: "archive.tar", extension: "GZ" }],
+    [".env", { basename: ".env", extension: "" }],
+    ["README", { basename: "README", extension: "" }],
+  ])("splits %s", (fileName, expected) => {
+    expect(getFileNameParts(fileName)).toEqual(expected);
   });
 });
 

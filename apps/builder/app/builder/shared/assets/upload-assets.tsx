@@ -1,6 +1,6 @@
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
-import { getFileExtension, type Asset } from "@webstudio-is/sdk";
+import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
@@ -118,6 +118,21 @@ const deleteUploadingFileData = (id: UploadingFileData["assetId"]) => {
   );
 };
 
+const getUniqueFilesData = (
+  filesData: UploadingFileData[],
+  revokeObjectURL = URL.revokeObjectURL
+) => {
+  const uniqueFilesData = new Map<string, UploadingFileData>();
+  for (const fileData of filesData) {
+    if (uniqueFilesData.has(fileData.fingerprintId)) {
+      revokeObjectURL(fileData.objectURL);
+      continue;
+    }
+    uniqueFilesData.set(fileData.fingerprintId, fileData);
+  }
+  return uniqueFilesData;
+};
+
 export const waitForAssetUpload = (assetId: string): Promise<Asset> => {
   const existingAsset = $assets.get().get(assetId);
   if (existingAsset !== undefined) {
@@ -170,13 +185,11 @@ const getVideoDimensions = async (file: File) => {
 };
 
 const deduplicateAssetName = (name: string, existingNames: Set<string>) => {
+  const { basename, extension } = getFileNameParts(name);
+  const extensionWithDot = extension === "" ? "" : `.${extension}`;
   // eslint-disable-next-line no-constant-condition
   for (let index = 0; true; index += 1) {
     const suffix = index === 0 ? "" : `_${index}`;
-    const extension = getFileExtension(name);
-    const extensionWithDot =
-      extension === undefined ? "" : name.slice(-extension.length - 1);
-    const basename = name.slice(0, name.length - extensionWithDot.length);
     const nameWithSuffix = basename + suffix + extensionWithDot;
     if (!existingNames.has(nameWithSuffix)) {
       return nameWithSuffix;
@@ -425,9 +438,7 @@ export const uploadAssets = async <T extends File | URL>(
   const filesData = await getFilesData(type, filesOrUrls, options.folderId);
 
   // Filter out duplicates inside filesData
-  const uniqFilesDataMap = new Map(
-    filesData.map((fileData) => [fileData.fingerprintId, fileData])
-  );
+  const uniqueFilesDataByFingerprint = getUniqueFilesData(filesData);
 
   // Filter out duplicates already being uploaded
   const existingUploadsByFingerprint = new Map(
@@ -436,24 +447,29 @@ export const uploadAssets = async <T extends File | URL>(
       .map((fileData) => [fileData.fingerprintId, fileData])
   );
 
-  for (const [fingerprintId] of existingUploadsByFingerprint) {
-    if (uniqFilesDataMap.has(fingerprintId)) {
-      const fileData = uniqFilesDataMap.get(fingerprintId)!;
-      uniqFilesDataMap.delete(fingerprintId);
-      toast.info("Asset already exists", {
-        icon: <ToastImageInfo objectURL={fileData.objectURL} />,
-      });
+  for (const [
+    fingerprintId,
+    existingFileData,
+  ] of existingUploadsByFingerprint) {
+    const fileData = uniqueFilesDataByFingerprint.get(fingerprintId);
+    if (fileData === undefined) {
+      continue;
     }
+    uniqueFilesDataByFingerprint.delete(fingerprintId);
+    URL.revokeObjectURL(fileData.objectURL);
+    toast.info("Asset already exists", {
+      icon: <ToastImageInfo objectURL={existingFileData.objectURL} />,
+    });
   }
 
-  const uniqFilesData = [...uniqFilesDataMap.values()];
+  const uniqueFilesData = [...uniqueFilesDataByFingerprint.values()];
 
   const uploadTickets = new Map<
     UploadingFileData["fingerprintId"],
     UploadTicket
   >();
   const ticketedFilesData: UploadingFileData[] = [];
-  for (const fileData of uniqFilesData) {
+  for (const fileData of uniqueFilesData) {
     try {
       const ticket = await createUploadTicket({
         authToken,
@@ -519,5 +535,6 @@ export const __testing__ = {
   createUploadTicket,
   deduplicateAssetName,
   getFilesData,
+  getUniqueFilesData,
   submitAssetUpload,
 };
