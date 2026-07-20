@@ -1139,6 +1139,13 @@ export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
     demandOption: true,
   });
 
+export const publishReportCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("attempt-id", {
+    type: "string",
+    describe: "Required publish attempt id returned by publish Activity",
+    demandOption: true,
+  });
+
 export const unpublishCommandOptions = (yargs: CommonYargsArgv) =>
   confirmOption(
     publishCommandOptions(yargs),
@@ -1341,6 +1348,7 @@ export type ApiCommandOptions = {
   domainId?: string;
   target?: "staging" | "production";
   job?: string;
+  attemptId?: string;
   idempotencyKey?: string;
   from?: string;
   to?: string;
@@ -2979,6 +2987,17 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = { jobId: requireOption(options.job, "--job") };
     return runProjectSessionCommand(
       "get-publish-job",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "get-publish-report": async (options, connection, dependencies) => {
+    const input = {
+      attemptId: requireOption(options.attemptId, "--attempt-id"),
+    };
+    return runProjectSessionCommand(
+      "get-publish-report",
       input,
       connection,
       dependencies

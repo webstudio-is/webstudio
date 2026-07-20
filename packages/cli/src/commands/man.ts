@@ -244,6 +244,7 @@ const taskRecipeUseCases = {
     "Publish project",
     "List publishes",
     "Check publish job",
+    "Inspect publish report",
     "Unpublish",
     "List domains",
     "Create domain",
