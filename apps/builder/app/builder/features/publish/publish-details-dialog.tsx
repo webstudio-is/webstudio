@@ -445,10 +445,14 @@ export const PublishStatusButton = ({
 }) => {
   const [open, setOpen] = useState(false);
   const findings = getCurrentPrePublishAudit();
-  const hasAuditErrors = findings.some(({ severity }) => severity === "error");
-  const hasAuditWarnings = findings.some(
+  const auditErrorCount = findings.filter(
+    ({ severity }) => severity === "error"
+  ).length;
+  const auditWarningCount = findings.filter(
     ({ severity }) => severity === "warning"
-  );
+  ).length;
+  const hasAuditErrors = auditErrorCount > 0;
+  const hasAuditWarnings = auditWarningCount > 0;
   const displayedStatus = hasAuditErrors
     ? "error"
     : status === "pending"
@@ -465,13 +469,25 @@ export const PublishStatusButton = ({
       : displayedStatus === "pending"
       ? theme.colors.foregroundDisabled
       : theme.colors.foregroundDestructive;
+  const statusLabel = hasAuditErrors
+    ? `${auditErrorCount} audit ${auditErrorCount === 1 ? "error" : "errors"}`
+    : displayedStatus === "warning" && hasAuditWarnings
+    ? `${auditWarningCount} audit ${
+        auditWarningCount === 1 ? "warning" : "warnings"
+      }`
+    : displayedStatus === "pending"
+    ? "Publish in progress"
+    : displayedStatus === "error"
+    ? "Publish failed"
+    : "Published";
+  const accessibleLabel = `${label}: ${statusLabel}. Open publish details`;
 
   return (
     <>
-      <Tooltip content={`Open publish details for ${label}`}>
+      <Tooltip content={accessibleLabel}>
         <IconButton
           type="button"
-          aria-label={`Open publish details for ${label}`}
+          aria-label={accessibleLabel}
           onClick={() => setOpen(true)}
           css={{ color }}
         >
