@@ -130,6 +130,14 @@ describe("asset name helpers", () => {
     });
   });
 
+  test("keeps underscores inside the storage id out of the display name", () => {
+    expect(parseAssetName("test_nCEugJxJwUd_MJcgPodZr.md")).toEqual({
+      basename: "test",
+      hash: "nCEugJxJwUd_MJcgPodZr",
+      ext: "md",
+    });
+  });
+
   test("parses name with hash but no extension", () => {
     expect(parseAssetName("hello_hash1_hash2")).toEqual({
       basename: "hello_hash1",

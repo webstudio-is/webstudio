@@ -21,6 +21,36 @@ export type AssetTextEditorLanguage =
   | "markdown"
   | "xml";
 
+export const assetStorageIdLength = 21;
+
+export type ParsedAssetName = {
+  basename: string;
+  hash: string;
+  ext: string;
+};
+
+export const parseAssetName = (assetName: string): ParsedAssetName => {
+  let name = assetName;
+  let ext = "";
+  const lastDotAt = name.lastIndexOf(".");
+  if (lastDotAt > -1) {
+    ext = name.slice(lastDotAt + 1);
+    name = name.slice(0, lastDotAt);
+  }
+
+  let hash = "";
+  let separatorAt = name.length - assetStorageIdLength - 1;
+  if (separatorAt < 0 || name[separatorAt] !== "_") {
+    // Support storage names created before Nano ID was introduced.
+    separatorAt = name.lastIndexOf("_");
+  }
+  if (separatorAt > -1) {
+    hash = name.slice(separatorAt + 1);
+    name = name.slice(0, separatorAt);
+  }
+  return { basename: name, hash, ext };
+};
+
 type MimeType = `${MimeCategory}/${string}`;
 type BinaryMimeType = `${Exclude<MimeCategory, "text">}/${string}`;
 

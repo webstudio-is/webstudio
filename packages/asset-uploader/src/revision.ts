@@ -1,5 +1,4 @@
-import { basename, extname } from "node:path";
-import { isTextFileAsset, type Asset } from "@webstudio-is/sdk";
+import { isTextFileAsset, parseAssetName, type Asset } from "@webstudio-is/sdk";
 import {
   authorizeProject,
   AuthorizationError,
@@ -22,13 +21,9 @@ const getRevisionFilename = ({
   name: string;
   filename: string | null;
 }) => {
-  const extension = extname(name);
-  const storedBasename = basename(name, extension);
-  const suffixAt = storedBasename.lastIndexOf("_");
-  const displayBasename =
-    filename ??
-    (suffixAt === -1 ? storedBasename : storedBasename.slice(0, suffixAt));
-  return sanitizeS3Key(`${displayBasename}${extension}`);
+  const { basename, ext } = parseAssetName(name);
+  const displayBasename = filename ?? basename;
+  return sanitizeS3Key(`${displayBasename}${ext === "" ? "" : `.${ext}`}`);
 };
 
 export const swapAssetFileWithClient = async (
