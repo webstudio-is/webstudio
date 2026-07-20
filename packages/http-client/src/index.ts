@@ -1546,6 +1546,10 @@ export const getPublishJob = projectQueryInput<
   AuthProjectParams & { jobId: string }
 >("get-publish-job");
 
+export const getPublishReport = projectQueryInput<
+  AuthProjectParams & { attemptId: string }
+>("get-publish-report");
+
 export const unpublish = projectConfirmedMutationInput<
   AuthProjectParams & {
     target: "staging" | "production";
