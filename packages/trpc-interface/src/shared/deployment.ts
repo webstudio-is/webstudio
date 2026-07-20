@@ -13,6 +13,10 @@ export const publishInput = z.object({
   branchName: z.string(),
   // action log helper (not used for deployment, but for action logs readablity)
   logProjectName: z.string(),
+  attemptId: z.string().optional(),
+  reportRetentionDays: z
+    .union([z.literal(0), z.literal(1), z.literal(30)])
+    .optional(),
 });
 
 export const unpublishInput = z.object({
@@ -28,6 +32,34 @@ export const output = z.discriminatedUnion("success", [
     error: z.string(),
   }),
 ]);
+
+export const publishReportInput = z.object({
+  attemptId: z.string().uuid(),
+  retentionDays: z.union([z.literal(1), z.literal(30)]),
+});
+
+export const publishReportOutput = z.discriminatedUnion("availability", [
+  z.object({ availability: z.literal("available"), report: z.unknown() }),
+  z.object({ availability: z.literal("not_found") }),
+  z.object({ availability: z.literal("unavailable") }),
+]);
+
+export const storePublishReportInput = z.object({
+  attemptId: z.string().uuid(),
+  retentionDays: z.union([z.literal(1), z.literal(30)]),
+  report: z.unknown(),
+});
+
+export const deletePublishReportsInput = z.object({
+  reports: z
+    .array(
+      z.object({
+        attemptId: z.string().uuid(),
+        retentionDays: z.union([z.literal(1), z.literal(30)]),
+      })
+    )
+    .max(1000),
+});
 
 /**
  * This is the ContentManagementService. It is currently used to publish content to a custom domain.
@@ -52,4 +84,16 @@ export const deploymentRouter = router({
         error: "NOT_IMPLEMENTED",
       };
     }),
+  getPublishReport: procedure
+    .input(publishReportInput)
+    .output(publishReportOutput)
+    .query(() => ({ availability: "unavailable" as const })),
+  storePublishReport: procedure
+    .input(storePublishReportInput)
+    .output(output)
+    .mutation(() => ({ success: false as const, error: "NOT_IMPLEMENTED" })),
+  deletePublishReports: procedure
+    .input(deletePublishReportsInput)
+    .output(output)
+    .mutation(() => ({ success: false as const, error: "NOT_IMPLEMENTED" })),
 });

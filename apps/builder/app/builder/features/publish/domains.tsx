@@ -15,12 +15,7 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import {
-  AlertIcon,
-  CheckCircleIcon,
-  CopyIcon,
-  HelpIcon,
-} from "@webstudio-is/icons";
+import { CopyIcon, HelpIcon } from "@webstudio-is/icons";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   Fragment,
@@ -42,6 +37,7 @@ import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
+import { PublishStatusButton } from "./publish-details-dialog";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -81,8 +77,8 @@ export const getPublishStatusAndText = ({
     status === "PUBLISHED"
       ? "Published"
       : status === "FAILED"
-        ? "Publish failed"
-        : "Publishing started";
+      ? "Publish failed"
+      : "Publishing started";
 
   const statusText = (
     <>
@@ -141,33 +137,6 @@ const getStatusText = (props: {
     isVerifiedActive,
     text: props.isLoading ? "Loading status..." : text,
   };
-};
-
-const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
-  const { isVerifiedActive, text } = getStatusText(props);
-
-  const Icon = isVerifiedActive ? CheckCircleIcon : AlertIcon;
-
-  return (
-    <Tooltip content={text}>
-      <Flex
-        align="center"
-        justify="center"
-        css={{
-          cursor: "pointer",
-          width: theme.sizes.controlHeight,
-          height: theme.sizes.controlHeight,
-          color: props.isLoading
-            ? theme.colors.foregroundDisabled
-            : isVerifiedActive
-              ? theme.colors.foregroundSuccessText
-              : theme.colors.foregroundDestructive,
-        }}
-      >
-        <Icon />
-      </Flex>
-    </Tooltip>
-  );
 };
 
 const DomainItem = ({
@@ -350,9 +319,17 @@ const DomainItem = ({
       title={projectDomain.domain}
       suffix={
         <Grid flow="column">
-          <StatusIcon
-            isLoading={isStatusLoading}
-            projectDomain={projectDomain}
+          <PublishStatusButton
+            label={projectDomain.domain}
+            activity={text}
+            latestBuildId={projectDomain.latestBuildVirtual?.buildId}
+            status={
+              isStatusLoading
+                ? "pending"
+                : isVerifiedActive
+                ? "success"
+                : "error"
+            }
           />
 
           <CopyToClipboard
