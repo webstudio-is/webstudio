@@ -1072,9 +1072,16 @@ export const deleteResourceCommandOptions = (yargs: CommonYargsArgv) =>
         "Also remove direct resource prop references that point at this resource",
     });
 
-const publishTargetOption = (yargs: CommonYargsArgv) =>
+const deploymentTargetOption = (yargs: CommonYargsArgv) =>
   yargs.option("target", {
     choices: ["staging", "production"] as const,
+    describe: "Required deployment target",
+    demandOption: true,
+  });
+
+const publishTargetOption = (yargs: CommonYargsArgv) =>
+  yargs.option("target", {
+    choices: ["staging", "production", "static"] as const,
     describe: "Required publish target",
     demandOption: true,
   });
@@ -1096,6 +1103,20 @@ export const publishCommandOptions = (yargs: CommonYargsArgv) =>
     .option("idempotency-key", {
       type: "string",
       describe: "Optional idempotency key for retrying the same publish",
+    })
+    .option("template", {
+      type: "array",
+      string: true,
+      choices: [
+        "docker",
+        "vercel",
+        "netlify",
+        "ssg",
+        "ssg-netlify",
+        "ssg-vercel",
+      ] as const,
+      describe:
+        "Static export template. Repeat to request multiple templates; defaults to ssg.",
     });
 
 export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1105,9 +1126,24 @@ export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
     demandOption: true,
   });
 
+export const publishReportCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("attempt-id", {
+    type: "string",
+    describe: "Required publish attempt id returned by publish Activity",
+    demandOption: true,
+  });
+
 export const unpublishCommandOptions = (yargs: CommonYargsArgv) =>
   confirmOption(
-    publishCommandOptions(yargs),
+    publishDomainsOption(deploymentTargetOption(apiCommandOptions(yargs)))
+      .option("message", {
+        type: "string",
+        describe: "Optional human-readable unpublish message",
+      })
+      .option("idempotency-key", {
+        type: "string",
+        describe: "Optional idempotency key for retrying the same unpublish",
+      }),
     "Required. Confirm that selected domains should be unpublished"
   );
 
@@ -1304,8 +1340,9 @@ export type ApiCommandOptions = {
   asset?: string | string[];
   domain?: string | string[];
   domainId?: string;
-  target?: "staging" | "production";
+  target?: "staging" | "production" | "static";
   job?: string;
+  attemptId?: string;
   idempotencyKey?: string;
   from?: string;
   to?: string;
@@ -1581,8 +1618,22 @@ const assetListTypeOption = (
 
 const publishTargetValue = (
   value: ApiCommandOptions["target"]
+): "staging" | "production" | "static" =>
+  requiredChoice(value, ["staging", "production", "static"], "--target");
+
+const deploymentTargetValue = (
+  value: ApiCommandOptions["target"]
 ): "staging" | "production" =>
   requiredChoice(value, ["staging", "production"], "--target");
+
+const publishTemplateValues = (value: ApiCommandOptions["template"]) =>
+  listStringOption(value)?.map((template) =>
+    requiredChoice(
+      template,
+      ["docker", "vercel", "netlify", "ssg", "ssg-netlify", "ssg-vercel"],
+      "--template"
+    )
+  );
 
 const textUpdateModeOption = (
   value: ApiCommandOptions["mode"]
@@ -2898,8 +2949,21 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     );
   },
   publish: async (options, connection, dependencies) => {
+    const target = publishTargetValue(options.target);
+    if (target === "static") {
+      return runProjectSessionCommand(
+        "publish",
+        {
+          target,
+          templates: publishTemplateValues(options.template),
+          idempotencyKey: options.idempotencyKey,
+        },
+        connection,
+        dependencies
+      );
+    }
     const input = {
-      target: publishTargetValue(options.target),
+      target,
       domains: listStringOption(options.domain),
       message: options.message,
       idempotencyKey: options.idempotencyKey,
@@ -2926,10 +2990,21 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "get-publish-report": async (options, connection, dependencies) => {
+    const input = {
+      attemptId: requireOption(options.attemptId, "--attempt-id"),
+    };
+    return runProjectSessionCommand(
+      "get-publish-report",
+      input,
+      connection,
+      dependencies
+    );
+  },
   unpublish: async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
     const input = {
-      target: publishTargetValue(options.target),
+      target: deploymentTargetValue(options.target),
       domains: listStringOption(options.domain),
       message: options.message,
       idempotencyKey: options.idempotencyKey,

@@ -618,16 +618,18 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "publish",
     description:
-      "Publish the configured project to staging or production. Uses the project domain by default and, for production, active verified custom domains. If local development cannot contact the deployment backend, the JSON response includes warning while still returning the local publish job id.",
+      "Publish the configured project to staging or production, or prepare a static export. Uses the project domain by default and, for production, active verified custom domains. If local development cannot contact the deployment backend, the JSON response includes warning while still returning the local publish job id.",
     requiredOptions: ["target", "json"],
     examples: [
       "webstudio publish --target production --json",
       "webstudio publish --target production --domain example.com --json",
+      "webstudio publish --target static --template ssg --json",
     ],
   },
   {
     command: "list-publishes",
-    description: "List production publish builds for the configured project",
+    description:
+      "List retained publish Activity for the configured project, including staging, production, blocked audits, failures, and static exports",
     examples: ["webstudio list-publishes --json"],
   },
   {
@@ -636,6 +638,15 @@ const curatedPublicApiOperationDocumentation = [
       "Show the status and domains for a publish job returned by publish",
     requiredOptions: ["job", "json"],
     examples: ["webstudio get-publish-job --job build-id --json"],
+  },
+  {
+    command: "get-publish-report",
+    description:
+      "Get the detailed structured report for a publish attempt. Requires a Pro or Team plan and an unexpired report.",
+    requiredOptions: ["attempt-id", "json"],
+    examples: [
+      "webstudio get-publish-report --attempt-id publish-attempt-id --json",
+    ],
   },
   {
     command: "unpublish",

@@ -280,26 +280,58 @@ export const serverOnlyRouterOperationMetadata = {
     client: "publish",
     permit: "edit",
     inputSchema: {
-      type: "object",
-      properties: {
-        target: {
-          type: "string",
-          enum: ["staging", "production"],
-        },
-        domains: {
-          type: "array",
-          items: {
-            type: "string",
+      oneOf: [
+        {
+          type: "object",
+          properties: {
+            target: {
+              type: "string",
+              enum: ["staging", "production"],
+            },
+            domains: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+            message: {
+              type: "string",
+            },
+            idempotencyKey: {
+              type: "string",
+            },
           },
+          required: ["target"],
         },
-        message: {
-          type: "string",
+        {
+          type: "object",
+          properties: {
+            target: {
+              type: "string",
+              const: "static",
+            },
+            templates: {
+              default: ["ssg"],
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "docker",
+                  "vercel",
+                  "netlify",
+                  "ssg",
+                  "ssg-netlify",
+                  "ssg-vercel",
+                ],
+              },
+            },
+            idempotencyKey: {
+              type: "string",
+            },
+          },
+          required: ["target"],
         },
-        idempotencyKey: {
-          type: "string",
-        },
-      },
-      required: ["target"],
+      ],
     },
   },
   "publish.getJob": {
@@ -317,6 +349,23 @@ export const serverOnlyRouterOperationMetadata = {
         },
       },
       required: ["jobId"],
+    },
+  },
+  "publish.getReport": {
+    id: "publish.getReport",
+    command: "get-publish-report",
+    method: "query",
+    path: "api.publish.getReport",
+    client: "getPublishReport",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        attemptId: {
+          type: "string",
+        },
+      },
+      required: ["attemptId"],
     },
   },
   "publish.unpublish": {

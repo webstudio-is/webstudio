@@ -217,7 +217,8 @@ describe("createProductionBuild (msw)", () => {
           },
         ])
       ),
-      db.post("rpc/create_production_build", () => {
+      db.get("Asset", () => json([])),
+      db.post("rpc/create_production_build_expected", () => {
         didCreateProductionBuild = true;
         return json("build-prod");
       })

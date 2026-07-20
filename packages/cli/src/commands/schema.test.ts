@@ -55,14 +55,18 @@ test("prints api command schema as json", () => {
         operation: "publish",
         method: "mutation",
         inputSchema: expect.objectContaining({
-          type: "object",
-          properties: expect.objectContaining({
-            target: expect.objectContaining({
-              enum: expect.arrayContaining(["staging", "production"]),
+          oneOf: expect.arrayContaining([
+            expect.objectContaining({
+              type: "object",
+              properties: expect.objectContaining({
+                target: expect.objectContaining({
+                  enum: expect.arrayContaining(["staging", "production"]),
+                }),
+                domains: expect.objectContaining({ type: "array" }),
+                message: expect.objectContaining({ type: "string" }),
+              }),
             }),
-            domains: expect.objectContaining({ type: "array" }),
-            message: expect.objectContaining({ type: "string" }),
-          }),
+          ]),
         }),
       }),
       expect.objectContaining({
@@ -73,9 +77,11 @@ test("prints api command schema as json", () => {
     ])
   );
   for (const command of output.commands) {
-    expect(command.inputSchema).toEqual(
-      expect.objectContaining({ type: "object" })
-    );
+    const schemas = command.inputSchema.oneOf ?? [command.inputSchema];
+    expect(schemas).not.toHaveLength(0);
+    for (const inputSchema of schemas) {
+      expect(inputSchema).toEqual(expect.objectContaining({ type: "object" }));
+    }
   }
   expect(output.commands).not.toEqual(
     expect.arrayContaining([

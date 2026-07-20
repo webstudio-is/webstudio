@@ -68,6 +68,7 @@
     "@emotion/hash": "^0.9.2",
     "@modelcontextprotocol/sdk": "^1.10.0",
     "@webstudio-is/authorization-token": "workspace:*",
+    "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",

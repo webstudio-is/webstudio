@@ -1678,6 +1678,23 @@ test("publishes project", async () => {
   });
 });
 
+test("publishes static export", async () => {
+  await expectCommandCall({
+    options: {
+      command: "publish",
+      target: "static",
+      template: "ssg,vercel",
+      idempotencyKey: "publish-key",
+    },
+    call: apiCalls.publish,
+    connection: {
+      target: "static",
+      templates: ["ssg", "vercel"],
+      idempotencyKey: "publish-key",
+    },
+  });
+});
+
 test("lists publishes", async () => {
   await expectCommandCall({
     options: { command: "list-publishes" },
@@ -1690,6 +1707,17 @@ test("gets publish job", async () => {
     options: { command: "get-publish-job", job: "job-id" },
     call: apiCalls.getPublishJob,
     connection: { jobId: "job-id" },
+  });
+});
+
+test("gets publish report", async () => {
+  await expectCommandCall({
+    options: {
+      command: "get-publish-report",
+      attemptId: "attempt-id",
+    },
+    call: apiCalls.getPublishReport,
+    connection: { attemptId: "attempt-id" },
   });
 });
 

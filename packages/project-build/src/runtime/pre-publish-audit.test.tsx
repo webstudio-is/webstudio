@@ -9,6 +9,7 @@ import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { $, renderData } from "@webstudio-is/template";
 import {
   formatPrePublishAuditFinding,
+  getGeneratedStylesheetFinding,
   runPrePublishAudit,
 } from "./pre-publish-audit";
 
@@ -172,4 +173,17 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
       },
     },
   ]);
+});
+
+test("reports generated stylesheet syntax errors", () => {
+  expect(
+    getGeneratedStylesheetFinding(".broken { color: rgb(0, 0, 0; }")
+  ).toMatchObject({
+    ruleId: "generated-stylesheet",
+    severity: "error",
+    location: {},
+  });
+  expect(
+    getGeneratedStylesheetFinding(".valid { color: black; }")
+  ).toBeUndefined();
 });

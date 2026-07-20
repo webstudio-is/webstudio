@@ -41,15 +41,10 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import {
-  $registeredComponentMetas,
-  selectInstance,
-} from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
-  $authToken,
   $authTokenPermissions,
-  $builderMode,
   $editingPageId,
   $permissions,
   $stagingUsername,
@@ -64,8 +59,6 @@ import { $project } from "~/shared/sync/data-stores";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
-  CheckCircleIcon,
-  AlertIcon,
   CopyIcon,
   GearIcon,
   UpgradeIcon,
@@ -84,98 +77,22 @@ import {
   $instances,
   $pages,
   $projectSettings,
-  $props,
-  $resources,
 } from "~/shared/sync/data-stores";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import { builderUrl } from "~/shared/router-utils";
 import {
   getRestrictedFeatures,
   type RestrictedFeature,
 } from "./restricted-features";
 import {
-  findPageAndSelectorByInstanceId,
-  formatPrePublishAuditFinding,
-  runPrePublishAudit,
-  type PrePublishAuditFinding,
-} from "@webstudio-is/project-build/runtime";
+  invalidatePublishActivity,
+  PublishStatusButton,
+} from "./publish-details-dialog";
 
-const PrePublishAuditError = ({
-  finding,
-}: {
-  finding: PrePublishAuditFinding;
-}) => {
-  const message = formatPrePublishAuditFinding(finding);
-  const { instanceId } = finding.location;
-  const pages = $pages.get();
-  const instances = $instances.get();
-  const project = $project.get();
-
-  if (
-    instanceId === undefined ||
-    pages === undefined ||
-    project === undefined ||
-    instances.has(instanceId) === false
-  ) {
-    return message;
-  }
-
-  const { pageId, instanceSelector } = findPageAndSelectorByInstanceId(
-    pages,
-    instances,
-    instanceId
-  );
-  const href = builderUrl({
-    projectId: project.id,
-    pageId: pageId === pages.homePageId ? undefined : pageId,
-    instanceId,
-    origin: window.location.origin,
-    authToken: $authToken.get(),
-    mode: $builderMode.get(),
-  });
-
-  return (
-    <>
-      {message}{" "}
-      <Link
-        href={href}
-        onClick={(event) => {
-          if (
-            event.button !== 0 ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.shiftKey ||
-            event.altKey
-          ) {
-            return;
-          }
-          event.preventDefault();
-          $selectedPageId.set(pageId);
-          selectInstance(instanceSelector);
-          $publishDialog.set("none");
-        }}
-      >
-        Show element
-      </Link>
-    </>
-  );
-};
-
-const getPrePublishAuditError = () => {
-  const findings = runPrePublishAudit({
-    pages: $pages.get(),
-    instances: $instances.get(),
-    props: $props.get(),
-    dataSources: $dataSources.get(),
-    resources: $resources.get(),
-    metas: $registeredComponentMetas.get(),
-  });
-  const finding = findings.find(({ severity }) => severity === "error");
-  return finding && <PrePublishAuditError finding={finding} />;
-};
+const getShortPublishError = (message: string) =>
+  message.length <= 200 ? message : `${message.slice(0, 197)}…`;
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -270,29 +187,18 @@ const ChangeProjectDomain = ({
       }
       suffix={
         <Grid flow="column" align="center">
-          <Tooltip
-            content={error !== undefined ? error : <Text>{statusText}</Text>}
-          >
-            <Flex
-              align="center"
-              justify="center"
-              css={{
-                cursor: "pointer",
-                width: theme.sizes.controlHeight,
-                height: theme.sizes.controlHeight,
-                color:
-                  error !== undefined || status === "FAILED"
-                    ? theme.colors.foregroundDestructive
-                    : theme.colors.foregroundSuccessText,
-              }}
-            >
-              {error !== undefined || status === "FAILED" ? (
-                <AlertIcon />
-              ) : (
-                <CheckCircleIcon />
-              )}
-            </Flex>
-          </Tooltip>
+          <PublishStatusButton
+            label={pageUrl.host}
+            activity={error ?? statusText}
+            latestBuildId={project.latestBuildVirtual?.buildId}
+            status={
+              error !== undefined || status === "FAILED"
+                ? "error"
+                : status === "PENDING"
+                  ? "pending"
+                  : "success"
+            }
+          />
 
           <CopyToClipboard
             text={pageUrl.toString()}
@@ -460,9 +366,6 @@ const Publish = ({
 }) => {
   const { maxDailyPublishesPerUser } = useStore($permissions);
   const { userPublishCount } = useUserPublishCount();
-  const [publishError, setPublishError] = useState<
-    undefined | JSX.Element | string
-  >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -512,15 +415,6 @@ const Publish = ({
   }, [project.domain]);
 
   const handlePublish = async (formData: FormData) => {
-    setPublishError(undefined);
-
-    const auditError = getPrePublishAuditError();
-    if (auditError !== undefined) {
-      toast.error(auditError);
-      setPublishError(auditError);
-      return;
-    }
-
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
     const domains = formData
@@ -539,6 +433,7 @@ const Publish = ({
       domains,
       destination: "saas",
     });
+    invalidatePublishActivity(project.id);
 
     if (publishResult.success === false) {
       console.error(publishResult.error);
@@ -564,11 +459,12 @@ const Publish = ({
           </>
         );
       }
-      setPublishError(error);
       if (publishResult.error === "NOT_IMPLEMENTED") {
         toast.info(error);
       } else {
-        toast.error(error);
+        toast.error(
+          typeof error === "string" ? getShortPublishError(error) : error
+        );
       }
 
       if (process.env.NODE_ENV === "development") {
@@ -618,7 +514,6 @@ const Publish = ({
 
       if (status === "FAILED") {
         toast.error(statusText);
-        setPublishError(statusText);
         break;
       }
 
@@ -638,8 +533,6 @@ const Publish = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
-      {publishError && <Text color="destructive">{publishError}</Text>}
-
       <Tooltip
         content={
           isPublishInProgress
@@ -711,7 +604,6 @@ const PublishStatic = ({
 }) => {
   const project = useStore($project);
   const [_, startTransition] = useTransition();
-  const [publishError, setPublishError] = useState<JSX.Element | string>();
 
   if (project == null) {
     throw new Error("Project not found");
@@ -728,99 +620,107 @@ const PublishStatic = ({
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
-      {publishError && <Text color="destructive">{publishError}</Text>}
-      {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
+      <Flex gap="2" align="center">
+        <PublishStatusButton
+          label="Static export"
+          activity={statusText}
+          latestBuildId={project.latestStaticBuild?.buildId}
+          status={
+            isPublishInProgress
+              ? "pending"
+              : status === "FAILED"
+                ? "error"
+                : status === "PUBLISHED"
+                  ? "success"
+                  : "warning"
+          }
+        />
+        <Tooltip
+          content={isPublishInProgress ? "Preparing static site" : undefined}
+        >
+          <Button
+            type="button"
+            color="positive"
+            state={isPublishInProgress ? "pending" : undefined}
+            onClick={() => {
+              startTransition(async () => {
+                try {
+                  setIsPendingOptimistic(true);
 
-      <Tooltip
-        content={isPublishInProgress ? "Preparing static site" : undefined}
-      >
-        <Button
-          type="button"
-          color="positive"
-          state={isPublishInProgress ? "pending" : undefined}
-          onClick={() => {
-            startTransition(async () => {
-              try {
-                setPublishError(undefined);
-                const auditError = getPrePublishAuditError();
-                if (auditError !== undefined) {
-                  toast.error(auditError);
-                  setPublishError(auditError);
-                  return;
-                }
+                  const result = await nativeClient.domain.publish.mutate({
+                    projectId,
+                    destination: "static",
+                    templates: [...templates],
+                  });
+                  invalidatePublishActivity(projectId);
 
-                setIsPendingOptimistic(true);
+                  if (result.success === false) {
+                    toast.error(getShortPublishError(result.error));
+                    return;
+                  }
 
-                const result = await nativeClient.domain.publish.mutate({
-                  projectId,
-                  destination: "static",
-                  templates: [...templates],
-                });
+                  const name = "name" in result ? result.name : undefined;
 
-                if (result.success === false) {
-                  toast.error(result.error);
-                  return;
-                }
+                  if (name == null) {
+                    toast.error('File name must be defined in "result"');
+                    return;
+                  }
 
-                const name = "name" in result ? result.name : undefined;
+                  const timeout = 10000;
 
-                if (name == null) {
-                  toast.error('File name must be defined in "result"');
-                  return;
-                }
+                  // Repeat few more times than timeout
+                  const repeat = PENDING_TIMEOUT / timeout + 5;
 
-                const timeout = 10000;
+                  for (let i = 0; i !== repeat; i++) {
+                    await new Promise((resolve) =>
+                      setTimeout(resolve, timeout)
+                    );
 
-                // Repeat few more times than timeout
-                const repeat = PENDING_TIMEOUT / timeout + 5;
+                    await refreshProject();
 
-                for (let i = 0; i !== repeat; i++) {
-                  await new Promise((resolve) => setTimeout(resolve, timeout));
+                    const latestStaticBuild = $project.get()?.latestStaticBuild;
 
-                  await refreshProject();
+                    if (latestStaticBuild == null) {
+                      continue;
+                    }
+
+                    const { status } =
+                      getStaticPublishStatusAndText(latestStaticBuild);
+
+                    if (status !== "PENDING") {
+                      break;
+                    }
+                  }
 
                   const latestStaticBuild = $project.get()?.latestStaticBuild;
 
                   if (latestStaticBuild == null) {
-                    continue;
+                    throw new Error("Static build not found");
                   }
 
-                  const { status } =
+                  const { status, statusText } =
                     getStaticPublishStatusAndText(latestStaticBuild);
 
-                  if (status !== "PENDING") {
-                    break;
+                  if (status === "FAILED") {
+                    // Report if Export failed
+                    toast.error(statusText);
                   }
+
+                  if (status === "PUBLISHED") {
+                    window.location.href = `/cgi/static/ssg/${name}`;
+                  }
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Unknown error"
+                  );
                 }
-
-                const latestStaticBuild = $project.get()?.latestStaticBuild;
-
-                if (latestStaticBuild == null) {
-                  throw new Error("Static build not found");
-                }
-
-                const { status, statusText } =
-                  getStaticPublishStatusAndText(latestStaticBuild);
-
-                if (status === "FAILED") {
-                  // Report if Export failed
-                  toast.error(statusText);
-                }
-
-                if (status === "PUBLISHED") {
-                  window.location.href = `/cgi/static/ssg/${name}`;
-                }
-              } catch (error) {
-                toast.error(
-                  error instanceof Error ? error.message : "Unknown error"
-                );
-              }
-            });
-          }}
-        >
-          Build and download static site
-        </Button>
-      </Tooltip>
+              });
+            }}
+          >
+            Build and download static site
+          </Button>
+        </Tooltip>
+      </Flex>
     </Flex>
   );
 };
