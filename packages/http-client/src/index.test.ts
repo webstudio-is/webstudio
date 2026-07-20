@@ -51,6 +51,7 @@ import {
   extractDesignToken,
   findAssetUsage,
   getPublishJob,
+  getPublishReport,
   getApiCompatibilityMessage,
   getApiErrorCode,
   getBuildSnapshot,
@@ -779,6 +780,10 @@ test("wraps project api trpc calls in named functions", async () => {
       ...params,
       jobId: "job-id",
     });
+    await getPublishReport({
+      ...params,
+      attemptId: "attempt-id",
+    });
     await unpublish({
       ...params,
       target: "production",
@@ -1008,6 +1013,7 @@ test("wraps project api trpc calls in named functions", async () => {
       '"idempotencyKey":"publish-key"'
     ),
     expectRequest("/trpc/api.publish.getJob"),
+    expectRequest("/trpc/api.publish.getReport"),
     expectBodyRequest("/trpc/api.publish.unpublish", '"confirm":true'),
     expectRequest("/trpc/api.domains.list"),
     expectBodyRequest("/trpc/api.domains.create", '"domain":"example.com"'),
