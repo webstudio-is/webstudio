@@ -411,6 +411,9 @@ describe("prebuild", () => {
       readFile("app/__generated__/$resources.assets.ts", "utf8")
     ).resolves.toContain("image.png");
     await expect(
+      readFile("app/__generated__/$resources.assets.ts", "utf8")
+    ).resolves.toContain('"format": "png"');
+    await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.toContain('"path": "/"');
     await expect(

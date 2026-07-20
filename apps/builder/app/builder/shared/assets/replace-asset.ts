@@ -68,7 +68,7 @@ export const replaceAsset = async (
   toast.success("Asset replaced successfully");
 };
 
-const waitForAsset = (assetId: string): Promise<Asset> => {
+export const waitForAsset = (assetId: string): Promise<Asset> => {
   // Check if asset already exists (avoids TDZ with synchronous subscribe callback)
   const existingAsset = $assets.get().get(assetId);
   if (existingAsset !== undefined) {
@@ -94,7 +94,7 @@ const waitForAsset = (assetId: string): Promise<Asset> => {
         .some((fileData) => fileData.assetId === assetId);
       if (isUploading === false) {
         cleanup();
-        reject(new Error("Failed to upload replacement asset"));
+        reject(new Error("Failed to upload asset"));
       }
     };
     const unsubscribeAssets = $assets.listen(check);
@@ -102,5 +102,3 @@ const waitForAsset = (assetId: string): Promise<Asset> => {
     check();
   });
 };
-
-export const __testing__ = { waitForAsset };

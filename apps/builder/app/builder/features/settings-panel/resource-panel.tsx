@@ -30,6 +30,8 @@ import {
   sitemapResourceUrl,
   currentDateResourceUrl,
   assetsResourceUrl,
+  maxAssetResourceContentBytes,
+  maxAssetResourceContentItems,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -912,6 +914,7 @@ export const SystemResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
+  const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
 
   const resource =
@@ -946,6 +949,9 @@ export const SystemResourceForm = forwardRef<
       ) ?? localResources[0]
     );
   });
+  const [searchParams, setSearchParams] = useState(
+    resource?.searchParams ?? []
+  );
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
@@ -992,8 +998,30 @@ export const SystemResourceForm = forwardRef<
             );
           }}
           value={localResource}
-          onChange={setLocalResource}
+          onChange={(value) => {
+            setLocalResource(value);
+            if (value.value !== resource?.url) {
+              setSearchParams([]);
+            }
+          }}
         />
+        {localResource.value === JSON.stringify(assetsResourceUrl) && (
+          <>
+            <Text color="subtle" variant="tiny">
+              Filter with filename or extension. Use comma-separated extensions
+              and include=content to load editable text. Content is limited to{" "}
+              {maxAssetResourceContentItems} assets and{" "}
+              {maxAssetResourceContentBytes / 1024} KiB per asset. JSON content
+              is exposed as structured data.
+            </Text>
+            <SearchParams
+              scope={scope}
+              aliases={aliases}
+              searchParams={searchParams}
+              onChange={setSearchParams}
+            />
+          </>
+        )}
       </Flex>
     </>
   );

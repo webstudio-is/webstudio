@@ -21,9 +21,9 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import {
   getFileName,
+  getFileUploadFingerprint,
   getMimeType,
   getSha256Hash,
-  getSha256HashOfFile,
 } from "./asset-utils";
 
 const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
@@ -76,7 +76,7 @@ const getFilesData = async <T extends File | URL>(
   const filesData: UploadingFileData[] = [];
   for (const fileOrUrl of filesOrUrls) {
     if (fileOrUrl instanceof File) {
-      const fingerprintId = await getSha256HashOfFile(fileOrUrl);
+      const fingerprintId = await getFileUploadFingerprint(fileOrUrl);
       filesData.push({
         source: "file" as const,
         assetId: "",

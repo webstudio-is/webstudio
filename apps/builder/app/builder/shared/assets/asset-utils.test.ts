@@ -2,9 +2,20 @@ import { expect, test, describe } from "vitest";
 import {
   getImageNameAndType,
   getSha256Hash,
+  getFileUploadFingerprint,
   detectAssetType,
   uploadingFileDataToAsset,
 } from "./asset-utils";
+
+test("distinguishes upload fingerprints for equal files with different names", async () => {
+  const first = new File([""], "first.md");
+  const second = new File([""], "second.md");
+
+  const firstFingerprint = await getFileUploadFingerprint(first);
+  const secondFingerprint = await getFileUploadFingerprint(second);
+
+  expect(firstFingerprint).not.toBe(secondFingerprint);
+});
 
 describe("getImageNameAndType", () => {
   test("returns MIME type and filename for valid image", () => {

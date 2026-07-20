@@ -3,12 +3,17 @@ import type { ResourceRequest } from "./schema/resources";
 import { serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
+const localResourceBaseUrl = new URL("https://webstudio.local");
 
 /**
  * Prevents fetch cycles by prefixing local resources.
  */
 export const isLocalResource = (pathname: string, resourceName?: string) => {
-  const segments = pathname.split("/").filter(Boolean);
+  const url = new URL(pathname, localResourceBaseUrl);
+  if (url.origin !== localResourceBaseUrl.origin) {
+    return false;
+  }
+  const segments = url.pathname.split("/").filter(Boolean);
 
   if (resourceName === undefined) {
     return segments[0] === LOCAL_RESOURCE_PREFIX;
@@ -31,13 +36,15 @@ export const loadResource = async (
     try {
       // cloudflare workers fail when fetching url contains spaces
       // even though new URL suppose to trim them on parsing by spec
-      const url = new URL(resourceRequest.url.trim());
+      const resourceUrl = resourceRequest.url.trim();
+      const isRelative = URL.canParse(resourceUrl) === false;
+      const url = new URL(resourceUrl, localResourceBaseUrl);
       if (searchParams) {
         for (const { name, value } of searchParams) {
           url.searchParams.append(name, serializeValue(value));
         }
       }
-      href = url.href;
+      href = isRelative ? `${url.pathname}${url.search}${url.hash}` : url.href;
     } catch {
       // empty block
     }

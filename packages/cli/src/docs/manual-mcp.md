@@ -274,6 +274,7 @@ terms, agents can:
 - Create GraphQL resources.
 - Create system resources.
 - Use built-in system resources for sitemap, current date, and assets.
+- Filter the Assets system resource by `filename` or `extension`, opt into bounded text content with `include=content`, and bind its metadata or parsed JSON content.
 - List and inspect complete asset metadata; upload, download, update, move, duplicate, find usage for, replace, and delete assets.
 - List, create, rename, move, recursively duplicate, and recursively delete nested asset folders.
 - Publish to staging or production.

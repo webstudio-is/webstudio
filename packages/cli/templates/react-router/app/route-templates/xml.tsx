@@ -1,6 +1,10 @@
 import { renderToString } from "react-dom/server";
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
+import {
+  isLocalResource,
+  loadAssetResource,
+  loadResources,
+} from "@webstudio-is/sdk/runtime";
 import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
@@ -31,7 +35,7 @@ const authenticateProductionRequest = (request: Request) => {
   return authenticateRequest(request, authRoutes);
 };
 
-const customFetch: typeof fetch = (input, init) => {
+const createCustomFetch = (origin: string): typeof fetch => (input, init) => {
   if (typeof input !== "string") {
     return fetch(input, init);
   }
@@ -62,9 +66,11 @@ const customFetch: typeof fetch = (input, init) => {
   }
 
   if (isLocalResource(input, "assets")) {
-    const response = new Response(JSON.stringify(assets));
-    response.headers.set("content-type", "application/json; charset=utf-8");
-    return Promise.resolve(response);
+    return loadAssetResource({
+      assets,
+      requestUrl: input,
+      fetchAsset: (url) => fetch(new URL(url, origin)),
+    }).then(Response.json);
   }
 
   return fetch(input, init);
@@ -91,7 +97,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   };
 
   const resources = await loadResources(
-    customFetch,
+    createCustomFetch(url.origin),
     getResources({ system }).data
   );
   const pageMeta = getPageMeta({ system, resources });

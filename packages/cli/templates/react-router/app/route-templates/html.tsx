@@ -17,6 +17,7 @@ import {
   formIdFieldName,
   formBotFieldName,
   cachedFetch,
+  loadAssetResource,
 } from "@webstudio-is/sdk/runtime";
 import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
@@ -64,7 +65,7 @@ const authenticateProductionRequest = (request: Request) => {
   return authenticateRequest(request, authRoutes);
 };
 
-const customFetch: typeof fetch = (input, init) => {
+const createCustomFetch = (origin: string): typeof fetch => (input, init) => {
   if (typeof input !== "string") {
     return cachedFetch(projectId, input, init);
   }
@@ -95,9 +96,11 @@ const customFetch: typeof fetch = (input, init) => {
   }
 
   if (isLocalResource(input, "assets")) {
-    const response = new Response(JSON.stringify(assets));
-    response.headers.set("content-type", "application/json; charset=utf-8");
-    return Promise.resolve(response);
+    return loadAssetResource({
+      assets,
+      requestUrl: input,
+      fetchAsset: (url) => cachedFetch(projectId, new URL(url, origin)),
+    }).then(Response.json);
   }
 
   return cachedFetch(projectId, input, init);
@@ -123,7 +126,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   };
 
   const resources = await loadResources(
-    customFetch,
+    createCustomFetch(url.origin),
     getResources({ system }).data
   );
   const pageMeta = getPageMeta({ system, resources });

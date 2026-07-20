@@ -4,7 +4,11 @@ import {
   Separator,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { BrushCleaningIcon, NewFolderIcon } from "@webstudio-is/icons";
+import {
+  BrushCleaningIcon,
+  NewFolderIcon,
+  NewPageIcon,
+} from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { isTextFileAsset } from "@webstudio-is/sdk";
@@ -17,6 +21,7 @@ import { $assets } from "~/shared/sync/data-stores";
 import type { Publish } from "~/shared/pubsub";
 import { useImageAssetCanvasDrag } from "./use-image-asset-canvas-drag";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
+import { CreateTextFileDialog } from "~/builder/features/text-file-editor/create-text-file-dialog";
 import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 
 export const AssetsPanel = ({
@@ -27,6 +32,7 @@ export const AssetsPanel = ({
 }) => {
   const [folderId, setFolderId] = useState<string>();
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [createTextFileOpen, setCreateTextFileOpen] = useState(false);
   const [openedTextAssetId, setOpenedTextAssetId] = useState<string>();
   const uploadRef = useRef<AssetUploadHandle>(null);
   const authPermit = useStore($authPermit);
@@ -60,6 +66,15 @@ export const AssetsPanel = ({
                 <NewFolderIcon />
               </IconButton>
             </Tooltip>
+            <Tooltip content="Create text file">
+              <IconButton
+                disabled={authPermit === "view"}
+                aria-label="Create text file"
+                onClick={() => setCreateTextFileOpen(true)}
+              >
+                <NewPageIcon />
+              </IconButton>
+            </Tooltip>
             <Tooltip content="Delete unused assets">
               <IconButton onClick={openDeleteUnusedAssetsDialog}>
                 <BrushCleaningIcon />
@@ -82,6 +97,7 @@ export const AssetsPanel = ({
             ? {}
             : {
                 createFolder: () => setCreateFolderOpen(true),
+                createFile: () => setCreateTextFileOpen(true),
                 upload: () => uploadRef.current?.open(),
               }),
           deleteUnusedAssets: openDeleteUnusedAssetsDialog,
@@ -91,6 +107,12 @@ export const AssetsPanel = ({
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
         currentFolderId={folderId}
+      />
+      <CreateTextFileDialog
+        open={createTextFileOpen}
+        folderId={folderId}
+        onOpenChange={setCreateTextFileOpen}
+        onCreated={setOpenedTextAssetId}
       />
       {openedTextAssetId !== undefined && (
         <TextFileEditor

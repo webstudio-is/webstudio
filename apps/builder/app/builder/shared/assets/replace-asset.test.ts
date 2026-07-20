@@ -2,9 +2,7 @@ import { beforeEach, expect, test } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import { $uploadingFilesDataStore } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
-import { __testing__ } from "./replace-asset";
-
-const { waitForAsset } = __testing__;
+import { waitForAsset } from "./replace-asset";
 
 const asset = {
   id: "replacement",
@@ -43,5 +41,5 @@ test("rejects when a replacement upload fails", async () => {
 
   $uploadingFilesDataStore.set([]);
 
-  await expect(result).rejects.toThrow("Failed to upload replacement asset");
+  await expect(result).rejects.toThrow("Failed to upload asset");
 });

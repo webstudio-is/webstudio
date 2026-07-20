@@ -29,7 +29,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     if (isLocalResource(input, "assets")) {
-      return assetsLoader({ request });
+      return assetsLoader({ request, resourceUrl: input });
     }
 
     return fetch(input, init);

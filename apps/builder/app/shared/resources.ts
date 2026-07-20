@@ -12,6 +12,7 @@ export { getResourceKey };
 const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, ResourceRequest>();
 const cache = new Map<string, unknown>();
+const cachedRequests = new Map<string, ResourceRequest>();
 
 export const $resourcesCache = atom(cache);
 
@@ -46,6 +47,10 @@ const loadResources = async () => {
     const results = new Map<string, unknown>(await response.json());
     for (const [key, result] of results) {
       cache.set(key, result);
+      const request = pending.get(key);
+      if (request !== undefined) {
+        cachedRequests.set(key, request);
+      }
       pending.delete(key);
     }
   }
@@ -82,6 +87,7 @@ export const preloadResource = (resource: ResourceRequest) => {
 export const invalidateResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
   cache.delete(key);
+  cachedRequests.delete(key);
   preloadResource(resource);
 };
 
@@ -90,16 +96,11 @@ export const invalidateResource = (resource: ResourceRequest) => {
  * Call this when assets are uploaded, deleted, or modified to refresh expressions using assets.
  */
 export const invalidateAssets = () => {
-  const url = "/$resources/assets";
-  // System resources always use GET with no params/headers/body
-  const systemResourceRequest: ResourceRequest = {
-    name: "assets",
-    method: "get",
-    url,
-    searchParams: [],
-    headers: [],
-  };
-  invalidateResource(systemResourceRequest);
+  for (const request of cachedRequests.values()) {
+    if (request.url === "/$resources/assets") {
+      invalidateResource(request);
+    }
+  }
 };
 
 export const computeResourceRequest = (
