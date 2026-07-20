@@ -856,7 +856,7 @@ export const serializeAssetList = ({
   assets: Asset[];
   build?: AssetReferenceBuild;
   input: PaginatedOutputInput & {
-    type?: "image" | "font";
+    type?: Asset["type"];
     withUsage?: boolean;
     sort?: "name" | "size" | "createdAt" | "usage";
   };
@@ -1011,7 +1011,7 @@ export const listAssets = (
     | "dataSources"
   >,
   input: PaginatedOutputInput & {
-    type?: "image" | "font";
+    type?: Asset["type"];
     withUsage?: boolean;
     sort?: "name" | "size" | "createdAt" | "usage";
   } = {}

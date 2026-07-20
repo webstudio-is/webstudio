@@ -66313,7 +66313,7 @@ export const runtimeOperationContractData = [
       properties: {
         type: {
           type: "string",
-          enum: ["image", "font"],
+          enum: ["font", "image", "file"],
         },
         sort: {
           type: "string",

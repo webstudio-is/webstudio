@@ -9,7 +9,11 @@ import {
   getInputSchemaMetadata,
   isHiddenPublicApiInputField,
 } from "../contracts/input-schema";
-import { instanceFilterInput, type InputJsonSchema } from "@webstudio-is/sdk";
+import {
+  assetType,
+  instanceFilterInput,
+  type InputJsonSchema,
+} from "@webstudio-is/sdk";
 import { pageCopyNamespaces } from "../contracts/namespaces";
 import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
@@ -399,7 +403,7 @@ const scopedInstanceListInput = z.object({
 });
 const paginatedListInput = paginatedOutputInputSchema;
 const assetListInput = z.object({
-  type: z.enum(["image", "font"]).optional(),
+  type: assetType.optional(),
   sort: z.enum(["name", "size", "createdAt", "usage"]).optional(),
   withUsage: z.boolean().optional(),
   ...paginatedOutputInputSchema.shape,

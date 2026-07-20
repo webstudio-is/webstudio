@@ -399,6 +399,7 @@ export const uploadAsset = async (
       headers: createHeaders({
         ...headers,
         "x-auth-token": authToken,
+        "x-webstudio-asset-description": upload.asset.description ?? undefined,
         "content-type": "application/octet-stream",
       }),
     }

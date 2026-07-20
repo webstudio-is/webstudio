@@ -79,6 +79,8 @@ export const action = async (props: ActionFunctionArgs) => {
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId");
   const folderId = url.searchParams.get("folderId") ?? undefined;
+  const description =
+    request.headers.get("x-webstudio-asset-description") ?? undefined;
   const rawAssetType = url.searchParams.get("type");
   const isApiUpload = projectId !== null || rawAssetType !== null;
 
@@ -121,6 +123,7 @@ export const action = async (props: ActionFunctionArgs) => {
           projectId,
           type: assetType,
           filename: params.name,
+          description,
           folderId,
         },
         context

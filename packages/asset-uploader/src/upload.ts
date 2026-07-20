@@ -16,6 +16,7 @@ type UploadData = {
   projectId: string;
   type: string;
   filename: string;
+  description?: string;
   folderId?: string;
 };
 
@@ -50,7 +51,7 @@ export const createUploadTicket = async (
   context: AppContext,
   createId: () => Asset["id"] = nanoid
 ): Promise<UploadTicket> => {
-  const { projectId, type, filename, folderId } = data;
+  const { projectId, type, filename, description, folderId } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -135,6 +136,7 @@ export const createUploadTicket = async (
       id: assetId,
       projectId,
       name,
+      description,
       folderId,
     });
     if (assetInsert.error) {

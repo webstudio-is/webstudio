@@ -304,6 +304,26 @@ describe("asset runtime operations", () => {
     });
   });
 
+  test("filters generic file assets", () => {
+    const file: Asset = {
+      id: "document",
+      projectId: "project",
+      name: "readme.md",
+      type: "file",
+      size: 12,
+      format: "md",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      meta: {},
+    };
+
+    expect(
+      listAssets(
+        { ...state, assets: new Map([[file.id, file]]) },
+        { type: "file" }
+      )
+    ).toMatchObject({ items: [{ id: "document", type: "file" }] });
+  });
+
   test("gets the complete asset record", () => {
     const asset = imageAsset("nested");
     asset.description = "Campaign hero";

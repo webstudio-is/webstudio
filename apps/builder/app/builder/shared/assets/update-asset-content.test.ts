@@ -1,30 +1,15 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { updateProjectAssetContent } from "@webstudio-is/http-client";
-import { createTransactionFromBuilderPatchPayload } from "~/shared/sync/builder-patch";
 import { $authToken } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
-import { updateAssetContent } from "./update-asset-content";
+import { createUpdateAssetContent } from "./update-asset-content";
 
-vi.mock("@webstudio-is/http-client", () => ({
-  updateProjectAssetContent: vi.fn(),
-}));
-vi.mock("~/shared/fetch.client", () => ({ fetch: vi.fn() }));
-vi.mock("~/shared/sync/builder-patch", () => ({
-  createTransactionFromBuilderPatchPayload: vi.fn(),
-}));
-vi.mock("~/shared/instance-utils/data", () => ({
-  getWebstudioData: () => ({ assets: new Map() }),
-}));
-vi.mock("~/shared/resources", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("~/shared/resources")>()),
-  invalidateAssets: vi.fn(),
-}));
-vi.mock("~/shared/sync/project-queue", () => ({
-  onNextTransactionComplete: vi.fn(),
-}));
-
-const updateProjectAssetContentMock = vi.mocked(updateProjectAssetContent);
-const createTransaction = vi.mocked(createTransactionFromBuilderPatchPayload);
+const requestContentUpdate = vi.fn<typeof updateProjectAssetContent>();
+const commitUpdatedAsset = vi.fn();
+const updateAssetContent = createUpdateAssetContent({
+  requestContentUpdate,
+  commitUpdatedAsset,
+});
 
 const asset = {
   id: "asset",
@@ -38,8 +23,8 @@ const asset = {
 };
 
 beforeEach(() => {
-  updateProjectAssetContentMock.mockReset();
-  createTransaction.mockReset();
+  requestContentUpdate.mockReset();
+  commitUpdatedAsset.mockReset();
   $project.set({ id: "project" } as never);
   $authToken.set("token");
 });
@@ -56,13 +41,13 @@ test("commits a content revision without changing the asset id", async () => {
     size: 7,
     createdAt: "2026-07-18T00:00:00.000Z",
   };
-  updateProjectAssetContentMock.mockResolvedValue({ asset: revision });
+  requestContentUpdate.mockResolvedValue({ asset: revision });
 
   await expect(
     updateAssetContent({ asset, content: '{"a":1}' })
   ).resolves.toEqual(revision);
 
-  expect(updateProjectAssetContentMock).toHaveBeenCalledWith(
+  expect(requestContentUpdate).toHaveBeenCalledWith(
     expect.objectContaining({
       assetId: "asset",
       projectId: "project",
@@ -72,30 +57,16 @@ test("commits a content revision without changing the asset id", async () => {
     })
   );
   await expect(
-    updateProjectAssetContentMock.mock.calls[0]?.[0].readAssetData()
+    requestContentUpdate.mock.calls[0]?.[0].readAssetData()
   ).resolves.toBe('{"a":1}');
-  expect(createTransaction).toHaveBeenCalledWith({
-    data: { assets: new Map() },
-    payload: [
-      {
-        namespace: "assets",
-        patches: [
-          {
-            op: "replace",
-            path: ["asset"],
-            value: revision,
-          },
-        ],
-      },
-    ],
-  });
+  expect(commitUpdatedAsset).toHaveBeenCalledWith(revision);
 });
 
 test("does not commit a conflicting revision", async () => {
-  updateProjectAssetContentMock.mockRejectedValue(new Error("File changed"));
+  requestContentUpdate.mockRejectedValue(new Error("File changed"));
 
   await expect(updateAssetContent({ asset, content: "stale" })).rejects.toThrow(
     "File changed"
   );
-  expect(createTransaction).not.toHaveBeenCalled();
+  expect(commitUpdatedAsset).not.toHaveBeenCalled();
 });
