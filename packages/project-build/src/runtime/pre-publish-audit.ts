@@ -225,6 +225,8 @@ const prePublishAuditChecks: PrePublishAuditCheck[] = [
   checkGeneratedStylesheet,
 ];
 
+const maxAuditFindings = 500;
+
 export const runPrePublishAudit = ({
   pages,
   ...context
@@ -243,7 +245,33 @@ export const runPrePublishAudit = ({
     ];
   }
 
-  return prePublishAuditChecks.flatMap((check) => check({ ...context, pages }));
+  const findings: PrePublishAuditFinding[] = [];
+  for (const check of prePublishAuditChecks) {
+    try {
+      findings.push(...check({ ...context, pages }));
+    } catch {
+      findings.push({
+        ruleId: "validation-incomplete",
+        severity: "error",
+        message:
+          "Part of the pre-publish audit could not complete. Review the other findings and try again.",
+        location: {},
+      });
+    }
+  }
+  if (findings.length <= maxAuditFindings) {
+    return findings;
+  }
+  const omittedCount = findings.length - maxAuditFindings + 1;
+  return [
+    ...findings.slice(0, maxAuditFindings - 1),
+    {
+      ruleId: "audit-truncated",
+      severity: "warning",
+      message: `${omittedCount} additional audit findings were omitted from this report.`,
+      location: {},
+    },
+  ];
 };
 
 export const formatPrePublishAuditFinding = (
