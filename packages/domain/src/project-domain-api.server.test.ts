@@ -141,8 +141,9 @@ const createPublishContext = (
     planFeatures: {
       allowAdvancedPublishDiagnostics: true,
       publishLogRetentionDays: 1,
+      publishActivityRetentionDays: 30,
     },
-  } as unknown as AppContext);
+  }) as unknown as AppContext;
 
 const productionBuildHandler = (
   onRequest: (body: { project_id: string; deployment: string }) => void
@@ -175,6 +176,7 @@ const publishAttemptHandlers = () => {
         auditWarningCount: 0,
         diagnosticErrors: 0,
         diagnosticWarnings: 0,
+        issues: [],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
         startedAt: null,
@@ -186,9 +188,87 @@ const publishAttemptHandlers = () => {
       attempt = { ...attempt, ...((await request.json()) as object) };
       return json(attempt);
     }),
+    db.get("Asset", () => json([])),
     db.get("User", () => json({ username: "Publisher" })),
   ];
 };
+
+const publishAttemptRow = {
+  id: "attempt-1",
+  projectId: "project-1",
+  buildId: "build-1",
+  artifactName: null,
+  target: "PRODUCTION",
+  targetKeys: ["a"],
+  targetLabels: ["a.example"],
+  status: "SUCCEEDED",
+  failureCode: null,
+  auditErrorCount: 0,
+  auditWarningCount: 0,
+  diagnosticErrors: 0,
+  diagnosticWarnings: 0,
+  issues: [],
+  summary: "Published successfully",
+  retentionDays: 0,
+  expiresAt: null,
+  reportAvailability: "NOT_CREATED",
+  createdAt: "2026-07-20T00:00:00.000Z",
+  updatedAt: "2026-07-20T00:00:01.000Z",
+  startedAt: "2026-07-20T00:00:00.000Z",
+  completedAt: "2026-07-20T00:00:01.000Z",
+};
+
+test("free activity keeps only the latest attempt for each domain", async () => {
+  server.use(
+    db.get("PublishAttempt", () =>
+      json([
+        publishAttemptRow,
+        {
+          ...publishAttemptRow,
+          id: "attempt-older",
+          buildId: "build-older",
+          targetKeys: ["a", "b"],
+          targetLabels: ["a.example", "b.example"],
+          createdAt: "2026-07-19T00:00:00.000Z",
+        },
+      ])
+    )
+  );
+
+  const result = await listProjectPublishes("project-1", {
+    ...context,
+    planFeatures: {
+      ...context.planFeatures,
+      publishActivityRetentionDays: 0,
+    },
+  } as AppContext);
+
+  expect(result.publishes.map(({ id, domains }) => ({ id, domains }))).toEqual([
+    { id: "attempt-1", domains: ["a.example"] },
+    { id: "attempt-older", domains: ["b.example"] },
+  ]);
+});
+
+test("paid activity asks PostgREST for only the retained window", async () => {
+  let createdAtFilter: string | null = null;
+  server.use(
+    db.get("PublishAttempt", ({ request }) => {
+      createdAtFilter = new URL(request.url).searchParams.get("createdAt");
+      return json([]);
+    }),
+    db.get("Build", () => json([]))
+  );
+
+  await listProjectPublishes("project-1", {
+    ...context,
+    planFeatures: {
+      ...context.planFeatures,
+      publishActivityRetentionDays: 30,
+    },
+  } as AppContext);
+
+  expect(createdAtFilter).toMatch(/^gte\./);
+});
 
 test("publishes saas project through shared domain service", async () => {
   const publish = vi.fn().mockResolvedValue({ success: true });
@@ -463,6 +543,9 @@ test("lists non-static project publishes", async () => {
         summary: "Published successfully",
         auditErrorCount: 0,
         auditWarningCount: 0,
+        diagnosticErrors: 0,
+        diagnosticWarnings: 0,
+        issues: [],
         reportAvailability: "not_created",
         artifact: undefined,
         createdAt: "2024-01-03T00:00:00.000Z",

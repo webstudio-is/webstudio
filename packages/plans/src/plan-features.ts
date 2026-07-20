@@ -17,6 +17,9 @@ export const planFeatures = z.object({
   publishLogRetentionDays: z
     .union([z.literal(0), z.literal(1), z.literal(30)])
     .optional(),
+  publishActivityRetentionDays: z
+    .union([z.literal(0), z.literal(30)])
+    .optional(),
   maxContactEmailsPerProject: z.number().nonnegative(),
   maxDomainsAllowedPerUser: z.number().nonnegative(),
   maxDailyPublishesPerUser: z.number().nonnegative(),
@@ -51,6 +54,7 @@ export const defaultPlanFeatures: PlanFeatures = {
   allowStagingPublish: false,
   allowAdvancedPublishDiagnostics: false,
   publishLogRetentionDays: 0,
+  publishActivityRetentionDays: 0,
   maxContactEmailsPerProject: 0,
   maxDomainsAllowedPerUser: 0,
   maxDailyPublishesPerUser: 10,

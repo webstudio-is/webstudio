@@ -763,7 +763,7 @@ export const apiRouter = router({
             return {
               status: "queued" as const,
               jobId: result.attempt.id,
-              buildId: result.build.id,
+              buildId: result.build?.id,
               artifact: { readiness: "pending" as const, name: result.name },
             };
           } catch (error) {

@@ -225,6 +225,7 @@ model PublishAttempt {
   auditWarningCount  Int                       @default(0)
   diagnosticErrors   Int                       @default(0)
   diagnosticWarnings Int                       @default(0)
+  issues             Json                      @default("[]")
   summary            String                    @db.VarChar(512)
   retentionDays      Int                       @default(0)
   expiresAt          DateTime?                 @db.Timestamptz(3)

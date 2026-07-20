@@ -18,6 +18,7 @@ import {
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { loadAssetsByProjectWithClient } from "@webstudio-is/asset-uploader/patch-assets-core.server";
 import {
   migratePages,
   serializePages,
@@ -35,7 +36,6 @@ import { createPages } from "../template";
 import { serializeStyles } from "./styles";
 import { serializeStyleSourceSelections } from "./style-source-selections";
 import { parseConfig, serializeData } from "./build-parser";
-import { assertBuildIntegrity } from "../build-integrity";
 import {
   PrePublishAuditError,
   runPrePublishAudit,
@@ -380,7 +380,10 @@ export const createProductionBuild = async (
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const devBuild = await loadDevBuildByProjectId(context, props.projectId);
-    assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
+    const projectAssets = await loadAssetsByProjectWithClient(
+      props.projectId,
+      context.postgrest.client
+    );
     const findings = runPrePublishAudit({
       pages: devBuild.pages,
       instances: new Map(devBuild.instances.map((item) => [item.id, item])),
@@ -388,7 +391,7 @@ export const createProductionBuild = async (
       dataSources: new Map(devBuild.dataSources.map((item) => [item.id, item])),
       resources: new Map(devBuild.resources.map((item) => [item.id, item])),
       metas: componentMetas,
-      assets: new Map(),
+      assets: new Map(projectAssets.map((item) => [item.id, item])),
       breakpoints: new Map(devBuild.breakpoints.map((item) => [item.id, item])),
       styles: new Map(
         devBuild.styles.map((item) => [getStyleDeclKey(item), item])

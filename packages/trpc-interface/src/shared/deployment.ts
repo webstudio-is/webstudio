@@ -38,8 +38,59 @@ export const publishReportInput = z.object({
   retentionDays: z.union([z.literal(1), z.literal(30)]),
 });
 
+const publishIssueSeverity = z.enum(["error", "warning", "info"]);
+
+const publishAuditFinding = z.object({
+  ruleId: z.string().max(100),
+  severity: publishIssueSeverity,
+  message: z.string().max(4096),
+  location: z.object({
+    pageId: z.string().optional(),
+    pageName: z.string().optional(),
+    pagePath: z.string().optional(),
+    instanceId: z.string().optional(),
+    dataSourceId: z.string().optional(),
+    propId: z.string().optional(),
+    resourceId: z.string().optional(),
+  }),
+});
+
+const publishDiagnostic = z.object({
+  severity: z.enum(["error", "warning"]),
+  stage: z.string().max(100),
+  message: z.string().max(4096),
+});
+
+const publishReportStage = z.object({
+  name: z.string().max(100),
+  status: z.enum(["pending", "succeeded", "warning", "failed", "skipped"]),
+  excerpt: z.string().max(4096).optional(),
+  log: z.string().max(600_000).optional(),
+  logTruncated: z.boolean().optional(),
+});
+
+export const publishReport = z.object({
+  version: z.literal(1),
+  attemptId: z.string().uuid(),
+  buildId: z.string().optional(),
+  createdAt: z.string().datetime(),
+  expiresAt: z.string().datetime().optional(),
+  outcome: z.enum(["pending", "succeeded", "warning", "failed"]),
+  actorLabel: z.string().max(80).optional(),
+  targetLabels: z.array(z.string().max(255)).max(100),
+  auditSnapshot: z.array(publishAuditFinding).max(500),
+  stages: z.array(publishReportStage).max(32),
+  diagnostics: z.array(publishDiagnostic).max(500),
+  truncation: z.object({
+    stagesOmitted: z.number().int().nonnegative(),
+    diagnosticsOmitted: z.number().int().nonnegative(),
+  }),
+});
+
+export type PublishReport = z.infer<typeof publishReport>;
+
 export const publishReportOutput = z.discriminatedUnion("availability", [
-  z.object({ availability: z.literal("available"), report: z.unknown() }),
+  z.object({ availability: z.literal("available"), report: publishReport }),
   z.object({ availability: z.literal("not_found") }),
   z.object({ availability: z.literal("unavailable") }),
 ]);
@@ -47,7 +98,7 @@ export const publishReportOutput = z.discriminatedUnion("availability", [
 export const storePublishReportInput = z.object({
   attemptId: z.string().uuid(),
   retentionDays: z.union([z.literal(1), z.literal(30)]),
-  report: z.unknown(),
+  report: publishReport,
 });
 
 export const deletePublishReportsInput = z.object({

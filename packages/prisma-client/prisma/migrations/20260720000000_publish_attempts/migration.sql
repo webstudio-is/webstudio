@@ -16,6 +16,7 @@ CREATE TABLE "PublishAttempt" (
   "auditWarningCount" integer NOT NULL DEFAULT 0,
   "diagnosticErrors" integer NOT NULL DEFAULT 0,
   "diagnosticWarnings" integer NOT NULL DEFAULT 0,
+  "issues" jsonb NOT NULL DEFAULT '[]',
   "summary" varchar(512) NOT NULL,
   "retentionDays" integer NOT NULL DEFAULT 0 CHECK ("retentionDays" IN (0, 1, 30)),
   "expiresAt" timestamptz(3),
