@@ -30,18 +30,16 @@ test("accepts supported text names and rejects invalid or duplicate names", () =
   expect(
     getTextFileNameError({
       name: "readme.md",
-      folderId: "docs",
       assets: [existing],
     })
-  ).toBe("A file with this name already exists here.");
+  ).toBe("A file with this name already exists.");
 });
 
-test("compares the complete display name after an asset is renamed", () => {
+test("compares global complete display names after an asset is renamed", () => {
   expect(
     getTextFileNameError({
       name: "guide.md",
-      folderId: "docs",
-      assets: [{ ...existing, filename: "Guide" }],
+      assets: [{ ...existing, filename: "guide", folderId: "other" }],
     })
-  ).toBe("A file with this name already exists here.");
+  ).toBe("A file with this name already exists.");
 });

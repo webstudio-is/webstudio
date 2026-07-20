@@ -108,6 +108,37 @@ describe("createUploadTicket", () => {
     });
   });
 
+  test("preserves the requested display name while sanitizing storage", async () => {
+    server.use(
+      ownershipHandler,
+      db.head("Asset", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.head("File", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.post("File", async ({ request }) => {
+        expect(await request.json()).toMatchObject({
+          name: expect.stringMatching(/^Campaign_photo_.+\.png$/),
+        });
+        return empty({ status: 201 });
+      }),
+      db.post("Asset", async ({ request }) => {
+        expect(await request.json()).toMatchObject({
+          filename: "Campaign photo",
+        });
+        return empty({ status: 201 });
+      })
+    );
+
+    await createUploadTicket(
+      {
+        projectId: "project-1",
+        type: "image/png",
+        filename: "Campaign_photo.png",
+        displayFilename: "Campaign photo",
+      },
+      createContext(),
+      () => "asset-1"
+    );
+  });
+
   test("throws when uploaded assets and recent uploads reach the limit", async () => {
     server.use(
       ownershipHandler,

@@ -287,15 +287,17 @@ const createUploadTicket = async ({
   const metaFormData = new FormData();
   metaFormData.append("projectId", projectId);
   metaFormData.append("type", assetType);
-  // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
-  // should be removed after fix
   const existingNames = new Set<string>();
   for (const asset of $assets.get().values()) {
     existingNames.add(formatAssetName(asset));
   }
+  const deduplicatedFilename = deduplicateAssetName(fileName, existingNames);
+  // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
+  // should be removed after fix
+  metaFormData.append("filename", sanitizeS3Key(deduplicatedFilename));
   metaFormData.append(
-    "filename",
-    deduplicateAssetName(sanitizeS3Key(fileName), existingNames)
+    "displayFilename",
+    getFileNameParts(deduplicatedFilename).basename
   );
 
   const authHeaders = createAssetUploadHeaders(authToken);

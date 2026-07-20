@@ -1,5 +1,6 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { createUploadTicket } from "@webstudio-is/asset-uploader/index.server";
+import isValidFilename from "valid-filename";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
@@ -27,18 +28,23 @@ export const action = async (props: ActionFunctionArgs) => {
       const projectId = formData.get("projectId");
       const type = formData.get("type");
       const filename = formData.get("filename");
+      const displayFilename = formData.get("displayFilename");
       if (
         typeof projectId !== "string" ||
         typeof type !== "string" ||
-        typeof filename !== "string"
+        typeof filename !== "string" ||
+        (displayFilename !== null &&
+          (typeof displayFilename !== "string" ||
+            isValidFilename(displayFilename) === false))
       ) {
-        throw Error("Project id, type or filename are missing");
+        throw Error("Project id, type or filename are invalid");
       }
       const ticket = await createUploadTicket(
         {
           projectId,
           type,
           filename,
+          displayFilename: displayFilename ?? undefined,
         },
         context
       );

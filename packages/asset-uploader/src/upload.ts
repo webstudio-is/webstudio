@@ -5,7 +5,7 @@ import {
   getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
 import { nanoid } from "nanoid";
-import type { Asset } from "@webstudio-is/sdk";
+import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
@@ -16,6 +16,7 @@ type UploadData = {
   projectId: string;
   type: string;
   filename: string;
+  displayFilename?: string;
   description?: string;
   folderId?: string;
 };
@@ -51,7 +52,14 @@ export const createUploadTicket = async (
   context: AppContext,
   createId: () => Asset["id"] = nanoid
 ): Promise<UploadTicket> => {
-  const { projectId, type, filename, description, folderId } = data;
+  const {
+    projectId,
+    type,
+    filename,
+    displayFilename = getFileNameParts(filename).basename,
+    description,
+    folderId,
+  } = data;
   const sanitizedFilename = sanitizeS3Key(filename);
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
@@ -119,8 +127,7 @@ export const createUploadTicket = async (
     attempt += 1
   ) {
     const assetId = createId();
-    const { name, basename: displayFilename } =
-      createUniqueAssetFilename(sanitizedFilename);
+    const name = createUniqueAssetFilename(sanitizedFilename);
 
     const fileInsert = await context.postgrest.client.from("File").insert({
       name,

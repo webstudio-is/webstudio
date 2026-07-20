@@ -130,7 +130,7 @@ export const updateAssetContent = async (
     throw new Error("This asset is not an editable text file");
   }
 
-  const { name: revisionName } = createUniqueAssetFilename(
+  const revisionName = createUniqueAssetFilename(
     getRevisionFilename({
       name: currentAsset.name,
       filename: currentAsset.filename,

@@ -24,11 +24,9 @@ import { uploadSingleAsset } from "~/builder/shared/assets/upload-assets";
 
 export const getTextFileNameError = ({
   name,
-  folderId,
   assets,
 }: {
   name: string;
-  folderId?: string;
   assets: Iterable<Asset>;
 }) => {
   if (isValidFilename(name) === false) {
@@ -41,11 +39,8 @@ export const getTextFileNameError = ({
     return "Use a supported editable text extension.";
   }
   for (const asset of assets) {
-    if (
-      asset.folderId === folderId &&
-      formatAssetName(asset).toLowerCase() === name.toLowerCase()
-    ) {
-      return "A file with this name already exists here.";
+    if (formatAssetName(asset) === name) {
+      return "A file with this name already exists.";
     }
   }
 };
@@ -103,7 +98,6 @@ export const CreateTextFileDialog = ({
     }
     const validationError = getTextFileNameError({
       name: normalizedName,
-      folderId,
       assets: $assets.get().values(),
     });
     setError(validationError);

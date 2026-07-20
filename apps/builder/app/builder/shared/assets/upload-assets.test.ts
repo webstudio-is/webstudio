@@ -43,7 +43,31 @@ describe("upload-assets", () => {
     expect(init.body.has("assetId")).toBe(false);
     expect(init.body.get("projectId")).toBe("project-id");
     expect(init.body.get("type")).toBe("image");
+    expect(init.body.get("filename")).toBe("image.png");
+    expect(init.body.get("displayFilename")).toBe("image");
     expect(init.headers.get("x-auth-token")).toBe("token");
+  });
+
+  test("keeps the display name separate from the sanitized storage name", async () => {
+    request.mockResolvedValue(
+      new Response(
+        JSON.stringify({ assetId: "server-asset-id", name: "upload-name" })
+      )
+    );
+
+    await createUploadTicket({
+      authToken: undefined,
+      projectId: "project-id",
+      fileOrUrl: new File(["content"], "Campaign photo.png", {
+        type: "image/png",
+      }),
+      assetType: "image",
+      request,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("filename")).toBe("Campaign_photo.png");
+    expect(init.body.get("displayFilename")).toBe("Campaign photo");
   });
 
   test("reports non-error upload failures", async () => {
