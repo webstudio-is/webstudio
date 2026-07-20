@@ -71,6 +71,13 @@ export const apiCommandOptions = (yargs: CommonYargsArgv) =>
         "Refresh required local project namespaces from the remote project before running a local-capable command.",
     });
 
+export const permissionsCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("json", {
+    type: "boolean",
+    describe: "Print a machine-readable JSON response to stdout",
+    default: false,
+  });
+
 const outputDetailCommandOptions = (yargs: CommonYargsArgv) =>
   yargs
     .option("cursor", {
