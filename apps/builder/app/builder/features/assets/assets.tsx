@@ -8,13 +8,7 @@ import {
   Separator,
   Tooltip,
 } from "@webstudio-is/design-system";
-import {
-  BrushCleaningIcon,
-  NewFolderIcon,
-  NewPageIcon,
-  PlusIcon,
-  UploadIcon,
-} from "@webstudio-is/icons";
+import { BrushCleaningIcon, PlusIcon } from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { isTextFileAsset } from "@webstudio-is/sdk";
@@ -90,15 +84,12 @@ export const AssetsPanel = ({
               </Tooltip>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => uploadRef.current?.open()}>
-                  <UploadIcon />
                   Upload
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setCreateTextFileOpen(true)}>
-                  <NewPageIcon />
                   Create text file
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setCreateFolderOpen(true)}>
-                  <NewFolderIcon />
                   Create folder
                 </DropdownMenuItem>
               </DropdownMenuContent>
