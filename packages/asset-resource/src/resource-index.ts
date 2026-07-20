@@ -95,11 +95,13 @@ export const buildAssetResourceIndex = async ({
   resourceId,
   query,
   entries,
+  assetRevision,
 }: {
   projectId: string;
   resourceId: string;
   query: string;
   entries: readonly CanonicalAssetFileEntry[];
+  assetRevision?: string;
 }) => {
   const validatedQuery = validateAssetResourceQuery(query);
   const assetIds = new Set<string>();
@@ -128,7 +130,8 @@ export const buildAssetResourceIndex = async ({
     version: 1,
     resourceId,
     query,
-    assetRevision: await computeCanonicalAssetRevision(entries),
+    assetRevision:
+      assetRevision ?? (await computeCanonicalAssetRevision(entries)),
     queryMode: selection.queryMode,
     parameterNames: selection.parameterNames,
     documents: selection.documents,

@@ -40,6 +40,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   resourceId,
   query,
   entries,
+  assetRevision,
   signal,
 }: {
   client: Client;
@@ -48,6 +49,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   resourceId: string;
   query: string;
   entries: readonly CanonicalAssetFileEntry[];
+  assetRevision?: string;
   signal?: AbortSignal;
 }) => {
   assertNotCancelled(signal);
@@ -56,6 +58,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
     resourceId,
     query,
     entries,
+    assetRevision,
   });
   assertNotCancelled(signal);
   await beginAssetResourceIndexBuild({

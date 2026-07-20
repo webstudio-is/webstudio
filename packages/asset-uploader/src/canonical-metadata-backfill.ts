@@ -7,6 +7,8 @@ import {
 import {
   assetResourceLimits,
   createAssetFolderHierarchy,
+  formatAssetName,
+  getFileNameParts,
   getMimeTypeByFilename,
   type AssetFileDocument,
 } from "@webstudio-is/sdk";
@@ -133,19 +135,18 @@ const createCanonicalDocument = ({
   properties: Record<string, unknown>;
   excerpt?: string;
 }) => {
-  const name = asset.filename ?? asset.file.name;
-  const extensionSeparator = asset.file.name.lastIndexOf(".");
-  const extension =
-    extensionSeparator === -1
-      ? undefined
-      : asset.file.name.slice(extensionSeparator + 1).toLowerCase();
+  const name = formatAssetName({
+    name: asset.file.name,
+    filename: asset.filename,
+  });
+  const extension = getFileNameParts(asset.file.name).extension.toLowerCase();
   const folderId = hierarchy.resolveFolderId(asset.folderId ?? undefined);
   const folderNames = hierarchy.getPath(folderId).map((folder) => folder.name);
   return normalizeAssetFileDocument({
     asset: {
       id: asset.id,
       name,
-      ...(extension === undefined ? {} : { extension }),
+      ...(extension === "" ? {} : { extension }),
       ...(folderId === undefined ? {} : { folderId, folderNames }),
       mimeType: getMimeTypeByFilename(asset.file.name),
       size: asset.file.size,

@@ -1,6 +1,7 @@
-import type {
-  CanonicalAssetFileEntry,
-  ImmutableAssetResourceIndexStore,
+import {
+  computeCanonicalAssetRevision,
+  type CanonicalAssetFileEntry,
+  type ImmutableAssetResourceIndexStore,
 } from "@webstudio-is/asset-resource";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
@@ -70,6 +71,7 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
   // schema-less field. V1 therefore treats all query resources in this project
   // as affected, but rebuilds them from compact canonical rows loaded once.
   const entries = await loadCanonicalAssetFileEntries({ client, projectId });
+  const assetRevision = await computeCanonicalAssetRevision(entries);
   const updatedResourceIds: string[] = [];
   const errors: unknown[] = [];
   for (const resource of resources) {
@@ -81,6 +83,7 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
         resourceId: resource.resourceId,
         query: resource.query,
         entries,
+        assetRevision,
       });
       updatedResourceIds.push(resource.resourceId);
     } catch (error) {
@@ -159,6 +162,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
         resourceId: resource.resourceId,
         query: resource.query,
         entries,
+        assetRevision,
       });
     } catch (error) {
       // A concurrent build of the same identity may activate first. The

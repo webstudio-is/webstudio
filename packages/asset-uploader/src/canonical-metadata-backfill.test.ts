@@ -55,7 +55,7 @@ describe("canonical asset metadata synchronization", () => {
           {
             id: "one",
             projectId: "project-1",
-            filename: "one.md",
+            filename: "one",
             folderId: "blog",
             file: {
               name: "stored-one.md",
@@ -167,6 +167,7 @@ describe("canonical asset metadata synchronization", () => {
   });
 
   test("indexes an empty Markdown file without a storage range read", async () => {
+    const storageName = "empty_abcdefghijklmnopqrstu.md";
     const readFile = vi.fn<AssetClient["readFile"]>();
     let document: Record<string, unknown> | undefined;
     server.use(
@@ -175,10 +176,10 @@ describe("canonical asset metadata synchronization", () => {
           {
             id: "empty",
             projectId: "project-1",
-            filename: "empty.md",
+            filename: "empty",
             folderId: null,
             file: {
-              name: "empty.md",
+              name: storageName,
               size: 0,
               updatedAt: "2026-07-18T01:00:00.000Z",
               status: "UPLOADED",
@@ -204,9 +205,11 @@ describe("canonical asset metadata synchronization", () => {
     ).resolves.toMatchObject({ status: "indexed" });
     expect(readFile).not.toHaveBeenCalled();
     expect(document).toMatchObject({
+      name: "empty.md",
+      path: "empty.md",
       properties: {},
       size: 0,
-      contentRef: "empty.md",
+      contentRef: storageName,
     });
   });
 
@@ -253,7 +256,7 @@ describe("canonical asset metadata synchronization", () => {
           {
             id: "asset-1",
             projectId: "project-1",
-            filename: "renamed.md",
+            filename: "renamed",
             folderId: "blog",
             file: {
               name: "stored.md",
@@ -305,7 +308,7 @@ describe("canonical asset metadata synchronization", () => {
         storageName: "stored.md",
         fileUpdatedAt: "2026-07-18T04:00:00.000Z",
         fileSize: 35,
-        filename: "renamed.md",
+        filename: "renamed",
         folderId: "blog",
       },
       document: {
@@ -418,7 +421,7 @@ describe("canonical asset metadata synchronization", () => {
           {
             id: "asset-1",
             projectId: "project-1",
-            filename: "new.md",
+            filename: "new",
             folderId: "blog",
             file: {
               name: "stored.md",
@@ -477,7 +480,7 @@ describe("canonical asset metadata synchronization", () => {
       {
         id: "stable",
         projectId: "project-1",
-        filename: "stable.md",
+        filename: "stable",
         folderId: null,
         file: {
           name: "stable.md",
@@ -489,7 +492,7 @@ describe("canonical asset metadata synchronization", () => {
       {
         id: "changed",
         projectId: "project-1",
-        filename: "changed.md",
+        filename: "changed",
         folderId: null,
         file: {
           name: "changed.md",
@@ -501,7 +504,7 @@ describe("canonical asset metadata synchronization", () => {
       {
         id: "renamed",
         projectId: "project-1",
-        filename: "new-name.md",
+        filename: "new-name",
         folderId: null,
         file: {
           name: "renamed.md",

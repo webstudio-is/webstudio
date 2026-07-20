@@ -124,6 +124,14 @@ describe("asset query resource body", () => {
     expect(
       getAssetQueryConfigurationError({
         query: "*[properties.slug == $slug]",
+        parameters: [{ name: "  slug  " }],
+        resultLimit: 1,
+        content: { mode: "none" },
+      })
+    ).toBeUndefined();
+    expect(
+      getAssetQueryConfigurationError({
+        query: "*[properties.slug == $slug]",
         parameters: [],
         resultLimit: 1,
         content: { mode: "none" },

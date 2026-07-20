@@ -1,6 +1,7 @@
 import {
   assetResourceContentOptions,
   assetResourceLimits,
+  normalizeAssetQueryParameterName,
   type AssetResourceContentOptions,
   type AssetResourceIndexStatus,
 } from "@webstudio-is/sdk";
@@ -59,7 +60,9 @@ export const getAssetQueryConfigurationError = ({
   if (parameters.length > assetResourceLimits.parameterCount) {
     return `Use at most ${assetResourceLimits.parameterCount} runtime parameters.`;
   }
-  const names = parameters.map(({ name }) => name.trim());
+  const names = parameters.map(({ name }) =>
+    normalizeAssetQueryParameterName(name)
+  );
   if (names.some((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) === false)) {
     return "Runtime parameter names must be valid identifiers.";
   }

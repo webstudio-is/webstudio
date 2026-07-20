@@ -356,7 +356,7 @@ const HeaderPair = ({
         value={name}
         onChange={(event) => onChange(event.target.value, value)}
       />
-      <input hidden={true} readOnly={true} name="header-value" value={value} />
+      <input type="hidden" readOnly={true} name="header-value" value={value} />
       <BindingControl>
         <InputField
           placeholder="Value"
