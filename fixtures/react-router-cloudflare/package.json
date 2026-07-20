@@ -34,7 +34,8 @@
     "wrangler": "^4.14.1",
     "@webstudio-is/wsauth": "workspace:*",
     "@react-router/node": "^7.5.3",
-    "@react-router/serve": "^7.5.3"
+    "@react-router/serve": "^7.5.3",
+    "@webstudio-is/asset-resource": "workspace:*"
   },
   "type": "module",
   "private": true,
