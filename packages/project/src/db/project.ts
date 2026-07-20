@@ -220,41 +220,6 @@ export const softDeleteProject = async (
   projectId: string,
   context: AppContext
 ) => {
-  let attemptRows: { id: string; retentionDays: number }[] = [];
-  try {
-    const attempts = await (
-      context.postgrest.client as unknown as {
-        from: (relation: string) => {
-          select: (columns: string) => {
-            eq: (
-              column: string,
-              value: string
-            ) => Promise<{
-              data: { id: string; retentionDays: number }[] | null;
-              error: unknown;
-            }>;
-          };
-        };
-      }
-    )
-      .from("PublishAttempt")
-      .select("id, retentionDays")
-      .eq("projectId", projectId);
-    attemptRows = attempts.data ?? [];
-  } catch {
-    // The R2 lifecycle remains the deletion fallback during rollout.
-  }
-  const reports = attemptRows.flatMap(({ id, retentionDays }) =>
-    retentionDays === 1 || retentionDays === 30
-      ? [{ attemptId: id, retentionDays: retentionDays as 1 | 30 }]
-      : []
-  );
-  if (reports.length > 0) {
-    await context.deployment.deploymentTrpc.deletePublishReports
-      .mutate({ reports: reports.slice(0, 1000) })
-      .catch(() => undefined);
-  }
-
   const result = await context.postgrest.client
     .from("Project")
     .update({
@@ -266,6 +231,60 @@ export const softDeleteProject = async (
 
   if (result.error) {
     throw result.error;
+  }
+
+  // Delete detailed reports only after the project was safely soft-deleted.
+  // R2 lifecycle rules remain the fallback if this best-effort cleanup fails.
+  try {
+    const table = (
+      context.postgrest.client as unknown as {
+        from: (relation: string) => {
+          select: (columns: string) => {
+            eq: (
+              column: string,
+              value: string
+            ) => {
+              order: (column: string) => {
+                range: (
+                  from: number,
+                  to: number
+                ) => Promise<{
+                  data: { id: string; retentionDays: number }[] | null;
+                  error: unknown;
+                }>;
+              };
+            };
+          };
+        };
+      }
+    ).from("PublishAttempt");
+    const pageSize = 1000;
+    for (let from = 0; ; from += pageSize) {
+      const attempts = await table
+        .select("id, retentionDays")
+        .eq("projectId", projectId)
+        .order("id")
+        .range(from, from + pageSize - 1);
+      if (attempts.error) {
+        return;
+      }
+      const rows = attempts.data ?? [];
+      const reports = rows.flatMap(({ id, retentionDays }) =>
+        retentionDays === 1 || retentionDays === 30
+          ? [{ attemptId: id, retentionDays: retentionDays as 1 | 30 }]
+          : []
+      );
+      if (reports.length > 0) {
+        await context.deployment.deploymentTrpc.deletePublishReports.mutate({
+          reports,
+        });
+      }
+      if (rows.length < pageSize) {
+        break;
+      }
+    }
+  } catch {
+    // Report deletion is best effort and must not undo project deletion.
   }
 };
 

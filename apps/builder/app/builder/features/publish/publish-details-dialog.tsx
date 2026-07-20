@@ -50,12 +50,81 @@ type Filter = "all" | "error" | "warning";
 type ActivityItem = {
   id: string;
   buildId?: string;
+  target?: string;
   status?: string;
   summary?: string;
   domains: string[];
   createdAt: string;
   completedAt?: string;
   reportAvailability?: string;
+  auditErrorCount: number;
+  auditWarningCount: number;
+  diagnosticErrors: number;
+  diagnosticWarnings: number;
+  issues: Array<{
+    severity: "error" | "warning";
+    message: string;
+    source: "audit" | "build";
+  }>;
+};
+
+type ActivityResult = Awaited<
+  ReturnType<typeof nativeClient.domain.publishActivity.query>
+>;
+
+const activityCache = new Map<
+  string,
+  { expiresAt: number; promise: Promise<ActivityResult> }
+>();
+const activityInvalidatedEvent = "webstudio:publish-activity-invalidated";
+
+export const invalidatePublishActivity = (projectId: string) => {
+  activityCache.delete(projectId);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent(activityInvalidatedEvent, { detail: projectId })
+    );
+  }
+};
+
+const loadActivity = (projectId: string, fresh = false) => {
+  const cached = activityCache.get(projectId);
+  if (
+    fresh === false &&
+    cached !== undefined &&
+    cached.expiresAt > Date.now()
+  ) {
+    return cached.promise;
+  }
+  const promise = nativeClient.domain.publishActivity.query({ projectId });
+  activityCache.set(projectId, { expiresAt: Date.now() + 5_000, promise });
+  return promise;
+};
+
+const isForLabel = (item: ActivityItem, label: string) =>
+  item.domains.includes(label) ||
+  (label === "Static export" && "target" in item && item.target === "static");
+
+export const getPublishActivityStatus = (item?: ActivityItem) => {
+  if (item === undefined) {
+    return;
+  }
+  if (
+    item.status === "failed" ||
+    item.status === "blocked" ||
+    item.auditErrorCount + item.diagnosticErrors > 0
+  ) {
+    return "error" as const;
+  }
+  if (item.status === "queued" || item.status === "building") {
+    return "pending" as const;
+  }
+  if (item.auditWarningCount + item.diagnosticWarnings > 0) {
+    return "warning" as const;
+  }
+  if (item.status === "succeeded") {
+    return "success" as const;
+  }
 };
 
 const Activity = ({
@@ -74,23 +143,23 @@ const Activity = ({
   const instances = useStore($instances);
   const { allowAdvancedPublishDiagnostics = false } = useStore($planFeatures);
   const [items, setItems] = useState<ActivityItem[]>([]);
-  const [report, setReport] = useState<unknown>();
+  const [report, setReport] =
+    useState<
+      Awaited<ReturnType<typeof nativeClient.domain.publishReport.query>>
+    >();
   const [selectedId, setSelectedId] = useState<string>();
   const [reportFilter, setReportFilter] = useState<Filter>("all");
+  const [activityFilter, setActivityFilter] = useState<Filter>("all");
+  const [activityState, setActivityState] = useState<
+    "loading" | "loaded" | "error"
+  >("loading");
+  const [reportState, setReportState] = useState<
+    "idle" | "loading" | "loaded" | "error"
+  >("idle");
 
   const reportData =
-    typeof report === "object" && report !== null && "report" in report
-      ? (report.report as {
-          actorLabel?: string;
-          stages?: { name: string; status: string }[];
-          diagnostics?: { severity: string; stage: string; message: string }[];
-          auditSnapshot?: {
-            severity: string;
-            ruleId: string;
-            message: string;
-            location?: { instanceId?: string };
-          }[];
-        })
+    report?.success === true && report.result.availability === "available"
+      ? report.result.report
       : undefined;
   const diagnostics = (reportData?.diagnostics ?? []).filter(
     (item) => reportFilter === "all" || item.severity === reportFilter
@@ -100,19 +169,29 @@ const Activity = ({
     if (project == null) {
       return;
     }
-    nativeClient.domain.publishActivity
-      .query({ projectId: project.id })
+    let cancelled = false;
+    setActivityState("loading");
+    loadActivity(project.id, true)
       .then((result) => {
-        if (result.success) {
+        if (cancelled === false && result.success) {
           setItems(
-            result.publishes.filter(
-              (item) =>
-                item.domains.includes(label) ||
-                (label === "Static export" && item.target === "static")
-            ) as ActivityItem[]
+            (result.publishes as ActivityItem[]).filter((item) =>
+              isForLabel(item, label)
+            )
           );
+          setActivityState("loaded");
+        } else if (cancelled === false) {
+          setActivityState("error");
+        }
+      })
+      .catch(() => {
+        if (cancelled === false) {
+          setActivityState("error");
         }
       });
+    return () => {
+      cancelled = true;
+    };
   }, [label, project]);
 
   if (selectedId !== undefined) {
@@ -123,13 +202,16 @@ const Activity = ({
           onClick={() => {
             setSelectedId(undefined);
             setReport(undefined);
+            setReportState("idle");
           }}
         >
           Back
         </Button>
         <Text variant="titles">Publish report</Text>
-        {report === undefined ? (
+        {reportState === "loading" ? (
           <Text color="subtle">Loading report…</Text>
+        ) : reportState === "error" ? (
+          <Text color="subtle">The detailed report could not be loaded.</Text>
         ) : reportData === undefined ? (
           <Text color="subtle">This detailed report is unavailable.</Text>
         ) : (
@@ -137,43 +219,6 @@ const Activity = ({
             {reportData.actorLabel !== undefined && (
               <Text color="subtle">Published by {reportData.actorLabel}</Text>
             )}
-            <Text variant="titles">Audit at publish time</Text>
-            {(reportData.auditSnapshot ?? []).length === 0 ? (
-              <Text color="subtle">No audit issues were reported.</Text>
-            ) : (
-              (reportData.auditSnapshot ?? []).map((item, index) => (
-                <Flex
-                  key={`${item.ruleId}-${index}`}
-                  direction="column"
-                  gap="1"
-                >
-                  <Text variant="labels">
-                    {item.severity} · {item.ruleId}
-                  </Text>
-                  <Text>{item.message}</Text>
-                  {item.location?.instanceId !== undefined &&
-                    pages !== undefined &&
-                    instances.has(item.location.instanceId) && (
-                      <Button
-                        color="neutral"
-                        onClick={() => {
-                          const location = findPageAndSelectorByInstanceId(
-                            pages,
-                            instances,
-                            item.location!.instanceId!
-                          );
-                          $selectedPageId.set(location.pageId);
-                          selectInstance(location.instanceSelector);
-                          onClose();
-                        }}
-                      >
-                        Show element
-                      </Button>
-                    )}
-                </Flex>
-              ))
-            )}
-            <Text variant="titles">Build diagnostics</Text>
             <Flex gap="2">
               {(["all", "error", "warning"] as const).map((value) => (
                 <Button
@@ -189,6 +234,50 @@ const Activity = ({
                 </Button>
               ))}
             </Flex>
+            <Text variant="titles">Audit at publish time</Text>
+            {reportData.auditSnapshot.filter(
+              (item) => reportFilter === "all" || item.severity === reportFilter
+            ).length === 0 ? (
+              <Text color="subtle">No audit issues were reported.</Text>
+            ) : (
+              reportData.auditSnapshot
+                .filter(
+                  (item) =>
+                    reportFilter === "all" || item.severity === reportFilter
+                )
+                .map((item, index) => (
+                  <Flex
+                    key={`${item.ruleId}-${index}`}
+                    direction="column"
+                    gap="1"
+                  >
+                    <Text variant="labels">
+                      {item.severity} · {item.ruleId}
+                    </Text>
+                    <Text>{item.message}</Text>
+                    {item.location?.instanceId !== undefined &&
+                      pages !== undefined &&
+                      instances.has(item.location.instanceId) && (
+                        <Button
+                          color="neutral"
+                          onClick={() => {
+                            const location = findPageAndSelectorByInstanceId(
+                              pages,
+                              instances,
+                              item.location!.instanceId!
+                            );
+                            $selectedPageId.set(location.pageId);
+                            selectInstance(location.instanceSelector);
+                            onClose();
+                          }}
+                        >
+                          Show element
+                        </Button>
+                      )}
+                  </Flex>
+                ))
+            )}
+            <Text variant="titles">Build diagnostics</Text>
             {diagnostics.length === 0 ? (
               <Text color="subtle">No diagnostics in this category.</Text>
             ) : (
@@ -201,13 +290,44 @@ const Activity = ({
                 </Flex>
               ))
             )}
-            {(reportData.stages ?? []).map((stage) => (
-              <Text key={stage.name} color="subtle">
-                {stage.name}: {stage.status}
-              </Text>
+            {reportData.stages.map((stage) => (
+              <Flex key={stage.name} direction="column" gap="1">
+                <Text color="subtle">
+                  {stage.name}: {stage.status}
+                </Text>
+                {stage.log !== undefined && (
+                  <Text
+                    userSelect="text"
+                    css={{
+                      whiteSpace: "pre-wrap",
+                      fontFamily: "monospace",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {stage.log}
+                    {stage.logTruncated === true && "\nLog truncated."}
+                  </Text>
+                )}
+              </Flex>
             ))}
           </Flex>
         )}
+      </Flex>
+    );
+  }
+
+  if (activityState === "loading") {
+    return (
+      <Flex direction="column" gap="3" css={{ padding: theme.spacing[5] }}>
+        <Text color="subtle">Loading publish activity…</Text>
+      </Flex>
+    );
+  }
+
+  if (activityState === "error") {
+    return (
+      <Flex direction="column" gap="3" css={{ padding: theme.spacing[5] }}>
+        <Text color="subtle">Publish activity could not be loaded.</Text>
       </Flex>
     );
   }
@@ -223,58 +343,100 @@ const Activity = ({
 
   return (
     <Flex direction="column" gap="3" css={{ padding: theme.spacing[5] }}>
-      {items.map((item) => (
-        <Flex key={item.id} direction="column" gap="1">
-          <Flex gap="2" align="center">
-            <Text variant="titles">
-              {item.summary ?? item.status ?? "Published"}
-            </Text>
-            {item.buildId !== undefined && item.buildId === latestBuildId && (
-              <Text variant="labels">Latest</Text>
-            )}
-          </Flex>
-          <Text color="subtle">
-            {new Date(item.createdAt).toLocaleString()}
-            {item.completedAt !== undefined &&
-              ` · ${Math.max(
-                0,
-                Math.round(
-                  (new Date(item.completedAt).getTime() -
-                    new Date(item.createdAt).getTime()) /
-                    1000
-                )
-              )}s`}
-          </Text>
-          {allowAdvancedPublishDiagnostics &&
-            item.reportAvailability === "available" &&
-            project !== undefined && (
-              <Button
-                color="neutral"
-                onClick={async () => {
-                  setSelectedId(item.id);
-                  const result = await nativeClient.domain.publishReport.query({
-                    projectId: project.id,
-                    attemptId: item.id,
-                  });
-                  setReport(
-                    result.success
-                      ? result.result
-                      : { availability: "unavailable" }
-                  );
-                }}
-              >
-                View detailed report
-              </Button>
-            )}
-          {!allowAdvancedPublishDiagnostics &&
-            item.reportAvailability !== undefined && (
-              <Text color="subtle">
-                Detailed reports are available on Pro plans.
+      <Flex gap="2">
+        {(["all", "error", "warning"] as const).map((value) => (
+          <Button
+            key={value}
+            color={activityFilter === value ? "primary" : "neutral"}
+            onClick={() => setActivityFilter(value)}
+          >
+            {value === "all"
+              ? "All"
+              : value === "error"
+              ? "Errors"
+              : "Warnings"}
+          </Button>
+        ))}
+      </Flex>
+      {items.filter(
+        (item) =>
+          activityFilter === "all" ||
+          item.issues.some(({ severity }) => severity === activityFilter)
+      ).length === 0 && (
+        <Text color="subtle">No publish issues in this category.</Text>
+      )}
+      {items
+        .filter(
+          (item) =>
+            activityFilter === "all" ||
+            item.issues.some(({ severity }) => severity === activityFilter)
+        )
+        .map((item) => (
+          <Flex key={item.id} direction="column" gap="1">
+            <Flex gap="2" align="center">
+              <Text variant="titles">
+                {item.summary ?? item.status ?? "Published"}
               </Text>
-            )}
-          <Separator />
-        </Flex>
-      ))}
+              {item.buildId !== undefined && item.buildId === latestBuildId && (
+                <Text variant="labels">Latest</Text>
+              )}
+            </Flex>
+            <Text color="subtle">
+              {new Date(item.createdAt).toLocaleString()}
+              {item.completedAt !== undefined &&
+                ` · ${Math.max(
+                  0,
+                  Math.round(
+                    (new Date(item.completedAt).getTime() -
+                      new Date(item.createdAt).getTime()) /
+                      1000
+                  )
+                )}s`}
+            </Text>
+            {item.issues
+              .filter(
+                (issue) =>
+                  activityFilter === "all" || issue.severity === activityFilter
+              )
+              .map((issue, index) => (
+                <Text key={`${issue.source}-${index}`}>
+                  {issue.severity === "error" ? "Error" : "Warning"} ·{" "}
+                  {issue.message}
+                </Text>
+              ))}
+            {allowAdvancedPublishDiagnostics &&
+              item.reportAvailability === "available" &&
+              project !== undefined && (
+                <Button
+                  color="neutral"
+                  onClick={async () => {
+                    setSelectedId(item.id);
+                    setReportState("loading");
+                    try {
+                      const result =
+                        await nativeClient.domain.publishReport.query({
+                          projectId: project.id,
+                          attemptId: item.id,
+                        });
+                      setReport(result);
+                      setReportState("loaded");
+                    } catch {
+                      setReportState("error");
+                    }
+                  }}
+                >
+                  View detailed report
+                </Button>
+              )}
+            {!allowAdvancedPublishDiagnostics &&
+              item.reportAvailability === "available" && (
+                <Text color="subtle">
+                  Detailed reports are available on Pro plans.
+                </Text>
+              )}
+            <Separator />
+          </Flex>
+        ))}
     </Flex>
   );
 };
@@ -390,8 +552,8 @@ const Findings = ({
             {value === "all"
               ? "All"
               : value === "error"
-              ? "Errors"
-              : "Warnings"}
+                ? "Errors"
+                : "Warnings"}
           </Button>
         ))}
       </Flex>
@@ -444,42 +606,72 @@ export const PublishStatusButton = ({
   latestBuildId?: string;
 }) => {
   const [open, setOpen] = useState(false);
+  const project = useStore($project);
+  const [latestActivity, setLatestActivity] = useState<ActivityItem>();
   const findings = getCurrentPrePublishAudit();
-  const auditErrorCount = findings.filter(
-    ({ severity }) => severity === "error"
-  ).length;
-  const auditWarningCount = findings.filter(
-    ({ severity }) => severity === "warning"
-  ).length;
-  const hasAuditErrors = auditErrorCount > 0;
-  const hasAuditWarnings = auditWarningCount > 0;
-  const displayedStatus = hasAuditErrors
-    ? "error"
-    : status === "pending"
-    ? status
-    : hasAuditWarnings && status === "success"
-    ? "warning"
-    : status;
+  useEffect(() => {
+    if (project === undefined) {
+      return;
+    }
+    let cancelled = false;
+    const update = (fresh = false) => {
+      loadActivity(project.id, fresh)
+        .then((result) => {
+          if (cancelled || result.success === false) {
+            return;
+          }
+          setLatestActivity(
+            (result.publishes as ActivityItem[]).find((item) =>
+              isForLabel(item, label)
+            )
+          );
+        })
+        .catch(() => undefined);
+    };
+    update();
+    const handleInvalidation = (event: Event) => {
+      if (
+        event instanceof CustomEvent &&
+        event.detail === project.id
+      ) {
+        update(true);
+      }
+    };
+    window.addEventListener(activityInvalidatedEvent, handleInvalidation);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(activityInvalidatedEvent, handleInvalidation);
+    };
+  }, [label, project, status]);
+
+  const activityStatus = getPublishActivityStatus(latestActivity);
+  const displayedStatus = status === "pending"
+      ? status
+      : status === "error"
+        ? status
+        : activityStatus === "error"
+          ? "error"
+          : activityStatus === "pending"
+            ? "pending"
+            : activityStatus === "warning"
+              ? "warning"
+        : status;
   const Icon = displayedStatus === "success" ? CheckCircleIcon : AlertIcon;
   const color =
     displayedStatus === "success"
       ? theme.colors.foregroundSuccessText
       : displayedStatus === "warning"
-      ? theme.colors.borderAlert
-      : displayedStatus === "pending"
-      ? theme.colors.foregroundDisabled
-      : theme.colors.foregroundDestructive;
-  const statusLabel = hasAuditErrors
-    ? `${auditErrorCount} audit ${auditErrorCount === 1 ? "error" : "errors"}`
-    : displayedStatus === "warning" && hasAuditWarnings
-    ? `${auditWarningCount} audit ${
-        auditWarningCount === 1 ? "warning" : "warnings"
-      }`
-    : displayedStatus === "pending"
-    ? "Publish in progress"
-    : displayedStatus === "error"
-    ? "Publish failed"
-    : "Published";
+        ? theme.colors.borderAlert
+        : displayedStatus === "pending"
+          ? theme.colors.foregroundDisabled
+          : theme.colors.foregroundDestructive;
+  const statusLabel = displayedStatus === "pending"
+        ? "Publish in progress"
+        : displayedStatus === "error"
+          ? "Publish failed"
+          : displayedStatus === "warning"
+            ? "Published with warnings"
+            : "Published";
   const accessibleLabel = `${label}: ${statusLabel}. Open publish details`;
 
   return (

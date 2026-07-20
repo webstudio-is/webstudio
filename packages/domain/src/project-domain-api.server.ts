@@ -20,6 +20,7 @@ import {
   getPublishAttempt,
   hashPublishIdempotencyKey,
   listPublishAttempts,
+  toCompactPublishIssues,
   updatePublishAttempt,
 } from "./publish-attempt.server";
 
@@ -64,11 +65,15 @@ const storeBlockedPublishReport = async ({
   attemptId,
   retentionDays,
   findings,
+  targetLabels,
+  expiresAt,
   context,
 }: {
   attemptId: string;
   retentionDays: number;
   findings: PrePublishAuditError["findings"];
+  targetLabels: string[];
+  expiresAt: string | null;
   context: AppContext;
 }) => {
   if (retentionDays !== 1 && retentionDays !== 30) {
@@ -82,7 +87,10 @@ const storeBlockedPublishReport = async ({
         version: 1,
         attemptId,
         createdAt: new Date().toISOString(),
+        expiresAt: expiresAt ?? undefined,
+        outcome: "failed",
         actorLabel: await getPublishActorLabel(context),
+        targetLabels,
         stages: [
           { name: "audit", status: "failed" },
           { name: "build", status: "skipped" },
@@ -90,6 +98,7 @@ const storeBlockedPublishReport = async ({
         ],
         auditSnapshot: findings,
         diagnostics: [],
+        truncation: { stagesOmitted: 0, diagnosticsOmitted: 0 },
       },
     });
   return result.success ? ("AVAILABLE" as const) : ("UNAVAILABLE" as const);
@@ -99,11 +108,15 @@ const storeInitialPublishReport = async ({
   attemptId,
   retentionDays,
   findings,
+  targetLabels,
+  expiresAt,
   context,
 }: {
   attemptId: string;
   retentionDays: number;
   findings: PrePublishAuditError["findings"];
+  targetLabels: string[];
+  expiresAt: string | null;
   context: AppContext;
 }) => {
   if (retentionDays !== 1 && retentionDays !== 30) {
@@ -116,14 +129,23 @@ const storeInitialPublishReport = async ({
       version: 1,
       attemptId,
       createdAt: new Date().toISOString(),
+      expiresAt: expiresAt ?? undefined,
+      outcome: "pending",
       actorLabel: await getPublishActorLabel(context),
+      targetLabels,
       stages: [
-        { name: "audit", status: "succeeded" },
+        {
+          name: "audit",
+          status: findings.some(({ severity }) => severity === "warning")
+            ? "warning"
+            : "succeeded",
+        },
         { name: "build", status: "pending" },
         { name: "deploy", status: "pending" },
       ],
       auditSnapshot: findings,
       diagnostics: [],
+      truncation: { stagesOmitted: 0, diagnosticsOmitted: 0 },
     },
   });
 };
@@ -211,6 +233,9 @@ export const listProjectPublishes = async (
         summary: attempt.summary,
         auditErrorCount: attempt.auditErrorCount,
         auditWarningCount: attempt.auditWarningCount,
+        diagnosticErrors: attempt.diagnosticErrors,
+        diagnosticWarnings: attempt.diagnosticWarnings,
+        issues: attempt.issues,
         reportAvailability: attempt.reportAvailability.toLowerCase(),
         artifact:
           attempt.target === "STATIC" && attempt.artifactName !== null
@@ -269,6 +294,9 @@ export const listProjectPublishes = async (
               : "Published successfully",
           auditErrorCount: 0,
           auditWarningCount: 0,
+          diagnosticErrors: 0,
+          diagnosticWarnings: 0,
+          issues: [],
           reportAvailability: "not_created",
           artifact: undefined,
           createdAt: build.createdAt,
@@ -298,6 +326,9 @@ export const getProjectPublishJob = async (
       summary: attempt.summary,
       auditErrorCount: attempt.auditErrorCount,
       auditWarningCount: attempt.auditWarningCount,
+      diagnosticErrors: attempt.diagnosticErrors,
+      diagnosticWarnings: attempt.diagnosticWarnings,
+      issues: attempt.issues,
       reportAvailability: attempt.reportAvailability.toLowerCase(),
       artifact:
         attempt.target === "STATIC" && attempt.artifactName !== null
@@ -429,7 +460,7 @@ export const publishProject = async (
       project.domainsVirtual.find((item) => item.domain === domain)?.domainId ??
       "staging"
   );
-  const attempt = await createPublishAttempt(
+  const { attempt, created } = await createPublishAttempt(
     {
       projectId: project.id,
       target,
@@ -438,11 +469,13 @@ export const publishProject = async (
       idempotencyHash:
         idempotencyKey === undefined
           ? undefined
-          : await hashPublishIdempotencyKey(idempotencyKey),
+          : await hashPublishIdempotencyKey(
+              JSON.stringify({ idempotencyKey, target, domains })
+            ),
     },
     context
   );
-  if (attempt.status !== "VALIDATING") {
+  if (created === false) {
     return {
       attempt,
       build: attempt.buildId === null ? undefined : { id: attempt.buildId },
@@ -467,6 +500,8 @@ export const publishProject = async (
         attemptId: attempt.id,
         retentionDays: attempt.retentionDays,
         findings: error.findings,
+        targetLabels: domains,
+        expiresAt: attempt.expiresAt,
         context,
       }).catch(() => "UNAVAILABLE" as const);
       await updatePublishAttempt(attempt.id, { reportAvailability }, context, [
@@ -498,6 +533,8 @@ export const publishProject = async (
     attemptId: attempt.id,
     retentionDays: attempt.retentionDays,
     findings: build.auditFindings,
+    targetLabels: domains,
+    expiresAt: attempt.expiresAt,
     context,
   }).catch(() => undefined);
   await updatePublishAttempt(
@@ -508,6 +545,7 @@ export const publishProject = async (
       summary: "Publish queued",
       auditErrorCount,
       auditWarningCount,
+      issues: toCompactPublishIssues(build.auditFindings, "audit"),
       startedAt: new Date().toISOString(),
     },
     context,
@@ -566,7 +604,7 @@ export const publishStaticProject = async (
   context: AppContext
 ) => {
   const project = await projectApi.loadById(projectId, context);
-  const attempt = await createPublishAttempt(
+  const { attempt, created } = await createPublishAttempt(
     {
       projectId,
       target: "STATIC",
@@ -576,20 +614,28 @@ export const publishStaticProject = async (
       idempotencyHash:
         idempotencyKey === undefined
           ? undefined
-          : await hashPublishIdempotencyKey(idempotencyKey),
+          : await hashPublishIdempotencyKey(
+              JSON.stringify({
+                idempotencyKey,
+                target: "STATIC",
+                templates,
+                artifactName: name,
+              })
+            ),
     },
     context
   );
-  if (attempt.status !== "VALIDATING") {
-    return attempt.buildId === null
-      ? { success: false as const, error: attempt.summary }
-      : {
-          success: true as const,
-          name: attempt.artifactName ?? name,
-          build: { id: attempt.buildId },
-          project,
-          attempt,
-        };
+  if (created === false) {
+    if (attempt.status === "BLOCKED" || attempt.status === "FAILED") {
+      return { success: false as const, error: attempt.summary, attempt };
+    }
+    return {
+      success: true as const,
+      name: attempt.artifactName ?? name,
+      build: attempt.buildId === null ? undefined : { id: attempt.buildId },
+      project,
+      attempt,
+    };
   }
   let build;
   try {
@@ -613,6 +659,8 @@ export const publishStaticProject = async (
         attemptId: attempt.id,
         retentionDays: attempt.retentionDays,
         findings: error.findings,
+        targetLabels: ["Static export"],
+        expiresAt: attempt.expiresAt,
         context,
       }).catch(() => "UNAVAILABLE" as const);
       await updatePublishAttempt(attempt.id, { reportAvailability }, context, [
@@ -638,6 +686,8 @@ export const publishStaticProject = async (
     attemptId: attempt.id,
     retentionDays: attempt.retentionDays,
     findings: build.auditFindings,
+    targetLabels: ["Static export"],
+    expiresAt: attempt.expiresAt,
     context,
   }).catch(() => undefined);
   await updatePublishAttempt(
@@ -649,6 +699,7 @@ export const publishStaticProject = async (
       auditWarningCount: build.auditFindings.filter(
         ({ severity }) => severity === "warning"
       ).length,
+      issues: toCompactPublishIssues(build.auditFindings, "audit"),
       startedAt: new Date().toISOString(),
     },
     context,

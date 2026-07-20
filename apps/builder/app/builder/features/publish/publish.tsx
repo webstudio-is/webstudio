@@ -86,20 +86,13 @@ import {
   getRestrictedFeatures,
   type RestrictedFeature,
 } from "./restricted-features";
-import { formatPrePublishAuditFinding } from "@webstudio-is/project-build/runtime";
 import {
-  getCurrentPrePublishAudit,
+  invalidatePublishActivity,
   PublishStatusButton,
 } from "./publish-details-dialog";
 
-const getPrePublishAuditError = () => {
-  const findings = getCurrentPrePublishAudit();
-  const finding = findings.find(({ severity }) => severity === "error");
-  const message = finding && formatPrePublishAuditFinding(finding);
-  return message === undefined || message.length <= 200
-    ? message
-    : `${message.slice(0, 197)}…`;
-};
+const getShortPublishError = (message: string) =>
+  message.length <= 200 ? message : `${message.slice(0, 197)}…`;
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -430,12 +423,6 @@ const Publish = ({
   }, [project.domain]);
 
   const handlePublish = async (formData: FormData) => {
-    const auditError = getPrePublishAuditError();
-    if (auditError !== undefined) {
-      toast.error(auditError);
-      return;
-    }
-
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
     const domains = formData
@@ -454,6 +441,7 @@ const Publish = ({
       domains,
       destination: "saas",
     });
+    invalidatePublishActivity(project.id);
 
     if (publishResult.success === false) {
       console.error(publishResult.error);
@@ -482,7 +470,9 @@ const Publish = ({
       if (publishResult.error === "NOT_IMPLEMENTED") {
         toast.info(error);
       } else {
-        toast.error(error);
+        toast.error(
+          typeof error === "string" ? getShortPublishError(error) : error
+        );
       }
 
       if (process.env.NODE_ENV === "development") {
@@ -719,12 +709,6 @@ const PublishStatic = ({
             onClick={() => {
               startTransition(async () => {
                 try {
-                  const auditError = getPrePublishAuditError();
-                  if (auditError !== undefined) {
-                    toast.error(auditError);
-                    return;
-                  }
-
                   setIsPendingOptimistic(true);
 
                   const result = await nativeClient.domain.publish.mutate({
@@ -732,9 +716,10 @@ const PublishStatic = ({
                     destination: "static",
                     templates: [...templates],
                   });
+                  invalidatePublishActivity(projectId);
 
                   if (result.success === false) {
-                    toast.error(result.error);
+                    toast.error(getShortPublishError(result.error));
                     return;
                   }
 

@@ -23,6 +23,7 @@ export type PublishAttempt = {
   auditWarningCount: number;
   diagnosticErrors: number;
   diagnosticWarnings: number;
+  issues: CompactPublishIssue[];
   summary: string;
   retentionDays: number;
   expiresAt: string | null;
@@ -33,10 +34,17 @@ export type PublishAttempt = {
   completedAt: string | null;
 };
 
+export type CompactPublishIssue = {
+  severity: "error" | "warning";
+  message: string;
+  source: "audit" | "build";
+};
+
 type QueryResult = { data: unknown; error: unknown };
 type AttemptQuery = PromiseLike<QueryResult> & {
   select: (columns?: string) => AttemptQuery;
   eq: (column: string, value: unknown) => AttemptQuery;
+  gte: (column: string, value: string) => AttemptQuery;
   in: (column: string, values: string[]) => AttemptQuery;
   order: (column: string, options: { ascending: boolean }) => AttemptQuery;
   limit: (count: number) => AttemptQuery;
@@ -63,6 +71,25 @@ const throwOnError = (result: QueryResult) => {
 };
 
 const truncateSummary = (summary: string) => summary.trim().slice(0, 512);
+
+export const toCompactPublishIssues = (
+  findings: Array<{ severity: "error" | "warning" | "info"; message: string }>,
+  source: CompactPublishIssue["source"]
+) =>
+  findings
+    .filter(
+      (
+        finding
+      ): finding is { severity: "error" | "warning"; message: string } =>
+        finding.severity === "error" || finding.severity === "warning"
+    )
+    .slice(0, 20)
+    .map(({ severity, message }) => ({
+      severity,
+      source,
+      message:
+        message.length <= 160 ? message : `${message.slice(0, 157).trimEnd()}…`,
+    }));
 
 export const hashPublishIdempotencyKey = async (value: string) => {
   const digest = await crypto.subtle.digest(
@@ -102,7 +129,7 @@ export const createPublishAttempt = async (
       .maybeSingle();
     throwOnError(existing);
     if (existing.data !== null) {
-      return existing.data as PublishAttempt;
+      return { attempt: existing.data as PublishAttempt, created: false };
     }
   }
   const retentionDays = context.planFeatures.publishLogRetentionDays ?? 0;
@@ -137,11 +164,32 @@ export const createPublishAttempt = async (
       .maybeSingle();
     throwOnError(existing);
     if (existing.data !== null) {
-      return existing.data as PublishAttempt;
+      return { attempt: existing.data as PublishAttempt, created: false };
     }
   }
   throwOnError(result);
-  return result.data as PublishAttempt;
+  return { attempt: result.data as PublishAttempt, created: true };
+};
+
+const staleAttemptTimeoutMs = 30 * 60 * 1000;
+
+const normalizeStaleAttempt = (attempt: PublishAttempt): PublishAttempt => {
+  if (attempt.status !== "QUEUED" && attempt.status !== "BUILDING") {
+    return attempt;
+  }
+  if (
+    Date.now() - new Date(attempt.updatedAt).getTime() <
+    staleAttemptTimeoutMs
+  ) {
+    return attempt;
+  }
+  return {
+    ...attempt,
+    status: "FAILED",
+    failureCode: "workflow_timeout",
+    summary: "The publish did not complete within the expected time.",
+    completedAt: attempt.updatedAt,
+  };
 };
 
 export const updatePublishAttempt = async (
@@ -159,6 +207,29 @@ export const updatePublishAttempt = async (
   return result.data as PublishAttempt | null;
 };
 
+const reconcileStaleAttempt = async (
+  attempt: PublishAttempt,
+  context: AppContext
+) => {
+  const normalized = normalizeStaleAttempt(attempt);
+  if (normalized === attempt) {
+    return attempt;
+  }
+  return (
+    (await updatePublishAttempt(
+      attempt.id,
+      {
+        status: normalized.status,
+        failureCode: normalized.failureCode,
+        summary: normalized.summary,
+        completedAt: normalized.completedAt,
+      },
+      context,
+      ["QUEUED", "BUILDING"]
+    ).catch(() => null)) ?? normalized
+  );
+};
+
 export const blockPublishAttempt = async (
   id: string,
   findings: PrePublishAuditFinding[],
@@ -173,6 +244,7 @@ export const blockPublishAttempt = async (
       failureCode: "audit_failed",
       auditErrorCount: errors.length,
       auditWarningCount: warnings.length,
+      issues: toCompactPublishIssues(findings, "audit"),
       summary: truncateSummary(
         errors[0]?.message ?? "Publish was blocked by the pre-publish audit."
       ),
@@ -187,42 +259,65 @@ export const listPublishAttempts = async (
   projectId: string,
   context: AppContext
 ) => {
-  const retentionDays = context.planFeatures.publishLogRetentionDays ?? 0;
-  if (retentionDays === 0) {
+  const activityRetentionDays =
+    context.planFeatures.publishActivityRetentionDays ?? 0;
+  if (activityRetentionDays === 0) {
     const result = await table(context)
       .select("*")
       .eq("projectId", projectId)
       .order("createdAt", { ascending: false })
       .limit(25);
     throwOnError(result);
-    const attempts = result.data as PublishAttempt[];
+    const attempts = await Promise.all(
+      (result.data as PublishAttempt[]).map((attempt) =>
+        reconcileStaleAttempt(attempt, context)
+      )
+    );
     const seen = new Set<string>();
-    return attempts.filter((attempt) => {
-      const keys = attempt.targetKeys.filter((key) => seen.has(key) === false);
-      keys.forEach((key) => seen.add(key));
-      return keys.length > 0;
+    return attempts.flatMap((attempt) => {
+      const unseenIndexes = attempt.targetKeys.flatMap((key, index) =>
+        seen.has(key) ? [] : [index]
+      );
+      unseenIndexes.forEach((index) => seen.add(attempt.targetKeys[index]!));
+      if (unseenIndexes.length === 0) {
+        return [];
+      }
+      return [
+        {
+          ...attempt,
+          targetKeys: unseenIndexes.map((index) => attempt.targetKeys[index]!),
+          targetLabels: unseenIndexes.map(
+            (index) => attempt.targetLabels[index]!
+          ),
+        },
+      ];
     });
   }
 
+  const cutoff = new Date(
+    Date.now() - activityRetentionDays * 24 * 60 * 60 * 1000
+  ).toISOString();
   const attempts: PublishAttempt[] = [];
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
     const result = await table(context)
       .select("*")
       .eq("projectId", projectId)
+      .gte("createdAt", cutoff)
       .order("createdAt", { ascending: false })
       .range(from, from + pageSize - 1);
     throwOnError(result);
     const page = result.data as PublishAttempt[];
-    attempts.push(...page);
+    attempts.push(
+      ...(await Promise.all(
+        page.map((attempt) => reconcileStaleAttempt(attempt, context))
+      ))
+    );
     if (page.length < pageSize) {
       break;
     }
   }
-  const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
-  return attempts.filter(
-    ({ createdAt }) => new Date(createdAt).getTime() >= cutoff
-  );
+  return attempts;
 };
 
 export const getPublishAttempt = async (
@@ -235,5 +330,6 @@ export const getPublishAttempt = async (
     .eq("id", attemptId)
     .maybeSingle();
   throwOnError(result);
-  return result.data as PublishAttempt | null;
+  const attempt = result.data as PublishAttempt | null;
+  return attempt === null ? null : reconcileStaleAttempt(attempt, context);
 };

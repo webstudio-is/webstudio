@@ -187,4 +187,28 @@ describe("parsePlansEnv", () => {
     expect(result.get("Pro")?.features.publishLogRetentionDays).toBe(1);
     expect(result.get("Team")?.features.publishLogRetentionDays).toBe(30);
   });
+
+  test("keeps compact activity for 30 days independently of detailed logs", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        {
+          name: "Invalid",
+          features: { publishActivityRetentionDays: 1 },
+        },
+        {
+          name: "Pro",
+          features: {
+            publishLogRetentionDays: 1,
+            publishActivityRetentionDays: 30,
+          },
+        },
+      ])
+    );
+
+    expect(result.has("Invalid")).toBe(false);
+    expect(result.get("Pro")?.features).toMatchObject({
+      publishLogRetentionDays: 1,
+      publishActivityRetentionDays: 30,
+    });
+  });
 });
