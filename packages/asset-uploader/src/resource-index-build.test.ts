@@ -52,9 +52,15 @@ describe("resource index build and activation", () => {
           p_resource_id: "posts",
           p_revision: expect.stringMatching(/^sha256:/),
           p_checksum: expect.stringMatching(/^sha256:/),
-          p_object_key: expect.stringContaining("projects/project-1/resources/posts"),
+          p_object_key: expect.stringContaining(
+            "projects/project-1/resources/posts"
+          ),
         });
         return json(true);
+      }),
+      db.post("rpc/claim_asset_resource_index_garbage", () => {
+        events.push("cleanup");
+        return json([]);
       })
     );
     const result = await buildPersistAndActivateAssetResourceIndex({
@@ -64,6 +70,7 @@ describe("resource index build and activation", () => {
           events.push("persist");
           return { status: "created", checksum };
         },
+        delete: async () => "deleted",
       },
       projectId: "project-1",
       resourceId: "posts",
@@ -71,7 +78,7 @@ describe("resource index build and activation", () => {
       entries: [entry],
     });
 
-    expect(events).toEqual(["begin", "persist", "activate"]);
+    expect(events).toEqual(["begin", "persist", "activate", "cleanup"]);
     expect(result.index.documents).toHaveLength(1);
   });
 

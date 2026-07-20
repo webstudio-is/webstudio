@@ -33,9 +33,13 @@ const isAstNode = (value: unknown): value is AstNode =>
 const measureAst = (tree: ExprNode) => {
   let nodes = 0;
   let maxDepth = 0;
+  let datasetScans = 0;
   const visit = (node: AstNode, depth: number) => {
     nodes += 1;
     maxDepth = Math.max(maxDepth, depth);
+    if (node.type === "Everything") {
+      datasetScans += 1;
+    }
     if (
       nodes > assetResourceLimits.queryAstNodes ||
       maxDepth > assetResourceLimits.queryAstDepth ||
@@ -58,7 +62,7 @@ const measureAst = (tree: ExprNode) => {
     }
   };
   visit(tree, 1);
-  return { nodes, depth: maxDepth };
+  return { nodes, depth: maxDepth, datasetScans };
 };
 
 export type ValidatedAssetResourceQuery = {
@@ -67,6 +71,7 @@ export type ValidatedAssetResourceQuery = {
   queryMode: "static" | "parameterized";
   astNodes: number;
   astDepth: number;
+  datasetScans: number;
 };
 
 export const validateAssetResourceQuery = (
@@ -102,7 +107,8 @@ export const validateAssetResourceQuery = (
   const ast = measureAst(tree);
   if (
     ast.nodes > assetResourceLimits.queryAstNodes ||
-    ast.depth > assetResourceLimits.queryAstDepth
+    ast.depth > assetResourceLimits.queryAstDepth ||
+    ast.datasetScans > assetResourceLimits.queryDatasetScans
   ) {
     throw new AssetResourceQueryValidationError({
       code: "QUERY_COMPLEXITY_EXCEEDED",
@@ -112,6 +118,8 @@ export const validateAssetResourceQuery = (
         astNodeLimit: assetResourceLimits.queryAstNodes,
         astDepth: ast.depth,
         astDepthLimit: assetResourceLimits.queryAstDepth,
+        datasetScans: ast.datasetScans,
+        datasetScanLimit: assetResourceLimits.queryDatasetScans,
       },
     });
   }
@@ -132,6 +140,7 @@ export const validateAssetResourceQuery = (
     queryMode: parameterNames.length === 0 ? "static" : "parameterized",
     astNodes: ast.nodes,
     astDepth: ast.depth,
+    datasetScans: ast.datasetScans,
   };
 };
 

@@ -5,6 +5,7 @@ import type { Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
+import { isStoredAssetQueryResource } from "./asset-resource-config";
 
 export const generateResources = ({
   scope,
@@ -29,6 +30,9 @@ export const generateResources = ({
     // call resource by bound variable name
     const resourceName = scope.getName(resource.id, resource.name);
     generatedRequest += `  const ${resourceName}: ResourceRequest = {\n`;
+    if (isStoredAssetQueryResource(resource)) {
+      generatedRequest += `    resourceId: ${JSON.stringify(resource.id)},\n`;
+    }
     generatedRequest += `    name: ${JSON.stringify(resource.name)},\n`;
     if (resource.control !== undefined) {
       generatedRequest += `    control: "${resource.control}",\n`;

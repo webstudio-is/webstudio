@@ -27,6 +27,7 @@ export const rebuildAssetResourceIndex = async ({
     .select("query")
     .eq("projectId", projectId)
     .eq("resourceId", resourceId)
+    .is("deletedAt", null)
     .maybeSingle();
   assertPostgrestSuccess(state);
   if (state.data === null) {

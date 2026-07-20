@@ -76,7 +76,7 @@ describe("resource index build", () => {
     await expect(verifyAssetResourceIndex(index)).resolves.toEqual(index);
   });
 
-  test("excludes draft and private documents before building public candidates", async () => {
+  test("treats all frontmatter fields as schemaless query data", async () => {
     const entries = [
       createCanonicalAssetFileEntry({
         projectId: "project-1",
@@ -101,8 +101,12 @@ describe("resource index build", () => {
       entries,
     });
 
-    expect(index.documents.map(({ _id }) => _id)).toEqual(["published"]);
-    expect(serializeAssetResourceIndex(index)).not.toContain("secret");
+    expect(index.documents.map(({ _id }) => _id)).toEqual([
+      "draft",
+      "private",
+      "published",
+    ]);
+    expect(serializeAssetResourceIndex(index)).toContain("secret");
   });
 
   test("rejects mixed projects, inconsistent identities, and duplicate assets", async () => {

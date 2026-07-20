@@ -2,18 +2,17 @@ import {
   assetResourceQueryFailure,
   assetResourceQueryRequest,
   type AssetResourceQueryFailure,
-  type AssetResourceQuerySuccess,
 } from "@webstudio-is/sdk";
-import { assetsQueryResourceUrl } from "@webstudio-is/sdk/runtime";
+import {
+  assetResourceIdHeader,
+  assetsQueryResourceUrl,
+} from "@webstudio-is/sdk/runtime";
 import {
   AssetResourceQueryExecutionError,
   computeAssetResourceQueryHash,
-  executeAssetResourceQuery,
+  executeAndHydrateAssetResourceQuery,
 } from "./index";
-import {
-  AssetResourceHydrationError,
-  hydrateAssetResourceResult,
-} from "./hydration";
+import { AssetResourceHydrationError } from "./hydration";
 import { verifyAssetResourceIndex } from "./resource-index";
 
 export type PublishedAssetResourceManifestEntry = {
@@ -29,19 +28,35 @@ export type PublishedAssetFetch = (
   init?: RequestInit
 ) => Promise<Response>;
 
+type AssetBinding = {
+  fetch: (request: Request) => Promise<Response>;
+};
+
 const parsedIndexCache = new Map<
   string,
   Promise<Awaited<ReturnType<typeof verifyAssetResourceIndex>>>
 >();
 
+const getParsedIndexCacheKey = ({
+  deploymentId,
+  entry,
+}: {
+  deploymentId: string;
+  entry: PublishedAssetResourceManifestEntry;
+}) =>
+  `${deploymentId}\n${entry.resourceId}\n${entry.revision}\n${entry.indexPath}`;
+
 const loadIndex = ({
+  deploymentId,
   entry,
   fetchAsset,
 }: {
+  deploymentId: string;
   entry: PublishedAssetResourceManifestEntry;
   fetchAsset: PublishedAssetFetch;
 }) => {
-  let pending = parsedIndexCache.get(entry.indexPath);
+  const cacheKey = getParsedIndexCacheKey({ deploymentId, entry });
+  let pending = parsedIndexCache.get(cacheKey);
   if (pending === undefined) {
     pending = (async () => {
       const response = await fetchAsset(entry.indexPath);
@@ -59,8 +74,8 @@ const loadIndex = ({
       }
       return index;
     })();
-    parsedIndexCache.set(entry.indexPath, pending);
-    pending.catch(() => parsedIndexCache.delete(entry.indexPath));
+    parsedIndexCache.set(cacheKey, pending);
+    pending.catch(() => parsedIndexCache.delete(cacheKey));
   }
   return pending;
 };
@@ -130,9 +145,15 @@ export const createPublishedAssetResourceFetch = ({
   fetchAsset: PublishedAssetFetch;
   cache?: Pick<Cache, "match" | "put">;
 }) => {
-  const entriesByQueryHash = new Map(
-    manifest.map((entry) => [entry.queryHash, entry])
-  );
+  const entriesByQueryHash = new Map<
+    string,
+    PublishedAssetResourceManifestEntry[]
+  >();
+  for (const entry of manifest) {
+    const entries = entriesByQueryHash.get(entry.queryHash) ?? [];
+    entries.push(entry);
+    entriesByQueryHash.set(entry.queryHash, entries);
+  }
   return async (
     input: RequestInfo | URL,
     init?: RequestInit
@@ -146,7 +167,9 @@ export const createPublishedAssetResourceFetch = ({
     }
     let parsedRequest;
     try {
-      parsedRequest = assetResourceQueryRequest.parse(await request.json());
+      parsedRequest = assetResourceQueryRequest.parse(
+        await request.clone().json()
+      );
     } catch {
       return failure({
         code: "INVALID_REQUEST",
@@ -155,12 +178,25 @@ export const createPublishedAssetResourceFetch = ({
       });
     }
     const queryHash = await computeAssetResourceQueryHash(parsedRequest.query);
-    const entry = entriesByQueryHash.get(queryHash);
+    const matchingEntries = entriesByQueryHash.get(queryHash) ?? [];
+    const resourceId = request.headers.get(assetResourceIdHeader);
+    const entry =
+      resourceId === null
+        ? matchingEntries.length === 1
+          ? matchingEntries[0]
+          : undefined
+        : matchingEntries.find((entry) => entry.resourceId === resourceId);
     if (entry === undefined) {
       return failure({
-        code: "INDEX_NOT_FOUND",
-        message: "No published index matches this asset resource query",
-        status: 404,
+        code:
+          resourceId === null && matchingEntries.length > 1
+            ? "INVALID_REQUEST"
+            : "INDEX_NOT_FOUND",
+        message:
+          resourceId === null && matchingEntries.length > 1
+            ? "Asset resource identity is required for this query"
+            : "No published index matches this asset resource query",
+        status: resourceId === null && matchingEntries.length > 1 ? 400 : 404,
       });
     }
     if (
@@ -184,25 +220,22 @@ export const createPublishedAssetResourceFetch = ({
             request,
           });
     if (cacheKey !== undefined) {
-      const cached = await selectedCache?.match(cacheKey);
+      const cached = await selectedCache
+        ?.match(cacheKey)
+        .catch(() => undefined);
       if (cached !== undefined) {
         return new Response(cached.body, cached);
       }
     }
 
     try {
-      const index = await loadIndex({ entry, fetchAsset });
-      const response = await executeAssetResourceQuery({
+      const index = await loadIndex({ deploymentId, entry, fetchAsset });
+      const result = await executeAndHydrateAssetResourceQuery({
         request: parsedRequest,
         documents: index.documents,
         queryHash: index.queryHash,
         indexRevision: entry.revision,
         assetRevision: index.assetRevision,
-      });
-      const hydration = await hydrateAssetResourceResult({
-        result: response.result,
-        documents: index.documents,
-        options: parsedRequest.content,
         read: async (contentRef, range) => {
           const headers = new Headers();
           if (range !== undefined && range.length > 0) {
@@ -226,22 +259,15 @@ export const createPublishedAssetResourceFetch = ({
           };
         },
       });
-      const result: AssetResourceQuerySuccess = {
-        ...response,
-        content: hydration.content,
-        meta: {
-          ...response.meta,
-          hydratedFileCount: hydration.hydratedFileCount,
-          hydratedBytes: hydration.hydratedBytes,
-        },
-      };
       const resultResponse = jsonResponse(result);
       if (cacheKey !== undefined) {
         resultResponse.headers.set(
           "cache-control",
           request.headers.get("cache-control") as string
         );
-        await cache?.put(cacheKey, resultResponse.clone());
+        await cache
+          ?.put(cacheKey, resultResponse.clone())
+          .catch(() => undefined);
       }
       return resultResponse;
     } catch (error) {
@@ -252,7 +278,7 @@ export const createPublishedAssetResourceFetch = ({
         return failure({
           code: error.code,
           message: error.message,
-          status: error.code === "PROTECTED_CONTENT" ? 403 : 400,
+          status: 400,
         });
       }
       return failure({
@@ -263,6 +289,59 @@ export const createPublishedAssetResourceFetch = ({
       });
     }
   };
+};
+
+const getAssetBinding = (context: unknown): AssetBinding | undefined => {
+  if (typeof context !== "object" || context === null) {
+    return;
+  }
+  const cloudflare = Reflect.get(context, "cloudflare");
+  if (typeof cloudflare !== "object" || cloudflare === null) {
+    return;
+  }
+  const env = Reflect.get(cloudflare, "env");
+  if (typeof env !== "object" || env === null) {
+    return;
+  }
+  const assets = Reflect.get(env, "ASSETS");
+  if (
+    typeof assets === "object" &&
+    assets !== null &&
+    typeof Reflect.get(assets, "fetch") === "function"
+  ) {
+    return assets as AssetBinding;
+  }
+};
+
+export const createGeneratedAssetResourceFetch = async ({
+  request,
+  context,
+  deploymentId,
+  manifest,
+  fallback,
+}: {
+  request: Request;
+  context: unknown;
+  deploymentId: string;
+  manifest: readonly PublishedAssetResourceManifestEntry[];
+  fallback: typeof fetch;
+}): Promise<typeof fetch> => {
+  const binding = getAssetBinding(context);
+  const fetchAsset = (path: string, init?: RequestInit) => {
+    const assetRequest = new Request(new URL(path, request.url), init);
+    return binding?.fetch(assetRequest) ?? fetch(assetRequest);
+  };
+  const cache = await globalThis.caches
+    ?.open(`webstudio-assets-${deploymentId}`)
+    .catch(() => undefined);
+  const fetchResource = createPublishedAssetResourceFetch({
+    deploymentId,
+    manifest,
+    fetchAsset,
+    cache,
+  });
+  return async (input, init) =>
+    (await fetchResource(input, init)) ?? fallback(input, init);
 };
 
 export const __testing = {

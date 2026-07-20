@@ -1,29 +1,12 @@
-import { parseObjectExpression, type Resource } from "@webstudio-is/sdk";
+import { getAssetResourceQuery, type Resource } from "@webstudio-is/sdk";
+export { getAssetResourceQuery } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetClientWithResourceIndexStore } from "./client";
 import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { buildPersistAndActivateAssetResourceIndex } from "./resource-index-build";
 import { deleteAssetResourceIndexQuery } from "./resource-index-persistence";
-
-const assetQueryUrl = "/$resources/assets/query";
-
-export const getAssetResourceQuery = (resource: Resource) => {
-  try {
-    if (JSON.parse(resource.url) !== assetQueryUrl) {
-      return;
-    }
-    const body = parseObjectExpression(resource.body ?? "");
-    const queryExpression = body.get("query");
-    if (queryExpression === undefined) {
-      return;
-    }
-    const query = JSON.parse(queryExpression);
-    return typeof query === "string" && query.trim() !== "" ? query : undefined;
-  } catch {
-    return;
-  }
-};
+import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
 
 export const synchronizeAssetResourceIndexQueries = async ({
   client,
@@ -64,6 +47,15 @@ export const synchronizeAssetResourceIndexQueries = async ({
 
   for (const resourceId of deletedResourceIds) {
     await deleteAssetResourceIndexQuery({ client, projectId, resourceId });
+  }
+  if (
+    deletedResourceIds.length > 0 &&
+    assetClient.resourceIndexStore.delete !== undefined
+  ) {
+    await collectAssetResourceIndexGarbageBestEffort({
+      client,
+      store: { delete: assetClient.resourceIndexStore.delete },
+    });
   }
   if (changed.length === 0) {
     return { deletedResourceIds, updatedResourceIds: [] };

@@ -1,9 +1,6 @@
 import {
   buildAssetResourceIndex,
-  computeAssetResourceQueryHash,
-  computeCanonicalAssetRevision,
   persistAssetResourceIndex,
-  validateAssetResourceQuery,
   type CanonicalAssetFileEntry,
   type ImmutableAssetResourceIndexStore,
 } from "@webstudio-is/asset-resource";
@@ -14,6 +11,7 @@ import {
   cancelAssetResourceIndexBuild,
   failAssetResourceIndexBuild,
 } from "./resource-index-persistence";
+import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
 
 export class AssetResourceIndexBuildSupersededError extends Error {
   constructor() {
@@ -53,27 +51,23 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   signal?: AbortSignal;
 }) => {
   assertNotCancelled(signal);
-  validateAssetResourceQuery(query);
-  const queryHash = await computeAssetResourceQueryHash(query);
-  const assetRevision = await computeCanonicalAssetRevision(entries);
+  const index = await buildAssetResourceIndex({
+    projectId,
+    resourceId,
+    query,
+    entries,
+  });
+  assertNotCancelled(signal);
   await beginAssetResourceIndexBuild({
     client,
     projectId,
     resourceId,
     query,
-    queryHash,
-    assetRevision,
+    queryHash: index.queryHash,
+    assetRevision: index.assetRevision,
   });
 
   try {
-    assertNotCancelled(signal);
-    const index = await buildAssetResourceIndex({
-      projectId,
-      resourceId,
-      query,
-      entries,
-    });
-    assertNotCancelled(signal);
     const persisted = await persistAssetResourceIndex({
       store,
       projectId,
@@ -93,6 +87,12 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
     if (activated === false) {
       throw new AssetResourceIndexBuildSupersededError();
     }
+    if (store.delete !== undefined) {
+      await collectAssetResourceIndexGarbageBestEffort({
+        client,
+        store: { delete: store.delete },
+      });
+    }
     return { index, persisted };
   } catch (error) {
     if (error instanceof AssetResourceIndexBuildCancelledError) {
@@ -100,8 +100,8 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
         client,
         projectId,
         resourceId,
-        queryHash,
-        assetRevision,
+        queryHash: index.queryHash,
+        assetRevision: index.assetRevision,
       });
       throw error;
     }
@@ -110,8 +110,8 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
         client,
         projectId,
         resourceId,
-        queryHash,
-        assetRevision,
+        queryHash: index.queryHash,
+        assetRevision: index.assetRevision,
       });
     } catch (stateError) {
       throw new AggregateError(

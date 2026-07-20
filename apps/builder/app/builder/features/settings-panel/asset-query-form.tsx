@@ -43,6 +43,7 @@ import {
   createAssetQueryResourceBody,
   getAssetFileTypeGroqPredicate,
   getAssetIndexStatusLabel,
+  getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
   parseAssetQueryResourceBody,
   type AssetQueryParameterBinding,
@@ -65,6 +66,7 @@ const AssetQueryParameters = ({
       <SmallIconButton
         aria-label="Add runtime parameter"
         icon={<PlusIcon />}
+        disabled={parameters.length >= assetResourceLimits.parameterCount}
         onClick={() => onChange([...parameters, { name: "", value: '""' }])}
       />
     </Flex>
@@ -256,6 +258,7 @@ const AssetQueryOptions = ({
 
 const AssetQueryPreview = ({
   resourceId,
+  resourceRevision,
   query,
   parameters,
   scope,
@@ -265,6 +268,7 @@ const AssetQueryPreview = ({
   onIndexStatusChange,
 }: {
   resourceId?: string;
+  resourceRevision?: string;
   query: string;
   parameters: AssetQueryParameterBinding[];
   scope: Record<string, unknown>;
@@ -286,24 +290,34 @@ const AssetQueryPreview = ({
       return;
     }
     let ignore = false;
-    loadBuilderAssetIndexStatus(resourceId)
-      .then((response) => {
+    let pollTimeout: ReturnType<typeof setTimeout> | undefined;
+    const load = async () => {
+      try {
+        const response = await loadBuilderAssetIndexStatus(resourceId);
         if (ignore) {
           return;
         }
         const data = response.data as { status?: unknown };
         const parsed = assetResourceIndexStatus.safeParse(data.status);
-        onIndexStatusChange(parsed.success ? parsed.data : undefined);
-      })
-      .catch(() => {
+        const status = parsed.success ? parsed.data : undefined;
+        onIndexStatusChange(status);
+        if (status?.state === "indexing") {
+          pollTimeout = setTimeout(load, 1000);
+        }
+      } catch {
         if (ignore === false) {
           onIndexStatusChange(undefined);
         }
-      });
+      }
+    };
+    void load();
     return () => {
       ignore = true;
+      if (pollTimeout !== undefined) {
+        clearTimeout(pollTimeout);
+      }
     };
-  }, [onIndexStatusChange, resourceId]);
+  }, [onIndexStatusChange, resourceId, resourceRevision]);
 
   const preview = async () => {
     setPreviewState({ type: "loading" });
@@ -422,6 +436,12 @@ export const AssetQueryForm = ({
   );
   const [fieldCatalog, setFieldCatalog] = useState<BuilderAssetFieldCatalog>();
   const [indexStatus, setIndexStatus] = useState<AssetResourceIndexStatus>();
+  const configurationError = getAssetQueryConfigurationError({
+    query,
+    parameters,
+    resultLimit,
+    content,
+  });
 
   useEffect(() => {
     if (enabled === false) {
@@ -483,6 +503,11 @@ export const AssetQueryForm = ({
       </Flex>
       {enabled && (
         <>
+          <input
+            type="hidden"
+            name="asset-query-valid"
+            value={configurationError === undefined ? "true" : "false"}
+          />
           <input type="hidden" name="header-name" value="Content-Type" />
           <input type="hidden" name="header-value" value='"application/json"' />
           <input
@@ -533,8 +558,12 @@ export const AssetQueryForm = ({
             onResultLimitChange={setResultLimit}
             onContentChange={setContent}
           />
+          {configurationError !== undefined && (
+            <Text color="destructive">{configurationError}</Text>
+          )}
           <AssetQueryPreview
             resourceId={resource?.id}
+            resourceRevision={resource?.body}
             query={query}
             parameters={parameters}
             scope={scope}

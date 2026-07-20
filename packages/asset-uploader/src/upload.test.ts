@@ -847,6 +847,73 @@ describe("uploadFile", () => {
     });
   });
 
+  test("keeps a committed upload when resource synchronization fails", async () => {
+    const source = "Post body";
+    const uploadedFile = {
+      name: "post.md",
+      format: "md",
+      size: source.length,
+      status: "UPLOADED",
+      uploaderProjectId: "project-1",
+      isDeleted: false,
+      description: null,
+      meta: "{}",
+      createdAt: "2026-07-18T00:00:00.000Z",
+      updatedAt: "2026-07-18T01:00:00.000Z",
+    };
+    server.use(
+      db.get("File", () => json({ ...uploadedFile, status: "UPLOADING" })),
+      db.patch("File", () => json(uploadedFile)),
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("name")) {
+          return json({
+            id: "asset-1",
+            projectId: "project-1",
+            filename: null,
+            description: null,
+            folderId: null,
+          });
+        }
+        return json([
+          {
+            id: "asset-1",
+            projectId: "project-1",
+            filename: null,
+            folderId: null,
+            file: uploadedFile,
+          },
+        ]);
+      }),
+      db.get("AssetFolder", () => json([]))
+    );
+    const logError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      uploadFile(
+        "post.md",
+        new Blob([source]).stream(),
+        {
+          uploadFile: async () => ({
+            format: "md",
+            size: source.length,
+            meta: {},
+          }),
+          readFile: async () => {
+            throw new Error("Storage read failed");
+          },
+        },
+        createContext(),
+        undefined
+      )
+    ).resolves.toMatchObject({ id: "asset-1", name: "post.md" });
+    expect(logError).toHaveBeenCalledWith(
+      "Uploaded asset resource synchronization failed",
+      expect.any(Error)
+    );
+    logError.mockRestore();
+  });
+
   test("returns uploaded asset with reserved asset row id", async () => {
     server.use(
       db.get("File", () =>
@@ -902,7 +969,16 @@ describe("uploadFile", () => {
         });
       }),
       db.get("AssetFolder", () => json([])),
-      db.post("rpc/replace_asset_file_metadata", () => json(true))
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        const body = (await request.json()) as {
+          p_document: { extension: string; mimeType: string };
+        };
+        expect(body.p_document).toMatchObject({
+          extension: "png",
+          mimeType: "image/png",
+        });
+        return json(true);
+      })
     );
 
     await expect(

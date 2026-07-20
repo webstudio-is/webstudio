@@ -67,6 +67,36 @@ test("generate resources loader", () => {
   `);
 });
 
+test("generates resource identity for an Assets query", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "postsVariable",
+        scopeInstanceId: "body",
+        type: "resource",
+        name: "Posts",
+        resourceId: "postsResource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "postsResource",
+        name: "Posts",
+        control: "system" as const,
+        url: '"/$resources/assets/query"',
+        method: "post" as const,
+        headers: [],
+        body: '{ query: "*[]" }',
+      },
+    ]),
+    props: new Map(),
+  });
+
+  expect(generated).toContain('resourceId: "postsResource"');
+});
+
 test("generate variable and use in resources loader", () => {
   expect(
     generateResources({

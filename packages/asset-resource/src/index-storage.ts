@@ -14,6 +14,7 @@ export type ImmutableAssetResourceIndexStore = {
     status: "created" | "exists";
     checksum: string;
   }>;
+  delete?: (key: string) => Promise<"deleted" | "missing">;
 };
 
 const encodeKeySegment = (value: string) => {
@@ -65,4 +66,8 @@ export const persistAssetResourceIndex = async ({
     revision: index.integrity.checksum,
     status: result.status,
   };
+};
+
+export type AssetResourceIndexGarbageCollectionStore = {
+  delete: NonNullable<ImmutableAssetResourceIndexStore["delete"]>;
 };

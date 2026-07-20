@@ -2,9 +2,17 @@ import {
   assetResourceLimits,
   type AssetResourceIndexV1,
 } from "@webstudio-is/sdk";
-import { verifyAssetResourceIndex } from "@webstudio-is/asset-resource";
+import {
+  verifyAssetResourceIndex,
+  type AssetResourceIndexGarbageCollectionStore,
+} from "@webstudio-is/asset-resource";
 import type { Client, Database } from "@webstudio-is/postgrest/index.server";
 import { assertPostgrestSuccess } from "./patch-utils";
+import {
+  addAssetResourceIndexReference,
+  removeAssetResourceIndexReferences,
+} from "./resource-index-persistence";
+import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
 
 type StateRow = Pick<
   Database["public"]["Tables"]["AssetResourceIndexState"]["Row"],
@@ -70,13 +78,18 @@ export const loadAssetResourceIndexSnapshots = async ({
   resources,
   read,
   expectedAssetRevision,
+  referenceId,
+  garbageCollectionStore,
 }: {
   client: Client;
   projectId: string;
   resources: readonly { resourceId: string; queryHash: string }[];
   read: (name: string) => Promise<{ data: AsyncIterable<Uint8Array> }>;
   expectedAssetRevision: string;
+  referenceId: string;
+  garbageCollectionStore?: AssetResourceIndexGarbageCollectionStore;
 }): Promise<AssetResourceIndexSnapshot[]> => {
+  const operationReferenceId = `${referenceId}:${crypto.randomUUID()}`;
   const expectedQueryHashes = new Map(
     resources.map(({ resourceId, queryHash }) => [resourceId, queryHash])
   );
@@ -125,36 +138,64 @@ export const loadAssetResourceIndexSnapshots = async ({
     revisions.map((row) => [`${row.resourceId}:${row.revision}`, row])
   );
 
-  return await Promise.all(
-    uniqueResourceIds.map(async (resourceId) => {
+  try {
+    for (const resourceId of uniqueResourceIds) {
       const state = statesByResource.get(resourceId) as StateRow & {
         activeRevision: string;
       };
-      const revision = revisionByIdentity.get(
-        `${resourceId}:${state.activeRevision}`
-      );
-      if (revision === undefined) {
-        throw new AssetResourceIndexSnapshotError(
-          resourceId,
-          "Active asset resource index revision is missing"
+      await addAssetResourceIndexReference({
+        client,
+        projectId,
+        resourceId,
+        revision: state.activeRevision,
+        type: "BUILD",
+        referenceId: operationReferenceId,
+      });
+    }
+    return await Promise.all(
+      uniqueResourceIds.map(async (resourceId) => {
+        const state = statesByResource.get(resourceId) as StateRow & {
+          activeRevision: string;
+        };
+        const revision = revisionByIdentity.get(
+          `${resourceId}:${state.activeRevision}`
         );
-      }
-      const index = await readIndex({ objectKey: revision.objectKey, read });
-      if (
-        index.resourceId !== resourceId ||
-        index.queryHash !== state.queryHash ||
-        index.queryHash !== revision.queryHash ||
-        index.assetRevision !== state.assetRevision ||
-        index.assetRevision !== revision.assetRevision ||
-        index.integrity.checksum !== state.activeRevision ||
-        revision.revision !== state.activeRevision
-      ) {
-        throw new AssetResourceIndexSnapshotError(
-          resourceId,
-          "Active asset resource index identity is inconsistent"
-        );
-      }
-      return { resourceId, revision: state.activeRevision, index };
-    })
-  );
+        if (revision === undefined) {
+          throw new AssetResourceIndexSnapshotError(
+            resourceId,
+            "Active asset resource index revision is missing"
+          );
+        }
+        const index = await readIndex({ objectKey: revision.objectKey, read });
+        if (
+          index.resourceId !== resourceId ||
+          index.queryHash !== state.queryHash ||
+          index.queryHash !== revision.queryHash ||
+          index.assetRevision !== state.assetRevision ||
+          index.assetRevision !== revision.assetRevision ||
+          index.integrity.checksum !== state.activeRevision ||
+          revision.revision !== state.activeRevision
+        ) {
+          throw new AssetResourceIndexSnapshotError(
+            resourceId,
+            "Active asset resource index identity is inconsistent"
+          );
+        }
+        return { resourceId, revision: state.activeRevision, index };
+      })
+    );
+  } finally {
+    await removeAssetResourceIndexReferences({
+      client,
+      projectId,
+      type: "BUILD",
+      referenceId: operationReferenceId,
+    });
+    if (garbageCollectionStore !== undefined) {
+      await collectAssetResourceIndexGarbageBestEffort({
+        client,
+        store: garbageCollectionStore,
+      });
+    }
+  }
 };

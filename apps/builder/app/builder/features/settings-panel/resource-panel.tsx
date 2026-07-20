@@ -600,7 +600,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
 };
 
 type PanelApi = {
-  save: (formData: FormData) => void;
+  save: (formData: FormData) => void | false;
 };
 
 type BodyType = ResourceBodyInputType;
@@ -965,6 +965,9 @@ export const SystemResourceForm = forwardRef<
   const isAssetQuery = isAssetsResource && isAssetQueryEnabled;
   useImperativeHandle(ref, () => ({
     save: (formData) => {
+      if (formData.get("asset-query-valid") === "false") {
+        return false;
+      }
       // preserve existing instance scope when edit
       const scopeInstanceId =
         variable?.scopeInstanceId ?? $selectedInstance.get()?.id;

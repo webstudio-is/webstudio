@@ -335,6 +335,29 @@ describe("loadResource", () => {
       ]),
     });
   });
+  test("identifies generated Assets query requests by resource", async () => {
+    mockFetch.mockResolvedValue(Response.json({ ok: true }));
+
+    await loadResource(mockFetch, {
+      resourceId: "posts-resource",
+      name: "Posts",
+      control: "system",
+      url: "/$resources/assets/query",
+      searchParams: [],
+      method: "post",
+      headers: [{ name: "content-type", value: "application/json" }],
+      body: { query: "*[]" },
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith("/$resources/assets/query", {
+      method: "post",
+      headers: new Headers([
+        ["content-type", "application/json"],
+        ["x-webstudio-resource-id", "posts-resource"],
+      ]),
+      body: JSON.stringify({ query: "*[]" }),
+    });
+  });
 });
 
 describe("getResourceCacheKey", () => {

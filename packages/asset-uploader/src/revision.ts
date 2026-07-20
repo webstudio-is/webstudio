@@ -9,12 +9,13 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Client } from "@webstudio-is/postgrest/index.server";
-import type { AssetUploadClient } from "./client";
+import type { AssetClient } from "./client";
 import { uploadFileData } from "./upload";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
+import { synchronizeAssetResourceStateAfterAssetChange } from "./resource-index-maintenance";
 
 export class AssetRevisionConflictError extends Error {}
 
@@ -103,7 +104,7 @@ export const updateAssetContent = async (
     expectedName: string;
     data: ReadableStream<Uint8Array>;
   },
-  assetClient: AssetUploadClient,
+  assetClient: AssetClient,
   context: AppContext
 ): Promise<Asset> => {
   const canEdit = await authorizeProject.hasProjectPermit(
@@ -181,6 +182,7 @@ export const updateAssetContent = async (
       context.postgrest.client
     );
   } catch (error) {
+    let swapCommitted = false;
     try {
       const current = await loadAsset({
         assetId,
@@ -188,19 +190,34 @@ export const updateAssetContent = async (
         client: context.postgrest.client,
       });
       if (current.name === revisionName) {
-        return revision;
+        swapCommitted = true;
+      } else {
+        const discardedRevision = await context.postgrest.client
+          .from("File")
+          .update({ isDeleted: true })
+          .eq("name", revisionName);
+        assertPostgrestSuccess(discardedRevision);
       }
-      const discardedRevision = await context.postgrest.client
-        .from("File")
-        .update({ isDeleted: true })
-        .eq("name", revisionName);
-      assertPostgrestSuccess(discardedRevision);
     } catch (cleanupError) {
       console.error("Unable to discard an asset revision", cleanupError);
     }
-    throw error;
+    if (swapCommitted === false) {
+      throw error;
+    }
   }
 
+  try {
+    await synchronizeAssetResourceStateAfterAssetChange({
+      client: context.postgrest.client,
+      assetClient,
+      projectId,
+      assetId,
+    });
+  } catch (error) {
+    // The immutable revision swap has already committed. Keep the primary
+    // mutation successful; publication reconciles stale query indexes.
+    console.error("Asset revision resource synchronization failed", error);
+  }
   return revision;
 };
 

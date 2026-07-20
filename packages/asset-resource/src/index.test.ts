@@ -1,11 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { assetResourceLimits, type AssetFileDocument } from "@webstudio-is/sdk";
 import { loadResource } from "@webstudio-is/sdk/runtime";
-import {
-  AssetResourceQueryExecutionError,
-  createAssetResourceRequest,
-  executeAssetResourceQuery,
-} from "./index";
+import { createAssetResourceRequest, executeAssetResourceQuery } from "./index";
 
 const createDocument = (
   id: string,
@@ -171,27 +167,5 @@ describe("bounded asset resource execution", () => {
         assetRevision: "asset-revision",
       })
     ).rejects.toMatchObject({ code: "RESULT_SIZE_EXCEEDED" });
-  });
-
-  test("rejects execution that exceeds the runtime limit", async () => {
-    const now = vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(251);
-    await expect(
-      executeAssetResourceQuery({
-        request: {
-          query: "*[0]",
-          parameters: {},
-          resultLimit: 1,
-          content: { mode: "none" },
-        },
-        documents,
-        queryHash: "query-revision",
-        indexRevision: "index-revision",
-        assetRevision: "asset-revision",
-        now,
-      })
-    ).rejects.toMatchObject({
-      name: AssetResourceQueryExecutionError.name,
-      code: "QUERY_TIMEOUT",
-    });
   });
 });

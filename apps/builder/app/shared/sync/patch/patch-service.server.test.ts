@@ -6,6 +6,7 @@ const createContentModeCapabilities = vi.hoisted(() =>
   vi.fn(() => ({ capabilities: true }))
 );
 const synchronizeAssetResourceIndexQueries = vi.hoisted(() => vi.fn());
+const synchronizeCanonicalAsset = vi.hoisted(() => vi.fn());
 const synchronizeAllCanonicalAssetStandardMetadata = vi.hoisted(() => vi.fn());
 const updateAssetResourceIndexesAfterCanonicalChange = vi.hoisted(() =>
   vi.fn()
@@ -26,6 +27,7 @@ vi.mock("./patch-auth.server", () => ({
 }));
 vi.mock("@webstudio-is/asset-uploader/index.server", () => ({
   synchronizeAssetResourceIndexQueries,
+  synchronizeCanonicalAsset,
   synchronizeAllCanonicalAssetStandardMetadata,
   updateAssetResourceIndexesAfterCanonicalChange,
 }));
@@ -115,6 +117,10 @@ describe("applyPatchRequest", () => {
     synchronizeAssetResourceIndexQueries.mockReset().mockResolvedValue({
       deletedResourceIds: [],
       updatedResourceIds: [],
+    });
+    synchronizeCanonicalAsset.mockReset().mockResolvedValue({
+      status: "indexed",
+      revision: "revision-1",
     });
     synchronizeAllCanonicalAssetStandardMetadata
       .mockReset()
@@ -206,6 +212,56 @@ describe("applyPatchRequest", () => {
         projectId: "project-1",
         changedAssetIds: ["folder-1"],
       })
+    );
+  });
+
+  test("indexes added assets before rebuilding resource indexes", async () => {
+    const assetEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-asset-add",
+        payload: [
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "add",
+                path: ["asset-1"],
+                value: { id: "asset-1", name: "post.md" },
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await expect(
+      applyPatchRequest(createContext(), { ...patch, entries: [assetEntry] })
+    ).resolves.toMatchObject({ status: "ok" });
+
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledWith({
+      client: expect.anything(),
+      assetClient: createAssetClient.mock.results[0]?.value,
+      projectId: "project-1",
+      assetId: "asset-1",
+    });
+    expect(updateAssetResourceIndexesAfterCanonicalChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project-1",
+        changedAssetIds: ["asset-1"],
+      })
+    );
+    expect(synchronizeCanonicalAsset.mock.invocationCallOrder[0]).toBeLessThan(
+      updateAssetResourceIndexesAfterCanonicalChange.mock.invocationCallOrder[0]
     );
   });
 

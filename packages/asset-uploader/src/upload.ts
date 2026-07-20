@@ -19,8 +19,7 @@ import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
-import { synchronizeCanonicalAsset } from "./canonical-metadata-backfill";
-import { updateAssetResourceIndexesAfterCanonicalChange } from "./resource-index-maintenance";
+import { synchronizeAssetResourceStateAfterAssetChange } from "./resource-index-maintenance";
 
 type UploadData = {
   projectId: string;
@@ -527,19 +526,15 @@ export const uploadFile = async (
     await cleanupUploadError(name, context, onUploadError);
     throw error;
   }
-  await synchronizeCanonicalAsset({
-    projectId: uploadedAsset.projectId,
-    assetId: uploadedAsset.id,
-    client: context.postgrest.client,
-    assetClient: client,
-  });
-  if (client.resourceIndexStore !== undefined) {
-    await updateAssetResourceIndexesAfterCanonicalChange({
+  try {
+    await synchronizeAssetResourceStateAfterAssetChange({
       client: context.postgrest.client,
-      store: client.resourceIndexStore,
+      assetClient: client,
       projectId: uploadedAsset.projectId,
-      changedAssetIds: [uploadedAsset.id],
+      assetId: uploadedAsset.id,
     });
+  } catch (error) {
+    console.error("Uploaded asset resource synchronization failed", error);
   }
   return uploadedAsset;
 };

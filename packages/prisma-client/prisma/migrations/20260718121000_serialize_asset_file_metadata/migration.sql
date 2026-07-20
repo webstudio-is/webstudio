@@ -95,7 +95,6 @@ BEGIN
       WHERE asset."projectId" = p_project_id
         AND asset."id" = asset_id
         AND file."status" = 'UPLOADED'
-        AND file."name" ~* '\.md$'
     ) THEN
       DELETE FROM public."AssetFileMetadata"
       WHERE "projectId" = p_project_id

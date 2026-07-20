@@ -20,7 +20,12 @@ BEGIN
     SELECT candidate.ctid
     FROM public."AssetResourceIndexRevision" AS candidate
     WHERE candidate."unreferencedAt" <= p_before
-      AND candidate."gcClaimId" IS NULL
+      AND (
+        candidate."gcClaimId" IS NULL
+        -- Object deletion is idempotent, so an interrupted worker's claim can
+        -- safely be rotated and resumed after its lease expires.
+        OR candidate."gcStartedAt" <= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+      )
       AND NOT EXISTS (
         SELECT 1 FROM public."AssetResourceIndexReference" AS reference
         WHERE reference."projectId" = candidate."projectId"

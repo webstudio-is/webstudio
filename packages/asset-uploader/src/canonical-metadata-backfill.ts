@@ -147,7 +147,7 @@ const createCanonicalDocument = ({
       name,
       ...(extension === undefined ? {} : { extension }),
       ...(folderId === undefined ? {} : { folderId, folderNames }),
-      mimeType: getMimeTypeByFilename(name),
+      mimeType: getMimeTypeByFilename(asset.file.name),
       size: asset.file.size,
       revision,
       contentRef: asset.file.name,
@@ -187,14 +187,15 @@ const indexCanonicalAsset = async ({
   let excerpt: string | undefined;
   if (markdownExtension.test(asset.file.name)) {
     const prefixLength = Math.min(
-      Math.max(1, asset.file.size),
+      asset.file.size,
       assetResourceLimits.hydratedFileBytes
     );
-    const stored = await assetClient.readFile(asset.file.name, {
-      offset: 0,
-      length: prefixLength,
-    });
-    const bytes = await readPrefix(stored.data, prefixLength);
+    const bytes =
+      prefixLength === 0
+        ? new Uint8Array()
+        : await assetClient
+            .readFile(asset.file.name, { offset: 0, length: prefixLength })
+            .then((stored) => readPrefix(stored.data, prefixLength));
     const markdown = await Promise.all([
       extractMarkdownFrontmatter(bytes),
       extractMarkdownBodyAndExcerpt(bytes),

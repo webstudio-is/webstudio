@@ -6,11 +6,7 @@ import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
 import { sitemap } from "__SITEMAP__";
 import { assets } from "__ASSETS__";
 import { authRoutes } from "__AUTH__";
-import {
-  assetQueryDeploymentId,
-  assetQueryManifest,
-} from "__ASSET_QUERY_MANIFEST__";
-import { createGeneratedAssetResourceFetch } from "../asset-resource-fetch";
+import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
 
 const authenticateProductionRequest = (request: Request) => {
   const host =
@@ -90,8 +86,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   const generatedFetch = await createGeneratedAssetResourceFetch({
     request: arg.request,
     context: arg.context,
-    deploymentId: assetQueryDeploymentId,
-    manifest: assetQueryManifest,
     fallback: customFetch,
   });
   const resources = await loadResources(

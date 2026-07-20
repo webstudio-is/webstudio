@@ -237,4 +237,21 @@ describe("getResourceKey - pure function tests", () => {
 
     expect(new Set(keys).size).toBe(requests.length);
   });
+
+  test("asset query cache separates resource identities", () => {
+    const request: ResourceRequest = {
+      resourceId: "posts",
+      name: "assets-query",
+      control: "system",
+      method: "post",
+      url: "/$resources/assets/query",
+      searchParams: [],
+      headers: [],
+      body: { query: "*[]" },
+    };
+
+    expect(getResourceKey(request)).not.toBe(
+      getResourceKey({ ...request, resourceId: "other-posts" })
+    );
+  });
 });

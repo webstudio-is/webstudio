@@ -36,5 +36,7 @@ describe("filesystem immutable resource index storage", () => {
     await expect(
       readFile(join(directory, "projects/one/index.json"), "utf8")
     ).resolves.toBe("one");
+    await expect(store.delete?.(object.key)).resolves.toBe("deleted");
+    await expect(store.delete?.(object.key)).resolves.toBe("missing");
   });
 });

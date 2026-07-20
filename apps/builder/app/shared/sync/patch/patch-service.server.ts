@@ -17,6 +17,7 @@ import type {
 } from "./patch-normalize.server";
 import {
   synchronizeAllCanonicalAssetStandardMetadata,
+  synchronizeCanonicalAsset,
   synchronizeAssetResourceIndexQueries,
   updateAssetResourceIndexesAfterCanonicalChange,
 } from "@webstudio-is/asset-uploader/index.server";
@@ -397,6 +398,7 @@ export const applyPatchRequest = async (
   );
   if (assetChanges.length > 0) {
     try {
+      const assetClient = createAssetClient();
       const hasFolderChanges = assetChanges.some(
         ({ namespace }) => namespace === "assetFolders"
       );
@@ -404,6 +406,27 @@ export const applyPatchRequest = async (
         await synchronizeAllCanonicalAssetStandardMetadata({
           client: context.postgrest.client,
           projectId: patch.projectId,
+        });
+      }
+      const addedAssetIds = [
+        ...new Set(
+          assetChanges
+            .filter(({ namespace }) => namespace === "assets")
+            .flatMap(({ patches }) =>
+              patches.flatMap(({ op, path }) =>
+                op === "add" && path.length === 1 && typeof path[0] === "string"
+                  ? [path[0]]
+                  : []
+              )
+            )
+        ),
+      ];
+      for (const assetId of addedAssetIds) {
+        await synchronizeCanonicalAsset({
+          client: context.postgrest.client,
+          assetClient,
+          projectId: patch.projectId,
+          assetId,
         });
       }
       const changedAssetIds = [
@@ -417,7 +440,7 @@ export const applyPatchRequest = async (
       ];
       await updateAssetResourceIndexesAfterCanonicalChange({
         client: context.postgrest.client,
-        store: createAssetClient().resourceIndexStore,
+        store: assetClient.resourceIndexStore,
         projectId: patch.projectId,
         changedAssetIds:
           changedAssetIds.length === 0 ? ["project-assets"] : changedAssetIds,
