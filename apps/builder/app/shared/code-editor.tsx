@@ -5,6 +5,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import type { Extension } from "@codemirror/state";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
@@ -58,6 +59,8 @@ const wrapperStyle = css({
     size: "default",
   },
 });
+
+const noLanguageExtensions: Extension[] = [];
 
 const getHtmlExtensions = () => [
   highlightActiveLine(),
@@ -137,11 +140,21 @@ export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
     lang?: "html" | "json" | "markdown" | "css-properties";
+    languageExtensions?: Extension[];
     title?: ReactNode;
     size?: "default" | "small" | "full";
+    expandable?: boolean;
   }
->(({ lang, title, size, ...editorContentProps }, ref) => {
-  const extensions = useMemo(() => {
+>((props, ref) => {
+  const {
+    lang,
+    languageExtensions = noLanguageExtensions,
+    title,
+    size,
+    expandable = true,
+    ...editorContentProps
+  } = props;
+  const builtInExtensions = useMemo(() => {
     if (lang === "html") {
       return getHtmlExtensions();
     }
@@ -167,6 +180,11 @@ export const CodeEditor = forwardRef<
     return [];
   }, [lang]);
 
+  const extensions = useMemo(
+    () => [...builtInExtensions, ...languageExtensions],
+    [builtInExtensions, languageExtensions]
+  );
+
   const dialogExtensions = useMemo(
     () => [...extensions, foldGutterExtension],
     [extensions]
@@ -191,20 +209,24 @@ export const CodeEditor = forwardRef<
   }, []);
   return (
     <div className={wrapperStyle({ size })} ref={ref}>
-      <EditorDialogControl>
+      {expandable === false ? (
         <EditorContent {...editorContentProps} extensions={extensions} />
-        <EditorDialog
-          title={title}
-          content={
-            <EditorContent
-              {...editorContentProps}
-              extensions={dialogExtensions}
-            />
-          }
-        >
-          <EditorDialogButton />
-        </EditorDialog>
-      </EditorDialogControl>
+      ) : (
+        <EditorDialogControl>
+          <EditorContent {...editorContentProps} extensions={extensions} />
+          <EditorDialog
+            title={title}
+            content={
+              <EditorContent
+                {...editorContentProps}
+                extensions={dialogExtensions}
+              />
+            }
+          >
+            <EditorDialogButton />
+          </EditorDialog>
+        </EditorDialogControl>
+      )}
     </div>
   );
 });

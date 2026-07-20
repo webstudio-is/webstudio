@@ -20,6 +20,7 @@ export const formatAsset = ({
     description: string | null;
     size: number;
     createdAt: string;
+    updatedAt: string;
     meta: string;
   };
 }): Asset => {
@@ -34,6 +35,7 @@ export const formatAsset = ({
     folderId: folderId ?? undefined,
     size: file.size,
     createdAt: file.createdAt,
+    updatedAt: file.updatedAt,
   };
 
   if (isFont) {

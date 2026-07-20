@@ -93,6 +93,32 @@ export const createLocalUploadAssetsInput = <Asset extends { name: string }>({
   readAssetData: createLocalAssetDataReader(readFile, assetsDir),
 });
 
+export const createLocalUpdateAssetContentInput = ({
+  assetId,
+  expectedName,
+  path,
+  content,
+  readFile,
+}: {
+  assetId: string;
+  expectedName: string;
+  path?: string;
+  content?: string;
+  readFile: (path: string) => Promise<unknown>;
+}) => {
+  if ((path === undefined) === (content === undefined)) {
+    throw new Error(
+      "update-asset-content requires exactly one of path or content."
+    );
+  }
+  return {
+    assetId,
+    expectedName,
+    readAssetData: async () =>
+      path === undefined ? content : await readFile(resolve(path)),
+  };
+};
+
 const downloadUrlToFileOnce = async (url: string, filePath: string) => {
   const tempFilePath = `${filePath}.tmp`;
   let writableStream: ReturnType<typeof createWriteStream> | undefined;

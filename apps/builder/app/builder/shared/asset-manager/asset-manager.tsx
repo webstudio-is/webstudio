@@ -103,6 +103,7 @@ type FolderNavigationProps =
 
 type AssetManagerProps = FolderNavigationProps & {
   onChange?: (assetId: Asset["id"]) => void;
+  onOpen?: (assetId: Asset["id"]) => void;
   /** acceptable file types in the `<input accept>` attribute format */
   accept?: string;
   canManageFolders?: boolean;
@@ -140,6 +141,7 @@ const getItemCountLabel = (count: number, qualifier?: string) =>
 export const AssetManager = ({
   accept = "*",
   onChange,
+  onOpen,
   folderId,
   onFolderChange,
   canManageFolders = false,
@@ -914,6 +916,7 @@ export const AssetManager = ({
         }}
         onKeyDown={handleShortcut}
         autoScrollOnElementDrag={canManageFolders}
+        allowFolderDrop={canManageFolders}
         contextMenu={
           hasPanelContextMenuActions ? (
             <AssetManagerItemContextMenuContent
@@ -997,6 +1000,11 @@ export const AssetManager = ({
                   onChange={(assetContainer) => {
                     onChange?.(assetContainer.asset.id);
                   }}
+                  onOpen={
+                    assetContainer.status === "uploaded" && onOpen !== undefined
+                      ? () => onOpen(assetContainer.asset.id)
+                      : undefined
+                  }
                   selected={isItemSelected({
                     type: "asset",
                     id: assetContainer.asset.id,

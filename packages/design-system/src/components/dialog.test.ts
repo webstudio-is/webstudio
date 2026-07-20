@@ -56,7 +56,7 @@ describe("calculateCenteredPosition", () => {
 });
 
 describe("calculateDialogStyle", () => {
-  test("maximized dialog fills boundary", () => {
+  test("maximized dialog leaves space around the boundary", () => {
     const bounds = { x: 100, y: 50, width: 800, height: 600 };
     const style = calculateDialogStyle(bounds, {
       isMaximized: true,
@@ -65,10 +65,12 @@ describe("calculateDialogStyle", () => {
     });
 
     expect(style).toEqual({
-      top: 50,
-      left: 100,
-      width: 800,
-      height: 600,
+      top: 70,
+      left: 120,
+      width: 760,
+      height: 560,
+      maxWidth: 760,
+      maxHeight: 560,
     });
   });
 

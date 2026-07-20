@@ -1,5 +1,5 @@
 {
-  "bundleVersion": "bundle-1h06fyv",
+  "bundleVersion": "bundle-1l6lbch",
   "build": {
     "id": "1b66ee06-8ea5-4420-9a0e-e0d3a67aca32",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
@@ -7227,6 +7227,7 @@
       "size": 19680,
       "name": "e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
       "createdAt": "2026-01-14T01:59:48.958+00:00",
+      "updatedAt": "2026-01-14T01:59:48.958+00:00",
       "format": "mp3",
       "meta": {},
       "type": "file"
@@ -7237,6 +7238,7 @@
       "size": 901185,
       "name": "webm-example_2r_6VmRBjhAy3ldaqz0gk.webm",
       "createdAt": "2026-01-14T02:59:19.806+00:00",
+      "updatedAt": "2026-01-14T02:59:19.806+00:00",
       "format": "webm",
       "meta": {},
       "type": "file"
@@ -7247,6 +7249,7 @@
       "size": 268326,
       "name": "cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png",
       "createdAt": "2025-06-20T17:59:02.94+00:00",
+      "updatedAt": "2025-06-20T17:59:02.94+00:00",
       "format": "png",
       "meta": {
         "width": 790,
@@ -7260,6 +7263,7 @@
       "size": 2906,
       "name": "small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
       "createdAt": "2023-09-12T09:44:22.12+00:00",
+      "updatedAt": "2023-09-12T09:44:24.24+00:00",
       "format": "webp",
       "meta": {
         "width": 100,
@@ -7273,6 +7277,7 @@
       "size": 170479,
       "name": "video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4",
       "createdAt": "2026-01-14T02:59:28.168+00:00",
+      "updatedAt": "2026-01-14T02:59:28.168+00:00",
       "format": "mp4",
       "meta": {},
       "type": "file"
@@ -7283,6 +7288,7 @@
       "size": 210614,
       "name": "_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg",
       "createdAt": "2023-09-06T11:28:43.031+00:00",
+      "updatedAt": "2023-09-06T11:28:46.868+00:00",
       "format": "jpeg",
       "meta": {
         "width": 1024,

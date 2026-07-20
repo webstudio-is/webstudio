@@ -13,21 +13,26 @@ const searchParams = (params: Record<string, string | undefined | null>) => {
   return asString === "" ? "" : `?${asString}`;
 };
 
+export type BuilderLinkParams = {
+  pageId?: string;
+  instanceId?: string;
+  authToken?: string;
+  pageHash?: string;
+  mode?: BuilderMode;
+  safemode?: boolean;
+};
+
 export const builderPath = ({
   pageId,
+  instanceId,
   authToken,
   pageHash,
   mode,
   safemode = false,
-}: {
-  pageId?: string;
-  authToken?: string;
-  pageHash?: string;
-  mode?: "preview" | "content";
-  safemode?: boolean;
-} = {}) => {
+}: BuilderLinkParams = {}) => {
   return `/${searchParams({
     pageId,
+    instanceId,
     authToken,
     pageHash,
     mode,
@@ -35,38 +40,27 @@ export const builderPath = ({
   })}`;
 };
 
-export const builderUrl = (props: {
+export const builderUrl = ({
+  projectId,
+  origin,
+  ...link
+}: BuilderLinkParams & {
   projectId: string;
-  pageId?: string;
   origin: string;
-  authToken?: string;
-  mode?: BuilderMode;
-  safemode?: boolean;
 }) => {
-  const authServerOrigin = getAuthorizationServerOrigin(props.origin);
+  const authServerOrigin = getAuthorizationServerOrigin(origin);
 
-  const url = new URL(
-    builderPath({
-      pageId: props.pageId,
-      authToken: props.authToken,
-      safemode: props.safemode,
-    }),
-    authServerOrigin
-  );
+  const url = new URL(builderPath(link), authServerOrigin);
 
   const fragments = url.host.split(".");
   if (fragments.length <= 3) {
-    fragments.splice(0, 0, "p-" + props.projectId);
+    fragments.splice(0, 0, "p-" + projectId);
   } else {
     // staging | development branches
-    fragments[0] = "p-" + props.projectId + "-dot-" + fragments[0];
+    fragments[0] = "p-" + projectId + "-dot-" + fragments[0];
   }
 
   url.host = fragments.join(".");
-
-  if (props.mode !== undefined) {
-    url.searchParams.set("mode", props.mode);
-  }
 
   return url.href;
 };

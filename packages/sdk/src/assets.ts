@@ -1,6 +1,40 @@
 import warnOnce from "warn-once";
 import type { Asset } from "./schema/assets";
 
+export const MIME_CATEGORIES = [
+  "image",
+  "video",
+  "audio",
+  "font",
+  "text",
+  "application",
+] as const;
+
+export type MimeCategory = (typeof MIME_CATEGORIES)[number];
+
+export type AssetTextEditorLanguage =
+  | "plain"
+  | "css"
+  | "html"
+  | "javascript"
+  | "json"
+  | "markdown"
+  | "xml";
+
+type MimeType = `${MimeCategory}/${string}`;
+type BinaryMimeType = `${Exclude<MimeCategory, "text">}/${string}`;
+
+const binaryFile = <Mime extends BinaryMimeType>(mimeType: Mime) =>
+  ({ mimeType, textEditor: false }) as const;
+
+const textFile = <
+  Mime extends MimeType,
+  Language extends AssetTextEditorLanguage,
+>(
+  mimeType: Mime,
+  textEditor: Language
+) => ({ mimeType, textEditor }) as const;
+
 /**
  * Central registry of allowed file types, extensions, and MIME types
  * for asset uploads and serving.
@@ -12,63 +46,78 @@ import type { Asset } from "./schema/assets";
  * Other formats (BMP, ICO, TIFF) are allowed for upload but served as-is without optimization.
  */
 
-export const ALLOWED_FILE_TYPES = {
+const assetFileTypes = {
   // Documents
-  pdf: "application/pdf",
-  doc: "application/msword",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  xls: "application/vnd.ms-excel",
-  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  csv: "text/csv",
-  ppt: "application/vnd.ms-powerpoint",
-  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  pdf: binaryFile("application/pdf"),
+  doc: binaryFile("application/msword"),
+  docx: binaryFile(
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ),
+  xls: binaryFile("application/vnd.ms-excel"),
+  xlsx: binaryFile(
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  ),
+  csv: textFile("text/csv", "plain"),
+  ppt: binaryFile("application/vnd.ms-powerpoint"),
+  pptx: binaryFile(
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  ),
 
   // Code
-  txt: "text/plain",
-  md: "text/markdown",
-  js: "text/javascript",
-  css: "text/css",
-  json: "application/json",
-  html: "text/html",
-  xml: "application/xml",
+  txt: textFile("text/plain", "plain"),
+  md: textFile("text/markdown", "markdown"),
+  js: textFile("text/javascript", "javascript"),
+  css: textFile("text/css", "css"),
+  json: textFile("application/json", "json"),
+  html: textFile("text/html", "html"),
+  xml: textFile("application/xml", "xml"),
 
   // Archives
-  zip: "application/zip",
-  rar: "application/vnd.rar",
+  zip: binaryFile("application/zip"),
+  rar: binaryFile("application/vnd.rar"),
 
   // Audio
-  mp3: "audio/mpeg",
-  wav: "audio/wav",
-  ogg: "audio/ogg",
-  m4a: "audio/mp4",
+  mp3: binaryFile("audio/mpeg"),
+  wav: binaryFile("audio/wav"),
+  ogg: binaryFile("audio/ogg"),
+  m4a: binaryFile("audio/mp4"),
 
   // Video
-  mp4: "video/mp4",
-  mov: "video/quicktime",
-  avi: "video/x-msvideo",
-  webm: "video/webm",
+  mp4: binaryFile("video/mp4"),
+  mov: binaryFile("video/quicktime"),
+  avi: binaryFile("video/x-msvideo"),
+  webm: binaryFile("video/webm"),
 
   // Images
   // Note: Cloudflare Image Resizing supports: jpg, jpeg, png, gif, webp, svg, avif
   // Other formats (bmp, ico, tif, tiff) are served as-is without optimization
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  gif: "image/gif",
-  svg: "image/svg+xml",
-  webp: "image/webp",
-  avif: "image/avif",
-  ico: "image/vnd.microsoft.icon", // Used for favicons
-  bmp: "image/bmp", // Served without optimization
-  tif: "image/tiff", // Served without optimization
-  tiff: "image/tiff", // Served without optimization
+  jpg: binaryFile("image/jpeg"),
+  jpeg: binaryFile("image/jpeg"),
+  png: binaryFile("image/png"),
+  gif: binaryFile("image/gif"),
+  svg: textFile("image/svg+xml", "xml"),
+  webp: binaryFile("image/webp"),
+  avif: binaryFile("image/avif"),
+  ico: binaryFile("image/vnd.microsoft.icon"),
+  bmp: binaryFile("image/bmp"),
+  tif: binaryFile("image/tiff"),
+  tiff: binaryFile("image/tiff"),
 
   // Fonts
-  woff: "font/woff",
-  woff2: "font/woff2",
-  ttf: "font/ttf",
-  otf: "font/otf",
+  woff: binaryFile("font/woff"),
+  woff2: binaryFile("font/woff2"),
+  ttf: binaryFile("font/ttf"),
+  otf: binaryFile("font/otf"),
 } as const;
+
+export const ALLOWED_FILE_TYPES = Object.fromEntries(
+  Object.entries(assetFileTypes).map(([extension, { mimeType }]) => [
+    extension,
+    mimeType,
+  ])
+) as {
+  readonly [Extension in keyof typeof assetFileTypes]: (typeof assetFileTypes)[Extension]["mimeType"];
+};
 
 export type AllowedFileExtension = keyof typeof ALLOWED_FILE_TYPES;
 
@@ -79,20 +128,6 @@ export const ALLOWED_FILE_EXTENSIONS: ReadonlySet<AllowedFileExtension> =
   new Set<AllowedFileExtension>(
     Object.keys(ALLOWED_FILE_TYPES) as AllowedFileExtension[]
   );
-
-/**
- * Set of allowed MIME type categories
- */
-export const MIME_CATEGORIES = [
-  "image",
-  "video",
-  "audio",
-  "font",
-  "text",
-  "application",
-] as const;
-
-export type MimeCategory = (typeof MIME_CATEGORIES)[number];
 
 /**
  * File extensions grouped by MIME category for UI display and filtering
@@ -195,6 +230,17 @@ export const getMimeTypeByExtension = (
   return ALLOWED_FILE_TYPES[extension.toLowerCase() as AllowedFileExtension];
 };
 
+export const getAssetTextEditorLanguage = (
+  asset: Pick<Asset, "format">
+): AssetTextEditorLanguage | undefined => {
+  const fileType =
+    assetFileTypes[asset.format.toLowerCase() as keyof typeof assetFileTypes];
+  return fileType?.textEditor || undefined;
+};
+
+export const isTextFileAsset = (asset: Pick<Asset, "format">): boolean =>
+  getAssetTextEditorLanguage(asset) !== undefined;
+
 /**
  * Get MIME type from a filename
  */
@@ -205,6 +251,9 @@ export const getMimeTypeByFilename = (fileName: string): string => {
   }
   return getMimeTypeByExtension(extension) ?? "application/octet-stream";
 };
+
+export const isResizableImageFileName = (fileName: string): boolean =>
+  RESIZABLE_IMAGE_MIME_TYPES.includes(getMimeTypeByFilename(fileName));
 
 /**
  * Check if a file extension is allowed
@@ -413,25 +462,19 @@ export const decodePathFragment = (fragment: string): string => {
 };
 
 /**
- * Generates the appropriate URL for an asset based on its type and format.
- * - Images use /cgi/image/ with format=raw
- * - All other assets (videos, audio, fonts, documents) use /cgi/asset/ with format=raw
+ * Generates the appropriate URL for an asset based on its format.
  *
  * @param asset - The asset to generate URL for
  * @param origin - Origin to prepend (e.g., "https://example.com"). When provided, returns an absolute URL.
  * @returns A URL object. Use .pathname for relative paths, .href for absolute URLs
  */
-export const getAssetUrl = (asset: Asset, origin: string): URL => {
-  let path: string;
-  const assetType = detectAssetType(asset.name);
-
-  if (assetType === "image") {
-    path = `/cgi/image/${asset.name}?format=raw`;
-  } else {
-    // Videos, audio, fonts, documents all use /cgi/asset/
-    path = `/cgi/asset/${asset.name}?format=raw`;
-  }
-
+export const getAssetUrl = (
+  asset: Pick<Asset, "name">,
+  origin: string
+): URL => {
+  const path = isResizableImageFileName(asset.name)
+    ? `/cgi/image/${asset.name}?format=raw`
+    : `/cgi/asset/${asset.name}?format=raw`;
   return new URL(path, origin);
 };
 

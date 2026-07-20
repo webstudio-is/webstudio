@@ -183,6 +183,7 @@ export const CodeControl = ({
           lang={lang}
           title={
             <DialogTitle
+              maximizable
               suffix={
                 <DialogTitleActions>
                   <DialogMaximize />

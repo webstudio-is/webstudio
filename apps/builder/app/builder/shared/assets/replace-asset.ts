@@ -1,6 +1,7 @@
 import type { Asset } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
+import { $uploadingFilesDataStore } from "~/shared/nano-states";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
@@ -12,7 +13,7 @@ import { uploadAssets } from "./upload-assets";
  * 1. Uploads the new file via the existing upload pipeline
  * 2. Waits for the upload to complete (new asset appears in $assets)
  * 3. Re-points all references (props, styles, page meta) from old → new asset
- * 4. Copies filename & description from old asset to new asset
+ * 4. Copies the description from the old asset to the new asset
  * 5. Deletes the old asset
  */
 export const replaceAsset = async (
@@ -25,7 +26,9 @@ export const replaceAsset = async (
     return;
   }
 
-  const fileToAssetId = await uploadAssets("image", [file]);
+  const fileToAssetId = await uploadAssets("image", [file], {
+    folderId: oldAsset.folderId,
+  });
   const newAssetId = fileToAssetId.get(file);
 
   if (!newAssetId) {
@@ -33,12 +36,30 @@ export const replaceAsset = async (
     return;
   }
 
-  await waitForAsset(newAssetId);
+  try {
+    await waitForAsset(newAssetId);
+  } catch {
+    return;
+  }
 
-  executeRuntimeMutation({
-    id: "assets.replace",
-    input: { fromAssetId: oldAssetId, toAssetId: newAssetId },
-  });
+  try {
+    const result = executeRuntimeMutation({
+      id: "assets.replace",
+      input: { fromAssetId: oldAssetId, toAssetId: newAssetId },
+    });
+    if (result === undefined) {
+      throw new Error("Asset replacement is not permitted");
+    }
+  } catch (error) {
+    executeRuntimeMutation({
+      id: "assets.delete",
+      input: { assetIdsOrPrefixes: [newAssetId], force: true },
+    });
+    toast.error(
+      error instanceof Error ? error.message : "Failed to replace asset"
+    );
+    return;
+  }
 
   onNextTransactionComplete(() => {
     invalidateAssets();
@@ -54,14 +75,32 @@ const waitForAsset = (assetId: string): Promise<Asset> => {
     return Promise.resolve(existingAsset);
   }
 
-  // Use .listen() instead of .subscribe(), so the `unsubscribe` variable is always assigned before the callback runs.
-  return new Promise((resolve) => {
-    const unsubscribe = $assets.listen((assets) => {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      unsubscribeAssets();
+      unsubscribeUploads();
+    };
+    const check = () => {
+      const assets = $assets.get();
       const asset = assets.get(assetId);
       if (asset !== undefined) {
-        unsubscribe();
+        cleanup();
         resolve(asset);
+        return;
       }
-    });
+
+      const isUploading = $uploadingFilesDataStore
+        .get()
+        .some((fileData) => fileData.assetId === assetId);
+      if (isUploading === false) {
+        cleanup();
+        reject(new Error("Failed to upload replacement asset"));
+      }
+    };
+    const unsubscribeAssets = $assets.listen(check);
+    const unsubscribeUploads = $uploadingFilesDataStore.listen(check);
+    check();
   });
 };
+
+export const __testing__ = { waitForAsset };

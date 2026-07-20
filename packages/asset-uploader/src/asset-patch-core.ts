@@ -7,6 +7,7 @@ import {
   diffMaps,
   type Patch,
 } from "./patch-utils";
+import { swapAssetFileWithClient } from "./revision";
 
 export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
   Array.from(assets, (asset) => ({
@@ -128,7 +129,7 @@ export const deleteAssetsWithClient = async (
 };
 
 /**
- * patchAssetsWithClient can only delete, add, or update asset metadata.
+ * Persists asset additions, deletions, metadata updates, and file revisions.
  */
 export const patchAssetsWithClient = async (
   { projectId, client }: { projectId: string; client: Client },
@@ -150,6 +151,7 @@ export const patchAssetsWithClient = async (
     assetsMap,
     patchedAssets,
     (previous, asset) =>
+      previous.name === asset.name &&
       previous.filename === asset.filename &&
       previous.description === asset.description &&
       previous.folderId === asset.folderId
@@ -159,6 +161,21 @@ export const patchAssetsWithClient = async (
   }
 
   for (const asset of updated) {
+    const previous = assetsMap.get(asset.id);
+    if (previous === undefined) {
+      throw new Error(`Asset ${asset.id} was not loaded`);
+    }
+    if (previous.name !== asset.name) {
+      await swapAssetFileWithClient(
+        {
+          projectId,
+          assetId: asset.id,
+          expectedName: previous.name,
+          replacementName: asset.name,
+        },
+        client
+      );
+    }
     const { filename, description, folderId } = asset;
     const updatedAsset = await client
       .from("Asset")

@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import { http, HttpResponse } from "msw";
 import {
   createTestServer,
   db,
@@ -327,6 +328,48 @@ describe("patchAssets (msw)", () => {
         filename: "renamed-photo.jpg",
       }),
     ]);
+  });
+
+  test("atomically swaps an asset file while preserving its id", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+    let swapInput: unknown;
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("Asset", () =>
+        json({
+          filename: localAssetRow.filename,
+          description: localAssetRow.description,
+          folderId: null,
+        })
+      ),
+      http.post(
+        "http://test-postgrest/rpc/swap_asset_file",
+        async ({ request }) => {
+          swapInput = await request.json();
+          return HttpResponse.json("updated");
+        }
+      )
+    );
+
+    await patchAssetsWithClient(
+      { projectId, client: testContext.postgrest.client },
+      [
+        {
+          op: "replace",
+          path: ["asset-1", "name"],
+          value: "photo_revision.jpg",
+        },
+      ]
+    );
+
+    expect(swapInput).toEqual({
+      project_id: projectId,
+      asset_id: "asset-1",
+      expected_name: "photo.jpg",
+      replacement_name: "photo_revision.jpg",
+    });
   });
 
   test("persists moving an asset to root as null", async () => {

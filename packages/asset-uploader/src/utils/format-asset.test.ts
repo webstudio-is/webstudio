@@ -18,6 +18,7 @@ describe("formatAsset", () => {
         description: null,
         size: 50000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({
           family: "Inter",
           style: "normal",
@@ -33,6 +34,8 @@ describe("formatAsset", () => {
       type: "font",
       format: "woff2",
       size: 50000,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-02T00:00:00Z",
       meta: {
         family: "Inter",
         style: "normal",
@@ -50,6 +53,7 @@ describe("formatAsset", () => {
         description: null,
         size: 100000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({
           width: 1920,
           height: 1080,
@@ -80,6 +84,7 @@ describe("formatAsset", () => {
         description: null,
         size: 5000000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({
           width: 1920,
           height: 1080,
@@ -107,6 +112,7 @@ describe("formatAsset", () => {
         description: null,
         size: 3000000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({
           width: 1280,
           height: 720,
@@ -134,6 +140,7 @@ describe("formatAsset", () => {
         description: null,
         size: 2000000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({}),
       },
     });
@@ -158,6 +165,7 @@ describe("formatAsset", () => {
         description: null,
         size: 500000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({}),
       },
     });
@@ -185,6 +193,7 @@ describe("formatAsset", () => {
         description: null,
         size: 100000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({}),
       },
     });
@@ -202,6 +211,7 @@ describe("formatAsset", () => {
         description: null,
         size: 50000,
         createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-02T00:00:00Z",
         meta: JSON.stringify({}),
       },
     });

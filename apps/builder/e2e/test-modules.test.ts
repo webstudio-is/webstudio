@@ -2,9 +2,19 @@ import { expect, test } from "vitest";
 import {
   getE2eFileShards,
   getE2eShards,
+  getE2eSuiteName,
   getE2eTestModules,
   isE2eTestInShard,
 } from "./test-modules";
+
+test("formats suite names using the shared shard filename syntax", () => {
+  expect(
+    getE2eSuiteName("pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts")
+  ).toBe("pages actions");
+  expect(getE2eSuiteName("asset-canvas-drag.[shard-4].e2e.ts")).toBe(
+    "asset canvas drag"
+  );
+});
 
 test("discovers every e2e module and filters ownership by shard tag", () => {
   const files = [

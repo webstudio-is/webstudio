@@ -334,6 +334,9 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   currentUrlCopy.searchParams.delete("pageId");
   nextUrlCopy.searchParams.delete("pageId");
 
+  currentUrlCopy.searchParams.delete("instanceId");
+  nextUrlCopy.searchParams.delete("instanceId");
+
   currentUrlCopy.searchParams.delete("mode");
   nextUrlCopy.searchParams.delete("mode");
 

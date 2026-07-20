@@ -952,6 +952,7 @@ const VariablePopoverContent = ({
       </Grid>
 
       <DialogTitle
+        maximizable
         suffix={
           <DialogTitleActions>
             {(variableType === "resource" ||
@@ -1026,6 +1027,7 @@ export const VariablePopoverTrigger = ({
 
   return (
     <FloatingPanel
+      maximizable
       placement="center"
       width={740}
       height={480}

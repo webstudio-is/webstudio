@@ -3700,6 +3700,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 anyOf: [
                                   {
@@ -3837,6 +3840,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 type: "string",
                               },
@@ -3897,6 +3903,9 @@ export const runtimeOperationContractData = [
                                 minLength: 1,
                               },
                               createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
                                 type: "string",
                               },
                               format: {
@@ -6834,6 +6843,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 anyOf: [
                                   {
@@ -6971,6 +6983,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 type: "string",
                               },
@@ -7031,6 +7046,9 @@ export const runtimeOperationContractData = [
                                 minLength: 1,
                               },
                               createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
                                 type: "string",
                               },
                               format: {
@@ -9979,6 +9997,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 anyOf: [
                                   {
@@ -10116,6 +10137,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 type: "string",
                               },
@@ -10176,6 +10200,9 @@ export const runtimeOperationContractData = [
                                 minLength: 1,
                               },
                               createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
                                 type: "string",
                               },
                               format: {
@@ -13113,6 +13140,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 anyOf: [
                                   {
@@ -13250,6 +13280,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 type: "string",
                               },
@@ -13310,6 +13343,9 @@ export const runtimeOperationContractData = [
                                 minLength: 1,
                               },
                               createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
                                 type: "string",
                               },
                               format: {
@@ -18942,6 +18978,9 @@ export const runtimeOperationContractData = [
                                     createdAt: {
                                       type: "string",
                                     },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
                                     format: {
                                       anyOf: [
                                         {
@@ -19087,6 +19126,9 @@ export const runtimeOperationContractData = [
                                     createdAt: {
                                       type: "string",
                                     },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
                                     format: {
                                       type: "string",
                                     },
@@ -19147,6 +19189,9 @@ export const runtimeOperationContractData = [
                                       minLength: 1,
                                     },
                                     createdAt: {
+                                      type: "string",
+                                    },
+                                    updatedAt: {
                                       type: "string",
                                     },
                                     format: {
@@ -22279,6 +22324,9 @@ export const runtimeOperationContractData = [
                                     createdAt: {
                                       type: "string",
                                     },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
                                     format: {
                                       anyOf: [
                                         {
@@ -22424,6 +22472,9 @@ export const runtimeOperationContractData = [
                                     createdAt: {
                                       type: "string",
                                     },
+                                    updatedAt: {
+                                      type: "string",
+                                    },
                                     format: {
                                       type: "string",
                                     },
@@ -22484,6 +22535,9 @@ export const runtimeOperationContractData = [
                                       minLength: 1,
                                     },
                                     createdAt: {
+                                      type: "string",
+                                    },
+                                    updatedAt: {
                                       type: "string",
                                     },
                                     format: {
@@ -36684,6 +36738,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 anyOf: [
                                   {
@@ -36821,6 +36878,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 type: "string",
                               },
@@ -36881,6 +36941,9 @@ export const runtimeOperationContractData = [
                                 minLength: 1,
                               },
                               createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
                                 type: "string",
                               },
                               format: {
@@ -39893,6 +39956,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 anyOf: [
                                   {
@@ -40030,6 +40096,9 @@ export const runtimeOperationContractData = [
                               createdAt: {
                                 type: "string",
                               },
+                              updatedAt: {
+                                type: "string",
+                              },
                               format: {
                                 type: "string",
                               },
@@ -40090,6 +40159,9 @@ export const runtimeOperationContractData = [
                                 minLength: 1,
                               },
                               createdAt: {
+                                type: "string",
+                              },
+                              updatedAt: {
                                 type: "string",
                               },
                               format: {
@@ -46218,6 +46290,9 @@ export const runtimeOperationContractData = [
                       createdAt: {
                         type: "string",
                       },
+                      updatedAt: {
+                        type: "string",
+                      },
                       format: {
                         anyOf: [
                           {
@@ -46350,6 +46425,9 @@ export const runtimeOperationContractData = [
                       createdAt: {
                         type: "string",
                       },
+                      updatedAt: {
+                        type: "string",
+                      },
                       format: {
                         type: "string",
                       },
@@ -46410,6 +46488,9 @@ export const runtimeOperationContractData = [
                         minLength: 1,
                       },
                       createdAt: {
+                        type: "string",
+                      },
+                      updatedAt: {
                         type: "string",
                       },
                       format: {
@@ -52041,6 +52122,9 @@ export const runtimeOperationContractData = [
                       createdAt: {
                         type: "string",
                       },
+                      updatedAt: {
+                        type: "string",
+                      },
                       format: {
                         anyOf: [
                           {
@@ -52173,6 +52257,9 @@ export const runtimeOperationContractData = [
                       createdAt: {
                         type: "string",
                       },
+                      updatedAt: {
+                        type: "string",
+                      },
                       format: {
                         type: "string",
                       },
@@ -52233,6 +52320,9 @@ export const runtimeOperationContractData = [
                         minLength: 1,
                       },
                       createdAt: {
+                        type: "string",
+                      },
+                      updatedAt: {
                         type: "string",
                       },
                       format: {
@@ -66223,7 +66313,7 @@ export const runtimeOperationContractData = [
       properties: {
         type: {
           type: "string",
-          enum: ["image", "font"],
+          enum: ["font", "image", "file"],
         },
         sort: {
           type: "string",
@@ -66966,6 +67056,9 @@ export const runtimeOperationContractData = [
                 createdAt: {
                   type: "string",
                 },
+                updatedAt: {
+                  type: "string",
+                },
                 format: {
                   anyOf: [
                     {
@@ -67098,6 +67191,9 @@ export const runtimeOperationContractData = [
                 createdAt: {
                   type: "string",
                 },
+                updatedAt: {
+                  type: "string",
+                },
                 format: {
                   type: "string",
                 },
@@ -67158,6 +67254,9 @@ export const runtimeOperationContractData = [
                   minLength: 1,
                 },
                 createdAt: {
+                  type: "string",
+                },
+                updatedAt: {
                   type: "string",
                 },
                 format: {

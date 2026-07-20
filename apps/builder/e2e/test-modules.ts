@@ -1,23 +1,32 @@
 const e2eFileSuffix = ".e2e.ts";
-const shardTagPattern = /\[(shard-\d+)\]/g;
+const shardNamePattern = "shard-\\d+";
+const shardTagPattern = new RegExp(`\\[(${shardNamePattern})\\]`, "g");
+const trailingShardTagsPattern = new RegExp(`(\\.\\[${shardNamePattern}\\])+$`);
 
 export const getE2eFileShards = (fileName: string) =>
   [...fileName.matchAll(shardTagPattern)].map((match) => match[1]);
 
+export const getE2eSuiteName = (fileName: string) => {
+  const name = fileName.endsWith(e2eFileSuffix)
+    ? fileName.slice(0, -e2eFileSuffix.length)
+    : fileName;
+  return name.replace(trailingShardTagsPattern, "").replaceAll("-", " ");
+};
+
 export const getE2eShards = (fileNames: readonly string[]) => {
-  const e2eFiles = fileNames.filter((fileName) =>
-    fileName.endsWith(e2eFileSuffix)
-  );
-  const unassignedFiles = e2eFiles.filter(
-    (fileName) => getE2eFileShards(fileName).length === 0
-  );
+  const e2eFiles = fileNames
+    .filter((fileName) => fileName.endsWith(e2eFileSuffix))
+    .map((fileName) => ({ fileName, shards: getE2eFileShards(fileName) }));
+  const unassignedFiles = e2eFiles
+    .filter(({ shards }) => shards.length === 0)
+    .map(({ fileName }) => fileName);
   if (unassignedFiles.length > 0) {
     throw new Error(
       `Every e2e file must have a shard tag: ${unassignedFiles.join(", ")}`
     );
   }
-  return [...new Set(e2eFiles.flatMap(getE2eFileShards))].sort((left, right) =>
-    left.localeCompare(right, undefined, { numeric: true })
+  return [...new Set(e2eFiles.flatMap(({ shards }) => shards))].sort(
+    (left, right) => left.localeCompare(right, undefined, { numeric: true })
   );
 };
 

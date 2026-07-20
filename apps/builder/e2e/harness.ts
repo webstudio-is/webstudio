@@ -9,6 +9,7 @@ import {
   type LaunchOptions,
 } from "playwright";
 import env from "../app/env/env.server";
+import { getE2eSuiteName } from "./test-modules";
 
 const builderPort = process.env.PORT ?? "3000";
 
@@ -45,12 +46,6 @@ type TestApi = ((name: string, run: () => Promise<void>) => void) & {
 const suites: Suite[] = [];
 const suitesByFile = new Map<string, Suite>();
 
-const formatSuiteName = (filePath: string) => {
-  return basename(filePath, ".e2e.ts")
-    .replace(/(\.\[shard-\d+\])+$/, "")
-    .replaceAll("-", " ");
-};
-
 const getCallerFile = () => {
   const stack = new Error().stack ?? "";
   const callerLine = stack
@@ -75,9 +70,10 @@ const getFileSuite = () => {
     return suite;
   }
 
+  const fileName = basename(filePath);
   suite = {
-    name: formatSuiteName(filePath),
-    fileName: basename(filePath),
+    name: getE2eSuiteName(fileName),
+    fileName,
     filePath,
     tests: [],
   };

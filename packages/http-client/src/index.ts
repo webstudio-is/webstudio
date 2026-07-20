@@ -322,6 +322,7 @@ const formatMebibytes = (bytes: number) =>
 
 type Asset = PublishedProjectBundle["assets"][number];
 type BinaryAssetData = Blob | ArrayBuffer | ArrayBufferView<ArrayBuffer>;
+type AssetContentData = BinaryAssetData | string;
 
 type AssetUpload = {
   asset: Asset;
@@ -398,6 +399,7 @@ export const uploadAsset = async (
       headers: createHeaders({
         ...headers,
         "x-auth-token": authToken,
+        "x-webstudio-asset-description": upload.asset.description ?? undefined,
         "content-type": "application/octet-stream",
       }),
     }
@@ -565,6 +567,46 @@ export const uploadProjectAssets = async (
     },
   });
   return { uploaded };
+};
+
+type AssetContentUpdateResult =
+  | { asset: Asset }
+  | {
+      errors: string;
+    };
+
+export const updateProjectAssetContent = async (
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
+    assetId: string;
+    expectedName: string;
+    readAssetData: () => Promise<AssetContentData>;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ asset: Asset }> => {
+  const request = params.request ?? fetch;
+  const { sourceOrigin } = parseBuilderUrl(params.origin);
+  const url = new URL(
+    `/rest/assets/${encodeURIComponent(params.assetId)}/content`,
+    params.requestOrigin ?? sourceOrigin
+  );
+  url.searchParams.set("projectId", params.projectId);
+  url.searchParams.set("expectedName", params.expectedName);
+  const response = await request(url, {
+    method: "PUT",
+    body: await params.readAssetData(),
+    headers: createHeaders({
+      ...params.headers,
+      "x-auth-token": params.authToken,
+      "content-type": "application/octet-stream",
+    }),
+  });
+  const result = (await response.json()) as AssetContentUpdateResult;
+  if ("errors" in result) {
+    throw Object.assign(new Error(result.errors), { status: response.status });
+  }
+  return result;
 };
 
 export const loadProjectBundleByBuildId = async (

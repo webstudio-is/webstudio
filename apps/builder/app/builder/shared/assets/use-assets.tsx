@@ -1,9 +1,11 @@
 import { useMemo } from "react";
-import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, Assets } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/sync/data-stores";
-import { $uploadingFilesDataStore } from "~/shared/nano-states";
+import {
+  $uploadingFilesDataStore,
+  type UploadingFileData,
+} from "~/shared/nano-states";
 import type {
   AssetContainer,
   UploadedAssetContainer,
@@ -11,39 +13,39 @@ import type {
 } from "./types";
 import { uploadingFileDataToAsset } from "./asset-utils";
 
-const $assetContainers = computed(
-  [$assets, $uploadingFilesDataStore],
-  (assets, uploadingFilesData) => {
-    const uploadingContainers: UploadingAssetContainer[] = [];
+const getAssetContainers = (
+  assets: Assets,
+  uploadingFilesData: UploadingFileData[]
+) => {
+  const uploadingContainers: UploadingAssetContainer[] = [];
 
-    for (const uploadingFile of uploadingFilesData) {
-      uploadingContainers.push({
-        status: "uploading",
-        objectURL: uploadingFile.objectURL,
-        asset: uploadingFileDataToAsset(uploadingFile),
-      });
-    }
-
-    const uploadedContainers: UploadedAssetContainer[] = [];
-
-    for (const asset of assets.values()) {
-      uploadedContainers.push({
-        status: "uploaded",
-        asset,
-      });
-    }
-
-    // sort newest uploaded assets first
-    uploadedContainers.sort(
-      (leftContainer, rightContainer) =>
-        new Date(rightContainer.asset.createdAt).getTime() -
-        new Date(leftContainer.asset.createdAt).getTime()
-    );
-
-    // put uploading assets first
-    return [...uploadingContainers, ...uploadedContainers];
+  for (const uploadingFile of uploadingFilesData) {
+    uploadingContainers.push({
+      status: "uploading",
+      objectURL: uploadingFile.objectURL,
+      asset: uploadingFileDataToAsset(uploadingFile),
+    });
   }
-);
+
+  const uploadedContainers: UploadedAssetContainer[] = [];
+
+  for (const asset of assets.values()) {
+    uploadedContainers.push({
+      status: "uploaded",
+      asset,
+    });
+  }
+
+  // sort newest uploaded assets first
+  uploadedContainers.sort(
+    (leftContainer, rightContainer) =>
+      new Date(rightContainer.asset.createdAt).getTime() -
+      new Date(leftContainer.asset.createdAt).getTime()
+  );
+
+  // put uploading assets first
+  return [...uploadingContainers, ...uploadedContainers];
+};
 
 const filterByType = (
   assetContainers: AssetContainer[],
@@ -58,7 +60,12 @@ const filterByType = (
 };
 
 export const useAssets = (type?: Asset["type"]) => {
-  const assetContainers = useStore($assetContainers);
+  const assets = useStore($assets);
+  const uploadingFilesData = useStore($uploadingFilesDataStore);
+  const assetContainers = useMemo(
+    () => getAssetContainers(assets, uploadingFilesData),
+    [assets, uploadingFilesData]
+  );
 
   const assetsByType = useMemo(() => {
     return filterByType(assetContainers, type);

@@ -20,9 +20,34 @@ import {
   acceptToMimeCategories,
   getAssetMime,
   doesAssetMatchMimePatterns,
+  getAssetTextEditorLanguage,
+  isTextFileAsset,
 } from "./assets";
 
 describe("allowed-file-types", () => {
+  describe("text editor support", () => {
+    test.each([
+      ["txt", "plain"],
+      ["csv", "plain"],
+      ["md", "markdown"],
+      ["js", "javascript"],
+      ["css", "css"],
+      ["json", "json"],
+      ["html", "html"],
+      ["xml", "xml"],
+      ["svg", "xml"],
+    ])("maps %s files to the %s editor", (format, language) => {
+      expect(getAssetTextEditorLanguage({ format })).toBe(language);
+      expect(isTextFileAsset({ format })).toBe(true);
+    });
+
+    test("marks binary and unknown formats as non-editable", () => {
+      expect(getAssetTextEditorLanguage({ format: "pdf" })).toBeUndefined();
+      expect(getAssetTextEditorLanguage({ format: "unknown" })).toBeUndefined();
+      expect(isTextFileAsset({ format: "pdf" })).toBe(false);
+    });
+  });
+
   describe("getMimeTypeByExtension", () => {
     test("returns correct MIME type for valid extension", () => {
       expect(getMimeTypeByExtension("jpg")).toBe("image/jpeg");
@@ -468,6 +493,23 @@ describe("allowed-file-types", () => {
       expect(url.pathname).toBe("/cgi/image/photo.jpg");
       expect(url.search).toBe("?format=raw");
     });
+
+    test.each(["tiff", "tif", "bmp", "ico", "avif"])(
+      "serves %s images directly without resizing",
+      (format) => {
+        const url = getAssetUrl(
+          {
+            ...mockImageAsset,
+            name: `photo.${format}`,
+          },
+          "https://example.com"
+        );
+
+        expect(url.href).toBe(
+          `https://example.com/cgi/asset/photo.${format}?format=raw`
+        );
+      }
+    );
 
     test("generates correct URL for video assets", () => {
       const url = getAssetUrl(mockVideoAsset, "https://example.com");

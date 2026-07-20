@@ -265,6 +265,9 @@ describe("public api operation catalog", () => {
     expect(getPublicApiOperation("upload-asset").semanticOwner).toBe(
       "local-side-effect"
     );
+    expect(getPublicApiOperation("update-asset-content").semanticOwner).toBe(
+      "local-side-effect"
+    );
     expect(getPublicApiOperation("publish").semanticOwner).toBe(
       "server-infrastructure"
     );
@@ -286,6 +289,13 @@ describe("public api operation catalog", () => {
     expect(
       getPublicApiOperation("upload-assets").invalidatesNamespaces
     ).toEqual(["assets"]);
+    expect(
+      getPublicApiOperation("update-asset-content").invalidatesNamespaces
+    ).toEqual(["assets"]);
+    expect(
+      getPublicApiOperation("update-asset-content").requiredInputFields
+    ).toEqual(["assetId", "expectedName"]);
+    expect(getPublicApiOperation("update-asset-content").permit).toBe("edit");
   });
 
   test("allows MCP uploads to target asset folders", () => {

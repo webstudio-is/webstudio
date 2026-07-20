@@ -2,11 +2,10 @@ import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Text, FloatingPanel } from "@webstudio-is/design-system";
-import type { Prop } from "@webstudio-is/sdk";
 import { acceptToMimeCategories } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/sync/data-stores";
 import { AssetManager } from "~/builder/shared/asset-manager";
-import { type ControlProps } from "../shared";
+import { type PropValue } from "../shared";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
 import { AssetUpload } from "~/builder/shared/assets";
 
@@ -19,12 +18,10 @@ const isImageAccept = (accept?: string) => {
   );
 };
 
-type AssetControlProps = ControlProps<unknown>;
-
 type Props = {
   accept?: string;
-  prop?: Extract<Prop, { type: "asset" }>;
-  onChange: AssetControlProps["onChange"];
+  prop?: Extract<PropValue, { type: "asset" }>;
+  onChange: (value: Extract<PropValue, { type: "asset" }>) => void;
 };
 
 export const SelectAsset = ({ prop, onChange, accept }: Props) => {

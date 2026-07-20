@@ -101,6 +101,19 @@ const buttonLinkClass = css({
   ...textVariants.link,
 }).toString();
 
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+const formatDateTime = (date: string) => {
+  try {
+    return dateTimeFormatter.format(new Date(date));
+  } catch {
+    return date;
+  }
+};
+
 const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
   const props = useStore($props);
   const styles = useStore($styles);
@@ -413,6 +426,29 @@ const AssetSettingsContent = ({
         </Grid>
       </Box>
 
+      <Grid
+        columns={2}
+        css={{
+          padding: theme.panel.padding,
+          gridTemplateColumns: "auto 1fr",
+          columnGap: theme.spacing[5],
+          rowGap: theme.spacing[3],
+        }}
+      >
+        <Text variant="labels">Created</Text>
+        <Text variant="labels" align="right">
+          {formatDateTime(asset.createdAt)}
+        </Text>
+        {asset.updatedAt && (
+          <>
+            <Text variant="labels">Last modified</Text>
+            <Text variant="labels" align="right">
+              {formatDateTime(asset.updatedAt)}
+            </Text>
+          </>
+        )}
+      </Grid>
+
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
         <Label htmlFor="asset-manager-filename">Name</Label>
         <InputErrorsTooltip
@@ -606,6 +642,13 @@ export const AssetSettings = ({
           onOpenChange(false);
           onDelete();
         };
+  const replaceAsset =
+    onReplace === undefined
+      ? undefined
+      : () => {
+          onOpenChange(false);
+          onReplace();
+        };
   return (
     <Popover modal open={open} onOpenChange={onOpenChange}>
       {usages.length === 0 && (
@@ -622,7 +665,7 @@ export const AssetSettings = ({
           asset={asset}
           usages={usages}
           onDelete={deleteAsset}
-          onReplace={onReplace}
+          onReplace={replaceAsset}
           focusName={focusName}
         />
       </PopoverContent>

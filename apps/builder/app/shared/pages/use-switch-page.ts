@@ -1,19 +1,59 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
-import { $pages, $project } from "~/shared/sync/data-stores";
+import { $instances, $pages, $project } from "~/shared/sync/data-stores";
 import {
   $authToken,
   $canOpenPageTemplates,
+  $selectedInstanceSelector,
+  $selectedPageId,
   $selectedPageHash,
   $builderMode,
   isBuilderMode,
+  selectInstance,
   setBuilderMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 import { $selectedPage } from "../nano-states";
 import { selectPage } from "../nano-states";
-import { findPageByIdOrPath, isPageTemplate } from "@webstudio-is/sdk";
+import {
+  findPageByIdOrPath,
+  isPageTemplate,
+  type Instances,
+  type Pages,
+} from "@webstudio-is/sdk";
+import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime";
+
+const getDeepLinkedInstanceSelection = ({
+  instanceId,
+  canOpenPageTemplates,
+  pages,
+  instances,
+}: {
+  instanceId: string | null;
+  canOpenPageTemplates: boolean;
+  pages: Pages;
+  instances: Instances;
+}) => {
+  if (instanceId === null || instances.has(instanceId) === false) {
+    return;
+  }
+
+  const selection = findPageAndSelectorByInstanceId(
+    pages,
+    instances,
+    instanceId
+  );
+  const page = canOpenPageTemplates
+    ? findPageByIdOrPath(selection.pageId, pages, { includeTemplates: true })
+    : findPageByIdOrPath(selection.pageId, pages);
+  if (page?.rootInstanceId !== selection.instanceSelector.at(-1)) {
+    return;
+  }
+  return selection;
+};
+
+export const __testing__ = { getDeepLinkedInstanceSelection };
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -41,6 +81,17 @@ const setPageStateFromUrl = () => {
     )?.id ?? pages.homePageId;
 
   $selectedPageHash.set({ hash: searchParams.get("pageHash") ?? "" });
+  const instanceSelection = getDeepLinkedInstanceSelection({
+    instanceId: searchParams.get("instanceId"),
+    canOpenPageTemplates: $canOpenPageTemplates.get(),
+    pages,
+    instances: $instances.get(),
+  });
+  if (instanceSelection !== undefined) {
+    $selectedPageId.set(instanceSelection.pageId);
+    selectInstance(instanceSelection.instanceSelector);
+    return;
+  }
   selectPage(pageId);
 };
 
@@ -58,6 +109,7 @@ export const useSyncPageUrl = () => {
   const page = useStore($selectedPage);
   const pageHash = useStore($selectedPageHash);
   const builderMode = useStore($builderMode);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const canOpenPageTemplate = useStore($canOpenPageTemplates);
 
   // Get pageId and pageHash from URL
@@ -91,31 +143,42 @@ export const useSyncPageUrl = () => {
 
     const searchParamsPageId = searchParams.get("pageId") ?? pages.homePageId;
     const searchParamsPageHash = searchParams.get("pageHash") ?? "";
-    const searParamsModeRaw = searchParams.get("mode");
-    const searParamsMode = isBuilderMode(searParamsModeRaw)
-      ? searParamsModeRaw
+    const searchParamsInstanceId = searchParams.get("instanceId") ?? undefined;
+    const searchParamsModeRaw = searchParams.get("mode");
+    const searchParamsMode = isBuilderMode(searchParamsModeRaw)
+      ? searchParamsModeRaw
       : undefined;
+    const builderModeParam = builderMode === "design" ? undefined : builderMode;
     const searchParamsSafemode = searchParams.get("safemode");
+    const selectedInstanceId = selectedInstanceSelector?.[0];
+    const instanceId =
+      selectedInstanceId === page.rootInstanceId ||
+      $instances.get().has(selectedInstanceId ?? "") === false
+        ? undefined
+        : selectedInstanceId;
 
-    // Do not navigate on popstate change or if params match
-    if (
+    const isSamePageState =
       searchParamsPageId === page.id &&
       searchParamsPageHash === pageHash.hash &&
-      searParamsMode === builderMode
-    ) {
+      searchParamsMode === builderModeParam;
+
+    // Do not navigate on popstate change or if params match
+    if (isSamePageState && searchParamsInstanceId === instanceId) {
       return;
     }
 
     navigate(
       builderPath({
         pageId: page.id === pages.homePageId ? undefined : page.id,
+        instanceId,
         authToken: $authToken.get(),
         pageHash: pageHash.hash === "" ? undefined : pageHash.hash,
-        mode: builderMode === "design" ? undefined : builderMode,
+        mode: builderModeParam,
         safemode: searchParamsSafemode === "true",
-      })
+      }),
+      { replace: isSamePageState }
     );
-  }, [builderMode, navigate, page, pageHash]);
+  }, [builderMode, navigate, page, pageHash, selectedInstanceSelector]);
 
   useEffect(() => {
     const pages = $pages.get();
