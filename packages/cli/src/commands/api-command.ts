@@ -3086,7 +3086,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   "delete-asset": async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
     const input = {
-      assetIdsOrPrefixes: requireListOption(options.asset, "--asset"),
+      assetIds: requireListOption(options.asset, "--asset"),
       force: options.force,
     };
     return runProjectSessionCommand(
@@ -3098,6 +3098,23 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   },
 };
 
+const printPermissions = (result: unknown) => {
+  if (typeof result !== "object" || result === null) {
+    throw new Error("The server returned invalid project permissions.");
+  }
+  const permissions = result as Record<string, unknown>;
+  console.info(`Project role: ${String(permissions.relation ?? "unknown")}`);
+  for (const [label, field] of [
+    ["View", "canView"],
+    ["Edit", "canEdit"],
+    ["Build", "canBuild"],
+    ["Publish", "canPublish"],
+    ["Admin", "canAdmin"],
+  ] as const) {
+    console.info(`${label}: ${permissions[field] === true ? "yes" : "no"}`);
+  }
+};
+
 export const apiCommand = async (
   options: ApiCommandOptions,
   dependencies = defaultDependencies
@@ -3105,7 +3122,11 @@ export const apiCommand = async (
   const start = Date.now();
   let projectId: string | undefined;
   try {
-    if (options.json !== true && options.command !== "audit") {
+    if (
+      options.json !== true &&
+      options.command !== "audit" &&
+      options.command !== "permissions"
+    ) {
       throw new Error(`${options.command} currently requires --json.`);
     }
 
@@ -3140,6 +3161,8 @@ export const apiCommand = async (
       : response;
     if (options.command === "audit" && options.json !== true) {
       printAuditReport(result);
+    } else if (options.command === "permissions" && options.json !== true) {
+      printPermissions(result);
     } else {
       printJson({
         ok: true,

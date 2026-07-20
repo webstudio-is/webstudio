@@ -51,6 +51,94 @@ const assetPkeyError = ({
 });
 
 describe("createUploadTicket", () => {
+  test("reuses an uploaded asset with the same project content hash", async () => {
+    let inserted = false;
+    server.use(
+      ownershipHandler,
+      db.get("File", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("uploaderProjectId")).toBe("eq.project-1");
+        expect(url.searchParams.get("contentHash")).toBe("eq.hash-1");
+        return json({
+          name: "existing.png",
+          status: "UPLOADED",
+          createdAt: "2024-01-01T00:00:00.000Z",
+        });
+      }),
+      db.get("Asset", () => json({ id: "existing-asset" })),
+      db.post("File", () => {
+        inserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    await expect(
+      createUploadTicket(
+        {
+          projectId: "project-1",
+          type: "image/png",
+          filename: "photo.png",
+          contentHash: "hash-1",
+        },
+        createContext()
+      )
+    ).resolves.toEqual({
+      assetId: "existing-asset",
+      name: "existing.png",
+      deduplicated: true,
+    });
+    expect(inserted).toBe(false);
+  });
+
+  test("reuses the winning asset after a concurrent content hash insert", async () => {
+    let contentHashReads = 0;
+    server.use(
+      ownershipHandler,
+      db.get("File", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("contentHash")) {
+          contentHashReads += 1;
+          return contentHashReads === 1
+            ? json(null)
+            : json({
+                name: "winner.png",
+                status: "UPLOADED",
+                createdAt: "2024-01-01T00:00:00.000Z",
+              });
+        }
+        return json(null);
+      }),
+      db.get("Asset", () => json({ id: "winner-asset" })),
+      db.head("Asset", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.head("File", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.post("File", () =>
+        json(
+          {
+            code: "23505",
+            message: "duplicate project content hash",
+          },
+          { status: 409 }
+        )
+      )
+    );
+
+    await expect(
+      createUploadTicket(
+        {
+          projectId: "project-1",
+          type: "image/png",
+          filename: "photo.png",
+          contentHash: "hash-1",
+        },
+        createContext()
+      )
+    ).resolves.toEqual({
+      assetId: "winner-asset",
+      name: "winner.png",
+      deduplicated: true,
+    });
+  });
+
   test("counts assets instead of uploaded files for the project limit", async () => {
     let insertedFile: unknown;
 
@@ -415,6 +503,7 @@ describe("uploadFile", () => {
           },
         },
         createContext(),
+        undefined,
         undefined,
         async () => {
           customCleanupCalled = true;

@@ -295,6 +295,27 @@ test("requires json output flag", async () => {
   );
 });
 
+test("prints project permissions without json output", async () => {
+  mockConfig();
+  apiCalls.getProjectPermissions.mockResolvedValue({
+    relation: "builders",
+    canView: true,
+    canEdit: true,
+    canBuild: true,
+    canPublish: false,
+    canAdmin: false,
+  });
+
+  await apiCommand({ command: "permissions" }, dependencies);
+
+  expect(console.info).toHaveBeenCalledWith("Project role: builders");
+  expect(console.info).toHaveBeenCalledWith("View: yes");
+  expect(console.info).toHaveBeenCalledWith("Edit: yes");
+  expect(console.info).toHaveBeenCalledWith("Build: yes");
+  expect(console.info).toHaveBeenCalledWith("Publish: no");
+  expect(console.info).toHaveBeenCalledWith("Admin: no");
+});
+
 test("explains mcp-only editing commands should use shortcut or single-op-call", async () => {
   mockConfig();
 
@@ -1904,7 +1925,7 @@ test("deletes assets with confirmation", async () => {
     },
     call: apiCalls.deleteAssets,
     connection: {
-      assetIdsOrPrefixes: ["asset-id", "asset-prefix"],
+      assetIds: ["asset-id", "asset-prefix"],
       force: true,
     },
   });

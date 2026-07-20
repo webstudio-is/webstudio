@@ -9,6 +9,7 @@ const assetUploadDescriptor = z.object({
   format: z.string().optional(),
   description: z.string().optional(),
   folderId: z.string().min(1).optional(),
+  force: z.boolean().optional(),
   meta: z.record(z.string(), z.unknown()).optional(),
 });
 

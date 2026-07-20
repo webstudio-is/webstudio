@@ -30,7 +30,8 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
     name,
     type,
     data,
-    assetInfoFallback
+    assetInfoFallback,
+    assetDataOverride
   ) => {
     return uploadToS3({
       signer,
@@ -42,6 +43,7 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
       bucket: options.bucket,
       acl: options.acl,
       assetInfoFallback,
+      assetDataOverride,
     });
   };
 

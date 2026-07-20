@@ -7,3 +7,4 @@ export * from "./folder-persistence";
 export * from "./revision";
 export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";
+export { assetDataOverride } from "./utils/get-asset-data";

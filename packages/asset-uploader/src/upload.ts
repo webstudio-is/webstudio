@@ -8,9 +8,11 @@ import { nanoid } from "nanoid";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
+import type { AssetDataOverride } from "./utils/get-asset-data";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
+import { assertPostgrestSuccess } from "./patch-utils";
 
 type UploadData = {
   projectId: string;
@@ -19,15 +21,86 @@ type UploadData = {
   displayFilename?: string;
   description?: string;
   folderId?: string;
+  contentHash?: string;
 };
 
 export type UploadTicket = {
   assetId: Asset["id"];
   name: string;
+  deduplicated: boolean;
 };
 
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 const maxCreateUploadTicketAttempts = 3;
+const contentHashUploadPollInterval = 100;
+const contentHashUploadPollAttempts = 50;
+
+const findContentHashUploadTicket = async ({
+  projectId,
+  contentHash,
+  context,
+}: {
+  projectId: string;
+  contentHash: string;
+  context: AppContext;
+}): Promise<UploadTicket | undefined> => {
+  for (let attempt = 0; attempt < contentHashUploadPollAttempts; attempt += 1) {
+    const file = await context.postgrest.client
+      .from("File")
+      .select("name, status, createdAt")
+      .eq("uploaderProjectId", projectId)
+      .eq("contentHash", contentHash)
+      .maybeSingle();
+    if (file.error) {
+      throw new Error(file.error.message);
+    }
+    if (file.data === null) {
+      return;
+    }
+    if (file.data.status === "UPLOADED") {
+      const asset = await context.postgrest.client
+        .from("Asset")
+        .select("id")
+        .eq("projectId", projectId)
+        .eq("name", file.data.name)
+        .maybeSingle();
+      if (asset.error) {
+        throw new Error(asset.error.message);
+      }
+      if (asset.data === null) {
+        throw new Error("Deduplicated asset record is missing.");
+      }
+      return {
+        assetId: asset.data.id,
+        name: file.data.name,
+        deduplicated: true,
+      };
+    }
+    if (
+      new Date(file.data.createdAt).getTime() <
+      Date.now() - UPLOADING_STALE_TIMEOUT
+    ) {
+      const deletedAsset = await context.postgrest.client
+        .from("Asset")
+        .delete()
+        .eq("projectId", projectId)
+        .eq("name", file.data.name);
+      assertPostgrestSuccess(deletedAsset);
+      const deletedFile = await context.postgrest.client
+        .from("File")
+        .delete()
+        .eq("name", file.data.name);
+      assertPostgrestSuccess(deletedFile);
+      return;
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, contentHashUploadPollInterval)
+    );
+  }
+  throw new Error(
+    "An identical asset upload is still in progress. Retry after it completes."
+  );
+};
 
 export type UploadErrorCleanup = (
   name: string,
@@ -59,6 +132,7 @@ export const createUploadTicket = async (
     displayFilename = getFileNameParts(filename).basename,
     description,
     folderId,
+    contentHash,
   } = data;
   const sanitizedFilename = sanitizeS3Key(filename);
   const canEdit = await authorizeProject.hasProjectPermit(
@@ -69,6 +143,17 @@ export const createUploadTicket = async (
     throw new AuthorizationError(
       "You don't have access to create this project assets"
     );
+  }
+
+  if (contentHash !== undefined) {
+    const existing = await findContentHashUploadTicket({
+      projectId,
+      contentHash,
+      context,
+    });
+    if (existing !== undefined) {
+      return existing;
+    }
   }
 
   const { maxAssetsPerProject } = await getProjectPlanFeatures(
@@ -136,8 +221,19 @@ export const createUploadTicket = async (
       format: type,
       size: 0,
       uploaderProjectId: projectId,
+      contentHash,
     });
     if (fileInsert.error) {
+      if (fileInsert.error.code === "23505" && contentHash !== undefined) {
+        const existing = await findContentHashUploadTicket({
+          projectId,
+          contentHash,
+          context,
+        });
+        if (existing !== undefined) {
+          return existing;
+        }
+      }
       throw new Error(fileInsert.error.message);
     }
 
@@ -160,7 +256,7 @@ export const createUploadTicket = async (
       throw new Error(assetInsert.error.message);
     }
 
-    return { assetId, name };
+    return { assetId, name, deduplicated: false };
   }
 
   throw new Error("Unable to reserve asset upload.");
@@ -174,6 +270,7 @@ export const uploadFileData = async (
   assetInfoFallback:
     | { width: number; height: number; format: string }
     | undefined,
+  assetDataOverride?: AssetDataOverride,
   onUploadError?: UploadErrorCleanup
 ): Promise<Database["public"]["Tables"]["File"]["Row"]> => {
   let file = await context.postgrest.client
@@ -196,7 +293,8 @@ export const uploadFileData = async (
       file.data.format,
       // global web streams types do not define ReadableStream as async iterable
       data as unknown as AsyncIterable<Uint8Array>,
-      assetInfoFallback
+      assetInfoFallback,
+      assetDataOverride
     );
     const { meta, format, size } = assetData;
     file = await context.postgrest.client
@@ -220,6 +318,49 @@ export const uploadFileData = async (
   }
 };
 
+export const getUploadedAsset = async ({
+  name,
+  projectId,
+  context,
+  file: providedFile,
+}: {
+  name: string;
+  projectId: string;
+  context: AppContext;
+  file?: Database["public"]["Tables"]["File"]["Row"];
+}): Promise<Asset> => {
+  let file = providedFile;
+  if (file === undefined) {
+    const result = await context.postgrest.client
+      .from("File")
+      .select("*")
+      .eq("name", name)
+      .eq("status", "UPLOADED")
+      .single();
+    if (result.error || result.data === null) {
+      throw new Error(result.error?.message ?? "File not found");
+    }
+    file = result.data;
+  }
+  const asset = await context.postgrest.client
+    .from("Asset")
+    .select("id, projectId, filename, description, folderId")
+    .eq("name", name)
+    .eq("projectId", projectId)
+    .single();
+  if (asset.error || asset.data === null) {
+    throw new Error(asset.error?.message ?? "Asset not found");
+  }
+  return formatAsset({
+    assetId: asset.data.id,
+    projectId: asset.data.projectId,
+    filename: asset.data.filename,
+    description: asset.data.description,
+    folderId: asset.data.folderId,
+    file,
+  });
+};
+
 export const uploadFile = async (
   name: string,
   data: ReadableStream<Uint8Array>,
@@ -228,6 +369,7 @@ export const uploadFile = async (
   assetInfoFallback:
     | { width: number; height: number; format: string }
     | undefined,
+  assetDataOverride?: AssetDataOverride,
   onUploadError?: UploadErrorCleanup
 ): Promise<Asset> => {
   const file = await uploadFileData(
@@ -236,6 +378,7 @@ export const uploadFile = async (
     client,
     context,
     assetInfoFallback,
+    assetDataOverride,
     onUploadError
   );
   try {
@@ -243,24 +386,10 @@ export const uploadFile = async (
     if (typeof projectId !== "string") {
       throw Error("File uploader project is missing");
     }
-    const asset = await context.postgrest.client
-      .from("Asset")
-      .select("id, projectId, filename, description, folderId")
-      .eq("name", name)
-      .eq("projectId", projectId)
-      .single();
-    if (asset.error) {
-      throw asset.error;
-    }
-    if (asset.data === null) {
-      throw Error("Asset not found");
-    }
-    return formatAsset({
-      assetId: asset.data.id,
-      projectId: asset.data.projectId,
-      filename: asset.data.filename,
-      description: asset.data.description,
-      folderId: asset.data.folderId,
+    return await getUploadedAsset({
+      name,
+      projectId,
+      context,
       file,
     });
   } catch (error) {

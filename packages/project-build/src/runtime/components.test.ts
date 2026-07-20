@@ -1002,6 +1002,37 @@ test("honors fragment token conflict resolution", async () => {
   );
 });
 
+test("requires an explicit fragment token conflict resolution", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  for (const styleSource of existingFragment.styleSources) {
+    state.styleSources.set(styleSource.id, styleSource);
+  }
+  for (const style of existingFragment.styles) {
+    state.styles.set(getStyleDeclKey(style), style);
+  }
+  for (const breakpoint of existingFragment.breakpoints) {
+    state.breakpoints.set(breakpoint.id, breakpoint);
+  }
+  const conflictingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
+  );
+
+  expect(() =>
+    insertFragment(
+      state,
+      {
+        parentInstanceId: parent.id,
+        fragment: conflictingFragment,
+      },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow(/explicit conflictResolution.*brand/);
+});
+
 test("inserts token-only fragments without a parent instance", async () => {
   const parent = createParent();
   const state = createState(parent);

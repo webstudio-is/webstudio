@@ -25,7 +25,7 @@ export const fontWeights = {
   },
   "700": {
     label: "Bold",
-    names: ["bold", "bold"],
+    names: ["bold"],
   },
   "800": {
     label: "Extra Bold",

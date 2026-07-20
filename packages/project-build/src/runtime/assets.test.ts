@@ -416,6 +416,42 @@ describe("asset runtime operations", () => {
       ],
     });
   });
+
+  test("does not treat exact asset ids as prefixes", () => {
+    expect(
+      deleteAssets(
+        {
+          ...state,
+          assets: new Map([
+            ["unused", { ...state.assets.get("unused")!, id: "unused" }],
+            [
+              "unused-child",
+              { ...state.assets.get("unused")!, id: "unused-child" },
+            ],
+          ]),
+        },
+        { assetIds: ["unused"] }
+      ).result
+    ).toEqual({ assetIds: ["unused"] });
+  });
+
+  test("deletes assets by an explicit prefix", () => {
+    expect(
+      deleteAssets(
+        {
+          ...state,
+          assets: new Map([
+            ["unused", { ...state.assets.get("unused")!, id: "unused" }],
+            [
+              "unused-child",
+              { ...state.assets.get("unused")!, id: "unused-child" },
+            ],
+          ]),
+        },
+        { assetIdPrefixes: ["unused"] }
+      ).result
+    ).toEqual({ assetIds: ["unused", "unused-child"] });
+  });
 });
 const createPages = ({
   meta = {},

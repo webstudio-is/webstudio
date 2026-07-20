@@ -1154,6 +1154,41 @@ test("uploads assets as binary requests", async () => {
   );
 });
 
+test("requests a forced asset upload and exposes deduplication", async () => {
+  const asset = {
+    id: "asset-1",
+    projectId: "project-1",
+    type: "file" as const,
+    name: "document.txt",
+    filename: "document",
+    format: "txt",
+    size: 5,
+    meta: {},
+    createdAt: "2024-01-01T00:00:00.000Z",
+  };
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(
+      new Response(
+        JSON.stringify({ uploadedAssets: [asset], deduplicated: true }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+  vi.stubGlobal("fetch", fetch);
+
+  const uploaded = await uploadAsset({
+    origin: "https://apps.webstudio.is",
+    authToken: "token",
+    projectId: "project-1",
+    upload: { asset, data: new Blob(["asset"]), force: true },
+  });
+
+  expect((fetch.mock.calls[0]?.[0] as URL).searchParams.get("force")).toBe(
+    "true"
+  );
+  expect(uploaded[0]).toMatchObject({ deduplicated: true });
+});
+
 test("loads project bundle by build id without auth headers", async () => {
   const project = createPublishedProjectBundleFixture();
   const fetch = vi.fn().mockResolvedValue(
@@ -1330,7 +1365,7 @@ test("uploads project asset descriptors with local data readers", async () => {
     })
   ).resolves.toEqual({ uploaded: [uploadedAsset] });
 
-  const calls = fetch.mock.calls as unknown as Array<[URL]>;
+  const calls = fetch.mock.calls as unknown as Array<[URL, RequestInit]>;
   expect(new URL(calls[0][0].toString()).searchParams.get("folderId")).toBe(
     "campaign"
   );
@@ -1338,6 +1373,9 @@ test("uploads project asset descriptors with local data readers", async () => {
     const url = new URL(request.toString());
     expect(url.searchParams.has("assetId")).toBe(false);
   }
+  expect(new Headers(calls[0][1].headers).get("x-webstudio-asset-meta")).toBe(
+    JSON.stringify({ width: 10, height: 20 })
+  );
 });
 
 test("updates asset content through the stable asset revision endpoint", async () => {

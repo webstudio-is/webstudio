@@ -60540,7 +60540,23 @@ export const runtimeOperationContractData = [
                 propertyNames: {
                   type: "string",
                 },
-                additionalProperties: {},
+                additionalProperties: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                        },
+                      },
+                      required: ["type"],
+                      additionalProperties: {},
+                    },
+                  ],
+                },
               },
               declarations: {
                 type: "array",
@@ -60550,7 +60566,23 @@ export const runtimeOperationContractData = [
                     property: {
                       type: "string",
                     },
-                    value: {},
+                    value: {
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                            },
+                          },
+                          required: ["type"],
+                          additionalProperties: {},
+                        },
+                      ],
+                    },
                     breakpoint: {
                       type: "string",
                     },
@@ -60558,7 +60590,7 @@ export const runtimeOperationContractData = [
                       type: "string",
                     },
                   },
-                  required: ["property"],
+                  required: ["property", "value"],
                 },
               },
             },
@@ -60865,7 +60897,23 @@ export const runtimeOperationContractData = [
                 propertyNames: {
                   type: "string",
                 },
-                additionalProperties: {},
+                additionalProperties: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                        },
+                      },
+                      required: ["type"],
+                      additionalProperties: {},
+                    },
+                  ],
+                },
               },
               declarations: {
                 type: "array",
@@ -60875,7 +60923,23 @@ export const runtimeOperationContractData = [
                     property: {
                       type: "string",
                     },
-                    value: {},
+                    value: {
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                            },
+                          },
+                          required: ["type"],
+                          additionalProperties: {},
+                        },
+                      ],
+                    },
                     breakpoint: {
                       type: "string",
                     },
@@ -60883,7 +60947,7 @@ export const runtimeOperationContractData = [
                       type: "string",
                     },
                   },
-                  required: ["property"],
+                  required: ["property", "value"],
                 },
               },
             },
@@ -60948,7 +61012,23 @@ export const runtimeOperationContractData = [
               property: {
                 type: "string",
               },
-              value: {},
+              value: {
+                anyOf: [
+                  {
+                    type: "string",
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type"],
+                    additionalProperties: {},
+                  },
+                ],
+              },
               breakpoint: {
                 type: "string",
               },
@@ -60956,7 +61036,7 @@ export const runtimeOperationContractData = [
                 type: "string",
               },
             },
-            required: ["property"],
+            required: ["property", "value"],
           },
         },
       },
@@ -64266,7 +64346,6 @@ export const runtimeOperationContractData = [
       additionalProperties: {},
     },
     readNamespaces: [
-      "pages",
       "styles",
       "styleSources",
       "styleSourceSelections",
@@ -67405,18 +67484,34 @@ export const runtimeOperationContractData = [
     inputSchema: {
       type: "object",
       properties: {
-        assetIdsOrPrefixes: {
+        assetIds: {
           minItems: 1,
           type: "array",
           items: {
             type: "string",
           },
         },
+        assetIdPrefixes: {
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        assetIdsOrPrefixes: {
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "string",
+          },
+          description:
+            "Deprecated compatibility alias. Use assetIds for exact ids or assetIdPrefixes for prefixes.",
+        },
         force: {
           type: "boolean",
         },
       },
-      required: ["assetIdsOrPrefixes"],
+      required: [],
     },
     outputSchema: {
       type: "object",

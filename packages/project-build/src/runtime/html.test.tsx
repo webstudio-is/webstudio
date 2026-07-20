@@ -28,6 +28,14 @@ describe("validateHtmlEmbedCode", () => {
     ).toBeUndefined();
   });
 
+  test("accepts svg syntax that the html serializer normalizes", () => {
+    expect(
+      validateHtmlEmbedCode(
+        '<svg viewBox="0 0 24 24"><linearGradient id="paint"><stop offset="0%" stop-color="#fff" /></linearGradient><path fill="url(#paint)" d="M0 0h24v24H0z" /></svg>'
+      )
+    ).toBeUndefined();
+  });
+
   test("reports html parser errors with autofix output", () => {
     expect(
       validateHtmlEmbedCode('<section></section attribute="value">')

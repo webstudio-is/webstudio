@@ -40,6 +40,8 @@ import {
   type ConflictResolution,
 } from "./style-copy";
 import { unwrap } from "./unwrap";
+import { throwBuilderRuntimeError } from "./errors";
+import { validateHtmlEmbedCode } from "./html";
 import {
   collectFontFamiliesFromStyleValue,
   traverseStyleValue,
@@ -566,6 +568,23 @@ export const insertWebstudioFragmentCopy = ({
   createId?: () => string;
   contentMode?: boolean;
 }) => {
+  for (const instance of fragment.instances) {
+    if (instance.component !== "HtmlEmbed") {
+      continue;
+    }
+    const code = fragment.props.find(
+      (prop) =>
+        prop.instanceId === instance.id &&
+        prop.name === "code" &&
+        prop.type === "string"
+    );
+    if (code !== undefined && typeof code.value === "string") {
+      const error = validateHtmlEmbedCode(code.value);
+      if (error !== undefined) {
+        throwBuilderRuntimeError("BAD_REQUEST", error.message);
+      }
+    }
+  }
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
   const newDataIds = {

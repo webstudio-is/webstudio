@@ -16,6 +16,31 @@ export const assetData: z.ZodType<AssetData> = z.object({
   meta: z.union([imageMeta, fontMeta, z.object({})]),
 });
 
+export const assetDataOverride = z.object({
+  format: z.string().optional(),
+  meta: z.record(z.string(), z.unknown()).optional(),
+});
+export type AssetDataOverride = z.infer<typeof assetDataOverride>;
+
+export const applyAssetDataOverride = (
+  detected: AssetData,
+  override?: AssetDataOverride
+): AssetData => {
+  const meta = { ...detected.meta, ...override?.meta };
+  const parsedMeta =
+    "family" in detected.meta
+      ? fontMeta.parse(meta)
+      : "width" in detected.meta && "height" in detected.meta
+        ? imageMeta.parse(meta)
+        : z.object({}).parse(meta);
+
+  return {
+    ...detected,
+    format: override?.format ?? detected.format,
+    meta: parsedMeta,
+  };
+};
+
 type BaseAssetOptions = {
   size: number;
   data: Uint8Array;

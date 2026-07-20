@@ -374,6 +374,21 @@ test("remap token selections in inserted slot content", () => {
   });
 });
 
+test("rejects invalid HtmlEmbed code before inserting a fragment", () => {
+  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const fragment = renderTemplate(<$.HtmlEmbed code="<div><span></div>" />);
+
+  expect(() =>
+    insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableVariables: [],
+      projectId: "",
+    })
+  ).toThrow("Entered HTML has a validation error");
+  expect(data.instances.size).toBe(1);
+});
+
 test("insert instances with multiple roots", () => {
   const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
   const fragment = renderTemplate(

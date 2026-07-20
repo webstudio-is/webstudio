@@ -1279,6 +1279,34 @@ describe("runtime style operations", () => {
     ]);
   });
 
+  test("parses CSS strings when creating design tokens", () => {
+    const mutation = createDesignTokens(
+      {
+        breakpoints: runtimeBreakpoints,
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      { tokens: [{ name: "Primary", styles: { fontSize: "24px" } }] },
+      { createId }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["new-id:desktop:fontSize:"],
+          value: createStyleDecl("new-id", "desktop", "fontSize", {
+            type: "unit",
+            value: 24,
+            unit: "px",
+          }),
+        },
+      ],
+    });
+  });
+
   test("creates and attaches design tokens atomically", () => {
     const mutation = createAttachedDesignTokens(
       {
@@ -1653,28 +1681,10 @@ describe("runtime style operations", () => {
     ]);
   });
 
-  test("define css variables uses the project base breakpoint", () => {
+  test("defines css variables on the project root at the base breakpoint", () => {
     const mutation = defineCssVariables(
       {
         breakpoints: runtimeBreakpoints,
-        pages: {
-          homePageId: "home",
-          rootFolderId: "root",
-          pages: new Map([
-            [
-              "home",
-              {
-                id: "home",
-                name: "Home",
-                title: "",
-                rootInstanceId: "root",
-                meta: {},
-                path: "",
-              },
-            ],
-          ]),
-          folders: new Map(),
-        },
         styles: new Map(),
         styleSources: new Map(),
         styleSourceSelections: new Map(),
@@ -1683,7 +1693,23 @@ describe("runtime style operations", () => {
       { createId }
     );
 
-    expect(mutation.result.names).toEqual(["--color"]);
+    expect(mutation.result).toEqual({
+      names: ["--color"],
+      scope: ROOT_INSTANCE_ID,
+    });
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSourceSelections",
+      patches: [
+        {
+          op: "add",
+          path: [ROOT_INSTANCE_ID],
+          value: {
+            instanceId: ROOT_INSTANCE_ID,
+            values: ["new-id"],
+          },
+        },
+      ],
+    });
     expect(mutation.payload).toContainEqual({
       namespace: "styles",
       patches: [

@@ -46,7 +46,10 @@ import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { findAvailableVariables } from "./data";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
-import { insertWebstudioFragmentCopy } from "./fragment";
+import {
+  detectFragmentTokenConflicts,
+  insertWebstudioFragmentCopy,
+} from "./fragment";
 import {
   createInstanceAppendPayload,
   createInstanceChild,
@@ -1039,6 +1042,20 @@ export const insertFragment = (
   input: z.infer<typeof insertFragmentInput>,
   context: BuilderRuntimeContext
 ): BuilderRuntimeMutation<FragmentInsertResult> => {
+  if (input.conflictResolution === undefined) {
+    const conflicts = detectFragmentTokenConflicts({
+      fragment: input.fragment,
+      targetData: getRequiredComponentInsertState(state),
+    });
+    if (conflicts.length > 0) {
+      return throwBuilderRuntimeError(
+        "CONFLICT",
+        `Design token conflicts require an explicit conflictResolution (ours, theirs, or merge): ${conflicts
+          .map(({ tokenName }) => tokenName)
+          .join(", ")}`
+      );
+    }
+  }
   if (input.fragment.children.length === 0) {
     return createInsertTokenFragmentMutation({
       state,

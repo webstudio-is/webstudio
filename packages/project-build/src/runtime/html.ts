@@ -48,12 +48,48 @@ export type HtmlEmbedCodeError = {
 
 const htmlEmbedCodeMaxChars = 50_000;
 
-const normalizeHtmlForComparison = (value: string) =>
-  value
-    .replaceAll(/\s/g, "")
-    .replaceAll('=""', "")
-    .replaceAll('xmlns="http://www.w3.org/2000/svg"', "")
-    .replaceAll(/<([a-zA-Z][\w:-]*)([^<>]*)\/>/g, "<$1$2></$1>");
+const voidElementNames = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+const hasUnclosedElement = (
+  node: DefaultTreeAdapterMap["node"],
+  source: string
+): boolean => {
+  if (defaultTreeAdapter.isElementNode(node)) {
+    const location = node.sourceCodeLocation;
+    const selfClosing =
+      location?.startTag !== undefined &&
+      source
+        .slice(location.startTag.startOffset, location.startTag.endOffset)
+        .trimEnd()
+        .endsWith("/>");
+    if (
+      location?.startTag !== undefined &&
+      location.endTag === undefined &&
+      selfClosing === false &&
+      voidElementNames.has(node.tagName) === false
+    ) {
+      return true;
+    }
+  }
+  return (
+    "childNodes" in node ? defaultTreeAdapter.getChildNodes(node) : []
+  ).some((child) => hasUnclosedElement(child, source));
+};
 
 export const validateHtmlEmbedCode = (
   value: string
@@ -68,16 +104,14 @@ export const validateHtmlEmbedCode = (
 
   const parseErrors: string[] = [];
   const parsed = parseFragment(value, {
+    sourceCodeLocationInfo: true,
     onParseError: (error) => {
       parseErrors.push(error.code);
     },
   });
   const expected = serialize(parsed);
 
-  if (
-    parseErrors.length === 0 &&
-    normalizeHtmlForComparison(expected) === normalizeHtmlForComparison(value)
-  ) {
+  if (parseErrors.length === 0 && hasUnclosedElement(parsed, value) === false) {
     return;
   }
 

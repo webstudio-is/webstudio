@@ -68,10 +68,26 @@ export const assetReplaceInput = z.object({
   toAssetId: z.string(),
 });
 
-export const assetDeleteInput = z.object({
-  assetIdsOrPrefixes: z.array(z.string()).min(1),
-  force: z.boolean().optional(),
-});
+export const assetDeleteInput = z
+  .object({
+    assetIds: z.array(z.string()).min(1).optional(),
+    assetIdPrefixes: z.array(z.string()).min(1).optional(),
+    assetIdsOrPrefixes: z
+      .array(z.string())
+      .min(1)
+      .describe(
+        "Deprecated compatibility alias. Use assetIds for exact ids or assetIdPrefixes for prefixes."
+      )
+      .optional(),
+    force: z.boolean().optional(),
+  })
+  .refine(
+    ({ assetIds, assetIdPrefixes, assetIdsOrPrefixes }) =>
+      assetIds !== undefined ||
+      assetIdPrefixes !== undefined ||
+      assetIdsOrPrefixes !== undefined,
+    { message: "Provide assetIds or assetIdPrefixes" }
+  );
 
 export const assetUpdateInput = z.object({
   assetId: z.string(),
@@ -1097,10 +1113,15 @@ export const deleteAssets = (
   input: z.infer<typeof assetDeleteInput>
 ) => {
   const assets = Array.from(getRequiredAssets(state).values());
-  const selectedAssets = assets.filter((asset) =>
-    input.assetIdsOrPrefixes.some(
-      (value) => asset.id === value || asset.id.startsWith(value)
-    )
+  const assetIds = new Set(input.assetIds);
+  const prefixes = [
+    ...(input.assetIdPrefixes ?? []),
+    ...(input.assetIdsOrPrefixes ?? []),
+  ];
+  const selectedAssets = assets.filter(
+    (asset) =>
+      assetIds.has(asset.id) ||
+      prefixes.some((value) => asset.id === value || asset.id.startsWith(value))
   );
   if (selectedAssets.length === 0) {
     return createRuntimeMutation({

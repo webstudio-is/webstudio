@@ -304,6 +304,8 @@ describe("public api operation catalog", () => {
 
     expect(JSON.stringify(upload.inputSchema)).toContain('"folderId"');
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"folderId"');
+    expect(JSON.stringify(upload.inputSchema)).toContain('"force"');
+    expect(JSON.stringify(uploadMany.inputSchema)).toContain('"force"');
   });
 
   test("keeps operation lookup and tRPC path lookup strict", () => {
