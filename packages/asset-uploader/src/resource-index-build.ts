@@ -11,7 +11,6 @@ import {
   cancelAssetResourceIndexBuild,
   failAssetResourceIndexBuild,
 } from "./resource-index-persistence";
-import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
 
 export class AssetResourceIndexBuildSupersededError extends Error {
   constructor() {
@@ -52,6 +51,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   assetRevision?: string;
   signal?: AbortSignal;
 }) => {
+  const buildAttemptId = crypto.randomUUID();
   assertNotCancelled(signal);
   const index = await buildAssetResourceIndex({
     projectId,
@@ -68,6 +68,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
     query,
     queryHash: index.queryHash,
     assetRevision: index.assetRevision,
+    buildAttemptId,
   });
 
   try {
@@ -84,17 +85,12 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
       revision: persisted.revision,
       queryHash: index.queryHash,
       assetRevision: index.assetRevision,
+      buildAttemptId,
       checksum: index.integrity.checksum,
       objectKey: persisted.key,
     });
     if (activated === false) {
       throw new AssetResourceIndexBuildSupersededError();
-    }
-    if (store.delete !== undefined) {
-      await collectAssetResourceIndexGarbageBestEffort({
-        client,
-        store: { delete: store.delete },
-      });
     }
     return { index, persisted };
   } catch (error) {
@@ -105,6 +101,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
         resourceId,
         queryHash: index.queryHash,
         assetRevision: index.assetRevision,
+        buildAttemptId,
       });
       throw error;
     }
@@ -115,6 +112,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
         resourceId,
         queryHash: index.queryHash,
         assetRevision: index.assetRevision,
+        buildAttemptId,
       });
     } catch (stateError) {
       throw new AggregateError(

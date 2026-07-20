@@ -1,22 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  authorizeProject,
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { previewAssetResourceQuery } from "./query-preview";
-
-vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
-  authorizeProject: { hasProjectPermit: vi.fn() },
-  AuthorizationError: class AuthorizationError extends Error {},
-}));
-vi.mock("./canonical-metadata-persistence", () => ({
-  loadCanonicalAssetFileEntries: vi.fn(),
-}));
-vi.mock("./canonical-metadata-backfill", () => ({
-  synchronizeCanonicalAssets: vi.fn(),
-}));
 
 const projectId = "project-1";
 const postgrestClient = { from: vi.fn() } as never;
@@ -24,16 +11,25 @@ const context = {
   postgrest: { client: postgrestClient },
 } as unknown as AppContext;
 const revision = `sha256:${"b".repeat(64)}`;
+const hasProjectPermit = vi.fn();
+const synchronizeCanonicalAssets = vi.fn();
+const loadCanonicalAssetFileEntries = vi.fn();
+const dependencies = {
+  hasProjectPermit,
+  synchronizeCanonicalAssets,
+  loadCanonicalAssetFileEntries,
+};
 
 describe("previewAssetResourceQuery", () => {
   beforeEach(() => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockReset();
-    vi.mocked(loadCanonicalAssetFileEntries).mockReset();
+    hasProjectPermit.mockReset();
+    synchronizeCanonicalAssets.mockReset();
+    loadCanonicalAssetFileEntries.mockReset();
   });
 
   test("evaluates persisted canonical metadata without reading files", async () => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockResolvedValue(true);
-    vi.mocked(loadCanonicalAssetFileEntries).mockResolvedValue([
+    hasProjectPermit.mockResolvedValue(true);
+    loadCanonicalAssetFileEntries.mockResolvedValue([
       {
         projectId,
         assetId: "post-1",
@@ -66,6 +62,7 @@ describe("previewAssetResourceQuery", () => {
       },
       context,
       assetClient: { readFile },
+      dependencies,
     });
 
     expect(result.result).toEqual([{ _id: "post-1" }]);
@@ -78,7 +75,7 @@ describe("previewAssetResourceQuery", () => {
   });
 
   test("does not load metadata without view access", async () => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockResolvedValue(false);
+    hasProjectPermit.mockResolvedValue(false);
     await expect(
       previewAssetResourceQuery({
         projectId,
@@ -90,14 +87,15 @@ describe("previewAssetResourceQuery", () => {
         },
         context,
         assetClient: { readFile: vi.fn() },
+        dependencies,
       })
     ).rejects.toBeInstanceOf(AuthorizationError);
     expect(loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
   });
 
   test("hydrates only identities retained by the query result", async () => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockResolvedValue(true);
-    vi.mocked(loadCanonicalAssetFileEntries).mockResolvedValue([
+    hasProjectPermit.mockResolvedValue(true);
+    loadCanonicalAssetFileEntries.mockResolvedValue([
       {
         projectId,
         assetId: "post-1",
@@ -137,6 +135,7 @@ describe("previewAssetResourceQuery", () => {
       },
       context,
       assetClient: { readFile },
+      dependencies,
     });
 
     expect(result.content["post-1"]?.text).toBe("Post");
@@ -148,7 +147,7 @@ describe("previewAssetResourceQuery", () => {
   });
 
   test("hydrates exactly one complete file selected by a slug detail query", async () => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockResolvedValue(true);
+    hasProjectPermit.mockResolvedValue(true);
     const entries = ["first", "selected"].map((slug) => ({
       projectId,
       assetId: `post-${slug}`,
@@ -170,7 +169,7 @@ describe("previewAssetResourceQuery", () => {
         { path: "properties.slug", type: "string" as const },
       ],
     }));
-    vi.mocked(loadCanonicalAssetFileEntries).mockResolvedValue(entries);
+    loadCanonicalAssetFileEntries.mockResolvedValue(entries);
     const readFile = vi.fn(async (contentRef: string) => ({
       data: {
         async *[Symbol.asyncIterator]() {
@@ -192,6 +191,7 @@ describe("previewAssetResourceQuery", () => {
       },
       context,
       assetClient: { readFile },
+      dependencies,
     });
 
     expect(result.content).toEqual({

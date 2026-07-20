@@ -12,6 +12,7 @@ CREATE TABLE "AssetResourceIndexState" (
   "query" TEXT NOT NULL,
   "queryHash" TEXT NOT NULL,
   "assetRevision" TEXT NOT NULL,
+  "buildAttemptId" TEXT NOT NULL,
   "buildStatus" "AssetResourceIndexBuildStatus" NOT NULL DEFAULT 'PENDING',
   "activeRevision" TEXT,
   "buildError" JSONB,
@@ -30,6 +31,8 @@ CREATE TABLE "AssetResourceIndexState" (
     CHECK (BTRIM("query") <> '' AND OCTET_LENGTH("query") <= 32768),
   CONSTRAINT "AssetResourceIndexState_assetRevision_check"
     CHECK ("assetRevision" ~ '^sha256:[0-9a-f]{64}$'),
+  CONSTRAINT "AssetResourceIndexState_buildAttemptId_check"
+    CHECK (BTRIM("buildAttemptId") <> ''),
   CONSTRAINT "AssetResourceIndexState_activeRevision_check"
     CHECK (
       "activeRevision" IS NULL

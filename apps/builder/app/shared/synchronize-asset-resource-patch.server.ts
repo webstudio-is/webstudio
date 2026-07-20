@@ -69,18 +69,22 @@ export const synchronizeAssetResourcesAfterBuildPatch = async ({
     const directAssetChanges = assetChanges.filter(
       ({ namespace }) => namespace === "assets"
     );
-    const addedAssetIds = [
+    const canonicalAssetIds = [
       ...new Set(
         directAssetChanges.flatMap(({ patches }) =>
-          patches.flatMap(({ op, path }) =>
-            op === "add" && path.length === 1 && typeof path[0] === "string"
+          patches.flatMap(({ path }) =>
+            typeof path[0] === "string" &&
+            (path.length === 1 ||
+              path[1] === "name" ||
+              path[1] === "filename" ||
+              path[1] === "folderId")
               ? [path[0]]
               : []
           )
         )
       ),
     ];
-    for (const assetId of addedAssetIds) {
+    for (const assetId of canonicalAssetIds) {
       await synchronizeCanonicalAsset({
         client: context.postgrest.client,
         assetClient,
@@ -88,21 +92,19 @@ export const synchronizeAssetResourcesAfterBuildPatch = async ({
         assetId,
       });
     }
-    const changedAssetIds = [
-      ...new Set(
-        directAssetChanges.flatMap(({ patches }) =>
-          patches
-            .map(({ path }) => path[0])
-            .filter((id): id is string => typeof id === "string")
-        )
-      ),
-    ];
+    const hasFolderChanges = assetChanges.some(
+      ({ namespace }) => namespace === "assetFolders"
+    );
+    if (hasFolderChanges === false && canonicalAssetIds.length === 0) {
+      return;
+    }
     await updateAssetResourceIndexesAfterCanonicalChange({
       client: context.postgrest.client,
       store: assetClient.resourceIndexStore,
       projectId,
-      changedAssetIds:
-        changedAssetIds.length === 0 ? ["project-assets"] : changedAssetIds,
+      changedAssetIds: hasFolderChanges
+        ? ["project-assets"]
+        : canonicalAssetIds,
     });
   } catch (error) {
     console.error("Asset resource index maintenance failed", error);

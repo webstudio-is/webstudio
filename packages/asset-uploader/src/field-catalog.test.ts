@@ -1,23 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  authorizeProject,
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
-import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
-
-vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
-  authorizeProject: { hasProjectPermit: vi.fn() },
-  AuthorizationError: class AuthorizationError extends Error {},
-}));
-vi.mock("./canonical-metadata-persistence", () => ({
-  loadCanonicalAssetFileEntries: vi.fn(),
-}));
-vi.mock("./canonical-metadata-backfill", () => ({
-  synchronizeCanonicalAssets: vi.fn(),
-}));
 
 const projectId = "project-1";
 const postgrestClient = { from: vi.fn() } as never;
@@ -25,16 +11,25 @@ const context = {
   postgrest: { client: postgrestClient },
 } as unknown as AppContext;
 const assetClient = { readFile: vi.fn() };
+const hasProjectPermit = vi.fn();
+const synchronizeCanonicalAssets = vi.fn();
+const loadCanonicalAssetFileEntries = vi.fn();
+const dependencies = {
+  hasProjectPermit,
+  synchronizeCanonicalAssets,
+  loadCanonicalAssetFileEntries,
+};
 
 describe("loadBuilderAssetFieldCatalog", () => {
   beforeEach(() => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockReset();
-    vi.mocked(loadCanonicalAssetFileEntries).mockReset();
+    hasProjectPermit.mockReset();
+    loadCanonicalAssetFileEntries.mockReset();
+    synchronizeCanonicalAssets.mockReset();
   });
 
   test("authorizes view access and derives fields from persisted metadata", async () => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockResolvedValue(true);
-    vi.mocked(loadCanonicalAssetFileEntries).mockResolvedValue([
+    hasProjectPermit.mockResolvedValue(true);
+    loadCanonicalAssetFileEntries.mockResolvedValue([
       {
         projectId,
         assetId: "post-1",
@@ -60,9 +55,10 @@ describe("loadBuilderAssetFieldCatalog", () => {
       projectId,
       context,
       assetClient,
+      dependencies,
     });
 
-    expect(authorizeProject.hasProjectPermit).toHaveBeenCalledWith(
+    expect(hasProjectPermit).toHaveBeenCalledWith(
       { projectId, permit: "view" },
       context
     );
@@ -78,10 +74,15 @@ describe("loadBuilderAssetFieldCatalog", () => {
   });
 
   test("does not load metadata without view access", async () => {
-    vi.mocked(authorizeProject.hasProjectPermit).mockResolvedValue(false);
+    hasProjectPermit.mockResolvedValue(false);
 
     await expect(
-      loadBuilderAssetFieldCatalog({ projectId, context, assetClient })
+      loadBuilderAssetFieldCatalog({
+        projectId,
+        context,
+        assetClient,
+        dependencies,
+      })
     ).rejects.toBeInstanceOf(AuthorizationError);
     expect(loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
   });

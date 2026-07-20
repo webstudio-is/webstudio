@@ -2,6 +2,7 @@ import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resou
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import { buildPersistAndActivateAssetResourceIndex } from "./resource-index-build";
+import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
 
 export class AssetResourceIndexNotFoundError extends Error {
   constructor() {
@@ -24,7 +25,7 @@ export const rebuildAssetResourceIndex = async ({
   query: string;
 }) => {
   const entries = await loadCanonicalAssetFileEntries({ client, projectId });
-  return await buildPersistAndActivateAssetResourceIndex({
+  const result = await buildPersistAndActivateAssetResourceIndex({
     client,
     store,
     projectId,
@@ -32,4 +33,11 @@ export const rebuildAssetResourceIndex = async ({
     query,
     entries,
   });
+  if (store.delete !== undefined) {
+    await collectAssetResourceIndexGarbageBestEffort({
+      client,
+      store: { delete: store.delete },
+    });
+  }
+  return result;
 };

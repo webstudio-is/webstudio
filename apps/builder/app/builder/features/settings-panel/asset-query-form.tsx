@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  assetResourceParameterName,
   assetResourceContentOptions,
   assetResourceLimits,
   assetResourceIndexStatus,
@@ -484,7 +485,9 @@ export const AssetQueryForm = ({
         new Set(
           parameters
             .map(({ name }) => name)
-            .filter((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name))
+            .filter(
+              (name) => assetResourceParameterName.safeParse(name).success
+            )
         )
       ),
       resourceFieldPaths,

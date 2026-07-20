@@ -5,19 +5,7 @@ const loadCanonicalAssetFileEntries = vi.hoisted(() => vi.fn());
 const synchronizeCanonicalAssets = vi.hoisted(() => vi.fn());
 const buildPersistAndActivateAssetResourceIndex = vi.hoisted(() => vi.fn());
 const deleteAssetResourceIndexQuery = vi.hoisted(() => vi.fn());
-
-vi.mock("./canonical-metadata-persistence", () => ({
-  loadCanonicalAssetFileEntries,
-}));
-vi.mock("./canonical-metadata-backfill", () => ({
-  synchronizeCanonicalAssets,
-}));
-vi.mock("./resource-index-build", () => ({
-  buildPersistAndActivateAssetResourceIndex,
-}));
-vi.mock("./resource-index-persistence", () => ({
-  deleteAssetResourceIndexQuery,
-}));
+const collectAssetResourceIndexGarbageBestEffort = vi.hoisted(() => vi.fn());
 
 import {
   getAssetResourceQuery,
@@ -40,6 +28,13 @@ const resource = (id: string, query: string): Resource => ({
     ])
   ),
 });
+const dependencies = {
+  loadCanonicalAssetFileEntries,
+  synchronizeCanonicalAssets,
+  buildPersistAndActivateAssetResourceIndex,
+  deleteAssetResourceIndexQuery,
+  collectAssetResourceIndexGarbageBestEffort,
+};
 
 describe("asset resource query lifecycle", () => {
   beforeEach(() => {
@@ -47,6 +42,7 @@ describe("asset resource query lifecycle", () => {
     synchronizeCanonicalAssets.mockReset().mockResolvedValue({});
     buildPersistAndActivateAssetResourceIndex.mockReset().mockResolvedValue({});
     deleteAssetResourceIndexQuery.mockReset().mockResolvedValue(true);
+    collectAssetResourceIndexGarbageBestEffort.mockReset();
   });
 
   test("extracts only fixed queryable-asset GROQ definitions", () => {
@@ -65,10 +61,13 @@ describe("asset resource query lifecycle", () => {
     await expect(
       synchronizeAssetResourceIndexQueries({
         client: {} as never,
-        assetClient: { resourceIndexStore: {} } as never,
+        assetClient: {
+          resourceIndexStore: { delete: vi.fn() },
+        } as never,
         projectId: "project-1",
         previousResources: previous,
         resources: current,
+        dependencies,
       })
     ).resolves.toEqual({
       deletedResourceIds: [],
@@ -77,6 +76,7 @@ describe("asset resource query lifecycle", () => {
     expect(loadCanonicalAssetFileEntries).toHaveBeenCalledOnce();
     expect(synchronizeCanonicalAssets).toHaveBeenCalledOnce();
     expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(2);
+    expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledOnce();
   });
 
   test("deletes index ownership when a query is deleted or changed away", async () => {
@@ -94,6 +94,7 @@ describe("asset resource query lifecycle", () => {
           resource("changed-away", "*[]"),
         ],
         resources: [external],
+        dependencies,
       })
     ).resolves.toEqual({
       deletedResourceIds: ["changed-away", "deleted"],

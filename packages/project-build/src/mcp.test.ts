@@ -7169,6 +7169,37 @@ describe("project session mcp adapter", () => {
     }
   });
 
+  test("returns actionable structured screenshot failures", async () => {
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(async () => {
+        throw new Error("Chromium executable was not found");
+      }),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "screenshot",
+        arguments: { url: "https://example.com" },
+      });
+      expect(result).toMatchObject({
+        isError: true,
+        structuredContent: {
+          ok: false,
+          error: {
+            code: "SCREENSHOT_CAPTURE_FAILED",
+            message: expect.stringContaining("preview.status"),
+          },
+        },
+      });
+    } finally {
+      await close();
+    }
+  });
+
   test("returns stable SDK tool errors from resolver", async () => {
     const error = new Error(
       "Project session snapshot changed on disk."

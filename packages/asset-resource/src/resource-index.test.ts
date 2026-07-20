@@ -76,12 +76,12 @@ describe("resource index build", () => {
     await expect(verifyAssetResourceIndex(index)).resolves.toEqual(index);
   });
 
-  test("reuses a canonical revision prepared for a batch", async () => {
+  test("accepts a canonical revision prepared from the same entries", async () => {
     const entry = createCanonicalAssetFileEntry({
       projectId: "project-1",
       document: createDocument("post", {}),
     });
-    const assetRevision = `sha256:${"a".repeat(64)}`;
+    const assetRevision = await computeCanonicalAssetRevision([entry]);
 
     const index = await buildAssetResourceIndex({
       projectId: "project-1",
@@ -92,6 +92,22 @@ describe("resource index build", () => {
     });
 
     expect(index.assetRevision).toBe(assetRevision);
+  });
+
+  test("rejects an asset revision unrelated to the prepared entries", async () => {
+    const entry = createCanonicalAssetFileEntry({
+      projectId: "project-1",
+      document: createDocument("post", {}),
+    });
+    await expect(
+      buildAssetResourceIndex({
+        projectId: "project-1",
+        resourceId: "posts",
+        query: "*[]",
+        entries: [entry],
+        assetRevision: `sha256:${"0".repeat(64)}`,
+      })
+    ).rejects.toThrow("do not match the supplied asset revision");
   });
 
   test("treats all frontmatter fields as schemaless query data", async () => {

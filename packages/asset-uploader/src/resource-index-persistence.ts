@@ -8,6 +8,7 @@ export const beginAssetResourceIndexBuild = async ({
   query,
   queryHash,
   assetRevision,
+  buildAttemptId,
 }: {
   client: Client;
   projectId: string;
@@ -15,6 +16,7 @@ export const beginAssetResourceIndexBuild = async ({
   query: string;
   queryHash: string;
   assetRevision: string;
+  buildAttemptId: string;
 }) => {
   const result = await client.rpc("begin_asset_resource_index_build", {
     p_project_id: projectId,
@@ -22,6 +24,7 @@ export const beginAssetResourceIndexBuild = async ({
     p_query: query,
     p_query_hash: queryHash,
     p_asset_revision: assetRevision,
+    p_build_attempt_id: buildAttemptId,
   });
   assertPostgrestSuccess(result);
 };
@@ -33,6 +36,7 @@ export const activateAssetResourceIndex = async ({
   revision,
   queryHash,
   assetRevision,
+  buildAttemptId,
   checksum,
   objectKey,
 }: {
@@ -42,6 +46,7 @@ export const activateAssetResourceIndex = async ({
   revision: string;
   queryHash: string;
   assetRevision: string;
+  buildAttemptId: string;
   checksum: string;
   objectKey: string;
 }) => {
@@ -51,6 +56,7 @@ export const activateAssetResourceIndex = async ({
     p_revision: revision,
     p_query_hash: queryHash,
     p_asset_revision: assetRevision,
+    p_build_attempt_id: buildAttemptId,
     p_checksum: checksum,
     p_object_key: objectKey,
   });
@@ -64,18 +70,21 @@ export const failAssetResourceIndexBuild = async ({
   resourceId,
   queryHash,
   assetRevision,
+  buildAttemptId,
 }: {
   client: Client;
   projectId: string;
   resourceId: string;
   queryHash: string;
   assetRevision: string;
+  buildAttemptId: string;
 }) => {
   const result = await client.rpc("fail_asset_resource_index_build", {
     p_project_id: projectId,
     p_resource_id: resourceId,
     p_query_hash: queryHash,
     p_asset_revision: assetRevision,
+    p_build_attempt_id: buildAttemptId,
     p_build_error: {
       code: "INDEX_BUILD_FAILED",
       message: "Resource index build failed",
@@ -91,18 +100,21 @@ export const cancelAssetResourceIndexBuild = async ({
   resourceId,
   queryHash,
   assetRevision,
+  buildAttemptId,
 }: {
   client: Client;
   projectId: string;
   resourceId: string;
   queryHash: string;
   assetRevision: string;
+  buildAttemptId: string;
 }) => {
   const result = await client.rpc("cancel_asset_resource_index_build", {
     p_project_id: projectId,
     p_resource_id: resourceId,
     p_query_hash: queryHash,
     p_asset_revision: assetRevision,
+    p_build_attempt_id: buildAttemptId,
   });
   assertPostgrestSuccess(result);
   return result.data === true;
