@@ -28,14 +28,25 @@ describe("validateHtmlEmbedCode", () => {
     ).toBeUndefined();
   });
 
-  test("accepts self-closing html void elements", () => {
-    expect(validateHtmlEmbedCode("<input />")).toBeUndefined();
-  });
+  test.each(["<input />", "<meta />"])(
+    "accepts self-closing html void element: %s",
+    (value) => {
+      expect(validateHtmlEmbedCode(value)).toBeUndefined();
+    }
+  );
 
   test("accepts svg syntax that the html serializer normalizes", () => {
     expect(
       validateHtmlEmbedCode(
         '<svg viewBox="0 0 24 24"><linearGradient id="paint"><stop offset="0%" stop-color="#fff" /></linearGradient><path fill="url(#paint)" d="M0 0h24v24H0z" /></svg>'
+      )
+    ).toBeUndefined();
+  });
+
+  test("accepts parser-preserved comments, entities, and template content", () => {
+    expect(
+      validateHtmlEmbedCode(
+        "<!-- note --><template><span>Tom &amp; Jerry</span></template>"
       )
     ).toBeUndefined();
   });
@@ -73,6 +84,15 @@ describe("validateHtmlEmbedCode", () => {
       message: "Entered HTML has a validation error.",
       value,
       expected: "<select>discarded</select>",
+    });
+  });
+
+  test("reports an unclosed SVG child", () => {
+    const value = "<svg><path></svg>";
+    expect(validateHtmlEmbedCode(value)).toEqual({
+      message: "Entered HTML has a validation error.",
+      value,
+      expected: "<svg><path></path></svg>",
     });
   });
 

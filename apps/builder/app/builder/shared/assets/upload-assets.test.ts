@@ -152,16 +152,16 @@ describe("upload-assets", () => {
       () => "blob:test"
     );
 
+    const contentHash =
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
     expect(fileData).toMatchObject({
       source: "file",
-      contentHash:
-        "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-      fingerprintId:
-        "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+      contentHash,
+      fingerprintId: JSON.stringify(["image.png", contentHash]),
     });
   });
 
-  test("deduplicates identical file content regardless of filename", async () => {
+  test("preserves identical file content with different filenames", async () => {
     const filesData = await getFilesData(
       "image",
       [
@@ -175,8 +175,27 @@ describe("upload-assets", () => {
 
     const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
 
+    expect(uniqueFilesData.size).toBe(2);
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  test("deduplicates identical content with the same filename", async () => {
+    let objectUrlIndex = 0;
+    const filesData = await getFilesData(
+      "image",
+      [
+        new File(["same"], "image.png", { type: "image/png" }),
+        new File(["same"], "image.png", { type: "image/png" }),
+      ],
+      undefined,
+      () => `blob:${objectUrlIndex++}`
+    );
+    const revokeObjectURL = vi.fn();
+
+    const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
+
     expect(uniqueFilesData.size).toBe(1);
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:second.png");
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:1");
   });
 
   test("releases object URLs discarded during deduplication", async () => {

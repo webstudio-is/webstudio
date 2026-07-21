@@ -31,13 +31,47 @@ const maxCreateUploadTicketAttempts = 3;
 const contentHashUploadPollInterval = 100;
 const contentHashUploadPollAttempts = 50;
 
-const getRestoredAssetId = (projectId: string, name: string) =>
+const getDeduplicatedAssetId = (
+  projectId: string,
+  name: string,
+  filename: string
+) =>
   createHash("sha256")
     .update(projectId)
     .update("\0")
     .update(name)
+    .update("\0")
+    .update(filename)
     .digest("base64url")
     .slice(0, 21);
+
+const assertAssetCapacity = async (projectId: string, context: AppContext) => {
+  const { maxAssetsPerProject } = await getProjectPlanFeatures(
+    projectId,
+    context
+  );
+  const assetCount = await context.postgrest.client
+    .from("Asset")
+    .select("id, file:File!inner(status)", { count: "exact", head: true })
+    .eq("projectId", projectId)
+    .eq("file.status", "UPLOADED");
+  const uploadingCount = await context.postgrest.client
+    .from("File")
+    .select("*", { count: "exact", head: true })
+    .eq("isDeleted", false)
+    .eq("uploaderProjectId", projectId)
+    .eq("status", "UPLOADING")
+    .gt(
+      "createdAt",
+      new Date(Date.now() - UPLOADING_STALE_TIMEOUT).toISOString()
+    );
+  const count = (assetCount.count ?? 0) + (uploadingCount.count ?? 0);
+  if (count >= maxAssetsPerProject) {
+    throw new Error(
+      `The maximum number of assets per project is ${maxAssetsPerProject}.`
+    );
+  }
+};
 
 const findAssetByFileName = async ({
   projectId,
@@ -53,6 +87,32 @@ const findAssetByFileName = async ({
     .select("id, projectId, filename, description, folderId")
     .eq("projectId", projectId)
     .eq("name", name)
+    .order("id")
+    .limit(1)
+    .maybeSingle();
+  if (asset.error) {
+    throw new Error(asset.error.message);
+  }
+  return asset.data ?? undefined;
+};
+
+const findAssetByIdentity = async ({
+  projectId,
+  name,
+  filename,
+  context,
+}: {
+  projectId: string;
+  name: string;
+  filename: string;
+  context: AppContext;
+}) => {
+  const asset = await context.postgrest.client
+    .from("Asset")
+    .select("id, projectId, filename, description, folderId")
+    .eq("projectId", projectId)
+    .eq("name", name)
+    .eq("filename", filename)
     .order("id")
     .limit(1)
     .maybeSingle();
@@ -91,14 +151,20 @@ const findContentHashUploadTicket = async ({
       return;
     }
     if (file.data.status === "UPLOADED") {
-      let asset = await findAssetByFileName({
+      let asset = await findAssetByIdentity({
         projectId,
         name: file.data.name,
+        filename: displayFilename,
         context,
       });
       if (asset === undefined) {
+        await assertAssetCapacity(projectId, context);
         const restoredAsset = {
-          id: getRestoredAssetId(projectId, file.data.name),
+          id: getDeduplicatedAssetId(
+            projectId,
+            file.data.name,
+            displayFilename
+          ),
           projectId,
           filename: displayFilename,
           description: description ?? null,
@@ -108,9 +174,10 @@ const findContentHashUploadTicket = async ({
           .from("Asset")
           .insert({ ...restoredAsset, name: file.data.name });
         if (insertedAsset.error?.code === "23505") {
-          asset = await findAssetByFileName({
+          asset = await findAssetByIdentity({
             projectId,
             name: file.data.name,
+            filename: displayFilename,
             context,
           });
           if (asset === undefined) {
@@ -223,46 +290,7 @@ export const createUploadTicket = async (
     }
   }
 
-  const { maxAssetsPerProject } = await getProjectPlanFeatures(
-    projectId,
-    context
-  );
-
-  /**
-   * sometimes for example on request timeout we don't know what happened to the "UPLOADING" asset,
-   * so we don't take into account assets with the "UPLOADING" status that were created more
-   * than UPLOADING_STALE_TIMEOUT milliseconds ago
-   **/
-
-  const assetCount = await context.postgrest.client
-    .from("Asset")
-    .select("id, file:File!inner(status)", { count: "exact", head: true })
-    .eq("projectId", projectId)
-    .eq("file.status", "UPLOADED");
-
-  const uploadingCount = await context.postgrest.client
-    .from("File")
-    .select("*", { count: "exact", head: true })
-    .eq("isDeleted", false)
-    .eq("uploaderProjectId", projectId)
-    .eq("status", "UPLOADING")
-    .gt(
-      "createdAt",
-      new Date(Date.now() - UPLOADING_STALE_TIMEOUT).toISOString()
-    );
-
-  const count = (assetCount.count ?? 0) + (uploadingCount.count ?? 0);
-
-  if (count >= maxAssetsPerProject) {
-    /**
-     * Here is right to write `Max ${maxAssetsPerProject}` but see the comment below,
-     * it's probable that the user can exceed the limit a little bit.
-     * So it can be a little bit strange that the limit is 5 but the user already has 7.
-     **/
-    throw new Error(
-      `The maximum number of assets per project is ${maxAssetsPerProject}.`
-    );
-  }
+  await assertAssetCapacity(projectId, context);
 
   /**
    * Create a temporary "UPLOADING" asset, so it can be counted in the next query

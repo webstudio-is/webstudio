@@ -408,6 +408,72 @@ describe("insert page copy", () => {
     });
   });
 
+  test("preserves legacy HtmlEmbed code when duplicating a page", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        {
+          type: "instance",
+          id: "bodyId",
+          component: "Body",
+          children: [{ type: "id", value: "embedId" }],
+        },
+        {
+          type: "instance",
+          id: "embedId",
+          component: "HtmlEmbed",
+          children: [],
+        },
+      ]),
+      props: toMap<Prop>([
+        {
+          id: "legacy-code",
+          instanceId: "embedId",
+          name: "code",
+          type: "string",
+          value: "<div><span></div>",
+        },
+      ]),
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "pageId",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [],
+        folders: [createRootFolder(["pageId"])],
+      }),
+    });
+
+    const mutation = duplicatePage(
+      data,
+      {
+        projectId: "projectId",
+        pageId: "pageId",
+        name: "Copy",
+        path: "/copy",
+      },
+      { createId: nanoid }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "props",
+      patches: expect.arrayContaining([
+        expect.objectContaining({
+          op: "add",
+          value: expect.objectContaining({
+            name: "code",
+            type: "string",
+            value: "<div><span></div>",
+          }),
+        }),
+      ]),
+    });
+  });
+
   test("runtime duplicate atomically substitutes copied page text and variables", () => {
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([

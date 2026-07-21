@@ -3,3 +3,4 @@ export * from "./__generated__/attributes";
 export * from "./__generated__/aria";
 export * from "./pseudo-classes";
 export { roles as ariaRoles } from "aria-query";
+export { voidHtmlTags } from "html-tags";

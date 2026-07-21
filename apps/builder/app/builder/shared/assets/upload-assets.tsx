@@ -494,9 +494,7 @@ export const uploadAssets = async <T extends File | URL>(
       uploadTickets.set(fileData.fingerprintId, ticket);
       if (ticket.deduplicated) {
         URL.revokeObjectURL(fileData.objectURL);
-        if (ticket.asset !== undefined) {
-          safeSetAsset(ticket.asset, projectId);
-        }
+        safeSetAsset(ticket.asset, projectId);
         toast.info("Asset already exists");
         continue;
       }

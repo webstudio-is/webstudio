@@ -60,6 +60,7 @@ import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { ConflictResolution } from "./style-copy";
 import { findPageAndSelectorByInstanceId } from "./lookup";
+import { validateFragmentHtmlEmbedCode } from "./html";
 import { z } from "zod";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
@@ -1042,6 +1043,10 @@ export const insertFragment = (
   input: z.infer<typeof insertFragmentInput>,
   context: BuilderRuntimeContext
 ): BuilderRuntimeMutation<FragmentInsertResult> => {
+  const htmlEmbedError = validateFragmentHtmlEmbedCode(input.fragment);
+  if (htmlEmbedError !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", htmlEmbedError.message);
+  }
   if (input.conflictResolution === undefined) {
     const conflicts = detectFragmentTokenConflicts({
       fragment: input.fragment,

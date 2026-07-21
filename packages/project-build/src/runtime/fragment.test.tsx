@@ -374,19 +374,24 @@ test("remap token selections in inserted slot content", () => {
   });
 });
 
-test("rejects invalid HtmlEmbed code before inserting a fragment", () => {
+test("preserves legacy HtmlEmbed code when copying internal fragments", () => {
   const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
   const fragment = renderTemplate(<$.HtmlEmbed code="<div><span></div>" />);
 
-  expect(() =>
-    insertWebstudioFragmentCopy({
-      data,
-      fragment,
-      availableVariables: [],
-      projectId: "",
+  insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: [],
+    projectId: "",
+  });
+
+  expect(Array.from(data.props.values())).toContainEqual(
+    expect.objectContaining({
+      name: "code",
+      type: "string",
+      value: "<div><span></div>",
     })
-  ).toThrow("Entered HTML has a validation error");
-  expect(data.instances.size).toBe(1);
+  );
 });
 
 test("insert instances with multiple roots", () => {

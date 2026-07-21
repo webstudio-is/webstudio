@@ -77,7 +77,8 @@ export const getSha256HashOfFile = async (file: File) => {
 export const getFileUploadFingerprint = async (
   file: File,
   contentHash?: string
-) => contentHash ?? getSha256HashOfFile(file);
+) =>
+  JSON.stringify([file.name, contentHash ?? (await getSha256HashOfFile(file))]);
 
 export const getMimeType = (file: File | URL) => {
   if (file instanceof File) {

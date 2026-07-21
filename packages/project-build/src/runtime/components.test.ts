@@ -576,6 +576,21 @@ test("inserts fragment into page template", async () => {
   );
 });
 
+test("rejects invalid HtmlEmbed code from externally authored fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<$.HtmlEmbed code={"<div><span></div>"} />`
+  );
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("Entered HTML has a validation error");
+});
+
 test("rejects tag when inserting non-element component", async () => {
   const parent = createParent();
 

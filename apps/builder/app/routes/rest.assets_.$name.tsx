@@ -5,11 +5,11 @@ import {
   createSizeLimiter,
   assetDataOverride,
   getContentHash,
-  getUploadedAsset,
   uploadFile,
   type UploadErrorCleanup,
 } from "@webstudio-is/asset-uploader/index.server";
 import { isAssetFileName } from "@webstudio-is/protocol";
+import type { Asset } from "@webstudio-is/sdk";
 import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
   createAssetClient,
@@ -67,16 +67,7 @@ const createAssetUploadResponse = async ({
   );
 };
 
-const createDeduplicatedAssetResponse = async ({
-  name,
-  projectId,
-  context,
-}: {
-  name: string;
-  projectId: string;
-  context: Awaited<ReturnType<typeof createContext>>;
-}) => {
-  const asset = await getUploadedAsset({ name, projectId, context });
+const createDeduplicatedAssetResponse = (asset: Asset) => {
   return json(
     {
       uploadedAssets: [asset],
@@ -194,11 +185,7 @@ export const action = async (props: ActionFunctionArgs) => {
         context
       );
       if (ticket.deduplicated) {
-        return await createDeduplicatedAssetResponse({
-          name: ticket.name,
-          projectId,
-          context,
-        });
+        return createDeduplicatedAssetResponse(ticket.asset);
       }
       return await createAssetUploadResponse({
         body: createRequestBody(data),

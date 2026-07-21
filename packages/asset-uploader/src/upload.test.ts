@@ -38,6 +38,11 @@ const ownershipHandler = db.get("Project", ({ request }) => {
   return json({ userId: "owner-1", workspaceId: null });
 });
 
+const availableAssetCapacityHandlers = () => [
+  db.head("Asset", () => empty({ headers: { "Content-Range": "*/0" } })),
+  db.head("File", () => empty({ headers: { "Content-Range": "*/0" } })),
+];
+
 const assetPkeyError = ({
   assetId,
   projectId,
@@ -65,7 +70,7 @@ const uploadedFile = {
 };
 
 describe("createUploadTicket", () => {
-  test("reuses an uploaded asset with the same project content hash", async () => {
+  test("reuses an uploaded asset with the same content and display name", async () => {
     let inserted = false;
     server.use(
       ownershipHandler,
@@ -77,6 +82,7 @@ describe("createUploadTicket", () => {
       }),
       db.get("Asset", ({ request }) => {
         const url = new URL(request.url);
+        expect(url.searchParams.get("filename")).toBe("eq.existing");
         expect(url.searchParams.get("order")).toBe("id.asc");
         expect(url.searchParams.get("limit")).toBe("1");
         return json({
@@ -98,7 +104,7 @@ describe("createUploadTicket", () => {
         {
           projectId: "project-1",
           type: "image/png",
-          filename: "photo.png",
+          filename: "existing.png",
           contentHash: "hash-1",
         },
         createContext()
@@ -110,6 +116,49 @@ describe("createUploadTicket", () => {
       asset: { id: "existing-asset", name: "existing.png", type: "image" },
     });
     expect(inserted).toBe(false);
+  });
+
+  test("creates a distinct logical asset for a different display name", async () => {
+    let insertedAsset: unknown;
+    server.use(
+      ownershipHandler,
+      db.get("File", () =>
+        json({ ...uploadedFile, name: "first.md", format: "text/markdown" })
+      ),
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("name")).toBe("eq.first.md");
+        expect(url.searchParams.get("filename")).toBe("eq.second");
+        return json(null);
+      }),
+      ...availableAssetCapacityHandlers(),
+      db.post("Asset", async ({ request }) => {
+        insertedAsset = await request.json();
+        return empty({ status: 201 });
+      })
+    );
+
+    const ticket = await createUploadTicket(
+      {
+        projectId: "project-1",
+        type: "text/markdown",
+        filename: "second.md",
+        contentHash: "hash-1",
+      },
+      createContext()
+    );
+
+    expect(ticket).toMatchObject({
+      name: "first.md",
+      deduplicated: true,
+      asset: { filename: "second" },
+    });
+    expect(insertedAsset).toMatchObject({
+      id: ticket.assetId,
+      projectId: "project-1",
+      name: "first.md",
+      filename: "second",
+    });
   });
 
   test("restores a soft-deleted file with the same content hash", async () => {
@@ -124,6 +173,7 @@ describe("createUploadTicket", () => {
         return json({ ...uploadedFile, isDeleted: true });
       }),
       db.get("Asset", () => json(null)),
+      ...availableAssetCapacityHandlers(),
       db.patch("File", async ({ request }) => {
         expect(await request.json()).toEqual({ isDeleted: false });
         restoredFile = true;
@@ -152,7 +202,10 @@ describe("createUploadTicket", () => {
       deduplicated: true,
       asset: { id: expect.any(String), name: "existing.png" },
     });
-    expect(ticket.assetId).toBe(ticket.asset?.id);
+    if (ticket.deduplicated === false) {
+      throw new Error("Expected a deduplicated upload ticket");
+    }
+    expect(ticket.assetId).toBe(ticket.asset.id);
     expect(restoredFile).toBe(true);
     expect(insertedAsset).toMatchObject({
       id: ticket.assetId,
@@ -174,6 +227,7 @@ describe("createUploadTicket", () => {
         return json(null);
       }),
       db.get("Asset", () => json(null)),
+      ...availableAssetCapacityHandlers(),
       db.post("Asset", () => {
         insertedAsset = true;
         return empty({ status: 201 });
@@ -216,6 +270,7 @@ describe("createUploadTicket", () => {
               folderId: null,
             });
       }),
+      ...availableAssetCapacityHandlers(),
       db.post("Asset", async ({ request }) => {
         const asset = (await request.json()) as { id: string };
         restoredAssetId = asset.id;
@@ -246,6 +301,40 @@ describe("createUploadTicket", () => {
       deduplicated: true,
     });
     expect(assetReads).toBe(2);
+  });
+
+  test("enforces the asset limit before restoring deduplicated content", async () => {
+    let insertedAsset = false;
+    let restoredFile = false;
+    server.use(
+      ownershipHandler,
+      db.get("File", () => json({ ...uploadedFile, isDeleted: true })),
+      db.get("Asset", () => json(null)),
+      db.head("Asset", () => empty({ headers: { "Content-Range": "*/350" } })),
+      db.head("File", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.post("Asset", () => {
+        insertedAsset = true;
+        return empty({ status: 201 });
+      }),
+      db.patch("File", () => {
+        restoredFile = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    await expect(
+      createUploadTicket(
+        {
+          projectId: "project-1",
+          type: "image/png",
+          filename: "photo.png",
+          contentHash: "hash-1",
+        },
+        createContext()
+      )
+    ).rejects.toThrow("The maximum number of assets per project is 350.");
+    expect(insertedAsset).toBe(false);
+    expect(restoredFile).toBe(false);
   });
 
   test("reuses the winning asset after a concurrent content hash insert", async () => {
