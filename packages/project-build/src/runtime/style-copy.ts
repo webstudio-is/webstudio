@@ -392,6 +392,7 @@ export const insertPortalLocalStyleSources = ({
   styleSources,
   styleSourceSelections,
   styles,
+  styleSourceIdMap,
   mergedBreakpointIds,
 }: {
   fragmentStyleSources: StyleSource[];
@@ -401,6 +402,7 @@ export const insertPortalLocalStyleSources = ({
   styleSources: StyleSources;
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
+  styleSourceIdMap: Map<StyleSource["id"], StyleSource["id"]>;
   mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
 }): void => {
   const instanceStyleSourceIds = new Set<StyleSource["id"]>();
@@ -409,8 +411,11 @@ export const insertPortalLocalStyleSources = ({
     if (instanceIds.has(instanceId) === false) {
       continue;
     }
-    styleSourceSelections.set(instanceId, styleSourceSelection);
-    for (const styleSourceId of styleSourceSelection.values) {
+    const values = styleSourceSelection.values.map(
+      (styleSourceId) => styleSourceIdMap.get(styleSourceId) ?? styleSourceId
+    );
+    styleSourceSelections.set(instanceId, { instanceId, values });
+    for (const styleSourceId of values) {
       instanceStyleSourceIds.add(styleSourceId);
     }
   }
