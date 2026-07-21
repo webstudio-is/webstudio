@@ -1844,7 +1844,7 @@ export const createStyleDeclsFromInput = ({
   state?: StyleDecl["state"];
   listed?: StyleDecl["listed"];
 }): StyleDecl[] => {
-  const createSingleStyleDecl = () => [
+  const createStyleDeclWithInput = (property: unknown, value: unknown) =>
     createStyleDecl({
       styleSourceId,
       breakpointId: breakpoint,
@@ -1852,8 +1852,7 @@ export const createStyleDeclsFromInput = ({
       value,
       state,
       listed,
-    }),
-  ];
+    });
   const normalizedProperty = normalizeStyleProperty(property);
   const cssProperty = hyphenateProperty(String(normalizedProperty));
   if (
@@ -1861,12 +1860,12 @@ export const createStyleDeclsFromInput = ({
       cssProperty as (typeof shorthandProperties)[number]
     ) === false
   ) {
-    return createSingleStyleDecl();
+    return [createStyleDeclWithInput(property, value)];
   }
 
   const parsedValue = styleValue.safeParse(value);
   if (parsedValue.success === false) {
-    return createSingleStyleDecl();
+    return [createStyleDeclWithInput(property, value)];
   }
   const parsed = parseCss(
     `.styles{${cssProperty}:${toValue(parsedValue.data)}}`,
@@ -1885,14 +1884,7 @@ export const createStyleDeclsFromInput = ({
     );
   }
   return parsed.styles.map((style) =>
-    createStyleDecl({
-      styleSourceId,
-      breakpointId: breakpoint,
-      property: style.property,
-      value: style.value,
-      state,
-      listed,
-    })
+    createStyleDeclWithInput(style.property, style.value)
   );
 };
 
