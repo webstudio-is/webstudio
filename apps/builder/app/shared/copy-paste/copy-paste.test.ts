@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtime";
-import { coreMetas, type Instance } from "@webstudio-is/sdk";
+import { coreMetas, ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import type { Project } from "@webstudio-is/project";
 import { initBuilderApi } from "../builder-api";
@@ -91,7 +91,12 @@ const setupRootCssVariable = (property: `--${string}`, value: string) => {
     new Map([["root-local", { id: "root-local", type: "local" }]])
   );
   $styleSourceSelections.set(
-    new Map([["body-id", { instanceId: "body-id", values: ["root-local"] }]])
+    new Map([
+      [
+        ROOT_INSTANCE_ID,
+        { instanceId: ROOT_INSTANCE_ID, values: ["root-local"] },
+      ],
+    ])
   );
   $styles.set(
     new Map([

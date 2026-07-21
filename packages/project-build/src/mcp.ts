@@ -1571,6 +1571,16 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       },
       assetsDir: ".webstudio/assets",
     },
+    {
+      asset: {
+        name: "hero.png",
+        type: "image",
+        format: "png",
+        meta: { width: 1200, height: 630 },
+        force: true,
+      },
+      assetsDir: ".webstudio/assets",
+    },
   ],
   "upload-assets": [
     {
@@ -1866,7 +1876,10 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   ],
   "list-assets": [{}, { verbose: true }],
   "replace-asset": [{ fromAssetId: "old-asset-id", toAssetId: "new-asset-id" }],
-  "delete-asset": [{ assetIdsOrPrefixes: ["asset-id"] }],
+  "delete-asset": [
+    { assetIds: ["asset-id"] },
+    { assetIdPrefixes: ["generated-prefix"] },
+  ],
   "set-image-descriptions": [
     {
       updates: [

@@ -1,4 +1,4 @@
-import htmlTags, { voidHtmlTags, type HtmlTags } from "html-tags";
+import { htmlTags, voidHtmlTags, type HtmlTags } from "@webstudio-is/html-data";
 import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { compareMedia, type StyleValue } from "@webstudio-is/css-engine";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";

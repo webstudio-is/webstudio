@@ -1,5 +1,6 @@
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
+import { getAssetContentHash } from "@webstudio-is/sdk";
 import {
   apiClientHeader,
   apiClientVersionHeader,
@@ -327,6 +328,7 @@ type AssetContentData = BinaryAssetData | string;
 type AssetUpload = {
   asset: Asset;
   data: BinaryAssetData;
+  force?: boolean;
 };
 
 type AssetUploadDescriptor = {
@@ -336,11 +338,16 @@ type AssetUploadDescriptor = {
   meta?: Record<string, unknown>;
   description?: string | null;
   folderId?: string;
+  force?: boolean;
 };
 
-type AssetUploadResult = { uploadedAssets?: Asset[] };
+type UploadedAsset = Asset & { deduplicated?: boolean };
+type AssetUploadResult = {
+  uploadedAssets?: Asset[];
+  deduplicated?: boolean;
+};
 type AssetUploadBatchResult =
-  | { status: "fulfilled"; uploadedAssets: Asset[] }
+  | { status: "fulfilled"; uploadedAssets: UploadedAsset[] }
   | { status: "rejected"; asset: Asset; error: unknown };
 
 const formatError = (error: unknown) =>
@@ -354,12 +361,20 @@ const retryOnce = async <Result>(task: () => Promise<Result>) => {
   }
 };
 
+const getBinaryAssetDataHash = async (data: BinaryAssetData) => {
+  return getAssetContentHash(
+    data instanceof Blob ? await data.arrayBuffer() : data
+  );
+};
+
 const getAssetUploadUrl = ({
   asset,
+  force,
   origin,
   projectId,
 }: {
   asset: Asset;
+  force?: boolean;
   origin: string;
   projectId: string;
 }) => {
@@ -376,7 +391,12 @@ const getAssetUploadUrl = ({
   if (asset.type === "image") {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
+  }
+  if (asset.format !== undefined) {
     url.searchParams.set("format", asset.format);
+  }
+  if (force === true) {
+    url.searchParams.set("force", "true");
   }
   return url;
 };
@@ -390,6 +410,7 @@ export const uploadAsset = async (
   const response = await fetchJsonResponse(
     getAssetUploadUrl({
       asset: upload.asset,
+      force: upload.force,
       origin,
       projectId,
     }),
@@ -400,6 +421,7 @@ export const uploadAsset = async (
         ...headers,
         "x-auth-token": authToken,
         "x-webstudio-asset-description": upload.asset.description ?? undefined,
+        "x-webstudio-asset-meta": JSON.stringify(upload.asset.meta),
         "content-type": "application/octet-stream",
       }),
     }
@@ -418,7 +440,12 @@ export const uploadAsset = async (
     throw new Error(result.errors);
   }
   return "uploadedAssets" in result && Array.isArray(result.uploadedAssets)
-    ? result.uploadedAssets
+    ? result.deduplicated === true
+      ? result.uploadedAssets.map((asset) => ({
+          ...asset,
+          deduplicated: true,
+        }))
+      : result.uploadedAssets
     : [];
 };
 
@@ -426,27 +453,60 @@ export const uploadAssets = async (
   params: AuthProjectParams & {
     assets: Asset[];
     readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
+    force?: (asset: Asset) => boolean;
   }
-): Promise<Asset[]> => {
-  const results: AssetUploadBatchResult[] = await Promise.all(
-    params.assets.map(async (asset) => {
+): Promise<UploadedAsset[]> => {
+  const results: AssetUploadBatchResult[] = Array(params.assets.length);
+  const prepared = await Promise.all(
+    params.assets.map(async (asset, index) => {
       try {
-        const uploadedAssets = await retryOnce(async () => {
-          const data = await params.readAssetData(asset);
-          return await uploadAsset({
-            authToken: params.authToken,
-            headers: params.headers,
-            origin: params.origin,
-            projectId: params.projectId,
-            upload: {
-              asset,
-              data,
-            },
-          });
-        });
-        return { status: "fulfilled", uploadedAssets };
+        const data = await retryOnce(() => params.readAssetData(asset));
+        const force = params.force?.(asset);
+        return {
+          asset,
+          data,
+          force,
+          index,
+          group:
+            force === true
+              ? `force:${index}`
+              : await getBinaryAssetDataHash(data),
+        };
       } catch (error) {
-        return { status: "rejected", asset, error };
+        results[index] = { status: "rejected", asset, error };
+      }
+    })
+  );
+  const uploads = prepared.flatMap((upload) =>
+    upload === undefined ? [] : [upload]
+  );
+  const groups = new Map<string, typeof uploads>();
+  for (const upload of uploads) {
+    const group = groups.get(upload.group) ?? [];
+    group.push(upload);
+    groups.set(upload.group, group);
+  }
+  await Promise.all(
+    Array.from(groups.values(), async (uploads) => {
+      for (const { asset, data, force, index } of uploads) {
+        try {
+          const uploadedAssets = await retryOnce(async () => {
+            return await uploadAsset({
+              authToken: params.authToken,
+              headers: params.headers,
+              origin: params.origin,
+              projectId: params.projectId,
+              upload: {
+                asset,
+                data,
+                force,
+              },
+            });
+          });
+          results[index] = { status: "fulfilled", uploadedAssets };
+        } catch (error) {
+          results[index] = { status: "rejected", asset, error };
+        }
       }
     })
   );
@@ -537,6 +597,7 @@ export const uploadProjectAsset = async (
     projectId: params.projectId,
     assets: [asset],
     readAssetData: () => params.readAssetData(params.asset),
+    force: () => params.asset.force === true,
   });
   return { uploaded };
 };
@@ -565,6 +626,7 @@ export const uploadProjectAssets = async (
       }
       return params.readAssetData(descriptor);
     },
+    force: (asset) => descriptorByName.get(asset.name)?.force === true,
   });
   return { uploaded };
 };

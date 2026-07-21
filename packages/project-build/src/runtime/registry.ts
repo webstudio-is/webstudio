@@ -1602,7 +1602,7 @@ export const builderRuntimeOperations = [
     "cssVariables.define",
     api("define-css-variable", "defineCssVariables"),
     mutationContract({
-      readNamespaces: ["pages", ...styleNamespaces, "breakpoints"],
+      readNamespaces: [...styleNamespaces, "breakpoints"],
       writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
     }),
     styles.cssVariableDefineInput,

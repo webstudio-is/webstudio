@@ -2,7 +2,6 @@ import {
   type DefaultTreeAdapterMap,
   defaultTreeAdapter,
   parseFragment,
-  serialize,
 } from "parse5";
 import {
   type WebstudioFragment,
@@ -39,54 +38,6 @@ type ElementNode = DefaultTreeAdapterMap["element"];
 
 const spaceRegex = /^\s*$/;
 const wsAttributePrefix = "data-ws-";
-
-export type HtmlEmbedCodeError = {
-  message: string;
-  value: string;
-  expected?: string;
-};
-
-const htmlEmbedCodeMaxChars = 50_000;
-
-const normalizeHtmlForComparison = (value: string) =>
-  value
-    .replaceAll(/\s/g, "")
-    .replaceAll('=""', "")
-    .replaceAll('xmlns="http://www.w3.org/2000/svg"', "")
-    .replaceAll(/<([a-zA-Z][\w:-]*)([^<>]*)\/>/g, "<$1$2></$1>");
-
-export const validateHtmlEmbedCode = (
-  value: string
-): HtmlEmbedCodeError | undefined => {
-  if (value.length > htmlEmbedCodeMaxChars) {
-    return {
-      message: `The HTML Embed code exceeds ${htmlEmbedCodeMaxChars} character limit.`,
-      value,
-      expected: "",
-    };
-  }
-
-  const parseErrors: string[] = [];
-  const parsed = parseFragment(value, {
-    onParseError: (error) => {
-      parseErrors.push(error.code);
-    },
-  });
-  const expected = serialize(parsed);
-
-  if (
-    parseErrors.length === 0 &&
-    normalizeHtmlForComparison(expected) === normalizeHtmlForComparison(value)
-  ) {
-    return;
-  }
-
-  return {
-    message: "Entered HTML has a validation error.",
-    value,
-    expected,
-  };
-};
 
 const getAttributeType = (
   attribute: (typeof ariaAttributes)[number]

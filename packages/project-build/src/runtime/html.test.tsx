@@ -1,10 +1,7 @@
 import { expect, test, describe } from "vitest";
 import { $, css, renderTemplate, token, ws } from "@webstudio-is/template";
 import type { WebstudioFragment } from "@webstudio-is/sdk";
-import {
-  generateFragmentFromHtml as _generateFragmentFromHtml,
-  validateHtmlEmbedCode,
-} from "./html";
+import { generateFragmentFromHtml as _generateFragmentFromHtml } from "./html";
 
 // Wrapper that strips skippedSelectors for tests that only compare fragment shape
 const generateFragmentFromHtml = (html: string) => {
@@ -12,49 +9,6 @@ const generateFragmentFromHtml = (html: string) => {
     _generateFragmentFromHtml(html);
   return fragment;
 };
-
-describe("validateHtmlEmbedCode", () => {
-  test("accepts html that serializes without repairs", () => {
-    expect(validateHtmlEmbedCode("<div><span>Label</span></div>")).toBe(
-      undefined
-    );
-  });
-
-  test("accepts self-closing svg elements", () => {
-    expect(
-      validateHtmlEmbedCode(
-        '<svg xmlns="http://www.w3.org/2000/svg"><path /></svg>'
-      )
-    ).toBeUndefined();
-  });
-
-  test("reports html parser errors with autofix output", () => {
-    expect(
-      validateHtmlEmbedCode('<section></section attribute="value">')
-    ).toEqual({
-      message: "Entered HTML has a validation error.",
-      value: '<section></section attribute="value">',
-      expected: "<section></section>",
-    });
-  });
-
-  test("reports repaired html with autofix output", () => {
-    expect(validateHtmlEmbedCode("<div><span></div>")).toEqual({
-      message: "Entered HTML has a validation error.",
-      value: "<div><span></div>",
-      expected: "<div><span></span></div>",
-    });
-  });
-
-  test("enforces the html embed size limit", () => {
-    const value = "a".repeat(50_001);
-    expect(validateHtmlEmbedCode(value)).toEqual({
-      message: "The HTML Embed code exceeds 50000 character limit.",
-      value,
-      expected: "",
-    });
-  });
-});
 
 test("generate instances from html", () => {
   expect(

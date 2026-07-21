@@ -576,6 +576,21 @@ test("inserts fragment into page template", async () => {
   );
 });
 
+test("rejects invalid HtmlEmbed code from externally authored fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    `<$.HtmlEmbed code={"<div><span></div>"} />`
+  );
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("Entered HTML has a validation error");
+});
+
 test("rejects tag when inserting non-element component", async () => {
   const parent = createParent();
 
@@ -1000,6 +1015,37 @@ test("honors fragment token conflict resolution", async () => {
       value: { type: "keyword", value: "red" },
     })
   );
+});
+
+test("requires an explicit fragment token conflict resolution", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+  const existingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: blue;\`)]} />`
+  );
+  for (const styleSource of existingFragment.styleSources) {
+    state.styleSources.set(styleSource.id, styleSource);
+  }
+  for (const style of existingFragment.styles) {
+    state.styles.set(getStyleDeclKey(style), style);
+  }
+  for (const breakpoint of existingFragment.breakpoints) {
+    state.breakpoints.set(breakpoint.id, breakpoint);
+  }
+  const conflictingFragment = await parseWebstudioJsxFragment(
+    `<ws.element ws:tag="div" ws:tokens={[token("brand", css\`color: red;\`)]} />`
+  );
+
+  expect(() =>
+    insertFragment(
+      state,
+      {
+        parentInstanceId: parent.id,
+        fragment: conflictingFragment,
+      },
+      { createId: createIdFactory(), projectId: "project-id" }
+    )
+  ).toThrow(/explicit conflictResolution.*brand/);
 });
 
 test("inserts token-only fragments without a parent instance", async () => {

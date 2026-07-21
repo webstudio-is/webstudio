@@ -1,8 +1,17 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import deepEqual from "fast-deep-equal";
-import { camelCaseProperty, validateSelector } from "@webstudio-is/css-data";
-import { styleValue, toValue, type StyleValue } from "@webstudio-is/css-engine";
+import {
+  camelCaseProperty,
+  parseCssValue,
+  validateSelector,
+} from "@webstudio-is/css-data";
+import {
+  hyphenateProperty,
+  styleValue,
+  toValue,
+  type StyleValue,
+} from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
   ROOT_INSTANCE_ID,
@@ -25,11 +34,7 @@ import {
   type PaginatedOutputInput,
 } from "./output";
 import type { BuilderState } from "../state/builder-state";
-import {
-  findSerializedPageByInput,
-  getHomePageRootInstanceId,
-  getSerializedPages,
-} from "./pages";
+import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { getInstanceDepths } from "./instances";
 import { throwBuilderRuntimeError } from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
@@ -264,19 +269,12 @@ const withValidatedBreakpoint = <Input extends { breakpoint?: string }>(
 export const getCssVariableRootTarget = (
   state: Pick<
     BuilderState,
-    "breakpoints" | "pages" | "styleSources" | "styleSourceSelections"
+    "breakpoints" | "styleSources" | "styleSourceSelections"
   >,
   breakpoint?: string
 ) => {
-  const rootInstanceId =
-    state.pages === undefined
-      ? undefined
-      : getHomePageRootInstanceId(state.pages);
-  if (rootInstanceId === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Home page not found");
-  }
   return {
-    rootInstanceId,
+    rootInstanceId: ROOT_INSTANCE_ID,
     breakpointId: withValidatedBreakpoint({ breakpoint }, state.breakpoints)
       .breakpoint,
     styleSourceId:
@@ -286,7 +284,7 @@ export const getCssVariableRootTarget = (
         : getLocalStyleSourceId({
             styleSources: state.styleSources,
             styleSourceSelection:
-              state.styleSourceSelections.get(rootInstanceId),
+              state.styleSourceSelections.get(ROOT_INSTANCE_ID),
           }),
   };
 };
@@ -1161,18 +1159,23 @@ export const serializeCssVariables = ({
   };
 };
 
+const designTokenStyleValueInput = z.union([
+  z.string(),
+  z.object({ type: z.string() }).passthrough(),
+]);
+
 export const designTokenStyleInput = z.object({
   property: z.string(),
-  value: z.unknown(),
+  value: designTokenStyleValueInput,
   breakpoint: z.string().optional(),
   state: styleStateInput.optional(),
 });
-type DesignTokenStyleInput = z.input<typeof designTokenStyleInput>;
+type DesignTokenStyleInput = z.infer<typeof designTokenStyleInput>;
 
 export const designTokenCreateInput = z.object({
   tokenId: runtimeGeneratedIdInput,
   name: z.string().min(1),
-  styles: z.record(z.string(), z.unknown()).optional(),
+  styles: z.record(z.string(), designTokenStyleValueInput).optional(),
   declarations: z.array(designTokenStyleInput).optional(),
 });
 
@@ -1309,14 +1312,26 @@ export const validateStyleSourceName = ({
 };
 
 export const createDesignTokenStyleInputs = (input: {
-  styles?: Record<string, unknown>;
+  styles?: Record<string, z.infer<typeof designTokenStyleValueInput>>;
   declarations?: DesignTokenStyleInput[];
-}): DesignTokenStyleInput[] => [
+}): Array<Omit<DesignTokenStyleInput, "value"> & { value: StyleValue }> => [
   ...Object.entries(input.styles ?? {}).map(([property, value]) => ({
     property,
-    value,
+    value:
+      typeof value === "string"
+        ? parseCssValue(hyphenateProperty(property), value)
+        : styleValue.parse(value),
   })),
-  ...(input.declarations ?? []),
+  ...(input.declarations ?? []).map((declaration) => ({
+    ...declaration,
+    value:
+      typeof declaration.value === "string"
+        ? parseCssValue(
+            hyphenateProperty(declaration.property),
+            declaration.value
+          )
+        : styleValue.parse(declaration.value),
+  })),
 ];
 
 export const getLocalStyleSourceId = ({
@@ -3428,11 +3443,7 @@ export const listCssVariables = (
 export const defineCssVariables = (
   state: Pick<
     BuilderState,
-    | "breakpoints"
-    | "pages"
-    | "styles"
-    | "styleSources"
-    | "styleSourceSelections"
+    "breakpoints" | "styles" | "styleSources" | "styleSourceSelections"
   >,
   input: z.infer<typeof cssVariableDefineInput>,
   context: { createId: () => string }
@@ -3467,7 +3478,7 @@ export const defineCssVariables = (
   }
   return createRuntimeMutation({
     payload: resultPayload.payload,
-    result: { names: Object.keys(input.vars) },
+    result: { names: Object.keys(input.vars), scope: ROOT_INSTANCE_ID },
     invalidatesNamespaces: ["styles", "styleSources", "styleSourceSelections"],
   });
 };

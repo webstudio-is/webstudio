@@ -18,7 +18,11 @@ describe("upload-assets", () => {
   test("requests upload tickets without client-supplied asset ids", async () => {
     request.mockResolvedValue(
       new Response(
-        JSON.stringify({ assetId: "server-asset-id", name: "upload-name" })
+        JSON.stringify({
+          assetId: "server-asset-id",
+          name: "upload-name",
+          deduplicated: false,
+        })
       )
     );
 
@@ -33,6 +37,7 @@ describe("upload-assets", () => {
     ).resolves.toEqual({
       assetId: "server-asset-id",
       name: "upload-name",
+      deduplicated: false,
     });
 
     expect(request).toHaveBeenCalledOnce();
@@ -45,13 +50,18 @@ describe("upload-assets", () => {
     expect(init.body.get("type")).toBe("image");
     expect(init.body.get("filename")).toBe("image.png");
     expect(init.body.get("displayFilename")).toBe("image");
+    expect(init.body.get("contentHash")).toBeNull();
     expect(init.headers.get("x-auth-token")).toBe("token");
   });
 
   test("keeps the display name separate from the sanitized storage name", async () => {
     request.mockResolvedValue(
       new Response(
-        JSON.stringify({ assetId: "server-asset-id", name: "upload-name" })
+        JSON.stringify({
+          assetId: "server-asset-id",
+          name: "upload-name",
+          deduplicated: false,
+        })
       )
     );
 
@@ -68,6 +78,38 @@ describe("upload-assets", () => {
     const [, init] = request.mock.calls[0] as [string, { body: FormData }];
     expect(init.body.get("filename")).toBe("Campaign_photo.png");
     expect(init.body.get("displayFilename")).toBe("Campaign photo");
+  });
+
+  test("passes the existing browser content hash to the shared upload ticket", async () => {
+    request.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          assetId: "existing-asset-id",
+          name: "existing-name",
+          deduplicated: true,
+        })
+      )
+    );
+
+    await expect(
+      createUploadTicket({
+        authToken: "token",
+        projectId: "project-id",
+        fileOrUrl: new File(["content"], "image.png", {
+          type: "image/png",
+        }),
+        contentHash: "a".repeat(64),
+        assetType: "image",
+        request,
+      })
+    ).resolves.toEqual({
+      assetId: "existing-asset-id",
+      name: "existing-name",
+      deduplicated: true,
+    });
+
+    const [, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("contentHash")).toBe("a".repeat(64));
   });
 
   test("reports non-error upload failures", async () => {
@@ -100,6 +142,60 @@ describe("upload-assets", () => {
       folderId: "folder-id",
       url: "https://example.com/image.png",
     });
+  });
+
+  test("prepares one content hash for fingerprinting and server deduplication", async () => {
+    const [fileData] = await getFilesData(
+      "image",
+      [new File(["hello"], "image.png", { type: "image/png" })],
+      undefined,
+      () => "blob:test"
+    );
+
+    const contentHash =
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
+    expect(fileData).toMatchObject({
+      source: "file",
+      contentHash,
+      fingerprintId: JSON.stringify(["image.png", contentHash]),
+    });
+  });
+
+  test("preserves identical file content with different filenames", async () => {
+    const filesData = await getFilesData(
+      "image",
+      [
+        new File(["same"], "first.png", { type: "image/png" }),
+        new File(["same"], "second.png", { type: "image/png" }),
+      ],
+      undefined,
+      (file) => `blob:${file instanceof File ? file.name : "unknown"}`
+    );
+    const revokeObjectURL = vi.fn();
+
+    const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
+
+    expect(uniqueFilesData.size).toBe(2);
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  test("deduplicates identical content with the same filename", async () => {
+    let objectUrlIndex = 0;
+    const filesData = await getFilesData(
+      "image",
+      [
+        new File(["same"], "image.png", { type: "image/png" }),
+        new File(["same"], "image.png", { type: "image/png" }),
+      ],
+      undefined,
+      () => `blob:${objectUrlIndex++}`
+    );
+    const revokeObjectURL = vi.fn();
+
+    const uniqueFilesData = getUniqueFilesData(filesData, revokeObjectURL);
+
+    expect(uniqueFilesData.size).toBe(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:1");
   });
 
   test("releases object URLs discarded during deduplication", async () => {

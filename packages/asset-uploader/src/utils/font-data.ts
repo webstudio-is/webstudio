@@ -3,7 +3,6 @@ import {
   fontWeights,
   FONT_STYLES,
   type FontFormat,
-  type FontWeight,
   type VariationAxes,
   type FontStyle,
 } from "@webstudio-is/fonts";
@@ -12,10 +11,24 @@ import { getFileNameParts } from "@webstudio-is/sdk";
 // same default fontkit uses internally
 const defaultLanguage = "en";
 
+const normalizeWeightName = (value: string) =>
+  value.toLowerCase().replaceAll(/[\s_-]+/g, "");
+
+const fontWeightAliases = Object.entries(fontWeights)
+  .flatMap(([weight, { names }]) =>
+    names.map((name) => ({
+      name: normalizeWeightName(name),
+      weight: Number(weight),
+    }))
+  )
+  .sort((left, right) => right.name.length - left.name.length);
+
 export const parseSubfamily = (
-  subfamily: string
+  subfamily: string,
+  weightClass?: number
 ): { style: FontStyle; weight: number } => {
   const subfamilyLow = subfamily.toLowerCase();
+  const normalizedSubfamily = normalizeWeightName(subfamily);
   let style: FontStyle = "normal";
   for (const possibleStyle of FONT_STYLES) {
     if (subfamilyLow.includes(possibleStyle)) {
@@ -23,14 +36,18 @@ export const parseSubfamily = (
       break;
     }
   }
-  let weight: FontWeight = "400";
-  for (weight in fontWeights) {
-    const { names } = fontWeights[weight];
-    if (names.some((name) => subfamilyLow.includes(name))) {
-      break;
-    }
+  if (
+    weightClass !== undefined &&
+    Number.isInteger(weightClass) &&
+    weightClass >= 1 &&
+    weightClass <= 1000
+  ) {
+    return { style, weight: weightClass };
   }
-  return { style, weight: Number(weight) };
+  const weight = fontWeightAliases.find(({ name }) =>
+    normalizedSubfamily.includes(name)
+  )?.weight;
+  return { style, weight: weight ?? 400 };
 };
 
 const splitAndTrim = (string: string) =>
@@ -96,7 +113,7 @@ export const getFontData = (data: Uint8Array, fileName: string): FontData => {
   return {
     format,
     family,
-    ...parseSubfamily(subfamily),
+    ...parseSubfamily(subfamily, font["OS/2"]?.usWeightClass),
   };
 };
 

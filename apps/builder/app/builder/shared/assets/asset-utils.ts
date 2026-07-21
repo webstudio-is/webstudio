@@ -13,6 +13,7 @@ import {
   getAssetUrl,
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
+import { getContentHash } from "@webstudio-is/asset-uploader";
 
 export { getAssetUrl };
 
@@ -55,18 +56,9 @@ const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
   return [FALLBACK_URL_TYPE, `${nanoid()}.png`] as const;
 };
 
-const bufferToHex = (buffer: ArrayBuffer) => {
-  const byteArray = new Uint8Array(buffer);
-  return Array.from(byteArray, (byte) =>
-    byte.toString(16).padStart(2, "0")
-  ).join("");
-};
-
 export const getSha256Hash = async (data: string) => {
   const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
-  return bufferToHex(hashBuffer);
+  return getContentHash(encoder.encode(data));
 };
 
 const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> =>
@@ -77,14 +69,16 @@ const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> =>
     reader.readAsArrayBuffer(file);
   });
 
-const getSha256HashOfFile = async (file: File) => {
+export const getSha256HashOfFile = async (file: File) => {
   const arrayBuffer = await readFileAsArrayBuffer(file);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-  return bufferToHex(hashBuffer);
+  return getContentHash(arrayBuffer);
 };
 
-export const getFileUploadFingerprint = async (file: File) =>
-  JSON.stringify([file.name, await getSha256HashOfFile(file)]);
+export const getFileUploadFingerprint = async (
+  file: File,
+  contentHash?: string
+) =>
+  JSON.stringify([file.name, contentHash ?? (await getSha256HashOfFile(file))]);
 
 export const getMimeType = (file: File | URL) => {
   if (file instanceof File) {

@@ -1,4 +1,6 @@
 export * from "./db";
+export * from "./content-hash";
+export * from "./utils/size-limiter";
 export * from "./upload";
 export * from "./delete";
 export * from "./patch";
@@ -7,3 +9,4 @@ export * from "./folder-persistence";
 export * from "./revision";
 export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";
+export { assetDataOverride } from "./utils/get-asset-data";

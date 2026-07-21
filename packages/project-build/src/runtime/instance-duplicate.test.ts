@@ -104,6 +104,37 @@ test("duplicates an instance after itself", () => {
   ]);
 });
 
+test("preserves legacy HtmlEmbed code when duplicating an instance", () => {
+  const data = createData();
+  data.instances.set("source", {
+    ...createInstance("source"),
+    component: "HtmlEmbed",
+  });
+  data.props.set("legacy-code", {
+    id: "legacy-code",
+    instanceId: "source",
+    name: "code",
+    type: "string",
+    value: "<div><span></div>",
+  });
+
+  duplicateInstanceAfterItselfMutable({
+    data,
+    sourceInstanceId: "source",
+    parentInstanceId: "parent",
+    projectId: "project-id",
+    createId: () => "source-copy",
+  });
+
+  expect(Array.from(data.props.values())).toContainEqual(
+    expect.objectContaining({
+      instanceId: "source-copy",
+      name: "code",
+      value: "<div><span></div>",
+    })
+  );
+});
+
 test("removes copied grid placement when source is auto-placed", () => {
   const data = createData();
   const gridPlacement = createStyleDecl("source-local", "gridColumnStart", {

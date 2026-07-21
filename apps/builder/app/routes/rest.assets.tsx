@@ -1,5 +1,8 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
-import { createUploadTicket } from "@webstudio-is/asset-uploader/index.server";
+import {
+  createUploadTicket,
+  isContentHash,
+} from "@webstudio-is/asset-uploader/index.server";
 import isValidFilename from "valid-filename";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -29,10 +32,12 @@ export const action = async (props: ActionFunctionArgs) => {
       const type = formData.get("type");
       const filename = formData.get("filename");
       const displayFilename = formData.get("displayFilename");
+      const contentHash = formData.get("contentHash");
       if (
         typeof projectId !== "string" ||
         typeof type !== "string" ||
         typeof filename !== "string" ||
+        (contentHash !== null && isContentHash(contentHash) === false) ||
         (displayFilename !== null &&
           (typeof displayFilename !== "string" ||
             isValidFilename(displayFilename) === false))
@@ -45,6 +50,7 @@ export const action = async (props: ActionFunctionArgs) => {
           type,
           filename,
           displayFilename: displayFilename ?? undefined,
+          contentHash: contentHash ?? undefined,
         },
         context
       );

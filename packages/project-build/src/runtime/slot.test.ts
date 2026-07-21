@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { Instance } from "@webstudio-is/sdk";
+import type { Instance, WebstudioData } from "@webstudio-is/sdk";
 import { applyBuilderPatchTransactions } from "../state/patch";
 import {
   attachSharedSlot,
+  detachSharedSlotChildrenMutable,
   extractSharedSlot,
   findClosestSlot,
   getDirectSharedSlotChildBoundary,
@@ -179,6 +180,61 @@ describe("runtime slot utilities", () => {
     expect(updated?.get("fragment")?.children).toEqual([
       { type: "id", value: "section" },
     ]);
+  });
+
+  test("preserves legacy HtmlEmbed code when detaching shared content", () => {
+    const data: Omit<WebstudioData, "pages"> = {
+      instances: new Map([
+        [
+          "first-slot",
+          instance("first-slot", "Slot", [{ type: "id", value: "fragment" }]),
+        ],
+        [
+          "second-slot",
+          instance("second-slot", "Slot", [{ type: "id", value: "fragment" }]),
+        ],
+        [
+          "fragment",
+          instance("fragment", "Fragment", [{ type: "id", value: "embed" }]),
+        ],
+        ["embed", instance("embed", "HtmlEmbed")],
+      ]),
+      props: new Map([
+        [
+          "legacy-code",
+          {
+            id: "legacy-code",
+            instanceId: "embed",
+            name: "code",
+            type: "string",
+            value: "<div><span></div>",
+          },
+        ],
+      ]),
+      assets: new Map(),
+      breakpoints: new Map(),
+      dataSources: new Map(),
+      resources: new Map(),
+      styles: new Map(),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+    };
+    const ids = ["fragment-copy", "embed-copy", "code-copy"];
+
+    detachSharedSlotChildrenMutable({
+      data,
+      slotId: "first-slot",
+      projectId: "project-id",
+      createId: () => ids.shift() ?? "unexpected",
+    });
+
+    expect(Array.from(data.props.values())).toContainEqual(
+      expect.objectContaining({
+        instanceId: "embed-copy",
+        name: "code",
+        value: "<div><span></div>",
+      })
+    );
   });
 
   test("explains the required selector order when the parent is invalid", () => {

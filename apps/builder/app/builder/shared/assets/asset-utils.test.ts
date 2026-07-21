@@ -6,14 +6,17 @@ import {
   uploadingFileDataToAsset,
 } from "./asset-utils";
 
-test("distinguishes upload fingerprints for equal files with different names", async () => {
+test("distinguishes upload fingerprints by filename and content", async () => {
   const first = new File([""], "first.md");
-  const second = new File([""], "second.md");
+  const renamed = new File([""], "renamed.md");
+  const changed = new File(["changed"], "first.md");
 
   const firstFingerprint = await getFileUploadFingerprint(first);
-  const secondFingerprint = await getFileUploadFingerprint(second);
+  const renamedFingerprint = await getFileUploadFingerprint(renamed);
+  const changedFingerprint = await getFileUploadFingerprint(changed);
 
-  expect(firstFingerprint).not.toBe(secondFingerprint);
+  expect(firstFingerprint).not.toBe(renamedFingerprint);
+  expect(firstFingerprint).not.toBe(changedFingerprint);
 });
 
 describe("getImageNameAndType", () => {

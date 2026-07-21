@@ -151,7 +151,6 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "css.escape": "^1.5.1",
     "fast-glob": "^3.3.2",
-    "html-tags": "^4.0.0",
     "msw": "^2.13.2",
     "playwright": "^1.50.1",
     "react-router-dom": "^6.30.0",

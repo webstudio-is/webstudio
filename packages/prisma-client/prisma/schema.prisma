@@ -35,6 +35,7 @@ model File {
   isDeleted         Boolean      @default(false)
   uploaderProject   Project?     @relation(fields: [uploaderProjectId], references: [id])
   uploaderProjectId String?
+  contentHash       String?      @db.VarChar(64)
   assets            Asset[]
 }
 

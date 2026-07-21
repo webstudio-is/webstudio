@@ -1,6 +1,11 @@
 import { arrayBuffer } from "node:stream/consumers";
 import type { SignatureV4 } from "@smithy/signature-v4";
-import { type AssetData, getAssetData } from "../../utils/get-asset-data";
+import {
+  applyAssetDataOverride,
+  type AssetData,
+  type AssetDataOverride,
+  getAssetData,
+} from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
 import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
 import { getMimeTypeByFilename } from "@webstudio-is/sdk";
@@ -15,6 +20,7 @@ export const uploadToS3 = async ({
   bucket,
   acl,
   assetInfoFallback,
+  assetDataOverride,
 }: {
   signer: SignatureV4;
   name: string;
@@ -27,6 +33,7 @@ export const uploadToS3 = async ({
   assetInfoFallback:
     | { width: number; height: number; format: string }
     | undefined;
+  assetDataOverride?: AssetDataOverride;
 }): Promise<AssetData> => {
   const limitSize = createSizeLimiter(maxSize, name);
 
@@ -43,6 +50,29 @@ export const uploadToS3 = async ({
 
   // Use proper MIME type based on file extension instead of generic type category
   const contentType = getMimeTypeByFilename(name);
+
+  const assetData = applyAssetDataOverride(
+    type.startsWith("video") && assetInfoFallback !== undefined
+      ? {
+          size: data.byteLength,
+          format: assetInfoFallback.format,
+          meta: {
+            width: assetInfoFallback.width,
+            height: assetInfoFallback.height,
+          },
+        }
+      : await getAssetData({
+          type: type.startsWith("image")
+            ? "image"
+            : type === "font"
+              ? "font"
+              : "file",
+          size: data.byteLength,
+          data: new Uint8Array(data),
+          name,
+        }),
+    assetDataOverride
+  );
 
   const s3Request = await signer.sign({
     method: "PUT",
@@ -72,28 +102,6 @@ export const uploadToS3 = async ({
   if (response.status !== 200) {
     throw Error(`Cannot upload file ${name}`);
   }
-
-  if (type.startsWith("video") && assetInfoFallback !== undefined) {
-    return {
-      size: data.byteLength,
-      format: assetInfoFallback?.format,
-      meta: {
-        width: assetInfoFallback?.width ?? 0,
-        height: assetInfoFallback?.height ?? 0,
-      },
-    };
-  }
-
-  const assetData = await getAssetData({
-    type: type.startsWith("image")
-      ? "image"
-      : type === "font"
-        ? "font"
-        : "file",
-    size: data.byteLength,
-    data: new Uint8Array(data),
-    name,
-  });
 
   return assetData;
 };

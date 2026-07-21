@@ -17,6 +17,7 @@ import type { BuilderState } from "../state/builder-state";
 import {
   addAsset,
   assetAddInput,
+  assetDeleteInput,
   calculateUsagesByAssetId,
   createAssetDeletePayload,
   createAssetReplacementPayload,
@@ -405,6 +406,13 @@ describe("asset runtime operations", () => {
     ).toThrow("Assets are still referenced: asset");
   });
 
+  test("rejects empty asset id prefixes", () => {
+    expect(() => assetDeleteInput.parse({ assetIdPrefixes: [""] })).toThrow();
+    expect(() =>
+      assetDeleteInput.parse({ assetIdsOrPrefixes: ["  "] })
+    ).toThrow();
+  });
+
   test("builds asset delete mutations", () => {
     expect(
       deleteAssets(state, { assetIdsOrPrefixes: ["unused"] })
@@ -415,6 +423,42 @@ describe("asset runtime operations", () => {
         { namespace: "assets", patches: [{ op: "remove", path: ["unused"] }] },
       ],
     });
+  });
+
+  test("does not treat exact asset ids as prefixes", () => {
+    expect(
+      deleteAssets(
+        {
+          ...state,
+          assets: new Map([
+            ["unused", { ...state.assets.get("unused")!, id: "unused" }],
+            [
+              "unused-child",
+              { ...state.assets.get("unused")!, id: "unused-child" },
+            ],
+          ]),
+        },
+        { assetIds: ["unused"] }
+      ).result
+    ).toEqual({ assetIds: ["unused"] });
+  });
+
+  test("deletes assets by an explicit prefix", () => {
+    expect(
+      deleteAssets(
+        {
+          ...state,
+          assets: new Map([
+            ["unused", { ...state.assets.get("unused")!, id: "unused" }],
+            [
+              "unused-child",
+              { ...state.assets.get("unused")!, id: "unused-child" },
+            ],
+          ]),
+        },
+        { assetIdPrefixes: ["unused"] }
+      ).result
+    ).toEqual({ assetIds: ["unused", "unused-child"] });
   });
 });
 const createPages = ({

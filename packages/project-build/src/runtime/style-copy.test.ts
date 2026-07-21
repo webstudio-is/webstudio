@@ -115,9 +115,54 @@ describe("token conflict helpers", () => {
       },
     ]);
   });
+
+  test("detects conflicting tokens within the incoming fragment", () => {
+    expect(
+      detectTokenConflicts({
+        fragmentStyleSources: [
+          token("first", "Primary"),
+          token("second", "Primary"),
+        ],
+        fragmentStyles: [
+          style("first", "base", "color", red),
+          style("second", "base", "color", blue),
+        ],
+        existingStyleSources: new Map(),
+        existingStyles: new Map(),
+        breakpoints: baseBreakpoints,
+        mergedBreakpointIds: new Map(),
+      })
+    ).toMatchObject([{ tokenName: "Primary", fragmentTokenId: "second" }]);
+  });
 });
 
 describe("style source insertion", () => {
+  test("reuses identical tokens planned in the same fragment", () => {
+    const inserted = insertStyleSources({
+      fragmentStyleSources: [
+        token("first", "Primary"),
+        token("second", "Primary"),
+      ],
+      fragmentStyles: [
+        style("first", "base", "color", red),
+        style("second", "base", "color", red),
+      ],
+      existingStyleSources: new Map(),
+      existingStyles: new Map(),
+      breakpoints: baseBreakpoints,
+      mergedBreakpointIds: new Map(),
+      createId: () => "created",
+    });
+
+    expect(inserted.styleSourceIdMap).toEqual(
+      new Map([
+        ["first", "created"],
+        ["second", "created"],
+      ])
+    );
+    expect(inserted.updatedStyleSources.size).toBe(1);
+  });
+
   test("reuses matching tokens and suffixes conflicting incoming tokens", () => {
     const reused = insertStyleSources({
       fragmentStyleSources: [token("incoming", "Primary")],

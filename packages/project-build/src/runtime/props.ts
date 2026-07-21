@@ -14,7 +14,7 @@ import {
   getExpressionErrors,
 } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
-import { validateHtmlEmbedCode } from "./html";
+import { validateHtmlEmbedCode } from "./html-embed";
 import { createRuntimeMutation } from "./mutation";
 import { isDynamicPropType } from "./accessibility-analysis";
 

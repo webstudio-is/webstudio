@@ -374,6 +374,26 @@ test("remap token selections in inserted slot content", () => {
   });
 });
 
+test("preserves legacy HtmlEmbed code when copying internal fragments", () => {
+  const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
+  const fragment = renderTemplate(<$.HtmlEmbed code="<div><span></div>" />);
+
+  insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: [],
+    projectId: "",
+  });
+
+  expect(Array.from(data.props.values())).toContainEqual(
+    expect.objectContaining({
+      name: "code",
+      type: "string",
+      value: "<div><span></div>",
+    })
+  );
+});
+
 test("insert instances with multiple roots", () => {
   const data = renderData(<$.Body ws:id="bodyId"></$.Body>);
   const fragment = renderTemplate(

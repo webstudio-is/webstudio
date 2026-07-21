@@ -187,7 +187,7 @@ export const insertWebstudioFragmentAt = (
       id: "instances.insertFragment",
       input: {
         fragment,
-        conflictResolution,
+        conflictResolution: conflictResolution ?? "theirs",
         contentMode: options?.contentMode,
       },
     });
@@ -205,7 +205,7 @@ export const insertWebstudioFragmentAt = (
     input: {
       parentInstanceId: target.parentInstanceId,
       fragment,
-      conflictResolution,
+      conflictResolution: conflictResolution ?? "theirs",
       contentMode: options?.contentMode,
       insertIndex: target.insertIndex,
     },
