@@ -93,6 +93,27 @@ describe("insert target", () => {
     ).toEqual({ parentSelector: ["body"], position: "end" });
   });
 
+  test("does not restore an incompatible explicit paste target", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <ws.element ws:id="button" ws:tag="button" />
+      </$.Body>
+    );
+    const fragment = renderTemplate(<$.ListItem ws:id="item" />);
+
+    expect(
+      resolveFragmentInsertTarget({
+        fragment,
+        instances: data.instances,
+        props: data.props,
+        metas: componentMetas,
+        rootInstanceId: "body",
+        from: { parentSelector: ["button", "body"], position: "end" },
+        allowFragmentContentModelWarnings: true,
+      })
+    ).toBeUndefined();
+  });
+
   test("reports global root target", () => {
     const data = renderData(<$.Body ws:id="body"></$.Body>);
     const fragment = renderTemplate(

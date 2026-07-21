@@ -43,6 +43,7 @@ import {
   expectSlotsShareFragment,
 } from "../slot-test-utils";
 import { pasteHandled } from "./copy-paste";
+import { initBuilderApi } from "../builder-api";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -202,6 +203,40 @@ describe("copy and cut guards", () => {
       [pastedRootIds?.[0], "body0"],
       [pastedRootIds?.[1], "body0"],
     ]);
+  });
+
+  test("pastes a legacy invalid subtree with a warning", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "legacy-button" },
+        ]),
+        {
+          ...createInstance("legacy-button", elementComponent, [
+            { type: "id", value: "legacy-heading" },
+          ]),
+          tag: "button",
+        },
+        {
+          ...createInstance("legacy-heading", elementComponent, []),
+          tag: "h3",
+        },
+      ] satisfies Instance[])
+    );
+    selectInstance(["legacy-button", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["body0"]);
+    initBuilderApi();
+    const previousWarn = window.__webstudio__$__builderApi.toast.warn;
+    const warn = vi.fn();
+    window.__webstudio__$__builderApi.toast.warn = warn;
+
+    expect(await instanceText.onPaste?.(clipboardData)).toEqual(pasteHandled);
+    expect($instances.get().get("body0")?.children).toHaveLength(2);
+    expect(warn).toHaveBeenCalledWith(
+      "Pasted with warning: Placing <h3> element inside a <button> violates HTML spec."
+    );
+    window.__webstudio__$__builderApi.toast.warn = previousWarn;
   });
 
   test("sanitizes multi-root clipboard root ids before paste", async () => {

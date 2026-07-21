@@ -12,6 +12,8 @@ import {
 import {
   builderRuntimeContext,
   createComponentTemplateFragment,
+  getFragmentContentModelWarnings,
+  type FragmentContentModelWarning,
   type ConflictResolution,
   resolveComponentInsertTarget,
   resolveFragmentInsertTarget,
@@ -55,7 +57,8 @@ const onNoComponentInsertMatch = (component: string) => {
 
 const getFragmentInsertTarget = (
   fragment: WebstudioFragment,
-  from?: Insertable
+  from?: Insertable,
+  options?: { allowContentModelWarnings?: boolean }
 ) => {
   const rootInstanceId = getRootInstanceId();
   if (rootInstanceId === undefined) {
@@ -73,6 +76,7 @@ const getFragmentInsertTarget = (
     onRootTarget,
     onMissingTarget,
     onNoMatch: onNoInsertMatch(fragment),
+    allowFragmentContentModelWarnings: options?.allowContentModelWarnings,
   });
 };
 
@@ -161,7 +165,12 @@ export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
   insertable?: Insertable,
   conflictResolution?: ConflictResolution,
-  options?: { contentMode?: boolean; onBreakpointLimitMerge?: () => void }
+  options?: {
+    contentMode?: boolean;
+    onBreakpointLimitMerge?: () => void;
+    allowContentModelWarnings?: boolean;
+    onContentModelWarnings?: (warnings: FragmentContentModelWarning[]) => void;
+  }
 ): boolean => {
   const hasChildren = fragment.children.length > 0;
   const hasTokens = fragment.styleSources.length > 0;
@@ -187,7 +196,7 @@ export const insertWebstudioFragmentAt = (
     }
     return result !== undefined;
   }
-  const target = getFragmentInsertTarget(fragment, insertable);
+  const target = getFragmentInsertTarget(fragment, insertable, options);
   if ($project.get() === undefined || target === undefined) {
     return false;
   }
@@ -216,6 +225,15 @@ export const insertWebstudioFragmentAt = (
   }
   if (result?.result.didMergeBreakpointsDueToLimit === true) {
     options?.onBreakpointLimitMerge?.();
+  }
+  if (result !== undefined && options?.allowContentModelWarnings === true) {
+    const warnings = getFragmentContentModelWarnings({
+      fragment,
+      metas: $registeredComponentMetas.get(),
+    });
+    if (warnings.length > 0) {
+      options.onContentModelWarnings?.(warnings);
+    }
   }
   return result !== undefined;
 };
@@ -264,7 +282,8 @@ export type Insertable = InsertTarget;
 
 export const findClosestInsertable = (
   fragment: WebstudioFragment,
-  from?: Insertable
+  from?: Insertable,
+  options?: { allowContentModelWarnings?: boolean }
 ): undefined | Insertable => {
   const rootInstanceId = getRootInstanceId();
   if (rootInstanceId === undefined) {
@@ -281,6 +300,7 @@ export const findClosestInsertable = (
     onRootTarget,
     onMissingTarget,
     onNoMatch: onNoInsertMatch(fragment),
+    allowFragmentContentModelWarnings: options?.allowContentModelWarnings,
   });
   if (target === undefined) {
     return;
