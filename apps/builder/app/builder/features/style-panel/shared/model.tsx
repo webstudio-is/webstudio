@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import type { HtmlTags } from "html-tags";
+import type { HtmlTags } from "@webstudio-is/html-data";
 import { computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { propertiesData } from "@webstudio-is/css-data";

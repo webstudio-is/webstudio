@@ -299,23 +299,29 @@ test("prints project permissions without json output", async () => {
   mockConfig();
   apiCalls.getProjectPermissions.mockResolvedValue({
     relation: "builders",
+    permits: ["view", "edit", "build", "api"],
     canView: true,
     canEdit: true,
     canBuild: true,
     canUseApi: true,
     canPublish: false,
+    canPublishProjectDomain: true,
+    canPublishCustomDomains: false,
     canAdmin: false,
   });
 
   await apiCommand({ command: "permissions" }, dependencies);
 
   expect(console.info).toHaveBeenCalledWith("Project role: builders");
-  expect(console.info).toHaveBeenCalledWith("View: yes");
-  expect(console.info).toHaveBeenCalledWith("Edit: yes");
-  expect(console.info).toHaveBeenCalledWith("Build: yes");
-  expect(console.info).toHaveBeenCalledWith("API: yes");
-  expect(console.info).toHaveBeenCalledWith("Publish: no");
-  expect(console.info).toHaveBeenCalledWith("Admin: no");
+  expect(console.info).toHaveBeenCalledWith("Permits: view, edit, build, api");
+  expect(console.info).toHaveBeenCalledWith("canView: yes");
+  expect(console.info).toHaveBeenCalledWith("canEdit: yes");
+  expect(console.info).toHaveBeenCalledWith("canBuild: yes");
+  expect(console.info).toHaveBeenCalledWith("canUseApi: yes");
+  expect(console.info).toHaveBeenCalledWith("canPublish: no");
+  expect(console.info).toHaveBeenCalledWith("canPublishProjectDomain: yes");
+  expect(console.info).toHaveBeenCalledWith("canPublishCustomDomains: no");
+  expect(console.info).toHaveBeenCalledWith("canAdmin: no");
 });
 
 test("selects a previously linked project explicitly", async () => {

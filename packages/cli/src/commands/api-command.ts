@@ -21,6 +21,7 @@ import {
   isMissingApiAccessError,
 } from "../error-codes";
 import { printJson } from "../json-output";
+import { isPlainRecord } from "../type-utils";
 import {
   executeProjectSessionApiOperation,
   getProjectSessionMeta,
@@ -3112,20 +3113,22 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
 };
 
 const printPermissions = (result: unknown) => {
-  if (typeof result !== "object" || result === null) {
+  if (isPlainRecord(result) === false) {
     throw new Error("The server returned invalid project permissions.");
   }
-  const permissions = result as Record<string, unknown>;
-  console.info(`Project role: ${String(permissions.relation ?? "unknown")}`);
-  for (const [label, field] of [
-    ["View", "canView"],
-    ["Edit", "canEdit"],
-    ["Build", "canBuild"],
-    ["API", "canUseApi"],
-    ["Publish", "canPublish"],
-    ["Admin", "canAdmin"],
-  ] as const) {
-    console.info(`${label}: ${permissions[field] === true ? "yes" : "no"}`);
+  console.info(`Project role: ${String(result.relation ?? "unknown")}`);
+  const permits = Array.isArray(result.permits)
+    ? result.permits.filter(
+        (permit): permit is string => typeof permit === "string"
+      )
+    : [];
+  console.info(
+    `Permits: ${permits.length === 0 ? "none" : permits.join(", ")}`
+  );
+  for (const [name, value] of Object.entries(result)) {
+    if (name.startsWith("can") && typeof value === "boolean") {
+      console.info(`${name}: ${value ? "yes" : "no"}`);
+    }
   }
 };
 

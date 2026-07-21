@@ -19,7 +19,6 @@
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
     "esbuild": "^0.25.3",
-    "html-tags": "^4.0.0",
     "mdn-data": "2.28.0",
     "openai": "^3.2.1",
     "p-retry": "^6.2.1",

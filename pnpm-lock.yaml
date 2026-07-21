@@ -480,9 +480,6 @@ importers:
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.2
-      html-tags:
-        specifier: ^4.0.0
-        version: 4.0.0
       msw:
         specifier: ^2.13.2
         version: 2.13.2(@types/node@22.13.10)(typescript@7.0.2)
@@ -1395,9 +1392,6 @@ importers:
       esbuild:
         specifier: ^0.25.3
         version: 0.25.3
-      html-tags:
-        specifier: ^4.0.0
-        version: 4.0.0
       mdn-data:
         specifier: 2.28.0
         version: 2.28.0
@@ -2163,9 +2157,6 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
-      html-tags:
-        specifier: ^4.0.0
-        version: 4.0.0
       nanoid:
         specifier: ^5.1.5
         version: 5.1.5

@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { describe, expect, test } from "vitest";
-import type { HtmlTags } from "html-tags";
+import type { HtmlTags } from "@webstudio-is/html-data";
 import {
   type Breakpoint,
   type Styles,

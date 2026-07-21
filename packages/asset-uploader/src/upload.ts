@@ -6,7 +6,11 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { createHash } from "node:crypto";
 import { nanoid } from "nanoid";
-import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
+import {
+  getFileExtension,
+  getFileNameParts,
+  type Asset,
+} from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
 import type { AssetDataOverride } from "./utils/get-asset-data";
@@ -31,17 +35,27 @@ const maxCreateUploadTicketAttempts = 3;
 const contentHashUploadPollInterval = 100;
 const contentHashUploadPollAttempts = 50;
 
+type AssetIdentity = {
+  filename: string;
+  description: string | null;
+  folderId: string | null;
+};
+
 const getDeduplicatedAssetId = (
   projectId: string,
   name: string,
-  filename: string
+  identity: AssetIdentity
 ) =>
   createHash("sha256")
-    .update(projectId)
-    .update("\0")
-    .update(name)
-    .update("\0")
-    .update(filename)
+    .update(
+      JSON.stringify([
+        projectId,
+        name,
+        identity.filename,
+        identity.description,
+        identity.folderId,
+      ])
+    )
     .digest("base64url")
     .slice(0, 21);
 
@@ -73,53 +87,66 @@ const assertAssetCapacity = async (projectId: string, context: AppContext) => {
   }
 };
 
-const findAssetByFileName = async ({
+const findAsset = async ({
   projectId,
   name,
+  identity,
   context,
 }: {
   projectId: string;
   name: string;
+  identity?: AssetIdentity;
   context: AppContext;
 }) => {
-  const asset = await context.postgrest.client
+  let query = context.postgrest.client
     .from("Asset")
     .select("id, projectId, filename, description, folderId")
     .eq("projectId", projectId)
-    .eq("name", name)
-    .order("id")
-    .limit(1)
-    .maybeSingle();
-  if (asset.error) {
-    throw new Error(asset.error.message);
+    .eq("name", name);
+  if (identity !== undefined) {
+    query = query.eq("filename", identity.filename);
+    query =
+      identity.description === null
+        ? query.is("description", null)
+        : query.eq("description", identity.description);
+    query =
+      identity.folderId === null
+        ? query.is("folderId", null)
+        : query.eq("folderId", identity.folderId);
   }
-  return asset.data ?? undefined;
+  const result = await query.order("id").limit(1).maybeSingle();
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+  return result.data ?? undefined;
 };
 
-const findAssetByIdentity = async ({
+const getContentDeduplicationExtension = (filename: string) =>
+  getFileExtension(filename)?.toLowerCase() ?? "";
+
+const findFileByContent = async ({
   projectId,
-  name,
+  contentHash,
   filename,
   context,
 }: {
   projectId: string;
-  name: string;
+  contentHash: string;
   filename: string;
   context: AppContext;
 }) => {
-  const asset = await context.postgrest.client
-    .from("Asset")
-    .select("id, projectId, filename, description, folderId")
-    .eq("projectId", projectId)
-    .eq("name", name)
-    .eq("filename", filename)
-    .order("id")
-    .limit(1)
-    .maybeSingle();
-  if (asset.error) {
-    throw new Error(asset.error.message);
+  const files = await context.postgrest.client
+    .from("File")
+    .select("*")
+    .eq("uploaderProjectId", projectId)
+    .eq("contentHash", contentHash);
+  if (files.error) {
+    throw new Error(files.error.message);
   }
-  return asset.data ?? undefined;
+  const extension = getContentDeduplicationExtension(filename);
+  return files.data?.find(
+    (file) => getContentDeduplicationExtension(file.name) === extension
+  );
 };
 
 const findContentHashUploadTicket = async ({
@@ -137,47 +164,43 @@ const findContentHashUploadTicket = async ({
     description,
     folderId,
   } = data;
+  const assetIdentity: AssetIdentity = {
+    filename: displayFilename,
+    description: description ?? null,
+    folderId: folderId ?? null,
+  };
   for (let attempt = 0; attempt < contentHashUploadPollAttempts; attempt += 1) {
-    const file = await context.postgrest.client
-      .from("File")
-      .select("*")
-      .eq("uploaderProjectId", projectId)
-      .eq("contentHash", contentHash)
-      .maybeSingle();
-    if (file.error) {
-      throw new Error(file.error.message);
-    }
-    if (file.data === null) {
+    const file = await findFileByContent({
+      projectId,
+      contentHash,
+      filename,
+      context,
+    });
+    if (file === undefined) {
       return;
     }
-    if (file.data.status === "UPLOADED") {
-      let asset = await findAssetByIdentity({
+    if (file.status === "UPLOADED") {
+      let asset = await findAsset({
         projectId,
-        name: file.data.name,
-        filename: displayFilename,
+        name: file.name,
+        identity: assetIdentity,
         context,
       });
       if (asset === undefined) {
         await assertAssetCapacity(projectId, context);
         const restoredAsset = {
-          id: getDeduplicatedAssetId(
-            projectId,
-            file.data.name,
-            displayFilename
-          ),
+          id: getDeduplicatedAssetId(projectId, file.name, assetIdentity),
           projectId,
-          filename: displayFilename,
-          description: description ?? null,
-          folderId: folderId ?? null,
+          ...assetIdentity,
         };
         const insertedAsset = await context.postgrest.client
           .from("Asset")
-          .insert({ ...restoredAsset, name: file.data.name });
+          .insert({ ...restoredAsset, name: file.name });
         if (insertedAsset.error?.code === "23505") {
-          asset = await findAssetByIdentity({
+          asset = await findAsset({
             projectId,
-            name: file.data.name,
-            filename: displayFilename,
+            name: file.name,
+            identity: assetIdentity,
             context,
           });
           if (asset === undefined) {
@@ -188,11 +211,11 @@ const findContentHashUploadTicket = async ({
           asset = restoredAsset;
         }
       }
-      if (file.data.isDeleted) {
+      if (file.isDeleted) {
         const restoredFile = await context.postgrest.client
           .from("File")
           .update({ isDeleted: false })
-          .eq("name", file.data.name)
+          .eq("name", file.name)
           .eq("uploaderProjectId", projectId);
         assertPostgrestSuccess(restoredFile);
       }
@@ -202,29 +225,29 @@ const findContentHashUploadTicket = async ({
         filename: asset.filename,
         description: asset.description,
         folderId: asset.folderId,
-        file: file.data,
+        file,
       });
       return {
         assetId: asset.id,
-        name: file.data.name,
+        name: file.name,
         deduplicated: true,
         asset: formattedAsset,
       };
     }
     if (
-      new Date(file.data.createdAt).getTime() <
+      new Date(file.createdAt).getTime() <
       Date.now() - UPLOADING_STALE_TIMEOUT
     ) {
       const deletedAsset = await context.postgrest.client
         .from("Asset")
         .delete()
         .eq("projectId", projectId)
-        .eq("name", file.data.name);
+        .eq("name", file.name);
       assertPostgrestSuccess(deletedAsset);
       const deletedFile = await context.postgrest.client
         .from("File")
         .delete()
-        .eq("name", file.data.name);
+        .eq("name", file.name);
       assertPostgrestSuccess(deletedFile);
       return;
     }
@@ -452,7 +475,7 @@ export const getUploadedAsset = async ({
     }
     file = result.data;
   }
-  const asset = await findAssetByFileName({ projectId, name, context });
+  const asset = await findAsset({ projectId, name, context });
   if (asset === undefined) {
     throw new Error("Asset not found");
   }

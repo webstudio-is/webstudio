@@ -1,4 +1,4 @@
-import type { HtmlTags } from "html-tags";
+import type { HtmlTags } from "@webstudio-is/html-data";
 import { useStore } from "@nanostores/react";
 import {
   BlockquoteIcon,

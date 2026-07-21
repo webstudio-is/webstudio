@@ -60,7 +60,7 @@ import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import type { ConflictResolution } from "./style-copy";
 import { findPageAndSelectorByInstanceId } from "./lookup";
-import { validateFragmentHtmlEmbedCode } from "./html";
+import { validateFragmentHtmlEmbedCode } from "./html-embed";
 import { z } from "zod";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);

@@ -1,5 +1,5 @@
 import { generate, walk, List, type CssNode } from "css-tree";
-import type { HtmlTags } from "html-tags";
+import type { HtmlTags } from "@webstudio-is/html-data";
 import {
   camelCaseProperty,
   cssTryParseValue,

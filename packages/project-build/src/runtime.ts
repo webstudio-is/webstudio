@@ -19,6 +19,7 @@ export * from "./runtime/errors";
 export * from "./runtime/expression-validation";
 export * from "./runtime/fragment";
 export * from "./runtime/html";
+export * from "./runtime/html-embed";
 export * from "./runtime/insert-target";
 export * from "./runtime/instance-path";
 export * from "./runtime/instance-duplicate";
