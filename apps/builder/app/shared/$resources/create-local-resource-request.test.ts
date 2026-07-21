@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createLocalResourceRequest } from "./rest.resources-loader-utils";
+import { createLocalResourceRequest } from "./create-local-resource-request";
 
 describe("resources loader local dispatch", () => {
   test("creates nested requests from relative local resource URLs", async () => {
