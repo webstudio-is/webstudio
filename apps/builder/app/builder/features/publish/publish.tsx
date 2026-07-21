@@ -469,6 +469,9 @@ const Publish = ({
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
+  const [publishWarning, setPublishWarning] = useState<
+    undefined | JSX.Element | string
+  >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -519,6 +522,7 @@ const Publish = ({
 
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
+    setPublishWarning(undefined);
 
     const { error: auditError, warning: auditWarning } =
       getPrePublishAuditMessages();
@@ -528,7 +532,8 @@ const Publish = ({
       return;
     }
     if (auditWarning !== undefined) {
-      toast.info(auditWarning);
+      toast.warn(auditWarning);
+      setPublishWarning(auditWarning);
     }
 
     // Custom domain checkboxes are disabled on free plan so they are never
@@ -649,6 +654,9 @@ const Publish = ({
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
       {publishError && <Text color="destructive">{publishError}</Text>}
+      {publishWarning && (
+        <PanelBanner variant="warning">{publishWarning}</PanelBanner>
+      )}
 
       <Tooltip
         content={
@@ -722,6 +730,7 @@ const PublishStatic = ({
   const project = useStore($project);
   const [_, startTransition] = useTransition();
   const [publishError, setPublishError] = useState<JSX.Element | string>();
+  const [publishWarning, setPublishWarning] = useState<JSX.Element | string>();
 
   if (project == null) {
     throw new Error("Project not found");
@@ -739,6 +748,9 @@ const PublishStatic = ({
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
       {publishError && <Text color="destructive">{publishError}</Text>}
+      {publishWarning && (
+        <PanelBanner variant="warning">{publishWarning}</PanelBanner>
+      )}
       {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
 
       <Tooltip
@@ -752,6 +764,7 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setPublishError(undefined);
+                setPublishWarning(undefined);
                 const { error: auditError, warning: auditWarning } =
                   getPrePublishAuditMessages();
                 if (auditError !== undefined) {
@@ -760,7 +773,8 @@ const PublishStatic = ({
                   return;
                 }
                 if (auditWarning !== undefined) {
-                  toast.info(auditWarning);
+                  toast.warn(auditWarning);
+                  setPublishWarning(auditWarning);
                 }
 
                 setIsPendingOptimistic(true);
