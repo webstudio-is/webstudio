@@ -116,6 +116,18 @@ test("allows valid publishable pages and ignores invalid drafts", () => {
   ).toEqual([]);
 });
 
+test("allows valid legacy CodeText children", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <$.CodeText>
+        <$.Text ws:tag="span">Legacy code text</$.Text>
+      </$.CodeText>
+    </$.Body>
+  );
+
+  expect(runAudit({ instances, props })).toEqual([]);
+});
+
 test("blocks publishing when required audit input is unavailable", () => {
   const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
 
