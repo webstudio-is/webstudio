@@ -13,7 +13,7 @@ import {
   $uploadingFilesDataStore,
   type UploadingFileData,
 } from "~/shared/nano-states";
-import { $assetFolders, $assets } from "~/shared/sync/data-stores";
+import { $assets } from "~/shared/sync/data-stores";
 import { $project } from "~/shared/sync/data-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
@@ -55,13 +55,9 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
     return;
   }
 
-  const folderId =
-    asset.folderId !== undefined && $assetFolders.get().has(asset.folderId)
-      ? asset.folderId
-      : undefined;
   executeRuntimeMutation({
     id: "assets.add",
-    input: { asset: { ...asset, folderId } },
+    input: { asset },
   });
 
   onNextTransactionComplete(() => {
