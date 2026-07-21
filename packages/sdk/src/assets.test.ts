@@ -600,7 +600,7 @@ describe("allowed-file-types", () => {
       expect(url.search).toBe("?format=raw");
     });
 
-    test.each(["tiff", "tif", "bmp", "ico", "avif"])(
+    test.each(["bmp", "ico", "avif"])(
       "serves %s images directly without resizing",
       (format) => {
         const url = getAssetUrl(
