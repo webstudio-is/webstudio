@@ -36,6 +36,7 @@ const entry = createCanonicalAssetFileEntry({
 });
 const metadataRow = {
   ...entry,
+  metadataToken: "metadata-token-1",
   document,
   createdAt: "2026-07-18T00:00:00.000Z",
   updatedAt: "2026-07-18T00:00:00.000Z",
@@ -63,7 +64,7 @@ describe("incremental resource index maintenance", () => {
       db.post("rpc/begin_asset_resource_index_build", async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>;
         begun.push(String(body.p_resource_id));
-        return json(null);
+        return json(true);
       }),
       db.post("rpc/activate_asset_resource_index", async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>;
@@ -137,6 +138,35 @@ describe("incremental resource index maintenance", () => {
     expect(putIfAbsent).not.toHaveBeenCalled();
   });
 
+  test("does not rebuild resources already updated by query synchronization", async () => {
+    let metadataLoaded = false;
+    server.use(
+      db.get("AssetResourceIndexState", () =>
+        json([{ resourceId: "posts", query: "*[]" }])
+      ),
+      db.get("AssetFileMetadata", () => {
+        metadataLoaded = true;
+        return json([metadataRow]);
+      })
+    );
+    const putIfAbsent = vi.fn();
+
+    await expect(
+      updateAssetResourceIndexesAfterCanonicalChange({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent },
+        projectId: "project-1",
+        changedAssetIds: ["post-1"],
+        excludedResourceIds: ["posts"],
+      })
+    ).resolves.toEqual({
+      changedAssetIds: ["post-1"],
+      updatedResourceIds: [],
+    });
+    expect(metadataLoaded).toBe(false);
+    expect(putIfAbsent).not.toHaveBeenCalled();
+  });
+
   test("repairs a stale current-query index before publication", async () => {
     const query = `*[extension == "md"]`;
     const queryHash = await computeAssetResourceQueryHash(query);
@@ -154,7 +184,7 @@ describe("incremental resource index maintenance", () => {
           },
         ])
       ),
-      db.post("rpc/begin_asset_resource_index_build", () => json(null)),
+      db.post("rpc/begin_asset_resource_index_build", () => json(true)),
       db.post("rpc/activate_asset_resource_index", () => json(true))
     );
     const putIfAbsent = vi.fn(async ({ checksum }) => ({
@@ -170,6 +200,9 @@ describe("incremental resource index maintenance", () => {
         resources: [{ resourceId: "posts", query, queryHash }],
         entries: [entry],
         assetRevision,
+        metadataSnapshot: [
+          { assetId: "post-1", metadataToken: "metadata-token-1" },
+        ],
       })
     ).resolves.toEqual(["posts"]);
     expect(putIfAbsent).toHaveBeenCalledOnce();
@@ -207,6 +240,9 @@ describe("incremental resource index maintenance", () => {
       ],
       entries: [entry],
       assetRevision,
+      metadataSnapshot: [
+        { assetId: "post-1", metadataToken: "metadata-token-1" },
+      ],
       read,
       referenceId: "historical-build",
     });

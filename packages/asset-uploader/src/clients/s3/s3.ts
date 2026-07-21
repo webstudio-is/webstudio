@@ -1,9 +1,6 @@
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SignatureV4 } from "@smithy/signature-v4";
-import type {
-  AssetClient,
-  AssetClientWithResourceIndexStore,
-} from "../../client";
+import type { AssetClient } from "../../client";
 import { uploadToS3 } from "./upload";
 import { readFromS3 } from "./read";
 import {
@@ -17,13 +14,18 @@ type S3ClientOptions = {
   accessKeyId: string;
   secretAccessKey: string;
   bucket: string;
+  resourceIndexBucket?: string;
   acl?: string;
   maxUploadSize: number;
 };
 
-export const createS3Client = (
-  options: S3ClientOptions
-): AssetClientWithResourceIndexStore => {
+export const createS3Client = (options: S3ClientOptions): AssetClient => {
+  const resourceIndexBucket = options.resourceIndexBucket;
+  if (resourceIndexBucket === options.bucket) {
+    throw new Error(
+      "Resource indexes require a bucket distinct from the public asset bucket"
+    );
+  }
   const signer = new SignatureV4({
     credentials: {
       accessKeyId: options.accessKeyId,
@@ -58,22 +60,33 @@ export const createS3Client = (
   };
 
   return {
-    resourceIndexStore: {
-      putIfAbsent: (object) =>
-        putImmutableObjectToS3({
-          signer,
-          endpoint: options.endpoint,
-          bucket: options.bucket,
-          object,
+    ...(resourceIndexBucket === undefined
+      ? {}
+      : {
+          resourceIndexStore: {
+            putIfAbsent: (object) =>
+              putImmutableObjectToS3({
+                signer,
+                endpoint: options.endpoint,
+                bucket: resourceIndexBucket,
+                object,
+              }),
+            read: (key) =>
+              readFromS3({
+                signer,
+                name: key,
+                endpoint: options.endpoint,
+                bucket: resourceIndexBucket,
+              }),
+            delete: (key) =>
+              deleteImmutableObjectFromS3({
+                signer,
+                endpoint: options.endpoint,
+                bucket: resourceIndexBucket,
+                key,
+              }),
+          },
         }),
-      delete: (key) =>
-        deleteImmutableObjectFromS3({
-          signer,
-          endpoint: options.endpoint,
-          bucket: options.bucket,
-          key,
-        }),
-    },
     uploadFile,
     readFile: (name, range) =>
       readFromS3({

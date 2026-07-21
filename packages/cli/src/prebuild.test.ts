@@ -15,9 +15,10 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { bundleVersion } from "@webstudio-is/protocol";
 import { createAssetResourceIndex } from "@webstudio-is/asset-resource";
-import { createAssetQueryResourceBody } from "@webstudio-is/sdk";
+import { createAssetQueryResourceBody, type Resource } from "@webstudio-is/sdk";
 import {
   generateRedirectsModule,
+  getRequiredAssetResourceContentRefs,
   materializeAssetResourceIndexes,
   prebuild,
 } from "./prebuild";
@@ -319,6 +320,63 @@ describe("generateRedirectsModule", () => {
   });
 });
 
+test("requires candidate files only when an asset query can hydrate content", async () => {
+  const query = "*[]";
+  const index = await createAssetResourceIndex({
+    format: "webstudio-resource-index",
+    version: 1,
+    resourceId: "posts",
+    query,
+    assetRevision: `sha256:${"a".repeat(64)}`,
+    queryMode: "static",
+    parameterNames: [],
+    documents: [
+      {
+        _id: "post-1",
+        _type: "asset.file",
+        name: "post.md",
+        path: "post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision: "post-revision",
+        contentRef: "post.md",
+        properties: {},
+      },
+    ],
+  });
+  const createResource = (contentExpression: string): Resource => ({
+    id: "posts",
+    name: "Posts",
+    control: "system",
+    method: "post",
+    url: '"/$resources/assets/query"',
+    headers: [],
+    body: createAssetQueryResourceBody({
+      query,
+      parameters: [],
+      contentExpression,
+    }),
+  });
+  const snapshots = [
+    { resourceId: "posts", revision: index.integrity.checksum, index },
+  ];
+
+  expect(
+    getRequiredAssetResourceContentRefs({
+      snapshots,
+      resources: [["posts", createResource('{"mode":"none"}')]],
+    })
+  ).toEqual(new Set());
+  expect(
+    getRequiredAssetResourceContentRefs({
+      snapshots,
+      resources: [["posts", createResource('{"mode":"markdown-body"}')]],
+    })
+  ).toEqual(new Set(["post.md"]));
+});
+
 test("materializes immutable resource indexes as public JSON with a reference-only module", async () => {
   const index = await createAssetResourceIndex({
     format: "webstudio-resource-index",
@@ -332,6 +390,12 @@ test("materializes immutable resource indexes as public JSON with a reference-on
   });
   await mkdir("public", { recursive: true });
   await mkdir("app/__generated__", { recursive: true });
+  await mkdir("public/resource-indexes", { recursive: true });
+  await writeFile(
+    "public/resource-indexes/obsolete-index.json",
+    "obsolete",
+    "utf8"
+  );
 
   await materializeAssetResourceIndexes({
     snapshots: [
@@ -348,6 +412,7 @@ test("materializes immutable resource indexes as public JSON with a reference-on
 
   const files = await getFilePaths("public/resource-indexes");
   expect(files).toHaveLength(1);
+  expect(files[0]).not.toContain("obsolete-index.json");
   expect(JSON.parse(await readFile(files[0], "utf8"))).toEqual(index);
   const manifestModule = await readFile(
     "app/__generated__/$resources.asset-query-manifest.ts",
@@ -434,17 +499,15 @@ test("executes and hydrates an asset query from SSG public files", async () => {
     ],
   });
 
-  const response = await runtimeFetch(
-    new Request("https://site.example/$resources/assets/query", {
-      method: "POST",
-      body: JSON.stringify({
-        query,
-        parameters: { slug: "post" },
-        resultLimit: 1,
-        content: { mode: "full" },
-      }),
-    })
-  );
+  const response = await runtimeFetch("/$resources/assets/query", {
+    method: "POST",
+    body: JSON.stringify({
+      query,
+      parameters: { slug: "post" },
+      resultLimit: 1,
+      content: { mode: "full" },
+    }),
+  });
 
   expect({
     status: response?.status,

@@ -110,4 +110,62 @@ describe("publication resource index snapshots", () => {
       })
     ).rejects.toMatchObject({ resourceId: "posts" });
   });
+
+  test("preserves both snapshot and reference cleanup failures", async () => {
+    const index = await createAssetResourceIndex({
+      format: "webstudio-resource-index",
+      version: 1,
+      resourceId: "posts",
+      query: "*[]",
+      assetRevision: `sha256:${"a".repeat(64)}`,
+      queryMode: "static",
+      parameterNames: [],
+      documents: [],
+    });
+    const states = createQuery([
+      {
+        resourceId: "posts",
+        queryHash: index.queryHash,
+        assetRevision: index.assetRevision,
+        activeRevision: index.integrity.checksum,
+        buildStatus: "ACTIVE",
+        deletedAt: null,
+      },
+    ]);
+    const revisions = createQuery([
+      {
+        resourceId: "posts",
+        revision: index.integrity.checksum,
+        queryHash: index.queryHash,
+        assetRevision: index.assetRevision,
+        objectKey: "private/posts.json",
+      },
+    ]);
+    const client = {
+      from: vi.fn().mockReturnValueOnce(states).mockReturnValueOnce(revisions),
+      rpc: vi.fn(async (name: string) =>
+        name === "remove_asset_resource_index_reference"
+          ? { data: null, error: new Error("cleanup failed") }
+          : { data: null, error: null }
+      ),
+    };
+
+    const result = loadAssetResourceIndexSnapshots({
+      client: client as never,
+      projectId: "project-1",
+      resources: [{ resourceId: "posts", queryHash: index.queryHash }],
+      read: async () => {
+        throw new Error("read failed");
+      },
+      referenceId: "build-1",
+      expectedAssetRevision: index.assetRevision,
+    });
+
+    const error = await result.catch((error: unknown) => error);
+    expect(error).toBeInstanceOf(AggregateError);
+    expect((error as AggregateError).errors).toEqual([
+      expect.objectContaining({ message: "read failed" }),
+      expect.objectContaining({ message: "cleanup failed" }),
+    ]);
+  });
 });

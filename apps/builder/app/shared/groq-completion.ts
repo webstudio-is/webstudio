@@ -48,6 +48,12 @@ const groqVocabulary: Completion[] = [
   { label: "upper()", type: "function", apply: "upper()" },
 ];
 
+// Match dotted paths and JSON-quoted bracket segments, including incomplete
+// segments while the user is typing (for example `properties["seo`).
+const groqFieldPath =
+  /(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.[A-Za-z_][A-Za-z0-9_]*)|(?:\[\])|(?:\["(?:[^"\\]|\\.)*(?:"\])?))*[.\[]?$/;
+const validGroqFieldPath = new RegExp(`^${groqFieldPath.source}`);
+
 const getSyntaxContext = (context: CompletionContext) => {
   const names: string[] = [];
   let node: SyntaxNode | null = syntaxTree(context.state).resolveInner(
@@ -94,14 +100,14 @@ const getFieldCompletions = ({
 export const createGroqCompletionSource =
   (configuration: GroqCompletionConfiguration = {}) =>
   (context: CompletionContext): CompletionResult | null => {
-    const token = context.matchBefore(
-      /(?:\$[A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_.$]*)/
-    );
+    const parameterToken = context.matchBefore(/\$[A-Za-z0-9_]*/);
+    const fieldToken = context.matchBefore(groqFieldPath);
+    const token = parameterToken ?? fieldToken;
     if (token === null && context.explicit === false) {
       return null;
     }
     const text = token?.text ?? "";
-    if (text.startsWith("$")) {
+    if (parameterToken !== null) {
       return {
         from: token?.from ?? context.pos,
         options: (configuration.parameterNames ?? []).map((name) => ({
@@ -114,19 +120,20 @@ export const createGroqCompletionSource =
     }
 
     const syntaxContext = getSyntaxContext(context);
-    if (
-      syntaxContext.some((name) =>
-        ["String", "DoubleString", "SingleString"].includes(name)
-      )
-    ) {
+    const insideString = syntaxContext.includes("String");
+    const insideBracketAttribute =
+      text.includes('["') && syntaxContext.includes("DoubleString");
+    if (insideString && insideBracketAttribute === false) {
       return null;
     }
-    const inDottedPath =
-      text.includes(".") || syntaxContext.includes("DotAccess");
+    const inFieldPath =
+      text.includes(".") ||
+      text.includes("[") ||
+      syntaxContext.includes("DotAccess");
     const fields = getFieldCompletions(configuration);
     return {
       from: token?.from ?? context.pos,
-      options: inDottedPath ? fields : [...fields, ...groqVocabulary],
-      validFor: /^[A-Za-z_][A-Za-z0-9_.$]*$/,
+      options: inFieldPath ? fields : [...fields, ...groqVocabulary],
+      validFor: validGroqFieldPath,
     };
   };

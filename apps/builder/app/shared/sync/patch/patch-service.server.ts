@@ -323,7 +323,8 @@ const applyAuthorizedEntries = async ({
 
 export const applyPatchRequest = async (
   context: AppContext,
-  patch: NormalizedPatchRequest
+  patch: NormalizedPatchRequest,
+  dependencies = { synchronizeAssetResourcesAfterBuildPatch }
 ): Promise<PatchResult> => {
   const state = await loadBuildState(context, patch.buildId);
   assertBuildProject(state, patch);
@@ -362,8 +363,9 @@ export const applyPatchRequest = async (
     return applied;
   }
 
-  await synchronizeAssetResourcesAfterBuildPatch({
+  await dependencies.synchronizeAssetResourcesAfterBuildPatch({
     context,
+    buildId: patch.buildId,
     projectId: patch.projectId,
     previousResources: build?.resources,
     resources: applied.build?.resources,

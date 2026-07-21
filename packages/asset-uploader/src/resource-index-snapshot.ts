@@ -13,6 +13,7 @@ import {
   removeAssetResourceIndexReferences,
 } from "./resource-index-persistence";
 import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
+import { mapBounded } from "./async-utils";
 
 type StateRow = Pick<
   Database["public"]["Tables"]["AssetResourceIndexState"]["Row"],
@@ -138,6 +139,8 @@ export const loadAssetResourceIndexSnapshots = async ({
     revisions.map((row) => [`${row.resourceId}:${row.revision}`, row])
   );
 
+  let snapshots: AssetResourceIndexSnapshot[] = [];
+  let operationFailure: { error: unknown } | undefined;
   try {
     for (const resourceId of uniqueResourceIds) {
       const state = statesByResource.get(resourceId) as StateRow & {
@@ -152,8 +155,10 @@ export const loadAssetResourceIndexSnapshots = async ({
         referenceId: operationReferenceId,
       });
     }
-    return await Promise.all(
-      uniqueResourceIds.map(async (resourceId) => {
+    snapshots = await mapBounded(
+      uniqueResourceIds,
+      assetResourceLimits.concurrentContentReads,
+      async (resourceId) => {
         const state = statesByResource.get(resourceId) as StateRow & {
           activeRevision: string;
         };
@@ -182,9 +187,14 @@ export const loadAssetResourceIndexSnapshots = async ({
           );
         }
         return { resourceId, revision: state.activeRevision, index };
-      })
+      }
     );
-  } finally {
+  } catch (error) {
+    operationFailure = { error };
+  }
+
+  let cleanupFailure: { error: unknown } | undefined;
+  try {
     await removeAssetResourceIndexReferences({
       client,
       projectId,
@@ -197,5 +207,22 @@ export const loadAssetResourceIndexSnapshots = async ({
         store: garbageCollectionStore,
       });
     }
+  } catch (error) {
+    cleanupFailure = { error };
   }
+
+  if (operationFailure !== undefined && cleanupFailure !== undefined) {
+    throw new AggregateError(
+      [operationFailure.error, cleanupFailure.error],
+      "Asset resource index snapshot loading and reference cleanup failed",
+      { cause: operationFailure.error }
+    );
+  }
+  if (operationFailure !== undefined) {
+    throw operationFailure.error;
+  }
+  if (cleanupFailure !== undefined) {
+    throw cleanupFailure.error;
+  }
+  return snapshots;
 };

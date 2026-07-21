@@ -248,4 +248,39 @@ describe("selected asset content hydration", () => {
       content: { private: { text: "secret" } },
     });
   });
+
+  test("waits for every started content read before propagating a failure", async () => {
+    const failed = createDocument("failed", "x");
+    const slow = createDocument("slow", "y");
+    let release: (() => void) | undefined;
+    let slowReadCompleted = false;
+    const read: AssetResourceContentReader = async (contentRef) => {
+      if (contentRef === failed.contentRef) {
+        throw new Error("read failed");
+      }
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      slowReadCompleted = true;
+      return {
+        data: {
+          async *[Symbol.asyncIterator]() {
+            yield encoder.encode("y");
+          },
+        },
+      };
+    };
+    const pending = hydrateAssetResourceResult({
+      result: [identity(failed), identity(slow)],
+      documents: [failed, slow],
+      options: { mode: "full" },
+      read,
+    });
+
+    await expect.poll(() => release).toBeTypeOf("function");
+    release?.();
+
+    await expect(pending).rejects.toThrow("read failed");
+    expect(slowReadCompleted).toBe(true);
+  });
 });

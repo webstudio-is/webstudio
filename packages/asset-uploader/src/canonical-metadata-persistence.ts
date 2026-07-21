@@ -6,6 +6,14 @@ import type { Client, Database } from "@webstudio-is/postgrest/index.server";
 import { assertPostgrestSuccess } from "./patch-utils";
 
 type MetadataRow = Database["public"]["Tables"]["AssetFileMetadata"]["Row"];
+type StoredMetadataRow = MetadataRow & {
+  metadataToken: string;
+};
+
+export type CanonicalAssetMetadataSnapshot = {
+  assetId: string;
+  metadataToken: string;
+}[];
 
 export type CanonicalAssetMetadataSource = {
   storageName: string;
@@ -118,7 +126,7 @@ const loadCanonicalAssetFileMetadataRows = async ({
   client: Client;
   projectId: string;
   assetIds?: string[];
-}): Promise<MetadataRow[]> => {
+}): Promise<StoredMetadataRow[]> => {
   let query = client
     .from("AssetFileMetadata")
     .select()
@@ -131,7 +139,7 @@ const loadCanonicalAssetFileMetadataRows = async ({
   }
   const result = await query.order("assetId").order("revision");
   assertPostgrestSuccess(result);
-  return result.data ?? [];
+  return (result.data ?? []) as StoredMetadataRow[];
 };
 
 export const loadCanonicalAssetFileEntries = async ({
@@ -149,6 +157,23 @@ export const loadCanonicalAssetFileEntries = async ({
     assetIds,
   });
   return rows.map(parseMetadataRow);
+};
+
+export const loadCanonicalAssetFileSnapshot = async ({
+  client,
+  projectId,
+}: {
+  client: Client;
+  projectId: string;
+}) => {
+  const rows = await loadCanonicalAssetFileMetadataRows({ client, projectId });
+  return {
+    entries: rows.map(parseMetadataRow),
+    metadataSnapshot: rows.map(({ assetId, metadataToken }) => ({
+      assetId,
+      metadataToken,
+    })),
+  };
 };
 
 export const loadCanonicalAssetFileEntriesForRecovery = async ({

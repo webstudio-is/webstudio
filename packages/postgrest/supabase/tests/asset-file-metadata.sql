@@ -54,6 +54,36 @@ SELECT is(
   'One asset has one active canonical revision'
 );
 
+CREATE TEMP TABLE initial_metadata_token AS
+SELECT "metadataToken"
+FROM "AssetFileMetadata"
+WHERE "projectId" = 'metadata-test-project'
+  AND "assetId" = 'metadata-test-asset';
+
+SELECT is(
+  replace_asset_file_metadata(
+    'metadata-test-project',
+    'metadata-test-asset',
+    'revision-1',
+    '{"_id":"metadata-test-asset","revision":"revision-1"}'::JSONB,
+    '[]'::JSONB,
+    '{"storageName":"metadata-test.md","fileUpdatedAt":"2026-07-18T10:00:00Z","fileSize":10,"filename":"post.md","folderId":null}'::JSONB
+  ),
+  TRUE,
+  'Repeated replacement of identical canonical metadata is accepted'
+);
+
+SELECT is(
+  (
+    SELECT "metadataToken"
+    FROM "AssetFileMetadata"
+    WHERE "projectId" = 'metadata-test-project'
+      AND "assetId" = 'metadata-test-asset'
+  ),
+  (SELECT "metadataToken" FROM initial_metadata_token),
+  'Identical canonical metadata preserves its snapshot token'
+);
+
 UPDATE "File"
 SET "size" = 11,
   "updatedAt" = '2026-07-18T11:00:00Z'

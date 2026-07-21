@@ -9,7 +9,7 @@ import {
   type FieldContribution,
   type ObservedFieldType,
 } from "./canonical";
-import { serializeJsonDeterministically } from "./stable-json";
+import { compareStrings, serializeJsonDeterministically } from "./stable-json";
 import { sha256 } from "./sha256";
 
 export type AggregatedFieldType = {
@@ -35,16 +35,6 @@ export type AssetFieldCatalog = AggregatedAssetFieldCatalog & {
   format: "webstudio-asset-field-catalog";
   version: 1;
   canonicalRevision: string;
-};
-
-const compareStrings = (left: string, right: string) => {
-  if (left < right) {
-    return -1;
-  }
-  if (left > right) {
-    return 1;
-  }
-  return 0;
 };
 
 export const computeCanonicalAssetRevision = async (

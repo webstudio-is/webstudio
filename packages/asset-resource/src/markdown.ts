@@ -280,6 +280,12 @@ const parseYamlProperties = (
       return input.map((item) => normalize(item, depth + 1));
     }
     if (typeof input === "object") {
+      if (Object.getPrototypeOf(input) !== Object.prototype) {
+        throw new MarkdownMetadataError(
+          "FRONTMATTER_INVALID",
+          "Markdown frontmatter contains a non-JSON object"
+        );
+      }
       const result: Record<string, unknown> = {};
       for (const [key, child] of Object.entries(input)) {
         fields += 1;

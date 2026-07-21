@@ -106,8 +106,14 @@ const failure = ({
     status
   );
 
-const getRequest = (input: RequestInfo | URL, init?: RequestInit) =>
-  new Request(input, init);
+const getRequest = (
+  input: RequestInfo | URL,
+  baseUrl: string | URL,
+  init?: RequestInit
+) =>
+  typeof input === "string" || input instanceof URL
+    ? new Request(new URL(input, baseUrl), init)
+    : new Request(input, init);
 
 export const getPublishedAssetResourceCacheKey = async ({
   deploymentId,
@@ -119,8 +125,9 @@ export const getPublishedAssetResourceCacheKey = async ({
   request: Request;
 }) => {
   const body = await request.clone().text();
+  const cacheControl = request.headers.get("cache-control");
   const hash = await sha256Hex(
-    `${deploymentId}\n${entry.resourceId}\n${entry.revision}\n${body}`
+    `${deploymentId}\n${entry.resourceId}\n${entry.revision}\n${body}\n${cacheControl}`
   );
   const url = new URL(request.url);
   url.searchParams.set("ws-asset-resource", hash);
@@ -132,12 +139,15 @@ export const createPublishedAssetResourceFetch = ({
   manifest,
   fetchAsset,
   cache,
+  baseUrl,
 }: {
   deploymentId: string;
   manifest: readonly PublishedAssetResourceManifestEntry[];
   fetchAsset: PublishedAssetFetch;
   cache?: Pick<Cache, "match" | "put">;
+  baseUrl: string | URL;
 }) => {
+  const baseOrigin = new URL(baseUrl).origin;
   const entriesByQueryHash = new Map<
     string,
     PublishedAssetResourceManifestEntry[]
@@ -151,7 +161,10 @@ export const createPublishedAssetResourceFetch = ({
     input: RequestInfo | URL,
     init?: RequestInit
   ): Promise<Response | undefined> => {
-    const request = getRequest(input, init);
+    const request = getRequest(input, baseUrl, init);
+    if (new URL(request.url).origin !== baseOrigin) {
+      return;
+    }
     if (
       new URL(request.url).pathname !== assetsQueryResourceUrl ||
       request.method.toUpperCase() !== "POST"
@@ -332,6 +345,7 @@ export const createGeneratedAssetResourceFetch = async ({
     manifest,
     fetchAsset,
     cache,
+    baseUrl: request.url,
   });
   return async (input, init) =>
     (await fetchResource(input, init)) ?? fallback(input, init);

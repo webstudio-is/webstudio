@@ -18,6 +18,7 @@ import {
   patchAssetFoldersWithClient,
 } from "./folder-persistence";
 import { patchAssets } from "./patch";
+import { createAssetContentRevision } from "./canonical-metadata-backfill";
 import type { Patch } from "immer";
 
 const server = createTestServer();
@@ -376,6 +377,7 @@ describe("patchAssets (msw)", () => {
 
   test("persists moving an asset to root as null", async () => {
     const projectId = uid();
+    const updatedAt = "2026-07-18T00:00:00.000Z";
     let localAssetRow = {
       ...assetRow,
       projectId,
@@ -386,6 +388,7 @@ describe("patchAssets (msw)", () => {
         name: "stored.md",
         format: "md",
         size: 100,
+        updatedAt,
         meta: "{}",
       },
     };
@@ -399,7 +402,11 @@ describe("patchAssets (msw)", () => {
       extension: "md",
       mimeType: "text/markdown",
       size: 100,
-      revision: "file:stored.md:revision:100",
+      revision: createAssetContentRevision({
+        storageName: "stored.md",
+        updatedAt,
+        size: 100,
+      }),
       contentRef: "stored.md",
       properties: { title: "Post" },
       excerpt: "Body",

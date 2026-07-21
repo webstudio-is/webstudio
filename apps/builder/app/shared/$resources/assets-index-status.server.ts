@@ -6,6 +6,8 @@ import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { createContext } from "../context.server";
 import { isBuilder } from "../router-utils";
 
+const defaultDependencies = { createContext, loadAssetResourceIndexStatus };
+
 const failure = ({
   code,
   message,
@@ -22,13 +24,16 @@ const failure = ({
     { status, headers: privateNoStoreResponseHeaders }
   );
 
-export const loader = async ({
-  request,
-  resourceRequest,
-}: {
-  request: Request;
-  resourceRequest: Request;
-}) => {
+export const loader = async (
+  {
+    request,
+    resourceRequest,
+  }: {
+    request: Request;
+    resourceRequest: Request;
+  },
+  dependencies = defaultDependencies
+) => {
   if (isBuilder(request) === false) {
     return failure({
       code: "FORBIDDEN",
@@ -53,8 +58,8 @@ export const loader = async ({
   }
 
   try {
-    const context = await createContext(request);
-    const status = await loadAssetResourceIndexStatus({
+    const context = await dependencies.createContext(request);
+    const status = await dependencies.loadAssetResourceIndexStatus({
       projectId,
       resourceId,
       context,

@@ -2,6 +2,7 @@ import { parse, type ExprNode } from "groq-js/1";
 import { assetResourceLimits } from "@webstudio-is/sdk";
 import { getAssetResourceParameterNames } from "./candidate-selection";
 import { visitGroqAst } from "./groq-ast";
+import { appendAssetFieldPath } from "./canonical";
 
 export class AssetResourceQueryValidationError extends Error {
   readonly code: "INVALID_QUERY" | "QUERY_COMPLEXITY_EXCEEDED";
@@ -143,11 +144,12 @@ const getAttributePath = (node: unknown): string | undefined => {
   const basePath = getAttributePath(attribute.base);
   return basePath === undefined
     ? attribute.name
-    : `${basePath}.${attribute.name}`;
+    : appendAssetFieldPath(basePath, attribute.name);
 };
 
-export const getAssetResourceReferencedFieldPaths = (query: string) => {
-  const { tree } = validateAssetResourceQuery(query);
+export const getAssetResourceReferencedFieldPathsFromTree = (
+  tree: ExprNode
+) => {
   const paths = new Set<string>();
   visitGroqAst(tree, (node) => {
     const path = getAttributePath(node);
@@ -157,3 +159,8 @@ export const getAssetResourceReferencedFieldPaths = (query: string) => {
   });
   return Array.from(paths).sort();
 };
+
+export const getAssetResourceReferencedFieldPaths = (query: string) =>
+  getAssetResourceReferencedFieldPathsFromTree(
+    validateAssetResourceQuery(query).tree
+  );

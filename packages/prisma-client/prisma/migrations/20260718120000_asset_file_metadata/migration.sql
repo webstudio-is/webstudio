@@ -2,6 +2,7 @@ CREATE TABLE "AssetFileMetadata" (
   "projectId" TEXT NOT NULL,
   "assetId" TEXT NOT NULL,
   "revision" TEXT NOT NULL,
+  "metadataToken" TEXT NOT NULL DEFAULT gen_random_uuid()::TEXT,
   "document" JSONB NOT NULL,
   "fieldContributions" JSONB NOT NULL DEFAULT '[]',
   "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

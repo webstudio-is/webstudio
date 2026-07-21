@@ -3,6 +3,7 @@ import { assetResourceLimits } from "@webstudio-is/sdk";
 import {
   AssetResourceQueryValidationError,
   getAssetResourceReferencedFieldPaths,
+  getAssetResourceReferencedFieldPathsFromTree,
   validateAssetResourceQuery,
 } from "./query-validation";
 
@@ -104,5 +105,15 @@ describe("asset resource query validation", () => {
       "properties.slug",
       "properties.title",
     ]);
+  });
+
+  test("formats dynamic field names with valid bracket notation", () => {
+    const validated = validateAssetResourceQuery(
+      '*[properties["seo-title"] == "Post"]'
+    );
+
+    expect(
+      getAssetResourceReferencedFieldPathsFromTree(validated.tree)
+    ).toEqual(["properties", 'properties["seo-title"]']);
   });
 });

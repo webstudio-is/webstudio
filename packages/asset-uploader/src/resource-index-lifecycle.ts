@@ -1,13 +1,13 @@
-import { computeCanonicalAssetRevision } from "@webstudio-is/asset-resource";
 import { getAssetResourceQuery, type Resource } from "@webstudio-is/sdk";
 export { getAssetResourceQuery } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetClientWithResourceIndexStore } from "./client";
 import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import { loadCanonicalAssetFileSnapshot } from "./canonical-metadata-persistence";
 import { buildPersistAndActivateAssetResourceIndex } from "./resource-index-build";
 import { deleteAssetResourceIndexQuery } from "./resource-index-persistence";
 import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
+import type { AssetResourceIndexBuildSource } from "./resource-index-persistence";
 
 export const synchronizeAssetResourceIndexQueries = async ({
   client,
@@ -15,6 +15,7 @@ export const synchronizeAssetResourceIndexQueries = async ({
   projectId,
   previousResources,
   resources,
+  source,
   dependencies = {},
 }: {
   client: Client;
@@ -22,9 +23,10 @@ export const synchronizeAssetResourceIndexQueries = async ({
   projectId: string;
   previousResources: readonly Resource[];
   resources: readonly Resource[];
+  source: AssetResourceIndexBuildSource;
   dependencies?: {
     synchronizeCanonicalAssets?: typeof synchronizeCanonicalAssets;
-    loadCanonicalAssetFileEntries?: typeof loadCanonicalAssetFileEntries;
+    loadCanonicalAssetFileSnapshot?: typeof loadCanonicalAssetFileSnapshot;
     buildPersistAndActivateAssetResourceIndex?: typeof buildPersistAndActivateAssetResourceIndex;
     deleteAssetResourceIndexQuery?: typeof deleteAssetResourceIndexQuery;
     collectAssetResourceIndexGarbageBestEffort?: typeof collectAssetResourceIndexGarbageBestEffort;
@@ -32,8 +34,9 @@ export const synchronizeAssetResourceIndexQueries = async ({
 }) => {
   const synchronize =
     dependencies.synchronizeCanonicalAssets ?? synchronizeCanonicalAssets;
-  const loadEntries =
-    dependencies.loadCanonicalAssetFileEntries ?? loadCanonicalAssetFileEntries;
+  const loadSnapshot =
+    dependencies.loadCanonicalAssetFileSnapshot ??
+    loadCanonicalAssetFileSnapshot;
   const buildIndex =
     dependencies.buildPersistAndActivateAssetResourceIndex ??
     buildPersistAndActivateAssetResourceIndex;
@@ -59,15 +62,17 @@ export const synchronizeAssetResourceIndexQueries = async ({
     .map(([resourceId]) => resourceId)
     .sort();
   const changed = [...current]
-    .filter(
-      ([resourceId, query]) =>
-        query !== undefined && query !== previous.get(resourceId)
-    )
+    .filter(([, query]) => query !== undefined)
     .map(([resourceId, query]) => ({ resourceId, query: query as string }))
     .sort((left, right) => left.resourceId.localeCompare(right.resourceId));
 
+  const failures: unknown[] = [];
   for (const resourceId of deletedResourceIds) {
-    await deleteQuery({ client, projectId, resourceId });
+    try {
+      await deleteQuery({ client, projectId, resourceId, source });
+    } catch (error) {
+      failures.push(error);
+    }
   }
   if (changed.length === 0) {
     if (
@@ -79,29 +84,52 @@ export const synchronizeAssetResourceIndexQueries = async ({
         store: { delete: assetClient.resourceIndexStore.delete },
       });
     }
+    if (failures.length > 0) {
+      throw new AggregateError(
+        failures,
+        `Failed to synchronize ${failures.length} asset resource index queries`
+      );
+    }
     return { deletedResourceIds, updatedResourceIds: [] };
   }
-  await synchronize({ projectId, client, assetClient });
-  const entries = await loadEntries({ client, projectId });
-  const assetRevision = await computeCanonicalAssetRevision(entries);
   const updatedResourceIds: string[] = [];
-  for (const { resourceId, query } of changed) {
-    await buildIndex({
+  try {
+    await synchronize({ projectId, client, assetClient });
+    const { entries, metadataSnapshot } = await loadSnapshot({
       client,
-      store: assetClient.resourceIndexStore,
       projectId,
-      resourceId,
-      query,
-      entries,
-      assetRevision,
     });
-    updatedResourceIds.push(resourceId);
+    for (const { resourceId, query } of changed) {
+      try {
+        await buildIndex({
+          client,
+          store: assetClient.resourceIndexStore,
+          projectId,
+          resourceId,
+          query,
+          entries,
+          metadataSnapshot,
+          source,
+        });
+        updatedResourceIds.push(resourceId);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+  } catch (error) {
+    failures.push(error);
   }
   if (assetClient.resourceIndexStore.delete !== undefined) {
     await collectGarbage({
       client,
       store: { delete: assetClient.resourceIndexStore.delete },
     });
+  }
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures,
+      `Failed to synchronize ${failures.length} asset resource index queries`
+    );
   }
   return { deletedResourceIds, updatedResourceIds };
 };

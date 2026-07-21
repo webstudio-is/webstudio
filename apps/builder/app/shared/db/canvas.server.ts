@@ -10,7 +10,7 @@ import {
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   loadAssetDataByProject,
-  loadCanonicalAssetFileEntries,
+  loadCanonicalAssetFileSnapshot,
   prepareAssetResourceIndexSnapshotsForPublication,
   getAssetResourceQuery,
   synchronizeCanonicalAssets,
@@ -30,7 +30,7 @@ import {
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
-import { createAssetClient } from "../asset-client";
+import { createAssetClientWithResourceIndexStore } from "../asset-client";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
   item.id,
@@ -172,16 +172,17 @@ const addProjectMetadata = async (
     });
   let assetResourceIndexes: PublishedProjectBundle["assetResourceIndexes"];
   if (assetQueryResources.length > 0) {
-    const assetClient = createAssetClient();
+    const assetClient = createAssetClientWithResourceIndexStore();
     await synchronizeCanonicalAssets({
       client: context.postgrest.client,
       projectId: project.id,
       assetClient,
     });
-    const canonicalEntries = await loadCanonicalAssetFileEntries({
-      client: context.postgrest.client,
-      projectId: project.id,
-    });
+    const { entries: canonicalEntries, metadataSnapshot } =
+      await loadCanonicalAssetFileSnapshot({
+        client: context.postgrest.client,
+        projectId: project.id,
+      });
     const indexedResources = await Promise.all(
       assetQueryResources.map(async ({ resourceId, query }) => ({
         resourceId,
@@ -198,9 +199,10 @@ const addProjectMetadata = async (
         projectId: project.id,
         resources: indexedResources,
         entries: canonicalEntries,
-        read: assetClient.readFile,
+        read: assetClient.resourceIndexStore.read,
         referenceId: data.build.id,
         assetRevision: expectedAssetRevision,
+        metadataSnapshot,
       });
   }
 

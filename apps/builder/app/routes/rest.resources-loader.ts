@@ -13,6 +13,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getResourceKey } from "~/shared/resources";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
+import { createLocalResourceRequest } from "./rest.resources-loader-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -43,14 +44,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (isLocalResource(input, "assets/query")) {
       return assetsQueryLoader({
         request,
-        resourceRequest: new Request(input, init),
+        resourceRequest: createLocalResourceRequest(request, input, init),
       });
     }
 
     if (isLocalResource(input, "assets/index-status")) {
       return assetsIndexStatusLoader({
         request,
-        resourceRequest: new Request(input, init),
+        resourceRequest: createLocalResourceRequest(request, input, init),
       });
     }
 

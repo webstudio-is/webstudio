@@ -1,6 +1,5 @@
 import {
   buildAssetResourceIndex,
-  computeCanonicalAssetRevision,
   type CanonicalAssetFileEntry,
   type ImmutableAssetResourceIndexStore,
 } from "@webstudio-is/asset-resource";
@@ -8,7 +7,10 @@ import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetClient } from "./client";
 import { assertPostgrestSuccess } from "./patch-utils";
 import { synchronizeCanonicalAsset } from "./canonical-metadata-backfill";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import {
+  loadCanonicalAssetFileSnapshot,
+  type CanonicalAssetMetadataSnapshot,
+} from "./canonical-metadata-persistence";
 import {
   AssetResourceIndexBuildSupersededError,
   buildPersistAndActivateAssetResourceIndex,
@@ -51,11 +53,13 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
   store,
   projectId,
   changedAssetIds,
+  excludedResourceIds = [],
 }: {
   client: Client;
   store: ImmutableAssetResourceIndexStore;
   projectId: string;
   changedAssetIds: readonly string[];
+  excludedResourceIds?: readonly string[];
 }) => {
   const changedIds = [...new Set(changedAssetIds)].sort();
   if (changedIds.length === 0) {
@@ -68,7 +72,10 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
     .is("deletedAt", null)
     .order("resourceId");
   assertPostgrestSuccess(stateResult);
-  const resources = stateResult.data ?? [];
+  const excluded = new Set(excludedResourceIds);
+  const resources = (stateResult.data ?? []).filter(
+    ({ resourceId }) => excluded.has(resourceId) === false
+  );
   if (resources.length === 0) {
     return { changedAssetIds: changedIds, updatedResourceIds: [] };
   }
@@ -76,8 +83,10 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
   // Every GROQ query may depend on collection cardinality, ordering, or any
   // schema-less field. V1 therefore treats all query resources in this project
   // as affected, but rebuilds them from compact canonical rows loaded once.
-  const entries = await loadCanonicalAssetFileEntries({ client, projectId });
-  const assetRevision = await computeCanonicalAssetRevision(entries);
+  const { entries, metadataSnapshot } = await loadCanonicalAssetFileSnapshot({
+    client,
+    projectId,
+  });
   const updatedResourceIds: string[] = [];
   const errors: unknown[] = [];
   for (const resource of resources) {
@@ -89,7 +98,7 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
         resourceId: resource.resourceId,
         query: resource.query,
         entries,
-        assetRevision,
+        metadataSnapshot,
       });
       updatedResourceIds.push(resource.resourceId);
     } catch (error) {
@@ -118,6 +127,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
   resources,
   entries,
   assetRevision,
+  metadataSnapshot,
 }: {
   client: Client;
   store: ImmutableAssetResourceIndexStore;
@@ -129,6 +139,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
   }[];
   entries: readonly CanonicalAssetFileEntry[];
   assetRevision: string;
+  metadataSnapshot: CanonicalAssetMetadataSnapshot;
 }) => {
   if (resources.length === 0) {
     return [];
@@ -175,6 +186,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
         query: resource.query,
         entries,
         assetRevision,
+        metadataSnapshot,
       });
     } catch (error) {
       // A concurrent build of the same identity may activate first. The
@@ -196,6 +208,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   resources,
   entries,
   assetRevision,
+  metadataSnapshot,
   read,
   referenceId,
 }: {
@@ -209,6 +222,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   }[];
   entries: readonly CanonicalAssetFileEntry[];
   assetRevision: string;
+  metadataSnapshot: CanonicalAssetMetadataSnapshot;
   read: (name: string) => Promise<{ data: AsyncIterable<Uint8Array> }>;
   referenceId: string;
 }): Promise<AssetResourceIndexSnapshot[]> => {
@@ -242,6 +256,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
     resources: currentResources,
     entries,
     assetRevision,
+    metadataSnapshot,
   });
   const currentSnapshots = await loadAssetResourceIndexSnapshots({
     client,

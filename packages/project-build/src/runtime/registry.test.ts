@@ -1864,6 +1864,38 @@ describe("builder runtime read families", () => {
     expect(
       JSON.stringify((disabled as { payload: unknown }).payload)
     ).not.toContain("/$resources/assets/query");
+
+    const storedQueryResource = queryState.resources?.get("asset-resource");
+    if (storedQueryResource === undefined) {
+      throw new Error("Expected queried Assets resource");
+    }
+    const invalidQueryState = {
+      ...queryState,
+      resources: new Map([
+        ...(queryState.resources ?? []),
+        [
+          "invalid-asset-resource",
+          {
+            ...storedQueryResource,
+            id: "invalid-asset-resource",
+            body: "invalid query configuration",
+          },
+        ],
+      ]),
+    } as BuilderState;
+    const repaired = executeBuilderRuntimeOperation({
+      id: "assetsResources.update",
+      state: invalidQueryState,
+      input: {
+        resourceId: "invalid-asset-resource",
+        values: { query: null },
+        scopeInstanceId: "heading",
+      },
+      context,
+    });
+    expect(
+      JSON.stringify((repaired as { payload: unknown }).payload)
+    ).toContain('\\"/$resources/assets\\"');
   });
 
   test("replaces bounded fixed resource URLs without changing expressions", () => {

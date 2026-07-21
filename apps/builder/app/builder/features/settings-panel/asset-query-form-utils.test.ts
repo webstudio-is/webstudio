@@ -6,6 +6,7 @@ import {
   getAssetFileTypeGroqPredicate,
   getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
+  normalizeAssetQueryParameterBindings,
   parseAssetQueryResourceBody,
 } from "./asset-query-form-utils";
 
@@ -94,6 +95,14 @@ describe("asset query resource body", () => {
 
   test("file-type helpers produce visible GROQ source", () => {
     expect(getAssetFileTypeGroqPredicate("md")).toBe('extension == "md"');
+  });
+
+  test("normalizes runtime parameter names without changing expressions", () => {
+    expect(
+      normalizeAssetQueryParameterBindings([
+        { name: "  slug  ", value: "system.params.slug" },
+      ])
+    ).toEqual([{ name: "slug", value: "system.params.slug" }]);
   });
 
   test("rejects invalid and duplicate query options before saving", () => {
