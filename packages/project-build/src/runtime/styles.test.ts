@@ -85,6 +85,7 @@ import {
   createLocalStyleSourcePlan,
   createStyleDecl as createStyleDeclValue,
   createStyleDeclFromInput,
+  createStyleDeclsFromInput,
   deleteLocalStyleSourcesMutable,
   deleteStyleDeclMutable,
   deleteStyleSourceMutable,
@@ -2089,6 +2090,27 @@ describe("style declaration helpers", () => {
     });
   });
 
+  test("expands shorthand style input into editable longhands", () => {
+    expect(
+      createStyleDeclsFromInput({
+        styleSourceId: "token",
+        property: "inset",
+        value: { type: "unparsed", value: "0" },
+        breakpoint: "desktop",
+        state: ":hover",
+      })
+    ).toEqual(
+      ["top", "right", "bottom", "left"].map((property) => ({
+        styleSourceId: "token",
+        breakpointId: "desktop",
+        listed: undefined,
+        property,
+        value: { type: "unit", value: 0, unit: "number" },
+        state: ":hover",
+      }))
+    );
+  });
+
   test("creates style declaration keys from user input with base breakpoint default", () => {
     expect(
       getStyleDeclKeyFromInput({
@@ -2617,6 +2639,35 @@ describe("createStyleDeclarationUpdatePayload", () => {
     expect(missingLocalStyleSourceInstanceIds).toEqual([]);
   });
 
+  test("expands shorthand updates into local longhand patches", () => {
+    const { payload, styleKeys } = createStyleDeclarationUpdatePayload({
+      styleSources: sources([local("local")]),
+      styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+      styles: [],
+      createId,
+      updates: [
+        {
+          instanceId: "box",
+          property: "inset",
+          value: { type: "unparsed", value: "0" },
+        },
+      ],
+    });
+
+    expect(payload[0]?.patches.map((patch) => patch.path[0])).toEqual([
+      "local:base:top:",
+      "local:base:right:",
+      "local:base:bottom:",
+      "local:base:left:",
+    ]);
+    expect(styleKeys).toEqual([
+      "local:base:top:",
+      "local:base:right:",
+      "local:base:bottom:",
+      "local:base:left:",
+    ]);
+  });
+
   test("reports missing local style source when creation is disabled", () => {
     const result = createStyleDeclarationUpdatePayload({
       styleSources: new Map(),
@@ -2942,6 +2993,23 @@ describe("design token patch helpers", () => {
       },
     ]);
     expect(styleKeys).toEqual(["token:base:color:", "token:base:color:"]);
+  });
+
+  test("expands shorthand updates for design tokens", () => {
+    const { payload } = createDesignTokenStyleUpdatePayload({
+      designTokenId: "token",
+      styles: [],
+      updates: [
+        { property: "gridArea", value: { type: "unparsed", value: "1 / 1" } },
+      ],
+    });
+
+    expect(payload[0]?.patches.map((patch) => patch.path[0])).toEqual([
+      "token:base:gridRowStart:",
+      "token:base:gridColumnStart:",
+      "token:base:gridRowEnd:",
+      "token:base:gridColumnEnd:",
+    ]);
   });
 
   test("returns empty payload when token style updates are empty", () => {
