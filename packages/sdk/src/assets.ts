@@ -162,7 +162,7 @@ const assetFileTypes = {
 
   // Images
   // Note: Cloudflare Image Resizing supports: jpg, jpeg, png, gif, webp, svg, avif
-  // Other formats (bmp, ico, tif, tiff) are served as-is without optimization
+  // Other formats (bmp, ico) are served as-is without optimization
   jpg: binaryFile("image/jpeg"),
   jpeg: binaryFile("image/jpeg"),
   png: binaryFile("image/png"),
@@ -172,8 +172,6 @@ const assetFileTypes = {
   avif: binaryFile("image/avif"),
   ico: binaryFile("image/vnd.microsoft.icon"),
   bmp: binaryFile("image/bmp"),
-  tif: binaryFile("image/tiff"),
-  tiff: binaryFile("image/tiff"),
 
   // Fonts
   woff: binaryFile("font/woff"),
