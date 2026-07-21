@@ -482,6 +482,10 @@ export const uploadAssets = async <T extends File | URL>(
     }
     uniqueFilesDataByFingerprint.delete(fingerprintId);
     URL.revokeObjectURL(fileData.objectURL);
+    const existingAsset = $assets.get().get(existingFileData.assetId);
+    if (existingAsset !== undefined) {
+      moveExistingAsset(existingAsset, fileData.folderId);
+    }
     toast.info("Asset already exists", {
       icon: <ToastImageInfo objectURL={existingFileData.objectURL} />,
     });
@@ -510,7 +514,11 @@ export const uploadAssets = async <T extends File | URL>(
       uploadTickets.set(fileData.fingerprintId, ticket);
       if (ticket.deduplicated) {
         URL.revokeObjectURL(fileData.objectURL);
-        safeSetAsset(ticket.asset, projectId);
+        moveExistingAsset(ticket.asset, fileData.folderId);
+        safeSetAsset(
+          { ...ticket.asset, folderId: fileData.folderId },
+          projectId
+        );
         toast.info("Asset already exists");
         continue;
       }
