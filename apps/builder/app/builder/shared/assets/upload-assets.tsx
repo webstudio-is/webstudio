@@ -514,11 +514,11 @@ export const uploadAssets = async <T extends File | URL>(
       uploadTickets.set(fileData.fingerprintId, ticket);
       if (ticket.deduplicated) {
         URL.revokeObjectURL(fileData.objectURL);
-        moveExistingAsset(ticket.asset, fileData.folderId);
         safeSetAsset(
           { ...ticket.asset, folderId: fileData.folderId },
           projectId
         );
+        moveExistingAsset(ticket.asset, fileData.folderId);
         toast.info("Asset already exists");
         continue;
       }
