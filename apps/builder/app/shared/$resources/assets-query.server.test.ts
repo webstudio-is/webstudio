@@ -1,22 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/index.server";
 import {
   AssetResourceQueryExecutionError,
   AssetResourceQueryValidationError,
 } from "@webstudio-is/asset-resource";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
-import { createContext } from "../context.server";
 import { loader } from "./assets-query.server";
 
-vi.mock("@webstudio-is/asset-uploader/index.server", () => ({
-  previewAssetResourceQuery: vi.fn(),
-}));
-vi.mock("../context.server", () => ({ createContext: vi.fn() }));
-vi.mock("../asset-client", () => ({
-  createAssetClient: vi.fn(() => ({ readFile: vi.fn() })),
-}));
-
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
+const dependencies = {
+  createContext: vi.fn(),
+  createAssetClient: vi.fn(() => ({ readFile: vi.fn() })),
+  previewAssetResourceQuery: vi.fn(),
+};
 const outerRequest = () =>
   new Request(`https://p-${projectId}.localhost/rest/resources-loader`);
 const innerRequest = (body: unknown) =>
@@ -27,8 +22,8 @@ const innerRequest = (body: unknown) =>
 
 describe("asset query preview system resource", () => {
   beforeEach(() => {
-    vi.mocked(createContext).mockResolvedValue({} as never);
-    vi.mocked(previewAssetResourceQuery).mockReset();
+    dependencies.createContext.mockResolvedValue({} as never);
+    dependencies.previewAssetResourceQuery.mockReset();
   });
 
   test("uses outer authentication context and the inner query body", async () => {
@@ -45,17 +40,22 @@ describe("asset query preview system resource", () => {
         hydratedBytes: 0,
       },
     };
-    vi.mocked(previewAssetResourceQuery).mockResolvedValue(responseBody);
+    dependencies.previewAssetResourceQuery.mockResolvedValue(responseBody);
 
-    const response = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest({ query: "*[]" }),
-    });
+    const response = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: "*[]" }),
+      },
+      dependencies
+    );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(responseBody);
-    expect(createContext).toHaveBeenCalledWith(expect.any(Request));
-    expect(previewAssetResourceQuery).toHaveBeenCalledWith({
+    expect(dependencies.createContext).toHaveBeenCalledWith(
+      expect.any(Request)
+    );
+    expect(dependencies.previewAssetResourceQuery).toHaveBeenCalledWith({
       projectId,
       request: {
         query: "*[]",
@@ -69,23 +69,26 @@ describe("asset query preview system resource", () => {
   });
 
   test("returns structured invalid-request and forbidden failures", async () => {
-    const invalid = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest({ query: "" }),
-    });
+    const invalid = await loader(
+      { request: outerRequest(), resourceRequest: innerRequest({ query: "" }) },
+      dependencies
+    );
     expect(invalid.status).toBe(400);
     await expect(invalid.json()).resolves.toMatchObject({
       ok: false,
       error: { code: "INVALID_REQUEST" },
     });
 
-    vi.mocked(previewAssetResourceQuery).mockRejectedValue(
+    dependencies.previewAssetResourceQuery.mockRejectedValue(
       new AuthorizationError("denied")
     );
-    const forbidden = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest({ query: "*[]" }),
-    });
+    const forbidden = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: "*[]" }),
+      },
+      dependencies
+    );
     expect(forbidden.status).toBe(403);
     await expect(forbidden.json()).resolves.toMatchObject({
       ok: false,
@@ -94,16 +97,19 @@ describe("asset query preview system resource", () => {
   });
 
   test("rejects malformed JSON and accepts hydration options", async () => {
-    const malformed = await loader({
-      request: outerRequest(),
-      resourceRequest: new Request(
-        `https://p-${projectId}.localhost/$resources/assets/query`,
-        { method: "POST", body: "{" }
-      ),
-    });
+    const malformed = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: new Request(
+          `https://p-${projectId}.localhost/$resources/assets/query`,
+          { method: "POST", body: "{" }
+        ),
+      },
+      dependencies
+    );
     expect(malformed.status).toBe(400);
 
-    vi.mocked(previewAssetResourceQuery).mockResolvedValue({
+    dependencies.previewAssetResourceQuery.mockResolvedValue({
       ok: true,
       result: null,
       content: {},
@@ -116,15 +122,18 @@ describe("asset query preview system resource", () => {
         hydratedBytes: 0,
       },
     });
-    const hydration = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest({
-        query: "*[0]",
-        content: { mode: "full" },
-      }),
-    });
+    const hydration = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({
+          query: "*[0]",
+          content: { mode: "full" },
+        }),
+      },
+      dependencies
+    );
     expect(hydration.status).toBe(200);
-    expect(previewAssetResourceQuery).toHaveBeenCalledWith({
+    expect(dependencies.previewAssetResourceQuery).toHaveBeenCalledWith({
       projectId,
       request: expect.objectContaining({ content: { mode: "full" } }),
       context: expect.anything(),
@@ -133,31 +142,37 @@ describe("asset query preview system resource", () => {
   });
 
   test("maps query validation and execution errors", async () => {
-    vi.mocked(previewAssetResourceQuery).mockRejectedValueOnce(
+    dependencies.previewAssetResourceQuery.mockRejectedValueOnce(
       new AssetResourceQueryValidationError({
         code: "INVALID_QUERY",
         message: "Invalid GROQ",
       })
     );
-    const invalid = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest({ query: "*[invalid ==" }),
-    });
+    const invalid = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: "*[invalid ==" }),
+      },
+      dependencies
+    );
     expect(invalid.status).toBe(400);
     await expect(invalid.json()).resolves.toMatchObject({
       error: { code: "INVALID_QUERY" },
     });
 
-    vi.mocked(previewAssetResourceQuery).mockRejectedValueOnce(
+    dependencies.previewAssetResourceQuery.mockRejectedValueOnce(
       new AssetResourceQueryExecutionError({
         code: "RESULT_LIMIT_EXCEEDED",
         message: "Too many results",
       })
     );
-    const excessive = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest({ query: "*[]" }),
-    });
+    const excessive = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: "*[]" }),
+      },
+      dependencies
+    );
     expect(excessive.status).toBe(400);
     await expect(excessive.json()).resolves.toMatchObject({
       error: { code: "RESULT_LIMIT_EXCEEDED" },

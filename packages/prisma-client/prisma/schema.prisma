@@ -59,6 +59,7 @@ model AssetFileMetadata {
   projectId          String
   assetId            String
   revision           String
+  metadataToken      String   @default(uuid())
   document           Json
   fieldContributions Json     @default("[]")
   createdAt          DateTime @default(now()) @db.Timestamptz(3)

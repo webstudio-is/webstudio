@@ -7,18 +7,8 @@ import type { CanonicalAssetFileEntry } from "./canonical";
 import { computeCanonicalAssetRevision } from "./field-catalog";
 import { selectAssetResourceCandidates } from "./candidate-selection";
 import { validateAssetResourceQuery } from "./query-validation";
-import { serializeJsonDeterministically } from "./stable-json";
+import { compareStrings, serializeJsonDeterministically } from "./stable-json";
 import { sha256 } from "./sha256";
-
-const compareStrings = (left: string, right: string) => {
-  if (left < right) {
-    return -1;
-  }
-  if (left > right) {
-    return 1;
-  }
-  return 0;
-};
 
 export type AssetResourceIndexInput = Omit<
   AssetResourceIndexV1,

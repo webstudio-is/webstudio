@@ -1,4 +1,4 @@
-const compareStrings = (left: string, right: string) => {
+export const compareStrings = (left: string, right: string) => {
   if (left < right) {
     return -1;
   }

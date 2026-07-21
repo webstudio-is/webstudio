@@ -78,7 +78,7 @@ describe("asset resource request transport", () => {
 
     expect(fetch).toHaveBeenCalledOnce();
     const [url, init] = fetch.mock.calls[0];
-    expect(url).toBe("https://example.com/$resources/assets/query");
+    expect(url).toBe("/$resources/assets/query");
     expect(init).toEqual({
       method: "post",
       headers: new Headers([["content-type", "application/json"]]),

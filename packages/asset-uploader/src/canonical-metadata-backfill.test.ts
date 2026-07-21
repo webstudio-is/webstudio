@@ -457,14 +457,19 @@ describe("canonical asset metadata synchronization", () => {
         client: testContext.postgrest.client,
       })
     ).resolves.toBe(1);
+    const revision = createAssetContentRevision({
+      storageName: "stored.md",
+      updatedAt: "2026-07-18T05:00:00.000Z",
+      size: 20,
+    });
     expect(persisted).toMatchObject({
       assetId: "asset-1",
-      revision: previousDocument.revision,
+      revision,
       document: {
         name: "new.md",
         path: "Blog/new.md",
         contentRef: "stored.md",
-        revision: previousDocument.revision,
+        revision,
         properties: { title: "Post" },
         excerpt: "Body",
       },

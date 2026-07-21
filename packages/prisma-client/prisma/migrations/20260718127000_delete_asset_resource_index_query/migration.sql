@@ -1,11 +1,21 @@
 CREATE FUNCTION delete_asset_resource_index_query(
   p_project_id TEXT,
-  p_resource_id TEXT
+  p_resource_id TEXT,
+  p_build_id TEXT DEFAULT NULL,
+  p_resources TEXT DEFAULT NULL
 )
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 BEGIN
+  IF asset_resource_index_source_matches(
+    p_project_id,
+    p_build_id,
+    p_resources
+  ) = FALSE THEN
+    RETURN FALSE;
+  END IF;
+
   PERFORM pg_catalog.pg_advisory_xact_lock(
     pg_catalog.hashtextextended(
       pg_catalog.jsonb_build_array(p_project_id, p_resource_id)::TEXT,

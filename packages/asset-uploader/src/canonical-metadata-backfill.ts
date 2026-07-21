@@ -22,6 +22,7 @@ import {
   loadCanonicalAssetFileEntriesForRecovery,
   replaceCanonicalAssetFileEntry,
 } from "./canonical-metadata-persistence";
+import { runBounded } from "./async-utils";
 
 const markdownExtension = /\.md$/i;
 type CanonicalAssetClient = Pick<AssetClient, "readFile"> &
@@ -94,24 +95,6 @@ const loadUploadedAssets = async (
   const result = await query.order("id");
   assertPostgrestSuccess(result);
   return (result.data ?? []) as UploadedAssetRow[];
-};
-
-const runBounded = async <Value>(
-  values: readonly Value[],
-  concurrency: number,
-  run: (value: Value) => Promise<void>
-) => {
-  let cursor = 0;
-  const worker = async () => {
-    while (cursor < values.length) {
-      const value = values[cursor];
-      cursor += 1;
-      await run(value);
-    }
-  };
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, values.length) }, worker)
-  );
 };
 
 type AssetFolderHierarchy = ReturnType<typeof createAssetFolderHierarchy>;
@@ -397,18 +380,32 @@ export const synchronizeCanonicalAssetStandardMetadata = async ({
     loadAssetFoldersByProjectWithClient(projectId, client),
   ]);
   const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
+  const entriesByAssetId = new Map<string, typeof entries>();
+  for (const entry of entries) {
+    const assetEntries = entriesByAssetId.get(entry.assetId) ?? [];
+    assetEntries.push(entry);
+    entriesByAssetId.set(entry.assetId, assetEntries);
+  }
   const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
   const hierarchy = createAssetFolderHierarchy(folderMap);
   let updated = 0;
-  for (const entry of entries) {
-    const asset = assetsById.get(entry.assetId);
-    if (asset === undefined) {
+  for (const asset of assetsById.values()) {
+    const revision = createAssetContentRevision({
+      storageName: asset.file.name,
+      updatedAt: asset.file.updatedAt,
+      size: asset.file.size,
+    });
+    const assetEntries = entriesByAssetId.get(asset.id) ?? [];
+    const entry =
+      assetEntries.find((candidate) => candidate.revision === revision) ??
+      (assetEntries.length === 1 ? assetEntries[0] : undefined);
+    if (entry === undefined) {
       continue;
     }
     const document = createCanonicalDocument({
       asset,
       hierarchy,
-      revision: entry.revision,
+      revision,
       properties: entry.document.properties,
       excerpt: entry.document.excerpt,
     });

@@ -5,7 +5,10 @@ import {
   json,
   testContext,
 } from "@webstudio-is/postgrest/testing";
-import { collectAssetResourceIndexGarbage } from "./resource-index-garbage-collection";
+import {
+  collectAssetResourceIndexGarbage,
+  collectAssetResourceIndexGarbageBestEffort,
+} from "./resource-index-garbage-collection";
 
 const server = createTestServer();
 const candidate = {
@@ -100,5 +103,37 @@ describe("resource index garbage collection", () => {
         store: { delete: async () => "missing" },
       })
     ).resolves.toEqual({ claimed: 1, deleted: 0, missing: 1 });
+  });
+
+  test("drains every available batch", async () => {
+    let claims = 0;
+    server.use(
+      db.post("rpc/claim_asset_resource_index_garbage", () => {
+        claims += 1;
+        if (claims === 1) {
+          return json([
+            candidate,
+            {
+              ...candidate,
+              revision: `sha256:${"b".repeat(64)}`,
+              objectKey: "projects/project-1/resources/posts/older.json",
+              gcClaimId: "claim-2",
+            },
+          ]);
+        }
+        return json([]);
+      }),
+      db.post("rpc/finalize_asset_resource_index_garbage", () => json(true))
+    );
+    const remove = vi.fn(async () => "deleted" as const);
+
+    await collectAssetResourceIndexGarbageBestEffort({
+      client: testContext.postgrest.client,
+      store: { delete: remove },
+      limit: 2,
+    });
+
+    expect(claims).toBe(2);
+    expect(remove).toHaveBeenCalledTimes(2);
   });
 });

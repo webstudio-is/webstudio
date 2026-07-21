@@ -41,3 +41,9 @@ export type AssetClient = AssetUploadClient & {
 export type AssetClientWithResourceIndexStore = AssetClient & {
   resourceIndexStore: ImmutableAssetResourceIndexStore;
 };
+
+export type AssetClientWithReadableResourceIndexStore = AssetClient & {
+  resourceIndexStore: ImmutableAssetResourceIndexStore & {
+    read: NonNullable<ImmutableAssetResourceIndexStore["read"]>;
+  };
+};

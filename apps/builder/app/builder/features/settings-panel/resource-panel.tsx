@@ -21,6 +21,7 @@ import {
   encodeDataVariableId,
   generateObjectExpression,
   isLiteralExpression,
+  isStoredAssetQueryResource,
   parseObjectExpression,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -923,7 +924,7 @@ export const SystemResourceForm = forwardRef<
       ? resources.get(variable.resourceId)
       : undefined;
   const isStoredAssetQuery =
-    resource?.url === JSON.stringify(assetsQueryResourceUrl);
+    resource !== undefined && isStoredAssetQueryResource(resource);
 
   const assetsLocalResource = {
     label: "Assets",

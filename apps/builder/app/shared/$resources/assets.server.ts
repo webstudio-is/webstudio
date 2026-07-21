@@ -5,11 +5,16 @@ import { toRuntimeAsset } from "@webstudio-is/sdk";
 import { isBuilder } from "../router-utils";
 import { createContext } from "../context.server";
 
+const defaultDependencies = { createContext, loadAssetsByProject };
+
 /**
  * System Resource that provides the list of assets for the current project.
  * This allows assets to be dynamically referenced in the builder using the expression editor.
  */
-export const loader = async ({ request }: { request: Request }) => {
+export const loader = async (
+  { request }: { request: Request },
+  dependencies = defaultDependencies
+) => {
   if (isBuilder(request) === false) {
     throw new Error(
       "Asset resource loader can only be accessed from the builder interface"
@@ -24,9 +29,9 @@ export const loader = async ({ request }: { request: Request }) => {
     );
   }
 
-  const context = await createContext(request);
+  const context = await dependencies.createContext(request);
 
-  const assets = await loadAssetsByProject(projectId, context);
+  const assets = await dependencies.loadAssetsByProject(projectId, context);
 
   const requestUrl = new URL(request.url);
   const origin = `${requestUrl.protocol}//${requestUrl.host}`;

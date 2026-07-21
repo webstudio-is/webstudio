@@ -1,5 +1,6 @@
 import {
   buildAssetResourceIndex,
+  getAssetResourceIndexObjectKey,
   persistAssetResourceIndex,
   type CanonicalAssetFileEntry,
   type ImmutableAssetResourceIndexStore,
@@ -10,7 +11,9 @@ import {
   beginAssetResourceIndexBuild,
   cancelAssetResourceIndexBuild,
   failAssetResourceIndexBuild,
+  type AssetResourceIndexBuildSource,
 } from "./resource-index-persistence";
+import type { CanonicalAssetMetadataSnapshot } from "./canonical-metadata-persistence";
 
 export class AssetResourceIndexBuildSupersededError extends Error {
   constructor() {
@@ -40,6 +43,8 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   query,
   entries,
   assetRevision,
+  metadataSnapshot,
+  source,
   signal,
 }: {
   client: Client;
@@ -49,6 +54,8 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   query: string;
   entries: readonly CanonicalAssetFileEntry[];
   assetRevision?: string;
+  metadataSnapshot: CanonicalAssetMetadataSnapshot;
+  source?: AssetResourceIndexBuildSource;
   signal?: AbortSignal;
 }) => {
   const buildAttemptId = crypto.randomUUID();
@@ -60,8 +67,9 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
     entries,
     assetRevision,
   });
+  const objectKey = getAssetResourceIndexObjectKey({ projectId, index });
   assertNotCancelled(signal);
-  await beginAssetResourceIndexBuild({
+  const begun = await beginAssetResourceIndexBuild({
     client,
     projectId,
     resourceId,
@@ -69,10 +77,21 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
     queryHash: index.queryHash,
     assetRevision: index.assetRevision,
     buildAttemptId,
+    revision: index.integrity.checksum,
+    checksum: index.integrity.checksum,
+    objectKey,
+    metadataSnapshot,
+    source,
   });
+  if (begun === false) {
+    throw new AssetResourceIndexBuildSupersededError();
+  }
 
+  let persisted:
+    | Awaited<ReturnType<typeof persistAssetResourceIndex>>
+    | undefined;
   try {
-    const persisted = await persistAssetResourceIndex({
+    persisted = await persistAssetResourceIndex({
       store,
       projectId,
       index,
@@ -88,6 +107,8 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
       buildAttemptId,
       checksum: index.integrity.checksum,
       objectKey: persisted.key,
+      metadataSnapshot,
+      source,
     });
     if (activated === false) {
       throw new AssetResourceIndexBuildSupersededError();
@@ -95,14 +116,25 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
     return { index, persisted };
   } catch (error) {
     if (error instanceof AssetResourceIndexBuildCancelledError) {
-      await cancelAssetResourceIndexBuild({
-        client,
-        projectId,
-        resourceId,
-        queryHash: index.queryHash,
-        assetRevision: index.assetRevision,
-        buildAttemptId,
-      });
+      try {
+        await cancelAssetResourceIndexBuild({
+          client,
+          projectId,
+          resourceId,
+          queryHash: index.queryHash,
+          assetRevision: index.assetRevision,
+          buildAttemptId,
+        });
+      } catch (stateError) {
+        throw new AggregateError(
+          [error, stateError],
+          "Resource index build was cancelled but its state could not be updated",
+          { cause: error }
+        );
+      }
+      // The immutable object is content-addressed and may already be shared by
+      // another concurrent attempt. Deleting it here could break an activated
+      // revision. The pre-registered revision remains discoverable by GC.
       throw error;
     }
     try {

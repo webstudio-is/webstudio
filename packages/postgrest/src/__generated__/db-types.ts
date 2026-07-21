@@ -90,6 +90,7 @@ export type Database = {
           createdAt: string;
           document: Json;
           fieldContributions: Json;
+          metadataToken: string;
           projectId: string;
           revision: string;
           updatedAt: string;
@@ -99,6 +100,7 @@ export type Database = {
           createdAt?: string;
           document: Json;
           fieldContributions?: Json;
+          metadataToken?: string;
           projectId: string;
           revision: string;
           updatedAt?: string;
@@ -108,6 +110,7 @@ export type Database = {
           createdAt?: string;
           document?: Json;
           fieldContributions?: Json;
+          metadataToken?: string;
           projectId?: string;
           revision?: string;
           updatedAt?: string;
@@ -597,6 +600,7 @@ export type Database = {
       };
       File: {
         Row: {
+          contentHash: string | null;
           createdAt: string;
           description: string | null;
           format: string;
@@ -609,6 +613,7 @@ export type Database = {
           uploaderProjectId: string | null;
         };
         Insert: {
+          contentHash?: string | null;
           createdAt?: string;
           description?: string | null;
           format: string;
@@ -621,6 +626,7 @@ export type Database = {
           uploaderProjectId?: string | null;
         };
         Update: {
+          contentHash?: string | null;
           createdAt?: string;
           description?: string | null;
           format?: string;
@@ -1250,11 +1256,14 @@ export type Database = {
         Args: {
           p_asset_revision: string;
           p_build_attempt_id: string;
+          p_build_id?: string;
           p_checksum: string;
+          p_metadata_snapshot?: Json;
           p_object_key: string;
           p_project_id: string;
           p_query_hash: string;
           p_resource_id: string;
+          p_resources?: string;
           p_revision: string;
         };
         Returns: boolean;
@@ -1269,16 +1278,30 @@ export type Database = {
         };
         Returns: undefined;
       };
+      asset_file_metadata_snapshot_matches: {
+        Args: { p_metadata_snapshot: Json; p_project_id: string };
+        Returns: boolean;
+      };
+      asset_resource_index_source_matches: {
+        Args: { p_build_id: string; p_project_id: string; p_resources: string };
+        Returns: boolean;
+      };
       begin_asset_resource_index_build: {
         Args: {
           p_asset_revision: string;
           p_build_attempt_id: string;
+          p_build_id?: string;
+          p_checksum?: string;
+          p_metadata_snapshot?: Json;
+          p_object_key?: string;
           p_project_id: string;
           p_query: string;
           p_query_hash: string;
           p_resource_id: string;
+          p_resources?: string;
+          p_revision?: string;
         };
-        Returns: undefined;
+        Returns: boolean;
       };
       cancel_asset_resource_index_build: {
         Args: {
@@ -1335,7 +1358,12 @@ export type Database = {
         Returns: undefined;
       };
       delete_asset_resource_index_query: {
-        Args: { p_project_id: string; p_resource_id: string };
+        Args: {
+          p_build_id?: string;
+          p_project_id: string;
+          p_resource_id: string;
+          p_resources?: string;
+        };
         Returns: boolean;
       };
       delete_stale_asset_file_metadata: {
@@ -1392,6 +1420,10 @@ export type Database = {
           p_resources: Json;
         };
         Returns: Json;
+      };
+      invalidate_asset_resource_indexes: {
+        Args: { p_project_id: string };
+        Returns: undefined;
       };
       latestBuildVirtual:
         | {

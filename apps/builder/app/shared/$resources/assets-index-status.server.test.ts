@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { loadAssetResourceIndexStatus } from "@webstudio-is/asset-uploader/index.server";
-import { createContext } from "../context.server";
 import { loader } from "./assets-index-status.server";
 
-vi.mock("@webstudio-is/asset-uploader/index.server", () => ({
-  loadAssetResourceIndexStatus: vi.fn(),
-}));
-vi.mock("../context.server", () => ({ createContext: vi.fn() }));
-
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
+const dependencies = {
+  createContext: vi.fn(),
+  loadAssetResourceIndexStatus: vi.fn(),
+};
 const outerRequest = () =>
   new Request(`https://p-${projectId}.localhost/rest/resources-loader`);
 const innerRequest = (resourceId?: string) => {
@@ -23,8 +20,8 @@ const innerRequest = (resourceId?: string) => {
 
 describe("asset index status system resource", () => {
   beforeEach(() => {
-    vi.mocked(createContext).mockResolvedValue({} as never);
-    vi.mocked(loadAssetResourceIndexStatus).mockReset();
+    dependencies.createContext.mockResolvedValue({} as never);
+    dependencies.loadAssetResourceIndexStatus.mockReset();
   });
 
   test("returns the authenticated resource status", async () => {
@@ -36,16 +33,19 @@ describe("asset index status system resource", () => {
       activeRevision: "active-revision",
       updatedAt: "2026-07-18T12:00:00.000Z",
     };
-    vi.mocked(loadAssetResourceIndexStatus).mockResolvedValue(status);
+    dependencies.loadAssetResourceIndexStatus.mockResolvedValue(status);
 
-    const response = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest("posts"),
-    });
+    const response = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest("posts"),
+      },
+      dependencies
+    );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, status });
-    expect(loadAssetResourceIndexStatus).toHaveBeenCalledWith({
+    expect(dependencies.loadAssetResourceIndexStatus).toHaveBeenCalledWith({
       projectId,
       resourceId: "posts",
       context: expect.anything(),
@@ -53,17 +53,20 @@ describe("asset index status system resource", () => {
   });
 
   test("rejects a missing resource ID and reports missing state", async () => {
-    const invalid = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest(),
-    });
+    const invalid = await loader(
+      { request: outerRequest(), resourceRequest: innerRequest() },
+      dependencies
+    );
     expect(invalid.status).toBe(400);
 
-    vi.mocked(loadAssetResourceIndexStatus).mockResolvedValue(undefined);
-    const missing = await loader({
-      request: outerRequest(),
-      resourceRequest: innerRequest("missing"),
-    });
+    dependencies.loadAssetResourceIndexStatus.mockResolvedValue(undefined);
+    const missing = await loader(
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest("missing"),
+      },
+      dependencies
+    );
     expect(missing.status).toBe(404);
     await expect(missing.json()).resolves.toMatchObject({
       ok: false,

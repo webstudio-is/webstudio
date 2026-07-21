@@ -90,6 +90,7 @@ export const createSsgAssetResourceFetch = ({
   >[0]["manifest"];
 }) =>
   createPublishedAssetResourceFetch({
+    baseUrl: "https://webstudio.local",
     deploymentId,
     manifest,
     fetchAsset: fetchSsgPublicAsset,

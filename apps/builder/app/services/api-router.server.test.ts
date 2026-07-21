@@ -167,6 +167,20 @@ describe("api router build operation adapters", () => {
   test("rebuilds a query index through the authenticated recovery operation", async () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue({
+      id: "build-1",
+      resources: [
+        {
+          id: "resource-1",
+          name: "Posts",
+          control: "system",
+          method: "post",
+          url: JSON.stringify("/$resources/assets/query"),
+          headers: [],
+          body: '{query:"*[]"}',
+        },
+      ],
+    } as never);
     vi.spyOn(assetUploader, "rebuildAssetResourceIndex").mockResolvedValue({
       index: {},
       persisted: { revision: "revision-2", key: "indexes/revision-2.json" },
@@ -782,7 +796,8 @@ describe("api router permits", () => {
         projectId: "project-1",
         clientVersion: 3,
       }),
-      expect.anything()
+      expect.anything(),
+      expect.any(Function)
     );
   });
 

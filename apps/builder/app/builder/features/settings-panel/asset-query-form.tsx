@@ -10,6 +10,7 @@ import {
   isLiteralExpression,
   type AssetResourceContentOptions,
   type AssetResourceIndexStatus,
+  type AssetResourceQuerySuccess,
   type BuilderAssetFieldCatalog,
   type Resource,
 } from "@webstudio-is/sdk";
@@ -46,6 +47,7 @@ import {
   getAssetIndexStatusLabel,
   getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
+  normalizeAssetQueryParameterBindings,
   parseAssetQueryResourceBody,
   type AssetQueryParameterBinding,
 } from "./asset-query-form-utils";
@@ -282,8 +284,20 @@ const AssetQueryPreview = ({
     | { type: "idle" }
     | { type: "loading" }
     | { type: "error"; message: string }
-    | { type: "success"; result: unknown }
+    | { type: "success"; response: AssetResourceQuerySuccess }
   >({ type: "idle" });
+  const previewInputKey = JSON.stringify({
+    query,
+    parameters,
+    resultLimit,
+    content,
+  });
+  const previewInputKeyRef = useRef(previewInputKey);
+  previewInputKeyRef.current = previewInputKey;
+
+  useEffect(() => {
+    setPreviewState({ type: "idle" });
+  }, [previewInputKey]);
 
   useEffect(() => {
     if (resourceId === undefined) {
@@ -321,12 +335,13 @@ const AssetQueryPreview = ({
   }, [onIndexStatusChange, resourceId, resourceRevision]);
 
   const preview = async () => {
+    const requestedInputKey = previewInputKey;
     setPreviewState({ type: "loading" });
     try {
       const response = await previewBuilderAssetQuery({
         query,
         parameters: Object.fromEntries(
-          parameters
+          normalizeAssetQueryParameterBindings(parameters)
             .filter(({ name }) => name.trim().length > 0)
             .map(({ name, value }) => [
               name,
@@ -336,6 +351,9 @@ const AssetQueryPreview = ({
         resultLimit,
         content,
       });
+      if (previewInputKeyRef.current !== requestedInputKey) {
+        return;
+      }
       const parsed = assetResourceQueryResponse.safeParse(response.data);
       if (parsed.success === false) {
         setPreviewState({
@@ -348,14 +366,17 @@ const AssetQueryPreview = ({
         setPreviewState({ type: "error", message: parsed.data.error.message });
         return;
       }
-      setPreviewState({ type: "success", result: parsed.data.result });
+      setPreviewState({ type: "success", response: parsed.data });
     } catch {
+      if (previewInputKeyRef.current !== requestedInputKey) {
+        return;
+      }
       setPreviewState({ type: "error", message: "The query preview failed." });
     }
   };
   const isEmpty =
     previewState.type === "success" &&
-    isEmptyAssetQueryResult(previewState.result);
+    isEmptyAssetQueryResult(previewState.response.result);
 
   return (
     <Grid gap={2}>
@@ -383,7 +404,7 @@ const AssetQueryPreview = ({
           title="Query preview"
           size="small"
           readOnly={true}
-          value={JSON.stringify(previewState.result, null, 2)}
+          value={JSON.stringify(previewState.response, null, 2)}
           onChange={() => {}}
           onChangeComplete={() => {}}
         />
@@ -483,7 +504,7 @@ export const AssetQueryForm = ({
       catalog: fieldCatalog,
       parameterNames: Array.from(
         new Set(
-          parameters
+          normalizeAssetQueryParameterBindings(parameters)
             .map(({ name }) => name)
             .filter(
               (name) => assetResourceParameterName.safeParse(name).success

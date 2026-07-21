@@ -49,6 +49,8 @@ import {
   ROOT_INSTANCE_ID,
   elementComponent,
   toRuntimeAsset,
+  assetResourceContentOptions,
+  parseAssetQueryResourceBody,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
@@ -157,6 +159,41 @@ const getResourceIndexPublicPath = (resourceId: string, revision: string) =>
     revision
   )}.json`;
 
+export const getRequiredAssetResourceContentRefs = ({
+  snapshots,
+  resources,
+}: {
+  snapshots: NonNullable<PublishedProjectBundle["assetResourceIndexes"]>;
+  resources: PublishedProjectBundle["build"]["resources"];
+}) => {
+  const resourcesById = new Map(resources);
+  const required = new Set<string>();
+  for (const snapshot of snapshots) {
+    const resource = resourcesById.get(snapshot.resourceId);
+    if (resource === undefined) {
+      continue;
+    }
+    const { contentExpression } = parseAssetQueryResourceBody(resource.body);
+    let content: unknown = { mode: "none" };
+    if (contentExpression !== undefined) {
+      try {
+        content = JSON.parse(contentExpression);
+      } catch {
+        // A dynamic or malformed mode cannot prove that hydration is disabled.
+        content = undefined;
+      }
+    }
+    const parsedContent = assetResourceContentOptions.safeParse(content);
+    if (parsedContent.success && parsedContent.data.mode === "none") {
+      continue;
+    }
+    for (const document of snapshot.index.documents) {
+      required.add(document.contentRef);
+    }
+  }
+  return required;
+};
+
 export const generateAssetQueryRuntimeModule = ({
   deploymentId,
   manifest,
@@ -200,6 +237,7 @@ export const materializeAssetResourceIndexes = async ({
   deploymentId: string;
 }) => {
   const targetDirectory = join(publicDirectory, "resource-indexes");
+  await rm(targetDirectory, { recursive: true, force: true });
   await createFolderIfNotExists(targetDirectory);
   const manifest = snapshots.map(({ resourceId, revision, index }) => {
     if (
@@ -1051,15 +1089,43 @@ export const prebuild = async (options: {
 
   if (options.assets === true && siteData.assets.length > 0) {
     const downloading = createProgress();
-    downloading.start("Downloading fonts and images");
+    downloading.start("Downloading assets");
+    const requiredContentRefs = getRequiredAssetResourceContentRefs({
+      snapshots: siteData.assetResourceIndexes ?? [],
+      resources: siteData.build.resources,
+    });
+    const requiredAssets: Asset[] = [];
+    const bestEffortAssets: Asset[] = [];
+    for (const asset of siteData.assets) {
+      if (requiredContentRefs.delete(asset.name)) {
+        requiredAssets.push(asset);
+      } else {
+        bestEffortAssets.push(asset);
+      }
+    }
+    if (requiredContentRefs.size > 0) {
+      throw new Error(
+        `Published asset query indexes reference missing assets: ${[
+          ...requiredContentRefs,
+        ]
+          .sort()
+          .join(", ")}`
+      );
+    }
     await materializeAssetFiles({
-      assets: siteData.assets,
+      assets: requiredAssets,
+      origin: siteData.origin || "",
+      sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),
+      targetAssetsDirectory: join(buildRoot, "public", assetBaseUrl),
+    });
+    await materializeAssetFiles({
+      assets: bestEffortAssets,
       continueOnError: true,
       origin: siteData.origin || "",
       sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),
       targetAssetsDirectory: join(buildRoot, "public", assetBaseUrl),
     });
-    downloading.stop("Downloaded fonts and images");
+    downloading.stop("Downloaded assets");
   }
 
   feedback.step("Build finished");

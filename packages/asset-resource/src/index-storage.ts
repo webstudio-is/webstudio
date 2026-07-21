@@ -14,6 +14,10 @@ export type ImmutableAssetResourceIndexStore = {
     status: "created" | "exists";
     checksum: string;
   }>;
+  read?: (key: string) => Promise<{
+    data: AsyncIterable<Uint8Array>;
+    contentLength?: number;
+  }>;
   delete?: (key: string) => Promise<"deleted" | "missing">;
 };
 
@@ -38,7 +42,8 @@ export const getAssetResourceIndexObjectKey = ({
     encodeKeySegment(index.resourceId),
     "indexes",
     encodeKeySegment(index.queryHash),
-    `${encodeKeySegment(index.assetRevision)}.json`,
+    encodeKeySegment(index.assetRevision),
+    `${encodeKeySegment(index.integrity.checksum)}.json`,
   ].join("/");
 
 export const persistAssetResourceIndex = async ({

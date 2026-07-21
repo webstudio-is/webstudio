@@ -5,6 +5,9 @@ SELECT no_plan();
 INSERT INTO "Project" ("id", "title", "tags", "domain")
 VALUES ('resource-index-test-project', 'Resource index test', '{}', 'resource-index-test.example');
 
+INSERT INTO "Build" ("id", "projectId", pages, resources)
+VALUES ('resource-index-test-build', 'resource-index-test-project', '[]', '[]');
+
 SELECT lives_ok(
   $$
     SELECT begin_asset_resource_index_build(
@@ -13,10 +16,28 @@ SELECT lives_ok(
       '*[]',
       'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-      'attempt-active'
+      'attempt-active',
+      '[]'::JSONB,
+      NULL,
+      NULL,
+      'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      'projects/test/resources/posts/index.json'
     )
   $$,
-  'A valid query and asset revision begin an index build'
+  'A valid build pre-registers its immutable revision before storage writes'
+);
+
+SELECT is(
+  (
+    SELECT count(*)::INTEGER
+    FROM "AssetResourceIndexRevision"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'posts'
+      AND revision = 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+  ),
+  1,
+  'A crash after storage persistence leaves a revision discoverable by GC'
 );
 
 SELECT is(
@@ -32,6 +53,89 @@ SELECT is(
   ),
   TRUE,
   'A validated revision is recorded and activated atomically'
+);
+
+UPDATE "Build"
+SET resources = '[{"id":"newer-resource-snapshot"}]'
+WHERE id = 'resource-index-test-build'
+  AND "projectId" = 'resource-index-test-project';
+
+SELECT is(
+  (
+    SELECT "buildStatus"
+    FROM "AssetResourceIndexState"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'posts'
+  ),
+  'STALE'::"AssetResourceIndexBuildStatus",
+  'A saved resource change invalidates active indexes synchronously'
+);
+
+SELECT is(
+  begin_asset_resource_index_build(
+    'resource-index-test-project',
+    'posts',
+    '*[false]',
+    'sha256:1111111111111111111111111111111111111111111111111111111111111111',
+    'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+    'attempt-stale-resources',
+    '[]'::JSONB,
+    'resource-index-test-build',
+    '[]'
+  ),
+  FALSE,
+  'A build from a stale resource snapshot cannot replace current state'
+);
+
+SELECT is(
+  begin_asset_resource_index_build(
+    'resource-index-test-project',
+    'posts',
+    '*[false]',
+    'sha256:1111111111111111111111111111111111111111111111111111111111111111',
+    'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+    'attempt-stale-metadata',
+    '[{"assetId":"missing","metadataToken":"old"}]'::JSONB,
+    'resource-index-test-build',
+    '[{"id":"newer-resource-snapshot"}]'
+  ),
+  FALSE,
+  'A build from a stale metadata snapshot cannot replace current state'
+);
+
+UPDATE "Build"
+SET resources = '[]'
+WHERE id = 'resource-index-test-build'
+  AND "projectId" = 'resource-index-test-project';
+
+SELECT begin_asset_resource_index_build(
+  'resource-index-test-project',
+  'posts',
+  '*[]',
+  'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  'attempt-reactivated',
+  '[]'::JSONB,
+  'resource-index-test-build',
+  '[]'
+);
+
+SELECT is(
+  activate_asset_resource_index(
+    'resource-index-test-project',
+    'posts',
+    'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+    'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    'attempt-reactivated',
+    'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+    'projects/test/resources/posts/index.json',
+    '[]'::JSONB,
+    'resource-index-test-build',
+    '[]'
+  ),
+  TRUE,
+  'The current resource snapshot can reactivate its matching revision'
 );
 
 SELECT is(
@@ -50,13 +154,47 @@ SELECT is(
   'Project data resolves an active revision to its checksum and object reference'
 );
 
+INSERT INTO "File" (name, format, size, status)
+VALUES ('resource-index-test.md', 'file', 10, 'UPLOADED');
+
+INSERT INTO "Asset" (id, "projectId", name)
+VALUES ('resource-index-test-asset', 'resource-index-test-project', 'resource-index-test.md');
+
+INSERT INTO "AssetFileMetadata" (
+  "projectId", "assetId", revision, document, "fieldContributions"
+) VALUES (
+  'resource-index-test-project',
+  'resource-index-test-asset',
+  'file:resource-index-test.md:1',
+  '{}'::JSONB,
+  '[]'::JSONB
+);
+
+SELECT is(
+  (
+    SELECT "buildStatus"
+    FROM "AssetResourceIndexState"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'posts'
+  ),
+  'STALE'::"AssetResourceIndexBuildStatus",
+  'A canonical metadata change invalidates an active index synchronously'
+);
+
+DELETE FROM "AssetFileMetadata"
+WHERE "projectId" = 'resource-index-test-project'
+  AND "assetId" = 'resource-index-test-asset';
+
 SELECT begin_asset_resource_index_build(
   'resource-index-test-project',
   'posts',
   '*[]',
   'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
   'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  'attempt-old'
+  'attempt-old',
+  '[]'::JSONB,
+  'resource-index-test-build',
+  '[]'
 );
 
 SELECT begin_asset_resource_index_build(
@@ -65,7 +203,36 @@ SELECT begin_asset_resource_index_build(
   '*[]',
   'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
   'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  'attempt-current'
+  'attempt-current',
+  '[]'::JSONB,
+  'resource-index-test-build',
+  '[]'
+);
+
+SELECT is(
+  activate_asset_resource_index(
+    'resource-index-test-project',
+    'posts',
+    'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+    'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    'attempt-old',
+    'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    'projects/test/resources/posts/superseded.json'
+  ),
+  FALSE,
+  'A superseded attempt cannot activate its persisted revision'
+);
+
+SELECT ok(
+  (
+    SELECT "unreferencedAt" IS NOT NULL
+    FROM "AssetResourceIndexRevision"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'posts'
+      AND revision = 'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+  ),
+  'A superseded persisted revision remains discoverable for garbage collection'
 );
 
 SELECT is(
@@ -104,6 +271,71 @@ SELECT is(
   ),
   'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
   'A failed replacement preserves the previous active revision'
+);
+
+UPDATE "AssetResourceIndexRevision"
+SET "unreferencedAt" = CURRENT_TIMESTAMP - INTERVAL '1 minute'
+WHERE "projectId" = 'resource-index-test-project'
+  AND "resourceId" = 'posts'
+  AND revision = 'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+SELECT is(
+  begin_asset_resource_index_build(
+    'resource-index-test-project',
+    'posts',
+    '*[]',
+    'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+    'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    'attempt-reserved-revision',
+    '[]'::JSONB,
+    'resource-index-test-build',
+    '[]',
+    'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    'projects/test/resources/posts/superseded.json'
+  ),
+  TRUE,
+  'Reusing an immutable revision reserves it before the storage write'
+);
+
+SELECT ok(
+  (
+    SELECT "unreferencedAt" > CURRENT_TIMESTAMP
+    FROM "AssetResourceIndexRevision"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'posts'
+      AND revision = 'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+  ),
+  'A reused unreferenced revision receives a fresh garbage-collection grace period'
+);
+
+SELECT is(
+  (
+    SELECT count(*)::INTEGER
+    FROM claim_asset_resource_index_garbage(CURRENT_TIMESTAMP, 10)
+  ),
+  0,
+  'Garbage collection cannot claim a revision reserved by a current build'
+);
+
+CREATE TEMP TABLE superseded_revision_garbage AS
+SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10);
+
+SELECT is(
+  (SELECT count(*)::INTEGER FROM superseded_revision_garbage),
+  1,
+  'A superseded persisted revision remains collectable after its grace period'
+);
+
+SELECT is(
+  finalize_asset_resource_index_garbage(
+    (SELECT "projectId" FROM superseded_revision_garbage),
+    (SELECT "resourceId" FROM superseded_revision_garbage),
+    (SELECT revision FROM superseded_revision_garbage),
+    (SELECT "gcClaimId" FROM superseded_revision_garbage)
+  ),
+  TRUE,
+  'The superseded persisted revision can be finalized independently'
 );
 
 SELECT throws_ok(
@@ -214,13 +446,32 @@ SELECT is(
   'Removing a deployment releases its revision reference'
 );
 
+SELECT lives_ok(
+  $$
+    SELECT add_asset_resource_index_reference(
+      'resource-index-test-project',
+      'posts',
+      'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      'BUILD',
+      'abandoned-build'
+    )
+  $$,
+  'An in-flight build can temporarily retain a revision'
+);
+
+UPDATE "AssetResourceIndexReference"
+SET "createdAt" = CURRENT_TIMESTAMP - INTERVAL '25 hours'
+WHERE "projectId" = 'resource-index-test-project'
+  AND type = 'BUILD'
+  AND "referenceId" = 'abandoned-build';
+
 CREATE TEMP TABLE claimed_resource_index_garbage AS
 SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10);
 
 SELECT is(
   (SELECT count(*)::INTEGER FROM claimed_resource_index_garbage),
   1,
-  'The revision becomes collectable after its last reference is removed'
+  'An expired transient build reference does not retain a revision forever'
 );
 
 SELECT is(
