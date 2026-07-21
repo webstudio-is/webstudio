@@ -13,7 +13,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getResourceKey } from "~/shared/resources";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { createLocalResourceRequest } from "./rest.resources-loader-utils";
+import { createLocalResourceRequest } from "../shared/$resources/create-local-resource-request";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
