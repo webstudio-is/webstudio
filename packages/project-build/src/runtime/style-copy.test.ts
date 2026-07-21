@@ -191,13 +191,14 @@ describe("style source insertion", () => {
       styleSources,
       styleSourceSelections,
       styles,
+      styleSourceIdMap: new Map([["token", "mapped-token"]]),
       mergedBreakpointIds: new Map([["old-base", "base"]]),
     });
 
     expect(styleSources.get("local")).toEqual(local("local"));
     expect(styleSourceSelections.get("portal")).toEqual({
       instanceId: "portal",
-      values: ["local", "token"],
+      values: ["local", "mapped-token"],
     });
     expect(Array.from(styles.values())).toEqual([
       style("local", "base", "color", red),
