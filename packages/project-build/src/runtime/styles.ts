@@ -1829,30 +1829,6 @@ export const createStyleDecl = ({
     listed,
   });
 
-export const createStyleDeclFromInput = ({
-  styleSourceId,
-  property,
-  value,
-  breakpoint = DEFAULT_BREAKPOINT_ID,
-  state,
-  listed,
-}: {
-  styleSourceId: StyleSource["id"];
-  property: unknown;
-  value: unknown;
-  breakpoint?: string;
-  state?: StyleDecl["state"];
-  listed?: StyleDecl["listed"];
-}): StyleDecl =>
-  createStyleDecl({
-    styleSourceId,
-    breakpointId: breakpoint,
-    state,
-    property,
-    value,
-    listed,
-  });
-
 export const createStyleDeclsFromInput = ({
   styleSourceId,
   property,
@@ -1869,11 +1845,11 @@ export const createStyleDeclsFromInput = ({
   listed?: StyleDecl["listed"];
 }): StyleDecl[] => {
   const createSingleStyleDecl = () => [
-    createStyleDeclFromInput({
+    createStyleDecl({
       styleSourceId,
+      breakpointId: breakpoint,
       property,
       value,
-      breakpoint,
       state,
       listed,
     }),
@@ -1909,9 +1885,9 @@ export const createStyleDeclsFromInput = ({
     );
   }
   return parsed.styles.map((style) =>
-    createStyleDeclFromInput({
+    createStyleDecl({
       styleSourceId,
-      breakpoint,
+      breakpointId: breakpoint,
       property: style.property,
       value: style.value,
       state,

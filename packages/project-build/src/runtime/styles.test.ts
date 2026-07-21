@@ -84,7 +84,6 @@ import {
   createLocalStyleSourcePatchPlan,
   createLocalStyleSourcePlan,
   createStyleDecl as createStyleDeclValue,
-  createStyleDeclFromInput,
   createStyleDeclsFromInput,
   deleteLocalStyleSourcesMutable,
   deleteStyleDeclMutable,
@@ -2073,21 +2072,23 @@ describe("style declaration helpers", () => {
     });
   });
 
-  test("creates style declarations from user input with base breakpoint default", () => {
+  test("creates a longhand style declaration with base breakpoint default", () => {
     expect(
-      createStyleDeclFromInput({
+      createStyleDeclsFromInput({
         styleSourceId: "token",
         property: "color",
         value: { type: "keyword", value: "red" },
         state: ":hover",
       })
-    ).toEqual({
-      styleSourceId: "token",
-      breakpointId: "base",
-      property: "color",
-      value: { type: "keyword", value: "red" },
-      state: ":hover",
-    });
+    ).toEqual([
+      {
+        styleSourceId: "token",
+        breakpointId: "base",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+        state: ":hover",
+      },
+    ]);
   });
 
   test("expands shorthand style input into editable longhands", () => {
@@ -2098,17 +2099,28 @@ describe("style declaration helpers", () => {
         value: { type: "unparsed", value: "0" },
         breakpoint: "desktop",
         state: ":hover",
+        listed: true,
       })
     ).toEqual(
       ["top", "right", "bottom", "left"].map((property) => ({
         styleSourceId: "token",
         breakpointId: "desktop",
-        listed: undefined,
+        listed: true,
         property,
         value: { type: "unit", value: 0, unit: "number" },
         state: ":hover",
       }))
     );
+  });
+
+  test("rejects invalid shorthand values", () => {
+    expect(() =>
+      createStyleDeclsFromInput({
+        styleSourceId: "token",
+        property: "inset",
+        value: { type: "unparsed", value: "1px /" },
+      })
+    ).toThrow('Invalid value for shorthand CSS property "inset"');
   });
 
   test("creates style declaration keys from user input with base breakpoint default", () => {
