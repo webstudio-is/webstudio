@@ -198,7 +198,9 @@ const handlePasteWebflow = async (clipboardData: string) => {
   }
   fragment = await denormalizeSrcProps(fragment);
 
-  const insertable = findClosestInsertable(fragment);
+  const insertable = findClosestInsertable(fragment, undefined, {
+    allowContentModelWarnings: true,
+  });
   if (insertable === undefined) {
     return pasteHandled;
   }
