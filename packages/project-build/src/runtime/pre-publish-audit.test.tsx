@@ -6,7 +6,7 @@ import {
   type Pages,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { $, renderData } from "@webstudio-is/template";
+import { $, renderData, ws } from "@webstudio-is/template";
 import {
   formatPrePublishAuditFinding,
   runPrePublishAudit,
@@ -122,6 +122,19 @@ test("allows valid legacy CodeText children", () => {
       <$.CodeText>
         <$.Text ws:tag="span">Legacy code text</$.Text>
       </$.CodeText>
+    </$.Body>
+  );
+
+  expect(runAudit({ instances, props })).toEqual([]);
+});
+
+test("allows valid Video children", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <$.Video>
+        <ws.element ws:tag="source" />
+        <ws.element ws:tag="track" />
+      </$.Video>
     </$.Body>
   );
 
