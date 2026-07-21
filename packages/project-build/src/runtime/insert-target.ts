@@ -156,6 +156,7 @@ export const findClosestInsertTarget = ({
   from,
   onRootTarget,
   onNoMatch,
+  allowFragmentContentModelWarnings,
 }: {
   fragment: Pick<WebstudioFragment, "children" | "instances" | "props">;
   instances: Instances;
@@ -166,6 +167,7 @@ export const findClosestInsertTarget = ({
   from?: InsertTarget;
   onRootTarget?: () => void;
   onNoMatch?: (message: string) => void;
+  allowFragmentContentModelWarnings?: boolean;
 }): undefined | InsertTarget => {
   const instanceSelector = from?.parentSelector ??
     selectedInstanceSelector ?? [rootInstanceId];
@@ -191,6 +193,7 @@ export const findClosestInsertTarget = ({
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
     onError: onNoMatch,
+    allowFragmentContentModelWarnings,
   });
   if (insertableIndex === -1) {
     return;
@@ -232,6 +235,7 @@ export const resolveFragmentInsertTarget = ({
   onRootTarget,
   onNoMatch,
   onMissingTarget,
+  allowFragmentContentModelWarnings,
 }: {
   fragment: Pick<WebstudioFragment, "children" | "instances" | "props">;
   instances: Instances;
@@ -243,19 +247,23 @@ export const resolveFragmentInsertTarget = ({
   onRootTarget?: () => void;
   onNoMatch?: (message: string) => void;
   onMissingTarget?: () => void;
+  allowFragmentContentModelWarnings?: boolean;
 }): undefined | ResolvedInsertTarget => {
+  const matchedTarget = findClosestInsertTarget({
+    fragment,
+    instances,
+    props,
+    metas,
+    rootInstanceId,
+    selectedInstanceSelector,
+    from,
+    onRootTarget,
+    onNoMatch,
+    allowFragmentContentModelWarnings,
+  });
   const closestTarget =
-    findClosestInsertTarget({
-      fragment,
-      instances,
-      props,
-      metas,
-      rootInstanceId,
-      selectedInstanceSelector,
-      from,
-      onRootTarget,
-      onNoMatch,
-    }) ?? from;
+    matchedTarget ??
+    (allowFragmentContentModelWarnings === true ? undefined : from);
   if (closestTarget === undefined) {
     return;
   }

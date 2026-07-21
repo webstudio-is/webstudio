@@ -6,7 +6,7 @@ import {
   type Pages,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
-import { $, renderData } from "@webstudio-is/template";
+import { $, renderData, ws } from "@webstudio-is/template";
 import {
   formatPrePublishAuditFinding,
   runPrePublishAudit,
@@ -52,14 +52,14 @@ const runAudit = ({
     metas: componentMetas,
   });
 
-test("returns a blocking finding with the page and instance identity", () => {
+test("warns without blocking legacy invalid HTML", () => {
   const { instances, props } = renderData(
     <$.Body ws:id="body">
-      <$.Paragraph>
-        <$.Heading ws:id="heading" ws:tag="h2">
-          Analyze Global Markets
+      <ws.element ws:tag="button">
+        <$.Heading ws:id="heading" ws:tag="h3">
+          Legacy accordion trigger
         </$.Heading>
-      </$.Paragraph>
+      </ws.element>
     </$.Body>
   );
 
@@ -68,8 +68,8 @@ test("returns a blocking finding with the page and instance identity", () => {
   expect(findings).toEqual([
     {
       ruleId: "html-content-model",
-      severity: "error",
-      message: "Placing <h2> element inside a <p> violates HTML spec.",
+      severity: "warning",
+      message: "Placing <h3> element inside a <button> violates HTML spec.",
       location: {
         pageId: "marketedge",
         pageName: "MarketEdge",
@@ -79,7 +79,7 @@ test("returns a blocking finding with the page and instance identity", () => {
     },
   ]);
   expect(formatPrePublishAuditFinding(findings[0]!)).toBe(
-    'Cannot publish "MarketEdge" (/marketedge): Placing <h2> element inside a <p> violates HTML spec.'
+    'Publish warning for "MarketEdge" (/marketedge): Placing <h3> element inside a <button> violates HTML spec.'
   );
 });
 
@@ -114,6 +114,31 @@ test("allows valid publishable pages and ignores invalid drafts", () => {
       props,
     })
   ).toEqual([]);
+});
+
+test("allows valid legacy CodeText children", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <$.CodeText>
+        <$.Text ws:tag="span">Legacy code text</$.Text>
+      </$.CodeText>
+    </$.Body>
+  );
+
+  expect(runAudit({ instances, props })).toEqual([]);
+});
+
+test("allows valid Video children", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <$.Video>
+        <ws.element ws:tag="source" />
+        <ws.element ws:tag="track" />
+      </$.Video>
+    </$.Body>
+  );
+
+  expect(runAudit({ instances, props })).toEqual([]);
 });
 
 test("blocks publishing when required audit input is unavailable", () => {

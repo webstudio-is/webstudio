@@ -94,20 +94,19 @@ describe("canWrapInstance for components", () => {
     expect(result).toBe(true);
   });
 
-  test("should reject invalid wrapping (text in CodeText)", () => {
+  test("should allow wrapping text in a legacy CodeText", () => {
     $instances.set(
       renderData(
         <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
+          <$.Text ws:id="text">Hello</$.Text>
         </$.Body>
       ).instances
     );
-    selectInstance(["box", "body"]);
+    selectInstance(["text", "body"]);
 
-    // CodeText only accepts text content, not boxes
     const result = canWrapInstance(
-      "box",
-      ["box", "body"],
+      "text",
+      ["text", "body"],
       "body",
       "CodeText",
       undefined,
@@ -115,7 +114,7 @@ describe("canWrapInstance for components", () => {
       $props.get(),
       $registeredComponentMetas.get()
     );
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 });
 

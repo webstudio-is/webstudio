@@ -103,7 +103,7 @@ import {
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
 
-const PrePublishAuditError = ({
+const PrePublishAuditMessage = ({
   finding,
 }: {
   finding: PrePublishAuditFinding;
@@ -164,7 +164,7 @@ const PrePublishAuditError = ({
   );
 };
 
-const getPrePublishAuditError = () => {
+const getPrePublishAuditMessages = () => {
   const findings = runPrePublishAudit({
     pages: $pages.get(),
     instances: $instances.get(),
@@ -173,8 +173,14 @@ const getPrePublishAuditError = () => {
     resources: $resources.get(),
     metas: $registeredComponentMetas.get(),
   });
-  const finding = findings.find(({ severity }) => severity === "error");
-  return finding && <PrePublishAuditError finding={finding} />;
+  const getMessage = (severity: PrePublishAuditFinding["severity"]) => {
+    const finding = findings.find((item) => item.severity === severity);
+    return finding && <PrePublishAuditMessage finding={finding} />;
+  };
+  return {
+    error: getMessage("error"),
+    warning: getMessage("warning"),
+  };
 };
 
 type ChangeProjectDomainProps = {
@@ -463,6 +469,9 @@ const Publish = ({
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
+  const [publishWarning, setPublishWarning] = useState<
+    undefined | JSX.Element | string
+  >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -513,12 +522,18 @@ const Publish = ({
 
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
+    setPublishWarning(undefined);
 
-    const auditError = getPrePublishAuditError();
+    const { error: auditError, warning: auditWarning } =
+      getPrePublishAuditMessages();
     if (auditError !== undefined) {
       toast.error(auditError);
       setPublishError(auditError);
       return;
+    }
+    if (auditWarning !== undefined) {
+      toast.warn(auditWarning);
+      setPublishWarning(auditWarning);
     }
 
     // Custom domain checkboxes are disabled on free plan so they are never
@@ -639,6 +654,9 @@ const Publish = ({
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
       {publishError && <Text color="destructive">{publishError}</Text>}
+      {publishWarning && (
+        <PanelBanner variant="warning">{publishWarning}</PanelBanner>
+      )}
 
       <Tooltip
         content={
@@ -712,6 +730,7 @@ const PublishStatic = ({
   const project = useStore($project);
   const [_, startTransition] = useTransition();
   const [publishError, setPublishError] = useState<JSX.Element | string>();
+  const [publishWarning, setPublishWarning] = useState<JSX.Element | string>();
 
   if (project == null) {
     throw new Error("Project not found");
@@ -729,6 +748,9 @@ const PublishStatic = ({
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
       {publishError && <Text color="destructive">{publishError}</Text>}
+      {publishWarning && (
+        <PanelBanner variant="warning">{publishWarning}</PanelBanner>
+      )}
       {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
 
       <Tooltip
@@ -742,11 +764,17 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setPublishError(undefined);
-                const auditError = getPrePublishAuditError();
+                setPublishWarning(undefined);
+                const { error: auditError, warning: auditWarning } =
+                  getPrePublishAuditMessages();
                 if (auditError !== undefined) {
                   toast.error(auditError);
                   setPublishError(auditError);
                   return;
+                }
+                if (auditWarning !== undefined) {
+                  toast.warn(auditWarning);
+                  setPublishWarning(auditWarning);
                 }
 
                 setIsPendingOptimistic(true);
