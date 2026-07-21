@@ -103,7 +103,7 @@ import {
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
 
-const PrePublishAuditError = ({
+const PrePublishAuditMessage = ({
   finding,
 }: {
   finding: PrePublishAuditFinding;
@@ -164,7 +164,7 @@ const PrePublishAuditError = ({
   );
 };
 
-const getPrePublishAuditError = () => {
+const getPrePublishAuditMessages = () => {
   const findings = runPrePublishAudit({
     pages: $pages.get(),
     instances: $instances.get(),
@@ -173,8 +173,14 @@ const getPrePublishAuditError = () => {
     resources: $resources.get(),
     metas: $registeredComponentMetas.get(),
   });
-  const finding = findings.find(({ severity }) => severity === "error");
-  return finding && <PrePublishAuditError finding={finding} />;
+  const getMessage = (severity: PrePublishAuditFinding["severity"]) => {
+    const finding = findings.find((item) => item.severity === severity);
+    return finding && <PrePublishAuditMessage finding={finding} />;
+  };
+  return {
+    error: getMessage("error"),
+    warning: getMessage("warning"),
+  };
 };
 
 type ChangeProjectDomainProps = {
@@ -514,11 +520,15 @@ const Publish = ({
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
 
-    const auditError = getPrePublishAuditError();
+    const { error: auditError, warning: auditWarning } =
+      getPrePublishAuditMessages();
     if (auditError !== undefined) {
       toast.error(auditError);
       setPublishError(auditError);
       return;
+    }
+    if (auditWarning !== undefined) {
+      toast.info(auditWarning);
     }
 
     // Custom domain checkboxes are disabled on free plan so they are never
@@ -742,11 +752,15 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setPublishError(undefined);
-                const auditError = getPrePublishAuditError();
+                const { error: auditError, warning: auditWarning } =
+                  getPrePublishAuditMessages();
                 if (auditError !== undefined) {
                   toast.error(auditError);
                   setPublishError(auditError);
                   return;
+                }
+                if (auditWarning !== undefined) {
+                  toast.info(auditWarning);
                 }
 
                 setIsPendingOptimistic(true);
