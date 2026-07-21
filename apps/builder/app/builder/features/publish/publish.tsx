@@ -520,33 +520,7 @@ const Publish = ({
     };
   }, [project.domain]);
 
-  const handlePublish = async (formData: FormData) => {
-    setPublishError(undefined);
-    setPublishWarning(undefined);
-
-    const { error: auditError, warning: auditWarning } =
-      getPrePublishAuditMessages();
-    if (auditError !== undefined) {
-      toast.error(auditError);
-      setPublishError(auditError);
-      return;
-    }
-    if (auditWarning !== undefined) {
-      toast.warn(auditWarning);
-      setPublishWarning(auditWarning);
-    }
-
-    // Custom domain checkboxes are disabled on free plan so they are never
-    // submitted — only the staging (wstd.io) domain can appear in formData.
-    const domains = formData
-      .getAll(domainToPublishName)
-      .map((domainEntry) => domainEntry.toString());
-
-    if (domains.length === 0) {
-      toast.error("Please select at least one domain to publish");
-      return;
-    }
-
+  const publish = async (domains: string[]) => {
     setIsPublishing(true);
 
     const publishResult = await nativeClient.domain.publish.mutate({
@@ -643,6 +617,38 @@ const Publish = ({
     }
   };
 
+  const handlePublish = (formData: FormData) => {
+    setPublishError(undefined);
+    setPublishWarning(undefined);
+
+    const { error: auditError, warning: auditWarning } =
+      getPrePublishAuditMessages();
+    if (auditError !== undefined) {
+      toast.error(auditError);
+      setPublishError(auditError);
+      return;
+    }
+    if (auditWarning !== undefined) {
+      toast.warn(auditWarning);
+      setPublishWarning(auditWarning);
+    }
+
+    // Custom domain checkboxes are disabled on free plan so they are never
+    // submitted — only the staging (wstd.io) domain can appear in formData.
+    const domains = formData
+      .getAll(domainToPublishName)
+      .map((domainEntry) => domainEntry.toString());
+
+    if (domains.length === 0) {
+      toast.error("Please select at least one domain to publish");
+      return;
+    }
+
+    startTransition(async () => {
+      await publish(domains);
+    });
+  };
+
   const hasPendingState = project.latestBuildVirtual
     ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
     : false;
@@ -655,7 +661,9 @@ const Publish = ({
     <Flex gap={2} shrink={false} direction={"column"}>
       {publishError && <Text color="destructive">{publishError}</Text>}
       {publishWarning && (
-        <PanelBanner variant="warning">{publishWarning}</PanelBanner>
+        <PanelBanner variant="warning">
+          <Text>{publishWarning}</Text>
+        </PanelBanner>
       )}
 
       <Tooltip
@@ -669,7 +677,13 @@ const Publish = ({
       >
         <Button
           ref={buttonRef}
-          formAction={handlePublish}
+          type="button"
+          onClick={() => {
+            const form = buttonRef.current?.closest("form");
+            if (form) {
+              handlePublish(new FormData(form));
+            }
+          }}
           color="positive"
           state={showPendingState ? "pending" : undefined}
           disabled={
@@ -749,7 +763,9 @@ const PublishStatic = ({
     <Flex gap={2} shrink={false} direction={"column"}>
       {publishError && <Text color="destructive">{publishError}</Text>}
       {publishWarning && (
-        <PanelBanner variant="warning">{publishWarning}</PanelBanner>
+        <PanelBanner variant="warning">
+          <Text>{publishWarning}</Text>
+        </PanelBanner>
       )}
       {status === "FAILED" && <Text color="destructive">{statusText}</Text>}
 
@@ -761,22 +777,22 @@ const PublishStatic = ({
           color="positive"
           state={isPublishInProgress ? "pending" : undefined}
           onClick={() => {
+            setPublishError(undefined);
+            setPublishWarning(undefined);
+            const { error: auditError, warning: auditWarning } =
+              getPrePublishAuditMessages();
+            if (auditError !== undefined) {
+              toast.error(auditError);
+              setPublishError(auditError);
+              return;
+            }
+            if (auditWarning !== undefined) {
+              toast.warn(auditWarning);
+              setPublishWarning(auditWarning);
+            }
+
             startTransition(async () => {
               try {
-                setPublishError(undefined);
-                setPublishWarning(undefined);
-                const { error: auditError, warning: auditWarning } =
-                  getPrePublishAuditMessages();
-                if (auditError !== undefined) {
-                  toast.error(auditError);
-                  setPublishError(auditError);
-                  return;
-                }
-                if (auditWarning !== undefined) {
-                  toast.warn(auditWarning);
-                  setPublishWarning(auditWarning);
-                }
-
                 setIsPendingOptimistic(true);
 
                 const result = await nativeClient.domain.publish.mutate({
