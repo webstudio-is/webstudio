@@ -79,6 +79,7 @@ describe("published Markdown blog end-to-end", () => {
       };
     });
     const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://blog.example",
       deploymentId: "blog-deployment",
       manifest,
       fetchAsset,

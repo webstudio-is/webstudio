@@ -51,9 +51,12 @@ BEGIN
   )
   ON CONFLICT ("projectId", "assetId", "revision")
   DO UPDATE SET
+    "metadataToken" = gen_random_uuid()::TEXT,
     "document" = EXCLUDED."document",
     "fieldContributions" = EXCLUDED."fieldContributions",
-    "updatedAt" = EXCLUDED."updatedAt";
+    "updatedAt" = EXCLUDED."updatedAt"
+  WHERE "AssetFileMetadata"."document" IS DISTINCT FROM EXCLUDED."document"
+    OR "AssetFileMetadata"."fieldContributions" IS DISTINCT FROM EXCLUDED."fieldContributions";
 
   DELETE FROM public."AssetFileMetadata"
   WHERE "projectId" = p_project_id

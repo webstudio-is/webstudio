@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { generateObjectExpression, type Resource } from "@webstudio-is/sdk";
 
-const loadCanonicalAssetFileEntries = vi.hoisted(() => vi.fn());
+const loadCanonicalAssetFileSnapshot = vi.hoisted(() => vi.fn());
 const synchronizeCanonicalAssets = vi.hoisted(() => vi.fn());
 const buildPersistAndActivateAssetResourceIndex = vi.hoisted(() => vi.fn());
 const deleteAssetResourceIndexQuery = vi.hoisted(() => vi.fn());
@@ -29,16 +29,20 @@ const resource = (id: string, query: string): Resource => ({
   ),
 });
 const dependencies = {
-  loadCanonicalAssetFileEntries,
+  loadCanonicalAssetFileSnapshot,
   synchronizeCanonicalAssets,
   buildPersistAndActivateAssetResourceIndex,
   deleteAssetResourceIndexQuery,
   collectAssetResourceIndexGarbageBestEffort,
 };
+const source = { buildId: "build-1", resources: "[]" };
 
 describe("asset resource query lifecycle", () => {
   beforeEach(() => {
-    loadCanonicalAssetFileEntries.mockReset().mockResolvedValue([]);
+    loadCanonicalAssetFileSnapshot.mockReset().mockResolvedValue({
+      entries: [],
+      metadataSnapshot: [],
+    });
     synchronizeCanonicalAssets.mockReset().mockResolvedValue({});
     buildPersistAndActivateAssetResourceIndex.mockReset().mockResolvedValue({});
     deleteAssetResourceIndexQuery.mockReset().mockResolvedValue(true);
@@ -55,9 +59,16 @@ describe("asset resource query lifecycle", () => {
     ).toBeUndefined();
   });
 
-  test("builds created and changed queries from one canonical load", async () => {
-    const previous = [resource("changed", "*[false]")];
-    const current = [resource("changed", "*[]"), resource("created", "*[]")];
+  test("rebuilds all current queries from one canonical load", async () => {
+    const previous = [
+      resource("changed", "*[false]"),
+      resource("unchanged", "*[]"),
+    ];
+    const current = [
+      resource("changed", "*[]"),
+      resource("created", "*[]"),
+      resource("unchanged", "*[]"),
+    ];
     await expect(
       synchronizeAssetResourceIndexQueries({
         client: {} as never,
@@ -67,15 +78,16 @@ describe("asset resource query lifecycle", () => {
         projectId: "project-1",
         previousResources: previous,
         resources: current,
+        source,
         dependencies,
       })
     ).resolves.toEqual({
       deletedResourceIds: [],
-      updatedResourceIds: ["changed", "created"],
+      updatedResourceIds: ["changed", "created", "unchanged"],
     });
-    expect(loadCanonicalAssetFileEntries).toHaveBeenCalledOnce();
+    expect(loadCanonicalAssetFileSnapshot).toHaveBeenCalledOnce();
     expect(synchronizeCanonicalAssets).toHaveBeenCalledOnce();
-    expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(2);
+    expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(3);
     expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledOnce();
   });
 
@@ -94,6 +106,7 @@ describe("asset resource query lifecycle", () => {
           resource("changed-away", "*[]"),
         ],
         resources: [external],
+        source,
         dependencies,
       })
     ).resolves.toEqual({
@@ -101,7 +114,33 @@ describe("asset resource query lifecycle", () => {
       updatedResourceIds: [],
     });
     expect(deleteAssetResourceIndexQuery).toHaveBeenCalledTimes(2);
-    expect(loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
+    expect(deleteAssetResourceIndexQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ source })
+    );
+    expect(loadCanonicalAssetFileSnapshot).not.toHaveBeenCalled();
     expect(synchronizeCanonicalAssets).not.toHaveBeenCalled();
+  });
+
+  test("continues independent query work and cleanup after a failure", async () => {
+    buildPersistAndActivateAssetResourceIndex
+      .mockRejectedValueOnce(new Error("first build failed"))
+      .mockResolvedValueOnce({});
+
+    await expect(
+      synchronizeAssetResourceIndexQueries({
+        client: {} as never,
+        assetClient: {
+          resourceIndexStore: { delete: vi.fn() },
+        } as never,
+        projectId: "project-1",
+        previousResources: [],
+        resources: [resource("first", "*[]"), resource("second", "*[]")],
+        source,
+        dependencies,
+      })
+    ).rejects.toThrow("Failed to synchronize 1 asset resource index queries");
+
+    expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(2);
+    expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledOnce();
   });
 });

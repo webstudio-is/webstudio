@@ -128,6 +128,18 @@ tags: [web, studio]
       extractMarkdownFrontmatter("---\ntitle: first\ntitle: second\n---\n")
     ).rejects.toMatchObject({ code: "FRONTMATTER_INVALID" });
   });
+
+  test("rejects tagged YAML values that are not JSON", async () => {
+    for (const value of [
+      "!!timestamp 2020-01-01",
+      "!!set\n  item: null",
+      "!!omap\n  - item: value",
+    ]) {
+      await expect(
+        extractMarkdownFrontmatter(`---\nvalue: ${value}\n---\n`)
+      ).rejects.toMatchObject({ code: "FRONTMATTER_INVALID" });
+    }
+  });
 });
 
 describe("Markdown body and excerpt extraction", () => {

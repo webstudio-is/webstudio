@@ -10,6 +10,7 @@ import {
   deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntry,
+  loadCanonicalAssetFileSnapshot,
   replaceCanonicalAssetFileEntry,
 } from "./canonical-metadata-persistence";
 
@@ -35,6 +36,7 @@ const entry = createCanonicalAssetFileEntry({
 });
 const row = {
   ...entry,
+  metadataToken: "metadata-token-1",
   document,
   fieldContributions: entry.fieldContributions,
   createdAt: "2026-07-18T00:00:00.000Z",
@@ -61,6 +63,22 @@ describe("canonical asset metadata persistence", () => {
         revision: "sha256:one",
       })
     ).resolves.toEqual(entry);
+  });
+
+  test("loads metadata tokens atomically with canonical entries", async () => {
+    server.use(db.get("AssetFileMetadata", () => json([row])));
+
+    await expect(
+      loadCanonicalAssetFileSnapshot({
+        client: testContext.postgrest.client,
+        projectId: "project-1",
+      })
+    ).resolves.toEqual({
+      entries: [entry],
+      metadataSnapshot: [
+        { assetId: "asset-1", metadataToken: "metadata-token-1" },
+      ],
+    });
   });
 
   test("replaces older revisions for one canonical asset", async () => {

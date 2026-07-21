@@ -26,6 +26,10 @@ const stateByBuildStatus = {
   FAILED: "failed",
 } as const satisfies Record<StatusRow["buildStatus"], string>;
 
+const defaultDependencies = {
+  hasProjectPermit: authorizeProject.hasProjectPermit,
+};
+
 export const toAssetResourceIndexStatus = (row: StatusRow) =>
   assetResourceIndexStatus.parse({
     resourceId: row.resourceId,
@@ -43,16 +47,19 @@ export const toAssetResourceIndexStatus = (row: StatusRow) =>
     updatedAt: row.updatedAt,
   });
 
-export const loadAssetResourceIndexStatus = async ({
-  projectId,
-  resourceId,
-  context,
-}: {
-  projectId: string;
-  resourceId: string;
-  context: AppContext;
-}) => {
-  const canView = await authorizeProject.hasProjectPermit(
+export const loadAssetResourceIndexStatus = async (
+  {
+    projectId,
+    resourceId,
+    context,
+  }: {
+    projectId: string;
+    resourceId: string;
+    context: AppContext;
+  },
+  dependencies = defaultDependencies
+) => {
+  const canView = await dependencies.hasProjectPermit(
     { projectId, permit: "view" },
     context
   );

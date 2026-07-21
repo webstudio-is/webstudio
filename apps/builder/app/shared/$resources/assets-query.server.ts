@@ -17,6 +17,21 @@ import { createContext } from "../context.server";
 import { isBuilder } from "../router-utils";
 import { createAssetClient } from "../asset-client";
 
+type Dependencies = {
+  createContext: typeof createContext;
+  createAssetClient: () => Pick<
+    ReturnType<typeof createAssetClient>,
+    "readFile"
+  >;
+  previewAssetResourceQuery: typeof previewAssetResourceQuery;
+};
+
+const defaultDependencies: Dependencies = {
+  createContext,
+  createAssetClient,
+  previewAssetResourceQuery,
+};
+
 const failure = ({
   code,
   message,
@@ -38,13 +53,16 @@ const failure = ({
     { status, headers: privateNoStoreResponseHeaders }
   );
 
-export const loader = async ({
-  request,
-  resourceRequest,
-}: {
-  request: Request;
-  resourceRequest: Request;
-}) => {
+export const loader = async (
+  {
+    request,
+    resourceRequest,
+  }: {
+    request: Request;
+    resourceRequest: Request;
+  },
+  dependencies = defaultDependencies
+) => {
   if (isBuilder(request) === false) {
     return failure({
       code: "FORBIDDEN",
@@ -80,12 +98,12 @@ export const loader = async ({
     });
   }
   try {
-    const context = await createContext(request);
-    const result = await previewAssetResourceQuery({
+    const context = await dependencies.createContext(request);
+    const result = await dependencies.previewAssetResourceQuery({
       projectId,
       request: parsed.data,
       context,
-      assetClient: createAssetClient(),
+      assetClient: dependencies.createAssetClient(),
     });
     return json(result, { headers: privateNoStoreResponseHeaders });
   } catch (error) {

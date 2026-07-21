@@ -341,17 +341,18 @@ export const updateAssetsResource = (
   if (resource === undefined || isAssetsResource(resource) === false) {
     return throwBuilderRuntimeError("NOT_FOUND", "Assets resource not found");
   }
+  const { name, query: queryUpdate } = input.values;
   const storedConfiguration = parseAssetResourceConfiguration(resource);
   if (
     isStoredAssetQueryResource(resource) &&
-    storedConfiguration === undefined
+    storedConfiguration === undefined &&
+    queryUpdate === undefined
   ) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      "Stored Assets query configuration could not be decoded"
+      "Stored Assets query configuration could not be decoded; replace or remove the query to repair it"
     );
   }
-  const { name, query: queryUpdate } = input.values;
   const currentQuery =
     storedConfiguration === undefined
       ? undefined

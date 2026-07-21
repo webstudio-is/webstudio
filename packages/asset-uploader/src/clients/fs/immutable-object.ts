@@ -1,4 +1,5 @@
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resource";
 
@@ -34,6 +35,11 @@ export const createFsImmutableResourceIndexStore = (
         }
         throw error;
       }
+    },
+    read: async (key) => {
+      const path = resolvePath(key);
+      const file = await stat(path);
+      return { data: createReadStream(path), contentLength: file.size };
     },
     delete: async (key) => {
       try {

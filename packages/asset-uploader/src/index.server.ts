@@ -21,3 +21,8 @@ export * from "./resource-index-rebuild";
 export * from "./resource-index-snapshot";
 export * from "./resource-index-lifecycle";
 export * from "./resource-index-garbage-collection";
+export type {
+  AssetClient,
+  AssetClientWithResourceIndexStore,
+  AssetClientWithReadableResourceIndexStore,
+} from "./client";

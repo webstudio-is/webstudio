@@ -1,5 +1,11 @@
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import { assertPostgrestSuccess } from "./patch-utils";
+import type { CanonicalAssetMetadataSnapshot } from "./canonical-metadata-persistence";
+
+export type AssetResourceIndexBuildSource = {
+  buildId: string;
+  resources: string;
+};
 
 export const beginAssetResourceIndexBuild = async ({
   client,
@@ -9,6 +15,11 @@ export const beginAssetResourceIndexBuild = async ({
   queryHash,
   assetRevision,
   buildAttemptId,
+  revision,
+  checksum,
+  objectKey,
+  metadataSnapshot,
+  source,
 }: {
   client: Client;
   projectId: string;
@@ -17,6 +28,11 @@ export const beginAssetResourceIndexBuild = async ({
   queryHash: string;
   assetRevision: string;
   buildAttemptId: string;
+  revision: string;
+  checksum: string;
+  objectKey: string;
+  metadataSnapshot: CanonicalAssetMetadataSnapshot;
+  source?: AssetResourceIndexBuildSource;
 }) => {
   const result = await client.rpc("begin_asset_resource_index_build", {
     p_project_id: projectId,
@@ -25,8 +41,15 @@ export const beginAssetResourceIndexBuild = async ({
     p_query_hash: queryHash,
     p_asset_revision: assetRevision,
     p_build_attempt_id: buildAttemptId,
+    p_revision: revision,
+    p_checksum: checksum,
+    p_object_key: objectKey,
+    p_metadata_snapshot: metadataSnapshot,
+    p_build_id: source?.buildId,
+    p_resources: source?.resources,
   });
   assertPostgrestSuccess(result);
+  return result.data === true;
 };
 
 export const activateAssetResourceIndex = async ({
@@ -39,6 +62,8 @@ export const activateAssetResourceIndex = async ({
   buildAttemptId,
   checksum,
   objectKey,
+  metadataSnapshot,
+  source,
 }: {
   client: Client;
   projectId: string;
@@ -49,6 +74,8 @@ export const activateAssetResourceIndex = async ({
   buildAttemptId: string;
   checksum: string;
   objectKey: string;
+  metadataSnapshot: CanonicalAssetMetadataSnapshot;
+  source?: AssetResourceIndexBuildSource;
 }) => {
   const result = await client.rpc("activate_asset_resource_index", {
     p_project_id: projectId,
@@ -59,6 +86,9 @@ export const activateAssetResourceIndex = async ({
     p_build_attempt_id: buildAttemptId,
     p_checksum: checksum,
     p_object_key: objectKey,
+    p_metadata_snapshot: metadataSnapshot,
+    p_build_id: source?.buildId,
+    p_resources: source?.resources,
   });
   assertPostgrestSuccess(result);
   return result.data === true;
@@ -124,14 +154,18 @@ export const deleteAssetResourceIndexQuery = async ({
   client,
   projectId,
   resourceId,
+  source,
 }: {
   client: Client;
   projectId: string;
   resourceId: string;
+  source?: AssetResourceIndexBuildSource;
 }) => {
   const result = await client.rpc("delete_asset_resource_index_query", {
     p_project_id: projectId,
     p_resource_id: resourceId,
+    p_build_id: source?.buildId,
+    p_resources: source?.resources,
   });
   assertPostgrestSuccess(result);
   return result.data === true;

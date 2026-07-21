@@ -34,27 +34,43 @@ describe("explicit resource index rebuild", () => {
         json([
           {
             ...entry,
+            metadataToken: "metadata-token-1",
             document,
             createdAt: "2026-07-18T00:00:00.000Z",
             updatedAt: "2026-07-18T00:00:00.000Z",
           },
         ])
       ),
-      db.post("rpc/begin_asset_resource_index_build", () => json(null)),
+      db.post("rpc/begin_asset_resource_index_build", () => json(true)),
       db.post("rpc/activate_asset_resource_index", () => json(true))
     );
     const putIfAbsent = vi.fn(async ({ checksum }) => ({
       status: "exists" as const,
       checksum,
     }));
+    const synchronizeCanonicalAssets = vi.fn(async () => ({
+      scanned: 1,
+      indexed: 0,
+      metadataUpdated: 0,
+      unchanged: 1,
+      removed: 0,
+      skipped: 0,
+      inconsistent: 0,
+    }));
     const result = await rebuildAssetResourceIndex({
       client: testContext.postgrest.client,
-      store: { putIfAbsent },
+      assetClient: { resourceIndexStore: { putIfAbsent } } as never,
       projectId: "project-1",
       resourceId: "posts",
       query: `*[properties.slug == $slug]`,
+      source: { buildId: "build-1", resources: "[]" },
+      dependencies: { synchronizeCanonicalAssets },
     });
 
+    expect(synchronizeCanonicalAssets).toHaveBeenCalledOnce();
+    expect(synchronizeCanonicalAssets.mock.invocationCallOrder[0]).toBeLessThan(
+      putIfAbsent.mock.invocationCallOrder[0]
+    );
     expect(result.index.parameterNames).toEqual(["slug"]);
     expect(result.index.documents).toHaveLength(1);
     expect(putIfAbsent).toHaveBeenCalledOnce();

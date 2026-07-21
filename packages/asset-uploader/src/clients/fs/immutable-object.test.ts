@@ -36,6 +36,13 @@ describe("filesystem immutable resource index storage", () => {
     await expect(
       readFile(join(directory, "projects/one/index.json"), "utf8")
     ).resolves.toBe("one");
+    const stored = await store.read?.(object.key);
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of stored?.data ?? []) {
+      chunks.push(chunk);
+    }
+    expect(Buffer.concat(chunks).toString("utf8")).toBe("one");
+    expect(stored?.contentLength).toBe(3);
     await expect(store.delete?.(object.key)).resolves.toBe("deleted");
     await expect(store.delete?.(object.key)).resolves.toBe("missing");
   });

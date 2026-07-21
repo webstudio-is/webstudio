@@ -8,13 +8,15 @@ const LOCAL_RESOURCE_PREFIX = "$resources";
  * Prevents fetch cycles by prefixing local resources.
  */
 export const isLocalResource = (pathname: string, resourceName?: string) => {
-  let resolvedPathname = pathname;
-  try {
-    resolvedPathname = new URL(pathname).pathname;
-  } catch {
-    // Keep relative paths unchanged.
+  const pathEnd = [pathname.indexOf("?"), pathname.indexOf("#")]
+    .filter((index) => index !== -1)
+    .reduce((first, index) => Math.min(first, index), pathname.length);
+  const path = pathname.slice(0, pathEnd);
+  if (path.startsWith("//")) {
+    return false;
   }
-  const segments = resolvedPathname.split("/").filter(Boolean);
+  const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+  const segments = normalizedPath.split("/");
 
   if (resourceName === undefined) {
     return segments[0] === LOCAL_RESOURCE_PREFIX;
@@ -81,15 +83,20 @@ export const loadResource = async (
     try {
       // cloudflare workers fail when fetching url contains spaces
       // even though new URL suppose to trim them on parsing by spec
-      const resolutionBase =
-        baseUrl === undefined ? undefined : new URL("/", baseUrl);
-      const url = new URL(resourceRequest.url.trim(), resolutionBase);
+      const sourceUrl = resourceRequest.url.trim();
+      const local = isLocalResource(sourceUrl);
+      const resolutionBase = local
+        ? new URL("https://webstudio.local")
+        : baseUrl === undefined
+          ? undefined
+          : new URL("/", baseUrl);
+      const url = new URL(sourceUrl, resolutionBase);
       if (searchParams) {
         for (const { name, value } of searchParams) {
           url.searchParams.append(name, serializeValue(value));
         }
       }
-      href = url.href;
+      href = local ? `${url.pathname}${url.search}` : url.href;
     } catch {
       // empty block
     }

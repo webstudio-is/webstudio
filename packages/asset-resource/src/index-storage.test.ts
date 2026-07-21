@@ -40,6 +40,10 @@ describe("resource index persistence", () => {
       status: "created",
     });
     expect(result.key).toContain("project%2F%2E%2E%2Fprivate");
+    expect(result.key).toContain(encodeURIComponent(index.assetRevision));
+    expect(result.key).toContain(
+      `${encodeURIComponent(index.integrity.checksum)}.json`
+    );
     expect(putIfAbsent).toHaveBeenCalledWith(
       expect.objectContaining({
         key: result.key,

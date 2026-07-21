@@ -291,7 +291,7 @@ export const hydrateAssetResourceResult = async ({
       });
     }
   };
-  await Promise.all(
+  const settlements = await Promise.allSettled(
     Array.from(
       {
         length: Math.min(
@@ -302,6 +302,13 @@ export const hydrateAssetResourceResult = async ({
       worker
     )
   );
+  const failure = settlements.find(
+    (settlement): settlement is PromiseRejectedResult =>
+      settlement.status === "rejected"
+  );
+  if (failure !== undefined) {
+    throw failure.reason;
+  }
   return {
     content,
     hydratedFileCount: selected.length,

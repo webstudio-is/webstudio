@@ -168,15 +168,45 @@ describe("loadResource", () => {
     });
   });
 
-  test("recognizes absolute local resource URLs", () => {
+  test("does not intercept an external URL that resembles a local resource", () => {
     expect(
       isLocalResource("https://example.com/$resources/assets", "assets")
-    ).toBe(true);
+    ).toBe(false);
+    expect(isLocalResource("//$resources/assets", "assets")).toBe(false);
+    expect(isLocalResource("//example.com/$resources/assets", "assets")).toBe(
+      false
+    );
   });
 
   test("keeps the legacy Assets path distinct from the query path", () => {
     expect(isLocalResource("/$resources/assets", "assets")).toBe(true);
     expect(isLocalResource("/$resources/assets/query", "assets")).toBe(false);
+    expect(
+      isLocalResource(
+        "/$resources/assets/index-status?resourceId=posts",
+        "assets/index-status"
+      )
+    ).toBe(true);
+  });
+
+  test("keeps a local resource relative while resolving ordinary URLs", async () => {
+    mockFetch.mockResolvedValue(new Response("ok"));
+    await loadResource(
+      mockFetch,
+      {
+        name: "assets",
+        url: "/$resources/assets",
+        searchParams: [{ name: "page", value: 1 }],
+        method: "get",
+        headers: [],
+      },
+      "https://example.com/blog/post"
+    );
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "/$resources/assets?page=1",
+      expect.any(Object)
+    );
   });
 
   test("returns a structured cancellation failure", async () => {

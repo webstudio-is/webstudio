@@ -169,6 +169,7 @@ export const commitBuildTransactions = async ({
       try {
         await synchronizeAssetResourcesAfterBuildPatch({
           context: ctx,
+          buildId,
           projectId,
           previousResources: previousBuild.resources,
           resources: build.resources,

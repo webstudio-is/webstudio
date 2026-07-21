@@ -60,6 +60,7 @@ const createRuntime = async () => {
     manifest,
     fetchAsset,
     runtimeFetch: createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
       deploymentId: "build-1",
       manifest,
       fetchAsset,
@@ -87,6 +88,27 @@ const withResourceId = (request: Request, resourceId: string) => {
 
 describe("published asset resource runtime", () => {
   beforeEach(() => __testing.clearParsedIndexCache());
+
+  test("accepts generated local resource URLs as relative strings", async () => {
+    const { manifest, fetchAsset } = await createRuntime();
+    const fetchResource = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "deployment-1",
+      manifest,
+      fetchAsset,
+    });
+
+    const response = await fetchResource("/$resources/assets/query", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-webstudio-resource-id": "posts",
+      },
+      body: JSON.stringify({ query, parameters: { slug: "hello" } }),
+    });
+
+    expect(response?.status).toBe(200);
+  });
 
   test("evaluates runtime parameters and caches one parsed immutable index per isolate", async () => {
     const { runtimeFetch, fetchAsset } = await createRuntime();
@@ -153,7 +175,17 @@ describe("published asset resource runtime", () => {
       "https://external.example/data"
     );
     expect(await fallbackResponse.text()).toBe("fallback");
-    expect(fallback).toHaveBeenCalledOnce();
+
+    const externalQueryResponse = await generatedFetch(
+      "https://external.example/$resources/assets/query",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query, parameters: { slug: "post" } }),
+      }
+    );
+    expect(await externalQueryResponse.text()).toBe("fallback");
+    expect(fallback).toHaveBeenCalledTimes(2);
   });
 
   test("isolates parsed indexes for deployments that use the same public path", async () => {
@@ -183,6 +215,7 @@ describe("published asset resource runtime", () => {
     ];
     const secondFetchAsset = vi.fn(async () => Response.json(secondIndex));
     const secondRuntime = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
       deploymentId: "build-2",
       manifest: secondManifest,
       fetchAsset: secondFetchAsset,
@@ -227,6 +260,7 @@ describe("published asset resource runtime", () => {
       )
     );
     const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
       deploymentId: "build-1",
       manifest,
       fetchAsset,
@@ -257,6 +291,7 @@ describe("published asset resource runtime", () => {
       }),
     };
     const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
       deploymentId: "build-1",
       manifest,
       fetchAsset,
@@ -276,7 +311,7 @@ describe("published asset resource runtime", () => {
     expect(cache.put).toHaveBeenCalledOnce();
   });
 
-  test("rejects stale revisions and keys caches by deployment, revision, parameters, and hydration", async () => {
+  test("rejects stale revisions and keys caches by deployment, revision, parameters, hydration, and policy", async () => {
     const { runtimeFetch, manifest } = await createRuntime();
     const staleRequest = createQueryRequest();
     const body = await staleRequest.json();
@@ -325,6 +360,16 @@ describe("published asset resource runtime", () => {
         }),
       })
     );
+    const changedCachePolicyRequest = createQueryRequest();
+    changedCachePolicyRequest.headers.set(
+      "cache-control",
+      "public, max-age=60"
+    );
+    const changedCachePolicy = await getKey(
+      "build-1",
+      manifest[0],
+      changedCachePolicyRequest
+    );
     expect(
       new Set([
         first.url,
@@ -332,7 +377,8 @@ describe("published asset resource runtime", () => {
         changedRevision.url,
         changedHydration.url,
         changedParameters.url,
+        changedCachePolicy.url,
       ])
-    ).toHaveLength(5);
+    ).toHaveLength(6);
   });
 });

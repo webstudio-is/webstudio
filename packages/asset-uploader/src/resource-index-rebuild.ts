@@ -1,8 +1,10 @@
-import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resource";
 import type { Client } from "@webstudio-is/postgrest/index.server";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import type { AssetClientWithResourceIndexStore } from "./client";
+import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
+import { loadCanonicalAssetFileSnapshot } from "./canonical-metadata-persistence";
 import { buildPersistAndActivateAssetResourceIndex } from "./resource-index-build";
 import { collectAssetResourceIndexGarbageBestEffort } from "./resource-index-garbage-collection";
+import type { AssetResourceIndexBuildSource } from "./resource-index-persistence";
 
 export class AssetResourceIndexNotFoundError extends Error {
   constructor() {
@@ -13,30 +15,45 @@ export class AssetResourceIndexNotFoundError extends Error {
 
 export const rebuildAssetResourceIndex = async ({
   client,
-  store,
+  assetClient,
   projectId,
   resourceId,
   query,
+  source,
+  dependencies = {},
 }: {
   client: Client;
-  store: ImmutableAssetResourceIndexStore;
+  assetClient: AssetClientWithResourceIndexStore;
   projectId: string;
   resourceId: string;
   query: string;
+  source: AssetResourceIndexBuildSource;
+  dependencies?: {
+    synchronizeCanonicalAssets?: typeof synchronizeCanonicalAssets;
+    loadCanonicalAssetFileSnapshot?: typeof loadCanonicalAssetFileSnapshot;
+  };
 }) => {
-  const entries = await loadCanonicalAssetFileEntries({ client, projectId });
+  await (dependencies.synchronizeCanonicalAssets ?? synchronizeCanonicalAssets)(
+    { client, assetClient, projectId }
+  );
+  const { entries, metadataSnapshot } = await (
+    dependencies.loadCanonicalAssetFileSnapshot ??
+    loadCanonicalAssetFileSnapshot
+  )({ client, projectId });
   const result = await buildPersistAndActivateAssetResourceIndex({
     client,
-    store,
+    store: assetClient.resourceIndexStore,
     projectId,
     resourceId,
     query,
     entries,
+    metadataSnapshot,
+    source,
   });
-  if (store.delete !== undefined) {
+  if (assetClient.resourceIndexStore.delete !== undefined) {
     await collectAssetResourceIndexGarbageBestEffort({
       client,
-      store: { delete: store.delete },
+      store: { delete: assetClient.resourceIndexStore.delete },
     });
   }
   return result;

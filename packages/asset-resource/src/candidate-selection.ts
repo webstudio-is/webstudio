@@ -1,22 +1,13 @@
 import { evaluate, type ExprNode } from "groq-js/1";
 import type { AssetFileDocument } from "@webstudio-is/sdk";
 import { isGroqAstNode, visitGroqAst } from "./groq-ast";
+import { compareStrings } from "./stable-json";
 
 const assetResourceCandidatePolicyV1 = {
   records: "safe-static-filter-superset",
   fields: "complete-lightweight-document",
   content: "reference-only",
 } as const;
-
-const compareStrings = (left: string, right: string) => {
-  if (left < right) {
-    return -1;
-  }
-  if (left > right) {
-    return 1;
-  }
-  return 0;
-};
 
 export const getAssetResourceParameterNames = (tree: ExprNode) => {
   const names = new Set<string>();

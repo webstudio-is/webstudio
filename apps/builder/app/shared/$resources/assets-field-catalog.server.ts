@@ -7,7 +7,25 @@ import { createContext } from "../context.server";
 import { isBuilder } from "../router-utils";
 import { createAssetClient } from "../asset-client";
 
-export const loader = async ({ request }: { request: Request }) => {
+type Dependencies = {
+  createContext: typeof createContext;
+  createAssetClient: () => Pick<
+    ReturnType<typeof createAssetClient>,
+    "readFile"
+  >;
+  loadBuilderAssetFieldCatalog: typeof loadBuilderAssetFieldCatalog;
+};
+
+const defaultDependencies: Dependencies = {
+  createContext,
+  createAssetClient,
+  loadBuilderAssetFieldCatalog,
+};
+
+export const loader = async (
+  { request }: { request: Request },
+  dependencies = defaultDependencies
+) => {
   if (isBuilder(request) === false) {
     throw new Error(
       "Asset field catalog can only be accessed from the builder interface"
@@ -20,11 +38,11 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 
   try {
-    const context = await createContext(request);
-    const catalog = await loadBuilderAssetFieldCatalog({
+    const context = await dependencies.createContext(request);
+    const catalog = await dependencies.loadBuilderAssetFieldCatalog({
       projectId,
       context,
-      assetClient: createAssetClient(),
+      assetClient: dependencies.createAssetClient(),
     });
     return json(catalog, { headers: privateNoStoreResponseHeaders });
   } catch (error) {

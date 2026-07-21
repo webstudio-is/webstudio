@@ -106,6 +106,19 @@ const requiredInputOption = (yargs: CommonYargsArgv, describe: string) =>
     demandOption: true,
   });
 
+export const inputCommandOptions = (yargs: CommonYargsArgv) =>
+  requiredInputOption(
+    apiCommandOptions(yargs),
+    "Required JSON file containing the command input."
+  );
+
+export const assetResourceCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("resource", {
+    type: "string",
+    describe: "Required Assets resource id",
+    demandOption: true,
+  });
+
 const confirmOption = (yargs: CommonYargsArgv, describe: string) =>
   yargs.option("confirm", {
     type: "boolean",

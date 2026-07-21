@@ -13,6 +13,16 @@ export {
 } from "@webstudio-is/sdk";
 export type { AssetQueryParameterBinding } from "@webstudio-is/sdk";
 
+export const normalizeAssetQueryParameterBindings = <
+  Binding extends { name: string },
+>(
+  parameters: readonly Binding[]
+) =>
+  parameters.map((parameter) => ({
+    ...parameter,
+    name: normalizeAssetQueryParameterName(parameter.name),
+  }));
+
 export const getAssetIndexStatusLabel = (
   status: AssetResourceIndexStatus | undefined
 ) => {
@@ -61,8 +71,8 @@ export const getAssetQueryConfigurationError = ({
   if (parameters.length > assetResourceLimits.parameterCount) {
     return `Use at most ${assetResourceLimits.parameterCount} runtime parameters.`;
   }
-  const names = parameters.map(({ name }) =>
-    normalizeAssetQueryParameterName(name)
+  const names = normalizeAssetQueryParameterBindings(parameters).map(
+    ({ name }) => name
   );
   if (
     names.some(

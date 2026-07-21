@@ -1,4 +1,5 @@
 import { assetFileDocument, type AssetFileDocument } from "@webstudio-is/sdk";
+import { compareStrings } from "./stable-json";
 
 export type AssetFileMetadataInput = {
   id: string;
@@ -53,18 +54,8 @@ const getObservedType = (value: unknown): ObservedFieldType => {
 };
 
 const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
-const appendFieldPath = (path: string, key: string) =>
+export const appendAssetFieldPath = (path: string, key: string) =>
   identifier.test(key) ? `${path}.${key}` : `${path}[${JSON.stringify(key)}]`;
-
-const compareStrings = (left: string, right: string) => {
-  if (left < right) {
-    return -1;
-  }
-  if (left > right) {
-    return 1;
-  }
-  return 0;
-};
 
 export const getFieldContributions = (
   properties: AssetFileDocument["properties"]
@@ -82,7 +73,7 @@ export const getFieldContributions = (
     if (value !== null && typeof value === "object") {
       for (const key of Object.keys(value).sort()) {
         add(
-          appendFieldPath(path, key),
+          appendAssetFieldPath(path, key),
           (value as Record<string, unknown>)[key]
         );
       }
@@ -90,7 +81,7 @@ export const getFieldContributions = (
   };
 
   for (const key of Object.keys(properties).sort()) {
-    add(appendFieldPath("properties", key), properties[key]);
+    add(appendAssetFieldPath("properties", key), properties[key]);
   }
   return Array.from(contributions.values()).sort(
     (left, right) =>

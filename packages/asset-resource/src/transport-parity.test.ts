@@ -51,7 +51,7 @@ describe("Builder and generated resource transport parity", () => {
 
     expect(builderFetch.mock.calls).toEqual(generatedFetch.mock.calls);
     expect(builderFetch).toHaveBeenCalledWith(
-      "https://site.example/$resources/assets/query",
+      "/$resources/assets/query",
       expect.objectContaining({
         method: "post",
         headers: new Headers([["content-type", "application/json"]]),

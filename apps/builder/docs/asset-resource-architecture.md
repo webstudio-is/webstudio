@@ -84,13 +84,13 @@ only when their corresponding UI needs them. Opening the editor may fetch the
 compact field catalog and one resource's index status; neither response
 contains Markdown bodies or public storage URLs.
 
-The authenticated field-catalog and preview APIs read persisted
-`AssetFileMetadata` rows. The status API reads one
-`AssetResourceIndexState` row. None of these request paths invokes canonical
-metadata backfill, synchronization, recovery, rebuild, or an asset-storage
-reader. Full or partial file bytes are available only through the explicit
-post-selection hydration contract, never through Builder startup or editor
-initialization.
+The authenticated field-catalog and preview APIs first synchronize canonical
+metadata, then read persisted `AssetFileMetadata` rows. Synchronization reuses
+unchanged rows and reads a bounded prefix only for new, changed, or inconsistent
+Markdown assets. The status API reads one `AssetResourceIndexState` row and does
+not read private index objects. Neither the catalog nor status response contains
+file bodies. Preview reads full or partial bytes only when its explicit
+post-selection hydration option requests them.
 
 The browser has no direct credentials for private index objects in R2. The
 Builder resource bridge supplies the outer authenticated request context while
@@ -202,12 +202,11 @@ Every saved resource query is parsed before indexing. The parsed GROQ tree,
 rather than string matching, determines whether it references runtime
 parameters.
 
-A **static query** has no parameter nodes. The index build evaluates it against
-the matching canonical asset revision, validates its limits and JSON result,
-and stores the materialized result plus the selected hydration identities. At
-runtime the pinned result is returned without evaluating GROQ again. Changing
-the query, publication policy, relevant asset metadata, or selected file
-revision invalidates that materialization.
+A **static query** has no parameter nodes. Like a parameterized query, its index
+stores a deterministic candidate dataset and the validated query. The runtime
+evaluates GROQ against that pinned dataset, then applies the result limit and
+hydrates selected files. `queryMode` records whether parameters are required;
+it does not select a separate materialized-result format in V1.
 
 A **parameterized query** contains at least one `$parameter`. Its index stores a
 deterministically ordered candidate dataset and the validated query needed for
@@ -232,16 +231,16 @@ final runtime evaluation:
 
 Index construction accepts only persisted `CanonicalAssetFileEntry` values.
 It derives the asset revision and candidate documents from those entries and
-rejects a caller-provided revision that does not match that exact entry set. It
-has no asset-storage reader, so creating or changing a resource query cannot
-reopen Markdown files. Content is read only by the separate post-selection
-hydration path.
+rejects a caller-provided revision that does not match that exact entry set.
+Resource synchronization may first read bounded prefixes for canonical rows
+that are new, changed, or in need of recovery; after that synchronization, the
+pure index builder uses only persisted lightweight documents. Complete content
+is read only by the separate post-selection hydration path.
 
-The query hash is SHA-256 over the index-format version, exact UTF-8 query, and
-static resource options that affect candidates or results. Runtime parameter
-values and request-specific lower limits are not part of the query hash. The
-immutable index revision identifies the resource ID, query hash, canonical
-asset revision, and index checksum.
+The query hash is SHA-256 over the exact UTF-8 query. Runtime parameter values
+and request-specific limits are not part of it. The immutable index checksum
+covers the complete versioned artifact, including the resource ID, query hash,
+canonical asset revision, candidate documents, and format version.
 
 An active revision is usable only when all four values agree:
 
@@ -251,19 +250,27 @@ An active revision is usable only when all four values agree:
 4. The stored bytes match the index checksum.
 
 Building a replacement never mutates the active revision. Validation and any
-static evaluation finish first; activation is one atomic reference change. A
-unique attempt ID guards activation, failure, and cancellation, so concurrent
+static evaluation finish first. The build transaction pre-registers or renews
+the content-addressed revision with a 24-hour unreferenced lease before
+uploading the immutable object, so garbage collection cannot race a reused
+object and a crash between upload and activation remains discoverable.
+Activation is one atomic reference change. A unique
+attempt ID guards activation, failure, and cancellation, so concurrent
 builds with the same query and asset revisions cannot complete each other's
 state transitions. A
 failed or superseded build leaves the previous valid revision active but marks
 the resource stale until a matching revision can be activated. Publication
-cannot proceed while it is stale.
+never consumes a stale revision: it first reconciles the current query against
+the publication snapshot, or builds a historical query snapshot in memory.
 
 Private index artifacts use a dedicated S3-compatible R2 store. The adapter
 writes with `If-None-Match: *`, records the index checksum as object metadata,
 and verifies that checksum with `HEAD` when an idempotent write finds an
 existing object. It sets no public ACL and must use a bucket with no public
-object access, separate from public asset-delivery storage.
+object access, separate from public asset-delivery storage. Builder configures
+that bucket with `S3_RESOURCE_INDEX_BUCKET`; query-index operations fail closed
+when remote asset storage is enabled without it. Filesystem development stores
+indexes below `private/asset-resource-indexes`, outside the public asset tree.
 
 V1 does not deduplicate index objects across resources: `resourceId` is part of
 both object identity and the revision primary key. Cleanup therefore never
@@ -273,9 +280,11 @@ snapshot. Published deployments contain their own static copy and no longer
 depend on the private object. After activation, query deletion, and snapshot
 release, best-effort cleanup runs once per mutation or publication batch,
 claims unreferenced revisions, deletes their private objects, and then removes
-their database rows. Garbage claims are 15-minute
-leases. A later cleanup worker rotates and resumes an expired claim, so a crash
-before or after object deletion cannot permanently strand the revision row.
+their database rows. Temporary `BUILD` references stop protecting revisions
+after 24 hours, so a failed release cannot retain an object forever. Garbage
+claims are 15-minute leases. A later
+cleanup worker rotates and resumes an expired claim, so a crash before or after
+object deletion cannot permanently strand the revision row.
 
 ## Schemaless frontmatter and publication
 
@@ -457,9 +466,10 @@ resource definition call different endpoints from `/` and `/blog/post`.
 Generated route templates pass the normalized public request URL. Builder
 preview passes the source origin decoded from the project Builder URL rather
 than the internal `/rest/resources-loader` URL or project subdomain. Absolute
-URLs remain unchanged. Local `/$resources/*` detection accepts either relative
-or resolved absolute URLs, so system resources continue to dispatch internally
-in both environments.
+URLs remain unchanged. Local `/$resources/*` URLs remain relative through the
+transport so generated adapters can distinguish them from an identical path on
+an external origin. Generated dynamic adapters also require the request origin
+to match the deployment origin before dispatching a local asset query.
 
 `createAssetResourceRequest` adapts the typed query contract to the existing
 resource transport. It produces `POST /$resources/assets/query`, marks it as a
@@ -476,11 +486,11 @@ entry shadowing the other. Requests without an identity remain compatible when
 the published manifest contains only one matching query.
 
 Both cache layers hash the complete normalized POST body. Builder
-`getResourceKey` and generated-runtime `getResourceCacheKey` have collision
-tests that independently vary the GROQ query, runtime parameters, pinned index
-revision, and content options. Cache-control remains part of the generated
-Cache API key, while the request method prevents a POST query from colliding
-with a legacy GET resource at the same URL.
+`getResourceKey` and the published-runtime cache key have collision tests that
+independently vary the GROQ query, runtime parameters, pinned index revision,
+and content options. Published keys additionally include deployment, resource,
+and immutable index revision identity. The published adapter handles only POST
+asset-query requests, so they cannot collide with the legacy GET resource.
 
 Resource loading accepts an optional `AbortSignal` and timeout. Either aborts
 the underlying fetch and always removes its listener and timer. Caller
@@ -655,22 +665,22 @@ frontmatter and does not add 1,000 source files to the repository.
 
 Baseline captured on 2026-07-18 with Node 22.22.1 on Darwin:
 
-| Measurement                                                 |                                    Result |
-| ----------------------------------------------------------- | ----------------------------------------: |
-| Initial frontmatter backfill                                |                   282.890 ms, 1,000 reads |
-| One-file metadata plus index update                         | 33.634 ms, 1 read and 999 unchanged reads |
-| Query index cold build                                      |                                 59.920 ms |
-| Warm rebuild median / p95                                   |                        32.816 / 35.148 ms |
-| Changed-query rebuild median / p95                          |                        32.444 / 32.706 ms |
-| Public candidates                                           |                                       900 |
-| Index JSON / gzip                                           |                    433,249 / 31,485 bytes |
-| Cold JSON parse plus integrity verification median / p95    |                        16.752 / 22.900 ms |
-| Runtime minified / gzip bundle                              |                   449,344 / 102,176 bytes |
-| Warm listing median / p95                                   |                          4.258 / 4.871 ms |
-| `$slug` selection plus complete-file hydration median / p95 |                          1.111 / 1.575 ms |
-| Estimated parsed-index heap per copy                        |                             569,809 bytes |
-| Published static files                                      |                    900 Markdown + 1 index |
-| Generated TypeScript index bytes                            |                                         0 |
+| Measurement                                                 |                                            Result |
+| ----------------------------------------------------------- | ------------------------------------------------: |
+| Initial frontmatter backfill                                |                           282.890 ms, 1,000 reads |
+| One-file metadata plus index update                         | 33.634 ms, 1 read and 999 unchanged files skipped |
+| Query index cold build                                      |                                         59.920 ms |
+| Warm rebuild median / p95                                   |                                32.816 / 35.148 ms |
+| Changed-query rebuild median / p95                          |                                32.444 / 32.706 ms |
+| Public candidates                                           |                                               900 |
+| Index JSON / gzip                                           |                            433,249 / 31,485 bytes |
+| Cold JSON parse plus integrity verification median / p95    |                                16.752 / 22.900 ms |
+| Runtime minified / gzip bundle                              |                           449,344 / 102,176 bytes |
+| Warm listing median / p95                                   |                                  4.258 / 4.871 ms |
+| `$slug` selection plus complete-file hydration median / p95 |                                  1.111 / 1.575 ms |
+| Estimated parsed-index heap per copy                        |                                     569,809 bytes |
+| Published static files                                      |                            900 Markdown + 1 index |
+| Generated TypeScript index bytes                            |                                                 0 |
 
 Storage-operation timings in this local benchmark cover serialization,
 integrity checks, and store calls with an in-memory immutable-store adapter;
@@ -680,7 +690,7 @@ baselines for this machine, not universal latency guarantees.
 
 ## Operations and rollout
 
-Operational metrics are defined by `AssetResourceOperationalMetrics`:
+Before production rollout, the hosting telemetry adapter must expose:
 
 - Active, indexing, failed, and stale index counts.
 - Oldest stale-index age.
@@ -688,11 +698,12 @@ Operational metrics are defined by `AssetResourceOperationalMetrics`:
 - Orphaned immutable objects.
 - Garbage-collection failures.
 
-Alerts fire for any failed build, oversized attempt, orphan, or GC failure, and
-when an index remains stale for more than 15 minutes. Build duration, immutable
-store latency, index bytes, query latency, hydration bytes, and cache hit rate
-should additionally be emitted as tagged histograms/counters by the hosting
-telemetry adapter using project-safe identifiers.
+Configure alerts for any failed build, oversized attempt, orphan, or GC failure,
+and when an index remains stale for more than 15 minutes. The adapter must also
+emit build duration, immutable-store latency, index bytes, query latency,
+hydration bytes, and cache hit rate as tagged histograms or counters using
+project-safe identifiers. This instrumentation is a rollout requirement, not
+part of the asset-resource package itself.
 
 `assetResource` defaults to disabled. Keep rollout experimental until production
 canaries confirm the 1,000-file memory, CPU, publish-time, static-file-count,

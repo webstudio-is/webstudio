@@ -31,6 +31,13 @@ BEGIN
         WHERE reference."projectId" = candidate."projectId"
           AND reference."resourceId" = candidate."resourceId"
           AND reference.revision = candidate.revision
+          -- BUILD references protect only an in-flight snapshot operation.
+          -- Expiring abandoned references prevents a failed cleanup request
+          -- from retaining an immutable object forever.
+          AND (
+            reference.type <> 'BUILD'
+            OR reference."createdAt" > CURRENT_TIMESTAMP - INTERVAL '24 hours'
+          )
       )
       AND NOT EXISTS (
         SELECT 1 FROM public."AssetResourceIndexState" AS state
@@ -73,6 +80,10 @@ BEGIN
       WHERE reference."projectId" = candidate."projectId"
         AND reference."resourceId" = candidate."resourceId"
         AND reference.revision = candidate.revision
+        AND (
+          reference.type <> 'BUILD'
+          OR reference."createdAt" > CURRENT_TIMESTAMP - INTERVAL '24 hours'
+        )
     )
     AND NOT EXISTS (
       SELECT 1 FROM public."AssetResourceIndexState" AS state

@@ -42,8 +42,18 @@ describe("resource index build and activation", () => {
           p_query: `*[properties.slug == $slug]`,
           p_query_hash: expect.stringMatching(/^sha256:/),
           p_asset_revision: expect.stringMatching(/^sha256:/),
+          p_revision: expect.stringMatching(/^sha256:/),
+          p_checksum: expect.stringMatching(/^sha256:/),
+          p_object_key: expect.stringContaining(
+            "projects/project-1/resources/posts"
+          ),
+          p_metadata_snapshot: [
+            { assetId: "post-1", metadataToken: "metadata-token-1" },
+          ],
+          p_build_id: "build-1",
+          p_resources: "[]",
         });
-        return json(null);
+        return json(true);
       }),
       db.post("rpc/activate_asset_resource_index", async ({ request }) => {
         events.push("activate");
@@ -72,6 +82,10 @@ describe("resource index build and activation", () => {
       resourceId: "posts",
       query: `*[properties.slug == $slug]`,
       entries: [entry],
+      metadataSnapshot: [
+        { assetId: "post-1", metadataToken: "metadata-token-1" },
+      ],
+      source: { buildId: "build-1", resources: "[]" },
     });
 
     expect(events).toEqual(["begin", "persist", "activate"]);
@@ -80,7 +94,7 @@ describe("resource index build and activation", () => {
 
   test("reports a superseded build when compare-and-swap activation loses", async () => {
     server.use(
-      db.post("rpc/begin_asset_resource_index_build", () => json(null)),
+      db.post("rpc/begin_asset_resource_index_build", () => json(true)),
       db.post("rpc/activate_asset_resource_index", () => json(false)),
       db.post("rpc/fail_asset_resource_index_build", () => json(false))
     );
@@ -97,8 +111,33 @@ describe("resource index build and activation", () => {
         resourceId: "posts",
         query: "*[]",
         entries: [entry],
+        metadataSnapshot: [],
       })
     ).rejects.toBeInstanceOf(AssetResourceIndexBuildSupersededError);
+  });
+
+  test("does not persist when its source snapshot is already superseded", async () => {
+    const putIfAbsent = vi.fn();
+    const activate = vi.fn();
+    server.use(
+      db.post("rpc/begin_asset_resource_index_build", () => json(false)),
+      db.post("rpc/activate_asset_resource_index", activate)
+    );
+
+    await expect(
+      buildPersistAndActivateAssetResourceIndex({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent },
+        projectId: "project-1",
+        resourceId: "posts",
+        query: "*[]",
+        entries: [entry],
+        metadataSnapshot: [],
+      })
+    ).rejects.toBeInstanceOf(AssetResourceIndexBuildSupersededError);
+
+    expect(putIfAbsent).not.toHaveBeenCalled();
+    expect(activate).not.toHaveBeenCalled();
   });
 
   test("uses a unique identity for each otherwise identical build attempt", async () => {
@@ -110,7 +149,7 @@ describe("resource index build and activation", () => {
           p_build_attempt_id: string;
         };
         begun.push(body.p_build_attempt_id);
-        return json(null);
+        return json(true);
       }),
       db.post("rpc/activate_asset_resource_index", async ({ request }) => {
         const body = (await request.json()) as {
@@ -132,6 +171,7 @@ describe("resource index build and activation", () => {
       resourceId: "posts",
       query: "*[]",
       entries: [entry],
+      metadataSnapshot: [],
     };
 
     await buildPersistAndActivateAssetResourceIndex(input);
@@ -145,7 +185,7 @@ describe("resource index build and activation", () => {
   test("marks a current failed attempt without trying to activate it", async () => {
     const activate = vi.fn();
     server.use(
-      db.post("rpc/begin_asset_resource_index_build", () => json(null)),
+      db.post("rpc/begin_asset_resource_index_build", () => json(true)),
       db.post("rpc/activate_asset_resource_index", activate),
       db.post("rpc/fail_asset_resource_index_build", async ({ request }) => {
         expect(await request.json()).toMatchObject({
@@ -171,23 +211,26 @@ describe("resource index build and activation", () => {
         resourceId: "posts",
         query: "*[]",
         entries: [entry],
+        metadataSnapshot: [],
       })
     ).rejects.toThrow("Storage unavailable");
     expect(activate).not.toHaveBeenCalled();
   });
 
-  test("marks an in-flight cancelled build stale and never activates it", async () => {
+  test("marks an in-flight cancelled build stale without deleting its potentially shared object", async () => {
     const controller = new AbortController();
     const activate = vi.fn();
+    const deleteObject = vi.fn(async () => "deleted" as const);
     let releaseStorage: (() => void) | undefined;
     server.use(
-      db.post("rpc/begin_asset_resource_index_build", () => json(null)),
+      db.post("rpc/begin_asset_resource_index_build", () => json(true)),
       db.post("rpc/activate_asset_resource_index", activate),
       db.post("rpc/cancel_asset_resource_index_build", () => json(true))
     );
     const build = buildPersistAndActivateAssetResourceIndex({
       client: testContext.postgrest.client,
       store: {
+        delete: deleteObject,
         putIfAbsent: async ({ checksum }) => {
           await new Promise<void>((resolve) => {
             releaseStorage = resolve;
@@ -199,6 +242,7 @@ describe("resource index build and activation", () => {
       resourceId: "posts",
       query: "*[]",
       entries: [entry],
+      metadataSnapshot: [],
       signal: controller.signal,
     });
     await vi.waitFor(() => expect(releaseStorage).toBeTypeOf("function"));
@@ -209,6 +253,7 @@ describe("resource index build and activation", () => {
       AssetResourceIndexBuildCancelledError
     );
     expect(activate).not.toHaveBeenCalled();
+    expect(deleteObject).not.toHaveBeenCalled();
   });
 
   test("rejects an invalid query before build state or storage changes", async () => {
@@ -221,6 +266,7 @@ describe("resource index build and activation", () => {
         resourceId: "posts",
         query: "*[invalid ==",
         entries: [entry],
+        metadataSnapshot: [],
       })
     ).rejects.toMatchObject({ code: "INVALID_QUERY" });
     expect(putIfAbsent).not.toHaveBeenCalled();

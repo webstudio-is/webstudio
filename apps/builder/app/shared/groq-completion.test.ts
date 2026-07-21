@@ -82,6 +82,60 @@ describe("GROQ completion", () => {
     );
   });
 
+  test.each([
+    "*[properties[",
+    '*[properties["seo',
+    '*[properties["seo-title"]',
+  ])("replaces an incomplete bracket path from its root in %s", async (doc) => {
+    const result = await complete(
+      createGroqCompletionSource({
+        catalog: {
+          format: "webstudio-builder-asset-field-catalog",
+          version: 1,
+          canonicalRevision: `sha256:${"2".repeat(64)}`,
+          documentCount: 1,
+          fields: {
+            'properties["seo-title"]': {
+              types: ["string"],
+              occurrences: 1,
+            },
+          },
+        },
+      }),
+      doc
+    );
+    expect(result?.from).toBe(doc.indexOf("properties"));
+    expect(result?.options).toContainEqual(
+      expect.objectContaining({ label: 'properties["seo-title"]' })
+    );
+    expect(result?.options.map(({ label }) => label)).not.toContain("match");
+  });
+
+  test("completes nested array traversal paths", async () => {
+    const doc = "*[properties.authors[].";
+    const result = await complete(
+      createGroqCompletionSource({
+        catalog: {
+          format: "webstudio-builder-asset-field-catalog",
+          version: 1,
+          canonicalRevision: `sha256:${"3".repeat(64)}`,
+          documentCount: 1,
+          fields: {
+            "properties.authors[].name": {
+              types: ["string"],
+              occurrences: 1,
+            },
+          },
+        },
+      }),
+      doc
+    );
+    expect(result?.from).toBe(doc.indexOf("properties"));
+    expect(result?.options).toContainEqual(
+      expect.objectContaining({ label: "properties.authors[].name" })
+    );
+  });
+
   test("displays observed types, optionality, and mixed-type warnings", async () => {
     const result = await complete(
       createGroqCompletionSource({
@@ -114,6 +168,9 @@ describe("GROQ completion", () => {
   test("uses the syntax tree to avoid suggestions inside strings", async () => {
     const source = createGroqCompletionSource();
     await expect(complete(source, '*[name == "partial')).resolves.toBeNull();
+    await expect(
+      complete(source, `*[name == 'properties["partial`)
+    ).resolves.toBeNull();
 
     const filterResult = await complete(source, "*[name == ");
     expect(filterResult?.options.map(({ label }) => label)).toContain("match");

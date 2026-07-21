@@ -31,7 +31,7 @@ import {
   AssetResourceHydrationError,
   AssetResourceQueryExecutionError,
   AssetResourceQueryValidationError,
-  getAssetResourceReferencedFieldPaths,
+  getAssetResourceReferencedFieldPathsFromTree,
   validateAssetResourceQuery,
 } from "@webstudio-is/asset-resource";
 import {
@@ -89,7 +89,10 @@ import {
   executeApiRuntimeMutation,
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
-import { createAssetClient } from "../shared/asset-client";
+import {
+  createAssetClient,
+  createAssetClientWithResourceIndexStore,
+} from "../shared/asset-client";
 
 const assertApiPublishDomains = ({
   auth,
@@ -741,8 +744,8 @@ export const apiRouter = router({
             valid: true as const,
             queryMode: validated.queryMode,
             parameterNames: validated.parameterNames,
-            referencedFieldPaths: getAssetResourceReferencedFieldPaths(
-              input.query
+            referencedFieldPaths: getAssetResourceReferencedFieldPathsFromTree(
+              validated.tree
             ),
             astNodes: validated.astNodes,
             astDepth: validated.astDepth,
@@ -831,12 +834,17 @@ export const apiRouter = router({
           if (query === undefined) {
             throw new AssetResourceIndexNotFoundError();
           }
+          const assetClient = createAssetClientWithResourceIndexStore();
           const result = await rebuildAssetResourceIndex({
             client: ctx.postgrest.client,
-            store: createAssetClient().resourceIndexStore,
+            assetClient,
             projectId: input.projectId,
             resourceId: input.resourceId,
             query,
+            source: {
+              buildId: build.id,
+              resources: JSON.stringify(build.resources),
+            },
           });
           const status = await loadAssetResourceIndexStatus({
             projectId: input.projectId,
