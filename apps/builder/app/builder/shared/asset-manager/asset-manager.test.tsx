@@ -699,6 +699,27 @@ describe("Asset Manager shortcuts", () => {
     });
   });
 
+  test("selects all rendered assets and folders with Command or Control + A", () => {
+    const asset = createAsset("asset");
+    act(() => $assets.set(new Map([[asset.id, asset]])));
+    const container = renderManager();
+    const options = getOptions(container);
+    const folderButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Folder Alpha"]'
+    )!;
+    const folderOption = folderButton.closest<HTMLElement>('[role="option"]')!;
+
+    keyDown(options[0]!.button, "a", { metaKey: true });
+    expect(
+      [folderOption, ...options.map(({ option }) => option)].map((item) =>
+        item.getAttribute("aria-selected")
+      )
+    ).toEqual(["true", "true", "true", "true", "true"]);
+
+    keyDown(options[0]!.button, "a", { ctrlKey: true });
+    expect(document.body.textContent).toContain("4 items selected.");
+  });
+
   test("applies copy and duplicate shortcuts to the complete multiselection", () => {
     const asset = createAsset("asset");
     act(() => $assets.set(new Map([[asset.id, asset]])));

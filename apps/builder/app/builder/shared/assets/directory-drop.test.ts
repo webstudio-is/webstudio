@@ -83,6 +83,19 @@ test("falls back to regular files when directory entries are unavailable", async
   });
 });
 
+test("ignores directory items when getAsFile throws NotFoundError", async () => {
+  const item = {
+    getAsFile: () => {
+      throw new DOMException("directory", "NotFoundError");
+    },
+  } as unknown as DataTransferItem;
+
+  await expect(readDroppedAssetItems([item])).resolves.toEqual({
+    files: [],
+    directories: [],
+  });
+});
+
 test("creates every folder before returning files grouped by destination", async () => {
   const readme = new File(["readme"], "readme.md");
   const logo = new File(["logo"], "logo.svg");

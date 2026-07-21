@@ -48,6 +48,10 @@ export const startAssetManagerMarquee = ({
   const scrollViewport = listbox.closest<HTMLElement>(
     "[data-asset-manager-scroll-area]"
   );
+  const initialScroll = {
+    left: scrollViewport?.scrollLeft ?? 0,
+    top: scrollViewport?.scrollTop ?? 0,
+  };
   const getBounds = () =>
     scrollViewport?.getBoundingClientRect() ?? panel.getBoundingClientRect();
 
@@ -100,7 +104,18 @@ export const startAssetManagerMarquee = ({
       x: Math.min(Math.max(event.clientX, bounds.left), bounds.right),
       y: Math.min(Math.max(event.clientY, bounds.top), bounds.bottom),
     };
-    const selectionRect = createAssetManagerSelectionRect(start, end);
+    const scrollDelta = {
+      left:
+        (scrollViewport?.scrollLeft ?? initialScroll.left) - initialScroll.left,
+      top: (scrollViewport?.scrollTop ?? initialScroll.top) - initialScroll.top,
+    };
+    const selectionRect = createAssetManagerSelectionRect(
+      {
+        x: start.x - scrollDelta.left,
+        y: start.y - scrollDelta.top,
+      },
+      end
+    );
     const intersectingItems = items.filter((item) => {
       const element = getItemElement(item);
       return (

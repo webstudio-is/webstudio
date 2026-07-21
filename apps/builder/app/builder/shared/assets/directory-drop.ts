@@ -21,6 +21,17 @@ const getEntry = (item: DataTransferItem) => {
 const readFileEntry = (entry: FileSystemFileEntry) =>
   new Promise<File>((resolve, reject) => entry.file(resolve, reject));
 
+const getDroppedFile = (item: DataTransferItem) => {
+  try {
+    return item.getAsFile();
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "NotFoundError") {
+      return null;
+    }
+    throw error;
+  }
+};
+
 const readDirectoryEntries = async (entry: FileSystemDirectoryEntry) => {
   const reader = entry.createReader();
   const entries: FileSystemEntry[] = [];
@@ -73,7 +84,7 @@ export const readDroppedAssetItems = async (
       files.push(await readFileEntry(entry as FileSystemFileEntry));
       continue;
     }
-    const file = item.getAsFile();
+    const file = getDroppedFile(item);
     if (file !== null) {
       files.push(file);
     }

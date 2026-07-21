@@ -727,13 +727,32 @@ export const AssetManager = ({
       event.altKey === false &&
       event.shiftKey === false &&
       ["backspace", "delete"].includes(key);
-    if (isItemCommand === false && isDeleteCommand === false) {
+    const isSelectAllCommand =
+      hasCommandModifier &&
+      event.altKey === false &&
+      event.shiftKey === false &&
+      key === "a";
+    if (
+      isItemCommand === false &&
+      isDeleteCommand === false &&
+      isSelectAllCommand === false
+    ) {
       return;
     }
     event.preventDefault();
     event.stopPropagation();
 
-    if (key === "c" && shortcutItems.length > 0) {
+    if (isSelectAllCommand) {
+      const renderedItems = navigableItems.filter((item) =>
+        itemElements.current.has(getAssetManagerSelectionKey(item))
+      );
+      if (renderedItems.length > 0) {
+        setForcedSelection(renderedItems);
+        setSelectionAnchor(renderedItems[0]);
+        setSelection(renderedItems[0]);
+        announceSelection(renderedItems);
+      }
+    } else if (key === "c" && shortcutItems.length > 0) {
       copyItems(shortcutItems);
     } else if (key === "x" && shortcutItems.length > 0) {
       cutItems(shortcutItems);
