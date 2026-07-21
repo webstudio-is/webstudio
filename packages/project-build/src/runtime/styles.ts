@@ -3,7 +3,9 @@ import { nanoid } from "nanoid";
 import deepEqual from "fast-deep-equal";
 import {
   camelCaseProperty,
+  parseCss,
   parseCssValue,
+  shorthandProperties,
   validateSelector,
 } from "@webstudio-is/css-data";
 import {
@@ -1827,7 +1829,7 @@ export const createStyleDecl = ({
     listed,
   });
 
-export const createStyleDeclFromInput = ({
+export const createStyleDeclsFromInput = ({
   styleSourceId,
   property,
   value,
@@ -1841,15 +1843,50 @@ export const createStyleDeclFromInput = ({
   breakpoint?: string;
   state?: StyleDecl["state"];
   listed?: StyleDecl["listed"];
-}): StyleDecl =>
-  createStyleDecl({
-    styleSourceId,
-    breakpointId: breakpoint,
-    state,
-    property,
-    value,
-    listed,
-  });
+}): StyleDecl[] => {
+  const createStyleDeclWithInput = (property: unknown, value: unknown) =>
+    createStyleDecl({
+      styleSourceId,
+      breakpointId: breakpoint,
+      property,
+      value,
+      state,
+      listed,
+    });
+  const normalizedProperty = normalizeStyleProperty(property);
+  const cssProperty = hyphenateProperty(String(normalizedProperty));
+  if (
+    shorthandProperties.includes(
+      cssProperty as (typeof shorthandProperties)[number]
+    ) === false
+  ) {
+    return [createStyleDeclWithInput(property, value)];
+  }
+
+  const parsedValue = styleValue.safeParse(value);
+  if (parsedValue.success === false) {
+    return [createStyleDeclWithInput(property, value)];
+  }
+  const parsed = parseCss(
+    `.styles{${cssProperty}:${toValue(parsedValue.data)}}`,
+    new Map()
+  );
+  if (
+    parsed.errors.length > 0 ||
+    parsed.styles.length === 0 ||
+    parsed.styles.some(({ value: parsedStyleValue }) =>
+      ["invalid", "guaranteedInvalid"].includes(parsedStyleValue.type)
+    )
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      `Invalid value for shorthand CSS property "${cssProperty}"`
+    );
+  }
+  return parsed.styles.map((style) =>
+    createStyleDeclWithInput(style.property, style.value)
+  );
+};
 
 export const getStyleDeclKeyFromInput = ({
   styleSourceId,
@@ -2609,18 +2646,19 @@ export const createDesignTokenCreatePayload = ({
       value: styleSource,
     });
     for (const declaration of createDesignTokenStyleInputs(token)) {
-      const style = createStyleDeclFromInput({
+      for (const style of createStyleDeclsFromInput({
         styleSourceId: tokenId,
         breakpoint: declaration.breakpoint,
         property: declaration.property,
         value: declaration.value,
         state: declaration.state,
-      });
-      stylePatches.push({
-        op: "add" as const,
-        path: [getStyleDeclKey(style)],
-        value: style,
-      });
+      })) {
+        stylePatches.push({
+          op: "add" as const,
+          path: [getStyleDeclKey(style)],
+          value: style,
+        });
+      }
     }
   }
 
@@ -2655,23 +2693,24 @@ export const createDesignTokenStyleUpdatePayload = ({
   const styleKeys = new Set(
     Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
   );
-  const patches = updates.map((update) => {
-    const style = createStyleDeclFromInput({
+  const patches = updates.flatMap((update) =>
+    createStyleDeclsFromInput({
       styleSourceId: designTokenId,
       breakpoint: update.breakpoint,
       property: update.property,
       value: update.value,
       state: update.state,
-    });
-    const key = getStyleDeclKey(style);
-    const patch = {
-      op: styleKeys.has(key) ? ("replace" as const) : ("add" as const),
-      path: [key],
-      value: style,
-    };
-    styleKeys.add(key);
-    return patch;
-  });
+    }).map((style) => {
+      const key = getStyleDeclKey(style);
+      const patch = {
+        op: styleKeys.has(key) ? ("replace" as const) : ("add" as const),
+        path: [key],
+        value: style,
+      };
+      styleKeys.add(key);
+      return patch;
+    })
+  );
 
   return {
     payload:
@@ -2869,20 +2908,21 @@ export const createStyleDeclarationUpdatePayload = ({
       continue;
     }
     payload.push(...result.payload);
-    const nextStyleDecl = createStyleDeclFromInput({
+    for (const nextStyleDecl of createStyleDeclsFromInput({
       styleSourceId: result.styleSourceId,
       breakpoint: update.breakpoint,
       property: update.property,
       value: update.value,
       state: update.state,
       listed: update.listed,
-    });
-    const key = getStyleDeclKey(nextStyleDecl);
-    stylePatches.set(key, {
-      op: existingStyleKeys.has(key) ? "replace" : "add",
-      path: [key],
-      value: nextStyleDecl,
-    });
+    })) {
+      const key = getStyleDeclKey(nextStyleDecl);
+      stylePatches.set(key, {
+        op: existingStyleKeys.has(key) ? "replace" : "add",
+        path: [key],
+        value: nextStyleDecl,
+      });
+    }
   }
 
   const patches = Array.from(stylePatches.values());
@@ -3028,23 +3068,24 @@ export const createSelectedStyleDeclarationUpdatePayload = ({
       ]);
     }
 
-    const styleDecl = createStyleDeclFromInput({
+    for (const styleDecl of createStyleDeclsFromInput({
       styleSourceId: update.styleSourceId,
       breakpoint: update.breakpoint,
       property: update.property,
       value: update.value,
       state: update.state,
       listed: update.listed,
-    });
-    const styleKey = getStyleDeclKey(styleDecl);
-    stylePatches.push({
-      op: existingStyleKeys.has(styleKey)
-        ? ("replace" as const)
-        : ("add" as const),
-      path: [styleKey],
-      value: styleDecl,
-    });
-    existingStyleKeys.add(styleKey);
+    })) {
+      const styleKey = getStyleDeclKey(styleDecl);
+      stylePatches.push({
+        op: existingStyleKeys.has(styleKey)
+          ? ("replace" as const)
+          : ("add" as const),
+        path: [styleKey],
+        value: styleDecl,
+      });
+      existingStyleKeys.add(styleKey);
+    }
   }
 
   if (styleSourcePatches.length > 0) {
