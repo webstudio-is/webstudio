@@ -50,7 +50,7 @@ export const ALLOWED_FILE_TYPES = {
 
   // Images
   // Note: Cloudflare Image Resizing supports: jpg, jpeg, png, gif, webp, svg, avif
-  // Other formats (bmp, ico, tif, tiff) are served as-is without optimization
+  // Other formats (bmp, ico) are served as-is without optimization
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
@@ -60,8 +60,6 @@ export const ALLOWED_FILE_TYPES = {
   avif: "image/avif",
   ico: "image/vnd.microsoft.icon", // Used for favicons
   bmp: "image/bmp", // Served without optimization
-  tif: "image/tiff", // Served without optimization
-  tiff: "image/tiff", // Served without optimization
 
   // Fonts
   woff: "font/woff",

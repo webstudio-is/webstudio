@@ -334,6 +334,8 @@ describe("allowed-file-types", () => {
       expect(detectAssetType("graphic.gif")).toBe("image");
       expect(detectAssetType("vector.svg")).toBe("image");
       expect(detectAssetType("picture.webp")).toBe("image");
+      expect(detectAssetType("picture.tif")).toBe("file");
+      expect(detectAssetType("picture.tiff")).toBe("file");
     });
 
     test("detects font files", () => {

@@ -914,6 +914,7 @@ export const AssetManager = ({
         }}
         onKeyDown={handleShortcut}
         autoScrollOnElementDrag={canManageFolders}
+        allowFolderDrop={canManageFolders}
         contextMenu={
           hasPanelContextMenuActions ? (
             <AssetManagerItemContextMenuContent
