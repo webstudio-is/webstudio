@@ -121,6 +121,22 @@ const deleteUploadingFileData = (id: UploadingFileData["assetId"]) => {
   );
 };
 
+const moveExistingAsset = (asset: Asset, folderId: string | undefined) => {
+  if (asset.folderId === folderId) {
+    return;
+  }
+  executeRuntimeMutation({
+    id: "assets.update",
+    input: {
+      assetId: asset.id,
+      values: { folderId: folderId ?? null },
+    },
+  });
+  onNextTransactionComplete(() => {
+    invalidateAssets();
+  });
+};
+
 const getUniqueFilesData = (
   filesData: UploadingFileData[],
   revokeObjectURL = URL.revokeObjectURL
@@ -399,6 +415,10 @@ const processUpload = async (
       const assetId = fileData.assetId;
 
       if ($assets.get().has(assetId)) {
+        const existingAsset = $assets.get().get(assetId);
+        if (existingAsset !== undefined) {
+          moveExistingAsset(existingAsset, fileData.folderId);
+        }
         toast.info("Asset already exists", {
           icon: <ToastImageInfo objectURL={fileData.objectURL} />,
         });
