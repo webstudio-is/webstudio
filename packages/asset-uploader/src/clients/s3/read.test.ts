@@ -38,6 +38,28 @@ describe("readFromS3", () => {
     expect(result.contentLength).toBe(4);
   });
 
+  test("preserves hierarchical index key separators", async () => {
+    const sign = vi.fn(async (request) => request);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("{}"))
+    );
+
+    await readFromS3({
+      signer: { sign } as unknown as SignatureV4,
+      name: "resource-indexes/projects/project%2Fone/index.json",
+      endpoint: "https://storage.example",
+      bucket: "assets",
+      keyType: "hierarchical",
+    });
+
+    expect(sign).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/assets/resource-indexes/projects/project%252Fone/index.json",
+      })
+    );
+  });
+
   test("rejects ignored ranges and invalid inputs", async () => {
     vi.stubGlobal(
       "fetch",

@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { isLiteralExpression, type StyleDecl } from "@webstudio-is/sdk";
+import {
+  isLiteralExpression,
+  isStoredAssetQueryResource,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
 import { ariaAttributes, ariaRoles } from "@webstudio-is/html-data";
@@ -1214,7 +1218,11 @@ export const analyzeProject = (
         continue;
       }
       const resource = state.resources.get(dataSource.resourceId);
-      if (resource === undefined || resource.method === "get") {
+      if (
+        resource === undefined ||
+        resource.method === "get" ||
+        isStoredAssetQueryResource(resource)
+      ) {
         continue;
       }
       matches.push({

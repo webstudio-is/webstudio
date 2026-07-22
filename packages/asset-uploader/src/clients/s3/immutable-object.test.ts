@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
 import type { SignatureV4 } from "@smithy/signature-v4";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   deleteImmutableObjectFromS3,
   putImmutableObjectToS3,
@@ -20,9 +20,12 @@ const createSigner = () => {
 };
 
 describe("immutable S3 object persistence", () => {
-  test("conditionally writes a private immutable object", async () => {
+  test("conditionally writes a private object under a hierarchical key", async () => {
     const { signer, sign } = createSigner();
-    const fetch = vi.fn(async () => new Response(null, { status: 200 }));
+    const fetch = vi.fn(
+      async (_input: string | URL | Request) =>
+        new Response(null, { status: 200 })
+    );
     vi.stubGlobal("fetch", fetch);
 
     await expect(
@@ -33,15 +36,38 @@ describe("immutable S3 object persistence", () => {
         object,
       })
     ).resolves.toEqual({ status: "created", checksum: object.checksum });
+    expect(fetch.mock.calls[0]?.[0].toString()).toBe(
+      `https://storage.example/private-indexes/${object.key}`
+    );
     expect(sign).toHaveBeenCalledWith(
       expect.objectContaining({
         method: "PUT",
+        path: `/private-indexes/${object.key}`,
         headers: expect.objectContaining({
           "If-None-Match": "*",
           "Cache-Control": "private, max-age=31536000, immutable",
           "x-amz-meta-webstudio-checksum": object.checksum,
         }),
       })
+    );
+  });
+
+  test("transport-encodes values without escaping structural separators", async () => {
+    const { signer, sign } = createSigner();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 200 }))
+    );
+
+    await putImmutableObjectToS3({
+      signer,
+      endpoint: "https://storage.example",
+      bucket: "private-indexes",
+      object: { ...object, key: "projects/project%2Fone/index.json" },
+    });
+
+    expect(sign.mock.calls[0]?.[0].path).toBe(
+      "/private-indexes/projects/project%252Fone/index.json"
     );
   });
 
@@ -69,6 +95,38 @@ describe("immutable S3 object persistence", () => {
     expect(sign).toHaveBeenLastCalledWith(
       expect.objectContaining({ method: "HEAD" })
     );
+  });
+
+  test("retries conditional-write races with a finite bound", async () => {
+    const { signer } = createSigner();
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 409 }))
+      .mockResolvedValueOnce(new Response(null, { status: 409 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(
+      putImmutableObjectToS3({
+        signer,
+        endpoint: "https://storage.example",
+        bucket: "private-indexes",
+        object,
+      })
+    ).resolves.toMatchObject({ status: "created" });
+    expect(fetch).toHaveBeenCalledTimes(3);
+
+    const failedFetch = vi.fn(async () => new Response(null, { status: 409 }));
+    vi.stubGlobal("fetch", failedFetch);
+    await expect(
+      putImmutableObjectToS3({
+        signer,
+        endpoint: "https://storage.example",
+        bucket: "private-indexes",
+        object,
+      })
+    ).rejects.toThrow("Cannot persist");
+    expect(failedFetch).toHaveBeenCalledTimes(3);
   });
 
   test("rejects storage errors and unverifiable existing objects", async () => {

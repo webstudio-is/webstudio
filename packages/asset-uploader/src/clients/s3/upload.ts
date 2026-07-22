@@ -7,8 +7,8 @@ import {
   getAssetData,
 } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
-import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
 import { getMimeTypeByFilename } from "@webstudio-is/sdk";
+import { createS3ObjectUrl } from "./object-url";
 
 export const uploadToS3 = async ({
   signer,
@@ -43,10 +43,12 @@ export const uploadToS3 = async ({
   // Also check if S3 client has an option to check the size limit
   const data = await arrayBuffer(limitSize(dataStream));
 
-  const url = new URL(
-    `/${bucket}/${extendedEncodeURIComponent(name)}`,
-    endpoint
-  );
+  const url = createS3ObjectUrl({
+    endpoint,
+    bucket,
+    key: name,
+    keyType: "flat",
+  });
 
   // Use proper MIME type based on file extension instead of generic type category
   const contentType = getMimeTypeByFilename(name);

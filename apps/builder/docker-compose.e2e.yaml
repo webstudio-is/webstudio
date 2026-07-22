@@ -1,4 +1,10 @@
 services:
   db:
+    image: webstudio-builder-e2e-postgres
+    build:
+      context: .
+      dockerfile: e2e/postgres.Dockerfile
     tmpfs:
       - /var/lib/postgresql/data
+    volumes:
+      - ./e2e/postgres-init.sh:/docker-entrypoint-initdb.d/10-supabase-extensions.sh:ro
