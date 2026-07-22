@@ -792,9 +792,9 @@ export const prebuild = async (options: {
     `
   );
 
-  // Generate assets resource file
-  // Assets use /cgi/ endpoints on both builder and published sites
-  // Use a placeholder origin for URL construction, result will be relative paths
+  // Generate assets resource file.
+  // Use a placeholder origin to preserve runtime metadata before overriding the
+  // builder-only URL with the generated project's local asset URL.
   const assetsById = Object.fromEntries(
     siteData.assets.map((asset) => [
       asset.id,
