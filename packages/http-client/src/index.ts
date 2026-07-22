@@ -726,6 +726,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     projectDomain,
     projectTitle,
     user,
+    assetResourceIndexes,
   } = normalizedProject;
   return {
     bundleVersion: currentBundleVersion,
@@ -737,6 +738,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     user,
     projectDomain,
     projectTitle,
+    assetResourceIndexes,
     origin,
   };
 };
