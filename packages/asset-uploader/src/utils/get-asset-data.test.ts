@@ -59,6 +59,6 @@ describe("asset data overrides", () => {
         },
         { meta: { familyName: "Poppins" } }
       )
-    ).toThrow("unsupported fields");
+    ).toThrow("metadata override is invalid");
   });
 });

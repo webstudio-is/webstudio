@@ -7,7 +7,8 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import {
   authenticatedPageFixture,
-  designInputFixture,
+  fontAssetsFixture,
+  highImpactFixtures,
   type HighImpactFixture,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
@@ -15,17 +16,21 @@ import { evaluateHighImpactOutcome } from "./validate";
 import { runHighImpactAgentEvaluation } from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
 import type { EvaluationToolCall } from "./validate";
+import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
+
+const fixtureById = new Map<string, HighImpactFixture>(
+  highImpactFixtures.map((fixture) => [fixture.id, fixture])
+);
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
 
 const run = async () => {
   const fixture: HighImpactFixture =
-    process.env.WEBSTUDIO_HIGH_IMPACT_FIXTURE === "design-input-v1"
-      ? designInputFixture
-      : authenticatedPageFixture;
+    fixtureById.get(process.env.WEBSTUDIO_HIGH_IMPACT_FIXTURE ?? "") ??
+    authenticatedPageFixture;
   const repositoryRoot = resolve(import.meta.dirname, "../../../..");
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
@@ -44,6 +49,9 @@ const run = async () => {
   const traceProxy = join(import.meta.dirname, "mcp-trace-proxy.ts");
   const fixtureApi = await startHighImpactFixtureApi(fixture);
   await mkdir(projectDirectory, { recursive: true });
+  if (fixture.id === fontAssetsFixture.id) {
+    await writeFontAssetFixtureFiles(projectDirectory);
+  }
   const env = { ...process.env, WEBSTUDIO_CONFIG_DIR: configDirectory };
   try {
     await execFileAsync(

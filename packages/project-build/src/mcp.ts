@@ -5023,6 +5023,24 @@ const metaGoalGuides = [
   },
   {
     pattern:
+      /(?:upload|import|add|update|manage).*\bfonts?\b|\bfonts?\b.*(?:upload|import|add|update|manage)|font\s+assets?/i,
+    tools: [
+      "list-fonts",
+      "list-assets",
+      "upload-asset",
+      "upload-assets",
+      "update-asset",
+      "refresh",
+      "get-asset",
+    ],
+    workflow: [
+      "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
+      "Use update-asset to correct font metadata without re-uploading the binary.",
+      'After font mutations, call refresh with {"namespaces":["assets"]}, then use get-asset for each changed id to verify the persisted metadata.',
+    ],
+  },
+  {
+    pattern:
       /(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception)/i,
     tools: [
       "list-pages",

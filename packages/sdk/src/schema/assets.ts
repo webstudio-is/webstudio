@@ -52,5 +52,27 @@ export type FileAsset = z.infer<typeof fileAsset>;
 export const asset = z.union([fontAsset, imageAsset, fileAsset]);
 export type Asset = z.infer<typeof asset>;
 
+const assetMetaSchemas = {
+  font: fontMeta,
+  image: imageMeta,
+  file: z.object({}),
+} as const satisfies Record<AssetType, z.ZodType>;
+
+export const mergeAssetMeta = (
+  type: AssetType,
+  current: object,
+  override: Record<string, unknown>
+): Asset["meta"] | undefined => {
+  const merged = { ...current, ...override };
+  const result = assetMetaSchemas[type].safeParse(merged);
+  if (
+    result.success === false ||
+    Object.keys(result.data).length !== Object.keys(merged).length
+  ) {
+    return;
+  }
+  return result.data;
+};
+
 export const assets = z.map(assetId, asset);
 export type Assets = z.infer<typeof assets>;

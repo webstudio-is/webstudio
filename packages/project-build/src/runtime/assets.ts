@@ -10,6 +10,7 @@ import {
   isAllowedMimeCategory,
   formatAssetName,
   getAssetDisplayNameParts,
+  mergeAssetMeta,
   parseAssetName,
   type Asset,
   type DataSource,
@@ -21,11 +22,9 @@ import {
   type Styles,
   assetType,
   fileAsset,
-  imageMeta,
   fontAsset,
   imageAsset,
 } from "@webstudio-is/sdk";
-import { fontMeta } from "@webstudio-is/fonts";
 import {
   appendOptionalPropertyPatch,
   type BuilderPatchChange,
@@ -677,42 +676,18 @@ export const updateAsset = (
 
   const patches: BuilderPatchChange["patches"] = [];
   if (input.values.meta !== undefined) {
-    const allowedMetaKeys = new Set(
-      asset.type === "font"
-        ? ["family", "style", "weight", "variationAxes"]
-        : asset.type === "image"
-          ? ["width", "height"]
-          : []
-    );
-    if (
-      Object.keys(input.values.meta).some(
-        (key) => allowedMetaKeys.has(key) === false
-      )
-    ) {
+    const meta = mergeAssetMeta(asset.type, asset.meta, input.values.meta);
+    if (meta === undefined) {
       return throwBuilderRuntimeError(
         "BAD_REQUEST",
         `Invalid metadata for ${asset.type} asset`
       );
     }
-    const parsedMeta =
-      asset.type === "font"
-        ? fontMeta.safeParse({ ...asset.meta, ...input.values.meta })
-        : asset.type === "image"
-          ? imageMeta.safeParse({ ...asset.meta, ...input.values.meta })
-          : Object.keys(input.values.meta).length === 0
-            ? { success: true as const, data: {} }
-            : { success: false as const };
-    if (parsedMeta.success === false) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        `Invalid metadata for ${asset.type} asset`
-      );
-    }
-    if (deepEqual(asset.meta, parsedMeta.data) === false) {
+    if (deepEqual(asset.meta, meta) === false) {
       patches.push({
         op: "replace",
         path: [asset.id, "meta"],
-        value: parsedMeta.data,
+        value: meta,
       });
     }
   }

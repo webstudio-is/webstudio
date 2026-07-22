@@ -1,3 +1,6 @@
+import type { Asset } from "@webstudio-is/sdk";
+import { fontAssetFixtureFiles } from "./font-assets-fixture";
+
 export type EvaluationPage = {
   id: string;
   name: string;
@@ -33,6 +36,7 @@ export type EvaluationStyle = {
 };
 
 export type EvaluationProject = {
+  assets: Asset[];
   pages: EvaluationPage[];
   instances: EvaluationInstance[];
   props: EvaluationProp[];
@@ -52,7 +56,7 @@ export type EvaluationProject = {
 };
 
 export type HighImpactFixture = {
-  id: "authenticated-page-v1" | "design-input-v1";
+  id: "authenticated-page-v1" | "design-input-v1" | "font-assets-v1";
   objective: string;
   project: EvaluationProject;
 };
@@ -65,6 +69,7 @@ const homePage: EvaluationPage = {
 };
 
 const emptyProject = (): EvaluationProject => ({
+  assets: [],
   pages: [homePage],
   instances: [
     {
@@ -199,9 +204,16 @@ export const designInputFixture: HighImpactFixture & {
   },
 };
 
+export const fontAssetsFixture: HighImpactFixture = {
+  id: "font-assets-v1",
+  objective: `Upload ${fontAssetFixtureFiles.map(({ name }) => name).join(" and ")} from .webstudio/assets as font assets, initially using family Imported Rajdhani, style normal, and weight 400. Then use update-asset on each uploaded asset to set family Rajdhani, style normal, and weight 600. Refresh the assets namespace and read both assets back to verify the saved metadata before finishing. Do not change the page.`,
+  project: emptyProject(),
+};
+
 export const highImpactFixtures = [
   authenticatedPageFixture,
   designInputFixture,
+  fontAssetsFixture,
 ] as const;
 
 export const validateHighImpactFixture = (fixture: HighImpactFixture) => {

@@ -78,6 +78,7 @@
     "@vercel/react-router": "^1.1.0",
     "@vitejs/plugin-react": "^4.4.1",
     "@webstudio-is/css-engine": "workspace:*",
+    "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
