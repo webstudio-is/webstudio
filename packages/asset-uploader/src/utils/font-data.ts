@@ -1,4 +1,4 @@
-import { create as createFontKit } from "fontkit";
+import { create as createFontKit, type Font } from "fontkit";
 import {
   fontWeights,
   FONT_STYLES,
@@ -75,6 +75,13 @@ const normalizeFamily = (
   return getFileNameParts(fileName).basename;
 };
 
+type FontNameSource = Pick<Font, "getName">;
+
+const getFontFamily = (font: FontNameSource) =>
+  font.getName("preferredFamily", defaultLanguage) ||
+  font.getName("fontFamily", defaultLanguage) ||
+  "";
+
 type FontDataStatic = {
   format: FontFormat;
   family: string;
@@ -94,7 +101,7 @@ export const getFontData = (data: Uint8Array, fileName: string): FontData => {
     throw Error(`Unsupported font type ${font.type}`);
   }
   const format = font.type.toLowerCase() as FontData["format"];
-  const originalFamily = font.getName("fontFamily", defaultLanguage) ?? "";
+  const originalFamily = getFontFamily(font);
   const subfamily =
     font.getName("preferredSubfamily", defaultLanguage) ??
     font.getName("fontSubfamily", defaultLanguage) ??
@@ -123,4 +130,5 @@ export const __testing__: {
     subfamily: string,
     fileName: string
   ) => string;
-} = { normalizeFamily };
+  getFontFamily: typeof getFontFamily;
+} = { normalizeFamily, getFontFamily };

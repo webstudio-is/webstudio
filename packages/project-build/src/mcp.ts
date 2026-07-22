@@ -1563,6 +1563,15 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "upload-asset": [
     {
       asset: {
+        name: "Rajdhani-SemiBold.woff2",
+        type: "font",
+        format: "woff2",
+        meta: { family: "Rajdhani", style: "normal", weight: 600 },
+      },
+      assetsDir: ".webstudio/assets",
+    },
+    {
+      asset: {
         name: "hero.png",
         type: "image",
         format: "png",
@@ -1864,6 +1873,10 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     },
   ],
   "update-asset": [
+    {
+      assetId: "font-asset-id",
+      values: { meta: { family: "Rajdhani", style: "normal", weight: 600 } },
+    },
     {
       assetId: "asset-id",
       values: { description: "Team collaborating around a whiteboard" },
@@ -5006,6 +5019,24 @@ const metaGoalGuides = [
       "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
       "After creating or changing authentication expressions, call verify-bindings for the account page and resolve every validity, scope, and reference finding before previewing.",
       "Preview and verify every auth state with non-secret fixture data, then audit the route. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.",
+    ],
+  },
+  {
+    pattern:
+      /(?:upload|import|add|update|manage).*\bfonts?\b|\bfonts?\b.*(?:upload|import|add|update|manage)|font\s+assets?/i,
+    tools: [
+      "list-fonts",
+      "list-assets",
+      "upload-asset",
+      "upload-assets",
+      "update-asset",
+      "refresh",
+      "get-asset",
+    ],
+    workflow: [
+      "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
+      "Use update-asset to correct font metadata without re-uploading the binary.",
+      'After font mutations, call refresh with {"namespaces":["assets"]}, then use get-asset for each changed id to verify the persisted metadata.',
     ],
   },
   {

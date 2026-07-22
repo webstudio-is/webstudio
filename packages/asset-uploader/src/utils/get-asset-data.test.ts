@@ -31,4 +31,34 @@ describe("asset data overrides", () => {
       )
     ).toThrow();
   });
+
+  test("keeps the detected format for fonts", () => {
+    expect(
+      applyAssetDataOverride(
+        {
+          size: 100,
+          format: "ttf",
+          meta: { family: "Rajdhani", style: "normal", weight: 600 },
+        },
+        { format: "woff2" }
+      )
+    ).toEqual({
+      size: 100,
+      format: "ttf",
+      meta: { family: "Rajdhani", style: "normal", weight: 600 },
+    });
+  });
+
+  test("rejects unsupported metadata overrides", () => {
+    expect(() =>
+      applyAssetDataOverride(
+        {
+          size: 100,
+          format: "ttf",
+          meta: { family: "Poppins", style: "normal", weight: 700 },
+        },
+        { meta: { familyName: "Poppins" } }
+      )
+    ).toThrow("metadata override is invalid");
+  });
 });

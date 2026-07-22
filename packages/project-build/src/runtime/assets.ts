@@ -10,6 +10,7 @@ import {
   isAllowedMimeCategory,
   formatAssetName,
   getAssetDisplayNameParts,
+  mergeAssetMeta,
   parseAssetName,
   type Asset,
   type DataSource,
@@ -101,6 +102,7 @@ export const assetUpdateInput = z.object({
         .optional(),
       description: z.union([z.string(), z.null()]).optional(),
       folderId: z.union([z.string().min(1), z.null()]).optional(),
+      meta: z.record(z.string(), z.unknown()).optional(),
     })
     .refine(
       (values) => Object.keys(values).length > 0,
@@ -673,6 +675,22 @@ export const updateAsset = (
   }
 
   const patches: BuilderPatchChange["patches"] = [];
+  if (input.values.meta !== undefined) {
+    const meta = mergeAssetMeta(asset.type, asset.meta, input.values.meta);
+    if (meta === undefined) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Invalid metadata for ${asset.type} asset`
+      );
+    }
+    if (deepEqual(asset.meta, meta) === false) {
+      patches.push({
+        op: "replace",
+        path: [asset.id, "meta"],
+        value: meta,
+      });
+    }
+  }
   if (input.values.filename !== undefined) {
     if (isValidFilename(input.values.filename) === false) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Invalid filename");

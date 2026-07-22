@@ -5,9 +5,11 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 import {
-  authenticatedPageFixture,
-  designInputFixture,
+  fontAssetsFixture,
+  highImpactFixtures,
   type HighImpactFixture,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
@@ -15,25 +17,40 @@ import { evaluateHighImpactOutcome } from "./validate";
 import { runHighImpactAgentEvaluation } from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
 import type { EvaluationToolCall } from "./validate";
+import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
 
+const fixtureById = new Map<string, HighImpactFixture>(
+  highImpactFixtures.map((fixture) => [fixture.id, fixture])
+);
+
 const shellQuote = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
 
-const run = async () => {
-  const fixture: HighImpactFixture =
-    process.env.WEBSTUDIO_HIGH_IMPACT_FIXTURE === "design-input-v1"
-      ? designInputFixture
-      : authenticatedPageFixture;
-  const repositoryRoot = resolve(import.meta.dirname, "../../../..");
+const selectFixtures = (fixtureId: string | undefined) => {
+  if (fixtureId === undefined) {
+    return highImpactFixtures;
+  }
+  const fixture = fixtureById.get(fixtureId);
+  if (fixture === undefined) {
+    throw new Error(`Unknown evaluation fixture: ${fixtureId}`);
+  }
+  return [fixture];
+};
+
+const runFixture = async ({
+  fixture,
+  repositoryRoot,
+  resultPath,
+}: {
+  fixture: HighImpactFixture;
+  repositoryRoot: string;
+  resultPath: string;
+}) => {
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
   const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.6-sol";
-  const resultPath = resolve(
-    process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
-      join(import.meta.dirname, "results", `${fixture.id}.json`)
-  );
   const directory = await mkdtemp(
     join(tmpdir(), "webstudio-high-impact-agent-")
   );
@@ -44,6 +61,9 @@ const run = async () => {
   const traceProxy = join(import.meta.dirname, "mcp-trace-proxy.ts");
   const fixtureApi = await startHighImpactFixtureApi(fixture);
   await mkdir(projectDirectory, { recursive: true });
+  if (fixture.id === fontAssetsFixture.id) {
+    await writeFontAssetFixtureFiles(projectDirectory);
+  }
   const env = { ...process.env, WEBSTUDIO_CONFIG_DIR: configDirectory };
   try {
     await execFileAsync(
@@ -84,7 +104,7 @@ const run = async () => {
         .split("\n")
         .filter(Boolean)
         .map((line) => JSON.parse(line) as EvaluationToolCall);
-    const result = await runHighImpactAgentEvaluation({
+    return await runHighImpactAgentEvaluation({
       fixture,
       target: { kind: "source", repositoryRoot },
       agentCommand,
@@ -105,10 +125,6 @@ const run = async () => {
         });
       },
     });
-    process.stdout.write(`${JSON.stringify(result, undefined, 2)}\n`);
-    if (result.outcome !== "passed") {
-      process.exitCode = 1;
-    }
   } finally {
     await fixtureApi.close();
     if (process.env.WEBSTUDIO_HIGH_IMPACT_KEEP_WORKSPACE === "1") {
@@ -116,6 +132,54 @@ const run = async () => {
     } else {
       await rm(directory, { recursive: true, force: true });
     }
+  }
+};
+
+const run = async () => {
+  const fixtureIds = highImpactFixtures.map(({ id }) => id);
+  const args = hideBin(process.argv);
+  if (args[0] === "--") {
+    args.shift();
+  }
+  const options = await yargs(args)
+    .option("fixture", {
+      type: "string",
+      choices: fixtureIds,
+      description: "Run one evaluation fixture instead of the complete suite",
+    })
+    .strict()
+    .help()
+    .parse();
+  const fixtures = selectFixtures(options.fixture);
+  if (
+    fixtures.length > 1 &&
+    process.env.WEBSTUDIO_HIGH_IMPACT_RESULT !== undefined
+  ) {
+    throw new Error(
+      "WEBSTUDIO_HIGH_IMPACT_RESULT can only be used with --fixture."
+    );
+  }
+  const repositoryRoot = resolve(import.meta.dirname, "../../../..");
+  const resultsDirectory = resolve(
+    process.env.WEBSTUDIO_HIGH_IMPACT_RESULTS_DIR ??
+      join(repositoryRoot, ".temp/evaluations/high-impact")
+  );
+  const results = [];
+  for (const fixture of fixtures) {
+    const resultPath = resolve(
+      process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
+        join(resultsDirectory, `${fixture.id}.json`)
+    );
+    results.push(await runFixture({ fixture, repositoryRoot, resultPath }));
+  }
+  const outcome = results.every((result) => result.outcome === "passed")
+    ? "passed"
+    : "failed";
+  process.stdout.write(
+    `${JSON.stringify({ outcome, results }, undefined, 2)}\n`
+  );
+  if (outcome === "failed") {
+    process.exitCode = 1;
   }
 };
 
