@@ -28,7 +28,7 @@ describe("resource index storage", () => {
     ).toBeDefined();
   });
 
-  test("uses the configured S3 bucket for the private index store", async () => {
+  test("uses the configured S3 bucket and hierarchical index key", async () => {
     const fetch = vi.fn(
       async (_input: string | URL | Request) =>
         new Response(null, { status: 200 })
@@ -44,7 +44,7 @@ describe("resource index storage", () => {
     });
 
     expect(fetch.mock.calls[0]?.[0].toString()).toBe(
-      "https://storage.example/public-assets/resource-indexes%2Fprojects%2Fproject-1%2Findex.json"
+      "https://storage.example/public-assets/resource-indexes/projects/project-1/index.json"
     );
   });
 });

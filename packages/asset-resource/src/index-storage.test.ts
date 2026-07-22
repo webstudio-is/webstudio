@@ -55,6 +55,18 @@ describe("resource index persistence", () => {
     );
   });
 
+  test("keeps encoded dynamic values within their logical key segments", async () => {
+    const index = await createIndex();
+    const key = getAssetResourceIndexObjectKey({
+      projectId: "project/%2F/../é",
+      index,
+    });
+
+    expect(key.split("/")).toHaveLength(9);
+    expect(key).toContain("project%2F%252F%2F%2E%2E%2F%C3%A9");
+    expect(key).not.toContain("/../");
+  });
+
   test("accepts an idempotent existing object and rejects a collision", async () => {
     const index = await createIndex();
     const persist = (checksum: string) =>

@@ -30,7 +30,6 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
     // should never be enabled when work with s3
     uriEscapePath: false,
   });
-
   const uploadFile: AssetClient["uploadFile"] = async (
     name,
     type,
@@ -67,6 +66,7 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
           name: key,
           endpoint: options.endpoint,
           bucket: options.bucket,
+          keyType: "hierarchical",
         }),
       delete: (key) =>
         deleteImmutableObjectFromS3({

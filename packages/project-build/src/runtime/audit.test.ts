@@ -2426,6 +2426,39 @@ describe("project audit and analysis", () => {
     );
   });
 
+  test("does not treat the read-only Assets query as a mutation", () => {
+    const resources: NonNullable<BuilderState["resources"]> = new Map(
+      state.resources
+    );
+    resources.set("posts", {
+      id: "posts",
+      name: "Posts",
+      control: "system",
+      method: "post",
+      url: '"/$resources/assets/query"',
+      headers: [],
+      searchParams: [],
+      body: '{ query: "*[]" }',
+    });
+    const dataSources: NonNullable<BuilderState["dataSources"]> = new Map(
+      state.dataSources
+    );
+    dataSources.set("posts-data", {
+      id: "posts-data",
+      type: "resource",
+      name: "Posts",
+      scopeInstanceId: "heading",
+      resourceId: "posts",
+    });
+
+    expect(
+      analyzeProject(
+        { ...state, resources, dataSources },
+        { scopes: ["security"], pageId: "home" }
+      ).matches
+    ).toEqual([]);
+  });
+
   test("audits duplicate static page titles without flagging dynamic titles", () => {
     const pages = new Map<string, Page>(state.pages.pages);
     pages.set("home", {

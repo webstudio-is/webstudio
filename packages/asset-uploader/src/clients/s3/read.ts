@@ -4,7 +4,7 @@ import {
   type AssetReadRange,
   validateAssetReadRange,
 } from "../../client";
-import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
+import { createS3ObjectUrl } from "./object-url";
 
 export const readFromS3 = async ({
   signer,
@@ -12,20 +12,19 @@ export const readFromS3 = async ({
   range,
   endpoint,
   bucket,
+  keyType = "flat",
 }: {
   signer: SignatureV4;
   name: string;
   range?: AssetReadRange;
   endpoint: string;
   bucket: string;
+  keyType?: "flat" | "hierarchical";
 }): ReturnType<AssetClient["readFile"]> => {
   if (range !== undefined) {
     validateAssetReadRange(range);
   }
-  const url = new URL(
-    `/${bucket}/${extendedEncodeURIComponent(name)}`,
-    endpoint
-  );
+  const url = createS3ObjectUrl({ endpoint, bucket, key: name, keyType });
   const headers = {
     "x-amz-date": new Date().toISOString(),
     "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
