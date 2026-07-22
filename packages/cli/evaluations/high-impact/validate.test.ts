@@ -2,10 +2,15 @@ import { describe, expect, test } from "vitest";
 import {
   authenticatedPageFixture,
   designInputFixture,
+  fontAssetsFixture,
   highImpactFixtures,
   validateHighImpactFixture,
   type EvaluationProject,
 } from "./fixtures";
+import {
+  fontAssetFixtureFiles,
+  fontAssetFixtureMeta,
+} from "./font-assets-fixture";
 import { evaluateHighImpactOutcome, type EvaluationToolCall } from "./validate";
 
 const clone = <Value>(value: Value): Value => structuredClone(value);
@@ -107,6 +112,23 @@ const addDesignPage = (): EvaluationProject => {
   return project;
 };
 
+const addFontAssets = (): EvaluationProject => {
+  const project = clone(fontAssetsFixture.project);
+  project.assets = fontAssetFixtureFiles.map(({ name, format }) => ({
+    id: format,
+    projectId: "project",
+    name,
+    filename: name,
+    description: null,
+    size: 4,
+    type: "font",
+    format,
+    meta: fontAssetFixtureMeta,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  }));
+  return project;
+};
+
 const designCalls: EvaluationToolCall[] = [
   { name: "meta.guide" },
   { name: "list-breakpoints" },
@@ -123,10 +145,55 @@ describe("high-impact fixture validation", () => {
     expect(highImpactFixtures.map(validateHighImpactFixture)).toEqual([
       { valid: true, failures: [] },
       { valid: true, failures: [] },
+      { valid: true, failures: [] },
     ]);
     expect(JSON.stringify(highImpactFixtures)).toBe(
       JSON.stringify(highImpactFixtures)
     );
+  });
+});
+
+describe("font-assets evaluation", () => {
+  test("accepts corrected persisted metadata and deterministic font sources", () => {
+    const project = addFontAssets();
+    const result = evaluateHighImpactOutcome({
+      fixture: fontAssetsFixture,
+      project,
+      toolCalls: [
+        { name: "meta.guide" },
+        ...project.assets.map(() => ({ name: "upload-asset" })),
+        ...project.assets.map((asset) => ({
+          name: "update-asset",
+          arguments: {
+            assetId: asset.id,
+            values: { meta: fontAssetFixtureMeta },
+          },
+        })),
+        { name: "refresh" },
+        ...project.assets.map((asset) => ({
+          name: "get-asset",
+          arguments: { assetId: asset.id },
+        })),
+      ],
+    });
+
+    expect(result).toMatchObject({ passed: true, failures: [] });
+  });
+
+  test("rejects a refresh before the final metadata update", () => {
+    const project = clone(fontAssetsFixture.project);
+    const result = evaluateHighImpactOutcome({
+      fixture: fontAssetsFixture,
+      project,
+      toolCalls: [
+        { name: "meta.guide" },
+        { name: "update-asset" },
+        { name: "refresh" },
+        { name: "update-asset" },
+      ],
+    });
+
+    expect(result.checks.metadataWorkflow).toBe("failed");
   });
 });
 

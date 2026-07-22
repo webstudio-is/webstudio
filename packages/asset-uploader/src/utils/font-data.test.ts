@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { parseSubfamily, __testing__ } from "./font-data";
 
-const { normalizeFamily } = __testing__;
+const { getFontFamily, normalizeFamily } = __testing__;
 
 describe("font-data", () => {
   describe("parseSubfamily()", () => {
@@ -112,5 +112,14 @@ describe("font-data", () => {
       );
       expect(normalizeFamily("", "", "font.woff")).toBe(`font`);
     });
+  });
+
+  test("prefers the typographic family name", () => {
+    expect(
+      getFontFamily({
+        getName: (name: string, _language: string) =>
+          name === "preferredFamily" ? "Rajdhani" : "Rajdhani SemiBold",
+      })
+    ).toBe("Rajdhani");
   });
 });

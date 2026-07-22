@@ -4101,6 +4101,10 @@ describe("project session mcp adapter", () => {
       name: "meta.guide",
       input: { brief: "Build a Supabase authenticated account page" },
     });
+    const fontAssetGuide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Upload and correct two font assets" },
+    });
     const designInputGuide = await adapter.callTool({
       name: "meta.guide",
       input: { brief: "Recreate this Figma design as a responsive page" },
@@ -4180,6 +4184,18 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({ name: "insert-fragment" }),
           expect.objectContaining({ name: "verify-bindings" }),
           expect.objectContaining({ name: "audit" }),
+        ]),
+      })
+    );
+    expect(fontAssetGuide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          expect.stringContaining("returned asset ids directly"),
+          expect.stringContaining("without re-uploading"),
+          expect.stringContaining('"namespaces":["assets"]'),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "refresh" }),
         ]),
       })
     );

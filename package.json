@@ -9,6 +9,7 @@
     "webstudio": "node packages/cli/local.js",
     "dts": "pnpm -r dts",
     "dev": "bash ./apps/builder/dev/run-local.sh",
+    "evaluations": "pnpm --filter webstudio evaluations",
     "lint": "oxlint --deny-warnings",
     "check:package-boundaries": "node scripts/check-package-boundaries.mjs",
     "check:generated-api": "pnpm --filter @webstudio-is/project-build generate-runtime-operation-contracts && pnpm --filter @webstudio-is/builder generate-server-only-api-metadata && node scripts/check-clean-files.mjs packages/project-build/src/contracts/__generated__/runtime-operation-contracts.ts packages/protocol/src/builder-api/__generated__/server-only-router-operation-metadata.ts",
