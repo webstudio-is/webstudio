@@ -65,13 +65,45 @@ not alter production and could not directly execute a post-edit screenshot.
 | Preview and browser shutdown                         |        5.3 s |
 | Complete measured five-call run reported by MCP      |       36.7 s |
 
-Because a stale path screenshot performs the same preview preparation/start
-and cold-browser capture in sequence, the measured current cost of the first
-screenshot after an edit is approximately **26.2 seconds** on this homepage,
-plus the mutation itself. This is an inference from the separately measured
-phases, not a claimed production mutation: the read-only token correctly
-rejected the attempted semantic no-op update. A subsequent screenshot without
-another mutation takes about 1.36 seconds.
+Because a stale path screenshot is intended to perform the same preview
+preparation/start and cold-browser capture in sequence, these phases predicted
+approximately **26.2 seconds** for the first screenshot after an edit, plus the
+mutation itself. The read-only token correctly rejected a semantic no-op
+update, so an editable local clone was used to test that lifecycle directly.
+
+### Editable production-homepage clone
+
+The production project bundle was synchronized into a disposable local Builder
+project with API permission. The clone retained all 43 routes and 266 homepage
+text nodes. Of 216 assets, 212 uploaded successfully; four assets in folders
+were omitted after the local importer hit an asset-folder foreign-key ordering
+error. This did not affect the edited heading or lifecycle measurements.
+
+One shared `mcp run` session changed the homepage heading, verified the changed
+session value, explicitly regenerated the session preview, captured it, restored
+the original heading, regenerated again, and captured the restored page.
+
+| Operation                                                | Elapsed time |
+| -------------------------------------------------------- | -----------: |
+| Remote-backed local session refresh                      |       0.83 s |
+| Committed heading mutation                               |  0.81-0.87 s |
+| Explicit preview generation, build, and start after edit |  11.6-12.6 s |
+| First screenshot after explicit preview start            |   9.8-11.8 s |
+| Complete mutation-to-visible-screenshot cycle            |  22.9-25.2 s |
+| Complete edit, verify, screenshot, restore, and stop run |       52.7 s |
+
+The changed screenshot visibly rendered `MCP EDIT IS VISIBLE`, and the restored
+screenshot matched the original screenshot byte for byte. The mutation itself
+is still negligible compared with preview and capture lifecycle work.
+
+The test also found a correctness defect in the shorter documented workflow.
+Calling a path-based screenshot directly after the committed mutation took
+20.1 seconds, but both post-edit captures were byte-identical to the baseline
+and rendered the old heading. An explicit `preview.start({ source: "session" })`
+made the edit visible. In addition, `generatedBuildMetrics.version` remained at
+1 while the committed project session advanced through versions 4 and 5. The
+current output therefore cannot prove that a screenshot corresponds to the
+mutation it is supposed to verify.
 
 ## Architectural decision
 
@@ -130,6 +162,8 @@ second project-state interpretation.
 
 - Include project id and committed project version in generated-page metadata
   or a generated readiness endpoint.
+- Ensure a path-based screenshot invalidates and refreshes from the latest
+  committed session without requiring a second explicit `preview.start` call.
 - After regeneration, wait for Vite to accept the new module graph and for the
   requested page to report the expected project version before capturing.
 - Reload or navigate the retained browser page only after the new version is
@@ -158,6 +192,9 @@ second project-state interpretation.
 - Add the edit-to-screenshot benchmark to the local agent evaluation suite so
   changes affecting CLI, MCP, generation, or screenshots can be checked with
   `pnpm evaluations` without adding it to CI.
+- Measure lifecycle work outside the screenshot handler as well as browser
+  capture; the local clone reported 3.5-5.4 seconds inside screenshot results
+  while callers actually waited 9.8-11.8 seconds.
 
 ## Test plan
 
@@ -180,6 +217,8 @@ second project-state interpretation.
 - Run a real generated fixture through iterative preview, mutate visible text,
   capture again, and assert the new text and project version without changing
   the preview PID or browser session.
+- Repeat the mutation followed directly by a path screenshot, with no explicit
+  preview restart, and assert it cannot return the previous version.
 - Repeat for styles, route creation/removal, assets, fonts, responsive
   breakpoints, and draft pages.
 - Apply several mutations before capture and verify one refresh renders the
