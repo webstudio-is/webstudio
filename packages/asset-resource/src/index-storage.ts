@@ -36,6 +36,7 @@ export const getAssetResourceIndexObjectKey = ({
   index: AssetResourceIndexV1;
 }) =>
   [
+    "resource-indexes",
     "projects",
     encodeKeySegment(projectId),
     "resources",

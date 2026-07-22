@@ -20,12 +20,7 @@ type S3ClientOptions = {
 };
 
 export const createS3Client = (options: S3ClientOptions): AssetClient => {
-  const resourceIndexBucket = options.resourceIndexBucket;
-  if (resourceIndexBucket === options.bucket) {
-    throw new Error(
-      "Resource indexes require a bucket distinct from the public asset bucket"
-    );
-  }
+  const resourceIndexBucket = options.resourceIndexBucket ?? options.bucket;
   const signer = new SignatureV4({
     credentials: {
       accessKeyId: options.accessKeyId,
@@ -60,33 +55,29 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
   };
 
   return {
-    ...(resourceIndexBucket === undefined
-      ? {}
-      : {
-          resourceIndexStore: {
-            putIfAbsent: (object) =>
-              putImmutableObjectToS3({
-                signer,
-                endpoint: options.endpoint,
-                bucket: resourceIndexBucket,
-                object,
-              }),
-            read: (key) =>
-              readFromS3({
-                signer,
-                name: key,
-                endpoint: options.endpoint,
-                bucket: resourceIndexBucket,
-              }),
-            delete: (key) =>
-              deleteImmutableObjectFromS3({
-                signer,
-                endpoint: options.endpoint,
-                bucket: resourceIndexBucket,
-                key,
-              }),
-          },
+    resourceIndexStore: {
+      putIfAbsent: (object) =>
+        putImmutableObjectToS3({
+          signer,
+          endpoint: options.endpoint,
+          bucket: resourceIndexBucket,
+          object,
         }),
+      read: (key) =>
+        readFromS3({
+          signer,
+          name: key,
+          endpoint: options.endpoint,
+          bucket: resourceIndexBucket,
+        }),
+      delete: (key) =>
+        deleteImmutableObjectFromS3({
+          signer,
+          endpoint: options.endpoint,
+          bucket: resourceIndexBucket,
+          key,
+        }),
+    },
     uploadFile,
     readFile: (name, range) =>
       readFromS3({

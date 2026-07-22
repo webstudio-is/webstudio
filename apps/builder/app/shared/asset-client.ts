@@ -48,9 +48,7 @@ export const createAssetClientWithResourceIndexStore = () => {
     client.resourceIndexStore === undefined ||
     client.resourceIndexStore.read === undefined
   ) {
-    throw new Error(
-      "Private asset resource index storage is not configured. Set S3_RESOURCE_INDEX_BUCKET."
-    );
+    throw new Error("Private asset resource index storage is not configured");
   }
   return client as AssetClientWithReadableResourceIndexStore;
 };

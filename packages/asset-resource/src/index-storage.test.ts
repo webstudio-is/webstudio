@@ -31,6 +31,7 @@ describe("resource index persistence", () => {
       index,
     });
 
+    expect(result.key).toMatch(/^resource-indexes\//);
     expect(result).toEqual({
       key: getAssetResourceIndexObjectKey({
         projectId: "project/../private",
