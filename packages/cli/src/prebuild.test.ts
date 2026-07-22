@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { bundleVersion } from "@webstudio-is/protocol";
+import type { Asset } from "@webstudio-is/sdk";
 import { generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();
@@ -68,6 +69,7 @@ const getFilePaths = async (dir: string): Promise<string[]> => {
 
 const createSiteData = (
   overrides: {
+    assets?: Asset[];
     pages?: Array<{
       id: string;
       name: string;
@@ -114,7 +116,7 @@ const createSiteData = (
     },
     page: pages[0],
     pages,
-    assets: [
+    assets: overrides.assets ?? [
       {
         id: "asset-image",
         projectId: "project-id",
@@ -376,6 +378,38 @@ describe("prebuild", () => {
     await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.not.toContain('"path": "/draft"');
+  });
+
+  test("uses the local asset base in generated asset resources", async () => {
+    await writeSiteData(
+      createSiteData({
+        assets: [
+          {
+            id: "asset-audio",
+            projectId: "project-id",
+            name: "audio.mp3",
+            type: "file",
+            format: "mp3",
+            size: 1,
+            meta: {},
+            description: "",
+            createdAt: "2024-01-01T00:00:00.000Z",
+          },
+        ],
+      })
+    );
+
+    await prebuild({
+      assets: false,
+      template: ["defaults"],
+    });
+
+    const assetsModule = await readFile(
+      "app/__generated__/$resources.assets.ts",
+      "utf8"
+    );
+    expect(assetsModule).toContain('"url": "/assets/audio.mp3"');
+    expect(assetsModule).not.toContain("/cgi/");
   });
 
   test("scaffolds generated files and stores redirects as data", async () => {

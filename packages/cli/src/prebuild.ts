@@ -798,7 +798,12 @@ export const prebuild = async (options: {
   const assetsById = Object.fromEntries(
     siteData.assets.map((asset) => [
       asset.id,
-      toRuntimeAsset(asset, "https://placeholder.local"),
+      {
+        ...toRuntimeAsset(asset, "https://placeholder.local"),
+        // Generated projects serve materialized assets from the template's
+        // asset base; the /cgi routes only exist in the live builder.
+        url: `${assetBaseUrl}${asset.name}`,
+      },
     ])
   );
 
