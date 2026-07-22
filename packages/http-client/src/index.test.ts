@@ -1529,8 +1529,29 @@ test("keeps browser asset content updates on the requested origin", async () => 
 });
 
 test("normalizes synced project bundles for local storage", () => {
+  const index = {
+    format: "webstudio-resource-index" as const,
+    version: 1 as const,
+    resourceId: "resource-1",
+    queryHash: `sha256:${"a".repeat(64)}`,
+    assetRevision: `sha256:${"b".repeat(64)}`,
+    queryMode: "static" as const,
+    parameterNames: [],
+    documents: [],
+    integrity: {
+      algorithm: "sha256" as const,
+      checksum: `sha256:${"c".repeat(64)}`,
+    },
+  };
   const bundle = createPublishedProjectBundleFixture({
     bundleVersion: "bundle-old",
+    assetResourceIndexes: [
+      {
+        resourceId: index.resourceId,
+        revision: index.integrity.checksum,
+        index,
+      },
+    ],
     assetFolders: [
       {
         id: "folder-1",
@@ -1551,6 +1572,7 @@ test("normalizes synced project bundles for local storage", () => {
     user: bundle.user,
     projectDomain: bundle.projectDomain,
     projectTitle: bundle.projectTitle,
+    assetResourceIndexes: bundle.assetResourceIndexes,
     origin: bundle.origin,
   });
 });
