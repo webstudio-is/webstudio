@@ -110,9 +110,10 @@ mutation it is supposed to verify.
 Introduce two explicit preview lifecycles with one shared controller contract:
 
 - **Iterative preview** uses the generated React Router app's Vite development
-  server. It stays alive across project mutations and recompiles changed
-  generated files. This is the default for MCP path screenshots and ordinary
-  `preview.start` calls intended for authoring.
+  server. It stays alive across project mutations and serves regenerated files.
+  The retained browser performs a normal page reload after each regeneration;
+  the workflow does not use HMR. This is the default for MCP path screenshots
+  and ordinary `preview.start` calls intended for authoring.
 - **Production preview** keeps the current generate, production build, and
   production server path. Rendered audits and explicit final verification use
   this mode because they need production-like output and build metrics.
@@ -140,6 +141,8 @@ second project-state interpretation.
 - Do not run `npm run build` or `npm run start` for iterative refreshes.
 - Do not close the screenshot browser session when only generated project data
   changed.
+- Do not apply Vite HMR updates in the retained page. Reload the page normally
+  after the development server has compiled the regenerated files.
 - Restart only for configuration changes that the running development server
   cannot safely absorb, such as a different project, preview mode, host, port,
   dependency manifest, or image-domain policy.
@@ -164,10 +167,11 @@ second project-state interpretation.
   or a generated readiness endpoint.
 - Ensure a path-based screenshot invalidates and refreshes from the latest
   committed session without requiring a second explicit `preview.start` call.
-- After regeneration, wait for Vite to accept the new module graph and for the
-  requested page to report the expected project version before capturing.
-- Reload or navigate the retained browser page only after the new version is
-  available; do not rely on an arbitrary timeout or merely receiving HTTP 200.
+- After regeneration, wait for Vite to compile the changed module graph, reload
+  the retained browser page normally, and wait for the requested page to report
+  the expected project version before capturing.
+- Do not rely on HMR, an arbitrary timeout, or merely receiving HTTP 200 as
+  evidence that the page contains the new version.
 - Return the rendered project version and preview mode in screenshot metadata
   so agents and tests can distinguish current evidence from stale evidence.
 - On generation or compilation failure, keep the server process diagnosable,
@@ -217,6 +221,8 @@ second project-state interpretation.
 - Run a real generated fixture through iterative preview, mutate visible text,
   capture again, and assert the new text and project version without changing
   the preview PID or browser session.
+- Assert each committed regeneration performs a normal document reload rather
+  than applying an HMR update.
 - Repeat the mutation followed directly by a path screenshot, with no explicit
   preview restart, and assert it cannot return the previous version.
 - Repeat for styles, route creation/removal, assets, fonts, responsive
@@ -256,6 +262,7 @@ second project-state interpretation.
 - Replacing the generated React Router application with Builder canvas output.
 - Making rendered audit use a development server.
 - Persisting a preview or browser process across unrelated CLI/MCP processes.
+- Using Vite HMR to update the rendered page between screenshots.
 - Implementing incremental compiler semantics independently of the existing
   generation pipeline before measurement proves full regeneration is a
   bottleneck after production build and browser restart are removed.
