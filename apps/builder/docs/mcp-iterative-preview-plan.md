@@ -46,6 +46,33 @@ as an available-port request, while the public MCP schema currently rejects
 zero. That contract mismatch is independent of iterative preview latency and
 should be handled separately.
 
+### Production homepage measurement
+
+A second measurement used the production Webstudio homepage through its
+authenticated preview share link. The project contained 43 routes and 266 text
+nodes on the homepage. The supplied token was read-only, so the benchmark did
+not alter production and could not directly execute a post-edit screenshot.
+
+| Operation                                            | Elapsed time |
+| ---------------------------------------------------- | -----------: |
+| CLI/MCP startup before the run                       |        2.1 s |
+| Remote project refresh                               |        3.1 s |
+| Generated preview preparation                        |        5.2 s |
+| Production build, server start, and readiness        |       10.9 s |
+| Complete production preview preparation/start        |       16.0 s |
+| First homepage screenshot with a cold browser        |       10.2 s |
+| Unchanged homepage screenshot with everything reused |       1.36 s |
+| Preview and browser shutdown                         |        5.3 s |
+| Complete measured five-call run reported by MCP      |       36.7 s |
+
+Because a stale path screenshot performs the same preview preparation/start
+and cold-browser capture in sequence, the measured current cost of the first
+screenshot after an edit is approximately **26.2 seconds** on this homepage,
+plus the mutation itself. This is an inference from the separately measured
+phases, not a claimed production mutation: the read-only token correctly
+rejected the attempted semantic no-op update. A subsequent screenshot without
+another mutation takes about 1.36 seconds.
+
 ## Architectural decision
 
 Introduce two explicit preview lifecycles with one shared controller contract:
