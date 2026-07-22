@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit",
     "generate-docs": "tsx scripts/generate-docs.ts && oxfmt src/docs.generated.ts",
     "build": "pnpm generate-docs && rm -rf lib && vite build",
+    "evaluations": "tsx --conditions=webstudio evaluations/high-impact/run-local-agent.ts",
     "test": "vitest run",
     "test:release-smoke": "pnpm build && tsx --conditions=webstudio scripts/release-smoke.ts",
     "test:release-smoke:model": "WEBSTUDIO_RELEASE_SMOKE_MODEL_EVAL_REQUIRED=1 pnpm test:release-smoke",
