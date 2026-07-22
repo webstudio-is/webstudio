@@ -790,11 +790,13 @@ Notes:
 Commands:
 
 - MCP tool: update-asset {"assetId":"<assetId>","values":{"description":"Team collaborating around a whiteboard"}}
+- MCP tool: update-asset {"assetId":"<fontAssetId>","values":{"meta":{"family":"Rajdhani","style":"normal","weight":600}}}
 
 Notes:
 
 - Use an empty description only when the image is intentionally decorative.
 - Updating an image asset description updates the default alt text wherever that asset is used with an asset-backed alt prop.
+- Font metadata updates merge with the detected metadata and are validated before committing; use this to correct a family, style, or weight after upload.
 
 ## Generate missing image descriptions with an agent
 

@@ -1563,6 +1563,15 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "upload-asset": [
     {
       asset: {
+        name: "Rajdhani-SemiBold.woff2",
+        type: "font",
+        format: "woff2",
+        meta: { family: "Rajdhani", style: "normal", weight: 600 },
+      },
+      assetsDir: ".webstudio/assets",
+    },
+    {
+      asset: {
         name: "hero.png",
         type: "image",
         format: "png",
@@ -1864,6 +1873,10 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     },
   ],
   "update-asset": [
+    {
+      assetId: "font-asset-id",
+      values: { meta: { family: "Rajdhani", style: "normal", weight: 600 } },
+    },
     {
       assetId: "asset-id",
       values: { description: "Team collaborating around a whiteboard" },

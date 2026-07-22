@@ -66985,6 +66985,13 @@ export const runtimeOperationContractData = [
                 },
               ],
             },
+            meta: {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {},
+            },
           },
           required: [],
         },

@@ -21,9 +21,11 @@ import {
   type Styles,
   assetType,
   fileAsset,
+  imageMeta,
   fontAsset,
   imageAsset,
 } from "@webstudio-is/sdk";
+import { fontMeta } from "@webstudio-is/fonts";
 import {
   appendOptionalPropertyPatch,
   type BuilderPatchChange,
@@ -101,6 +103,7 @@ export const assetUpdateInput = z.object({
         .optional(),
       description: z.union([z.string(), z.null()]).optional(),
       folderId: z.union([z.string().min(1), z.null()]).optional(),
+      meta: z.record(z.string(), z.unknown()).optional(),
     })
     .refine(
       (values) => Object.keys(values).length > 0,
@@ -673,6 +676,46 @@ export const updateAsset = (
   }
 
   const patches: BuilderPatchChange["patches"] = [];
+  if (input.values.meta !== undefined) {
+    const allowedMetaKeys = new Set(
+      asset.type === "font"
+        ? ["family", "style", "weight", "variationAxes"]
+        : asset.type === "image"
+          ? ["width", "height"]
+          : []
+    );
+    if (
+      Object.keys(input.values.meta).some(
+        (key) => allowedMetaKeys.has(key) === false
+      )
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Invalid metadata for ${asset.type} asset`
+      );
+    }
+    const parsedMeta =
+      asset.type === "font"
+        ? fontMeta.safeParse({ ...asset.meta, ...input.values.meta })
+        : asset.type === "image"
+          ? imageMeta.safeParse({ ...asset.meta, ...input.values.meta })
+          : Object.keys(input.values.meta).length === 0
+            ? { success: true as const, data: {} }
+            : { success: false as const };
+    if (parsedMeta.success === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Invalid metadata for ${asset.type} asset`
+      );
+    }
+    if (deepEqual(asset.meta, parsedMeta.data) === false) {
+      patches.push({
+        op: "replace",
+        path: [asset.id, "meta"],
+        value: parsedMeta.data,
+      });
+    }
+  }
   if (input.values.filename !== undefined) {
     if (isValidFilename(input.values.filename) === false) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Invalid filename");

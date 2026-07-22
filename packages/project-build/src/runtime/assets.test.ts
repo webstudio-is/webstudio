@@ -17,6 +17,7 @@ import type { BuilderState } from "../state/builder-state";
 import {
   addAsset,
   assetAddInput,
+  assetUpdateInput,
   assetDeleteInput,
   calculateUsagesByAssetId,
   createAssetDeletePayload,
@@ -50,6 +51,19 @@ const imageAsset = (id: string, name = `${id}.png`): Asset =>
     createdAt: "2026-01-01T00:00:00.000Z",
     description: null,
     meta: { width: 100, height: 100 },
+  }) as Asset;
+
+const fontAsset = (id: string): Asset =>
+  ({
+    id,
+    projectId: "project",
+    name: `${id}.woff2`,
+    type: "font",
+    size: 1,
+    format: "woff2",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    description: null,
+    meta: { family: "Rajdhani", style: "normal", weight: 600 },
   }) as Asset;
 
 const assetProp: Prop = {
@@ -1087,6 +1101,57 @@ test("creates asset delete payload", () => {
 });
 
 describe("updateAsset", () => {
+  test("updates font metadata without discarding the other fields", () => {
+    const result = updateAsset(
+      { assets: new Map([["font-1", fontAsset("font-1")]]) },
+      {
+        assetId: "font-1",
+        values: { meta: { family: "Rajdhani Display" } },
+      }
+    );
+
+    expect(result.payload).toEqual([
+      {
+        namespace: "assets",
+        patches: [
+          {
+            op: "replace",
+            path: ["font-1", "meta"],
+            value: { family: "Rajdhani Display", style: "normal", weight: 600 },
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("rejects invalid or unsupported asset metadata", () => {
+    expect(() =>
+      updateAsset(
+        { assets: new Map([["font-1", fontAsset("font-1")]]) },
+        { assetId: "font-1", values: { meta: { weight: "heavy" } } }
+      )
+    ).toThrow("Invalid metadata for font asset");
+
+    expect(() =>
+      updateAsset(
+        { assets: new Map([["asset-1", imageAsset("asset-1")]]) },
+        { assetId: "asset-1", values: { meta: { family: "Roboto" } } }
+      )
+    ).toThrow("Invalid metadata for image asset");
+  });
+
+  test("accepts metadata through the public input schema", () => {
+    expect(
+      assetUpdateInput.parse({
+        assetId: "font-1",
+        values: { meta: { family: "Rajdhani Display", weight: 600 } },
+      })
+    ).toEqual({
+      assetId: "font-1",
+      values: { meta: { family: "Rajdhani Display", weight: 600 } },
+    });
+  });
+
   test("updates filename and description", () => {
     const result = updateAsset(
       {

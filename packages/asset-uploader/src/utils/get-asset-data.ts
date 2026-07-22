@@ -26,6 +26,20 @@ export const applyAssetDataOverride = (
   detected: AssetData,
   override?: AssetDataOverride
 ): AssetData => {
+  const allowedMetaKeys = new Set(
+    "family" in detected.meta
+      ? ["family", "style", "weight", "variationAxes"]
+      : "width" in detected.meta
+        ? ["width", "height"]
+        : []
+  );
+  if (
+    Object.keys(override?.meta ?? {}).some(
+      (key) => allowedMetaKeys.has(key) === false
+    )
+  ) {
+    throw new Error("Asset metadata override contains unsupported fields");
+  }
   const meta = { ...detected.meta, ...override?.meta };
   const parsedMeta =
     "family" in detected.meta
@@ -36,7 +50,10 @@ export const applyAssetDataOverride = (
 
   return {
     ...detected,
-    format: override?.format ?? detected.format,
+    format:
+      "family" in detected.meta
+        ? detected.format
+        : (override?.format ?? detected.format),
     meta: parsedMeta,
   };
 };
