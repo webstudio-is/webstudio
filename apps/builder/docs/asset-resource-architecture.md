@@ -263,14 +263,16 @@ the resource stale until a matching revision can be activated. Publication
 never consumes a stale revision: it first reconciles the current query against
 the publication snapshot, or builds a historical query snapshot in memory.
 
-Private index artifacts use a dedicated S3-compatible R2 store. The adapter
+Private index artifacts use the configured S3-compatible R2 store under the
+reserved `resource-indexes/` namespace. The adapter
 writes with `If-None-Match: *`, records the index checksum as object metadata,
 and verifies that checksum with `HEAD` when an idempotent write finds an
-existing object. It sets no public ACL and must use a bucket with no public
-object access, separate from public asset-delivery storage. Builder configures
-that bucket with `S3_RESOURCE_INDEX_BUCKET`; query-index operations fail closed
-when remote asset storage is enabled without it. Filesystem development stores
-indexes below `private/asset-resource-indexes`, outside the public asset tree.
+existing object. It sets no public ACL. The bucket is not exposed directly;
+public asset delivery is mediated by Webstudio and must not expose the reserved
+namespace. `S3_RESOURCE_INDEX_BUCKET` may select a dedicated bucket but defaults
+to `S3_BUCKET`, preserving existing deployments that use a separate storage
+boundary without requiring one. Filesystem development stores indexes below
+`private/asset-resource-indexes`, outside the public asset tree.
 
 V1 does not deduplicate index objects across resources: `resourceId` is part of
 both object identity and the revision primary key. Cleanup therefore never
