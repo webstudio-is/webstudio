@@ -35,7 +35,6 @@ const environment = z.object({
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_BUCKET: z.string().optional(),
-  S3_RESOURCE_INDEX_BUCKET: z.string().optional(),
   S3_ACL: z.string().optional(),
 
   // Origin for /cdn-cgi/image/ cloudflare endpoint (without ending slash)
@@ -100,7 +99,6 @@ const rawEnv = {
   S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
   S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
   S3_BUCKET: process.env.S3_BUCKET,
-  S3_RESOURCE_INDEX_BUCKET: process.env.S3_RESOURCE_INDEX_BUCKET,
   S3_ACL: process.env.S3_ACL,
   RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
   ENTRI_APPLICATION_ID: process.env.ENTRI_APPLICATION_ID,

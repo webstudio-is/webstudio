@@ -269,9 +269,7 @@ writes with `If-None-Match: *`, records the index checksum as object metadata,
 and verifies that checksum with `HEAD` when an idempotent write finds an
 existing object. It sets no public ACL. The bucket is not exposed directly;
 public asset delivery is mediated by Webstudio and must not expose the reserved
-namespace. `S3_RESOURCE_INDEX_BUCKET` may select a dedicated bucket but defaults
-to `S3_BUCKET`, preserving existing deployments that use a separate storage
-boundary without requiring one. Filesystem development stores indexes below
+namespace. Filesystem development stores indexes below
 `private/asset-resource-indexes`, outside the public asset tree.
 
 V1 does not deduplicate index objects across resources: `resourceId` is part of
@@ -579,9 +577,9 @@ affected resources from being attempted.
 
 The feature extends the existing **Assets** system resource. Without query
 configuration it keeps the established fetch-all request and response exactly.
-Enable the `assetResource` feature flag and turn on **Configure query** inside
-an Assets resource to opt into GROQ. Existing stored query configurations remain
-editable when the flag is disabled, so a rollout change cannot corrupt them.
+Turn on **Configure query** inside an Assets resource to opt into GROQ. The
+`assetResource` feature is enabled by default, while resources without query
+configuration continue to use the established fetch-all behavior.
 
 The editor provides:
 
@@ -707,8 +705,7 @@ hydration bytes, and cache hit rate as tagged histograms or counters using
 project-safe identifiers. This instrumentation is a rollout requirement, not
 part of the asset-resource package itself.
 
-`assetResource` defaults to disabled. Keep rollout experimental until production
-canaries confirm the 1,000-file memory, CPU, publish-time, static-file-count,
-and error-rate budgets and no privacy or stale-index alerts fire. Widening the
-rollout requires a fresh benchmark report plus reviewed production telemetry;
-it is not implied by merging the implementation.
+`assetResource` ships enabled. Existing Assets resources require no migration or
+configuration change: only resources with **Configure query** enabled build and
+publish query indexes. Monitor the 1,000-file memory, CPU, publish-time,
+static-file-count, error-rate, privacy, and stale-index budgets after rollout.

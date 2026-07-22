@@ -14,13 +14,11 @@ type S3ClientOptions = {
   accessKeyId: string;
   secretAccessKey: string;
   bucket: string;
-  resourceIndexBucket?: string;
   acl?: string;
   maxUploadSize: number;
 };
 
 export const createS3Client = (options: S3ClientOptions): AssetClient => {
-  const resourceIndexBucket = options.resourceIndexBucket ?? options.bucket;
   const signer = new SignatureV4({
     credentials: {
       accessKeyId: options.accessKeyId,
@@ -60,7 +58,7 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
         putImmutableObjectToS3({
           signer,
           endpoint: options.endpoint,
-          bucket: resourceIndexBucket,
+          bucket: options.bucket,
           object,
         }),
       read: (key) =>
@@ -68,13 +66,13 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
           signer,
           name: key,
           endpoint: options.endpoint,
-          bucket: resourceIndexBucket,
+          bucket: options.bucket,
         }),
       delete: (key) =>
         deleteImmutableObjectFromS3({
           signer,
           endpoint: options.endpoint,
-          bucket: resourceIndexBucket,
+          bucket: options.bucket,
           key,
         }),
     },

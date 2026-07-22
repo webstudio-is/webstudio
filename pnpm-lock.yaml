@@ -1977,6 +1977,9 @@ importers:
       prisma:
         specifier: 5.12.1
         version: 5.12.1
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
       zod:
         specifier: ^4.4.3
         version: 4.4.3

@@ -545,6 +545,10 @@ SELECT is(
   'Repeated query deletion is idempotent'
 );
 
+DELETE FROM "Build"
+WHERE "id" = 'resource-index-test-build'
+  AND "projectId" = 'resource-index-test-project';
+
 DELETE FROM "Project" WHERE "id" = 'resource-index-test-project';
 
 SELECT is(

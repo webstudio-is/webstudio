@@ -246,7 +246,7 @@ If you're sure no other process is running, please delete the lockfile:
 
     const migrationName = (error.migration || undefined)?.name;
     if (typeof migrationName === "string") {
-      prismaMigrations.setFailed(migrationName, originalErrorString);
+      await prismaMigrations.setFailed(migrationName, originalErrorString);
     }
 
     process.exitCode = 1;
