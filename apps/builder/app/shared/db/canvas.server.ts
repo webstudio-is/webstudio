@@ -222,6 +222,14 @@ const addProjectMetadata = async (
         ({ resourceId, query }) => currentQueries.get(resourceId) === query
       )
       .map(({ resourceId }) => resourceId);
+    const currentAssetResourceBuild =
+      currentBuild === undefined
+        ? undefined
+        : {
+            buildId: currentBuild.id,
+            resources: JSON.stringify(currentBuild.resources),
+            resourceIds: currentResourceIds,
+          };
     const retainedFontIds = new Set(
       data.assets
         .filter((asset) => asset.type === "font")
@@ -252,7 +260,7 @@ const addProjectMetadata = async (
           referenceId: data.build.id,
           assetRevision: expectedAssetRevision,
           metadataSnapshot,
-          currentResourceIds,
+          currentBuild: currentAssetResourceBuild,
         });
       const [assetDataAfter, latestCanonical] = await Promise.all([
         loadAssetDataByProject(project.id, context),

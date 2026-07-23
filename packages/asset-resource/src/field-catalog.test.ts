@@ -206,6 +206,18 @@ describe("AssetFieldCatalogAccumulator", () => {
         },
       ])
     );
+
+    expect(accumulator.remove("one")).toBe(true);
+    expect(accumulator.snapshot()).toEqual({
+      documentCount: 0,
+      fields: [],
+    });
+    expect(() =>
+      accumulator.upsert({
+        ...createEntry({ id: "other", properties: {} }),
+        projectId: "project-2",
+      })
+    ).not.toThrow();
   });
 });
 

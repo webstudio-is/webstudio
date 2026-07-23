@@ -413,9 +413,9 @@ export const synchronizeCanonicalAssetStandardMetadata = async ({
       size: asset.file.size,
     });
     const assetEntries = entriesByAssetId.get(asset.id) ?? [];
-    const entry =
-      assetEntries.find((candidate) => candidate.revision === revision) ??
-      (assetEntries.length === 1 ? assetEntries[0] : undefined);
+    const entry = assetEntries.find(
+      (candidate) => candidate.revision === revision
+    );
     if (entry === undefined) {
       continue;
     }
@@ -425,6 +425,7 @@ export const synchronizeCanonicalAssetStandardMetadata = async ({
       revision,
       properties: entry.document.properties,
       excerpt: entry.document.excerpt,
+      metadataError: entry.document.metadataError,
     });
     await replaceCanonicalAssetFileEntry({
       client,

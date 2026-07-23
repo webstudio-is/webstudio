@@ -46,7 +46,12 @@ const getParsedIndexCacheKey = ({
   deploymentId: string;
   entry: PublishedAssetResourceManifestEntry;
 }) =>
-  `${deploymentId}\n${entry.resourceId}\n${entry.revision}\n${entry.indexPath}`;
+  JSON.stringify([
+    deploymentId,
+    entry.resourceId,
+    entry.revision,
+    entry.indexPath,
+  ]);
 
 const loadIndex = ({
   deploymentId,
@@ -81,7 +86,13 @@ const loadIndex = ({
       return index;
     })();
     parsedIndexCache.set(cacheKey, pending);
-    pending.catch(() => parsedIndexCache.delete(cacheKey));
+    pending.catch(() => {
+      // The rejected request may have been evicted and replaced by a newer
+      // request for the same key while it was still pending.
+      if (parsedIndexCache.get(cacheKey) === pending) {
+        parsedIndexCache.delete(cacheKey);
+      }
+    });
     while (parsedIndexCache.size > assetResourceLimits.runtimeCachedIndexes) {
       const oldestKey = parsedIndexCache.keys().next().value;
       if (oldestKey === undefined) {
@@ -139,7 +150,13 @@ export const getPublishedAssetResourceCacheKey = async ({
   const body = await request.clone().text();
   const cacheControl = request.headers.get("cache-control");
   const hash = await sha256Hex(
-    `${deploymentId}\n${entry.resourceId}\n${entry.revision}\n${body}\n${cacheControl}`
+    JSON.stringify([
+      deploymentId,
+      entry.resourceId,
+      entry.revision,
+      body,
+      cacheControl,
+    ])
   );
   const url = new URL(request.url);
   url.searchParams.set("ws-asset-resource", hash);
