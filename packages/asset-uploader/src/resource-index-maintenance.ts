@@ -109,6 +109,8 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
     await collectAssetResourceIndexGarbageBestEffort({
       client,
       store: { delete: store.delete },
+      projectId,
+      resourceIds: resources.map(({ resourceId }) => resourceId),
     });
   }
   if (errors.length > 0) {

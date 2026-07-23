@@ -329,14 +329,29 @@ SELECT ok(
 SELECT is(
   (
     SELECT count(*)::INTEGER
-    FROM claim_asset_resource_index_garbage(CURRENT_TIMESTAMP, 10)
+    FROM claim_asset_resource_index_garbage(
+      'another-project', ARRAY['posts'], '2100-01-01', 10
+    )
+  ),
+  0,
+  'Garbage collection cannot claim revisions outside the affected project'
+);
+
+SELECT is(
+  (
+    SELECT count(*)::INTEGER
+    FROM claim_asset_resource_index_garbage(
+      'resource-index-test-project', ARRAY['posts'], CURRENT_TIMESTAMP, 10
+    )
   ),
   0,
   'Garbage collection cannot claim a revision reserved by a current build'
 );
 
 CREATE TEMP TABLE superseded_revision_garbage AS
-SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10);
+SELECT * FROM claim_asset_resource_index_garbage(
+  'resource-index-test-project', ARRAY['posts'], '2100-01-01', 10
+);
 
 SELECT is(
   (SELECT count(*)::INTEGER FROM superseded_revision_garbage),
@@ -447,7 +462,9 @@ SELECT is(
 SELECT is(
   (
     SELECT count(*)::INTEGER
-    FROM claim_asset_resource_index_garbage('2100-01-01', 10)
+    FROM claim_asset_resource_index_garbage(
+      'resource-index-test-project', ARRAY['posts'], '2100-01-01', 10
+    )
   ),
   0,
   'A deployment reference prevents deleted-query revision collection'
@@ -483,7 +500,9 @@ WHERE "projectId" = 'resource-index-test-project'
   AND "referenceId" = 'abandoned-build';
 
 CREATE TEMP TABLE claimed_resource_index_garbage AS
-SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10);
+SELECT * FROM claim_asset_resource_index_garbage(
+  'resource-index-test-project', ARRAY['posts'], '2100-01-01', 10
+);
 
 SELECT is(
   (SELECT count(*)::INTEGER FROM claimed_resource_index_garbage),
@@ -494,7 +513,9 @@ SELECT is(
 SELECT is(
   (
     SELECT count(*)::INTEGER
-    FROM claim_asset_resource_index_garbage('2100-01-01', 10)
+    FROM claim_asset_resource_index_garbage(
+      'resource-index-test-project', ARRAY['posts'], '2100-01-01', 10
+    )
   ),
   0,
   'A fresh garbage claim cannot be claimed by another worker'
@@ -506,7 +527,9 @@ WHERE "projectId" = 'resource-index-test-project'
   AND "resourceId" = 'posts';
 
 CREATE TEMP TABLE reclaimed_resource_index_garbage AS
-SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10);
+SELECT * FROM claim_asset_resource_index_garbage(
+  'resource-index-test-project', ARRAY['posts'], '2100-01-01', 10
+);
 
 SELECT is(
   (SELECT count(*)::INTEGER FROM reclaimed_resource_index_garbage),
@@ -623,26 +646,14 @@ DELETE FROM "Build"
 WHERE "id" = 'resource-index-test-build'
   AND "projectId" = 'resource-index-test-project';
 
-SELECT throws_ok(
-  $$ DELETE FROM "Project" WHERE id = 'resource-index-test-project' $$,
-  '23503',
-  NULL,
-  'Hard project deletion cannot orphan immutable resource indexes'
-);
-
-CREATE TEMP TABLE project_delete_garbage AS
-SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10)
-WHERE "resourceId" = 'project-delete-test';
-
 SELECT is(
-  finalize_asset_resource_index_garbage(
-    (SELECT "projectId" FROM project_delete_garbage),
-    (SELECT "resourceId" FROM project_delete_garbage),
-    (SELECT revision FROM project_delete_garbage),
-    (SELECT "gcClaimId" FROM project_delete_garbage)
+  (
+    SELECT count(*)::INTEGER
+    FROM "AssetResourceIndexRevision"
+    WHERE "projectId" = 'resource-index-test-project'
   ),
-  TRUE,
-  'Project deletion cleanup finalizes its immutable resource index'
+  1,
+  'The project still owns an immutable index before hard deletion'
 );
 
 DELETE FROM "Project" WHERE "id" = 'resource-index-test-project';
@@ -654,7 +665,7 @@ SELECT is(
     WHERE "projectId" = 'resource-index-test-project'
   ),
   0,
-  'Deleting a project cascades its resource index revisions'
+  'Hard project deletion cascades database state without waiting for object storage'
 );
 
 SELECT * FROM finish();

@@ -205,6 +205,8 @@ export const loadAssetResourceIndexSnapshots = async ({
       await collectAssetResourceIndexGarbageBestEffort({
         client,
         store: garbageCollectionStore,
+        projectId,
+        resourceIds: uniqueResourceIds,
       });
     }
   } catch (error) {

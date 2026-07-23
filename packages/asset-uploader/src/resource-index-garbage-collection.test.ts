@@ -18,12 +18,18 @@ const candidate = {
   objectKey: "projects/project-1/resources/posts/index.json",
   gcClaimId: "claim-1",
 };
+const scope = {
+  projectId: candidate.projectId,
+  resourceIds: [candidate.resourceId],
+};
 
 describe("resource index garbage collection", () => {
   test("deletes claimed objects and finalizes their rows", async () => {
     server.use(
       db.post("rpc/claim_asset_resource_index_garbage", async ({ request }) => {
         expect(await request.json()).toEqual({
+          p_project_id: candidate.projectId,
+          p_resource_ids: [candidate.resourceId],
           p_before: "2026-07-20T00:00:00.000Z",
           p_limit: 10,
         });
@@ -37,6 +43,7 @@ describe("resource index garbage collection", () => {
       collectAssetResourceIndexGarbage({
         client: testContext.postgrest.client,
         store: { delete: remove },
+        ...scope,
         now: new Date("2026-07-20T00:00:00Z"),
         limit: 10,
       })
@@ -57,6 +64,7 @@ describe("resource index garbage collection", () => {
     await expect(
       collectAssetResourceIndexGarbage({
         client: testContext.postgrest.client,
+        ...scope,
         store: {
           delete: async () => {
             throw new Error("R2 unavailable");
@@ -83,6 +91,7 @@ describe("resource index garbage collection", () => {
       collectAssetResourceIndexGarbage({
         client: testContext.postgrest.client,
         store: { delete: remove },
+        ...scope,
       })
     ).rejects.toThrow("Failed to collect 1");
     expect(remove).toHaveBeenCalledOnce();
@@ -101,6 +110,7 @@ describe("resource index garbage collection", () => {
       collectAssetResourceIndexGarbage({
         client: testContext.postgrest.client,
         store: { delete: async () => "missing" },
+        ...scope,
       })
     ).resolves.toEqual({ claimed: 1, deleted: 0, missing: 1 });
   });
@@ -130,10 +140,25 @@ describe("resource index garbage collection", () => {
     await collectAssetResourceIndexGarbageBestEffort({
       client: testContext.postgrest.client,
       store: { delete: remove },
+      ...scope,
       limit: 2,
     });
 
     expect(claims).toBe(1);
     expect(remove).toHaveBeenCalledTimes(2);
+  });
+
+  test("skips storage and database work for an empty resource scope", async () => {
+    const remove = vi.fn(async () => "deleted" as const);
+
+    await expect(
+      collectAssetResourceIndexGarbage({
+        client: testContext.postgrest.client,
+        store: { delete: remove },
+        projectId: candidate.projectId,
+        resourceIds: [],
+      })
+    ).resolves.toEqual({ claimed: 0, deleted: 0, missing: 0 });
+    expect(remove).not.toHaveBeenCalled();
   });
 });

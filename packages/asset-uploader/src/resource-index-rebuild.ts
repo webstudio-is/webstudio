@@ -54,6 +54,8 @@ export const rebuildAssetResourceIndex = async ({
     await collectAssetResourceIndexGarbageBestEffort({
       client,
       store: { delete: assetClient.resourceIndexStore.delete },
+      projectId,
+      resourceIds: [resourceId],
     });
   }
   return result;
