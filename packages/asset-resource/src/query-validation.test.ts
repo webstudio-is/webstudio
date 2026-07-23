@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { assetResourceLimits } from "@webstudio-is/sdk";
 import {
+  getAssetResourceParameterFieldPaths,
   AssetResourceQueryValidationError,
   getAssetResourceReferencedFieldPaths,
   getAssetResourceReferencedFieldPathsFromTree,
@@ -21,6 +22,18 @@ const expectValidationCode = (
 };
 
 describe("asset resource query validation", () => {
+  test("finds unambiguous fields compared with route parameters", () => {
+    expect(
+      getAssetResourceParameterFieldPaths(
+        "*[properties.slug == $slug && $locale == properties.locale]"
+      )
+    ).toEqual(
+      new Map([
+        ["locale", ["properties", "locale"]],
+        ["slug", ["properties", "slug"]],
+      ])
+    );
+  });
   test("returns one parsed analysis for a valid parameterized query", () => {
     expect(
       validateAssetResourceQuery(

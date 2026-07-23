@@ -160,13 +160,30 @@ VALUES ('resource-index-test.md', 'file', 10, 'UPLOADED');
 INSERT INTO "Asset" (id, "projectId", name)
 VALUES ('resource-index-test-asset', 'resource-index-test-project', 'resource-index-test.md');
 
+SELECT throws_ok(
+  $$
+    INSERT INTO "AssetFileMetadata" (
+      "projectId", "assetId", revision, document, "fieldContributions"
+    ) VALUES (
+      'resource-index-test-project',
+      'resource-index-test-asset',
+      'file:resource-index-test.md:invalid',
+      '{}'::JSONB,
+      '[]'::JSONB
+    )
+  $$,
+  '23514',
+  NULL,
+  'Canonical metadata requires explicit matching identity fields'
+);
+
 INSERT INTO "AssetFileMetadata" (
   "projectId", "assetId", revision, document, "fieldContributions"
 ) VALUES (
   'resource-index-test-project',
   'resource-index-test-asset',
   'file:resource-index-test.md:1',
-  '{}'::JSONB,
+  '{"_id":"resource-index-test-asset","revision":"file:resource-index-test.md:1"}'::JSONB,
   '[]'::JSONB
 );
 
@@ -545,9 +562,88 @@ SELECT is(
   'Repeated query deletion is idempotent'
 );
 
+INSERT INTO "AssetResourceIndexState" (
+  "projectId", "resourceId", query, "queryHash", "assetRevision",
+  "buildAttemptId", "buildStatus"
+) VALUES (
+  'resource-index-test-project',
+  'project-delete-test',
+  '*[]',
+  'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  'project-delete-attempt',
+  'BUILDING'
+);
+
+INSERT INTO "AssetResourceIndexRevision" (
+  "projectId", "resourceId", revision, "queryHash", "assetRevision",
+  checksum, "objectKey"
+) VALUES (
+  'resource-index-test-project',
+  'project-delete-test',
+  'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+  'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+  'projects/test/resources/project-delete-test.json'
+);
+
+UPDATE "AssetResourceIndexState"
+SET "activeRevision" =
+      'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+  "buildStatus" = 'ACTIVE'
+WHERE "projectId" = 'resource-index-test-project'
+  AND "resourceId" = 'project-delete-test';
+
+UPDATE "Project"
+SET "isDeleted" = TRUE
+WHERE id = 'resource-index-test-project';
+
+SELECT ok(
+  (
+    SELECT "activeRevision" IS NULL AND "deletedAt" IS NOT NULL
+    FROM "AssetResourceIndexState"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'project-delete-test'
+  ),
+  'Soft project deletion retires active resource indexes'
+);
+
+SELECT ok(
+  (
+    SELECT "unreferencedAt" IS NOT NULL
+    FROM "AssetResourceIndexRevision"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'project-delete-test'
+  ),
+  'Soft project deletion makes immutable indexes collectible'
+);
+
 DELETE FROM "Build"
 WHERE "id" = 'resource-index-test-build'
   AND "projectId" = 'resource-index-test-project';
+
+SELECT throws_ok(
+  $$ DELETE FROM "Project" WHERE id = 'resource-index-test-project' $$,
+  '23503',
+  NULL,
+  'Hard project deletion cannot orphan immutable resource indexes'
+);
+
+CREATE TEMP TABLE project_delete_garbage AS
+SELECT * FROM claim_asset_resource_index_garbage('2100-01-01', 10)
+WHERE "resourceId" = 'project-delete-test';
+
+SELECT is(
+  finalize_asset_resource_index_garbage(
+    (SELECT "projectId" FROM project_delete_garbage),
+    (SELECT "resourceId" FROM project_delete_garbage),
+    (SELECT revision FROM project_delete_garbage),
+    (SELECT "gcClaimId" FROM project_delete_garbage)
+  ),
+  TRUE,
+  'Project deletion cleanup finalizes its immutable resource index'
+);
 
 DELETE FROM "Project" WHERE "id" = 'resource-index-test-project';
 

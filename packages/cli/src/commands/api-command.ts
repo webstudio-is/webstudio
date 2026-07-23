@@ -2877,6 +2877,45 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "get-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "get-assets-resource",
+      { resourceId: requireOption(options.resource, "--resource") },
+      connection,
+      dependencies
+    ),
+  "create-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "create-assets-resource",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
+  "update-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "update-assets-resource",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
+  "get-asset-resource-index-status": async (
+    options,
+    connection,
+    dependencies
+  ) =>
+    runProjectSessionCommand(
+      "get-asset-resource-index-status",
+      { resourceId: requireOption(options.resource, "--resource") },
+      connection,
+      dependencies
+    ),
+  "rebuild-asset-resource-index": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "rebuild-asset-resource-index",
+      { resourceId: requireOption(options.resource, "--resource") },
+      connection,
+      dependencies
+    ),
   "create-resource": async (options, connection, dependencies) => {
     const input = {
       resource: (await getResourceFields(

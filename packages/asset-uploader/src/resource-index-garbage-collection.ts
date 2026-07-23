@@ -109,16 +109,7 @@ export const collectAssetResourceIndexGarbageBestEffort = async ({
   limit?: number;
 }) => {
   try {
-    while (true) {
-      const result = await collectAssetResourceIndexGarbage({
-        client,
-        store,
-        limit,
-      });
-      if (result.claimed < limit) {
-        break;
-      }
-    }
+    await collectAssetResourceIndexGarbage({ client, store, limit });
   } catch (error) {
     console.error("Asset resource index cleanup failed", error);
   }

@@ -20,12 +20,15 @@ import {
   findPageByIdOrPath,
   getAllPages,
   getStyleDeclKey,
+  assetResourceLimits,
+  isStoredAssetQueryResource,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
 import {
   computeAssetResourceQueryHash,
   computeCanonicalAssetRevision,
+  serializeAssetResourceIndex,
 } from "@webstudio-is/asset-resource";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
@@ -164,25 +167,42 @@ const addProjectMetadata = async (
       ? undefined
       : await getUserById(context, project.userId);
 
+  const reachableResourceIds = new Set<string>();
+  for (const [, prop] of data.build.props) {
+    if (prop.type === "resource") {
+      reachableResourceIds.add(prop.value);
+    }
+  }
+  for (const [, dataSource] of data.build.dataSources) {
+    if (dataSource.type === "resource") {
+      reachableResourceIds.add(dataSource.resourceId);
+    }
+  }
   const assetQueryResources = data.build.resources
     .map(([, resource]) => resource)
     .flatMap((resource) => {
+      if (reachableResourceIds.has(resource.id) === false) {
+        return [];
+      }
       const query = getAssetResourceQuery(resource);
-      return query === undefined ? [] : [{ resourceId: resource.id, query }];
+      if (query !== undefined) {
+        return [{ resourceId: resource.id, query }];
+      }
+      if (isStoredAssetQueryResource(resource)) {
+        throw new Error(
+          `Assets resource ${JSON.stringify(resource.id)} has an invalid query configuration`
+        );
+      }
+      return [];
     });
+  if (assetQueryResources.length > assetResourceLimits.publishedResourceCount) {
+    throw new Error("Published Assets resource count exceeds the limit");
+  }
   let assetResourceIndexes: PublishedProjectBundle["assetResourceIndexes"];
+  let publishedAssets = data.assets;
+  let publishedAssetFolders = data.assetFolders;
   if (assetQueryResources.length > 0) {
     const assetClient = createAssetClientWithResourceIndexStore();
-    await synchronizeCanonicalAssets({
-      client: context.postgrest.client,
-      projectId: project.id,
-      assetClient,
-    });
-    const { entries: canonicalEntries, metadataSnapshot } =
-      await loadCanonicalAssetFileSnapshot({
-        client: context.postgrest.client,
-        projectId: project.id,
-      });
     const indexedResources = await Promise.all(
       assetQueryResources.map(async ({ resourceId, query }) => ({
         resourceId,
@@ -190,24 +210,97 @@ const addProjectMetadata = async (
         queryHash: await computeAssetResourceQueryHash(query),
       }))
     );
-    const expectedAssetRevision =
-      await computeCanonicalAssetRevision(canonicalEntries);
-    assetResourceIndexes =
-      await prepareAssetResourceIndexSnapshotsForPublication({
+    const currentBuild = await loadDevBuildByProjectId(context, project.id);
+    const currentQueries = new Map(
+      (currentBuild?.resources ?? []).map((resource) => [
+        resource.id,
+        getAssetResourceQuery(resource),
+      ])
+    );
+    const currentResourceIds = indexedResources
+      .filter(
+        ({ resourceId, query }) => currentQueries.get(resourceId) === query
+      )
+      .map(({ resourceId }) => resourceId);
+    const retainedFontIds = new Set(
+      data.assets
+        .filter((asset) => asset.type === "font")
+        .map((asset) => asset.id)
+    );
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const assetDataBefore = await loadAssetDataByProject(project.id, context);
+      await synchronizeCanonicalAssets({
         client: context.postgrest.client,
-        store: assetClient.resourceIndexStore,
         projectId: project.id,
-        resources: indexedResources,
-        entries: canonicalEntries,
-        read: assetClient.resourceIndexStore.read,
-        referenceId: data.build.id,
-        assetRevision: expectedAssetRevision,
-        metadataSnapshot,
+        assetClient,
       });
+      const { entries: canonicalEntries, metadataSnapshot } =
+        await loadCanonicalAssetFileSnapshot({
+          client: context.postgrest.client,
+          projectId: project.id,
+        });
+      const expectedAssetRevision =
+        await computeCanonicalAssetRevision(canonicalEntries);
+      const preparedIndexes =
+        await prepareAssetResourceIndexSnapshotsForPublication({
+          client: context.postgrest.client,
+          store: assetClient.resourceIndexStore,
+          projectId: project.id,
+          resources: indexedResources,
+          entries: canonicalEntries,
+          read: assetClient.resourceIndexStore.read,
+          referenceId: data.build.id,
+          assetRevision: expectedAssetRevision,
+          metadataSnapshot,
+          currentResourceIds,
+        });
+      const [assetDataAfter, latestCanonical] = await Promise.all([
+        loadAssetDataByProject(project.id, context),
+        loadCanonicalAssetFileSnapshot({
+          client: context.postgrest.client,
+          projectId: project.id,
+        }),
+      ]);
+      const latestAssetRevision = await computeCanonicalAssetRevision(
+        latestCanonical.entries
+      );
+      const assetsStayedStable =
+        JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter) &&
+        expectedAssetRevision === latestAssetRevision;
+      if (assetsStayedStable === false) {
+        if (attempt === 0) {
+          continue;
+        }
+        throw new Error("Assets changed while preparing publication; retry");
+      }
+      assetResourceIndexes = preparedIndexes;
+      publishedAssets = assetDataAfter.assets.filter(
+        (asset) => asset.type !== "font" || retainedFontIds.has(asset.id)
+      );
+      publishedAssetFolders = assetDataAfter.assetFolders;
+      break;
+    }
+    if (assetResourceIndexes === undefined) {
+      throw new Error("Asset resource indexes were not prepared");
+    }
+    const totalIndexBytes = assetResourceIndexes.reduce(
+      (total, snapshot) =>
+        total +
+        new TextEncoder().encode(serializeAssetResourceIndex(snapshot.index))
+          .byteLength,
+      0
+    );
+    if (totalIndexBytes > assetResourceLimits.publishedIndexBytes) {
+      throw new Error(
+        "Published Assets resource indexes exceed the byte limit"
+      );
+    }
   }
 
   return {
     ...data,
+    assets: publishedAssets,
+    assetFolders: publishedAssetFolders,
     bundleVersion,
     user: user ? { email: user.email } : undefined,
     projectDomain: project.domain,

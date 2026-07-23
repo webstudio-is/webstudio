@@ -16,6 +16,7 @@ import {
   assetsQueryResourceUrl,
   assetsResourceUrl,
 } from "@webstudio-is/sdk/runtime";
+import { validateAssetResourceQuery } from "@webstudio-is/asset-resource";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
@@ -67,16 +68,58 @@ const assetResourceConfigurationFields = {
   content: assetResourceContentOptions.default({ mode: "none" }),
 };
 
-const storedAssetQueryConfigurationInput = z.object(
-  assetResourceConfigurationFields
-);
+const refineAssetQueryConfiguration = (
+  configuration: {
+    query: string;
+    parameters: readonly { name: string }[];
+  },
+  context: z.RefinementCtx
+) => {
+  let parameterNames: readonly string[];
+  try {
+    parameterNames = validateAssetResourceQuery(
+      configuration.query
+    ).parameterNames;
+  } catch (error) {
+    context.addIssue({
+      code: "custom",
+      path: ["query"],
+      message:
+        error instanceof Error ? error.message : "Asset query is invalid.",
+    });
+    return;
+  }
+  const bindings = new Set(
+    configuration.parameters.map((parameter) => parameter.name)
+  );
+  for (const parameterName of parameterNames) {
+    if (bindings.has(parameterName) === false) {
+      context.addIssue({
+        code: "custom",
+        path: ["parameters"],
+        message: `Asset query parameter $${parameterName} requires a binding.`,
+      });
+    }
+  }
+};
 
-export const assetsQueryConfigurationInput = z.object({
-  groq: assetResourceConfigurationFields.query,
-  parameters: assetResourceConfigurationFields.parameters,
-  resultLimit: assetResourceConfigurationFields.resultLimit,
-  content: assetResourceConfigurationFields.content,
-});
+const storedAssetQueryConfigurationInput = z
+  .object(assetResourceConfigurationFields)
+  .superRefine(refineAssetQueryConfiguration);
+
+export const assetsQueryConfigurationInput = z
+  .object({
+    groq: assetResourceConfigurationFields.query,
+    parameters: assetResourceConfigurationFields.parameters,
+    resultLimit: assetResourceConfigurationFields.resultLimit,
+    content: assetResourceConfigurationFields.content,
+  })
+  .superRefine((configuration, context) =>
+    refineAssetQueryConfiguration(
+      { query: configuration.groq, parameters: configuration.parameters },
+      context
+    )
+  );
 
 export const assetsResourceListInput = z.object({
   scopeInstanceId: z.string().optional(),

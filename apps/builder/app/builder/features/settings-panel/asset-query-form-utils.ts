@@ -7,6 +7,7 @@ import {
   type AssetResourceIndexStatus,
 } from "@webstudio-is/sdk";
 import { validateAssetResourceQuery } from "@webstudio-is/asset-resource";
+import { getExpressionErrorMessages } from "@webstudio-is/project-build/runtime";
 export {
   createAssetQueryResourceBody,
   parseAssetQueryResourceBody,
@@ -58,7 +59,7 @@ export const getAssetQueryConfigurationError = ({
   content,
 }: {
   query: string;
-  parameters: readonly { name: string }[];
+  parameters: readonly { name: string; value?: string }[];
   resultLimit: number;
   content: AssetResourceContentOptions;
 }) => {
@@ -83,6 +84,15 @@ export const getAssetQueryConfigurationError = ({
   }
   if (new Set(names).size !== names.length) {
     return "Runtime parameter names must be unique.";
+  }
+  if (
+    parameters.some(
+      ({ value }) =>
+        value !== undefined &&
+        getExpressionErrorMessages({ expression: value }).length > 0
+    )
+  ) {
+    return "Enter a valid Webstudio expression for every runtime parameter.";
   }
   const configuredNames = new Set(names);
   const missingName = referencedParameterNames.find(

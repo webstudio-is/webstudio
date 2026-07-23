@@ -209,4 +209,48 @@ describe("previewAssetResourceQuery", () => {
       length: 8,
     });
   });
+
+  test("applies static candidate selection before the candidate limit", async () => {
+    hasProjectPermit.mockResolvedValue(true);
+    loadCanonicalAssetFileEntries.mockResolvedValue(
+      Array.from({ length: 1001 }, (_, index) => {
+        const selected = index === 1000;
+        const assetId = `asset-${index}`;
+        return {
+          projectId,
+          assetId,
+          revision,
+          document: {
+            _id: assetId,
+            _type: "asset.file" as const,
+            name: `${index}.md`,
+            path: selected ? "blog/selected.md" : `other/${index}.md`,
+            key: `${index}`,
+            extension: "md",
+            mimeType: "text/markdown",
+            size: 1,
+            revision,
+            contentRef: `assets/${assetId}`,
+            properties: {},
+          },
+          fieldContributions: [],
+        };
+      })
+    );
+
+    const result = await previewAssetResourceQuery({
+      projectId,
+      request: {
+        query: '*[path match "blog/**"]{_id}',
+        parameters: {},
+        resultLimit: 1,
+        content: { mode: "none" },
+      },
+      context,
+      assetClient: { readFile: vi.fn() },
+      dependencies,
+    });
+
+    expect(result.result).toEqual([{ _id: "asset-1000" }]);
+  });
 });

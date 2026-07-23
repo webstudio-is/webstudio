@@ -59,7 +59,7 @@ describe("asset resource query lifecycle", () => {
     ).toBeUndefined();
   });
 
-  test("rebuilds all current queries from one canonical load", async () => {
+  test("rebuilds only created and changed queries from one canonical load", async () => {
     const previous = [
       resource("changed", "*[false]"),
       resource("unchanged", "*[]"),
@@ -83,11 +83,11 @@ describe("asset resource query lifecycle", () => {
       })
     ).resolves.toEqual({
       deletedResourceIds: [],
-      updatedResourceIds: ["changed", "created", "unchanged"],
+      updatedResourceIds: ["changed", "created"],
     });
     expect(loadCanonicalAssetFileSnapshot).toHaveBeenCalledOnce();
     expect(synchronizeCanonicalAssets).toHaveBeenCalledOnce();
-    expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(3);
+    expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(2);
     expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledOnce();
   });
 

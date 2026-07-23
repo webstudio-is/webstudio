@@ -147,6 +147,71 @@ const getAttributePath = (node: unknown): string | undefined => {
     : appendAssetFieldPath(basePath, attribute.name);
 };
 
+const getAttributePathSegments = (node: unknown): string[] | undefined => {
+  if (
+    typeof node !== "object" ||
+    node === null ||
+    Reflect.get(node, "type") !== "AccessAttribute" ||
+    typeof Reflect.get(node, "name") !== "string"
+  ) {
+    return;
+  }
+  const base = Reflect.get(node, "base");
+  const baseSegments = base === undefined ? [] : getAttributePathSegments(base);
+  if (baseSegments === undefined) {
+    return;
+  }
+  return [...baseSegments, Reflect.get(node, "name") as string];
+};
+
+const getParameterName = (node: unknown) =>
+  typeof node === "object" &&
+  node !== null &&
+  Reflect.get(node, "type") === "Parameter" &&
+  typeof Reflect.get(node, "name") === "string"
+    ? (Reflect.get(node, "name") as string)
+    : undefined;
+
+/**
+ * Returns the document field directly compared with each GROQ parameter.
+ * Ambiguous parameters are omitted instead of guessing a prerender identity.
+ */
+export const getAssetResourceParameterFieldPaths = (query: string) => {
+  const paths = new Map<string, string[] | undefined>();
+  const add = (parameterName: string, path: string[]) => {
+    const previous = paths.get(parameterName);
+    if (previous === undefined && paths.has(parameterName) === false) {
+      paths.set(parameterName, path);
+      return;
+    }
+    if (JSON.stringify(previous) !== JSON.stringify(path)) {
+      paths.set(parameterName, undefined);
+    }
+  };
+  visitGroqAst(validateAssetResourceQuery(query).tree, (node) => {
+    if (node.type !== "OpCall" || Reflect.get(node, "op") !== "==") {
+      return;
+    }
+    const left = Reflect.get(node, "left");
+    const right = Reflect.get(node, "right");
+    const leftParameter = getParameterName(left);
+    const rightParameter = getParameterName(right);
+    const leftPath = getAttributePathSegments(left);
+    const rightPath = getAttributePathSegments(right);
+    if (leftParameter !== undefined && rightPath !== undefined) {
+      add(leftParameter, rightPath);
+    }
+    if (rightParameter !== undefined && leftPath !== undefined) {
+      add(rightParameter, leftPath);
+    }
+  });
+  return new Map(
+    [...paths]
+      .filter((entry): entry is [string, string[]] => entry[1] !== undefined)
+      .sort(([left], [right]) => left.localeCompare(right))
+  );
+};
+
 export const getAssetResourceReferencedFieldPathsFromTree = (
   tree: ExprNode
 ) => {

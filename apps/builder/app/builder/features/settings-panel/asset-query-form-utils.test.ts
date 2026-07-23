@@ -146,5 +146,13 @@ describe("asset query resource body", () => {
         content: { mode: "none" },
       })
     ).toContain("$slug");
+    expect(
+      getAssetQueryConfigurationError({
+        query: "*[properties.slug == $slug]",
+        parameters: [{ name: "slug", value: "system.params." }],
+        resultLimit: 1,
+        content: { mode: "none" },
+      })
+    ).toContain("Webstudio expression");
   });
 });

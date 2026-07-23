@@ -107,16 +107,18 @@ export const createCanonicalAssetFileEntry = ({
   };
 };
 
-const assertPathSegment = (segment: string, label: string) => {
-  if (
-    segment.length === 0 ||
-    segment === "." ||
-    segment === ".." ||
-    segment.includes("/") ||
-    segment.includes("\\")
-  ) {
-    throw new Error(`${label} must be one normalized path segment`);
+// Asset and folder names are user data, not filesystem paths. Encode each name
+// independently so slashes and dot segments cannot change path structure while
+// preserving the original name in the document for display and exact matching.
+const encodeAssetPathSegment = (segment: string) => {
+  const encoded = encodeURIComponent(segment);
+  if (encoded === ".") {
+    return "%2E";
   }
+  if (encoded === "..") {
+    return "%2E%2E";
+  }
+  return encoded;
 };
 
 /**
@@ -127,22 +129,19 @@ export const normalizeAssetFileDocument = ({
   asset,
   properties,
   excerpt,
+  metadataError,
 }: {
   asset: AssetFileMetadataInput;
   properties: Record<string, unknown>;
   excerpt?: string;
+  metadataError?: AssetFileDocument["metadataError"];
 }): AssetFileDocument => {
-  assertPathSegment(asset.name, "Asset name");
   const folderNames = asset.folderNames ?? [];
   if ((asset.folderId === undefined) !== (folderNames.length === 0)) {
     throw new Error(
       "Asset folder ID and complete folder-name path must be provided together"
     );
   }
-  for (const folderName of folderNames) {
-    assertPathSegment(folderName, "Asset folder name");
-  }
-
   const extensionSeparator = asset.name.lastIndexOf(".");
   const extension =
     asset.extension ??
@@ -153,7 +152,9 @@ export const normalizeAssetFileDocument = ({
     extensionSeparator <= 0
       ? asset.name
       : asset.name.slice(0, extensionSeparator);
-  const path = [...folderNames, asset.name].join("/");
+  const path = [...folderNames, asset.name]
+    .map(encodeAssetPathSegment)
+    .join("/");
 
   return assetFileDocument.parse({
     _id: asset.id,
@@ -169,5 +170,6 @@ export const normalizeAssetFileDocument = ({
     contentRef: asset.contentRef,
     properties,
     ...(excerpt === undefined ? {} : { excerpt }),
+    ...(metadataError === undefined ? {} : { metadataError }),
   });
 };

@@ -62,7 +62,10 @@ export const synchronizeAssetResourceIndexQueries = async ({
     .map(([resourceId]) => resourceId)
     .sort();
   const changed = [...current]
-    .filter(([, query]) => query !== undefined)
+    .filter(
+      ([resourceId, query]) =>
+        query !== undefined && previous.get(resourceId) !== query
+    )
     .map(([resourceId, query]) => ({ resourceId, query: query as string }))
     .sort((left, right) => left.resourceId.localeCompare(right.resourceId));
 

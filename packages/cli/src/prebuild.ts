@@ -36,6 +36,7 @@ import {
   createScope,
   findTreeInstanceIds,
   getAllPages,
+  getAssetResourceQuery,
   getPagePath,
   getPublishablePages,
   generateResources,
@@ -50,8 +51,11 @@ import {
   elementComponent,
   toRuntimeAsset,
   assetResourceContentOptions,
+  assetResourceLimits,
+  matchPathnameParams,
   parseAssetQueryResourceBody,
 } from "@webstudio-is/sdk";
+import { getAssetResourceParameterFieldPaths } from "@webstudio-is/asset-resource";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
@@ -97,6 +101,141 @@ type SiteDataByPage = {
     params?: Params;
     pages: Array<Page>;
   };
+};
+
+const getExpressionMemberPath = (node: unknown): string[] | undefined => {
+  if (typeof node !== "object" || node === null) {
+    return;
+  }
+  if (
+    Reflect.get(node, "type") === "Identifier" &&
+    typeof Reflect.get(node, "name") === "string"
+  ) {
+    return [Reflect.get(node, "name") as string];
+  }
+  if (Reflect.get(node, "type") !== "MemberExpression") {
+    return;
+  }
+  const base = getExpressionMemberPath(Reflect.get(node, "object"));
+  if (base === undefined) {
+    return;
+  }
+  const computed = Reflect.get(node, "computed") === true;
+  const property = Reflect.get(node, "property");
+  const name = computed
+    ? Reflect.get(property, "value")
+    : Reflect.get(property, "name");
+  return typeof name === "string" ? [...base, name] : undefined;
+};
+
+const getBoundSystemRouteParameter = (expression: string) => {
+  try {
+    const program = parse(`(${expression})`, { ecmaVersion: "latest" });
+    const statement = program.body[0];
+    const node =
+      statement?.type === "ExpressionStatement"
+        ? statement.expression
+        : undefined;
+    const path = getExpressionMemberPath(node);
+    return path?.length === 3 && path[0] === "system" && path[1] === "params"
+      ? path[2]
+      : undefined;
+  } catch {
+    return;
+  }
+};
+
+const getDocumentPathValue = (document: unknown, path: readonly string[]) => {
+  let value = document;
+  for (const segment of path) {
+    if (typeof value !== "object" || value === null) {
+      return;
+    }
+    value = Reflect.get(value, segment);
+  }
+  return value;
+};
+
+export const getAssetResourcePrerenderPaths = ({
+  pagePath,
+  resources,
+  indexes,
+}: {
+  pagePath: string;
+  resources: readonly [string, Resource][];
+  indexes: PublishedProjectBundle["assetResourceIndexes"];
+}) => {
+  const pathParameters = [...matchPathnameParams(pagePath)];
+  if (
+    pathParameters.length === 0 ||
+    pathParameters.some(
+      (match) =>
+        match.groups?.name === undefined || (match.groups.modifier ?? "") !== ""
+    )
+  ) {
+    return [];
+  }
+  const routeParameterNames = new Set(
+    pathParameters.map((match) => match.groups?.name as string)
+  );
+  const indexByResourceId = new Map(
+    (indexes ?? []).map((snapshot) => [snapshot.resourceId, snapshot.index])
+  );
+  const paths = new Set<string>();
+  for (const [, resource] of resources) {
+    const index = indexByResourceId.get(resource.id);
+    if (index === undefined) {
+      continue;
+    }
+    const query = getAssetResourceQuery(resource);
+    if (query === undefined) {
+      continue;
+    }
+    const parameterFields = getAssetResourceParameterFieldPaths(query);
+    const routeFields = new Map<string, string[]>();
+    for (const binding of parseAssetQueryResourceBody(resource.body)
+      .parameters) {
+      const routeParameter = getBoundSystemRouteParameter(binding.value);
+      const fieldPath = parameterFields.get(binding.name);
+      if (
+        routeParameter !== undefined &&
+        routeParameterNames.has(routeParameter) &&
+        fieldPath !== undefined
+      ) {
+        routeFields.set(routeParameter, fieldPath);
+      }
+    }
+    if (routeFields.size !== routeParameterNames.size) {
+      continue;
+    }
+    for (const document of index.documents) {
+      const values = new Map<string, string>();
+      for (const [name, fieldPath] of routeFields) {
+        const value = getDocumentPathValue(document, fieldPath);
+        if (
+          (typeof value === "string" && value.length > 0) ||
+          (typeof value === "number" && Number.isFinite(value)) ||
+          typeof value === "boolean"
+        ) {
+          values.set(name, String(value));
+        }
+      }
+      if (values.size !== routeParameterNames.size) {
+        continue;
+      }
+      let path = pagePath;
+      for (const match of [...pathParameters].reverse()) {
+        const name = match.groups?.name as string;
+        const value = values.get(name) as string;
+        path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
+      }
+      paths.add(path);
+      if (paths.size > assetResourceLimits.candidateDocuments) {
+        throw new Error("Dynamic SSG path count exceeds the Assets limit");
+      }
+    }
+  }
+  return [...paths].sort();
 };
 
 const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
@@ -215,7 +354,7 @@ export const generateAssetQueryRuntimeModule = ({
   if (manifest.length === 0) {
     return `export const createGeneratedAssetResourceFetch = async ({ fallback }: ${inputType}): Promise<typeof fetch> => fallback;\n`;
   }
-  return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/asset-resource";
+  return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/asset-resource/runtime";
 
 const deploymentId = ${JSON.stringify(deploymentId)};
 const manifest = ${JSON.stringify(manifest, null, 2)};
@@ -970,7 +1109,15 @@ export const prebuild = async (options: {
     await writeGeneratedFile(serverFile, serverExports);
 
     const getTemplates = framework[documentType];
-    for (const { file, template } of getTemplates({ pagePath })) {
+    const prerenderPaths = getAssetResourcePrerenderPaths({
+      pagePath,
+      resources: pageData.build.resources,
+      indexes: siteData.assetResourceIndexes,
+    });
+    for (const { file, template } of getTemplates({
+      pagePath,
+      prerenderPaths,
+    })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
         .replaceAll(

@@ -211,6 +211,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   metadataSnapshot,
   read,
   referenceId,
+  currentResourceIds = [],
 }: {
   client: Client;
   store: ImmutableAssetResourceIndexStore;
@@ -225,6 +226,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   metadataSnapshot: CanonicalAssetMetadataSnapshot;
   read: (name: string) => Promise<{ data: AsyncIterable<Uint8Array> }>;
   referenceId: string;
+  currentResourceIds?: readonly string[];
 }): Promise<AssetResourceIndexSnapshot[]> => {
   if (resources.length === 0) {
     return [];
@@ -241,12 +243,14 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   const states = new Map(
     (statesResult.data ?? []).map((state) => [state.resourceId, state])
   );
+  const explicitlyCurrent = new Set(currentResourceIds);
   const currentResources = resources.filter((resource) => {
     const state = states.get(resource.resourceId);
     return (
-      state !== undefined &&
-      state.deletedAt === null &&
-      state.queryHash === resource.queryHash
+      explicitlyCurrent.has(resource.resourceId) ||
+      (state !== undefined &&
+        state.deletedAt === null &&
+        state.queryHash === resource.queryHash)
     );
   });
   await reconcileAssetResourceIndexesForPublication({

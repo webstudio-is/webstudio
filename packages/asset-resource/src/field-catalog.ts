@@ -79,6 +79,13 @@ const getStandardFieldContributions = (
   ...(document.excerpt === undefined
     ? []
     : [{ path: "excerpt", type: "string" } as const]),
+  ...(document.metadataError === undefined
+    ? []
+    : [
+        { path: "metadataError", type: "object" } as const,
+        { path: "metadataError.code", type: "string" } as const,
+        { path: "metadataError.message", type: "string" } as const,
+      ]),
 ];
 
 type MutableField = {

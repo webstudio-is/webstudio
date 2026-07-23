@@ -12,13 +12,14 @@ import {
   type Asset,
 } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-import type { AssetUploadClient } from "./client";
+import type { AssetClient, AssetUploadClient } from "./client";
 import type { AssetDataOverride } from "./utils/get-asset-data";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
+import { synchronizeAssetResourceStateAfterAssetChange } from "./resource-index-maintenance";
 
 type UploadData = {
   projectId: string;
@@ -514,12 +515,33 @@ export const uploadFile = async (
     if (typeof projectId !== "string") {
       throw Error("File uploader project is missing");
     }
-    return await getUploadedAsset({
+    const asset = await getUploadedAsset({
       name,
       projectId,
       context,
       file,
     });
+    const readableClient = client as Partial<AssetClient>;
+    if (
+      readableClient.readFile !== undefined &&
+      readableClient.resourceIndexStore !== undefined
+    ) {
+      try {
+        await synchronizeAssetResourceStateAfterAssetChange({
+          client: context.postgrest.client,
+          assetClient: readableClient as AssetClient & {
+            resourceIndexStore: NonNullable<AssetClient["resourceIndexStore"]>;
+          },
+          projectId,
+          assetId: asset.id,
+        });
+      } catch (error) {
+        // The upload has committed. Derived metadata and indexes are repaired
+        // by the next preview or publication if this best-effort update fails.
+        console.error("Asset upload resource synchronization failed", error);
+      }
+    }
+    return asset;
   } catch (error) {
     await cleanupUploadError(name, context, onUploadError);
     throw error;
