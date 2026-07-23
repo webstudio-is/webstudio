@@ -7,9 +7,9 @@ import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { createServer as createTcpServer } from "node:net";
 import { delimiter, dirname, join, parse } from "node:path";
 import { parse as parseHtml, type DefaultTreeAdapterMap } from "parse5";
+import type { ProjectPreviewMode } from "@webstudio-is/project-build/visual";
 
-export const previewModes = ["iterative", "production"] as const;
-export type PreviewMode = (typeof previewModes)[number];
+export type PreviewMode = ProjectPreviewMode;
 
 export type PreviewServerOptions = {
   host: string;
@@ -537,17 +537,20 @@ export const createPreviewController = (
       }
     }
     serverOutput = "";
-    server = startPreviewServer(
+    const startedServer = startPreviewServer(
       {
         ...nextOptions,
         stdio: ["ignore", "pipe", "pipe"],
       },
       dependencies
     );
-    server.process.stdout?.on("data", appendServerOutput);
-    server.process.stderr?.on("data", appendServerOutput);
-    server.process.once("exit", () => {
-      server = undefined;
+    server = startedServer;
+    startedServer.process.stdout?.on("data", appendServerOutput);
+    startedServer.process.stderr?.on("data", appendServerOutput);
+    startedServer.process.once("exit", () => {
+      if (server === startedServer) {
+        server = undefined;
+      }
     });
     return getStatus();
   };

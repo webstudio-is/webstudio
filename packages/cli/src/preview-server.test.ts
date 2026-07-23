@@ -535,6 +535,42 @@ test("preview controller can restart a running server after rebuilding", async (
   expect(spawn).toHaveBeenCalledTimes(4);
 });
 
+test("ignores a delayed exit from a previously owned preview server", async () => {
+  let firstExit: (() => void) | undefined;
+  const firstProcess = createPreviewProcess({
+    once: vi.fn((event: string, callback: () => void) => {
+      if (event === "exit") {
+        firstExit = callback;
+      }
+      return undefined;
+    }) as never,
+    kill: vi.fn(() => false),
+  });
+  const secondProcess = createPreviewProcess({ pid: 456 });
+  const spawn = vi
+    .fn()
+    .mockReturnValueOnce(firstProcess)
+    .mockReturnValueOnce(secondProcess);
+  const controller = createPreviewController(
+    {
+      host: "127.0.0.1",
+      port: 5173,
+      cwd: "/tmp/preview",
+      mode: "iterative",
+    },
+    createDependencies({ spawn: spawn as never })
+  );
+
+  await controller.start();
+  await controller.start({ restart: true });
+  firstExit?.();
+
+  expect(controller.status()).toMatchObject({
+    pid: 456,
+    running: true,
+  });
+});
+
 test("waits for preview server readiness", async () => {
   const fetch = vi
     .fn()

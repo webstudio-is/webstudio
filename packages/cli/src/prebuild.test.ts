@@ -7,6 +7,7 @@ import {
   rm,
   stat,
   symlink,
+  utimes,
   writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
@@ -309,6 +310,14 @@ describe("prebuild", () => {
           rootInstanceId: "root",
           meta: {},
         },
+        {
+          id: "about",
+          name: "About",
+          title: "About",
+          path: "/about",
+          rootInstanceId: "root",
+          meta: {},
+        },
       ],
     });
     await writeSiteData(siteData);
@@ -317,11 +326,18 @@ describe("prebuild", () => {
       template: ["react-router"],
       preserveRouteTemplates: true,
     });
+    const unchangedFile = "app/__generated__/[about]._index.tsx";
+    const unchangedTime = new Date("2000-01-01T00:00:00.000Z");
+    await utimes(unchangedFile, unchangedTime, unchangedTime);
     const pricingFile = "app/__generated__/[pricing]._index.tsx";
-    const pricingInode = (await stat(pricingFile)).ino;
-    await writeFile("app/__generated__/obsolete.tsx", "obsolete", "utf8");
+    const pricingRoute = "app/routes/[pricing]._index.tsx";
+    const templateRoute = "app/routes/[robots.txt].tsx";
+    await writeFile("app/routes/custom.tsx", "custom", "utf8");
 
     siteData.build.version += 1;
+    siteData.build.pages.pages = siteData.build.pages.pages.filter(
+      (page) => page.id !== "pricing"
+    );
     await writeSiteData(siteData);
     await prebuild({
       assets: false,
@@ -337,15 +353,45 @@ describe("prebuild", () => {
       incremental: true,
     });
 
-    expect((await stat(pricingFile)).ino).toBe(pricingInode);
+    expect((await stat(unchangedFile)).mtimeMs).toBe(unchangedTime.getTime());
     await expect(
       readFile("app/__generated__/_index.tsx", "utf8")
     ).resolves.toContain(
       `export const projectVersion = ${siteData.build.version};`
     );
+    await expect(readFile(pricingFile, "utf8")).rejects.toThrow("ENOENT");
+    await expect(readFile(pricingRoute, "utf8")).rejects.toThrow("ENOENT");
+    await expect(readFile(templateRoute, "utf8")).resolves.toContain(
+      "User-agent"
+    );
+    await expect(readFile("app/routes/custom.tsx", "utf8")).resolves.toBe(
+      "custom"
+    );
+  });
+
+  test("rejects generated manifests that point outside owned output", async () => {
+    const outsideFile = "outside.ts";
+    await writeSiteData(createSiteData());
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    await writeFile(outsideFile, "preserve", "utf8");
+    await writeFile(
+      ".webstudio/generated-files.json",
+      JSON.stringify([outsideFile]),
+      "utf8"
+    );
+
     await expect(
-      readFile("app/__generated__/obsolete.tsx", "utf8")
-    ).rejects.toThrow("ENOENT");
+      prebuild({
+        assets: false,
+        template: ["react-router"],
+        incremental: true,
+      })
+    ).rejects.toThrow("Generated files manifest is invalid.");
+    await expect(readFile(outsideFile, "utf8")).resolves.toBe("preserve");
   });
 
   test("excludes draft pages from published output", async () => {

@@ -17,6 +17,7 @@ import {
   previewOptions,
 } from "./preview";
 import type { CommonYargsArgv } from "./yargs-types";
+import { generatedFilesManifest } from "../prebuild";
 
 test("rejects empty preview host", async () => {
   await expect(
@@ -548,9 +549,13 @@ test("refreshes an iterative generated project without replacing its directory",
   });
 
   await mkdir(join(projectDir, ".webstudio"), { recursive: true });
-  await mkdir(previewProjectDir, { recursive: true });
+  await mkdir(join(previewProjectDir, "app", "route-templates"), {
+    recursive: true,
+  });
+  await mkdir(join(previewProjectDir, ".webstudio"), { recursive: true });
   await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
   await writeFile(join(previewProjectDir, "server-marker"), "running");
+  await writeFile(join(previewProjectDir, generatedFilesManifest), "[]");
   chdir(projectDir);
   try {
     await preparePreviewProject({

@@ -40,6 +40,12 @@ import {
   type ScreenshotWaitUntil,
 } from "./visual/screenshot-browser";
 import type { ScreenshotDiffResult } from "./visual/screenshot-diff";
+import {
+  projectPreviewModes,
+  projectPreviewSources,
+  type ProjectPreviewMode,
+  type ProjectPreviewSource,
+} from "./visual/preview";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -127,13 +133,11 @@ export type McpErrorCodeResolver = (error: unknown) => string | undefined;
 export type McpTransport = Transport;
 type McpLogLevel = "info" | "error";
 
-export const projectSessionPreviewSources = ["local", "session"] as const;
-export type ProjectSessionPreviewSource =
-  (typeof projectSessionPreviewSources)[number];
+export const projectSessionPreviewSources = projectPreviewSources;
+export type ProjectSessionPreviewSource = ProjectPreviewSource;
 
-export const projectSessionPreviewModes = ["iterative", "production"] as const;
-export type ProjectSessionPreviewMode =
-  (typeof projectSessionPreviewModes)[number];
+export const projectSessionPreviewModes = projectPreviewModes;
+export type ProjectSessionPreviewMode = ProjectPreviewMode;
 
 type ProjectSessionScreenshotNavigation = {
   requestedUrl: string;
@@ -6164,6 +6168,7 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
     manifest: RenderedAuditArtifactManifest
   ) => Promise<string>;
   restorePoints?: ProjectSessionRestorePointHandlers;
+  onProjectSessionChange?: () => void;
 };
 
 type ProjectSessionRestorePointHandlers = {
@@ -6195,6 +6200,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   reportToolProgress,
   storeRenderedAuditArtifacts,
   restorePoints,
+  onProjectSessionChange,
 }: ProjectSessionMcpCoreOptions<Command>) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
@@ -6501,11 +6507,15 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "refresh") {
         const session = getSession();
         await session.initialize();
-        return toCallResult(await session.refresh(getRefreshNamespaces(input)));
+        const result = await session.refresh(getRefreshNamespaces(input));
+        onProjectSessionChange?.();
+        return toCallResult(result);
       }
       if (name === "reset-session") {
         const session = getSession();
-        return toCallResult(await session.reset());
+        const result = await session.reset();
+        onProjectSessionChange?.();
+        return toCallResult(result);
       }
       if (name === "create-restore-point" && restorePoints !== undefined) {
         return toMetaResult(
@@ -6882,6 +6892,7 @@ export const createProjectSessionMcpServer = async <
   reportLog,
   storeRenderedAuditArtifacts,
   restorePoints,
+  onProjectSessionChange,
   onInitialized,
   toolHeartbeatIntervalMs = 10_000,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
@@ -6924,6 +6935,7 @@ export const createProjectSessionMcpServer = async <
     guidance,
     storeRenderedAuditArtifacts,
     restorePoints,
+    onProjectSessionChange,
     reportToolProgress: (message) => {
       sendLog("info", message);
     },

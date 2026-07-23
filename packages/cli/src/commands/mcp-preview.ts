@@ -8,6 +8,7 @@ import {
   createScreenshotCaptureSession,
 } from "../screenshot";
 import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
+import { createExclusiveAsyncRunner } from "../async-utils";
 import {
   preparePreviewProject,
   previewDefaultTemplate,
@@ -63,6 +64,23 @@ type McpScreenshotInput = {
 
 type McpToolProgress = {
   report: (message: string) => void;
+};
+
+export const createPreviewFreshness = () => {
+  let revision = 0;
+  let freshRevision = -1;
+  return {
+    markStale() {
+      revision += 1;
+    },
+    isStale: () => freshRevision !== revision,
+    capture: () => revision,
+    markFresh(capturedRevision: number) {
+      if (capturedRevision === revision) {
+        freshRevision = revision;
+      }
+    },
+  };
 };
 
 type CaptureSessionConfig = Pick<
@@ -131,6 +149,7 @@ const prepareDefaultPreviewProject = (
 export const createMcpPreviewHandlers = ({
   preview,
   isStale = () => true,
+  captureFreshness = () => 0,
   markFresh = () => undefined,
   preparePreview = prepareDefaultPreviewProject,
   prepareSessionDataFile,
@@ -139,7 +158,8 @@ export const createMcpPreviewHandlers = ({
 }: {
   preview: McpPreviewController;
   isStale?: () => boolean;
-  markFresh?: () => void;
+  captureFreshness?: () => number;
+  markFresh?: (freshness: number) => void;
   preparePreview?: typeof prepareDefaultPreviewProject;
   prepareSessionDataFile?: () => Promise<void>;
   captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
@@ -150,6 +170,7 @@ export const createMcpPreviewHandlers = ({
     | undefined;
   let captureSessionConfig: CaptureSessionConfig | undefined;
   let activeSource: PreviewSource | undefined;
+  const runPreviewLifecycle = createExclusiveAsyncRunner();
   const closeCaptureSession = async () => {
     try {
       await captureSession?.close();
@@ -251,6 +272,7 @@ export const createMcpPreviewHandlers = ({
         imageDomains: input.imageDomains,
       });
       progress?.report("tool screenshot preparing generated preview project");
+      const freshness = captureFreshness();
       const previewProject = await preparePreview(
         source,
         prepareSessionDataFile,
@@ -272,7 +294,7 @@ export const createMcpPreviewHandlers = ({
         restart: canReusePreview === false,
       });
       activeSource = source;
-      markFresh();
+      markFresh(freshness);
     }
     return preview.resolveUrl(input.path);
   };
@@ -315,177 +337,192 @@ export const createMcpPreviewHandlers = ({
   };
   return {
     async startPreview(input: McpPreviewInput, progress?: McpToolProgress) {
-      const mode = input.mode ?? "iterative";
-      const source = getPreviewSource(input.source);
-      const canReusePreview =
-        mode === "iterative" &&
-        isPreviewTargetCompatible(input, mode, preview.status());
-      if (canReusePreview === false) {
-        await closeCaptureSession();
-      }
-      validatePreviewServerOptions({
-        host: input.host ?? "127.0.0.1",
-        port: input.port ?? 5173,
-        imageDomains: input.imageDomains,
-      });
-      progress?.report(
-        "tool preview.start preparing generated preview project"
-      );
-      const previewProject = await preparePreview(
-        source,
-        prepareSessionDataFile,
-        {
-          preserveGeneratedProject: canReusePreview && mode === "iterative",
-          prepareForIncrementalGeneration: mode === "iterative",
+      return await runPreviewLifecycle(async () => {
+        const mode = input.mode ?? "iterative";
+        const source = getPreviewSource(input.source);
+        const canReusePreview =
+          mode === "iterative" &&
+          isPreviewTargetCompatible(input, mode, preview.status());
+        if (canReusePreview === false) {
+          await closeCaptureSession();
         }
-      );
-      progress?.report(
-        `tool preview.start ${canReusePreview ? "refreshing" : "starting"} ${mode} preview server`
-      );
-      const result = await preview.startAndWait({
-        ...input,
-        mode,
-        cwd: previewProject.cwd,
-        buildCacheKey: previewProject.buildCacheKey,
-        restart: canReusePreview === false,
+        validatePreviewServerOptions({
+          host: input.host ?? "127.0.0.1",
+          port: input.port ?? 5173,
+          imageDomains: input.imageDomains,
+        });
+        progress?.report(
+          "tool preview.start preparing generated preview project"
+        );
+        const freshness = captureFreshness();
+        const previewProject = await preparePreview(
+          source,
+          prepareSessionDataFile,
+          {
+            preserveGeneratedProject: canReusePreview && mode === "iterative",
+            prepareForIncrementalGeneration: mode === "iterative",
+          }
+        );
+        progress?.report(
+          `tool preview.start ${canReusePreview ? "refreshing" : "starting"} ${mode} preview server`
+        );
+        const result = await preview.startAndWait({
+          ...input,
+          mode,
+          cwd: previewProject.cwd,
+          buildCacheKey: previewProject.buildCacheKey,
+          restart: canReusePreview === false,
+        });
+        activeSource = source;
+        markFresh(freshness);
+        return {
+          ...result,
+          ...(mode === "production"
+            ? {
+                generatedBuildMetrics: await inspectGeneratedBuildMetrics(
+                  previewProject.cwd
+                ),
+              }
+            : {}),
+        };
       });
-      activeSource = source;
-      markFresh();
-      return {
-        ...result,
-        ...(mode === "production"
-          ? {
-              generatedBuildMetrics: await inspectGeneratedBuildMetrics(
-                previewProject.cwd
-              ),
-            }
-          : {}),
-      };
     },
     async captureScreenshot(
       input: McpScreenshotInput,
       progress?: McpToolProgress
     ) {
-      const startedAt = Date.now();
-      const url = await resolveScreenshotUrl(input, progress);
-      const previewReadyAt = Date.now();
-      progress?.report(`tool screenshot capturing ${url}`);
-      const captureOptions = getCaptureOptions(input, url);
-      let result: Awaited<ReturnType<typeof captureScreenshot>>;
-      if (
-        getPreviewSource(input.source) !== "local" &&
-        createCaptureSession !== undefined
-      ) {
-        result = await (await getCaptureSession(input)).capture(captureOptions);
-      } else {
-        result = await captureScreenshot({
-          ...captureOptions,
-          isJson: false,
-          isMcp: true,
-          isInteractive: false,
-          confirmInstall: async () => false,
-        });
-      }
-      const completedAt = Date.now();
-      return {
-        ...assertGeneratedSiteCapture(input, result),
-        ...(input.path !== undefined && input.baseUrl === undefined
-          ? { previewMode: preview.status().mode }
-          : {}),
-        lifecycleTimings: {
-          previewRefreshMs: previewReadyAt - startedAt,
-          captureMs: completedAt - previewReadyAt,
-          totalMs: completedAt - startedAt,
-        },
-      };
-    },
-    async capturePageScreenshots(
-      inputs: readonly McpScreenshotInput[],
-      progress?: McpToolProgress
-    ) {
-      const firstInput = inputs[0];
-      if (firstInput === undefined) {
-        return [];
-      }
-      const previewTarget = getPreviewTarget(firstInput);
-      if (
-        createCaptureSession === undefined ||
-        previewTarget.source === "local" ||
-        inputs.some(
-          (input) =>
-            isSamePreviewTarget(getPreviewTarget(input), previewTarget) ===
-              false ||
-            isSameCaptureSessionConfig(
-              getCaptureSessionConfig(input),
-              getCaptureSessionConfig(firstInput)
-            ) === false
-        )
-      ) {
-        throw new Error(
-          "Resized screenshot capture requires one session preview target and browser configuration."
-        );
-      }
-      const urls: string[] = [];
-      for (const input of inputs) {
-        urls.push(await resolveScreenshotUrl(input, progress));
-      }
-      progress?.report(
-        `tool screenshot capturing ${new Set(urls).size} pages across ${inputs.length} viewport widths`
-      );
-      const results = await (
-        await getCaptureSession(firstInput)
-      ).capturePage(
-        inputs.map((input, index) => {
-          const url = urls[index];
-          if (url === undefined) {
-            throw new Error("Screenshot URL resolution was incomplete.");
-          }
-          return getCaptureOptions(input, url);
-        })
-      );
-      return results.map((result, index) => {
-        const input = inputs[index];
-        if (input === undefined) {
-          throw new Error("Screenshot input was omitted from the batch.");
+      return await runPreviewLifecycle(async () => {
+        const startedAt = Date.now();
+        const url = await resolveScreenshotUrl(input, progress);
+        const previewReadyAt = Date.now();
+        progress?.report(`tool screenshot capturing ${url}`);
+        const captureOptions = getCaptureOptions(input, url);
+        let result: Awaited<ReturnType<typeof captureScreenshot>>;
+        if (
+          getPreviewSource(input.source) !== "local" &&
+          createCaptureSession !== undefined
+        ) {
+          result = await (
+            await getCaptureSession(input)
+          ).capture(captureOptions);
+        } else {
+          result = await captureScreenshot({
+            ...captureOptions,
+            isJson: false,
+            isMcp: true,
+            isInteractive: false,
+            confirmInstall: async () => false,
+          });
         }
+        const completedAt = Date.now();
         return {
           ...assertGeneratedSiteCapture(input, result),
           ...(input.path !== undefined && input.baseUrl === undefined
             ? { previewMode: preview.status().mode }
             : {}),
+          lifecycleTimings: {
+            previewRefreshMs: previewReadyAt - startedAt,
+            captureMs: completedAt - previewReadyAt,
+            totalMs: completedAt - startedAt,
+          },
         };
       });
     },
-    async stopPreview() {
-      const errors: unknown[] = [];
-      try {
-        await closeCaptureSession();
-      } catch (error) {
-        errors.push(error);
-      }
-      let result;
-      try {
-        if (preview.stop === undefined) {
-          throw new Error("Preview controller cannot stop its owned preview.");
+    async capturePageScreenshots(
+      inputs: readonly McpScreenshotInput[],
+      progress?: McpToolProgress
+    ) {
+      return await runPreviewLifecycle(async () => {
+        const firstInput = inputs[0];
+        if (firstInput === undefined) {
+          return [];
         }
-        result = await preview.stop();
-        activeSource = undefined;
-      } catch (error) {
-        errors.push(error);
-      }
-      if (errors.length === 1) {
-        throw errors[0];
-      }
-      if (errors.length > 1) {
-        throw new AggregateError(
-          errors,
-          "Could not clean up screenshot capture or stop the owned preview."
+        const previewTarget = getPreviewTarget(firstInput);
+        if (
+          createCaptureSession === undefined ||
+          previewTarget.source === "local" ||
+          inputs.some(
+            (input) =>
+              isSamePreviewTarget(getPreviewTarget(input), previewTarget) ===
+                false ||
+              isSameCaptureSessionConfig(
+                getCaptureSessionConfig(input),
+                getCaptureSessionConfig(firstInput)
+              ) === false
+          )
+        ) {
+          throw new Error(
+            "Resized screenshot capture requires one session preview target and browser configuration."
+          );
+        }
+        const urls: string[] = [];
+        for (const input of inputs) {
+          urls.push(await resolveScreenshotUrl(input, progress));
+        }
+        progress?.report(
+          `tool screenshot capturing ${new Set(urls).size} pages across ${inputs.length} viewport widths`
         );
-      }
-      if (result === undefined) {
-        throw new Error("Preview controller did not return its stopped state.");
-      }
-      return result;
+        const results = await (
+          await getCaptureSession(firstInput)
+        ).capturePage(
+          inputs.map((input, index) => {
+            const url = urls[index];
+            if (url === undefined) {
+              throw new Error("Screenshot URL resolution was incomplete.");
+            }
+            return getCaptureOptions(input, url);
+          })
+        );
+        return results.map((result, index) => {
+          const input = inputs[index];
+          if (input === undefined) {
+            throw new Error("Screenshot input was omitted from the batch.");
+          }
+          return {
+            ...assertGeneratedSiteCapture(input, result),
+            ...(input.path !== undefined && input.baseUrl === undefined
+              ? { previewMode: preview.status().mode }
+              : {}),
+          };
+        });
+      });
+    },
+    async stopPreview() {
+      return await runPreviewLifecycle(async () => {
+        const errors: unknown[] = [];
+        try {
+          await closeCaptureSession();
+        } catch (error) {
+          errors.push(error);
+        }
+        let result;
+        try {
+          if (preview.stop === undefined) {
+            throw new Error(
+              "Preview controller cannot stop its owned preview."
+            );
+          }
+          result = await preview.stop();
+          activeSource = undefined;
+        } catch (error) {
+          errors.push(error);
+        }
+        if (errors.length === 1) {
+          throw errors[0];
+        }
+        if (errors.length > 1) {
+          throw new AggregateError(
+            errors,
+            "Could not clean up screenshot capture or stop the owned preview."
+          );
+        }
+        if (result === undefined) {
+          throw new Error(
+            "Preview controller did not return its stopped state."
+          );
+        }
+        return result;
+      });
     },
   };
 };

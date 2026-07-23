@@ -1,5 +1,72 @@
 import { expect, test, vi } from "vitest";
-import { createMcpPreviewHandlers } from "./mcp-preview";
+import {
+  createMcpPreviewHandlers,
+  createPreviewFreshness,
+} from "./mcp-preview";
+
+test("does not mark a preview fresh after a newer mutation", () => {
+  const freshness = createPreviewFreshness();
+  const capturedRevision = freshness.capture();
+
+  freshness.markStale();
+  freshness.markFresh(capturedRevision);
+
+  expect(freshness.isStale()).toBe(true);
+  const currentRevision = freshness.capture();
+  freshness.markFresh(currentRevision);
+  expect(freshness.isStale()).toBe(false);
+});
+
+test("coalesces overlapping refreshes of the same stale preview", async () => {
+  const freshness = createPreviewFreshness();
+  let releasePreparation: () => void = () => undefined;
+  const preparationBlocked = new Promise<void>((resolve) => {
+    releasePreparation = resolve;
+  });
+  const preparePreview = vi.fn(async () => {
+    await preparationBlocked;
+    return { cwd: "/tmp/preview" };
+  });
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    startAndWait: vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    })),
+    canReuse: vi.fn(() => true),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:5173${path}`),
+  };
+  const captureScreenshot = createCaptureScreenshotMock([]);
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: freshness.isStale,
+    captureFreshness: freshness.capture,
+    markFresh: freshness.markFresh,
+    preparePreview,
+    captureScreenshot,
+  });
+
+  const firstCapture = handlers.captureScreenshot({
+    path: "/first",
+    viewport: { width: 1280, height: 720 },
+  });
+  const secondCapture = handlers.captureScreenshot({
+    path: "/second",
+    viewport: { width: 1280, height: 720 },
+  });
+  await vi.waitFor(() => expect(preparePreview).toHaveBeenCalledOnce());
+  releasePreparation();
+  await Promise.all([firstCapture, secondCapture]);
+
+  expect(preparePreview).toHaveBeenCalledOnce();
+  expect(preview.startAndWait).toHaveBeenCalledOnce();
+  expect(captureScreenshot).toHaveBeenCalledTimes(2);
+});
 
 const createCaptureScreenshotMock = (events: string[]) =>
   vi.fn(async (options) => {
@@ -342,6 +409,61 @@ test("reuses and closes one browser capture session for session screenshots", as
 
   expect(close).toHaveBeenCalledOnce();
   expect(preview.stop).toHaveBeenCalledOnce();
+});
+
+test("waits for an active capture before stopping preview resources", async () => {
+  let finishCapture: () => void = () => undefined;
+  const captureBlocked = new Promise<void>((resolve) => {
+    finishCapture = resolve;
+  });
+  const capture = vi.fn(async () => {
+    await captureBlocked;
+    return createCaptureScreenshotMock([])({
+      url: "http://127.0.0.1:5173/",
+      width: 1280,
+      height: 720,
+    });
+  });
+  const close = vi.fn(async () => undefined);
+  const stop = vi.fn(async () => ({
+    url: "http://127.0.0.1:5173/",
+    running: false,
+    mode: "iterative" as const,
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
+      stop,
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture,
+      capturePage: vi.fn(async () => []),
+      close,
+    })),
+  });
+
+  const captureResult = handlers.captureScreenshot({
+    path: "/",
+    viewport: { width: 1280, height: 720 },
+  });
+  await vi.waitFor(() => expect(capture).toHaveBeenCalledOnce());
+  const stopResult = handlers.stopPreview();
+  await Promise.resolve();
+  expect(stop).not.toHaveBeenCalled();
+  expect(close).not.toHaveBeenCalled();
+
+  finishCapture();
+  await captureResult;
+  await stopResult;
+  expect(close).toHaveBeenCalledOnce();
+  expect(stop).toHaveBeenCalledOnce();
 });
 
 test("recreates the capture session when the browser configuration changes", async () => {

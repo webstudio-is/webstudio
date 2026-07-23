@@ -3429,10 +3429,12 @@ describe("project session mcp adapter", () => {
         })
       ),
     });
+    const onProjectSessionChange = vi.fn();
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(session),
       executeOperation: createExecuteOperation(),
+      onProjectSessionChange,
     });
 
     const status = await adapter.callTool({ name: "status" });
@@ -3478,6 +3480,7 @@ describe("project session mcp adapter", () => {
     expect(reset.structuredContent.meta.session).toEqual(
       expect.objectContaining({ operationId: "project-session.reset" })
     );
+    expect(onProjectSessionChange).toHaveBeenCalledTimes(2);
   });
 
   test("calls meta tools without initializing project session", async () => {

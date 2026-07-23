@@ -1,4 +1,12 @@
-import { basename, dirname, join, normalize, relative } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  normalize,
+  relative,
+  sep,
+} from "node:path";
 import { existsSync } from "node:fs";
 import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
@@ -63,6 +71,15 @@ import { formatZodIssues } from "./zod-utils";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
+
+export const generatedFilesManifest = join(
+  ".webstudio",
+  "generated-files.json"
+);
+const appRoot = "app";
+const generatedDir = join(appRoot, "__generated__");
+const routesDir = join(appRoot, "routes");
+const generatedOutputDirectories = [generatedDir, routesDir] as const;
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -152,20 +169,37 @@ const writeWsAuthResources = async (
   );
 };
 
+const isGeneratedOutputPath = (path: string) =>
+  generatedOutputDirectories.some((directory) => {
+    const relativePath = relative(directory, path);
+    return (
+      relativePath !== "" &&
+      relativePath !== ".." &&
+      relativePath.startsWith(`..${sep}`) === false &&
+      isAbsolute(relativePath) === false
+    );
+  });
+
+const readGeneratedFilesManifest = async () => {
+  const value = JSON.parse(await readFile(generatedFilesManifest, "utf8"));
+  if (
+    Array.isArray(value) === false ||
+    value.some(
+      (path) =>
+        typeof path !== "string" || isGeneratedOutputPath(path) === false
+    )
+  ) {
+    throw new Error("Generated files manifest is invalid.");
+  }
+  return new Set<string>(value);
+};
+
 const removeObsoleteGeneratedFiles = async (
-  directory: string,
+  previousFiles: ReadonlySet<string>,
   generatedFiles: ReadonlySet<string>
 ) => {
-  const entries = await readdir(directory, { withFileTypes: true }).catch(
-    () => []
-  );
-  for (const entry of entries) {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) {
-      await removeObsoleteGeneratedFiles(path, generatedFiles);
-      continue;
-    }
-    if (entry.isFile() && generatedFiles.has(normalize(path)) === false) {
+  for (const path of previousFiles) {
+    if (generatedFiles.has(path) === false) {
       await rm(path, { force: true });
     }
   }
@@ -336,19 +370,19 @@ export const prebuild = async (options: {
 
   feedback.step("Scaffolding the project files");
 
-  const appRoot = "app";
-
-  const generatedDir = join(appRoot, "__generated__");
   if (options.incremental !== true) {
     await rm(generatedDir, { recursive: true, force: true });
   }
 
-  const routesDir = join(appRoot, "routes");
   if (options.incremental !== true) {
     await rm(routesDir, { recursive: true, force: true });
   }
 
   const generatedFiles = new Set<string>();
+  const previousGeneratedFiles =
+    options.incremental === true
+      ? await readGeneratedFilesManifest()
+      : new Set<string>();
   const writeGeneratedFile = async (file: string, content: string) => {
     generatedFiles.add(normalize(file));
     if (options.incremental === true) {
@@ -883,11 +917,12 @@ export const prebuild = async (options: {
   }
 
   if (options.incremental === true) {
-    await Promise.all([
-      removeObsoleteGeneratedFiles(generatedDir, generatedFiles),
-      removeObsoleteGeneratedFiles(routesDir, generatedFiles),
-    ]);
+    await removeObsoleteGeneratedFiles(previousGeneratedFiles, generatedFiles);
   }
+  await writeFileIfChanged(
+    generatedFilesManifest,
+    JSON.stringify([...generatedFiles].sort(), undefined, 2)
+  );
 
   if (options.assets === true && siteData.assets.length > 0) {
     const downloading = createProgress();
