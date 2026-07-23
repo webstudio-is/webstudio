@@ -2,6 +2,7 @@ export * from "./db";
 export * from "./content-hash";
 export * from "./utils/size-limiter";
 export * from "./upload";
+export * from "./delete";
 export * from "./patch";
 export * from "./asset-patch-core";
 export * from "./folder-persistence";

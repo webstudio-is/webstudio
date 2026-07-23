@@ -247,8 +247,6 @@ const addProjectMetadata = async (
           client: context.postgrest.client,
           projectId: project.id,
         });
-      const expectedAssetRevision =
-        await computeCanonicalAssetRevision(canonicalEntries);
       const preparedIndexes =
         await prepareAssetResourceIndexSnapshotsForPublication({
           client: context.postgrest.client,
@@ -258,10 +256,13 @@ const addProjectMetadata = async (
           entries: canonicalEntries,
           read: assetClient.resourceIndexStore.read,
           referenceId: data.build.id,
-          assetRevision: expectedAssetRevision,
           metadataSnapshot,
           currentBuild: currentAssetResourceBuild,
         });
+      const expectedAssetRevision = preparedIndexes[0]?.index.assetRevision;
+      if (expectedAssetRevision === undefined) {
+        throw new Error("Asset resource indexes were not prepared");
+      }
       const [assetDataAfter, latestCanonical] = await Promise.all([
         loadAssetDataByProject(project.id, context),
         loadCanonicalAssetFileSnapshot({

@@ -264,7 +264,6 @@ describe("incremental resource index maintenance", () => {
   test("does not authorize a reusable query with an unrelated build snapshot", async () => {
     const query = `*[extension == "md"]`;
     const queryHash = await computeAssetResourceQueryHash(query);
-    const assetRevision = await computeCanonicalAssetRevision([entry]);
     let beginInput: Record<string, unknown> | undefined;
     server.use(
       db.get("AssetResourceIndexState", () =>
@@ -292,7 +291,6 @@ describe("incremental resource index maintenance", () => {
         projectId: "project-1",
         resources: [{ resourceId: "posts", query, queryHash }],
         entries: [entry],
-        assetRevision,
         metadataSnapshot: [
           { assetId: "post-1", metadataToken: "metadata-token-1" },
         ],
@@ -313,7 +311,6 @@ describe("incremental resource index maintenance", () => {
     const historicalQuery = `*[extension == "md"]`;
     const historicalQueryHash =
       await computeAssetResourceQueryHash(historicalQuery);
-    const assetRevision = await computeCanonicalAssetRevision([entry]);
     server.use(
       db.get("AssetResourceIndexState", () =>
         json([
@@ -340,7 +337,6 @@ describe("incremental resource index maintenance", () => {
         },
       ],
       entries: [entry],
-      assetRevision,
       metadataSnapshot: [
         { assetId: "post-1", metadataToken: "metadata-token-1" },
       ],

@@ -31,6 +31,28 @@ const entry = createCanonicalAssetFileEntry({
 });
 
 describe("resource index build and activation", () => {
+  test("rejects a prepared builder from a different canonical snapshot", async () => {
+    const build = vi.fn();
+    await expect(
+      buildPersistAndActivateAssetResourceIndex({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent: vi.fn() },
+        projectId: "project-1",
+        resourceId: "posts",
+        query: "*[]",
+        entries: [entry],
+        assetRevision: `sha256:${"a".repeat(64)}`,
+        metadataSnapshot: [],
+        indexBuilder: {
+          projectId: "project-2",
+          assetRevision: `sha256:${"b".repeat(64)}`,
+          build,
+        },
+      })
+    ).rejects.toThrow("belongs to a different project");
+    expect(build).not.toHaveBeenCalled();
+  });
+
   test("persists a validated artifact before atomically activating it", async () => {
     const events: string[] = [];
     server.use(

@@ -5,6 +5,7 @@ import { computeCanonicalAssetRevision } from "./field-catalog";
 import {
   buildAssetResourceIndex,
   computeAssetResourceQueryHash,
+  createAssetResourceIndexBuilder,
   createAssetResourceIndex,
   normalizeAssetResourceIndex,
   serializeAssetResourceIndex,
@@ -92,6 +93,37 @@ describe("resource index build", () => {
     });
 
     expect(index.assetRevision).toBe(assetRevision);
+  });
+
+  test("reuses one prepared canonical snapshot across resource queries", async () => {
+    const entries = [
+      createCanonicalAssetFileEntry({
+        projectId: "project-1",
+        document: createDocument("one", { locale: "en" }),
+      }),
+      createCanonicalAssetFileEntry({
+        projectId: "project-1",
+        document: createDocument("two", { locale: "fr" }),
+      }),
+    ];
+    const builder = await createAssetResourceIndexBuilder({
+      projectId: "project-1",
+      entries,
+    });
+
+    const [all, english] = await Promise.all([
+      builder.build({ resourceId: "all", query: "*[]" }),
+      builder.build({
+        resourceId: "english",
+        query: `*[properties.locale == "en"]`,
+      }),
+    ]);
+
+    expect(builder.projectId).toBe("project-1");
+    expect(all.assetRevision).toBe(builder.assetRevision);
+    expect(english.assetRevision).toBe(builder.assetRevision);
+    expect(all.documents.map(({ _id }) => _id)).toEqual(["one", "two"]);
+    expect(english.documents.map(({ _id }) => _id)).toEqual(["one"]);
   });
 
   test("rejects an asset revision unrelated to the prepared entries", async () => {
