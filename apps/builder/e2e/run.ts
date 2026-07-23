@@ -45,19 +45,37 @@ for (const module of testModules) {
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED ??= "0";
 
-const waitForHttp = async (url: string, timeoutMs: number) => {
+const waitForHttp = async ({
+  url,
+  timeoutMs,
+  isReady = (response) => response.status < 500,
+  consecutiveResponses = 1,
+}: {
+  url: string;
+  timeoutMs: number;
+  isReady?: (response: Response) => boolean;
+  consecutiveResponses?: number;
+}) => {
   const startedAt = Date.now();
   let lastError: unknown;
+  let readyResponses = 0;
 
   while (Date.now() - startedAt < timeoutMs) {
     try {
       const response = await fetch(url);
       await response.arrayBuffer();
-      if (response.status < 500) {
+      if (isReady(response)) {
+        readyResponses += 1;
+      } else {
+        readyResponses = 0;
+        lastError = new Error(`Received HTTP ${response.status}`);
+      }
+      if (readyResponses === consecutiveResponses) {
         return;
       }
     } catch (error) {
       lastError = error;
+      readyResponses = 0;
     }
     await delay(250);
   }
@@ -67,31 +85,17 @@ const waitForHttp = async (url: string, timeoutMs: number) => {
 
 const waitForPostgrest = async () => {
   const url = new URL("/User?select=*", postgrestUrl);
-  const startedAt = Date.now();
-  let successfulResponses = 0;
-
-  while (Date.now() - startedAt < 30_000) {
-    try {
-      const response = await fetch(url.href);
-      await response.arrayBuffer();
-      if (response.status < 500) {
-        successfulResponses += 1;
-        if (successfulResponses === 3) {
-          return;
-        }
-      }
-    } catch {
-      successfulResponses = 0;
-    }
-    await delay(250);
-  }
-
-  throw new Error(`Timed out waiting for ${url.href}`);
+  await waitForHttp({
+    url: url.href,
+    timeoutMs: 30_000,
+    isReady: (response) => response.ok,
+    consecutiveResponses: 3,
+  });
 };
 
 const waitForBuilder = async (child: ChildProcess) => {
   await Promise.race([
-    waitForHttp(builderUrl, 60_000),
+    waitForHttp({ url: builderUrl, timeoutMs: 60_000 }),
     new Promise<never>((_, reject) => {
       child.once("exit", (code, signal) => {
         reject(
