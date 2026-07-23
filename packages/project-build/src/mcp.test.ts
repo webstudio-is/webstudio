@@ -973,7 +973,7 @@ describe("project session mcp adapter", () => {
         `Missing MCP output schema for ${command}`
       ).toMatchObject({
         type: "object",
-        required: ["url", "running"],
+        required: ["url", "running", "mode"],
         properties: {
           url: { type: "string" },
           pid: { type: "integer" },
@@ -1600,10 +1600,12 @@ describe("project session mcp adapter", () => {
     const startPreview = vi.fn(async () => ({
       url: "http://127.0.0.1:5177",
       running: true,
+      mode: "production" as const,
     }));
     const stopPreview = vi.fn(async () => ({
       url: "http://127.0.0.1:5173",
       running: false,
+      mode: "production" as const,
     }));
     const captureScreenshot = vi.fn(async (input) => ({
       output: `/tmp/${input.viewport.width}.png`,
@@ -5570,10 +5572,12 @@ describe("project session mcp adapter", () => {
       startPreview: vi.fn(async () => ({
         url: "http://127.0.0.1:5173/",
         running: true,
+        mode: "iterative" as const,
       })),
       getPreviewStatus: vi.fn(async () => ({
         url: "http://127.0.0.1:5173/",
         running: true,
+        mode: "iterative" as const,
       })),
       guidance: testMcpGuidance,
     });
@@ -5784,7 +5788,7 @@ describe("project session mcp adapter", () => {
         },
       })
     ).rejects.toThrow(
-      "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, or imageDomains."
+      "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, mode, or imageDomains."
     );
   });
 
@@ -5993,6 +5997,7 @@ describe("project session mcp adapter", () => {
           url: "http://127.0.0.1:5173/",
           pid: 123,
           running: true,
+          mode: "iterative" as const,
         };
       }
     );
@@ -6000,10 +6005,12 @@ describe("project session mcp adapter", () => {
       url: "http://127.0.0.1:5173/",
       pid: 123,
       running: true,
+      mode: "iterative" as const,
     }));
     const stopPreview = vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",
       running: false,
+      mode: "iterative" as const,
     }));
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
@@ -6057,15 +6064,18 @@ describe("project session mcp adapter", () => {
       url: "http://127.0.0.1:5173/",
       pid: 123,
       running: true,
+      mode: "iterative",
     });
     expect(status.structuredContent.data).toEqual({
       url: "http://127.0.0.1:5173/",
       pid: 123,
       running: true,
+      mode: "iterative",
     });
     expect(stopped.structuredContent.data).toEqual({
       url: "http://127.0.0.1:5173/",
       running: false,
+      mode: "iterative",
     });
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -6985,10 +6995,12 @@ describe("project session mcp adapter", () => {
       startPreview: vi.fn(async () => ({
         url: "http://127.0.0.1:5173/",
         running: true,
+        mode: "iterative" as const,
       })),
       getPreviewStatus: vi.fn(async () => ({
         url: "http://127.0.0.1:5173/",
         running: true,
+        mode: "iterative" as const,
       })),
       captureScreenshot: vi.fn(async () => ({
         output: "current.png",

@@ -880,20 +880,35 @@ const createCliMcpHost = async ({
       );
     },
   });
+  type ScreenshotResult = Awaited<
+    ReturnType<typeof previewHandlers.captureScreenshot>
+  >;
+  type ResizedScreenshotResult = Awaited<
+    ReturnType<typeof previewHandlers.capturePageScreenshots>
+  >[number];
   const toProjectSessionScreenshotResult = (
-    result: Awaited<ReturnType<typeof previewHandlers.captureScreenshot>>
-  ) => ({
-    output: result.output,
-    browserPath: result.browser.path,
-    browser: result.browser.browser,
-    viewport: result.viewport,
-    fullPage: result.fullPage,
-    elapsedMs: result.elapsedMs,
-    warnings: result.warnings,
-    navigation: result.navigation,
-    layout: result.layout,
-    timings: result.timings,
-  });
+    result: ScreenshotResult | ResizedScreenshotResult
+  ) => {
+    const navigation = result.navigation ?? result.layout?.navigation;
+    return {
+      output: result.output,
+      browserPath: result.browser.path,
+      browser: result.browser.browser,
+      viewport: result.viewport,
+      fullPage: result.fullPage,
+      elapsedMs: result.elapsedMs,
+      warnings: result.warnings,
+      previewMode: result.previewMode,
+      renderedProjectId: navigation?.projectId,
+      renderedProjectVersion: navigation?.projectVersion,
+      ...("lifecycleTimings" in result
+        ? { lifecycleTimings: result.lifecycleTimings }
+        : {}),
+      navigation: result.navigation,
+      layout: result.layout,
+      timings: result.timings,
+    };
+  };
   const host: CliMcpHost = {
     operations,
     createProjectSession: () => session,

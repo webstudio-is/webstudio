@@ -54,6 +54,7 @@ import {
   createFileIfNotExists,
   createFolderIfNotExists,
   loadJSONFile,
+  writeFileIfChanged,
 } from "./fs-utils";
 import { htmlToJsx } from "./html-to-jsx";
 import { compareMedia } from "@webstudio-is/css-engine";
@@ -137,15 +138,37 @@ const readAssetBaseUrl = async (constantsPath: string) => {
 const writeWsAuthResources = async (
   generatedDir: string,
   pages: Pages,
-  projectSettings?: PublishedProjectBundle["build"]["projectSettings"]
+  projectSettings:
+    | PublishedProjectBundle["build"]["projectSettings"]
+    | undefined,
+  writeGeneratedFile: (file: string, content: string) => Promise<unknown>
 ) => {
   const { content, module } = createAuthConfigResources(pages, projectSettings);
   await createFolderIfNotExists(dirname(LOCAL_AUTH_FILE));
-  await writeFile(LOCAL_AUTH_FILE, content);
-  await createFileIfNotExists(
+  await writeFileIfChanged(LOCAL_AUTH_FILE, content);
+  await writeGeneratedFile(
     join(generatedDir, "$resources.wsauth.server.ts"),
     module
   );
+};
+
+const removeObsoleteGeneratedFiles = async (
+  directory: string,
+  generatedFiles: ReadonlySet<string>
+) => {
+  const entries = await readdir(directory, { withFileTypes: true }).catch(
+    () => []
+  );
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      await removeObsoleteGeneratedFiles(path, generatedFiles);
+      continue;
+    }
+    if (entry.isFile() && generatedFiles.has(normalize(path)) === false) {
+      await rm(path, { force: true });
+    }
+  }
 };
 
 /**
@@ -264,6 +287,10 @@ export const prebuild = async (options: {
   silent?: boolean;
   /** Generate draft routes for local verification without publishing them. */
   includeDraftPages?: boolean;
+  /** Preserve the generated tree and atomically replace only changed files. */
+  incremental?: boolean;
+  /** Retain route template inputs for a later incremental generation. */
+  preserveRouteTemplates?: boolean;
 }) => {
   const buildRoot = cwd();
   const feedback = options.silent
@@ -312,25 +339,49 @@ export const prebuild = async (options: {
   const appRoot = "app";
 
   const generatedDir = join(appRoot, "__generated__");
-  await rm(generatedDir, { recursive: true, force: true });
+  if (options.incremental !== true) {
+    await rm(generatedDir, { recursive: true, force: true });
+  }
 
   const routesDir = join(appRoot, "routes");
-  await rm(routesDir, { recursive: true, force: true });
+  if (options.incremental !== true) {
+    await rm(routesDir, { recursive: true, force: true });
+  }
+
+  const generatedFiles = new Set<string>();
+  const writeGeneratedFile = async (file: string, content: string) => {
+    generatedFiles.add(normalize(file));
+    if (options.incremental === true) {
+      return await writeFileIfChanged(file, content);
+    }
+    await createFileIfNotExists(file, content);
+    return true;
+  };
 
   // force npm to install with not matching peer dependencies
   await writeFile(join(cwd(), ".npmrc"), npmrc);
 
-  for (const template of options.template) {
-    await copyTemplates(template);
+  if (options.incremental !== true) {
+    for (const template of options.template) {
+      await copyTemplates(template);
+    }
   }
 
+  const preserveRouteTemplates =
+    options.incremental === true || options.preserveRouteTemplates === true;
   let framework;
   if (options.template.includes("ssg")) {
-    framework = await createVikeSsgFramework();
+    framework = await createVikeSsgFramework({
+      preserveTemplates: preserveRouteTemplates,
+    });
   } else if (options.template.includes("react-router")) {
-    framework = await createReactRouterFramework();
+    framework = await createReactRouterFramework({
+      preserveTemplates: preserveRouteTemplates,
+    });
   } else {
-    framework = await createRemixFramework();
+    framework = await createRemixFramework({
+      preserveTemplates: preserveRouteTemplates,
+    });
   }
 
   const assetBaseUrl = await readAssetBaseUrl(join(cwd(), "app/constants.mjs"));
@@ -361,7 +412,8 @@ export const prebuild = async (options: {
   await writeWsAuthResources(
     generatedDir,
     pages,
-    siteData.build.projectSettings
+    siteData.build.projectSettings,
+    writeGeneratedFile
   );
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
@@ -518,7 +570,7 @@ export const prebuild = async (options: {
       true,
   });
 
-  await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
+  await writeGeneratedFile(join(generatedDir, "index.css"), cssText);
 
   for (const page of generatedPages) {
     const scope = createScope([
@@ -654,6 +706,8 @@ export const prebuild = async (options: {
 
       export const projectId = "${siteData.build.projectId}";
 
+      ${pagePath === "/" ? `export const projectVersion = ${siteData.build.version};` : ""}
+
       export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
 
       export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
@@ -735,10 +789,10 @@ export const prebuild = async (options: {
     const generatedBasename = generateRemixRoute(pagePath);
 
     const clientFile = join(generatedDir, `${generatedBasename}.tsx`);
-    await createFileIfNotExists(clientFile, pageExports);
+    await writeGeneratedFile(clientFile, pageExports);
 
     const serverFile = join(generatedDir, `${generatedBasename}.server.tsx`);
-    await createFileIfNotExists(serverFile, serverExports);
+    await writeGeneratedFile(serverFile, serverExports);
 
     const getTemplates = framework[documentType];
     for (const { file, template } of getTemplates({ pagePath })) {
@@ -768,7 +822,7 @@ export const prebuild = async (options: {
           "__CSS__",
           importFrom(`./app/__generated__/index.css`, file)
         );
-      await createFileIfNotExists(file, content);
+      await writeGeneratedFile(file, content);
     }
   }
 
@@ -778,10 +832,10 @@ export const prebuild = async (options: {
       "__SITEMAP__",
       importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
     );
-    await createFileIfNotExists(file, content);
+    await writeGeneratedFile(file, content);
   }
 
-  await createFileIfNotExists(
+  await writeGeneratedFile(
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
       export const sitemap = ${JSON.stringify(
@@ -807,25 +861,32 @@ export const prebuild = async (options: {
     ])
   );
 
-  await createFileIfNotExists(
+  await writeGeneratedFile(
     join(generatedDir, "$resources.assets.ts"),
     `
     export const assets = ${JSON.stringify(assetsById, null, 2)};
     `
   );
 
-  await createFileIfNotExists(
+  await writeGeneratedFile(
     join(generatedDir, "$resources.redirects.ts"),
     generateRedirectsModule(pages.redirects)
   );
 
   if (pages.redirects !== undefined && pages.redirects.length > 0) {
-    await createFileIfNotExists(
+    await writeGeneratedFile(
       join(routesDir, "$.tsx"),
       generateRedirectFallbackRoute(
         options.template.includes("react-router") ? "react-router" : "remix"
       )
     );
+  }
+
+  if (options.incremental === true) {
+    await Promise.all([
+      removeObsoleteGeneratedFiles(generatedDir, generatedFiles),
+      removeObsoleteGeneratedFiles(routesDir, generatedFiles),
+    ]);
   }
 
   if (options.assets === true && siteData.assets.length > 0) {

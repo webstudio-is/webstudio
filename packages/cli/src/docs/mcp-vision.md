@@ -8,21 +8,22 @@
 
 ## Visual Verification Rule
 
-For visual/design work, use preview.start and screenshot after generated project files are current so vision can inspect the rendered result before finishing. `preview.start` is long-lived and cannot be used through one-shot `mcp single-op-call`; from a shell, use `webstudio mcp run` for preview.start/screenshot/preview.stop in one shared process, or use a long-running MCP server. When a baseline exists, use screenshot.diff to get pixel regions, OCR text changes, and diff PNG artifacts.
+For visual/design work, use `preview.start` and `screenshot({ path })` so vision can inspect the current MCP session before finishing and verify that generated project files are current. Iterative preview is the default: it keeps one generated-site server and browser alive, regenerates changed files, and performs an ordinary page reload without Vite HMR. Use `mode: "production"` only for release-like verification; rendered audit selects it automatically. `preview.start` is long-lived and cannot be used through one-shot `mcp single-op-call`; from a shell, use `webstudio mcp run` for preview.start/screenshot/preview.stop in one shared process, or use a long-running MCP server. When a baseline exists, use screenshot.diff to get pixel regions, OCR text changes, and diff PNG artifacts.
 
 An authenticated project share URL is used with `webstudio init --link`; it is
 not a generated-site preview URL. Project screenshots and rendered audits use
 the generated local preview owned by the current CLI/MCP process. Do not pass a
-Builder URL containing `authToken` and `mode` to `screenshot`; use `path` after
-starting preview, or use `baseUrl` only for an intentional generated site that
-is already running.
+Builder/share URL to `screenshot`, even without query parameters. Use `path`
+after starting preview, or use `baseUrl` only for an intentional generated site
+that is already running. Path captures verify the generated-site root marker
+and fail instead of returning a screenshot of Builder chrome.
 
 ## Vision Verification Loop
 
 - Make focused page/content/style changes with semantic MCP tools.
-- Make sure generated project files are current, then call preview.start to build the app and keep the production-like generated site running. In shell-driven workflows, run preview.start, screenshot, and preview.stop inside one `webstudio mcp run` call so they share the same preview owner.
+- Call preview.start once to keep the iterative generated site running. In shell-driven workflows, run preview.start, screenshot, and preview.stop inside one `webstudio mcp run` call so they share the same preview owner.
 - {{dependency-notes}}
-- After MCP mutations, path-based screenshots regenerate/restart preview as needed before capture; when preview is fresh in the same long-running MCP server, repeated path screenshots reuse the running server. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview without starting or restarting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
+- After MCP mutations, path-based screenshots regenerate the current session in place, wait for its exact project version, and normally reload the route. The server and browser remain alive. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running generated site without starting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
 - For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.
 - For responsive work, call list-breakpoints first, then capture screenshots at viewport widths based on the Builder breakpoints plus a narrow mobile and desktop width.
 - Call screenshot with { path: "/" } or the changed page path and viewport such as { width: 375, height: 812 } and { width: 1440, height: 900 }. For an existing preview in another process, call screenshot with { baseUrl: "http://127.0.0.1:5177", path: "/" }. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
@@ -33,11 +34,11 @@ is already running.
 
 ## Workflow Summary With Diff
 
-For visual/design work, make sure generated project files are current, call preview.start to build and start the production-like preview server, then screenshot({ path, viewport }) for every changed page path; for responsive work, use list-breakpoints and capture each changed page at Builder breakpoint widths plus mobile and desktop widths; use screenshot.diff on each baseline/current page or viewport pair when a baseline exists, then inspect pixel regions, OCR textAnalysis, and PNG/diff artifacts with vision before finishing.
+For visual/design work, call preview.start once to start the iterative generated-site preview, then screenshot({ path, viewport }) after each focused mutation; path screenshots regenerate changed files and reload the route in the existing server and browser. For responsive work, use list-breakpoints and capture each changed page at Builder breakpoint widths plus mobile and desktop widths. Use screenshot.diff on each baseline/current page or viewport pair when a baseline exists, then inspect pixel regions, OCR textAnalysis, and PNG/diff artifacts with vision before finishing. Use mode: "production" only for release-like verification.
 
 ## Workflow Summary Without Diff
 
-For visual/design work, make sure generated project files are current, call preview.start to build and start the production-like preview server, then screenshot({ path, viewport }) for every changed page path; for responsive work, use list-breakpoints and capture each changed page at Builder breakpoint widths plus mobile and desktop widths; inspect every PNG with vision before finishing.
+For visual/design work, call preview.start once to start the iterative generated-site preview, then screenshot({ path, viewport }) after each focused mutation; path screenshots regenerate changed files and reload the route in the existing server and browser. For responsive work, use list-breakpoints and capture each changed page at Builder breakpoint widths plus mobile and desktop widths. Inspect every PNG with vision before finishing. Use mode: "production" only for release-like verification.
 
 Each screenshot result includes rendered `layout` metrics when the local browser
 provides them. `layout.horizontalOverflow: true` is deterministic evidence that
@@ -64,7 +65,7 @@ budget.
 
 ## Screenshot Verification Summary
 
-Inside a long-running MCP server, prefer preview.start plus screenshot({ path, viewport }) after generated project files are current, so a fresh production-like preview server is available for fast repeated checks across multiple pages. After MCP mutations, path screenshots restart preview as needed before capture; when preview is fresh in that same MCP server, repeated path screenshots reuse the running server. From one-shot shell calls or another process, use screenshot({ baseUrl, path, viewport }) to capture an already-running preview/site without generating, building, starting, or restarting preview. Use path values such as "/", "/pricing", or "/about" to capture specific generated routes. For responsive work, read list-breakpoints and capture one familiar device viewport inside each Builder breakpoint range before using vision. Screenshot waits for load by default, then fonts and two layout frames; pass waitForSelector for app readiness, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout for final settling. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts on each baseline/current screenshot pair. Outside MCP, use `webstudio screenshot --path /pricing --output pricing.png` for one temporary generated preview capture, or keep `webstudio preview` running and pass its absolute URL to `webstudio screenshot` for repeated captures.
+Inside a long-running MCP server, call preview.start once, then use screenshot({ path, viewport }) for fast repeated checks across multiple pages. Iterative mode is the default: after MCP mutations, path screenshots regenerate changed files and reload the requested route while keeping the server and browser alive. Use mode: "production" only for release-like verification. From one-shot shell calls or another process, use screenshot({ baseUrl, path, viewport }) to capture an already-running preview/site without generating, building, starting, or restarting preview. Use path values such as "/", "/pricing", or "/about" to capture specific generated routes. For responsive work, read list-breakpoints and capture one familiar device viewport inside each Builder breakpoint range before using vision. Screenshot waits for load by default, then fonts and two layout frames; pass waitForSelector for app readiness, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout for final settling. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts on each baseline/current screenshot pair. Outside MCP, use `webstudio screenshot --path /pricing --output pricing.png` for one temporary generated preview capture, or keep `webstudio preview` running and pass its absolute URL to `webstudio screenshot` for repeated captures.
 
 ## Screenshot Diff Evidence
 

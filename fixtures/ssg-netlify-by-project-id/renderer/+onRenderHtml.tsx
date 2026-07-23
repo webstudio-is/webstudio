@@ -4,6 +4,7 @@ import type { OnRenderHtmlSync } from "vike/types";
 import {
   CustomCode,
   projectId,
+  projectVersion,
   lastPublished,
   // @todo think about how to make __generated__ typeable
   /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
@@ -19,6 +20,7 @@ export const onRenderHtml: OnRenderHtmlSync = (pageContext) => {
       <html
         lang={lang}
         data-ws-project={projectId}
+        data-ws-version={projectVersion}
         data-ws-last-published={lastPublished}
       >
         <head>

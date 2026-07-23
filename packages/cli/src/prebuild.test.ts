@@ -5,6 +5,7 @@ import {
   readdir,
   readFile,
   rm,
+  stat,
   symlink,
   writeFile,
 } from "node:fs/promises";
@@ -289,6 +290,64 @@ describe("generateRedirectsModule", () => {
 });
 
 describe("prebuild", () => {
+  test("incrementally replaces only changed generated files", async () => {
+    const siteData = createSiteData({
+      pages: [
+        {
+          id: "home",
+          name: "Home",
+          title: "Home",
+          path: "",
+          rootInstanceId: "root",
+          meta: {},
+        },
+        {
+          id: "pricing",
+          name: "Pricing",
+          title: "Pricing",
+          path: "/pricing",
+          rootInstanceId: "root",
+          meta: {},
+        },
+      ],
+    });
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    const pricingFile = "app/__generated__/[pricing]._index.tsx";
+    const pricingInode = (await stat(pricingFile)).ino;
+    await writeFile("app/__generated__/obsolete.tsx", "obsolete", "utf8");
+
+    siteData.build.version += 1;
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+
+    siteData.build.version += 1;
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+
+    expect((await stat(pricingFile)).ino).toBe(pricingInode);
+    await expect(
+      readFile("app/__generated__/_index.tsx", "utf8")
+    ).resolves.toContain(
+      `export const projectVersion = ${siteData.build.version};`
+    );
+    await expect(
+      readFile("app/__generated__/obsolete.tsx", "utf8")
+    ).rejects.toThrow("ENOENT");
+  });
+
   test("excludes draft pages from published output", async () => {
     await writeSiteData(
       createSiteData({

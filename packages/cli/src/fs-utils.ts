@@ -54,6 +54,14 @@ export const writeFileAtomic = async (filePath: string, content: string) => {
   }
 };
 
+export const writeFileIfChanged = async (filePath: string, content: string) => {
+  if ((await readFile(filePath, "utf8").catch(() => undefined)) === content) {
+    return false;
+  }
+  await writeFileAtomic(filePath, content);
+  return true;
+};
+
 const wait = (duration: number) =>
   new Promise((resolve) => setTimeout(resolve, duration));
 

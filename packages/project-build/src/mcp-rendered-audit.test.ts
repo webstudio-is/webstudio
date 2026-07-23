@@ -498,13 +498,18 @@ describe("rendered audit evidence", () => {
     });
 
     expect(startPreview).toHaveBeenCalledWith(
-      expect.objectContaining({ port: 0, source: "session" }),
+      expect.objectContaining({
+        port: 0,
+        source: "session",
+        mode: "production",
+      }),
       expect.any(Object)
     );
     expect(capturePageScreenshots).toHaveBeenCalledOnce();
     expect(capturePageScreenshots).toHaveBeenCalledWith([
       expect.objectContaining({
         path: "/page",
+        mode: "production",
         output: ".webstudio/audits/screenshots/page-1440x900.webp",
         viewport: { width: 1440, height: 900 },
         waitForTimeout: 0,
