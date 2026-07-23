@@ -1,6 +1,6 @@
 import { open } from "node:fs/promises";
 import { resolve, sep } from "node:path";
-import { createPublishedAssetResourceFetch } from "@webstudio-is/asset-resource";
+import { createPublishedAssetResourceFetch } from "@webstudio-is/asset-resource/runtime";
 
 const resolvePublicAsset = (path: string) => {
   const publicDirectory = resolve("public");
