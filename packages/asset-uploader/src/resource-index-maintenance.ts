@@ -15,6 +15,7 @@ import {
   AssetResourceIndexBuildSupersededError,
   buildPersistAndActivateAssetResourceIndex,
 } from "./resource-index-build";
+import type { AssetResourceIndexBuildSource } from "./resource-index-persistence";
 import {
   loadAssetResourceIndexSnapshots,
   type AssetResourceIndexSnapshot,
@@ -130,6 +131,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
   entries,
   assetRevision,
   metadataSnapshot,
+  source,
 }: {
   client: Client;
   store: ImmutableAssetResourceIndexStore;
@@ -142,6 +144,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
   entries: readonly CanonicalAssetFileEntry[];
   assetRevision: string;
   metadataSnapshot: CanonicalAssetMetadataSnapshot;
+  source?: AssetResourceIndexBuildSource;
 }) => {
   if (resources.length === 0) {
     return [];
@@ -167,12 +170,14 @@ export const reconcileAssetResourceIndexesForPublication = async ({
     // Builder's current active query.
     if (
       state !== undefined &&
-      (state.deletedAt !== null || state.queryHash !== resource.queryHash)
+      (state.deletedAt !== null || state.queryHash !== resource.queryHash) &&
+      source === undefined
     ) {
       continue;
     }
     if (
       state !== undefined &&
+      state.queryHash === resource.queryHash &&
       state.buildStatus === "ACTIVE" &&
       state.activeRevision !== null &&
       state.assetRevision === assetRevision
@@ -189,6 +194,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
         entries,
         assetRevision,
         metadataSnapshot,
+        source,
       });
     } catch (error) {
       // A concurrent build of the same identity may activate first. The
@@ -213,7 +219,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   metadataSnapshot,
   read,
   referenceId,
-  currentResourceIds = [],
+  currentBuild,
 }: {
   client: Client;
   store: ImmutableAssetResourceIndexStore;
@@ -228,7 +234,9 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   metadataSnapshot: CanonicalAssetMetadataSnapshot;
   read: (name: string) => Promise<{ data: AsyncIterable<Uint8Array> }>;
   referenceId: string;
-  currentResourceIds?: readonly string[];
+  currentBuild?: AssetResourceIndexBuildSource & {
+    resourceIds: readonly string[];
+  };
 }): Promise<AssetResourceIndexSnapshot[]> => {
   if (resources.length === 0) {
     return [];
@@ -245,25 +253,44 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   const states = new Map(
     (statesResult.data ?? []).map((state) => [state.resourceId, state])
   );
-  const explicitlyCurrent = new Set(currentResourceIds);
-  const currentResources = resources.filter((resource) => {
+  const explicitlyCurrent = new Set(currentBuild?.resourceIds);
+  const explicitlyCurrentResources = resources.filter((resource) =>
+    explicitlyCurrent.has(resource.resourceId)
+  );
+  const reusableCurrentResources = resources.filter((resource) => {
+    if (explicitlyCurrent.has(resource.resourceId)) {
+      return false;
+    }
     const state = states.get(resource.resourceId);
     return (
-      explicitlyCurrent.has(resource.resourceId) ||
-      (state !== undefined &&
-        state.deletedAt === null &&
-        state.queryHash === resource.queryHash)
+      state !== undefined &&
+      state.deletedAt === null &&
+      state.queryHash === resource.queryHash
     );
   });
   await reconcileAssetResourceIndexesForPublication({
     client,
     store,
     projectId,
-    resources: currentResources,
+    resources: reusableCurrentResources,
     entries,
     assetRevision,
     metadataSnapshot,
   });
+  await reconcileAssetResourceIndexesForPublication({
+    client,
+    store,
+    projectId,
+    resources: explicitlyCurrentResources,
+    entries,
+    assetRevision,
+    metadataSnapshot,
+    source: currentBuild,
+  });
+  const currentResources = [
+    ...explicitlyCurrentResources,
+    ...reusableCurrentResources,
+  ];
   const currentSnapshots = await loadAssetResourceIndexSnapshots({
     client,
     projectId,

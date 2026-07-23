@@ -6,7 +6,12 @@ INSERT INTO "Project" ("id", "title", "tags", "domain")
 VALUES ('resource-index-test-project', 'Resource index test', '{}', 'resource-index-test.example');
 
 INSERT INTO "Build" ("id", "projectId", pages, resources)
-VALUES ('resource-index-test-build', 'resource-index-test-project', '[]', '[]');
+VALUES (
+  'resource-index-test-build',
+  'resource-index-test-project',
+  '[]',
+  '[{"id":"posts","body":"old"},{"id":"http","url":"old"}]'
+);
 
 SELECT lives_ok(
   $$
@@ -56,7 +61,23 @@ SELECT is(
 );
 
 UPDATE "Build"
-SET resources = '[{"id":"newer-resource-snapshot"}]'
+SET resources = '[{"id":"posts","body":"old"},{"id":"http","url":"new"}]'
+WHERE id = 'resource-index-test-build'
+  AND "projectId" = 'resource-index-test-project';
+
+SELECT is(
+  (
+    SELECT "buildStatus"
+    FROM "AssetResourceIndexState"
+    WHERE "projectId" = 'resource-index-test-project'
+      AND "resourceId" = 'posts'
+  ),
+  'ACTIVE'::"AssetResourceIndexBuildStatus",
+  'An unrelated resource change preserves an active index'
+);
+
+UPDATE "Build"
+SET resources = '[{"id":"posts","body":"new"},{"id":"http","url":"new"}]'
 WHERE id = 'resource-index-test-build'
   AND "projectId" = 'resource-index-test-project';
 
@@ -68,7 +89,7 @@ SELECT is(
       AND "resourceId" = 'posts'
   ),
   'STALE'::"AssetResourceIndexBuildStatus",
-  'A saved resource change invalidates active indexes synchronously'
+  'A tracked resource definition change invalidates its active index synchronously'
 );
 
 SELECT is(
@@ -97,7 +118,7 @@ SELECT is(
     'attempt-stale-metadata',
     '[{"assetId":"missing","metadataToken":"old"}]'::JSONB,
     'resource-index-test-build',
-    '[{"id":"newer-resource-snapshot"}]'
+    '[{"id":"posts","body":"new"},{"id":"http","url":"new"}]'
   ),
   FALSE,
   'A build from a stale metadata snapshot cannot replace current state'

@@ -46,27 +46,38 @@ export const synchronizeAssetResourceIndexQueries = async ({
     dependencies.collectAssetResourceIndexGarbageBestEffort ??
     collectAssetResourceIndexGarbageBestEffort;
   const previous = new Map(
-    previousResources.map((resource) => [
-      resource.id,
-      getAssetResourceQuery(resource),
-    ])
+    previousResources.map((resource) => [resource.id, resource])
   );
-  const current = new Map(
-    resources.map((resource) => [resource.id, getAssetResourceQuery(resource)])
-  );
+  const current = new Map(resources.map((resource) => [resource.id, resource]));
   const deletedResourceIds = [...previous]
-    .filter(
-      ([resourceId, query]) =>
-        query !== undefined && current.get(resourceId) === undefined
-    )
+    .filter(([resourceId, resource]) => {
+      const currentResource = current.get(resourceId);
+      return (
+        getAssetResourceQuery(resource) !== undefined &&
+        (currentResource === undefined ||
+          getAssetResourceQuery(currentResource) === undefined)
+      );
+    })
     .map(([resourceId]) => resourceId)
     .sort();
   const changed = [...current]
-    .filter(
-      ([resourceId, query]) =>
-        query !== undefined && previous.get(resourceId) !== query
-    )
-    .map(([resourceId, query]) => ({ resourceId, query: query as string }))
+    .flatMap(([resourceId, resource]) => {
+      const query = getAssetResourceQuery(resource);
+      if (query === undefined) {
+        return [];
+      }
+      const previousResource = previous.get(resourceId);
+      if (
+        previousResource !== undefined &&
+        previousResource.control === resource.control &&
+        previousResource.method === resource.method &&
+        previousResource.url === resource.url &&
+        previousResource.body === resource.body
+      ) {
+        return [];
+      }
+      return [{ resourceId, query }];
+    })
     .sort((left, right) => left.resourceId.localeCompare(right.resourceId));
 
   const failures: unknown[] = [];

@@ -393,6 +393,11 @@ describe("canonical asset metadata synchronization", () => {
   });
 
   test("updates a renamed or moved asset without rereading its Markdown body", async () => {
+    const revision = createAssetContentRevision({
+      storageName: "stored.md",
+      updatedAt: "2026-07-18T05:00:00.000Z",
+      size: 20,
+    });
     const previousDocument = {
       _id: "asset-1",
       _type: "asset.file" as const,
@@ -402,10 +407,14 @@ describe("canonical asset metadata synchronization", () => {
       extension: "md",
       mimeType: "text/markdown",
       size: 20,
-      revision: "file:stored.md:revision:20",
+      revision,
       contentRef: "stored.md",
       properties: { title: "Post" },
       excerpt: "Body",
+      metadataError: {
+        code: "FRONTMATTER_INVALID",
+        message: "Invalid frontmatter",
+      },
     };
     const previousEntry = createCanonicalAssetFileEntry({
       projectId: "project-1",
@@ -466,11 +475,6 @@ describe("canonical asset metadata synchronization", () => {
         client: testContext.postgrest.client,
       })
     ).resolves.toBe(1);
-    const revision = createAssetContentRevision({
-      storageName: "stored.md",
-      updatedAt: "2026-07-18T05:00:00.000Z",
-      size: 20,
-    });
     expect(persisted).toMatchObject({
       assetId: "asset-1",
       revision,
@@ -481,8 +485,73 @@ describe("canonical asset metadata synchronization", () => {
         revision,
         properties: { title: "Post" },
         excerpt: "Body",
+        metadataError: {
+          code: "FRONTMATTER_INVALID",
+          message: "Invalid frontmatter",
+        },
       },
     });
+  });
+
+  test("does not assign metadata from an old content revision to a new one", async () => {
+    const previousEntry = createCanonicalAssetFileEntry({
+      projectId: "project-1",
+      document: {
+        _id: "asset-1",
+        _type: "asset.file",
+        name: "post.md",
+        path: "post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 20,
+        revision: "file:stored.md:old:20",
+        contentRef: "stored.md",
+        properties: { title: "Old title" },
+      },
+    });
+    const replace = vi.fn();
+    server.use(
+      db.get("AssetFileMetadata", () =>
+        json([
+          {
+            ...previousEntry,
+            createdAt: "2026-07-18T00:00:00.000Z",
+            updatedAt: "2026-07-18T00:00:00.000Z",
+          },
+        ])
+      ),
+      db.get("Asset", () =>
+        json([
+          {
+            id: "asset-1",
+            projectId: "project-1",
+            filename: "renamed",
+            folderId: null,
+            file: {
+              name: "stored.md",
+              size: 20,
+              updatedAt: "2026-07-18T05:00:00.000Z",
+              status: "UPLOADED",
+            },
+          },
+        ])
+      ),
+      db.get("AssetFolder", () => json([])),
+      db.post("rpc/replace_asset_file_metadata", () => {
+        replace();
+        return json(true);
+      })
+    );
+
+    await expect(
+      synchronizeCanonicalAssetStandardMetadata({
+        projectId: "project-1",
+        assetIds: ["asset-1"],
+        client: testContext.postgrest.client,
+      })
+    ).resolves.toBe(0);
+    expect(replace).not.toHaveBeenCalled();
   });
 
   test("batch synchronization rereads only missing or changed revisions", async () => {

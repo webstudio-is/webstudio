@@ -1,6 +1,9 @@
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
-import { getAssetContentHash } from "@webstudio-is/sdk";
+import {
+  getAssetContentHash,
+  type AssetResourceContentOptions,
+} from "@webstudio-is/sdk";
 import {
   apiClientHeader,
   apiClientVersionHeader,
@@ -1561,12 +1564,6 @@ type ResourceFieldsInput = {
   headers: Array<{ name: string; value: string }>;
   body?: string;
 };
-
-type AssetResourceContentOptions =
-  | { mode: "none" }
-  | { mode: "full"; maxBytes?: number }
-  | { mode: "range"; offset: number; length: number }
-  | { mode: "markdown-body"; maxBytes?: number };
 
 type AssetResourceParameterBinding = {
   name: string;

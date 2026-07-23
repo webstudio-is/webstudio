@@ -12,7 +12,7 @@ import {
   synchronizeAssetResourceIndexQueries,
 } from "./resource-index-lifecycle";
 
-const resource = (id: string, query: string): Resource => ({
+const resource = (id: string, query: string, resultLimit = 20): Resource => ({
   id,
   name: id,
   control: "system",
@@ -23,7 +23,7 @@ const resource = (id: string, query: string): Resource => ({
     new Map([
       ["query", JSON.stringify(query)],
       ["parameters", "{}"],
-      ["resultLimit", "20"],
+      ["resultLimit", JSON.stringify(resultLimit)],
       ["content", '{"mode":"none"}'],
     ])
   ),
@@ -93,6 +93,37 @@ describe("asset resource query lifecycle", () => {
         projectId: "project-1",
         resourceIds: ["changed", "created"],
       })
+    );
+  });
+
+  test("rebuilds only index-affecting changes to an existing query resource", async () => {
+    const previous = resource("posts", "*[]");
+    const configured = resource("configured", "*[]");
+
+    await expect(
+      synchronizeAssetResourceIndexQueries({
+        client: {} as never,
+        assetClient: { resourceIndexStore: {} } as never,
+        projectId: "project-1",
+        previousResources: [previous, configured],
+        resources: [
+          {
+            ...previous,
+            name: "Renamed",
+            headers: [{ name: "x", value: "y" }],
+          },
+          resource("configured", "*[]", 30),
+        ],
+        source,
+        dependencies,
+      })
+    ).resolves.toEqual({
+      deletedResourceIds: [],
+      updatedResourceIds: ["configured"],
+    });
+    expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledOnce();
+    expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledWith(
+      expect.objectContaining({ resourceId: "configured", query: "*[]" })
     );
   });
 

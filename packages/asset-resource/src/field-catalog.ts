@@ -189,6 +189,9 @@ export class AssetFieldCatalogAccumulator {
     }
     this.apply(previous.fields, -1);
     this.entries.delete(assetId);
+    if (this.entries.size === 0) {
+      this.projectId = undefined;
+    }
     return true;
   }
 
@@ -221,9 +224,9 @@ export class AssetFieldCatalogAccumulator {
   }
 }
 
-export const aggregateAssetFields = (
+const createCatalogAccumulator = (
   entries: readonly CanonicalAssetFileEntry[]
-): AggregatedAssetFieldCatalog => {
+) => {
   const accumulator = new AssetFieldCatalogAccumulator();
   const assetIds = new Set<string>();
   for (const entry of entries) {
@@ -233,23 +236,17 @@ export const aggregateAssetFields = (
     assetIds.add(entry.assetId);
     accumulator.upsert(entry);
   }
-  return accumulator.snapshot();
+  return accumulator;
 };
+
+export const aggregateAssetFields = (
+  entries: readonly CanonicalAssetFileEntry[]
+): AggregatedAssetFieldCatalog => createCatalogAccumulator(entries).snapshot();
 
 export const createAssetFieldCatalog = async (
   entries: readonly CanonicalAssetFileEntry[]
-): Promise<AssetFieldCatalog> => {
-  const accumulator = new AssetFieldCatalogAccumulator();
-  const assetIds = new Set<string>();
-  for (const entry of entries) {
-    if (assetIds.has(entry.assetId)) {
-      throw new Error("Asset field catalog contains duplicate asset entries");
-    }
-    assetIds.add(entry.assetId);
-    accumulator.upsert(entry);
-  }
-  return await accumulator.versionedSnapshot();
-};
+): Promise<AssetFieldCatalog> =>
+  await createCatalogAccumulator(entries).versionedSnapshot();
 
 export const toBuilderAssetFieldCatalog = (
   catalog: AssetFieldCatalog

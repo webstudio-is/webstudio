@@ -148,6 +148,67 @@ describe("published asset resource runtime", () => {
     expect(__testing.getParsedIndexCacheSize()).toBe(4);
   });
 
+  test("does not let an evicted rejection remove its replacement", async () => {
+    const { index, manifest } = await createRuntime();
+    let rejectFirst: (error: Error) => void = () => {};
+    let resolveSecond: (response: Response) => void = () => {};
+    let markFirstStarted: () => void = () => {};
+    let markSecondStarted: () => void = () => {};
+    const firstStarted = new Promise<void>((resolve) => {
+      markFirstStarted = resolve;
+    });
+    const secondStarted = new Promise<void>((resolve) => {
+      markSecondStarted = resolve;
+    });
+    const firstResponse = new Promise<Response>((_resolve, reject) => {
+      rejectFirst = reject;
+    });
+    const secondResponse = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
+    let indexReads = 0;
+    const fetchAsset = vi.fn(async () => {
+      indexReads += 1;
+      if (indexReads === 1) {
+        markFirstStarted();
+        return await firstResponse;
+      }
+      if (indexReads === 2) {
+        markSecondStarted();
+        return await secondResponse;
+      }
+      return Response.json(index);
+    });
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "evicted-deployment",
+      manifest,
+      fetchAsset,
+    });
+
+    const first = runtimeFetch(createQueryRequest());
+    await firstStarted;
+    for (let fill = 0; fill < 4; fill += 1) {
+      const fillRuntime = createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: `fill-deployment-${fill}`,
+        manifest,
+        fetchAsset: async () => Response.json(index),
+      });
+      expect((await fillRuntime(createQueryRequest()))?.status).toBe(200);
+    }
+
+    const second = runtimeFetch(createQueryRequest());
+    await secondStarted;
+    rejectFirst(new Error("Evicted request failed"));
+    expect((await first)?.status).toBe(500);
+    resolveSecond(Response.json(index));
+    expect((await second)?.status).toBe(200);
+
+    expect((await runtimeFetch(createQueryRequest()))?.status).toBe(200);
+    expect(indexReads).toBe(2);
+  });
+
   test("hydrates exactly the selected complete Markdown file", async () => {
     const { runtimeFetch, fetchAsset } = await createRuntime();
     const response = await runtimeFetch(createQueryRequest({ mode: "full" }));

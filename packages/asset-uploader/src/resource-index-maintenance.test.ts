@@ -208,6 +208,107 @@ describe("incremental resource index maintenance", () => {
     expect(putIfAbsent).toHaveBeenCalledOnce();
   });
 
+  test("repairs a current query change from its validated build snapshot", async () => {
+    const query = `*[extension == "md"]`;
+    const queryHash = await computeAssetResourceQueryHash(query);
+    const assetRevision = await computeCanonicalAssetRevision([entry]);
+    let beginInput: Record<string, unknown> | undefined;
+    server.use(
+      db.get("AssetResourceIndexState", () =>
+        json([
+          {
+            resourceId: "posts",
+            queryHash: `sha256:${"0".repeat(64)}`,
+            assetRevision,
+            buildStatus: "ACTIVE",
+            activeRevision: `sha256:${"1".repeat(64)}`,
+            deletedAt: null,
+          },
+        ])
+      ),
+      db.post("rpc/begin_asset_resource_index_build", async ({ request }) => {
+        beginInput = (await request.json()) as Record<string, unknown>;
+        return json(true);
+      }),
+      db.post("rpc/activate_asset_resource_index", () => json(true))
+    );
+    const putIfAbsent = vi.fn(async ({ checksum }) => ({
+      status: "created" as const,
+      checksum,
+    }));
+
+    await expect(
+      reconcileAssetResourceIndexesForPublication({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent },
+        projectId: "project-1",
+        resources: [{ resourceId: "posts", query, queryHash }],
+        entries: [entry],
+        assetRevision,
+        metadataSnapshot: [
+          { assetId: "post-1", metadataToken: "metadata-token-1" },
+        ],
+        source: {
+          buildId: "current-build",
+          resources: '[{"id":"posts"}]',
+        },
+      })
+    ).resolves.toEqual(["posts"]);
+    expect(beginInput).toMatchObject({
+      p_build_id: "current-build",
+      p_resources: '[{"id":"posts"}]',
+    });
+    expect(putIfAbsent).toHaveBeenCalledOnce();
+  });
+
+  test("does not authorize a reusable query with an unrelated build snapshot", async () => {
+    const query = `*[extension == "md"]`;
+    const queryHash = await computeAssetResourceQueryHash(query);
+    const assetRevision = await computeCanonicalAssetRevision([entry]);
+    let beginInput: Record<string, unknown> | undefined;
+    server.use(
+      db.get("AssetResourceIndexState", () =>
+        json([
+          {
+            resourceId: "posts",
+            queryHash,
+            assetRevision: `sha256:${"0".repeat(64)}`,
+            buildStatus: "FAILED",
+            activeRevision: null,
+            deletedAt: null,
+          },
+        ])
+      ),
+      db.post("rpc/begin_asset_resource_index_build", async ({ request }) => {
+        beginInput = (await request.json()) as Record<string, unknown>;
+        return json(false);
+      })
+    );
+
+    await expect(
+      prepareAssetResourceIndexSnapshotsForPublication({
+        client: testContext.postgrest.client,
+        store: { putIfAbsent: vi.fn() },
+        projectId: "project-1",
+        resources: [{ resourceId: "posts", query, queryHash }],
+        entries: [entry],
+        assetRevision,
+        metadataSnapshot: [
+          { assetId: "post-1", metadataToken: "metadata-token-1" },
+        ],
+        read: vi.fn(),
+        referenceId: "historical-build",
+        currentBuild: {
+          buildId: "unrelated-current-build",
+          resources: "[]",
+          resourceIds: [],
+        },
+      })
+    ).rejects.toThrow("Asset resource index is not active");
+    expect(beginInput).not.toHaveProperty("p_build_id");
+    expect(beginInput).not.toHaveProperty("p_resources");
+  });
+
   test("builds a historical query snapshot without replacing current state", async () => {
     const historicalQuery = `*[extension == "md"]`;
     const historicalQueryHash =
