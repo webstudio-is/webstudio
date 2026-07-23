@@ -18,7 +18,11 @@ import { chdir, cwd } from "node:process";
 import { promisify } from "node:util";
 import { log } from "@clack/prompts";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
-import { prebuild } from "../prebuild";
+import {
+  projectPreviewSources,
+  type ProjectPreviewSource,
+} from "@webstudio-is/project-build/visual";
+import { generatedFilesManifest, prebuild } from "../prebuild";
 import { LOCAL_CONFIG_FILE, LOCAL_DATA_FILE } from "../config";
 import { HandledCliError } from "../errors";
 import {
@@ -41,10 +45,11 @@ import {
 } from "../project-session";
 import { LOCAL_ASSETS_DIR } from "../asset-files";
 import packageJson from "../../package.json" with { type: "json" };
+import { createExclusiveAsyncRunner } from "../async-utils";
 
 export const previewDefaultTemplate = ["defaults", "react-router"] as const;
-export const previewSources = ["local", "session"] as const;
-export type PreviewSource = (typeof previewSources)[number];
+export const previewSources = projectPreviewSources;
+export type PreviewSource = ProjectPreviewSource;
 
 const getPreviewTemplates = (template: string[]) => {
   const templates =
@@ -305,33 +310,12 @@ const runInDirectory = async <Result>(
   }
 };
 
-let runInDirectoryQueue = Promise.resolve();
+const runExclusive = createExclusiveAsyncRunner();
 
-const runExclusive = async <Result>(callback: () => Promise<Result>) => {
-  const previousRun = runInDirectoryQueue;
-  let releaseCurrentRun: () => void = () => undefined;
-  runInDirectoryQueue = new Promise((resolve) => {
-    releaseCurrentRun = resolve;
-  });
-  await previousRun.catch(() => undefined);
-  try {
-    return await callback();
-  } finally {
-    releaseCurrentRun();
-  }
-};
-
-const preparePreviewDirectory = async (projectDir: string) => {
-  const previewProjectDir = getPreviewProjectDir(projectDir);
-  await mkdir(previewProjectDir, { recursive: true });
-  const entries = await readdir(previewProjectDir);
-  await Promise.all(
-    entries
-      .filter((entry) => entry !== "node_modules")
-      .map((entry) =>
-        rm(join(previewProjectDir, entry), { recursive: true, force: true })
-      )
-  );
+const copyPreviewProjectFiles = async (
+  projectDir: string,
+  previewProjectDir: string
+) => {
   await mkdir(join(previewProjectDir, ".webstudio"), { recursive: true });
   for (const file of localPreviewFiles) {
     await copyFile(join(projectDir, file), join(previewProjectDir, file)).catch(
@@ -347,6 +331,35 @@ const preparePreviewDirectory = async (projectDir: string) => {
       }
     );
   }
+};
+
+const hasIncrementalGenerationInputs = async (previewProjectDir: string) => {
+  return await Promise.all([
+    access(join(previewProjectDir, "app", "route-templates")),
+    access(join(previewProjectDir, generatedFilesManifest)),
+  ]).then(
+    () => true,
+    () => false
+  );
+};
+
+const preparePreviewDirectory = async (
+  projectDir: string,
+  preserveGeneratedProject: boolean
+) => {
+  const previewProjectDir = getPreviewProjectDir(projectDir);
+  await mkdir(previewProjectDir, { recursive: true });
+  if (preserveGeneratedProject === false) {
+    const entries = await readdir(previewProjectDir);
+    await Promise.all(
+      entries
+        .filter((entry) => entry !== "node_modules")
+        .map((entry) =>
+          rm(join(previewProjectDir, entry), { recursive: true, force: true })
+        )
+    );
+  }
+  await copyPreviewProjectFiles(projectDir, previewProjectDir);
   return previewProjectDir;
 };
 
@@ -429,6 +442,8 @@ export const preparePreviewProject = async ({
   getBuildCacheKey = getPreviewBuildCacheKey,
   silent = false,
   includeDraftPages = false,
+  preserveGeneratedProject = false,
+  prepareForIncrementalGeneration = false,
   prepareSessionDataFile = async () => {
     const connection = await resolveApiConnection();
     const session = createCliProjectSession({ connection });
@@ -451,6 +466,8 @@ export const preparePreviewProject = async ({
   getBuildCacheKey?: typeof getPreviewBuildCacheKey;
   silent?: boolean;
   includeDraftPages?: boolean;
+  preserveGeneratedProject?: boolean;
+  prepareForIncrementalGeneration?: boolean;
   prepareSessionDataFile?: () => Promise<void>;
 }): Promise<{
   cwd: string;
@@ -495,12 +512,16 @@ export const preparePreviewProject = async ({
     template,
     includeDraftPages,
   });
+  const hasIncrementalInputs =
+    await hasIncrementalGenerationInputs(previewProjectDir);
+  const canReuseCachedProject =
+    prepareForIncrementalGeneration === false || hasIncrementalInputs;
   if (buildCacheKey !== undefined) {
     const cachedBuildKey = await readFile(
       join(previewProjectDir, previewBuildCacheMarker),
       "utf8"
     ).catch(() => undefined);
-    if (cachedBuildKey === buildCacheKey) {
+    if (cachedBuildKey === buildCacheKey && canReuseCachedProject) {
       await ensureDependencies(previewProjectDir);
       return { cwd: previewProjectDir, buildCacheKey, buildRequired: false };
     }
@@ -508,13 +529,19 @@ export const preparePreviewProject = async ({
 
   if (generate) {
     await runExclusive(async () => {
-      await preparePreviewDirectory(projectDir);
+      const reuseGeneratedProject =
+        preserveGeneratedProject && hasIncrementalInputs;
+      await preparePreviewDirectory(projectDir, reuseGeneratedProject);
       await runInDirectory(previewProjectDir, async () => {
         await prebuildProject({
           assets,
           template: getPreviewTemplates(template),
           ...(silent ? { silent: true } : {}),
           ...(includeDraftPages ? { includeDraftPages: true } : {}),
+          ...(reuseGeneratedProject ? { incremental: true } : {}),
+          ...(prepareForIncrementalGeneration
+            ? { preserveRouteTemplates: true }
+            : {}),
         });
       });
       await ensureDependencies(previewProjectDir);

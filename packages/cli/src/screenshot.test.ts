@@ -406,8 +406,6 @@ test("resets a reusable capture session after browser startup rejects", async ()
   await expect(session.capture(options)).rejects.toThrow(
     "Browser exited before its DevTools endpoint became ready."
   );
-  await expect(session.close()).resolves.toBeUndefined();
-
   await expect(session.capture(options)).rejects.toThrow(
     "Browser exited before its DevTools endpoint became ready."
   );

@@ -145,9 +145,9 @@ Commands:
 
 Notes:
 
-- Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see the production-like generated site.
+- Use this after page/content/style mutations so a vision-capable AI can see the generated site from the current MCP session. Use `path`; never pass a Webstudio Builder/share URL or capture Builder chrome.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
-- After MCP mutations, path screenshots regenerate/restart preview as needed before capture; when preview is fresh, repeated path screenshots reuse the running server.
+- Iterative mode is the default: after MCP mutations, path screenshots ensure generated project files are current, wait for the exact session version, and perform an ordinary page reload without Vite HMR. The preview server and browser stay alive. Use `{"mode":"production"}` only for release-like verification; rendered audit does this automatically.
 - Do not call `preview.start` through one-shot `webstudio mcp single-op-call`: it is long-lived. From a shell, use `webstudio mcp run` with preview.start, screenshot, and preview.stop in one shared process, or use a real long-running MCP client.
 - From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
 - Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.

@@ -40,6 +40,12 @@ import {
   type ScreenshotWaitUntil,
 } from "./visual/screenshot-browser";
 import type { ScreenshotDiffResult } from "./visual/screenshot-diff";
+import {
+  projectPreviewModes,
+  projectPreviewSources,
+  type ProjectPreviewMode,
+  type ProjectPreviewSource,
+} from "./visual/preview";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -127,6 +133,26 @@ export type McpErrorCodeResolver = (error: unknown) => string | undefined;
 export type McpTransport = Transport;
 type McpLogLevel = "info" | "error";
 
+export const projectSessionPreviewSources = projectPreviewSources;
+export type ProjectSessionPreviewSource = ProjectPreviewSource;
+
+export const projectSessionPreviewModes = projectPreviewModes;
+export type ProjectSessionPreviewMode = ProjectPreviewMode;
+
+type ProjectSessionScreenshotNavigation = {
+  requestedUrl: string;
+  finalUrl: string;
+  status?: number;
+  statusText?: string;
+  mimeType?: string;
+  redirects: string[];
+  documentReadyState: string;
+  generatedSiteRootPresent: boolean;
+  projectId?: string;
+  projectVersion?: number;
+  layoutStable: boolean;
+};
+
 export type ProjectSessionScreenshotInput = {
   url?: string;
   baseUrl?: string;
@@ -135,7 +161,8 @@ export type ProjectSessionScreenshotInput = {
   host?: string;
   port?: number;
   imageDomains?: string[];
-  source?: "local" | "session";
+  source?: ProjectSessionPreviewSource;
+  mode?: ProjectSessionPreviewMode;
   viewport: {
     width: number;
     height: number;
@@ -166,6 +193,14 @@ export type ProjectSessionScreenshotResult = {
   fullPage: boolean;
   elapsedMs: number;
   warnings: readonly string[];
+  previewMode?: ProjectSessionPreviewMode;
+  renderedProjectId?: string;
+  renderedProjectVersion?: number;
+  lifecycleTimings?: {
+    previewRefreshMs: number;
+    captureMs: number;
+    totalMs: number;
+  };
   timings?: {
     wallMs: number;
     targetSetupMs: number;
@@ -177,29 +212,9 @@ export type ProjectSessionScreenshotResult = {
     artifactWriteMs: number;
     targetCleanupMs: number;
   };
-  navigation?: {
-    requestedUrl: string;
-    finalUrl: string;
-    status?: number;
-    statusText?: string;
-    mimeType?: string;
-    redirects: string[];
-    documentReadyState: string;
-    generatedSiteRootPresent: boolean;
-    layoutStable: boolean;
-  };
+  navigation?: ProjectSessionScreenshotNavigation;
   layout?: {
-    navigation?: {
-      requestedUrl: string;
-      finalUrl: string;
-      status?: number;
-      statusText?: string;
-      mimeType?: string;
-      redirects: string[];
-      documentReadyState: string;
-      generatedSiteRootPresent: boolean;
-      layoutStable: boolean;
-    };
+    navigation?: ProjectSessionScreenshotNavigation;
     documentType?: string;
     viewportWidth: number;
     viewportHeight: number;
@@ -283,14 +298,16 @@ type InstallOcr = () => Promise<ProjectSessionInstallOcrResult>;
 export type ProjectSessionPreviewInput = {
   host?: string;
   port?: number;
-  source?: "local" | "session";
+  source?: ProjectSessionPreviewSource;
   imageDomains?: string[];
+  mode?: ProjectSessionPreviewMode;
 };
 
 export type ProjectSessionPreviewResult = {
   url: string;
   pid?: number;
   running: boolean;
+  mode: ProjectSessionPreviewMode;
 };
 
 type StartPreview = (
@@ -340,6 +357,16 @@ export type ProjectSessionMcpGuidance = {
 const isScreenshotBrowser = (value: unknown): value is ScreenshotBrowser =>
   typeof value === "string" &&
   screenshotBrowserChoices.includes(value as ScreenshotBrowser);
+
+const isProjectSessionPreviewSource = (
+  value: unknown
+): value is ProjectSessionPreviewSource =>
+  projectSessionPreviewSources.some((source) => source === value);
+
+const isProjectSessionPreviewMode = (
+  value: unknown
+): value is ProjectSessionPreviewMode =>
+  projectSessionPreviewModes.some((mode) => mode === value);
 
 const getRequestParams = (request: unknown) =>
   isRecord(request) && isRecord(request.params) ? request.params : {};
@@ -1075,7 +1102,7 @@ const getNormalizedOperationInput = (
 const screenshotInputSchema = {
   ...emptyInputSchema,
   description:
-    "Capture a visual screenshot for AI vision review. Pass { url } for any absolute URL, { path } inside the same long-running MCP server after preview.start, or { baseUrl, path } to capture from an already-running preview/site without starting preview. Use repeated { path } captures to verify multiple generated-site pages.",
+    'Capture the generated site for AI vision review. For the configured project, use { path: "/" }; this refreshes the current MCP session and reloads only the generated site. Never pass a Webstudio Builder/share URL or screenshot the Builder UI. Use { url } only for an intentional standalone external site, or { baseUrl, path } for an existing generated-site server.',
   properties: {
     url: {
       type: "string",
@@ -1160,10 +1187,17 @@ const screenshotInputSchema = {
     },
     source: {
       type: "string",
-      enum: ["local", "session"],
-      default: "local",
+      enum: projectSessionPreviewSources,
+      default: "session",
       description:
         "When screenshot needs to start/restart preview for a path, choose local for .webstudio/data.json or session for the current ProjectSession snapshot after MCP edits.",
+    },
+    mode: {
+      type: "string",
+      enum: projectSessionPreviewModes,
+      default: "iterative",
+      description:
+        "Iterative keeps one development server and browser alive while reloading after MCP edits. Production performs a full generated build and is intended for audits and release-like verification.",
     },
     host: {
       type: "string",
@@ -1397,7 +1431,7 @@ const installOcrInputSchema = {
 const previewInputSchema = {
   ...emptyInputSchema,
   description:
-    "Regenerate local project files when needed, build them, and start or inspect a long-lived production-like generated-site preview server for visual verification.",
+    "Start or refresh the generated-site preview. Iterative mode is the default for repeated MCP edit and screenshot cycles: it keeps one server alive, regenerates the current session, and uses normal page reloads without HMR. Use production mode for release-like audits.",
   properties: {
     host: {
       type: "string",
@@ -1409,10 +1443,15 @@ const previewInputSchema = {
     },
     source: {
       type: "string",
-      enum: ["local", "session"],
-      default: "local",
+      enum: projectSessionPreviewSources,
+      default: "session",
       description:
         "Project data source for generated preview: local uses .webstudio/data.json; session materializes the current ProjectSession snapshot first, which is the right choice after MCP mutations.",
+    },
+    mode: {
+      type: "string",
+      enum: projectSessionPreviewModes,
+      default: "iterative",
     },
     imageDomains: {
       type: "array",
@@ -2064,8 +2103,9 @@ const previewDataSchema = {
     url: { type: "string" },
     pid: { type: "integer" },
     running: { type: "boolean" },
+    mode: { type: "string", enum: projectSessionPreviewModes },
   },
-  required: ["url", "running"],
+  required: ["url", "running", "mode"],
   additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
@@ -2701,7 +2741,7 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
     name: "preview.start",
     description:
-      "Regenerate local project files when needed, build them, then start or restart a production-like generated-site preview server for fast visual verification while MCP is running.",
+      "Start or refresh a generated-site preview. The iterative default keeps the server and browser alive and normally reloads the generated route after each MCP edit; production mode performs the full build used by audits.",
     inputSchema: previewInputSchema,
     outputSchema: getMcpOutputSchema(previewDataSchema),
     mcpExamples: getMcpExamples("preview.start"),
@@ -5803,8 +5843,12 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     }
   }
   const source = input.source === undefined ? undefined : input.source;
-  if (source !== undefined && source !== "local" && source !== "session") {
+  if (source !== undefined && isProjectSessionPreviewSource(source) === false) {
     throw new Error("screenshot source must be local or session.");
+  }
+  const mode = input.mode === undefined ? undefined : input.mode;
+  if (mode !== undefined && isProjectSessionPreviewMode(mode) === false) {
+    throw new Error("screenshot mode must be iterative or production.");
   }
   const host = typeof input.host === "string" ? input.host : undefined;
   if (host !== undefined && host.length === 0) {
@@ -5841,10 +5885,11 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       host !== undefined ||
       port !== undefined ||
       source !== undefined ||
+      mode !== undefined ||
       imageDomains !== undefined
     ) {
       throw new Error(
-        "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, or imageDomains."
+        "screenshot baseUrl uses an existing preview/site and cannot be combined with host, port, source, mode, or imageDomains."
       );
     }
   }
@@ -5857,6 +5902,7 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     port,
     imageDomains,
     source,
+    mode,
     viewport: { width, height },
     fullPage: input.fullPage === true,
     includeImageMetrics: input.includeImageMetrics === true,
@@ -6036,8 +6082,12 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
     throw new Error("preview port must be an integer between 1 and 65535.");
   }
   const source = input.source === undefined ? undefined : input.source;
-  if (source !== undefined && source !== "local" && source !== "session") {
+  if (source !== undefined && isProjectSessionPreviewSource(source) === false) {
     throw new Error("preview source must be local or session.");
+  }
+  const mode = input.mode === undefined ? undefined : input.mode;
+  if (mode !== undefined && isProjectSessionPreviewMode(mode) === false) {
+    throw new Error("preview mode must be iterative or production.");
   }
   const imageDomains = input.imageDomains;
   if (
@@ -6057,6 +6107,7 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
     host,
     port,
     source,
+    mode,
     imageDomains,
   };
 };
@@ -6117,6 +6168,7 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
     manifest: RenderedAuditArtifactManifest
   ) => Promise<string>;
   restorePoints?: ProjectSessionRestorePointHandlers;
+  onProjectSessionChange?: () => void;
 };
 
 type ProjectSessionRestorePointHandlers = {
@@ -6148,6 +6200,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   reportToolProgress,
   storeRenderedAuditArtifacts,
   restorePoints,
+  onProjectSessionChange,
 }: ProjectSessionMcpCoreOptions<Command>) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
@@ -6454,11 +6507,15 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "refresh") {
         const session = getSession();
         await session.initialize();
-        return toCallResult(await session.refresh(getRefreshNamespaces(input)));
+        const result = await session.refresh(getRefreshNamespaces(input));
+        onProjectSessionChange?.();
+        return toCallResult(result);
       }
       if (name === "reset-session") {
         const session = getSession();
-        return toCallResult(await session.reset());
+        const result = await session.reset();
+        onProjectSessionChange?.();
+        return toCallResult(result);
       }
       if (name === "create-restore-point" && restorePoints !== undefined) {
         return toMetaResult(
@@ -6835,6 +6892,7 @@ export const createProjectSessionMcpServer = async <
   reportLog,
   storeRenderedAuditArtifacts,
   restorePoints,
+  onProjectSessionChange,
   onInitialized,
   toolHeartbeatIntervalMs = 10_000,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
@@ -6877,6 +6935,7 @@ export const createProjectSessionMcpServer = async <
     guidance,
     storeRenderedAuditArtifacts,
     restorePoints,
+    onProjectSessionChange,
     reportToolProgress: (message) => {
       sendLog("info", message);
     },

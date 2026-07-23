@@ -17,6 +17,7 @@ import {
   previewOptions,
 } from "./preview";
 import type { CommonYargsArgv } from "./yargs-types";
+import { generatedFilesManifest } from "../prebuild";
 
 test("rejects empty preview host", async () => {
   await expect(
@@ -300,6 +301,45 @@ test("revalidates dependencies when reusing a cached preview build", async () =>
   expect(prebuildProject).not.toHaveBeenCalled();
 });
 
+test("regenerates a production cache before using it for iterative preview", async () => {
+  const previousDirectory = cwd();
+  const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
+  const previewProjectDir = join(projectDir, ".webstudio", "preview");
+  const prebuildProject = vi.fn(async () => undefined);
+
+  await mkdir(join(projectDir, ".webstudio"), { recursive: true });
+  await mkdir(previewProjectDir, { recursive: true });
+  await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
+  await writeFile(join(projectDir, ".webstudio", "config.json"), "{}");
+  await writeFile(
+    join(previewProjectDir, ".webstudio-preview-build"),
+    "cache-key"
+  );
+  chdir(projectDir);
+  try {
+    const result = await preparePreviewProject({
+      assets: true,
+      template: [],
+      generate: true,
+      prepareForIncrementalGeneration: true,
+      prebuildProject,
+      ensureDependencies: vi.fn(async () => undefined),
+      getBuildCacheKey: vi.fn(async () => "cache-key"),
+    });
+
+    expect(result.buildRequired).toBe(true);
+  } finally {
+    chdir(previousDirectory);
+    await rm(projectDir, { recursive: true, force: true });
+  }
+
+  expect(prebuildProject).toHaveBeenCalledWith({
+    assets: true,
+    template: ["defaults", "react-router"],
+    preserveRouteTemplates: true,
+  });
+});
+
 test("links local workspace preview dependencies without asking npm for placeholder versions", async () => {
   const symlink = vi.fn(async () => undefined);
   const cliNodeModules = getNodeModulesSearchPaths(import.meta.url).find(
@@ -496,6 +536,42 @@ test("materializes session data before previewing from session source", async ()
     assets: true,
     template: ["defaults", "react-router"],
   });
+});
+
+test("refreshes an iterative generated project without replacing its directory", async () => {
+  const previousDirectory = cwd();
+  const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
+  const previewProjectDir = join(projectDir, ".webstudio", "preview");
+  const prebuildProject = vi.fn(async () => {
+    await expect(
+      readFile(join(previewProjectDir, "server-marker"), "utf8")
+    ).resolves.toBe("running");
+  });
+
+  await mkdir(join(projectDir, ".webstudio"), { recursive: true });
+  await mkdir(join(previewProjectDir, "app", "route-templates"), {
+    recursive: true,
+  });
+  await mkdir(join(previewProjectDir, ".webstudio"), { recursive: true });
+  await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
+  await writeFile(join(previewProjectDir, "server-marker"), "running");
+  await writeFile(join(previewProjectDir, generatedFilesManifest), "[]");
+  chdir(projectDir);
+  try {
+    await preparePreviewProject({
+      assets: true,
+      template: [],
+      generate: true,
+      preserveGeneratedProject: true,
+      prebuildProject,
+      ensureDependencies: vi.fn(async () => undefined),
+    });
+  } finally {
+    chdir(previousDirectory);
+    await rm(projectDir, { recursive: true, force: true });
+  }
+
+  expect(prebuildProject).toHaveBeenCalledOnce();
 });
 
 test("uses current project directory when generation is disabled", async () => {

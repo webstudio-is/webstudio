@@ -365,6 +365,8 @@ const waitForSelector = async (
 type BrowserReadiness = {
   documentReadyState: string;
   generatedSiteRootPresent: boolean;
+  projectId?: string;
+  projectVersion?: number;
   layoutStable: boolean;
 };
 
@@ -379,6 +381,14 @@ const waitForFontsAndFrames = async (
           documentReadyState: document.readyState,
           generatedSiteRootPresent:
             document.documentElement.hasAttribute("data-ws-project"),
+          projectId:
+            document.documentElement.getAttribute("data-ws-project") ?? undefined,
+          projectVersion: (() => {
+            const attribute = document.documentElement.getAttribute("data-ws-version");
+            if (attribute === null) return undefined;
+            const value = Number(attribute);
+            return Number.isFinite(value) ? value : undefined;
+          })(),
           width: document.documentElement.scrollWidth,
           height: document.documentElement.scrollHeight,
         }))`,
@@ -395,6 +405,8 @@ const waitForFontsAndFrames = async (
   ): value is {
     documentReadyState: string;
     generatedSiteRootPresent: boolean;
+    projectId?: string;
+    projectVersion?: number;
     width: number;
     height: number;
   } =>
@@ -404,6 +416,12 @@ const waitForFontsAndFrames = async (
     typeof value.documentReadyState === "string" &&
     "generatedSiteRootPresent" in value &&
     typeof value.generatedSiteRootPresent === "boolean" &&
+    ("projectId" in value === false ||
+      value.projectId === undefined ||
+      typeof value.projectId === "string") &&
+    ("projectVersion" in value === false ||
+      value.projectVersion === undefined ||
+      typeof value.projectVersion === "number") &&
     "width" in value &&
     typeof value.width === "number" &&
     "height" in value &&
@@ -428,6 +446,12 @@ const waitForFontsAndFrames = async (
       return {
         documentReadyState: value.documentReadyState,
         generatedSiteRootPresent: value.generatedSiteRootPresent,
+        ...(value.projectId === undefined
+          ? {}
+          : { projectId: value.projectId }),
+        ...(value.projectVersion === undefined
+          ? {}
+          : { projectVersion: value.projectVersion }),
         layoutStable: true,
       };
     }
@@ -435,6 +459,12 @@ const waitForFontsAndFrames = async (
       return {
         documentReadyState: value.documentReadyState,
         generatedSiteRootPresent: value.generatedSiteRootPresent,
+        ...(value.projectId === undefined
+          ? {}
+          : { projectId: value.projectId }),
+        ...(value.projectVersion === undefined
+          ? {}
+          : { projectVersion: value.projectVersion }),
         layoutStable: false,
       };
     }
@@ -533,6 +563,8 @@ export type BrowserScreenshotNavigation = {
   redirects: string[];
   documentReadyState: string;
   generatedSiteRootPresent: boolean;
+  projectId?: string;
+  projectVersion?: number;
   layoutStable: boolean;
 };
 
