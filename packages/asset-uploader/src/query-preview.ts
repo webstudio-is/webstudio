@@ -1,6 +1,5 @@
 import {
   buildAssetResourceIndex,
-  computeAssetResourceQueryHash,
   executeAndHydrateAssetResourceQuery,
 } from "@webstudio-is/asset-resource";
 import type { AssetResourceQueryRequest } from "@webstudio-is/sdk";
@@ -41,7 +40,7 @@ export const previewAssetResourceQuery = async ({
   return await executeAndHydrateAssetResourceQuery({
     request,
     documents: index.documents,
-    queryHash: await computeAssetResourceQueryHash(request.query),
+    queryHash: index.queryHash,
     indexRevision: `metadata:${index.integrity.checksum}`,
     assetRevision: index.assetRevision,
     read: assetClient.readFile,

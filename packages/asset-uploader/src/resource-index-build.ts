@@ -3,6 +3,7 @@ import {
   getAssetResourceIndexObjectKey,
   persistAssetResourceIndex,
   type CanonicalAssetFileEntry,
+  type AssetResourceIndexBuilder,
   type ImmutableAssetResourceIndexStore,
 } from "@webstudio-is/asset-resource";
 import type { Client } from "@webstudio-is/postgrest/index.server";
@@ -46,6 +47,7 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   metadataSnapshot,
   source,
   signal,
+  indexBuilder,
 }: {
   client: Client;
   store: ImmutableAssetResourceIndexStore;
@@ -57,16 +59,30 @@ export const buildPersistAndActivateAssetResourceIndex = async ({
   metadataSnapshot: CanonicalAssetMetadataSnapshot;
   source?: AssetResourceIndexBuildSource;
   signal?: AbortSignal;
+  indexBuilder?: AssetResourceIndexBuilder;
 }) => {
   const buildAttemptId = crypto.randomUUID();
   assertNotCancelled(signal);
-  const index = await buildAssetResourceIndex({
-    projectId,
-    resourceId,
-    query,
-    entries,
-    assetRevision,
-  });
+  if (indexBuilder !== undefined && indexBuilder.projectId !== projectId) {
+    throw new Error("Resource index builder belongs to a different project");
+  }
+  if (
+    indexBuilder !== undefined &&
+    assetRevision !== undefined &&
+    indexBuilder.assetRevision !== assetRevision
+  ) {
+    throw new Error("Resource index builder has a different asset revision");
+  }
+  const index =
+    indexBuilder === undefined
+      ? await buildAssetResourceIndex({
+          projectId,
+          resourceId,
+          query,
+          entries,
+          assetRevision,
+        })
+      : await indexBuilder.build({ resourceId, query });
   const objectKey = getAssetResourceIndexObjectKey({ projectId, index });
   assertNotCancelled(signal);
   const begun = await beginAssetResourceIndexBuild({

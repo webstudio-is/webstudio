@@ -1,5 +1,6 @@
 import {
-  buildAssetResourceIndex,
+  createAssetResourceIndexBuilder,
+  type AssetResourceIndexBuilder,
   type CanonicalAssetFileEntry,
   type ImmutableAssetResourceIndexStore,
 } from "@webstudio-is/asset-resource";
@@ -88,6 +89,10 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
     client,
     projectId,
   });
+  const indexBuilder = await createAssetResourceIndexBuilder({
+    projectId,
+    entries,
+  });
   const updatedResourceIds: string[] = [];
   const errors: unknown[] = [];
   for (const resource of resources) {
@@ -100,6 +105,7 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
         query: resource.query,
         entries,
         metadataSnapshot,
+        indexBuilder,
       });
       updatedResourceIds.push(resource.resourceId);
     } catch (error) {
@@ -132,6 +138,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
   assetRevision,
   metadataSnapshot,
   source,
+  indexBuilder,
 }: {
   client: Client;
   store: ImmutableAssetResourceIndexStore;
@@ -145,6 +152,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
   assetRevision: string;
   metadataSnapshot: CanonicalAssetMetadataSnapshot;
   source?: AssetResourceIndexBuildSource;
+  indexBuilder?: AssetResourceIndexBuilder;
 }) => {
   if (resources.length === 0) {
     return [];
@@ -164,6 +172,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
     (statesResult.data ?? []).map((state) => [state.resourceId, state])
   );
   const rebuilt: string[] = [];
+  let preparedIndexBuilder = indexBuilder;
   for (const resource of resources) {
     const state = states.get(resource.resourceId);
     // A different query belongs to a historical build and must not replace the
@@ -184,6 +193,11 @@ export const reconcileAssetResourceIndexesForPublication = async ({
     ) {
       continue;
     }
+    preparedIndexBuilder ??= await createAssetResourceIndexBuilder({
+      projectId,
+      entries,
+      assetRevision,
+    });
     try {
       await buildPersistAndActivateAssetResourceIndex({
         client,
@@ -195,6 +209,7 @@ export const reconcileAssetResourceIndexesForPublication = async ({
         assetRevision,
         metadataSnapshot,
         source,
+        indexBuilder: preparedIndexBuilder,
       });
     } catch (error) {
       // A concurrent build of the same identity may activate first. The
@@ -215,7 +230,6 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   projectId,
   resources,
   entries,
-  assetRevision,
   metadataSnapshot,
   read,
   referenceId,
@@ -230,7 +244,6 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
     queryHash: string;
   }[];
   entries: readonly CanonicalAssetFileEntry[];
-  assetRevision: string;
   metadataSnapshot: CanonicalAssetMetadataSnapshot;
   read: (name: string) => Promise<{ data: AsyncIterable<Uint8Array> }>;
   referenceId: string;
@@ -253,6 +266,11 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
   const states = new Map(
     (statesResult.data ?? []).map((state) => [state.resourceId, state])
   );
+  const indexBuilder = await createAssetResourceIndexBuilder({
+    projectId,
+    entries,
+  });
+  const { assetRevision } = indexBuilder;
   const explicitlyCurrent = new Set(currentBuild?.resourceIds);
   const explicitlyCurrentResources = resources.filter((resource) =>
     explicitlyCurrent.has(resource.resourceId)
@@ -276,6 +294,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
     entries,
     assetRevision,
     metadataSnapshot,
+    indexBuilder,
   });
   await reconcileAssetResourceIndexesForPublication({
     client,
@@ -286,6 +305,7 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
     assetRevision,
     metadataSnapshot,
     source: currentBuild,
+    indexBuilder,
   });
   const currentResources = [
     ...explicitlyCurrentResources,
@@ -308,12 +328,9 @@ export const prepareAssetResourceIndexSnapshotsForPublication = async ({
     if (snapshots.has(resource.resourceId)) {
       continue;
     }
-    const index = await buildAssetResourceIndex({
-      projectId,
+    const index = await indexBuilder.build({
       resourceId: resource.resourceId,
       query: resource.query,
-      entries,
-      assetRevision,
     });
     snapshots.set(resource.resourceId, {
       resourceId: resource.resourceId,

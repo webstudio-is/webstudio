@@ -6,6 +6,7 @@ const synchronizeCanonicalAssets = vi.hoisted(() => vi.fn());
 const buildPersistAndActivateAssetResourceIndex = vi.hoisted(() => vi.fn());
 const deleteAssetResourceIndexQuery = vi.hoisted(() => vi.fn());
 const collectAssetResourceIndexGarbageBestEffort = vi.hoisted(() => vi.fn());
+const loadOwnedAssetResourceIndexIds = vi.hoisted(() => vi.fn());
 
 import {
   getAssetResourceQuery,
@@ -34,6 +35,7 @@ const dependencies = {
   buildPersistAndActivateAssetResourceIndex,
   deleteAssetResourceIndexQuery,
   collectAssetResourceIndexGarbageBestEffort,
+  loadOwnedAssetResourceIndexIds,
 };
 const source = { buildId: "build-1", resources: "[]" };
 
@@ -47,6 +49,7 @@ describe("asset resource query lifecycle", () => {
     buildPersistAndActivateAssetResourceIndex.mockReset().mockResolvedValue({});
     deleteAssetResourceIndexQuery.mockReset().mockResolvedValue(true);
     collectAssetResourceIndexGarbageBestEffort.mockReset();
+    loadOwnedAssetResourceIndexIds.mockReset().mockResolvedValue([]);
   });
 
   test("extracts only fixed queryable-asset GROQ definitions", () => {
@@ -155,6 +158,35 @@ describe("asset resource query lifecycle", () => {
     );
     expect(loadCanonicalAssetFileSnapshot).not.toHaveBeenCalled();
     expect(synchronizeCanonicalAssets).not.toHaveBeenCalled();
+  });
+
+  test("repairs persisted ownership left by an earlier failed deletion", async () => {
+    loadOwnedAssetResourceIndexIds.mockResolvedValueOnce([
+      "current",
+      "orphaned",
+    ]);
+
+    await expect(
+      synchronizeAssetResourceIndexQueries({
+        client: {} as never,
+        assetClient: { resourceIndexStore: {} } as never,
+        projectId: "project-1",
+        previousResources: [resource("current", "*[]")],
+        resources: [resource("current", "*[]")],
+        source,
+        dependencies,
+      })
+    ).resolves.toEqual({
+      deletedResourceIds: ["orphaned"],
+      updatedResourceIds: [],
+    });
+    expect(deleteAssetResourceIndexQuery).toHaveBeenCalledOnce();
+    expect(deleteAssetResourceIndexQuery).toHaveBeenCalledWith({
+      client: {},
+      projectId: "project-1",
+      resourceId: "orphaned",
+      source,
+    });
   });
 
   test("continues independent query work and cleanup after a failure", async () => {

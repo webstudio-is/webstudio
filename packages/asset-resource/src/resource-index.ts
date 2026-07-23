@@ -56,6 +56,20 @@ const assertIndexSize = (serialized: string) => {
 export const computeAssetResourceQueryHash = async (query: string) =>
   await sha256(query);
 
+type PreparedAssetResourceEntries = {
+  assetRevision: string;
+  documents: AssetResourceIndexV1["documents"];
+};
+
+export type AssetResourceIndexBuilder = {
+  projectId: string;
+  assetRevision: string;
+  build: (input: {
+    resourceId: string;
+    query: string;
+  }) => Promise<AssetResourceIndexV1>;
+};
+
 export const createAssetResourceIndex = async ({
   query,
   ...input
@@ -80,20 +94,15 @@ export const createAssetResourceIndex = async ({
   return index;
 };
 
-export const buildAssetResourceIndex = async ({
+const prepareAssetResourceEntries = async ({
   projectId,
-  resourceId,
-  query,
   entries,
   assetRevision,
 }: {
   projectId: string;
-  resourceId: string;
-  query: string;
   entries: readonly CanonicalAssetFileEntry[];
   assetRevision?: string;
-}) => {
-  const validatedQuery = validateAssetResourceQuery(query);
+}): Promise<PreparedAssetResourceEntries> => {
   const preparedAssetRevision = await computeCanonicalAssetRevision(entries);
   if (assetRevision !== undefined && assetRevision !== preparedAssetRevision) {
     throw new Error(
@@ -101,6 +110,7 @@ export const buildAssetResourceIndex = async ({
     );
   }
   const assetIds = new Set<string>();
+  const documents: AssetResourceIndexV1["documents"] = [];
   for (const entry of entries) {
     if (entry.projectId !== projectId) {
       throw new Error("Resource index cannot combine multiple projects");
@@ -115,21 +125,89 @@ export const buildAssetResourceIndex = async ({
       throw new Error("Resource index contains duplicate canonical assets");
     }
     assetIds.add(entry.assetId);
+    documents.push(entry.document);
   }
+  return { assetRevision: preparedAssetRevision, documents };
+};
 
+const buildPreparedAssetResourceIndex = async ({
+  resourceId,
+  query,
+  prepared,
+  validatedQuery = validateAssetResourceQuery(query),
+}: {
+  resourceId: string;
+  query: string;
+  prepared: PreparedAssetResourceEntries;
+  validatedQuery?: ReturnType<typeof validateAssetResourceQuery>;
+}) => {
   const selection = await selectAssetResourceCandidates({
     tree: validatedQuery.tree,
-    documents: entries.map(({ document }) => document),
+    documents: prepared.documents,
   });
   return await createAssetResourceIndex({
     format: "webstudio-resource-index",
     version: 1,
     resourceId,
     query,
-    assetRevision: preparedAssetRevision,
+    assetRevision: prepared.assetRevision,
     queryMode: selection.queryMode,
     parameterNames: selection.parameterNames,
     documents: selection.documents,
+  });
+};
+
+/**
+ * Prepares one canonical snapshot for any number of resource queries. This
+ * keeps validation and revision hashing proportional to the asset count, not
+ * the number of Assets resources that consume the same snapshot.
+ */
+export const createAssetResourceIndexBuilder = async ({
+  projectId,
+  entries,
+  assetRevision,
+}: {
+  projectId: string;
+  entries: readonly CanonicalAssetFileEntry[];
+  assetRevision?: string;
+}): Promise<AssetResourceIndexBuilder> => {
+  const prepared = await prepareAssetResourceEntries({
+    projectId,
+    entries,
+    assetRevision,
+  });
+  return {
+    projectId,
+    assetRevision: prepared.assetRevision,
+    build: async ({ resourceId, query }) =>
+      await buildPreparedAssetResourceIndex({ resourceId, query, prepared }),
+  };
+};
+
+export const buildAssetResourceIndex = async ({
+  projectId,
+  resourceId,
+  query,
+  entries,
+  assetRevision,
+}: {
+  projectId: string;
+  resourceId: string;
+  query: string;
+  entries: readonly CanonicalAssetFileEntry[];
+  assetRevision?: string;
+}) => {
+  const validatedQuery = validateAssetResourceQuery(query);
+  const prepared = await prepareAssetResourceEntries({
+    projectId,
+    entries,
+    assetRevision,
+  });
+  return await buildPreparedAssetResourceIndex({
+    resourceId,
+    query,
+    prepared,
+    validatedQuery,
   });
 };
 
