@@ -8,18 +8,28 @@ const garbageCollectionConcurrency = 8;
 export const collectAssetResourceIndexGarbage = async ({
   client,
   store,
+  projectId,
+  resourceIds,
   limit = 100,
   now = new Date(),
 }: {
   client: Client;
   store: AssetResourceIndexGarbageCollectionStore;
+  projectId: string;
+  resourceIds: readonly string[];
   limit?: number;
   now?: Date;
 }) => {
   if (Number.isSafeInteger(limit) === false || limit <= 0 || limit > 1000) {
     throw new Error("Resource index garbage collection limit is invalid");
   }
+  const scopedResourceIds = [...new Set(resourceIds)].sort();
+  if (scopedResourceIds.length === 0) {
+    return { claimed: 0, deleted: 0, missing: 0 };
+  }
   const candidates = await client.rpc("claim_asset_resource_index_garbage", {
+    p_project_id: projectId,
+    p_resource_ids: scopedResourceIds,
     p_before: now.toISOString(),
     p_limit: limit,
   });
@@ -102,14 +112,24 @@ export const collectAssetResourceIndexGarbage = async ({
 export const collectAssetResourceIndexGarbageBestEffort = async ({
   client,
   store,
+  projectId,
+  resourceIds,
   limit = 100,
 }: {
   client: Client;
   store: AssetResourceIndexGarbageCollectionStore;
+  projectId: string;
+  resourceIds: readonly string[];
   limit?: number;
 }) => {
   try {
-    await collectAssetResourceIndexGarbage({ client, store, limit });
+    await collectAssetResourceIndexGarbage({
+      client,
+      store,
+      projectId,
+      resourceIds,
+      limit,
+    });
   } catch (error) {
     console.error("Asset resource index cleanup failed", error);
   }

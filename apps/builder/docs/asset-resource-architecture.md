@@ -286,9 +286,13 @@ claims are 15-minute leases. A later
 cleanup worker rotates and resumes an expired claim, so a crash before or after
 object deletion cannot permanently strand the revision row.
 
-Each inline cleanup invocation processes at most one bounded batch. Production
-must also invoke the same collector from scheduled background work so cleanup
-does not depend on later Builder or publication traffic.
+Each index mutation and publication checks one bounded cleanup batch for only
+the affected project and resource IDs. Object deletion failures do not fail the
+user operation and are retried by the next relevant change. No fleet-wide or
+scheduled collector is required. A project that receives no later traffic may
+retain an obsolete R2 object; this is an accepted storage leak rather than a
+correctness failure. Hard project deletion cascades its database state without
+waiting for object storage for the same reason.
 
 ## Schemaless frontmatter and publication
 

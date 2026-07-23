@@ -88,7 +88,12 @@ describe("asset resource query lifecycle", () => {
     expect(loadCanonicalAssetFileSnapshot).toHaveBeenCalledOnce();
     expect(synchronizeCanonicalAssets).toHaveBeenCalledOnce();
     expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(2);
-    expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledOnce();
+    expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project-1",
+        resourceIds: ["changed", "created"],
+      })
+    );
   });
 
   test("deletes index ownership when a query is deleted or changed away", async () => {
@@ -141,6 +146,11 @@ describe("asset resource query lifecycle", () => {
     ).rejects.toThrow("Failed to synchronize 1 asset resource index queries");
 
     expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledTimes(2);
-    expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledOnce();
+    expect(collectAssetResourceIndexGarbageBestEffort).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project-1",
+        resourceIds: ["first", "second"],
+      })
+    );
   });
 });

@@ -261,9 +261,8 @@ ALTER TABLE "AssetResourceIndexState"
   )
   ON DELETE NO ACTION ON UPDATE CASCADE;
 
--- Derived index objects must enter garbage collection before project rows can
--- disappear. Normal project deletion is soft; the guard prevents a later hard
--- delete from losing the only durable object keys.
+-- Soft deletion makes every project-owned revision eligible for the same
+-- resource-scoped, best-effort cleanup used after normal index changes.
 CREATE FUNCTION retire_asset_resource_indexes_on_project_delete()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -290,28 +289,6 @@ CREATE TRIGGER "Project_retire_asset_resource_indexes"
 AFTER UPDATE OF "isDeleted" ON "Project"
 FOR EACH ROW
 EXECUTE FUNCTION retire_asset_resource_indexes_on_project_delete();
-
-CREATE FUNCTION protect_asset_resource_objects_before_project_delete()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM public."AssetResourceIndexRevision"
-    WHERE "projectId" = OLD.id
-  ) THEN
-    RAISE EXCEPTION
-      'Project asset resource indexes must be collected before hard deletion'
-      USING ERRCODE = '23503';
-  END IF;
-  RETURN OLD;
-END;
-$$;
-
-CREATE TRIGGER "Project_protect_asset_resource_objects"
-BEFORE DELETE ON "Project"
-FOR EACH ROW
-EXECUTE FUNCTION protect_asset_resource_objects_before_project_delete();
 
 
 -- Resource index build and activation lifecycle
@@ -964,6 +941,8 @@ $$;
 -- Revision garbage collection
 
 CREATE FUNCTION claim_asset_resource_index_garbage(
+  p_project_id TEXT,
+  p_resource_ids TEXT[],
   p_before TIMESTAMPTZ,
   p_limit INTEGER
 )
@@ -980,11 +959,23 @@ BEGIN
   IF p_limit <= 0 OR p_limit > 1000 THEN
     RAISE EXCEPTION 'Resource index garbage collection limit is invalid';
   END IF;
+  IF p_project_id IS NULL
+    OR BTRIM(p_project_id) = ''
+    OR COALESCE(array_length(p_resource_ids, 1), 0) = 0
+    OR EXISTS (
+      SELECT 1 FROM unnest(p_resource_ids) AS resource_id
+      WHERE resource_id IS NULL OR BTRIM(resource_id) = ''
+    )
+  THEN
+    RAISE EXCEPTION 'Resource index garbage collection scope is invalid';
+  END IF;
   RETURN QUERY
   WITH candidates AS (
     SELECT candidate.ctid
     FROM public."AssetResourceIndexRevision" AS candidate
-    WHERE candidate."unreferencedAt" <= p_before
+    WHERE candidate."projectId" = p_project_id
+      AND candidate."resourceId" = ANY(p_resource_ids)
+      AND candidate."unreferencedAt" <= p_before
       AND (
         candidate."gcClaimId" IS NULL
         -- Object deletion is idempotent, so an interrupted worker's claim can

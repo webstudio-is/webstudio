@@ -85,6 +85,8 @@ export const synchronizeAssetResourceIndexQueries = async ({
       await collectGarbage({
         client,
         store: { delete: assetClient.resourceIndexStore.delete },
+        projectId,
+        resourceIds: deletedResourceIds,
       });
     }
     if (failures.length > 0) {
@@ -126,6 +128,13 @@ export const synchronizeAssetResourceIndexQueries = async ({
     await collectGarbage({
       client,
       store: { delete: assetClient.resourceIndexStore.delete },
+      projectId,
+      resourceIds: [
+        ...new Set([
+          ...deletedResourceIds,
+          ...changed.map(({ resourceId }) => resourceId),
+        ]),
+      ],
     });
   }
   if (failures.length > 0) {

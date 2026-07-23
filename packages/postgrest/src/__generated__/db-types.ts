@@ -1314,7 +1314,12 @@ export type Database = {
         Returns: boolean;
       };
       claim_asset_resource_index_garbage: {
-        Args: { p_before: string; p_limit: number };
+        Args: {
+          p_before: string;
+          p_limit: number;
+          p_project_id: string;
+          p_resource_ids: string[];
+        };
         Returns: {
           gcClaimId: string;
           objectKey: string;
