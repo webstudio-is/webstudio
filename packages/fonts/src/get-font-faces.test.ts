@@ -63,6 +63,55 @@ describe("getFontFaces()", () => {
 `);
   });
 
+  test("deduplicates sources and chooses a deterministic winner per format", () => {
+    const assets: Array<PartialFontAsset> = [
+      {
+        format: "ttf",
+        meta: { family: "Roboto", style: "normal", weight: 400 },
+        name: "roboto.ttf",
+      },
+      {
+        format: "woff",
+        meta: { family: "Roboto", style: "normal", weight: 400 },
+        name: "a-roboto.woff",
+      },
+      {
+        format: "woff",
+        meta: { family: "Roboto", style: "normal", weight: 400 },
+        name: "z-roboto.woff",
+      },
+      {
+        format: "woff",
+        meta: { family: "Roboto", style: "normal", weight: 400 },
+        name: "a-roboto.woff",
+      },
+    ];
+
+    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" })).toEqual([
+      {
+        fontDisplay: "swap",
+        fontFamily: "Roboto",
+        fontStyle: "normal",
+        fontWeight: 400,
+        src: 'url("/fonts/a-roboto.woff") format("woff"), url("/fonts/roboto.ttf") format("truetype")',
+      },
+    ]);
+  });
+
+  test("uses the file extension when an old asset has a stale format", () => {
+    const assets: Array<PartialFontAsset> = [
+      {
+        format: "woff2",
+        meta: { family: "Rajdhani", style: "normal", weight: 600 },
+        name: "Rajdhani-SemiBold.ttf",
+      },
+    ];
+
+    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" })[0]?.src).toBe(
+      'url("/fonts/Rajdhani-SemiBold.ttf") format("truetype")'
+    );
+  });
+
   test("different style", () => {
     const assets: Array<PartialFontAsset> = [
       {

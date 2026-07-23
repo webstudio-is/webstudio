@@ -1,4 +1,6 @@
 import type { Server } from "node:http";
+import { fontFormat, fontMeta } from "@webstudio-is/fonts";
+import type { Asset } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import React from "react";
 import type { BuilderState } from "@webstudio-is/project-build/state";
@@ -10,6 +12,7 @@ import type { EvaluationToolCall } from "./validate";
 import {
   createRuntimeFixtureBuildSnapshot,
   publicApiCommandByOperationId,
+  readRuntimeFixtureRequestBody,
   runtimeFixturePermissions,
   startRuntimeFixtureApi,
 } from "../../scripts/runtime-fixture-api";
@@ -40,6 +43,7 @@ const createPersistedPages = (project: EvaluationProject) => ({
 });
 
 const stateToProject = (state: BuilderState): EvaluationProject => ({
+  assets: Array.from(state.assets?.values() ?? []),
   pages: Array.from(state.pages?.pages.values() ?? []).map((page) => ({
     id: page.id,
     name: page.name,
@@ -110,7 +114,7 @@ export const startHighImpactFixtureApi = async (
     styleSources: fixture.project.styleSources,
     styleSourceSelections: fixture.project.styleSourceSelections,
     styles: fixture.project.styles,
-    assets: [],
+    assets: fixture.project.assets,
     projectSettings: { meta: {}, compiler: {} },
   };
   let state = createBuilderStateFromBuildData(build as never);
@@ -119,8 +123,46 @@ export const startHighImpactFixtureApi = async (
   const calls: EvaluationToolCall[] = [];
   let origin = "";
   const fixtureApi = await startRuntimeFixtureApi(
-    async ({ operationPath, readInput }) => {
+    async ({ request, response, pathname, operationPath, readInput }) => {
       let data: unknown;
+      if (request.method === "POST" && pathname.startsWith("/rest/assets/")) {
+        const url = new URL(request.url ?? "", origin);
+        const name = decodeURIComponent(pathname.slice("/rest/assets/".length));
+        const body = await readRuntimeFixtureRequestBody(request);
+        if (
+          url.searchParams.get("projectId") !== projectId ||
+          url.searchParams.get("type") !== "font" ||
+          body.byteLength === 0
+        ) {
+          throw new Error("Invalid font asset upload request.");
+        }
+        const format = fontFormat.parse(url.searchParams.get("format"));
+        const meta = fontMeta.parse(
+          JSON.parse(String(request.headers["x-webstudio-asset-meta"] ?? "{}"))
+        );
+        const description = request.headers["x-webstudio-asset-description"];
+        const asset: Asset = {
+          id: `evaluation-asset-${generatedId++}`,
+          projectId,
+          name,
+          filename: name,
+          description: typeof description === "string" ? description : null,
+          size: body.byteLength,
+          type: "font",
+          format,
+          meta,
+          createdAt: "2026-01-01T00:00:00.000Z",
+        };
+        calls.push({ name: "upload-asset", arguments: { name, format, meta } });
+        state = {
+          ...state,
+          assets: new Map(state.assets).set(asset.id, asset),
+        };
+        version += 1;
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(JSON.stringify({ uploadedAssets: [asset] }));
+        return;
+      }
       if (operationPath === "build.loadProjectBundleByProjectId") {
         data = createLocalProjectBundleFromSessionSnapshot(
           {

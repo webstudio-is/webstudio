@@ -1,4 +1,17 @@
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
+
+export type FrameworkOptions = { preserveTemplates?: boolean };
+export const routeTemplatesDirectory = join("app", "route-templates");
+
+export const cleanupFrameworkTemplates = async ({
+  preserveTemplates = false,
+}: FrameworkOptions = {}) => {
+  if (preserveTemplates === false) {
+    await rm(routeTemplatesDirectory, { recursive: true, force: true });
+  }
+};
 
 type FrameworkTemplateEntry = {
   file: string;

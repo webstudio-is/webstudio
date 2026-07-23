@@ -17,6 +17,13 @@ test("documents generated app setup for visual verification", () => {
     "generated project files are current"
   );
   expect(screenshotVerificationSummary).toContain("preview.start");
+  expect(screenshotVerificationSummary).toContain(
+    "Iterative mode is the default"
+  );
+  expect(screenshotVerificationSummary).not.toContain("production-like");
+  expect(screenshotVerificationSummary).not.toContain(
+    "path screenshots restart preview"
+  );
   expect(screenshotVerificationSummary).toContain("list-breakpoints");
   expect(screenshotVerificationSummary).toContain("viewport");
 });

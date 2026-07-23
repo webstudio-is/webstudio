@@ -85,10 +85,15 @@ const createMetadataOnlyMcpAdapter = () =>
       installUrl: "",
       warnings: [],
     }),
-    startPreview: async () => ({ url: "http://localhost:5173", running: true }),
+    startPreview: async () => ({
+      url: "http://localhost:5173",
+      running: true,
+      mode: "iterative",
+    }),
     getPreviewStatus: async () => ({
       url: "http://localhost:5173",
       running: true,
+      mode: "iterative",
     }),
   });
 

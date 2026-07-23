@@ -1,11 +1,16 @@
 import { join } from "node:path";
-import { readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { isPathnamePattern } from "@webstudio-is/sdk";
 import {
   baseComponentImportSource,
   createFrameworkComponentRegistry,
 } from "@webstudio-is/sdk-components-registry/framework";
-import type { Framework } from "./framework";
+import {
+  cleanupFrameworkTemplates,
+  routeTemplatesDirectory,
+  type Framework,
+  type FrameworkOptions,
+} from "./framework";
 
 const generateVikeRoute = (pagePath: string) => {
   if (pagePath === "/") {
@@ -14,24 +19,24 @@ const generateVikeRoute = (pagePath: string) => {
   return pagePath;
 };
 
-export const createFramework = async (): Promise<Framework> => {
-  const routeTemplatesDir = join("app", "route-templates");
-
+export const createFramework = async (
+  options: FrameworkOptions = {}
+): Promise<Framework> => {
   const htmlPageTemplate = await readFile(
-    join(routeTemplatesDir, "html", "+Page.tsx"),
+    join(routeTemplatesDirectory, "html", "+Page.tsx"),
     "utf8"
   );
   const htmlHeadTemplate = await readFile(
-    join(routeTemplatesDir, "html", "+Head.tsx"),
+    join(routeTemplatesDirectory, "html", "+Head.tsx"),
     "utf8"
   );
   const htmlDataTemplate = await readFile(
-    join(routeTemplatesDir, "html", "+data.ts"),
+    join(routeTemplatesDirectory, "html", "+data.ts"),
     "utf8"
   );
 
   // cleanup route templates after reading to not bloat generated code
-  await rm(routeTemplatesDir, { recursive: true, force: true });
+  await cleanupFrameworkTemplates(options);
 
   const { components, metas } = createFrameworkComponentRegistry();
 

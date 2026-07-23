@@ -1,34 +1,39 @@
 import { join } from "node:path";
-import { readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { generateRemixRoute } from "@webstudio-is/react-sdk";
 import {
   baseComponentImportSource,
   createFrameworkComponentRegistry,
 } from "@webstudio-is/sdk-components-registry/framework";
 import * as reactRouterComponents from "@webstudio-is/sdk-components-react-router";
-import type { Framework } from "./framework";
+import {
+  cleanupFrameworkTemplates,
+  routeTemplatesDirectory,
+  type Framework,
+  type FrameworkOptions,
+} from "./framework";
 
-export const createFramework = async (): Promise<Framework> => {
-  const routeTemplatesDir = join("app", "route-templates");
-
+export const createFramework = async (
+  options: FrameworkOptions = {}
+): Promise<Framework> => {
   const htmlTemplate = await readFile(
-    join(routeTemplatesDir, "html.tsx"),
+    join(routeTemplatesDirectory, "html.tsx"),
     "utf8"
   );
   const xmlTemplate = await readFile(
-    join(routeTemplatesDir, "xml.tsx"),
+    join(routeTemplatesDirectory, "xml.tsx"),
     "utf8"
   );
   const textTemplate = await readFile(
-    join(routeTemplatesDir, "text.tsx"),
+    join(routeTemplatesDirectory, "text.tsx"),
     "utf8"
   );
   const defaultSitemapTemplate = await readFile(
-    join(routeTemplatesDir, "default-sitemap.tsx"),
+    join(routeTemplatesDirectory, "default-sitemap.tsx"),
     "utf8"
   );
   // cleanup route templates after reading to not bloat generated code
-  await rm(routeTemplatesDir, { recursive: true, force: true });
+  await cleanupFrameworkTemplates(options);
 
   const reactRouter = "@webstudio-is/sdk-components-react-router";
   const { components, metas } = createFrameworkComponentRegistry({

@@ -1283,6 +1283,9 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
+      '@webstudio-is/fonts':
+        specifier: workspace:*
+        version: link:../fonts
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../image

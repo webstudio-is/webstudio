@@ -6,6 +6,9 @@ const sourceConditions =
 
 export default defineConfig({
   plugins: [reactRouter()],
+  server: {
+    hmr: process.env.WEBSTUDIO_PREVIEW_HMR === "disabled" ? false : undefined,
+  },
   resolve: {
     conditions: [...sourceConditions, "browser", "development|production"],
   },

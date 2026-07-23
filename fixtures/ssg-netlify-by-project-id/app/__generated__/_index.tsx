@@ -14,6 +14,8 @@ import {
 
 export const projectId = "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e";
 
+export const projectVersion = 7;
+
 export const projectDomain = "fixture-client-do-not-touch-wsmel";
 
 export const lastPublished = "2026-01-04T10:46:48.415Z";

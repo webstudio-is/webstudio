@@ -104,10 +104,12 @@ test("captures a project route through a temporary production preview", async ()
     startAndWait: vi.fn(async () => ({
       url: "http://127.0.0.1:5180/",
       running: true,
+      mode: "production" as const,
     })),
     stop: vi.fn(async () => ({
       url: "http://127.0.0.1:5180/",
       running: false,
+      mode: "production" as const,
     })),
     resolveUrl: vi.fn(() => "http://127.0.0.1:5180/pricing"),
   };
@@ -165,10 +167,12 @@ test("fails a generated project route that returns an HTTP error", async () => {
     startAndWait: vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",
       running: true,
+      mode: "production" as const,
     })),
     stop: vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",
       running: false,
+      mode: "production" as const,
     })),
     resolveUrl: vi.fn(() => "http://127.0.0.1:5173/missing"),
   };
@@ -227,10 +231,12 @@ test("stops the temporary preview when project route capture fails", async () =>
     startAndWait: vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",
       running: true,
+      mode: "production" as const,
     })),
     stop: vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",
       running: false,
+      mode: "production" as const,
     })),
     resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
   };
@@ -259,6 +265,7 @@ test("stops the temporary preview when startup fails", async () => {
     stop: vi.fn(async () => ({
       url: "http://127.0.0.1:5173/",
       running: false,
+      mode: "production" as const,
     })),
     resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
   };

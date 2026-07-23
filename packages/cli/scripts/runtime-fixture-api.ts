@@ -95,20 +95,22 @@ export const createRuntimeFixtureSerializedBuild = ({
   };
 };
 
+export const readRuntimeFixtureRequestBody = async (
+  request: IncomingMessage
+) => {
+  const chunks: Buffer[] = [];
+  for await (const chunk of request) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+};
+
 const readTrpcInput = async (request: IncomingMessage) => {
   const url = new URL(request.url ?? "", "http://127.0.0.1");
   const source =
     request.method === "GET"
       ? (url.searchParams.get("input") ?? "{}")
-      : await new Promise<string>((resolve, reject) => {
-          let body = "";
-          request.setEncoding("utf8");
-          request.on("data", (chunk) => {
-            body += chunk;
-          });
-          request.on("end", () => resolve(body || "{}"));
-          request.on("error", reject);
-        });
+      : (await readRuntimeFixtureRequestBody(request)).toString("utf8") || "{}";
   const batch = JSON.parse(source) as Record<string, unknown>;
   const first = batch["0"];
   if (typeof first !== "object" || first === null || Array.isArray(first)) {

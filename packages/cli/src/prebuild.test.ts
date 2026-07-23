@@ -5,13 +5,16 @@ import {
   readdir,
   readFile,
   rm,
+  stat,
   symlink,
+  utimes,
   writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { bundleVersion } from "@webstudio-is/protocol";
+import type { Asset } from "@webstudio-is/sdk";
 import { generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();
@@ -68,6 +71,7 @@ const getFilePaths = async (dir: string): Promise<string[]> => {
 
 const createSiteData = (
   overrides: {
+    assets?: Asset[];
     pages?: Array<{
       id: string;
       name: string;
@@ -114,7 +118,7 @@ const createSiteData = (
     },
     page: pages[0],
     pages,
-    assets: [
+    assets: overrides.assets ?? [
       {
         id: "asset-image",
         projectId: "project-id",
@@ -287,6 +291,109 @@ describe("generateRedirectsModule", () => {
 });
 
 describe("prebuild", () => {
+  test("incrementally replaces only changed generated files", async () => {
+    const siteData = createSiteData({
+      pages: [
+        {
+          id: "home",
+          name: "Home",
+          title: "Home",
+          path: "",
+          rootInstanceId: "root",
+          meta: {},
+        },
+        {
+          id: "pricing",
+          name: "Pricing",
+          title: "Pricing",
+          path: "/pricing",
+          rootInstanceId: "root",
+          meta: {},
+        },
+        {
+          id: "about",
+          name: "About",
+          title: "About",
+          path: "/about",
+          rootInstanceId: "root",
+          meta: {},
+        },
+      ],
+    });
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    const unchangedFile = "app/__generated__/[about]._index.tsx";
+    const unchangedTime = new Date("2000-01-01T00:00:00.000Z");
+    await utimes(unchangedFile, unchangedTime, unchangedTime);
+    const pricingFile = "app/__generated__/[pricing]._index.tsx";
+    const pricingRoute = "app/routes/[pricing]._index.tsx";
+    const templateRoute = "app/routes/[robots.txt].tsx";
+    await writeFile("app/routes/custom.tsx", "custom", "utf8");
+
+    siteData.build.version += 1;
+    siteData.build.pages.pages = siteData.build.pages.pages.filter(
+      (page) => page.id !== "pricing"
+    );
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+
+    siteData.build.version += 1;
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+
+    expect((await stat(unchangedFile)).mtimeMs).toBe(unchangedTime.getTime());
+    await expect(
+      readFile("app/__generated__/_index.tsx", "utf8")
+    ).resolves.toContain(
+      `export const projectVersion = ${siteData.build.version};`
+    );
+    await expect(readFile(pricingFile, "utf8")).rejects.toThrow("ENOENT");
+    await expect(readFile(pricingRoute, "utf8")).rejects.toThrow("ENOENT");
+    await expect(readFile(templateRoute, "utf8")).resolves.toContain(
+      "User-agent"
+    );
+    await expect(readFile("app/routes/custom.tsx", "utf8")).resolves.toBe(
+      "custom"
+    );
+  });
+
+  test("rejects generated manifests that point outside owned output", async () => {
+    const outsideFile = "outside.ts";
+    await writeSiteData(createSiteData());
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    await writeFile(outsideFile, "preserve", "utf8");
+    await writeFile(
+      ".webstudio/generated-files.json",
+      JSON.stringify([outsideFile]),
+      "utf8"
+    );
+
+    await expect(
+      prebuild({
+        assets: false,
+        template: ["react-router"],
+        incremental: true,
+      })
+    ).rejects.toThrow("Generated files manifest is invalid.");
+    await expect(readFile(outsideFile, "utf8")).resolves.toBe("preserve");
+  });
+
   test("excludes draft pages from published output", async () => {
     await writeSiteData(
       createSiteData({
@@ -376,6 +483,38 @@ describe("prebuild", () => {
     await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.not.toContain('"path": "/draft"');
+  });
+
+  test("uses the local asset base in generated asset resources", async () => {
+    await writeSiteData(
+      createSiteData({
+        assets: [
+          {
+            id: "asset-audio",
+            projectId: "project-id",
+            name: "audio.mp3",
+            type: "file",
+            format: "mp3",
+            size: 1,
+            meta: {},
+            description: "",
+            createdAt: "2024-01-01T00:00:00.000Z",
+          },
+        ],
+      })
+    );
+
+    await prebuild({
+      assets: false,
+      template: ["defaults"],
+    });
+
+    const assetsModule = await readFile(
+      "app/__generated__/$resources.assets.ts",
+      "utf8"
+    );
+    expect(assetsModule).toContain('"url": "/assets/audio.mp3"');
+    expect(assetsModule).not.toContain("/cgi/");
   });
 
   test("scaffolds generated files and stores redirects as data", async () => {

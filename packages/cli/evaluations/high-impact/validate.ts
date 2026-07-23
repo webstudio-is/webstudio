@@ -1,11 +1,19 @@
 import { parseExpressionAt } from "acorn";
+import { getFontFaces } from "@webstudio-is/fonts";
+import type { FontAsset } from "@webstudio-is/sdk";
 import {
   authenticatedPageFixture,
   designInputFixture,
+  fontAssetsFixture,
   type EvaluationInstance,
   type EvaluationProject,
   type HighImpactFixture,
 } from "./fixtures";
+import {
+  fontAssetFixtureFiles,
+  fontAssetFixtureMeta,
+  fontAssetFixtureSource,
+} from "./font-assets-fixture";
 
 export type EvaluationToolCall = {
   name: string;
@@ -109,6 +117,21 @@ const getPageEvaluationContext = (project: EvaluationProject, path: string) => {
       page === undefined ? [] : descendants(project, page.rootInstanceId),
   };
 };
+
+const getEditablePageState = (project: EvaluationProject) => ({
+  pages: project.pages,
+  instances: project.instances.map(
+    ({ id, component, tag, label, children }) => ({
+      id,
+      component,
+      tag,
+      label,
+      children,
+    })
+  ),
+  props: project.props,
+  styles: project.styles,
+});
 
 const isValidExpression = (value: string) => {
   try {
@@ -422,6 +445,78 @@ const validateDesign = (
   );
 };
 
+const validateFontAssets = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const fontAssets = input.project.assets.filter(
+    (asset): asset is FontAsset => asset.type === "font"
+  );
+  const expectedNames = new Set<string>(
+    fontAssetFixtureFiles.map(({ name }) => name)
+  );
+  recordCheck(
+    checks,
+    failures,
+    "fontUploads",
+    fontAssets.length === expectedNames.size &&
+      fontAssets.every((asset) => expectedNames.has(asset.name)),
+    "The two requested local font files were not uploaded as distinct assets."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "fontMetadata",
+    fontAssets.length === expectedNames.size &&
+      fontAssets.every(
+        (asset) =>
+          asset.meta.family === fontAssetFixtureMeta.family &&
+          "style" in asset.meta &&
+          asset.meta.style === fontAssetFixtureMeta.style &&
+          asset.meta.weight === fontAssetFixtureMeta.weight
+      ),
+    "Uploaded font metadata did not persist as Rajdhani normal 600."
+  );
+  const updateCalls = input.toolCalls.flatMap((call, index) =>
+    call.name === "update-asset" && call.isError !== true
+      ? [{ ...call, index }]
+      : []
+  );
+  const refreshIndex = input.toolCalls.findLastIndex(
+    (call) => call.name === "refresh" && call.isError !== true
+  );
+  const verificationReads = input.toolCalls.filter(
+    (call, index) =>
+      call.name === "get-asset" && call.isError !== true && index > refreshIndex
+  );
+  recordCheck(
+    checks,
+    failures,
+    "metadataWorkflow",
+    updateCalls.length >= expectedNames.size &&
+      refreshIndex > (updateCalls.at(-1)?.index ?? Number.POSITIVE_INFINITY) &&
+      verificationReads.length >= expectedNames.size,
+    "The agent did not update both font assets, refresh, and read both persisted assets afterward."
+  );
+  const fontFaces = getFontFaces(fontAssets, { assetBaseUrl: "/assets/" });
+  recordCheck(
+    checks,
+    failures,
+    "fontFaceSources",
+    fontFaces.length === 1 && fontFaces[0]?.src === fontAssetFixtureSource,
+    "The persisted assets did not produce one deterministic font face with WOFF2 and TrueType sources."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "pageUnchanged",
+    JSON.stringify(getEditablePageState(input.project)) ===
+      JSON.stringify(getEditablePageState(input.fixture.project)),
+    "The font workflow changed unrelated page data."
+  );
+};
+
 export const evaluateHighImpactOutcome = (
   input: HighImpactEvaluationInput
 ): HighImpactEvaluationResult => {
@@ -430,6 +525,8 @@ export const evaluateHighImpactOutcome = (
   validateCommon(input, checks, failures);
   if (input.fixture.id === authenticatedPageFixture.id) {
     validateAuth(input, checks, failures);
+  } else if (input.fixture.id === fontAssetsFixture.id) {
+    validateFontAssets(input, checks, failures);
   } else {
     validateDesign(input, checks, failures);
   }

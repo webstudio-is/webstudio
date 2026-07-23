@@ -15,6 +15,7 @@ import { isRecord } from "./shared/type-utils";
 import type {
   ProjectSessionScreenshotInput,
   ProjectSessionScreenshotResult,
+  ProjectSessionPreviewInput,
 } from "./mcp";
 import {
   createConfirmationToken,
@@ -76,7 +77,7 @@ const readAllPaginatedItems = async (
 };
 
 type StartPreview = (
-  input: { source: "session"; port: number; imageDomains?: string[] },
+  input: ProjectSessionPreviewInput & { source: "session"; port: number },
   progress: { report: (message: string) => void }
 ) => Promise<{ url: string; generatedBuildMetrics?: unknown }>;
 
@@ -167,6 +168,7 @@ const getRenderedAuditScreenshotInput = ({
   path: pagePath,
   output: `.webstudio/audits/screenshots/${pageId.replaceAll(/[^a-z0-9_-]/gi, "_")}-${viewport.width}x${viewport.height}.webp`,
   source: "session",
+  mode: "production",
   viewport: { width: viewport.width, height: viewport.height },
   fullPage: true,
   includeImageMetrics: performanceEnabled,
@@ -1221,6 +1223,7 @@ export const augmentAuditWithRenderedChecks = async ({
     const previewResult = await startPreview(
       {
         source: "session",
+        mode: "production",
         port: automaticPreviewPort,
         imageDomains: renderedInput.imageDomains,
       },

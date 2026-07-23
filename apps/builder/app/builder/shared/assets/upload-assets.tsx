@@ -13,7 +13,7 @@ import {
   $uploadingFilesDataStore,
   type UploadingFileData,
 } from "~/shared/nano-states";
-import { $assetFolders, $assets } from "~/shared/sync/data-stores";
+import { $assets } from "~/shared/sync/data-stores";
 import { $project } from "~/shared/sync/data-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
@@ -55,13 +55,9 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
     return;
   }
 
-  const folderId =
-    asset.folderId !== undefined && $assetFolders.get().has(asset.folderId)
-      ? asset.folderId
-      : undefined;
   executeRuntimeMutation({
     id: "assets.add",
-    input: { asset: { ...asset, folderId } },
+    input: { asset },
   });
 
   onNextTransactionComplete(() => {
@@ -123,6 +119,22 @@ const deleteUploadingFileData = (id: UploadingFileData["assetId"]) => {
   $uploadingFilesDataStore.set(
     uploadingFilesData.filter((fileData) => fileData.assetId !== id)
   );
+};
+
+const moveExistingAsset = (asset: Asset, folderId: string | undefined) => {
+  if (asset.folderId === folderId) {
+    return;
+  }
+  executeRuntimeMutation({
+    id: "assets.update",
+    input: {
+      assetId: asset.id,
+      values: { folderId: folderId ?? null },
+    },
+  });
+  onNextTransactionComplete(() => {
+    invalidateAssets();
+  });
 };
 
 const getUniqueFilesData = (
@@ -403,6 +415,10 @@ const processUpload = async (
       const assetId = fileData.assetId;
 
       if ($assets.get().has(assetId)) {
+        const existingAsset = $assets.get().get(assetId);
+        if (existingAsset !== undefined) {
+          moveExistingAsset(existingAsset, fileData.folderId);
+        }
         toast.info("Asset already exists", {
           icon: <ToastImageInfo objectURL={fileData.objectURL} />,
         });
@@ -466,6 +482,10 @@ export const uploadAssets = async <T extends File | URL>(
     }
     uniqueFilesDataByFingerprint.delete(fingerprintId);
     URL.revokeObjectURL(fileData.objectURL);
+    const existingAsset = $assets.get().get(existingFileData.assetId);
+    if (existingAsset !== undefined) {
+      moveExistingAsset(existingAsset, fileData.folderId);
+    }
     toast.info("Asset already exists", {
       icon: <ToastImageInfo objectURL={existingFileData.objectURL} />,
     });
@@ -494,7 +514,11 @@ export const uploadAssets = async <T extends File | URL>(
       uploadTickets.set(fileData.fingerprintId, ticket);
       if (ticket.deduplicated) {
         URL.revokeObjectURL(fileData.objectURL);
-        safeSetAsset(ticket.asset, projectId);
+        safeSetAsset(
+          { ...ticket.asset, folderId: fileData.folderId },
+          projectId
+        );
+        moveExistingAsset(ticket.asset, fileData.folderId);
         toast.info("Asset already exists");
         continue;
       }

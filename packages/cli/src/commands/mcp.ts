@@ -70,7 +70,10 @@ import {
 } from "./mcp-batch";
 import { apiCompatibilityHeaders } from "./api";
 import { importProject as importProjectCommand } from "./import";
-import { createMcpPreviewHandlers } from "./mcp-preview";
+import {
+  createMcpPreviewHandlers,
+  createPreviewFreshness,
+} from "./mcp-preview";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -861,17 +864,13 @@ const createCliMcpHost = async ({
   );
   await prepareMcpProjectSession(session);
   const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
-  let isPreviewStale = true;
-  const markPreviewStale = () => {
-    isPreviewStale = true;
-  };
+  const previewFreshness = createPreviewFreshness();
   const previewHandlers = createMcpPreviewHandlers({
     preview,
     createCaptureSession: createScreenshotCaptureSession,
-    isStale: () => isPreviewStale,
-    markFresh: () => {
-      isPreviewStale = false;
-    },
+    isStale: previewFreshness.isStale,
+    captureFreshness: previewFreshness.capture,
+    markFresh: previewFreshness.markFresh,
     prepareSessionDataFile: async () => {
       await writeCliProjectSessionDataFile(
         getLoadedProjectSessionSnapshot(session),
@@ -880,23 +879,39 @@ const createCliMcpHost = async ({
       );
     },
   });
+  type ScreenshotResult = Awaited<
+    ReturnType<typeof previewHandlers.captureScreenshot>
+  >;
+  type ResizedScreenshotResult = Awaited<
+    ReturnType<typeof previewHandlers.capturePageScreenshots>
+  >[number];
   const toProjectSessionScreenshotResult = (
-    result: Awaited<ReturnType<typeof previewHandlers.captureScreenshot>>
-  ) => ({
-    output: result.output,
-    browserPath: result.browser.path,
-    browser: result.browser.browser,
-    viewport: result.viewport,
-    fullPage: result.fullPage,
-    elapsedMs: result.elapsedMs,
-    warnings: result.warnings,
-    navigation: result.navigation,
-    layout: result.layout,
-    timings: result.timings,
-  });
+    result: ScreenshotResult | ResizedScreenshotResult
+  ) => {
+    const navigation = result.navigation ?? result.layout?.navigation;
+    return {
+      output: result.output,
+      browserPath: result.browser.path,
+      browser: result.browser.browser,
+      viewport: result.viewport,
+      fullPage: result.fullPage,
+      elapsedMs: result.elapsedMs,
+      warnings: result.warnings,
+      previewMode: result.previewMode,
+      renderedProjectId: navigation?.projectId,
+      renderedProjectVersion: navigation?.projectVersion,
+      ...("lifecycleTimings" in result
+        ? { lifecycleTimings: result.lifecycleTimings }
+        : {}),
+      navigation: result.navigation,
+      layout: result.layout,
+      timings: result.timings,
+    };
+  };
   const host: CliMcpHost = {
     operations,
     createProjectSession: () => session,
+    onProjectSessionChange: previewFreshness.markStale,
     executeOperation: async ({ command, input, dryRun }) => {
       const result = await executeProjectSessionApiOperation({
         command,
@@ -906,7 +921,7 @@ const createCliMcpHost = async ({
         dryRun,
       });
       if (dryRun !== true && shouldInvalidatePreview(command)) {
-        markPreviewStale();
+        previewFreshness.markStale();
       }
       return result;
     },
@@ -930,7 +945,11 @@ const createCliMcpHost = async ({
             code: "NOT_FOUND",
           });
         }
-        return await session.restoreSnapshot(restorePoint, { dryRun });
+        const result = await session.restoreSnapshot(restorePoint, { dryRun });
+        if (dryRun !== true) {
+          previewFreshness.markStale();
+        }
+        return result;
       },
     },
     async importProject(input) {
@@ -961,7 +980,7 @@ const createCliMcpHost = async ({
         }
         throw error;
       }
-      markPreviewStale();
+      previewFreshness.markStale();
       return { imported: true as const };
     },
     async downloadAsset(input) {
