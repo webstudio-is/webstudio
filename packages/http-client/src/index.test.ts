@@ -1647,6 +1647,7 @@ test("imports project bundle through staged upload", async () => {
         projectId: "project-id",
         data: {
           largeContent: "x".repeat(3 * 1024 * 1024 + 1),
+          assetResourceIndexes: [{ marker: "derived-index-marker" }],
         } as unknown as PublishedProjectBundle,
       })
     ).resolves.toEqual({ version: 2 });
@@ -1657,6 +1658,9 @@ test("imports project bundle through staged upload", async () => {
   }
 
   expect(uploadChunks).toHaveLength(2);
+  expect(Buffer.concat(uploadChunks).toString("utf8")).not.toContain(
+    "derived-index-marker"
+  );
   expect(JSON.stringify(trpcBody)).toContain('"uploadId":"upload-id"');
   expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
 });

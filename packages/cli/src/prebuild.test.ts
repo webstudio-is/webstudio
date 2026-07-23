@@ -430,7 +430,9 @@ test("materializes immutable resource indexes as public JSON with a reference-on
     "app/__generated__/$resources.asset-query-runtime.ts",
     "utf8"
   );
-  expect(runtimeModule).toContain('from "@webstudio-is/asset-resource"');
+  expect(runtimeModule).toContain(
+    'from "@webstudio-is/asset-resource/runtime"'
+  );
   expect(runtimeModule).not.toContain('"documents"');
   expect(runtimeModule).not.toContain('"properties"');
 });
@@ -1016,7 +1018,21 @@ describe("prebuild", () => {
         path.includes("$slug")
       )
     ).toHaveLength(1);
-  });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("react-router", ["build"]);
+    const serverBundle = (
+      await Promise.all(
+        (
+          await getFilePaths("build/server")
+        )
+          .filter((path) => path.endsWith(".js"))
+          .map((path) => readFile(path, "utf8"))
+      )
+    ).join("\n");
+    expect(serverBundle).not.toContain("Published post");
+    expect(serverBundle).not.toContain("draft secret");
+    expect(serverBundle).not.toContain("post-revision");
+  }, 30_000);
 
   test("uses pass-through images in the base react-router template", async () => {
     await prebuild({ assets: false, template: ["react-router"] });
@@ -1087,7 +1103,7 @@ describe("prebuild", () => {
     );
   });
 
-  test("selects ssg templates and skips dynamic routes", async () => {
+  test("selects ssg templates", async () => {
     await writeSiteData(
       createSiteData({
         pages: [
@@ -1096,14 +1112,6 @@ describe("prebuild", () => {
             name: "Home",
             title: "Home",
             path: "",
-            rootInstanceId: "root",
-            meta: {},
-          },
-          {
-            id: "post",
-            name: "Post",
-            title: "Post",
-            path: "/blog/:slug",
             rootInstanceId: "root",
             meta: {},
           },
@@ -1122,12 +1130,6 @@ describe("prebuild", () => {
     await expect(readFile("pages/index/+data.ts", "utf8")).resolves.toContain(
       "../app/__generated__/_index.server"
     );
-    await expect(
-      readFile("pages/blog/:slug/+Page.tsx", "utf8")
-    ).rejects.toThrow("ENOENT");
-    await expect(
-      readFile("app/__generated__/[blog].$slug._index.tsx", "utf8")
-    ).resolves.toContain("export { Page }");
     await expect(readFile("pages/index/+data.ts", "utf8")).resolves.toContain(
       "createSsgAssetResourceFetch"
     );
@@ -1136,6 +1138,110 @@ describe("prebuild", () => {
       "@webstudio-is/asset-resource"
     );
   });
+
+  test("prerenders dynamic SSG paths from parameterized Assets resources", async () => {
+    const query =
+      '*[properties.slug == $slug][0]{_id, "title": properties.title}';
+    const index = await createAssetResourceIndex({
+      format: "webstudio-resource-index",
+      version: 1,
+      resourceId: "post",
+      query,
+      assetRevision: `sha256:${"a".repeat(64)}`,
+      queryMode: "parameterized",
+      parameterNames: ["slug"],
+      documents: [
+        {
+          _id: "post-1",
+          _type: "asset.file",
+          name: "post.md",
+          path: "blog/post.md",
+          key: "post",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: 1,
+          revision: "post-revision",
+          contentRef: "post.md",
+          properties: { slug: "hello-world", title: "Hello" },
+        },
+      ],
+    });
+    const siteData = {
+      ...createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "home-root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "post-root",
+            meta: {},
+          },
+        ],
+        instances: [
+          ["home-root", { id: "home-root", component: "Box", children: [] }],
+          ["post-root", { id: "post-root", component: "Box", children: [] }],
+        ],
+      }),
+      assetResourceIndexes: [
+        {
+          resourceId: index.resourceId,
+          revision: index.integrity.checksum,
+          index,
+        },
+      ],
+    };
+    siteData.build.resources = [
+      [
+        "post",
+        {
+          id: "post",
+          name: "Post",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets/query"',
+          headers: [],
+          body: createAssetQueryResourceBody({
+            query,
+            parameters: [{ name: "slug", value: "system.params.slug" }],
+            resultLimit: 1,
+          }),
+        },
+      ],
+    ] as never;
+    siteData.build.dataSources = [
+      [
+        "post-data",
+        {
+          id: "post-data",
+          type: "resource",
+          name: "post",
+          resourceId: "post",
+          scopeInstanceId: "post-root",
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await expect(
+      readFile("pages/blog/@slug/+onBeforePrerenderStart.ts", "utf8")
+    ).resolves.toContain("/blog/hello-world");
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+    await expect(
+      readFile("dist/client/blog/hello-world/index.html", "utf8")
+    ).resolves.toContain("<!DOCTYPE html>");
+  }, 30_000);
 
   test("prerenders SSG pages with asset query data", async () => {
     const query = '*[]{"title": properties.title}';

@@ -37,6 +37,12 @@ export const assetFileDocument = z.strictObject({
   contentRef: z.string().min(1),
   properties: z.record(z.string(), z.json()),
   excerpt: z.string().optional(),
+  metadataError: z
+    .strictObject({
+      code: z.string().min(1),
+      message: z.string().min(1),
+    })
+    .optional(),
 });
 
 export type AssetFileDocument = z.infer<typeof assetFileDocument>;
@@ -138,6 +144,9 @@ export const assetResourceLimits = {
   resultBytes: 1024 * 1024,
   candidateDocuments: 1000,
   indexBytes: 16 * 1024 * 1024,
+  publishedResourceCount: 32,
+  publishedIndexBytes: 32 * 1024 * 1024,
+  runtimeCachedIndexes: 4,
   frontmatterBytes: 64 * 1024,
   frontmatterDepth: 8,
   frontmatterFields: 256,

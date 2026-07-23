@@ -63,17 +63,28 @@ describe("normalizeAssetFileDocument", () => {
     });
   });
 
-  test.each(["", ".", "..", "nested/name", "nested\\name"])(
-    "rejects invalid path segment %j",
-    (name) => {
-      expect(() =>
-        normalizeAssetFileDocument({
-          asset: { ...asset, name },
-          properties: {},
-        })
-      ).toThrow("one normalized path segment");
-    }
-  );
+  test.each([
+    [".", "%2E"],
+    ["..", "%2E%2E"],
+    ["nested/name", "nested%2Fname"],
+    ["nested\\name", "nested%5Cname"],
+  ])("encodes user-defined path segment %j", (name, path) => {
+    expect(
+      normalizeAssetFileDocument({
+        asset: { ...asset, name, folderId: undefined, folderNames: undefined },
+        properties: {},
+      }).path
+    ).toBe(path);
+  });
+
+  test("rejects an empty asset name", () => {
+    expect(() =>
+      normalizeAssetFileDocument({
+        asset: { ...asset, name: "" },
+        properties: {},
+      })
+    ).toThrow();
+  });
 
   test("rejects JSON-incompatible property values", () => {
     expect(() =>

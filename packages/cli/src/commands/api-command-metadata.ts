@@ -247,6 +247,17 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
 export const highLevelCliCommands = [
   { command: "audit", operation: "audit" },
   { command: "permissions", operation: "permissions" },
+  { command: "get-assets-resource", operation: "get-assets-resource" },
+  { command: "create-assets-resource", operation: "create-assets-resource" },
+  { command: "update-assets-resource", operation: "update-assets-resource" },
+  {
+    command: "get-asset-resource-index-status",
+    operation: "get-asset-resource-index-status",
+  },
+  {
+    command: "rebuild-asset-resource-index",
+    operation: "rebuild-asset-resource-index",
+  },
   {
     command: "get-marketplace-product",
     operation: "get-marketplace-product",

@@ -1,5 +1,6 @@
 import { generateObjectExpression, parseObjectExpression } from "./expression";
 import { assetsQueryResourceUrl, assetsResourceUrl } from "./resource-loader";
+import { assetResourceLimits } from "./schema/asset-resource";
 import type { Resource } from "./schema/resources";
 
 export type AssetQueryParameterBinding = {
@@ -34,7 +35,7 @@ export const parseAssetQueryResourceBody = (body: string | undefined) => {
 export const createAssetQueryResourceBody = ({
   query,
   parameters,
-  resultLimit = 100,
+  resultLimit = assetResourceLimits.defaultResultCount,
   contentExpression = '{ "mode": "none" }',
 }: {
   query: string;

@@ -105,7 +105,7 @@ describe("resource index garbage collection", () => {
     ).resolves.toEqual({ claimed: 1, deleted: 0, missing: 1 });
   });
 
-  test("drains every available batch", async () => {
+  test("processes at most one batch", async () => {
     let claims = 0;
     server.use(
       db.post("rpc/claim_asset_resource_index_garbage", () => {
@@ -133,7 +133,7 @@ describe("resource index garbage collection", () => {
       limit: 2,
     });
 
-    expect(claims).toBe(2);
+    expect(claims).toBe(1);
     expect(remove).toHaveBeenCalledTimes(2);
   });
 });

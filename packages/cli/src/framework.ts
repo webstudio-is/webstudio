@@ -25,7 +25,10 @@ export type Framework = {
   components: Record<string, string>;
   // instance.tag: "importSource:importSpecifier"
   tags: Record<string, string>;
-  html: (params: { pagePath: string }) => FrameworkTemplateEntry[];
+  html: (params: {
+    pagePath: string;
+    prerenderPaths?: readonly string[];
+  }) => FrameworkTemplateEntry[];
   xml: (params: { pagePath: string }) => FrameworkTemplateEntry[];
   text: (params: { pagePath: string }) => FrameworkTemplateEntry[];
   defaultSitemap: () => FrameworkTemplateEntry[];

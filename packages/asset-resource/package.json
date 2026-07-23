@@ -11,7 +11,7 @@
     "benchmark:groq": "node scripts/benchmark-groq.mjs",
     "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
     "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
-    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/published-runtime.ts src/query.ts src/markdown.ts src/indexing.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -35,10 +35,34 @@
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
       "default": "./src/index.ts"
+    },
+    "./runtime": {
+      "webstudio": "./src/published-runtime.ts",
+      "types": "./lib/types/published-runtime.d.ts",
+      "import": "./lib/published-runtime.js",
+      "default": "./src/published-runtime.ts"
+    },
+    "./query": {
+      "webstudio": "./src/query.ts",
+      "types": "./lib/types/query.d.ts",
+      "import": "./lib/query.js",
+      "default": "./src/query.ts"
+    },
+    "./markdown": {
+      "webstudio": "./src/markdown.ts",
+      "types": "./lib/types/markdown.d.ts",
+      "import": "./lib/markdown.js",
+      "default": "./src/markdown.ts"
+    },
+    "./indexing": {
+      "webstudio": "./src/indexing.ts",
+      "types": "./lib/types/indexing.d.ts",
+      "import": "./lib/indexing.js",
+      "default": "./src/indexing.ts"
     }
   },
   "files": [
-    "lib/*",
+    "lib/**/*",
     "!*.test.*"
   ]
 }

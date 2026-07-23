@@ -306,6 +306,13 @@ const AssetQueryPreview = ({
     }
     let ignore = false;
     let pollTimeout: ReturnType<typeof setTimeout> | undefined;
+    let pollAttempts = 0;
+    const schedulePoll = () => {
+      pollAttempts += 1;
+      if (pollAttempts < 10) {
+        pollTimeout = setTimeout(load, 1000);
+      }
+    };
     const load = async () => {
       try {
         const response = await loadBuilderAssetIndexStatus(resourceId);
@@ -316,12 +323,13 @@ const AssetQueryPreview = ({
         const parsed = assetResourceIndexStatus.safeParse(data.status);
         const status = parsed.success ? parsed.data : undefined;
         onIndexStatusChange(status);
-        if (status?.state === "indexing") {
-          pollTimeout = setTimeout(load, 1000);
+        if (status?.state === "indexing" || status === undefined) {
+          schedulePoll();
         }
       } catch {
         if (ignore === false) {
           onIndexStatusChange(undefined);
+          schedulePoll();
         }
       }
     };
@@ -448,7 +456,9 @@ export const AssetQueryForm = ({
     {}
   );
   const [resultLimit, setResultLimit] = useState(
-    typeof parsedResultLimit === "number" ? parsedResultLimit : 100
+    typeof parsedResultLimit === "number"
+      ? parsedResultLimit
+      : assetResourceLimits.defaultResultCount
   );
   const parsedContent = assetResourceContentOptions.safeParse(
     evaluateExpressionWithinScope(parsedBody.contentExpression ?? "", {})

@@ -132,6 +132,22 @@ describe("published asset resource runtime", () => {
     );
   });
 
+  test("bounds parsed indexes retained by one isolate", async () => {
+    const { manifest, fetchAsset } = await createRuntime();
+    for (let index = 0; index < 5; index += 1) {
+      const runtimeFetch = createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: `deployment-${index}`,
+        manifest,
+        fetchAsset,
+      });
+      const response = await runtimeFetch(createQueryRequest());
+      expect(response?.status).toBe(200);
+    }
+
+    expect(__testing.getParsedIndexCacheSize()).toBe(4);
+  });
+
   test("hydrates exactly the selected complete Markdown file", async () => {
     const { runtimeFetch, fetchAsset } = await createRuntime();
     const response = await runtimeFetch(createQueryRequest({ mode: "full" }));
@@ -142,6 +158,7 @@ describe("published asset resource runtime", () => {
     });
     expect(fetchAsset).toHaveBeenCalledWith("/assets/post.md", {
       headers: expect.any(Headers),
+      signal: expect.any(AbortSignal),
     });
   });
 

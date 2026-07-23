@@ -67,6 +67,7 @@
   "dependencies": {
     "@emotion/hash": "^0.9.2",
     "@modelcontextprotocol/sdk": "^1.10.0",
+    "@webstudio-is/asset-resource": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",

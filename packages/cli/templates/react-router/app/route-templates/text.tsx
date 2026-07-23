@@ -91,7 +91,8 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   const resources = await loadResources(
     generatedFetch,
     getResources({ system }).data,
-    url
+    url,
+    { signal: arg.request.signal }
   );
   const pageMeta = getPageMeta({ system, resources });
 

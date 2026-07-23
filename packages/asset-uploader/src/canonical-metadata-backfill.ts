@@ -2,6 +2,7 @@ import {
   createCanonicalAssetFileEntry,
   extractMarkdownBodyAndExcerpt,
   extractMarkdownFrontmatter,
+  MarkdownMetadataError,
   normalizeAssetFileDocument,
 } from "@webstudio-is/asset-resource";
 import {
@@ -113,12 +114,14 @@ const createCanonicalDocument = ({
   revision,
   properties,
   excerpt,
+  metadataError,
 }: {
   asset: UploadedAssetRow;
   hierarchy: AssetFolderHierarchy;
   revision: string;
   properties: Record<string, unknown>;
   excerpt?: string;
+  metadataError?: AssetFileDocument["metadataError"];
 }) => {
   const name = formatAssetName({
     name: asset.file.name,
@@ -140,6 +143,7 @@ const createCanonicalDocument = ({
     },
     properties,
     ...(excerpt === undefined || excerpt.length === 0 ? {} : { excerpt }),
+    ...(metadataError === undefined ? {} : { metadataError }),
   });
 };
 
@@ -171,6 +175,7 @@ const indexCanonicalAsset = async ({
 }) => {
   let properties: Record<string, unknown> = {};
   let excerpt: string | undefined;
+  let metadataError: AssetFileDocument["metadataError"];
   if (markdownExtension.test(asset.file.name)) {
     const prefixLength = Math.min(
       asset.file.size,
@@ -182,12 +187,22 @@ const indexCanonicalAsset = async ({
         : await assetClient
             .readFile(asset.file.name, { offset: 0, length: prefixLength })
             .then((stored) => readPrefix(stored.data, prefixLength));
-    const markdown = await Promise.all([
-      extractMarkdownFrontmatter(bytes),
-      extractMarkdownBodyAndExcerpt(bytes),
-    ]);
-    properties = markdown[0].properties;
-    excerpt = markdown[1].excerpt;
+    try {
+      properties = (await extractMarkdownFrontmatter(bytes)).properties;
+    } catch (error) {
+      if (error instanceof MarkdownMetadataError === false) {
+        throw error;
+      }
+      metadataError = { code: error.code, message: error.message };
+    }
+    try {
+      excerpt = (await extractMarkdownBodyAndExcerpt(bytes)).excerpt;
+    } catch (error) {
+      if (error instanceof MarkdownMetadataError === false) {
+        throw error;
+      }
+      metadataError ??= { code: error.code, message: error.message };
+    }
   }
   const revision = createAssetContentRevision({
     storageName: asset.file.name,
@@ -200,6 +215,7 @@ const indexCanonicalAsset = async ({
     revision,
     properties,
     excerpt,
+    metadataError,
   });
   await replaceCanonicalAssetFileEntry({
     client,
@@ -311,6 +327,7 @@ export const synchronizeCanonicalAssets = async ({
       revision,
       properties: current.document.properties,
       excerpt: current.document.excerpt,
+      metadataError: current.document.metadataError,
     });
     if (
       assetEntries.length === 1 &&

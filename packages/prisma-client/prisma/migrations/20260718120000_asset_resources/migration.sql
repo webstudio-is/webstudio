@@ -15,21 +15,19 @@ CREATE TABLE "AssetFileMetadata" (
   CONSTRAINT "AssetFileMetadata_pkey"
     PRIMARY KEY ("projectId", "assetId", "revision"),
   CONSTRAINT "AssetFileMetadata_document_identity_check"
-    CHECK (
+    CHECK ((
       jsonb_typeof("document") = 'object'
+      AND jsonb_typeof("document"->'_id') = 'string'
       AND "document"->>'_id' = "assetId"
+      AND jsonb_typeof("document"->'revision') = 'string'
       AND "document"->>'revision' = "revision"
-    ),
+    ) IS TRUE),
   CONSTRAINT "AssetFileMetadata_field_contributions_check"
     CHECK (jsonb_typeof("fieldContributions") = 'array'),
   CONSTRAINT "AssetFileMetadata_assetId_projectId_fkey"
     FOREIGN KEY ("assetId", "projectId") REFERENCES "Asset"("id", "projectId")
     ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-CREATE INDEX "AssetFileMetadata_projectId_assetId_idx"
-  ON "AssetFileMetadata"("projectId", "assetId");
-
 
 -- Canonical metadata lifecycle
 
@@ -244,6 +242,15 @@ CREATE INDEX "AssetResourceIndexRevision_lookup_idx"
     "assetRevision"
   );
 
+CREATE INDEX "AssetResourceIndexRevision_garbage_idx"
+  ON "AssetResourceIndexRevision"(
+    "unreferencedAt",
+    "projectId",
+    "resourceId",
+    "revision"
+  )
+  WHERE "unreferencedAt" IS NOT NULL;
+
 ALTER TABLE "AssetResourceIndexState"
   ADD CONSTRAINT "AssetResourceIndexState_activeRevision_fkey"
   FOREIGN KEY ("projectId", "resourceId", "activeRevision")
@@ -253,6 +260,58 @@ ALTER TABLE "AssetResourceIndexState"
     "revision"
   )
   ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- Derived index objects must enter garbage collection before project rows can
+-- disappear. Normal project deletion is soft; the guard prevents a later hard
+-- delete from losing the only durable object keys.
+CREATE FUNCTION retire_asset_resource_indexes_on_project_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF OLD."isDeleted" IS DISTINCT FROM TRUE AND NEW."isDeleted" = TRUE THEN
+    UPDATE public."AssetResourceIndexState"
+    SET "activeRevision" = NULL,
+      "buildStatus" = 'STALE',
+      "buildError" = NULL,
+      "deletedAt" = COALESCE("deletedAt", CURRENT_TIMESTAMP),
+      "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "projectId" = NEW.id;
+
+    UPDATE public."AssetResourceIndexRevision"
+    SET "unreferencedAt" = COALESCE("unreferencedAt", CURRENT_TIMESTAMP)
+    WHERE "projectId" = NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER "Project_retire_asset_resource_indexes"
+AFTER UPDATE OF "isDeleted" ON "Project"
+FOR EACH ROW
+EXECUTE FUNCTION retire_asset_resource_indexes_on_project_delete();
+
+CREATE FUNCTION protect_asset_resource_objects_before_project_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public."AssetResourceIndexRevision"
+    WHERE "projectId" = OLD.id
+  ) THEN
+    RAISE EXCEPTION
+      'Project asset resource indexes must be collected before hard deletion'
+      USING ERRCODE = '23503';
+  END IF;
+  RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER "Project_protect_asset_resource_objects"
+BEFORE DELETE ON "Project"
+FOR EACH ROW
+EXECUTE FUNCTION protect_asset_resource_objects_before_project_delete();
 
 
 -- Resource index build and activation lifecycle
@@ -975,7 +1034,16 @@ CREATE FUNCTION finalize_asset_resource_index_garbage(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  removed BOOLEAN;
 BEGIN
+  PERFORM pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(
+      pg_catalog.jsonb_build_array(p_project_id, p_resource_id)::TEXT,
+      0
+    )
+  );
+
   DELETE FROM public."AssetResourceIndexRevision" AS candidate
   WHERE candidate."projectId" = p_project_id
     AND candidate."resourceId" = p_resource_id
@@ -997,7 +1065,22 @@ BEGIN
         AND state."resourceId" = candidate."resourceId"
         AND state."activeRevision" = candidate.revision
     );
-  RETURN FOUND;
+  removed := FOUND;
+
+  IF removed THEN
+    DELETE FROM public."AssetResourceIndexState" AS state
+    WHERE state."projectId" = p_project_id
+      AND state."resourceId" = p_resource_id
+      AND state."deletedAt" IS NOT NULL
+      AND state."activeRevision" IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM public."AssetResourceIndexRevision" AS revision
+        WHERE revision."projectId" = state."projectId"
+          AND revision."resourceId" = state."resourceId"
+      );
+  END IF;
+
+  RETURN removed;
 END;
 $$;
 

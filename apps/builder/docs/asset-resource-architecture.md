@@ -286,6 +286,10 @@ claims are 15-minute leases. A later
 cleanup worker rotates and resumes an expired claim, so a crash before or after
 object deletion cannot permanently strand the revision row.
 
+Each inline cleanup invocation processes at most one bounded batch. Production
+must also invoke the same collector from scheduled background work so cleanup
+does not depend on later Builder or publication traffic.
+
 ## Schemaless frontmatter and publication
 
 Frontmatter fields have no built-in publication meaning. Names such as `draft`,
@@ -313,6 +317,9 @@ single source for Builder, indexer, generated runtime, and test limits. V1 uses:
 | Serialized result             | 1 MiB                      |
 | Candidate documents           | 1,000                      |
 | Serialized index              | 16 MiB                     |
+| Published query resources     | 32                         |
+| Published indexes combined    | 32 MiB                     |
+| Parsed indexes per isolate    | 4, least-recently used     |
 | Frontmatter per file          | 64 KiB                     |
 | Frontmatter structure         | Depth 8, 256 fields        |
 | One frontmatter string        | 16 KiB UTF-8               |
@@ -648,6 +655,16 @@ server-only adapter reads immutable indexes and ranged Markdown bytes from the
 generated `public` directory, so prerendering requires neither a live HTTP
 endpoint nor bundling content into JavaScript. Range hydration uses positioned
 file reads rather than loading the complete source asset before slicing it.
+Dynamic SSG pages are enumerated when every required `:parameter` is bound
+directly from `system.params.<name>` and its GROQ parameter is compared directly
+with one canonical document field, for example
+`properties.slug == $slug`. Prebuild fails explicitly when a dynamic route has
+no safely enumerable Assets resource instead of silently omitting its pages.
+
+Redeploying a historical build preserves that build's stored query and
+application structure but evaluates it against the project's latest assets.
+This matches the existing non-versioned asset contract; it is not an exact
+historical content rollback.
 
 Public index construction applies only the configured GROQ candidate selection.
 Prebuild materializes Markdown through the same static asset pipeline as other

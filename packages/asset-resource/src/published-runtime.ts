@@ -1,4 +1,5 @@
 import {
+  assetResourceLimits,
   assetResourceQueryFailure,
   assetResourceQueryRequest,
   type AssetResourceQueryFailure,
@@ -9,9 +10,9 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   AssetResourceQueryExecutionError,
-  computeAssetResourceQueryHash,
   executeAndHydrateAssetResourceQuery,
-} from "./index";
+} from "./query-execution";
+import { computeAssetResourceQueryHash } from "./resource-index";
 import { AssetResourceHydrationError } from "./hydration";
 import { verifyAssetResourceIndex } from "./resource-index";
 import { sha256Hex } from "./sha256";
@@ -58,7 +59,11 @@ const loadIndex = ({
 }) => {
   const cacheKey = getParsedIndexCacheKey({ deploymentId, entry });
   let pending = parsedIndexCache.get(cacheKey);
-  if (pending === undefined) {
+  if (pending !== undefined) {
+    // Map insertion order doubles as the least-recently-used order.
+    parsedIndexCache.delete(cacheKey);
+    parsedIndexCache.set(cacheKey, pending);
+  } else {
     pending = (async () => {
       const response = await fetchAsset(entry.indexPath);
       if (response.ok === false) {
@@ -77,6 +82,13 @@ const loadIndex = ({
     })();
     parsedIndexCache.set(cacheKey, pending);
     pending.catch(() => parsedIndexCache.delete(cacheKey));
+    while (parsedIndexCache.size > assetResourceLimits.runtimeCachedIndexes) {
+      const oldestKey = parsedIndexCache.keys().next().value;
+      if (oldestKey === undefined) {
+        break;
+      }
+      parsedIndexCache.delete(oldestKey);
+    }
   }
   return pending;
 };
@@ -235,7 +247,21 @@ export const createPublishedAssetResourceFetch = ({
     }
 
     try {
+      if (request.signal.aborted) {
+        return failure({
+          code: "REQUEST_CANCELLED",
+          message: "Published asset resource query was cancelled",
+          status: 499,
+        });
+      }
       const index = await loadIndex({ deploymentId, entry, fetchAsset });
+      if (request.signal.aborted) {
+        return failure({
+          code: "REQUEST_CANCELLED",
+          message: "Published asset resource query was cancelled",
+          status: 499,
+        });
+      }
       const result = await executeAndHydrateAssetResourceQuery({
         request: parsedRequest,
         documents: index.documents,
@@ -252,7 +278,7 @@ export const createPublishedAssetResourceFetch = ({
           }
           const assetResponse = await fetchAsset(
             `/assets/${encodeURIComponent(contentRef)}`,
-            { headers }
+            { headers, signal: request.signal }
           );
           if (assetResponse.ok === false || assetResponse.body === null) {
             throw new Error("Selected published asset content was not found");
@@ -266,7 +292,7 @@ export const createPublishedAssetResourceFetch = ({
         },
       });
       const resultResponse = jsonResponse(result);
-      if (cacheKey !== undefined) {
+      if (cacheKey !== undefined && request.signal.aborted === false) {
         resultResponse.headers.set(
           "cache-control",
           request.headers.get("cache-control") as string
@@ -277,6 +303,13 @@ export const createPublishedAssetResourceFetch = ({
       }
       return resultResponse;
     } catch (error) {
+      if (request.signal.aborted) {
+        return failure({
+          code: "REQUEST_CANCELLED",
+          message: "Published asset resource query was cancelled",
+          status: 499,
+        });
+      }
       if (
         error instanceof AssetResourceQueryExecutionError ||
         error instanceof AssetResourceHydrationError
@@ -353,4 +386,5 @@ export const createGeneratedAssetResourceFetch = async ({
 
 export const __testing = {
   clearParsedIndexCache: () => parsedIndexCache.clear(),
+  getParsedIndexCacheSize: () => parsedIndexCache.size,
 };

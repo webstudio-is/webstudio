@@ -342,7 +342,7 @@ describe("canonical asset metadata synchronization", () => {
     ).resolves.toEqual({ status: "deleted" });
   });
 
-  test("keeps existing canonical metadata when changed Markdown has invalid YAML", async () => {
+  test("persists standard metadata and a parse error for invalid YAML", async () => {
     const source = "---\ntitle: [broken\n---\nBody";
     const bytes = encoder.encode(source);
     const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
@@ -369,7 +369,16 @@ describe("canonical asset metadata synchronization", () => {
           },
         ])
       ),
-      db.get("AssetFolder", () => json([]))
+      db.get("AssetFolder", () => json([])),
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        const input = (await request.json()) as ReplaceMetadataRpcArgs;
+        expect(input.p_document).toMatchObject({
+          _id: "asset-1",
+          properties: {},
+          metadataError: { code: "FRONTMATTER_INVALID" },
+        });
+        return json(true);
+      })
     );
 
     await expect(
@@ -379,7 +388,7 @@ describe("canonical asset metadata synchronization", () => {
         client: testContext.postgrest.client,
         assetClient: { uploadFile: vi.fn(), readFile },
       })
-    ).rejects.toMatchObject({ code: "FRONTMATTER_INVALID" });
+    ).resolves.toEqual(expect.anything());
     expect(readFile).toHaveBeenCalledOnce();
   });
 

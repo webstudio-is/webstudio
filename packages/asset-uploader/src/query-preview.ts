@@ -1,6 +1,6 @@
 import {
+  buildAssetResourceIndex,
   computeAssetResourceQueryHash,
-  computeCanonicalAssetRevision,
   executeAndHydrateAssetResourceQuery,
 } from "@webstudio-is/asset-resource";
 import type { AssetResourceQueryRequest } from "@webstudio-is/sdk";
@@ -32,13 +32,18 @@ export const previewAssetResourceQuery = async ({
       "You don't have access to preview this project's asset resources",
     dependencies,
   });
-  const assetRevision = await computeCanonicalAssetRevision(entries);
+  const index = await buildAssetResourceIndex({
+    projectId,
+    resourceId: "preview",
+    query: request.query,
+    entries,
+  });
   return await executeAndHydrateAssetResourceQuery({
     request,
-    documents: entries.map(({ document }) => document),
+    documents: index.documents,
     queryHash: await computeAssetResourceQueryHash(request.query),
-    indexRevision: `metadata:${assetRevision}`,
-    assetRevision,
+    indexRevision: `metadata:${index.integrity.checksum}`,
+    assetRevision: index.assetRevision,
     read: assetClient.readFile,
   });
 };

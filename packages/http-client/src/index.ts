@@ -1811,7 +1811,11 @@ const uploadProjectBundleData = async (
 ) => {
   const { sourceOrigin } = parseBuilderUrl(params.origin);
   const endpoint = new URL(stagedUploadPath, sourceOrigin);
-  const data = JSON.stringify(params.data);
+  // Resource indexes are derived deployment artifacts. Import rebuilds them
+  // from the destination project's assets and must not transport stale blobs.
+  const { assetResourceIndexes: _assetResourceIndexes, ...portableData } =
+    params.data;
+  const data = JSON.stringify(portableData);
   if (new TextEncoder().encode(data).byteLength > maxProjectBundleSize) {
     throw new Error(
       `Project bundle is too large to import. Maximum size is ${formatMebibytes(maxProjectBundleSize)}.`

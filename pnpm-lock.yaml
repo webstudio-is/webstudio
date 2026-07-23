@@ -2047,6 +2047,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.10.0
         version: 1.10.0
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../asset-resource
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../authorization-token
