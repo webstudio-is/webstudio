@@ -64,7 +64,7 @@ builder_backend_wait_for_postgrest() {
   until {
     local status
     status="$(curl -s -o /dev/null -w "%{http_code}" "$url" || true)"
-    [ "$status" -ge 200 ] && [ "$status" -lt 500 ]
+    [ "$status" -ge 200 ] && [ "$status" -lt 300 ]
   }; do
     if [ "$(date +%s)" -ge "$timeout_at" ]; then
       echo "Timed out waiting for PostgREST" >&2
