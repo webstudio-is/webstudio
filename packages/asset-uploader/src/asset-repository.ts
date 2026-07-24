@@ -2,13 +2,13 @@ import type { Asset } from "@webstudio-is/sdk";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
 import { createUploadTicket, type CreateUploadTicketInput } from "./upload";
-import { synchronizeAssetResourceStateAfterAssetChange } from "./resource-index-maintenance";
+import { synchronizeCanonicalMetadataAfterAssetChange } from "./canonical-metadata-maintenance";
 
 type CreateId = () => Asset["id"];
 
 const defaultDependencies = {
   createUploadTicket,
-  synchronizeAssetResourceStateAfterAssetChange,
+  synchronizeCanonicalMetadataAfterAssetChange,
   reportMaintenanceError: (error: unknown) =>
     console.error("Asset repository maintenance failed", error),
 };
@@ -21,7 +21,7 @@ export interface AssetRepository {
 }
 
 /**
- * Owns logical PostgreSQL asset mutations and their derived query state while
+ * Owns logical PostgreSQL asset mutations and their derived file metadata while
  * PostgreSQL remains the project's authoritative ProjectStore backend.
  */
 export class PostgresAssetRepository implements AssetRepository {
@@ -61,7 +61,7 @@ export class PostgresAssetRepository implements AssetRepository {
     // through the same derived-document boundary as upload completion.
     if (ticket.deduplicated) {
       try {
-        await this.dependencies.synchronizeAssetResourceStateAfterAssetChange({
+        await this.dependencies.synchronizeCanonicalMetadataAfterAssetChange({
           client: this.context.postgrest.client,
           assetClient: this.assetClient,
           projectId: this.projectId,

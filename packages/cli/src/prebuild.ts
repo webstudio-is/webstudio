@@ -36,7 +36,7 @@ import {
   createScope,
   findTreeInstanceIds,
   getAllPages,
-  getAssetResourceQuery,
+  isConfiguredAssetsResource,
   getPagePath,
   getPublishablePages,
   generateResources,
@@ -52,14 +52,14 @@ import {
   toRuntimeAsset,
   assetResourceLimits,
   matchPathnameParams,
-  parseAssetQueryResourceBody,
+  assetQueryFilter,
+  parseStructuredAssetQueryResourceBody,
+  type AssetQueryFilter,
+  type StructuredAssetQueryFilterBinding,
 } from "@webstudio-is/sdk";
-import {
-  assetQueryPlanSelectsContent,
-  getAssetResourceVariableFieldPaths,
-} from "@webstudio-is/asset-resource";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
+import { matchesAssetQueryFilter } from "@webstudio-is/asset-resource";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -158,14 +158,29 @@ const getDocumentPathValue = (document: unknown, path: readonly string[]) => {
   return value;
 };
 
+const getStaticAssetQueryFilter = (
+  filter: StructuredAssetQueryFilterBinding
+): AssetQueryFilter | undefined => {
+  try {
+    const parsed = assetQueryFilter.safeParse({
+      field: filter.field,
+      operator: filter.operator,
+      value: JSON.parse(filter.value) as unknown,
+    });
+    return parsed.success ? parsed.data : undefined;
+  } catch {
+    return;
+  }
+};
+
 export const getAssetResourcePrerenderPaths = ({
   pagePath,
   resources,
-  indexes,
+  index,
 }: {
   pagePath: string;
   resources: readonly [string, Resource][];
-  indexes: PublishedProjectBundle["assetResourceIndexes"];
+  index: PublishedProjectBundle["assetIndex"];
 }) => {
   const pathParameters = [...matchPathnameParams(pagePath)];
   if (
@@ -180,40 +195,52 @@ export const getAssetResourcePrerenderPaths = ({
   const routeParameterNames = new Set(
     pathParameters.map((match) => match.groups?.name as string)
   );
-  const indexByResourceId = new Map(
-    (indexes ?? []).map((snapshot) => [snapshot.resourceId, snapshot.index])
-  );
+  if (index === undefined) {
+    return [];
+  }
   const paths = new Set<string>();
   for (const [, resource] of resources) {
-    const index = indexByResourceId.get(resource.id);
-    if (index === undefined) {
+    if (isConfiguredAssetsResource(resource) === false) {
       continue;
     }
-    const query = getAssetResourceQuery(resource);
-    if (query === undefined) {
+    const configuration = parseStructuredAssetQueryResourceBody(resource.body);
+    if (configuration === undefined) {
       continue;
     }
-    const variableFields = getAssetResourceVariableFieldPaths(query);
     const routeFields = new Map<string, string[]>();
-    for (const binding of parseAssetQueryResourceBody(resource.body)
-      .variables) {
-      const routeParameter = getBoundSystemRouteParameter(binding.value);
-      const fieldPath = variableFields.get(binding.name);
+    const staticFilters = [];
+    for (const filter of configuration.filters) {
+      const routeParameter = getBoundSystemRouteParameter(filter.value);
       if (
         routeParameter !== undefined &&
         routeParameterNames.has(routeParameter) &&
-        fieldPath !== undefined
+        filter.operator === "eq"
       ) {
-        routeFields.set(routeParameter, fieldPath);
+        routeFields.set(routeParameter, filter.field);
+        continue;
+      }
+      const staticFilter = getStaticAssetQueryFilter(filter);
+      if (staticFilter !== undefined) {
+        staticFilters.push(staticFilter);
       }
     }
     if (routeFields.size !== routeParameterNames.size) {
       continue;
     }
     for (const document of index.documents) {
+      if (
+        staticFilters.every((filter) =>
+          matchesAssetQueryFilter(document, filter)
+        ) === false
+      ) {
+        continue;
+      }
       const values = new Map<string, string>();
       for (const [name, fieldPath] of routeFields) {
-        const value = getDocumentPathValue(document, fieldPath);
+        const value = getDocumentPathValue(
+          document,
+          fieldPath[0] === "id" ? ["_id"] : fieldPath
+        );
         if (
           (typeof value === "string" && value.length > 0) ||
           (typeof value === "number" && Number.isFinite(value)) ||
@@ -295,32 +322,25 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   );
 };
 
-const getResourceIndexPublicPath = (resourceId: string, revision: string) =>
-  `/resource-indexes/${encodeURIComponent(resourceId)}.${encodeURIComponent(
-    revision
-  )}.json`;
+const assetIndexPublicPath = "/assets/db/index.json";
 
 export const getRequiredAssetResourceContentRefs = ({
-  snapshots,
+  index,
   resources,
 }: {
-  snapshots: NonNullable<PublishedProjectBundle["assetResourceIndexes"]>;
+  index: PublishedProjectBundle["assetIndex"];
   resources: PublishedProjectBundle["build"]["resources"];
 }) => {
-  const resourcesById = new Map(resources);
-  const required = new Set<string>();
-  for (const snapshot of snapshots) {
-    if (resourcesById.has(snapshot.resourceId) === false) {
-      continue;
-    }
-    if (assetQueryPlanSelectsContent(snapshot.index.plan) === false) {
-      continue;
-    }
-    for (const document of snapshot.index.documents) {
-      required.add(document.contentRef);
-    }
+  if (index === undefined) {
+    return new Set<string>();
   }
-  return required;
+  const selectsContent = resources.some(([, resource]) => {
+    const configuration = parseStructuredAssetQueryResourceBody(resource.body);
+    return configuration !== undefined && configuration.content.mode !== "none";
+  });
+  return new Set(
+    selectsContent ? index.documents.map(({ contentRef }) => contentRef) : []
+  );
 };
 
 export const generateAssetQueryRuntimeModule = ({
@@ -328,20 +348,18 @@ export const generateAssetQueryRuntimeModule = ({
   manifest,
 }: {
   deploymentId: string;
-  manifest: readonly {
-    resourceId: string;
+  manifest?: {
     revision: string;
-    queryHash: string;
     assetRevision: string;
     indexPath: string;
-  }[];
+  };
 }) => {
   const inputType = `{
     request: Request;
     context: unknown;
     fallback: typeof fetch;
   }`;
-  if (manifest.length === 0) {
+  if (manifest === undefined) {
     return `export const createGeneratedAssetResourceFetch = async ({ fallback }: ${inputType}): Promise<typeof fetch> => fallback;\n`;
   }
   return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/asset-resource/runtime";
@@ -354,40 +372,30 @@ export const createGeneratedAssetResourceFetch = ({ request, context, fallback }
 `;
 };
 
-export const materializeAssetResourceIndexes = async ({
-  snapshots,
+export const materializeAssetIndex = async ({
+  index,
   publicDirectory,
   generatedDirectory,
   deploymentId,
 }: {
-  snapshots: NonNullable<PublishedProjectBundle["assetResourceIndexes"]>;
+  index: PublishedProjectBundle["assetIndex"];
   publicDirectory: string;
   generatedDirectory: string;
   deploymentId: string;
 }) => {
-  const targetDirectory = join(publicDirectory, "resource-indexes");
-  await rm(targetDirectory, { recursive: true, force: true });
-  await createFolderIfNotExists(targetDirectory);
-  const manifest = snapshots.map(({ resourceId, revision, index }) => {
-    if (
-      resourceId !== index.resourceId ||
-      revision !== index.integrity.checksum
-    ) {
-      throw new Error("Published asset resource snapshot identity is invalid");
-    }
-    const indexPath = getResourceIndexPublicPath(resourceId, revision);
-    return {
-      resourceId,
-      revision,
-      queryHash: index.queryHash,
-      assetRevision: index.assetRevision,
-      indexPath,
-      index,
-    };
-  });
-  for (const { indexPath, index } of manifest) {
+  const manifest =
+    index === undefined
+      ? undefined
+      : {
+          revision: index.integrity.checksum,
+          assetRevision: index.assetRevision,
+          indexPath: assetIndexPublicPath,
+        };
+  if (index !== undefined) {
+    const targetDirectory = join(publicDirectory, "assets", "db");
+    await createFolderIfNotExists(targetDirectory);
     await writeFile(
-      join(publicDirectory, indexPath.slice(1)),
+      join(publicDirectory, assetIndexPublicPath.slice(1)),
       JSON.stringify(index),
       "utf8"
     );
@@ -396,18 +404,14 @@ export const materializeAssetResourceIndexes = async ({
     join(generatedDirectory, "$resources.asset-query-manifest.ts"),
     `export const assetQueryDeploymentId = ${JSON.stringify(
       deploymentId
-    )};\nexport const assetQueryManifest = ${JSON.stringify(
-      manifest.map(({ index: _index, ...entry }) => entry),
-      null,
-      2
-    )};\n`,
+    )};\nexport const assetQueryManifest = ${JSON.stringify(manifest, null, 2)};\n`,
     "utf8"
   );
   await writeFile(
     join(generatedDirectory, "$resources.asset-query-runtime.ts"),
     generateAssetQueryRuntimeModule({
       deploymentId,
-      manifest: manifest.map(({ index: _index, ...entry }) => entry),
+      manifest,
     }),
     "utf8"
   );
@@ -1102,7 +1106,7 @@ export const prebuild = async (options: {
     const prerenderPaths = getAssetResourcePrerenderPaths({
       pagePath,
       resources: pageData.build.resources,
-      indexes: siteData.assetResourceIndexes,
+      index: siteData.assetIndex,
     });
     for (const { file, template } of getTemplates({
       pagePath,
@@ -1173,8 +1177,8 @@ export const prebuild = async (options: {
     `
   );
 
-  await materializeAssetResourceIndexes({
-    snapshots: siteData.assetResourceIndexes ?? [],
+  await materializeAssetIndex({
+    index: siteData.assetIndex,
     publicDirectory: join(buildRoot, "public"),
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
@@ -1228,7 +1232,7 @@ export const prebuild = async (options: {
     const downloading = createProgress();
     downloading.start("Downloading assets");
     const requiredContentRefs = getRequiredAssetResourceContentRefs({
-      snapshots: siteData.assetResourceIndexes ?? [],
+      index: siteData.assetIndex,
       resources: siteData.build.resources,
     });
     const requiredAssets: Asset[] = [];
@@ -1242,7 +1246,7 @@ export const prebuild = async (options: {
     }
     if (requiredContentRefs.size > 0) {
       throw new Error(
-        `Published asset query indexes reference missing assets: ${[
+        `Published asset index references missing assets: ${[
           ...requiredContentRefs,
         ]
           .sort()

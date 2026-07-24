@@ -4,24 +4,28 @@ import {
   assetsResourceUpdateInput,
 } from "./asset-resources";
 
-const baseQuery = { variables: [] };
-
 describe("Assets resource mutation input", () => {
-  test("rejects invalid GraphQL on create", () => {
+  test("rejects unsupported field paths", () => {
     const result = assetsResourceCreateInput.safeParse({
       name: "Posts",
       scopeInstanceId: "root",
-      query: { ...baseQuery, graphql: "query { assets(" },
+      query: {
+        filters: [
+          { field: ["content"], operator: "contains", value: '"hello"' },
+        ],
+      },
     });
 
     expect(result.success).toBe(false);
   });
 
-  test("rejects missing variable bindings on create and update", () => {
+  test("rejects query limits on create and update", () => {
     const query = {
-      ...baseQuery,
-      graphql:
-        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }) { items { id } } }",
+      filters: Array.from({ length: 33 }, () => ({
+        field: ["extension"],
+        operator: "eq" as const,
+        value: { type: "literal" as const, value: "md" },
+      })),
     };
 
     expect(
@@ -39,16 +43,26 @@ describe("Assets resource mutation input", () => {
     ).toBe(false);
   });
 
-  test("accepts a binding for every GraphQL variable", () => {
+  test("accepts literals and runtime expressions", () => {
     expect(
       assetsResourceCreateInput.safeParse({
         name: "Post",
         scopeInstanceId: "root",
         query: {
-          ...baseQuery,
-          graphql:
-            "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }) { items { id } } }",
-          variables: [{ name: "slug", value: "system.params.slug" }],
+          filters: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: { type: "literal", value: "md" },
+            },
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "system.params.slug",
+            },
+          ],
+          limit: "1",
+          content: { mode: "markdown-body", maxBytes: 65_536 },
         },
       }).success
     ).toBe(true);

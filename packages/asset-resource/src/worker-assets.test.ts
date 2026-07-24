@@ -15,12 +15,12 @@ afterEach(async () => {
 });
 
 describe("generated Worker asset boundary", () => {
-  test("keeps Markdown bodies and resource indexes outside JavaScript", async () => {
+  test("keeps Markdown bodies and the shared asset index outside JavaScript", async () => {
     const root = await mkdtemp(join(tmpdir(), "webstudio-asset-resource-"));
     temporaryDirectories.push(root);
 
     const publicDirectory = join(root, "public");
-    const indexDirectory = join(publicDirectory, "resource-indexes");
+    const indexDirectory = join(publicDirectory, "assets", "db");
     const assetDirectory = join(publicDirectory, "assets");
     await Promise.all([
       mkdir(indexDirectory, { recursive: true }),
@@ -29,13 +29,13 @@ describe("generated Worker asset boundary", () => {
 
     const indexMarker = "INDEX_BYTES_MUST_NOT_ENTER_WORKER_7f15c";
     const markdownMarker = "MARKDOWN_BYTES_MUST_NOT_ENTER_WORKER_4a20d";
-    const indexPath = join(indexDirectory, "blog.index-revision-7.json");
+    const indexPath = join(indexDirectory, "index.json");
     const markdownPath = join(assetDirectory, "hello-world.md");
     await Promise.all([
       writeFile(
         indexPath,
         JSON.stringify({
-          format: "webstudio-resource-index",
+          format: "webstudio-asset-index",
           version: 1,
           marker: indexMarker,
         })
@@ -46,7 +46,7 @@ describe("generated Worker asset boundary", () => {
     const result = await build({
       stdin: {
         contents: `
-          const indexUrl = "/resource-indexes/blog.index-revision-7.json";
+          const indexUrl = "/assets/db/index.json";
           const contentUrl = "/assets/hello-world.md";
           export default {
             async fetch(request, env) {
@@ -70,9 +70,7 @@ describe("generated Worker asset boundary", () => {
     });
     const workerBundle = result.outputFiles[0].text;
 
-    expect(workerBundle).toContain(
-      "/resource-indexes/blog.index-revision-7.json"
-    );
+    expect(workerBundle).toContain("/assets/db/index.json");
     expect(workerBundle).toContain("/assets/hello-world.md");
     expect(workerBundle).not.toContain(indexMarker);
     expect(workerBundle).not.toContain(markdownMarker);

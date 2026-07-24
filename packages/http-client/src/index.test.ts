@@ -1530,25 +1530,17 @@ test("keeps browser asset content updates on the requested origin", async () => 
 
 test("normalizes synced project bundles for local storage", () => {
   const index = {
-    format: "webstudio-resource-index" as const,
+    format: "webstudio-asset-index" as const,
     version: 1 as const,
-    resourceId: "resource-1",
-    queryHash: `sha256:${"a".repeat(64)}`,
     assetRevision: `sha256:${"b".repeat(64)}`,
-    plan: {
-      format: "webstudio-asset-query-plan",
-      version: 1,
-      kind: "asset-list",
-      queryHash: `sha256:${"a".repeat(64)}`,
-      assetRevision: `sha256:${"b".repeat(64)}`,
-      rootResponseKey: "assets",
-      variables: [],
-      orderBy: [],
-      first: 100,
-      skip: 0,
-      fields: [],
-    },
     documents: [],
+    fieldCatalog: {
+      format: "webstudio-builder-asset-field-catalog" as const,
+      version: 1 as const,
+      canonicalRevision: `sha256:${"b".repeat(64)}`,
+      documentCount: 0,
+      fields: {},
+    },
     integrity: {
       algorithm: "sha256" as const,
       checksum: `sha256:${"c".repeat(64)}`,
@@ -1556,13 +1548,7 @@ test("normalizes synced project bundles for local storage", () => {
   };
   const bundle = createPublishedProjectBundleFixture({
     bundleVersion: "bundle-old",
-    assetResourceIndexes: [
-      {
-        resourceId: index.resourceId,
-        revision: index.integrity.checksum,
-        index,
-      },
-    ],
+    assetIndex: index,
     assetFolders: [
       {
         id: "folder-1",
@@ -1583,7 +1569,7 @@ test("normalizes synced project bundles for local storage", () => {
     user: bundle.user,
     projectDomain: bundle.projectDomain,
     projectTitle: bundle.projectTitle,
-    assetResourceIndexes: bundle.assetResourceIndexes,
+    assetIndex: bundle.assetIndex,
     origin: bundle.origin,
   });
 });
@@ -1658,7 +1644,7 @@ test("imports project bundle through staged upload", async () => {
         projectId: "project-id",
         data: {
           largeContent: "x".repeat(3 * 1024 * 1024 + 1),
-          assetResourceIndexes: [{ marker: "derived-index-marker" }],
+          assetIndex: { marker: "derived-index-marker" },
         } as unknown as PublishedProjectBundle,
       })
     ).resolves.toEqual({ version: 2 });

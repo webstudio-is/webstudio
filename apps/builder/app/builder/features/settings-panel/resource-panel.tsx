@@ -24,7 +24,6 @@ import {
   generateObjectExpression,
   isConfiguredAssetsResource,
   isLiteralExpression,
-  isStoredAssetQueryResource,
   parseObjectExpression,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -929,9 +928,7 @@ export const SystemResourceForm = forwardRef<
       ? resources.get(variable.resourceId)
       : undefined;
   const isStoredAssetQuery =
-    resource !== undefined &&
-    (isConfiguredAssetsResource(resource) ||
-      isStoredAssetQueryResource(resource));
+    resource !== undefined && isConfiguredAssetsResource(resource);
 
   const assetsLocalResource = {
     label: "Assets",

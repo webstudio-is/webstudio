@@ -2435,10 +2435,10 @@ describe("project audit and analysis", () => {
       name: "Posts",
       control: "system",
       method: "post",
-      url: '"/$resources/assets/query"',
+      url: '"/$resources/assets"',
       headers: [],
       searchParams: [],
-      body: '{ query: "{ assets { items { id } } }" }',
+      body: "{ query: { filters: [], limit: 20, offset: 0 } }",
     });
     const dataSources: NonNullable<BuilderState["dataSources"]> = new Map(
       state.dataSources

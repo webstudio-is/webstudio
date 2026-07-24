@@ -20,10 +20,10 @@ describe("Builder asset resource client", () => {
         request: {
           name: "asset-query",
           method: "post",
-          url: "/$resources/assets/query",
+          url: "/$resources/assets",
           searchParams: [],
           headers: [],
-          body: { query: "{ assets { items { id } } }" },
+          body: { query: { filters: [], limit: 20, offset: 0 } },
         },
         fetcher,
       })

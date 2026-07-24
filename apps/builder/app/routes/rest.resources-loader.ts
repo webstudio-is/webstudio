@@ -8,7 +8,6 @@ import { loader as currentDateLoader } from "../shared/$resources/current-date.s
 import { loader as assetsLoader } from "../shared/$resources/assets.server";
 import { loader as assetsFieldCatalogLoader } from "../shared/$resources/assets-field-catalog.server";
 import { loader as assetsQueryLoader } from "../shared/$resources/assets-query.server";
-import { loader as assetsIndexStatusLoader } from "../shared/$resources/assets-index-status.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getResourceKey } from "~/shared/resources";
@@ -43,13 +42,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (isLocalResource(input, "assets/field-catalog")) {
       return assetsFieldCatalogLoader({ request });
-    }
-
-    if (isLocalResource(input, "assets/index-status")) {
-      return assetsIndexStatusLoader({
-        request,
-        resourceRequest: createLocalResourceRequest(request, input, init),
-      });
     }
 
     return fetch(input, init);

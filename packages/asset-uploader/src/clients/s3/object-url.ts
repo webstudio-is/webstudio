@@ -3,7 +3,7 @@ import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
 type S3ObjectKeyType = "flat" | "hierarchical";
 
 /**
- * Logical resource-index keys contain meaningful `/` separators and already
+ * Logical asset-database keys contain meaningful `/` separators and already
  * escaped dynamic segments. Encoding the whole key would turn those separators
  * into `%2F`, so S3-compatible storage would receive a flat object name instead
  * of the intended hierarchy. Encode hierarchical keys one segment at a time;

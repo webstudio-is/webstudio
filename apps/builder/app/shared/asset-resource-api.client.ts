@@ -3,10 +3,7 @@ import type {
   AssetQueryRequestInput,
   ResourceRequest,
 } from "@webstudio-is/sdk";
-import {
-  assetsFieldCatalogResourceUrl,
-  assetsIndexStatusResourceUrl,
-} from "@webstudio-is/sdk/runtime";
+import { assetsFieldCatalogResourceUrl } from "@webstudio-is/sdk/runtime";
 import { fetch as builderFetch } from "./fetch.client";
 import { restResourcesLoader } from "./router-utils";
 
@@ -47,18 +44,6 @@ export const loadBuilderAssetResource = async ({
 export const previewBuilderAssetQuery = async (input: AssetQueryRequestInput) =>
   await loadBuilderAssetResource({
     request: createAssetResourceRequest(input),
-  });
-
-export const loadBuilderAssetIndexStatus = async (resourceId: string) =>
-  await loadBuilderAssetResource({
-    request: {
-      name: "assets-index-status",
-      control: "system",
-      method: "get",
-      url: assetsIndexStatusResourceUrl,
-      searchParams: [{ name: "resourceId", value: resourceId }],
-      headers: [],
-    },
   });
 
 export const loadBuilderAssetFieldCatalog = async () =>

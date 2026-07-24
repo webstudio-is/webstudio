@@ -67169,27 +67169,140 @@ export const runtimeOperationContractData = [
               query: {
                 type: "object",
                 properties: {
-                  graphql: {
-                    type: "string",
-                  },
-                  variables: {
+                  filters: {
                     type: "array",
                     items: {
                       type: "object",
                       properties: {
-                        name: {
+                        field: {
+                          minItems: 1,
+                          maxItems: 9,
+                          type: "array",
+                          items: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        operator: {
                           type: "string",
+                          enum: [
+                            "eq",
+                            "ne",
+                            "in",
+                            "contains",
+                            "startsWith",
+                            "endsWith",
+                            "gt",
+                            "gte",
+                            "lt",
+                            "lte",
+                            "exists",
+                            "isEmpty",
+                          ],
                         },
                         value: {
                           type: "string",
                         },
                       },
-                      required: ["name", "value"],
+                      required: ["field", "operator", "value"],
                       additionalProperties: {},
                     },
                   },
+                  sort: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        field: {
+                          minItems: 1,
+                          maxItems: 9,
+                          type: "array",
+                          items: {
+                            type: "string",
+                            minLength: 1,
+                          },
+                        },
+                        direction: {
+                          type: "string",
+                          enum: ["asc", "desc"],
+                        },
+                      },
+                      required: ["field", "direction"],
+                      additionalProperties: false,
+                    },
+                  },
+                  limit: {
+                    type: "string",
+                  },
+                  offset: {
+                    type: "string",
+                  },
+                  content: {
+                    oneOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "none",
+                          },
+                        },
+                        required: ["mode"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "full",
+                          },
+                          maxBytes: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 1048576,
+                          },
+                        },
+                        required: ["mode"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "range",
+                          },
+                          offset: {
+                            type: "integer",
+                            minimum: 0,
+                            maximum: 9007199254740991,
+                          },
+                          length: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 262144,
+                          },
+                        },
+                        required: ["mode", "offset", "length"],
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "markdown-body",
+                          },
+                          maxBytes: {
+                            type: "integer",
+                            exclusiveMinimum: 0,
+                            maximum: 1048576,
+                          },
+                        },
+                        required: ["mode"],
+                      },
+                    ],
+                  },
                 },
-                required: ["graphql", "variables"],
+                required: ["filters", "sort", "limit", "offset", "content"],
                 additionalProperties: {},
               },
               configurationError: {
@@ -67288,27 +67401,140 @@ export const runtimeOperationContractData = [
             query: {
               type: "object",
               properties: {
-                graphql: {
-                  type: "string",
-                },
-                variables: {
+                filters: {
                   type: "array",
                   items: {
                     type: "object",
                     properties: {
-                      name: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      operator: {
                         type: "string",
+                        enum: [
+                          "eq",
+                          "ne",
+                          "in",
+                          "contains",
+                          "startsWith",
+                          "endsWith",
+                          "gt",
+                          "gte",
+                          "lt",
+                          "lte",
+                          "exists",
+                          "isEmpty",
+                        ],
                       },
                       value: {
                         type: "string",
                       },
                     },
-                    required: ["name", "value"],
+                    required: ["field", "operator", "value"],
                     additionalProperties: {},
                   },
                 },
+                sort: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      direction: {
+                        type: "string",
+                        enum: ["asc", "desc"],
+                      },
+                    },
+                    required: ["field", "direction"],
+                    additionalProperties: false,
+                  },
+                },
+                limit: {
+                  type: "string",
+                },
+                offset: {
+                  type: "string",
+                },
+                content: {
+                  oneOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "none",
+                        },
+                      },
+                      required: ["mode"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "full",
+                        },
+                        maxBytes: {
+                          type: "integer",
+                          exclusiveMinimum: 0,
+                          maximum: 1048576,
+                        },
+                      },
+                      required: ["mode"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "range",
+                        },
+                        offset: {
+                          type: "integer",
+                          minimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        length: {
+                          type: "integer",
+                          exclusiveMinimum: 0,
+                          maximum: 262144,
+                        },
+                      },
+                      required: ["mode", "offset", "length"],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "markdown-body",
+                        },
+                        maxBytes: {
+                          type: "integer",
+                          exclusiveMinimum: 0,
+                          maximum: 1048576,
+                        },
+                      },
+                      required: ["mode"],
+                    },
+                  ],
+                },
               },
-              required: ["graphql", "variables"],
+              required: ["filters", "sort", "limit", "offset", "content"],
               additionalProperties: {},
             },
             configurationError: {
@@ -67342,25 +67568,40 @@ export const runtimeOperationContractData = [
         query: {
           type: "object",
           properties: {
-            graphql: {
-              type: "string",
-              minLength: 1,
-              maxLength: 32768,
-              description:
-                "GraphQL query evaluated against the generated Assets schema.",
-            },
-            variables: {
+            filters: {
               default: [],
-              description:
-                "Runtime GraphQL variables. Each value is a Webstudio expression evaluated in the resource scope.",
               maxItems: 32,
               type: "array",
               items: {
                 type: "object",
                 properties: {
-                  name: {
+                  field: {
+                    minItems: 1,
+                    maxItems: 9,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                    description:
+                      'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                  },
+                  operator: {
                     type: "string",
-                    pattern: "^[A-Za-z_][A-Za-z0-9_]*$",
+                    enum: [
+                      "eq",
+                      "ne",
+                      "in",
+                      "contains",
+                      "startsWith",
+                      "endsWith",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "exists",
+                      "isEmpty",
+                    ],
                   },
                   value: {
                     anyOf: [
@@ -67382,14 +67623,152 @@ export const runtimeOperationContractData = [
                       },
                     ],
                     description:
-                      'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                      'A Webstudio expression evaluated in the resource scope. Use { type: "literal", value: "text" } for a fixed string.',
                   },
                 },
-                required: ["name", "value"],
+                required: ["field", "operator", "value"],
               },
             },
+            sort: {
+              default: [],
+              maxItems: 8,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field: {
+                    minItems: 1,
+                    maxItems: 9,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  direction: {
+                    type: "string",
+                    enum: ["asc", "desc"],
+                  },
+                },
+                required: ["field", "direction"],
+                additionalProperties: false,
+              },
+            },
+            limit: {
+              default: "100",
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      const: "literal",
+                    },
+                    value: {
+                      type: "string",
+                    },
+                  },
+                  required: ["type", "value"],
+                },
+              ],
+              description:
+                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            offset: {
+              default: "0",
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    type: {
+                      type: "string",
+                      const: "literal",
+                    },
+                    value: {
+                      type: "string",
+                    },
+                  },
+                  required: ["type", "value"],
+                },
+              ],
+              description:
+                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            content: {
+              default: {
+                mode: "none",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "none",
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "full",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "range",
+                    },
+                    offset: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    length: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 262144,
+                    },
+                  },
+                  required: ["mode", "offset", "length"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "markdown-body",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+              ],
+            },
           },
-          required: ["graphql"],
+          required: [],
         },
         scopeInstanceId: {
           type: "string",
@@ -67528,25 +67907,40 @@ export const runtimeOperationContractData = [
                 {
                   type: "object",
                   properties: {
-                    graphql: {
-                      type: "string",
-                      minLength: 1,
-                      maxLength: 32768,
-                      description:
-                        "GraphQL query evaluated against the generated Assets schema.",
-                    },
-                    variables: {
+                    filters: {
                       default: [],
-                      description:
-                        "Runtime GraphQL variables. Each value is a Webstudio expression evaluated in the resource scope.",
                       maxItems: 32,
                       type: "array",
                       items: {
                         type: "object",
                         properties: {
-                          name: {
+                          field: {
+                            minItems: 1,
+                            maxItems: 9,
+                            type: "array",
+                            items: {
+                              type: "string",
+                              minLength: 1,
+                            },
+                            description:
+                              'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                          },
+                          operator: {
                             type: "string",
-                            pattern: "^[A-Za-z_][A-Za-z0-9_]*$",
+                            enum: [
+                              "eq",
+                              "ne",
+                              "in",
+                              "contains",
+                              "startsWith",
+                              "endsWith",
+                              "gt",
+                              "gte",
+                              "lt",
+                              "lte",
+                              "exists",
+                              "isEmpty",
+                            ],
                           },
                           value: {
                             anyOf: [
@@ -67568,14 +67962,152 @@ export const runtimeOperationContractData = [
                               },
                             ],
                             description:
-                              'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                              'A Webstudio expression evaluated in the resource scope. Use { type: "literal", value: "text" } for a fixed string.',
                           },
                         },
-                        required: ["name", "value"],
+                        required: ["field", "operator", "value"],
                       },
                     },
+                    sort: {
+                      default: [],
+                      maxItems: 8,
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          field: {
+                            minItems: 1,
+                            maxItems: 9,
+                            type: "array",
+                            items: {
+                              type: "string",
+                              minLength: 1,
+                            },
+                          },
+                          direction: {
+                            type: "string",
+                            enum: ["asc", "desc"],
+                          },
+                        },
+                        required: ["field", "direction"],
+                        additionalProperties: false,
+                      },
+                    },
+                    limit: {
+                      default: "100",
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "literal",
+                            },
+                            value: {
+                              type: "string",
+                            },
+                          },
+                          required: ["type", "value"],
+                        },
+                      ],
+                      description:
+                        'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                    },
+                    offset: {
+                      default: "0",
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "literal",
+                            },
+                            value: {
+                              type: "string",
+                            },
+                          },
+                          required: ["type", "value"],
+                        },
+                      ],
+                      description:
+                        'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                    },
+                    content: {
+                      default: {
+                        mode: "none",
+                      },
+                      oneOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "none",
+                            },
+                          },
+                          required: ["mode"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "full",
+                            },
+                            maxBytes: {
+                              type: "integer",
+                              exclusiveMinimum: 0,
+                              maximum: 1048576,
+                            },
+                          },
+                          required: ["mode"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "range",
+                            },
+                            offset: {
+                              type: "integer",
+                              minimum: 0,
+                              maximum: 9007199254740991,
+                            },
+                            length: {
+                              type: "integer",
+                              exclusiveMinimum: 0,
+                              maximum: 262144,
+                            },
+                          },
+                          required: ["mode", "offset", "length"],
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "markdown-body",
+                            },
+                            maxBytes: {
+                              type: "integer",
+                              exclusiveMinimum: 0,
+                              maximum: 1048576,
+                            },
+                          },
+                          required: ["mode"],
+                        },
+                      ],
+                    },
                   },
-                  required: ["graphql"],
+                  required: [],
                 },
                 {
                   type: "null",

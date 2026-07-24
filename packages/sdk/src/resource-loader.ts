@@ -28,10 +28,7 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
 export const currentDateResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/current-date`;
 export const assetsResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets`;
-export const assetsQueryResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/query`;
 export const assetsFieldCatalogResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/field-catalog`;
-export const assetsIndexStatusResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/index-status`;
-export const assetResourceIdHeader = "x-webstudio-resource-id";
 
 export type ResourceLoadOptions = {
   signal?: AbortSignal;
@@ -106,13 +103,6 @@ export const loadResource = async (
         serializeValue(value),
       ])
     );
-    if (
-      resourceRequest.resourceId !== undefined &&
-      resourceRequest.control === "system" &&
-      isLocalResource(href, "assets/query")
-    ) {
-      requestHeaders.set(assetResourceIdHeader, resourceRequest.resourceId);
-    }
     const requestInit: RequestInit = {
       method,
       headers: requestHeaders,

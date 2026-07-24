@@ -1,12 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
-  createAssetQueryResourceBody,
   createStructuredAssetQueryResourceBody,
-  getAssetResourceQuery,
   isAssetsResource,
   isConfiguredAssetsResource,
-  isStoredAssetQueryResource,
-  parseAssetQueryResourceBody,
   parseStructuredAssetQueryResourceBody,
 } from "./asset-resource-config";
 import type { Resource } from "./schema/resources";
@@ -16,40 +12,13 @@ const createResource = (overrides: Partial<Resource> = {}): Resource => ({
   name: "Posts",
   control: "system",
   method: "post",
-  url: '"/$resources/assets/query"',
+  url: '"/$resources/assets"',
   headers: [],
   ...overrides,
 });
 
 describe("asset query resource configuration", () => {
-  test("round-trips query fields and expression variables", () => {
-    const query =
-      "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id } } }";
-    const body = createAssetQueryResourceBody({
-      query,
-      variables: [{ name: "slug", value: "$ws$dataSource$routeSlug" }],
-    });
-
-    expect(parseAssetQueryResourceBody(body)).toEqual({
-      queryExpression: JSON.stringify(query),
-      variables: [{ name: "slug", value: "$ws$dataSource$routeSlug" }],
-    });
-    expect(getAssetResourceQuery(createResource({ body }))).toBe(query);
-  });
-
-  test("normalizes variable names before serialization", () => {
-    const body = createAssetQueryResourceBody({
-      query: "query Post($slug: String) { assets { items { id } } }",
-      variables: [{ name: "  slug  ", value: '"post"' }],
-    });
-
-    expect(parseAssetQueryResourceBody(body).variables).toEqual([
-      { name: "slug", value: '"post"' },
-    ]);
-  });
-
   test("only recognizes exact system Assets resource contracts", () => {
-    expect(isStoredAssetQueryResource(createResource())).toBe(true);
     expect(isAssetsResource(createResource())).toBe(true);
     expect(
       isAssetsResource(
@@ -63,12 +32,10 @@ describe("asset query resource configuration", () => {
       false
     );
     expect(
-      isAssetsResource(
-        createResource({ url: '"/$resources/assets/query/extra"' })
-      )
+      isAssetsResource(createResource({ url: '"/$resources/other"' }))
     ).toBe(false);
     expect(
-      isAssetsResource(createResource({ url: ' "/$resources/assets/query"' }))
+      isAssetsResource(createResource({ url: ' "/$resources/assets"' }))
     ).toBe(false);
   });
 

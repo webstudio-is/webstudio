@@ -1,21 +1,18 @@
 import {
+  assetQueryFieldPath,
+  assetQuerySort,
   assetResourceLimits,
-  assetResourceVariableName,
-  assetResourceQueryRequest,
-  createAssetQueryResourceBody,
+  assetResourceContentOptions,
+  createStructuredAssetQueryResourceBody,
   decodeDataSourceVariable,
   isAssetsResource,
-  isStoredAssetQueryResource,
-  parseAssetQueryResourceBody,
+  isConfiguredAssetsResource,
+  parseStructuredAssetQueryResourceBody,
   SYSTEM_VARIABLE_ID,
   transpileExpression,
   type Resource,
 } from "@webstudio-is/sdk";
-import {
-  assetsQueryResourceUrl,
-  assetsResourceUrl,
-} from "@webstudio-is/sdk/runtime";
-import { validateAssetResourceQuery } from "@webstudio-is/asset-resource";
+import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
@@ -27,89 +24,43 @@ import {
 import { throwBuilderRuntimeError } from "./errors";
 import { paginateOutput, paginatedOutputInputSchema } from "./output";
 
-export const assetsQueryVariableBindingInput = z.object({
-  name: assetResourceVariableName,
-  value: resourceExpressionInput,
+const assetQueryValueExpressionInput = resourceExpressionInput.describe(
+  'A Webstudio expression evaluated in the resource scope. Use { type: "literal", value: "text" } for a fixed string.'
+);
+
+const assetQueryFilterBindingInput = z.object({
+  field: assetQueryFieldPath.describe(
+    'Indexed file field path, for example ["extension"] or ["properties", "slug"].'
+  ),
+  operator: z.enum([
+    "eq",
+    "ne",
+    "in",
+    "contains",
+    "startsWith",
+    "endsWith",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "exists",
+    "isEmpty",
+  ]),
+  value: assetQueryValueExpressionInput,
 });
 
-const assetResourceVariableBindingsInput = z
-  .array(assetsQueryVariableBindingInput)
-  .max(assetResourceLimits.variableCount)
-  .superRefine((variables, context) => {
-    const names = new Set<string>();
-    for (const [index, variable] of variables.entries()) {
-      if (names.has(variable.name)) {
-        context.addIssue({
-          code: "custom",
-          path: [index, "name"],
-          message: `Duplicate asset query variable "${variable.name}".`,
-        });
-      }
-      names.add(variable.name);
-    }
-  });
-
-const assetResourceConfigurationFields = {
-  query: assetResourceQueryRequest.shape.query.describe(
-    "GraphQL query evaluated against the generated Assets schema."
+export const assetsQueryConfigurationInput = z.object({
+  filters: z
+    .array(assetQueryFilterBindingInput)
+    .max(assetResourceLimits.filterCount)
+    .default([]),
+  sort: z.array(assetQuerySort).max(assetResourceLimits.sortCount).default([]),
+  limit: resourceExpressionInput.default(
+    String(assetResourceLimits.defaultResultCount)
   ),
-  variables: assetResourceVariableBindingsInput
-    .default([])
-    .describe(
-      "Runtime GraphQL variables. Each value is a Webstudio expression evaluated in the resource scope."
-    ),
-};
-
-const refineAssetQueryConfiguration = (
-  configuration: {
-    query: string;
-    variables: readonly { name: string }[];
-  },
-  context: z.RefinementCtx
-) => {
-  let variableNames: readonly string[];
-  try {
-    variableNames = validateAssetResourceQuery(
-      configuration.query
-    ).variableNames;
-  } catch (error) {
-    context.addIssue({
-      code: "custom",
-      path: ["query"],
-      message:
-        error instanceof Error ? error.message : "Asset query is invalid.",
-    });
-    return;
-  }
-  const bindings = new Set(
-    configuration.variables.map((variable) => variable.name)
-  );
-  for (const variableName of variableNames) {
-    if (bindings.has(variableName) === false) {
-      context.addIssue({
-        code: "custom",
-        path: ["variables"],
-        message: `Asset query variable $${variableName} requires a binding.`,
-      });
-    }
-  }
-};
-
-const storedAssetQueryConfigurationInput = z
-  .object(assetResourceConfigurationFields)
-  .superRefine(refineAssetQueryConfiguration);
-
-export const assetsQueryConfigurationInput = z
-  .object({
-    graphql: assetResourceConfigurationFields.query,
-    variables: assetResourceConfigurationFields.variables,
-  })
-  .superRefine((configuration, context) =>
-    refineAssetQueryConfiguration(
-      { query: configuration.graphql, variables: configuration.variables },
-      context
-    )
-  );
+  offset: resourceExpressionInput.default("0"),
+  content: assetResourceContentOptions.default({ mode: "none" }),
+});
 
 export const assetsResourceListInput = z.object({
   scopeInstanceId: z.string().optional(),
@@ -139,63 +90,31 @@ export const assetsResourceUpdateInput = z.object({
   dataSourceName: z.string().optional(),
 });
 
-type AssetResourceConfiguration = z.output<
-  typeof storedAssetQueryConfigurationInput
->;
-type DecodedAssetResourceConfiguration = Omit<
-  AssetResourceConfiguration,
-  "variables"
-> & {
-  variables: Array<{ name: string; value: string }>;
-};
-
 const normalizeExpression = (value: z.output<typeof resourceExpressionInput>) =>
   typeof value === "string" ? value : JSON.stringify(value.value);
 
-export const createAssetResourceBody = ({
-  query,
-  variables,
-}: AssetResourceConfiguration) =>
-  createAssetQueryResourceBody({
-    query,
-    variables: variables.map(({ name, value }) => ({
-      name,
+export const createAssetResourceBody = (
+  configuration: z.output<typeof assetsQueryConfigurationInput>
+) =>
+  createStructuredAssetQueryResourceBody({
+    filters: configuration.filters.map(({ field, operator, value }) => ({
+      field,
+      operator,
       value: normalizeExpression(value),
     })),
+    sort: configuration.sort,
+    limit: normalizeExpression(configuration.limit),
+    offset: normalizeExpression(configuration.offset),
+    content: configuration.content,
   });
-
-const parseJsonExpression = (expression: string | undefined) => {
-  if (expression === undefined) {
-    return;
-  }
-  try {
-    return JSON.parse(expression) as unknown;
-  } catch {
-    return;
-  }
-};
 
 export const parseAssetResourceConfiguration = (
   resource: Resource
-): DecodedAssetResourceConfiguration | undefined => {
-  if (isStoredAssetQueryResource(resource) === false) {
+): ReturnType<typeof parseStructuredAssetQueryResourceBody> => {
+  if (isConfiguredAssetsResource(resource) === false) {
     return;
   }
-  const fields = parseAssetQueryResourceBody(resource.body);
-  const parsed = storedAssetQueryConfigurationInput.safeParse({
-    query: parseJsonExpression(fields.queryExpression),
-    variables: fields.variables,
-  });
-  if (parsed.success === false) {
-    return;
-  }
-  return {
-    ...parsed.data,
-    variables: parsed.data.variables.map(({ name, value }) => ({
-      name,
-      value: normalizeExpression(value),
-    })),
-  };
+  return parseStructuredAssetQueryResourceBody(resource.body);
 };
 
 const toPublicExpression = ({
@@ -231,7 +150,7 @@ const serializeAssetResource = ({
   state: Pick<BuilderState, "dataSources">;
 }) => {
   const configuration = parseAssetResourceConfiguration(resource);
-  const isStoredQuery = isStoredAssetQueryResource(resource);
+  const isStoredQuery = isConfiguredAssetsResource(resource);
   const dataSource = Array.from(state.dataSources?.values() ?? []).find(
     (item) => item.type === "resource" && item.resourceId === resource.id
   );
@@ -255,14 +174,26 @@ const serializeAssetResource = ({
         ? {}
         : {
             query: {
-              graphql: configuration.query,
-              variables: configuration.variables.map(({ name, value }) => ({
-                name,
-                value: toPublicExpression({
-                  expression: value,
-                  dataSources: state.dataSources,
-                }),
-              })),
+              filters: configuration.filters.map(
+                ({ field, operator, value }) => ({
+                  field,
+                  operator,
+                  value: toPublicExpression({
+                    expression: value,
+                    dataSources: state.dataSources,
+                  }),
+                })
+              ),
+              sort: configuration.sort,
+              limit: toPublicExpression({
+                expression: configuration.limit,
+                dataSources: state.dataSources,
+              }),
+              offset: toPublicExpression({
+                expression: configuration.offset,
+                dataSources: state.dataSources,
+              }),
+              content: configuration.content,
             },
           }),
   };
@@ -322,7 +253,7 @@ const createStoredAssetsResource = ({
     name,
     control: "system" as const,
     method: "post" as const,
-    url: JSON.stringify(assetsQueryResourceUrl),
+    url: JSON.stringify(assetsResourceUrl),
     searchParams: [],
     headers: [
       {
@@ -330,10 +261,7 @@ const createStoredAssetsResource = ({
         value: { type: "literal" as const, value: "application/json" },
       },
     ],
-    body: createAssetResourceBody({
-      query: query.graphql,
-      variables: query.variables,
-    }),
+    body: createAssetResourceBody(query),
   };
 };
 
@@ -367,7 +295,7 @@ export const updateAssetsResource = (
   const { name, query: queryUpdate } = input.values;
   const storedConfiguration = parseAssetResourceConfiguration(resource);
   if (
-    isStoredAssetQueryResource(resource) &&
+    isConfiguredAssetsResource(resource) &&
     storedConfiguration === undefined &&
     queryUpdate === undefined
   ) {
@@ -380,8 +308,13 @@ export const updateAssetsResource = (
     storedConfiguration === undefined
       ? undefined
       : {
-          graphql: storedConfiguration.query,
-          variables: storedConfiguration.variables,
+          filters: storedConfiguration.filters.map(
+            ({ field, operator, value }) => ({ field, operator, value })
+          ),
+          sort: storedConfiguration.sort,
+          limit: storedConfiguration.limit,
+          offset: storedConfiguration.offset,
+          content: storedConfiguration.content,
         };
   const query =
     queryUpdate === undefined

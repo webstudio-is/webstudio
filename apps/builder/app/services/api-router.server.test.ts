@@ -17,10 +17,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import {
-  blockComponent,
-  createAssetQueryResourceBody,
-} from "@webstudio-is/sdk";
+import { blockComponent } from "@webstudio-is/sdk";
 import * as assetUploader from "@webstudio-is/asset-uploader/index.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import {
@@ -98,14 +95,6 @@ describe("api router build operation adapters", () => {
         },
       },
     });
-    vi.spyOn(assetUploader, "loadAssetResourceIndexStatus").mockResolvedValue({
-      resourceId: "resource-1",
-      state: "active",
-      queryHash: `sha256:${"b".repeat(64)}`,
-      assetRevision: `sha256:${"c".repeat(64)}`,
-      activeRevision: `sha256:${"d".repeat(64)}`,
-      updatedAt: "2026-07-18T12:00:00.000Z",
-    });
     const caller = createCaller(createContext(true));
 
     await expect(
@@ -157,74 +146,6 @@ describe("api router build operation adapters", () => {
       caller.assetQueries.fieldCatalog({ projectId: "project-1" })
     ).resolves.toMatchObject({
       fields: { "properties.slug": { types: ["string"] } },
-    });
-    await expect(
-      caller.assetQueries.indexStatus({
-        projectId: "project-1",
-        resourceId: "resource-1",
-      })
-    ).resolves.toMatchObject({ status: { state: "active" } });
-
-    vi.mocked(assetUploader.loadAssetResourceIndexStatus).mockResolvedValueOnce(
-      undefined
-    );
-    await expect(
-      caller.assetQueries.indexStatus({
-        projectId: "project-1",
-        resourceId: "missing-resource",
-      })
-    ).rejects.toMatchObject({
-      code: "NOT_FOUND",
-      cause: { webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND" },
-    });
-  });
-
-  test("rebuilds a query index through the authenticated recovery operation", async () => {
-    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
-    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
-    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue({
-      id: "build-1",
-      resources: [
-        {
-          id: "resource-1",
-          name: "Posts",
-          control: "system",
-          method: "post",
-          url: JSON.stringify("/$resources/assets/query"),
-          headers: [],
-          body: createAssetQueryResourceBody({
-            query: "{ assets { items { id } } }",
-            variables: [],
-          }),
-        },
-      ],
-    } as never);
-    vi.spyOn(assetUploader, "rebuildAssetResourceIndex").mockResolvedValue({
-      index: {},
-      persisted: { revision: "revision-2", key: "indexes/revision-2.json" },
-    } as never);
-    vi.spyOn(assetUploader, "loadAssetResourceIndexStatus").mockResolvedValue({
-      resourceId: "resource-1",
-      state: "active",
-      queryHash: `sha256:${"b".repeat(64)}`,
-      assetRevision: `sha256:${"c".repeat(64)}`,
-      activeRevision: `sha256:${"d".repeat(64)}`,
-      updatedAt: "2026-07-18T12:00:00.000Z",
-    });
-    const caller = createCaller({
-      ...createContext(true),
-      postgrest: { client: {} },
-    } as AppContext);
-
-    await expect(
-      caller.assetQueries.rebuildIndex({
-        projectId: "project-1",
-        resourceId: "resource-1",
-      })
-    ).resolves.toMatchObject({
-      resourceId: "resource-1",
-      revision: "revision-2",
-      status: { state: "active" },
     });
   });
 

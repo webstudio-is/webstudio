@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
 import { createUploadTicket } from "./upload";
-import { synchronizeAssetResourceStateAfterAssetChange } from "./resource-index-maintenance";
+import { synchronizeCanonicalMetadataAfterAssetChange } from "./canonical-metadata-maintenance";
 import { PostgresAssetRepository } from "./asset-repository";
 
 const context = {
@@ -12,8 +12,8 @@ const assetClient = {} as AssetClient;
 
 const createDependencies = () => ({
   createUploadTicket: vi.fn<typeof createUploadTicket>(),
-  synchronizeAssetResourceStateAfterAssetChange:
-    vi.fn<typeof synchronizeAssetResourceStateAfterAssetChange>(),
+  synchronizeCanonicalMetadataAfterAssetChange:
+    vi.fn<typeof synchronizeCanonicalMetadataAfterAssetChange>(),
   reportMaintenanceError: vi.fn<(error: unknown) => void>(),
 });
 
@@ -35,8 +35,11 @@ describe("PostgresAssetRepository", () => {
         meta: {},
       },
     });
-    dependencies.synchronizeAssetResourceStateAfterAssetChange.mockResolvedValue(
-      undefined
+    dependencies.synchronizeCanonicalMetadataAfterAssetChange.mockResolvedValue(
+      {
+        status: "indexed",
+        revision: "revision-1",
+      }
     );
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
@@ -63,7 +66,7 @@ describe("PostgresAssetRepository", () => {
       undefined
     );
     expect(
-      dependencies.synchronizeAssetResourceStateAfterAssetChange
+      dependencies.synchronizeCanonicalMetadataAfterAssetChange
     ).toHaveBeenCalledWith({
       client: context.postgrest.client,
       assetClient,
@@ -92,7 +95,7 @@ describe("PostgresAssetRepository", () => {
     });
 
     expect(
-      dependencies.synchronizeAssetResourceStateAfterAssetChange
+      dependencies.synchronizeCanonicalMetadataAfterAssetChange
     ).not.toHaveBeenCalled();
   });
 
@@ -114,7 +117,7 @@ describe("PostgresAssetRepository", () => {
         meta: {},
       },
     });
-    dependencies.synchronizeAssetResourceStateAfterAssetChange.mockRejectedValue(
+    dependencies.synchronizeCanonicalMetadataAfterAssetChange.mockRejectedValue(
       failure
     );
     const repository = new PostgresAssetRepository({

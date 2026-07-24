@@ -30,17 +30,13 @@ import {
 import {
   AssetQueryExecutionError,
   AssetResourceHydrationError,
-  AssetResourceQueryValidationError,
   validateAssetQueryAgainstCatalog,
 } from "@webstudio-is/asset-resource";
 import {
-  AssetResourceIndexNotFoundError,
-  loadAssetResourceIndexStatus,
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
   previewAssetResourceQuery,
-  rebuildAssetResourceIndex,
 } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -56,7 +52,6 @@ import {
 import { componentMetas } from "~/shared/component-metas.server";
 import {
   assetQueryRequest,
-  getAssetResourceQuery,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
@@ -88,10 +83,7 @@ import {
   executeApiRuntimeMutation,
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
-import {
-  createAssetClient,
-  createAssetClientWithResourceIndexStore,
-} from "../shared/asset-client";
+import { createAssetClient } from "../shared/asset-client";
 
 const assertApiPublishDomains = ({
   auth,
@@ -124,20 +116,13 @@ const assetQueryInput = projectIdInput.extend(assetQueryRequest.shape);
 const assetQueryValidationInput = projectIdInput.extend({
   query: assetQueryRequest.shape.query,
 });
-const assetResourceIdInput = projectIdInput.extend({
-  resourceId: z.string().min(1),
-});
-
 const throwAssetQueryApiError = (error: unknown): never => {
   if (error instanceof AssetQueryExecutionError) {
     return throwApiError("BAD_REQUEST", error.message, {
       webstudioCode: "INVALID_REQUEST",
     });
   }
-  if (
-    error instanceof AssetResourceQueryValidationError ||
-    error instanceof AssetResourceHydrationError
-  ) {
+  if (error instanceof AssetResourceHydrationError) {
     return throwApiError("BAD_REQUEST", error.message, {
       webstudioCode: error.code,
     });
@@ -799,81 +784,6 @@ export const apiRouter = router({
       {
         command: "get-asset-field-catalog",
         client: "getAssetFieldCatalog",
-      }
-    ),
-    indexStatus: projectQuery(
-      assetResourceIdInput,
-      "view",
-      async ({ ctx, input }) => {
-        const status = await loadAssetResourceIndexStatus({
-          projectId: input.projectId,
-          resourceId: input.resourceId,
-          context: ctx,
-        });
-        if (status === undefined) {
-          return throwApiError(
-            "NOT_FOUND",
-            "Queryable asset resource index status was not found",
-            { webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND" }
-          );
-        }
-        return { status };
-      },
-      {
-        command: "get-asset-resource-index-status",
-        client: "getAssetResourceIndexStatus",
-      }
-    ),
-    rebuildIndex: projectMutation(
-      assetResourceIdInput,
-      "build",
-      async ({ ctx, input }) => {
-        try {
-          const build = await loadDevBuildByProjectId(ctx, input.projectId);
-          const resource = build.resources.find(
-            ({ id }) => id === input.resourceId
-          );
-          const query =
-            resource === undefined
-              ? undefined
-              : getAssetResourceQuery(resource);
-          if (query === undefined) {
-            throw new AssetResourceIndexNotFoundError();
-          }
-          const assetClient = createAssetClientWithResourceIndexStore();
-          const result = await rebuildAssetResourceIndex({
-            client: ctx.postgrest.client,
-            assetClient,
-            projectId: input.projectId,
-            resourceId: input.resourceId,
-            query,
-            source: {
-              buildId: build.id,
-              resources: JSON.stringify(build.resources),
-            },
-          });
-          const status = await loadAssetResourceIndexStatus({
-            projectId: input.projectId,
-            resourceId: input.resourceId,
-            context: ctx,
-          });
-          return {
-            resourceId: input.resourceId,
-            revision: result.persisted.revision,
-            status,
-          };
-        } catch (error) {
-          if (error instanceof AssetResourceIndexNotFoundError) {
-            return throwApiError("NOT_FOUND", error.message, {
-              webstudioCode: "ASSET_RESOURCE_INDEX_NOT_FOUND",
-            });
-          }
-          return throwAssetQueryApiError(error);
-        }
-      },
-      {
-        command: "rebuild-asset-resource-index",
-        client: "rebuildAssetResourceIndex",
       }
     ),
   }),

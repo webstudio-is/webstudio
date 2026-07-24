@@ -19,7 +19,7 @@ import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
-import { synchronizeAssetResourceStateAfterAssetChange } from "./resource-index-maintenance";
+import { synchronizeCanonicalMetadataAfterAssetChange } from "./canonical-metadata-maintenance";
 
 export type CreateUploadTicketInput = {
   projectId: string;
@@ -522,23 +522,18 @@ export const uploadFile = async (
       file,
     });
     const readableClient = client as Partial<AssetClient>;
-    if (
-      readableClient.readFile !== undefined &&
-      readableClient.resourceIndexStore !== undefined
-    ) {
+    if (readableClient.readFile !== undefined) {
       try {
-        await synchronizeAssetResourceStateAfterAssetChange({
+        await synchronizeCanonicalMetadataAfterAssetChange({
           client: context.postgrest.client,
-          assetClient: readableClient as AssetClient & {
-            resourceIndexStore: NonNullable<AssetClient["resourceIndexStore"]>;
-          },
+          assetClient: readableClient as AssetClient,
           projectId,
           assetId: asset.id,
         });
       } catch (error) {
-        // The upload has committed. Derived metadata and indexes are repaired
+        // The upload has committed. Derived metadata is repaired
         // by the next preview or publication if this best-effort update fails.
-        console.error("Asset upload resource synchronization failed", error);
+        console.error("Asset metadata synchronization failed", error);
       }
     }
     return asset;

@@ -67,7 +67,7 @@ test("generate resources loader", () => {
   `);
 });
 
-test("generates resource identity for an Assets query", () => {
+test("generates a configured Assets request on the standard endpoint", () => {
   const generated = generateResources({
     scope: createScope(),
     page: { rootInstanceId: "body" } as Page,
@@ -85,16 +85,17 @@ test("generates resource identity for an Assets query", () => {
         id: "postsResource",
         name: "Posts",
         control: "system" as const,
-        url: '"/$resources/assets/query"',
+        url: '"/$resources/assets"',
         method: "post" as const,
         headers: [],
-        body: '{ query: "{ assets { items { id } } }" }',
+        body: "{ query: { filters: [], limit: 20, offset: 0 } }",
       },
     ]),
     props: new Map(),
   });
 
-  expect(generated).toContain('resourceId: "postsResource"');
+  expect(generated).toContain('url: "/$resources/assets"');
+  expect(generated).not.toContain('resourceId: "postsResource"');
 });
 
 test("generate variable and use in resources loader", () => {

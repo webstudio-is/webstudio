@@ -99,7 +99,6 @@ export default defineConfig(({ mode }) => {
       },
     ],
     resolve: {
-      dedupe: ["graphql"],
       conditions: [...conditions, "browser", "development|production"],
       alias: [
         {
