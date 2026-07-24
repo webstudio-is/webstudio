@@ -805,11 +805,14 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
 });
 
+const assetsResourceResultDescription =
+  "Queried results are exposed as <dataSourceName>.data.items; each item has indexed file fields at the top level, frontmatter or JSON fields in .properties, a derived .excerpt at the top level, and requested file content in .content.text.";
+
 const mcpOperationOverrides = new Map<
   string,
   {
     description: string;
-    inputSchema: ProjectSessionMcpInputSchema;
+    inputSchema?: ProjectSessionMcpInputSchema;
   }
 >([
   [
@@ -826,6 +829,18 @@ const mcpOperationOverrides = new Map<
       description:
         "Create a Collection from array/object data and one repeated-item Webstudio JSX fragment. Internal item parameters and bindings are created atomically.",
       inputSchema: insertCollectionMcpInputSchema,
+    },
+  ],
+  [
+    "create-assets-resource",
+    {
+      description: `Create a scoped Assets resource. ${assetsResourceResultDescription}`,
+    },
+  ],
+  [
+    "update-assets-resource",
+    {
+      description: `Update an Assets resource or its query. ${assetsResourceResultDescription}`,
     },
   ],
 ]);
