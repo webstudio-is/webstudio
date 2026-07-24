@@ -11,13 +11,16 @@ import {
 } from "../../app/__generated__/$resources.asset-query-manifest";
 import { createSsgAssetResourceFetch } from "../../app/asset-resource-fetch";
 
-const fetchAssetResource = createSsgAssetResourceFetch({
-  deploymentId: assetQueryDeploymentId,
-  manifest: assetQueryManifest,
-});
+const fetchAssetResource =
+  assetQueryManifest === undefined
+    ? undefined
+    : createSsgAssetResourceFetch({
+        deploymentId: assetQueryDeploymentId,
+        manifest: assetQueryManifest,
+      });
 
 const customFetch: typeof fetch = async (input, init) => {
-  const assetResourceResponse = await fetchAssetResource(input, init);
+  const assetResourceResponse = await fetchAssetResource?.(input, init);
   if (assetResourceResponse !== undefined) {
     return assetResourceResponse;
   }
