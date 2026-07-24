@@ -1694,17 +1694,18 @@ describe("builder runtime read families", () => {
     expectRuntimeValidationError(
       "assetsResources.create",
       {
-        name: "Invalid parameters",
+        name: "Invalid variables",
         scopeInstanceId: "heading",
         query: {
-          groq: "*[_type == $type]",
-          parameters: [
+          graphql:
+            "query Assets($type: String) { assets(where: { type: { eq: $type } }) { items { id } } }",
+          variables: [
             { name: "type", value: '"asset.file"' },
             { name: "type", value: '"asset.file"' },
           ],
         },
       },
-      { path: ["query", "parameters", "1", "name"] }
+      { path: ["query", "variables", "1", "name"] }
     );
 
     const fetchAll = executeBuilderRuntimeOperation({
@@ -1746,10 +1747,9 @@ describe("builder runtime read families", () => {
         name: "Blog posts",
         scopeInstanceId: "heading",
         query: {
-          groq: '*[_type == "asset.file" && properties.slug == $slug][0]',
-          parameters: [{ name: "slug", value: "system.params.slug" }],
-          resultLimit: 1,
-          content: { mode: "markdown-body", maxBytes: 65536 },
+          graphql:
+            "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } content(mode: MARKDOWN_BODY, maxBytes: 65536) { text } } } }",
+          variables: [{ name: "slug", value: "system.params.slug" }],
         },
       },
       context: {
@@ -1787,7 +1787,7 @@ describe("builder runtime read families", () => {
     });
     expect(resourcePatch?.value).toHaveProperty(
       "body",
-      expect.stringContaining("properties.slug == $slug")
+      expect.stringContaining("slug: { eq: $slug }")
     );
 
     const queryState = {
@@ -1813,10 +1813,9 @@ describe("builder runtime read families", () => {
         scopeInstanceId: "heading",
         mode: "query",
         query: {
-          groq: '*[_type == "asset.file" && properties.slug == $slug][0]',
-          parameters: [{ name: "slug", value: "system.params.slug" }],
-          resultLimit: 1,
-          content: { mode: "markdown-body", maxBytes: 65536 },
+          graphql:
+            "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } content(mode: MARKDOWN_BODY, maxBytes: 65536) { text } } } }",
+          variables: [{ name: "slug", value: "system.params.slug" }],
         },
       }),
     });
@@ -1835,9 +1834,8 @@ describe("builder runtime read families", () => {
         resourceId: "asset-resource",
         values: {
           query: {
-            groq: '*[_type == "asset.file"][0...2]',
-            resultLimit: 2,
-            content: { mode: "none" },
+            graphql: "{ assets(first: 2) { items { id } } }",
+            variables: [],
           },
         },
       },

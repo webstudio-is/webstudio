@@ -41,13 +41,13 @@ describe("resource index build", () => {
       buildAssetResourceIndex({
         projectId: "project-1",
         resourceId: "resource-1",
-        query: "*[invalid ==",
+        query: "query { assets(",
         entries,
       })
-    ).rejects.toMatchObject({ code: "INVALID_QUERY" });
+    ).rejects.toThrow("Syntax Error");
   });
 
-  test("builds directly from canonical metadata and applies safe prefiltering", async () => {
+  test("builds directly from canonical metadata with a compiled query plan", async () => {
     const entries = [
       createCanonicalAssetFileEntry({
         projectId: "project-1",
@@ -64,16 +64,19 @@ describe("resource index build", () => {
     const index = await buildAssetResourceIndex({
       projectId: "project-1",
       resourceId: "resource-1",
-      query: `*[properties.locale == "en" && properties.slug == $slug]`,
+      query: `query Post($slug: String!) {
+        assets(where: { properties: { locale: { eq: "en" }, slug: { eq: $slug } } }, first: 1) {
+          items { id properties { locale slug } }
+        }
+      }`,
       entries,
     });
 
     expect(index).toMatchObject({
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
       assetRevision: await computeCanonicalAssetRevision(entries),
     });
-    expect(index.documents.map(({ _id }) => _id)).toEqual(["en"]);
+    expect(index.documents.map(({ _id }) => _id)).toEqual(["en", "fr"]);
+    expect(index.plan).toMatchObject({ kind: "asset-list" });
     await expect(verifyAssetResourceIndex(index)).resolves.toEqual(index);
   });
 
@@ -87,7 +90,7 @@ describe("resource index build", () => {
     const index = await buildAssetResourceIndex({
       projectId: "project-1",
       resourceId: "resource-1",
-      query: "*[]",
+      query: "{ assets { items { id } } }",
       entries: [entry],
       assetRevision,
     });
@@ -112,10 +115,14 @@ describe("resource index build", () => {
     });
 
     const [all, english] = await Promise.all([
-      builder.build({ resourceId: "all", query: "*[]" }),
+      builder.build({
+        resourceId: "all",
+        query: "{ assets { items { id } } }",
+      }),
       builder.build({
         resourceId: "english",
-        query: `*[properties.locale == "en"]`,
+        query:
+          '{ assets(where: { properties: { locale: { eq: "en" } } }) { items { id } } }',
       }),
     ]);
 
@@ -123,7 +130,7 @@ describe("resource index build", () => {
     expect(all.assetRevision).toBe(builder.assetRevision);
     expect(english.assetRevision).toBe(builder.assetRevision);
     expect(all.documents.map(({ _id }) => _id)).toEqual(["one", "two"]);
-    expect(english.documents.map(({ _id }) => _id)).toEqual(["one"]);
+    expect(english.documents.map(({ _id }) => _id)).toEqual(["one", "two"]);
   });
 
   test("rejects an asset revision unrelated to the prepared entries", async () => {
@@ -135,7 +142,7 @@ describe("resource index build", () => {
       buildAssetResourceIndex({
         projectId: "project-1",
         resourceId: "posts",
-        query: "*[]",
+        query: "{ assets { items { id } } }",
         entries: [entry],
         assetRevision: `sha256:${"0".repeat(64)}`,
       })
@@ -163,7 +170,7 @@ describe("resource index build", () => {
     const index = await buildAssetResourceIndex({
       projectId: "project-1",
       resourceId: "resource-1",
-      query: "*[]",
+      query: "{ assets { items { id } } }",
       entries,
     });
 
@@ -184,7 +191,7 @@ describe("resource index build", () => {
       buildAssetResourceIndex({
         projectId: "project-2",
         resourceId: "resource-1",
-        query: "*[]",
+        query: "{ assets { items { id } } }",
         entries: [entry],
       })
     ).rejects.toThrow("multiple projects");
@@ -192,7 +199,7 @@ describe("resource index build", () => {
       buildAssetResourceIndex({
         projectId: "project-1",
         resourceId: "resource-1",
-        query: "*[]",
+        query: "{ assets { items { id } } }",
         entries: [{ ...entry, assetId: "other" }],
       })
     ).rejects.toThrow("identity is inconsistent");
@@ -200,7 +207,7 @@ describe("resource index build", () => {
       buildAssetResourceIndex({
         projectId: "project-1",
         resourceId: "resource-1",
-        query: "*[]",
+        query: "{ assets { items { id } } }",
         entries: [entry, entry],
       })
     ).rejects.toThrow("duplicate canonical assets");
@@ -213,7 +220,28 @@ const base = {
   resourceId: "resource-1",
   queryHash: `sha256:${"a".repeat(64)}`,
   assetRevision: `sha256:${"b".repeat(64)}`,
-  queryMode: "parameterized" as const,
+  plan: {
+    format: "webstudio-asset-query-plan",
+    version: 1,
+    kind: "asset-list",
+    queryHash: `sha256:${"a".repeat(64)}`,
+    assetRevision: `sha256:${"b".repeat(64)}`,
+    rootResponseKey: "assets",
+    variables: [
+      {
+        name: "locale",
+        type: { kind: "named", name: "String", required: false },
+      },
+      {
+        name: "slug",
+        type: { kind: "named", name: "String", required: false },
+      },
+    ],
+    orderBy: [],
+    first: 100,
+    skip: 0,
+    fields: [{ kind: "items", responseKey: "items", fields: [] }],
+  } as const,
   integrity: {
     algorithm: "sha256" as const,
     checksum: `sha256:${"c".repeat(64)}`,
@@ -221,28 +249,23 @@ const base = {
 };
 
 describe("resource index normalization and serialization", () => {
-  test("sorts parameters and documents without mutating the input", () => {
-    const parameterNames = ["slug", "locale"];
+  test("sorts documents without mutating the input", () => {
     const documents = [
       createDocument("two", { title: "Two" }),
       createDocument("one", { title: "One" }),
     ];
     const index = normalizeAssetResourceIndex({
       ...base,
-      parameterNames,
       documents,
     });
 
-    expect(index.parameterNames).toEqual(["locale", "slug"]);
     expect(index.documents.map(({ _id }) => _id)).toEqual(["one", "two"]);
-    expect(parameterNames).toEqual(["slug", "locale"]);
     expect(documents.map(({ _id }) => _id)).toEqual(["two", "one"]);
   });
 
   test("emits identical bytes for equivalent key and input order", () => {
     const first = normalizeAssetResourceIndex({
       ...base,
-      parameterNames: ["slug", "locale"],
       documents: [
         createDocument("two", { title: "Two" }),
         createDocument("one", {
@@ -253,7 +276,6 @@ describe("resource index normalization and serialization", () => {
     });
     const second = normalizeAssetResourceIndex({
       ...base,
-      parameterNames: ["locale", "slug"],
       documents: [
         createDocument("one", {
           author: { active: true, name: "Ada" },
@@ -272,7 +294,6 @@ describe("resource index normalization and serialization", () => {
     expect(() =>
       normalizeAssetResourceIndex({
         ...base,
-        parameterNames: ["slug"],
         documents: [
           createDocument("one", { title: "One" }),
           createDocument("one", { title: "Duplicate" }),
@@ -282,23 +303,22 @@ describe("resource index normalization and serialization", () => {
   });
 
   test("computes query, asset, content-reference, and integrity metadata", async () => {
-    const documents = [createDocument("one", { title: "One" })];
+    const documents = [createDocument("one", { title: "One", slug: "one" })];
+    const query = `query Post($slug: String!) {
+      assets(where: { properties: { slug: { eq: $slug } } }, first: 1) {
+        items { id properties { title } }
+      }
+    }`;
     const index = await createAssetResourceIndex({
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "resource-1",
-      query: `*[_type == "asset.file" && properties.slug == $slug][0]`,
+      query,
       assetRevision: `sha256:${"b".repeat(64)}`,
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
       documents,
     });
 
-    expect(index.queryHash).toBe(
-      await computeAssetResourceQueryHash(
-        `*[_type == "asset.file" && properties.slug == $slug][0]`
-      )
-    );
+    expect(index.queryHash).toBe(await computeAssetResourceQueryHash(query));
     expect(index.assetRevision).toBe(`sha256:${"b".repeat(64)}`);
     expect(index.documents[0].contentRef).toBe("one.md");
     expect(index.integrity).toMatchObject({
@@ -313,10 +333,8 @@ describe("resource index normalization and serialization", () => {
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "resource-1",
-      query: "*[]",
+      query: "{ assets { items { id } } }",
       assetRevision: `sha256:${"b".repeat(64)}`,
-      queryMode: "static",
-      parameterNames: [],
       documents: [createDocument("one", { title: "One" })],
     });
     await expect(

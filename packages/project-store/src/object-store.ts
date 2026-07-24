@@ -1,13 +1,19 @@
 import type {
   ProjectHead,
   ProjectHeadUpdateResult,
+  ProjectAssetReadRange,
   ProjectSnapshotReference,
 } from "./types";
 
 export interface ObjectStore {
-  get(key: string): Promise<Uint8Array | undefined>;
+  get(
+    key: string,
+    range?: ProjectAssetReadRange
+  ): Promise<Uint8Array | undefined>;
   put(key: string, value: Uint8Array): Promise<void>;
+  putIfAbsent(key: string, value: Uint8Array): Promise<"written" | "existing">;
   delete(key: string): Promise<void>;
+  /** Lists descendants below a logical directory, excluding an exact file key. */
   list(prefix: string): Promise<string[]>;
 }
 

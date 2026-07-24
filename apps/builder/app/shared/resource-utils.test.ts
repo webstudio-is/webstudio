@@ -210,7 +210,7 @@ describe("getResourceKey - pure function tests", () => {
     expect(key1).toBeTruthy();
   });
 
-  test("asset query cache separates query, parameters, index, and content", () => {
+  test("asset query cache separates query, variables, operation, and index", () => {
     const createRequest = (body: Record<string, unknown>): ResourceRequest => ({
       name: "assets-query",
       control: "system",
@@ -221,17 +221,17 @@ describe("getResourceKey - pure function tests", () => {
       body,
     });
     const base = {
-      query: "*[]",
-      parameters: { slug: "first" },
+      query: "query Posts($slug: String) { assets { items { id } } }",
+      variables: { slug: "first" },
+      operationName: "Posts",
       indexRevision: "index-1",
-      content: { mode: "none" },
     };
     const requests = [
       base,
-      { ...base, query: "*[_type == 'asset.file']" },
-      { ...base, parameters: { slug: "second" } },
+      { ...base, query: "query Posts { assets { items { path } } }" },
+      { ...base, variables: { slug: "second" } },
+      { ...base, operationName: "Other" },
       { ...base, indexRevision: "index-2" },
-      { ...base, content: { mode: "full", maxBytes: 4096 } },
     ];
     const keys = requests.map((body) => getResourceKey(createRequest(body)));
 
@@ -247,7 +247,7 @@ describe("getResourceKey - pure function tests", () => {
       url: "/$resources/assets/query",
       searchParams: [],
       headers: [],
-      body: { query: "*[]" },
+      body: { query: "{ assets { items { id } } }", variables: {} },
     };
 
     expect(getResourceKey(request)).not.toBe(

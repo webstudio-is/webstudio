@@ -1,12 +1,15 @@
 import { describe, expect, test } from "vitest";
-import { ObjectProjectStore } from "./project-store";
-import { R2ObjectStore, type R2BucketLike } from "./r2";
+import { createR2ProjectStore, R2ObjectStore, type R2BucketLike } from "./r2";
+import { runStorageAdapterContract } from "./__tests__/storage-adapter-contract";
 
 class FakeR2Bucket implements R2BucketLike {
   private version = 0;
   readonly objects = new Map<string, { bytes: Uint8Array; etag: string }>();
 
-  async get(key: string) {
+  async get(
+    key: string,
+    options?: { range: { offset: number; length: number } }
+  ) {
     const stored = this.objects.get(key);
     if (stored === undefined) {
       return null;
@@ -14,7 +17,16 @@ class FakeR2Bucket implements R2BucketLike {
     return {
       key,
       etag: stored.etag,
-      arrayBuffer: async () => new Uint8Array(stored.bytes).buffer,
+      arrayBuffer: async () => {
+        const bytes =
+          options === undefined
+            ? stored.bytes
+            : stored.bytes.slice(
+                options.range.offset,
+                options.range.offset + options.range.length
+              );
+        return new Uint8Array(bytes).buffer;
+      },
     };
   }
 
@@ -64,11 +76,34 @@ class FakeR2Bucket implements R2BucketLike {
   }
 }
 
+class RepeatingCursorR2Bucket extends FakeR2Bucket {
+  async list() {
+    return { objects: [], truncated: true, cursor: "repeated" };
+  }
+}
+
+runStorageAdapterContract({
+  name: "R2",
+  create: async () => {
+    const storage = new R2ObjectStore(
+      new FakeR2Bucket(),
+      "projects/project/db"
+    );
+    return { objects: storage, heads: storage };
+  },
+});
+
 describe("R2 project store", () => {
+  test("rejects a repeated pagination cursor instead of looping", async () => {
+    const storage = new R2ObjectStore(new RepeatingCursorR2Bucket());
+
+    await expect(storage.list("objects")).rejects.toThrow("repeated");
+  });
+
   test("round-trips project snapshots below a private project prefix", async () => {
     const bucket = new FakeR2Bucket();
     const storage = new R2ObjectStore(bucket, "projects/project/db");
-    const store = new ObjectProjectStore(storage, storage);
+    const store = createR2ProjectStore(bucket, "project");
     const reference = await store.writeSnapshot({
       projectId: "project",
       builderRevision: "1",
@@ -79,6 +114,10 @@ describe("R2 project store", () => {
       },
     });
     await storage.put("objects-other/not-a-project-object", new Uint8Array());
+    bucket.objects.set("projects/project/database/sibling", {
+      bytes: new Uint8Array(),
+      etag: "sibling",
+    });
 
     await expect(store.readSnapshot(reference)).resolves.toMatchObject({
       manifest: { projectId: "project" },
@@ -89,52 +128,28 @@ describe("R2 project store", () => {
     });
     expect(await storage.list("objects")).toHaveLength(3);
     expect(
-      [...bucket.objects.keys()].every((key) =>
-        key.startsWith("projects/project/db/")
-      )
+      (await storage.list("")).some((key) => key.includes("sibling"))
+    ).toBe(false);
+    expect(
+      [...bucket.objects.keys()]
+        .filter((key) => key !== "projects/project/database/sibling")
+        .every((key) => key.startsWith("projects/project/db/"))
     ).toBe(true);
   });
 
-  test("uses R2 conditional writes for atomic head updates", async () => {
+  test("stores binary assets under the project asset prefix", async () => {
     const bucket = new FakeR2Bucket();
-    const storage = new R2ObjectStore(bucket, "projects/project/db");
-    const store = new ObjectProjectStore(storage, storage);
-    const snapshots = await Promise.all(
-      [1, 2, 3].map((builderRevision) =>
-        store.writeSnapshot({
-          projectId: "project",
-          builderRevision: String(builderRevision),
-          assetRevision: "1",
-          collections: {},
-        })
-      )
-    );
-    const created = await store.updateHead({
-      name: "development",
-      reference: snapshots[0],
-    });
-    if (created.status !== "updated") {
-      throw new Error("Expected initial R2 project head update to succeed");
-    }
+    const store = createR2ProjectStore(bucket, "project/..");
+    const bytes = new TextEncoder().encode("asset body");
 
-    const results = await Promise.all([
-      store.updateHead({
-        name: "development",
-        expectedRevision: created.head.revision,
-        reference: snapshots[1],
-      }),
-      store.updateHead({
-        name: "development",
-        expectedRevision: created.head.revision,
-        reference: snapshots[2],
-      }),
+    const reference = await store.writeAsset(bytes);
+
+    await expect(store.readAsset(reference)).resolves.toEqual(bytes);
+    await expect(
+      store.readAsset(reference, { offset: 2, length: 4 })
+    ).resolves.toEqual(new TextEncoder().encode("set "));
+    expect([...bucket.objects.keys()]).toEqual([
+      `projects/project%2F%2E%2E/assets/sha256/${reference.object.hash.slice("sha256:".length)}`,
     ]);
-
-    expect(results.filter(({ status }) => status === "updated")).toHaveLength(
-      1
-    );
-    expect(results.filter(({ status }) => status === "conflict")).toHaveLength(
-      1
-    );
   });
 });

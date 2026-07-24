@@ -1,4 +1,5 @@
 import {
+  synchronizeCanonicalAssets,
   synchronizeAllCanonicalAssetStandardMetadata,
   synchronizeAssetResourceIndexQueries,
   synchronizeCanonicalAsset,
@@ -6,11 +7,12 @@ import {
 } from "@webstudio-is/asset-uploader/index.server";
 import type { BuildPatchChange } from "@webstudio-is/project/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import type { Resource } from "@webstudio-is/sdk";
+import { getAssetResourceQuery, type Resource } from "@webstudio-is/sdk";
 import { createAssetClientWithResourceIndexStore } from "./asset-client";
 
 const defaultDependencies = {
   createAssetClient: createAssetClientWithResourceIndexStore,
+  synchronizeCanonicalAssets,
   synchronizeAllCanonicalAssetStandardMetadata,
   synchronizeAssetResourceIndexQueries,
   synchronizeCanonicalAsset,
@@ -63,6 +65,7 @@ export const synchronizeAssetResourcesAfterBuildPatch = async (
     previousResources,
     resources,
     changes,
+    replaceAllAssets = false,
   }: {
     context: AppContext;
     buildId: string;
@@ -70,6 +73,7 @@ export const synchronizeAssetResourcesAfterBuildPatch = async (
     previousResources?: string;
     resources?: string;
     changes: readonly BuildPatchChange[];
+    replaceAllAssets?: boolean;
   },
   dependencies = defaultDependencies
 ) => {
@@ -80,7 +84,11 @@ export const synchronizeAssetResourcesAfterBuildPatch = async (
   const assetChanges = changes.filter(
     ({ namespace }) => namespace === "assets" || namespace === "assetFolders"
   );
-  if (hasResourceChanges === false && assetChanges.length === 0) {
+  if (
+    hasResourceChanges === false &&
+    assetChanges.length === 0 &&
+    replaceAllAssets === false
+  ) {
     return;
   }
   let assetClient: ReturnType<typeof dependencies.createAssetClient>;
@@ -92,7 +100,11 @@ export const synchronizeAssetResourcesAfterBuildPatch = async (
   }
   let canonicalAlreadySynchronized = false;
   let updatedResourceIds: string[] = [];
-  if (hasResourceChanges) {
+  if (
+    (hasResourceChanges || replaceAllAssets) &&
+    previousResources !== undefined &&
+    resources !== undefined
+  ) {
     try {
       const result = await dependencies.synchronizeAssetResourceIndexQueries({
         client: context.postgrest.client,
@@ -109,11 +121,36 @@ export const synchronizeAssetResourcesAfterBuildPatch = async (
     }
   }
 
-  if (assetChanges.length === 0) {
+  if (assetChanges.length === 0 && replaceAllAssets === false) {
     return;
   }
 
   try {
+    if (replaceAllAssets) {
+      if (
+        resources !== undefined &&
+        parseResources(resources).some(
+          (resource) => getAssetResourceQuery(resource) !== undefined
+        ) === false
+      ) {
+        return;
+      }
+      if (canonicalAlreadySynchronized === false) {
+        await dependencies.synchronizeCanonicalAssets({
+          client: context.postgrest.client,
+          assetClient,
+          projectId,
+        });
+      }
+      await dependencies.updateAssetResourceIndexesAfterCanonicalChange({
+        client: context.postgrest.client,
+        store: assetClient.resourceIndexStore,
+        projectId,
+        changedAssetIds: ["project-assets"],
+        excludedResourceIds: updatedResourceIds,
+      });
+      return;
+    }
     const hasFolderChanges = assetChanges.some(
       ({ namespace }) => namespace === "assetFolders"
     );

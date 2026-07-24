@@ -1,29 +1,34 @@
 import {
-  assetResourceQueryRequest,
-  type AssetResourceQueryInput,
+  assetQueryRequest,
+  type AssetQueryRequestInput,
   type ResourceRequest,
 } from "@webstudio-is/sdk";
-import { assetsQueryResourceUrl } from "@webstudio-is/sdk/runtime";
+import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 
 export * from "./markdown";
+export * from "./json";
 export * from "./canonical";
 export * from "./field-catalog";
 export * from "./resource-index";
-export * from "./candidate-selection";
+export * from "./query-plan";
+export * from "./graphql";
+export * from "./graphql-editor";
+export * from "./graphql-compiler";
 export * from "./index-storage";
 export * from "./query-validation";
 export * from "./hydration";
-export * from "./query-execution";
 export * from "./published-runtime";
+export * from "./structured-query";
+export * from "./asset-index";
 
 export const createAssetResourceRequest = (
-  request: AssetResourceQueryInput
+  request: AssetQueryRequestInput
 ): ResourceRequest => ({
-  name: "assets-query",
+  name: "assets",
   control: "system",
   method: "post",
-  url: assetsQueryResourceUrl,
+  url: assetsResourceUrl,
   searchParams: [],
   headers: [{ name: "content-type", value: "application/json" }],
-  body: assetResourceQueryRequest.parse(request),
+  body: assetQueryRequest.parse(request),
 });

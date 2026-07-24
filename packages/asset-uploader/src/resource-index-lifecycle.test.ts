@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { generateObjectExpression, type Resource } from "@webstudio-is/sdk";
+import { createAssetQueryResourceBody, type Resource } from "@webstudio-is/sdk";
 
 const loadCanonicalAssetFileSnapshot = vi.hoisted(() => vi.fn());
 const synchronizeCanonicalAssets = vi.hoisted(() => vi.fn());
@@ -13,21 +13,14 @@ import {
   synchronizeAssetResourceIndexQueries,
 } from "./resource-index-lifecycle";
 
-const resource = (id: string, query: string, resultLimit = 20): Resource => ({
+const resource = (id: string, query: string): Resource => ({
   id,
   name: id,
   control: "system",
   method: "post",
   url: JSON.stringify("/$resources/assets/query"),
   headers: [],
-  body: generateObjectExpression(
-    new Map([
-      ["query", JSON.stringify(query)],
-      ["parameters", "{}"],
-      ["resultLimit", JSON.stringify(resultLimit)],
-      ["content", '{"mode":"none"}'],
-    ])
-  ),
+  body: createAssetQueryResourceBody({ query, variables: [] }),
 });
 const dependencies = {
   loadCanonicalAssetFileSnapshot,
@@ -52,11 +45,12 @@ describe("asset resource query lifecycle", () => {
     loadOwnedAssetResourceIndexIds.mockReset().mockResolvedValue([]);
   });
 
-  test("extracts only fixed queryable-asset GROQ definitions", () => {
-    expect(getAssetResourceQuery(resource("posts", "*[]"))).toBe("*[]");
+  test("extracts only fixed queryable-asset GraphQL definitions", () => {
+    const query = "{ assets { items { id } } }";
+    expect(getAssetResourceQuery(resource("posts", query))).toBe(query);
     expect(
       getAssetResourceQuery({
-        ...resource("external", "*[]"),
+        ...resource("external", query),
         url: JSON.stringify("https://example.com"),
       })
     ).toBeUndefined();
@@ -64,13 +58,13 @@ describe("asset resource query lifecycle", () => {
 
   test("rebuilds only created and changed queries from one canonical load", async () => {
     const previous = [
-      resource("changed", "*[false]"),
-      resource("unchanged", "*[]"),
+      resource("changed", "{ assets(first: 1) { items { id } } }"),
+      resource("unchanged", "{ assets { items { id } } }"),
     ];
     const current = [
-      resource("changed", "*[]"),
-      resource("created", "*[]"),
-      resource("unchanged", "*[]"),
+      resource("changed", "{ assets(first: 2) { items { id } } }"),
+      resource("created", "{ assets { items { path } } }"),
+      resource("unchanged", "{ assets { items { id } } }"),
     ];
     await expect(
       synchronizeAssetResourceIndexQueries({
@@ -100,8 +94,9 @@ describe("asset resource query lifecycle", () => {
   });
 
   test("rebuilds only index-affecting changes to an existing query resource", async () => {
-    const previous = resource("posts", "*[]");
-    const configured = resource("configured", "*[]");
+    const query = "{ assets { items { id } } }";
+    const previous = resource("posts", query);
+    const configured = resource("configured", query);
 
     await expect(
       synchronizeAssetResourceIndexQueries({
@@ -115,7 +110,7 @@ describe("asset resource query lifecycle", () => {
             name: "Renamed",
             headers: [{ name: "x", value: "y" }],
           },
-          resource("configured", "*[]", 30),
+          resource("configured", "{ assets(first: 30) { items { id } } }"),
         ],
         source,
         dependencies,
@@ -126,13 +121,16 @@ describe("asset resource query lifecycle", () => {
     });
     expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledOnce();
     expect(buildPersistAndActivateAssetResourceIndex).toHaveBeenCalledWith(
-      expect.objectContaining({ resourceId: "configured", query: "*[]" })
+      expect.objectContaining({
+        resourceId: "configured",
+        query: "{ assets(first: 30) { items { id } } }",
+      })
     );
   });
 
   test("deletes index ownership when a query is deleted or changed away", async () => {
     const external = {
-      ...resource("changed-away", "*[]"),
+      ...resource("changed-away", "{ assets { items { id } } }"),
       url: JSON.stringify("https://example.com"),
     };
     await expect(
@@ -141,8 +139,8 @@ describe("asset resource query lifecycle", () => {
         assetClient: { resourceIndexStore: {} } as never,
         projectId: "project-1",
         previousResources: [
-          resource("deleted", "*[]"),
-          resource("changed-away", "*[]"),
+          resource("deleted", "{ assets { items { id } } }"),
+          resource("changed-away", "{ assets { items { id } } }"),
         ],
         resources: [external],
         source,
@@ -171,8 +169,8 @@ describe("asset resource query lifecycle", () => {
         client: {} as never,
         assetClient: { resourceIndexStore: {} } as never,
         projectId: "project-1",
-        previousResources: [resource("current", "*[]")],
-        resources: [resource("current", "*[]")],
+        previousResources: [resource("current", "{ assets { items { id } } }")],
+        resources: [resource("current", "{ assets { items { id } } }")],
         source,
         dependencies,
       })
@@ -202,7 +200,10 @@ describe("asset resource query lifecycle", () => {
         } as never,
         projectId: "project-1",
         previousResources: [],
-        resources: [resource("first", "*[]"), resource("second", "*[]")],
+        resources: [
+          resource("first", "{ assets { items { id } } }"),
+          resource("second", "{ assets { items { path } } }"),
+        ],
         source,
         dependencies,
       })

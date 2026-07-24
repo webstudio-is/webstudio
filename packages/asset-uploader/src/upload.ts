@@ -21,7 +21,7 @@ import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
 import { synchronizeAssetResourceStateAfterAssetChange } from "./resource-index-maintenance";
 
-type UploadData = {
+export type CreateUploadTicketInput = {
   projectId: string;
   type: string;
   filename: string;
@@ -154,7 +154,7 @@ const findContentHashUploadTicket = async ({
   data,
   context,
 }: {
-  data: UploadData & { contentHash: string };
+  data: CreateUploadTicketInput & { contentHash: string };
   context: AppContext;
 }): Promise<UploadTicket | undefined> => {
   const {
@@ -280,7 +280,7 @@ const cleanupUploadError = async (
 };
 
 export const createUploadTicket = async (
-  data: UploadData,
+  data: CreateUploadTicketInput,
   context: AppContext,
   createId: () => Asset["id"] = nanoid
 ): Promise<UploadTicket> => {

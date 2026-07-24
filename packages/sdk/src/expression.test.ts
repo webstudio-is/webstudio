@@ -10,6 +10,7 @@ import {
   transpileExpression,
   getExpressionIdentifiers,
   parseObjectExpression,
+  parseArrayExpression,
   generateObjectExpression,
   SYSTEM_VARIABLE_ID,
   allowedArrayMethods,
@@ -768,6 +769,16 @@ describe("transpile expression", () => {
 });
 
 describe("object expression transformations", () => {
+  test("parse array expression", () => {
+    expect(parseArrayExpression(`[0, "", $c + 1]`)).toEqual([
+      "0",
+      '""',
+      "$c + 1",
+    ]);
+    expect(parseArrayExpression("0")).toBeUndefined();
+    expect(parseArrayExpression("[...items]")).toBeUndefined();
+  });
+
   test("parse object expression", () => {
     expect(parseObjectExpression(`{ a: 0, b: "", c: $c + 1 }`)).toEqual(
       new Map([

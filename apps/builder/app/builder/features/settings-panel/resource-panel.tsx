@@ -2,6 +2,8 @@ import { z } from "zod";
 import { computed } from "nanostores";
 import {
   forwardRef,
+  lazy,
+  Suspense,
   useEffect,
   useId,
   useImperativeHandle,
@@ -20,6 +22,7 @@ import {
 import {
   encodeDataVariableId,
   generateObjectExpression,
+  isConfiguredAssetsResource,
   isLiteralExpression,
   isStoredAssetQueryResource,
   parseObjectExpression,
@@ -31,7 +34,6 @@ import {
   sitemapResourceUrl,
   currentDateResourceUrl,
   assetsResourceUrl,
-  assetsQueryResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -48,7 +50,6 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
@@ -79,7 +80,11 @@ import {
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";
-import { AssetQueryForm } from "./asset-query-form";
+const AssetQueryForm = lazy(() =>
+  import("./asset-query-form").then(({ AssetQueryForm }) => ({
+    default: AssetQueryForm,
+  }))
+);
 
 export const UrlField = ({
   scope,
@@ -924,13 +929,15 @@ export const SystemResourceForm = forwardRef<
       ? resources.get(variable.resourceId)
       : undefined;
   const isStoredAssetQuery =
-    resource !== undefined && isStoredAssetQueryResource(resource);
+    resource !== undefined &&
+    (isConfiguredAssetsResource(resource) ||
+      isStoredAssetQueryResource(resource));
 
   const assetsLocalResource = {
     label: "Assets",
     value: JSON.stringify(assetsResourceUrl),
     description:
-      "Loads all project assets by default, with optional GROQ querying and selected-file content.",
+      "Loads all project assets by default, with optional filters, sorting, pagination, and file content.",
   };
   const localResources = [
     {
@@ -959,8 +966,6 @@ export const SystemResourceForm = forwardRef<
   });
   const isAssetsResource =
     localResource.value === JSON.stringify(assetsResourceUrl);
-  const canConfigureAssetQuery =
-    isFeatureEnabled("assetResource") || isStoredAssetQuery;
   const [isAssetQueryEnabled, setIsAssetQueryEnabled] =
     useState(isStoredAssetQuery);
   const isAssetQuery = isAssetsResource && isAssetQueryEnabled;
@@ -1002,15 +1007,7 @@ export const SystemResourceForm = forwardRef<
         name="method"
         value={isAssetQuery ? "post" : "get"}
       />
-      <input
-        type="hidden"
-        name="url"
-        value={
-          isAssetQuery
-            ? JSON.stringify(assetsQueryResourceUrl)
-            : localResource.value
-        }
-      />
+      <input type="hidden" name="url" value={localResource.value} />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={resourceId}>Resource</Label>
         <Select
@@ -1027,15 +1024,19 @@ export const SystemResourceForm = forwardRef<
           value={localResource}
           onChange={setLocalResource}
         />
-        {isAssetsResource && canConfigureAssetQuery && (
-          <AssetQueryForm
-            resource={resource}
-            scope={scope}
-            aliases={aliases}
-            enabled={isAssetQuery}
-            enabledId={assetQueryEnabledId}
-            onEnabledChange={setIsAssetQueryEnabled}
-          />
+        {isAssetsResource && (
+          <Suspense
+            fallback={<Text color="subtle">Loading query editor…</Text>}
+          >
+            <AssetQueryForm
+              resource={resource}
+              scope={scope}
+              aliases={aliases}
+              enabled={isAssetQuery}
+              enabledId={assetQueryEnabledId}
+              onEnabledChange={setIsAssetQueryEnabled}
+            />
+          </Suspense>
         )}
       </Flex>
     </>

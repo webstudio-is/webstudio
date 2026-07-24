@@ -157,8 +157,19 @@ describe("assetResourceIndexV1", () => {
     resourceId: "resource-1",
     queryHash: `sha256:${"a".repeat(64)}`,
     assetRevision: `sha256:${"b".repeat(64)}`,
-    queryMode: "parameterized" as const,
-    parameterNames: ["locale", "slug"],
+    plan: {
+      format: "webstudio-asset-query-plan",
+      version: 1,
+      kind: "asset-list",
+      queryHash: `sha256:${"a".repeat(64)}`,
+      assetRevision: `sha256:${"b".repeat(64)}`,
+      rootResponseKey: "assets",
+      variables: [{ name: "locale" }, { name: "slug" }],
+      orderBy: [],
+      first: 100,
+      skip: 0,
+      fields: [],
+    },
     documents: [document],
     integrity: {
       algorithm: "sha256" as const,
@@ -166,17 +177,11 @@ describe("assetResourceIndexV1", () => {
     },
   };
 
-  test("accepts a bounded versioned parameterized index", () => {
+  test("accepts a bounded versioned index", () => {
     expect(assetResourceIndexV1.parse(index)).toEqual(index);
   });
 
-  test("requires deterministic parameter and document ordering", () => {
-    expect(
-      assetResourceIndexV1.safeParse({
-        ...index,
-        parameterNames: ["slug", "locale"],
-      }).success
-    ).toBe(false);
+  test("requires deterministic document ordering", () => {
     expect(
       assetResourceIndexV1.safeParse({
         ...index,
@@ -186,28 +191,6 @@ describe("assetResourceIndexV1", () => {
         ],
       }).success
     ).toBe(false);
-  });
-
-  test("requires query mode to agree with parameter names", () => {
-    expect(
-      assetResourceIndexV1.safeParse({
-        ...index,
-        queryMode: "static",
-      }).success
-    ).toBe(false);
-    expect(
-      assetResourceIndexV1.safeParse({
-        ...index,
-        parameterNames: [],
-      }).success
-    ).toBe(false);
-    expect(
-      assetResourceIndexV1.safeParse({
-        ...index,
-        queryMode: "static",
-        parameterNames: [],
-      }).success
-    ).toBe(true);
   });
 });
 
@@ -235,59 +218,39 @@ describe("assetResourceIndexStatus", () => {
 });
 
 describe("assetResourceQueryRequest", () => {
-  test("defaults to no parameters and no content hydration", () => {
-    expect(assetResourceQueryRequest.parse({ query: "*[]" })).toEqual({
-      query: "*[]",
-      parameters: {},
-      resultLimit: 100,
-      content: { mode: "none" },
+  test("defaults to no variables", () => {
+    expect(
+      assetResourceQueryRequest.parse({ query: "{ assets { totalCount } }" })
+    ).toEqual({
+      query: "{ assets { totalCount } }",
+      variables: {},
     });
   });
 
-  test("accepts JSON parameters, a pinned index, and bounded hydration", () => {
+  test("accepts JSON variables, an operation name, and a pinned index", () => {
     const request = {
-      query: "*[properties.slug == $slug][0]{_id, revision, contentRef}",
-      parameters: { slug: "hello-world", locale: { language: "en" } },
-      resultLimit: 1,
+      query: "query Post($slug: String!) { assets { items { id } } }",
+      variables: { slug: "hello-world", locale: { language: "en" } },
+      operationName: "Post",
       indexRevision: "index-7",
-      content: { mode: "range" as const, offset: 100, length: 500 },
     };
 
     expect(assetResourceQueryRequest.parse(request)).toEqual(request);
   });
 
   test.each(["slug-value", "$slug", "0slug"])(
-    "rejects invalid parameter name %s",
+    "rejects invalid variable name %s",
     (name) => {
       expect(
         assetResourceQueryRequest.safeParse({
-          query: "*[]",
-          parameters: { [name]: "value" },
+          query: "{ assets { totalCount } }",
+          variables: { [name]: "value" },
         }).success
       ).toBe(false);
     }
   );
 
-  test("rejects limits higher than the server envelope", () => {
-    expect(
-      assetResourceQueryRequest.safeParse({
-        query: "*[]",
-        resultLimit: assetResourceLimits.resultCount + 1,
-      }).success
-    ).toBe(false);
-    expect(
-      assetResourceQueryRequest.safeParse({
-        query: "*[]",
-        content: {
-          mode: "range",
-          offset: 0,
-          length: assetResourceLimits.hydratedRangeBytes + 1,
-        },
-      }).success
-    ).toBe(false);
-  });
-
-  test("measures query and parameter limits as serialized UTF-8", () => {
+  test("measures query and variable limits as serialized UTF-8", () => {
     expect(
       assetResourceQueryRequest.safeParse({
         query: "😀".repeat(assetResourceLimits.queryBytes / 2),
@@ -295,9 +258,9 @@ describe("assetResourceQueryRequest", () => {
     ).toBe(false);
     expect(
       assetResourceQueryRequest.safeParse({
-        query: "*[]",
-        parameters: {
-          value: "😀".repeat(assetResourceLimits.parameterBytes / 2),
+        query: "{ assets { totalCount } }",
+        variables: {
+          value: "😀".repeat(assetResourceLimits.variableBytes / 2),
         },
       }).success
     ).toBe(false);
@@ -305,26 +268,14 @@ describe("assetResourceQueryRequest", () => {
 });
 
 describe("assetResourceQuerySuccess", () => {
-  test("keeps projected data separate from hydrated content", () => {
+  test("returns GraphQL data with immutable index metadata", () => {
     const response = {
       ok: true as const,
-      result: { _id: "asset-1", title: "Hello world" },
-      content: {
-        "asset-1": {
-          _id: "asset-1",
-          revision: "sha256:content-hash",
-          contentRef: "asset-1/sha256:content-hash",
-          encoding: "utf-8" as const,
-          text: "# Hello world",
-        },
-      },
+      data: { asset: { id: "asset-1", title: "Hello world" } },
       meta: {
         queryHash: "sha256:query-hash",
         indexRevision: "index-7",
         assetRevision: "asset-revision-12",
-        resultCount: 1,
-        hydratedFileCount: 1,
-        hydratedBytes: 13,
       },
     };
 

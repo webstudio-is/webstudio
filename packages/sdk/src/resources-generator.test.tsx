@@ -88,7 +88,7 @@ test("generates resource identity for an Assets query", () => {
         url: '"/$resources/assets/query"',
         method: "post" as const,
         headers: [],
-        body: '{ query: "*[]" }',
+        body: '{ query: "{ assets { items { id } } }" }',
       },
     ]),
     props: new Map(),

@@ -140,6 +140,28 @@ tags: [web, studio]
       ).rejects.toMatchObject({ code: "FRONTMATTER_INVALID" });
     }
   });
+
+  test("preserves arbitrary object keys without prototype pollution", async () => {
+    const { properties } = await extractMarkdownFrontmatter(`---
+__proto__:
+  polluted: true
+constructor: user value
+prototype: another value
+---
+`);
+
+    expect(Object.hasOwn(properties, "__proto__")).toBe(true);
+    expect(properties["__proto__"]).toEqual({ polluted: true });
+    expect(properties.constructor).toBe("user value");
+    expect(properties.prototype).toBe("another value");
+    expect(({} as { polluted?: boolean }).polluted).toBeUndefined();
+  });
+
+  test("rejects integers that cannot be represented without rounding", async () => {
+    await expect(
+      extractMarkdownFrontmatter("---\nvalue: 9007199254740993\n---\n")
+    ).rejects.toMatchObject({ code: "FRONTMATTER_INVALID" });
+  });
 });
 
 describe("Markdown body and excerpt extraction", () => {

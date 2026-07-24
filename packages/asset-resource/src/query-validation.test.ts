@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { assetResourceLimits } from "@webstudio-is/sdk";
 import {
-  getAssetResourceParameterFieldPaths,
+  getAssetResourceVariableFieldPaths,
   AssetResourceQueryValidationError,
   getAssetResourceReferencedFieldPaths,
   getAssetResourceReferencedFieldPathsFromTree,
@@ -24,8 +24,13 @@ const expectValidationCode = (
 describe("asset resource query validation", () => {
   test("finds unambiguous fields compared with route parameters", () => {
     expect(
-      getAssetResourceParameterFieldPaths(
-        "*[properties.slug == $slug && $locale == properties.locale]"
+      getAssetResourceVariableFieldPaths(
+        `query Posts($slug: String!, $locale: String!) {
+          assets(where: { properties: {
+            slug: { eq: $slug }
+            locale: { eq: $locale }
+          } }) { items { id } }
+        }`
       )
     ).toEqual(
       new Map([
@@ -37,11 +42,16 @@ describe("asset resource query validation", () => {
   test("returns one parsed analysis for a valid parameterized query", () => {
     expect(
       validateAssetResourceQuery(
-        `*[extension == "md" && properties.slug == $slug]`
+        `query Posts($slug: String!) {
+          assets(where: {
+            extension: { eq: "md" }
+            properties: { slug: { eq: $slug } }
+          }) { items { id } }
+        }`
       )
     ).toMatchObject({
       queryMode: "parameterized",
-      parameterNames: ["slug"],
+      variableNames: ["slug"],
       astNodes: expect.any(Number),
       astDepth: expect.any(Number),
       datasetScans: 1,
@@ -54,13 +64,13 @@ describe("asset resource query validation", () => {
       "INVALID_QUERY"
     );
     expectValidationCode(
-      () => validateAssetResourceQuery("*[invalid =="),
+      () => validateAssetResourceQuery("query { assets("),
       "INVALID_QUERY"
     );
     expectValidationCode(
       () =>
         validateAssetResourceQuery(
-          `"${"é".repeat(assetResourceLimits.queryBytes / 2 + 1)}"`
+          `query { assets { ${"é".repeat(assetResourceLimits.queryBytes / 2 + 1)} } }`
         ),
       "INVALID_QUERY"
     );
@@ -70,30 +80,30 @@ describe("asset resource query validation", () => {
     expectValidationCode(
       () =>
         validateAssetResourceQuery(
-          `${"(".repeat(assetResourceLimits.queryAstDepth + 1)}true${")".repeat(assetResourceLimits.queryAstDepth + 1)}`
+          `query { assets { items { ${"properties { ".repeat(assetResourceLimits.queryAstDepth + 1)}id${" }".repeat(assetResourceLimits.queryAstDepth + 1)} } } }`
         ),
       "QUERY_COMPLEXITY_EXCEEDED"
     );
     expectValidationCode(
       () =>
         validateAssetResourceQuery(
-          `*[${Array.from(
+          `query { assets { items { ${Array.from(
             { length: assetResourceLimits.queryAstNodes },
-            () => "true"
-          ).join(" || ")}]`
+            (_, index) => `field${index}`
+          ).join(" ")} } } }`
         ),
       "QUERY_COMPLEXITY_EXCEEDED"
     );
   });
 
-  test("rejects too many distinct runtime parameters", () => {
+  test("rejects too many distinct runtime variables", () => {
     expectValidationCode(
       () =>
         validateAssetResourceQuery(
-          `*[${Array.from(
-            { length: assetResourceLimits.parameterCount + 1 },
-            (_, index) => `$parameter_${index}`
-          ).join(" && ")}]`
+          `query TooMany(${Array.from(
+            { length: assetResourceLimits.variableCount + 1 },
+            (_, index) => `$parameter_${index}: String`
+          ).join(", ")}) { assets { items { id } } }`
         ),
       "QUERY_COMPLEXITY_EXCEEDED"
     );
@@ -101,7 +111,10 @@ describe("asset resource query validation", () => {
 
   test("rejects more than one dataset scan", () => {
     expectValidationCode(
-      () => validateAssetResourceQuery(`{"first": *[], "second": *[]}`),
+      () =>
+        validateAssetResourceQuery(
+          `{ first: assets { items { id } } second: assets { items { id } } }`
+        ),
       "QUERY_COMPLEXITY_EXCEEDED"
     );
   });
@@ -109,7 +122,11 @@ describe("asset resource query validation", () => {
   test("extracts complete referenced asset field paths", () => {
     expect(
       getAssetResourceReferencedFieldPaths(
-        '*[properties.slug == $slug] | order(properties.publishedAt desc){_id, "title": properties.title}'
+        `query Posts($slug: String!) {
+          assets(where: { properties: { slug: { eq: $slug } } }) {
+            items { id properties { title publishedAt } }
+          }
+        }`
       )
     ).toEqual([
       "_id",
@@ -122,7 +139,9 @@ describe("asset resource query validation", () => {
 
   test("formats dynamic field names with valid bracket notation", () => {
     const validated = validateAssetResourceQuery(
-      '*[properties["seo-title"] == "Post"]'
+      `{ assets(where: { properties: { _ws_73656f2d7469746c65: { eq: "Post" } } }) {
+        items { properties { _ws_73656f2d7469746c65 } }
+      } }`
     );
 
     expect(

@@ -1,6 +1,7 @@
 import type { SignatureV4 } from "@smithy/signature-v4";
 import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resource";
 import { createS3ObjectUrl } from "./object-url";
+import { createS3FetchHeaders, signS3Request } from "./request-headers";
 
 const checksumHeader = "x-amz-meta-webstudio-checksum";
 const maxConditionalWriteAttempts = 3;
@@ -12,19 +13,17 @@ const verifyExistingObject = async ({
   signer: SignatureV4;
   url: URL;
 }) => {
-  const request = await signer.sign({
+  const request = await signS3Request({
+    signer,
+    url,
     method: "HEAD",
-    protocol: url.protocol,
-    hostname: url.hostname,
-    path: url.pathname,
     headers: {
-      "x-amz-date": new Date().toISOString(),
       "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
     },
   });
   const existing = await fetch(url, {
     method: request.method,
-    headers: request.headers,
+    headers: createS3FetchHeaders(request.headers),
   });
   if (existing.ok === false) {
     throw new Error("Cannot verify existing immutable resource index");
@@ -55,13 +54,11 @@ export const putImmutableObjectToS3 = async ({
     keyType: "hierarchical",
   });
   for (let attempt = 1; attempt <= maxConditionalWriteAttempts; attempt += 1) {
-    const request = await signer.sign({
+    const request = await signS3Request({
+      signer,
+      url,
       method: "PUT",
-      protocol: url.protocol,
-      hostname: url.hostname,
-      path: url.pathname,
       headers: {
-        "x-amz-date": new Date().toISOString(),
         "Content-Type": object.contentType,
         "Content-Length": `${data.byteLength}`,
         "Cache-Control": "private, max-age=31536000, immutable",
@@ -73,7 +70,7 @@ export const putImmutableObjectToS3 = async ({
     });
     const response = await fetch(url, {
       method: request.method,
-      headers: request.headers,
+      headers: createS3FetchHeaders(request.headers),
       body: data,
     });
     if (response.ok) {
@@ -108,19 +105,17 @@ export const deleteImmutableObjectFromS3 = async ({
     key,
     keyType: "hierarchical",
   });
-  const request = await signer.sign({
+  const request = await signS3Request({
+    signer,
+    url,
     method: "DELETE",
-    protocol: url.protocol,
-    hostname: url.hostname,
-    path: url.pathname,
     headers: {
-      "x-amz-date": new Date().toISOString(),
       "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
     },
   });
   const response = await fetch(url, {
     method: request.method,
-    headers: request.headers,
+    headers: createS3FetchHeaders(request.headers),
   });
   if (response.status === 404) {
     return "missing" as const;

@@ -5,9 +5,8 @@ import {
   buildAssetResourceIndex,
   createAssetFieldCatalog,
   createCanonicalAssetFileEntry,
-  executeAssetResourceQuery,
+  executeAssetQueryPlan,
   extractMarkdownFrontmatter,
-  hydrateAssetResourceResult,
   normalizeAssetFileDocument,
   persistAssetResourceIndex,
   serializeAssetResourceIndex,
@@ -69,17 +68,27 @@ const catalog = await createAssetFieldCatalog(entries);
 const initialBackfillMs = performance.now() - initialStartedAt;
 const initialMarkdownReads = markdownReads;
 
-const listingQuery = `*[
-  _type == "asset.file" &&
-  extension == "md" &&
-  properties.locale == $locale
-] | order(properties.publishedAt desc, _id asc)[0...20]{
-  _id,
-  "title": properties.title,
-  "slug": properties.slug,
-  excerpt
+const listingQuery = `query Posts($locale: String!) {
+  assets(
+    where: { extension: { eq: "md" }, properties: { locale: { eq: $locale } } }
+    orderBy: [{ field: PROPERTIES_publishedAt, direction: DESC }, { field: ID, direction: ASC }]
+    first: 20
+  ) {
+    items { id properties { title slug } excerpt }
+    totalCount
+    hasMore
+  }
 }`;
-const detailQuery = `*[properties.slug == $slug][0]{_id, revision, contentRef, "title": properties.title}`;
+const detailQuery = `query Post($slug: String!) {
+  assets(where: { properties: { slug: { eq: $slug } } }, first: 1) {
+    items {
+      id
+      revision
+      properties { title }
+      content(mode: FULL) { text }
+    }
+  }
+}`;
 const buildIndex = (query = listingQuery) =>
   buildAssetResourceIndex({ projectId, resourceId, query, entries });
 
@@ -138,35 +147,17 @@ const garbageCollectionMs = performance.now() - gcStartedAt;
 
 const detailIndex = await buildIndex(detailQuery);
 const listingRequest = {
-  query: listingQuery,
-  parameters: { locale: "en" },
-  resultLimit: 20,
-  content: { mode: "none" },
+  variables: { locale: "en" },
 };
 const detailRequest = {
-  query: detailQuery,
-  parameters: { slug: "post-0999" },
-  resultLimit: 1,
-  content: { mode: "full" },
+  variables: { slug: "post-0999" },
 };
 const execute = (request, index) =>
-  executeAssetResourceQuery({
-    request,
+  executeAssetQueryPlan({
+    plan: index.plan,
     documents: index.documents,
-    queryHash: index.queryHash,
-    indexRevision: index.integrity.checksum,
     assetRevision: index.assetRevision,
-  });
-await execute(listingRequest, listingIndex);
-const warmListing = await measure(50, () =>
-  execute(listingRequest, listingIndex)
-);
-const detailAndHydration = await measure(50, async () => {
-  const response = await execute(detailRequest, detailIndex);
-  await hydrateAssetResourceResult({
-    result: response.result,
-    documents: detailIndex.documents,
-    options: detailRequest.content,
+    variables: request.variables,
     read: async (contentRef, range) => {
       const file = files.find(({ name }) => name === contentRef);
       if (file === undefined) {
@@ -187,6 +178,12 @@ const detailAndHydration = await measure(50, async () => {
       };
     },
   });
+await execute(listingRequest, listingIndex);
+const warmListing = await measure(50, () =>
+  execute(listingRequest, listingIndex)
+);
+const detailAndHydration = await measure(50, async () => {
+  await execute(detailRequest, detailIndex);
 });
 
 const workerBundle = await bundle({

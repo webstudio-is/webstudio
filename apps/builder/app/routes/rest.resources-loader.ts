@@ -34,18 +34,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     if (isLocalResource(input, "assets")) {
+      const resourceRequest = createLocalResourceRequest(request, input, init);
+      if (resourceRequest.method === "POST") {
+        return assetsQueryLoader({ request, resourceRequest });
+      }
       return assetsLoader({ request });
     }
 
     if (isLocalResource(input, "assets/field-catalog")) {
       return assetsFieldCatalogLoader({ request });
-    }
-
-    if (isLocalResource(input, "assets/query")) {
-      return assetsQueryLoader({
-        request,
-        resourceRequest: createLocalResourceRequest(request, input, init),
-      });
     }
 
     if (isLocalResource(input, "assets/index-status")) {

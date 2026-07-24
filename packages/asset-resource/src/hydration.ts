@@ -1,11 +1,10 @@
-import {
-  assetResourceLimits,
-  hydratedAssetContent,
-  type AssetFileDocument,
-  type AssetResourceContentOptions,
-  type HydratedAssetContent,
+import type {
+  AssetFileDocument,
+  AssetResourceContentOptions,
+  HydratedAssetContent,
 } from "@webstudio-is/sdk";
-import { extractMarkdownBody } from "./markdown";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
+import { extractMarkdownBody } from "./markdown-body";
 
 export class AssetResourceHydrationError extends Error {
   readonly code:
@@ -142,7 +141,7 @@ const decodeText = (bytes: Uint8Array) => {
   }
 };
 
-const getReadLength = (
+export const getAssetResourceHydrationReadLength = (
   document: AssetFileDocument,
   options: Exclude<AssetResourceContentOptions, { mode: "none" }>
 ) => {
@@ -216,7 +215,11 @@ export const hydrateAssetResourceResult = async ({
         details: { assetId: identity._id, mimeType: document.mimeType },
       });
     }
-    return { identity, document, readLength: getReadLength(document, options) };
+    return {
+      identity,
+      document,
+      readLength: getAssetResourceHydrationReadLength(document, options),
+    };
   });
   const totalReadBytes = selected.reduce(
     (total, item) => total + item.readLength,
@@ -275,7 +278,7 @@ export const hydrateAssetResourceResult = async ({
       }
       const returnedBytes = new TextEncoder().encode(text).byteLength;
       hydratedBytes += returnedBytes;
-      content[item.identity._id] = hydratedAssetContent.parse({
+      content[item.identity._id] = {
         ...item.identity,
         encoding: "utf-8",
         text,
@@ -288,7 +291,7 @@ export const hydrateAssetResourceResult = async ({
               },
             }
           : {}),
-      });
+      };
     }
   };
   const settlements = await Promise.allSettled(

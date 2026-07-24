@@ -4,27 +4,24 @@ import {
   assetsResourceUpdateInput,
 } from "./asset-resources";
 
-const baseQuery = {
-  resultLimit: 20,
-  content: { mode: "none" as const },
-  parameters: [],
-};
+const baseQuery = { variables: [] };
 
 describe("Assets resource mutation input", () => {
-  test("rejects invalid GROQ on create", () => {
+  test("rejects invalid GraphQL on create", () => {
     const result = assetsResourceCreateInput.safeParse({
       name: "Posts",
       scopeInstanceId: "root",
-      query: { ...baseQuery, groq: "*[" },
+      query: { ...baseQuery, graphql: "query { assets(" },
     });
 
     expect(result.success).toBe(false);
   });
 
-  test("rejects missing parameter bindings on create and update", () => {
+  test("rejects missing variable bindings on create and update", () => {
     const query = {
       ...baseQuery,
-      groq: "*[properties.slug == $slug]",
+      graphql:
+        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }) { items { id } } }",
     };
 
     expect(
@@ -42,15 +39,16 @@ describe("Assets resource mutation input", () => {
     ).toBe(false);
   });
 
-  test("accepts a binding for every GROQ parameter", () => {
+  test("accepts a binding for every GraphQL variable", () => {
     expect(
       assetsResourceCreateInput.safeParse({
         name: "Post",
         scopeInstanceId: "root",
         query: {
           ...baseQuery,
-          groq: "*[properties.slug == $slug]",
-          parameters: [{ name: "slug", value: "system.params.slug" }],
+          graphql:
+            "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }) { items { id } } }",
+          variables: [{ name: "slug", value: "system.params.slug" }],
         },
       }).success
     ).toBe(true);

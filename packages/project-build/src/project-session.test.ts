@@ -233,18 +233,31 @@ const createSession = ({
 describe("project session", () => {
   test("round-trips hydrated restore transactions through JSON", () => {
     const state = createSnapshot().state;
+    state.assetFolders = new Map([
+      [
+        "folder-1",
+        {
+          id: "folder-1",
+          projectId: "project-1",
+          name: "Posts",
+          createdAt: "2026-07-24T00:00:00.000Z",
+        },
+      ],
+    ]);
     const transaction: BuilderPatchTransaction = {
       id: "restore",
-      payload: ["pages", "props"].map((namespace) => ({
-        namespace: namespace as "pages" | "props",
-        patches: [
-          {
-            op: "replace",
-            path: [],
-            value: state[namespace as "pages" | "props"],
-          },
-        ],
-      })),
+      payload: (["pages", "props", "assetFolders"] as const).map(
+        (namespace) => ({
+          namespace,
+          patches: [
+            {
+              op: "replace" as const,
+              path: [],
+              value: state[namespace],
+            },
+          ],
+        })
+      ),
     };
 
     const serialized = JSON.parse(
@@ -264,6 +277,7 @@ describe("project session", () => {
       folders: expect.any(Map),
     });
     expect(getPatchValue(1)).toBeInstanceOf(Map);
+    expect(getPatchValue(2)).toEqual(state.assetFolders);
   });
 
   test("round-trips an explicitly empty marketplace product", () => {

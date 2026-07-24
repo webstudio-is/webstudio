@@ -1,21 +1,19 @@
-import {
-  assetResourceLimits,
-  assetResourceQueryFailure,
-  assetResourceQueryRequest,
-  type AssetResourceQueryFailure,
-} from "@webstudio-is/sdk";
+import { type AssetResourceQueryFailure } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   assetResourceIdHeader,
   assetsQueryResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
-  AssetResourceQueryExecutionError,
-  executeAndHydrateAssetResourceQuery,
-} from "./query-execution";
-import { computeAssetResourceQueryHash } from "./resource-index";
+  AssetQueryPlanExecutionError,
+  executeAssetQueryPlan,
+  type AssetQueryPlanV1,
+} from "./query-plan";
+import { computeAssetResourceQueryHash } from "./query-hash";
 import { AssetResourceHydrationError } from "./hydration";
-import { verifyAssetResourceIndex } from "./resource-index";
-import { sha256Hex } from "@webstudio-is/project-store";
+import { sha256Hex, validateStorageKey } from "@webstudio-is/project-store";
+import { verifyPublishedAssetResourceIndex } from "./runtime-index";
+import { parsePublishedAssetQueryRequestBody } from "./runtime-request";
 
 export type PublishedAssetResourceManifestEntry = {
   resourceId: string;
@@ -36,7 +34,7 @@ type AssetBinding = {
 
 const parsedIndexCache = new Map<
   string,
-  Promise<Awaited<ReturnType<typeof verifyAssetResourceIndex>>>
+  Promise<Awaited<ReturnType<typeof verifyPublishedAssetResourceIndex>>>
 >();
 
 const getParsedIndexCacheKey = ({
@@ -74,7 +72,9 @@ const loadIndex = ({
       if (response.ok === false) {
         throw new Error("Published asset resource index was not found");
       }
-      const index = await verifyAssetResourceIndex(await response.json());
+      const index = await verifyPublishedAssetResourceIndex(
+        await response.json()
+      );
       if (
         index.resourceId !== entry.resourceId ||
         index.integrity.checksum !== entry.revision ||
@@ -122,10 +122,10 @@ const failure = ({
   retryable?: boolean;
 }) =>
   jsonResponse(
-    assetResourceQueryFailure.parse({
+    {
       ok: false,
       error: { code, message, retryable },
-    }),
+    },
     status
   );
 
@@ -137,6 +137,25 @@ const getRequest = (
   typeof input === "string" || input instanceof URL
     ? new Request(new URL(input, baseUrl), init)
     : new Request(input, init);
+
+const encodePublicAssetPathSegment = (value: string) =>
+  encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+
+/**
+ * Asset content references are logical storage paths. Preserve their `/`
+ * separators so filesystem and object-storage adapters address the same
+ * hierarchy, while encoding every segment for safe use in an HTTP path.
+ */
+export const getPublishedAssetContentPath = (contentRef: string) => {
+  validateStorageKey(contentRef);
+  return `/assets/${contentRef
+    .split("/")
+    .map(encodePublicAssetPathSegment)
+    .join("/")}`;
+};
 
 export const getPublishedAssetResourceCacheKey = async ({
   deploymentId,
@@ -202,9 +221,9 @@ export const createPublishedAssetResourceFetch = ({
     }
     let parsedRequest;
     try {
-      parsedRequest = assetResourceQueryRequest.parse(
-        await request.clone().json()
-      );
+      parsedRequest = (
+        await parsePublishedAssetQueryRequestBody(request.clone())
+      ).request;
     } catch {
       return failure({
         code: "INVALID_REQUEST",
@@ -279,12 +298,12 @@ export const createPublishedAssetResourceFetch = ({
           status: 499,
         });
       }
-      const result = await executeAndHydrateAssetResourceQuery({
-        request: parsedRequest,
+      const data = await executeAssetQueryPlan({
+        plan: index.plan as unknown as AssetQueryPlanV1,
         documents: index.documents,
-        queryHash: index.queryHash,
-        indexRevision: entry.revision,
         assetRevision: index.assetRevision,
+        variables: parsedRequest.variables,
+        operationName: parsedRequest.operationName,
         read: async (contentRef, range) => {
           const headers = new Headers();
           if (range !== undefined && range.length > 0) {
@@ -294,7 +313,7 @@ export const createPublishedAssetResourceFetch = ({
             );
           }
           const assetResponse = await fetchAsset(
-            `/assets/${encodeURIComponent(contentRef)}`,
+            getPublishedAssetContentPath(contentRef),
             { headers, signal: request.signal }
           );
           if (assetResponse.ok === false || assetResponse.body === null) {
@@ -308,7 +327,15 @@ export const createPublishedAssetResourceFetch = ({
           };
         },
       });
-      const resultResponse = jsonResponse(result);
+      const resultResponse = jsonResponse({
+        ok: true,
+        data,
+        meta: {
+          queryHash: index.queryHash,
+          indexRevision: entry.revision,
+          assetRevision: index.assetRevision,
+        },
+      });
       if (cacheKey !== undefined && request.signal.aborted === false) {
         resultResponse.headers.set(
           "cache-control",
@@ -327,12 +354,16 @@ export const createPublishedAssetResourceFetch = ({
           status: 499,
         });
       }
-      if (
-        error instanceof AssetResourceQueryExecutionError ||
-        error instanceof AssetResourceHydrationError
-      ) {
+      if (error instanceof AssetResourceHydrationError) {
         return failure({
           code: error.code,
+          message: error.message,
+          status: 400,
+        });
+      }
+      if (error instanceof AssetQueryPlanExecutionError) {
+        return failure({
+          code: "INVALID_QUERY",
           message: error.message,
           status: 400,
         });

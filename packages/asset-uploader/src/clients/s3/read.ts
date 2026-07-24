@@ -5,6 +5,7 @@ import {
   validateAssetReadRange,
 } from "../../client";
 import { createS3ObjectUrl } from "./object-url";
+import { createS3FetchHeaders, signS3Request } from "./request-headers";
 
 export const readFromS3 = async ({
   signer,
@@ -26,22 +27,20 @@ export const readFromS3 = async ({
   }
   const url = createS3ObjectUrl({ endpoint, bucket, key: name, keyType });
   const headers = {
-    "x-amz-date": new Date().toISOString(),
     "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
     ...(range === undefined
       ? {}
       : { Range: `bytes=${range.offset}-${range.offset + range.length - 1}` }),
   };
-  const request = await signer.sign({
+  const request = await signS3Request({
+    signer,
+    url,
     method: "GET",
-    protocol: url.protocol,
-    hostname: url.hostname,
-    path: url.pathname,
     headers,
   });
   const response = await fetch(url, {
     method: request.method,
-    headers: request.headers,
+    headers: createS3FetchHeaders(request.headers),
   });
   if (response.ok === false || response.body === null) {
     throw new Error("Cannot read asset file");

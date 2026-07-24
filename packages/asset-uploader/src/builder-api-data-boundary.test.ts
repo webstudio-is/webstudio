@@ -33,12 +33,7 @@ describe("Builder asset-resource API data boundary", () => {
     });
     await previewAssetResourceQuery({
       projectId,
-      request: {
-        query: "*[]",
-        parameters: {},
-        resultLimit: 1,
-        content: { mode: "none" },
-      },
+      request: { query: { limit: 1 } },
       context,
       assetClient,
       dependencies,

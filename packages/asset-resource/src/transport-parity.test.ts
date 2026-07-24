@@ -8,30 +8,25 @@ afterEach(() => {
 
 const createQueryRequest = () =>
   createAssetResourceRequest({
-    query:
-      '*[properties.slug == $slug][0]{_id, revision, contentRef, "title": properties.title}',
-    parameters: {
-      slug: "hello-world",
-      locale: { language: "en", fallback: ["en-US"] },
+    query: {
+      filters: [
+        {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: "hello-world",
+        },
+      ],
+      limit: 1,
     },
     indexRevision: "index-7",
-    content: { mode: "markdown-body", maxBytes: 16 * 1024 },
   });
 
 describe("Builder and generated resource transport parity", () => {
   test("sends and returns the same successful asset query contract", async () => {
     const responseBody = {
-      ok: true,
-      result: { _id: "asset-1", title: "Hello world" },
-      content: {},
-      meta: {
-        queryHash: "query-hash",
-        indexRevision: "index-7",
-        assetRevision: "asset-revision-2",
-        resultCount: 1,
-        hydratedFileCount: 0,
-        hydratedBytes: 0,
-      },
+      items: [{ id: "asset-1", properties: { title: "Hello world" } }],
+      totalCount: 1,
+      hasMore: false,
     };
     const builderFetch = vi
       .fn<typeof fetch>()
@@ -51,7 +46,7 @@ describe("Builder and generated resource transport parity", () => {
 
     expect(builderFetch.mock.calls).toEqual(generatedFetch.mock.calls);
     expect(builderFetch).toHaveBeenCalledWith(
-      "/$resources/assets/query",
+      "/$resources/assets",
       expect.objectContaining({
         method: "post",
         headers: new Headers([["content-type", "application/json"]]),

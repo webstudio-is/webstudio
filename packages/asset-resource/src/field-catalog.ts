@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/project-store";
 import {
   createCanonicalAssetFileEntry,
+  parseAssetFieldPath,
   type CanonicalAssetFileEntry,
   type FieldContribution,
   type ObservedFieldType,
@@ -251,6 +252,41 @@ export const createAssetFieldCatalog = async (
 ): Promise<AssetFieldCatalog> =>
   await createCatalogAccumulator(entries).versionedSnapshot();
 
+const queryableStandardFields = new Set([
+  "name",
+  "path",
+  "key",
+  "folderId",
+  "extension",
+  "mimeType",
+  "size",
+  "revision",
+  "excerpt",
+]);
+
+const getBuilderQueryPath = (path: string) => {
+  if (path === "_id") {
+    return ["id"];
+  }
+  if (queryableStandardFields.has(path)) {
+    return [path];
+  }
+  const segments = parseAssetFieldPath(path);
+  if (
+    segments === undefined ||
+    segments.length === 0 ||
+    segments.some((segment) => segment.type === "element")
+  ) {
+    return;
+  }
+  return [
+    "properties",
+    ...segments.map((segment) =>
+      segment.type === "field" ? segment.name : ""
+    ),
+  ];
+};
+
 export const toBuilderAssetFieldCatalog = (
   catalog: AssetFieldCatalog
 ): BuilderAssetFieldCatalog =>
@@ -260,14 +296,18 @@ export const toBuilderAssetFieldCatalog = (
     canonicalRevision: catalog.canonicalRevision,
     documentCount: catalog.documentCount,
     fields: Object.fromEntries(
-      catalog.fields.map((field) => [
-        field.path,
-        {
-          types: field.types.map(({ type }) => type),
-          occurrences: field.occurrences,
-          ...(field.optional ? { optional: true } : {}),
-          ...(field.mixed ? { mixed: true } : {}),
-        },
-      ])
+      catalog.fields.map((field) => {
+        const queryPath = getBuilderQueryPath(field.path);
+        return [
+          field.path,
+          {
+            ...(queryPath === undefined ? {} : { queryPath }),
+            types: field.types.map(({ type }) => type),
+            occurrences: field.occurrences,
+            ...(field.optional ? { optional: true } : {}),
+            ...(field.mixed ? { mixed: true } : {}),
+          },
+        ];
+      })
     ),
   });

@@ -624,15 +624,15 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "validate-asset-query",
     description:
-      "Validate GROQ for queryable assets and return parameters, referenced fields, and bounded syntax-tree metrics.",
+      "Validate a structured Assets query and return its referenced dynamic fields and bounded operation counts.",
     examples: [
-      'webstudio validate-asset-query \'{"query":"*[_type == \\"asset.file\\" && properties.slug == $slug][0]"}\'',
+      'webstudio validate-asset-query \'{"query":{"filters":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}],"limit":1}}\'',
     ],
   },
   {
     command: "preview-asset-query",
     description:
-      "Run an authenticated queryable asset preview against persisted metadata, with concrete parameter values and optional selected-file content hydration.",
+      "Run an authenticated structured Assets query against indexed metadata, optionally loading bounded file content.",
     examples: [
       "webstudio preview-asset-query --input asset-query-preview.json --json",
     ],

@@ -256,116 +256,207 @@ export const serverOnlyRouterOperationMetadata = {
       type: "object",
       properties: {
         query: {
-          type: "string",
-          minLength: 1,
-          maxLength: 32768,
-        },
-      },
-      required: ["query"],
-    },
-  },
-  "assetQueries.preview": {
-    id: "assetQueries.preview",
-    command: "preview-asset-query",
-    method: "query",
-    path: "api.assetQueries.preview",
-    client: "previewAssetQuery",
-    permit: "view",
-    inputSchema: {
-      type: "object",
-      properties: {
-        query: {
-          type: "string",
-          minLength: 1,
-          maxLength: 32768,
-        },
-        parameters: {
-          default: {},
           type: "object",
-          propertyNames: {
-            type: "string",
-            pattern: "^[A-Za-z_][A-Za-z0-9_]*$",
+          properties: {
+            filters: {
+              default: [],
+              maxItems: 32,
+              type: "array",
+              items: {
+                oneOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      operator: {
+                        type: "string",
+                        enum: [
+                          "eq",
+                          "ne",
+                          "contains",
+                          "startsWith",
+                          "endsWith",
+                          "gt",
+                          "gte",
+                          "lt",
+                          "lte",
+                        ],
+                      },
+                      value: {
+                        $ref: "#/$defs/__schema0",
+                      },
+                    },
+                    required: ["field", "operator", "value"],
+                    additionalProperties: false,
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      operator: {
+                        type: "string",
+                        const: "in",
+                      },
+                      value: {
+                        maxItems: 1000,
+                        type: "array",
+                        items: {
+                          $ref: "#/$defs/__schema1",
+                        },
+                      },
+                    },
+                    required: ["field", "operator", "value"],
+                    additionalProperties: false,
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      operator: {
+                        type: "string",
+                        enum: ["exists", "isEmpty"],
+                      },
+                      value: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["field", "operator", "value"],
+                    additionalProperties: false,
+                  },
+                ],
+              },
+            },
+            sort: {
+              default: [],
+              maxItems: 8,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field: {
+                    minItems: 1,
+                    maxItems: 9,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  direction: {
+                    type: "string",
+                    enum: ["asc", "desc"],
+                  },
+                },
+                required: ["field", "direction"],
+                additionalProperties: false,
+              },
+            },
+            limit: {
+              default: 100,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            offset: {
+              default: 0,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            content: {
+              default: {
+                mode: "none",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "none",
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "full",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "range",
+                    },
+                    offset: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    length: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 262144,
+                    },
+                  },
+                  required: ["mode", "offset", "length"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "markdown-body",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+              ],
+            },
           },
-          additionalProperties: {
-            $ref: "#/$defs/__schema0",
-          },
-        },
-        resultLimit: {
-          default: 100,
-          type: "integer",
-          exclusiveMinimum: 0,
-          maximum: 1000,
-        },
-        indexRevision: {
-          type: "string",
-          minLength: 1,
-        },
-        content: {
-          default: {
-            mode: "none",
-          },
-          oneOf: [
-            {
-              type: "object",
-              properties: {
-                mode: {
-                  type: "string",
-                  const: "none",
-                },
-              },
-              required: ["mode"],
-            },
-            {
-              type: "object",
-              properties: {
-                mode: {
-                  type: "string",
-                  const: "full",
-                },
-                maxBytes: {
-                  type: "integer",
-                  exclusiveMinimum: 0,
-                  maximum: 1048576,
-                },
-              },
-              required: ["mode"],
-            },
-            {
-              type: "object",
-              properties: {
-                mode: {
-                  type: "string",
-                  const: "range",
-                },
-                offset: {
-                  type: "integer",
-                  minimum: 0,
-                  maximum: 9007199254740991,
-                },
-                length: {
-                  type: "integer",
-                  exclusiveMinimum: 0,
-                  maximum: 262144,
-                },
-              },
-              required: ["mode", "offset", "length"],
-            },
-            {
-              type: "object",
-              properties: {
-                mode: {
-                  type: "string",
-                  const: "markdown-body",
-                },
-                maxBytes: {
-                  type: "integer",
-                  exclusiveMinimum: 0,
-                  maximum: 1048576,
-                },
-              },
-              required: ["mode"],
-            },
-          ],
+          additionalProperties: false,
+          required: [],
         },
       },
       required: ["query"],
@@ -397,6 +488,323 @@ export const serverOnlyRouterOperationMetadata = {
               },
               additionalProperties: {
                 $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+        __schema1: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema1",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema1",
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+  "assetQueries.preview": {
+    id: "assetQueries.preview",
+    command: "preview-asset-query",
+    method: "query",
+    path: "api.assetQueries.preview",
+    client: "previewAssetQuery",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "object",
+          properties: {
+            filters: {
+              default: [],
+              maxItems: 32,
+              type: "array",
+              items: {
+                oneOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      operator: {
+                        type: "string",
+                        enum: [
+                          "eq",
+                          "ne",
+                          "contains",
+                          "startsWith",
+                          "endsWith",
+                          "gt",
+                          "gte",
+                          "lt",
+                          "lte",
+                        ],
+                      },
+                      value: {
+                        $ref: "#/$defs/__schema0",
+                      },
+                    },
+                    required: ["field", "operator", "value"],
+                    additionalProperties: false,
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      operator: {
+                        type: "string",
+                        const: "in",
+                      },
+                      value: {
+                        maxItems: 1000,
+                        type: "array",
+                        items: {
+                          $ref: "#/$defs/__schema1",
+                        },
+                      },
+                    },
+                    required: ["field", "operator", "value"],
+                    additionalProperties: false,
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      field: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                      operator: {
+                        type: "string",
+                        enum: ["exists", "isEmpty"],
+                      },
+                      value: {
+                        type: "boolean",
+                      },
+                    },
+                    required: ["field", "operator", "value"],
+                    additionalProperties: false,
+                  },
+                ],
+              },
+            },
+            sort: {
+              default: [],
+              maxItems: 8,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field: {
+                    minItems: 1,
+                    maxItems: 9,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  direction: {
+                    type: "string",
+                    enum: ["asc", "desc"],
+                  },
+                },
+                required: ["field", "direction"],
+                additionalProperties: false,
+              },
+            },
+            limit: {
+              default: 100,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            offset: {
+              default: 0,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            content: {
+              default: {
+                mode: "none",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "none",
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "full",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "range",
+                    },
+                    offset: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    length: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 262144,
+                    },
+                  },
+                  required: ["mode", "offset", "length"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "markdown-body",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+              ],
+            },
+          },
+          additionalProperties: false,
+          required: [],
+        },
+        indexRevision: {
+          type: "string",
+          minLength: 1,
+          maxLength: 255,
+        },
+      },
+      required: ["query"],
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+        __schema1: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema1",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema1",
               },
             },
           ],

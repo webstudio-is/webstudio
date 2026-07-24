@@ -1,12 +1,12 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { arrayBuffer } from "node:stream/consumers";
 import {
-  createUploadTicket,
   createSizeLimiter,
   assetDataOverride,
   getContentHash,
   uploadFile,
   type UploadErrorCleanup,
+  PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/index.server";
 import { isAssetFileName } from "@webstudio-is/protocol";
 import type { Asset } from "@webstudio-is/sdk";
@@ -36,6 +36,7 @@ const createAssetUploadResponse = async ({
   assetInfoFallback,
   assetInfoOverride,
   onUploadError,
+  assetClient = createAssetClient(),
 }: {
   body: ReadableStream<Uint8Array>;
   context: Awaited<ReturnType<typeof createContext>>;
@@ -46,11 +47,12 @@ const createAssetUploadResponse = async ({
     meta?: Record<string, unknown>;
   };
   onUploadError?: UploadErrorCleanup;
+  assetClient?: ReturnType<typeof createAssetClient>;
 }) => {
   const asset = await uploadFile(
     name,
     body,
-    createAssetClient(),
+    assetClient,
     context,
     assetInfoFallback,
     assetInfoOverride,
@@ -173,17 +175,18 @@ export const action = async (props: ActionFunctionArgs) => {
       await assertApiProjectPermit(context, projectId, "build");
       const data = await readRequestBody(request.body, params.name);
       const force = url.searchParams.get("force") === "true";
-      const ticket = await createUploadTicket(
-        {
-          projectId,
-          type: assetType,
-          filename: params.name,
-          description,
-          folderId,
-          contentHash: force ? undefined : await getContentHash(data),
-        },
-        context
-      );
+      const assetClient = createAssetClient();
+      const ticket = await new PostgresAssetRepository({
+        projectId,
+        context,
+        assetClient,
+      }).createUploadTicket({
+        type: assetType,
+        filename: params.name,
+        description,
+        folderId,
+        contentHash: force ? undefined : await getContentHash(data),
+      });
       if (ticket.deduplicated) {
         return createDeduplicatedAssetResponse(ticket.asset);
       }
@@ -194,6 +197,7 @@ export const action = async (props: ActionFunctionArgs) => {
         assetInfoFallback,
         assetInfoOverride,
         onUploadError: createApiUploadErrorCleanup(ticket.assetId, projectId),
+        assetClient,
       });
     }
 

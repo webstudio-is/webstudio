@@ -6,19 +6,27 @@ import {
 import {
   compareStrings,
   serializeJsonDeterministically,
-  sha256,
 } from "@webstudio-is/project-store";
 import type { CanonicalAssetFileEntry } from "./canonical";
 import { computeCanonicalAssetRevision } from "./field-catalog";
-import { selectAssetResourceCandidates } from "./candidate-selection";
-import { validateAssetResourceQuery } from "./query-validation";
+import { compileAssetGraphqlQuery } from "./graphql-compiler";
+import {
+  AssetResourceQueryValidationError,
+  validateAssetResourceQuery,
+} from "./query-validation";
+import type { AssetQueryPlanV1 } from "./query-plan";
+import { computeAssetResourceQueryHash } from "./query-hash";
+import {
+  checksumAssetResourceIndex,
+  verifyPublishedAssetResourceIndex,
+} from "./runtime-index";
 
 export type AssetResourceIndexInput = Omit<
   AssetResourceIndexV1,
-  "parameterNames" | "documents"
+  "documents" | "plan"
 > & {
-  parameterNames: readonly string[];
   documents: readonly AssetResourceIndexV1["documents"][number][];
+  plan: AssetQueryPlanV1;
 };
 
 export const normalizeAssetResourceIndex = (
@@ -26,7 +34,6 @@ export const normalizeAssetResourceIndex = (
 ): AssetResourceIndexV1 =>
   assetResourceIndexV1.parse({
     ...input,
-    parameterNames: [...input.parameterNames].sort(compareStrings),
     documents: [...input.documents].sort((left, right) =>
       compareStrings(left._id, right._id)
     ),
@@ -37,14 +44,18 @@ export const serializeAssetResourceIndex = (index: unknown) =>
 
 type CreateAssetResourceIndexInput = Omit<
   AssetResourceIndexInput,
-  "queryHash" | "integrity"
+  "queryHash" | "integrity" | "plan"
 > & {
   query: string;
 };
 
-const checksumAssetResourceIndex = async (index: AssetResourceIndexV1) => {
-  const { integrity: _integrity, ...payload } = index;
-  return await sha256(serializeJsonDeterministically(payload));
+type ValidatedAssetResourceQuery = string & {
+  readonly __validatedAssetResourceQuery: unique symbol;
+};
+
+const validateQuery = (query: string): ValidatedAssetResourceQuery => {
+  validateAssetResourceQuery(query);
+  return query as ValidatedAssetResourceQuery;
 };
 
 const assertIndexSize = (serialized: string) => {
@@ -56,8 +67,7 @@ const assertIndexSize = (serialized: string) => {
   }
 };
 
-export const computeAssetResourceQueryHash = async (query: string) =>
-  await sha256(query);
+export { computeAssetResourceQueryHash } from "./query-hash";
 
 type PreparedAssetResourceEntries = {
   assetRevision: string;
@@ -73,14 +83,33 @@ export type AssetResourceIndexBuilder = {
   }) => Promise<AssetResourceIndexV1>;
 };
 
-export const createAssetResourceIndex = async ({
+const createAssetResourceIndexFromValidatedQuery = async ({
   query,
   ...input
-}: CreateAssetResourceIndexInput): Promise<AssetResourceIndexV1> => {
+}: Omit<CreateAssetResourceIndexInput, "query"> & {
+  query: ValidatedAssetResourceQuery;
+}): Promise<AssetResourceIndexV1> => {
   const queryHash = await computeAssetResourceQueryHash(query);
+  let plan: AssetQueryPlanV1;
+  try {
+    plan = await compileAssetGraphqlQuery({
+      query,
+      documents: input.documents,
+      assetRevision: input.assetRevision,
+    });
+  } catch (error) {
+    throw new AssetResourceQueryValidationError({
+      code: "INVALID_QUERY",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Asset GraphQL query cannot be compiled",
+    });
+  }
   const unsigned = normalizeAssetResourceIndex({
     ...input,
     queryHash,
+    plan,
     integrity: {
       algorithm: "sha256",
       checksum: `sha256:${"0".repeat(64)}`,
@@ -96,6 +125,15 @@ export const createAssetResourceIndex = async ({
   assertIndexSize(serializeAssetResourceIndex(index));
   return index;
 };
+
+export const createAssetResourceIndex = async ({
+  query,
+  ...input
+}: CreateAssetResourceIndexInput): Promise<AssetResourceIndexV1> =>
+  await createAssetResourceIndexFromValidatedQuery({
+    ...input,
+    query: validateQuery(query),
+  });
 
 const prepareAssetResourceEntries = async ({
   projectId,
@@ -137,26 +175,18 @@ const buildPreparedAssetResourceIndex = async ({
   resourceId,
   query,
   prepared,
-  validatedQuery = validateAssetResourceQuery(query),
 }: {
   resourceId: string;
-  query: string;
+  query: ValidatedAssetResourceQuery;
   prepared: PreparedAssetResourceEntries;
-  validatedQuery?: ReturnType<typeof validateAssetResourceQuery>;
 }) => {
-  const selection = await selectAssetResourceCandidates({
-    tree: validatedQuery.tree,
-    documents: prepared.documents,
-  });
-  return await createAssetResourceIndex({
+  return await createAssetResourceIndexFromValidatedQuery({
     format: "webstudio-resource-index",
     version: 1,
     resourceId,
     query,
     assetRevision: prepared.assetRevision,
-    queryMode: selection.queryMode,
-    parameterNames: selection.parameterNames,
-    documents: selection.documents,
+    documents: prepared.documents,
   });
 };
 
@@ -183,7 +213,11 @@ export const createAssetResourceIndexBuilder = async ({
     projectId,
     assetRevision: prepared.assetRevision,
     build: async ({ resourceId, query }) =>
-      await buildPreparedAssetResourceIndex({ resourceId, query, prepared }),
+      await buildPreparedAssetResourceIndex({
+        resourceId,
+        query: validateQuery(query),
+        prepared,
+      }),
   };
 };
 
@@ -200,7 +234,7 @@ export const buildAssetResourceIndex = async ({
   entries: readonly CanonicalAssetFileEntry[];
   assetRevision?: string;
 }) => {
-  const validatedQuery = validateAssetResourceQuery(query);
+  const validatedQuery = validateQuery(query);
   const prepared = await prepareAssetResourceEntries({
     projectId,
     entries,
@@ -208,18 +242,12 @@ export const buildAssetResourceIndex = async ({
   });
   return await buildPreparedAssetResourceIndex({
     resourceId,
-    query,
+    query: validatedQuery,
     prepared,
-    validatedQuery,
   });
 };
 
 export const verifyAssetResourceIndex = async (value: unknown) => {
   const index = assetResourceIndexV1.parse(value);
-  const expected = await checksumAssetResourceIndex(index);
-  if (index.integrity.checksum !== expected) {
-    throw new Error("Resource index checksum is invalid");
-  }
-  assertIndexSize(serializeAssetResourceIndex(index));
-  return index;
+  return await verifyPublishedAssetResourceIndex(index);
 };

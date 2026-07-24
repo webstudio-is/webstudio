@@ -1,7 +1,6 @@
 import {
-  assetResourceContentOptions,
   assetResourceLimits,
-  assetResourceParameterName,
+  assetResourceVariableName,
   assetResourceQueryRequest,
   createAssetQueryResourceBody,
   decodeDataSourceVariable,
@@ -28,58 +27,51 @@ import {
 import { throwBuilderRuntimeError } from "./errors";
 import { paginateOutput, paginatedOutputInputSchema } from "./output";
 
-export const assetsQueryParameterBindingInput = z.object({
-  name: assetResourceParameterName,
+export const assetsQueryVariableBindingInput = z.object({
+  name: assetResourceVariableName,
   value: resourceExpressionInput,
 });
 
-const assetResourceParameterBindingsInput = z
-  .array(assetsQueryParameterBindingInput)
-  .max(assetResourceLimits.parameterCount)
-  .superRefine((parameters, context) => {
+const assetResourceVariableBindingsInput = z
+  .array(assetsQueryVariableBindingInput)
+  .max(assetResourceLimits.variableCount)
+  .superRefine((variables, context) => {
     const names = new Set<string>();
-    for (const [index, parameter] of parameters.entries()) {
-      if (names.has(parameter.name)) {
+    for (const [index, variable] of variables.entries()) {
+      if (names.has(variable.name)) {
         context.addIssue({
           code: "custom",
           path: [index, "name"],
-          message: `Duplicate asset query parameter "${parameter.name}".`,
+          message: `Duplicate asset query variable "${variable.name}".`,
         });
       }
-      names.add(parameter.name);
+      names.add(variable.name);
     }
   });
 
 const assetResourceConfigurationFields = {
   query: assetResourceQueryRequest.shape.query.describe(
-    "GROQ query evaluated against asset.file documents."
+    "GraphQL query evaluated against the generated Assets schema."
   ),
-  parameters: assetResourceParameterBindingsInput
+  variables: assetResourceVariableBindingsInput
     .default([])
     .describe(
-      "Runtime GROQ parameters. Each value is a Webstudio expression evaluated in the resource scope."
+      "Runtime GraphQL variables. Each value is a Webstudio expression evaluated in the resource scope."
     ),
-  resultLimit: z
-    .number()
-    .int()
-    .positive()
-    .max(assetResourceLimits.resultCount)
-    .default(assetResourceLimits.defaultResultCount),
-  content: assetResourceContentOptions.default({ mode: "none" }),
 };
 
 const refineAssetQueryConfiguration = (
   configuration: {
     query: string;
-    parameters: readonly { name: string }[];
+    variables: readonly { name: string }[];
   },
   context: z.RefinementCtx
 ) => {
-  let parameterNames: readonly string[];
+  let variableNames: readonly string[];
   try {
-    parameterNames = validateAssetResourceQuery(
+    variableNames = validateAssetResourceQuery(
       configuration.query
-    ).parameterNames;
+    ).variableNames;
   } catch (error) {
     context.addIssue({
       code: "custom",
@@ -90,14 +82,14 @@ const refineAssetQueryConfiguration = (
     return;
   }
   const bindings = new Set(
-    configuration.parameters.map((parameter) => parameter.name)
+    configuration.variables.map((variable) => variable.name)
   );
-  for (const parameterName of parameterNames) {
-    if (bindings.has(parameterName) === false) {
+  for (const variableName of variableNames) {
+    if (bindings.has(variableName) === false) {
       context.addIssue({
         code: "custom",
-        path: ["parameters"],
-        message: `Asset query parameter $${parameterName} requires a binding.`,
+        path: ["variables"],
+        message: `Asset query variable $${variableName} requires a binding.`,
       });
     }
   }
@@ -109,14 +101,12 @@ const storedAssetQueryConfigurationInput = z
 
 export const assetsQueryConfigurationInput = z
   .object({
-    groq: assetResourceConfigurationFields.query,
-    parameters: assetResourceConfigurationFields.parameters,
-    resultLimit: assetResourceConfigurationFields.resultLimit,
-    content: assetResourceConfigurationFields.content,
+    graphql: assetResourceConfigurationFields.query,
+    variables: assetResourceConfigurationFields.variables,
   })
   .superRefine((configuration, context) =>
     refineAssetQueryConfiguration(
-      { query: configuration.groq, parameters: configuration.parameters },
+      { query: configuration.graphql, variables: configuration.variables },
       context
     )
   );
@@ -154,9 +144,9 @@ type AssetResourceConfiguration = z.output<
 >;
 type DecodedAssetResourceConfiguration = Omit<
   AssetResourceConfiguration,
-  "parameters"
+  "variables"
 > & {
-  parameters: Array<{ name: string; value: string }>;
+  variables: Array<{ name: string; value: string }>;
 };
 
 const normalizeExpression = (value: z.output<typeof resourceExpressionInput>) =>
@@ -164,18 +154,14 @@ const normalizeExpression = (value: z.output<typeof resourceExpressionInput>) =>
 
 export const createAssetResourceBody = ({
   query,
-  parameters,
-  resultLimit,
-  content,
+  variables,
 }: AssetResourceConfiguration) =>
   createAssetQueryResourceBody({
     query,
-    parameters: parameters.map(({ name, value }) => ({
+    variables: variables.map(({ name, value }) => ({
       name,
       value: normalizeExpression(value),
     })),
-    resultLimit,
-    contentExpression: JSON.stringify(content),
   });
 
 const parseJsonExpression = (expression: string | undefined) => {
@@ -198,16 +184,14 @@ export const parseAssetResourceConfiguration = (
   const fields = parseAssetQueryResourceBody(resource.body);
   const parsed = storedAssetQueryConfigurationInput.safeParse({
     query: parseJsonExpression(fields.queryExpression),
-    parameters: fields.parameters,
-    resultLimit: parseJsonExpression(fields.resultLimitExpression),
-    content: parseJsonExpression(fields.contentExpression),
+    variables: fields.variables,
   });
   if (parsed.success === false) {
     return;
   }
   return {
     ...parsed.data,
-    parameters: parsed.data.parameters.map(({ name, value }) => ({
+    variables: parsed.data.variables.map(({ name, value }) => ({
       name,
       value: normalizeExpression(value),
     })),
@@ -271,10 +255,8 @@ const serializeAssetResource = ({
         ? {}
         : {
             query: {
-              groq: configuration.query,
-              resultLimit: configuration.resultLimit,
-              content: configuration.content,
-              parameters: configuration.parameters.map(({ name, value }) => ({
+              graphql: configuration.query,
+              variables: configuration.variables.map(({ name, value }) => ({
                 name,
                 value: toPublicExpression({
                   expression: value,
@@ -349,10 +331,8 @@ const createStoredAssetsResource = ({
       },
     ],
     body: createAssetResourceBody({
-      query: query.groq,
-      parameters: query.parameters,
-      resultLimit: query.resultLimit,
-      content: query.content,
+      query: query.graphql,
+      variables: query.variables,
     }),
   };
 };
@@ -400,10 +380,8 @@ export const updateAssetsResource = (
     storedConfiguration === undefined
       ? undefined
       : {
-          groq: storedConfiguration.query,
-          parameters: storedConfiguration.parameters,
-          resultLimit: storedConfiguration.resultLimit,
-          content: storedConfiguration.content,
+          graphql: storedConfiguration.query,
+          variables: storedConfiguration.variables,
         };
   const query =
     queryUpdate === undefined

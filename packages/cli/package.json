@@ -35,6 +35,7 @@
     "@trpc/client": "^10.45.2",
     "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/project-migrations": "workspace:*",
+    "@webstudio-is/project-store": "workspace:*",
     "@webstudio-is/protocol": "workspace:*",
     "@webstudio-is/sync-client": "workspace:*",
     "acorn": "^8.14.1",

@@ -17,6 +17,11 @@ import {
 } from "./resource-index-maintenance";
 
 const server = createTestServer();
+const markdownAssetsQuery =
+  '{ assets(where: { extension: { eq: "md" } }) { items { id } } }';
+const postBySlugQuery =
+  "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id } } }";
+const allAssetsQuery = "{ assets { items { id } } }";
 const document = {
   _id: "post-1",
   _type: "asset.file" as const,
@@ -53,8 +58,8 @@ describe("incremental resource index maintenance", () => {
         expect(search.get("projectId")).toBe("eq.project-1");
         expect(search.get("deletedAt")).toBe("is.null");
         return json([
-          { resourceId: "listing", query: `*[extension == "md"]` },
-          { resourceId: "post", query: `*[properties.slug == $slug]` },
+          { resourceId: "listing", query: markdownAssetsQuery },
+          { resourceId: "post", query: postBySlugQuery },
         ]);
       }),
       db.get("AssetFileMetadata", () => {
@@ -114,7 +119,7 @@ describe("incremental resource index maintenance", () => {
         const search = new URL(request.url).searchParams;
         return search.get("deletedAt") === "is.null"
           ? json([])
-          : json([{ resourceId: "deleted", query: "*[]" }]);
+          : json([{ resourceId: "deleted", query: allAssetsQuery }]);
       }),
       db.get("AssetFileMetadata", () => {
         metadataLoaded = true;
@@ -142,7 +147,7 @@ describe("incremental resource index maintenance", () => {
     let metadataLoaded = false;
     server.use(
       db.get("AssetResourceIndexState", () =>
-        json([{ resourceId: "posts", query: "*[]" }])
+        json([{ resourceId: "posts", query: allAssetsQuery }])
       ),
       db.get("AssetFileMetadata", () => {
         metadataLoaded = true;
@@ -168,7 +173,7 @@ describe("incremental resource index maintenance", () => {
   });
 
   test("repairs a stale current-query index before publication", async () => {
-    const query = `*[extension == "md"]`;
+    const query = markdownAssetsQuery;
     const queryHash = await computeAssetResourceQueryHash(query);
     const assetRevision = await computeCanonicalAssetRevision([entry]);
     server.use(
@@ -209,7 +214,7 @@ describe("incremental resource index maintenance", () => {
   });
 
   test("repairs a current query change from its validated build snapshot", async () => {
-    const query = `*[extension == "md"]`;
+    const query = markdownAssetsQuery;
     const queryHash = await computeAssetResourceQueryHash(query);
     const assetRevision = await computeCanonicalAssetRevision([entry]);
     let beginInput: Record<string, unknown> | undefined;
@@ -262,7 +267,7 @@ describe("incremental resource index maintenance", () => {
   });
 
   test("does not authorize a reusable query with an unrelated build snapshot", async () => {
-    const query = `*[extension == "md"]`;
+    const query = markdownAssetsQuery;
     const queryHash = await computeAssetResourceQueryHash(query);
     let beginInput: Record<string, unknown> | undefined;
     server.use(
@@ -308,7 +313,7 @@ describe("incremental resource index maintenance", () => {
   });
 
   test("builds a historical query snapshot without replacing current state", async () => {
-    const historicalQuery = `*[extension == "md"]`;
+    const historicalQuery = markdownAssetsQuery;
     const historicalQueryHash =
       await computeAssetResourceQueryHash(historicalQuery);
     server.use(

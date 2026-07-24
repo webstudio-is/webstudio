@@ -1,7 +1,9 @@
 import {
   createCanonicalAssetFileEntry,
+  extractJsonProperties,
   extractMarkdownBodyAndExcerpt,
   extractMarkdownFrontmatter,
+  JsonMetadataError,
   MarkdownMetadataError,
   normalizeAssetFileDocument,
 } from "@webstudio-is/asset-resource";
@@ -26,6 +28,7 @@ import {
 import { runBounded } from "./async-utils";
 
 const markdownExtension = /\.md$/i;
+const jsonExtension = /\.json$/i;
 type CanonicalAssetClient = Pick<AssetClient, "readFile"> &
   Partial<Omit<AssetClient, "readFile">>;
 
@@ -202,6 +205,32 @@ const indexCanonicalAsset = async ({
         throw error;
       }
       metadataError ??= { code: error.code, message: error.message };
+    }
+  } else if (jsonExtension.test(asset.file.name)) {
+    if (asset.file.size > assetResourceLimits.jsonBytes) {
+      const error = new JsonMetadataError(
+        "JSON_BYTES_EXCEEDED",
+        "JSON metadata exceeds the byte limit"
+      );
+      metadataError = { code: error.code, message: error.message };
+    } else {
+      const bytes =
+        asset.file.size === 0
+          ? new Uint8Array()
+          : await assetClient
+              .readFile(asset.file.name, {
+                offset: 0,
+                length: asset.file.size,
+              })
+              .then((stored) => readPrefix(stored.data, asset.file.size));
+      try {
+        properties = (await extractJsonProperties(bytes)).properties;
+      } catch (error) {
+        if (error instanceof JsonMetadataError === false) {
+          throw error;
+        }
+        metadataError = { code: error.code, message: error.message };
+      }
     }
   }
   const revision = createAssetContentRevision({

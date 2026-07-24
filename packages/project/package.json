@@ -18,6 +18,7 @@
     "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/project-migrations": "workspace:*",
+    "@webstudio-is/project-store": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "immer": "^10.1.1",
