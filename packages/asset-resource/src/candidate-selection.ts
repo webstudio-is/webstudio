@@ -1,7 +1,7 @@
 import { evaluate, type ExprNode } from "groq-js/1";
 import type { AssetFileDocument } from "@webstudio-is/sdk";
 import { isGroqAstNode, visitGroqAst } from "./groq-ast";
-import { compareStrings } from "./stable-json";
+import { compareStrings } from "@webstudio-is/project-store";
 
 const assetResourceCandidatePolicyV1 = {
   records: "safe-static-filter-superset",

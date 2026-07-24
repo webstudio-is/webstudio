@@ -15,7 +15,7 @@ import {
 import { computeAssetResourceQueryHash } from "./resource-index";
 import { AssetResourceHydrationError } from "./hydration";
 import { verifyAssetResourceIndex } from "./resource-index";
-import { sha256Hex } from "./sha256";
+import { sha256Hex } from "@webstudio-is/project-store";
 
 export type PublishedAssetResourceManifestEntry = {
   resourceId: string;

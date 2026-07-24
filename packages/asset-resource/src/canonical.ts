@@ -1,5 +1,8 @@
 import { assetFileDocument, type AssetFileDocument } from "@webstudio-is/sdk";
-import { compareStrings } from "./stable-json";
+import {
+  compareStrings,
+  serializeJsonDeterministically,
+} from "@webstudio-is/project-store";
 
 export type AssetFileMetadataInput = {
   id: string;
@@ -34,6 +37,12 @@ export type FieldContribution = {
   type: ObservedFieldType;
 };
 
+const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
+export const appendAssetFieldPath = (path: string, key: string) =>
+  identifier.test(key) ? `${path}.${key}` : `${path}[${JSON.stringify(key)}]`;
+
+type FieldPathSegment = { type: "field"; name: string } | { type: "element" };
+
 const getObservedType = (value: unknown): ObservedFieldType => {
   if (value === null) {
     return "null";
@@ -42,53 +51,104 @@ const getObservedType = (value: unknown): ObservedFieldType => {
     return "array";
   }
   const type = typeof value;
-  if (
-    type === "boolean" ||
-    type === "number" ||
-    type === "string" ||
-    type === "object"
-  ) {
+  if (type === "number") {
+    if (Number.isFinite(value) === false) {
+      throw new Error("Asset field contains a non-finite number");
+    }
     return type;
   }
-  throw new Error("Field contribution contains a non-JSON value");
+  if (type === "object") {
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new Error("Asset field contains a non-plain object");
+    }
+    return type;
+  }
+  if (type === "boolean" || type === "string") {
+    return type;
+  }
+  throw new Error("Asset field contains a non-JSON value");
 };
 
-const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
-export const appendAssetFieldPath = (path: string, key: string) =>
-  identifier.test(key) ? `${path}.${key}` : `${path}[${JSON.stringify(key)}]`;
+const compareFieldPaths = (
+  left: FieldPathSegment[],
+  right: FieldPathSegment[]
+) => {
+  for (let index = 0; index < Math.min(left.length, right.length); index++) {
+    const leftSegment = left[index];
+    const rightSegment = right[index];
+    if (leftSegment.type !== rightSegment.type) {
+      return leftSegment.type === "field" ? -1 : 1;
+    }
+    if (leftSegment.type === "field" && rightSegment.type === "field") {
+      const result = compareStrings(leftSegment.name, rightSegment.name);
+      if (result !== 0) {
+        return result;
+      }
+    }
+  }
+  return left.length - right.length;
+};
 
-export const getFieldContributions = (
-  properties: AssetFileDocument["properties"]
-): FieldContribution[] => {
-  const contributions = new Map<string, FieldContribution>();
-  const add = (path: string, value: unknown) => {
-    const type = getObservedType(value);
-    contributions.set(`${path}\u0000${type}`, { path, type });
+const getStructuralFieldContributions = (
+  fields: Readonly<Record<string, unknown>>
+) => {
+  const contributions = new Map<
+    string,
+    { path: FieldPathSegment[]; type: ObservedFieldType }
+  >();
+  const add = (path: FieldPathSegment[], value: unknown) => {
+    const contribution = { path, type: getObservedType(value) };
+    contributions.set(
+      `${serializeJsonDeterministically(path)}\u0000${contribution.type}`,
+      contribution
+    );
     if (Array.isArray(value)) {
       for (const item of value) {
-        add(`${path}[]`, item);
+        add([...path, { type: "element" }], item);
       }
       return;
     }
     if (value !== null && typeof value === "object") {
-      for (const key of Object.keys(value).sort()) {
+      for (const key of Object.keys(value).sort(compareStrings)) {
         add(
-          appendAssetFieldPath(path, key),
+          [...path, { type: "field", name: key }],
           (value as Record<string, unknown>)[key]
         );
       }
     }
   };
-
-  for (const key of Object.keys(properties).sort()) {
-    add(appendAssetFieldPath("properties", key), properties[key]);
+  for (const key of Object.keys(fields).sort(compareStrings)) {
+    add([{ type: "field", name: key }], fields[key]);
   }
-  return Array.from(contributions.values()).sort(
+  return [...contributions.values()].sort(
     (left, right) =>
-      compareStrings(left.path, right.path) ||
+      compareFieldPaths(left.path, right.path) ||
       compareStrings(left.type, right.type)
   );
 };
+
+const formatLegacyFieldPath = (path: FieldPathSegment[]) => {
+  let formatted = "properties";
+  for (const segment of path) {
+    formatted =
+      segment.type === "element"
+        ? `${formatted}[]`
+        : appendAssetFieldPath(formatted, segment.name);
+  }
+  return formatted;
+};
+
+export const getFieldContributions = (
+  properties: AssetFileDocument["properties"]
+): FieldContribution[] =>
+  getStructuralFieldContributions(properties)
+    .map(({ path, type }) => ({ path: formatLegacyFieldPath(path), type }))
+    .sort(
+      (left, right) =>
+        compareStrings(left.path, right.path) ||
+        compareStrings(left.type, right.type)
+    );
 
 export const createCanonicalAssetFileEntry = ({
   projectId,

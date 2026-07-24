@@ -1,0 +1,45 @@
+{
+  "name": "@webstudio-is/project-store",
+  "version": "0.0.0-webstudio-version",
+  "description": "Portable storage primitives for Webstudio project snapshots",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf lib && esbuild src/index.ts src/filesystem.ts src/r2.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "esbuild": "^0.25.3",
+    "vitest": "^3.1.2"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./src/index.ts"
+    },
+    "./filesystem": {
+      "webstudio": "./src/filesystem.ts",
+      "types": "./lib/types/filesystem.d.ts",
+      "import": "./lib/filesystem.js",
+      "default": "./src/filesystem.ts"
+    },
+    "./r2": {
+      "webstudio": "./src/r2.ts",
+      "types": "./lib/types/r2.d.ts",
+      "import": "./lib/r2.js",
+      "default": "./src/r2.ts"
+    }
+  },
+  "files": [
+    "lib/**/*",
+    "!*.test.*"
+  ]
+}

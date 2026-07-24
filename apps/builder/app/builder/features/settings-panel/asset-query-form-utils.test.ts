@@ -3,7 +3,6 @@ import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   createAssetQueryResourceBody,
   getAssetIndexStatusLabel,
-  getAssetFileTypeGroqPredicate,
   getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
   normalizeAssetQueryParameterBindings,
@@ -91,10 +90,6 @@ describe("asset query resource body", () => {
     expect(isEmptyAssetQueryResult([])).toBe(true);
     expect(isEmptyAssetQueryResult(null)).toBe(true);
     expect(isEmptyAssetQueryResult({})).toBe(false);
-  });
-
-  test("file-type helpers produce visible GROQ source", () => {
-    expect(getAssetFileTypeGroqPredicate("md")).toBe('extension == "md"');
   });
 
   test("normalizes runtime parameter names without changing expressions", () => {

@@ -49,9 +49,6 @@ export const getAssetIndexStatusLabel = (
 export const isEmptyAssetQueryResult = (result: unknown) =>
   result === null || (Array.isArray(result) && result.length === 0);
 
-export const getAssetFileTypeGroqPredicate = (extension: string) =>
-  `extension == ${JSON.stringify(extension)}`;
-
 export const getAssetQueryConfigurationError = ({
   query,
   parameters,

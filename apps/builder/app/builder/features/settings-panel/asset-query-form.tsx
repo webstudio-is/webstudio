@@ -35,7 +35,6 @@ import {
 } from "~/builder/shared/binding-popover";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
 import { CodeEditor } from "~/shared/code-editor";
-import type { EditorApi } from "~/shared/code-editor-base";
 import {
   loadBuilderAssetFieldCatalog,
   loadBuilderAssetIndexStatus,
@@ -43,7 +42,6 @@ import {
 } from "~/shared/asset-resource-api.client";
 import {
   createAssetQueryResourceBody,
-  getAssetFileTypeGroqPredicate,
   getAssetIndexStatusLabel,
   getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
@@ -498,7 +496,6 @@ export const AssetQueryForm = ({
     };
   }, [assets, enabled]);
 
-  const editorApiRef = useRef<EditorApi>();
   const groqCompletion = useMemo(() => {
     let resourceFieldPaths: Set<string> | undefined;
     if (indexStatus?.activeRevision !== undefined) {
@@ -555,23 +552,8 @@ export const AssetQueryForm = ({
             })}
           />
           <Grid gap={1}>
-            <Flex justify="between" align="center">
-              <Label>GROQ query</Label>
-              <Button
-                type="button"
-                color="neutral"
-                onClick={() => {
-                  editorApiRef.current?.replaceSelection(
-                    getAssetFileTypeGroqPredicate("md")
-                  );
-                  editorApiRef.current?.focus();
-                }}
-              >
-                Insert Markdown filter
-              </Button>
-            </Flex>
+            <Label>GROQ query</Label>
             <CodeEditor
-              editorApiRef={editorApiRef}
               lang="groq"
               groqCompletion={groqCompletion}
               title="GROQ query"

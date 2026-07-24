@@ -3,12 +3,15 @@ import {
   assetResourceIndexV1,
   type AssetResourceIndexV1,
 } from "@webstudio-is/sdk";
+import {
+  compareStrings,
+  serializeJsonDeterministically,
+  sha256,
+} from "@webstudio-is/project-store";
 import type { CanonicalAssetFileEntry } from "./canonical";
 import { computeCanonicalAssetRevision } from "./field-catalog";
 import { selectAssetResourceCandidates } from "./candidate-selection";
 import { validateAssetResourceQuery } from "./query-validation";
-import { compareStrings, serializeJsonDeterministically } from "./stable-json";
-import { sha256 } from "./sha256";
 
 export type AssetResourceIndexInput = Omit<
   AssetResourceIndexV1,

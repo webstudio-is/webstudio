@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@webstudio-is/project-store": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "groq-js": "1.30.3",
     "remark-frontmatter": "4.0.1",
