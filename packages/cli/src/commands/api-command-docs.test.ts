@@ -176,6 +176,16 @@ test("documents MCP use cases with JSON inputs instead of CLI flags", () => {
   }
 });
 
+test("documents the queried Assets result shape", () => {
+  for (const document of ["api-use-cases", "manual-llm"] as const) {
+    const contents = readCliDoc(document);
+    expect(contents).toContain("<dataSourceName>.data.items");
+    expect(contents).toContain("posts.data.items");
+    expect(contents).toContain("post.data.items[0]");
+    expect(contents).toContain("content.text");
+  }
+});
+
 test("documents MCP examples with current tool input fields", () => {
   const adapter = createMetadataOnlyMcpAdapter();
   const toolInputFields = new Map(
