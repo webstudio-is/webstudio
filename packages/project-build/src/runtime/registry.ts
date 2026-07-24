@@ -1873,7 +1873,7 @@ export const builderRuntimeOperations = [
     "resources.delete",
     api("delete-resource", "deleteResource"),
     mutationContract({
-      readNamespaces: [...dataNamespaces, "props"],
+      readNamespaces: ["pages", "instances", ...dataNamespaces, "props"],
       writeNamespaces: [...dataNamespaces, "props"],
     }),
     data.resourceDeleteInput,

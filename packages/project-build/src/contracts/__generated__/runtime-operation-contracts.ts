@@ -67285,7 +67285,7 @@ export const runtimeOperationContractData = [
       required: ["resourceId", "dataSourceIds", "propIds"],
       additionalProperties: {},
     },
-    readNamespaces: ["dataSources", "resources", "props"],
+    readNamespaces: ["pages", "instances", "dataSources", "resources", "props"],
     writeNamespaces: ["dataSources", "resources", "props"],
     invalidatesNamespaces: ["dataSources", "resources", "props"],
     retryOnConflict: false,
