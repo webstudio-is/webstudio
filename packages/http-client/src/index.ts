@@ -1,9 +1,6 @@
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
-import {
-  getAssetContentHash,
-  type AssetResourceContentOptions,
-} from "@webstudio-is/sdk";
+import { getAssetContentHash } from "@webstudio-is/sdk";
 import {
   apiClientHeader,
   apiClientVersionHeader,
@@ -1565,16 +1562,14 @@ type ResourceFieldsInput = {
   body?: string;
 };
 
-type AssetResourceParameterBinding = {
+type AssetResourceVariableBinding = {
   name: string;
   value: string | { type: "literal"; value: string };
 };
 
 type AssetsQueryConfigurationInput = {
-  groq: string;
-  parameters?: AssetResourceParameterBinding[];
-  resultLimit?: number;
-  content?: AssetResourceContentOptions;
+  graphql: string;
+  variables?: AssetResourceVariableBinding[];
 };
 
 export const listResources = projectQueryInput<
@@ -1623,10 +1618,9 @@ export const validateAssetQuery = projectQueryInput<
 export const previewAssetQuery = projectQueryInput<
   AuthProjectParams & {
     query: string;
-    parameters?: Record<string, unknown>;
-    resultLimit?: number;
+    variables?: Record<string, unknown>;
+    operationName?: string;
     indexRevision?: string;
-    content?: AssetResourceContentOptions;
   }
 >("preview-asset-query");
 

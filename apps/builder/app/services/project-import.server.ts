@@ -43,6 +43,7 @@ import {
   type Resource,
   type StyleSource,
 } from "@webstudio-is/sdk";
+import { synchronizeAssetResourcesAfterBuildPatch } from "../shared/synchronize-asset-resource-patch.server";
 
 const toMap = <Key extends string, Value>(entries: [Key, Value][]) =>
   new Map<Key, Value>(entries);
@@ -307,9 +308,14 @@ export const importPublishedProjectBundle = async (
     ignoreVersionCheck?: boolean;
     projectId: string;
   },
-  dependencies = {
+  dependencies: {
+    hasProjectPermit: typeof authorizeProject.hasProjectPermit;
+    loadDevBuildByProjectId: typeof loadDevBuildByProjectId;
+    synchronizeAssetResourcesAfterBuildPatch?: typeof synchronizeAssetResourcesAfterBuildPatch;
+  } = {
     hasProjectPermit: authorizeProject.hasProjectPermit,
     loadDevBuildByProjectId,
+    synchronizeAssetResourcesAfterBuildPatch,
   }
 ) => {
   if (ignoreVersionCheck === false) {
@@ -335,17 +341,15 @@ export const importPublishedProjectBundle = async (
     projectId,
   });
 
+  const buildUpdate = createBuildImportUpdate({
+    data,
+    lastTransactionId: crypto.randomUUID(),
+    updatedAt: new Date().toISOString(),
+    version: nextVersion,
+  });
   const update = await ctx.postgrest.client
     .from("Build")
-    .update(
-      createBuildImportUpdate({
-        data,
-        lastTransactionId: crypto.randomUUID(),
-        updatedAt: new Date().toISOString(),
-        version: nextVersion,
-      }),
-      { count: "exact" }
-    )
+    .update(buildUpdate, { count: "exact" })
     .match({
       id: build.id,
       projectId,
@@ -370,6 +374,16 @@ export const importPublishedProjectBundle = async (
     assetId: getImportedPreviewImageAssetId(data),
     ctx,
     projectId,
+  });
+
+  await dependencies.synchronizeAssetResourcesAfterBuildPatch?.({
+    context: ctx,
+    buildId: build.id,
+    projectId,
+    previousResources: JSON.stringify(build.resources),
+    resources: buildUpdate.resources,
+    changes: [],
+    replaceAllAssets: true,
   });
 
   return { version: nextVersion };

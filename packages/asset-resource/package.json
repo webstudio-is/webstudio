@@ -8,10 +8,9 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "benchmark:groq": "node scripts/benchmark-groq.mjs",
     "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
     "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
-    "build": "rm -rf lib && esbuild src/index.ts src/published-runtime.ts src/query.ts src/markdown.ts src/indexing.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/published-runtime.ts src/query.ts src/markdown.ts src/json.ts src/indexing.ts src/graphql.ts src/graphql-editor.ts src/graphql-compiler.ts src/query-plan.ts src/structured-query.ts src/asset-index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -19,8 +18,8 @@
   "dependencies": {
     "@webstudio-is/project-store": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
-    "groq-js": "1.30.3",
-    "remark-frontmatter": "4.0.1",
+    "graphql": "16.13.2",
+    "graphql-language-service": "5.5.2",
     "remark-parse": "10.0.2",
     "unified": "10.1.2",
     "yaml": "2.9.0"
@@ -55,11 +54,41 @@
       "import": "./lib/markdown.js",
       "default": "./src/markdown.ts"
     },
+    "./json": {
+      "webstudio": "./src/json.ts",
+      "types": "./lib/types/json.d.ts",
+      "import": "./lib/json.js",
+      "default": "./src/json.ts"
+    },
     "./indexing": {
       "webstudio": "./src/indexing.ts",
       "types": "./lib/types/indexing.d.ts",
       "import": "./lib/indexing.js",
       "default": "./src/indexing.ts"
+    },
+    "./graphql": {
+      "webstudio": "./src/graphql.ts",
+      "types": "./lib/types/graphql.d.ts",
+      "import": "./lib/graphql.js",
+      "default": "./src/graphql.ts"
+    },
+    "./graphql-editor": {
+      "webstudio": "./src/graphql-editor.ts",
+      "types": "./lib/types/graphql-editor.d.ts",
+      "import": "./lib/graphql-editor.js",
+      "default": "./src/graphql-editor.ts"
+    },
+    "./graphql-compiler": {
+      "webstudio": "./src/graphql-compiler.ts",
+      "types": "./lib/types/graphql-compiler.d.ts",
+      "import": "./lib/graphql-compiler.js",
+      "default": "./src/graphql-compiler.ts"
+    },
+    "./query-plan": {
+      "webstudio": "./src/query-plan.ts",
+      "types": "./lib/types/query-plan.d.ts",
+      "import": "./lib/query-plan.js",
+      "default": "./src/query-plan.ts"
     }
   },
   "files": [

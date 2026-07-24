@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  AssetResourceQueryExecutionError,
-  AssetResourceQueryValidationError,
-} from "@webstudio-is/asset-resource";
+import { AssetQueryExecutionError } from "@webstudio-is/asset-resource";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { loader } from "./assets-query.server";
 
@@ -15,53 +12,51 @@ const dependencies = {
 const outerRequest = () =>
   new Request(`https://p-${projectId}.localhost/rest/resources-loader`);
 const innerRequest = (body: unknown) =>
-  new Request(`https://p-${projectId}.localhost/$resources/assets/query`, {
+  new Request(`https://p-${projectId}.localhost/$resources/assets`, {
     method: "POST",
     body: JSON.stringify(body),
   });
 
-describe("asset query preview system resource", () => {
+describe("configured Assets system resource", () => {
   beforeEach(() => {
     dependencies.createContext.mockResolvedValue({} as never);
     dependencies.previewAssetResourceQuery.mockReset();
   });
 
-  test("uses outer authentication context and the inner query body", async () => {
+  test("uses the outer authentication context and typed inner request", async () => {
     const responseBody = {
-      ok: true as const,
-      result: [{ _id: "post-1" }],
-      content: {},
-      meta: {
-        queryHash: "query-revision",
-        indexRevision: "index-revision",
-        assetRevision: "asset-revision",
-        resultCount: 1,
-        hydratedFileCount: 0,
-        hydratedBytes: 0,
-      },
+      items: [{ id: "post-1" }],
+      totalCount: 1,
+      hasMore: false,
     };
     dependencies.previewAssetResourceQuery.mockResolvedValue(responseBody);
+    const query = {
+      filters: [
+        {
+          field: ["properties", "draft"],
+          operator: "ne",
+          value: true,
+        },
+      ],
+      limit: 20,
+    };
 
     const response = await loader(
-      {
-        request: outerRequest(),
-        resourceRequest: innerRequest({ query: "*[]" }),
-      },
+      { request: outerRequest(), resourceRequest: innerRequest({ query }) },
       dependencies
     );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(responseBody);
-    expect(dependencies.createContext).toHaveBeenCalledWith(
-      expect.any(Request)
-    );
     expect(dependencies.previewAssetResourceQuery).toHaveBeenCalledWith({
       projectId,
       request: {
-        query: "*[]",
-        parameters: {},
-        resultLimit: 100,
-        content: { mode: "none" },
+        query: expect.objectContaining({
+          ...query,
+          sort: [],
+          offset: 0,
+          content: { mode: "none" },
+        }),
       },
       context: expect.anything(),
       assetClient: expect.objectContaining({ readFile: expect.any(Function) }),
@@ -70,7 +65,10 @@ describe("asset query preview system resource", () => {
 
   test("returns structured invalid-request and forbidden failures", async () => {
     const invalid = await loader(
-      { request: outerRequest(), resourceRequest: innerRequest({ query: "" }) },
+      {
+        request: outerRequest(),
+        resourceRequest: innerRequest({ query: { limit: -1 } }),
+      },
       dependencies
     );
     expect(invalid.status).toBe(400);
@@ -83,10 +81,7 @@ describe("asset query preview system resource", () => {
       new AuthorizationError("denied")
     );
     const forbidden = await loader(
-      {
-        request: outerRequest(),
-        resourceRequest: innerRequest({ query: "*[]" }),
-      },
+      { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
       dependencies
     );
     expect(forbidden.status).toBe(403);
@@ -96,12 +91,12 @@ describe("asset query preview system resource", () => {
     });
   });
 
-  test("rejects malformed JSON and accepts hydration options", async () => {
+  test("rejects malformed JSON and maps execution errors", async () => {
     const malformed = await loader(
       {
         request: outerRequest(),
         resourceRequest: new Request(
-          `https://p-${projectId}.localhost/$resources/assets/query`,
+          `https://p-${projectId}.localhost/$resources/assets`,
           { method: "POST", body: "{" }
         ),
       },
@@ -109,73 +104,16 @@ describe("asset query preview system resource", () => {
     );
     expect(malformed.status).toBe(400);
 
-    dependencies.previewAssetResourceQuery.mockResolvedValue({
-      ok: true,
-      result: null,
-      content: {},
-      meta: {
-        queryHash: "query-revision",
-        indexRevision: "index-revision",
-        assetRevision: "asset-revision",
-        resultCount: 0,
-        hydratedFileCount: 0,
-        hydratedBytes: 0,
-      },
-    });
-    const hydration = await loader(
-      {
-        request: outerRequest(),
-        resourceRequest: innerRequest({
-          query: "*[0]",
-          content: { mode: "full" },
-        }),
-      },
-      dependencies
-    );
-    expect(hydration.status).toBe(200);
-    expect(dependencies.previewAssetResourceQuery).toHaveBeenCalledWith({
-      projectId,
-      request: expect.objectContaining({ content: { mode: "full" } }),
-      context: expect.anything(),
-      assetClient: expect.objectContaining({ readFile: expect.any(Function) }),
-    });
-  });
-
-  test("maps query validation and execution errors", async () => {
     dependencies.previewAssetResourceQuery.mockRejectedValueOnce(
-      new AssetResourceQueryValidationError({
-        code: "INVALID_QUERY",
-        message: "Invalid GROQ",
-      })
+      new AssetQueryExecutionError("Invalid pagination")
     );
     const invalid = await loader(
-      {
-        request: outerRequest(),
-        resourceRequest: innerRequest({ query: "*[invalid ==" }),
-      },
+      { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
       dependencies
     );
     expect(invalid.status).toBe(400);
     await expect(invalid.json()).resolves.toMatchObject({
-      error: { code: "INVALID_QUERY" },
-    });
-
-    dependencies.previewAssetResourceQuery.mockRejectedValueOnce(
-      new AssetResourceQueryExecutionError({
-        code: "RESULT_LIMIT_EXCEEDED",
-        message: "Too many results",
-      })
-    );
-    const excessive = await loader(
-      {
-        request: outerRequest(),
-        resourceRequest: innerRequest({ query: "*[]" }),
-      },
-      dependencies
-    );
-    expect(excessive.status).toBe(400);
-    await expect(excessive.json()).resolves.toMatchObject({
-      error: { code: "RESULT_LIMIT_EXCEEDED" },
+      error: { code: "INVALID_REQUEST" },
     });
   });
 });

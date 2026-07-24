@@ -82,7 +82,7 @@ export const updateAssetResourceIndexesAfterCanonicalChange = async ({
     return { changedAssetIds: changedIds, updatedResourceIds: [] };
   }
 
-  // Every GROQ query may depend on collection cardinality, ordering, or any
+  // Every Assets query may depend on collection cardinality, ordering, or any
   // schema-less field. V1 therefore treats all query resources in this project
   // as affected, but rebuilds them from compact canonical rows loaded once.
   const { entries, metadataSnapshot } = await loadCanonicalAssetFileSnapshot({

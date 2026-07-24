@@ -1,171 +1,43 @@
 import { describe, expect, test, vi } from "vitest";
-import { assetResourceLimits, type AssetFileDocument } from "@webstudio-is/sdk";
 import { loadResource } from "@webstudio-is/sdk/runtime";
-import { createAssetResourceRequest, executeAssetResourceQuery } from "./index";
-
-const createDocument = (
-  id: string,
-  properties: AssetFileDocument["properties"],
-  overrides: Partial<AssetFileDocument> = {}
-): AssetFileDocument => ({
-  _id: id,
-  _type: "asset.file",
-  name: `${id}.md`,
-  path: `blog/${id}.md`,
-  key: id,
-  folderId: "blog",
-  extension: "md",
-  mimeType: "text/markdown",
-  size: 100,
-  revision: `revision-${id}`,
-  contentRef: `content-${id}`,
-  properties,
-  excerpt: `Excerpt ${id}`,
-  ...overrides,
-});
-
-const documents = [
-  createDocument("alpha", {
-    title: "Alpha",
-    slug: "alpha",
-    publishedAt: "2026-07-16",
-    draft: false,
-    author: { name: "Ada" },
-  }),
-  createDocument("beta", {
-    title: "Beta",
-    slug: "beta",
-    publishedAt: "2026-07-18",
-    draft: false,
-    author: { name: "Ben" },
-  }),
-  createDocument("draft", {
-    title: "Draft",
-    slug: "draft",
-    publishedAt: "2026-07-19",
-    draft: true,
-  }),
-  createDocument(
-    "image",
-    { title: "Image" },
-    {
-      name: "image.png",
-      path: "blog/image.png",
-      extension: "png",
-      mimeType: "image/png",
-    }
-  ),
-];
+import { createAssetResourceRequest } from "./index";
 
 describe("asset resource request transport", () => {
-  test("serializes nested runtime parameters and hydration options in POST JSON", async () => {
+  test("serializes a typed Assets query in POST JSON", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         headers: { "content-type": "application/json" },
       })
     );
     const resourceRequest = createAssetResourceRequest({
-      query: "*[properties.slug == $slug && properties.locale == $locale]",
-      parameters: {
-        slug: "hello-world",
-        locale: { language: "en", fallbacks: ["en-US", "en"] },
+      query: {
+        filters: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "hello-world",
+          },
+          {
+            field: ["properties", "locale"],
+            operator: "eq",
+            value: "en",
+          },
+        ],
+        limit: 1,
       },
       indexRevision: "index-7",
-      content: { mode: "markdown-body", maxBytes: 4096 },
     });
 
     await loadResource(fetch, resourceRequest, "https://example.com/blog/post");
 
     expect(fetch).toHaveBeenCalledOnce();
     const [url, init] = fetch.mock.calls[0];
-    expect(url).toBe("/$resources/assets/query");
+    expect(url).toBe("/$resources/assets");
     expect(init).toEqual({
       method: "post",
       headers: new Headers([["content-type", "application/json"]]),
       body: JSON.stringify(resourceRequest.body),
     });
     expect(JSON.parse(String(init?.body))).toEqual(resourceRequest.body);
-    expect(resourceRequest.body).toEqual(
-      expect.objectContaining({ resultLimit: 100 })
-    );
-  });
-});
-
-describe("bounded asset resource execution", () => {
-  const execute = (
-    request: Partial<Parameters<typeof executeAssetResourceQuery>[0]["request"]>
-  ) =>
-    executeAssetResourceQuery({
-      request: {
-        query: "*[]",
-        parameters: {},
-        resultLimit: 100,
-        content: { mode: "none" },
-        ...request,
-      },
-      documents,
-      queryHash: "query-revision",
-      indexRevision: "index-revision",
-      assetRevision: "asset-revision",
-    });
-
-  test("returns a structured result without hydrating content", async () => {
-    await expect(
-      execute({
-        query: "*[extension == $extension]{_id}",
-        parameters: { extension: "md" },
-      })
-    ).resolves.toMatchObject({
-      ok: true,
-      result: [{ _id: "alpha" }, { _id: "beta" }, { _id: "draft" }],
-      content: {},
-      meta: { resultCount: 3, hydratedFileCount: 0, hydratedBytes: 0 },
-    });
-  });
-
-  test("rejects missing parameters and excessive results", async () => {
-    await expect(
-      execute({ query: "*[properties.slug == $slug]" })
-    ).rejects.toMatchObject({ code: "MISSING_PARAMETER" });
-    await expect(execute({ resultLimit: 2 })).rejects.toMatchObject({
-      code: "RESULT_LIMIT_EXCEEDED",
-    });
-  });
-
-  test("rejects excessive candidate datasets and serialized result bytes", async () => {
-    await expect(
-      executeAssetResourceQuery({
-        request: {
-          query: "*[0]",
-          parameters: {},
-          resultLimit: 1,
-          content: { mode: "none" },
-        },
-        documents: Array.from(
-          { length: assetResourceLimits.candidateDocuments + 1 },
-          (_, index) => createDocument(`post-${index}`, {})
-        ),
-        queryHash: "query-revision",
-        indexRevision: "index-revision",
-        assetRevision: "asset-revision",
-      })
-    ).rejects.toMatchObject({ code: "RESULT_LIMIT_EXCEEDED" });
-
-    await expect(
-      executeAssetResourceQuery({
-        request: {
-          query: `{"documents": *[]{properties}}`,
-          parameters: {},
-          resultLimit: 1,
-          content: { mode: "none" },
-        },
-        documents: Array.from({ length: 80 }, (_, index) =>
-          createDocument(`post-${index}`, { text: "x".repeat(16 * 1024) })
-        ),
-        queryHash: "query-revision",
-        indexRevision: "index-revision",
-        assetRevision: "asset-revision",
-      })
-    ).rejects.toMatchObject({ code: "RESULT_SIZE_EXCEEDED" });
   });
 });

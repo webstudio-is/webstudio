@@ -23,7 +23,7 @@ describe("Builder asset resource client", () => {
           url: "/$resources/assets/query",
           searchParams: [],
           headers: [],
-          body: { query: "*[]" },
+          body: { query: "{ assets { items { id } } }" },
         },
         fetcher,
       })

@@ -34,12 +34,17 @@ const documents = Array.from({ length: 1000 }, (_, index) => ({
 const entries = documents.map((document) =>
   createCanonicalAssetFileEntry({ projectId: "benchmark-project", document })
 );
-const query = `*[
-  _type == "asset.file" &&
-  extension == "md" &&
-  properties.draft != true &&
-  properties.locale == $locale
-] | order(properties.publishedAt desc, _id asc)`;
+const query = `query PublishedPosts($locale: String!) {
+  assets(
+    where: {
+      extension: { eq: "md" }
+      properties: { draft: { ne: true }, locale: { eq: $locale } }
+    }
+    orderBy: [{ field: PROPERTIES_publishedAt, direction: DESC }, { field: ID, direction: ASC }]
+  ) {
+    items { id path properties { title slug publishedAt } excerpt }
+  }
+}`;
 
 const percentile = (samples, quantile) =>
   [...samples].sort((left, right) => left - right)[

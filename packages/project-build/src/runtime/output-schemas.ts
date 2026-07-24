@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   assetType,
-  assetResourceContentOptions,
   compilerSettings,
   dataSourceVariableValue,
   documentTypes,
@@ -190,10 +189,8 @@ const resource = looseObject({
   dataSourceId: id.optional(),
 });
 const assetResourceConfiguration = looseObject({
-  groq: z.string(),
-  parameters: z.array(looseObject({ name: z.string(), value: z.string() })),
-  resultLimit: z.number().int().positive(),
-  content: assetResourceContentOptions,
+  graphql: z.string(),
+  variables: z.array(looseObject({ name: z.string(), value: z.string() })),
 });
 const assetResource = looseObject({
   resourceId: id,

@@ -36,10 +36,11 @@ const entryFromReplaceRpc = (value: ReplaceMetadataRpcArgs) => ({
 });
 
 describe("canonical asset metadata synchronization", () => {
-  test("indexes every asset and reads content only for Markdown files", async () => {
+  test("indexes Markdown and JSON metadata without reading binary files", async () => {
     const contents = new Map([
       ["stored-one.md", "---\ntitle: One\n---\n# First post"],
       ["stored-two.md", "---\ntitle: Two\ndraft: true\n---\nSecond post"],
+      ["stored-data.json", '{"title":"Data","draft":false}'],
     ]);
     const readFile = vi.fn<AssetClient["readFile"]>(async (name) => ({
       data: {
@@ -73,6 +74,18 @@ describe("canonical asset metadata synchronization", () => {
               name: "stored-two.md",
               size: encoder.encode(contents.get("stored-two.md")).byteLength,
               updatedAt: "2026-07-18T02:00:00.000Z",
+              status: "UPLOADED",
+            },
+          },
+          {
+            id: "data",
+            projectId: "project-1",
+            filename: null,
+            folderId: null,
+            file: {
+              name: "stored-data.json",
+              size: encoder.encode(contents.get("stored-data.json")).byteLength,
+              updatedAt: "2026-07-18T02:30:00.000Z",
               status: "UPLOADED",
             },
           },
@@ -127,16 +140,16 @@ describe("canonical asset metadata synchronization", () => {
     });
 
     expect(result).toEqual({
-      scanned: 3,
-      indexed: 3,
+      scanned: 4,
+      indexed: 4,
       metadataUpdated: 0,
       unchanged: 0,
       removed: 0,
       skipped: 0,
       inconsistent: 0,
     });
-    expect(readFile).toHaveBeenCalledTimes(2);
-    expect(persisted).toHaveLength(3);
+    expect(readFile).toHaveBeenCalledTimes(3);
+    expect(persisted).toHaveLength(4);
     expect(persisted).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -153,6 +166,13 @@ describe("canonical asset metadata synchronization", () => {
             path: "stored-two.md",
             properties: { title: "Two", draft: true },
             excerpt: "Second post",
+          }),
+        }),
+        expect.objectContaining({
+          assetId: "data",
+          document: expect.objectContaining({
+            path: "stored-data.json",
+            properties: { title: "Data", draft: false },
           }),
         }),
         expect.objectContaining({

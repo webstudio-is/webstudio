@@ -1,4 +1,6 @@
 import { z } from "zod";
+export { assetResourceLimits } from "../asset-resource-limits";
+import { assetResourceLimits } from "../asset-resource-limits";
 
 const relativeAssetPath = z
   .string()
@@ -65,6 +67,11 @@ export const builderAssetFieldCatalog = z
     fields: z.record(
       z.string().min(1),
       z.object({
+        queryPath: z
+          .array(z.string().min(1))
+          .min(1)
+          .max(assetResourceLimits.fieldPathDepth)
+          .optional(),
         types: z.array(assetObservedFieldType).min(1),
         occurrences: z.number().int().positive(),
         optional: z.literal(true).optional(),
@@ -132,36 +139,9 @@ export const assetResourceIndexStatus = z
 
 export type AssetResourceIndexStatus = z.infer<typeof assetResourceIndexStatus>;
 
-export const assetResourceLimits = {
-  queryBytes: 32 * 1024,
-  queryAstNodes: 1000,
-  queryAstDepth: 64,
-  queryDatasetScans: 1,
-  parameterCount: 32,
-  parameterBytes: 64 * 1024,
-  defaultResultCount: 100,
-  resultCount: 1000,
-  resultBytes: 1024 * 1024,
-  candidateDocuments: 1000,
-  indexBytes: 16 * 1024 * 1024,
-  publishedResourceCount: 32,
-  publishedIndexBytes: 32 * 1024 * 1024,
-  runtimeCachedIndexes: 4,
-  frontmatterBytes: 64 * 1024,
-  frontmatterDepth: 8,
-  frontmatterFields: 256,
-  frontmatterStringBytes: 16 * 1024,
-  excerptBytes: 2 * 1024,
-  hydratedFileBytes: 1024 * 1024,
-  hydratedTotalBytes: 2 * 1024 * 1024,
-  hydratedFileCount: 20,
-  hydratedRangeBytes: 256 * 1024,
-  concurrentContentReads: 8,
-} as const;
-
 const sha256Revision = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 
-export const assetResourceParameterName = z
+export const assetResourceVariableName = z
   .string()
   .regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
 
@@ -172,10 +152,7 @@ export const assetResourceIndexV1 = z
     resourceId: z.string().min(1),
     queryHash: sha256Revision,
     assetRevision: sha256Revision,
-    queryMode: z.enum(["static", "parameterized"]),
-    parameterNames: z
-      .array(assetResourceParameterName)
-      .max(assetResourceLimits.parameterCount),
+    plan: z.json(),
     documents: z.array(assetFileDocument),
     integrity: z.strictObject({
       algorithm: z.literal("sha256"),
@@ -190,25 +167,17 @@ export const assetResourceIndexV1 = z
         message: "Resource index exceeds the candidate document limit",
       });
     }
-    const sortedParameterNames = [...new Set(index.parameterNames)].sort();
     if (
-      JSON.stringify(index.parameterNames) !==
-      JSON.stringify(sortedParameterNames)
+      typeof index.plan !== "object" ||
+      index.plan === null ||
+      Array.isArray(index.plan) ||
+      Reflect.get(index.plan, "queryHash") !== index.queryHash ||
+      Reflect.get(index.plan, "assetRevision") !== index.assetRevision
     ) {
       context.addIssue({
         code: "custom",
-        path: ["parameterNames"],
-        message: "Resource index parameter names must be unique and sorted",
-      });
-    }
-    if (
-      (index.queryMode === "static" && index.parameterNames.length !== 0) ||
-      (index.queryMode === "parameterized" && index.parameterNames.length === 0)
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["queryMode"],
-        message: "Resource index query mode must match its parameters",
+        path: ["plan"],
+        message: "Resource index query plan identity must match the index",
       });
     }
     let previousId: string | undefined;
@@ -225,6 +194,52 @@ export const assetResourceIndexV1 = z
   });
 
 export type AssetResourceIndexV1 = z.infer<typeof assetResourceIndexV1>;
+
+/** One query-independent metadata index shared by every Assets resource. */
+export const assetIndexV1 = z
+  .strictObject({
+    format: z.literal("webstudio-asset-index"),
+    version: z.literal(1),
+    assetRevision: sha256Revision,
+    documents: z.array(assetFileDocument),
+    fieldCatalog: builderAssetFieldCatalog,
+    integrity: z.strictObject({
+      algorithm: z.literal("sha256"),
+      checksum: sha256Revision,
+    }),
+  })
+  .superRefine((index, context) => {
+    if (index.documents.length > assetResourceLimits.candidateDocuments) {
+      context.addIssue({
+        code: "custom",
+        path: ["documents"],
+        message: "Asset index exceeds the document limit",
+      });
+    }
+    if (
+      index.fieldCatalog.canonicalRevision !== index.assetRevision ||
+      index.fieldCatalog.documentCount !== index.documents.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["fieldCatalog"],
+        message: "Asset index field catalog does not match its documents",
+      });
+    }
+    let previousId: string | undefined;
+    for (const [position, document] of index.documents.entries()) {
+      if (previousId !== undefined && document._id <= previousId) {
+        context.addIssue({
+          code: "custom",
+          path: ["documents", position, "_id"],
+          message: "Asset index documents must have unique sorted IDs",
+        });
+      }
+      previousId = document._id;
+    }
+  });
+
+export type AssetIndexV1 = z.infer<typeof assetIndexV1>;
 
 const getUtf8ByteLength = (value: string) =>
   new TextEncoder().encode(value).byteLength;
@@ -264,6 +279,125 @@ export type AssetResourceContentOptions = z.infer<
   typeof assetResourceContentOptions
 >;
 
+const assetQueryStandardField = z.enum([
+  "id",
+  "name",
+  "path",
+  "key",
+  "folderId",
+  "extension",
+  "mimeType",
+  "size",
+  "revision",
+  "excerpt",
+]);
+
+export const assetQueryFieldPath = z
+  .array(z.string().min(1))
+  .min(1)
+  .max(assetResourceLimits.fieldPathDepth)
+  .superRefine((path, context) => {
+    if (path[0] === "properties") {
+      if (path.length < 2) {
+        context.addIssue({
+          code: "custom",
+          message: "A properties field path must select a property",
+        });
+      }
+      return;
+    }
+    if (
+      path.length !== 1 ||
+      assetQueryStandardField.safeParse(path[0]).success === false
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Asset query field path is unsupported",
+      });
+    }
+  });
+
+export type AssetQueryFieldPath = z.infer<typeof assetQueryFieldPath>;
+
+const assetQueryValueFilter = z.strictObject({
+  field: assetQueryFieldPath,
+  operator: z.enum([
+    "eq",
+    "ne",
+    "contains",
+    "startsWith",
+    "endsWith",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+  ]),
+  value: z.json(),
+});
+
+const assetQueryInFilter = z.strictObject({
+  field: assetQueryFieldPath,
+  operator: z.literal("in"),
+  value: z.array(z.json()).max(assetResourceLimits.resultCount),
+});
+
+const assetQueryBooleanFilter = z.strictObject({
+  field: assetQueryFieldPath,
+  operator: z.enum(["exists", "isEmpty"]),
+  value: z.boolean(),
+});
+
+export const assetQueryFilter = z.discriminatedUnion("operator", [
+  assetQueryValueFilter,
+  assetQueryInFilter,
+  assetQueryBooleanFilter,
+]);
+
+export type AssetQueryFilter = z.infer<typeof assetQueryFilter>;
+
+export const assetQuerySort = z.strictObject({
+  field: assetQueryFieldPath,
+  direction: z.enum(["asc", "desc"]),
+});
+
+export type AssetQuerySort = z.infer<typeof assetQuerySort>;
+
+/**
+ * Optional typed configuration for the existing Assets system resource.
+ * An omitted configuration preserves the legacy fetch-all behavior.
+ */
+export const assetQuery = z.strictObject({
+  filters: z
+    .array(assetQueryFilter)
+    .max(assetResourceLimits.filterCount)
+    .default([]),
+  sort: z.array(assetQuerySort).max(assetResourceLimits.sortCount).default([]),
+  limit: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(assetResourceLimits.resultCount)
+    .default(assetResourceLimits.defaultResultCount),
+  offset: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(assetResourceLimits.candidateDocuments)
+    .default(0),
+  content: assetResourceContentOptions.default({ mode: "none" }),
+});
+
+export type AssetQuery = z.infer<typeof assetQuery>;
+export type AssetQueryInput = z.input<typeof assetQuery>;
+
+export const assetQueryRequest = z.strictObject({
+  query: assetQuery,
+  indexRevision: z.string().min(1).max(255).optional(),
+});
+
+export type AssetQueryRequest = z.infer<typeof assetQueryRequest>;
+export type AssetQueryRequestInput = z.input<typeof assetQueryRequest>;
+
 export const assetResourceQueryRequest = z.object({
   query: z
     .string()
@@ -273,28 +407,22 @@ export const assetResourceQueryRequest = z.object({
       (query) => getUtf8ByteLength(query) <= assetResourceLimits.queryBytes,
       { error: "Asset resource query exceeds the UTF-8 byte limit" }
     ),
-  parameters: z
-    .record(assetResourceParameterName, z.json())
+  variables: z
+    .record(assetResourceVariableName, z.json())
     .refine(
-      (parameters) =>
-        Object.keys(parameters).length <= assetResourceLimits.parameterCount,
-      { error: "Too many asset resource parameters" }
+      (variables) =>
+        Object.keys(variables).length <= assetResourceLimits.variableCount,
+      { error: "Too many asset resource variables" }
     )
     .refine(
-      (parameters) =>
-        getUtf8ByteLength(JSON.stringify(parameters)) <=
-        assetResourceLimits.parameterBytes,
-      { error: "Asset resource parameters exceed the JSON byte limit" }
+      (variables) =>
+        getUtf8ByteLength(JSON.stringify(variables)) <=
+        assetResourceLimits.variableBytes,
+      { error: "Asset resource variables exceed the JSON byte limit" }
     )
     .default({}),
-  resultLimit: z
-    .number()
-    .int()
-    .positive()
-    .max(assetResourceLimits.resultCount)
-    .default(assetResourceLimits.defaultResultCount),
-  indexRevision: z.string().min(1).optional(),
-  content: assetResourceContentOptions.default({ mode: "none" }),
+  operationName: assetResourceVariableName.max(255).optional(),
+  indexRevision: z.string().min(1).max(255).optional(),
 });
 
 export type AssetResourceQueryRequest = z.infer<
@@ -319,17 +447,38 @@ export const hydratedAssetContent = z.object({
 
 export type HydratedAssetContent = z.infer<typeof hydratedAssetContent>;
 
+export const assetQueryContent = hydratedAssetContent.omit({
+  _id: true,
+  revision: true,
+  contentRef: true,
+});
+
+export type AssetQueryContent = z.infer<typeof assetQueryContent>;
+
+export const assetQueryItem = assetFileDocument
+  .omit({ _id: true, _type: true, contentRef: true })
+  .extend({
+    id: z.string().min(1),
+    content: assetQueryContent.optional(),
+  });
+
+export type AssetQueryItem = z.infer<typeof assetQueryItem>;
+
+export const assetQueryResult = z.strictObject({
+  items: z.array(assetQueryItem),
+  totalCount: z.number().int().nonnegative(),
+  hasMore: z.boolean(),
+});
+
+export type AssetQueryResult = z.infer<typeof assetQueryResult>;
+
 export const assetResourceQuerySuccess = z.object({
   ok: z.literal(true),
-  result: z.json(),
-  content: z.record(z.string(), hydratedAssetContent),
+  data: z.json(),
   meta: z.object({
     queryHash: z.string().min(1),
     indexRevision: z.string().min(1),
     assetRevision: z.string().min(1),
-    resultCount: z.number().int().nonnegative(),
-    hydratedFileCount: z.number().int().nonnegative(),
-    hydratedBytes: z.number().int().nonnegative(),
   }),
 });
 
@@ -340,7 +489,6 @@ export type AssetResourceQuerySuccess = z.infer<
 export const assetResourceErrorCode = z.enum([
   "INVALID_REQUEST",
   "INVALID_QUERY",
-  "MISSING_PARAMETER",
   "REQUEST_CANCELLED",
   "REQUEST_TIMEOUT",
   "NETWORK_ERROR",
@@ -350,7 +498,6 @@ export const assetResourceErrorCode = z.enum([
   "INDEX_NOT_FOUND",
   "INDEX_BUILD_FAILED",
   "QUERY_COMPLEXITY_EXCEEDED",
-  "RESULT_LIMIT_EXCEEDED",
   "RESULT_SIZE_EXCEEDED",
   "CONTENT_IDENTITY_REQUIRED",
   "CONTENT_NOT_TEXT",

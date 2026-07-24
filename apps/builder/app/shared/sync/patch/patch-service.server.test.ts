@@ -25,6 +25,7 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
 const synchronizeAssetResourceIndexQueries = vi.fn();
+const synchronizeCanonicalAssets = vi.fn();
 const synchronizeCanonicalAsset = vi.fn();
 const synchronizeAllCanonicalAssetStandardMetadata = vi.fn();
 const updateAssetResourceIndexesAfterCanonicalChange = vi.fn();
@@ -49,6 +50,7 @@ const createAssetClient = vi.fn(() => ({
 }));
 const synchronizationDependencies = {
   synchronizeAssetResourceIndexQueries,
+  synchronizeCanonicalAssets,
   synchronizeCanonicalAsset,
   synchronizeAllCanonicalAssetStandardMetadata,
   updateAssetResourceIndexesAfterCanonicalChange,
@@ -148,6 +150,15 @@ describe("applyPatchRequest", () => {
       deletedResourceIds: [],
       updatedResourceIds: [],
     });
+    synchronizeCanonicalAssets.mockReset().mockResolvedValue({
+      scanned: 0,
+      indexed: 0,
+      metadataUpdated: 0,
+      unchanged: 0,
+      removed: 0,
+      skipped: 0,
+      inconsistent: 0,
+    });
     synchronizeCanonicalAsset.mockReset().mockResolvedValue({
       status: "indexed",
       revision: "revision-1",
@@ -181,7 +192,7 @@ describe("applyPatchRequest", () => {
         method: "post",
         url: JSON.stringify("/$resources/assets/query"),
         headers: [],
-        body: '{query:"*[]"}',
+        body: '{query:"{ assets { items { id } } }"}',
       },
     ]);
     patchLoadedBuild.mockImplementation(async ({ build }) => ({
@@ -237,7 +248,7 @@ describe("applyPatchRequest", () => {
         method: "post",
         url: JSON.stringify("/$resources/assets/query"),
         headers: [],
-        body: '{query:"*[]"}',
+        body: '{query:"{ assets { items { id } } }"}',
       },
     ]);
     patchLoadedBuild.mockImplementation(async ({ build }) => ({

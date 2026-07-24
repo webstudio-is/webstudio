@@ -1,12 +1,18 @@
 import type { ObjectStore, ProjectHeadStore } from "./object-store";
+import { ObjectProjectStore } from "./project-store";
 import {
   encodeObjectProjectHead,
   parseObjectProjectHead,
 } from "./project-head";
 import { compareStrings } from "./stable-json";
-import { prependStoragePrefix, validateStorageKey } from "./storage-key";
+import {
+  getHostedProjectStoragePrefixes,
+  prependStoragePrefix,
+  validateStorageKey,
+} from "./storage-key";
 import type {
   ObjectProjectSnapshotReference,
+  ProjectAssetReadRange,
   ProjectHead,
   ProjectHeadUpdateResult,
 } from "./types";
@@ -26,7 +32,10 @@ type R2Conditional = {
 };
 
 export interface R2BucketLike {
-  get(key: string): Promise<R2ObjectBodyLike | null>;
+  get(
+    key: string,
+    options?: { range: { offset: number; length: number } }
+  ): Promise<R2ObjectBodyLike | null>;
   put(
     key: string,
     value: Uint8Array,
@@ -57,8 +66,11 @@ export class R2ObjectStore
     return prependStoragePrefix(this.prefix, key);
   }
 
-  async get(key: string) {
-    const object = await this.bucket.get(this.key(key));
+  async get(key: string, range?: ProjectAssetReadRange) {
+    const object = await this.bucket.get(
+      this.key(key),
+      range === undefined ? undefined : { range }
+    );
     return object === null
       ? undefined
       : new Uint8Array(await object.arrayBuffer());
@@ -71,26 +83,39 @@ export class R2ObjectStore
     }
   }
 
+  async putIfAbsent(key: string, value: Uint8Array) {
+    const result = await this.bucket.put(this.key(key), value, {
+      onlyIf: { etagDoesNotMatch: "*" },
+    });
+    return result === null ? "existing" : "written";
+  }
+
   async delete(key: string) {
     await this.bucket.delete(this.key(key));
   }
 
   async list(prefix: string) {
     validateStorageKey(prefix, true);
+    const root = this.key("", true);
     const storagePrefix =
-      prefix === "" ? this.key("", true) : `${this.key(prefix)}/`;
+      prefix === "" ? (root === "" ? "" : `${root}/`) : `${this.key(prefix)}/`;
     const keys: string[] = [];
     let cursor: string | undefined;
+    const visitedCursors = new Set<string>();
     do {
       const page = await this.bucket.list({
         prefix: storagePrefix,
         ...(cursor === undefined ? {} : { cursor }),
       });
       for (const object of page.objects) {
+        if (object.key.startsWith(storagePrefix) === false) {
+          throw new Error("R2 project object list contains an invalid key");
+        }
         const key =
           this.prefix === ""
             ? object.key
             : object.key.slice(this.prefix.length + 1);
+        validateStorageKey(key);
         keys.push(key);
       }
       if (page.truncated && page.cursor === undefined) {
@@ -98,7 +123,13 @@ export class R2ObjectStore
           "R2 returned a truncated project object list without a cursor"
         );
       }
+      if (page.truncated && visitedCursors.has(page.cursor ?? "")) {
+        throw new Error("R2 returned a repeated project object list cursor");
+      }
       cursor = page.truncated ? page.cursor : undefined;
+      if (cursor !== undefined) {
+        visitedCursors.add(cursor);
+      }
     } while (cursor !== undefined);
     return keys.sort(compareStrings);
   }
@@ -154,3 +185,13 @@ export class R2ObjectStore
     return { status: "updated", head: await parseObjectProjectHead(bytes) };
   }
 }
+
+export const createR2ProjectStore = (
+  bucket: R2BucketLike,
+  projectId: string
+) => {
+  const prefixes = getHostedProjectStoragePrefixes(projectId);
+  const objects = new R2ObjectStore(bucket, prefixes.database);
+  const assets = new R2ObjectStore(bucket, prefixes.assets);
+  return new ObjectProjectStore({ projectId, objects, assets, heads: objects });
+};

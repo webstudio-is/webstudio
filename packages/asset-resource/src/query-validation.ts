@@ -1,8 +1,16 @@
-import { parse, type ExprNode } from "groq-js/1";
-import { assetResourceLimits } from "@webstudio-is/sdk";
-import { getAssetResourceParameterNames } from "./candidate-selection";
-import { visitGroqAst } from "./groq-ast";
+import {
+  Kind,
+  validate,
+  visit,
+  type DocumentNode,
+  type SelectionSetNode,
+  type ValueNode,
+} from "graphql";
+import type { BuilderAssetFieldCatalog } from "@webstudio-is/sdk";
 import { appendAssetFieldPath } from "./canonical";
+import { decodeAssetGraphqlFieldName } from "./graphql-fields";
+import { analyzeAssetGraphqlDocument } from "./graphql-query";
+import { createAssetGraphqlSchemaFromCatalog } from "./graphql";
 
 export class AssetResourceQueryValidationError extends Error {
   readonly code: "INVALID_QUERY" | "QUERY_COMPLEXITY_EXCEEDED";
@@ -24,29 +32,9 @@ export class AssetResourceQueryValidationError extends Error {
   }
 }
 
-const measureAst = (tree: ExprNode) => {
-  let nodes = 0;
-  let maxDepth = 0;
-  let datasetScans = 0;
-  visitGroqAst(tree, (node, depth) => {
-    nodes += 1;
-    maxDepth = Math.max(maxDepth, depth);
-    if (node.type === "Everything") {
-      datasetScans += 1;
-    }
-    if (
-      nodes > assetResourceLimits.queryAstNodes ||
-      maxDepth > assetResourceLimits.queryAstDepth
-    ) {
-      return false;
-    }
-  });
-  return { nodes, depth: maxDepth, datasetScans };
-};
-
 export type ValidatedAssetResourceQuery = {
-  tree: ExprNode;
-  parameterNames: string[];
+  tree: DocumentNode;
+  variableNames: string[];
   queryMode: "static" | "parameterized";
   astNodes: number;
   astDepth: number;
@@ -56,155 +44,274 @@ export type ValidatedAssetResourceQuery = {
 export const validateAssetResourceQuery = (
   query: string
 ): ValidatedAssetResourceQuery => {
-  const queryBytes = new TextEncoder().encode(query).byteLength;
-  if (
-    query.trim().length === 0 ||
-    queryBytes > assetResourceLimits.queryBytes
-  ) {
-    throw new AssetResourceQueryValidationError({
-      code: "INVALID_QUERY",
-      message:
-        query.trim().length === 0
-          ? "Asset resource query cannot be empty"
-          : "Asset resource query exceeds the UTF-8 byte limit",
-      details: {
-        queryBytes,
-        queryByteLimit: assetResourceLimits.queryBytes,
-      },
-    });
-  }
-
-  let tree: ExprNode;
   try {
-    tree = parse(query);
-  } catch {
+    const analysis = analyzeAssetGraphqlDocument(query);
+    const operations = analysis.document.definitions.filter(
+      (definition) => definition.kind === Kind.OPERATION_DEFINITION
+    );
+    if (
+      operations.length !== 1 ||
+      operations[0].operation !== "query" ||
+      operations[0].selectionSet.selections.length !== 1
+    ) {
+      throw new Error("Asset GraphQL must contain exactly one query operation");
+    }
+    const root = operations[0].selectionSet.selections[0];
+    if (
+      root.kind !== Kind.FIELD ||
+      (root.name.value !== "asset" && root.name.value !== "assets")
+    ) {
+      throw new Error(
+        "Asset GraphQL must select one asset or assets root field"
+      );
+    }
+    let unsupportedSyntax: string | undefined;
+    visit(analysis.document, {
+      FragmentDefinition: () => {
+        unsupportedSyntax = "fragments";
+      },
+      FragmentSpread: () => {
+        unsupportedSyntax = "fragments";
+      },
+      InlineFragment: () => {
+        unsupportedSyntax = "fragments";
+      },
+      Directive: () => {
+        unsupportedSyntax = "directives";
+      },
+    });
+    if (unsupportedSyntax !== undefined) {
+      throw new Error(
+        `Asset GraphQL ${unsupportedSyntax} are not supported by published query plans`
+      );
+    }
+    const variableNames = analysis.variableNames;
+    return {
+      tree: analysis.document,
+      variableNames,
+      queryMode: variableNames.length === 0 ? "static" : "parameterized",
+      astNodes: analysis.astNodes,
+      astDepth: analysis.astDepth,
+      datasetScans: analysis.datasetScans,
+    };
+  } catch (error) {
+    if (error instanceof AssetResourceQueryValidationError) {
+      throw error;
+    }
+    const message =
+      error instanceof Error ? error.message : "Asset GraphQL query is invalid";
+    const complexity =
+      message.includes("syntax-tree limits") ||
+      message.includes("too many data scans") ||
+      message.includes("too many variables");
+    throw new AssetResourceQueryValidationError({
+      code: complexity ? "QUERY_COMPLEXITY_EXCEEDED" : "INVALID_QUERY",
+      message,
+    });
+  }
+};
+
+export const validateAssetResourceQueryAgainstCatalog = ({
+  query,
+  catalog,
+}: {
+  query: string;
+  catalog: BuilderAssetFieldCatalog;
+}) => {
+  const validated = validateAssetResourceQuery(query);
+  const errors = validate(
+    createAssetGraphqlSchemaFromCatalog(catalog),
+    validated.tree
+  );
+  if (errors.length !== 0) {
     throw new AssetResourceQueryValidationError({
       code: "INVALID_QUERY",
-      message: "Asset resource query contains invalid GROQ syntax",
+      message: errors.map(({ message }) => message).join("\n"),
     });
   }
-  const ast = measureAst(tree);
-  if (
-    ast.nodes > assetResourceLimits.queryAstNodes ||
-    ast.depth > assetResourceLimits.queryAstDepth ||
-    ast.datasetScans > assetResourceLimits.queryDatasetScans
-  ) {
-    throw new AssetResourceQueryValidationError({
-      code: "QUERY_COMPLEXITY_EXCEEDED",
-      message: "Asset resource query exceeds the syntax-tree limits",
-      details: {
-        astNodes: ast.nodes,
-        astNodeLimit: assetResourceLimits.queryAstNodes,
-        astDepth: ast.depth,
-        astDepthLimit: assetResourceLimits.queryAstDepth,
-        datasetScans: ast.datasetScans,
-        datasetScanLimit: assetResourceLimits.queryDatasetScans,
-      },
+  return validated;
+};
+
+const metadataOperators = new Set([
+  "exists",
+  "eq",
+  "ne",
+  "in",
+  "contains",
+  "startsWith",
+  "endsWith",
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "isEmpty",
+]);
+
+const sourceFieldName = (name: string, path: readonly string[]) =>
+  path[0] === "properties"
+    ? decodeAssetGraphqlFieldName(name)
+    : name === "id"
+      ? "_id"
+      : name === "type"
+        ? "_type"
+        : name;
+
+const formatFieldPath = (path: readonly string[]) => {
+  const [first, ...rest] = path;
+  if (first === undefined) {
+    return;
+  }
+  return rest.reduce(appendAssetFieldPath, first);
+};
+
+const forEachListItem = (
+  value: ValueNode,
+  callback: (item: ValueNode) => void
+) => {
+  if (value.kind === Kind.LIST) {
+    value.values.forEach(callback);
+  } else {
+    callback(value);
+  }
+};
+
+const walkFilter = ({
+  value,
+  path,
+  onField,
+  onVariableEquality,
+}: {
+  value: ValueNode;
+  path: readonly string[];
+  onField: (path: readonly string[]) => void;
+  onVariableEquality?: (name: string, path: readonly string[]) => void;
+}) => {
+  if (value.kind !== Kind.OBJECT) {
+    return;
+  }
+  for (const field of value.fields) {
+    const name = field.name.value;
+    if (name === "AND" || name === "OR" || name === "NOT") {
+      forEachListItem(field.value, (item) =>
+        walkFilter({ value: item, path, onField, onVariableEquality })
+      );
+      continue;
+    }
+    if (metadataOperators.has(name)) {
+      if (
+        name === "eq" &&
+        field.value.kind === Kind.VARIABLE &&
+        path.length > 0
+      ) {
+        onVariableEquality?.(field.value.name.value, path);
+      }
+      continue;
+    }
+    const childPath = [...path, sourceFieldName(name, path)];
+    onField(childPath);
+    walkFilter({
+      value: field.value,
+      path: childPath,
+      onField,
+      onVariableEquality,
     });
   }
-  const parameterNames = getAssetResourceParameterNames(tree);
-  if (parameterNames.length > assetResourceLimits.parameterCount) {
-    throw new AssetResourceQueryValidationError({
-      code: "QUERY_COMPLEXITY_EXCEEDED",
-      message: "Asset resource query references too many parameters",
-      details: {
-        parameterCount: parameterNames.length,
-        parameterLimit: assetResourceLimits.parameterCount,
-      },
-    });
-  }
-  return {
-    tree,
-    parameterNames,
-    queryMode: parameterNames.length === 0 ? "static" : "parameterized",
-    astNodes: ast.nodes,
-    astDepth: ast.depth,
-    datasetScans: ast.datasetScans,
-  };
 };
 
-type AttributeNode = {
-  type: "AccessAttribute";
-  name: string;
-  base?: unknown;
-};
+const getRootFields = (tree: DocumentNode) =>
+  tree.definitions.flatMap((definition) =>
+    definition.kind === Kind.OPERATION_DEFINITION
+      ? definition.selectionSet.selections.filter(
+          (selection) => selection.kind === Kind.FIELD
+        )
+      : []
+  );
 
-const getAttributePath = (node: unknown): string | undefined => {
-  if (
-    typeof node !== "object" ||
-    node === null ||
-    "type" in node === false ||
-    node.type !== "AccessAttribute" ||
-    "name" in node === false ||
-    typeof node.name !== "string"
-  ) {
-    return;
+const walkSelections = ({
+  selectionSet,
+  path,
+  onField,
+}: {
+  selectionSet: SelectionSetNode;
+  path: readonly string[];
+  onField: (path: readonly string[]) => void;
+}) => {
+  for (const selection of selectionSet.selections) {
+    if (selection.kind !== Kind.FIELD) {
+      continue;
+    }
+    const name = selection.name.value;
+    if (
+      path.length === 0 &&
+      (name === "asset" ||
+        name === "assets" ||
+        name === "items" ||
+        name === "totalCount" ||
+        name === "hasMore")
+    ) {
+      if (selection.selectionSet !== undefined) {
+        walkSelections({ selectionSet: selection.selectionSet, path, onField });
+      }
+      continue;
+    }
+    if (name === "content" || path[0] === "content") {
+      continue;
+    }
+    const childPath = [...path, sourceFieldName(name, path)];
+    onField(childPath);
+    if (selection.selectionSet !== undefined) {
+      walkSelections({
+        selectionSet: selection.selectionSet,
+        path: childPath,
+        onField,
+      });
+    }
   }
-  const attribute = node as AttributeNode;
-  const basePath = getAttributePath(attribute.base);
-  return basePath === undefined
-    ? attribute.name
-    : appendAssetFieldPath(basePath, attribute.name);
 };
-
-const getAttributePathSegments = (node: unknown): string[] | undefined => {
-  if (
-    typeof node !== "object" ||
-    node === null ||
-    Reflect.get(node, "type") !== "AccessAttribute" ||
-    typeof Reflect.get(node, "name") !== "string"
-  ) {
-    return;
-  }
-  const base = Reflect.get(node, "base");
-  const baseSegments = base === undefined ? [] : getAttributePathSegments(base);
-  if (baseSegments === undefined) {
-    return;
-  }
-  return [...baseSegments, Reflect.get(node, "name") as string];
-};
-
-const getParameterName = (node: unknown) =>
-  typeof node === "object" &&
-  node !== null &&
-  Reflect.get(node, "type") === "Parameter" &&
-  typeof Reflect.get(node, "name") === "string"
-    ? (Reflect.get(node, "name") as string)
-    : undefined;
 
 /**
- * Returns the document field directly compared with each GROQ parameter.
- * Ambiguous parameters are omitted instead of guessing a prerender identity.
+ * Returns metadata fields directly compared for equality with GraphQL
+ * variables. Ambiguous variables are omitted instead of guessing an SSG route
+ * identity.
  */
-export const getAssetResourceParameterFieldPaths = (query: string) => {
+export const getAssetResourceVariableFieldPaths = (query: string) => {
+  const tree = validateAssetResourceQuery(query).tree;
   const paths = new Map<string, string[] | undefined>();
-  const add = (parameterName: string, path: string[]) => {
-    const previous = paths.get(parameterName);
-    if (previous === undefined && paths.has(parameterName) === false) {
-      paths.set(parameterName, path);
-      return;
-    }
-    if (JSON.stringify(previous) !== JSON.stringify(path)) {
-      paths.set(parameterName, undefined);
+  const add = (name: string, path: readonly string[]) => {
+    const value = [...path];
+    const previous = paths.get(name);
+    if (previous === undefined && paths.has(name) === false) {
+      paths.set(name, value);
+    } else if (JSON.stringify(previous) !== JSON.stringify(value)) {
+      paths.set(name, undefined);
     }
   };
-  visitGroqAst(validateAssetResourceQuery(query).tree, (node) => {
-    if (node.type !== "OpCall" || Reflect.get(node, "op") !== "==") {
-      return;
+  for (const root of getRootFields(tree)) {
+    if (root.name.value === "asset") {
+      for (const argument of root.arguments ?? []) {
+        if (
+          (argument.name.value === "id" || argument.name.value === "path") &&
+          argument.value.kind === Kind.VARIABLE
+        ) {
+          add(argument.value.name.value, [
+            argument.name.value === "id" ? "_id" : "path",
+          ]);
+        }
+      }
+      continue;
     }
-    const left = Reflect.get(node, "left");
-    const right = Reflect.get(node, "right");
-    const leftParameter = getParameterName(left);
-    const rightParameter = getParameterName(right);
-    const leftPath = getAttributePathSegments(left);
-    const rightPath = getAttributePathSegments(right);
-    if (leftParameter !== undefined && rightPath !== undefined) {
-      add(leftParameter, rightPath);
+    const where = root.arguments?.find(
+      (argument) => argument.name.value === "where"
+    )?.value;
+    if (where !== undefined) {
+      walkFilter({
+        value: where,
+        path: [],
+        onField: () => {},
+        onVariableEquality: add,
+      });
     }
-    if (rightParameter !== undefined && leftPath !== undefined) {
-      add(rightParameter, leftPath);
-    }
-  });
+  }
   return new Map(
     [...paths]
       .filter((entry): entry is [string, string[]] => entry[1] !== undefined)
@@ -213,16 +320,31 @@ export const getAssetResourceParameterFieldPaths = (query: string) => {
 };
 
 export const getAssetResourceReferencedFieldPathsFromTree = (
-  tree: ExprNode
+  tree: DocumentNode
 ) => {
   const paths = new Set<string>();
-  visitGroqAst(tree, (node) => {
-    const path = getAttributePath(node);
-    if (path !== undefined) {
-      paths.add(path);
+  const add = (path: readonly string[]) => {
+    const formatted = formatFieldPath(path);
+    if (formatted !== undefined) {
+      paths.add(formatted);
     }
-  });
-  return Array.from(paths).sort();
+  };
+  for (const root of getRootFields(tree)) {
+    const where = root.arguments?.find(
+      (argument) => argument.name.value === "where"
+    )?.value;
+    if (where !== undefined) {
+      walkFilter({ value: where, path: [], onField: add });
+    }
+    if (root.selectionSet !== undefined) {
+      walkSelections({
+        selectionSet: root.selectionSet,
+        path: [],
+        onField: add,
+      });
+    }
+  }
+  return [...paths].sort();
 };
 
 export const getAssetResourceReferencedFieldPaths = (query: string) =>

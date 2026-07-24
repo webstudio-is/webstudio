@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import { readdirSync } from "node:fs";
 import envPaths from "env-paths";
 import { z } from "zod";
+import { encodeStoragePathSegment } from "@webstudio-is/project-store";
 
 const GLOBAL_CONFIG_FOLDER =
   process.env.WEBSTUDIO_CONFIG_DIR ?? envPaths("webstudio").config;
@@ -24,7 +25,7 @@ export const getLocalProjectStateDirectory = (
         projectRoot,
         dirname(LOCAL_CONFIG_FILE),
         "projects",
-        encodeURIComponent(projectId)
+        encodeStoragePathSegment(projectId)
       );
 
 const zLocalConfig = z.object({

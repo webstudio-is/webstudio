@@ -627,6 +627,27 @@ export const parseObjectExpression = (expression: string) => {
   return map;
 };
 
+/** Parse an array expression into its individual element expressions. */
+export const parseArrayExpression = (expression: string) => {
+  const items: string[] = [];
+  let root;
+  try {
+    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+  } catch {
+    return;
+  }
+  if (root.type !== "ArrayExpression") {
+    return;
+  }
+  for (const element of root.elements) {
+    if (element === null || element.type === "SpreadElement") {
+      return;
+    }
+    items.push(expression.slice(element.start, element.end));
+  }
+  return items;
+};
+
 /**
  * generate key value map into object expression
  * after updating individual value expressions

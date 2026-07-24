@@ -1,6 +1,6 @@
 import { createAssetResourceRequest } from "@webstudio-is/asset-resource";
 import type {
-  AssetResourceQueryInput,
+  AssetQueryRequestInput,
   ResourceRequest,
 } from "@webstudio-is/sdk";
 import {
@@ -44,9 +44,7 @@ export const loadBuilderAssetResource = async ({
   return entries[0][1] as BuilderResourceResult;
 };
 
-export const previewBuilderAssetQuery = async (
-  input: AssetResourceQueryInput
-) =>
+export const previewBuilderAssetQuery = async (input: AssetQueryRequestInput) =>
   await loadBuilderAssetResource({
     request: createAssetResourceRequest(input),
   });

@@ -278,6 +278,7 @@ Body`);
       types: ["string"],
       occurrences: 1,
       optional: true,
+      queryPath: ["properties", "seo", "social", "title"],
     });
   });
 

@@ -371,6 +371,41 @@ describe("build import helpers", () => {
     ]);
   });
 
+  test("reconciles query state after replacing imported assets", async () => {
+    const synchronizeAssetResourcesAfterBuildPatch = vi
+      .fn()
+      .mockResolvedValue(undefined);
+
+    await importPublishedProjectBundle(
+      {
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient([], {
+              existingFileNames: ["image.png"],
+            }),
+          },
+        } as never,
+        data: createData(),
+        projectId: "target-project",
+      },
+      {
+        hasProjectPermit,
+        loadDevBuildByProjectId,
+        synchronizeAssetResourcesAfterBuildPatch,
+      }
+    );
+
+    expect(synchronizeAssetResourcesAfterBuildPatch).toHaveBeenCalledWith({
+      context: expect.anything(),
+      buildId: "target-build",
+      projectId: "target-project",
+      previousResources: undefined,
+      resources: JSON.stringify([]),
+      changes: [],
+      replaceAllAssets: true,
+    });
+  });
+
   test("inserts the complete folder hierarchy in one request", async () => {
     const calls: string[] = [];
     const insertedFolders: Array<{ id: string; projectId: string }> = [];

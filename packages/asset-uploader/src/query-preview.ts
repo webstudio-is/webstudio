@@ -1,8 +1,8 @@
 import {
-  buildAssetResourceIndex,
-  executeAndHydrateAssetResourceQuery,
+  createAssetIndex,
+  executeAssetQuery,
 } from "@webstudio-is/asset-resource";
-import type { AssetResourceQueryRequest } from "@webstudio-is/sdk";
+import { type AssetQueryRequestInput } from "@webstudio-is/sdk";
 import type { AssetClient } from "./client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
@@ -18,7 +18,7 @@ export const previewAssetResourceQuery = async ({
   dependencies = {},
 }: {
   projectId: string;
-  request: AssetResourceQueryRequest;
+  request: AssetQueryRequestInput;
   context: AppContext;
   assetClient: Pick<AssetClient, "readFile">;
   dependencies?: BuilderCanonicalEntriesDependencies;
@@ -31,18 +31,13 @@ export const previewAssetResourceQuery = async ({
       "You don't have access to preview this project's asset resources",
     dependencies,
   });
-  const index = await buildAssetResourceIndex({
+  const index = await createAssetIndex({
     projectId,
-    resourceId: "preview",
-    query: request.query,
     entries,
   });
-  return await executeAndHydrateAssetResourceQuery({
-    request,
+  return await executeAssetQuery({
+    query: request.query,
     documents: index.documents,
-    queryHash: index.queryHash,
-    indexRevision: `metadata:${index.integrity.checksum}`,
-    assetRevision: index.assetRevision,
     read: assetClient.readFile,
   });
 };

@@ -1,14 +1,13 @@
 import { json } from "@remix-run/server-runtime";
 import {
-  AssetResourceQueryExecutionError,
+  AssetQueryExecutionError,
   AssetResourceHydrationError,
-  AssetResourceQueryValidationError,
 } from "@webstudio-is/asset-resource";
 import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/index.server";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import {
   assetResourceQueryFailure,
-  assetResourceQueryRequest,
+  assetQueryRequest,
   type AssetResourceErrorCode,
 } from "@webstudio-is/sdk";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
@@ -89,7 +88,7 @@ export const loader = async (
       status: 400,
     });
   }
-  const parsed = assetResourceQueryRequest.safeParse(input);
+  const parsed = assetQueryRequest.safeParse(input);
   if (parsed.success === false) {
     return failure({
       code: "INVALID_REQUEST",
@@ -114,19 +113,10 @@ export const loader = async (
         status: 403,
       });
     }
-    if (error instanceof AssetResourceQueryValidationError) {
+    if (error instanceof AssetQueryExecutionError) {
       return failure({
-        code: error.code,
+        code: "INVALID_REQUEST",
         message: error.message,
-        details: error.details,
-        status: 400,
-      });
-    }
-    if (error instanceof AssetResourceQueryExecutionError) {
-      return failure({
-        code: error.code,
-        message: error.message,
-        details: error.details,
         status: 400,
       });
     }

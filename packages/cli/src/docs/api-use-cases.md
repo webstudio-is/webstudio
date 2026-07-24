@@ -719,23 +719,23 @@ Commands:
 Commands:
 
 - MCP tool: get-asset-field-catalog {}
-- MCP tool: validate-asset-query {"query":"*[_type == \"asset.file\" && extension == \"md\" && properties.draft != true] | order(properties.publishedAt desc, _id asc)[0...20]"}
+- MCP tool: validate-asset-query {"query":"query PublishedPosts { assets(where: { extension: { eq: \"md\" }, properties: { draft: { ne: true } } }, first: 20) { items { id path excerpt } } }"}
 - MCP tool: create-assets-resource {"name":"All assets","scopeInstanceId":"<instanceId>","dataSourceName":"assets"}
-- MCP tool: create-assets-resource {"name":"Published posts","scopeInstanceId":"<instanceId>","dataSourceName":"posts","query":{"groq":"*[_type == \"asset.file\" && extension == \"md\" && properties.draft != true] | order(properties.publishedAt desc, _id asc)[0...20]{_id, path, properties, excerpt}","resultLimit":20,"content":{"mode":"none"}}}
-- MCP tool: create-assets-resource {"name":"Post by slug","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"groq":"*[_type == \"asset.file\" && extension == \"md\" && properties.slug == $slug][0]","parameters":[{"name":"slug","value":"system.params.slug"}],"resultLimit":1,"content":{"mode":"markdown-body","maxBytes":1048576}}}
+- MCP tool: create-assets-resource {"name":"Published posts","scopeInstanceId":"<instanceId>","dataSourceName":"posts","query":{"graphql":"query PublishedPosts { assets(where: { extension: { eq: \"md\" }, properties: { draft: { ne: true } } }, orderBy: [{ field: PROPERTIES_publishedAt, direction: DESC }, { field: ID, direction: ASC }], first: 20) { items { id path properties { _raw } excerpt } totalCount hasMore } }","variables":[]}}
+- MCP tool: create-assets-resource {"name":"Post by slug","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"graphql":"query Post($slug: String!) { assets(where: { extension: { eq: \"md\" }, properties: { slug: { eq: $slug } } }, first: 1) { items { id path properties { _raw } content(mode: MARKDOWN_BODY, maxBytes: 1048576) { text } } } }","variables":[{"name":"slug","value":"system.params.slug"}]}}
 - MCP tool: list-assets-resources {}
 - MCP tool: get-assets-resource {"resourceId":"<resourceId>"}
 - MCP tool: update-assets-resource {"resourceId":"<resourceId>","values":{"query":null}}
-- MCP tool: preview-asset-query {"query":"*[_type == \"asset.file\" && properties.slug == $slug][0]","parameters":{"slug":"hello-world"},"resultLimit":1,"content":{"mode":"markdown-body","maxBytes":1048576}}
+- MCP tool: preview-asset-query {"query":"query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id path content(mode: MARKDOWN_BODY, maxBytes: 1048576) { text } } } }","variables":{"slug":"hello-world"}}
 - MCP tool: get-asset-resource-index-status {"resourceId":"<resourceId>"}
 - MCP tool: rebuild-asset-resource-index {"resourceId":"<resourceId>"}
 
 Notes:
 
 - Read the field catalog before authoring unfamiliar queries. It includes dynamic schema-less frontmatter paths such as `properties.author.name`, observed types, optionality, and mixed-type state without downloading Markdown files.
-- Parameter bindings on a saved resource are Webstudio expressions evaluated at render time. Preview parameters are concrete JSON values for one test execution.
-- Use `content.mode:"none"` for listings. Use `markdown-body` or `full` only after a query selects the intended file, normally with `resultLimit:1` for a slug detail route.
-- Assets remains one resource type. Omit `query` for the legacy fetch-all request and response; provide `query` explicitly to enable GROQ. Set `values.query:null` to return to fetch-all mode.
+- Variable bindings on a saved resource are Webstudio expressions evaluated at render time. Preview variables are concrete JSON values for one test execution.
+- Select only metadata fields for listings. Select `content(mode: MARKDOWN_BODY)` or `content(mode: FULL)` only after filtering to the intended files, normally with `first: 1` for a slug detail route.
+- Assets remains one resource type. Omit `query` for the legacy fetch-all request and response; provide a GraphQL query explicitly to enable filtering and projection. Set `values.query:null` to return to fetch-all mode.
 - `create-assets-resource` and `update-assets-resource` are the semantic authoring path. Do not construct the internal query URL, headers, or body expression manually.
 - Check index status after saving. Request an explicit rebuild only for recovery; normal resource and asset mutations schedule index maintenance automatically.
 

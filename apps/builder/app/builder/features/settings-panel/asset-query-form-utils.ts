@@ -1,111 +1,48 @@
 import {
-  assetResourceParameterName,
-  assetResourceContentOptions,
   assetResourceLimits,
-  normalizeAssetQueryParameterName,
-  type AssetResourceContentOptions,
-  type AssetResourceIndexStatus,
+  createStructuredAssetQueryResourceBody,
+  parseStructuredAssetQueryResourceBody,
+  type StructuredAssetQueryResourceConfiguration,
 } from "@webstudio-is/sdk";
-import { validateAssetResourceQuery } from "@webstudio-is/asset-resource";
 import { getExpressionErrorMessages } from "@webstudio-is/project-build/runtime";
+
 export {
-  createAssetQueryResourceBody,
-  parseAssetQueryResourceBody,
-} from "@webstudio-is/sdk";
-export type { AssetQueryParameterBinding } from "@webstudio-is/sdk";
-
-export const normalizeAssetQueryParameterBindings = <
-  Binding extends { name: string },
->(
-  parameters: readonly Binding[]
-) =>
-  parameters.map((parameter) => ({
-    ...parameter,
-    name: normalizeAssetQueryParameterName(parameter.name),
-  }));
-
-export const getAssetIndexStatusLabel = (
-  status: AssetResourceIndexStatus | undefined
-) => {
-  if (status === undefined) {
-    return "No index has been created yet.";
-  }
-  if (status.state === "indexing") {
-    return status.activeRevision === undefined
-      ? "Building the first index…"
-      : "Building a replacement index; the last active revision is preserved.";
-  }
-  if (status.state === "stale") {
-    return "The saved query index is stale.";
-  }
-  if (status.state === "failed") {
-    return status.activeRevision === undefined
-      ? "The index build failed."
-      : "The replacement build failed; the last active revision is preserved.";
-  }
-  return "The query index is active.";
+  createStructuredAssetQueryResourceBody,
+  parseStructuredAssetQueryResourceBody,
 };
+export type { StructuredAssetQueryResourceConfiguration };
 
 export const isEmptyAssetQueryResult = (result: unknown) =>
-  result === null || (Array.isArray(result) && result.length === 0);
+  typeof result === "object" &&
+  result !== null &&
+  "items" in result &&
+  Array.isArray(result.items) &&
+  result.items.length === 0;
 
-export const getAssetQueryConfigurationError = ({
-  query,
-  parameters,
-  resultLimit,
-  content,
-}: {
-  query: string;
-  parameters: readonly { name: string; value?: string }[];
-  resultLimit: number;
-  content: AssetResourceContentOptions;
-}) => {
-  let referencedParameterNames: string[];
+export const getAssetQueryConfigurationError = (
+  configuration: StructuredAssetQueryResourceConfiguration
+) => {
+  if (configuration.filters.length > assetResourceLimits.filterCount) {
+    return `Use at most ${assetResourceLimits.filterCount} filters.`;
+  }
+  if (configuration.sort.length > assetResourceLimits.sortCount) {
+    return `Use at most ${assetResourceLimits.sortCount} sort fields.`;
+  }
+  const expressions = [
+    ...configuration.filters.map(({ value }) => value),
+    configuration.limit,
+    configuration.offset,
+  ];
+  if (
+    expressions.some(
+      (expression) => getExpressionErrorMessages({ expression }).length > 0
+    )
+  ) {
+    return "Enter a valid Webstudio expression for every query value.";
+  }
   try {
-    referencedParameterNames = validateAssetResourceQuery(query).parameterNames;
+    createStructuredAssetQueryResourceBody(configuration);
   } catch {
-    return "Enter a valid GROQ query.";
-  }
-  if (parameters.length > assetResourceLimits.parameterCount) {
-    return `Use at most ${assetResourceLimits.parameterCount} runtime parameters.`;
-  }
-  const names = normalizeAssetQueryParameterBindings(parameters).map(
-    ({ name }) => name
-  );
-  if (
-    names.some(
-      (name) => assetResourceParameterName.safeParse(name).success === false
-    )
-  ) {
-    return "Runtime parameter names must be valid identifiers.";
-  }
-  if (new Set(names).size !== names.length) {
-    return "Runtime parameter names must be unique.";
-  }
-  if (
-    parameters.some(
-      ({ value }) =>
-        value !== undefined &&
-        getExpressionErrorMessages({ expression: value }).length > 0
-    )
-  ) {
-    return "Enter a valid Webstudio expression for every runtime parameter.";
-  }
-  const configuredNames = new Set(names);
-  const missingName = referencedParameterNames.find(
-    (name) => configuredNames.has(name) === false
-  );
-  if (missingName !== undefined) {
-    return `Add a runtime binding for $${missingName}.`;
-  }
-  if (
-    Number.isSafeInteger(resultLimit) === false ||
-    resultLimit < 1 ||
-    resultLimit > assetResourceLimits.resultCount
-  ) {
-    return `Result limit must be between 1 and ${assetResourceLimits.resultCount}.`;
-  }
-  if (assetResourceContentOptions.safeParse(content).success === false) {
-    return "Selected-file content options are outside the supported limits.";
+    return "Complete every Assets query field.";
   }
 };

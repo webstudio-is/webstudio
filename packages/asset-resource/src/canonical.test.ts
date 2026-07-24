@@ -152,7 +152,7 @@ describe("field contributions", () => {
     ]);
   });
 
-  test("uses unambiguous GROQ paths for non-identifier property names", () => {
+  test("uses unambiguous catalog paths for non-identifier property names", () => {
     expect(
       getFieldContributions({
         "author.name": "literal dot",

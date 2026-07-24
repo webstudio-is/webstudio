@@ -18,14 +18,7 @@ import {
   indentOnInput,
   LanguageSupport,
   LRLanguage,
-  syntaxTree,
 } from "@codemirror/language";
-import { linter, type Diagnostic } from "@codemirror/lint";
-import type { EditorState } from "@codemirror/state";
-import {
-  createGroqCompletionSource,
-  type GroqCompletionConfiguration,
-} from "./groq-completion";
 import {
   autocompletion,
   closeBrackets,
@@ -45,7 +38,6 @@ import {
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
-import { groq } from "@sanity/lezer-groq";
 
 const wrapperStyle = css({
   position: "relative",
@@ -122,43 +114,6 @@ const getJsonExtensions = () => [
   keymap.of(closeBracketsKeymap),
 ];
 
-export const getGroqSyntaxDiagnostics = (state: EditorState): Diagnostic[] => {
-  const diagnostics: Diagnostic[] = [];
-  syntaxTree(state).iterate({
-    enter: (node) => {
-      if (node.type.isError) {
-        diagnostics.push({
-          from: node.from,
-          to: node.to,
-          severity: "error",
-          message: "Invalid GROQ syntax",
-        });
-      }
-    },
-  });
-  return diagnostics;
-};
-
-export const getGroqExtensions = (
-  completion: GroqCompletionConfiguration = {}
-) => [
-  highlightActiveLine(),
-  highlightSpecialChars(),
-  indentOnInput(),
-  groq(),
-  bracketMatching(),
-  closeBrackets(),
-  // render autocomplete in body
-  // to prevent popover scroll overflow
-  tooltips({ parent: document.body }),
-  autocompletion({
-    icons: false,
-    override: [createGroqCompletionSource(completion)],
-  }),
-  linter((view) => getGroqSyntaxDiagnostics(view.state)),
-  keymap.of([...closeBracketsKeymap, ...completionKeymap]),
-];
-
 const cssPropertiesLanguage = LRLanguage.define({
   name: "css",
   parser: cssLanguage.configure({ top: "Styles" }).parser,
@@ -184,8 +139,7 @@ const getCssPropertiesExtensions = () => [
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-    lang?: "html" | "json" | "markdown" | "css-properties" | "groq";
-    groqCompletion?: GroqCompletionConfiguration;
+    lang?: "html" | "json" | "markdown" | "css-properties";
     languageExtensions?: Extension[];
     title?: ReactNode;
     size?: "default" | "small" | "full";
@@ -194,7 +148,6 @@ export const CodeEditor = forwardRef<
 >((props, ref) => {
   const {
     lang,
-    groqCompletion,
     languageExtensions = noLanguageExtensions,
     title,
     size,
@@ -218,10 +171,6 @@ export const CodeEditor = forwardRef<
       return getCssPropertiesExtensions();
     }
 
-    if (lang === "groq") {
-      return getGroqExtensions(groqCompletion);
-    }
-
     if (lang === undefined) {
       return [];
     }
@@ -229,7 +178,7 @@ export const CodeEditor = forwardRef<
     lang satisfies never;
 
     return [];
-  }, [lang, groqCompletion]);
+  }, [lang]);
 
   const extensions = useMemo(
     () => [...builtInExtensions, ...languageExtensions],

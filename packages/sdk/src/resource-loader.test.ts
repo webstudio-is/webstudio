@@ -376,7 +376,7 @@ describe("loadResource", () => {
       searchParams: [],
       method: "post",
       headers: [{ name: "content-type", value: "application/json" }],
-      body: { query: "*[]" },
+      body: { query: "query Assets { assets { items { id } } }" },
     });
 
     expect(mockFetch).toHaveBeenCalledWith("/$resources/assets/query", {
@@ -385,13 +385,15 @@ describe("loadResource", () => {
         ["content-type", "application/json"],
         ["x-webstudio-resource-id", "posts-resource"],
       ]),
-      body: JSON.stringify({ query: "*[]" }),
+      body: JSON.stringify({
+        query: "query Assets { assets { items { id } } }",
+      }),
     });
   });
 });
 
 describe("getResourceCacheKey", () => {
-  test("separates asset query, parameters, index revision, and content options", async () => {
+  test("separates asset query, variables, and index revision", async () => {
     const createRequest = (body: Record<string, unknown>) =>
       new Request("https://example.com/$resources/assets/query", {
         method: "POST",
@@ -399,17 +401,16 @@ describe("getResourceCacheKey", () => {
         body: JSON.stringify(body),
       });
     const base = {
-      query: "*[]",
-      parameters: { slug: "first" },
+      query:
+        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id } } }",
+      variables: { slug: "first" },
       indexRevision: "index-1",
-      content: { mode: "none" },
     };
     const requests = [
       base,
-      { ...base, query: "*[_type == 'asset.file']" },
-      { ...base, parameters: { slug: "second" } },
+      { ...base, query: "query Assets { assets { items { id } } }" },
+      { ...base, variables: { slug: "second" } },
       { ...base, indexRevision: "index-2" },
-      { ...base, content: { mode: "full", maxBytes: 4096 } },
     ];
     const keys = await Promise.all(
       requests.map(

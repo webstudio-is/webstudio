@@ -2061,9 +2061,9 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       scopeInstanceId: "body-id",
       dataSourceName: "posts",
       query: {
-        groq: '*[_type == "asset.file" && extension == "md" && properties.draft != true] | order(properties.publishedAt desc, _id asc)[0...20]{_id, path, properties, excerpt}',
-        resultLimit: 20,
-        content: { mode: "none" },
+        graphql:
+          'query PublishedPosts { assets(where: { extension: { eq: "md" }, properties: { draft: { ne: true } } }, orderBy: [{ field: PROPERTIES_publishedAt, direction: DESC }, { field: ID, direction: ASC }], first: 20) { items { id path properties { _raw } excerpt } totalCount hasMore } }',
+        variables: [],
       },
     },
     {
@@ -2071,10 +2071,9 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       scopeInstanceId: "body-id",
       dataSourceName: "post",
       query: {
-        groq: '*[_type == "asset.file" && extension == "md" && properties.slug == $slug][0]',
-        parameters: [{ name: "slug", value: "system.params.slug" }],
-        resultLimit: 1,
-        content: { mode: "markdown-body", maxBytes: 1048576 },
+        graphql:
+          'query Post($slug: String!) { assets(where: { extension: { eq: "md" }, properties: { slug: { eq: $slug } } }, first: 1) { items { id path properties { _raw } content(mode: MARKDOWN_BODY, maxBytes: 1048576) { text } } } }',
+        variables: [{ name: "slug", value: "system.params.slug" }],
       },
     },
   ],
@@ -2083,9 +2082,9 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       resourceId: "resource-id",
       values: {
         query: {
-          groq: '*[_type == "asset.file"][0...50]',
-          resultLimit: 50,
-          content: { mode: "none" },
+          graphql:
+            "query Assets { assets(first: 50) { items { id path name mimeType } totalCount hasMore } }",
+          variables: [],
         },
       },
     },
@@ -2093,15 +2092,15 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   ],
   "validate-asset-query": [
     {
-      query: '*[_type == "asset.file" && properties.slug == $slug][0]',
+      query:
+        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id path } } }",
     },
   ],
   "preview-asset-query": [
     {
-      query: '*[_type == "asset.file" && properties.slug == $slug][0]',
-      parameters: { slug: "hello-world" },
-      resultLimit: 1,
-      content: { mode: "markdown-body", maxBytes: 1048576 },
+      query:
+        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id path content(mode: MARKDOWN_BODY, maxBytes: 1048576) { text } } } }",
+      variables: { slug: "hello-world" },
     },
   ],
   "get-asset-field-catalog": [{}],

@@ -2,7 +2,7 @@ import { assetFileDocument, type AssetFileDocument } from "@webstudio-is/sdk";
 import {
   compareStrings,
   serializeJsonDeterministically,
-} from "@webstudio-is/project-store";
+} from "@webstudio-is/project-store/json";
 
 export type AssetFileMetadataInput = {
   id: string;
@@ -41,7 +41,76 @@ const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
 export const appendAssetFieldPath = (path: string, key: string) =>
   identifier.test(key) ? `${path}.${key}` : `${path}[${JSON.stringify(key)}]`;
 
-type FieldPathSegment = { type: "field"; name: string } | { type: "element" };
+export type AssetFieldPathSegment =
+  | { type: "field"; name: string }
+  | { type: "element" };
+
+export const parseAssetFieldPath = (
+  path: string
+): AssetFieldPathSegment[] | undefined => {
+  if (path === "properties") {
+    return [];
+  }
+  if (path.startsWith("properties") === false) {
+    return;
+  }
+  const segments: AssetFieldPathSegment[] = [];
+  let position = "properties".length;
+  while (position < path.length) {
+    if (path.startsWith("[]", position)) {
+      segments.push({ type: "element" });
+      position += 2;
+      continue;
+    }
+    if (path[position] === ".") {
+      const start = position + 1;
+      position = start;
+      while (
+        position < path.length &&
+        path[position] !== "." &&
+        path[position] !== "["
+      ) {
+        position += 1;
+      }
+      if (position === start) {
+        return;
+      }
+      segments.push({ type: "field", name: path.slice(start, position) });
+      continue;
+    }
+    if (path.startsWith('["', position)) {
+      const start = position + 1;
+      let escaped = false;
+      let quote = start + 1;
+      for (; quote < path.length; quote += 1) {
+        const character = path[quote];
+        if (escaped) {
+          escaped = false;
+        } else if (character === "\\") {
+          escaped = true;
+        } else if (character === '"') {
+          break;
+        }
+      }
+      if (quote >= path.length || path[quote + 1] !== "]") {
+        return;
+      }
+      try {
+        const name = JSON.parse(path.slice(start, quote + 1));
+        if (typeof name !== "string") {
+          return;
+        }
+        segments.push({ type: "field", name });
+      } catch {
+        return;
+      }
+      position = quote + 2;
+      continue;
+    }
+    return;
+  }
+  return segments;
+};
 
 const getObservedType = (value: unknown): ObservedFieldType => {
   if (value === null) {
@@ -71,8 +140,8 @@ const getObservedType = (value: unknown): ObservedFieldType => {
 };
 
 const compareFieldPaths = (
-  left: FieldPathSegment[],
-  right: FieldPathSegment[]
+  left: AssetFieldPathSegment[],
+  right: AssetFieldPathSegment[]
 ) => {
   for (let index = 0; index < Math.min(left.length, right.length); index++) {
     const leftSegment = left[index];
@@ -95,9 +164,9 @@ const getStructuralFieldContributions = (
 ) => {
   const contributions = new Map<
     string,
-    { path: FieldPathSegment[]; type: ObservedFieldType }
+    { path: AssetFieldPathSegment[]; type: ObservedFieldType }
   >();
-  const add = (path: FieldPathSegment[], value: unknown) => {
+  const add = (path: AssetFieldPathSegment[], value: unknown) => {
     const contribution = { path, type: getObservedType(value) };
     contributions.set(
       `${serializeJsonDeterministically(path)}\u0000${contribution.type}`,
@@ -128,7 +197,7 @@ const getStructuralFieldContributions = (
   );
 };
 
-const formatLegacyFieldPath = (path: FieldPathSegment[]) => {
+const formatLegacyFieldPath = (path: AssetFieldPathSegment[]) => {
   let formatted = "properties";
   for (const segment of path) {
     formatted =
@@ -182,7 +251,7 @@ const encodeAssetPathSegment = (segment: string) => {
 };
 
 /**
- * Builds the canonical GROQ document without merging user properties into the
+ * Builds the canonical query document without merging user properties into the
  * reserved standard metadata namespace.
  */
 export const normalizeAssetFileDocument = ({

@@ -1,6 +1,7 @@
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import {
   mkdir,
+  link,
   open,
   readFile,
   readdir,
@@ -10,6 +11,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import type { ObjectStore, ProjectHeadStore } from "./object-store";
+import { ObjectProjectStore } from "./project-store";
 import {
   encodeObjectProjectHead,
   parseObjectProjectHead,
@@ -18,6 +20,7 @@ import { compareStrings } from "./stable-json";
 import { validateStorageKey } from "./storage-key";
 import type {
   ObjectProjectSnapshotReference,
+  ProjectAssetReadRange,
   ProjectHead,
   ProjectHeadUpdateResult,
 } from "./types";
@@ -27,8 +30,6 @@ const isMissing = (error: unknown) =>
 
 const isExisting = (error: unknown) =>
   error instanceof Error && "code" in error && error.code === "EEXIST";
-
-const staleHeadLockAge = 30_000;
 
 export class FilesystemObjectStore
   implements ObjectStore, ProjectHeadStore<ObjectProjectSnapshotReference>
@@ -58,9 +59,32 @@ export class FilesystemObjectStore
     return path;
   }
 
-  async get(key: string) {
+  async get(key: string, range?: ProjectAssetReadRange) {
     try {
-      return new Uint8Array(await readFile(this.path(key)));
+      const path = this.path(key);
+      if (range === undefined) {
+        return new Uint8Array(await readFile(path));
+      }
+      const handle = await open(path, "r");
+      try {
+        const bytes = new Uint8Array(range.length);
+        let readOffset = 0;
+        while (readOffset < bytes.length) {
+          const { bytesRead } = await handle.read(
+            bytes,
+            readOffset,
+            bytes.length - readOffset,
+            range.offset + readOffset
+          );
+          if (bytesRead === 0) {
+            break;
+          }
+          readOffset += bytesRead;
+        }
+        return bytes.subarray(0, readOffset);
+      } finally {
+        await handle.close();
+      }
     } catch (error) {
       if (isMissing(error)) {
         return;
@@ -69,8 +93,11 @@ export class FilesystemObjectStore
     }
   }
 
-  async put(key: string, value: Uint8Array) {
-    const path = this.path(key);
+  private async withTemporaryFile<Result>(
+    path: string,
+    value: Uint8Array,
+    publish: (temporaryPath: string) => Promise<Result>
+  ) {
     await mkdir(dirname(path), { recursive: true });
     const temporaryPath = join(
       dirname(path),
@@ -78,10 +105,36 @@ export class FilesystemObjectStore
     );
     try {
       await writeFile(temporaryPath, value, { flag: "wx" });
-      await rename(temporaryPath, path);
+      return await publish(temporaryPath);
     } finally {
       await rm(temporaryPath, { force: true });
     }
+  }
+
+  async put(key: string, value: Uint8Array) {
+    const path = this.path(key);
+    await this.withTemporaryFile(
+      path,
+      value,
+      async (temporaryPath) => await rename(temporaryPath, path)
+    );
+  }
+
+  async putIfAbsent(key: string, value: Uint8Array) {
+    const path = this.path(key);
+    return await this.withTemporaryFile(path, value, async (temporaryPath) => {
+      try {
+        // A hard link atomically publishes the complete temporary file without
+        // replacing a concurrent writer's immutable object.
+        await link(temporaryPath, path);
+        return "written" as const;
+      } catch (error) {
+        if (isExisting(error)) {
+          return "existing" as const;
+        }
+        throw error;
+      }
+    });
   }
 
   async delete(key: string) {
@@ -117,9 +170,7 @@ export class FilesystemObjectStore
       }
       throw error;
     });
-    if (startStat?.isFile()) {
-      keys.push(relative(this.root, start).split(sep).join("/"));
-    } else if (startStat?.isDirectory()) {
+    if (startStat?.isDirectory()) {
       await visit(start);
     }
     return keys.sort(compareStrings);
@@ -150,19 +201,6 @@ export class FilesystemObjectStore
       } catch (error) {
         if (isExisting(error) === false) {
           throw error;
-        }
-        const lockStat = await stat(path).catch((statError) => {
-          if (isMissing(statError)) {
-            return;
-          }
-          throw statError;
-        });
-        if (
-          lockStat !== undefined &&
-          Date.now() - lockStat.mtimeMs > staleHeadLockAge
-        ) {
-          await rm(path, { force: true });
-          continue;
         }
         await new Promise((resolveWait) => setTimeout(resolveWait, 10));
       }
@@ -197,3 +235,12 @@ export class FilesystemObjectStore
     }
   }
 }
+
+export const createFilesystemProjectStore = (
+  root: string,
+  projectId: string
+) => {
+  const objects = new FilesystemObjectStore(join(root, "db"));
+  const assets = new FilesystemObjectStore(join(root, "assets"));
+  return new ObjectProjectStore({ projectId, objects, assets, heads: objects });
+};

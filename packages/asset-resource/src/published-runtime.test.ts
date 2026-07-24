@@ -4,22 +4,30 @@ import {
   __testing,
   createGeneratedAssetResourceFetch,
   createPublishedAssetResourceFetch,
+  getPublishedAssetContentPath,
   getPublishedAssetResourceCacheKey,
 } from "./published-runtime";
 
 const revision = `sha256:${"a".repeat(64)}`;
-const query =
-  '*[properties.slug == $slug][0]{_id, revision, contentRef, "title": properties.title}';
+const query = `query Post($slug: String!) {
+  assets(where: { properties: { slug: { eq: $slug } } }, first: 1) {
+    items { id properties { title } }
+  }
+}`;
 
-const createRuntime = async () => {
+const contentQuery = `query Post($slug: String!) {
+  assets(where: { properties: { slug: { eq: $slug } } }, first: 1) {
+    items { id properties { title } content(mode: FULL) { text } }
+  }
+}`;
+
+const createRuntime = async (runtimeQuery = query) => {
   const index = await createAssetResourceIndex({
     format: "webstudio-resource-index",
     version: 1,
     resourceId: "posts",
-    query,
+    query: runtimeQuery,
     assetRevision: revision,
-    queryMode: "parameterized",
-    parameterNames: ["slug"],
     documents: [
       {
         _id: "post-1",
@@ -68,15 +76,16 @@ const createRuntime = async () => {
   };
 };
 
-const createQueryRequest = (content: unknown = { mode: "none" }) =>
+const createQueryRequest = (
+  runtimeQuery = query,
+  variables: Readonly<Record<string, unknown>> = { slug: "post" }
+) =>
   new Request("https://site.example/$resources/assets/query", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      query,
-      parameters: { slug: "post" },
-      resultLimit: 1,
-      content,
+      query: runtimeQuery,
+      variables,
     }),
   });
 
@@ -104,21 +113,24 @@ describe("published asset resource runtime", () => {
         "content-type": "application/json",
         "x-webstudio-resource-id": "posts",
       },
-      body: JSON.stringify({ query, parameters: { slug: "hello" } }),
+      body: JSON.stringify({ query, variables: { slug: "hello" } }),
     });
 
     expect(response?.status).toBe(200);
   });
 
-  test("evaluates runtime parameters and caches one parsed immutable index per isolate", async () => {
+  test("evaluates runtime variables and caches one parsed immutable index per isolate", async () => {
     const { runtimeFetch, fetchAsset } = await createRuntime();
     const first = await runtimeFetch(createQueryRequest());
     const second = await runtimeFetch(createQueryRequest());
 
     expect(await first?.json()).toMatchObject({
       ok: true,
-      result: { _id: "post-1", title: "Post" },
-      content: {},
+      data: {
+        assets: {
+          items: [{ id: "post-1", properties: { title: "Post" } }],
+        },
+      },
     });
     expect((await second?.json())?.ok).toBe(true);
     expect(
@@ -210,17 +222,38 @@ describe("published asset resource runtime", () => {
   });
 
   test("hydrates exactly the selected complete Markdown file", async () => {
-    const { runtimeFetch, fetchAsset } = await createRuntime();
-    const response = await runtimeFetch(createQueryRequest({ mode: "full" }));
+    const { runtimeFetch, fetchAsset } = await createRuntime(contentQuery);
+    const response = await runtimeFetch(createQueryRequest(contentQuery));
     expect(await response?.json()).toMatchObject({
       ok: true,
-      content: { "post-1": { text: "Post" } },
-      meta: { hydratedFileCount: 1, hydratedBytes: 4 },
+      data: {
+        assets: {
+          items: [{ content: { text: "Post" } }],
+        },
+      },
     });
     expect(fetchAsset).toHaveBeenCalledWith("/assets/post.md", {
       headers: expect.any(Headers),
       signal: expect.any(AbortSignal),
     });
+  });
+
+  test("preserves content-reference hierarchy while encoding URL segments", () => {
+    expect(getPublishedAssetContentPath("blog/a b?#'().md")).toBe(
+      "/assets/blog/a%20b%3F%23%27%28%29.md"
+    );
+  });
+
+  test("rejects content references that escape the asset namespace", () => {
+    expect(() => getPublishedAssetContentPath("../private.json")).toThrow(
+      "Invalid object key"
+    );
+    expect(() => getPublishedAssetContentPath("blog/../private.json")).toThrow(
+      "Invalid object key"
+    );
+    expect(() => getPublishedAssetContentPath("/private.json")).toThrow(
+      "Invalid object key"
+    );
   });
 
   test("uses the generated runtime adapter for asset queries and delegates other requests", async () => {
@@ -245,7 +278,7 @@ describe("published asset resource runtime", () => {
     const queryResponse = await generatedFetch(createQueryRequest());
     expect(await queryResponse.json()).toMatchObject({
       ok: true,
-      result: { _id: "post-1", title: "Post" },
+      data: { assets: { items: [{ properties: { title: "Post" } }] } },
     });
     expect(assetBindingFetch).toHaveBeenCalledOnce();
 
@@ -259,7 +292,7 @@ describe("published asset resource runtime", () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query, parameters: { slug: "post" } }),
+        body: JSON.stringify({ query, variables: { slug: "post" } }),
       }
     );
     expect(await externalQueryResponse.text()).toBe("fallback");
@@ -274,8 +307,6 @@ describe("published asset resource runtime", () => {
       resourceId: "posts",
       query,
       assetRevision: `sha256:${"b".repeat(64)}`,
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
       documents: [
         {
           ...first.index.documents[0],
@@ -301,10 +332,16 @@ describe("published asset resource runtime", () => {
 
     expect(
       await (await first.runtimeFetch(createQueryRequest()))?.json()
-    ).toMatchObject({ result: { title: "Post" } });
+    ).toMatchObject({
+      data: { assets: { items: [{ properties: { title: "Post" } }] } },
+    });
     expect(
       await (await secondRuntime(createQueryRequest()))?.json()
-    ).toMatchObject({ result: { title: "Other deployment" } });
+    ).toMatchObject({
+      data: {
+        assets: { items: [{ properties: { title: "Other deployment" } }] },
+      },
+    });
     expect(secondFetchAsset).toHaveBeenCalledOnce();
   });
 
@@ -316,8 +353,6 @@ describe("published asset resource runtime", () => {
       resourceId: "other-posts",
       query,
       assetRevision: revision,
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
       documents: first.index.documents,
     });
     const manifest = [
@@ -383,13 +418,13 @@ describe("published asset resource runtime", () => {
     expect(response?.status).toBe(200);
     expect(await response?.json()).toMatchObject({
       ok: true,
-      result: { title: "Post" },
+      data: { assets: { items: [{ properties: { title: "Post" } }] } },
     });
     expect(cache.match).toHaveBeenCalledOnce();
     expect(cache.put).toHaveBeenCalledOnce();
   });
 
-  test("rejects stale revisions and keys caches by deployment, revision, parameters, hydration, and policy", async () => {
+  test("rejects stale revisions and keys caches by deployment, revision, variables, hydration, and policy", async () => {
     const { runtimeFetch, manifest } = await createRuntime();
     const staleRequest = createQueryRequest();
     const body = await staleRequest.json();
@@ -420,10 +455,10 @@ describe("published asset resource runtime", () => {
       { ...manifest[0], revision },
       createQueryRequest()
     );
-    const changedHydration = await getKey(
+    const changedQuery = await getKey(
       "build-1",
       manifest[0],
-      createQueryRequest({ mode: "full" })
+      createQueryRequest(contentQuery)
     );
     const changedParameters = await getKey(
       "build-1",
@@ -432,9 +467,7 @@ describe("published asset resource runtime", () => {
         method: "POST",
         body: JSON.stringify({
           query,
-          parameters: { slug: "other" },
-          resultLimit: 1,
-          content: { mode: "none" },
+          variables: { slug: "other" },
         }),
       })
     );
@@ -453,10 +486,29 @@ describe("published asset resource runtime", () => {
         first.url,
         changedDeployment.url,
         changedRevision.url,
-        changedHydration.url,
+        changedQuery.url,
         changedParameters.url,
         changedCachePolicy.url,
       ])
     ).toHaveLength(6);
+  });
+
+  test("rejects an operation name that does not match the published plan", async () => {
+    const { runtimeFetch } = await createRuntime();
+    const request = createQueryRequest();
+    const body = await request.json();
+
+    const response = await runtimeFetch(
+      new Request(request.url, {
+        method: "POST",
+        body: JSON.stringify({ ...body, operationName: "Other" }),
+      })
+    );
+
+    expect(response?.status).toBe(400);
+    expect(await response?.json()).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_QUERY" },
+    });
   });
 });

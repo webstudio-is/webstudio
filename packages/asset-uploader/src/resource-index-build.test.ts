@@ -13,6 +13,9 @@ import {
 } from "./resource-index-build";
 
 const server = createTestServer();
+const allAssetsQuery = "{ assets { items { id } } }";
+const postBySlugQuery =
+  "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id } } }";
 const entry = createCanonicalAssetFileEntry({
   projectId: "project-1",
   document: {
@@ -39,7 +42,7 @@ describe("resource index build and activation", () => {
         store: { putIfAbsent: vi.fn() },
         projectId: "project-1",
         resourceId: "posts",
-        query: "*[]",
+        query: allAssetsQuery,
         entries: [entry],
         assetRevision: `sha256:${"a".repeat(64)}`,
         metadataSnapshot: [],
@@ -61,7 +64,7 @@ describe("resource index build and activation", () => {
         expect(await request.json()).toMatchObject({
           p_project_id: "project-1",
           p_resource_id: "posts",
-          p_query: `*[properties.slug == $slug]`,
+          p_query: postBySlugQuery,
           p_query_hash: expect.stringMatching(/^sha256:/),
           p_asset_revision: expect.stringMatching(/^sha256:/),
           p_revision: expect.stringMatching(/^sha256:/),
@@ -102,7 +105,7 @@ describe("resource index build and activation", () => {
       },
       projectId: "project-1",
       resourceId: "posts",
-      query: `*[properties.slug == $slug]`,
+      query: postBySlugQuery,
       entries: [entry],
       metadataSnapshot: [
         { assetId: "post-1", metadataToken: "metadata-token-1" },
@@ -131,7 +134,7 @@ describe("resource index build and activation", () => {
         },
         projectId: "project-1",
         resourceId: "posts",
-        query: "*[]",
+        query: allAssetsQuery,
         entries: [entry],
         metadataSnapshot: [],
       })
@@ -152,7 +155,7 @@ describe("resource index build and activation", () => {
         store: { putIfAbsent },
         projectId: "project-1",
         resourceId: "posts",
-        query: "*[]",
+        query: allAssetsQuery,
         entries: [entry],
         metadataSnapshot: [],
       })
@@ -191,7 +194,7 @@ describe("resource index build and activation", () => {
       },
       projectId: "project-1",
       resourceId: "posts",
-      query: "*[]",
+      query: allAssetsQuery,
       entries: [entry],
       metadataSnapshot: [],
     };
@@ -231,7 +234,7 @@ describe("resource index build and activation", () => {
         },
         projectId: "project-1",
         resourceId: "posts",
-        query: "*[]",
+        query: allAssetsQuery,
         entries: [entry],
         metadataSnapshot: [],
       })
@@ -262,7 +265,7 @@ describe("resource index build and activation", () => {
       },
       projectId: "project-1",
       resourceId: "posts",
-      query: "*[]",
+      query: allAssetsQuery,
       entries: [entry],
       metadataSnapshot: [],
       signal: controller.signal,
@@ -286,7 +289,7 @@ describe("resource index build and activation", () => {
         store: { putIfAbsent },
         projectId: "project-1",
         resourceId: "posts",
-        query: "*[invalid ==",
+        query: "query Invalid { assets(where: { invalid: }) { items { id } } }",
         entries: [entry],
         metadataSnapshot: [],
       })

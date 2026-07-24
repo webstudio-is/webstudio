@@ -23,10 +23,8 @@ describe("publication resource index snapshots", () => {
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "posts",
-      query: "*[]",
+      query: "{ assets { items { id } } }",
       assetRevision: `sha256:${"a".repeat(64)}`,
-      queryMode: "static",
-      parameterNames: [],
       documents: [],
     });
     const states = createQuery([
@@ -116,10 +114,8 @@ describe("publication resource index snapshots", () => {
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "posts",
-      query: "*[]",
+      query: "{ assets { items { id } } }",
       assetRevision: `sha256:${"a".repeat(64)}`,
-      queryMode: "static",
-      parameterNames: [],
       documents: [],
     });
     const states = createQuery([

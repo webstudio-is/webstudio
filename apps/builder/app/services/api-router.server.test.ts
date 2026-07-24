@@ -17,7 +17,10 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import { blockComponent } from "@webstudio-is/sdk";
+import {
+  blockComponent,
+  createAssetQueryResourceBody,
+} from "@webstudio-is/sdk";
 import * as assetUploader from "@webstudio-is/asset-uploader/index.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import {
@@ -78,17 +81,9 @@ describe("api router build operation adapters", () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
     vi.spyOn(assetUploader, "previewAssetResourceQuery").mockResolvedValue({
-      ok: true,
-      result: [{ _id: "post" }],
-      content: {},
-      meta: {
-        queryHash: "sha256:query",
-        indexRevision: "metadata:revision",
-        assetRevision: "sha256:assets",
-        resultCount: 1,
-        hydratedFileCount: 0,
-        hydratedBytes: 0,
-      },
+      items: [{ id: "post" }],
+      totalCount: 1,
+      hasMore: false,
     } as never);
     vi.spyOn(assetUploader, "loadBuilderAssetFieldCatalog").mockResolvedValue({
       format: "webstudio-builder-asset-field-catalog",
@@ -96,7 +91,11 @@ describe("api router build operation adapters", () => {
       canonicalRevision: `sha256:${"a".repeat(64)}`,
       documentCount: 1,
       fields: {
-        "properties.slug": { types: ["string"], occurrences: 1 },
+        "properties.slug": {
+          types: ["string"],
+          occurrences: 1,
+          queryPath: ["properties", "slug"],
+        },
       },
     });
     vi.spyOn(assetUploader, "loadAssetResourceIndexStatus").mockResolvedValue({
@@ -112,32 +111,48 @@ describe("api router build operation adapters", () => {
     await expect(
       caller.assetQueries.validate({
         projectId: "project-1",
-        query: '*[_type == "asset.file" && properties.slug == $slug][0]',
+        query: {
+          filters: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "post",
+            },
+          ],
+          limit: 1,
+        },
       })
     ).resolves.toMatchObject({
       valid: true,
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
-      referencedFieldPaths: expect.arrayContaining(["properties.slug"]),
+      referencedFieldPaths: expect.arrayContaining([["properties", "slug"]]),
+      filterCount: 1,
     });
     await expect(
       caller.assetQueries.validate({
         projectId: "project-1",
-        query: "*[",
+        query: {
+          filters: [
+            {
+              field: ["properties", "missing"],
+              operator: "exists",
+              value: true,
+            },
+          ],
+        },
       })
     ).rejects.toMatchObject({
       code: "BAD_REQUEST",
-      cause: { webstudioCode: "INVALID_QUERY" },
+      cause: { webstudioCode: "INVALID_REQUEST" },
     });
     await expect(
       caller.assetQueries.preview({
         projectId: "project-1",
-        query: '*[_type == "asset.file"]',
-        parameters: {},
-        resultLimit: 10,
-        content: { mode: "none" },
+        query: { limit: 10 },
       })
-    ).resolves.toMatchObject({ ok: true, result: [{ _id: "post" }] });
+    ).resolves.toMatchObject({
+      items: [{ id: "post" }],
+      totalCount: 1,
+    });
     await expect(
       caller.assetQueries.fieldCatalog({ projectId: "project-1" })
     ).resolves.toMatchObject({
@@ -177,7 +192,10 @@ describe("api router build operation adapters", () => {
           method: "post",
           url: JSON.stringify("/$resources/assets/query"),
           headers: [],
-          body: '{query:"*[]"}',
+          body: createAssetQueryResourceBody({
+            query: "{ assets { items { id } } }",
+            variables: [],
+          }),
         },
       ],
     } as never);

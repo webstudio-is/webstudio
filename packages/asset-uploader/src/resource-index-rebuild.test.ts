@@ -62,7 +62,8 @@ describe("explicit resource index rebuild", () => {
       assetClient: { resourceIndexStore: { putIfAbsent } } as never,
       projectId: "project-1",
       resourceId: "posts",
-      query: `*[properties.slug == $slug]`,
+      query:
+        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id } } }",
       source: { buildId: "build-1", resources: "[]" },
       dependencies: { synchronizeCanonicalAssets },
     });
@@ -71,7 +72,9 @@ describe("explicit resource index rebuild", () => {
     expect(synchronizeCanonicalAssets.mock.invocationCallOrder[0]).toBeLessThan(
       putIfAbsent.mock.invocationCallOrder[0]
     );
-    expect(result.index.parameterNames).toEqual(["slug"]);
+    expect(result.index.plan).toMatchObject({
+      variables: [expect.objectContaining({ name: "slug" })],
+    });
     expect(result.index.documents).toHaveLength(1);
     expect(putIfAbsent).toHaveBeenCalledOnce();
   });

@@ -9,16 +9,25 @@ import {
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test } from "vitest";
-import { ObjectProjectStore } from "./project-store";
-import { FilesystemObjectStore } from "./filesystem";
+import {
+  createFilesystemProjectStore,
+  FilesystemObjectStore,
+} from "./filesystem";
+import { runStorageAdapterContract } from "./__tests__/storage-adapter-contract";
 
 const directories: string[] = [];
 
 const createStore = async () => {
   const root = await mkdtemp(join(tmpdir(), "webstudio-project-store-"));
   directories.push(root);
-  const storage = new FilesystemObjectStore(root);
-  return { root, storage, store: new ObjectProjectStore(storage, storage) };
+  const storage = new FilesystemObjectStore(join(root, "db"));
+  const assets = new FilesystemObjectStore(join(root, "assets"));
+  return {
+    root,
+    storage,
+    assets,
+    store: createFilesystemProjectStore(root, "project"),
+  };
 };
 
 afterEach(async () => {
@@ -27,6 +36,14 @@ afterEach(async () => {
       .splice(0)
       .map((directory) => rm(directory, { recursive: true, force: true }))
   );
+});
+
+runStorageAdapterContract({
+  name: "filesystem",
+  create: async () => {
+    const { storage } = await createStore();
+    return { objects: storage, heads: storage };
+  },
 });
 
 describe("filesystem project store", () => {
@@ -46,63 +63,40 @@ describe("filesystem project store", () => {
     expect(await storage.list("objects")).toHaveLength(2);
     await expect(
       readFile(
-        join(root, "objects", reference.object.hash.slice("sha256:".length)),
+        join(
+          root,
+          "db",
+          "objects",
+          reference.object.hash.slice("sha256:".length)
+        ),
         "utf8"
       )
     ).resolves.toContain("webstudio-project-snapshot");
   });
 
-  test("allows exactly one concurrent compare-and-swap update", async () => {
-    const { storage, store } = await createStore();
-    const first = await store.writeSnapshot({
-      projectId: "project",
-      builderRevision: "1",
-      assetRevision: "1",
-      collections: {},
-    });
-    const second = await store.writeSnapshot({
-      projectId: "project",
-      builderRevision: "2",
-      assetRevision: "1",
-      collections: {},
-    });
-    const third = await store.writeSnapshot({
-      projectId: "project",
-      builderRevision: "3",
-      assetRevision: "1",
-      collections: {},
-    });
-    const created = await store.updateHead({
-      name: "development",
-      reference: first,
-    });
-    if (created.status !== "updated") {
-      throw new Error("Expected initial project head update to succeed");
-    }
+  test("stores binary assets separately from structured project data", async () => {
+    const { root, assets, store } = await createStore();
+    const bytes = new TextEncoder().encode("asset body");
+    const first = await store.writeAsset(bytes);
+    const second = await store.writeAsset(bytes);
 
-    const results = await Promise.all([
-      store.updateHead({
-        name: "development",
-        expectedRevision: created.head.revision,
-        reference: second,
-      }),
-      store.updateHead({
-        name: "development",
-        expectedRevision: created.head.revision,
-        reference: third,
-      }),
-    ]);
-
-    expect(results.filter(({ status }) => status === "updated")).toHaveLength(
-      1
-    );
-    expect(results.filter(({ status }) => status === "conflict")).toHaveLength(
-      1
-    );
-    await expect(storage.getHead("development")).resolves.toBeDefined();
+    expect(second).toEqual(first);
+    await expect(store.readAsset(first)).resolves.toEqual(bytes);
+    expect(await assets.list("sha256")).toHaveLength(1);
+    await expect(
+      readFile(
+        join(
+          root,
+          "assets",
+          "sha256",
+          first.object.hash.slice("sha256:".length)
+        ),
+        "utf8"
+      )
+    ).resolves.toBe("asset body");
   });
 
-  test("recovers a head lock left by a crashed process", async () => {
+  test("does not steal an old head lock from a paused writer", async () => {
     const { root, store } = await createStore();
     const reference = await store.writeSnapshot({
       projectId: "project",
@@ -110,15 +104,23 @@ describe("filesystem project store", () => {
       assetRevision: "1",
       collections: {},
     });
-    const lockPath = join(root, "heads", "development.json.lock");
-    await mkdir(join(root, "heads"), { recursive: true });
+    const lockPath = join(root, "db", "heads", "development.json.lock");
+    await mkdir(join(root, "db", "heads"), { recursive: true });
     await writeFile(lockPath, "");
     const staleTime = new Date(Date.now() - 60_000);
     await utimes(lockPath, staleTime, staleTime);
 
-    await expect(
-      store.updateHead({ name: "development", reference })
-    ).resolves.toMatchObject({ status: "updated" });
+    const update = store.updateHead({ name: "development", reference });
+    const state = await Promise.race([
+      update.then(() => "settled" as const),
+      new Promise<"pending">((resolvePending) =>
+        setTimeout(() => resolvePending("pending"), 50)
+      ),
+    ]);
+    expect(state).toBe("pending");
+
+    await rm(lockPath);
+    await expect(update).resolves.toMatchObject({ status: "updated" });
   });
 
   test("rejects keys that escape the configured root", async () => {
@@ -137,7 +139,12 @@ describe("filesystem project store", () => {
       collections: {},
     });
     await writeFile(
-      join(root, "objects", reference.object.hash.slice("sha256:".length)),
+      join(
+        root,
+        "db",
+        "objects",
+        reference.object.hash.slice("sha256:".length)
+      ),
       "{}"
     );
 

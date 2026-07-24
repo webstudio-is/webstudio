@@ -1,7 +1,7 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import {
-  createUploadTicket,
   isContentHash,
+  PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/index.server";
 import isValidFilename from "valid-filename";
 import { createContext } from "~/shared/context.server";
@@ -9,6 +9,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { parseError } from "~/shared/error/error-parse";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
+import { createAssetClient } from "~/shared/asset-client";
 
 export const loader = async () => {
   return json(
@@ -44,16 +45,16 @@ export const action = async (props: ActionFunctionArgs) => {
       ) {
         throw Error("Project id, type or filename are invalid");
       }
-      const ticket = await createUploadTicket(
-        {
-          projectId,
-          type,
-          filename,
-          displayFilename: displayFilename ?? undefined,
-          contentHash: contentHash ?? undefined,
-        },
-        context
-      );
+      const ticket = await new PostgresAssetRepository({
+        projectId,
+        context,
+        assetClient: createAssetClient(),
+      }).createUploadTicket({
+        type,
+        filename,
+        displayFilename: displayFilename ?? undefined,
+        contentHash: contentHash ?? undefined,
+      });
       return json(ticket, { headers: privateNoStoreResponseHeaders });
     }
 

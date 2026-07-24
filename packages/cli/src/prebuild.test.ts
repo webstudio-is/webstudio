@@ -325,32 +325,30 @@ describe("generateRedirectsModule", () => {
 });
 
 test("requires candidate files only when an asset query can hydrate content", async () => {
-  const query = "*[]";
-  const index = await createAssetResourceIndex({
-    format: "webstudio-resource-index",
-    version: 1,
-    resourceId: "posts",
-    query,
-    assetRevision: `sha256:${"a".repeat(64)}`,
-    queryMode: "static",
-    parameterNames: [],
-    documents: [
-      {
-        _id: "post-1",
-        _type: "asset.file",
-        name: "post.md",
-        path: "post.md",
-        key: "post",
-        extension: "md",
-        mimeType: "text/markdown",
-        size: 10,
-        revision: "post-revision",
-        contentRef: "post.md",
-        properties: {},
-      },
-    ],
-  });
-  const createResource = (contentExpression: string): Resource => ({
+  const createIndex = (query: string) =>
+    createAssetResourceIndex({
+      format: "webstudio-resource-index",
+      version: 1,
+      resourceId: "posts",
+      query,
+      assetRevision: `sha256:${"a".repeat(64)}`,
+      documents: [
+        {
+          _id: "post-1",
+          _type: "asset.file",
+          name: "post.md",
+          path: "post.md",
+          key: "post",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: 10,
+          revision: "post-revision",
+          contentRef: "post.md",
+          properties: {},
+        },
+      ],
+    });
+  const createResource = (query: string): Resource => ({
     id: "posts",
     name: "Posts",
     control: "system",
@@ -359,24 +357,37 @@ test("requires candidate files only when an asset query can hydrate content", as
     headers: [],
     body: createAssetQueryResourceBody({
       query,
-      parameters: [],
-      contentExpression,
+      variables: [],
     }),
   });
-  const snapshots = [
-    { resourceId: "posts", revision: index.integrity.checksum, index },
-  ];
+  const metadataQuery = "{ assets { items { id } } }";
+  const contentQuery =
+    "{ assets { items { id content(mode: MARKDOWN_BODY) { text } } } }";
+  const metadataIndex = await createIndex(metadataQuery);
+  const contentIndex = await createIndex(contentQuery);
 
   expect(
     getRequiredAssetResourceContentRefs({
-      snapshots,
-      resources: [["posts", createResource('{"mode":"none"}')]],
+      snapshots: [
+        {
+          resourceId: "posts",
+          revision: metadataIndex.integrity.checksum,
+          index: metadataIndex,
+        },
+      ],
+      resources: [["posts", createResource(metadataQuery)]],
     })
   ).toEqual(new Set());
   expect(
     getRequiredAssetResourceContentRefs({
-      snapshots,
-      resources: [["posts", createResource('{"mode":"markdown-body"}')]],
+      snapshots: [
+        {
+          resourceId: "posts",
+          revision: contentIndex.integrity.checksum,
+          index: contentIndex,
+        },
+      ],
+      resources: [["posts", createResource(contentQuery)]],
     })
   ).toEqual(new Set(["post.md"]));
 });
@@ -386,10 +397,8 @@ test("materializes immutable resource indexes as public JSON with a reference-on
     format: "webstudio-resource-index",
     version: 1,
     resourceId: "blog/posts",
-    query: "*[]",
+    query: "{ assets { items { id } } }",
     assetRevision: `sha256:${"a".repeat(64)}`,
-    queryMode: "static",
-    parameterNames: [],
     documents: [],
   });
   await mkdir("public", { recursive: true });
@@ -440,15 +449,13 @@ test("materializes immutable resource indexes as public JSON with a reference-on
 test("executes and hydrates an asset query from SSG public files", async () => {
   const source = "# Prerendered post\n";
   const query =
-    '*[properties.slug == $slug][0]{_id, revision, contentRef, "title": properties.title}';
+    "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } content(mode: FULL) { text } } } }";
   const index = await createAssetResourceIndex({
     format: "webstudio-resource-index",
     version: 1,
     resourceId: "post",
     query,
     assetRevision: `sha256:${"a".repeat(64)}`,
-    queryMode: "parameterized",
-    parameterNames: ["slug"],
     documents: [
       {
         _id: "post-1",
@@ -509,9 +516,7 @@ test("executes and hydrates an asset query from SSG public files", async () => {
     method: "POST",
     body: JSON.stringify({
       query,
-      parameters: { slug: "post" },
-      resultLimit: 1,
-      content: { mode: "full" },
+      variables: { slug: "post" },
     }),
   });
 
@@ -522,9 +527,17 @@ test("executes and hydrates an asset query from SSG public files", async () => {
     status: 200,
     body: {
       ok: true,
-      result: { _id: "post-1", title: "Prerendered post" },
-      content: { "post-1": { text: source } },
-      meta: { hydratedFileCount: 1 },
+      data: {
+        assets: {
+          items: [
+            {
+              id: "post-1",
+              properties: { title: "Prerendered post" },
+              content: { text: source },
+            },
+          ],
+        },
+      },
     },
   });
 });
@@ -926,10 +939,9 @@ describe("prebuild", () => {
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "posts",
-      query: "*[properties.slug == $slug][0]{_id, revision, contentRef}",
+      query:
+        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id content(mode: MARKDOWN_BODY) { text } } } }",
       assetRevision: `sha256:${"a".repeat(64)}`,
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
       documents: [
         {
           _id: "post-1",
@@ -1073,7 +1085,6 @@ describe("prebuild", () => {
       )
     ).join("\n");
     expect(serverBundle).not.toContain("@webstudio-is/asset-resource");
-    expect(serverBundle).not.toContain("groq-js");
   }, 30_000);
 
   test("keeps IPX image optimization in the react-router Docker overlay", async () => {
@@ -1141,15 +1152,13 @@ describe("prebuild", () => {
 
   test("prerenders dynamic SSG paths from parameterized Assets resources", async () => {
     const query =
-      '*[properties.slug == $slug][0]{_id, "title": properties.title}';
+      "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } } } }";
     const index = await createAssetResourceIndex({
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "post",
       query,
       assetRevision: `sha256:${"a".repeat(64)}`,
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
       documents: [
         {
           _id: "post-1",
@@ -1211,8 +1220,7 @@ describe("prebuild", () => {
           headers: [],
           body: createAssetQueryResourceBody({
             query,
-            parameters: [{ name: "slug", value: "system.params.slug" }],
-            resultLimit: 1,
+            variables: [{ name: "slug", value: "system.params.slug" }],
           }),
         },
       ],
@@ -1244,15 +1252,13 @@ describe("prebuild", () => {
   }, 30_000);
 
   test("prerenders SSG pages with asset query data", async () => {
-    const query = '*[]{"title": properties.title}';
+    const query = "{ assets(first: 10) { items { properties { title } } } }";
     const index = await createAssetResourceIndex({
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "posts",
       query,
       assetRevision: `sha256:${"a".repeat(64)}`,
-      queryMode: "static",
-      parameterNames: [],
       documents: [
         {
           _id: "post-1",
@@ -1291,8 +1297,7 @@ describe("prebuild", () => {
           headers: [],
           body: createAssetQueryResourceBody({
             query,
-            parameters: [],
-            resultLimit: 10,
+            variables: [],
           }),
         },
       ],
@@ -1338,7 +1343,11 @@ describe("prebuild", () => {
         status: 200,
         data: {
           ok: true,
-          result: [{ title: "Prerendered post" }],
+          data: {
+            assets: {
+              items: [{ properties: { title: "Prerendered post" } }],
+            },
+          },
         },
       },
     });

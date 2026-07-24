@@ -1,21 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  assetResourceParameterName,
-  assetResourceContentOptions,
+  assetQueryResult,
   assetResourceLimits,
-  assetResourceIndexStatus,
-  assetResourceQueryResponse,
   builderAssetFieldCatalog,
   isLiteralExpression,
+  type AssetQueryFilter,
+  type AssetQuerySort,
   type AssetResourceContentOptions,
-  type AssetResourceIndexStatus,
-  type AssetResourceQuerySuccess,
   type BuilderAssetFieldCatalog,
   type Resource,
+  type StructuredAssetQueryFilterBinding,
+  type StructuredAssetQueryResourceConfiguration,
 } from "@webstudio-is/sdk";
 import {
-  Button,
   Flex,
   Grid,
   InputField,
@@ -26,7 +24,6 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
-import { getAssetResourceReferencedFieldPaths } from "@webstudio-is/asset-resource";
 import { $assets } from "~/shared/sync/data-stores";
 import {
   BindingControl,
@@ -37,386 +34,505 @@ import { ExpressionEditor } from "~/builder/shared/expression-editor";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   loadBuilderAssetFieldCatalog,
-  loadBuilderAssetIndexStatus,
   previewBuilderAssetQuery,
 } from "~/shared/asset-resource-api.client";
 import {
-  createAssetQueryResourceBody,
-  getAssetIndexStatusLabel,
+  createStructuredAssetQueryResourceBody,
   getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
-  normalizeAssetQueryParameterBindings,
-  parseAssetQueryResourceBody,
-  type AssetQueryParameterBinding,
+  parseStructuredAssetQueryResourceBody,
 } from "./asset-query-form-utils";
 
-const AssetQueryParameters = ({
+type FieldOption = {
+  path: string[];
+  label: string;
+  types: string[];
+};
+
+const standardFields: FieldOption[] = [
+  ["id", "ID", "string"],
+  ["name", "Name", "string"],
+  ["path", "Path", "string"],
+  ["key", "Key", "string"],
+  ["folderId", "Folder ID", "string"],
+  ["extension", "Extension", "string"],
+  ["mimeType", "MIME type", "string"],
+  ["size", "Size", "number"],
+  ["revision", "Revision", "string"],
+  ["excerpt", "Excerpt", "string"],
+].map(([field, label, type]) => ({
+  path: [field],
+  label,
+  types: [type],
+}));
+
+const fieldKey = (path: readonly string[]) => JSON.stringify(path);
+
+const getFieldOptions = (
+  catalog: BuilderAssetFieldCatalog | undefined
+): FieldOption[] => {
+  const options = new Map(
+    standardFields.map((option) => [fieldKey(option.path), option])
+  );
+  for (const field of Object.values(catalog?.fields ?? {})) {
+    if (field.queryPath?.[0] !== "properties") {
+      continue;
+    }
+    options.set(fieldKey(field.queryPath), {
+      path: field.queryPath,
+      label: field.queryPath.join(" / "),
+      types: field.types,
+    });
+  }
+  return [...options.values()];
+};
+
+const commonOperators = ["eq", "ne", "in", "exists"] as const;
+const getOperators = (types: readonly string[]) => {
+  const operators = new Set<AssetQueryFilter["operator"]>(commonOperators);
+  if (types.some((type) => type === "string" || type === "array")) {
+    operators.add("contains");
+  }
+  if (types.includes("string")) {
+    operators.add("startsWith");
+    operators.add("endsWith");
+  }
+  if (types.some((type) => type === "string" || type === "number")) {
+    operators.add("gt");
+    operators.add("gte");
+    operators.add("lt");
+    operators.add("lte");
+  }
+  if (
+    types.some(
+      (type) => type === "string" || type === "array" || type === "object"
+    )
+  ) {
+    operators.add("isEmpty");
+  }
+  return [...operators];
+};
+
+const operatorLabels: Record<AssetQueryFilter["operator"], string> = {
+  eq: "Equals",
+  ne: "Does not equal",
+  in: "Is one of",
+  contains: "Contains",
+  startsWith: "Starts with",
+  endsWith: "Ends with",
+  gt: "Greater than",
+  gte: "Greater than or equal",
+  lt: "Less than",
+  lte: "Less than or equal",
+  exists: "Exists",
+  isEmpty: "Is empty",
+};
+
+const defaultFilterValue = (operator: AssetQueryFilter["operator"]) =>
+  operator === "in"
+    ? "[]"
+    : operator === "exists" || operator === "isEmpty"
+      ? "true"
+      : '""';
+
+const BoundExpression = ({
+  label,
+  value,
   scope,
   aliases,
-  parameters,
   onChange,
 }: {
+  label: string;
+  value: string;
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
-  parameters: AssetQueryParameterBinding[];
-  onChange: (parameters: AssetQueryParameterBinding[]) => void;
+  onChange: (value: string) => void;
 }) => (
-  <Grid gap={1}>
+  <BindingControl>
+    <div>
+      <ExpressionEditor
+        aria-label={label}
+        value={value}
+        onChange={onChange}
+        onChangeComplete={onChange}
+      />
+    </div>
+    <BindingPopover
+      scope={scope}
+      aliases={aliases}
+      variant={isLiteralExpression(value) ? "default" : "bound"}
+      value={value}
+      onChange={onChange}
+      onRemove={(literal) => onChange(JSON.stringify(literal))}
+    />
+  </BindingControl>
+);
+
+const Filters = ({
+  fields,
+  filters,
+  scope,
+  aliases,
+  onChange,
+}: {
+  fields: FieldOption[];
+  filters: StructuredAssetQueryFilterBinding[];
+  scope: Record<string, unknown>;
+  aliases: Map<string, string>;
+  onChange: (filters: StructuredAssetQueryFilterBinding[]) => void;
+}) => (
+  <Grid gap={2}>
     <Flex justify="between" align="center">
-      <Label>Runtime parameters</Label>
+      <Label>Filters</Label>
       <SmallIconButton
-        aria-label="Add runtime parameter"
+        aria-label="Add asset filter"
         icon={<PlusIcon />}
-        disabled={parameters.length >= assetResourceLimits.parameterCount}
-        onClick={() => onChange([...parameters, { name: "", value: '""' }])}
+        disabled={filters.length >= assetResourceLimits.filterCount}
+        onClick={() =>
+          onChange([
+            ...filters,
+            { field: ["path"], operator: "startsWith", value: '""' },
+          ])
+        }
       />
     </Flex>
-    <Grid gap={2}>
-      {parameters.map((parameter, index) => (
-        <Grid
-          key={index}
-          gap={2}
-          align="center"
-          css={{ gridTemplateColumns: `100px 1fr min-content` }}
-        >
-          <InputField
-            autoFocus={parameter.name === ""}
-            aria-label="Runtime parameter name"
-            placeholder="slug"
-            pattern="[A-Za-z_][A-Za-z0-9_]*"
-            value={parameter.name}
-            onChange={(event) => {
-              const next = [...parameters];
-              next[index] = { ...parameter, name: event.target.value };
-              onChange(next);
-            }}
-          />
-          <BindingControl>
-            <div>
-              <ExpressionEditor
-                value={parameter.value}
-                onChange={(value) => {
-                  const next = [...parameters];
-                  next[index] = { ...parameter, value };
-                  onChange(next);
-                }}
-                onChangeComplete={(value) => {
-                  const next = [...parameters];
-                  next[index] = { ...parameter, value };
-                  onChange(next);
-                }}
-              />
-            </div>
-            <BindingPopover
-              scope={scope}
-              aliases={aliases}
-              variant={
-                isLiteralExpression(parameter.value) ? "default" : "bound"
-              }
-              value={parameter.value}
-              onChange={(value) => {
-                const next = [...parameters];
-                next[index] = { ...parameter, value };
-                onChange(next);
-              }}
-              onRemove={(value) => {
-                const next = [...parameters];
-                next[index] = { ...parameter, value: JSON.stringify(value) };
+    {filters.map((filter, index) => {
+      const selectedField =
+        fields.find(
+          (field) => fieldKey(field.path) === fieldKey(filter.field)
+        ) ?? fields[0];
+      const operators = getOperators(selectedField.types);
+      return (
+        <Grid key={index} gap={1}>
+          <Grid
+            gap={1}
+            align="center"
+            css={{ gridTemplateColumns: "1fr 1fr min-content" }}
+          >
+            <Select<FieldOption>
+              aria-label="Asset filter field"
+              options={fields}
+              getLabel={(field) => field.label}
+              getValue={(field) => fieldKey(field.path)}
+              value={selectedField}
+              onChange={(field) => {
+                const next = [...filters];
+                const nextOperators = getOperators(field.types);
+                const operator = nextOperators.includes(filter.operator)
+                  ? filter.operator
+                  : nextOperators[0];
+                next[index] = {
+                  ...filter,
+                  field: field.path,
+                  operator,
+                  value:
+                    operator === filter.operator
+                      ? filter.value
+                      : defaultFilterValue(operator),
+                };
                 onChange(next);
               }}
             />
-          </BindingControl>
-          <SmallIconButton
-            aria-label="Delete runtime parameter"
-            variant="destructive"
-            icon={<TrashIcon />}
-            onClick={() =>
-              onChange(parameters.filter((_, item) => item !== index))
-            }
+            <Select<AssetQueryFilter["operator"]>
+              aria-label="Asset filter operator"
+              options={operators}
+              getLabel={(operator: AssetQueryFilter["operator"]) =>
+                operatorLabels[operator]
+              }
+              value={filter.operator}
+              onChange={(operator: AssetQueryFilter["operator"]) => {
+                const next = [...filters];
+                next[index] = {
+                  ...filter,
+                  operator,
+                  value: defaultFilterValue(operator),
+                };
+                onChange(next);
+              }}
+            />
+            <SmallIconButton
+              aria-label="Delete asset filter"
+              variant="destructive"
+              icon={<TrashIcon />}
+              onClick={() =>
+                onChange(filters.filter((_, position) => position !== index))
+              }
+            />
+          </Grid>
+          <BoundExpression
+            label="Asset filter value"
+            value={filter.value}
+            scope={scope}
+            aliases={aliases}
+            onChange={(value) => {
+              const next = [...filters];
+              next[index] = { ...filter, value };
+              onChange(next);
+            }}
           />
         </Grid>
-      ))}
-      {parameters.length === 0 && (
-        <Text color="subtle" align="center">
-          No runtime parameters
-        </Text>
-      )}
-    </Grid>
+      );
+    })}
+    {filters.length === 0 && (
+      <Text color="subtle">All assets are included.</Text>
+    )}
   </Grid>
 );
 
-const contentModeLabels: Record<AssetResourceContentOptions["mode"], string> = {
-  none: "No content",
-  full: "Complete text",
-  range: "Byte range",
-  "markdown-body": "Markdown body",
-};
-
-const AssetQueryOptions = ({
-  resultLimit,
-  content,
-  onResultLimitChange,
-  onContentChange,
+const Sorting = ({
+  fields,
+  sort,
+  onChange,
 }: {
-  resultLimit: number;
-  content: AssetResourceContentOptions;
-  onResultLimitChange: (value: number) => void;
-  onContentChange: (value: AssetResourceContentOptions) => void;
+  fields: FieldOption[];
+  sort: AssetQuerySort[];
+  onChange: (sort: AssetQuerySort[]) => void;
 }) => (
-  <Grid gap={3}>
-    <Grid gap={1}>
-      <Label>Result limit</Label>
-      <InputField
-        aria-label="Result limit"
-        type="number"
-        min={1}
-        max={assetResourceLimits.resultCount}
-        value={resultLimit}
-        onChange={(event) => {
-          if (Number.isNaN(event.target.valueAsNumber) === false) {
-            onResultLimitChange(event.target.valueAsNumber);
-          }
-        }}
-      />
-    </Grid>
-    <Grid gap={1}>
-      <Label>Selected-file content</Label>
-      <Select<AssetResourceContentOptions["mode"]>
-        aria-label="Selected-file content"
-        options={["none", "full", "range", "markdown-body"]}
-        getLabel={(mode: AssetResourceContentOptions["mode"]) =>
-          contentModeLabels[mode]
-        }
-        value={content.mode}
-        onChange={(mode) =>
-          onContentChange(
-            mode === "range" ? { mode, offset: 0, length: 16 * 1024 } : { mode }
-          )
+  <Grid gap={2}>
+    <Flex justify="between" align="center">
+      <Label>Sort</Label>
+      <SmallIconButton
+        aria-label="Add asset sort"
+        icon={<PlusIcon />}
+        disabled={sort.length >= assetResourceLimits.sortCount}
+        onClick={() =>
+          onChange([...sort, { field: ["name"], direction: "asc" }])
         }
       />
-    </Grid>
-    {(content.mode === "full" || content.mode === "markdown-body") && (
-      <Grid gap={1}>
-        <Label>Maximum content bytes</Label>
+    </Flex>
+    {sort.map((order, index) => {
+      const selectedField =
+        fields.find(
+          (field) => fieldKey(field.path) === fieldKey(order.field)
+        ) ?? fields[0];
+      return (
+        <Grid
+          key={index}
+          gap={1}
+          align="center"
+          css={{ gridTemplateColumns: "1fr 110px min-content" }}
+        >
+          <Select<FieldOption>
+            aria-label="Asset sort field"
+            options={fields.filter(
+              ({ types }) =>
+                types.includes("object") === false &&
+                types.includes("array") === false
+            )}
+            getLabel={(field) => field.label}
+            getValue={(field) => fieldKey(field.path)}
+            value={selectedField}
+            onChange={(field) => {
+              const next = [...sort];
+              next[index] = { ...order, field: field.path };
+              onChange(next);
+            }}
+          />
+          <Select<AssetQuerySort["direction"]>
+            aria-label="Asset sort direction"
+            options={["asc", "desc"] as const}
+            getLabel={(direction: AssetQuerySort["direction"]) =>
+              direction === "asc" ? "Ascending" : "Descending"
+            }
+            value={order.direction}
+            onChange={(direction: AssetQuerySort["direction"]) => {
+              const next = [...sort];
+              next[index] = { ...order, direction };
+              onChange(next);
+            }}
+          />
+          <SmallIconButton
+            aria-label="Delete asset sort"
+            variant="destructive"
+            icon={<TrashIcon />}
+            onClick={() =>
+              onChange(sort.filter((_, position) => position !== index))
+            }
+          />
+        </Grid>
+      );
+    })}
+  </Grid>
+);
+
+const ContentOptions = ({
+  value,
+  onChange,
+}: {
+  value: AssetResourceContentOptions;
+  onChange: (value: AssetResourceContentOptions) => void;
+}) => (
+  <Grid gap={1}>
+    <Label>File content</Label>
+    <Select<AssetResourceContentOptions["mode"]>
+      aria-label="Asset content mode"
+      options={["none", "markdown-body", "full", "range"] as const}
+      getLabel={(mode: AssetResourceContentOptions["mode"]) =>
+        mode === "none"
+          ? "Metadata only"
+          : mode === "markdown-body"
+            ? "Markdown body"
+            : mode === "full"
+              ? "Full file"
+              : "Byte range"
+      }
+      value={value.mode}
+      onChange={(mode: AssetResourceContentOptions["mode"]) =>
+        onChange(
+          mode === "range"
+            ? { mode, offset: 0, length: 1024 }
+            : mode === "none"
+              ? { mode }
+              : { mode, maxBytes: assetResourceLimits.hydratedFileBytes }
+        )
+      }
+    />
+    {value.mode === "range" && (
+      <Grid gap={1} css={{ gridTemplateColumns: "1fr 1fr" }}>
         <InputField
-          aria-label="Maximum content bytes"
+          aria-label="Content byte offset"
+          type="number"
+          min={0}
+          value={String(value.offset)}
+          onChange={(event) =>
+            onChange({ ...value, offset: Number(event.target.value) })
+          }
+        />
+        <InputField
+          aria-label="Content byte length"
           type="number"
           min={1}
-          max={assetResourceLimits.hydratedFileBytes}
-          value={content.maxBytes ?? assetResourceLimits.hydratedFileBytes}
-          onChange={(event) => {
-            if (Number.isNaN(event.target.valueAsNumber) === false) {
-              onContentChange({
-                mode: content.mode,
-                maxBytes: event.target.valueAsNumber,
-              });
-            }
-          }}
+          value={String(value.length)}
+          onChange={(event) =>
+            onChange({ ...value, length: Number(event.target.value) })
+          }
         />
       </Grid>
     )}
-    {content.mode === "range" && (
-      <Grid gap={2} css={{ gridTemplateColumns: "1fr 1fr" }}>
-        <Grid gap={1}>
-          <Label>Byte offset</Label>
-          <InputField
-            aria-label="Byte offset"
-            type="number"
-            min={0}
-            value={content.offset}
-            onChange={(event) => {
-              if (Number.isNaN(event.target.valueAsNumber) === false) {
-                onContentChange({
-                  ...content,
-                  offset: event.target.valueAsNumber,
-                });
-              }
-            }}
-          />
-        </Grid>
-        <Grid gap={1}>
-          <Label>Byte length</Label>
-          <InputField
-            aria-label="Byte length"
-            type="number"
-            min={1}
-            max={assetResourceLimits.hydratedRangeBytes}
-            value={content.length}
-            onChange={(event) => {
-              if (Number.isNaN(event.target.valueAsNumber) === false) {
-                onContentChange({
-                  ...content,
-                  length: event.target.valueAsNumber,
-                });
-              }
-            }}
-          />
-        </Grid>
-      </Grid>
+    {(value.mode === "full" || value.mode === "markdown-body") && (
+      <InputField
+        aria-label="Maximum content bytes"
+        type="number"
+        min={1}
+        value={value.maxBytes === undefined ? "" : String(value.maxBytes)}
+        onChange={(event) =>
+          onChange({
+            ...value,
+            maxBytes:
+              event.target.value === ""
+                ? undefined
+                : Number(event.target.value),
+          })
+        }
+      />
     )}
   </Grid>
 );
 
 const AssetQueryPreview = ({
-  resourceId,
-  resourceRevision,
-  query,
-  parameters,
+  configuration,
   scope,
-  resultLimit,
-  content,
-  indexStatus,
-  onIndexStatusChange,
+  enabled,
 }: {
-  resourceId?: string;
-  resourceRevision?: string;
-  query: string;
-  parameters: AssetQueryParameterBinding[];
+  configuration: StructuredAssetQueryResourceConfiguration;
   scope: Record<string, unknown>;
-  resultLimit: number;
-  content: AssetResourceContentOptions;
-  indexStatus?: AssetResourceIndexStatus;
-  onIndexStatusChange: (status: AssetResourceIndexStatus | undefined) => void;
+  enabled: boolean;
 }) => {
-  const [previewState, setPreviewState] = useState<
+  const [preview, setPreview] = useState<
     | { type: "idle" }
     | { type: "loading" }
     | { type: "error"; message: string }
-    | { type: "success"; response: AssetResourceQuerySuccess }
+    | { type: "success"; value: unknown }
   >({ type: "idle" });
-  const previewInputKey = JSON.stringify({
-    query,
-    parameters,
-    resultLimit,
-    content,
-  });
-  const previewInputKeyRef = useRef(previewInputKey);
-  previewInputKeyRef.current = previewInputKey;
+  const input = {
+    query: {
+      filters: configuration.filters.map(({ field, operator, value }) => ({
+        field,
+        operator,
+        value: evaluateExpressionWithinScope(value, scope),
+      })),
+      sort: configuration.sort,
+      limit: evaluateExpressionWithinScope(configuration.limit, scope),
+      offset: evaluateExpressionWithinScope(configuration.offset, scope),
+      content: configuration.content,
+    },
+  };
+  const inputKey = JSON.stringify(input);
+  const inputRef = useRef({ key: inputKey, input });
+  inputRef.current = { key: inputKey, input };
 
   useEffect(() => {
-    setPreviewState({ type: "idle" });
-  }, [previewInputKey]);
-
-  useEffect(() => {
-    if (resourceId === undefined) {
-      onIndexStatusChange(undefined);
+    setPreview({ type: "idle" });
+    if (enabled === false) {
       return;
     }
-    let ignore = false;
-    let pollTimeout: ReturnType<typeof setTimeout> | undefined;
-    let pollAttempts = 0;
-    const schedulePoll = () => {
-      pollAttempts += 1;
-      if (pollAttempts < 10) {
-        pollTimeout = setTimeout(load, 1000);
-      }
-    };
-    const load = async () => {
+    const requestedKey = inputKey;
+    const timeout = setTimeout(async () => {
+      setPreview({ type: "loading" });
       try {
-        const response = await loadBuilderAssetIndexStatus(resourceId);
-        if (ignore) {
+        const response = await previewBuilderAssetQuery(inputRef.current.input);
+        if (inputRef.current.key !== requestedKey) {
           return;
         }
-        const data = response.data as { status?: unknown };
-        const parsed = assetResourceIndexStatus.safeParse(data.status);
-        const status = parsed.success ? parsed.data : undefined;
-        onIndexStatusChange(status);
-        if (status?.state === "indexing" || status === undefined) {
-          schedulePoll();
+        const parsed = assetQueryResult.safeParse(response.data);
+        if (parsed.success === false) {
+          const message =
+            typeof response.data === "object" &&
+            response.data !== null &&
+            "error" in response.data &&
+            typeof response.data.error === "object" &&
+            response.data.error !== null &&
+            "message" in response.data.error &&
+            typeof response.data.error.message === "string"
+              ? response.data.error.message
+              : "The preview response was invalid.";
+          setPreview({ type: "error", message });
+          return;
         }
+        setPreview({ type: "success", value: parsed.data });
       } catch {
-        if (ignore === false) {
-          onIndexStatusChange(undefined);
-          schedulePoll();
+        if (inputRef.current.key === requestedKey) {
+          setPreview({ type: "error", message: "The query preview failed." });
         }
       }
-    };
-    void load();
-    return () => {
-      ignore = true;
-      if (pollTimeout !== undefined) {
-        clearTimeout(pollTimeout);
-      }
-    };
-  }, [onIndexStatusChange, resourceId, resourceRevision]);
-
-  const preview = async () => {
-    const requestedInputKey = previewInputKey;
-    setPreviewState({ type: "loading" });
-    try {
-      const response = await previewBuilderAssetQuery({
-        query,
-        parameters: Object.fromEntries(
-          normalizeAssetQueryParameterBindings(parameters)
-            .filter(({ name }) => name.trim().length > 0)
-            .map(({ name, value }) => [
-              name,
-              evaluateExpressionWithinScope(value, scope),
-            ])
-        ),
-        resultLimit,
-        content,
-      });
-      if (previewInputKeyRef.current !== requestedInputKey) {
-        return;
-      }
-      const parsed = assetResourceQueryResponse.safeParse(response.data);
-      if (parsed.success === false) {
-        setPreviewState({
-          type: "error",
-          message: "The preview response was invalid.",
-        });
-        return;
-      }
-      if (parsed.data.ok === false) {
-        setPreviewState({ type: "error", message: parsed.data.error.message });
-        return;
-      }
-      setPreviewState({ type: "success", response: parsed.data });
-    } catch {
-      if (previewInputKeyRef.current !== requestedInputKey) {
-        return;
-      }
-      setPreviewState({ type: "error", message: "The query preview failed." });
-    }
-  };
-  const isEmpty =
-    previewState.type === "success" &&
-    isEmptyAssetQueryResult(previewState.response.result);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [enabled, inputKey]);
 
   return (
     <Grid gap={2}>
-      <Flex justify="between" align="center">
-        <Label>Preview</Label>
-        <Button
-          type="button"
-          color="neutral"
-          disabled={previewState.type === "loading"}
-          onClick={preview}
-        >
-          {previewState.type === "loading" ? "Loading…" : "Run preview"}
-        </Button>
-      </Flex>
-      <Text color={indexStatus?.state === "failed" ? "destructive" : "subtle"}>
-        {getAssetIndexStatusLabel(indexStatus)}
-      </Text>
-      {previewState.type === "error" && (
-        <Text color="destructive">{previewState.message}</Text>
+      <Label>Preview</Label>
+      {preview.type === "loading" && (
+        <Text color="subtle">Loading preview…</Text>
       )}
-      {isEmpty && <Text color="subtle">The query returned no results.</Text>}
-      {previewState.type === "success" && isEmpty === false && (
-        <CodeEditor
-          lang="json"
-          title="Query preview"
-          size="small"
-          readOnly={true}
-          value={JSON.stringify(previewState.response, null, 2)}
-          onChange={() => {}}
-          onChangeComplete={() => {}}
-        />
+      {preview.type === "error" && (
+        <Text color="destructive">{preview.message}</Text>
       )}
+      {preview.type === "success" && isEmptyAssetQueryResult(preview.value) && (
+        <Text color="subtle">The query returned no assets.</Text>
+      )}
+      {preview.type === "success" &&
+        isEmptyAssetQueryResult(preview.value) === false && (
+          <CodeEditor
+            lang="json"
+            title="Query preview"
+            size="small"
+            readOnly={true}
+            value={JSON.stringify(preview.value, null, 2)}
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        )}
     </Grid>
   );
+};
+
+const defaultConfiguration: StructuredAssetQueryResourceConfiguration = {
+  filters: [],
+  sort: [],
+  limit: String(assetResourceLimits.defaultResultCount),
+  offset: "0",
+  content: { mode: "none" },
 };
 
 export const AssetQueryForm = ({
@@ -435,43 +551,25 @@ export const AssetQueryForm = ({
   onEnabledChange: (enabled: boolean) => void;
 }) => {
   const assets = useStore($assets);
-  const parsedBody = useMemo(
-    () => parseAssetQueryResourceBody(resource?.body),
+  const initial = useMemo(
+    () =>
+      parseStructuredAssetQueryResourceBody(resource?.body) ??
+      defaultConfiguration,
     [resource?.body]
   );
-  const initialQuery = evaluateExpressionWithinScope(
-    parsedBody.queryExpression ?? "",
-    {}
-  );
-  const [query, setQuery] = useState(
-    typeof initialQuery === "string"
-      ? initialQuery
-      : '*[_type == "asset.file"] | order(_id asc) [0...20]'
-  );
-  const [parameters, setParameters] = useState(parsedBody.parameters);
-  const parsedResultLimit = evaluateExpressionWithinScope(
-    parsedBody.resultLimitExpression ?? "",
-    {}
-  );
-  const [resultLimit, setResultLimit] = useState(
-    typeof parsedResultLimit === "number"
-      ? parsedResultLimit
-      : assetResourceLimits.defaultResultCount
-  );
-  const parsedContent = assetResourceContentOptions.safeParse(
-    evaluateExpressionWithinScope(parsedBody.contentExpression ?? "", {})
-  );
-  const [content, setContent] = useState<AssetResourceContentOptions>(
-    parsedContent.success ? parsedContent.data : { mode: "none" }
-  );
-  const [fieldCatalog, setFieldCatalog] = useState<BuilderAssetFieldCatalog>();
-  const [indexStatus, setIndexStatus] = useState<AssetResourceIndexStatus>();
-  const configurationError = getAssetQueryConfigurationError({
-    query,
-    parameters,
-    resultLimit,
-    content,
-  });
+  const [filters, setFilters] = useState(initial.filters);
+  const [sort, setSort] = useState(initial.sort);
+  const [limit, setLimit] = useState(initial.limit);
+  const [offset, setOffset] = useState(initial.offset);
+  const [content, setContent] = useState(initial.content);
+  const [catalog, setCatalog] = useState<BuilderAssetFieldCatalog>();
+  const configuration = { filters, sort, limit, offset, content };
+  const configurationError = getAssetQueryConfigurationError(configuration);
+  const fields = useMemo(() => getFieldOptions(catalog), [catalog]);
+  const body =
+    configurationError === undefined
+      ? createStructuredAssetQueryResourceBody(configuration)
+      : (resource?.body ?? "");
 
   useEffect(() => {
     if (enabled === false) {
@@ -484,43 +582,17 @@ export const AssetQueryForm = ({
           return;
         }
         const parsed = builderAssetFieldCatalog.safeParse(response.data);
-        setFieldCatalog(parsed.success ? parsed.data : undefined);
+        setCatalog(parsed.success ? parsed.data : undefined);
       })
       .catch(() => {
         if (ignore === false) {
-          setFieldCatalog(undefined);
+          setCatalog(undefined);
         }
       });
     return () => {
       ignore = true;
     };
   }, [assets, enabled]);
-
-  const groqCompletion = useMemo(() => {
-    let resourceFieldPaths: Set<string> | undefined;
-    if (indexStatus?.activeRevision !== undefined) {
-      try {
-        resourceFieldPaths = new Set(
-          getAssetResourceReferencedFieldPaths(query)
-        );
-      } catch {
-        // Keep project catalog completions while the query is temporarily invalid.
-      }
-    }
-    return {
-      catalog: fieldCatalog,
-      parameterNames: Array.from(
-        new Set(
-          normalizeAssetQueryParameterBindings(parameters)
-            .map(({ name }) => name)
-            .filter(
-              (name) => assetResourceParameterName.safeParse(name).success
-            )
-        )
-      ),
-      resourceFieldPaths,
-    };
-  }, [fieldCatalog, indexStatus?.activeRevision, parameters, query]);
 
   return (
     <>
@@ -541,52 +613,45 @@ export const AssetQueryForm = ({
           />
           <input type="hidden" name="header-name" value="Content-Type" />
           <input type="hidden" name="header-value" value='"application/json"' />
-          <input
-            type="hidden"
-            name="body"
-            value={createAssetQueryResourceBody({
-              query,
-              parameters,
-              resultLimit,
-              contentExpression: JSON.stringify(content),
-            })}
-          />
-          <Grid gap={1}>
-            <Label>GROQ query</Label>
-            <CodeEditor
-              lang="groq"
-              groqCompletion={groqCompletion}
-              title="GROQ query"
-              value={query}
-              onChange={setQuery}
-              onChangeComplete={setQuery}
-            />
-          </Grid>
-          <AssetQueryParameters
+          <input type="hidden" name="body" value={body} />
+          <Filters
+            fields={fields}
+            filters={filters}
             scope={scope}
             aliases={aliases}
-            parameters={parameters}
-            onChange={setParameters}
+            onChange={setFilters}
           />
-          <AssetQueryOptions
-            resultLimit={resultLimit}
-            content={content}
-            onResultLimitChange={setResultLimit}
-            onContentChange={setContent}
-          />
+          <Sorting fields={fields} sort={sort} onChange={setSort} />
+          <Grid gap={2} css={{ gridTemplateColumns: "1fr 1fr" }}>
+            <Grid gap={1}>
+              <Label>Limit</Label>
+              <BoundExpression
+                label="Asset query limit"
+                value={limit}
+                scope={scope}
+                aliases={aliases}
+                onChange={setLimit}
+              />
+            </Grid>
+            <Grid gap={1}>
+              <Label>Offset</Label>
+              <BoundExpression
+                label="Asset query offset"
+                value={offset}
+                scope={scope}
+                aliases={aliases}
+                onChange={setOffset}
+              />
+            </Grid>
+          </Grid>
+          <ContentOptions value={content} onChange={setContent} />
           {configurationError !== undefined && (
             <Text color="destructive">{configurationError}</Text>
           )}
           <AssetQueryPreview
-            resourceId={resource?.id}
-            resourceRevision={resource?.body}
-            query={query}
-            parameters={parameters}
+            configuration={configuration}
             scope={scope}
-            resultLimit={resultLimit}
-            content={content}
-            indexStatus={indexStatus}
-            onIndexStatusChange={setIndexStatus}
+            enabled={configurationError === undefined}
           />
         </>
       )}

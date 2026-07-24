@@ -6,13 +6,18 @@ describe("resources loader local dispatch", () => {
     const request = createLocalResourceRequest(
       new Request("https://p-project.builder.example/rest/resources-loader"),
       "/$resources/assets/query?resourceId=posts",
-      { method: "POST", body: '{"query":"*[]"}' }
+      {
+        method: "POST",
+        body: '{"query":"{ assets { items { id } } }"}',
+      }
     );
 
     expect(request.url).toBe(
       "https://p-project.builder.example/$resources/assets/query?resourceId=posts"
     );
     expect(request.method).toBe("POST");
-    expect(await request.text()).toBe('{"query":"*[]"}');
+    expect(await request.text()).toBe(
+      '{"query":"{ assets { items { id } } }"}'
+    );
   });
 });

@@ -50,12 +50,14 @@ import {
   ROOT_INSTANCE_ID,
   elementComponent,
   toRuntimeAsset,
-  assetResourceContentOptions,
   assetResourceLimits,
   matchPathnameParams,
   parseAssetQueryResourceBody,
 } from "@webstudio-is/sdk";
-import { getAssetResourceParameterFieldPaths } from "@webstudio-is/asset-resource";
+import {
+  assetQueryPlanSelectsContent,
+  getAssetResourceVariableFieldPaths,
+} from "@webstudio-is/asset-resource";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
@@ -191,12 +193,12 @@ export const getAssetResourcePrerenderPaths = ({
     if (query === undefined) {
       continue;
     }
-    const parameterFields = getAssetResourceParameterFieldPaths(query);
+    const variableFields = getAssetResourceVariableFieldPaths(query);
     const routeFields = new Map<string, string[]>();
     for (const binding of parseAssetQueryResourceBody(resource.body)
-      .parameters) {
+      .variables) {
       const routeParameter = getBoundSystemRouteParameter(binding.value);
-      const fieldPath = parameterFields.get(binding.name);
+      const fieldPath = variableFields.get(binding.name);
       if (
         routeParameter !== undefined &&
         routeParameterNames.has(routeParameter) &&
@@ -308,22 +310,10 @@ export const getRequiredAssetResourceContentRefs = ({
   const resourcesById = new Map(resources);
   const required = new Set<string>();
   for (const snapshot of snapshots) {
-    const resource = resourcesById.get(snapshot.resourceId);
-    if (resource === undefined) {
+    if (resourcesById.has(snapshot.resourceId) === false) {
       continue;
     }
-    const { contentExpression } = parseAssetQueryResourceBody(resource.body);
-    let content: unknown = { mode: "none" };
-    if (contentExpression !== undefined) {
-      try {
-        content = JSON.parse(contentExpression);
-      } catch {
-        // A dynamic or malformed mode cannot prove that hydration is disabled.
-        content = undefined;
-      }
-    }
-    const parsedContent = assetResourceContentOptions.safeParse(content);
-    if (parsedContent.success && parsedContent.data.mode === "none") {
+    if (assetQueryPlanSelectsContent(snapshot.index.plan) === false) {
       continue;
     }
     for (const document of snapshot.index.documents) {

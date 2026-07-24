@@ -12,10 +12,8 @@ const createIndex = () =>
     format: "webstudio-resource-index",
     version: 1,
     resourceId: "blog/posts",
-    query: "*[]",
+    query: "{ assets { items { id } } }",
     assetRevision: `sha256:${"b".repeat(64)}`,
-    queryMode: "static",
-    parameterNames: [],
     documents: [],
   });
 

@@ -20,6 +20,32 @@ const dependencies = {
   loadCanonicalAssetFileEntries,
 };
 
+const canonicalEntry = ({
+  slug,
+  size = 4,
+}: {
+  slug: string;
+  size?: number;
+}) => ({
+  projectId,
+  assetId: `post-${slug}`,
+  revision,
+  document: {
+    _id: `post-${slug}`,
+    _type: "asset.file" as const,
+    name: `${slug}.md`,
+    path: `blog/${slug}.md`,
+    key: slug,
+    extension: "md",
+    mimeType: "text/markdown",
+    size,
+    revision,
+    contentRef: `assets/post-${slug}`,
+    properties: { slug },
+  },
+  fieldContributions: [{ path: "properties.slug", type: "string" as const }],
+});
+
 describe("previewAssetResourceQuery", () => {
   beforeEach(() => {
     hasProjectPermit.mockReset();
@@ -27,46 +53,38 @@ describe("previewAssetResourceQuery", () => {
     loadCanonicalAssetFileEntries.mockReset();
   });
 
-  test("evaluates persisted canonical metadata without reading files", async () => {
+  test("evaluates the shared canonical metadata index without reading files", async () => {
     hasProjectPermit.mockResolvedValue(true);
     loadCanonicalAssetFileEntries.mockResolvedValue([
-      {
-        projectId,
-        assetId: "post-1",
-        revision,
-        document: {
-          _id: "post-1",
-          _type: "asset.file",
-          name: "post.md",
-          path: "blog/post.md",
-          key: "post",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: 100,
-          revision,
-          contentRef: "assets/post-1",
-          properties: { slug: "post" },
-        },
-        fieldContributions: [{ path: "properties.slug", type: "string" }],
-      },
+      canonicalEntry({ slug: "post", size: 100 }),
     ]);
-
     const readFile = vi.fn();
+
     const result = await previewAssetResourceQuery({
       projectId,
       request: {
-        query: "*[properties.slug == $slug]{_id}",
-        parameters: { slug: "post" },
-        resultLimit: 1,
-        content: { mode: "none" },
+        query: {
+          filters: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "post",
+            },
+          ],
+          limit: 1,
+        },
       },
       context,
       assetClient: { readFile },
       dependencies,
     });
 
-    expect(result.result).toEqual([{ _id: "post-1" }]);
-    expect(result.meta.indexRevision).toMatch(/^metadata:sha256:/);
+    expect(result.items).toEqual([
+      expect.objectContaining({
+        id: "post-post",
+        properties: { slug: "post" },
+      }),
+    ]);
     expect(loadCanonicalAssetFileEntries).toHaveBeenCalledWith({
       client: postgrestClient,
       projectId,
@@ -79,12 +97,7 @@ describe("previewAssetResourceQuery", () => {
     await expect(
       previewAssetResourceQuery({
         projectId,
-        request: {
-          query: "*[]",
-          parameters: {},
-          resultLimit: 1,
-          content: { mode: "none" },
-        },
+        request: { query: {} },
         context,
         assetClient: { readFile: vi.fn() },
         dependencies,
@@ -93,83 +106,12 @@ describe("previewAssetResourceQuery", () => {
     expect(loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
   });
 
-  test("hydrates only identities retained by the query result", async () => {
+  test("hydrates exactly the selected detail file", async () => {
     hasProjectPermit.mockResolvedValue(true);
     loadCanonicalAssetFileEntries.mockResolvedValue([
-      {
-        projectId,
-        assetId: "post-1",
-        revision,
-        document: {
-          _id: "post-1",
-          _type: "asset.file",
-          name: "post.md",
-          path: "blog/post.md",
-          key: "post",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: 4,
-          revision,
-          contentRef: "assets/post-1",
-          properties: { slug: "post" },
-        },
-        fieldContributions: [{ path: "properties.slug", type: "string" }],
-      },
+      canonicalEntry({ slug: "first", size: 5 }),
+      canonicalEntry({ slug: "selected", size: 8 }),
     ]);
-    const readFile = vi.fn(async () => ({
-      data: {
-        async *[Symbol.asyncIterator]() {
-          yield new TextEncoder().encode("Post");
-        },
-      },
-      contentLength: 4,
-    }));
-
-    const result = await previewAssetResourceQuery({
-      projectId,
-      request: {
-        query: "*[0]{_id, revision, contentRef}",
-        parameters: {},
-        resultLimit: 1,
-        content: { mode: "full" },
-      },
-      context,
-      assetClient: { readFile },
-      dependencies,
-    });
-
-    expect(result.content["post-1"]?.text).toBe("Post");
-    expect(result.meta).toMatchObject({
-      hydratedFileCount: 1,
-      hydratedBytes: 4,
-    });
-    expect(readFile).toHaveBeenCalledOnce();
-  });
-
-  test("hydrates exactly one complete file selected by a slug detail query", async () => {
-    hasProjectPermit.mockResolvedValue(true);
-    const entries = ["first", "selected"].map((slug) => ({
-      projectId,
-      assetId: `post-${slug}`,
-      revision,
-      document: {
-        _id: `post-${slug}`,
-        _type: "asset.file" as const,
-        name: `${slug}.md`,
-        path: `blog/${slug}.md`,
-        key: slug,
-        extension: "md",
-        mimeType: "text/markdown",
-        size: slug.length,
-        revision,
-        contentRef: `assets/post-${slug}`,
-        properties: { slug },
-      },
-      fieldContributions: [
-        { path: "properties.slug", type: "string" as const },
-      ],
-    }));
-    loadCanonicalAssetFileEntries.mockResolvedValue(entries);
     const readFile = vi.fn(async (contentRef: string) => ({
       data: {
         async *[Symbol.asyncIterator]() {
@@ -184,25 +126,29 @@ describe("previewAssetResourceQuery", () => {
     const result = await previewAssetResourceQuery({
       projectId,
       request: {
-        query: "*[properties.slug == $slug][0]{_id, revision, contentRef}",
-        parameters: { slug: "selected" },
-        resultLimit: 1,
-        content: { mode: "full" },
+        query: {
+          filters: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "selected",
+            },
+          ],
+          limit: 1,
+          content: { mode: "full" },
+        },
       },
       context,
       assetClient: { readFile },
       dependencies,
     });
 
-    expect(result.content).toEqual({
-      "post-selected": {
-        _id: "post-selected",
-        revision,
-        contentRef: "assets/post-selected",
-        encoding: "utf-8",
-        text: "selected",
-      },
-    });
+    expect(result.items).toEqual([
+      expect.objectContaining({
+        id: "post-selected",
+        content: { encoding: "utf-8", text: "selected" },
+      }),
+    ]);
     expect(readFile).toHaveBeenCalledOnce();
     expect(readFile).toHaveBeenCalledWith("assets/post-selected", {
       offset: 0,
@@ -210,47 +156,22 @@ describe("previewAssetResourceQuery", () => {
     });
   });
 
-  test("applies static candidate selection before the candidate limit", async () => {
+  test("rejects metadata sets beyond the shared index limit", async () => {
     hasProjectPermit.mockResolvedValue(true);
     loadCanonicalAssetFileEntries.mockResolvedValue(
-      Array.from({ length: 1001 }, (_, index) => {
-        const selected = index === 1000;
-        const assetId = `asset-${index}`;
-        return {
-          projectId,
-          assetId,
-          revision,
-          document: {
-            _id: assetId,
-            _type: "asset.file" as const,
-            name: `${index}.md`,
-            path: selected ? "blog/selected.md" : `other/${index}.md`,
-            key: `${index}`,
-            extension: "md",
-            mimeType: "text/markdown",
-            size: 1,
-            revision,
-            contentRef: `assets/${assetId}`,
-            properties: {},
-          },
-          fieldContributions: [],
-        };
-      })
+      Array.from({ length: 1001 }, (_, index) =>
+        canonicalEntry({ slug: String(index), size: 1 })
+      )
     );
 
-    const result = await previewAssetResourceQuery({
-      projectId,
-      request: {
-        query: '*[path match "blog/**"]{_id}',
-        parameters: {},
-        resultLimit: 1,
-        content: { mode: "none" },
-      },
-      context,
-      assetClient: { readFile: vi.fn() },
-      dependencies,
-    });
-
-    expect(result.result).toEqual([{ _id: "asset-1000" }]);
+    await expect(
+      previewAssetResourceQuery({
+        projectId,
+        request: { query: {} },
+        context,
+        assetClient: { readFile: vi.fn() },
+        dependencies,
+      })
+    ).rejects.toThrow("document limit");
   });
 });

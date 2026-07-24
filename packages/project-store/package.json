@@ -8,7 +8,7 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf lib && esbuild src/index.ts src/filesystem.ts src/r2.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/filesystem.ts src/r2.ts src/json.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -36,6 +36,12 @@
       "types": "./lib/types/r2.d.ts",
       "import": "./lib/r2.js",
       "default": "./src/r2.ts"
+    },
+    "./json": {
+      "webstudio": "./src/json.ts",
+      "types": "./lib/types/json.d.ts",
+      "import": "./lib/json.js",
+      "default": "./src/json.ts"
     }
   },
   "files": [

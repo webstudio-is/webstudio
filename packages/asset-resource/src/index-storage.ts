@@ -1,4 +1,5 @@
 import type { AssetResourceIndexV1 } from "@webstudio-is/sdk";
+import { encodeStoragePathSegment } from "@webstudio-is/project-store";
 import {
   serializeAssetResourceIndex,
   verifyAssetResourceIndex,
@@ -21,13 +22,6 @@ export type ImmutableAssetResourceIndexStore = {
   delete?: (key: string) => Promise<"deleted" | "missing">;
 };
 
-const encodeKeySegment = (value: string) => {
-  if (value.length === 0) {
-    throw new Error("Resource index key segment cannot be empty");
-  }
-  return encodeURIComponent(value).replaceAll(".", "%2E");
-};
-
 export const getAssetResourceIndexObjectKey = ({
   projectId,
   index,
@@ -38,13 +32,13 @@ export const getAssetResourceIndexObjectKey = ({
   [
     "resource-indexes",
     "projects",
-    encodeKeySegment(projectId),
+    encodeStoragePathSegment(projectId),
     "resources",
-    encodeKeySegment(index.resourceId),
+    encodeStoragePathSegment(index.resourceId),
     "indexes",
-    encodeKeySegment(index.queryHash),
-    encodeKeySegment(index.assetRevision),
-    `${encodeKeySegment(index.integrity.checksum)}.json`,
+    encodeStoragePathSegment(index.queryHash),
+    encodeStoragePathSegment(index.assetRevision),
+    `${encodeStoragePathSegment(index.integrity.checksum)}.json`,
   ].join("/");
 
 export const persistAssetResourceIndex = async ({

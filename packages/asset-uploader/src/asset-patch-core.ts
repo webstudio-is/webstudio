@@ -138,11 +138,9 @@ export const patchAssetsWithClient = async (
   {
     projectId,
     client,
-    synchronizeCanonicalMetadata = false,
   }: {
     projectId: string;
     client: Client;
-    synchronizeCanonicalMetadata?: boolean;
   },
   patches: Array<Patch>
 ): Promise<void> => {
@@ -239,7 +237,7 @@ export const patchAssetsWithClient = async (
       }
     }
   }
-  if (synchronizeCanonicalMetadata && standardMetadataAssetIds.length > 0) {
+  if (standardMetadataAssetIds.length > 0) {
     await synchronizeCanonicalAssetStandardMetadata({
       projectId,
       assetIds: standardMetadataAssetIds,

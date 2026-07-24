@@ -67169,10 +67169,10 @@ export const runtimeOperationContractData = [
               query: {
                 type: "object",
                 properties: {
-                  groq: {
+                  graphql: {
                     type: "string",
                   },
-                  parameters: {
+                  variables: {
                     type: "array",
                     items: {
                       type: "object",
@@ -67188,77 +67188,8 @@ export const runtimeOperationContractData = [
                       additionalProperties: {},
                     },
                   },
-                  resultLimit: {
-                    type: "integer",
-                    exclusiveMinimum: 0,
-                    maximum: 9007199254740991,
-                  },
-                  content: {
-                    oneOf: [
-                      {
-                        type: "object",
-                        properties: {
-                          mode: {
-                            type: "string",
-                            const: "none",
-                          },
-                        },
-                        required: ["mode"],
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          mode: {
-                            type: "string",
-                            const: "full",
-                          },
-                          maxBytes: {
-                            type: "integer",
-                            exclusiveMinimum: 0,
-                            maximum: 1048576,
-                          },
-                        },
-                        required: ["mode"],
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          mode: {
-                            type: "string",
-                            const: "range",
-                          },
-                          offset: {
-                            type: "integer",
-                            minimum: 0,
-                            maximum: 9007199254740991,
-                          },
-                          length: {
-                            type: "integer",
-                            exclusiveMinimum: 0,
-                            maximum: 262144,
-                          },
-                        },
-                        required: ["mode", "offset", "length"],
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          mode: {
-                            type: "string",
-                            const: "markdown-body",
-                          },
-                          maxBytes: {
-                            type: "integer",
-                            exclusiveMinimum: 0,
-                            maximum: 1048576,
-                          },
-                        },
-                        required: ["mode"],
-                      },
-                    ],
-                  },
                 },
-                required: ["groq", "parameters", "resultLimit", "content"],
+                required: ["graphql", "variables"],
                 additionalProperties: {},
               },
               configurationError: {
@@ -67357,10 +67288,10 @@ export const runtimeOperationContractData = [
             query: {
               type: "object",
               properties: {
-                groq: {
+                graphql: {
                   type: "string",
                 },
-                parameters: {
+                variables: {
                   type: "array",
                   items: {
                     type: "object",
@@ -67376,77 +67307,8 @@ export const runtimeOperationContractData = [
                     additionalProperties: {},
                   },
                 },
-                resultLimit: {
-                  type: "integer",
-                  exclusiveMinimum: 0,
-                  maximum: 9007199254740991,
-                },
-                content: {
-                  oneOf: [
-                    {
-                      type: "object",
-                      properties: {
-                        mode: {
-                          type: "string",
-                          const: "none",
-                        },
-                      },
-                      required: ["mode"],
-                    },
-                    {
-                      type: "object",
-                      properties: {
-                        mode: {
-                          type: "string",
-                          const: "full",
-                        },
-                        maxBytes: {
-                          type: "integer",
-                          exclusiveMinimum: 0,
-                          maximum: 1048576,
-                        },
-                      },
-                      required: ["mode"],
-                    },
-                    {
-                      type: "object",
-                      properties: {
-                        mode: {
-                          type: "string",
-                          const: "range",
-                        },
-                        offset: {
-                          type: "integer",
-                          minimum: 0,
-                          maximum: 9007199254740991,
-                        },
-                        length: {
-                          type: "integer",
-                          exclusiveMinimum: 0,
-                          maximum: 262144,
-                        },
-                      },
-                      required: ["mode", "offset", "length"],
-                    },
-                    {
-                      type: "object",
-                      properties: {
-                        mode: {
-                          type: "string",
-                          const: "markdown-body",
-                        },
-                        maxBytes: {
-                          type: "integer",
-                          exclusiveMinimum: 0,
-                          maximum: 1048576,
-                        },
-                      },
-                      required: ["mode"],
-                    },
-                  ],
-                },
               },
-              required: ["groq", "parameters", "resultLimit", "content"],
+              required: ["graphql", "variables"],
               additionalProperties: {},
             },
             configurationError: {
@@ -67480,16 +67342,17 @@ export const runtimeOperationContractData = [
         query: {
           type: "object",
           properties: {
-            groq: {
+            graphql: {
               type: "string",
               minLength: 1,
               maxLength: 32768,
-              description: "GROQ query evaluated against asset.file documents.",
+              description:
+                "GraphQL query evaluated against the generated Assets schema.",
             },
-            parameters: {
+            variables: {
               default: [],
               description:
-                "Runtime GROQ parameters. Each value is a Webstudio expression evaluated in the resource scope.",
+                "Runtime GraphQL variables. Each value is a Webstudio expression evaluated in the resource scope.",
               maxItems: 32,
               type: "array",
               items: {
@@ -67525,81 +67388,8 @@ export const runtimeOperationContractData = [
                 required: ["name", "value"],
               },
             },
-            resultLimit: {
-              default: 100,
-              type: "integer",
-              exclusiveMinimum: 0,
-              maximum: 1000,
-            },
-            content: {
-              default: {
-                mode: "none",
-              },
-              oneOf: [
-                {
-                  type: "object",
-                  properties: {
-                    mode: {
-                      type: "string",
-                      const: "none",
-                    },
-                  },
-                  required: ["mode"],
-                },
-                {
-                  type: "object",
-                  properties: {
-                    mode: {
-                      type: "string",
-                      const: "full",
-                    },
-                    maxBytes: {
-                      type: "integer",
-                      exclusiveMinimum: 0,
-                      maximum: 1048576,
-                    },
-                  },
-                  required: ["mode"],
-                },
-                {
-                  type: "object",
-                  properties: {
-                    mode: {
-                      type: "string",
-                      const: "range",
-                    },
-                    offset: {
-                      type: "integer",
-                      minimum: 0,
-                      maximum: 9007199254740991,
-                    },
-                    length: {
-                      type: "integer",
-                      exclusiveMinimum: 0,
-                      maximum: 262144,
-                    },
-                  },
-                  required: ["mode", "offset", "length"],
-                },
-                {
-                  type: "object",
-                  properties: {
-                    mode: {
-                      type: "string",
-                      const: "markdown-body",
-                    },
-                    maxBytes: {
-                      type: "integer",
-                      exclusiveMinimum: 0,
-                      maximum: 1048576,
-                    },
-                  },
-                  required: ["mode"],
-                },
-              ],
-            },
           },
-          required: ["groq"],
+          required: ["graphql"],
         },
         scopeInstanceId: {
           type: "string",
@@ -67738,17 +67528,17 @@ export const runtimeOperationContractData = [
                 {
                   type: "object",
                   properties: {
-                    groq: {
+                    graphql: {
                       type: "string",
                       minLength: 1,
                       maxLength: 32768,
                       description:
-                        "GROQ query evaluated against asset.file documents.",
+                        "GraphQL query evaluated against the generated Assets schema.",
                     },
-                    parameters: {
+                    variables: {
                       default: [],
                       description:
-                        "Runtime GROQ parameters. Each value is a Webstudio expression evaluated in the resource scope.",
+                        "Runtime GraphQL variables. Each value is a Webstudio expression evaluated in the resource scope.",
                       maxItems: 32,
                       type: "array",
                       items: {
@@ -67784,81 +67574,8 @@ export const runtimeOperationContractData = [
                         required: ["name", "value"],
                       },
                     },
-                    resultLimit: {
-                      default: 100,
-                      type: "integer",
-                      exclusiveMinimum: 0,
-                      maximum: 1000,
-                    },
-                    content: {
-                      default: {
-                        mode: "none",
-                      },
-                      oneOf: [
-                        {
-                          type: "object",
-                          properties: {
-                            mode: {
-                              type: "string",
-                              const: "none",
-                            },
-                          },
-                          required: ["mode"],
-                        },
-                        {
-                          type: "object",
-                          properties: {
-                            mode: {
-                              type: "string",
-                              const: "full",
-                            },
-                            maxBytes: {
-                              type: "integer",
-                              exclusiveMinimum: 0,
-                              maximum: 1048576,
-                            },
-                          },
-                          required: ["mode"],
-                        },
-                        {
-                          type: "object",
-                          properties: {
-                            mode: {
-                              type: "string",
-                              const: "range",
-                            },
-                            offset: {
-                              type: "integer",
-                              minimum: 0,
-                              maximum: 9007199254740991,
-                            },
-                            length: {
-                              type: "integer",
-                              exclusiveMinimum: 0,
-                              maximum: 262144,
-                            },
-                          },
-                          required: ["mode", "offset", "length"],
-                        },
-                        {
-                          type: "object",
-                          properties: {
-                            mode: {
-                              type: "string",
-                              const: "markdown-body",
-                            },
-                            maxBytes: {
-                              type: "integer",
-                              exclusiveMinimum: 0,
-                              maximum: 1048576,
-                            },
-                          },
-                          required: ["mode"],
-                        },
-                      ],
-                    },
                   },
-                  required: ["groq"],
+                  required: ["graphql"],
                 },
                 {
                   type: "null",

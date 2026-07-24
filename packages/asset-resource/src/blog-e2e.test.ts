@@ -27,18 +27,33 @@ const documents = [
 
 describe("published Markdown blog end-to-end", () => {
   test("lists metadata without bodies, then SSR-selects and hydrates one post by slug", async () => {
-    const listingQuery =
-      '*[properties.draft != true] | order(properties.publishedAt desc){"title": properties.title, "slug": properties.slug, excerpt}';
-    const detailQuery =
-      '*[properties.slug == $slug][0]{_id, revision, contentRef, "title": properties.title}';
+    const listingQuery = `{
+      assets(
+        where: { properties: { draft: { ne: true } } }
+        orderBy: [{ field: PROPERTIES_publishedAt, direction: DESC }]
+        first: 20
+      ) {
+        items { excerpt properties { title slug } }
+      }
+    }`;
+    const detailQuery = `query Post($slug: String!) {
+      assets(
+        where: { properties: { slug: { eq: $slug } } }
+        first: 1
+      ) {
+        items {
+          id
+          properties { title }
+          content(mode: FULL) { text }
+        }
+      }
+    }`;
     const listingIndex = await createAssetResourceIndex({
       format: "webstudio-resource-index",
       version: 1,
       resourceId: "listing",
       query: listingQuery,
       assetRevision,
-      queryMode: "static",
-      parameterNames: [],
       documents,
     });
     const detailIndex = await createAssetResourceIndex({
@@ -47,8 +62,6 @@ describe("published Markdown blog end-to-end", () => {
       resourceId: "detail",
       query: detailQuery,
       assetRevision,
-      queryMode: "parameterized",
-      parameterNames: ["slug"],
       documents,
     });
     const indexes = new Map([
@@ -94,14 +107,20 @@ describe("published Markdown blog end-to-end", () => {
 
     const listing = await request({
       query: listingQuery,
-      parameters: {},
-      resultLimit: 20,
-      content: { mode: "none" },
+      variables: {},
     });
     expect(await listing?.json()).toMatchObject({
       ok: true,
-      result: [{ title: "Hello", slug: "hello", excerpt: "Excerpt" }],
-      content: {},
+      data: {
+        assets: {
+          items: [
+            {
+              excerpt: "Excerpt",
+              properties: { title: "Hello", slug: "hello" },
+            },
+          ],
+        },
+      },
     });
     expect(
       fetchAsset.mock.calls.filter(([path]) => path === "/assets/hello.md")
@@ -109,15 +128,21 @@ describe("published Markdown blog end-to-end", () => {
 
     const detail = await request({
       query: detailQuery,
-      parameters: { slug: "hello" },
-      resultLimit: 1,
-      content: { mode: "full" },
+      variables: { slug: "hello" },
     });
     expect(await detail?.json()).toMatchObject({
       ok: true,
-      result: { _id: "post-1", title: "Hello" },
-      content: { "post-1": { text: "# Hello" } },
-      meta: { hydratedFileCount: 1 },
+      data: {
+        assets: {
+          items: [
+            {
+              id: "post-1",
+              properties: { title: "Hello" },
+              content: { text: "# Hello" },
+            },
+          ],
+        },
+      },
     });
     expect(
       fetchAsset.mock.calls.filter(([path]) => path === "/assets/hello.md")
