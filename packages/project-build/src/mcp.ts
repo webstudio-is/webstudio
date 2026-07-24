@@ -749,12 +749,13 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
 };
 
 const getHandshakeInputSchema = (
-  schema: ProjectSessionMcpInputSchema
+  schema: ProjectSessionMcpInputSchema,
+  maxInlineSize = maxInlineMcpInputSchemaSize
 ): {
   inputSchema: ProjectSessionMcpInputSchema;
   detailedInputSchema?: ProjectSessionMcpInputSchema;
 } => {
-  if (JSON.stringify(schema).length <= maxInlineMcpInputSchemaSize) {
+  if (JSON.stringify(schema).length <= maxInlineSize) {
     return { inputSchema: schema };
   }
   return {
@@ -768,7 +769,7 @@ const getHandshakeInputSchema = (
           return [
             name,
             propertySchema === undefined ||
-            (serializedProperty.length <= maxInlineMcpInputSchemaSize &&
+            (serializedProperty.length <= maxInlineSize &&
               serializedProperty.includes('"$ref"') === false)
               ? property
               : getCompactSchemaProperty(propertySchema),
@@ -1924,9 +1925,23 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       scopeInstanceId: "body-id",
       dataSourceName: "posts",
       query: {
-        graphql:
-          'query PublishedPosts { assets(where: { extension: { eq: "md" }, properties: { draft: { ne: true } } }, orderBy: [{ field: PROPERTIES_publishedAt, direction: DESC }, { field: ID, direction: ASC }], first: 20) { items { id path properties { _raw } excerpt } totalCount hasMore } }',
-        variables: [],
+        filters: [
+          {
+            field: ["extension"],
+            operator: "eq",
+            value: { type: "literal", value: "md" },
+          },
+          {
+            field: ["properties", "draft"],
+            operator: "ne",
+            value: "true",
+          },
+        ],
+        sort: [
+          { field: ["properties", "publishedAt"], direction: "desc" },
+          { field: ["id"], direction: "asc" },
+        ],
+        limit: "20",
       },
     },
     {
@@ -1934,9 +1949,20 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       scopeInstanceId: "body-id",
       dataSourceName: "post",
       query: {
-        graphql:
-          'query Post($slug: String!) { assets(where: { extension: { eq: "md" }, properties: { slug: { eq: $slug } } }, first: 1) { items { id path properties { _raw } content(mode: MARKDOWN_BODY, maxBytes: 1048576) { text } } } }',
-        variables: [{ name: "slug", value: "system.params.slug" }],
+        filters: [
+          {
+            field: ["extension"],
+            operator: "eq",
+            value: { type: "literal", value: "md" },
+          },
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "system.params.slug",
+          },
+        ],
+        limit: "1",
+        content: { mode: "markdown-body", maxBytes: 1_048_576 },
       },
     },
   ],
@@ -1945,9 +1971,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       resourceId: "resource-id",
       values: {
         query: {
-          graphql:
-            "query Assets { assets(first: 50) { items { id path name mimeType } totalCount hasMore } }",
-          variables: [],
+          limit: "50",
         },
       },
     },
@@ -1955,20 +1979,34 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   ],
   "validate-asset-query": [
     {
-      query:
-        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id path } } }",
+      query: {
+        filters: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "hello-world",
+          },
+        ],
+        limit: 1,
+      },
     },
   ],
   "preview-asset-query": [
     {
-      query:
-        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id path content(mode: MARKDOWN_BODY, maxBytes: 1048576) { text } } } }",
-      variables: { slug: "hello-world" },
+      query: {
+        filters: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "hello-world",
+          },
+        ],
+        limit: 1,
+        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+      },
     },
   ],
   "get-asset-field-catalog": [{}],
-  "get-asset-resource-index-status": [{ resourceId: "resource-id" }],
-  "rebuild-asset-resource-index": [{ resourceId: "resource-id" }],
   "update-asset": [
     {
       assetId: "font-asset-id",
@@ -2931,6 +2969,13 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
+const compactMcpOperationCommands = new Set([
+  "create-assets-resource",
+  "update-assets-resource",
+  "validate-asset-query",
+  "preview-asset-query",
+]);
+
 const detailedMcpInputSchemas = new WeakMap<
   ProjectSessionMcpTool,
   ProjectSessionMcpInputSchema
@@ -2958,13 +3003,14 @@ export const listProjectSessionMcpTools = (
     )
     .map((operation) => {
       const override = mcpOperationOverrides.get(operation.command);
+      const operationInputSchema = getMcpOperationInputSchema(operation, {
+        includeRenderedAudit:
+          options.includeScreenshot === true && options.includePreview === true,
+        schema: override?.inputSchema,
+      });
       const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
-        getMcpOperationInputSchema(operation, {
-          includeRenderedAudit:
-            options.includeScreenshot === true &&
-            options.includePreview === true,
-          schema: override?.inputSchema,
-        })
+        operationInputSchema,
+        compactMcpOperationCommands.has(operation.command) ? 2_500 : undefined
       );
       const tool = createProjectSessionMcpTool({
         name: operation.command,

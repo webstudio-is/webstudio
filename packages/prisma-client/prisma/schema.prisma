@@ -67,7 +67,6 @@ model AssetFileMetadata {
   asset              Asset    @relation(fields: [assetId, projectId], references: [id, projectId], onDelete: Cascade)
 
   @@id([projectId, assetId, revision])
-  @@index([projectId, assetId])
 }
 
 model AssetFolder {
@@ -184,8 +183,6 @@ model Project {
   isDeleted                 Boolean                      @default(false)
   files                     File[]
   assetFolders              AssetFolder[]
-  assetResourceIndexStates  AssetResourceIndexState[]
-  assetResourceIndexes      AssetResourceIndexRevision[]
   projectDomain             ProjectDomain[]
   authorizationToken        AuthorizationToken[]
   previewImageAsset         Asset?                       @relation(fields: [previewImageAssetId, id], references: [id, projectId])
@@ -198,76 +195,6 @@ model Project {
   @@unique([id, domain])
   // ApprovedMarketplaceProduct view performance index
   @@index([isDeleted, marketplaceApprovalStatus])
-}
-
-enum AssetResourceIndexBuildStatus {
-  PENDING
-  BUILDING
-  ACTIVE
-  STALE
-  FAILED
-}
-
-enum AssetResourceIndexReferenceType {
-  RESOURCE
-  BUILD
-  DEPLOYMENT
-}
-
-model AssetResourceIndexState {
-  projectId      String
-  resourceId     String
-  query          String
-  queryHash      String
-  assetRevision  String
-  buildAttemptId String
-  buildStatus    AssetResourceIndexBuildStatus @default(PENDING)
-  activeRevision String?
-  buildError     Json?
-  deletedAt      DateTime?                     @db.Timestamptz(3)
-  createdAt      DateTime                      @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime                      @default(now()) @updatedAt @db.Timestamptz(3)
-  project        Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  revisions      AssetResourceIndexRevision[]
-  activeIndex    AssetResourceIndexRevision?   @relation("ActiveAssetResourceIndex", fields: [projectId, resourceId, activeRevision], references: [projectId, resourceId, revision], onDelete: NoAction)
-
-  @@id([projectId, resourceId])
-  @@index([projectId, buildStatus])
-}
-
-model AssetResourceIndexRevision {
-  projectId     String
-  resourceId    String
-  revision      String
-  queryHash     String
-  assetRevision String
-  checksum      String
-  objectKey     String
-  unreferencedAt DateTime?                @db.Timestamptz(3)
-  gcClaimId      String?
-  gcStartedAt    DateTime?                @db.Timestamptz(3)
-  createdAt      DateTime                 @default(now()) @db.Timestamptz(3)
-  project       Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  resource      AssetResourceIndexState   @relation(fields: [projectId, resourceId], references: [projectId, resourceId], onDelete: Cascade)
-  activeFor     AssetResourceIndexState[] @relation("ActiveAssetResourceIndex")
-  references    AssetResourceIndexReference[]
-
-  @@id([projectId, resourceId, revision])
-  @@unique([projectId, objectKey])
-  @@index([projectId, resourceId, queryHash, assetRevision])
-}
-
-model AssetResourceIndexReference {
-  projectId   String
-  resourceId  String
-  revision    String
-  type        AssetResourceIndexReferenceType
-  referenceId String
-  createdAt   DateTime                   @default(now()) @db.Timestamptz(3)
-  index       AssetResourceIndexRevision @relation(fields: [projectId, resourceId, revision], references: [projectId, resourceId, revision], onDelete: Cascade)
-
-  @@id([projectId, resourceId, revision, type, referenceId])
-  @@index([projectId, type, referenceId])
 }
 
 enum PublishStatus {
@@ -331,8 +258,8 @@ model AuthorizationToken {
   relation  AuthorizationRelation @default(viewers)
   createdAt DateTime              @default(now()) @db.Timestamptz(3)
 
-  canClone Boolean @default(true)
-  canCopy  Boolean @default(true)
+  canClone  Boolean @default(true)
+  canCopy   Boolean @default(true)
   canUseApi Boolean @default(false)
 
   @@id([token, projectId])
@@ -395,12 +322,12 @@ view LatestStaticBuildPerProject {
 }
 
 model Workspace {
-  id        String    @id @default(uuid())
+  id        String            @id @default(uuid())
   name      String
-  isDefault Boolean   @default(false)
-  isDeleted Boolean   @default(false)
-  createdAt DateTime  @default(now()) @db.Timestamptz(3)
-  user      User      @relation(fields: [userId], references: [id])
+  isDefault Boolean           @default(false)
+  isDeleted Boolean           @default(false)
+  createdAt DateTime          @default(now()) @db.Timestamptz(3)
+  user      User              @relation(fields: [userId], references: [id])
   userId    String
   projects  Project[]
   members   WorkspaceMember[]
@@ -413,7 +340,7 @@ model WorkspaceMember {
   workspace   Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
   userId      String
-  relation    AuthorizationRelation  @default(administrators)
+  relation    AuthorizationRelation @default(administrators)
   createdAt   DateTime              @default(now()) @db.Timestamptz(3)
   removedAt   DateTime?             @db.Timestamptz(3)
 

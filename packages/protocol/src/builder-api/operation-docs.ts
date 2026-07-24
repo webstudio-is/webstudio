@@ -640,26 +640,8 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "get-asset-field-catalog",
     description:
-      "Get standard and dynamic Markdown frontmatter fields with observed types, occurrence counts, optionality, and mixed-type state.",
+      "Get standard fields plus dynamic Markdown frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",
     examples: ["webstudio get-asset-field-catalog --json"],
-  },
-  {
-    command: "get-asset-resource-index-status",
-    description:
-      "Get the active, indexing, stale, or failed index state for one Assets resource with query configuration.",
-    requiredOptions: ["resource", "json"],
-    examples: [
-      "webstudio get-asset-resource-index-status --resource resource-id --json",
-    ],
-  },
-  {
-    command: "rebuild-asset-resource-index",
-    description:
-      "Explicitly rebuild and atomically activate the index for one Assets resource with query configuration from persisted canonical metadata.",
-    requiredOptions: ["resource", "json"],
-    examples: [
-      "webstudio rebuild-asset-resource-index --resource resource-id --json",
-    ],
   },
   {
     command: "create-resource",

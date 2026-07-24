@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   isLiteralExpression,
-  isStoredAssetQueryResource,
+  isConfiguredAssetsResource,
   type StyleDecl,
 } from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
@@ -1221,7 +1221,7 @@ export const analyzeProject = (
       if (
         resource === undefined ||
         resource.method === "get" ||
-        isStoredAssetQueryResource(resource)
+        isConfiguredAssetsResource(resource)
       ) {
         continue;
       }

@@ -2,10 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   assetQueryResult,
+  assetQueryStandardFields,
+  assetQueryStandardFieldTypes,
   assetResourceLimits,
   builderAssetFieldCatalog,
   isLiteralExpression,
+  getAssetQueryOperatorsForFieldTypes,
   type AssetQueryFilter,
+  type AssetObservedFieldType,
   type AssetQuerySort,
   type AssetResourceContentOptions,
   type BuilderAssetFieldCatalog,
@@ -46,24 +50,28 @@ import {
 type FieldOption = {
   path: string[];
   label: string;
-  types: string[];
+  types: AssetObservedFieldType[];
 };
 
-const standardFields: FieldOption[] = [
-  ["id", "ID", "string"],
-  ["name", "Name", "string"],
-  ["path", "Path", "string"],
-  ["key", "Key", "string"],
-  ["folderId", "Folder ID", "string"],
-  ["extension", "Extension", "string"],
-  ["mimeType", "MIME type", "string"],
-  ["size", "Size", "number"],
-  ["revision", "Revision", "string"],
-  ["excerpt", "Excerpt", "string"],
-].map(([field, label, type]) => ({
+const standardFieldLabels: Record<
+  (typeof assetQueryStandardFields)[number],
+  string
+> = {
+  id: "ID",
+  name: "Name",
+  path: "Path",
+  key: "Key",
+  folderId: "Folder ID",
+  extension: "Extension",
+  mimeType: "MIME type",
+  size: "Size",
+  revision: "Revision",
+  excerpt: "Excerpt",
+};
+const standardFields: FieldOption[] = assetQueryStandardFields.map((field) => ({
   path: [field],
-  label,
-  types: [type],
+  label: standardFieldLabels[field],
+  types: [...assetQueryStandardFieldTypes[field]],
 }));
 
 const fieldKey = (path: readonly string[]) => JSON.stringify(path);
@@ -87,31 +95,8 @@ const getFieldOptions = (
   return [...options.values()];
 };
 
-const commonOperators = ["eq", "ne", "in", "exists"] as const;
-const getOperators = (types: readonly string[]) => {
-  const operators = new Set<AssetQueryFilter["operator"]>(commonOperators);
-  if (types.some((type) => type === "string" || type === "array")) {
-    operators.add("contains");
-  }
-  if (types.includes("string")) {
-    operators.add("startsWith");
-    operators.add("endsWith");
-  }
-  if (types.some((type) => type === "string" || type === "number")) {
-    operators.add("gt");
-    operators.add("gte");
-    operators.add("lt");
-    operators.add("lte");
-  }
-  if (
-    types.some(
-      (type) => type === "string" || type === "array" || type === "object"
-    )
-  ) {
-    operators.add("isEmpty");
-  }
-  return [...operators];
-};
+const getOperators = (types: readonly AssetObservedFieldType[]) =>
+  getAssetQueryOperatorsForFieldTypes(types);
 
 const operatorLabels: Record<AssetQueryFilter["operator"], string> = {
   eq: "Equals",

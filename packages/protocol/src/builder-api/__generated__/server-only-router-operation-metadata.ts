@@ -826,42 +826,6 @@ export const serverOnlyRouterOperationMetadata = {
       additionalProperties: true,
     },
   },
-  "assetQueries.indexStatus": {
-    id: "assetQueries.indexStatus",
-    command: "get-asset-resource-index-status",
-    method: "query",
-    path: "api.assetQueries.indexStatus",
-    client: "getAssetResourceIndexStatus",
-    permit: "view",
-    inputSchema: {
-      type: "object",
-      properties: {
-        resourceId: {
-          type: "string",
-          minLength: 1,
-        },
-      },
-      required: ["resourceId"],
-    },
-  },
-  "assetQueries.rebuildIndex": {
-    id: "assetQueries.rebuildIndex",
-    command: "rebuild-asset-resource-index",
-    method: "mutation",
-    path: "api.assetQueries.rebuildIndex",
-    client: "rebuildAssetResourceIndex",
-    permit: "build",
-    inputSchema: {
-      type: "object",
-      properties: {
-        resourceId: {
-          type: "string",
-          minLength: 1,
-        },
-      },
-      required: ["resourceId"],
-    },
-  },
   "publish.list": {
     id: "publish.list",
     command: "list-publishes",

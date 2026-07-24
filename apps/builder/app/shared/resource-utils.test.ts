@@ -210,48 +210,30 @@ describe("getResourceKey - pure function tests", () => {
     expect(key1).toBeTruthy();
   });
 
-  test("asset query cache separates query, variables, operation, and index", () => {
+  test("asset query cache separates structured query inputs", () => {
     const createRequest = (body: Record<string, unknown>): ResourceRequest => ({
       name: "assets-query",
       control: "system",
       method: "post",
-      url: "/$resources/assets/query",
+      url: "/$resources/assets",
       searchParams: [],
       headers: [{ name: "content-type", value: "application/json" }],
       body,
     });
-    const base = {
-      query: "query Posts($slug: String) { assets { items { id } } }",
-      variables: { slug: "first" },
-      operationName: "Posts",
-      indexRevision: "index-1",
-    };
+    const base = { query: { filters: [], limit: 20, offset: 0 } };
     const requests = [
       base,
-      { ...base, query: "query Posts { assets { items { path } } }" },
-      { ...base, variables: { slug: "second" } },
-      { ...base, operationName: "Other" },
-      { ...base, indexRevision: "index-2" },
+      { query: { ...base.query, limit: 10 } },
+      { query: { ...base.query, offset: 10 } },
+      {
+        query: {
+          ...base.query,
+          sort: [{ field: ["name"], direction: "asc" }],
+        },
+      },
     ];
     const keys = requests.map((body) => getResourceKey(createRequest(body)));
 
     expect(new Set(keys).size).toBe(requests.length);
-  });
-
-  test("asset query cache separates resource identities", () => {
-    const request: ResourceRequest = {
-      resourceId: "posts",
-      name: "assets-query",
-      control: "system",
-      method: "post",
-      url: "/$resources/assets/query",
-      searchParams: [],
-      headers: [],
-      body: { query: "{ assets { items { id } } }", variables: {} },
-    };
-
-    expect(getResourceKey(request)).not.toBe(
-      getResourceKey({ ...request, resourceId: "other-posts" })
-    );
   });
 });

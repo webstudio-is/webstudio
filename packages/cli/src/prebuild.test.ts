@@ -17,12 +17,19 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { bundleVersion } from "@webstudio-is/protocol";
 import type { Asset } from "@webstudio-is/sdk";
-import { createAssetResourceIndex } from "@webstudio-is/asset-resource";
-import { createAssetQueryResourceBody, type Resource } from "@webstudio-is/sdk";
+import {
+  createAssetIndex,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/asset-resource";
+import {
+  createStructuredAssetQueryResourceBody,
+  type AssetFileDocument,
+  type Resource,
+} from "@webstudio-is/sdk";
 import {
   generateRedirectsModule,
   getRequiredAssetResourceContentRefs,
-  materializeAssetResourceIndexes,
+  materializeAssetIndex,
   prebuild,
 } from "./prebuild";
 import {
@@ -324,115 +331,88 @@ describe("generateRedirectsModule", () => {
   });
 });
 
-test("requires candidate files only when an asset query can hydrate content", async () => {
-  const createIndex = (query: string) =>
-    createAssetResourceIndex({
-      format: "webstudio-resource-index",
-      version: 1,
-      resourceId: "posts",
-      query,
-      assetRevision: `sha256:${"a".repeat(64)}`,
-      documents: [
-        {
-          _id: "post-1",
-          _type: "asset.file",
-          name: "post.md",
-          path: "post.md",
-          key: "post",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: 10,
-          revision: "post-revision",
-          contentRef: "post.md",
-          properties: {},
-        },
-      ],
-    });
-  const createResource = (query: string): Resource => ({
-    id: "posts",
-    name: "Posts",
-    control: "system",
-    method: "post",
-    url: '"/$resources/assets/query"',
-    headers: [],
-    body: createAssetQueryResourceBody({
-      query,
-      variables: [],
-    }),
+const indexedDocument: AssetFileDocument = {
+  _id: "post-1",
+  _type: "asset.file",
+  name: "post.md",
+  path: "post.md",
+  key: "post",
+  extension: "md",
+  mimeType: "text/markdown",
+  size: 10,
+  revision: "post-revision",
+  contentRef: "post.md",
+  properties: { slug: "post", title: "Prerendered post" },
+};
+
+const createTestAssetIndex = (
+  documents: AssetFileDocument | AssetFileDocument[] = indexedDocument
+) =>
+  createAssetIndex({
+    projectId: "project-1",
+    entries: (Array.isArray(documents) ? documents : [documents]).map(
+      (document) =>
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document,
+        })
+    ),
   });
-  const metadataQuery = "{ assets { items { id } } }";
-  const contentQuery =
-    "{ assets { items { id content(mode: MARKDOWN_BODY) { text } } } }";
-  const metadataIndex = await createIndex(metadataQuery);
-  const contentIndex = await createIndex(contentQuery);
+
+const createQueryResource = (content: "none" | "full" = "none"): Resource => ({
+  id: "posts",
+  name: "Posts",
+  control: "system",
+  method: "post",
+  url: '"/$resources/assets"',
+  headers: [],
+  body: createStructuredAssetQueryResourceBody({
+    filters: [],
+    sort: [],
+    limit: "100",
+    offset: "0",
+    content: { mode: content },
+  }),
+});
+
+test("requires candidate files only when an asset query can hydrate content", async () => {
+  const index = await createTestAssetIndex();
 
   expect(
     getRequiredAssetResourceContentRefs({
-      snapshots: [
-        {
-          resourceId: "posts",
-          revision: metadataIndex.integrity.checksum,
-          index: metadataIndex,
-        },
-      ],
-      resources: [["posts", createResource(metadataQuery)]],
+      index,
+      resources: [["posts", createQueryResource()]],
     })
   ).toEqual(new Set());
   expect(
     getRequiredAssetResourceContentRefs({
-      snapshots: [
-        {
-          resourceId: "posts",
-          revision: contentIndex.integrity.checksum,
-          index: contentIndex,
-        },
-      ],
-      resources: [["posts", createResource(contentQuery)]],
+      index,
+      resources: [["posts", createQueryResource("full")]],
     })
   ).toEqual(new Set(["post.md"]));
 });
 
-test("materializes immutable resource indexes as public JSON with a reference-only module", async () => {
-  const index = await createAssetResourceIndex({
-    format: "webstudio-resource-index",
-    version: 1,
-    resourceId: "blog/posts",
-    query: "{ assets { items { id } } }",
-    assetRevision: `sha256:${"a".repeat(64)}`,
-    documents: [],
-  });
+test("materializes one shared asset index and a reference-only module", async () => {
+  const index = await createTestAssetIndex();
   await mkdir("public", { recursive: true });
   await mkdir("app/__generated__", { recursive: true });
-  await mkdir("public/resource-indexes", { recursive: true });
-  await writeFile(
-    "public/resource-indexes/obsolete-index.json",
-    "obsolete",
-    "utf8"
-  );
 
-  await materializeAssetResourceIndexes({
-    snapshots: [
-      {
-        resourceId: index.resourceId,
-        revision: index.integrity.checksum,
-        index,
-      },
-    ],
+  await materializeAssetIndex({
+    index,
     publicDirectory: "public",
     generatedDirectory: "app/__generated__",
     deploymentId: "build-1",
   });
 
-  const files = await getFilePaths("public/resource-indexes");
-  expect(files).toHaveLength(1);
-  expect(files[0]).not.toContain("obsolete-index.json");
-  expect(JSON.parse(await readFile(files[0], "utf8"))).toEqual(index);
+  expect(
+    JSON.parse(await readFile("public/assets/db/index.json", "utf8"))
+  ).toEqual(index);
   const manifestModule = await readFile(
     "app/__generated__/$resources.asset-query-manifest.ts",
     "utf8"
   );
   expect(manifestModule).toContain('assetQueryDeploymentId = "build-1"');
-  expect(manifestModule).toContain("/resource-indexes/");
+  expect(manifestModule).toContain("/assets/db/index.json");
   expect(manifestModule).not.toContain('"documents"');
   expect(manifestModule).not.toContain('"properties"');
   const runtimeModule = await readFile(
@@ -448,47 +428,20 @@ test("materializes immutable resource indexes as public JSON with a reference-on
 
 test("executes and hydrates an asset query from SSG public files", async () => {
   const source = "# Prerendered post\n";
-  const query =
-    "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } content(mode: FULL) { text } } } }";
-  const index = await createAssetResourceIndex({
-    format: "webstudio-resource-index",
-    version: 1,
-    resourceId: "post",
-    query,
-    assetRevision: `sha256:${"a".repeat(64)}`,
-    documents: [
-      {
-        _id: "post-1",
-        _type: "asset.file",
-        name: "post.md",
-        path: "blog/post.md",
-        key: "post",
-        extension: "md",
-        mimeType: "text/markdown",
-        size: new TextEncoder().encode(source).byteLength,
-        revision: "post-revision",
-        contentRef: "post.md",
-        properties: { slug: "post", title: "Prerendered post" },
-      },
-    ],
+  const index = await createTestAssetIndex({
+    ...indexedDocument,
+    size: new TextEncoder().encode(source).byteLength,
   });
   await mkdir("public/assets", { recursive: true });
   await mkdir("app/__generated__", { recursive: true });
   await writeFile("public/assets/post.md", source, "utf8");
-  await materializeAssetResourceIndexes({
-    snapshots: [
-      {
-        resourceId: index.resourceId,
-        revision: index.integrity.checksum,
-        index,
-      },
-    ],
+  await materializeAssetIndex({
+    index,
     publicDirectory: "public",
     generatedDirectory: "app/__generated__",
     deploymentId: "build-1",
   });
-  const [indexFile] = await getFilePaths("public/resource-indexes");
-  const indexPath = `/${indexFile.slice("public/".length)}`;
+  const indexPath = "/assets/db/index.json";
   await expect((await fetchSsgPublicAsset(indexPath)).json()).resolves.toEqual(
     index
   );
@@ -501,22 +454,27 @@ test("executes and hydrates an asset query from SSG public files", async () => {
   ).resolves.toBe(source);
   const runtimeFetch = createSsgAssetResourceFetch({
     deploymentId: "build-1",
-    manifest: [
-      {
-        resourceId: index.resourceId,
-        revision: index.integrity.checksum,
-        queryHash: index.queryHash,
-        assetRevision: index.assetRevision,
-        indexPath,
-      },
-    ],
+    manifest: {
+      revision: index.integrity.checksum,
+      assetRevision: index.assetRevision,
+      indexPath,
+    },
   });
 
-  const response = await runtimeFetch("/$resources/assets/query", {
+  const response = await runtimeFetch("/$resources/assets", {
     method: "POST",
     body: JSON.stringify({
-      query,
-      variables: { slug: "post" },
+      query: {
+        filters: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "post",
+          },
+        ],
+        limit: 1,
+        content: { mode: "full" },
+      },
     }),
   });
 
@@ -526,18 +484,13 @@ test("executes and hydrates an asset query from SSG public files", async () => {
   }).toMatchObject({
     status: 200,
     body: {
-      ok: true,
-      data: {
-        assets: {
-          items: [
-            {
-              id: "post-1",
-              properties: { title: "Prerendered post" },
-              content: { text: source },
-            },
-          ],
+      items: [
+        {
+          id: "post-1",
+          properties: { title: "Prerendered post" },
+          content: { text: source },
         },
-      },
+      ],
     },
   });
 });
@@ -935,28 +888,11 @@ describe("prebuild", () => {
 
   test("generates one dynamic SSR blog route with external index and published Markdown assets", async () => {
     const source = "# Published post\n";
-    const index = await createAssetResourceIndex({
-      format: "webstudio-resource-index",
-      version: 1,
-      resourceId: "posts",
-      query:
-        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id content(mode: MARKDOWN_BODY) { text } } } }",
-      assetRevision: `sha256:${"a".repeat(64)}`,
-      documents: [
-        {
-          _id: "post-1",
-          _type: "asset.file",
-          name: "post.md",
-          path: "blog/post.md",
-          key: "post",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: new TextEncoder().encode(source).byteLength,
-          revision: "post-revision",
-          contentRef: "post.md",
-          properties: { slug: "post" },
-        },
-      ],
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      path: "blog/post.md",
+      size: new TextEncoder().encode(source).byteLength,
+      properties: { slug: "post" },
     });
     const siteData = {
       ...createSiteData({
@@ -990,13 +926,7 @@ describe("prebuild", () => {
         description: "",
         createdAt: "2024-01-01T00:00:00.000Z",
       })),
-      assetResourceIndexes: [
-        {
-          resourceId: index.resourceId,
-          revision: index.integrity.checksum,
-          index,
-        },
-      ],
+      assetIndex: index,
     };
     await writeSiteData(
       siteData as unknown as ReturnType<typeof createSiteData>
@@ -1151,30 +1081,25 @@ describe("prebuild", () => {
   });
 
   test("prerenders dynamic SSG paths from parameterized Assets resources", async () => {
-    const query =
-      "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } } } }";
-    const index = await createAssetResourceIndex({
-      format: "webstudio-resource-index",
-      version: 1,
-      resourceId: "post",
-      query,
-      assetRevision: `sha256:${"a".repeat(64)}`,
-      documents: [
-        {
-          _id: "post-1",
-          _type: "asset.file",
-          name: "post.md",
-          path: "blog/post.md",
-          key: "post",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: 1,
-          revision: "post-revision",
-          contentRef: "post.md",
-          properties: { slug: "hello-world", title: "Hello" },
-        },
-      ],
-    });
+    const index = await createTestAssetIndex([
+      {
+        ...indexedDocument,
+        path: "blog/post.md",
+        size: 1,
+        properties: { slug: "hello-world", title: "Hello", draft: false },
+      },
+      {
+        ...indexedDocument,
+        _id: "draft-post",
+        name: "draft.md",
+        path: "blog/draft.md",
+        key: "draft",
+        size: 1,
+        revision: "draft-revision",
+        contentRef: "draft.md",
+        properties: { slug: "draft-post", title: "Draft", draft: true },
+      },
+    ]);
     const siteData = {
       ...createSiteData({
         pages: [
@@ -1200,13 +1125,7 @@ describe("prebuild", () => {
           ["post-root", { id: "post-root", component: "Box", children: [] }],
         ],
       }),
-      assetResourceIndexes: [
-        {
-          resourceId: index.resourceId,
-          revision: index.integrity.checksum,
-          index,
-        },
-      ],
+      assetIndex: index,
     };
     siteData.build.resources = [
       [
@@ -1216,11 +1135,25 @@ describe("prebuild", () => {
           name: "Post",
           control: "system",
           method: "post",
-          url: '"/$resources/assets/query"',
+          url: '"/$resources/assets"',
           headers: [],
-          body: createAssetQueryResourceBody({
-            query,
-            variables: [{ name: "slug", value: "system.params.slug" }],
+          body: createStructuredAssetQueryResourceBody({
+            filters: [
+              {
+                field: ["properties", "draft"],
+                operator: "ne",
+                value: "true",
+              },
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.slug",
+              },
+            ],
+            sort: [],
+            limit: "1",
+            offset: "0",
+            content: { mode: "none" },
           }),
         },
       ],
@@ -1243,6 +1176,9 @@ describe("prebuild", () => {
     await expect(
       readFile("pages/blog/@slug/+onBeforePrerenderStart.ts", "utf8")
     ).resolves.toContain("/blog/hello-world");
+    await expect(
+      readFile("pages/blog/@slug/+onBeforePrerenderStart.ts", "utf8")
+    ).resolves.not.toContain("/blog/draft-post");
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
     await runGeneratedCommand("vite", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
@@ -1252,38 +1188,15 @@ describe("prebuild", () => {
   }, 30_000);
 
   test("prerenders SSG pages with asset query data", async () => {
-    const query = "{ assets(first: 10) { items { properties { title } } } }";
-    const index = await createAssetResourceIndex({
-      format: "webstudio-resource-index",
-      version: 1,
-      resourceId: "posts",
-      query,
-      assetRevision: `sha256:${"a".repeat(64)}`,
-      documents: [
-        {
-          _id: "post-1",
-          _type: "asset.file",
-          name: "post.md",
-          path: "blog/post.md",
-          key: "post",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: 1,
-          revision: "post-revision",
-          contentRef: "post.md",
-          properties: { title: "Prerendered post" },
-        },
-      ],
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      path: "blog/post.md",
+      size: 1,
+      properties: { title: "Prerendered post" },
     });
     const siteData = {
       ...createSiteData(),
-      assetResourceIndexes: [
-        {
-          resourceId: index.resourceId,
-          revision: index.integrity.checksum,
-          index,
-        },
-      ],
+      assetIndex: index,
     };
     siteData.build.resources = [
       [
@@ -1293,11 +1206,14 @@ describe("prebuild", () => {
           name: "Posts",
           control: "system",
           method: "post",
-          url: '"/$resources/assets/query"',
+          url: '"/$resources/assets"',
           headers: [],
-          body: createAssetQueryResourceBody({
-            query,
-            variables: [],
+          body: createStructuredAssetQueryResourceBody({
+            filters: [],
+            sort: [],
+            limit: "10",
+            offset: "0",
+            content: { mode: "none" },
           }),
         },
       ],
@@ -1342,12 +1258,7 @@ describe("prebuild", () => {
         ok: true,
         status: 200,
         data: {
-          ok: true,
-          data: {
-            assets: {
-              items: [{ properties: { title: "Prerendered post" } }],
-            },
-          },
+          items: [{ properties: { title: "Prerendered post" } }],
         },
       },
     });

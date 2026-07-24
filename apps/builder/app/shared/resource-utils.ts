@@ -6,7 +6,6 @@ export const getResourceKey = (resource: ResourceRequest) => {
     return hash(
       JSON.stringify([
         // explicitly list all fields to keep hash stable
-        ...(resource.resourceId === undefined ? [] : [resource.resourceId]),
         resource.name,
         resource.method,
         resource.url,

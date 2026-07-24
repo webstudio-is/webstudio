@@ -10,22 +10,11 @@ export * from "./folder-persistence";
 export * from "./revision";
 export * from "./canonical-metadata-persistence";
 export * from "./canonical-metadata-backfill";
+export * from "./canonical-metadata-maintenance";
 export * from "./field-catalog";
 export * from "./query-preview";
 export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";
 export * from "./clients/s3/project-object-store";
 export { assetDataOverride } from "./utils/get-asset-data";
-export * from "./resource-index-persistence";
-export * from "./resource-index-build";
-export * from "./resource-index-maintenance";
-export * from "./resource-index-status";
-export * from "./resource-index-rebuild";
-export * from "./resource-index-snapshot";
-export * from "./resource-index-lifecycle";
-export * from "./resource-index-garbage-collection";
-export type {
-  AssetClient,
-  AssetClientWithResourceIndexStore,
-  AssetClientWithReadableResourceIndexStore,
-} from "./client";
+export type { AssetClient } from "./client";

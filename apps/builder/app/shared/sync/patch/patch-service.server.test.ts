@@ -24,23 +24,11 @@ import { synchronizeAssetResourcesAfterBuildPatch } from "../../synchronize-asse
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
-const synchronizeAssetResourceIndexQueries = vi.fn();
 const synchronizeCanonicalAssets = vi.fn();
 const synchronizeCanonicalAsset = vi.fn();
 const synchronizeAllCanonicalAssetStandardMetadata = vi.fn();
-const updateAssetResourceIndexesAfterCanonicalChange = vi.fn();
+const synchronizeCanonicalAssetStandardMetadata = vi.fn();
 const createAssetClient = vi.fn(() => ({
-  resourceIndexStore: {
-    putIfAbsent: vi.fn(async ({ checksum }: { checksum: string }) => ({
-      status: "created" as const,
-      checksum,
-    })),
-    read: vi.fn(async () => ({
-      data: {
-        async *[Symbol.asyncIterator]() {},
-      },
-    })),
-  },
   readFile: vi.fn(async () => ({
     data: {
       async *[Symbol.asyncIterator]() {},
@@ -49,11 +37,10 @@ const createAssetClient = vi.fn(() => ({
   uploadFile: vi.fn(async () => ({ format: "file", size: 0, meta: {} })),
 }));
 const synchronizationDependencies = {
-  synchronizeAssetResourceIndexQueries,
   synchronizeCanonicalAssets,
   synchronizeCanonicalAsset,
   synchronizeAllCanonicalAssetStandardMetadata,
-  updateAssetResourceIndexesAfterCanonicalChange,
+  synchronizeCanonicalAssetStandardMetadata,
   createAssetClient,
 } satisfies Exclude<
   Parameters<typeof synchronizeAssetResourcesAfterBuildPatch>[1],
@@ -74,6 +61,18 @@ const applyPatchRequestForTest = (
   patch: NormalizedPatchRequest
 ) => applyPatchRequest(context, patch, patchDependencies);
 
+const configuredResources = JSON.stringify([
+  {
+    id: "posts",
+    name: "Posts",
+    control: "system",
+    method: "post",
+    url: JSON.stringify("/$resources/assets"),
+    headers: [],
+    body: '{ query: { filters: [], sort: [], limit: 20, offset: 0, content: { mode: "none" } } }',
+  },
+]);
+
 const buildRow = {
   projectId: "project-1",
   version: 3,
@@ -84,7 +83,7 @@ const buildRow = {
   styleSourceSelections: JSON.stringify([]),
   styles: JSON.stringify([]),
   breakpoints: JSON.stringify([]),
-  resources: JSON.stringify([]),
+  resources: configuredResources,
 };
 
 const createContext = () => {
@@ -146,10 +145,6 @@ describe("applyPatchRequest", () => {
     patchLoadedBuild.mockReset();
     authorizePatchEntries.mockReset();
     createContentModeCapabilities.mockClear();
-    synchronizeAssetResourceIndexQueries.mockReset().mockResolvedValue({
-      deletedResourceIds: [],
-      updatedResourceIds: [],
-    });
     synchronizeCanonicalAssets.mockReset().mockResolvedValue({
       scanned: 0,
       indexed: 0,
@@ -166,57 +161,10 @@ describe("applyPatchRequest", () => {
     synchronizeAllCanonicalAssetStandardMetadata
       .mockReset()
       .mockResolvedValue(0);
-    updateAssetResourceIndexesAfterCanonicalChange
-      .mockReset()
-      .mockResolvedValue({
-        changedAssetIds: [],
-        updatedResourceIds: [],
-      });
     createAssetClient.mockClear();
   });
 
-  test("synchronizes query indexes after a committed resource patch", async () => {
-    const resourceEntry = {
-      ...patch.entries[0],
-      transaction: transaction("tx-resource", "resources") as never,
-    };
-    authorizePatchEntries.mockResolvedValue({
-      authorized: [{ entry: resourceEntry, context: { writer: 1 } }],
-      rejected: [],
-    });
-    const nextResources = JSON.stringify([
-      {
-        id: "posts",
-        name: "Posts",
-        control: "system",
-        method: "post",
-        url: JSON.stringify("/$resources/assets/query"),
-        headers: [],
-        body: '{query:"{ assets { items { id } } }"}',
-      },
-    ]);
-    patchLoadedBuild.mockImplementation(async ({ build }) => ({
-      status: "ok",
-      version: 4,
-      build: { ...build, version: 4, resources: nextResources },
-    }));
-
-    await expect(
-      applyPatchRequestForTest(createContext(), {
-        ...patch,
-        entries: [resourceEntry],
-      })
-    ).resolves.toMatchObject({ status: "ok" });
-    expect(synchronizeAssetResourceIndexQueries).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: "project-1",
-        previousResources: [],
-        resources: [expect.objectContaining({ id: "posts" })],
-      })
-    );
-  });
-
-  test("does not repeat canonical reads or changed-query builds for a combined patch", async () => {
+  test("synchronizes a changed asset once in a combined patch", async () => {
     const combinedEntry = {
       ...patch.entries[0],
       transaction: {
@@ -246,9 +194,9 @@ describe("applyPatchRequest", () => {
         name: "Posts",
         control: "system",
         method: "post",
-        url: JSON.stringify("/$resources/assets/query"),
+        url: JSON.stringify("/$resources/assets"),
         headers: [],
-        body: '{query:"{ assets { items { id } } }"}',
+        body: '{ query: { filters: [], sort: [], limit: 10, offset: 0, content: { mode: "none" } } }',
       },
     ]);
     patchLoadedBuild.mockImplementation(async ({ build }) => ({
@@ -256,27 +204,19 @@ describe("applyPatchRequest", () => {
       version: 4,
       build: { ...build, version: 4, resources: nextResources },
     }));
-    synchronizeAssetResourceIndexQueries.mockResolvedValueOnce({
-      deletedResourceIds: [],
-      updatedResourceIds: ["posts"],
-    });
-
     await applyPatchRequestForTest(createContext(), {
       ...patch,
       entries: [combinedEntry],
     });
 
-    expect(synchronizeCanonicalAsset).not.toHaveBeenCalled();
-    expect(synchronizeAllCanonicalAssetStandardMetadata).not.toHaveBeenCalled();
-    expect(updateAssetResourceIndexesAfterCanonicalChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        changedAssetIds: ["asset-1"],
-        excludedResourceIds: ["posts"],
-      })
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledTimes(1);
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ assetId: "asset-1" })
     );
+    expect(synchronizeAllCanonicalAssetStandardMetadata).not.toHaveBeenCalled();
   });
 
-  test("maintains canonical paths and indexes after asset-folder patches", async () => {
+  test("maintains canonical paths after asset-folder patches", async () => {
     const folderEntry = {
       ...patch.entries[0],
       transaction: {
@@ -311,15 +251,9 @@ describe("applyPatchRequest", () => {
       client: expect.anything(),
       projectId: "project-1",
     });
-    expect(updateAssetResourceIndexesAfterCanonicalChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: "project-1",
-        changedAssetIds: ["project-assets"],
-      })
-    );
   });
 
-  test("indexes added assets before rebuilding resource indexes", async () => {
+  test("indexes added assets", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -361,18 +295,9 @@ describe("applyPatchRequest", () => {
       projectId: "project-1",
       assetId: "asset-1",
     });
-    expect(updateAssetResourceIndexesAfterCanonicalChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: "project-1",
-        changedAssetIds: ["asset-1"],
-      })
-    );
-    expect(synchronizeCanonicalAsset.mock.invocationCallOrder[0]).toBeLessThan(
-      updateAssetResourceIndexesAfterCanonicalChange.mock.invocationCallOrder[0]
-    );
   });
 
-  test("reparses a swapped asset revision before rebuilding indexes", async () => {
+  test("reparses a swapped asset revision", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -408,9 +333,6 @@ describe("applyPatchRequest", () => {
 
     expect(synchronizeCanonicalAsset).toHaveBeenCalledWith(
       expect.objectContaining({ assetId: "asset-1" })
-    );
-    expect(synchronizeCanonicalAsset.mock.invocationCallOrder[0]).toBeLessThan(
-      updateAssetResourceIndexesAfterCanonicalChange.mock.invocationCallOrder[0]
     );
   });
 
@@ -449,12 +371,9 @@ describe("applyPatchRequest", () => {
     });
 
     expect(synchronizeCanonicalAsset).not.toHaveBeenCalled();
-    expect(updateAssetResourceIndexesAfterCanonicalChange).toHaveBeenCalledWith(
-      expect.objectContaining({ changedAssetIds: ["asset-1"] })
-    );
   });
 
-  test("skips index maintenance for asset descriptions", async () => {
+  test("skips metadata maintenance for asset descriptions", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -489,9 +408,6 @@ describe("applyPatchRequest", () => {
     });
 
     expect(synchronizeCanonicalAsset).not.toHaveBeenCalled();
-    expect(
-      updateAssetResourceIndexesAfterCanonicalChange
-    ).not.toHaveBeenCalled();
   });
 
   test("returns per-entry partial results while applying authorized entries", async () => {

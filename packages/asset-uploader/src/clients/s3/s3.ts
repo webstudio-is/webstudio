@@ -7,10 +7,6 @@ import {
 } from "@webstudio-is/project-store";
 import { uploadToS3 } from "./upload";
 import { readFromS3 } from "./read";
-import {
-  deleteImmutableObjectFromS3,
-  putImmutableObjectToS3,
-} from "./immutable-object";
 import { S3ProjectObjectStore } from "./project-object-store";
 
 export type S3StorageOptions = {
@@ -84,30 +80,6 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
   };
 
   return {
-    resourceIndexStore: {
-      putIfAbsent: (object) =>
-        putImmutableObjectToS3({
-          signer,
-          endpoint: options.endpoint,
-          bucket: options.bucket,
-          object,
-        }),
-      read: (key) =>
-        readFromS3({
-          signer,
-          name: key,
-          endpoint: options.endpoint,
-          bucket: options.bucket,
-          keyType: "hierarchical",
-        }),
-      delete: (key) =>
-        deleteImmutableObjectFromS3({
-          signer,
-          endpoint: options.endpoint,
-          bucket: options.bucket,
-          key,
-        }),
-    },
     uploadFile,
     readFile: (name, range) =>
       readFromS3({

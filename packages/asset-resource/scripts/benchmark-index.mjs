@@ -1,10 +1,10 @@
 import { gzipSync } from "node:zlib";
 import { performance } from "node:perf_hooks";
 import {
-  buildAssetResourceIndex,
+  createAssetIndex,
   createCanonicalAssetFileEntry,
-  serializeAssetResourceIndex,
-  verifyAssetResourceIndex,
+  serializeAssetIndex,
+  verifyAssetIndex,
 } from "../src/index.ts";
 
 const documents = Array.from({ length: 1000 }, (_, index) => ({
@@ -34,18 +34,6 @@ const documents = Array.from({ length: 1000 }, (_, index) => ({
 const entries = documents.map((document) =>
   createCanonicalAssetFileEntry({ projectId: "benchmark-project", document })
 );
-const query = `query PublishedPosts($locale: String!) {
-  assets(
-    where: {
-      extension: { eq: "md" }
-      properties: { draft: { ne: true }, locale: { eq: $locale } }
-    }
-    orderBy: [{ field: PROPERTIES_publishedAt, direction: DESC }, { field: ID, direction: ASC }]
-  ) {
-    items { id path properties { title slug publishedAt } excerpt }
-  }
-}`;
-
 const percentile = (samples, quantile) =>
   [...samples].sort((left, right) => left - right)[
     Math.min(samples.length - 1, Math.floor(samples.length * quantile))
@@ -65,10 +53,8 @@ const measure = async (iterations, operation) => {
 };
 
 const build = () =>
-  buildAssetResourceIndex({
+  createAssetIndex({
     projectId: "benchmark-project",
-    resourceId: "posts",
-    query,
     entries,
   });
 
@@ -76,7 +62,7 @@ for (let iteration = 0; iteration < 3; iteration += 1) {
   await build();
 }
 const index = await build();
-const serialized = serializeAssetResourceIndex(index);
+const serialized = serializeAssetIndex(index);
 const encoded = new TextEncoder().encode(serialized);
 const parsed = JSON.parse(serialized);
 
@@ -87,7 +73,7 @@ const result = {
   gzipBytes: gzipSync(encoded).byteLength,
   build: await measure(20, build),
   parse: await measure(100, () => JSON.parse(serialized)),
-  verify: await measure(20, () => verifyAssetResourceIndex(parsed)),
+  verify: await measure(20, () => verifyAssetIndex(parsed)),
 };
 
 console.info(JSON.stringify(result, null, 2));

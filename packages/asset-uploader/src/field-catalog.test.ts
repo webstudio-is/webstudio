@@ -68,6 +68,7 @@ describe("loadBuilderAssetFieldCatalog", () => {
     });
     expect(synchronizeCanonicalAssets).toHaveBeenCalledOnce();
     expect(result.fields["properties.title"]).toEqual({
+      queryPath: ["properties", "title"],
       types: ["string"],
       occurrences: 1,
     });

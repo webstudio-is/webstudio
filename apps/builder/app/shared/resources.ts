@@ -1,6 +1,5 @@
 import { atom, computed } from "nanostores";
 import {
-  isStoredAssetQueryResource,
   type DataSource,
   type Resource,
   type ResourceRequest,
@@ -112,9 +111,6 @@ export const computeResourceRequest = (
   values: Map<DataSource["id"], unknown>
 ): ResourceRequest => {
   const request: ResourceRequest = {
-    ...(isStoredAssetQueryResource(resource)
-      ? { resourceId: resource.id }
-      : {}),
     name: resource.name,
     method: resource.method,
     url: computeExpression(resource.url, values),

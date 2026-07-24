@@ -3,7 +3,7 @@ import {
   parseArrayExpression,
   parseObjectExpression,
 } from "./expression";
-import { assetsQueryResourceUrl, assetsResourceUrl } from "./resource-loader";
+import { assetsResourceUrl } from "./resource-loader";
 import {
   assetQueryFieldPath,
   assetQueryFilter,
@@ -16,13 +16,6 @@ import {
 } from "./schema/asset-resource";
 import type { Resource } from "./schema/resources";
 
-export type AssetQueryVariableBinding = {
-  name: string;
-  value: string;
-};
-
-export const normalizeAssetQueryVariableName = (name: string) => name.trim();
-
 const getStaticStringLiteral = (expression: string) => {
   try {
     const value = JSON.parse(expression);
@@ -34,52 +27,10 @@ const getStaticStringLiteral = (expression: string) => {
   }
 };
 
-export const parseAssetQueryResourceBody = (body: string | undefined) => {
-  const fields = parseObjectExpression(body ?? "");
-  const variables = parseObjectExpression(fields.get("variables") ?? "");
-  return {
-    queryExpression: fields.get("query"),
-    variables: Array.from(variables, ([name, value]) => ({ name, value })),
-  };
-};
-
-export const createAssetQueryResourceBody = ({
-  query,
-  variables,
-}: {
-  query: string;
-  variables: readonly AssetQueryVariableBinding[];
-}) =>
-  generateObjectExpression(
-    new Map([
-      ["query", JSON.stringify(query)],
-      [
-        "variables",
-        generateObjectExpression(
-          new Map(
-            variables
-              .map(({ name, value }) => ({
-                name: normalizeAssetQueryVariableName(name),
-                value,
-              }))
-              .filter(({ name }) => name.length > 0)
-              .map(({ name, value }) => [name, value])
-          )
-        ),
-      ],
-    ])
-  );
-
-export const isStoredAssetQueryResource = (resource: Resource) =>
-  resource.control === "system" &&
-  resource.method === "post" &&
-  getStaticStringLiteral(resource.url) === assetsQueryResourceUrl;
-
 export const isAssetsResource = (resource: Resource) =>
-  isStoredAssetQueryResource(resource) ||
-  (resource.control === "system" &&
-    (resource.method === "get" || resource.method === "post") &&
-    getStaticStringLiteral(resource.url) === assetsResourceUrl);
+  resource.control === "system" &&
+  (resource.method === "get" || resource.method === "post") &&
+  getStaticStringLiteral(resource.url) === assetsResourceUrl;
 
 export type StructuredAssetQueryFilterBinding = {
   field: AssetQueryFieldPath;
@@ -221,20 +172,4 @@ export const createStructuredAssetQueryResourceBody = ({
     ])
   );
   return generateObjectExpression(new Map([["query", query]]));
-};
-
-export const getAssetResourceQuery = (resource: Resource) => {
-  if (isStoredAssetQueryResource(resource) === false) {
-    return;
-  }
-  const { queryExpression } = parseAssetQueryResourceBody(resource.body);
-  if (queryExpression === undefined) {
-    return;
-  }
-  try {
-    const query = JSON.parse(queryExpression);
-    return typeof query === "string" && query.trim() !== "" ? query : undefined;
-  } catch {
-    return;
-  }
 };

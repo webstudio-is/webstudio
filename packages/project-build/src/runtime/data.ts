@@ -31,7 +31,7 @@ import {
 import { z } from "zod";
 import { produceWithPatches } from "immer";
 import {
-  assetsQueryResourceUrl,
+  assetsResourceUrl,
   createJsonStringifyProxy,
   isLocalResource,
   isPlainObject,
@@ -1962,7 +1962,7 @@ const getResourceWarnings = ({
     fields.method === "get" ||
     (fields.control === "system" &&
       fields.method === "post" &&
-      getStaticStringLiteral(fields.url) === assetsQueryResourceUrl);
+      getStaticStringLiteral(fields.url) === assetsResourceUrl);
   if (exposeAsDataSource && isRenderTimeRead === false) {
     warnings.push({
       severity: "warning",

@@ -178,15 +178,9 @@ describe("loadResource", () => {
     );
   });
 
-  test("keeps the legacy Assets path distinct from the query path", () => {
+  test("matches only the exact Assets resource path", () => {
     expect(isLocalResource("/$resources/assets", "assets")).toBe(true);
     expect(isLocalResource("/$resources/assets/query", "assets")).toBe(false);
-    expect(
-      isLocalResource(
-        "/$resources/assets/index-status?resourceId=posts",
-        "assets/index-status"
-      )
-    ).toBe(true);
   });
 
   test("keeps a local resource relative while resolving ordinary URLs", async () => {
@@ -365,28 +359,24 @@ describe("loadResource", () => {
       ]),
     });
   });
-  test("identifies generated Assets query requests by resource", async () => {
+  test("loads configured Assets queries on the standard endpoint", async () => {
     mockFetch.mockResolvedValue(Response.json({ ok: true }));
 
     await loadResource(mockFetch, {
-      resourceId: "posts-resource",
       name: "Posts",
       control: "system",
-      url: "/$resources/assets/query",
+      url: "/$resources/assets",
       searchParams: [],
       method: "post",
       headers: [{ name: "content-type", value: "application/json" }],
-      body: { query: "query Assets { assets { items { id } } }" },
+      body: { query: { filters: [], limit: 20, offset: 0 } },
     });
 
-    expect(mockFetch).toHaveBeenCalledWith("/$resources/assets/query", {
+    expect(mockFetch).toHaveBeenCalledWith("/$resources/assets", {
       method: "post",
-      headers: new Headers([
-        ["content-type", "application/json"],
-        ["x-webstudio-resource-id", "posts-resource"],
-      ]),
+      headers: new Headers([["content-type", "application/json"]]),
       body: JSON.stringify({
-        query: "query Assets { assets { items { id } } }",
+        query: { filters: [], limit: 20, offset: 0 },
       }),
     });
   });
@@ -395,7 +385,7 @@ describe("loadResource", () => {
 describe("getResourceCacheKey", () => {
   test("separates asset query, variables, and index revision", async () => {
     const createRequest = (body: Record<string, unknown>) =>
-      new Request("https://example.com/$resources/assets/query", {
+      new Request("https://example.com/$resources/assets", {
         method: "POST",
         headers: { "cache-control": "public, max-age=60" },
         body: JSON.stringify(body),

@@ -1691,23 +1691,6 @@ describe("builder runtime read families", () => {
   });
 
   test("preserves fetch-all Assets behavior and enables query configuration explicitly", () => {
-    expectRuntimeValidationError(
-      "assetsResources.create",
-      {
-        name: "Invalid variables",
-        scopeInstanceId: "heading",
-        query: {
-          graphql:
-            "query Assets($type: String) { assets(where: { type: { eq: $type } }) { items { id } } }",
-          variables: [
-            { name: "type", value: '"asset.file"' },
-            { name: "type", value: '"asset.file"' },
-          ],
-        },
-      },
-      { path: ["query", "variables", "1", "name"] }
-    );
-
     const fetchAll = executeBuilderRuntimeOperation({
       id: "assetsResources.create",
       state,
@@ -1747,9 +1730,15 @@ describe("builder runtime read families", () => {
         name: "Blog posts",
         scopeInstanceId: "heading",
         query: {
-          graphql:
-            "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } content(mode: MARKDOWN_BODY, maxBytes: 65536) { text } } } }",
-          variables: [{ name: "slug", value: "system.params.slug" }],
+          filters: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "system.params.slug",
+            },
+          ],
+          limit: "1",
+          content: { mode: "markdown-body", maxBytes: 65_536 },
         },
       },
       context: {
@@ -1783,11 +1772,11 @@ describe("builder runtime read families", () => {
       id: "asset-resource",
       control: "system",
       method: "post",
-      url: '"/$resources/assets/query"',
+      url: '"/$resources/assets"',
     });
     expect(resourcePatch?.value).toHaveProperty(
       "body",
-      expect.stringContaining("slug: { eq: $slug }")
+      expect.stringContaining('"properties"')
     );
 
     const queryState = {
@@ -1813,9 +1802,17 @@ describe("builder runtime read families", () => {
         scopeInstanceId: "heading",
         mode: "query",
         query: {
-          graphql:
-            "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id properties { title } content(mode: MARKDOWN_BODY, maxBytes: 65536) { text } } } }",
-          variables: [{ name: "slug", value: "system.params.slug" }],
+          filters: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "system.params.slug",
+            },
+          ],
+          sort: [],
+          limit: "1",
+          offset: "0",
+          content: { mode: "markdown-body", maxBytes: 65_536 },
         },
       }),
     });
@@ -1834,8 +1831,7 @@ describe("builder runtime read families", () => {
         resourceId: "asset-resource",
         values: {
           query: {
-            graphql: "{ assets(first: 2) { items { id } } }",
-            variables: [],
+            limit: "2",
           },
         },
       },
@@ -1861,7 +1857,7 @@ describe("builder runtime read families", () => {
     ).toContain('\\"/$resources/assets\\"');
     expect(
       JSON.stringify((disabled as { payload: unknown }).payload)
-    ).not.toContain("/$resources/assets/query");
+    ).not.toContain('\"method\":\"post\"');
 
     const storedQueryResource = queryState.resources?.get("asset-resource");
     if (storedQueryResource === undefined) {

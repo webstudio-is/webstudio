@@ -141,8 +141,7 @@ describe("asset content revisions", () => {
         }
       ),
       db.get("AssetFolder", () => json([])),
-      db.post("rpc/replace_asset_file_metadata", () => json(true)),
-      db.get("AssetResourceIndexState", () => json([]))
+      db.post("rpc/replace_asset_file_metadata", () => json(true))
     );
 
     const asset = await updateAssetContent(
@@ -201,7 +200,6 @@ describe("asset content revisions", () => {
     };
     let revisionName = "";
     let canonicalDocument: Record<string, unknown> | undefined;
-    let indexStatesLoaded = false;
     server.use(
       ownershipHandler,
       db.get("Asset", ({ request }) => {
@@ -253,10 +251,6 @@ describe("asset content revisions", () => {
           }
         ).p_document;
         return json(true);
-      }),
-      db.get("AssetResourceIndexState", () => {
-        indexStatesLoaded = true;
-        return json([]);
       })
     );
 
@@ -277,11 +271,6 @@ describe("asset content revisions", () => {
           expect(name).toBe(revisionName);
           return { data: new Blob([source]).stream() };
         },
-        resourceIndexStore: {
-          putIfAbsent: async () => {
-            throw new Error("No query indexes should be built");
-          },
-        },
       },
       createContext()
     );
@@ -293,7 +282,6 @@ describe("asset content revisions", () => {
       properties: { title: "Updated post" },
       excerpt: "Updated body",
     });
-    expect(indexStatesLoaded).toBe(true);
   });
 
   test("rejects a stale revision before uploading", async () => {
@@ -461,7 +449,7 @@ describe("asset content revisions", () => {
       format: "json",
     });
     expect(log).toHaveBeenCalledWith(
-      "Asset revision resource synchronization failed",
+      "Asset revision metadata synchronization failed",
       expect.anything()
     );
     log.mockRestore();

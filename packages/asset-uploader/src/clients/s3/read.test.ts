@@ -47,7 +47,7 @@ describe("readFromS3", () => {
 
     await readFromS3({
       signer: { sign } as unknown as SignatureV4,
-      name: "resource-indexes/projects/project%2Fone/index.json",
+      name: "assets/db/project%2Fone/index.json",
       endpoint: "https://storage.example",
       bucket: "assets",
       keyType: "hierarchical",
@@ -55,7 +55,7 @@ describe("readFromS3", () => {
 
     expect(sign).toHaveBeenCalledWith(
       expect.objectContaining({
-        path: "/assets/resource-indexes/projects/project%252Fone/index.json",
+        path: "/assets/assets/db/project%252Fone/index.json",
       })
     );
   });

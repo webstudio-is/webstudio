@@ -744,7 +744,7 @@ describe("createUploadTicket", () => {
 });
 
 describe("uploadFile", () => {
-  test("leaves asset resource maintenance to the committed asset patch", async () => {
+  test("synchronizes canonical metadata after committing an upload", async () => {
     const source = "---\ntitle: New post\n---\nPost body";
     const sourceBytes = new TextEncoder().encode(source);
     let persisted: Record<string, unknown> | undefined;
@@ -836,8 +836,19 @@ describe("uploadFile", () => {
       name: "post.md",
       type: "file",
     });
-    expect(readFile).not.toHaveBeenCalled();
-    expect(persisted).toBeUndefined();
+    expect(readFile).toHaveBeenCalledWith("post.md", {
+      offset: 0,
+      length: sourceBytes.byteLength,
+    });
+    expect(persisted).toMatchObject({
+      projectId: "project-1",
+      assetId: "asset-1",
+      document: {
+        _id: "asset-1",
+        path: "post.md",
+        properties: { title: "New post" },
+      },
+    });
   });
 
   test("accepts an upload-only storage client", async () => {

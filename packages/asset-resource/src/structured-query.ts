@@ -1,7 +1,10 @@
 import {
   assetQuery,
   assetQueryResult,
+  assetQueryStandardFieldTypes,
+  getAssetQueryOperatorsForFieldTypes,
   type AssetFileDocument,
+  type AssetObservedFieldType,
   type AssetQueryInput,
   type AssetQueryFieldPath,
   type AssetQueryFilter,
@@ -44,44 +47,16 @@ const validateFilterOperator = ({
   fieldTypes,
 }: {
   filter: AssetQueryFilter;
-  fieldTypes: readonly string[];
+  fieldTypes: readonly AssetObservedFieldType[];
 }) => {
-  const compatible =
-    filter.operator === "eq" ||
-    filter.operator === "ne" ||
-    filter.operator === "in" ||
-    filter.operator === "exists" ||
-    (filter.operator === "contains" &&
-      fieldTypes.some((type) => type === "string" || type === "array")) ||
-    ((filter.operator === "startsWith" || filter.operator === "endsWith") &&
-      fieldTypes.includes("string")) ||
-    ((filter.operator === "gt" ||
-      filter.operator === "gte" ||
-      filter.operator === "lt" ||
-      filter.operator === "lte") &&
-      fieldTypes.some((type) => type === "string" || type === "number")) ||
-    (filter.operator === "isEmpty" &&
-      fieldTypes.some(
-        (type) => type === "string" || type === "array" || type === "object"
-      ));
+  const compatible = getAssetQueryOperatorsForFieldTypes(fieldTypes).includes(
+    filter.operator
+  );
   if (compatible === false) {
     throw new AssetQueryExecutionError(
       `Operator ${filter.operator} is incompatible with ${getCatalogPath(filter.field)}`
     );
   }
-};
-
-const standardFieldTypes: Readonly<Record<string, readonly string[]>> = {
-  id: ["string"],
-  name: ["string"],
-  path: ["string"],
-  key: ["string"],
-  folderId: ["string"],
-  extension: ["string"],
-  mimeType: ["string"],
-  size: ["number"],
-  revision: ["string"],
-  excerpt: ["string"],
 };
 
 export const validateAssetQueryAgainstCatalog = ({
@@ -107,7 +82,10 @@ export const validateAssetQueryAgainstCatalog = ({
     } else {
       validateFilterOperator({
         filter,
-        fieldTypes: standardFieldTypes[filter.field[0]],
+        fieldTypes:
+          assetQueryStandardFieldTypes[
+            filter.field[0] as keyof typeof assetQueryStandardFieldTypes
+          ],
       });
     }
   }
@@ -181,7 +159,7 @@ const compareFilterValues = (left: unknown, right: unknown) => {
   }
 };
 
-const matchesFilter = (
+export const matchesAssetQueryFilter = (
   document: AssetFileDocument,
   filter: AssetQueryFilter
 ) => {
@@ -305,7 +283,7 @@ export const executeAssetQuery = async ({
     );
   }
   const matched = documents.filter((document) =>
-    query.filters.every((filter) => matchesFilter(document, filter))
+    query.filters.every((filter) => matchesAssetQueryFilter(document, filter))
   );
   const sorted = [...matched].sort((left, right) => {
     for (const order of query.sort) {

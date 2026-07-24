@@ -356,12 +356,6 @@ importers:
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
-      graphql:
-        specifier: 16.13.2
-        version: 16.13.2
-      graphql-language-service:
-        specifier: 5.5.2
-        version: 5.5.2(graphql@16.13.2)
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -1100,12 +1094,6 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
-      graphql:
-        specifier: 16.13.2
-        version: 16.13.2
-      graphql-language-service:
-        specifier: 5.5.2
-        version: 5.5.2(graphql@16.13.2)
       remark-parse:
         specifier: 10.0.2
         version: 10.0.2
@@ -7355,9 +7343,6 @@ packages:
     resolution: {integrity: sha512-8pYCQiL9Xdcg0UPSD3d+0KMlOjp+KGU5EPwYddgzQ7DATsg4fuUDjQtsYLmWjnk2obnNHgV3vE2Y4jejSOJVBQ==}
     engines: {node: '>=10'}
 
-  debounce-promise@3.1.2:
-    resolution: {integrity: sha512-rZHcgBkbYavBeD9ej6sP56XfG53d51CD4dnaw989YX/nZ/ZJfgRx/9ePKmTNiUiyQvh4mtrMoS3OAWW+yoYtpg==}
-
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
     peerDependencies:
@@ -8081,12 +8066,6 @@ packages:
 
   graceful-fs@4.2.10:
     resolution: {integrity: sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==}
-
-  graphql-language-service@5.5.2:
-    resolution: {integrity: sha512-NJhgEKTArkyNPcy4NRUFdbpNs5/F99LcvXbNtmGzNGwwruN8tBE3YPMjpYmp8KpBQtOx3uSuvXJlOOE3Vy2KRQ==}
-    hasBin: true
-    peerDependencies:
-      graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
 
   graphql@16.13.2:
     resolution: {integrity: sha512-5bJ+nf/UCpAjHM8i06fl7eLyVC9iuNAjm9qzkiu2ZGhM0VscSvS6WDPfAwkdkBuoXGM9FJSbKl6wylMwP9Ktig==}
@@ -9349,9 +9328,6 @@ packages:
 
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
-
-  nullthrows@1.1.1:
-    resolution: {integrity: sha512-2vPPEi+Z7WqML2jZYddDIfy5Dqb0r2fze2zTxNNknZaFpVHU3mFB3R+DWeJWGVx0ecvttSGlJTI+WG+8Z4cDWw==}
 
   nwsapi@2.2.24:
     resolution: {integrity: sha512-7YRhZ3jS45LwmSCT4b2sVFHt/WuovaktDU07QrtOBY2PXskss5a9jfmR9jptyumwXST+rFjrmppMY1KT/yn35A==}
@@ -11082,9 +11058,6 @@ packages:
         optional: true
       jsdom:
         optional: true
-
-  vscode-languageserver-types@3.18.0:
-    resolution: {integrity: sha512-8TsGPNMIMiiBdkORgRSvLjuiEIiAFtO+KssmYWxQ+uSVvlf7RjK8YKCOjPzZ+YA04jXEV7+7LvkSmHkhpNS99g==}
 
   w3c-keyname@2.2.8:
     resolution: {integrity: sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==}
@@ -16249,8 +16222,6 @@ snapshots:
     dependencies:
       mimic-fn: 3.1.0
 
-  debounce-promise@3.1.2: {}
-
   debug@2.6.9:
     dependencies:
       ms: 2.0.0
@@ -17137,13 +17108,6 @@ snapshots:
   gopd@1.2.0: {}
 
   graceful-fs@4.2.10: {}
-
-  graphql-language-service@5.5.2(graphql@16.13.2):
-    dependencies:
-      debounce-promise: 3.1.2
-      graphql: 16.13.2
-      nullthrows: 1.1.1
-      vscode-languageserver-types: 3.18.0
 
   graphql@16.13.2: {}
 
@@ -18734,8 +18698,6 @@ snapshots:
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
-
-  nullthrows@1.1.1: {}
 
   nwsapi@2.2.24:
     optional: true
@@ -20627,8 +20589,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-
-  vscode-languageserver-types@3.18.0: {}
 
   w3c-keyname@2.2.8: {}
 

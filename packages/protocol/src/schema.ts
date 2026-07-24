@@ -1,7 +1,7 @@
 import {
   asset,
   assetFolder,
-  assetResourceIndexV1,
+  assetIndexV1,
   page,
 } from "@webstudio-is/sdk/schema";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
@@ -78,15 +78,7 @@ export const publishedProjectBundle = projectBundle.extend({
   user: z.object({ email: z.string().nullable() }).optional(),
   projectDomain: z.string(),
   projectTitle: z.string(),
-  assetResourceIndexes: z
-    .array(
-      z.strictObject({
-        resourceId: z.string().min(1),
-        revision: z.string().regex(/^sha256:[a-f0-9]{64}$/),
-        index: assetResourceIndexV1,
-      })
-    )
-    .optional(),
+  assetIndex: assetIndexV1.optional(),
 });
 export type PublishedProjectBundle = z.infer<typeof publishedProjectBundle>;
 

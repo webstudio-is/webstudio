@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  assetQueryFieldPath,
+  assetQuerySort,
+  assetResourceContentOptions,
   assetType,
   compilerSettings,
   dataSourceVariableValue,
@@ -189,8 +192,30 @@ const resource = looseObject({
   dataSourceId: id.optional(),
 });
 const assetResourceConfiguration = looseObject({
-  graphql: z.string(),
-  variables: z.array(looseObject({ name: z.string(), value: z.string() })),
+  filters: z.array(
+    looseObject({
+      field: assetQueryFieldPath,
+      operator: z.enum([
+        "eq",
+        "ne",
+        "in",
+        "contains",
+        "startsWith",
+        "endsWith",
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "exists",
+        "isEmpty",
+      ]),
+      value: z.string(),
+    })
+  ),
+  sort: z.array(assetQuerySort),
+  limit: z.string(),
+  offset: z.string(),
+  content: assetResourceContentOptions,
 });
 const assetResource = looseObject({
   resourceId: id,

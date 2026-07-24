@@ -1,12 +1,6 @@
 /** Shared limits for asset indexing, authoring, and published query runtimes. */
 export const assetResourceLimits = {
   requestBytes: 512 * 1024,
-  queryBytes: 32 * 1024,
-  queryAstNodes: 1000,
-  queryAstDepth: 64,
-  queryDatasetScans: 1,
-  variableCount: 32,
-  variableBytes: 64 * 1024,
   filterCount: 32,
   sortCount: 8,
   fieldPathDepth: 9,
@@ -15,8 +9,6 @@ export const assetResourceLimits = {
   resultBytes: 1024 * 1024,
   candidateDocuments: 1000,
   indexBytes: 16 * 1024 * 1024,
-  publishedResourceCount: 32,
-  publishedIndexBytes: 32 * 1024 * 1024,
   runtimeCachedIndexes: 4,
   frontmatterBytes: 64 * 1024,
   frontmatterDepth: 8,

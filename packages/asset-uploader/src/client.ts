@@ -1,4 +1,3 @@
-import type { ImmutableAssetResourceIndexStore } from "@webstudio-is/asset-resource";
 import { validateProjectAssetReadRange } from "@webstudio-is/project-store";
 import type { AssetData, AssetDataOverride } from "./utils/get-asset-data";
 
@@ -25,7 +24,6 @@ export type AssetUploadClient = {
 };
 
 export type AssetClient = AssetUploadClient & {
-  resourceIndexStore?: ImmutableAssetResourceIndexStore;
   readFile: (
     name: string,
     range?: AssetReadRange
@@ -33,14 +31,4 @@ export type AssetClient = AssetUploadClient & {
     data: AsyncIterable<Uint8Array>;
     contentLength?: number;
   }>;
-};
-
-export type AssetClientWithResourceIndexStore = AssetClient & {
-  resourceIndexStore: ImmutableAssetResourceIndexStore;
-};
-
-export type AssetClientWithReadableResourceIndexStore = AssetClient & {
-  resourceIndexStore: ImmutableAssetResourceIndexStore & {
-    read: NonNullable<ImmutableAssetResourceIndexStore["read"]>;
-  };
 };

@@ -11,8 +11,6 @@ import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/r
 import {
   loadAssetDataByProject,
   loadCanonicalAssetFileSnapshot,
-  prepareAssetResourceIndexSnapshotsForPublication,
-  getAssetResourceQuery,
   synchronizeCanonicalAssets,
 } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -20,20 +18,19 @@ import {
   findPageByIdOrPath,
   getAllPages,
   getStyleDeclKey,
-  assetResourceLimits,
-  isStoredAssetQueryResource,
+  isConfiguredAssetsResource,
+  parseStructuredAssetQueryResourceBody,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
 import {
-  computeAssetResourceQueryHash,
   computeCanonicalAssetRevision,
-  serializeAssetResourceIndex,
+  createAssetIndex,
 } from "@webstudio-is/asset-resource";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
-import { createAssetClientWithResourceIndexStore } from "../asset-client";
+import { createAssetClient } from "../asset-client";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
   item.id,
@@ -178,58 +175,27 @@ const addProjectMetadata = async (
       reachableResourceIds.add(dataSource.resourceId);
     }
   }
-  const assetQueryResources = data.build.resources
+  const hasAssetQueries = data.build.resources
     .map(([, resource]) => resource)
-    .flatMap((resource) => {
+    .some((resource) => {
       if (reachableResourceIds.has(resource.id) === false) {
-        return [];
+        return false;
       }
-      const query = getAssetResourceQuery(resource);
-      if (query !== undefined) {
-        return [{ resourceId: resource.id, query }];
+      if (isConfiguredAssetsResource(resource) === false) {
+        return false;
       }
-      if (isStoredAssetQueryResource(resource)) {
+      if (parseStructuredAssetQueryResourceBody(resource.body) === undefined) {
         throw new Error(
           `Assets resource ${JSON.stringify(resource.id)} has an invalid query configuration`
         );
       }
-      return [];
+      return true;
     });
-  if (assetQueryResources.length > assetResourceLimits.publishedResourceCount) {
-    throw new Error("Published Assets resource count exceeds the limit");
-  }
-  let assetResourceIndexes: PublishedProjectBundle["assetResourceIndexes"];
+  let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
-  if (assetQueryResources.length > 0) {
-    const assetClient = createAssetClientWithResourceIndexStore();
-    const indexedResources = await Promise.all(
-      assetQueryResources.map(async ({ resourceId, query }) => ({
-        resourceId,
-        query,
-        queryHash: await computeAssetResourceQueryHash(query),
-      }))
-    );
-    const currentBuild = await loadDevBuildByProjectId(context, project.id);
-    const currentQueries = new Map(
-      (currentBuild?.resources ?? []).map((resource) => [
-        resource.id,
-        getAssetResourceQuery(resource),
-      ])
-    );
-    const currentResourceIds = indexedResources
-      .filter(
-        ({ resourceId, query }) => currentQueries.get(resourceId) === query
-      )
-      .map(({ resourceId }) => resourceId);
-    const currentAssetResourceBuild =
-      currentBuild === undefined
-        ? undefined
-        : {
-            buildId: currentBuild.id,
-            resources: JSON.stringify(currentBuild.resources),
-            resourceIds: currentResourceIds,
-          };
+  if (hasAssetQueries) {
+    const assetClient = createAssetClient();
     const retainedFontIds = new Set(
       data.assets
         .filter((asset) => asset.type === "font")
@@ -242,27 +208,15 @@ const addProjectMetadata = async (
         projectId: project.id,
         assetClient,
       });
-      const { entries: canonicalEntries, metadataSnapshot } =
+      const { entries: canonicalEntries } =
         await loadCanonicalAssetFileSnapshot({
           client: context.postgrest.client,
           projectId: project.id,
         });
-      const preparedIndexes =
-        await prepareAssetResourceIndexSnapshotsForPublication({
-          client: context.postgrest.client,
-          store: assetClient.resourceIndexStore,
-          projectId: project.id,
-          resources: indexedResources,
-          entries: canonicalEntries,
-          read: assetClient.resourceIndexStore.read,
-          referenceId: data.build.id,
-          metadataSnapshot,
-          currentBuild: currentAssetResourceBuild,
-        });
-      const expectedAssetRevision = preparedIndexes[0]?.index.assetRevision;
-      if (expectedAssetRevision === undefined) {
-        throw new Error("Asset resource indexes were not prepared");
-      }
+      const preparedIndex = await createAssetIndex({
+        projectId: project.id,
+        entries: canonicalEntries,
+      });
       const [assetDataAfter, latestCanonical] = await Promise.all([
         loadAssetDataByProject(project.id, context),
         loadCanonicalAssetFileSnapshot({
@@ -275,34 +229,22 @@ const addProjectMetadata = async (
       );
       const assetsStayedStable =
         JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter) &&
-        expectedAssetRevision === latestAssetRevision;
+        preparedIndex.assetRevision === latestAssetRevision;
       if (assetsStayedStable === false) {
         if (attempt === 0) {
           continue;
         }
         throw new Error("Assets changed while preparing publication; retry");
       }
-      assetResourceIndexes = preparedIndexes;
+      assetIndex = preparedIndex;
       publishedAssets = assetDataAfter.assets.filter(
         (asset) => asset.type !== "font" || retainedFontIds.has(asset.id)
       );
       publishedAssetFolders = assetDataAfter.assetFolders;
       break;
     }
-    if (assetResourceIndexes === undefined) {
-      throw new Error("Asset resource indexes were not prepared");
-    }
-    const totalIndexBytes = assetResourceIndexes.reduce(
-      (total, snapshot) =>
-        total +
-        new TextEncoder().encode(serializeAssetResourceIndex(snapshot.index))
-          .byteLength,
-      0
-    );
-    if (totalIndexBytes > assetResourceLimits.publishedIndexBytes) {
-      throw new Error(
-        "Published Assets resource indexes exceed the byte limit"
-      );
+    if (assetIndex === undefined) {
+      throw new Error("Asset index was not prepared");
     }
   }
 
@@ -314,7 +256,7 @@ const addProjectMetadata = async (
     user: user ? { email: user.email } : undefined,
     projectDomain: project.domain,
     projectTitle: project.title,
-    assetResourceIndexes,
+    assetIndex,
   };
 };
 

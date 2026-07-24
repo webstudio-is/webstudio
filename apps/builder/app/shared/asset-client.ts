@@ -3,7 +3,6 @@ import { maxSize } from "@webstudio-is/asset-uploader";
 import {
   createFsClient,
   createS3Client,
-  type AssetClientWithReadableResourceIndexStore,
 } from "@webstudio-is/asset-uploader/index.server";
 import env from "~/env/env.server";
 
@@ -33,21 +32,6 @@ export const createAssetClient = () => {
     return createFsClient({
       maxUploadSize,
       fileDirectory: path.join(process.cwd(), fileUploadPath),
-      resourceIndexDirectory: path.join(
-        process.cwd(),
-        "private/asset-resource-indexes"
-      ),
     });
   }
-};
-
-export const createAssetClientWithResourceIndexStore = () => {
-  const client = createAssetClient();
-  if (
-    client.resourceIndexStore === undefined ||
-    client.resourceIndexStore.read === undefined
-  ) {
-    throw new Error("Private asset resource index storage is not configured");
-  }
-  return client as AssetClientWithReadableResourceIndexStore;
 };

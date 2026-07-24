@@ -3,7 +3,6 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    dedupe: ["graphql"],
     alias: [
       {
         find: "~",
@@ -21,10 +20,5 @@ export default defineConfig({
     environment: "jsdom",
     environmentMatchGlobs: [["**/*.server.test.*", "node"]],
     setupFiles: ["@webstudio-is/design-system/test-setup"],
-    server: {
-      deps: {
-        inline: ["graphql", "graphql-language-service"],
-      },
-    },
   },
 });
