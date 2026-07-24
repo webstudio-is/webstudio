@@ -1,14 +1,14 @@
 {
   "name": "@webstudio-is/project-store",
   "version": "0.0.0-webstudio-version",
-  "description": "Portable storage primitives for Webstudio project snapshots",
+  "description": "Portable storage and deterministic JSON primitives",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf lib && esbuild src/index.ts src/filesystem.ts src/r2.ts src/json.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/json.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -24,18 +24,6 @@
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
       "default": "./src/index.ts"
-    },
-    "./filesystem": {
-      "webstudio": "./src/filesystem.ts",
-      "types": "./lib/types/filesystem.d.ts",
-      "import": "./lib/filesystem.js",
-      "default": "./src/filesystem.ts"
-    },
-    "./r2": {
-      "webstudio": "./src/r2.ts",
-      "types": "./lib/types/r2.d.ts",
-      "import": "./lib/r2.js",
-      "default": "./src/r2.ts"
     },
     "./json": {
       "webstudio": "./src/json.ts",

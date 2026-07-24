@@ -10,7 +10,7 @@ import {
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   loadAssetDataByProject,
-  loadCanonicalAssetFileSnapshot,
+  loadCanonicalAssetFileEntries,
   synchronizeCanonicalAssets,
 } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -208,25 +208,23 @@ const addProjectMetadata = async (
         projectId: project.id,
         assetClient,
       });
-      const { entries: canonicalEntries } =
-        await loadCanonicalAssetFileSnapshot({
-          client: context.postgrest.client,
-          projectId: project.id,
-        });
+      const canonicalEntries = await loadCanonicalAssetFileEntries({
+        client: context.postgrest.client,
+        projectId: project.id,
+      });
       const preparedIndex = await createAssetIndex({
         projectId: project.id,
         entries: canonicalEntries,
       });
       const [assetDataAfter, latestCanonical] = await Promise.all([
         loadAssetDataByProject(project.id, context),
-        loadCanonicalAssetFileSnapshot({
+        loadCanonicalAssetFileEntries({
           client: context.postgrest.client,
           projectId: project.id,
         }),
       ]);
-      const latestAssetRevision = await computeCanonicalAssetRevision(
-        latestCanonical.entries
-      );
+      const latestAssetRevision =
+        await computeCanonicalAssetRevision(latestCanonical);
       const assetsStayedStable =
         JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter) &&
         preparedIndex.assetRevision === latestAssetRevision;

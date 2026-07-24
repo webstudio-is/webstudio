@@ -22,7 +22,6 @@ type ReplaceMetadataRpcArgs = {
   p_asset_id: string;
   p_revision: string;
   p_document: Record<string, unknown>;
-  p_field_contributions: unknown[];
   p_source: Record<string, unknown>;
 };
 
@@ -31,7 +30,6 @@ const entryFromReplaceRpc = (value: ReplaceMetadataRpcArgs) => ({
   assetId: value.p_asset_id,
   revision: value.p_revision,
   document: value.p_document,
-  fieldContributions: value.p_field_contributions,
   source: value.p_source,
 });
 
@@ -772,14 +770,6 @@ describe("canonical asset metadata synchronization", () => {
         properties: { title: "Old" },
       },
     });
-    const inconsistentEntry = createCanonicalAssetFileEntry({
-      projectId: "project-1",
-      document: {
-        ...validEntry.document,
-        revision: "file:recovery.md:old:10",
-        properties: { title: "Inconsistent" },
-      },
-    });
     const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
       data: {
         async *[Symbol.asyncIterator]() {
@@ -806,14 +796,14 @@ describe("canonical asset metadata synchronization", () => {
       ),
       db.get("AssetFolder", () => json([])),
       db.get("AssetFileMetadata", () =>
-        json(
-          [validEntry, inconsistentEntry].map((metadataEntry, index) => ({
-            ...metadataEntry,
-            ...(index === 0 ? {} : { fieldContributions: [] }),
+        json([
+          {
+            ...validEntry,
+            revision: "file:recovery.md:old:10",
             createdAt: "2026-07-18T00:00:00.000Z",
             updatedAt: "2026-07-18T00:00:00.000Z",
-          }))
-        )
+          },
+        ])
       ),
       db.post("rpc/replace_asset_file_metadata", () => json(true))
     );

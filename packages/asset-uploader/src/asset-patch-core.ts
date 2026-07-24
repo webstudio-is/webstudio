@@ -8,7 +8,6 @@ import {
   type Patch,
 } from "./patch-utils";
 import { swapAssetFileWithClient } from "./revision";
-import { synchronizeCanonicalAssetStandardMetadata } from "./canonical-metadata-backfill";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
 
@@ -166,15 +165,6 @@ export const patchAssetsWithClient = async (
       previous.folderId === asset.folderId &&
       serializeAssetMeta(previous.meta) === serializeAssetMeta(asset.meta)
   );
-  const standardMetadataAssetIds = updated
-    .filter((asset) => {
-      const previous = assetsMap.get(asset.id);
-      return (
-        previous?.filename !== asset.filename ||
-        previous?.folderId !== asset.folderId
-      );
-    })
-    .map((asset) => asset.id);
   if (deletedAssetIds.length !== 0) {
     await deleteAssetsWithClient({ projectId, ids: deletedAssetIds }, client);
   }
@@ -237,14 +227,6 @@ export const patchAssetsWithClient = async (
       }
     }
   }
-  if (standardMetadataAssetIds.length > 0) {
-    await synchronizeCanonicalAssetStandardMetadata({
-      projectId,
-      assetIds: standardMetadataAssetIds,
-      client,
-    });
-  }
-
   const addedAssets: Asset[] = added;
   if (addedAssets.length !== 0) {
     const files = await client

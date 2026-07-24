@@ -418,10 +418,12 @@ const AssetQueryPreview = ({
   configuration,
   scope,
   enabled,
+  indexRevision,
 }: {
   configuration: StructuredAssetQueryResourceConfiguration;
   scope: Record<string, unknown>;
   enabled: boolean;
+  indexRevision?: string;
 }) => {
   const [preview, setPreview] = useState<
     | { type: "idle" }
@@ -430,6 +432,7 @@ const AssetQueryPreview = ({
     | { type: "success"; value: unknown }
   >({ type: "idle" });
   const input = {
+    indexRevision,
     query: {
       filters: configuration.filters.map(({ field, operator, value }) => ({
         field,
@@ -447,6 +450,7 @@ const AssetQueryPreview = ({
   inputRef.current = { key: inputKey, input };
 
   useEffect(() => {
+    let cancelled = false;
     setPreview({ type: "idle" });
     if (enabled === false) {
       return;
@@ -456,7 +460,7 @@ const AssetQueryPreview = ({
       setPreview({ type: "loading" });
       try {
         const response = await previewBuilderAssetQuery(inputRef.current.input);
-        if (inputRef.current.key !== requestedKey) {
+        if (cancelled || inputRef.current.key !== requestedKey) {
           return;
         }
         const parsed = assetQueryResult.safeParse(response.data);
@@ -476,12 +480,15 @@ const AssetQueryPreview = ({
         }
         setPreview({ type: "success", value: parsed.data });
       } catch {
-        if (inputRef.current.key === requestedKey) {
+        if (cancelled === false && inputRef.current.key === requestedKey) {
           setPreview({ type: "error", message: "The query preview failed." });
         }
       }
     }, 500);
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [enabled, inputKey]);
 
   return (
@@ -637,6 +644,7 @@ export const AssetQueryForm = ({
             configuration={configuration}
             scope={scope}
             enabled={configurationError === undefined}
+            indexRevision={catalog?.canonicalRevision}
           />
         </>
       )}

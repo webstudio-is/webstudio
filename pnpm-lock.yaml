@@ -2010,9 +2010,6 @@ importers:
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
-      '@webstudio-is/project-store':
-        specifier: workspace:*
-        version: link:../project-store
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -2080,9 +2077,6 @@ importers:
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
-      '@webstudio-is/project-store':
-        specifier: workspace:*
-        version: link:../project-store
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk

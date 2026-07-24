@@ -129,10 +129,19 @@ const detailQuery = {
   content: { mode: "full" },
 };
 const warmListing = await measure(50, () =>
-  executeAssetQuery({ query: listingQuery, documents: index.documents })
+  executeAssetQuery({
+    query: listingQuery,
+    catalog: index.fieldCatalog,
+    documents: index.documents,
+  })
 );
 const detailAndHydration = await measure(50, () =>
-  executeAssetQuery({ query: detailQuery, documents: index.documents, read })
+  executeAssetQuery({
+    query: detailQuery,
+    catalog: index.fieldCatalog,
+    documents: index.documents,
+    read,
+  })
 );
 
 const workerBundle = await bundle({

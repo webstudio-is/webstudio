@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  encodeStoragePathSegment,
-  getHostedProjectStoragePrefixes,
-  validateStorageKey,
-} from "./storage-key";
+import { encodeStoragePathSegment, validateStorageKey } from "./storage-key";
 
 describe("storage path segments", () => {
   test.each([
@@ -21,13 +17,6 @@ describe("storage path segments", () => {
     expect(() => encodeStoragePathSegment("")).toThrow(
       "Storage path segment cannot be empty"
     );
-  });
-
-  test("derives one encoded hosted project layout", () => {
-    expect(getHostedProjectStoragePrefixes("project/..")).toEqual({
-      database: "projects/project%2F%2E%2E/db",
-      assets: "projects/project%2F%2E%2E/assets",
-    });
   });
 
   test.each(["../outside", "a//b", "a\\b", "a\0b"])(

@@ -6,14 +6,6 @@ import type { Client, Database } from "@webstudio-is/postgrest/index.server";
 import { assertPostgrestSuccess } from "./patch-utils";
 
 type MetadataRow = Database["public"]["Tables"]["AssetFileMetadata"]["Row"];
-type StoredMetadataRow = MetadataRow & {
-  metadataToken: string;
-};
-
-export type CanonicalAssetMetadataSnapshot = {
-  assetId: string;
-  metadataToken: string;
-}[];
 
 export type CanonicalAssetMetadataSource = {
   storageName: string;
@@ -30,12 +22,6 @@ const parseMetadataRow = (row: MetadataRow): CanonicalAssetFileEntry => {
   });
   if (entry.assetId !== row.assetId || entry.revision !== row.revision) {
     throw new Error("Canonical asset metadata identity is inconsistent");
-  }
-  if (
-    JSON.stringify(entry.fieldContributions) !==
-    JSON.stringify(row.fieldContributions)
-  ) {
-    throw new Error("Canonical asset field contributions are inconsistent");
   }
   return entry;
 };
@@ -60,7 +46,6 @@ export const replaceCanonicalAssetFileEntry = async ({
     p_asset_id: entry.assetId,
     p_revision: entry.revision,
     p_document: entry.document,
-    p_field_contributions: entry.fieldContributions,
     p_source: {
       storageName: source.storageName,
       fileUpdatedAt: source.fileUpdatedAt,
@@ -126,7 +111,7 @@ const loadCanonicalAssetFileMetadataRows = async ({
   client: Client;
   projectId: string;
   assetIds?: string[];
-}): Promise<StoredMetadataRow[]> => {
+}): Promise<MetadataRow[]> => {
   let query = client
     .from("AssetFileMetadata")
     .select()
@@ -137,9 +122,9 @@ const loadCanonicalAssetFileMetadataRows = async ({
     }
     query = query.in("assetId", assetIds);
   }
-  const result = await query.order("assetId").order("revision");
+  const result = await query.order("assetId");
   assertPostgrestSuccess(result);
-  return (result.data ?? []) as StoredMetadataRow[];
+  return result.data ?? [];
 };
 
 export const loadCanonicalAssetFileEntries = async ({
@@ -157,23 +142,6 @@ export const loadCanonicalAssetFileEntries = async ({
     assetIds,
   });
   return rows.map(parseMetadataRow);
-};
-
-export const loadCanonicalAssetFileSnapshot = async ({
-  client,
-  projectId,
-}: {
-  client: Client;
-  projectId: string;
-}) => {
-  const rows = await loadCanonicalAssetFileMetadataRows({ client, projectId });
-  return {
-    entries: rows.map(parseMetadataRow),
-    metadataSnapshot: rows.map(({ assetId, metadataToken }) => ({
-      assetId,
-      metadataToken,
-    })),
-  };
 };
 
 export const loadCanonicalAssetFileEntriesForRecovery = async ({

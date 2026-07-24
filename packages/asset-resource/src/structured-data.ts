@@ -61,7 +61,13 @@ export const normalizeStructuredDataObject = (
       return input;
     }
     if (Array.isArray(input)) {
-      return input.map((item) => normalize(item, depth + 1));
+      return input.map((item) => {
+        fields += 1;
+        if (fields > limits.fields) {
+          throw new StructuredDataError("FIELDS_EXCEEDED");
+        }
+        return normalize(item, depth + 1);
+      });
     }
     if (isPlainObject(input)) {
       const result: Record<string, unknown> = Object.create(null);

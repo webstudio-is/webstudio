@@ -1,15 +1,10 @@
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SignatureV4 } from "@smithy/signature-v4";
 import type { AssetClient } from "../../client";
-import {
-  getHostedProjectStoragePrefixes,
-  ObjectProjectStore,
-} from "@webstudio-is/project-store";
 import { uploadToS3 } from "./upload";
 import { readFromS3 } from "./read";
-import { S3ProjectObjectStore } from "./project-object-store";
 
-export type S3StorageOptions = {
+type S3StorageOptions = {
   endpoint: string;
   region: string;
   accessKeyId: string;
@@ -34,27 +29,6 @@ const createS3Signer = (options: S3StorageOptions) =>
     // Paths are encoded centrally by createS3ObjectUrl.
     uriEscapePath: false,
   });
-
-export const createS3ProjectStore = (
-  options: S3StorageOptions,
-  projectId: string
-) => {
-  const signer = createS3Signer(options);
-  const prefixes = getHostedProjectStoragePrefixes(projectId);
-  const objects = new S3ProjectObjectStore({
-    signer,
-    endpoint: options.endpoint,
-    bucket: options.bucket,
-    prefix: prefixes.database,
-  });
-  const assets = new S3ProjectObjectStore({
-    signer,
-    endpoint: options.endpoint,
-    bucket: options.bucket,
-    prefix: prefixes.assets,
-  });
-  return new ObjectProjectStore({ projectId, objects, assets, heads: objects });
-};
 
 export const createS3Client = (options: S3ClientOptions): AssetClient => {
   const signer = createS3Signer(options);

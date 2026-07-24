@@ -18,10 +18,9 @@ import {
   serializeJsonDeterministically,
 } from "@webstudio-is/project-store/json";
 import {
-  AssetResourceHydrationError,
+  hydrateAssetResourceResult,
   type AssetResourceContentReader,
 } from "./hydration";
-import { createAssetContentHydrator } from "./content-hydrator";
 import { appendAssetFieldPath } from "./canonical";
 
 export class AssetQueryExecutionError extends Error {
@@ -269,14 +268,16 @@ const assertResultSize = (result: AssetQueryResult) => {
 
 export const executeAssetQuery = async ({
   query: input,
+  catalog,
   documents,
   read,
 }: {
   query: AssetQueryInput;
+  catalog: BuilderAssetFieldCatalog;
   documents: readonly AssetFileDocument[];
   read?: AssetResourceContentReader;
 }): Promise<AssetQueryResult> => {
-  const query = assetQuery.parse(input);
+  const { query } = validateAssetQueryAgainstCatalog({ query: input, catalog });
   if (documents.length > assetResourceLimits.candidateDocuments) {
     throw new AssetQueryExecutionError(
       "Asset query document limit was exceeded"
@@ -304,30 +305,28 @@ export const executeAssetQuery = async ({
     if (read === undefined) {
       throw new AssetQueryExecutionError("Asset content reader is unavailable");
     }
-    if (selected.length > assetResourceLimits.hydratedFileCount) {
-      throw new AssetResourceHydrationError({
-        code: "CONTENT_LIMIT_EXCEEDED",
-        message: "Too many selected assets requested content hydration",
-        details: {
-          fileCount: selected.length,
-          fileCountLimit: assetResourceLimits.hydratedFileCount,
+    const hydrated = await hydrateAssetResourceResult({
+      result: selected,
+      documents: selected,
+      options: contentOptions,
+      read,
+    });
+    items = selected.map((document, index) => {
+      const content = hydrated.content[document._id];
+      if (content === undefined) {
+        throw new AssetQueryExecutionError(
+          "Selected asset content could not be read"
+        );
+      }
+      return {
+        ...items[index],
+        content: {
+          encoding: content.encoding,
+          text: content.text,
+          ...(content.range === undefined ? {} : { range: content.range }),
         },
-      });
-    }
-    const hydrate = createAssetContentHydrator(read);
-    items = await Promise.all(
-      selected.map(async (document, index) => {
-        const content = await hydrate(document, contentOptions);
-        return {
-          ...items[index],
-          content: {
-            encoding: content.encoding,
-            text: content.text,
-            ...(content.range === undefined ? {} : { range: content.range }),
-          },
-        };
-      })
-    );
+      };
+    });
   }
   const result = assetQueryResult.parse({
     items,

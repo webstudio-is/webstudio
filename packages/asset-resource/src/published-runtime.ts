@@ -1,5 +1,4 @@
 import {
-  assetQueryRequest,
   assetResourceQueryFailure,
   type AssetResourceQueryFailure,
 } from "@webstudio-is/sdk";
@@ -12,6 +11,7 @@ import {
   executeAssetQuery,
 } from "./structured-query";
 import { AssetResourceHydrationError } from "./hydration";
+import { readAssetQueryRequest } from "./request";
 
 export type PublishedAssetIndexManifest = {
   revision: string;
@@ -183,7 +183,7 @@ export const createPublishedAssetResourceFetch = ({
     }
     let parsedRequest;
     try {
-      parsedRequest = assetQueryRequest.parse(await request.clone().json());
+      parsedRequest = await readAssetQueryRequest(request.clone());
     } catch {
       return failure({
         code: "INVALID_REQUEST",
@@ -226,6 +226,7 @@ export const createPublishedAssetResourceFetch = ({
       const index = await loadIndex({ deploymentId, manifest, fetchAsset });
       const result = await executeAssetQuery({
         query: parsedRequest.query,
+        catalog: index.fieldCatalog,
         documents: index.documents,
         read: async (contentRef, range) => {
           const headers = new Headers();

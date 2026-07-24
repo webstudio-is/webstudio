@@ -1,13 +1,13 @@
 import { json } from "@remix-run/server-runtime";
 import {
   AssetQueryExecutionError,
+  readAssetQueryRequest,
   AssetResourceHydrationError,
 } from "@webstudio-is/asset-resource";
 import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/index.server";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import {
   assetResourceQueryFailure,
-  assetQueryRequest,
   type AssetResourceErrorCode,
 } from "@webstudio-is/sdk";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
@@ -78,9 +78,9 @@ export const loader = async (
     });
   }
 
-  let input: unknown;
+  let parsed;
   try {
-    input = await resourceRequest.json();
+    parsed = await readAssetQueryRequest(resourceRequest);
   } catch {
     return failure({
       code: "INVALID_REQUEST",
@@ -88,19 +88,11 @@ export const loader = async (
       status: 400,
     });
   }
-  const parsed = assetQueryRequest.safeParse(input);
-  if (parsed.success === false) {
-    return failure({
-      code: "INVALID_REQUEST",
-      message: "Asset query preview request is invalid",
-      status: 400,
-    });
-  }
   try {
     const context = await dependencies.createContext(request);
     const result = await dependencies.previewAssetResourceQuery({
       projectId,
-      request: parsed.data,
+      request: parsed,
       context,
       assetClient: dependencies.createAssetClient(),
     });

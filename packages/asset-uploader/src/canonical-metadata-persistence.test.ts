@@ -10,7 +10,6 @@ import {
   deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntry,
-  loadCanonicalAssetFileSnapshot,
   replaceCanonicalAssetFileEntry,
 } from "./canonical-metadata-persistence";
 
@@ -36,9 +35,7 @@ const entry = createCanonicalAssetFileEntry({
 });
 const row = {
   ...entry,
-  metadataToken: "metadata-token-1",
   document,
-  fieldContributions: entry.fieldContributions,
   createdAt: "2026-07-18T00:00:00.000Z",
   updatedAt: "2026-07-18T00:00:00.000Z",
 };
@@ -65,22 +62,6 @@ describe("canonical asset metadata persistence", () => {
     ).resolves.toEqual(entry);
   });
 
-  test("loads metadata tokens atomically with canonical entries", async () => {
-    server.use(db.get("AssetFileMetadata", () => json([row])));
-
-    await expect(
-      loadCanonicalAssetFileSnapshot({
-        client: testContext.postgrest.client,
-        projectId: "project-1",
-      })
-    ).resolves.toEqual({
-      entries: [entry],
-      metadataSnapshot: [
-        { assetId: "asset-1", metadataToken: "metadata-token-1" },
-      ],
-    });
-  });
-
   test("replaces older revisions for one canonical asset", async () => {
     server.use(
       db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
@@ -89,7 +70,6 @@ describe("canonical asset metadata persistence", () => {
           p_asset_id: "asset-1",
           p_revision: "sha256:one",
           p_document: document,
-          p_field_contributions: entry.fieldContributions,
           p_source: {
             storageName: "stored.md",
             fileUpdatedAt: "2026-07-18T00:00:00.000Z",
@@ -147,7 +127,7 @@ describe("canonical asset metadata persistence", () => {
     server.use(
       db.get("AssetFileMetadata", ({ request }) => {
         expect(new URL(request.url).searchParams.get("order")).toBe(
-          "assetId.asc,revision.asc"
+          "assetId.asc"
         );
         return json([row]);
       })

@@ -37,6 +37,7 @@ export const previewAssetResourceQuery = async ({
   });
   return await executeAssetQuery({
     query: request.query,
+    catalog: index.fieldCatalog,
     documents: index.documents,
     read: assetClient.readFile,
   });

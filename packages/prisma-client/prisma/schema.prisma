@@ -59,14 +59,12 @@ model AssetFileMetadata {
   projectId          String
   assetId            String
   revision           String
-  metadataToken      String   @default(uuid())
   document           Json
-  fieldContributions Json     @default("[]")
   createdAt          DateTime @default(now()) @db.Timestamptz(3)
   updatedAt          DateTime @default(now()) @updatedAt @db.Timestamptz(3)
   asset              Asset    @relation(fields: [assetId, projectId], references: [id, projectId], onDelete: Cascade)
 
-  @@id([projectId, assetId, revision])
+  @@id([projectId, assetId])
 }
 
 model AssetFolder {

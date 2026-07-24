@@ -322,7 +322,12 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   );
 };
 
-const assetIndexPublicPath = "/assets/db/index.json";
+const getAssetIndexPublicPath = (
+  index: NonNullable<PublishedProjectBundle["assetIndex"]>
+) => {
+  const checksum = index.integrity.checksum.replace(/^sha256:/, "");
+  return `/assets/db/${checksum}.json`;
+};
 
 export const getRequiredAssetResourceContentRefs = ({
   index,
@@ -335,6 +340,9 @@ export const getRequiredAssetResourceContentRefs = ({
     return new Set<string>();
   }
   const selectsContent = resources.some(([, resource]) => {
+    if (isConfiguredAssetsResource(resource) === false) {
+      return false;
+    }
     const configuration = parseStructuredAssetQueryResourceBody(resource.body);
     return configuration !== undefined && configuration.content.mode !== "none";
   });
@@ -383,19 +391,23 @@ export const materializeAssetIndex = async ({
   generatedDirectory: string;
   deploymentId: string;
 }) => {
-  const manifest =
-    index === undefined
-      ? undefined
-      : {
-          revision: index.integrity.checksum,
-          assetRevision: index.assetRevision,
-          indexPath: assetIndexPublicPath,
-        };
+  const targetDirectory = join(publicDirectory, "assets", "db");
+  // This directory contains generated database artifacts only. Replace it as a
+  // unit so disabling or changing queries cannot publish a stale index.
+  await rm(targetDirectory, { recursive: true, force: true });
+  let manifest:
+    | { revision: string; assetRevision: string; indexPath: string }
+    | undefined;
   if (index !== undefined) {
-    const targetDirectory = join(publicDirectory, "assets", "db");
+    const indexPath = getAssetIndexPublicPath(index);
+    manifest = {
+      revision: index.integrity.checksum,
+      assetRevision: index.assetRevision,
+      indexPath,
+    };
     await createFolderIfNotExists(targetDirectory);
     await writeFile(
-      join(publicDirectory, assetIndexPublicPath.slice(1)),
+      join(publicDirectory, indexPath.slice(1)),
       JSON.stringify(index),
       "utf8"
     );

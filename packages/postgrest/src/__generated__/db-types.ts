@@ -89,8 +89,6 @@ export type Database = {
           assetId: string;
           createdAt: string;
           document: Json;
-          fieldContributions: Json;
-          metadataToken: string;
           projectId: string;
           revision: string;
           updatedAt: string;
@@ -99,8 +97,6 @@ export type Database = {
           assetId: string;
           createdAt?: string;
           document: Json;
-          fieldContributions?: Json;
-          metadataToken?: string;
           projectId: string;
           revision: string;
           updatedAt?: string;
@@ -109,8 +105,6 @@ export type Database = {
           assetId?: string;
           createdAt?: string;
           document?: Json;
-          fieldContributions?: Json;
-          metadataToken?: string;
           projectId?: string;
           revision?: string;
           updatedAt?: string;
@@ -1226,7 +1220,6 @@ export type Database = {
         Args: {
           p_asset_id: string;
           p_document: Json;
-          p_field_contributions: Json;
           p_project_id: string;
           p_revision: string;
           p_source: Json;

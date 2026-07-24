@@ -390,10 +390,27 @@ test("requires candidate files only when an asset query can hydrate content", as
       resources: [["posts", createQueryResource("full")]],
     })
   ).toEqual(new Set(["post.md"]));
+  expect(
+    getRequiredAssetResourceContentRefs({
+      index,
+      resources: [
+        [
+          "external",
+          {
+            ...createQueryResource("full"),
+            id: "external",
+            control: "graphql",
+            url: '"https://example.com/assets"',
+          },
+        ],
+      ],
+    })
+  ).toEqual(new Set());
 });
 
 test("materializes one shared asset index and a reference-only module", async () => {
   const index = await createTestAssetIndex();
+  const indexPath = `/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`;
   await mkdir("public", { recursive: true });
   await mkdir("app/__generated__", { recursive: true });
 
@@ -404,15 +421,15 @@ test("materializes one shared asset index and a reference-only module", async ()
     deploymentId: "build-1",
   });
 
-  expect(
-    JSON.parse(await readFile("public/assets/db/index.json", "utf8"))
-  ).toEqual(index);
+  expect(JSON.parse(await readFile(`public${indexPath}`, "utf8"))).toEqual(
+    index
+  );
   const manifestModule = await readFile(
     "app/__generated__/$resources.asset-query-manifest.ts",
     "utf8"
   );
   expect(manifestModule).toContain('assetQueryDeploymentId = "build-1"');
-  expect(manifestModule).toContain("/assets/db/index.json");
+  expect(manifestModule).toContain(indexPath);
   expect(manifestModule).not.toContain('"documents"');
   expect(manifestModule).not.toContain('"properties"');
   const runtimeModule = await readFile(
@@ -424,6 +441,28 @@ test("materializes one shared asset index and a reference-only module", async ()
   );
   expect(runtimeModule).not.toContain('"documents"');
   expect(runtimeModule).not.toContain('"properties"');
+});
+
+test("removes generated asset indexes when queries are disabled", async () => {
+  const index = await createTestAssetIndex();
+  const indexPath = `public/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`;
+  await mkdir("public", { recursive: true });
+  await mkdir("app/__generated__", { recursive: true });
+  await materializeAssetIndex({
+    index,
+    publicDirectory: "public",
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-1",
+  });
+  await expect(stat(indexPath)).resolves.toBeDefined();
+
+  await materializeAssetIndex({
+    index: undefined,
+    publicDirectory: "public",
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-2",
+  });
+  await expect(stat(indexPath)).rejects.toMatchObject({ code: "ENOENT" });
 });
 
 test("executes and hydrates an asset query from SSG public files", async () => {
@@ -441,7 +480,7 @@ test("executes and hydrates an asset query from SSG public files", async () => {
     generatedDirectory: "app/__generated__",
     deploymentId: "build-1",
   });
-  const indexPath = "/assets/db/index.json";
+  const indexPath = `/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`;
   await expect((await fetchSsgPublicAsset(indexPath)).json()).resolves.toEqual(
     index
   );

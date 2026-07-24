@@ -36,7 +36,6 @@ SELECT is(
     'metadata-test-asset',
     'revision-1',
     '{"_id":"metadata-test-asset","revision":"revision-1"}'::JSONB,
-    '[]'::JSONB,
     '{"storageName":"metadata-test.md","fileUpdatedAt":"2026-07-18T10:00:00Z","fileSize":10,"filename":"post.md","folderId":null}'::JSONB
   ),
   TRUE,
@@ -54,34 +53,16 @@ SELECT is(
   'One asset has one active canonical revision'
 );
 
-CREATE TEMP TABLE initial_metadata_token AS
-SELECT "metadataToken"
-FROM "AssetFileMetadata"
-WHERE "projectId" = 'metadata-test-project'
-  AND "assetId" = 'metadata-test-asset';
-
 SELECT is(
   replace_asset_file_metadata(
     'metadata-test-project',
     'metadata-test-asset',
     'revision-1',
     '{"_id":"metadata-test-asset","revision":"revision-1"}'::JSONB,
-    '[]'::JSONB,
     '{"storageName":"metadata-test.md","fileUpdatedAt":"2026-07-18T10:00:00Z","fileSize":10,"filename":"post.md","folderId":null}'::JSONB
   ),
   TRUE,
   'Repeated replacement of identical canonical metadata is accepted'
-);
-
-SELECT is(
-  (
-    SELECT "metadataToken"
-    FROM "AssetFileMetadata"
-    WHERE "projectId" = 'metadata-test-project'
-      AND "assetId" = 'metadata-test-asset'
-  ),
-  (SELECT "metadataToken" FROM initial_metadata_token),
-  'Identical canonical metadata preserves its snapshot token'
 );
 
 UPDATE "File"
@@ -95,7 +76,6 @@ SELECT is(
     'metadata-test-asset',
     'stale-revision',
     '{"_id":"stale"}'::JSONB,
-    '[]'::JSONB,
     '{"storageName":"metadata-test.md","fileUpdatedAt":"2026-07-18T10:00:00Z","fileSize":10,"filename":"post.md","folderId":null}'::JSONB
   ),
   FALSE,
@@ -119,7 +99,6 @@ SELECT is(
     'metadata-test-asset',
     'revision-2',
     '{"_id":"metadata-test-asset","revision":"revision-2"}'::JSONB,
-    '[]'::JSONB,
     '{"storageName":"metadata-test.md","fileUpdatedAt":"2026-07-18T11:00:00Z","fileSize":11,"filename":"post.md","folderId":null}'::JSONB
   ),
   TRUE,
@@ -134,7 +113,7 @@ SELECT results_eq(
       AND "assetId" = 'metadata-test-asset'
   $$,
   $$ VALUES ('revision-2') $$,
-  'Revision replacement removes the superseded row in the same transaction'
+  'Revision replacement updates the single canonical row in the same transaction'
 );
 
 SELECT is(
@@ -186,7 +165,6 @@ SELECT is(
     'metadata-image-asset',
     'image-revision',
     '{"_id":"metadata-image-asset","revision":"image-revision"}'::JSONB,
-    '[]'::JSONB,
     '{"storageName":"metadata-image.png","fileUpdatedAt":"2026-07-18T12:00:00Z","fileSize":20,"filename":"cover.png","folderId":null}'::JSONB
   ),
   TRUE,

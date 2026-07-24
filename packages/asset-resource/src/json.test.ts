@@ -40,6 +40,9 @@ describe("JSON metadata extraction", () => {
       extractJsonProperties('{"a":1,"b":2}', { fields: 1 })
     ).rejects.toMatchObject({ code: "JSON_FIELDS_EXCEEDED" });
     await expect(
+      extractJsonProperties('{"items":[1,2]}', { fields: 2 })
+    ).rejects.toMatchObject({ code: "JSON_FIELDS_EXCEEDED" });
+    await expect(
       extractJsonProperties('{"value":"long"}', { stringBytes: 3 })
     ).rejects.toMatchObject({ code: "JSON_STRING_BYTES_EXCEEDED" });
     await expect(

@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import type { AssetFileDocument } from "@webstudio-is/sdk";
+import type {
+  AssetFileDocument,
+  BuilderAssetFieldCatalog,
+} from "@webstudio-is/sdk";
 import { executeAssetQuery } from "./structured-query";
 
 const document = ({
@@ -55,9 +58,46 @@ const documents = [
   }),
 ];
 
+const catalog: BuilderAssetFieldCatalog = {
+  format: "webstudio-builder-asset-field-catalog",
+  version: 1,
+  canonicalRevision: `sha256:${"0".repeat(64)}`,
+  documentCount: documents.length,
+  fields: {
+    "properties.title": { types: ["string"], occurrences: 3 },
+    "properties.publishedAt": { types: ["string"], occurrences: 3 },
+    "properties.draft": {
+      types: ["boolean"],
+      occurrences: 2,
+      optional: true,
+    },
+    "properties.tags": { types: ["array"], occurrences: 3 },
+  },
+};
+
 describe("structured asset query", () => {
+  test("rejects dynamic fields that are absent from the index catalog", async () => {
+    await expect(
+      executeAssetQuery({
+        catalog,
+        documents,
+        query: {
+          filters: [
+            {
+              field: ["properties", "missing"],
+              operator: "eq",
+              value: true,
+            },
+          ],
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toThrow("Asset field properties.missing was not found");
+  });
+
   test("filters dynamic fields, sorts, paginates, and returns public records", async () => {
     const result = await executeAssetQuery({
+      catalog,
       documents,
       query: {
         filters: [
@@ -104,6 +144,7 @@ describe("structured asset query", () => {
       "---\ntitle: Alpha\n---\n# Alpha body\n"
     );
     const result = await executeAssetQuery({
+      catalog,
       documents: [{ ...documents[0], size: bytes.byteLength }],
       query: {
         filters: [{ field: ["id"], operator: "eq", value: "alpha" }],
@@ -131,6 +172,7 @@ describe("structured asset query", () => {
 
   test("supports lexical date ranges and missing-field checks", async () => {
     const result = await executeAssetQuery({
+      catalog,
       documents,
       query: {
         filters: [

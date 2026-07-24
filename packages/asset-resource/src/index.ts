@@ -13,6 +13,7 @@ export * from "./hydration";
 export * from "./published-runtime";
 export * from "./structured-query";
 export * from "./asset-index";
+export * from "./request";
 
 export const createAssetResourceRequest = (
   request: AssetQueryRequestInput
