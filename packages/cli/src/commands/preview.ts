@@ -47,20 +47,12 @@ import { LOCAL_ASSETS_DIR } from "../asset-files";
 import packageJson from "../../package.json" with { type: "json" };
 import { createExclusiveAsyncRunner } from "../async-utils";
 
-export const previewDefaultTemplate = ["defaults", "react-router"] as const;
+export const previewDefaultTemplate = ["react-router"] as const;
 export const previewSources = projectPreviewSources;
 export type PreviewSource = ProjectPreviewSource;
 
 const getPreviewTemplates = (template: string[]) => {
-  const templates =
-    template.length === 0 ? [...previewDefaultTemplate] : [...template];
-  if (
-    templates.includes("react-router") &&
-    templates.includes("defaults") === false
-  ) {
-    templates.unshift("defaults");
-  }
-  return templates;
+  return template.length === 0 ? [...previewDefaultTemplate] : [...template];
 };
 
 export const previewOptions = (yargs: CommonYargsArgv) =>
