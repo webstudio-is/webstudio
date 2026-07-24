@@ -4,13 +4,16 @@ import {
   type BuilderAssetFieldCatalog,
 } from "@webstudio-is/sdk";
 import {
+  compareStrings,
+  serializeJsonDeterministically,
+  sha256,
+} from "@webstudio-is/project-store";
+import {
   createCanonicalAssetFileEntry,
   type CanonicalAssetFileEntry,
   type FieldContribution,
   type ObservedFieldType,
 } from "./canonical";
-import { compareStrings, serializeJsonDeterministically } from "./stable-json";
-import { sha256 } from "./sha256";
 
 export type AggregatedFieldType = {
   type: ObservedFieldType;

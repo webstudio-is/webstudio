@@ -1,3 +1,5 @@
+export type ContentHash = `sha256:${string}`;
+
 export const sha256Hex = async (value: string | Uint8Array) => {
   const bytes = new Uint8Array(
     typeof value === "string" ? new TextEncoder().encode(value) : value
@@ -8,5 +10,9 @@ export const sha256Hex = async (value: string | Uint8Array) => {
   ).join("");
 };
 
-export const sha256 = async (value: string | Uint8Array) =>
-  `sha256:${await sha256Hex(value)}`;
+export const sha256 = async (
+  value: string | Uint8Array
+): Promise<ContentHash> => `sha256:${await sha256Hex(value)}`;
+
+export const isContentHash = (value: unknown): value is ContentHash =>
+  typeof value === "string" && /^sha256:[a-f0-9]{64}$/.test(value);
