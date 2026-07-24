@@ -139,7 +139,7 @@ test("captures a project route through a temporary production preview", async ()
 
   expect(preparePreviewProject).toHaveBeenCalledWith({
     assets: true,
-    template: ["defaults", "react-router"],
+    template: ["react-router"],
     generate: true,
     silent: true,
   });
