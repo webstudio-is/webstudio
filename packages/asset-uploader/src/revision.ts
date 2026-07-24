@@ -15,6 +15,7 @@ import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
+import { synchronizeCanonicalMetadataAfterAssetChange } from "./canonical-metadata-maintenance";
 
 export class AssetRevisionConflictError extends Error {}
 
@@ -181,6 +182,7 @@ export const updateAssetContent = async (
       context.postgrest.client
     );
   } catch (error) {
+    let swapCommitted = false;
     try {
       const current = await loadAsset({
         assetId,
@@ -188,19 +190,34 @@ export const updateAssetContent = async (
         client: context.postgrest.client,
       });
       if (current.name === revisionName) {
-        return revision;
+        swapCommitted = true;
+      } else {
+        const discardedRevision = await context.postgrest.client
+          .from("File")
+          .update({ isDeleted: true })
+          .eq("name", revisionName);
+        assertPostgrestSuccess(discardedRevision);
       }
-      const discardedRevision = await context.postgrest.client
-        .from("File")
-        .update({ isDeleted: true })
-        .eq("name", revisionName);
-      assertPostgrestSuccess(discardedRevision);
     } catch (cleanupError) {
       console.error("Unable to discard an asset revision", cleanupError);
     }
-    throw error;
+    if (swapCommitted === false) {
+      throw error;
+    }
   }
 
+  try {
+    await synchronizeCanonicalMetadataAfterAssetChange({
+      client: context.postgrest.client,
+      assetClient,
+      projectId,
+      assetId,
+    });
+  } catch (error) {
+    // The immutable revision swap has already committed. Keep the primary
+    // mutation successful; preview or publication can repair the metadata.
+    console.error("Asset revision metadata synchronization failed", error);
+  }
   return revision;
 };
 

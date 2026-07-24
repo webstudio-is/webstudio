@@ -12,15 +12,16 @@ import {
   type Asset,
 } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-import type { AssetClient } from "./client";
+import type { AssetClient, AssetUploadClient } from "./client";
 import type { AssetDataOverride } from "./utils/get-asset-data";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
+import { synchronizeCanonicalMetadataAfterAssetChange } from "./canonical-metadata-maintenance";
 
-type UploadData = {
+export type CreateUploadTicketInput = {
   projectId: string;
   type: string;
   filename: string;
@@ -153,7 +154,7 @@ const findContentHashUploadTicket = async ({
   data,
   context,
 }: {
-  data: UploadData & { contentHash: string };
+  data: CreateUploadTicketInput & { contentHash: string };
   context: AppContext;
 }): Promise<UploadTicket | undefined> => {
   const {
@@ -279,7 +280,7 @@ const cleanupUploadError = async (
 };
 
 export const createUploadTicket = async (
-  data: UploadData,
+  data: CreateUploadTicketInput,
   context: AppContext,
   createId: () => Asset["id"] = nanoid
 ): Promise<UploadTicket> => {
@@ -382,7 +383,7 @@ export const createUploadTicket = async (
 export const uploadFileData = async (
   name: string,
   data: ReadableStream<Uint8Array>,
-  client: AssetClient,
+  client: AssetUploadClient,
   context: AppContext,
   assetInfoFallback:
     | { width: number; height: number; format: string }
@@ -492,7 +493,7 @@ export const getUploadedAsset = async ({
 export const uploadFile = async (
   name: string,
   data: ReadableStream<Uint8Array>,
-  client: AssetClient,
+  client: AssetUploadClient,
   context: AppContext,
   assetInfoFallback:
     | { width: number; height: number; format: string }
@@ -514,12 +515,28 @@ export const uploadFile = async (
     if (typeof projectId !== "string") {
       throw Error("File uploader project is missing");
     }
-    return await getUploadedAsset({
+    const asset = await getUploadedAsset({
       name,
       projectId,
       context,
       file,
     });
+    const readableClient = client as Partial<AssetClient>;
+    if (readableClient.readFile !== undefined) {
+      try {
+        await synchronizeCanonicalMetadataAfterAssetChange({
+          client: context.postgrest.client,
+          assetClient: readableClient as AssetClient,
+          projectId,
+          assetId: asset.id,
+        });
+      } catch (error) {
+        // The upload has committed. Derived metadata is repaired
+        // by the next preview or publication if this best-effort update fails.
+        console.error("Asset metadata synchronization failed", error);
+      }
+    }
+    return asset;
   } catch (error) {
     await cleanupUploadError(name, context, onUploadError);
     throw error;

@@ -74,6 +74,81 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("exposes query validation and persisted asset query reads to API clients", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(assetUploader, "previewAssetResourceQuery").mockResolvedValue({
+      items: [{ id: "post" }],
+      totalCount: 1,
+      hasMore: false,
+    } as never);
+    vi.spyOn(assetUploader, "loadBuilderAssetFieldCatalog").mockResolvedValue({
+      format: "webstudio-builder-asset-field-catalog",
+      version: 1,
+      canonicalRevision: `sha256:${"a".repeat(64)}`,
+      documentCount: 1,
+      fields: {
+        "properties.slug": {
+          types: ["string"],
+          occurrences: 1,
+          queryPath: ["properties", "slug"],
+        },
+      },
+    });
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.assetQueries.validate({
+        projectId: "project-1",
+        query: {
+          filters: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "post",
+            },
+          ],
+          limit: 1,
+        },
+      })
+    ).resolves.toMatchObject({
+      valid: true,
+      referencedFieldPaths: expect.arrayContaining([["properties", "slug"]]),
+      filterCount: 1,
+    });
+    await expect(
+      caller.assetQueries.validate({
+        projectId: "project-1",
+        query: {
+          filters: [
+            {
+              field: ["properties", "missing"],
+              operator: "exists",
+              value: true,
+            },
+          ],
+        },
+      })
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      cause: { webstudioCode: "INVALID_REQUEST" },
+    });
+    await expect(
+      caller.assetQueries.preview({
+        projectId: "project-1",
+        query: { limit: 10 },
+      })
+    ).resolves.toMatchObject({
+      items: [{ id: "post" }],
+      totalCount: 1,
+    });
+    await expect(
+      caller.assetQueries.fieldCatalog({ projectId: "project-1" })
+    ).resolves.toMatchObject({
+      fields: { "properties.slug": { types: ["string"] } },
+    });
+  });
+
   test("allows CLI clients to refresh pages without project settings", async () => {
     const build = {
       id: "build-1",
@@ -660,7 +735,8 @@ describe("api router permits", () => {
         projectId: "project-1",
         clientVersion: 3,
       }),
-      expect.anything()
+      expect.anything(),
+      expect.any(Function)
     );
   });
 

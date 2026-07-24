@@ -1,0 +1,66 @@
+{
+  "name": "@webstudio-is/asset-resource",
+  "version": "0.0.0-webstudio-version",
+  "description": "Queryable Webstudio asset metadata and content runtime",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
+    "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
+    "build": "rm -rf lib && esbuild src/index.ts src/published-runtime.ts src/markdown.ts src/json.ts src/indexing.ts src/structured-query.ts src/asset-index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@webstudio-is/project-store": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "remark-parse": "10.0.2",
+    "unified": "10.1.2",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "esbuild": "^0.25.3",
+    "vitest": "^3.1.2"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./src/index.ts"
+    },
+    "./runtime": {
+      "webstudio": "./src/published-runtime.ts",
+      "types": "./lib/types/published-runtime.d.ts",
+      "import": "./lib/published-runtime.js",
+      "default": "./src/published-runtime.ts"
+    },
+    "./markdown": {
+      "webstudio": "./src/markdown.ts",
+      "types": "./lib/types/markdown.d.ts",
+      "import": "./lib/markdown.js",
+      "default": "./src/markdown.ts"
+    },
+    "./json": {
+      "webstudio": "./src/json.ts",
+      "types": "./lib/types/json.d.ts",
+      "import": "./lib/json.js",
+      "default": "./src/json.ts"
+    },
+    "./indexing": {
+      "webstudio": "./src/indexing.ts",
+      "types": "./lib/types/indexing.d.ts",
+      "import": "./lib/indexing.js",
+      "default": "./src/indexing.ts"
+    }
+  },
+  "files": [
+    "lib/**/*",
+    "!*.test.*"
+  ]
+}

@@ -106,6 +106,19 @@ const requiredInputOption = (yargs: CommonYargsArgv, describe: string) =>
     demandOption: true,
   });
 
+export const inputCommandOptions = (yargs: CommonYargsArgv) =>
+  requiredInputOption(
+    apiCommandOptions(yargs),
+    "Required JSON file containing the command input."
+  );
+
+export const assetResourceCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("resource", {
+    type: "string",
+    describe: "Required Assets resource id",
+    demandOption: true,
+  });
+
 const confirmOption = (yargs: CommonYargsArgv, describe: string) =>
   yargs.option("confirm", {
     type: "boolean",
@@ -2864,6 +2877,27 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "get-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "get-assets-resource",
+      { resourceId: requireOption(options.resource, "--resource") },
+      connection,
+      dependencies
+    ),
+  "create-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "create-assets-resource",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
+  "update-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "update-assets-resource",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
   "create-resource": async (options, connection, dependencies) => {
     const input = {
       resource: (await getResourceFields(

@@ -1,4 +1,6 @@
 import {
+  asset,
+  assetFolder,
   breakpoint,
   dataSource,
   deployment,
@@ -65,7 +67,7 @@ const serializedBuildShape = {
 export const serializedBuild: z.ZodObject<typeof serializedBuildShape> =
   z.object(serializedBuildShape);
 
-const serializedBuilderState = serializedBuild
+export const serializedBuilderState = serializedBuild
   .omit({
     id: true,
     projectId: true,
@@ -74,8 +76,14 @@ const serializedBuilderState = serializedBuild
     updatedAt: true,
     deployment: true,
   })
-  .partial();
+  .partial()
+  .extend({
+    assets: z.array(entry(asset)).optional(),
+    assetFolders: z.array(entry(assetFolder)).optional(),
+  });
 
-export const serializedRestorePointState = serializedBuilderState.extend({
-  marketplaceProduct: marketplaceProduct.nullable().optional(),
-});
+export const serializedRestorePointState = serializedBuilderState
+  .omit({ assets: true })
+  .extend({
+    marketplaceProduct: marketplaceProduct.nullable().optional(),
+  });

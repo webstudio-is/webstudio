@@ -67,6 +67,37 @@ test("generate resources loader", () => {
   `);
 });
 
+test("generates a configured Assets request on the standard endpoint", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "postsVariable",
+        scopeInstanceId: "body",
+        type: "resource",
+        name: "Posts",
+        resourceId: "postsResource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "postsResource",
+        name: "Posts",
+        control: "system" as const,
+        url: '"/$resources/assets"',
+        method: "post" as const,
+        headers: [],
+        body: "{ query: { filters: [], limit: 20, offset: 0 } }",
+      },
+    ]),
+    props: new Map(),
+  });
+
+  expect(generated).toContain('url: "/$resources/assets"');
+  expect(generated).not.toContain('resourceId: "postsResource"');
+});
+
 test("generate variable and use in resources loader", () => {
   expect(
     generateResources({

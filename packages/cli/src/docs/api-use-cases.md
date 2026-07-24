@@ -714,6 +714,30 @@ Commands:
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}
 
+## Query Markdown assets
+
+Commands:
+
+- MCP tool: get-asset-field-catalog {}
+- MCP tool: validate-asset-query {"query":{"filters":[{"field":["extension"],"operator":"eq","value":"md"},{"field":["properties","draft"],"operator":"ne","value":true}],"limit":20}}
+- MCP tool: create-assets-resource {"name":"All assets","scopeInstanceId":"<instanceId>","dataSourceName":"assets"}
+- MCP tool: create-assets-resource {"name":"Published posts","scopeInstanceId":"<instanceId>","dataSourceName":"posts","query":{"filters":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","draft"],"operator":"ne","value":{"type":"literal","value":true}}],"sort":[{"field":["properties","publishedAt"],"direction":"desc"}],"limit":{"type":"literal","value":20}}}
+- MCP tool: create-assets-resource {"name":"Post by slug","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"filters":[{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"}],"limit":{"type":"literal","value":1},"content":{"mode":"markdown-body","maxBytes":1048576}}}
+- MCP tool: list-assets-resources {}
+- MCP tool: get-assets-resource {"resourceId":"<resourceId>"}
+- MCP tool: update-assets-resource {"resourceId":"<resourceId>","values":{"query":null}}
+- MCP tool: preview-asset-query {"query":{"filters":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}],"limit":1,"content":{"mode":"markdown-body","maxBytes":1048576}}}
+
+Notes:
+
+- Read the field catalog before authoring unfamiliar queries. It includes dynamic schema-less frontmatter paths such as `properties.author.name`, observed types, optionality, and mixed-type state without downloading Markdown files.
+- Filter values, limit, and offset on a saved resource may be Webstudio expressions evaluated at render time. Preview queries use concrete JSON values.
+- Use `content.mode:"none"` for listings. Request `markdown-body`, `full`, or a bounded `range` only after filtering to the intended files, normally with `limit:1` for a slug detail route.
+- Read queried results from the scoped resource wrapper at `<dataSourceName>.data.items`. Bind a listing Collection to `posts.data.items` and a detail view to `post.data.items[0]`. On each item, indexed file fields such as `id`, `name`, and `extension` are top-level; Markdown frontmatter and JSON fields are under `properties`; the derived `excerpt` is top-level; and requested Markdown is at `content.text`.
+- Assets remains one resource type. Omit `query` for the fetch-all request and response; provide a structured query to enable filtering, sorting, pagination, or selected-file content. Set `values.query:null` to return to fetch-all mode.
+- `create-assets-resource` and `update-assets-resource` are the semantic authoring path. Do not construct the internal query URL, headers, or body expression manually.
+- The shared metadata index is maintained automatically and is emitted only when a configured Assets resource is reachable.
+
 ## Delete resource
 
 Commands:

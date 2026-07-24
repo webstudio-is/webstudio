@@ -23,6 +23,9 @@ builder_backend_migrations_fingerprint() {
         -mindepth 1 -maxdepth 1 -type d -print
       find packages/prisma-client/prisma/migrations \
         -type f \( -name migration.sql -o -name migration.ts \) -print
+      printf '%s\n' \
+        apps/builder/dev/backend.sh \
+        apps/builder/e2e/postgres-init.sh
     } | LC_ALL=C sort | while IFS= read -r path; do
       if [ -f "$path" ]; then
         printf '%s ' "$path"
@@ -61,7 +64,7 @@ builder_backend_wait_for_postgrest() {
   until {
     local status
     status="$(curl -s -o /dev/null -w "%{http_code}" "$url" || true)"
-    [ "$status" -ge 200 ] && [ "$status" -lt 500 ]
+    [ "$status" -ge 200 ] && [ "$status" -lt 300 ]
   }; do
     if [ "$(date +%s)" -ge "$timeout_at" ]; then
       echo "Timed out waiting for PostgREST" >&2
@@ -148,8 +151,10 @@ builder_backend_bootstrap_if_empty() {
 builder_backend_write_schema_snapshot() {
   mkdir -p "$(dirname "$SCHEMA_SNAPSHOT")"
   local temporary_snapshot="${SCHEMA_SNAPSHOT}.tmp.$$"
+  # The E2E image owns the Supabase-compatible extensions schema. Excluding it
+  # keeps a cached application schema restorable into every fresh E2E database.
   if builder_compose exec -T db \
-    sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema-only --no-owner --no-privileges' \
+    sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema-only --no-owner --no-privileges --exclude-schema=extensions' \
     >"$temporary_snapshot"; then
     mv "$temporary_snapshot" "$SCHEMA_SNAPSHOT"
   else

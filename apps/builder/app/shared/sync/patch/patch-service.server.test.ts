@@ -16,13 +16,62 @@ vi.mock("./patch-auth.server", () => ({
   createContentModeCapabilities,
   createWriterContext: vi.fn(),
 }));
-
 import {
   applyPatchRequest,
   loadAuthorizedPatchState,
 } from "./patch-service.server";
+import { synchronizeAssetResourcesAfterBuildPatch } from "../../synchronize-asset-resource-patch.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
+
+const synchronizeCanonicalAssets = vi.fn();
+const synchronizeCanonicalAsset = vi.fn();
+const synchronizeAllCanonicalAssetStandardMetadata = vi.fn();
+const synchronizeCanonicalAssetStandardMetadata = vi.fn();
+const createAssetClient = vi.fn(() => ({
+  readFile: vi.fn(async () => ({
+    data: {
+      async *[Symbol.asyncIterator]() {},
+    },
+  })),
+  uploadFile: vi.fn(async () => ({ format: "file", size: 0, meta: {} })),
+}));
+const synchronizationDependencies = {
+  synchronizeCanonicalAssets,
+  synchronizeCanonicalAsset,
+  synchronizeAllCanonicalAssetStandardMetadata,
+  synchronizeCanonicalAssetStandardMetadata,
+  createAssetClient,
+} satisfies Exclude<
+  Parameters<typeof synchronizeAssetResourcesAfterBuildPatch>[1],
+  undefined
+>;
+const patchDependencies = {
+  synchronizeAssetResourcesAfterBuildPatch: (
+    input: Parameters<typeof synchronizeAssetResourcesAfterBuildPatch>[0]
+  ) =>
+    synchronizeAssetResourcesAfterBuildPatch(
+      input,
+      synchronizationDependencies
+    ),
+};
+
+const applyPatchRequestForTest = (
+  context: AppContext,
+  patch: NormalizedPatchRequest
+) => applyPatchRequest(context, patch, patchDependencies);
+
+const configuredResources = JSON.stringify([
+  {
+    id: "posts",
+    name: "Posts",
+    control: "system",
+    method: "post",
+    url: JSON.stringify("/$resources/assets"),
+    headers: [],
+    body: '{ query: { filters: [], sort: [], limit: 20, offset: 0, content: { mode: "none" } } }',
+  },
+]);
 
 const buildRow = {
   projectId: "project-1",
@@ -34,6 +83,7 @@ const buildRow = {
   styleSourceSelections: JSON.stringify([]),
   styles: JSON.stringify([]),
   breakpoints: JSON.stringify([]),
+  resources: configuredResources,
 };
 
 const createContext = () => {
@@ -95,6 +145,269 @@ describe("applyPatchRequest", () => {
     patchLoadedBuild.mockReset();
     authorizePatchEntries.mockReset();
     createContentModeCapabilities.mockClear();
+    synchronizeCanonicalAssets.mockReset().mockResolvedValue({
+      scanned: 0,
+      indexed: 0,
+      metadataUpdated: 0,
+      unchanged: 0,
+      removed: 0,
+      skipped: 0,
+      inconsistent: 0,
+    });
+    synchronizeCanonicalAsset.mockReset().mockResolvedValue({
+      status: "indexed",
+      revision: "revision-1",
+    });
+    synchronizeAllCanonicalAssetStandardMetadata
+      .mockReset()
+      .mockResolvedValue(0);
+    createAssetClient.mockClear();
+  });
+
+  test("synchronizes a changed asset once in a combined patch", async () => {
+    const combinedEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-combined",
+        payload: [
+          { namespace: "resources", patches: [] },
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "add",
+                path: ["asset-1"],
+                value: { id: "asset-1", name: "post.md" },
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: combinedEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    const nextResources = JSON.stringify([
+      {
+        id: "posts",
+        name: "Posts",
+        control: "system",
+        method: "post",
+        url: JSON.stringify("/$resources/assets"),
+        headers: [],
+        body: '{ query: { filters: [], sort: [], limit: 10, offset: 0, content: { mode: "none" } } }',
+      },
+    ]);
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4, resources: nextResources },
+    }));
+    await applyPatchRequestForTest(createContext(), {
+      ...patch,
+      entries: [combinedEntry],
+    });
+
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledTimes(1);
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ assetId: "asset-1" })
+    );
+    expect(synchronizeAllCanonicalAssetStandardMetadata).not.toHaveBeenCalled();
+  });
+
+  test("maintains canonical paths after asset-folder patches", async () => {
+    const folderEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-folder",
+        payload: [
+          {
+            namespace: "assetFolders",
+            patches: [
+              { op: "replace", path: ["folder-1", "name"], value: "News" },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: folderEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await expect(
+      applyPatchRequestForTest(createContext(), {
+        ...patch,
+        entries: [folderEntry],
+      })
+    ).resolves.toMatchObject({ status: "ok" });
+    expect(synchronizeAllCanonicalAssetStandardMetadata).toHaveBeenCalledWith({
+      client: expect.anything(),
+      projectId: "project-1",
+    });
+  });
+
+  test("indexes added assets", async () => {
+    const assetEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-asset-add",
+        payload: [
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "add",
+                path: ["asset-1"],
+                value: { id: "asset-1", name: "post.md" },
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await expect(
+      applyPatchRequestForTest(createContext(), {
+        ...patch,
+        entries: [assetEntry],
+      })
+    ).resolves.toMatchObject({ status: "ok" });
+
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledWith({
+      client: expect.anything(),
+      assetClient: createAssetClient.mock.results[0]?.value,
+      projectId: "project-1",
+      assetId: "asset-1",
+    });
+  });
+
+  test("reparses a swapped asset revision", async () => {
+    const assetEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-asset-revision",
+        payload: [
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "replace",
+                path: ["asset-1", "name"],
+                value: "post-revision.md",
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await applyPatchRequestForTest(createContext(), {
+      ...patch,
+      entries: [assetEntry],
+    });
+
+    expect(synchronizeCanonicalAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ assetId: "asset-1" })
+    );
+  });
+
+  test("does not reparse files after standard asset metadata changes", async () => {
+    const assetEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-asset-filename",
+        payload: [
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "replace",
+                path: ["asset-1", "filename"],
+                value: "Public post title.md",
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await applyPatchRequestForTest(createContext(), {
+      ...patch,
+      entries: [assetEntry],
+    });
+
+    expect(synchronizeCanonicalAsset).not.toHaveBeenCalled();
+  });
+
+  test("skips metadata maintenance for asset descriptions", async () => {
+    const assetEntry = {
+      ...patch.entries[0],
+      transaction: {
+        id: "tx-asset-description",
+        payload: [
+          {
+            namespace: "assets",
+            patches: [
+              {
+                op: "replace",
+                path: ["asset-1", "description"],
+                value: "Decorative description",
+              },
+            ],
+          },
+        ],
+      } as never,
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetEntry, context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+
+    await applyPatchRequestForTest(createContext(), {
+      ...patch,
+      entries: [assetEntry],
+    });
+
+    expect(synchronizeCanonicalAsset).not.toHaveBeenCalled();
   });
 
   test("returns per-entry partial results while applying authorized entries", async () => {
@@ -115,7 +428,7 @@ describe("applyPatchRequest", () => {
 
     const context = createContext();
 
-    const result = await applyPatchRequest(context, patch);
+    const result = await applyPatchRequestForTest(context, patch);
 
     expect(createContentModeCapabilities).not.toHaveBeenCalled();
     expect(context.selectedColumns).toEqual([
@@ -166,7 +479,7 @@ describe("applyPatchRequest", () => {
     }));
     const context = createContext();
 
-    const result = await applyPatchRequest(context, patch);
+    const result = await applyPatchRequestForTest(context, patch);
 
     expect(createContentModeCapabilities).toHaveBeenCalledWith({
       breakpoints: JSON.stringify([]),
@@ -200,7 +513,7 @@ describe("applyPatchRequest", () => {
     });
     const context = createContext();
 
-    const result = await applyPatchRequest(context, patch);
+    const result = await applyPatchRequestForTest(context, patch);
 
     expect(context.selectedColumns).toEqual(["projectId, version"]);
     expect(patchLoadedBuild).not.toHaveBeenCalled();
@@ -240,7 +553,7 @@ describe("applyPatchRequest", () => {
     }));
     const context = createContext();
 
-    const result = await applyPatchRequest(context, assetsPatch);
+    const result = await applyPatchRequestForTest(context, assetsPatch);
 
     expect(context.selectedColumns).toEqual([
       "projectId, version",
@@ -282,7 +595,7 @@ describe("applyPatchRequest", () => {
       }))
       .mockResolvedValueOnce({ status: "error", errors: "entry failed" });
 
-    const result = await applyPatchRequest(createContext(), patch);
+    const result = await applyPatchRequestForTest(createContext(), patch);
 
     expect(result).toEqual({
       status: "partial",
@@ -319,7 +632,7 @@ describe("applyPatchRequest", () => {
         build: { ...build, version: 5 },
       }));
 
-    const result = await applyPatchRequest(createContext(), patch);
+    const result = await applyPatchRequestForTest(createContext(), patch);
 
     expect(patchLoadedBuild).toHaveBeenCalledTimes(2);
     expect(patchLoadedBuild).toHaveBeenNthCalledWith(
@@ -383,7 +696,10 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    const result = await applyPatchRequest(createContext(), duplicatePatch);
+    const result = await applyPatchRequestForTest(
+      createContext(),
+      duplicatePatch
+    );
 
     expect(result).toEqual({
       status: "partial",
@@ -418,9 +734,9 @@ describe("applyPatchRequest", () => {
       }))
       .mockRejectedValueOnce(new Error("PostgREST unavailable"));
 
-    await expect(applyPatchRequest(createContext(), patch)).rejects.toThrow(
-      "PostgREST unavailable"
-    );
+    await expect(
+      applyPatchRequestForTest(createContext(), patch)
+    ).rejects.toThrow("PostgREST unavailable");
   });
 });
 

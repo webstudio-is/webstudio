@@ -588,6 +588,62 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "list-assets-resources",
+    description:
+      "List Assets system resources, including legacy fetch-all mode and optional decoded query configuration.",
+    examples: [
+      "webstudio list-assets-resources --json",
+      "webstudio list-assets-resources --scope-instance body-id --json",
+    ],
+  },
+  {
+    command: "get-assets-resource",
+    description:
+      "Inspect one Assets system resource and whether it fetches all assets or uses optional query configuration.",
+    requiredOptions: ["resource", "json"],
+    examples: ["webstudio get-assets-resource --resource resource-id --json"],
+  },
+  {
+    command: "create-assets-resource",
+    description:
+      "Create a scoped Assets resource. Omit query to preserve legacy fetch-all behavior, or provide query configuration explicitly.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio create-assets-resource --input assets-resource.json --json",
+    ],
+  },
+  {
+    command: "update-assets-resource",
+    description:
+      "Update an Assets resource. Set query to null to restore legacy fetch-all behavior.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio update-assets-resource --input assets-resource-update.json --json",
+    ],
+  },
+  {
+    command: "validate-asset-query",
+    description:
+      "Validate a structured Assets query and return its referenced dynamic fields and bounded operation counts.",
+    examples: [
+      'webstudio validate-asset-query \'{"query":{"filters":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}],"limit":1}}\'',
+    ],
+  },
+  {
+    command: "preview-asset-query",
+    description:
+      "Run an authenticated structured Assets query against indexed metadata, optionally loading bounded file content.",
+    examples: [
+      "webstudio preview-asset-query --input asset-query-preview.json --json",
+    ],
+  },
+  {
+    command: "get-asset-field-catalog",
+    description:
+      "Get standard fields plus dynamic Markdown frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",
+    examples: ["webstudio get-asset-field-catalog --json"],
+  },
+  {
     command: "create-resource",
     description:
       "Create a resource. Add --scope-instance and --data-source-name only when the resource should be exposed as read data; for form/action resources, create it unscoped and bind a prop with bind-props.",

@@ -28,8 +28,15 @@ import {
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
 import {
+  AssetQueryExecutionError,
+  AssetResourceHydrationError,
+  validateAssetQueryAgainstCatalog,
+} from "@webstudio-is/asset-resource";
+import {
+  loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
+  previewAssetResourceQuery,
 } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
@@ -43,7 +50,11 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
+import {
+  assetQueryRequest,
+  type Asset,
+  type AssetFolder,
+} from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
@@ -72,6 +83,7 @@ import {
   executeApiRuntimeMutation,
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
+import { createAssetClient } from "../shared/asset-client";
 
 const assertApiPublishDomains = ({
   auth,
@@ -99,6 +111,24 @@ const assertApiPublishDomains = ({
 };
 
 const projectIdInput = z.object({ projectId: z.string() });
+
+const assetQueryInput = projectIdInput.extend(assetQueryRequest.shape);
+const assetQueryValidationInput = projectIdInput.extend({
+  query: assetQueryRequest.shape.query,
+});
+const throwAssetQueryApiError = (error: unknown): never => {
+  if (error instanceof AssetQueryExecutionError) {
+    return throwApiError("BAD_REQUEST", error.message, {
+      webstudioCode: "INVALID_REQUEST",
+    });
+  }
+  if (error instanceof AssetResourceHydrationError) {
+    return throwApiError("BAD_REQUEST", error.message, {
+      webstudioCode: error.code,
+    });
+  }
+  throw error;
+};
 
 const paginatedProjectInput = projectIdInput.extend(
   paginatedOutputInputSchema.shape
@@ -690,6 +720,73 @@ export const apiRouter = router({
   }),
 
   ...runtimeOperationRouters,
+
+  assetQueries: router({
+    validate: projectQuery(
+      assetQueryValidationInput,
+      "view",
+      async ({ ctx, input }) => {
+        try {
+          const catalog = await loadBuilderAssetFieldCatalog({
+            projectId: input.projectId,
+            context: ctx,
+            assetClient: createAssetClient(),
+          });
+          const validated = validateAssetQueryAgainstCatalog({
+            query: input.query,
+            catalog,
+          });
+          return {
+            valid: true as const,
+            referencedFieldPaths: validated.referencedFieldPaths,
+            filterCount: validated.query.filters.length,
+            sortCount: validated.query.sort.length,
+          };
+        } catch (error) {
+          return throwAssetQueryApiError(error);
+        }
+      },
+      {
+        command: "validate-asset-query",
+        client: "validateAssetQuery",
+      }
+    ),
+    preview: projectQuery(
+      assetQueryInput,
+      "view",
+      async ({ ctx, input }) => {
+        try {
+          const { projectId, ...request } = input;
+          return await previewAssetResourceQuery({
+            projectId,
+            request,
+            context: ctx,
+            assetClient: createAssetClient(),
+          });
+        } catch (error) {
+          return throwAssetQueryApiError(error);
+        }
+      },
+      {
+        command: "preview-asset-query",
+        client: "previewAssetQuery",
+      }
+    ),
+    fieldCatalog: projectQuery(
+      projectIdInput,
+      "view",
+      async ({ ctx, input }) =>
+        await loadBuilderAssetFieldCatalog({
+          projectId: input.projectId,
+          context: ctx,
+          assetClient: createAssetClient(),
+        }),
+      {
+        command: "get-asset-field-catalog",
+        client: "getAssetFieldCatalog",
+      }
+    ),
+  }),
 
   publish: router({
     list: projectQuery(

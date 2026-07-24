@@ -45,6 +45,7 @@ import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 import { assets } from "__ASSETS__";
 import { authRoutes } from "__AUTH__";
+import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
 
 const authenticateProductionRequest = (request: Request) => {
   const host =
@@ -122,9 +123,16 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     pathname: url.pathname,
   };
 
+  const generatedFetch = await createGeneratedAssetResourceFetch({
+    request: arg.request,
+    context: arg.context,
+    fallback: customFetch,
+  });
   const resources = await loadResources(
-    customFetch,
-    getResources({ system }).data
+    generatedFetch,
+    getResources({ system }).data,
+    url,
+    { signal: arg.request.signal }
   );
   const pageMeta = getPageMeta({ system, resources });
 

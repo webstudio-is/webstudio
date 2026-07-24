@@ -4,18 +4,15 @@
 
 import path from "node:path";
 import fs from "node:fs";
-import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { x } from "tinyexec";
 import { createPrisma } from "../src/prisma";
 import { UserError } from "./errors";
 import { PrismaClient } from "../src/__generated__";
+import { migrationsDir, prismaDir } from "./prisma-paths";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export const prismaDir = path.resolve(__dirname, "..", "prisma");
-export const schemaFilePath = path.join(prismaDir, "schema.prisma");
-export const migrationsDir = path.join(prismaDir, "migrations");
+export { cliDiff, cliExecute } from "./prisma-command";
+export { migrationsDir, prismaDir, schemaFilePath } from "./prisma-paths";
 
 let prisma_: PrismaClient | undefined;
 
@@ -248,35 +245,6 @@ export const generateMigrationName = (baseName: string) => {
   return `${prefix}_${baseName}`.slice(0, 254);
 };
 
-// https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-diff
-export const cliDiff = async () => {
-  const { stdout } = await x(
-    "prisma",
-    [
-      "migrate",
-      "diff",
-      `--from-schema-datasource=${schemaFilePath}`,
-      `--to-schema-datamodel=${schemaFilePath}`,
-      "--script",
-    ],
-    {
-      nodeOptions: { cwd: prismaDir },
-    }
-  );
-  return stdout;
-};
-
-// https://www.prisma.io/docs/reference/api-reference/command-reference#db-execute
-export const cliExecute = async (filePath: string) => {
-  await x(
-    "prisma",
-    ["db", "execute", `--file=${filePath}`, `--schema=${schemaFilePath}`],
-    {
-      nodeOptions: { cwd: prismaDir },
-    }
-  );
-};
-
 export const generateMigrationClient = async (migrationName: string) => {
   const migrationDir = path.join(migrationsDir, migrationName);
 
@@ -300,5 +268,6 @@ export const generateMigrationClient = async (migrationName: string) => {
   // https://www.prisma.io/docs/reference/api-reference/command-reference#generate
   await x("prisma", ["generate", `--schema=${schemaPath}`], {
     nodeOptions: { cwd: prismaDir },
+    throwOnError: true,
   });
 };

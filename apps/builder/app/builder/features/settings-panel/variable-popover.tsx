@@ -282,7 +282,7 @@ const TypeField = ({
 };
 
 type PanelApi = {
-  save: (formData: FormData) => void;
+  save: (formData: FormData) => void | false;
 };
 
 const ParameterForm = forwardRef<
@@ -916,10 +916,10 @@ const VariablePopoverContent = ({
                 nameElement.checkValidity()
               ) {
                 const formData = new FormData(event.currentTarget);
-                panelRef.current?.save(formData);
+                const saved = panelRef.current?.save(formData);
                 // close popover whenever new variable is created
                 // to prevent creating duplicated variable
-                if (variable === undefined) {
+                if (variable === undefined && saved !== false) {
                   onClose();
                 }
               }

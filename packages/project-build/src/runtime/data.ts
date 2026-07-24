@@ -31,6 +31,7 @@ import {
 import { z } from "zod";
 import { produceWithPatches } from "immer";
 import {
+  assetsResourceUrl,
   createJsonStringifyProxy,
   isLocalResource,
   isPlainObject,
@@ -701,6 +702,22 @@ const traverseExpressions = ({
   ) => void | string;
 }) => {
   const pagesList = pages ? getAllPages(pages) : [];
+  const updateExpression = ({
+    expression,
+    instanceId,
+    args,
+    set,
+  }: {
+    expression: string;
+    instanceId: Instance["id"];
+    args?: string[];
+    set: (nextExpression: string) => void;
+  }) => {
+    const nextExpression = update(expression, instanceId, args);
+    if (nextExpression !== undefined) {
+      set(nextExpression);
+    }
+  };
 
   let instanceIds =
     startingInstanceId === undefined
@@ -722,37 +739,60 @@ const traverseExpressions = ({
       startingInstanceId === ROOT_INSTANCE_ID
     ) {
       const { rootInstanceId } = page;
-      page.title = update(page.title, rootInstanceId) ?? page.title;
+      updateExpression({
+        expression: page.title,
+        instanceId: rootInstanceId,
+        set: (expression) => (page.title = expression),
+      });
       if (page.meta.description) {
-        page.meta.description =
-          update(page.meta.description, rootInstanceId) ??
-          page.meta.description;
+        updateExpression({
+          expression: page.meta.description,
+          instanceId: rootInstanceId,
+          set: (expression) => (page.meta.description = expression),
+        });
       }
       if (page.meta.excludePageFromSearch) {
-        page.meta.excludePageFromSearch =
-          update(page.meta.excludePageFromSearch, rootInstanceId) ??
-          page.meta.excludePageFromSearch;
+        updateExpression({
+          expression: page.meta.excludePageFromSearch,
+          instanceId: rootInstanceId,
+          set: (expression) => (page.meta.excludePageFromSearch = expression),
+        });
       }
       if (page.meta.socialImageUrl) {
-        page.meta.socialImageUrl =
-          update(page.meta.socialImageUrl, rootInstanceId) ??
-          page.meta.socialImageUrl;
+        updateExpression({
+          expression: page.meta.socialImageUrl,
+          instanceId: rootInstanceId,
+          set: (expression) => (page.meta.socialImageUrl = expression),
+        });
       }
       if (page.meta.language) {
-        page.meta.language =
-          update(page.meta.language, rootInstanceId) ?? page.meta.language;
+        updateExpression({
+          expression: page.meta.language,
+          instanceId: rootInstanceId,
+          set: (expression) => (page.meta.language = expression),
+        });
       }
       if (page.meta.status) {
-        page.meta.status =
-          update(page.meta.status, rootInstanceId) ?? page.meta.status;
+        updateExpression({
+          expression: page.meta.status,
+          instanceId: rootInstanceId,
+          set: (expression) => (page.meta.status = expression),
+        });
       }
       if (page.meta.redirect) {
-        page.meta.redirect =
-          update(page.meta.redirect, rootInstanceId) ?? page.meta.redirect;
+        updateExpression({
+          expression: page.meta.redirect,
+          instanceId: rootInstanceId,
+          set: (expression) => (page.meta.redirect = expression),
+        });
       }
       if (page.meta.custom) {
         for (const item of page.meta.custom) {
-          item.content = update(item.content, rootInstanceId) ?? item.content;
+          updateExpression({
+            expression: item.content,
+            instanceId: rootInstanceId,
+            set: (expression) => (item.content = expression),
+          });
         }
       }
     }
@@ -765,7 +805,11 @@ const traverseExpressions = ({
     }
     for (const child of instance.children) {
       if (child.type === "expression") {
-        child.value = update(child.value, instance.id) ?? child.value;
+        updateExpression({
+          expression: child.value,
+          instanceId: instance.id,
+          set: (expression) => (child.value = expression),
+        });
       }
     }
   }
@@ -775,13 +819,21 @@ const traverseExpressions = ({
       continue;
     }
     if (prop.type === "expression") {
-      prop.value = update(prop.value, prop.instanceId) ?? prop.value;
+      updateExpression({
+        expression: prop.value,
+        instanceId: prop.instanceId,
+        set: (expression) => (prop.value = expression),
+      });
       continue;
     }
     if (prop.type === "action") {
       for (const action of prop.value) {
-        action.code =
-          update(action.code, prop.instanceId, action.args) ?? action.code;
+        updateExpression({
+          expression: action.code,
+          instanceId: prop.instanceId,
+          args: action.args,
+          set: (expression) => (action.code = expression),
+        });
       }
       continue;
     }
@@ -803,18 +855,33 @@ const traverseExpressions = ({
     if (instanceId === undefined) {
       continue;
     }
-    resource.url = update(resource.url, instanceId) ?? resource.url;
+    updateExpression({
+      expression: resource.url,
+      instanceId,
+      set: (expression) => (resource.url = expression),
+    });
     for (const header of resource.headers) {
-      header.value = update(header.value, instanceId) ?? header.value;
+      updateExpression({
+        expression: header.value,
+        instanceId,
+        set: (expression) => (header.value = expression),
+      });
     }
     if (resource.searchParams) {
       for (const searchParam of resource.searchParams) {
-        searchParam.value =
-          update(searchParam.value, instanceId) ?? searchParam.value;
+        updateExpression({
+          expression: searchParam.value,
+          instanceId,
+          set: (expression) => (searchParam.value = expression),
+        });
       }
     }
     if (resource.body) {
-      resource.body = update(resource.body, instanceId) ?? resource.body;
+      updateExpression({
+        expression: resource.body,
+        instanceId,
+        set: (expression) => (resource.body = expression),
+      });
     }
   }
 };
@@ -1571,7 +1638,7 @@ const normalizeResourceUrlInput = (value: string) => {
   return value;
 };
 
-const resourceExpressionInput = z
+export const resourceExpressionInput = z
   .union([
     z.string(),
     z.object({ type: z.literal("literal"), value: z.string() }),
@@ -1928,7 +1995,7 @@ const getResourceWarnings = ({
 }: {
   fields: Pick<
     Resource,
-    "method" | "url" | "body" | "headers" | "searchParams"
+    "control" | "method" | "url" | "body" | "headers" | "searchParams"
   >;
   state: Pick<BuilderState, "instances" | "dataSources">;
   scopeInstanceId?: string;
@@ -1957,7 +2024,12 @@ const getResourceWarnings = ({
         resourceId,
       })
   );
-  if (exposeAsDataSource && fields.method !== "get") {
+  const isRenderTimeRead =
+    fields.method === "get" ||
+    (fields.control === "system" &&
+      fields.method === "post" &&
+      getStaticStringLiteral(fields.url) === assetsResourceUrl);
+  if (exposeAsDataSource && isRenderTimeRead === false) {
     warnings.push({
       severity: "warning",
       code: "render_time_mutation_resource",
@@ -2603,8 +2675,10 @@ export const updateResource = (
     | "styles"
   >,
   input: z.infer<typeof resourceUpdateInput>,
-  context: BuilderRuntimeContext
+  context: BuilderRuntimeContext,
+  options?: { clearBody?: boolean }
 ) => {
+  const clearBody = options?.clearBody === true;
   const values = normalizeResourceFieldsUpdateInput(input.values);
   validateResourceFields(values, ["values"]);
   const build = getRequiredBuildData(state);
@@ -2613,6 +2687,7 @@ export const updateResource = (
     return throwBuilderRuntimeError("NOT_FOUND", "Resource not found");
   }
   if (
+    clearBody === false &&
     Object.values(values).every((value) => value === undefined) &&
     input.dataSourceName === undefined &&
     input.scopeInstanceId === undefined &&
@@ -2627,6 +2702,7 @@ export const updateResource = (
   const nextResource = createResourceValue({
     ...resource,
     ...values,
+    ...(clearBody ? { body: undefined } : {}),
   });
   const dataSource = build.dataSources.find(
     (dataSource) =>
@@ -2931,7 +3007,10 @@ export const upsertResourceProp = (
 };
 
 export const deleteResource = (
-  state: Pick<BuilderState, "dataSources" | "resources" | "props">,
+  state: Pick<
+    BuilderState,
+    "pages" | "instances" | "dataSources" | "resources" | "props"
+  >,
   input: z.infer<typeof resourceDeleteInput>
 ) => {
   const resource = findResource(
@@ -2941,9 +3020,42 @@ export const deleteResource = (
   if (resource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Resource not found");
   }
+  if (state.pages === undefined || state.instances === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Pages or instances namespace is missing"
+    );
+  }
+  const dataSources = getRequiredDataSources(state);
+  const resourceDataSourceIds = new Set(
+    Array.from(dataSources.values())
+      .filter(
+        (dataSource) =>
+          dataSource.type === "resource" &&
+          dataSource.resourceId === resource.id
+      )
+      .map((dataSource) => dataSource.id)
+  );
+  const usedDataSources = findUsedVariables({
+    startingInstanceId: ROOT_INSTANCE_ID,
+    pages: state.pages,
+    instances: state.instances,
+    props: getRequiredProps(state),
+    dataSources,
+    resources: getRequiredResources(state),
+  });
+  const referencedDataSourceIds = Array.from(resourceDataSourceIds).filter(
+    (dataSourceId) => usedDataSources.has(dataSourceId)
+  );
+  if (referencedDataSourceIds.length > 0) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      `Resource data is referenced by expressions through ${referencedDataSourceIds.map((id) => JSON.stringify(id)).join(", ")}. Rebind or remove those expressions before deleting the resource.`
+    );
+  }
   const resultPayload = createResourceDeletePayload({
     resource,
-    dataSources: getRequiredDataSources(state).values(),
+    dataSources: dataSources.values(),
     props: getRequiredProps(state).values(),
     force: input.force,
   });

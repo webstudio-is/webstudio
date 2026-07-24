@@ -1137,6 +1137,41 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("documents the queried Assets result shape in focused tools", () => {
+    const contracts = runtimeOperationContracts.filter(({ id }) =>
+      ["assetsResources.create", "assetsResources.update"].includes(id)
+    );
+    const tools = listProjectSessionMcpTools(
+      contracts.map((contract) =>
+        publicOperation({
+          command: contract.command,
+          id: contract.id,
+          method: "mutation",
+          permit: "build",
+          description: contract.command,
+          inputSchema: contract.inputSchema,
+          readNamespaces: contract.readNamespaces,
+          writeNamespaces: contract.writeNamespaces,
+          invalidatesNamespaces: contract.invalidatesNamespaces,
+          retryOnConflict: contract.retryOnConflict,
+        })
+      )
+    );
+
+    const assetsResourceTools = tools.filter(({ name }) =>
+      ["create-assets-resource", "update-assets-resource"].includes(name)
+    );
+    expect(assetsResourceTools).toHaveLength(2);
+
+    for (const tool of assetsResourceTools) {
+      expect(tool.description).toContain("<dataSourceName>.data.items");
+      expect(tool.description).toContain(".properties");
+      expect(tool.description).toContain(".excerpt");
+      expect(tool.description).toContain(".content.text");
+      expect(getSchemaProperties(tool.inputSchema)).not.toEqual({});
+    }
+  });
+
   test("defers oversized input schemas until focused discovery", async () => {
     const description = "x".repeat(25_000);
     const operation = publicOperation({
@@ -7178,6 +7213,37 @@ describe("project session mcp adapter", () => {
             mimeType: "application/json",
           }),
         ],
+      });
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns actionable structured screenshot failures", async () => {
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(async () => {
+        throw new Error("Chromium executable was not found");
+      }),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "screenshot",
+        arguments: { url: "https://example.com" },
+      });
+      expect(result).toMatchObject({
+        isError: true,
+        structuredContent: {
+          ok: false,
+          error: {
+            code: "SCREENSHOT_CAPTURE_FAILED",
+            message: expect.stringContaining("preview.status"),
+          },
+        },
       });
     } finally {
       await close();

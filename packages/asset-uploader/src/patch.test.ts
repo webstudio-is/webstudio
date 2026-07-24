@@ -8,6 +8,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { createCanonicalAssetFileEntry } from "@webstudio-is/asset-resource";
 import {
   loadAssetsByProjectWithClient,
   patchAssetsWithClient,
@@ -17,6 +18,7 @@ import {
   patchAssetFoldersWithClient,
 } from "./folder-persistence";
 import { patchAssets } from "./patch";
+import { createAssetContentRevision } from "./canonical-metadata-backfill";
 import type { Patch } from "immer";
 
 const server = createTestServer();
@@ -296,6 +298,7 @@ describe("patchAssets (msw)", () => {
     server.use(
       ownershipHandler,
       db.get("Asset", () => json([localAssetRow])),
+      db.get("AssetFileMetadata", () => json([])),
       db.patch("Asset", async ({ request }) => {
         const body = (await request.json()) as { filename?: string };
         updatedFilename = body.filename;
@@ -374,19 +377,81 @@ describe("patchAssets (msw)", () => {
 
   test("persists moving an asset to root as null", async () => {
     const projectId = uid();
-    const localAssetRow = { ...assetRow, projectId, folderId: "folder" };
+    const updatedAt = "2026-07-18T00:00:00.000Z";
+    let localAssetRow = {
+      ...assetRow,
+      projectId,
+      filename: "post",
+      folderId: "folder" as string | null,
+      file: {
+        ...assetRow.file,
+        name: "stored.md",
+        format: "md",
+        size: 100,
+        updatedAt,
+        meta: "{}",
+      },
+    };
+    const canonicalDocument = {
+      _id: "asset-1",
+      _type: "asset.file" as const,
+      name: "post.md",
+      path: "Content/post.md",
+      key: "post",
+      folderId: "folder",
+      extension: "md",
+      mimeType: "text/markdown",
+      size: 100,
+      revision: createAssetContentRevision({
+        storageName: "stored.md",
+        updatedAt,
+        size: 100,
+      }),
+      contentRef: "stored.md",
+      properties: { title: "Post" },
+      excerpt: "Body",
+    };
+    const canonicalEntry = createCanonicalAssetFileEntry({
+      projectId,
+      document: canonicalDocument,
+    });
     let updatedFolderId: unknown = "not-updated";
+    let persistedDocument: unknown;
+    let metadataLoadCount = 0;
     server.use(
       ownershipHandler,
-      db.get("Asset", () => json([localAssetRow])),
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("id")) {
+          return json([{ ...localAssetRow, id: localAssetRow.assetId }]);
+        }
+        return json([localAssetRow]);
+      }),
+      db.get("AssetFileMetadata", () => {
+        metadataLoadCount += 1;
+        return json([
+          {
+            ...canonicalEntry,
+            createdAt: "2026-07-18T00:00:00.000Z",
+            updatedAt: "2026-07-18T00:00:00.000Z",
+          },
+        ]);
+      }),
+      db.get("AssetFolder", () => json([])),
       db.patch("Asset", async ({ request }) => {
         updatedFolderId = ((await request.json()) as { folderId: unknown })
           .folderId;
+        localAssetRow = { ...localAssetRow, folderId: null };
         return json({
           filename: localAssetRow.filename,
           description: localAssetRow.description,
           folderId: null,
         });
+      }),
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        const value = (await request.json()) as { p_document: unknown };
+        persistedDocument = value.p_document;
+        return json(true);
       })
     );
 
@@ -396,6 +461,14 @@ describe("patchAssets (msw)", () => {
       createContext()
     );
     expect(updatedFolderId).toBeNull();
+    expect(metadataLoadCount).toBe(1);
+    expect(persistedDocument).toMatchObject({
+      name: "post.md",
+      path: "post.md",
+      revision: canonicalDocument.revision,
+      properties: canonicalDocument.properties,
+      excerpt: canonicalDocument.excerpt,
+    });
   });
 
   test("does not update metadata when adding an existing asset", async () => {

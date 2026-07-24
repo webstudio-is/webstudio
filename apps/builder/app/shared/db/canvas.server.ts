@@ -8,18 +8,29 @@ import {
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/server";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
-import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/index.server";
+import {
+  loadAssetDataByProject,
+  loadCanonicalAssetFileSnapshot,
+  synchronizeCanonicalAssets,
+} from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   findPageByIdOrPath,
   getAllPages,
   getStyleDeclKey,
+  isConfiguredAssetsResource,
+  parseStructuredAssetQueryResourceBody,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
+import {
+  computeCanonicalAssetRevision,
+  createAssetIndex,
+} from "@webstudio-is/asset-resource";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
+import { createAssetClient } from "../asset-client";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
   item.id,
@@ -153,12 +164,99 @@ const addProjectMetadata = async (
       ? undefined
       : await getUserById(context, project.userId);
 
+  const reachableResourceIds = new Set<string>();
+  for (const [, prop] of data.build.props) {
+    if (prop.type === "resource") {
+      reachableResourceIds.add(prop.value);
+    }
+  }
+  for (const [, dataSource] of data.build.dataSources) {
+    if (dataSource.type === "resource") {
+      reachableResourceIds.add(dataSource.resourceId);
+    }
+  }
+  const hasAssetQueries = data.build.resources
+    .map(([, resource]) => resource)
+    .some((resource) => {
+      if (reachableResourceIds.has(resource.id) === false) {
+        return false;
+      }
+      if (isConfiguredAssetsResource(resource) === false) {
+        return false;
+      }
+      if (parseStructuredAssetQueryResourceBody(resource.body) === undefined) {
+        throw new Error(
+          `Assets resource ${JSON.stringify(resource.id)} has an invalid query configuration`
+        );
+      }
+      return true;
+    });
+  let assetIndex: PublishedProjectBundle["assetIndex"];
+  let publishedAssets = data.assets;
+  let publishedAssetFolders = data.assetFolders;
+  if (hasAssetQueries) {
+    const assetClient = createAssetClient();
+    const retainedFontIds = new Set(
+      data.assets
+        .filter((asset) => asset.type === "font")
+        .map((asset) => asset.id)
+    );
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const assetDataBefore = await loadAssetDataByProject(project.id, context);
+      await synchronizeCanonicalAssets({
+        client: context.postgrest.client,
+        projectId: project.id,
+        assetClient,
+      });
+      const { entries: canonicalEntries } =
+        await loadCanonicalAssetFileSnapshot({
+          client: context.postgrest.client,
+          projectId: project.id,
+        });
+      const preparedIndex = await createAssetIndex({
+        projectId: project.id,
+        entries: canonicalEntries,
+      });
+      const [assetDataAfter, latestCanonical] = await Promise.all([
+        loadAssetDataByProject(project.id, context),
+        loadCanonicalAssetFileSnapshot({
+          client: context.postgrest.client,
+          projectId: project.id,
+        }),
+      ]);
+      const latestAssetRevision = await computeCanonicalAssetRevision(
+        latestCanonical.entries
+      );
+      const assetsStayedStable =
+        JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter) &&
+        preparedIndex.assetRevision === latestAssetRevision;
+      if (assetsStayedStable === false) {
+        if (attempt === 0) {
+          continue;
+        }
+        throw new Error("Assets changed while preparing publication; retry");
+      }
+      assetIndex = preparedIndex;
+      publishedAssets = assetDataAfter.assets.filter(
+        (asset) => asset.type !== "font" || retainedFontIds.has(asset.id)
+      );
+      publishedAssetFolders = assetDataAfter.assetFolders;
+      break;
+    }
+    if (assetIndex === undefined) {
+      throw new Error("Asset index was not prepared");
+    }
+  }
+
   return {
     ...data,
+    assets: publishedAssets,
+    assetFolders: publishedAssetFolders,
     bundleVersion,
     user: user ? { email: user.email } : undefined,
     projectDomain: project.domain,
     projectTitle: project.title,
+    assetIndex,
   };
 };
 

@@ -7,8 +7,9 @@ import {
   getAssetData,
 } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
-import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
 import { getMimeTypeByFilename } from "@webstudio-is/sdk";
+import { createS3ObjectUrl } from "./object-url";
+import { createS3FetchHeaders, signS3Request } from "./request-headers";
 
 export const uploadToS3 = async ({
   signer,
@@ -43,10 +44,12 @@ export const uploadToS3 = async ({
   // Also check if S3 client has an option to check the size limit
   const data = await arrayBuffer(limitSize(dataStream));
 
-  const url = new URL(
-    `/${bucket}/${extendedEncodeURIComponent(name)}`,
-    endpoint
-  );
+  const url = createS3ObjectUrl({
+    endpoint,
+    bucket,
+    key: name,
+    keyType: "flat",
+  });
 
   // Use proper MIME type based on file extension instead of generic type category
   const contentType = getMimeTypeByFilename(name);
@@ -74,13 +77,11 @@ export const uploadToS3 = async ({
     assetDataOverride
   );
 
-  const s3Request = await signer.sign({
+  const s3Request = await signS3Request({
+    signer,
+    url,
     method: "PUT",
-    protocol: url.protocol,
-    hostname: url.hostname,
-    path: url.pathname,
     headers: {
-      "x-amz-date": new Date().toISOString(),
       "Content-Type": contentType,
       "Content-Length": `${data.byteLength}`,
       "Cache-Control": "public, max-age=31536004,immutable",
@@ -95,7 +96,7 @@ export const uploadToS3 = async ({
 
   const response = await fetch(url, {
     method: s3Request.method,
-    headers: s3Request.headers,
+    headers: createS3FetchHeaders(s3Request.headers),
     body: data,
   });
 

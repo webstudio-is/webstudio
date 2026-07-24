@@ -15,6 +15,7 @@ import type {
   NormalizedPatchRequest,
   PatchEntry,
 } from "./patch-normalize.server";
+import { synchronizeAssetResourcesAfterBuildPatch } from "../../synchronize-asset-resource-patch.server";
 
 type BuildRow = Database["public"]["Tables"]["Build"]["Row"];
 type BuildColumn = keyof BuildRow;
@@ -245,6 +246,7 @@ const applyAuthorizedEntries = async ({
       version,
       entries: [] satisfies PatchEntryResult[],
       status: "ok" as const,
+      build: undefined,
     };
   }
   if (build === undefined) {
@@ -275,6 +277,7 @@ const applyAuthorizedEntries = async ({
         status: "ok" as const,
         version: batchResult.version,
         entries: authorized.map(({ entry }) => acceptedResult(entry)),
+        build: currentBuild,
       };
     }
 
@@ -314,12 +317,14 @@ const applyAuthorizedEntries = async ({
     status: "partial" as const,
     version: currentVersion,
     entries,
+    build: currentBuild,
   };
 };
 
 export const applyPatchRequest = async (
   context: AppContext,
-  patch: NormalizedPatchRequest
+  patch: NormalizedPatchRequest,
+  dependencies = { synchronizeAssetResourcesAfterBuildPatch }
 ): Promise<PatchResult> => {
   const state = await loadBuildState(context, patch.buildId);
   assertBuildProject(state, patch);
@@ -338,17 +343,18 @@ export const applyPatchRequest = async (
       });
     }
   );
+  const build =
+    authorized.length === 0
+      ? undefined
+      : await loadBuildForPatch({
+          authorized,
+          context,
+          state,
+          buildId: patch.buildId,
+        });
   const applied = await applyAuthorizedEntries({
     authorized,
-    build:
-      authorized.length === 0
-        ? undefined
-        : await loadBuildForPatch({
-            authorized,
-            context,
-            state,
-            buildId: patch.buildId,
-          }),
+    build,
     patch,
     version: authorized.length === 0 ? state.version : patch.clientVersion,
   });
@@ -356,6 +362,15 @@ export const applyPatchRequest = async (
   if (applied.status === "version_mismatched") {
     return applied;
   }
+
+  await dependencies.synchronizeAssetResourcesAfterBuildPatch({
+    context,
+    buildId: patch.buildId,
+    projectId: patch.projectId,
+    previousResources: build?.resources,
+    resources: applied.build?.resources,
+    changes: authorized.flatMap(({ entry }) => entry.transaction.payload),
+  });
 
   const entriesByTransactionId = new Map<string, PatchEntryResult[]>();
   for (const entryResult of [

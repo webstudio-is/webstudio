@@ -30,15 +30,17 @@ export const {
 } = initTRPC.context<AppContext>().create({
   errorFormatter({ shape, error, ctx }) {
     const target = ctx?.apiClient.type;
+    const webstudioCode = getWebstudioErrorCode(error.cause);
     const payload =
       getApiCompatibilityPayload(error.cause) ??
-      (error.code === "NOT_FOUND" && (target === "browser" || target === "cli")
+      (error.code === "NOT_FOUND" &&
+      webstudioCode === undefined &&
+      (target === "browser" || target === "cli")
         ? createApiCompatibilityPayload({
             reason: "apiProcedureNotFound",
             target,
           })
         : undefined);
-    const webstudioCode = getWebstudioErrorCode(error.cause);
     const issues = getValidationIssues(error.cause);
 
     if (

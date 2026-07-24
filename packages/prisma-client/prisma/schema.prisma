@@ -40,18 +40,33 @@ model File {
 }
 
 model Asset {
-  id               String             @default(uuid()) // not unique!
+  id               String              @default(uuid()) // not unique!
   projectId        String
-  file             File               @relation(fields: [name], references: [name])
+  file             File                @relation(fields: [name], references: [name])
   name             String
   filename         String?
   description      String?
   folderId         String?
-  folder           AssetFolder?       @relation(fields: [folderId, projectId], references: [id, projectId], onDelete: NoAction)
+  folder           AssetFolder?        @relation(fields: [folderId, projectId], references: [id, projectId], onDelete: NoAction)
+  fileMetadata     AssetFileMetadata[]
   Project          Project[]
   DashboardProject DashboardProject[]
 
   @@id([id, projectId])
+}
+
+model AssetFileMetadata {
+  projectId          String
+  assetId            String
+  revision           String
+  metadataToken      String   @default(uuid())
+  document           Json
+  fieldContributions Json     @default("[]")
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  asset              Asset    @relation(fields: [assetId, projectId], references: [id, projectId], onDelete: Cascade)
+
+  @@id([projectId, assetId, revision])
 }
 
 model AssetFolder {
@@ -243,8 +258,8 @@ model AuthorizationToken {
   relation  AuthorizationRelation @default(viewers)
   createdAt DateTime              @default(now()) @db.Timestamptz(3)
 
-  canClone Boolean @default(true)
-  canCopy  Boolean @default(true)
+  canClone  Boolean @default(true)
+  canCopy   Boolean @default(true)
   canUseApi Boolean @default(false)
 
   @@id([token, projectId])
@@ -307,12 +322,12 @@ view LatestStaticBuildPerProject {
 }
 
 model Workspace {
-  id        String    @id @default(uuid())
+  id        String            @id @default(uuid())
   name      String
-  isDefault Boolean   @default(false)
-  isDeleted Boolean   @default(false)
-  createdAt DateTime  @default(now()) @db.Timestamptz(3)
-  user      User      @relation(fields: [userId], references: [id])
+  isDefault Boolean           @default(false)
+  isDeleted Boolean           @default(false)
+  createdAt DateTime          @default(now()) @db.Timestamptz(3)
+  user      User              @relation(fields: [userId], references: [id])
   userId    String
   projects  Project[]
   members   WorkspaceMember[]
@@ -325,7 +340,7 @@ model WorkspaceMember {
   workspace   Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
   userId      String
-  relation    AuthorizationRelation  @default(administrators)
+  relation    AuthorizationRelation @default(administrators)
   createdAt   DateTime              @default(now()) @db.Timestamptz(3)
   removedAt   DateTime?             @db.Timestamptz(3)
 

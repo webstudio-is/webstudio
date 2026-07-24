@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  assetQueryFieldPath,
+  assetQuerySort,
+  assetResourceContentOptions,
   assetType,
   compilerSettings,
   dataSourceVariableValue,
@@ -187,6 +190,42 @@ const resource = looseObject({
   scopeInstanceId: id.optional(),
   exposedAsDataSource: z.boolean(),
   dataSourceId: id.optional(),
+});
+const assetResourceConfiguration = looseObject({
+  filters: z.array(
+    looseObject({
+      field: assetQueryFieldPath,
+      operator: z.enum([
+        "eq",
+        "ne",
+        "in",
+        "contains",
+        "startsWith",
+        "endsWith",
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "exists",
+        "isEmpty",
+      ]),
+      value: z.string(),
+    })
+  ),
+  sort: z.array(assetQuerySort),
+  limit: z.string(),
+  offset: z.string(),
+  content: assetResourceContentOptions,
+});
+const assetResource = looseObject({
+  resourceId: id,
+  name: z.string(),
+  scopeInstanceId: id.optional(),
+  dataSourceId: id.optional(),
+  dataSourceName: z.string().optional(),
+  mode: z.enum(["all", "query", "invalid"]),
+  query: assetResourceConfiguration.optional(),
+  configurationError: z.string().optional(),
 });
 const asset = looseObject({
   id,
@@ -580,6 +619,13 @@ export const runtimeOutputSchemas = {
     resources: z.array(resource),
     ...outputPage,
   }),
+  "assetsResources.list": looseObject({
+    resources: z.array(assetResource),
+    ...outputPage,
+  }),
+  "assetsResources.get": looseObject({ resource: assetResource }),
+  "assetsResources.create": resourceMutationResult,
+  "assetsResources.update": resourceMutationResult.partial({ warnings: true }),
   "resources.create": resourceMutationResult,
   "resources.update": resourceMutationResult.partial({ warnings: true }),
   "resources.replaceText": looseObject({

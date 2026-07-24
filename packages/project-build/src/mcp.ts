@@ -749,12 +749,13 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
 };
 
 const getHandshakeInputSchema = (
-  schema: ProjectSessionMcpInputSchema
+  schema: ProjectSessionMcpInputSchema,
+  maxInlineSize = maxInlineMcpInputSchemaSize
 ): {
   inputSchema: ProjectSessionMcpInputSchema;
   detailedInputSchema?: ProjectSessionMcpInputSchema;
 } => {
-  if (JSON.stringify(schema).length <= maxInlineMcpInputSchemaSize) {
+  if (JSON.stringify(schema).length <= maxInlineSize) {
     return { inputSchema: schema };
   }
   return {
@@ -768,7 +769,7 @@ const getHandshakeInputSchema = (
           return [
             name,
             propertySchema === undefined ||
-            (serializedProperty.length <= maxInlineMcpInputSchemaSize &&
+            (serializedProperty.length <= maxInlineSize &&
               serializedProperty.includes('"$ref"') === false)
               ? property
               : getCompactSchemaProperty(propertySchema),
@@ -804,11 +805,14 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
 });
 
+const assetsResourceResultDescription =
+  "Queried results are exposed as <dataSourceName>.data.items; each item has indexed file fields at the top level, frontmatter or JSON fields in .properties, a derived .excerpt at the top level, and requested file content in .content.text.";
+
 const mcpOperationOverrides = new Map<
   string,
   {
     description: string;
-    inputSchema: ProjectSessionMcpInputSchema;
+    inputSchema?: ProjectSessionMcpInputSchema;
   }
 >([
   [
@@ -825,6 +829,18 @@ const mcpOperationOverrides = new Map<
       description:
         "Create a Collection from array/object data and one repeated-item Webstudio JSX fragment. Internal item parameters and bindings are created atomically.",
       inputSchema: insertCollectionMcpInputSchema,
+    },
+  ],
+  [
+    "create-assets-resource",
+    {
+      description: `Create a scoped Assets resource. ${assetsResourceResultDescription}`,
+    },
+  ],
+  [
+    "update-assets-resource",
+    {
+      description: `Update an Assets resource or its query. ${assetsResourceResultDescription}`,
     },
   ],
 ]);
@@ -1911,6 +1927,101 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       exposeAsDataSource: false,
     },
   ],
+  "list-assets-resources": [{}],
+  "get-assets-resource": [{ resourceId: "resource-id" }],
+  "create-assets-resource": [
+    {
+      name: "All assets",
+      scopeInstanceId: "body-id",
+      dataSourceName: "assets",
+    },
+    {
+      name: "Published posts",
+      scopeInstanceId: "body-id",
+      dataSourceName: "posts",
+      query: {
+        filters: [
+          {
+            field: ["extension"],
+            operator: "eq",
+            value: { type: "literal", value: "md" },
+          },
+          {
+            field: ["properties", "draft"],
+            operator: "ne",
+            value: "true",
+          },
+        ],
+        sort: [
+          { field: ["properties", "publishedAt"], direction: "desc" },
+          { field: ["id"], direction: "asc" },
+        ],
+        limit: "20",
+      },
+    },
+    {
+      name: "Post by slug",
+      scopeInstanceId: "body-id",
+      dataSourceName: "post",
+      query: {
+        filters: [
+          {
+            field: ["extension"],
+            operator: "eq",
+            value: { type: "literal", value: "md" },
+          },
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "system.params.slug",
+          },
+        ],
+        limit: "1",
+        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+      },
+    },
+  ],
+  "update-assets-resource": [
+    {
+      resourceId: "resource-id",
+      values: {
+        query: {
+          limit: "50",
+        },
+      },
+    },
+    { resourceId: "resource-id", values: { query: null } },
+  ],
+  "validate-asset-query": [
+    {
+      query: {
+        filters: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "hello-world",
+          },
+        ],
+        limit: 1,
+      },
+    },
+  ],
+  "preview-asset-query": [
+    {
+      query: {
+        filters: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "hello-world",
+          },
+        ],
+        limit: 1,
+        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+      },
+    },
+  ],
+  "get-asset-field-catalog": [{}],
   "update-asset": [
     {
       assetId: "font-asset-id",
@@ -2873,6 +2984,13 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
+const compactMcpOperationCommands = new Set([
+  "create-assets-resource",
+  "update-assets-resource",
+  "validate-asset-query",
+  "preview-asset-query",
+]);
+
 const detailedMcpInputSchemas = new WeakMap<
   ProjectSessionMcpTool,
   ProjectSessionMcpInputSchema
@@ -2900,13 +3018,14 @@ export const listProjectSessionMcpTools = (
     )
     .map((operation) => {
       const override = mcpOperationOverrides.get(operation.command);
+      const operationInputSchema = getMcpOperationInputSchema(operation, {
+        includeRenderedAudit:
+          options.includeScreenshot === true && options.includePreview === true,
+        schema: override?.inputSchema,
+      });
       const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
-        getMcpOperationInputSchema(operation, {
-          includeRenderedAudit:
-            options.includeScreenshot === true &&
-            options.includePreview === true,
-          schema: override?.inputSchema,
-        })
+        operationInputSchema,
+        compactMcpOperationCommands.has(operation.command) ? 2_500 : undefined
       );
       const tool = createProjectSessionMcpTool({
         name: operation.command,
@@ -6554,13 +6673,25 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toMetaResult(await downloadAsset(getDownloadAssetInput(input)));
       }
       if (name === "screenshot" && captureScreenshot !== undefined) {
-        return toMetaResult(
-          await captureScreenshot(getScreenshotInput(input), {
-            report: (message) => {
-              reportToolProgress?.(message);
-            },
-          })
-        );
+        const screenshotInput = getScreenshotInput(input);
+        try {
+          return toMetaResult(
+            await captureScreenshot(screenshotInput, {
+              report: (message) => {
+                reportToolProgress?.(message);
+              },
+            })
+          );
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          throw Object.assign(
+            new Error(
+              `Screenshot capture failed: ${message}. Check preview.status, verify that the route loads, and retry with an installed browser or explicit browserPath.`
+            ),
+            { code: "SCREENSHOT_CAPTURE_FAILED", cause: error }
+          );
+        }
       }
       if (name === "screenshot.diff" && diffScreenshots !== undefined) {
         return toMetaResult(

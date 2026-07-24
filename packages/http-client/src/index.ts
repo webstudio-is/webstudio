@@ -1,6 +1,12 @@
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
-import { getAssetContentHash } from "@webstudio-is/sdk";
+import {
+  getAssetContentHash,
+  type AssetQueryFieldPath,
+  type AssetQueryInput,
+  type AssetQuerySort,
+  type AssetResourceContentOptions,
+} from "@webstudio-is/sdk";
 import {
   apiClientHeader,
   apiClientVersionHeader,
@@ -726,6 +732,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     projectDomain,
     projectTitle,
     user,
+    assetIndex,
   } = normalizedProject;
   return {
     bundleVersion: currentBundleVersion,
@@ -737,6 +744,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     user,
     projectDomain,
     projectTitle,
+    assetIndex,
     origin,
   };
 };
@@ -1560,12 +1568,80 @@ type ResourceFieldsInput = {
   body?: string;
 };
 
+type AssetsQueryConfigurationInput = {
+  filters?: Array<{
+    field: AssetQueryFieldPath;
+    operator:
+      | "eq"
+      | "ne"
+      | "in"
+      | "contains"
+      | "startsWith"
+      | "endsWith"
+      | "gt"
+      | "gte"
+      | "lt"
+      | "lte"
+      | "exists"
+      | "isEmpty";
+    value: string | { type: "literal"; value: unknown };
+  }>;
+  sort?: AssetQuerySort[];
+  limit?: string | { type: "literal"; value: unknown };
+  offset?: string | { type: "literal"; value: unknown };
+  content?: AssetResourceContentOptions;
+};
+
 export const listResources = projectQueryInput<
   AuthProjectParams &
     PaginatedQueryInput & {
       scopeInstanceId?: string;
     }
 >("list-resources");
+
+export const listAssetsResources = projectQueryInput<
+  AuthProjectParams &
+    PaginatedQueryInput & {
+      scopeInstanceId?: string;
+    }
+>("list-assets-resources");
+
+export const getAssetsResource = projectQueryInput<
+  AuthProjectParams & { resourceId: string }
+>("get-assets-resource");
+
+export const createAssetsResource = projectMutationInput<
+  AuthProjectParams & {
+    name: string;
+    query?: AssetsQueryConfigurationInput;
+    scopeInstanceId: string;
+    dataSourceName?: string;
+  }
+>("create-assets-resource");
+
+export const updateAssetsResource = projectMutationInput<
+  AuthProjectParams & {
+    resourceId: string;
+    values: {
+      name?: string;
+      query?: AssetsQueryConfigurationInput | null;
+    };
+    scopeInstanceId?: string;
+    dataSourceName?: string;
+  }
+>("update-assets-resource");
+
+export const validateAssetQuery = projectQueryInput<
+  AuthProjectParams & { query: AssetQueryInput }
+>("validate-asset-query");
+
+export const previewAssetQuery = projectQueryInput<
+  AuthProjectParams & { query: AssetQueryInput }
+>("preview-asset-query");
+
+export const getAssetFieldCatalog = projectQueryInput<AuthProjectParams>(
+  "get-asset-field-catalog"
+);
 
 export const createResource = projectMutationInput<
   AuthProjectParams & {
@@ -1733,7 +1809,10 @@ const uploadProjectBundleData = async (
 ) => {
   const { sourceOrigin } = parseBuilderUrl(params.origin);
   const endpoint = new URL(stagedUploadPath, sourceOrigin);
-  const data = JSON.stringify(params.data);
+  // The asset index is derived from destination assets and must not transport
+  // stale metadata across project imports.
+  const { assetIndex: _assetIndex, ...portableData } = params.data;
+  const data = JSON.stringify(portableData);
   if (new TextEncoder().encode(data).byteLength > maxProjectBundleSize) {
     throw new Error(
       `Project bundle is too large to import. Maximum size is ${formatMebibytes(maxProjectBundleSize)}.`

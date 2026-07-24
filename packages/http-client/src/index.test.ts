@@ -1529,8 +1529,26 @@ test("keeps browser asset content updates on the requested origin", async () => 
 });
 
 test("normalizes synced project bundles for local storage", () => {
+  const index = {
+    format: "webstudio-asset-index" as const,
+    version: 1 as const,
+    assetRevision: `sha256:${"b".repeat(64)}`,
+    documents: [],
+    fieldCatalog: {
+      format: "webstudio-builder-asset-field-catalog" as const,
+      version: 1 as const,
+      canonicalRevision: `sha256:${"b".repeat(64)}`,
+      documentCount: 0,
+      fields: {},
+    },
+    integrity: {
+      algorithm: "sha256" as const,
+      checksum: `sha256:${"c".repeat(64)}`,
+    },
+  };
   const bundle = createPublishedProjectBundleFixture({
     bundleVersion: "bundle-old",
+    assetIndex: index,
     assetFolders: [
       {
         id: "folder-1",
@@ -1551,6 +1569,7 @@ test("normalizes synced project bundles for local storage", () => {
     user: bundle.user,
     projectDomain: bundle.projectDomain,
     projectTitle: bundle.projectTitle,
+    assetIndex: bundle.assetIndex,
     origin: bundle.origin,
   });
 });
@@ -1625,6 +1644,7 @@ test("imports project bundle through staged upload", async () => {
         projectId: "project-id",
         data: {
           largeContent: "x".repeat(3 * 1024 * 1024 + 1),
+          assetIndex: { marker: "derived-index-marker" },
         } as unknown as PublishedProjectBundle,
       })
     ).resolves.toEqual({ version: 2 });
@@ -1635,6 +1655,9 @@ test("imports project bundle through staged upload", async () => {
   }
 
   expect(uploadChunks).toHaveLength(2);
+  expect(Buffer.concat(uploadChunks).toString("utf8")).not.toContain(
+    "derived-index-marker"
+  );
   expect(JSON.stringify(trpcBody)).toContain('"uploadId":"upload-id"');
   expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
 });

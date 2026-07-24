@@ -8,6 +8,7 @@ import {
   type Patch,
 } from "./patch-utils";
 import { swapAssetFileWithClient } from "./revision";
+import { synchronizeCanonicalAssetStandardMetadata } from "./canonical-metadata-backfill";
 
 export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
   Array.from(assets, (asset) => ({
@@ -132,7 +133,13 @@ export const deleteAssetsWithClient = async (
  * Persists asset additions, deletions, metadata updates, and file revisions.
  */
 export const patchAssetsWithClient = async (
-  { projectId, client }: { projectId: string; client: Client },
+  {
+    projectId,
+    client,
+  }: {
+    projectId: string;
+    client: Client;
+  },
   patches: Array<Patch>
 ): Promise<void> => {
   const assetsList = await loadAssetsByProjectWithClient(projectId, client);
@@ -156,6 +163,15 @@ export const patchAssetsWithClient = async (
       previous.description === asset.description &&
       previous.folderId === asset.folderId
   );
+  const standardMetadataAssetIds = updated
+    .filter((asset) => {
+      const previous = assetsMap.get(asset.id);
+      return (
+        previous?.filename !== asset.filename ||
+        previous?.folderId !== asset.folderId
+      );
+    })
+    .map((asset) => asset.id);
   if (deletedAssetIds.length !== 0) {
     await deleteAssetsWithClient({ projectId, ids: deletedAssetIds }, client);
   }
@@ -198,6 +214,13 @@ export const patchAssetsWithClient = async (
         `Asset metadata update was not persisted for ${asset.id}`
       );
     }
+  }
+  if (standardMetadataAssetIds.length > 0) {
+    await synchronizeCanonicalAssetStandardMetadata({
+      projectId,
+      assetIds: standardMetadataAssetIds,
+      client,
+    });
   }
 
   const addedAssets: Asset[] = added;

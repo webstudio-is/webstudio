@@ -13,17 +13,58 @@ import {
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { bundleVersion } from "@webstudio-is/protocol";
 import type { Asset } from "@webstudio-is/sdk";
-import { generateRedirectsModule, prebuild } from "./prebuild";
+import {
+  createAssetIndex,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/asset-resource";
+import {
+  createStructuredAssetQueryResourceBody,
+  type AssetFileDocument,
+  type Resource,
+} from "@webstudio-is/sdk";
+import {
+  generateRedirectsModule,
+  getRequiredAssetResourceContentRefs,
+  materializeAssetIndex,
+  prebuild,
+} from "./prebuild";
+import {
+  createSsgAssetResourceFetch,
+  fetchSsgPublicAsset,
+} from "../templates/ssg/app/asset-resource-fetch";
 
 const originalCwd = process.cwd();
+const execFileAsync = promisify(execFile);
 const originalFetch = globalThis.fetch;
 let tempDir: string;
 let consoleInfo: ReturnType<typeof vi.spyOn>;
 const rootFolderId = "root";
 const elementComponent = "ws:element";
 const slowPrebuildTestTimeout = 15_000;
+
+const runGeneratedCommand = async (
+  command: "react-router" | "vite" | "vike",
+  args: string[]
+) => {
+  const env = { ...process.env };
+  for (const name of Object.keys(env)) {
+    if (name.startsWith("VITEST")) {
+      delete env[name];
+    }
+  }
+  env.NODE_ENV = "production";
+  env.NODE_OPTIONS = "--conditions=webstudio";
+  env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED = "1";
+  await execFileAsync(join(originalCwd, `node_modules/.bin/${command}`), args, {
+    cwd: tempDir,
+    env,
+  });
+};
+
 type Redirects = Array<{ old: string; new: string; status?: "301" | "302" }>;
 type GeneratedRouteModule = {
   loader: (args: { request: Request }) => Response | Promise<Response>;
@@ -290,6 +331,170 @@ describe("generateRedirectsModule", () => {
   });
 });
 
+const indexedDocument: AssetFileDocument = {
+  _id: "post-1",
+  _type: "asset.file",
+  name: "post.md",
+  path: "post.md",
+  key: "post",
+  extension: "md",
+  mimeType: "text/markdown",
+  size: 10,
+  revision: "post-revision",
+  contentRef: "post.md",
+  properties: { slug: "post", title: "Prerendered post" },
+};
+
+const createTestAssetIndex = (
+  documents: AssetFileDocument | AssetFileDocument[] = indexedDocument
+) =>
+  createAssetIndex({
+    projectId: "project-1",
+    entries: (Array.isArray(documents) ? documents : [documents]).map(
+      (document) =>
+        createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document,
+        })
+    ),
+  });
+
+const createQueryResource = (content: "none" | "full" = "none"): Resource => ({
+  id: "posts",
+  name: "Posts",
+  control: "system",
+  method: "post",
+  url: '"/$resources/assets"',
+  headers: [],
+  body: createStructuredAssetQueryResourceBody({
+    filters: [],
+    sort: [],
+    limit: "100",
+    offset: "0",
+    content: { mode: content },
+  }),
+});
+
+test("requires candidate files only when an asset query can hydrate content", async () => {
+  const index = await createTestAssetIndex();
+
+  expect(
+    getRequiredAssetResourceContentRefs({
+      index,
+      resources: [["posts", createQueryResource()]],
+    })
+  ).toEqual(new Set());
+  expect(
+    getRequiredAssetResourceContentRefs({
+      index,
+      resources: [["posts", createQueryResource("full")]],
+    })
+  ).toEqual(new Set(["post.md"]));
+});
+
+test("materializes one shared asset index and a reference-only module", async () => {
+  const index = await createTestAssetIndex();
+  await mkdir("public", { recursive: true });
+  await mkdir("app/__generated__", { recursive: true });
+
+  await materializeAssetIndex({
+    index,
+    publicDirectory: "public",
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-1",
+  });
+
+  expect(
+    JSON.parse(await readFile("public/assets/db/index.json", "utf8"))
+  ).toEqual(index);
+  const manifestModule = await readFile(
+    "app/__generated__/$resources.asset-query-manifest.ts",
+    "utf8"
+  );
+  expect(manifestModule).toContain('assetQueryDeploymentId = "build-1"');
+  expect(manifestModule).toContain("/assets/db/index.json");
+  expect(manifestModule).not.toContain('"documents"');
+  expect(manifestModule).not.toContain('"properties"');
+  const runtimeModule = await readFile(
+    "app/__generated__/$resources.asset-query-runtime.ts",
+    "utf8"
+  );
+  expect(runtimeModule).toContain(
+    'from "@webstudio-is/asset-resource/runtime"'
+  );
+  expect(runtimeModule).not.toContain('"documents"');
+  expect(runtimeModule).not.toContain('"properties"');
+});
+
+test("executes and hydrates an asset query from SSG public files", async () => {
+  const source = "# Prerendered post\n";
+  const index = await createTestAssetIndex({
+    ...indexedDocument,
+    size: new TextEncoder().encode(source).byteLength,
+  });
+  await mkdir("public/assets", { recursive: true });
+  await mkdir("app/__generated__", { recursive: true });
+  await writeFile("public/assets/post.md", source, "utf8");
+  await materializeAssetIndex({
+    index,
+    publicDirectory: "public",
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-1",
+  });
+  const indexPath = "/assets/db/index.json";
+  await expect((await fetchSsgPublicAsset(indexPath)).json()).resolves.toEqual(
+    index
+  );
+  await expect(
+    (
+      await fetchSsgPublicAsset("/assets/post.md", {
+        headers: { range: `bytes=0-${source.length - 1}` },
+      })
+    ).text()
+  ).resolves.toBe(source);
+  const runtimeFetch = createSsgAssetResourceFetch({
+    deploymentId: "build-1",
+    manifest: {
+      revision: index.integrity.checksum,
+      assetRevision: index.assetRevision,
+      indexPath,
+    },
+  });
+
+  const response = await runtimeFetch("/$resources/assets", {
+    method: "POST",
+    body: JSON.stringify({
+      query: {
+        filters: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "post",
+          },
+        ],
+        limit: 1,
+        content: { mode: "full" },
+      },
+    }),
+  });
+
+  expect({
+    status: response?.status,
+    body: await response?.json(),
+  }).toMatchObject({
+    status: 200,
+    body: {
+      items: [
+        {
+          id: "post-1",
+          properties: { title: "Prerendered post" },
+          content: { text: source },
+        },
+      ],
+    },
+  });
+});
+
 describe("prebuild", () => {
   test("incrementally replaces only changed generated files", async () => {
     const siteData = createSiteData({
@@ -546,9 +751,15 @@ describe("prebuild", () => {
       ])
     );
 
-    await expect(
-      readFile("app/__generated__/$resources.assets.ts", "utf8")
-    ).resolves.toContain("image.png");
+    const legacyAssetsModule = await readFile(
+      "app/__generated__/$resources.assets.ts",
+      "utf8"
+    );
+    expect(legacyAssetsModule).toContain("export const assets");
+    expect(legacyAssetsModule).toContain('"asset-image"');
+    expect(legacyAssetsModule).toContain("image.png");
+    expect(legacyAssetsModule).not.toContain("assets/query");
+    expect(legacyAssetsModule).not.toContain("properties");
     await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.toContain('"path": "/"');
@@ -675,9 +886,108 @@ describe("prebuild", () => {
     await expectGeneratedRedirectFallback("app/routes/$.tsx");
   });
 
+  test("generates one dynamic SSR blog route with external index and published Markdown assets", async () => {
+    const source = "# Published post\n";
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      path: "blog/post.md",
+      size: new TextEncoder().encode(source).byteLength,
+      properties: { slug: "post" },
+    });
+    const siteData = {
+      ...createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      }),
+      assets: ["post.md", "draft.md"].map((name) => ({
+        id: name,
+        projectId: "project-id",
+        name,
+        type: "file" as const,
+        format: "md",
+        size: source.length,
+        meta: {},
+        description: "",
+        createdAt: "2024-01-01T00:00:00.000Z",
+      })),
+      assetIndex: index,
+    };
+    await writeSiteData(
+      siteData as unknown as ReturnType<typeof createSiteData>
+    );
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/post.md", source, "utf8");
+    await writeFile(".webstudio/assets/draft.md", "draft secret", "utf8");
+
+    await prebuild({ assets: true, template: ["react-router"] });
+
+    await expect(
+      readFile("app/routes/[blog].$slug._index.tsx", "utf8")
+    ).resolves.toContain("createGeneratedAssetResourceFetch");
+    await expect(readFile("public/assets/post.md", "utf8")).resolves.toBe(
+      source
+    );
+    await expect(readFile("public/assets/draft.md", "utf8")).resolves.toBe(
+      "draft secret"
+    );
+    const manifest = await readFile(
+      "app/__generated__/$resources.asset-query-manifest.ts",
+      "utf8"
+    );
+    expect(manifest).not.toContain("Published post");
+    expect(manifest).not.toContain("draft secret");
+    await expect(
+      readFile("app/asset-resource-fetch.ts", "utf8")
+    ).rejects.toThrow("ENOENT");
+    expect(
+      (await getFilePaths("app/routes")).filter((path) =>
+        path.includes("$slug")
+      )
+    ).toHaveLength(1);
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("react-router", ["build"]);
+    const serverBundle = (
+      await Promise.all(
+        (
+          await getFilePaths("build/server")
+        )
+          .filter((path) => path.endsWith(".js"))
+          .map((path) => readFile(path, "utf8"))
+      )
+    ).join("\n");
+    expect(serverBundle).not.toContain("Published post");
+    expect(serverBundle).not.toContain("draft secret");
+    expect(serverBundle).not.toContain("post-revision");
+  }, 30_000);
+
   test("uses pass-through images in the base react-router template", async () => {
     await prebuild({ assets: false, template: ["react-router"] });
 
+    const route = await readFile("app/routes/_index.tsx", "utf8");
+    expect(route).toContain("$resources.asset-query-runtime");
+    expect(route).not.toContain("@webstudio-is/asset-resource");
+    const assetQueryRuntime = await readFile(
+      "app/__generated__/$resources.asset-query-runtime.ts",
+      "utf8"
+    );
+    expect(assetQueryRuntime).not.toContain("@webstudio-is/asset-resource");
+    expect(assetQueryRuntime).toContain("=> fallback");
     await expect(readFile("app/constants.mjs", "utf8")).resolves.toContain(
       "return props.src"
     );
@@ -688,6 +998,24 @@ describe("prebuild", () => {
     expect(packageJson.dependencies).not.toHaveProperty("h3");
     expect(packageJson.dependencies).not.toHaveProperty("ipx");
   });
+
+  test("omits the asset query runtime from dynamic app bundles without asset queries", async () => {
+    await prebuild({ assets: false, template: ["react-router"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+
+    await runGeneratedCommand("react-router", ["build"]);
+
+    const serverBundle = (
+      await Promise.all(
+        (
+          await getFilePaths("build/server")
+        )
+          .filter((path) => path.endsWith(".js"))
+          .map((path) => readFile(path, "utf8"))
+      )
+    ).join("\n");
+    expect(serverBundle).not.toContain("@webstudio-is/asset-resource");
+  }, 30_000);
 
   test("keeps IPX image optimization in the react-router Docker overlay", async () => {
     await prebuild({
@@ -716,7 +1044,7 @@ describe("prebuild", () => {
     );
   });
 
-  test("selects ssg templates and skips dynamic routes", async () => {
+  test("selects ssg templates", async () => {
     await writeSiteData(
       createSiteData({
         pages: [
@@ -725,14 +1053,6 @@ describe("prebuild", () => {
             name: "Home",
             title: "Home",
             path: "",
-            rootInstanceId: "root",
-            meta: {},
-          },
-          {
-            id: "post",
-            name: "Post",
-            title: "Post",
-            path: "/blog/:slug",
             rootInstanceId: "root",
             meta: {},
           },
@@ -751,13 +1071,203 @@ describe("prebuild", () => {
     await expect(readFile("pages/index/+data.ts", "utf8")).resolves.toContain(
       "../app/__generated__/_index.server"
     );
-    await expect(
-      readFile("pages/blog/:slug/+Page.tsx", "utf8")
-    ).rejects.toThrow("ENOENT");
-    await expect(
-      readFile("app/__generated__/[blog].$slug._index.tsx", "utf8")
-    ).resolves.toContain("export { Page }");
+    await expect(readFile("pages/index/+data.ts", "utf8")).resolves.toContain(
+      "createSsgAssetResourceFetch"
+    );
+    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.dependencies).toHaveProperty(
+      "@webstudio-is/asset-resource"
+    );
   });
+
+  test("prerenders dynamic SSG paths from parameterized Assets resources", async () => {
+    const index = await createTestAssetIndex([
+      {
+        ...indexedDocument,
+        path: "blog/post.md",
+        size: 1,
+        properties: { slug: "hello-world", title: "Hello", draft: false },
+      },
+      {
+        ...indexedDocument,
+        _id: "draft-post",
+        name: "draft.md",
+        path: "blog/draft.md",
+        key: "draft",
+        size: 1,
+        revision: "draft-revision",
+        contentRef: "draft.md",
+        properties: { slug: "draft-post", title: "Draft", draft: true },
+      },
+    ]);
+    const siteData = {
+      ...createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "home-root",
+            meta: {},
+          },
+          {
+            id: "post",
+            name: "Post",
+            title: "Post",
+            path: "/blog/:slug",
+            rootInstanceId: "post-root",
+            meta: {},
+          },
+        ],
+        instances: [
+          ["home-root", { id: "home-root", component: "Box", children: [] }],
+          ["post-root", { id: "post-root", component: "Box", children: [] }],
+        ],
+      }),
+      assetIndex: index,
+    };
+    siteData.build.resources = [
+      [
+        "post",
+        {
+          id: "post",
+          name: "Post",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          headers: [],
+          body: createStructuredAssetQueryResourceBody({
+            filters: [
+              {
+                field: ["properties", "draft"],
+                operator: "ne",
+                value: "true",
+              },
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.slug",
+              },
+            ],
+            sort: [],
+            limit: "1",
+            offset: "0",
+            content: { mode: "none" },
+          }),
+        },
+      ],
+    ] as never;
+    siteData.build.dataSources = [
+      [
+        "post-data",
+        {
+          id: "post-data",
+          type: "resource",
+          name: "post",
+          resourceId: "post",
+          scopeInstanceId: "post-root",
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await expect(
+      readFile("pages/blog/@slug/+onBeforePrerenderStart.ts", "utf8")
+    ).resolves.toContain("/blog/hello-world");
+    await expect(
+      readFile("pages/blog/@slug/+onBeforePrerenderStart.ts", "utf8")
+    ).resolves.not.toContain("/blog/draft-post");
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+    await expect(
+      readFile("dist/client/blog/hello-world/index.html", "utf8")
+    ).resolves.toContain("<!DOCTYPE html>");
+  }, 30_000);
+
+  test("prerenders SSG pages with asset query data", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      path: "blog/post.md",
+      size: 1,
+      properties: { title: "Prerendered post" },
+    });
+    const siteData = {
+      ...createSiteData(),
+      assetIndex: index,
+    };
+    siteData.build.resources = [
+      [
+        "posts",
+        {
+          id: "posts",
+          name: "Posts",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          headers: [],
+          body: createStructuredAssetQueryResourceBody({
+            filters: [],
+            sort: [],
+            limit: "10",
+            offset: "0",
+            content: { mode: "none" },
+          }),
+        },
+      ],
+    ] as never;
+    siteData.build.dataSources = [
+      [
+        "posts-data",
+        {
+          id: "posts-data",
+          type: "resource",
+          name: "posts",
+          resourceId: "posts",
+          scopeInstanceId: "root",
+        },
+      ],
+    ] as never;
+    await writeSiteData(
+      siteData as unknown as ReturnType<typeof createSiteData>
+    );
+    await prebuild({ assets: false, template: ["ssg"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    const pageModule = (await import(
+      `${
+        pathToFileURL(join(tempDir, "pages/index/+data.ts")).href
+      }?test=${crypto.randomUUID()}`
+    )) as {
+      data: (context: {
+        urlOriginal: string;
+        headers: Record<string, string>;
+        routeParams: Record<string, string>;
+      }) => Promise<{ resources: Record<string, unknown> }>;
+    };
+
+    const pageData = await pageModule.data({
+      urlOriginal: "/",
+      headers: { host: "example.com" },
+      routeParams: {},
+    });
+
+    expect(pageData.resources).toMatchObject({
+      Posts: {
+        ok: true,
+        status: 200,
+        data: {
+          items: [{ properties: { title: "Prerendered post" } }],
+        },
+      },
+    });
+    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["prerender"]);
+    await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(
+      "<!DOCTYPE html>"
+    );
+  }, 30_000);
 
   test("generates html, xml, and text document routes", async () => {
     await writeSiteData(

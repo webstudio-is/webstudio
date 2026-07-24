@@ -20,6 +20,7 @@ import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { assets } from "../__generated__/$resources.assets";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
+import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";
 
 const authenticateProductionRequest = (request: Request) => {
   const host =
@@ -98,9 +99,16 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     pathname: url.pathname,
   };
 
+  const generatedFetch = await createGeneratedAssetResourceFetch({
+    request: arg.request,
+    context: arg.context,
+    fallback: customFetch,
+  });
   const resources = await loadResources(
-    customFetch,
-    getResources({ system }).data
+    generatedFetch,
+    getResources({ system }).data,
+    url,
+    { signal: arg.request.signal }
   );
   const pageMeta = getPageMeta({ system, resources });
 

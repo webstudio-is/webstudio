@@ -209,4 +209,31 @@ describe("getResourceKey - pure function tests", () => {
     expect(key1).toBe(key2);
     expect(key1).toBeTruthy();
   });
+
+  test("asset query cache separates structured query inputs", () => {
+    const createRequest = (body: Record<string, unknown>): ResourceRequest => ({
+      name: "assets-query",
+      control: "system",
+      method: "post",
+      url: "/$resources/assets",
+      searchParams: [],
+      headers: [{ name: "content-type", value: "application/json" }],
+      body,
+    });
+    const base = { query: { filters: [], limit: 20, offset: 0 } };
+    const requests = [
+      base,
+      { query: { ...base.query, limit: 10 } },
+      { query: { ...base.query, offset: 10 } },
+      {
+        query: {
+          ...base.query,
+          sort: [{ field: ["name"], direction: "asc" }],
+        },
+      },
+    ];
+    const keys = requests.map((body) => getResourceKey(createRequest(body)));
+
+    expect(new Set(keys).size).toBe(requests.length);
+  });
 });

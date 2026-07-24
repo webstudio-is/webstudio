@@ -1,5 +1,6 @@
 import type { AssetClient } from "../../client";
 import { uploadToFs } from "./upload";
+import { readFromFs } from "./read";
 
 type FsClientOptions = {
   fileDirectory: string;
@@ -17,5 +18,7 @@ export const createFsClient = (options: FsClientOptions): AssetClient => {
         fileDirectory: options.fileDirectory,
         assetDataOverride,
       }),
+    readFile: (name, range) =>
+      readFromFs({ name, range, fileDirectory: options.fileDirectory }),
   };
 };

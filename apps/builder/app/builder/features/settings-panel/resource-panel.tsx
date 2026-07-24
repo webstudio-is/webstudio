@@ -2,6 +2,8 @@ import { z } from "zod";
 import { computed } from "nanostores";
 import {
   forwardRef,
+  lazy,
+  Suspense,
   useEffect,
   useId,
   useImperativeHandle,
@@ -20,6 +22,7 @@ import {
 import {
   encodeDataVariableId,
   generateObjectExpression,
+  isConfiguredAssetsResource,
   isLiteralExpression,
   parseObjectExpression,
   SYSTEM_VARIABLE_ID,
@@ -76,6 +79,11 @@ import {
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";
+const AssetQueryForm = lazy(() =>
+  import("./asset-query-form").then(({ AssetQueryForm }) => ({
+    default: AssetQueryForm,
+  }))
+);
 
 export const UrlField = ({
   scope,
@@ -353,7 +361,7 @@ const HeaderPair = ({
         value={name}
         onChange={(event) => onChange(event.target.value, value)}
       />
-      <input hidden={true} readOnly={true} name="header-value" value={value} />
+      <input type="hidden" readOnly={true} name="header-value" value={value} />
       <BindingControl>
         <InputField
           placeholder="Value"
@@ -597,7 +605,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
 };
 
 type PanelApi = {
-  save: (formData: FormData) => void;
+  save: (formData: FormData) => void | false;
 };
 
 type BodyType = ResourceBodyInputType;
@@ -912,13 +920,22 @@ export const SystemResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
+  const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
 
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
+  const isStoredAssetQuery =
+    resource !== undefined && isConfiguredAssetsResource(resource);
 
+  const assetsLocalResource = {
+    label: "Assets",
+    value: JSON.stringify(assetsResourceUrl),
+    description:
+      "Loads all project assets by default, with optional filters, sorting, pagination, and file content.",
+  };
   const localResources = [
     {
       label: "Sitemap",
@@ -931,24 +948,29 @@ export const SystemResourceForm = forwardRef<
       description:
         "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
-    {
-      label: "Assets",
-      value: JSON.stringify(assetsResourceUrl),
-      description:
-        "Resource that loads the list of assets of the current project.",
-    },
+    assetsLocalResource,
   ];
 
   const [localResource, setLocalResource] = useState(() => {
+    if (isStoredAssetQuery) {
+      return assetsLocalResource;
+    }
     return (
       localResources.find(
         (localResource) => localResource.value === resource?.url
       ) ?? localResources[0]
     );
   });
-
+  const isAssetsResource =
+    localResource.value === JSON.stringify(assetsResourceUrl);
+  const [isAssetQueryEnabled, setIsAssetQueryEnabled] =
+    useState(isStoredAssetQuery);
+  const isAssetQuery = isAssetsResource && isAssetQueryEnabled;
   useImperativeHandle(ref, () => ({
     save: (formData) => {
+      if (formData.get("asset-query-valid") === "false") {
+        return false;
+      }
       // preserve existing instance scope when edit
       const scopeInstanceId =
         variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
@@ -973,10 +995,15 @@ export const SystemResourceForm = forwardRef<
   }));
 
   const resourceId = useId();
+  const assetQueryEnabledId = useId();
 
   return (
     <>
-      <input type="hidden" name="method" value="get" />
+      <input
+        type="hidden"
+        name="method"
+        value={isAssetQuery ? "post" : "get"}
+      />
       <input type="hidden" name="url" value={localResource.value} />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={resourceId}>Resource</Label>
@@ -994,6 +1021,20 @@ export const SystemResourceForm = forwardRef<
           value={localResource}
           onChange={setLocalResource}
         />
+        {isAssetsResource && (
+          <Suspense
+            fallback={<Text color="subtle">Loading query editor…</Text>}
+          >
+            <AssetQueryForm
+              resource={resource}
+              scope={scope}
+              aliases={aliases}
+              enabled={isAssetQuery}
+              enabledId={assetQueryEnabledId}
+              onEnabledChange={setIsAssetQueryEnabled}
+            />
+          </Suspense>
+        )}
       </Flex>
     </>
   );

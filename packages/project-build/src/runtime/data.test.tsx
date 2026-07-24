@@ -41,6 +41,7 @@ import {
   createResourceValue,
   createResourceValueFromFormData,
   decodeDataVariableName,
+  deleteResource,
   deleteVariableMutable,
   deleteUnusedDataVariables,
   encodeDataVariableName,
@@ -3447,6 +3448,35 @@ describe("resource patch helpers", () => {
       propIds: ["prop"],
       isUsed: false,
     });
+  });
+
+  test("rejects deleting resources whose data source is referenced by expressions", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [
+        {
+          type: "expression",
+          value: `${encodeDataVariableId("data-source")}.data`,
+        },
+      ],
+    });
+    state.resources.set(resource.id, resource);
+    state.dataSources.set("data-source", {
+      id: "data-source",
+      scopeInstanceId: "body",
+      name: "Users",
+      type: "resource",
+      resourceId: resource.id,
+    });
+
+    expect(() =>
+      deleteResource(state, { resourceId: resource.id, force: true })
+    ).toThrow(
+      'Resource data is referenced by expressions through "data-source"'
+    );
   });
 });
 
