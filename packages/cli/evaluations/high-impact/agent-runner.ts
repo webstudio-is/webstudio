@@ -165,6 +165,7 @@ export const runHighImpactAgentEvaluation = async ({
   evaluate,
   env = process.env,
   timeoutMs = 10 * 60_000,
+  signal,
 }: {
   fixture: HighImpactFixture;
   target: AgentCliTarget;
@@ -179,6 +180,7 @@ export const runHighImpactAgentEvaluation = async ({
   evaluate: () => Promise<HighImpactEvaluationResult>;
   env?: NodeJS.ProcessEnv;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }) => {
   await mkdir(dirname(taskPath), { recursive: true });
   await writeFile(
@@ -192,6 +194,7 @@ export const runHighImpactAgentEvaluation = async ({
     cwd,
     env: { ...env, WEBSTUDIO_HIGH_IMPACT_AGENT_TASK: taskPath },
     timeoutMs,
+    signal,
     onStdoutLine: (line) => {
       let value: unknown;
       try {

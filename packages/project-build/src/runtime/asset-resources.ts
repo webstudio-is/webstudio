@@ -1,8 +1,5 @@
 import {
-  assetQueryFieldPath,
-  assetQuerySort,
-  assetResourceLimits,
-  assetResourceContentOptions,
+  assetQueryResourceConfigurationInput,
   createStructuredAssetQueryResourceBody,
   decodeDataSourceVariable,
   isAssetsResource,
@@ -10,57 +7,19 @@ import {
   parseStructuredAssetQueryResourceBody,
   SYSTEM_VARIABLE_ID,
   transpileExpression,
+  type AssetQueryResourceConfiguration,
   type Resource,
 } from "@webstudio-is/sdk";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
-import {
-  createResource,
-  resourceExpressionInput,
-  updateResource,
-} from "./data";
+import { createResource, updateResource } from "./data";
 import { throwBuilderRuntimeError } from "./errors";
 import { paginateOutput, paginatedOutputInputSchema } from "./output";
 
-const assetQueryValueExpressionInput = resourceExpressionInput.describe(
-  'A Webstudio expression evaluated in the resource scope. Use { type: "literal", value: "text" } for a fixed string.'
-);
-
-const assetQueryFilterBindingInput = z.object({
-  field: assetQueryFieldPath.describe(
-    'Indexed file field path, for example ["extension"] or ["properties", "slug"].'
-  ),
-  operator: z.enum([
-    "eq",
-    "ne",
-    "in",
-    "contains",
-    "startsWith",
-    "endsWith",
-    "gt",
-    "gte",
-    "lt",
-    "lte",
-    "exists",
-    "isEmpty",
-  ]),
-  value: assetQueryValueExpressionInput,
-});
-
-export const assetsQueryConfigurationInput = z.object({
-  filters: z
-    .array(assetQueryFilterBindingInput)
-    .max(assetResourceLimits.filterCount)
-    .default([]),
-  sort: z.array(assetQuerySort).max(assetResourceLimits.sortCount).default([]),
-  limit: resourceExpressionInput.default(
-    String(assetResourceLimits.defaultResultCount)
-  ),
-  offset: resourceExpressionInput.default("0"),
-  content: assetResourceContentOptions.default({ mode: "none" }),
-});
+export const assetsQueryConfigurationInput =
+  assetQueryResourceConfigurationInput;
 
 export const assetsResourceListInput = z.object({
   scopeInstanceId: z.string().optional(),
@@ -90,8 +49,12 @@ export const assetsResourceUpdateInput = z.object({
   dataSourceName: z.string().optional(),
 });
 
-const normalizeExpression = (value: z.output<typeof resourceExpressionInput>) =>
-  typeof value === "string" ? value : JSON.stringify(value.value);
+const normalizeExpression = (
+  value:
+    | AssetQueryResourceConfiguration["limit"]
+    | AssetQueryResourceConfiguration["offset"]
+    | AssetQueryResourceConfiguration["filters"][number]["value"]
+) => (typeof value === "string" ? value : JSON.stringify(value.value));
 
 export const createAssetResourceBody = (
   configuration: z.output<typeof assetsQueryConfigurationInput>

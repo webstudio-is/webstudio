@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { assetFileDocument, builderAssetFieldCatalog } from "./asset-resource";
+import {
+  assetFileDocument,
+  assetQueryResourceConfigurationInput,
+  builderAssetFieldCatalog,
+} from "./asset-resource";
 
 const document = {
   _id: "asset-1",
@@ -136,6 +140,43 @@ describe("builderAssetFieldCatalog", () => {
         fields: {
           name: { types: ["string", "number"], occurrences: 1 },
         },
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe("assetQueryResourceConfigurationInput", () => {
+  test("accepts JSON filter literals and bounded numeric pagination literals", () => {
+    expect(
+      assetQueryResourceConfigurationInput.safeParse({
+        filters: [
+          {
+            field: ["properties", "draft"],
+            operator: "ne",
+            value: { type: "literal", value: true },
+          },
+        ],
+        limit: { type: "literal", value: 20 },
+        offset: { type: "literal", value: 0 },
+      }).success
+    ).toBe(true);
+  });
+
+  test("rejects non-JSON literals and invalid numeric pagination literals", () => {
+    expect(
+      assetQueryResourceConfigurationInput.safeParse({
+        filters: [
+          {
+            field: ["properties", "publishedAt"],
+            operator: "eq",
+            value: { type: "literal", value: new Date() },
+          },
+        ],
+      }).success
+    ).toBe(false);
+    expect(
+      assetQueryResourceConfigurationInput.safeParse({
+        limit: { type: "literal", value: "20" },
       }).success
     ).toBe(false);
   });

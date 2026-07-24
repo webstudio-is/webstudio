@@ -43,7 +43,6 @@ const canonicalEntry = ({
     contentRef: `assets/post-${slug}`,
     properties: { slug },
   },
-  fieldContributions: [{ path: "properties.slug", type: "string" as const }],
 });
 
 describe("previewAssetResourceQuery", () => {

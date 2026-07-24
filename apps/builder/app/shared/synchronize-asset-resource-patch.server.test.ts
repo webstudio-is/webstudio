@@ -85,6 +85,30 @@ describe("asset metadata synchronization", () => {
     expect(synchronizeCanonicalAssets).not.toHaveBeenCalled();
   });
 
+  test("does not fail a committed patch when resource metadata is malformed", async () => {
+    const report = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      synchronizeAssetResourcesAfterBuildPatch(
+        {
+          context,
+          buildId: "build-1",
+          projectId: "project-1",
+          resources: "not-json",
+          changes: [],
+        },
+        dependencies
+      )
+    ).resolves.toBeUndefined();
+
+    expect(report).toHaveBeenCalledWith(
+      "Asset metadata synchronization failed",
+      expect.any(SyntaxError)
+    );
+    report.mockRestore();
+    expect(createAssetClient).not.toHaveBeenCalled();
+  });
+
   test("updates standard metadata for renamed or moved assets", async () => {
     const resource = createQueryResource();
     await synchronizeAssetResourcesAfterBuildPatch(

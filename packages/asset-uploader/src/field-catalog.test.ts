@@ -47,7 +47,6 @@ describe("loadBuilderAssetFieldCatalog", () => {
           contentRef: "assets/post-1",
           properties: { title: "Post" },
         },
-        fieldContributions: [{ path: "properties.title", type: "string" }],
       },
     ]);
 

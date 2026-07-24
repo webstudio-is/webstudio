@@ -1,6 +1,5 @@
 import {
   assetQuery,
-  assetQueryResult,
   assetQueryStandardFieldTypes,
   getAssetQueryOperatorsForFieldTypes,
   type AssetFileDocument,
@@ -41,22 +40,16 @@ const getCatalogPath = (path: AssetQueryFieldPath) => {
   return catalogPath;
 };
 
-const validateFilterOperator = ({
+const isFilterOperatorCompatible = ({
   filter,
   fieldTypes,
 }: {
   filter: AssetQueryFilter;
   fieldTypes: readonly AssetObservedFieldType[];
-}) => {
-  const compatible = getAssetQueryOperatorsForFieldTypes(fieldTypes).includes(
-    filter.operator
-  );
-  if (compatible === false) {
-    throw new AssetQueryExecutionError(
-      `Operator ${filter.operator} is incompatible with ${getCatalogPath(filter.field)}`
-    );
-  }
-};
+}) => getAssetQueryOperatorsForFieldTypes(fieldTypes).includes(filter.operator);
+
+const getCatalogField = (catalog: BuilderAssetFieldCatalog, path: string) =>
+  Object.hasOwn(catalog.fields, path) ? catalog.fields[path] : undefined;
 
 export const validateAssetQueryAgainstCatalog = ({
   query: input,
@@ -67,40 +60,56 @@ export const validateAssetQueryAgainstCatalog = ({
 }) => {
   const query = assetQuery.parse(input);
   const referencedFieldPaths = new Map<string, AssetQueryFieldPath>();
+  const warnings: string[] = [];
   for (const filter of query.filters) {
     const catalogPath = getCatalogPath(filter.field);
     referencedFieldPaths.set(catalogPath, filter.field);
     if (filter.field[0] === "properties") {
-      const field = catalog.fields[catalogPath];
+      const field = getCatalogField(catalog, catalogPath);
+      // Dynamic fields are schemaless. The catalog describes the currently
+      // observed documents for authoring assistance, but deleting the last
+      // matching file must not invalidate an otherwise valid saved query.
       if (field === undefined) {
-        throw new AssetQueryExecutionError(
-          `Asset field ${catalogPath} was not found`
+        warnings.push(`Asset field ${catalogPath} is not currently observed`);
+      } else if (
+        isFilterOperatorCompatible({ filter, fieldTypes: field.types }) ===
+        false
+      ) {
+        warnings.push(
+          `Operator ${filter.operator} is not compatible with the currently observed types of ${catalogPath}`
         );
       }
-      validateFilterOperator({ filter, fieldTypes: field.types });
     } else {
-      validateFilterOperator({
-        filter,
-        fieldTypes:
-          assetQueryStandardFieldTypes[
-            filter.field[0] as keyof typeof assetQueryStandardFieldTypes
-          ],
-      });
+      if (
+        isFilterOperatorCompatible({
+          filter,
+          fieldTypes:
+            assetQueryStandardFieldTypes[
+              filter.field[0] as keyof typeof assetQueryStandardFieldTypes
+            ],
+        }) === false
+      ) {
+        throw new AssetQueryExecutionError(
+          `Operator ${filter.operator} is incompatible with ${catalogPath}`
+        );
+      }
     }
   }
   for (const order of query.sort) {
     const catalogPath = getCatalogPath(order.field);
     referencedFieldPaths.set(catalogPath, order.field);
+    // Sorting is defined for every JSON value by compareSortValues below.
+    // Do not let an absent field or an unrelated mixed-type document make a
+    // previously valid schemaless query fail at runtime.
     if (order.field[0] === "properties") {
-      const field = catalog.fields[catalogPath];
+      const field = getCatalogField(catalog, catalogPath);
       if (field === undefined) {
-        throw new AssetQueryExecutionError(
-          `Asset field ${catalogPath} was not found`
-        );
-      }
-      if (field.types.some((type) => type === "object" || type === "array")) {
-        throw new AssetQueryExecutionError(
-          `Asset field ${catalogPath} cannot be sorted`
+        warnings.push(`Asset field ${catalogPath} is not currently observed`);
+      } else if (
+        field.types.some((type) => type === "object" || type === "array")
+      ) {
+        warnings.push(
+          `Asset field ${catalogPath} currently includes structured values that use deterministic JSON sort order`
         );
       }
     }
@@ -108,10 +117,11 @@ export const validateAssetQueryAgainstCatalog = ({
   return {
     query,
     referencedFieldPaths: [...referencedFieldPaths.values()],
+    warnings: [...new Set(warnings)],
   };
 };
 
-const getFieldValue = (
+export const getAssetQueryFieldValue = (
   document: AssetFileDocument,
   path: AssetQueryFieldPath
 ) => {
@@ -120,7 +130,11 @@ const getFieldValue = (
       ? document._id
       : (document as Readonly<Record<string, unknown>>)[path[0]];
   for (const segment of path.slice(1)) {
-    if (typeof value !== "object" || value === null) {
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      Object.hasOwn(value, segment) === false
+    ) {
       return;
     }
     value = (value as Readonly<Record<string, unknown>>)[segment];
@@ -162,7 +176,7 @@ export const matchesAssetQueryFilter = (
   document: AssetFileDocument,
   filter: AssetQueryFilter
 ) => {
-  const value = getFieldValue(document, filter.field);
+  const value = getAssetQueryFieldValue(document, filter.field);
   if (filter.operator === "exists") {
     return (value !== undefined && value !== null) === filter.value;
   }
@@ -289,8 +303,8 @@ export const executeAssetQuery = async ({
   const sorted = [...matched].sort((left, right) => {
     for (const order of query.sort) {
       const compared = compareSortValues(
-        getFieldValue(left, order.field),
-        getFieldValue(right, order.field)
+        getAssetQueryFieldValue(left, order.field),
+        getAssetQueryFieldValue(right, order.field)
       );
       if (compared !== 0) {
         return order.direction === "asc" ? compared : -compared;
@@ -328,11 +342,11 @@ export const executeAssetQuery = async ({
       };
     });
   }
-  const result = assetQueryResult.parse({
+  const result = {
     items,
     totalCount: matched.length,
     hasMore: query.offset + selected.length < matched.length,
-  });
+  } satisfies AssetQueryResult;
   assertResultSize(result);
   return result;
 };

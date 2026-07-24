@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   createStructuredAssetQueryResourceBody,
+  getAssetQueryFieldOptions,
   getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
   parseStructuredAssetQueryResourceBody,
@@ -78,5 +79,18 @@ describe("structured asset query resource body", () => {
     expect(isEmptyAssetQueryResult({ items: [{ id: "one" }] })).toBe(false);
     expect(isEmptyAssetQueryResult([])).toBe(false);
     expect(isEmptyAssetQueryResult(undefined)).toBe(false);
+  });
+
+  test("retains configured schemaless fields missing from the catalog", () => {
+    const options = getAssetQueryFieldOptions({
+      configuredPaths: [["properties", "removedField"]],
+    });
+
+    expect(options).toContainEqual(
+      expect.objectContaining({
+        path: ["properties", "removedField"],
+        types: expect.arrayContaining(["string", "object", "array"]),
+      })
+    );
   });
 });

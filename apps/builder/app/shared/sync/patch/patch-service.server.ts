@@ -41,8 +41,10 @@ const namespaceBuildColumns = {
   breakpoints: ["breakpoints"],
   instances: ["instances"],
   props: ["props"],
-  assets: [],
-  assetFolders: [],
+  // Asset metadata synchronization is conditional on configured Assets
+  // resources, so asset-only patches still need the current resource set.
+  assets: ["resources"],
+  assetFolders: ["resources"],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
   styles: ["styles"],

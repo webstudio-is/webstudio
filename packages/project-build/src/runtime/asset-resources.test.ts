@@ -60,11 +60,27 @@ describe("Assets resource mutation input", () => {
               operator: "eq",
               value: "system.params.slug",
             },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: { type: "literal", value: true },
+            },
           ],
-          limit: "1",
+          limit: { type: "literal", value: 20 },
+          offset: { type: "literal", value: 0 },
           content: { mode: "markdown-body", maxBytes: 65_536 },
         },
       }).success
     ).toBe(true);
+  });
+
+  test("rejects out-of-range literal pagination", () => {
+    expect(
+      assetsResourceCreateInput.safeParse({
+        name: "Posts",
+        scopeInstanceId: "root",
+        query: { limit: { type: "literal", value: -1 } },
+      }).success
+    ).toBe(false);
   });
 });

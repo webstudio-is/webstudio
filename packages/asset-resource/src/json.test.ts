@@ -46,6 +46,9 @@ describe("JSON metadata extraction", () => {
       extractJsonProperties('{"value":"long"}', { stringBytes: 3 })
     ).rejects.toMatchObject({ code: "JSON_STRING_BYTES_EXCEEDED" });
     await expect(
+      extractJsonProperties('{"value":"long"}', { serializedBytes: 8 })
+    ).rejects.toMatchObject({ code: "JSON_BYTES_EXCEEDED" });
+    await expect(
       extractJsonProperties('{"value":9007199254740993}')
     ).rejects.toMatchObject({ code: "JSON_INVALID" });
   });

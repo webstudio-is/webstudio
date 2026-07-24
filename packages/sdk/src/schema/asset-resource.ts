@@ -327,6 +327,77 @@ export const assetQuerySort = z.strictObject({
 
 export type AssetQuerySort = z.infer<typeof assetQuerySort>;
 
+const assetQueryLiteral = <Schema extends z.ZodType>(value: Schema) =>
+  z.strictObject({ type: z.literal("literal"), value });
+
+export const assetQueryFilterValueExpression = z.union([
+  z.string(),
+  assetQueryLiteral(z.json()),
+]);
+
+export type AssetQueryFilterValueExpression = z.infer<
+  typeof assetQueryFilterValueExpression
+>;
+
+export const assetQueryLimitExpression = z.union([
+  z.string(),
+  assetQueryLiteral(
+    z.number().int().nonnegative().max(assetResourceLimits.resultCount)
+  ),
+]);
+
+export type AssetQueryLimitExpression = z.infer<
+  typeof assetQueryLimitExpression
+>;
+
+export const assetQueryOffsetExpression = z.union([
+  z.string(),
+  assetQueryLiteral(
+    z.number().int().nonnegative().max(assetResourceLimits.candidateDocuments)
+  ),
+]);
+
+export type AssetQueryOffsetExpression = z.infer<
+  typeof assetQueryOffsetExpression
+>;
+
+export const assetQueryResourceConfigurationInput = z.strictObject({
+  filters: z
+    .array(
+      z.strictObject({
+        field: assetQueryFieldPath.describe(
+          'Indexed file field path, for example ["extension"] or ["properties", "slug"].'
+        ),
+        operator: z.enum(assetQueryOperators),
+        value: assetQueryFilterValueExpression.describe(
+          'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.'
+        ),
+      })
+    )
+    .max(assetResourceLimits.filterCount)
+    .default([]),
+  sort: z.array(assetQuerySort).max(assetResourceLimits.sortCount).default([]),
+  limit: assetQueryLimitExpression
+    .describe(
+      'A Webstudio expression, or { type: "literal", value: number } for a fixed result limit.'
+    )
+    .default(String(assetResourceLimits.defaultResultCount)),
+  offset: assetQueryOffsetExpression
+    .describe(
+      'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.'
+    )
+    .default("0"),
+  content: assetResourceContentOptions.default({ mode: "none" }),
+});
+
+export type AssetQueryResourceConfigurationInput = z.input<
+  typeof assetQueryResourceConfigurationInput
+>;
+
+export type AssetQueryResourceConfiguration = z.output<
+  typeof assetQueryResourceConfigurationInput
+>;
+
 /**
  * Optional typed configuration for the existing Assets system resource.
  * An omitted configuration preserves the legacy fetch-all behavior.

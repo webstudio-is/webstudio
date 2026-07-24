@@ -59,7 +59,10 @@ import {
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
-import { matchesAssetQueryFilter } from "@webstudio-is/asset-resource";
+import {
+  getAssetQueryFieldValue,
+  matchesAssetQueryFilter,
+} from "@webstudio-is/asset-resource";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -147,17 +150,6 @@ const getBoundSystemRouteParameter = (expression: string) => {
   }
 };
 
-const getDocumentPathValue = (document: unknown, path: readonly string[]) => {
-  let value = document;
-  for (const segment of path) {
-    if (typeof value !== "object" || value === null) {
-      return;
-    }
-    value = Reflect.get(value, segment);
-  }
-  return value;
-};
-
 const getStaticAssetQueryFilter = (
   filter: StructuredAssetQueryFilterBinding
 ): AssetQueryFilter | undefined => {
@@ -237,16 +229,12 @@ export const getAssetResourcePrerenderPaths = ({
       }
       const values = new Map<string, string>();
       for (const [name, fieldPath] of routeFields) {
-        const value = getDocumentPathValue(
-          document,
-          fieldPath[0] === "id" ? ["_id"] : fieldPath
-        );
-        if (
-          (typeof value === "string" && value.length > 0) ||
-          (typeof value === "number" && Number.isFinite(value)) ||
-          typeof value === "boolean"
-        ) {
-          values.set(name, String(value));
+        const value = getAssetQueryFieldValue(document, fieldPath);
+        // Route parameters are strings at runtime and `eq` is type-strict.
+        // Enumerating numbers or booleans would create a page whose resource
+        // query cannot select the document used to derive that path.
+        if (typeof value === "string" && value.length > 0) {
+          values.set(name, value);
         }
       }
       if (values.size !== routeParameterNames.size) {

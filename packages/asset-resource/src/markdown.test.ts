@@ -118,6 +118,11 @@ tags: [web, studio]
     await expect(
       extractMarkdownFrontmatter("---\ntitle: long\n---\n", { stringBytes: 3 })
     ).rejects.toMatchObject({ code: "FRONTMATTER_STRING_BYTES_EXCEEDED" });
+    await expect(
+      extractMarkdownFrontmatter("---\ntitle: long\n---\n", {
+        serializedBytes: 8,
+      })
+    ).rejects.toMatchObject({ code: "FRONTMATTER_BYTES_EXCEEDED" });
   });
 
   test("rejects aliases and duplicate keys", async () => {

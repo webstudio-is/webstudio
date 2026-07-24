@@ -129,9 +129,9 @@ describe("api router build operation adapters", () => {
           ],
         },
       })
-    ).rejects.toMatchObject({
-      code: "BAD_REQUEST",
-      cause: { webstudioCode: "INVALID_REQUEST" },
+    ).resolves.toMatchObject({
+      valid: true,
+      warnings: ["Asset field properties.missing is not currently observed"],
     });
     await expect(
       caller.assetQueries.preview({

@@ -29,6 +29,7 @@ import {
   shouldUpdateEvaluationBaselines,
   type EvaluationComparison,
 } from "./evaluation-regression";
+import { runConcurrently } from "./suite-runner";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -65,10 +66,12 @@ const runFixture = async ({
   fixture,
   repositoryRoot,
   resultPath,
+  signal,
 }: {
   fixture: HighImpactFixture;
   repositoryRoot: string;
   resultPath: string;
+  signal: AbortSignal;
 }) => {
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
@@ -139,6 +142,7 @@ const runFixture = async ({
       provider: "openai",
       model,
       env,
+      signal,
       getToolCalls: () => toolCalls,
       getCatalogObservations: () => catalogObservations,
       evaluate: async () => {
@@ -220,16 +224,22 @@ const run = async () => {
       process.env.WEBSTUDIO_HIGH_IMPACT_BASELINE_DIR ??
       join(import.meta.dirname, "results")
   );
-  const results: AgentEvaluationReport[] = [];
-  const rawResults: AgentEvaluationResult[] = [];
-  const baselines: AgentEvaluationResult[] = [];
-  for (const fixture of fixtures) {
+
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  process.once("SIGINT", abort);
+  process.once("SIGTERM", abort);
+  const completed = await runConcurrently(fixtures, async (fixture) => {
     const resultPath = resolve(
       process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
         join(resultsDirectory, `${fixture.id}.json`)
     );
-    const result = await runFixture({ fixture, repositoryRoot, resultPath });
-    rawResults.push(result);
+    const result = await runFixture({
+      fixture,
+      repositoryRoot,
+      resultPath,
+      signal: controller.signal,
+    });
     const baseline = await readFile(
       join(baselineDirectory, `${fixture.id}.json`),
       "utf8"
@@ -248,8 +258,15 @@ const run = async () => {
       `${JSON.stringify(report, undefined, 2)}\n`,
       "utf8"
     );
-    results.push(report);
-  }
+    return { result, report };
+  }).finally(() => {
+    process.removeListener("SIGINT", abort);
+    process.removeListener("SIGTERM", abort);
+  });
+  const rawResults = completed.map(({ result }) => result);
+  const results: AgentEvaluationReport[] = completed.map(
+    ({ report }) => report
+  );
   const evaluationsPassed = rawResults.every(
     (result) => result.outcome === "passed"
   );

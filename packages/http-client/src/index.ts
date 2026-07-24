@@ -2,10 +2,8 @@ import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
 import {
   getAssetContentHash,
-  type AssetQueryFieldPath,
   type AssetQueryInput,
-  type AssetQuerySort,
-  type AssetResourceContentOptions,
+  type AssetQueryResourceConfigurationInput,
 } from "@webstudio-is/sdk";
 import {
   apiClientHeader,
@@ -1568,30 +1566,6 @@ type ResourceFieldsInput = {
   body?: string;
 };
 
-type AssetsQueryConfigurationInput = {
-  filters?: Array<{
-    field: AssetQueryFieldPath;
-    operator:
-      | "eq"
-      | "ne"
-      | "in"
-      | "contains"
-      | "startsWith"
-      | "endsWith"
-      | "gt"
-      | "gte"
-      | "lt"
-      | "lte"
-      | "exists"
-      | "isEmpty";
-    value: string | { type: "literal"; value: unknown };
-  }>;
-  sort?: AssetQuerySort[];
-  limit?: string | { type: "literal"; value: unknown };
-  offset?: string | { type: "literal"; value: unknown };
-  content?: AssetResourceContentOptions;
-};
-
 export const listResources = projectQueryInput<
   AuthProjectParams &
     PaginatedQueryInput & {
@@ -1613,7 +1587,7 @@ export const getAssetsResource = projectQueryInput<
 export const createAssetsResource = projectMutationInput<
   AuthProjectParams & {
     name: string;
-    query?: AssetsQueryConfigurationInput;
+    query?: AssetQueryResourceConfigurationInput;
     scopeInstanceId: string;
     dataSourceName?: string;
   }
@@ -1624,7 +1598,7 @@ export const updateAssetsResource = projectMutationInput<
     resourceId: string;
     values: {
       name?: string;
-      query?: AssetsQueryConfigurationInput | null;
+      query?: AssetQueryResourceConfigurationInput | null;
     };
     scopeInstanceId?: string;
     dataSourceName?: string;

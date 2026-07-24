@@ -39,4 +39,18 @@ describe("runAgentCommand", () => {
       })
     ).rejects.toThrow("Agent command timed out after 50ms.");
   });
+
+  test("terminates the process group when the caller aborts", async () => {
+    const controller = new AbortController();
+    const pending = runAgentCommand({
+      command: `${JSON.stringify(process.execPath)} -e 'setInterval(() => {}, 1000)'`,
+      cwd: process.cwd(),
+      env: process.env,
+      timeoutMs: 5_000,
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    await expect(pending).rejects.toThrow(/aborted|signal SIGTERM/);
+  });
 });

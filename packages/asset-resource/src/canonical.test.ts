@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { assetResourceLimits } from "@webstudio-is/sdk";
 import {
   createCanonicalAssetFileEntry,
   getFieldContributions,
@@ -167,17 +168,27 @@ describe("field contributions", () => {
     ]);
   });
 
-  test("stores the contribution on the canonical entry", () => {
+  test("derives field contributions from canonical properties", () => {
     const document = normalizeAssetFileDocument({
       asset,
       properties: { author: { name: "Oleg" } },
     });
-    expect(
-      createCanonicalAssetFileEntry({ projectId: "project-1", document })
-        .fieldContributions
-    ).toEqual([
+    expect(getFieldContributions(document.properties)).toEqual([
       { path: "properties.author", type: "object" },
       { path: "properties.author.name", type: "string" },
     ]);
+  });
+
+  test("rejects oversized persisted properties at the canonical boundary", () => {
+    const document = normalizeAssetFileDocument({
+      asset,
+      properties: {
+        content: "x".repeat(assetResourceLimits.indexedPropertiesBytes),
+      },
+    });
+
+    expect(() =>
+      createCanonicalAssetFileEntry({ projectId: "project-1", document })
+    ).toThrow("indexed byte limit");
   });
 });

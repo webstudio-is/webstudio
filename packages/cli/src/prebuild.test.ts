@@ -28,6 +28,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   generateRedirectsModule,
+  getAssetResourcePrerenderPaths,
   getRequiredAssetResourceContentRefs,
   materializeAssetIndex,
   prebuild,
@@ -531,6 +532,49 @@ test("executes and hydrates an asset query from SSG public files", async () => {
         },
       ],
     },
+  });
+});
+
+test("hydrates URL-encoded SSG asset filenames from their decoded filesystem paths", async () => {
+  const contentRef = "post!-你好.md";
+  const source = "# Encoded filename\n";
+  const index = await createTestAssetIndex({
+    ...indexedDocument,
+    contentRef,
+    size: new TextEncoder().encode(source).byteLength,
+  });
+  await mkdir("public/assets", { recursive: true });
+  await mkdir("app/__generated__", { recursive: true });
+  await writeFile(`public/assets/${contentRef}`, source, "utf8");
+  await materializeAssetIndex({
+    index,
+    publicDirectory: "public",
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-encoded",
+  });
+  const runtimeFetch = createSsgAssetResourceFetch({
+    deploymentId: "build-encoded",
+    manifest: {
+      revision: index.integrity.checksum,
+      assetRevision: index.assetRevision,
+      indexPath: `/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`,
+    },
+  });
+
+  const response = await runtimeFetch("/$resources/assets", {
+    method: "POST",
+    body: JSON.stringify({
+      query: {
+        filters: [{ field: ["id"], operator: "eq", value: "post-1" }],
+        limit: 1,
+        content: { mode: "full" },
+      },
+    }),
+  });
+
+  expect(response?.status).toBe(200);
+  await expect(response?.json()).resolves.toMatchObject({
+    items: [{ content: { text: source } }],
   });
 });
 
@@ -1225,6 +1269,43 @@ describe("prebuild", () => {
       readFile("dist/client/blog/hello-world/index.html", "utf8")
     ).resolves.toContain("<!DOCTYPE html>");
   }, 30_000);
+
+  test("does not prerender dynamic Assets paths that cannot match string route params", async () => {
+    const index = await createTestAssetIndex([
+      {
+        ...indexedDocument,
+        properties: { slug: 123 },
+      },
+      {
+        ...indexedDocument,
+        _id: "boolean-slug",
+        revision: "boolean-revision",
+        properties: { slug: true },
+      },
+    ]);
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      filters: [
+        {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: "system.params.slug",
+        },
+      ],
+      sort: [],
+      limit: "1",
+      offset: "0",
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["post", resource]],
+        index,
+      })
+    ).toEqual([]);
+  });
 
   test("prerenders SSG pages with asset query data", async () => {
     const index = await createTestAssetIndex({

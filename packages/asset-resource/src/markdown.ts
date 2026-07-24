@@ -31,6 +31,7 @@ type FrontmatterLimits = {
   depth: number;
   fields: number;
   stringBytes: number;
+  serializedBytes: number;
 };
 
 const defaultFrontmatterLimits: FrontmatterLimits = {
@@ -38,6 +39,7 @@ const defaultFrontmatterLimits: FrontmatterLimits = {
   depth: assetResourceLimits.frontmatterDepth,
   fields: assetResourceLimits.frontmatterFields,
   stringBytes: assetResourceLimits.frontmatterStringBytes,
+  serializedBytes: assetResourceLimits.indexedPropertiesBytes,
 };
 
 const encoder = new TextEncoder();
@@ -99,6 +101,12 @@ const parseYamlProperties = (
         throw new MarkdownMetadataError(
           "FRONTMATTER_STRING_BYTES_EXCEEDED",
           "Markdown frontmatter contains a string that exceeds the byte limit"
+        );
+      }
+      if (error.code === "SERIALIZED_BYTES_EXCEEDED") {
+        throw new MarkdownMetadataError(
+          "FRONTMATTER_BYTES_EXCEEDED",
+          "Markdown frontmatter properties exceed the indexed byte limit"
         );
       }
       throw new MarkdownMetadataError(

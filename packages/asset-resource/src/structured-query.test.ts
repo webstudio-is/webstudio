@@ -3,7 +3,11 @@ import type {
   AssetFileDocument,
   BuilderAssetFieldCatalog,
 } from "@webstudio-is/sdk";
-import { executeAssetQuery } from "./structured-query";
+import {
+  executeAssetQuery,
+  getAssetQueryFieldValue,
+  validateAssetQueryAgainstCatalog,
+} from "./structured-query";
 
 const document = ({
   id,
@@ -76,23 +80,102 @@ const catalog: BuilderAssetFieldCatalog = {
 };
 
 describe("structured asset query", () => {
-  test("rejects dynamic fields that are absent from the index catalog", async () => {
-    await expect(
-      executeAssetQuery({
+  test("reads only own JSON properties from dynamic field paths", () => {
+    const inheritedNames = document({ id: "plain", properties: {} });
+    expect(
+      getAssetQueryFieldValue(inheritedNames, ["properties", "constructor"])
+    ).toBeUndefined();
+    expect(
+      getAssetQueryFieldValue(inheritedNames, ["properties", "toString"])
+    ).toBeUndefined();
+
+    const ownNames = document({
+      id: "own",
+      properties: JSON.parse(
+        '{"constructor":"constructor value","toString":"string value","__proto__":"prototype value"}'
+      ),
+    });
+    expect(
+      getAssetQueryFieldValue(ownNames, ["properties", "constructor"])
+    ).toBe("constructor value");
+    expect(getAssetQueryFieldValue(ownNames, ["properties", "toString"])).toBe(
+      "string value"
+    );
+    expect(getAssetQueryFieldValue(ownNames, ["properties", "__proto__"])).toBe(
+      "prototype value"
+    );
+
+    expect(
+      validateAssetQueryAgainstCatalog({
         catalog,
-        documents,
         query: {
           filters: [
             {
-              field: ["properties", "missing"],
+              field: ["properties", "constructor"],
               operator: "eq",
-              value: true,
+              value: "missing",
             },
           ],
-          content: { mode: "none" },
         },
-      })
-    ).rejects.toThrow("Asset field properties.missing was not found");
+      }).warnings
+    ).toEqual(["Asset field properties.constructor is not currently observed"]);
+  });
+
+  test("treats dynamic fields absent from the current catalog as missing", async () => {
+    const query = {
+      filters: [
+        {
+          field: ["properties", "missing"] as [string, string],
+          operator: "eq" as const,
+          value: true,
+        },
+      ],
+      content: { mode: "none" as const },
+    };
+    expect(
+      validateAssetQueryAgainstCatalog({ catalog, query }).warnings
+    ).toEqual(["Asset field properties.missing is not currently observed"]);
+    const result = await executeAssetQuery({
+      catalog,
+      documents,
+      query,
+    });
+
+    expect(result.items).toEqual([]);
+    expect(result.totalCount).toBe(0);
+  });
+
+  test("keeps sorting deterministic when a dynamic field becomes mixed", async () => {
+    const mixedDocuments = [
+      ...documents,
+      document({ id: "delta", properties: { publishedAt: { year: 2027 } } }),
+    ];
+    const result = await executeAssetQuery({
+      catalog: {
+        ...catalog,
+        documentCount: mixedDocuments.length,
+        fields: {
+          ...catalog.fields,
+          "properties.publishedAt": {
+            types: ["object", "string"],
+            occurrences: mixedDocuments.length,
+            mixed: true,
+          },
+        },
+      },
+      documents: mixedDocuments,
+      query: {
+        sort: [{ field: ["properties", "publishedAt"], direction: "asc" }],
+        content: { mode: "none" },
+      },
+    });
+
+    expect(result.items.map(({ id }) => id)).toEqual([
+      "beta",
+      "alpha",
+      "gamma",
+      "delta",
+    ]);
   });
 
   test("filters dynamic fields, sorts, paginates, and returns public records", async () => {

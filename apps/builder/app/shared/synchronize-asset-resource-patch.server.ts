@@ -75,25 +75,25 @@ export const synchronizeAssetResourcesAfterBuildPatch = async (
   },
   dependencies = defaultDependencies
 ) => {
-  const currentResources = parseResources(resources);
-  if (hasConfiguredAssetsResource(currentResources) === false) {
-    return;
-  }
-
-  const assetChanges = changes.filter(
-    ({ namespace }) => namespace === "assets" || namespace === "assetFolders"
-  );
-  const queryWasEnabled = hasConfiguredAssetsResource(
-    parseResources(previousResources)
-  );
-  const mustSynchronizeAll =
-    replaceAllAssets ||
-    (resources !== previousResources && queryWasEnabled === false);
-  if (mustSynchronizeAll === false && assetChanges.length === 0) {
-    return;
-  }
-
   try {
+    const currentResources = parseResources(resources);
+    if (hasConfiguredAssetsResource(currentResources) === false) {
+      return;
+    }
+
+    const assetChanges = changes.filter(
+      ({ namespace }) => namespace === "assets" || namespace === "assetFolders"
+    );
+    const queryWasEnabled = hasConfiguredAssetsResource(
+      parseResources(previousResources)
+    );
+    const mustSynchronizeAll =
+      replaceAllAssets ||
+      (resources !== previousResources && queryWasEnabled === false);
+    if (mustSynchronizeAll === false && assetChanges.length === 0) {
+      return;
+    }
+
     const assetClient = dependencies.createAssetClient();
     if (mustSynchronizeAll) {
       await dependencies.synchronizeCanonicalAssets({

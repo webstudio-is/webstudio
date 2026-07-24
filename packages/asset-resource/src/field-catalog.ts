@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/project-store";
 import {
   createCanonicalAssetFileEntry,
+  getFieldContributions,
   parseAssetFieldPath,
   type CanonicalAssetFileEntry,
   type FieldContribution,
@@ -57,7 +58,6 @@ export const computeCanonicalAssetRevision = async (
         assetId: entry.assetId,
         revision: entry.revision,
         document: entry.document,
-        fieldContributions: entry.fieldContributions,
       }))
   );
   return await sha256(serialized);
@@ -103,7 +103,7 @@ const getEntryFields = (entry: CanonicalAssetFileEntry): EntryFields => {
   const fields = new Map<string, Set<ObservedFieldType>>();
   for (const contribution of [
     ...getStandardFieldContributions(entry.document),
-    ...entry.fieldContributions,
+    ...getFieldContributions(entry.document.properties),
   ]) {
     const types = fields.get(contribution.path) ?? new Set();
     types.add(contribution.type);
@@ -119,9 +119,7 @@ const normalizeCatalogEntry = (entry: CanonicalAssetFileEntry) => {
   });
   if (
     normalized.assetId !== entry.assetId ||
-    normalized.revision !== entry.revision ||
-    serializeJsonDeterministically(normalized.fieldContributions) !==
-      serializeJsonDeterministically(entry.fieldContributions)
+    normalized.revision !== entry.revision
   ) {
     throw new Error("Asset field catalog entry is inconsistent");
   }

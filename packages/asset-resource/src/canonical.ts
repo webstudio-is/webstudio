@@ -1,8 +1,13 @@
-import { assetFileDocument, type AssetFileDocument } from "@webstudio-is/sdk";
+import {
+  assetFileDocument,
+  assetResourceLimits,
+  type AssetFileDocument,
+} from "@webstudio-is/sdk";
 import {
   compareStrings,
   serializeJsonDeterministically,
 } from "@webstudio-is/project-store/json";
+import { getStructuredDataByteLength } from "./structured-data";
 
 export type AssetFileMetadataInput = {
   id: string;
@@ -21,7 +26,6 @@ export type CanonicalAssetFileEntry = {
   assetId: string;
   revision: string;
   document: AssetFileDocument;
-  fieldContributions: FieldContribution[];
 };
 
 export type ObservedFieldType =
@@ -227,12 +231,17 @@ export const createCanonicalAssetFileEntry = ({
   document: unknown;
 }): CanonicalAssetFileEntry => {
   const parsedDocument = assetFileDocument.parse(document);
+  if (
+    getStructuredDataByteLength(parsedDocument.properties) >
+    assetResourceLimits.indexedPropertiesBytes
+  ) {
+    throw new Error("Canonical asset properties exceed the indexed byte limit");
+  }
   return {
     projectId,
     assetId: parsedDocument._id,
     revision: parsedDocument.revision,
     document: parsedDocument,
-    fieldContributions: getFieldContributions(parsedDocument.properties),
   };
 };
 

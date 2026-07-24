@@ -35,6 +35,7 @@ const defaultLimits: JsonMetadataLimits = {
   depth: assetResourceLimits.jsonDepth,
   fields: assetResourceLimits.jsonFields,
   stringBytes: assetResourceLimits.jsonStringBytes,
+  serializedBytes: assetResourceLimits.indexedPropertiesBytes,
 };
 
 const structuredError = (error: StructuredDataError): JsonMetadataError => {
@@ -54,6 +55,12 @@ const structuredError = (error: StructuredDataError): JsonMetadataError => {
     return new JsonMetadataError(
       "JSON_STRING_BYTES_EXCEEDED",
       "JSON metadata contains a string that exceeds the byte limit"
+    );
+  }
+  if (error.code === "SERIALIZED_BYTES_EXCEEDED") {
+    return new JsonMetadataError(
+      "JSON_BYTES_EXCEEDED",
+      "JSON properties exceed the indexed byte limit"
     );
   }
   return new JsonMetadataError(

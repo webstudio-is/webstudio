@@ -5,7 +5,20 @@ import { createPublishedAssetResourceFetch } from "@webstudio-is/asset-resource/
 const resolvePublicAsset = (path: string) => {
   const publicDirectory = resolve("public");
   const pathname = new URL(path, "https://webstudio.local").pathname;
-  const filePath = resolve(publicDirectory, `.${pathname}`);
+  const decodedSegments = pathname.split("/").map((segment) => {
+    const decoded = decodeURIComponent(segment);
+    if (
+      decoded === "." ||
+      decoded === ".." ||
+      decoded.includes("/") ||
+      decoded.includes("\\") ||
+      decoded.includes("\0")
+    ) {
+      throw new Error("Static asset path contains an invalid segment");
+    }
+    return decoded;
+  });
+  const filePath = resolve(publicDirectory, `.${decodedSegments.join("/")}`);
   if (filePath.startsWith(`${publicDirectory}${sep}`) === false) {
     throw new Error("Static asset path is outside the public directory");
   }

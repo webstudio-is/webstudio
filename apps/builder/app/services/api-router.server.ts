@@ -741,6 +741,7 @@ export const apiRouter = router({
             referencedFieldPaths: validated.referencedFieldPaths,
             filterCount: validated.query.filters.length,
             sortCount: validated.query.sort.length,
+            warnings: validated.warnings,
           };
         } catch (error) {
           return throwAssetQueryApiError(error);

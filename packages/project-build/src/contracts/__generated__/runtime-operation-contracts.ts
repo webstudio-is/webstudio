@@ -67591,7 +67591,6 @@ export const runtimeOperationContractData = [
                     enum: [
                       "eq",
                       "ne",
-                      "in",
                       "contains",
                       "startsWith",
                       "endsWith",
@@ -67599,6 +67598,7 @@ export const runtimeOperationContractData = [
                       "gte",
                       "lt",
                       "lte",
+                      "in",
                       "exists",
                       "isEmpty",
                     ],
@@ -67616,17 +67616,19 @@ export const runtimeOperationContractData = [
                             const: "literal",
                           },
                           value: {
-                            type: "string",
+                            $ref: "#/$defs/__schema0",
                           },
                         },
                         required: ["type", "value"],
+                        additionalProperties: false,
                       },
                     ],
                     description:
-                      'A Webstudio expression evaluated in the resource scope. Use { type: "literal", value: "text" } for a fixed string.',
+                      'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
                   },
                 },
                 required: ["field", "operator", "value"],
+                additionalProperties: false,
               },
             },
             sort: {
@@ -67668,14 +67670,17 @@ export const runtimeOperationContractData = [
                       const: "literal",
                     },
                     value: {
-                      type: "string",
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 1000,
                     },
                   },
                   required: ["type", "value"],
+                  additionalProperties: false,
                 },
               ],
               description:
-                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                'A Webstudio expression, or { type: "literal", value: number } for a fixed result limit.',
             },
             offset: {
               default: "0",
@@ -67691,14 +67696,17 @@ export const runtimeOperationContractData = [
                       const: "literal",
                     },
                     value: {
-                      type: "string",
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 1000,
                     },
                   },
                   required: ["type", "value"],
+                  additionalProperties: false,
                 },
               ],
               description:
-                'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.',
             },
             content: {
               default: {
@@ -67768,6 +67776,7 @@ export const runtimeOperationContractData = [
               ],
             },
           },
+          additionalProperties: false,
           required: [],
         },
         scopeInstanceId: {
@@ -67778,6 +67787,39 @@ export const runtimeOperationContractData = [
         },
       },
       required: ["name", "scopeInstanceId"],
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+      },
     },
     outputSchema: {
       type: "object",
@@ -67930,7 +67972,6 @@ export const runtimeOperationContractData = [
                             enum: [
                               "eq",
                               "ne",
-                              "in",
                               "contains",
                               "startsWith",
                               "endsWith",
@@ -67938,6 +67979,7 @@ export const runtimeOperationContractData = [
                               "gte",
                               "lt",
                               "lte",
+                              "in",
                               "exists",
                               "isEmpty",
                             ],
@@ -67955,17 +67997,19 @@ export const runtimeOperationContractData = [
                                     const: "literal",
                                   },
                                   value: {
-                                    type: "string",
+                                    $ref: "#/$defs/__schema0",
                                   },
                                 },
                                 required: ["type", "value"],
+                                additionalProperties: false,
                               },
                             ],
                             description:
-                              'A Webstudio expression evaluated in the resource scope. Use { type: "literal", value: "text" } for a fixed string.',
+                              'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
                           },
                         },
                         required: ["field", "operator", "value"],
+                        additionalProperties: false,
                       },
                     },
                     sort: {
@@ -68007,14 +68051,17 @@ export const runtimeOperationContractData = [
                               const: "literal",
                             },
                             value: {
-                              type: "string",
+                              type: "integer",
+                              minimum: 0,
+                              maximum: 1000,
                             },
                           },
                           required: ["type", "value"],
+                          additionalProperties: false,
                         },
                       ],
                       description:
-                        'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                        'A Webstudio expression, or { type: "literal", value: number } for a fixed result limit.',
                     },
                     offset: {
                       default: "0",
@@ -68030,14 +68077,17 @@ export const runtimeOperationContractData = [
                               const: "literal",
                             },
                             value: {
-                              type: "string",
+                              type: "integer",
+                              minimum: 0,
+                              maximum: 1000,
                             },
                           },
                           required: ["type", "value"],
+                          additionalProperties: false,
                         },
                       ],
                       description:
-                        'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                        'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.',
                     },
                     content: {
                       default: {
@@ -68107,6 +68157,7 @@ export const runtimeOperationContractData = [
                       ],
                     },
                   },
+                  additionalProperties: false,
                   required: [],
                 },
                 {
@@ -68125,6 +68176,39 @@ export const runtimeOperationContractData = [
         },
       },
       required: ["resourceId", "values"],
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+      },
     },
     outputSchema: {
       type: "object",

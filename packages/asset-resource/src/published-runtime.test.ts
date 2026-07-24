@@ -1,9 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { AssetFileDocument } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import {
   __testing,
+  createGeneratedAssetResourceFetch,
   createPublishedAssetResourceFetch,
   getPublishedAssetContentPath,
   getPublishedAssetResourceCacheKey,
@@ -85,6 +87,28 @@ const queryRequest = (content = false) =>
 
 describe("published asset resource runtime", () => {
   beforeEach(() => __testing.clearParsedIndexCache());
+  afterEach(() => vi.unstubAllGlobals());
+
+  test("does not open the query-result cache for ordinary generated fetches", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("caches", { open });
+    const fallback = vi.fn(async () => new Response("fallback"));
+    const generatedFetch = await createGeneratedAssetResourceFetch({
+      request: new Request("https://site.example/page"),
+      context: undefined,
+      deploymentId: "build-1",
+      manifest: {
+        revision,
+        assetRevision: revision,
+        indexPath: "/assets/db/index.json",
+      },
+      fallback,
+    });
+
+    expect(await (await generatedFetch("/other")).text()).toBe("fallback");
+    expect(fallback).toHaveBeenCalledOnce();
+    expect(open).not.toHaveBeenCalled();
+  });
 
   test("runs multiple structured requests against one parsed index", async () => {
     const { runtimeFetch, fetchAsset } = await createRuntime();
@@ -113,6 +137,28 @@ describe("published asset resource runtime", () => {
       "/assets/post.md",
       expect.anything()
     );
+  });
+
+  test("returns structured hydration details", async () => {
+    const { runtimeFetch } = await createRuntime();
+    const response = await runtimeFetch("/$resources/assets", {
+      method: "POST",
+      body: JSON.stringify({
+        query: {
+          filters: [{ field: ["id"], operator: "eq", value: "post-1" }],
+          limit: 1,
+          content: { mode: "full", maxBytes: 1 },
+        },
+      }),
+    });
+
+    expect(response?.status).toBe(400);
+    await expect(response?.json()).resolves.toMatchObject({
+      error: {
+        code: "CONTENT_LIMIT_EXCEEDED",
+        details: { assetId: "post-1", assetBytes: 4, fileByteLimit: 1 },
+      },
+    });
   });
 
   test("ignores other origins, methods, and paths", async () => {
@@ -146,7 +192,11 @@ describe("published asset resource runtime", () => {
 
   test("bounds parsed indexes retained by one isolate", async () => {
     const { manifest, fetchAsset } = await createRuntime();
-    for (let index = 0; index < 5; index += 1) {
+    for (
+      let index = 0;
+      index < assetResourceLimits.runtimeCachedIndexes + 1;
+      index += 1
+    ) {
       const runtimeFetch = createPublishedAssetResourceFetch({
         baseUrl: "https://site.example",
         deploymentId: `deployment-${index}`,
@@ -155,7 +205,9 @@ describe("published asset resource runtime", () => {
       });
       expect((await runtimeFetch(queryRequest()))?.status).toBe(200);
     }
-    expect(__testing.getParsedIndexCacheSize()).toBe(4);
+    expect(__testing.getParsedIndexCacheSize()).toBe(
+      assetResourceLimits.runtimeCachedIndexes
+    );
   });
 
   test("uses deployment and shared index identity in cache keys", async () => {

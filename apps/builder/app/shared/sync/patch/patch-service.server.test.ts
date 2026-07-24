@@ -531,7 +531,7 @@ describe("applyPatchRequest", () => {
     });
   });
 
-  test("loads only base patch columns for asset-only patches", async () => {
+  test("loads resources for asset-only metadata synchronization", async () => {
     const assetsPatch: NormalizedPatchRequest = {
       ...patch,
       entries: [
@@ -557,7 +557,7 @@ describe("applyPatchRequest", () => {
 
     expect(context.selectedColumns).toEqual([
       "projectId, version",
-      "projectId, version, lastTransactionId",
+      "projectId, version, lastTransactionId, resources",
     ]);
     expect(patchLoadedBuild).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -565,6 +565,7 @@ describe("applyPatchRequest", () => {
           projectId: "project-1",
           version: 3,
           lastTransactionId: null,
+          resources: configuredResources,
         }),
         transactions: [assetsPatch.entries[0].transaction],
       }),

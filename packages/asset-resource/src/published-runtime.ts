@@ -94,16 +94,18 @@ const failure = ({
   message,
   status,
   retryable = false,
+  details,
 }: {
   code: AssetResourceQueryFailure["error"]["code"];
   message: string;
   status: number;
   retryable?: boolean;
+  details?: Record<string, string | number>;
 }) =>
   jsonResponse(
     assetResourceQueryFailure.parse({
       ok: false,
-      error: { code, message, retryable },
+      error: { code, message, retryable, details },
     }),
     status
   );
@@ -282,6 +284,10 @@ export const createPublishedAssetResourceFetch = ({
               ? error.code
               : "INVALID_REQUEST",
           message: error.message,
+          details:
+            error instanceof AssetResourceHydrationError
+              ? error.details
+              : undefined,
           status: 400,
         });
       }
@@ -335,9 +341,20 @@ export const createGeneratedAssetResourceFetch = async ({
     const assetRequest = new Request(new URL(path, request.url), init);
     return binding?.fetch(assetRequest) ?? fetch(assetRequest);
   };
-  const cache = await globalThis.caches
-    ?.open(`webstudio-assets-${deploymentId}`)
-    .catch(() => undefined);
+  const cacheStorage = globalThis.caches;
+  let cachePromise: Promise<Cache> | undefined;
+  const getCache = () => {
+    cachePromise ??= cacheStorage.open(`webstudio-assets-${deploymentId}`);
+    return cachePromise;
+  };
+  const cache =
+    cacheStorage === undefined
+      ? undefined
+      : {
+          match: async (key: Request) => (await getCache()).match(key),
+          put: async (key: Request, response: Response) =>
+            (await getCache()).put(key, response),
+        };
   const fetchResource = createPublishedAssetResourceFetch({
     deploymentId,
     manifest,

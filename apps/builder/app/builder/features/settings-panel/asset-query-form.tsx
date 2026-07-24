@@ -2,14 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   assetQueryResult,
-  assetQueryStandardFields,
-  assetQueryStandardFieldTypes,
   assetResourceLimits,
   builderAssetFieldCatalog,
   isLiteralExpression,
   getAssetQueryOperatorsForFieldTypes,
   type AssetQueryFilter,
-  type AssetObservedFieldType,
   type AssetQuerySort,
   type AssetResourceContentOptions,
   type BuilderAssetFieldCatalog,
@@ -42,60 +39,15 @@ import {
 } from "~/shared/asset-resource-api.client";
 import {
   createStructuredAssetQueryResourceBody,
+  getAssetQueryFieldKey,
+  getAssetQueryFieldOptions,
   getAssetQueryConfigurationError,
   isEmptyAssetQueryResult,
   parseStructuredAssetQueryResourceBody,
 } from "./asset-query-form-utils";
+import type { AssetQueryFieldOption } from "./asset-query-form-utils";
 
-type FieldOption = {
-  path: string[];
-  label: string;
-  types: AssetObservedFieldType[];
-};
-
-const standardFieldLabels: Record<
-  (typeof assetQueryStandardFields)[number],
-  string
-> = {
-  id: "ID",
-  name: "Name",
-  path: "Path",
-  key: "Key",
-  folderId: "Folder ID",
-  extension: "Extension",
-  mimeType: "MIME type",
-  size: "Size",
-  revision: "Revision",
-  excerpt: "Excerpt",
-};
-const standardFields: FieldOption[] = assetQueryStandardFields.map((field) => ({
-  path: [field],
-  label: standardFieldLabels[field],
-  types: [...assetQueryStandardFieldTypes[field]],
-}));
-
-const fieldKey = (path: readonly string[]) => JSON.stringify(path);
-
-const getFieldOptions = (
-  catalog: BuilderAssetFieldCatalog | undefined
-): FieldOption[] => {
-  const options = new Map(
-    standardFields.map((option) => [fieldKey(option.path), option])
-  );
-  for (const field of Object.values(catalog?.fields ?? {})) {
-    if (field.queryPath?.[0] !== "properties") {
-      continue;
-    }
-    options.set(fieldKey(field.queryPath), {
-      path: field.queryPath,
-      label: field.queryPath.join(" / "),
-      types: field.types,
-    });
-  }
-  return [...options.values()];
-};
-
-const getOperators = (types: readonly AssetObservedFieldType[]) =>
+const getOperators = (types: AssetQueryFieldOption["types"]) =>
   getAssetQueryOperatorsForFieldTypes(types);
 
 const operatorLabels: Record<AssetQueryFilter["operator"], string> = {
@@ -160,7 +112,7 @@ const Filters = ({
   aliases,
   onChange,
 }: {
-  fields: FieldOption[];
+  fields: AssetQueryFieldOption[];
   filters: StructuredAssetQueryFilterBinding[];
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
@@ -184,9 +136,14 @@ const Filters = ({
     {filters.map((filter, index) => {
       const selectedField =
         fields.find(
-          (field) => fieldKey(field.path) === fieldKey(filter.field)
+          (field) =>
+            getAssetQueryFieldKey(field.path) ===
+            getAssetQueryFieldKey(filter.field)
         ) ?? fields[0];
-      const operators = getOperators(selectedField.types);
+      const compatibleOperators = getOperators(selectedField.types);
+      const operators = compatibleOperators.includes(filter.operator)
+        ? compatibleOperators
+        : [filter.operator, ...compatibleOperators];
       return (
         <Grid key={index} gap={1}>
           <Grid
@@ -194,11 +151,11 @@ const Filters = ({
             align="center"
             css={{ gridTemplateColumns: "1fr 1fr min-content" }}
           >
-            <Select<FieldOption>
+            <Select<AssetQueryFieldOption>
               aria-label="Asset filter field"
               options={fields}
               getLabel={(field) => field.label}
-              getValue={(field) => fieldKey(field.path)}
+              getValue={(field) => getAssetQueryFieldKey(field.path)}
               value={selectedField}
               onChange={(field) => {
                 const next = [...filters];
@@ -269,7 +226,7 @@ const Sorting = ({
   sort,
   onChange,
 }: {
-  fields: FieldOption[];
+  fields: AssetQueryFieldOption[];
   sort: AssetQuerySort[];
   onChange: (sort: AssetQuerySort[]) => void;
 }) => (
@@ -288,7 +245,9 @@ const Sorting = ({
     {sort.map((order, index) => {
       const selectedField =
         fields.find(
-          (field) => fieldKey(field.path) === fieldKey(order.field)
+          (field) =>
+            getAssetQueryFieldKey(field.path) ===
+            getAssetQueryFieldKey(order.field)
         ) ?? fields[0];
       return (
         <Grid
@@ -297,15 +256,11 @@ const Sorting = ({
           align="center"
           css={{ gridTemplateColumns: "1fr 110px min-content" }}
         >
-          <Select<FieldOption>
+          <Select<AssetQueryFieldOption>
             aria-label="Asset sort field"
-            options={fields.filter(
-              ({ types }) =>
-                types.includes("object") === false &&
-                types.includes("array") === false
-            )}
+            options={fields}
             getLabel={(field) => field.label}
-            getValue={(field) => fieldKey(field.path)}
+            getValue={(field) => getAssetQueryFieldKey(field.path)}
             value={selectedField}
             onChange={(field) => {
               const next = [...sort];
@@ -557,7 +512,17 @@ export const AssetQueryForm = ({
   const [catalog, setCatalog] = useState<BuilderAssetFieldCatalog>();
   const configuration = { filters, sort, limit, offset, content };
   const configurationError = getAssetQueryConfigurationError(configuration);
-  const fields = useMemo(() => getFieldOptions(catalog), [catalog]);
+  const fields = useMemo(
+    () =>
+      getAssetQueryFieldOptions({
+        catalog,
+        configuredPaths: [
+          ...filters.map(({ field }) => field),
+          ...sort.map(({ field }) => field),
+        ],
+      }),
+    [catalog, filters, sort]
+  );
   const body =
     configurationError === undefined
       ? createStructuredAssetQueryResourceBody(configuration)

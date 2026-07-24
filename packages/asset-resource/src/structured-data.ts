@@ -2,13 +2,15 @@ export type StructuredDataLimits = {
   depth: number;
   fields: number;
   stringBytes: number;
+  serializedBytes: number;
 };
 
 export type StructuredDataErrorCode =
   | "INVALID"
   | "DEPTH_EXCEEDED"
   | "FIELDS_EXCEEDED"
-  | "STRING_BYTES_EXCEEDED";
+  | "STRING_BYTES_EXCEEDED"
+  | "SERIALIZED_BYTES_EXCEEDED";
 
 export class StructuredDataError extends Error {
   readonly code: StructuredDataErrorCode;
@@ -21,6 +23,9 @@ export class StructuredDataError extends Error {
 }
 
 const encoder = new TextEncoder();
+
+export const getStructuredDataByteLength = (value: unknown) =>
+  encoder.encode(JSON.stringify(value)).byteLength;
 
 const isPlainObject = (
   value: unknown
@@ -83,5 +88,9 @@ export const normalizeStructuredDataObject = (
     throw new StructuredDataError("INVALID");
   };
 
-  return normalize(value, 1) as Record<string, unknown>;
+  const normalized = normalize(value, 1) as Record<string, unknown>;
+  if (getStructuredDataByteLength(normalized) > limits.serializedBytes) {
+    throw new StructuredDataError("SERIALIZED_BYTES_EXCEEDED");
+  }
+  return normalized;
 };

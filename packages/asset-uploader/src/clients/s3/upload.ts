@@ -48,7 +48,6 @@ export const uploadToS3 = async ({
     endpoint,
     bucket,
     key: name,
-    keyType: "flat",
   });
 
   // Use proper MIME type based on file extension instead of generic type category

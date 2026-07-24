@@ -13,19 +13,17 @@ export const readFromS3 = async ({
   range,
   endpoint,
   bucket,
-  keyType = "flat",
 }: {
   signer: SignatureV4;
   name: string;
   range?: AssetReadRange;
   endpoint: string;
   bucket: string;
-  keyType?: "flat" | "hierarchical";
 }): ReturnType<AssetClient["readFile"]> => {
   if (range !== undefined) {
     validateAssetReadRange(range);
   }
-  const url = createS3ObjectUrl({ endpoint, bucket, key: name, keyType });
+  const url = createS3ObjectUrl({ endpoint, bucket, key: name });
   const headers = {
     "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
     ...(range === undefined
