@@ -322,3 +322,23 @@ test("reorders and clears styles through runtime mutations", () => {
   expect($styles.get().has("token1:base:color:")).toEqual(false);
   expect($styles.get().get("local1:base:color:")).toEqual(localStyle);
 });
+
+test("reorders style sources while local style source is temporary", () => {
+  setupSelectedBody();
+  $styleSources.set(
+    new Map([
+      ["token1", { id: "token1", type: "token", name: "Primary" }],
+      ["token2", { id: "token2", type: "token", name: "Secondary" }],
+    ])
+  );
+  $styleSourceSelections.set(
+    new Map([["body", { instanceId: "body", values: ["token1", "token2"] }]])
+  );
+
+  reorderStyleSources(["token2", "token1", "temporary-local"]);
+
+  expect($styleSourceSelections.get().get("body")?.values).toEqual([
+    "token2",
+    "token1",
+  ]);
+});
