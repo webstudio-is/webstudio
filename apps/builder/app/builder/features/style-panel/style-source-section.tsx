@@ -159,11 +159,18 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   if (instanceId === undefined) {
     return;
   }
+  const attachedStyleSourceIds = new Set(
+    $styleSourceSelections.get().get(instanceId)?.values
+  );
   executeRuntimeMutation({
     id: "styleSources.reorder",
     input: {
       instanceId,
-      styleSourceIds,
+      // The style panel adds a temporary local source until local styles are
+      // persisted. Exclude it because the runtime only accepts attached IDs.
+      styleSourceIds: styleSourceIds.filter((id) =>
+        attachedStyleSourceIds.has(id)
+      ),
     },
   });
 };

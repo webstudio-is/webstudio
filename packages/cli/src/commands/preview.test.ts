@@ -34,8 +34,8 @@ test("rejects empty preview host", async () => {
   ).rejects.toThrow("--host must not be empty.");
 });
 
-test("defaults preview generation to the app template", () => {
-  expect(previewDefaultTemplate).toEqual(["defaults", "react-router"]);
+test("defaults preview generation to one compatible router template", () => {
+  expect(previewDefaultTemplate).toEqual(["react-router"]);
 });
 
 test("uses Node module search paths to discover installed dependencies", () => {
@@ -169,7 +169,7 @@ test("prepares preview by syncing missing data and generating the app template",
   expect(syncDependencies.loadProjectBundleByProjectId).toHaveBeenCalled();
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
-    template: ["defaults", "react-router"],
+    template: ["react-router"],
   });
   expect(result.cwd).toBe(getPreviewProjectDir());
 });
@@ -197,7 +197,7 @@ test("prepares local verification previews with draft routes", async () => {
   });
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
-    template: ["defaults", "react-router"],
+    template: ["react-router"],
     includeDraftPages: true,
   });
 });
@@ -259,7 +259,7 @@ test("generates preview project in isolated directory", async () => {
 
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
-    template: ["defaults", "react-router"],
+    template: ["react-router"],
   });
   expect(ensureDependencies).toHaveBeenCalledOnce();
 });
@@ -335,7 +335,7 @@ test("regenerates a production cache before using it for iterative preview", asy
 
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
-    template: ["defaults", "react-router"],
+    template: ["react-router"],
     preserveRouteTemplates: true,
   });
 });
@@ -534,7 +534,7 @@ test("materializes session data before previewing from session source", async ()
   expect(prepareSessionDataFile).toHaveBeenCalledOnce();
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
-    template: ["defaults", "react-router"],
+    template: ["react-router"],
   });
 });
 
@@ -600,7 +600,7 @@ test("uses current project directory when generation is disabled", async () => {
   expect(prebuildProject).not.toHaveBeenCalled();
 });
 
-test("adds defaults when previewing the direct React Router template", async () => {
+test("keeps the standalone React Router preview template", async () => {
   const prebuildProject = vi.fn(async () => undefined);
 
   await preparePreviewProject({
@@ -614,7 +614,7 @@ test("adds defaults when previewing the direct React Router template", async () 
 
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
-    template: ["defaults", "react-router"],
+    template: ["react-router"],
   });
 });
 
