@@ -1114,6 +1114,15 @@ export type Database = {
         Args: { from_date?: string; to_date?: string };
         Returns: undefined;
       };
+      delete_asset_file_metadata_if_matches: {
+        Args: {
+          p_asset_id: string;
+          p_document: Json;
+          p_project_id: string;
+          p_revision: string;
+        };
+        Returns: number;
+      };
       delete_stale_asset_file_metadata: {
         Args: { p_asset_ids: string[]; p_project_id: string };
         Returns: number;

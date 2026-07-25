@@ -5,7 +5,7 @@ import { loader } from "./assets-field-catalog.server";
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const assetClient = { readFile: vi.fn() };
 const dependencies = {
-  createContext: vi.fn(),
+  createAssetRestContext: vi.fn(),
   createAssetClient: vi.fn(() => assetClient),
   loadBuilderAssetFieldCatalog: vi.fn(),
 };
@@ -24,7 +24,7 @@ const catalog = {
 
 describe("asset field catalog system resource", () => {
   beforeEach(() => {
-    dependencies.createContext.mockResolvedValue({} as never);
+    dependencies.createAssetRestContext.mockResolvedValue({} as never);
     dependencies.loadBuilderAssetFieldCatalog.mockResolvedValue(catalog);
   });
 
@@ -41,6 +41,7 @@ describe("asset field catalog system resource", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("private");
     await expect(response.json()).resolves.toEqual(catalog);
+    expect(dependencies.createAssetRestContext).toHaveBeenCalledOnce();
     expect(dependencies.loadBuilderAssetFieldCatalog).toHaveBeenCalledWith({
       projectId,
       context: expect.anything(),

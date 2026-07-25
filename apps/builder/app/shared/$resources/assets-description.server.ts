@@ -8,7 +8,7 @@ import { isBuilder } from "../router-utils";
 import { createAssetClient } from "../asset-client";
 
 export type AssetDescriptionDependencies = {
-  createContext: typeof createAssetRestContext;
+  createAssetRestContext: typeof createAssetRestContext;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,
     "readFile"
@@ -17,7 +17,7 @@ export type AssetDescriptionDependencies = {
 };
 
 const defaultDependencies: AssetDescriptionDependencies = {
-  createContext: createAssetRestContext,
+  createAssetRestContext,
   createAssetClient,
   loadBuilderAssetFieldCatalog,
 };
@@ -69,7 +69,7 @@ export const createAssetDescriptionLoader =
     }
 
     try {
-      const context = await dependencies.createContext(request);
+      const context = await dependencies.createAssetRestContext(request);
       const catalog = await dependencies.loadBuilderAssetFieldCatalog({
         projectId,
         context,

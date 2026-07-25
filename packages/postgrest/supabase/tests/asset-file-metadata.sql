@@ -191,5 +191,50 @@ SELECT is(
   'Non-Markdown canonical metadata remains available'
 );
 
+SELECT is(
+  delete_asset_file_metadata_if_matches(
+    'metadata-test-project',
+    'metadata-image-asset',
+    'image-revision',
+    '{"_id":"metadata-image-asset","revision":"different-document"}'::JSONB
+  ),
+  0,
+  'Exact cleanup preserves metadata that does not match the failed snapshot'
+);
+
+SELECT is(
+  delete_asset_file_metadata_if_matches(
+    'metadata-test-project',
+    'metadata-image-asset',
+    'image-revision',
+    '{"_id":"metadata-image-asset","revision":"image-revision"}'::JSONB
+  ),
+  1,
+  'Failed re-indexing removes the exact obsolete snapshot while the asset remains uploaded'
+);
+
+SELECT is(
+  replace_asset_file_metadata(
+    'metadata-test-project',
+    'metadata-image-asset',
+    'new-image-revision',
+    '{"_id":"metadata-image-asset","revision":"new-image-revision"}'::JSONB,
+    '{"storageName":"metadata-image.png","fileUpdatedAt":"2026-07-18T12:00:00Z","fileSize":20,"filename":"cover.png","folderId":null}'::JSONB
+  ),
+  TRUE,
+  'A concurrent repair can install the current revision'
+);
+
+SELECT is(
+  delete_asset_file_metadata_if_matches(
+    'metadata-test-project',
+    'metadata-image-asset',
+    'image-revision',
+    '{"_id":"metadata-image-asset","revision":"image-revision"}'::JSONB
+  ),
+  0,
+  'Exact cleanup preserves metadata installed by a concurrent repair'
+);
+
 SELECT * FROM finish();
 ROLLBACK;

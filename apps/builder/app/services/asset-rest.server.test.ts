@@ -14,8 +14,10 @@ import {
   assetRestMethodNotAllowed,
   parseAssetRestDescription,
   parseAssetRestMetadataHeader,
+  readAssetRestFormData,
   readAssetRestJson,
 } from "./asset-rest.server";
+import { AssetUploadSizeLimitError } from "@webstudio-is/asset-uploader/index.server";
 
 describe("Assets REST responses", () => {
   test.each([
@@ -25,6 +27,7 @@ describe("Assets REST responses", () => {
     [new AssetRepositoryConflictError("conflict"), 409],
     [new AssetRestRangeError("bad range"), 416],
     [new AssetRestPayloadTooLargeError("too large"), 413],
+    [new AssetUploadSizeLimitError("post.md", 10), 413],
   ])("maps domain errors to HTTP status", async (error, status) => {
     const response = assetRestErrorResponse(error);
     expect(response.status).toBe(status);
@@ -121,5 +124,36 @@ describe("Assets REST responses", () => {
     expect(() => parseAssetRestMetadataHeader("{")).toThrow(
       AssetRestRequestError
     );
+  });
+
+  test("parses bounded multipart forms and rejects oversized forms", async () => {
+    const form = new FormData();
+    form.set("projectId", "project-1");
+    form.set("filename", "post.md");
+    const parsed = await readAssetRestFormData(
+      new Request("https://example.com/rest/assets/uploads", {
+        method: "POST",
+        body: form,
+      })
+    );
+    expect(Object.fromEntries(parsed)).toEqual({
+      projectId: "project-1",
+      filename: "post.md",
+    });
+
+    await expect(
+      readAssetRestFormData(
+        new Request("https://example.com/rest/assets/uploads", {
+          method: "POST",
+          headers: {
+            "content-type": "multipart/form-data; boundary=test",
+            "content-length": String(
+              assetResourceLimits.restMutationRequestBytes + 1
+            ),
+          },
+          body: "--test--",
+        })
+      )
+    ).rejects.toBeInstanceOf(AssetRestPayloadTooLargeError);
   });
 });

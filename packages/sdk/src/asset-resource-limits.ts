@@ -18,7 +18,10 @@ export const assetResourceLimits = {
   // while leaving room for the two-megabyte content budget and metadata.
   resultBytes: 16 * 1024 * 1024,
   candidateDocuments: 1000,
-  indexBytes: 16 * 1024 * 1024,
+  // Published runtimes parse, validate, hash, and retain the index during a
+  // cold request. Four MiB leaves substantial headroom for those temporary
+  // copies while remaining far above the representative 1,000-file fixture.
+  indexBytes: 4 * 1024 * 1024,
   // A generated deployment has one immutable manifest. Retaining older parsed
   // indexes in the same isolate only multiplies Worker memory usage.
   runtimeCachedIndexes: 1,

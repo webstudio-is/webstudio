@@ -165,6 +165,27 @@ const memoryBefore = process.memoryUsage().heapUsed;
 const retainedCopies = Array.from({ length: 10 }, () => JSON.parse(serialized));
 const memoryAfter = process.memoryUsage().heapUsed;
 
+const nearLimitEntries = entries.map((entry) =>
+  createCanonicalAssetFileEntry({
+    projectId,
+    document: {
+      ...entry.document,
+      properties: {
+        ...entry.document.properties,
+        benchmarkPayload: "x".repeat(3000),
+      },
+    },
+  })
+);
+const nearLimitIndex = await createAssetIndex({
+  projectId,
+  entries: nearLimitEntries,
+});
+const nearLimitSerialized = serializeAssetIndex(nearLimitIndex);
+const nearLimitMemoryBefore = process.memoryUsage().heapUsed;
+const nearLimitParsed = await verifyAssetIndex(JSON.parse(nearLimitSerialized));
+const nearLimitMemoryAfter = process.memoryUsage().heapUsed;
+
 console.info(
   JSON.stringify(
     {
@@ -186,6 +207,14 @@ console.info(
         jsonBytes: indexBytes.byteLength,
         gzipBytes: gzipSync(indexBytes).byteLength,
         coldParseAndVerify,
+        nearLimit: {
+          jsonBytes: encoder.encode(nearLimitSerialized).byteLength,
+          parseVerifyHeapDeltaBytes: Math.max(
+            0,
+            nearLimitMemoryAfter - nearLimitMemoryBefore
+          ),
+          documents: nearLimitParsed.documents.length,
+        },
       },
       workerRuntime: {
         minifiedBundleBytes: workerBytes.byteLength,

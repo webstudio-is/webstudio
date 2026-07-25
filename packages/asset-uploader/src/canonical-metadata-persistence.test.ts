@@ -7,6 +7,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import {
+  deleteCanonicalAssetFileEntryIfMatches,
   deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntry,
@@ -171,5 +172,28 @@ describe("canonical asset metadata persistence", () => {
         assetIds: ["asset-1", "asset-2"],
       })
     ).resolves.toBe(2);
+  });
+
+  test("deletes standard metadata only when the complete snapshot still matches", async () => {
+    server.use(
+      db.post(
+        "rpc/delete_asset_file_metadata_if_matches",
+        async ({ request }) => {
+          expect(await request.json()).toEqual({
+            p_project_id: "project-1",
+            p_asset_id: "asset-1",
+            p_revision: "sha256:one",
+            p_document: document,
+          });
+          return json(1);
+        }
+      )
+    );
+    await expect(
+      deleteCanonicalAssetFileEntryIfMatches({
+        client: testContext.postgrest.client,
+        entry,
+      })
+    ).resolves.toBe(1);
   });
 });

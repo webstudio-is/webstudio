@@ -81,6 +81,23 @@ export const deleteStaleCanonicalAssetFileEntries = async ({
   return result.data ?? 0;
 };
 
+export const deleteCanonicalAssetFileEntryIfMatches = async ({
+  client,
+  entry,
+}: {
+  client: Client;
+  entry: CanonicalAssetFileEntry;
+}) => {
+  const result = await client.rpc("delete_asset_file_metadata_if_matches", {
+    p_project_id: entry.projectId,
+    p_asset_id: entry.assetId,
+    p_revision: entry.revision,
+    p_document: entry.document,
+  });
+  assertPostgrestSuccess(result);
+  return result.data ?? 0;
+};
+
 export const loadCanonicalAssetFileEntry = async ({
   client,
   projectId,

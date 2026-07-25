@@ -26,7 +26,7 @@ describe("Builder asset-resource API data boundary", () => {
     query.mockResolvedValue({ items: [], totalCount: 0, hasMore: false });
   });
 
-  test("catalog and preview synchronize before reading persisted rows", async () => {
+  test("catalog and preview read maintained rows without reconciliation", async () => {
     const assetClient = { readFile: vi.fn() };
     await loadBuilderAssetFieldCatalog({
       projectId,

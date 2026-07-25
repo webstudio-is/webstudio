@@ -18,7 +18,7 @@ import { isBuilder } from "../router-utils";
 import { createAssetClient } from "../asset-client";
 
 type Dependencies = {
-  createContext: typeof createAssetRestContext;
+  createAssetRestContext: typeof createAssetRestContext;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,
     "readFile"
@@ -27,7 +27,7 @@ type Dependencies = {
 };
 
 const defaultDependencies: Dependencies = {
-  createContext: createAssetRestContext,
+  createAssetRestContext,
   createAssetClient,
   previewAssetResourceQuery,
 };
@@ -90,7 +90,7 @@ export const loader = async (
     });
   }
   try {
-    const context = await dependencies.createContext(request);
+    const context = await dependencies.createAssetRestContext(request);
     const result = await dependencies.previewAssetResourceQuery({
       projectId,
       request: parsed,

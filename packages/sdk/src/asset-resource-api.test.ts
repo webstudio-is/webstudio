@@ -126,6 +126,7 @@ describe("Assets OpenAPI description", () => {
       "/rest/assets/field-catalog",
       "/rest/assets/query-capabilities",
       "/rest/assets/openapi.json",
+      "/rest/assets/index/refresh",
     ]);
     expect(document.components.securitySchemes.projectToken).toMatchObject({
       type: "apiKey",

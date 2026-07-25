@@ -20,6 +20,7 @@ import type { AssetClient } from "./client";
 import { loadAssetFoldersByProjectWithClient } from "./folder-persistence";
 import { assertPostgrestSuccess } from "./patch-utils";
 import {
+  deleteCanonicalAssetFileEntryIfMatches,
   deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntriesForRecovery,
@@ -264,6 +265,40 @@ const indexCanonicalAsset = async ({
   return revision;
 };
 
+const deleteObsoleteCanonicalAssetMetadata = async ({
+  projectId,
+  assetId,
+  client,
+}: {
+  projectId: string;
+  assetId: string;
+  client: Client;
+}) => {
+  const [assets, entries] = await Promise.all([
+    loadUploadedAssets(projectId, client, [assetId]),
+    loadCanonicalAssetFileEntries({ client, projectId, assetIds: [assetId] }),
+  ]);
+  const asset = assets[0];
+  if (asset === undefined) {
+    await deleteStaleCanonicalAssetFileEntries({
+      client,
+      projectId,
+      assetIds: [assetId],
+    });
+    return;
+  }
+  const currentRevision = createAssetContentRevision({
+    storageName: asset.file.name,
+    updatedAt: asset.file.updatedAt,
+    size: asset.file.size,
+  });
+  for (const entry of entries) {
+    if (entry.revision !== currentRevision) {
+      await deleteCanonicalAssetFileEntryIfMatches({ client, entry });
+    }
+  }
+};
+
 export const synchronizeCanonicalAsset = async ({
   projectId,
   assetId,
@@ -286,16 +321,36 @@ export const synchronizeCanonicalAsset = async ({
     return { status: "deleted" as const };
   }
 
-  const folders = await loadAssetFoldersByProjectWithClient(projectId, client);
-  const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
-  const hierarchy = createAssetFolderHierarchy(folderMap);
-  const revision = await indexCanonicalAsset({
-    projectId,
-    asset,
-    hierarchy,
-    client,
-    assetClient,
-  });
+  let revision: string;
+  try {
+    const folders = await loadAssetFoldersByProjectWithClient(
+      projectId,
+      client
+    );
+    const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
+    const hierarchy = createAssetFolderHierarchy(folderMap);
+    revision = await indexCanonicalAsset({
+      projectId,
+      asset,
+      hierarchy,
+      client,
+      assetClient,
+    });
+  } catch (error) {
+    try {
+      await deleteObsoleteCanonicalAssetMetadata({
+        client,
+        projectId,
+        assetId,
+      });
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        `${getErrorMessage(error)}; stale metadata cleanup failed: ${getErrorMessage(cleanupError)}`
+      );
+    }
+    throw error;
+  }
   return { status: "indexed" as const, revision };
 };
 
@@ -369,10 +424,10 @@ export const synchronizeCanonicalAssets = async ({
         try {
           // Never leave a previous revision visible as if it represented the
           // current object after re-indexing failed.
-          await deleteStaleCanonicalAssetFileEntries({
+          await deleteObsoleteCanonicalAssetMetadata({
             client,
             projectId,
-            assetIds: [asset.id],
+            assetId: asset.id,
           });
         } catch (cleanupError) {
           issue.message += `; stale metadata cleanup failed: ${getErrorMessage(cleanupError)}`;
@@ -491,11 +546,23 @@ export const synchronizeCanonicalAssetStandardMetadata = async ({
       excerpt: entry.document.excerpt,
       metadataError: entry.document.metadataError,
     });
-    await replaceCanonicalAssetFileEntry({
-      client,
-      entry: createCanonicalAssetFileEntry({ projectId, document }),
-      source: getCanonicalMetadataSource(asset),
-    });
+    try {
+      await replaceCanonicalAssetFileEntry({
+        client,
+        entry: createCanonicalAssetFileEntry({ projectId, document }),
+        source: getCanonicalMetadataSource(asset),
+      });
+    } catch (error) {
+      try {
+        await deleteCanonicalAssetFileEntryIfMatches({ client, entry });
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [error, cleanupError],
+          `${getErrorMessage(error)}; stale metadata cleanup failed: ${getErrorMessage(cleanupError)}`
+        );
+      }
+      throw error;
+    }
     updated += 1;
   }
   return updated;

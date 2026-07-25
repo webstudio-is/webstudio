@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import {
   createAssetIndex,
@@ -80,5 +81,22 @@ describe("shared asset index", () => {
       })
     ).rejects.toThrow("checksum");
     expect(serializeAssetIndex(index)).toContain('"webstudio-asset-index"');
+  });
+
+  test("rejects indexes that would exceed the published runtime budget", async () => {
+    const largeEntries = Array.from({ length: 80 }, (_, index) =>
+      createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: {
+          ...entry({ id: `large-${index}` }).document,
+          properties: { content: "x".repeat(60 * 1024) },
+        },
+      })
+    );
+
+    await expect(
+      createAssetIndex({ projectId: "project", entries: largeEntries })
+    ).rejects.toThrow("byte limit");
+    expect(assetResourceLimits.indexBytes).toBe(4 * 1024 * 1024);
   });
 });

@@ -843,22 +843,52 @@ describe("canonical asset metadata synchronization", () => {
         status: "UPLOADED",
       },
     }));
+    const staleBrokenEntry = createCanonicalAssetFileEntry({
+      projectId: "project-1",
+      document: {
+        _id: "broken",
+        _type: "asset.file",
+        name: "broken.md",
+        path: "broken.md",
+        key: "broken",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 3,
+        revision: "file:broken.md:previous:3",
+        contentRef: "broken.md",
+        properties: { title: "Previous" },
+      },
+    });
     const replaced: string[] = [];
-    const deleted: string[][] = [];
+    const deleted: string[] = [];
     server.use(
       db.get("Asset", () => json(assets)),
       db.get("AssetFolder", () => json([])),
-      db.get("AssetFileMetadata", () => json([])),
+      db.get("AssetFileMetadata", () =>
+        json([
+          {
+            ...staleBrokenEntry,
+            createdAt: "2026-07-18T00:00:00.000Z",
+            updatedAt: "2026-07-18T00:00:00.000Z",
+          },
+        ])
+      ),
       db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
         const input = (await request.json()) as ReplaceMetadataRpcArgs;
         replaced.push(input.p_asset_id);
         return json(true);
       }),
-      db.post("rpc/delete_stale_asset_file_metadata", async ({ request }) => {
-        const input = (await request.json()) as { p_asset_ids: string[] };
-        deleted.push(input.p_asset_ids);
-        return json(1);
-      })
+      db.post(
+        "rpc/delete_asset_file_metadata_if_matches",
+        async ({ request }) => {
+          const input = (await request.json()) as {
+            p_asset_id: string;
+          };
+          deleted.push(input.p_asset_id);
+          return json(1);
+        }
+      ),
+      db.post("rpc/delete_stale_asset_file_metadata", () => json(0))
     );
     const readFile = vi.fn<AssetClient["readFile"]>(async (name) => {
       if (name === "broken.md") {
@@ -888,6 +918,6 @@ describe("canonical asset metadata synchronization", () => {
       }),
     ]);
     expect(replaced).toEqual(["healthy"]);
-    expect(deleted).toEqual([["broken"]]);
+    expect(deleted).toEqual(["broken"]);
   });
 });

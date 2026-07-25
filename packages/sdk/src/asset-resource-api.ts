@@ -18,6 +18,7 @@ import {
   assetsOpenApiUrl,
   assetsApiUrl,
   assetsFoldersApiUrl,
+  assetsIndexRefreshApiUrl,
   assetsUploadsApiUrl,
   assetsQueryApiUrl,
   assetsQueryCapabilitiesApiUrl,
@@ -109,6 +110,11 @@ export const assetResourceApiOperations = {
     operationId: "getAssetResourceOpenApi",
     method: "get",
     path: assetsOpenApiUrl,
+  },
+  refreshAssetIndex: {
+    operationId: "refreshAssetIndex",
+    method: "post",
+    path: assetsIndexRefreshApiUrl,
   },
 } as const;
 
@@ -214,6 +220,24 @@ export const assetFolderMutationResult = z.strictObject({
 
 export const assetMutationFailure = z.strictObject({
   errors: z.string().min(1),
+});
+
+export const assetIndexRefreshResult = z.strictObject({
+  scanned: z.number().int().nonnegative(),
+  indexed: z.number().int().nonnegative(),
+  metadataUpdated: z.number().int().nonnegative(),
+  unchanged: z.number().int().nonnegative(),
+  removed: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
+  inconsistent: z.number().int().nonnegative(),
+  issues: z.array(
+    z.strictObject({
+      assetId: z.string(),
+      storageName: z.string(),
+      revision: z.string(),
+      message: z.string(),
+    })
+  ),
 });
 
 type JsonSchema = Record<string, unknown>;
@@ -710,6 +734,26 @@ export const createAssetResourceOpenApi = ({
           },
         },
       },
+      [operations.refreshAssetIndex.path]: {
+        [operations.refreshAssetIndex.method]: {
+          operationId: operations.refreshAssetIndex.operationId,
+          summary: "Repair and refresh project asset metadata",
+          description:
+            "Re-reads missing or changed file metadata. A 503 response includes per-file issues when repair is incomplete.",
+          parameters: [projectIdParameter],
+          responses: {
+            200: schemaResponse(
+              "AssetIndexRefreshResult",
+              "Asset metadata is synchronized"
+            ),
+            503: schemaResponse(
+              "AssetIndexRefreshResult",
+              "Asset metadata repair is incomplete"
+            ),
+            ...mutationErrorResponses,
+          },
+        },
+      },
     },
     components: {
       schemas: {
@@ -778,6 +822,11 @@ export const createAssetResourceOpenApi = ({
           assetMutationFailure,
           "output"
         ),
+        AssetIndexRefreshResult: toComponentSchema(
+          "AssetIndexRefreshResult",
+          assetIndexRefreshResult,
+          "output"
+        ),
         AssetFolderListResult: toComponentSchema(
           "AssetFolderListResult",
           assetFolderListResult,
@@ -805,7 +854,7 @@ export const createAssetResourceOpenApi = ({
           in: "header",
           name: "x-auth-token",
           description:
-            "Webstudio project token with public API access enabled and the permit required by the operation.",
+            "Webstudio project token with the permit required by the operation. The same capability token works in shared Builder sessions and API clients.",
         },
         builderSession: {
           type: "apiKey",

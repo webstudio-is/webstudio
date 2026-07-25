@@ -46,10 +46,7 @@ import {
   synchronizeAllCanonicalAssetStandardMetadata,
   synchronizeCanonicalAssetStandardMetadata,
 } from "./canonical-metadata-backfill";
-import {
-  deleteStaleCanonicalAssetFileEntries,
-  loadCanonicalAssetFileEntries,
-} from "./canonical-metadata-persistence";
+import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import {
   deleteAssetFoldersWithClient,
   loadAssetFoldersByProjectWithClient,
@@ -77,7 +74,6 @@ const defaultDependencies = {
   synchronizeCanonicalAssets,
   synchronizeAllCanonicalAssetStandardMetadata,
   synchronizeCanonicalAssetStandardMetadata,
-  deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
   createAssetIndex,
   verifyAssetIndex,
@@ -248,18 +244,9 @@ export class PostgresAssetRepository
         assetId,
       });
     } catch (error) {
-      // The primary mutation may already be committed. Full synchronization
-      // during repair/publication is the durable repair path. Remove a stale
-      // revision now so hosted reads never present it as current metadata.
-      try {
-        await this.dependencies.deleteStaleCanonicalAssetFileEntries({
-          client: this.context.postgrest.client,
-          projectId: this.projectId,
-          assetIds: [assetId],
-        });
-      } catch (cleanupError) {
-        this.dependencies.reportMaintenanceError(cleanupError);
-      }
+      // Synchronization removes an obsolete revision with a guarded database
+      // write before propagating the failure. Publication is the strict repair
+      // boundary for persistent object-storage or parsing failures.
       this.dependencies.reportMaintenanceError(error);
     }
   }

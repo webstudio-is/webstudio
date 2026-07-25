@@ -3,11 +3,12 @@ import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { parseAssetQueryCapabilities } from "@webstudio-is/sdk";
 import { loader as capabilitiesLoader } from "./assets-query-capabilities.server";
 import { loader as openApiLoader } from "./assets-openapi.server";
+import { builderSessionCookieName } from "~/services/builder-session.server";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const assetClient = { readFile: vi.fn() };
 const dependencies = {
-  createContext: vi.fn(),
+  createAssetRestContext: vi.fn(),
   createAssetClient: vi.fn(() => assetClient),
   loadBuilderAssetFieldCatalog: vi.fn(),
 };
@@ -31,7 +32,7 @@ const request = (path: string, hostname = `p-${projectId}.localhost`) =>
 describe("asset API descriptions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    dependencies.createContext.mockResolvedValue({} as never);
+    dependencies.createAssetRestContext.mockResolvedValue({} as never);
     dependencies.loadBuilderAssetFieldCatalog.mockResolvedValue(catalog);
   });
 
@@ -68,7 +69,13 @@ describe("asset API descriptions", () => {
           post: { operationId: "queryAssets" },
         },
       },
+      components: {
+        securitySchemes: {
+          builderSession: { name: builderSessionCookieName },
+        },
+      },
     });
+    expect(dependencies.createAssetRestContext).toHaveBeenCalledOnce();
     expect(dependencies.loadBuilderAssetFieldCatalog).toHaveBeenCalledWith({
       projectId,
       context: expect.anything(),

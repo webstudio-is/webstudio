@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { createAssetAction } from "./asset-rest-item.server";
 
@@ -25,7 +26,7 @@ const createDependencies = () => {
     dependencies: {
       preventCrossOriginCookie: vi.fn(),
       checkCsrf: vi.fn(),
-      createContext: vi.fn(async () => ({ context: true })) as never,
+      createAssetRestContext: vi.fn(async () => ({ context: true })) as never,
       createAssetClient: vi.fn(() => ({ storage: true })) as never,
       createRepository: vi.fn(() => ({
         updateMetadata,
@@ -85,6 +86,7 @@ describe("mutable Assets REST route", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ asset });
     expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(dependencies.createAssetRestContext).toHaveBeenCalledOnce();
     expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
       filename: "Post",
       folderId: null,
@@ -136,5 +138,30 @@ describe("mutable Assets REST route", () => {
       errors: "You don't have access",
     });
     report.mockRestore();
+  });
+
+  test("rejects oversized JSON before calling the repository", async () => {
+    const { dependencies, updateMetadata } = createDependencies();
+    const response = await callAction(
+      createAssetAction(dependencies),
+      new Request(
+        "https://webstudio.is/rest/assets/asset-1?projectId=project-1",
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            "x-auth-token": "token",
+          },
+          body: JSON.stringify({
+            description: "x".repeat(
+              assetResourceLimits.restMutationRequestBytes
+            ),
+          }),
+        }
+      )
+    );
+
+    expect(response.status).toBe(413);
+    expect(updateMetadata).not.toHaveBeenCalled();
   });
 });

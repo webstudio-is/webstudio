@@ -47,6 +47,7 @@ export const getAssetApiUrl = (assetId: string) =>
 export const getAssetFolderApiUrl = (folderId: string) =>
   `${assetsFoldersApiUrl}/${encodeURIComponent(folderId)}`;
 export const assetsQueryApiUrl = `${assetsApiUrl}/query`;
+export const assetsIndexRefreshApiUrl = `${assetsApiUrl}/index/refresh`;
 export const assetsFieldCatalogApiUrl = `${assetsApiUrl}/field-catalog`;
 export const assetsQueryCapabilitiesApiUrl = `${assetsApiUrl}/query-capabilities`;
 export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;

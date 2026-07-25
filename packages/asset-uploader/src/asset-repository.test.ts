@@ -8,10 +8,7 @@ import {
   synchronizeAllCanonicalAssetStandardMetadata,
   synchronizeCanonicalAssetStandardMetadata,
 } from "./canonical-metadata-backfill";
-import {
-  deleteStaleCanonicalAssetFileEntries,
-  loadCanonicalAssetFileEntries,
-} from "./canonical-metadata-persistence";
+import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import {
   createAssetIndex,
   createPublishedAssetResourceFetch,
@@ -67,8 +64,6 @@ const createDependencies = () => ({
   synchronizeCanonicalAssetStandardMetadata:
     vi.fn<typeof synchronizeCanonicalAssetStandardMetadata>(),
   loadCanonicalAssetFileEntries: vi.fn<typeof loadCanonicalAssetFileEntries>(),
-  deleteStaleCanonicalAssetFileEntries:
-    vi.fn<typeof deleteStaleCanonicalAssetFileEntries>(),
   createAssetIndex: vi.fn<typeof createAssetIndex>(),
   verifyAssetIndex: vi
     .fn<typeof verifyAssetIndex>()
@@ -120,6 +115,23 @@ describe("PostgresAssetRepository", () => {
         range: { offset: 2, length: 4 },
       })
     ).resolves.toMatchObject({ asset, contentLength: 4 });
+    expect(dependencies.loadAssetsByProjectWithClient).toHaveBeenNthCalledWith(
+      1,
+      "project-1",
+      context.postgrest.client
+    );
+    expect(dependencies.loadAssetsByProjectWithClient).toHaveBeenNthCalledWith(
+      2,
+      "project-1",
+      context.postgrest.client,
+      ["asset-1"]
+    );
+    expect(dependencies.loadAssetsByProjectWithClient).toHaveBeenNthCalledWith(
+      3,
+      "project-1",
+      context.postgrest.client,
+      ["asset-1"]
+    );
     expect(dependencies.hasProjectPermit).toHaveBeenCalledWith(
       { projectId: "project-1", permit: "view" },
       context

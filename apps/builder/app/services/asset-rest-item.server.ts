@@ -30,7 +30,7 @@ import {
 type Dependencies = {
   preventCrossOriginCookie: typeof preventCrossOriginCookie;
   checkCsrf: typeof checkCsrf;
-  createContext: typeof createAssetRestContext;
+  createAssetRestContext: typeof createAssetRestContext;
   createAssetClient: typeof createAssetClient;
   createRepository: (
     input: ConstructorParameters<typeof PostgresAssetRepository>[0]
@@ -40,7 +40,7 @@ type Dependencies = {
 const defaultDependencies: Dependencies = {
   preventCrossOriginCookie,
   checkCsrf,
-  createContext: createAssetRestContext,
+  createAssetRestContext,
   createAssetClient,
   createRepository: (input) => new PostgresAssetRepository(input),
 };
@@ -59,7 +59,7 @@ export const createAssetAction =
         new URL(request.url).searchParams.get("projectId")
       );
 
-      const context = await dependencies.createContext(request);
+      const context = await dependencies.createAssetRestContext(request);
       const repository = dependencies.createRepository({
         projectId,
         context,

@@ -7,6 +7,7 @@ import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
   AssetRevisionConflictError,
+  AssetUploadSizeLimitError,
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/index.server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
@@ -161,7 +162,10 @@ const getAssetRestErrorStatus = (error: unknown) => {
   if (error instanceof AssetRestRangeError) {
     return 416;
   }
-  if (error instanceof AssetRestPayloadTooLargeError) {
+  if (
+    error instanceof AssetRestPayloadTooLargeError ||
+    error instanceof AssetUploadSizeLimitError
+  ) {
     return 413;
   }
   if (error instanceof AssetRestRequestError || error instanceof ZodError) {
