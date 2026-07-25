@@ -753,8 +753,9 @@ describe("api router permits", () => {
         projectId: "project-1",
         clientVersion: 3,
       }),
-      expect.anything(),
-      expect.any(Function)
+      expect.objectContaining({
+        authorization: expect.objectContaining({ type: "token" }),
+      })
     );
   });
 
