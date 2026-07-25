@@ -101,7 +101,7 @@ builder_backend_wait_for_db() {
 builder_backend_schema_exists() {
   [ "$(
     builder_compose exec -T db \
-      sh -c 'psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT to_regclass('\''public.\"Project\"'\'') IS NOT NULL"'
+      sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT to_regclass('\''public.\"Project\"'\'') IS NOT NULL"'
   )" = "t" ]
 }
 
@@ -111,7 +111,7 @@ builder_backend_bootstrap_schema_snapshot() {
   fi
 
   builder_compose exec -T db \
-    sh -c 'psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' \
+    sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' \
     <"$SCHEMA_SNAPSHOT" >/dev/null
 }
 
@@ -155,10 +155,11 @@ builder_backend_bootstrap_if_empty() {
 builder_backend_write_schema_snapshot() {
   mkdir -p "$(dirname "$SCHEMA_SNAPSHOT")"
   local temporary_snapshot="${SCHEMA_SNAPSHOT}.tmp.$$"
-  # Supabase owns its extensions schema. Excluding it keeps a cached application
-  # schema restorable into every fresh local or E2E database.
+  # Supabase initializes auth, storage, extensions, and other service schemas.
+  # Dump only the application-owned public schema so the snapshot can be
+  # restored into a fresh Supabase database without replacing its internals.
   if builder_compose exec -T db \
-    sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema-only --no-owner --no-privileges --exclude-schema=extensions' \
+    sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema=public --schema-only --clean --if-exists --no-owner --no-privileges' \
     >"$temporary_snapshot"; then
     mv "$temporary_snapshot" "$SCHEMA_SNAPSHOT"
   else
