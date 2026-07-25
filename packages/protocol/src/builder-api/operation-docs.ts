@@ -626,7 +626,7 @@ const curatedPublicApiOperationDocumentation = [
     description:
       "Validate a structured Assets query and return its referenced dynamic fields and bounded operation counts.",
     examples: [
-      'webstudio validate-asset-query \'{"query":{"filters":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}],"limit":1}}\'',
+      'webstudio validate-asset-query \'{"query":{"where":{"all":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}]},"limit":1}}\'',
     ],
   },
   {

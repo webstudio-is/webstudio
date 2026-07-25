@@ -6,20 +6,15 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { synchronizeAssetResourcesAfterBuildPatch } from "./synchronize-asset-resource-patch.server";
 
-const synchronizeCanonicalAssets = vi.fn();
-const synchronizeAllCanonicalAssetStandardMetadata = vi.fn();
-const synchronizeCanonicalAsset = vi.fn();
-const synchronizeCanonicalAssetStandardMetadata = vi.fn();
+const synchronizeBuildChanges = vi.fn();
+const createRepository = vi.fn(() => ({ synchronizeBuildChanges }));
 const createAssetClient = vi.fn(() => ({
   readFile: vi.fn(),
   uploadFile: vi.fn(),
 }));
 const dependencies = {
   createAssetClient,
-  synchronizeCanonicalAssets,
-  synchronizeAllCanonicalAssetStandardMetadata,
-  synchronizeCanonicalAsset,
-  synchronizeCanonicalAssetStandardMetadata,
+  createRepository,
 } satisfies Exclude<
   Parameters<typeof synchronizeAssetResourcesAfterBuildPatch>[1],
   undefined
@@ -36,7 +31,7 @@ const createQueryResource = (): Resource => ({
   url: JSON.stringify("/$resources/assets"),
   headers: [],
   body: createStructuredAssetQueryResourceBody({
-    filters: [],
+    where: { all: [] },
     sort: [],
     limit: "20",
     offset: "0",
@@ -60,10 +55,9 @@ describe("asset metadata synchronization", () => {
       dependencies
     );
 
-    expect(synchronizeCanonicalAssets).toHaveBeenCalledWith({
-      client: context.postgrest.client,
-      assetClient: expect.anything(),
-      projectId: "project-1",
+    expect(synchronizeBuildChanges).toHaveBeenCalledWith({
+      changes: [],
+      force: true,
     });
   });
 
@@ -82,7 +76,7 @@ describe("asset metadata synchronization", () => {
     );
 
     expect(createAssetClient).not.toHaveBeenCalled();
-    expect(synchronizeCanonicalAssets).not.toHaveBeenCalled();
+    expect(createRepository).not.toHaveBeenCalled();
   });
 
   test("does not fail a committed patch when resource metadata is malformed", async () => {
@@ -135,12 +129,22 @@ describe("asset metadata synchronization", () => {
       dependencies
     );
 
-    expect(synchronizeCanonicalAssetStandardMetadata).toHaveBeenCalledWith({
-      client: context.postgrest.client,
-      projectId: "project-1",
-      assetIds: ["asset-1", "asset-2"],
+    expect(synchronizeBuildChanges).toHaveBeenCalledWith({
+      changes: [
+        {
+          namespace: "assets",
+          patches: [
+            { op: "replace", path: ["asset-1", "filename"], value: "Post" },
+            {
+              op: "replace",
+              path: ["asset-2", "folderId"],
+              value: "folder-1",
+            },
+          ],
+        },
+      ],
+      force: false,
     });
-    expect(synchronizeCanonicalAsset).not.toHaveBeenCalled();
   });
 
   test("fully reindexes assets whose stored content reference changes", async () => {
@@ -168,12 +172,20 @@ describe("asset metadata synchronization", () => {
       dependencies
     );
 
-    expect(synchronizeCanonicalAsset).toHaveBeenCalledWith({
-      client: context.postgrest.client,
-      assetClient: expect.anything(),
-      projectId: "project-1",
-      assetId: "asset-1",
+    expect(synchronizeBuildChanges).toHaveBeenCalledWith({
+      changes: [
+        {
+          namespace: "assets",
+          patches: [
+            {
+              op: "replace",
+              path: ["asset-1", "name"],
+              value: "revision.md",
+            },
+          ],
+        },
+      ],
+      force: false,
     });
-    expect(synchronizeCanonicalAssetStandardMetadata).not.toHaveBeenCalled();
   });
 });

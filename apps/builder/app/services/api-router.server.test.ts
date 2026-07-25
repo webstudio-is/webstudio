@@ -18,6 +18,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { blockComponent } from "@webstudio-is/sdk";
+import { AssetIndexRevisionError } from "@webstudio-is/asset-resource";
 import * as assetUploader from "@webstudio-is/asset-uploader/index.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import {
@@ -101,13 +102,15 @@ describe("api router build operation adapters", () => {
       caller.assetQueries.validate({
         projectId: "project-1",
         query: {
-          filters: [
-            {
-              field: ["properties", "slug"],
-              operator: "eq",
-              value: "post",
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "post",
+              },
+            ],
+          },
           limit: 1,
         },
       })
@@ -120,13 +123,15 @@ describe("api router build operation adapters", () => {
       caller.assetQueries.validate({
         projectId: "project-1",
         query: {
-          filters: [
-            {
-              field: ["properties", "missing"],
-              operator: "exists",
-              value: true,
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["properties", "missing"],
+                operator: "exists",
+                value: true,
+              },
+            ],
+          },
         },
       })
     ).resolves.toMatchObject({
@@ -141,6 +146,19 @@ describe("api router build operation adapters", () => {
     ).resolves.toMatchObject({
       items: [{ id: "post" }],
       totalCount: 1,
+    });
+    vi.mocked(assetUploader.previewAssetResourceQuery).mockRejectedValueOnce(
+      new AssetIndexRevisionError()
+    );
+    await expect(
+      caller.assetQueries.preview({
+        projectId: "project-1",
+        query: { limit: 10 },
+        indexRevision: `sha256:${"0".repeat(64)}`,
+      })
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      cause: { webstudioCode: "STALE_INDEX" },
     });
     await expect(
       caller.assetQueries.fieldCatalog({ projectId: "project-1" })

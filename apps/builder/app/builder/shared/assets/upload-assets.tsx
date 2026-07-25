@@ -5,7 +5,10 @@ import type { AssetType, UploadTicket } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { Image, wsImageLoader } from "@webstudio-is/image";
-import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
+import {
+  restAssetsUploadPath,
+  restAssetsUploadsPath,
+} from "~/shared/router-utils";
 import { fetch } from "~/shared/fetch.client";
 import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
@@ -321,7 +324,7 @@ const createUploadTicket = async ({
 
   const authHeaders = createAssetUploadHeaders(authToken);
 
-  const metaResponse = await request(restAssetsPath(), {
+  const metaResponse = await request(restAssetsUploadsPath(), {
     method: "POST",
     body: metaFormData,
     headers: authHeaders,

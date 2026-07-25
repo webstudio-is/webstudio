@@ -17,6 +17,7 @@ import {
   bindProps,
   cloneInstance,
   createAssetFolder,
+  createProjectAssetFolder,
   createBreakpoint,
   createPageFromTemplate,
   createDesignTokens,
@@ -32,6 +33,8 @@ import {
   deleteCssVariables,
   deleteAssetFolder,
   deleteAssets,
+  deleteProjectAsset,
+  deleteProjectAssetFolder,
   deleteBreakpoint,
   deleteDomain,
   deletePage,
@@ -56,6 +59,8 @@ import {
   getBuildPatchSummary,
   getMarketplaceProduct,
   getProjectPermissions,
+  getProjectAsset,
+  getProjectAssetFolder,
   getProjectSettings,
   getStyleDeclarations,
   inspectInstance,
@@ -65,6 +70,8 @@ import {
   importProjectBundle,
   importProjectBundleWithAssets,
   listAssets,
+  listProjectAssets,
+  listProjectAssetFolders,
   listAssetFolders,
   listBreakpoints,
   listDesignTokens,
@@ -83,6 +90,7 @@ import {
   loadProjectBundleByProjectId,
   moveInstance,
   publish,
+  readProjectAssetContent,
   parseBuildPatchTransactions,
   parseBuilderUrl,
   toLocalProjectBundle,
@@ -96,6 +104,8 @@ import {
   rewriteCssVariableRefs,
   updateDesignTokenStyles,
   updateAssetFolder,
+  updateProjectAsset,
+  updateProjectAssetFolder,
   updateProjectAssetContent,
   updateDomain,
   updateBreakpoint,
@@ -1140,7 +1150,7 @@ test("uploads assets as binary requests", async () => {
   expect(fetch).toHaveBeenCalledOnce();
   const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
   expect(url.href).toBe(
-    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&folderId=campaign&width=10&height=20&format=png"
+    "https://apps.webstudio.is/rest/assets/uploads/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&folderId=campaign&width=10&height=20&format=png"
   );
   expect(init.method).toBe("POST");
   expect(init.body).toBe(file);
@@ -1496,6 +1506,163 @@ test("surfaces asset content revision conflicts", async () => {
   ).rejects.toMatchObject({ message: "File changed", status: 409 });
 });
 
+test("updates asset metadata through the unified Assets endpoint", async () => {
+  const updated = createImageAssetFixture({ id: "asset-id" });
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ asset: updated }), {
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await expect(
+    updateProjectAsset({
+      ...apiParams,
+      assetId: "asset/id",
+      values: { filename: "Campaign", folderId: null },
+      request,
+    })
+  ).resolves.toEqual({ asset: updated });
+
+  const [url, init] = request.mock.calls[0] as unknown as [URL, RequestInit];
+  expect(url.pathname).toBe("/rest/assets/asset%2Fid");
+  expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
+  expect(init).toMatchObject({
+    method: "PATCH",
+    body: JSON.stringify({ filename: "Campaign", folderId: null }),
+  });
+  expect(new Headers(init.headers).get("x-auth-token")).toBe(
+    apiParams.authToken
+  );
+});
+
+test("deletes an asset through the unified Assets endpoint", async () => {
+  const request = vi.fn(async () => new Response(null, { status: 204 }));
+
+  await expect(
+    deleteProjectAsset({
+      ...apiParams,
+      assetId: "asset/id",
+      request,
+    })
+  ).resolves.toBeUndefined();
+
+  const [url, init] = request.mock.calls[0] as unknown as [URL, RequestInit];
+  expect(url.pathname).toBe("/rest/assets/asset%2Fid");
+  expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
+  expect(init).toMatchObject({ method: "DELETE" });
+  expect(new Headers(init.headers).get("x-auth-token")).toBe(
+    apiParams.authToken
+  );
+});
+
+test("reads asset records and ranged content through the Assets REST data plane", async () => {
+  const asset = createImageAssetFixture({ id: "asset-id" });
+  const request = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ assets: [asset] }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ asset }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(new Response("data", { status: 206 }));
+
+  await expect(listProjectAssets({ ...apiParams, request })).resolves.toEqual({
+    assets: [asset],
+  });
+  await expect(
+    getProjectAsset({ ...apiParams, assetId: "asset/id", request })
+  ).resolves.toEqual({ asset });
+  await expect(
+    readProjectAssetContent({
+      ...apiParams,
+      assetId: "asset/id",
+      range: { offset: 2, length: 4 },
+      request,
+    })
+  ).resolves.toMatchObject({ status: 206 });
+
+  const [contentUrl, contentInit] = request.mock.calls[2] as [URL, RequestInit];
+  expect(contentUrl.pathname).toBe("/rest/assets/asset%2Fid/content");
+  expect(new Headers(contentInit.headers).get("range")).toBe("bytes=2-5");
+});
+
+test("manages folders through the Assets REST data plane", async () => {
+  const folder = {
+    id: "folder-1",
+    projectId: apiParams.projectId,
+    name: "Blog",
+    createdAt: "2026-07-25T00:00:00.000Z",
+  };
+  const request = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folders: [folder] }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folder }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folder }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folder: { ...folder, name: "Posts" } }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+  await expect(
+    listProjectAssetFolders({ ...apiParams, request })
+  ).resolves.toEqual({ folders: [folder] });
+  await expect(
+    getProjectAssetFolder({
+      ...apiParams,
+      folderId: "folder/id",
+      request,
+    })
+  ).resolves.toEqual({ folder });
+  await expect(
+    createProjectAssetFolder({ ...apiParams, name: "Blog", request })
+  ).resolves.toEqual({ folder });
+  await expect(
+    updateProjectAssetFolder({
+      ...apiParams,
+      folderId: "folder/id",
+      values: { name: "Posts" },
+      request,
+    })
+  ).resolves.toEqual({ folder: { ...folder, name: "Posts" } });
+  await expect(
+    deleteProjectAssetFolder({
+      ...apiParams,
+      folderId: "folder/id",
+      request,
+    })
+  ).resolves.toBeUndefined();
+
+  expect((request.mock.calls[0]?.[0] as URL).pathname).toBe(
+    "/rest/assets/folders"
+  );
+  expect((request.mock.calls[3]?.[0] as URL).pathname).toBe(
+    "/rest/assets/folders/folder%2Fid"
+  );
+  expect(request.mock.calls[3]?.[1]).toMatchObject({ method: "PATCH" });
+  expect(request.mock.calls[4]?.[1]).toMatchObject({ method: "DELETE" });
+});
+
 test("keeps browser asset content updates on the requested origin", async () => {
   const revision = {
     ...createImageAssetFixture({ id: "asset-id" }),
@@ -1686,7 +1853,7 @@ test("imports project bundle with assets and retries missing asset uploads", asy
 
     if (
       request.method === "POST" &&
-      url.pathname === "/rest/assets/image.png"
+      url.pathname === "/rest/assets/uploads/image.png"
     ) {
       uploadAttempts += 1;
       uploadUrls.push(url.href);

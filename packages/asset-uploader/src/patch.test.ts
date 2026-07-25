@@ -15,6 +15,7 @@ import {
 import {
   deleteAssetFoldersWithClient,
   patchAssetFoldersWithClient,
+  upsertAssetFolderWithClient,
 } from "./folder-persistence";
 import { patchAssets } from "./patch";
 import type { Patch } from "immer";
@@ -40,6 +41,51 @@ const ownershipHandler = db.get("Project", ({ request }) => {
 });
 
 describe("asset folder persistence", () => {
+  test("validates and upserts one REST folder mutation", async () => {
+    const projectId = uid();
+    const folder = {
+      id: "blog",
+      projectId,
+      name: "Blog",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    server.use(
+      db.get("AssetFolder", () => json([])),
+      db.post("AssetFolder", async ({ request }) => {
+        expect(await request.json()).toEqual([{ ...folder, parentId: null }]);
+        return json({ ...folder, parentId: null });
+      })
+    );
+
+    await expect(
+      upsertAssetFolderWithClient(
+        { projectId, folder },
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual(folder);
+  });
+
+  test("rejects a REST folder with a missing parent before persistence", async () => {
+    const projectId = uid();
+    server.use(db.get("AssetFolder", () => json([])));
+
+    await expect(
+      upsertAssetFolderWithClient(
+        {
+          projectId,
+          folder: {
+            id: "blog",
+            projectId,
+            name: "Blog",
+            parentId: "missing",
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        },
+        testContext.postgrest.client
+      )
+    ).rejects.toThrow("Parent folder must exist");
+  });
+
   test("inserts parents before children", async () => {
     const projectId = uid();
     let inserted: Array<{ id: string }> = [];

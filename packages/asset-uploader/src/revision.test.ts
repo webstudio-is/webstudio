@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { http, HttpResponse } from "msw";
 import {
   createTestServer,
@@ -13,6 +13,7 @@ import {
   AssetRevisionConflictError,
   updateAssetContent,
 } from "./revision";
+import { PostgresAssetRepository } from "./asset-repository";
 
 const { getRevisionFilename } = __testing__;
 const server = createTestServer();
@@ -254,14 +255,10 @@ describe("asset content revisions", () => {
       })
     );
 
-    await updateAssetContent(
-      {
-        assetId: "asset",
-        projectId: "project",
-        expectedName: markdownFile.name,
-        data: new Blob([source]).stream(),
-      },
-      {
+    await new PostgresAssetRepository({
+      projectId: "project",
+      context: createContext(),
+      assetStore: {
         uploadFile: async () => ({
           format: "md",
           size: sourceBytes.byteLength,
@@ -272,8 +269,11 @@ describe("asset content revisions", () => {
           return { data: new Blob([source]).stream() };
         },
       },
-      createContext()
-    );
+    }).updateContent({
+      assetId: "asset",
+      expectedName: markdownFile.name,
+      data: new Blob([source]).stream(),
+    });
 
     expect(canonicalDocument).toMatchObject({
       _id: "asset",
@@ -354,24 +354,23 @@ describe("asset content revisions", () => {
     );
 
     await expect(
-      updateAssetContent(
-        {
-          assetId: "asset",
-          projectId: "project",
-          expectedName: oldFile.name,
-          data: new Blob(["updated"]).stream(),
-        },
-        {
+      new PostgresAssetRepository({
+        projectId: "project",
+        context: createContext(),
+        assetStore: {
           uploadFile: async () => ({ format: "json", size: 7, meta: {} }),
           readFile: readEmptyFile,
         },
-        createContext()
-      )
+      }).updateContent({
+        assetId: "asset",
+        expectedName: oldFile.name,
+        data: new Blob(["updated"]).stream(),
+      })
     ).rejects.toBeInstanceOf(AssetRevisionConflictError);
     expect(discardedRevision).toBe(true);
   });
 
-  test("accepts a committed revision when response and index maintenance fail", async () => {
+  test("accepts a committed revision when the swap response fails", async () => {
     let assetLoadCount = 0;
     let revisionName = "";
     server.use(
@@ -427,8 +426,6 @@ describe("asset content revisions", () => {
         json({ message: "index database unavailable" }, { status: 500 })
       )
     );
-    const log = vi.spyOn(console, "error").mockImplementation(() => {});
-
     await expect(
       updateAssetContent(
         {
@@ -448,10 +445,5 @@ describe("asset content revisions", () => {
       name: expect.stringMatching(/^settings_.+\.json$/),
       format: "json",
     });
-    expect(log).toHaveBeenCalledWith(
-      "Asset revision metadata synchronization failed",
-      expect.anything()
-    );
-    log.mockRestore();
   });
 });

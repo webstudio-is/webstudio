@@ -2,22 +2,22 @@ import { describe, expect, test } from "vitest";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   createStructuredAssetQueryResourceBody,
-  getAssetQueryFieldOptions,
   getAssetQueryConfigurationError,
-  isEmptyAssetQueryResult,
   parseStructuredAssetQueryResourceBody,
 } from "./asset-query-form-utils";
 
 describe("structured asset query resource body", () => {
   test("preserves runtime values as expressions", () => {
     const configuration = {
-      filters: [
-        {
-          field: ["properties", "slug"],
-          operator: "eq" as const,
-          value: "$ws$dataSource$routeSlug",
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq" as const,
+            value: "$ws$dataSource$routeSlug",
+          },
+        ],
+      },
       sort: [
         {
           field: ["properties", "publishedAt"],
@@ -34,13 +34,15 @@ describe("structured asset query resource body", () => {
       computeExpression(body, new Map([["routeSlug", "hello-world"]]))
     ).toEqual({
       query: {
-        filters: [
-          {
-            field: ["properties", "slug"],
-            operator: "eq",
-            value: "hello-world",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "hello-world",
+            },
+          ],
+        },
         sort: [{ field: ["properties", "publishedAt"], direction: "desc" }],
         limit: 10,
         offset: 0,
@@ -52,7 +54,7 @@ describe("structured asset query resource body", () => {
 
   test("validates expressions and configured limits", () => {
     const configuration = {
-      filters: [],
+      where: { all: [] },
       sort: [],
       limit: "10",
       offset: "0",
@@ -65,32 +67,14 @@ describe("structured asset query resource body", () => {
     expect(
       getAssetQueryConfigurationError({
         ...configuration,
-        filters: Array.from({ length: 33 }, () => ({
-          field: ["path"],
-          operator: "eq" as const,
-          value: '"post.md"',
-        })),
+        where: {
+          all: Array.from({ length: 33 }, () => ({
+            field: ["path"],
+            operator: "eq" as const,
+            value: '"post.md"',
+          })),
+        },
       })
     ).toContain("at most");
-  });
-
-  test("recognizes the structured empty result", () => {
-    expect(isEmptyAssetQueryResult({ items: [] })).toBe(true);
-    expect(isEmptyAssetQueryResult({ items: [{ id: "one" }] })).toBe(false);
-    expect(isEmptyAssetQueryResult([])).toBe(false);
-    expect(isEmptyAssetQueryResult(undefined)).toBe(false);
-  });
-
-  test("retains configured schemaless fields missing from the catalog", () => {
-    const options = getAssetQueryFieldOptions({
-      configuredPaths: [["properties", "removedField"]],
-    });
-
-    expect(options).toContainEqual(
-      expect.objectContaining({
-        path: ["properties", "removedField"],
-        types: expect.arrayContaining(["string", "object", "array"]),
-      })
-    );
   });
 });

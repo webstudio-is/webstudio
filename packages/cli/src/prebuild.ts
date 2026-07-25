@@ -28,6 +28,7 @@ import type {
   DataSource,
   Deployment,
   Asset,
+  AssetFileDocument,
   Resource,
   WsComponentMeta,
   Pages,
@@ -56,12 +57,15 @@ import {
   parseStructuredAssetQueryResourceBody,
   type AssetQueryFilter,
   type StructuredAssetQueryFilterBinding,
+  type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   getAssetQueryFieldValue,
+  getAssetIndexStoragePath,
   matchesAssetQueryFilter,
+  serializeAssetIndex,
 } from "@webstudio-is/asset-resource";
 import {
   publishedProjectBundle,
@@ -165,6 +169,108 @@ const getStaticAssetQueryFilter = (
   }
 };
 
+const visitStructuredWhere = (
+  where: StructuredAssetQueryWhereBinding,
+  visit: (filter: StructuredAssetQueryFilterBinding) => void
+) => {
+  if ("field" in where) {
+    visit(where);
+    return;
+  }
+  for (const child of "all" in where ? where.all : where.any) {
+    visitStructuredWhere(child, visit);
+  }
+};
+
+const evaluatePrerenderWhere = ({
+  document,
+  where,
+  routeValues,
+}: {
+  document: AssetFileDocument;
+  where: StructuredAssetQueryWhereBinding;
+  routeValues: ReadonlyMap<string, string>;
+}): boolean | undefined => {
+  if ("field" in where) {
+    const routeParameter = getBoundSystemRouteParameter(where.value);
+    const routeValue =
+      routeParameter === undefined
+        ? undefined
+        : routeValues.get(routeParameter);
+    const filter =
+      routeValue === undefined
+        ? getStaticAssetQueryFilter(where)
+        : assetQueryFilter.safeParse({ ...where, value: routeValue });
+    if (filter === undefined) {
+      return;
+    }
+    if ("success" in filter) {
+      return filter.success
+        ? matchesAssetQueryFilter(document, filter.data)
+        : false;
+    }
+    return matchesAssetQueryFilter(document, filter);
+  }
+  const children = "all" in where ? where.all : where.any;
+  const results = children.map((child) =>
+    evaluatePrerenderWhere({ document, where: child, routeValues })
+  );
+  if ("all" in where) {
+    return results.includes(false)
+      ? false
+      : results.every((result) => result === true)
+        ? true
+        : undefined;
+  }
+  return results.includes(true)
+    ? true
+    : results.every((result) => result === false)
+      ? false
+      : undefined;
+};
+
+const getRouteCandidates = ({
+  document,
+  where,
+  routeParameterNames,
+}: {
+  document: AssetFileDocument;
+  where: StructuredAssetQueryWhereBinding;
+  routeParameterNames: ReadonlySet<string>;
+}) => {
+  const candidates = new Map<string, Set<string>>();
+  visitStructuredWhere(where, (filter) => {
+    const routeParameter = getBoundSystemRouteParameter(filter.value);
+    if (
+      routeParameter === undefined ||
+      routeParameterNames.has(routeParameter) === false
+    ) {
+      return;
+    }
+    const value = getAssetQueryFieldValue(document, filter.field);
+    const values =
+      filter.operator === "eq" && typeof value === "string"
+        ? [value]
+        : filter.operator === "contains" && Array.isArray(value)
+          ? value.filter((item): item is string => typeof item === "string")
+          : [];
+    if (values.length === 0) {
+      return;
+    }
+    let parameterCandidates = candidates.get(routeParameter);
+    if (parameterCandidates === undefined) {
+      parameterCandidates = new Set();
+      candidates.set(routeParameter, parameterCandidates);
+    }
+    for (const candidate of values) {
+      if (candidate.length > 0) {
+        parameterCandidates.add(candidate);
+      }
+    }
+  });
+  return candidates;
+};
+
 export const getAssetResourcePrerenderPaths = ({
   pagePath,
   resources,
@@ -199,57 +305,71 @@ export const getAssetResourcePrerenderPaths = ({
     if (configuration === undefined) {
       continue;
     }
-    const routeFields = new Map<string, string[]>();
-    const staticFilters = [];
-    for (const filter of configuration.filters) {
-      const routeParameter = getBoundSystemRouteParameter(filter.value);
-      if (
-        routeParameter !== undefined &&
-        routeParameterNames.has(routeParameter) &&
-        filter.operator === "eq"
-      ) {
-        routeFields.set(routeParameter, filter.field);
-        continue;
-      }
-      const staticFilter = getStaticAssetQueryFilter(filter);
-      if (staticFilter !== undefined) {
-        staticFilters.push(staticFilter);
-      }
-    }
-    if (routeFields.size !== routeParameterNames.size) {
-      continue;
-    }
+    let evaluatedCandidates = 0;
+    const routeOwners = new Map<string, string>();
     for (const document of index.documents) {
+      const candidates = getRouteCandidates({
+        document,
+        where: configuration.where,
+        routeParameterNames,
+      });
       if (
-        staticFilters.every((filter) =>
-          matchesAssetQueryFilter(document, filter)
-        ) === false
+        [...routeParameterNames].some(
+          (name) => (candidates.get(name)?.size ?? 0) === 0
+        )
       ) {
         continue;
       }
+      const parameterNames = [...routeParameterNames];
       const values = new Map<string, string>();
-      for (const [name, fieldPath] of routeFields) {
-        const value = getAssetQueryFieldValue(document, fieldPath);
-        // Route parameters are strings at runtime and `eq` is type-strict.
-        // Enumerating numbers or booleans would create a page whose resource
-        // query cannot select the document used to derive that path.
-        if (typeof value === "string" && value.length > 0) {
-          values.set(name, value);
+      const addPaths = (position: number) => {
+        if (position < parameterNames.length) {
+          const name = parameterNames[position];
+          for (const value of candidates.get(name) ?? []) {
+            values.set(name, value);
+            addPaths(position + 1);
+          }
+          values.delete(name);
+          return;
         }
-      }
-      if (values.size !== routeParameterNames.size) {
-        continue;
-      }
-      let path = pagePath;
-      for (const match of [...pathParameters].reverse()) {
-        const name = match.groups?.name as string;
-        const value = values.get(name) as string;
-        path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
-      }
-      paths.add(path);
-      if (paths.size > assetResourceLimits.candidateDocuments) {
-        throw new Error("Dynamic SSG path count exceeds the Assets limit");
-      }
+        evaluatedCandidates += 1;
+        if (
+          evaluatedCandidates >
+          assetResourceLimits.candidateDocuments *
+            assetResourceLimits.filterCount
+        ) {
+          throw new Error(
+            "Dynamic SSG route candidates exceed the Assets limit"
+          );
+        }
+        if (
+          evaluatePrerenderWhere({
+            document,
+            where: configuration.where,
+            routeValues: values,
+          }) === false
+        ) {
+          return;
+        }
+        let path = pagePath;
+        for (const match of [...pathParameters].reverse()) {
+          const name = match.groups?.name as string;
+          const value = values.get(name) as string;
+          path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
+        }
+        const owner = routeOwners.get(path);
+        if (owner !== undefined && owner !== document._id) {
+          throw new Error(
+            `Dynamic Assets route is claimed by multiple files: ${path}`
+          );
+        }
+        routeOwners.set(path, document._id);
+        paths.add(path);
+        if (paths.size > assetResourceLimits.candidateDocuments) {
+          throw new Error("Dynamic SSG path count exceeds the Assets limit");
+        }
+      };
+      addPaths(0);
     }
   }
   return [...paths].sort();
@@ -308,13 +428,6 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   throw new Error(
     `Cannot read exported string assetBaseUrl from ${constantsPath}`
   );
-};
-
-const getAssetIndexPublicPath = (
-  index: NonNullable<PublishedProjectBundle["assetIndex"]>
-) => {
-  const checksum = index.integrity.checksum.replace(/^sha256:/, "");
-  return `/assets/db/${checksum}.json`;
 };
 
 export const getRequiredAssetResourceContentRefs = ({
@@ -387,7 +500,7 @@ export const materializeAssetIndex = async ({
     | { revision: string; assetRevision: string; indexPath: string }
     | undefined;
   if (index !== undefined) {
-    const indexPath = getAssetIndexPublicPath(index);
+    const indexPath = `/${getAssetIndexStoragePath(index)}`;
     manifest = {
       revision: index.integrity.checksum,
       assetRevision: index.assetRevision,
@@ -396,7 +509,7 @@ export const materializeAssetIndex = async ({
     await createFolderIfNotExists(targetDirectory);
     await writeFile(
       join(publicDirectory, indexPath.slice(1)),
-      JSON.stringify(index),
+      serializeAssetIndex(index),
       "utf8"
     );
   }

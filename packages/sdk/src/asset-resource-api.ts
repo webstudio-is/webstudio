@@ -1,0 +1,773 @@
+import { z } from "zod";
+import { queryCapabilities } from "@webstudio-is/query-builder";
+import { assetResourceLimits } from "./asset-resource-limits";
+import { asset, assetType } from "./schema/assets";
+import { assetFolder, assetFolderName } from "./schema/asset-folders";
+import {
+  assetQueryRequest,
+  assetQueryResult,
+  assetResourceQueryFailure,
+  builderAssetFieldCatalog,
+} from "./schema/asset-resource";
+import {
+  assetsFieldCatalogApiUrl,
+  assetsOpenApiUrl,
+  assetsApiUrl,
+  assetsFoldersApiUrl,
+  assetsUploadsApiUrl,
+  assetsQueryApiUrl,
+  assetsQueryCapabilitiesApiUrl,
+} from "./resource-loader";
+import type { AssetQueryCapabilities } from "./asset-query-capabilities";
+
+export const assetResourceApiOperations = {
+  listAssets: {
+    operationId: "listAssets",
+    method: "get",
+    path: assetsApiUrl,
+  },
+  reserveAssetUpload: {
+    operationId: "reserveAssetUpload",
+    method: "post",
+    path: assetsUploadsApiUrl,
+  },
+  uploadAssetContent: {
+    operationId: "uploadAssetContent",
+    method: "post",
+    path: `${assetsUploadsApiUrl}/{name}`,
+  },
+  updateAsset: {
+    operationId: "updateAsset",
+    method: "patch",
+    path: "/rest/assets/{assetId}",
+  },
+  getAsset: {
+    operationId: "getAsset",
+    method: "get",
+    path: "/rest/assets/{assetId}",
+  },
+  deleteAsset: {
+    operationId: "deleteAsset",
+    method: "delete",
+    path: "/rest/assets/{assetId}",
+  },
+  replaceAssetContent: {
+    operationId: "replaceAssetContent",
+    method: "put",
+    path: "/rest/assets/{assetId}/content",
+  },
+  downloadAssetContent: {
+    operationId: "downloadAssetContent",
+    method: "get",
+    path: "/rest/assets/{assetId}/content",
+  },
+  listAssetFolders: {
+    operationId: "listAssetFolders",
+    method: "get",
+    path: assetsFoldersApiUrl,
+  },
+  createAssetFolder: {
+    operationId: "createAssetFolder",
+    method: "post",
+    path: assetsFoldersApiUrl,
+  },
+  updateAssetFolder: {
+    operationId: "updateAssetFolder",
+    method: "patch",
+    path: "/rest/assets/folders/{folderId}",
+  },
+  getAssetFolder: {
+    operationId: "getAssetFolder",
+    method: "get",
+    path: "/rest/assets/folders/{folderId}",
+  },
+  deleteAssetFolder: {
+    operationId: "deleteAssetFolder",
+    method: "delete",
+    path: "/rest/assets/folders/{folderId}",
+  },
+  queryAssets: {
+    operationId: "queryAssets",
+    method: "post",
+    path: assetsQueryApiUrl,
+  },
+  getAssetFieldCatalog: {
+    operationId: "getAssetFieldCatalog",
+    method: "get",
+    path: assetsFieldCatalogApiUrl,
+  },
+  getAssetQueryCapabilities: {
+    operationId: "getAssetQueryCapabilities",
+    method: "get",
+    path: assetsQueryCapabilitiesApiUrl,
+  },
+  getAssetResourceOpenApi: {
+    operationId: "getAssetResourceOpenApi",
+    method: "get",
+    path: assetsOpenApiUrl,
+  },
+} as const;
+
+export const assetUploadReservationRequest = z.strictObject({
+  projectId: z.string().min(1),
+  type: assetType,
+  filename: z.string().min(1),
+  displayFilename: z.string().min(1).optional(),
+  description: z.string().optional(),
+  folderId: z.string().min(1).optional(),
+  contentHash: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .optional(),
+});
+
+export const assetUploadTicket = z.discriminatedUnion("deduplicated", [
+  z.strictObject({
+    assetId: z.string().min(1),
+    name: z.string().min(1),
+    deduplicated: z.literal(false),
+  }),
+  z.strictObject({
+    assetId: z.string().min(1),
+    name: z.string().min(1),
+    deduplicated: z.literal(true),
+    asset,
+  }),
+]);
+
+export const assetUploadResult = z.strictObject({
+  uploadedAssets: z.array(asset),
+  deduplicated: z.boolean(),
+});
+
+export const assetListResult = z.strictObject({ assets: z.array(asset) });
+
+export const assetItemResult = z.strictObject({ asset });
+
+export const assetMetadataUpdate = z
+  .strictObject({
+    filename: z.string().min(1).nullable().optional(),
+    description: z.string().nullable().optional(),
+    folderId: z.string().min(1).nullable().optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one asset metadata field is required",
+  });
+export type AssetMetadataUpdate = z.infer<typeof assetMetadataUpdate>;
+
+export const assetMutationResult = assetItemResult;
+
+export const assetFolderListResult = z.strictObject({
+  folders: z.array(assetFolder),
+});
+
+export const assetFolderCreateRequest = z.strictObject({
+  name: assetFolderName,
+  parentId: z.string().min(1).optional(),
+});
+
+export const assetFolderUpdateRequest = z
+  .strictObject({
+    name: assetFolderName.optional(),
+    parentId: z.string().min(1).nullable().optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one asset folder field is required",
+  });
+export type AssetFolderUpdateRequest = z.infer<typeof assetFolderUpdateRequest>;
+
+export const assetFolderMutationResult = z.strictObject({
+  folder: assetFolder,
+});
+
+export const assetMutationFailure = z.strictObject({
+  errors: z.string().min(1),
+});
+
+type JsonSchema = Record<string, unknown>;
+
+const rewriteLocalReferences = (value: unknown, component: string): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => rewriteLocalReferences(item, component));
+  }
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      key === "$ref" && typeof item === "string" && item.startsWith("#/$defs/")
+        ? `#/components/schemas/${component}/${item.slice(2)}`
+        : rewriteLocalReferences(item, component),
+    ])
+  );
+};
+
+const toComponentSchema = (
+  component: string,
+  schema: z.ZodType,
+  io: "input" | "output"
+): JsonSchema => {
+  const { $schema: _schema, ...jsonSchema } = z.toJSONSchema(schema, {
+    target: "draft-2020-12",
+    io,
+    unrepresentable: "any",
+  });
+  return rewriteLocalReferences(jsonSchema, component) as JsonSchema;
+};
+
+const schemaResponse = (component: string, description: string) => ({
+  description,
+  content: {
+    "application/json": {
+      schema: { $ref: `#/components/schemas/${component}` },
+    },
+  },
+});
+
+const errorResponses = {
+  400: schemaResponse("AssetResourceQueryFailure", "Invalid request"),
+  403: schemaResponse("AssetResourceQueryFailure", "Access denied"),
+  409: schemaResponse("AssetResourceQueryFailure", "Stale asset index"),
+  500: schemaResponse("AssetResourceQueryFailure", "Internal error"),
+};
+
+const mutationErrorResponses = {
+  400: schemaResponse("AssetMutationFailure", "Invalid mutation"),
+  403: schemaResponse("AssetMutationFailure", "Access denied"),
+  404: schemaResponse("AssetMutationFailure", "Asset or folder not found"),
+  409: schemaResponse("AssetMutationFailure", "Asset revision conflict"),
+  500: schemaResponse("AssetMutationFailure", "Internal error"),
+};
+
+const pathParameter = (name: string, description: string) => ({
+  name,
+  in: "path",
+  required: true,
+  description,
+  schema: { type: "string", minLength: 1 },
+});
+
+const queryParameter = (
+  name: string,
+  description: string,
+  required = false
+) => ({
+  name,
+  in: "query",
+  required,
+  description,
+  schema: { type: "string", minLength: 1 },
+});
+
+const projectIdParameter = queryParameter("projectId", "Owning project", true);
+
+const createCapabilitiesExample = (capabilities: AssetQueryCapabilities) => {
+  const encoder = new TextEncoder();
+  const fields: AssetQueryCapabilities["fields"][number][] = [];
+  const base = { ...capabilities, fields };
+  let bytes = encoder.encode(JSON.stringify(base)).byteLength;
+  for (const field of capabilities.fields) {
+    const fieldBytes = encoder.encode(JSON.stringify(field)).byteLength + 1;
+    if (bytes + fieldBytes > assetResourceLimits.apiDescriptionExampleBytes) {
+      break;
+    }
+    fields.push(field);
+    bytes += fieldBytes;
+  }
+  return {
+    value: base,
+    truncated: fields.length !== capabilities.fields.length,
+  };
+};
+
+/**
+ * OpenAPI is the external, transport-level description of the Assets API.
+ * Query-authoring UI must consume the smaller normalized QueryCapabilities
+ * response instead of depending on OpenAPI parsing or Assets storage details.
+ */
+export const createAssetResourceOpenApi = ({
+  capabilities,
+}: {
+  capabilities: AssetQueryCapabilities;
+}) => {
+  queryCapabilities.parse(capabilities);
+  const operations = assetResourceApiOperations;
+  const capabilityExample = createCapabilitiesExample(capabilities);
+  const document = {
+    openapi: "3.1.1",
+    jsonSchemaDialect: "https://json-schema.org/draft/2020-12/schema",
+    info: {
+      title: "Webstudio Assets resource API",
+      version: "1.0.0",
+      description:
+        "Unified project Assets API for uploads, metadata and content mutations, queries, and bounded content hydration.",
+    },
+    paths: {
+      [operations.listAssets.path]: {
+        [operations.listAssets.method]: {
+          operationId: operations.listAssets.operationId,
+          summary: "List project assets",
+          parameters: [projectIdParameter],
+          responses: {
+            200: schemaResponse("AssetListResult", "Project assets"),
+            ...mutationErrorResponses,
+          },
+        },
+      },
+      [operations.reserveAssetUpload.path]: {
+        [operations.reserveAssetUpload.method]: {
+          operationId: operations.reserveAssetUpload.operationId,
+          summary: "Reserve an asset upload",
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  $ref: "#/components/schemas/AssetUploadReservationRequest",
+                },
+              },
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/AssetUploadReservationRequest",
+                },
+              },
+            },
+          },
+          responses: {
+            200: schemaResponse("AssetUploadTicket", "Upload reservation"),
+            ...mutationErrorResponses,
+          },
+        },
+      },
+      [operations.uploadAssetContent.path]: {
+        [operations.uploadAssetContent.method]: {
+          operationId: operations.uploadAssetContent.operationId,
+          summary: "Upload asset content",
+          parameters: [
+            pathParameter(
+              "name",
+              "Reserved storage name or requested filename"
+            ),
+            queryParameter("projectId", "Project receiving the asset"),
+            queryParameter("type", "Asset type: file, image, or font"),
+            queryParameter("folderId", "Destination asset folder"),
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/octet-stream": {
+                schema: { type: "string", format: "binary" },
+              },
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["url"],
+                  properties: { url: { type: "string", format: "uri" } },
+                  additionalProperties: false,
+                },
+              },
+            },
+          },
+          responses: {
+            200: schemaResponse("AssetUploadResult", "Uploaded asset"),
+            ...mutationErrorResponses,
+          },
+        },
+      },
+      [operations.updateAsset.path]: {
+        [operations.getAsset.method]: {
+          operationId: operations.getAsset.operationId,
+          summary: "Get an asset",
+          parameters: [
+            pathParameter("assetId", "Asset ID"),
+            projectIdParameter,
+          ],
+          responses: {
+            200: schemaResponse("AssetItemResult", "Asset record"),
+            ...mutationErrorResponses,
+          },
+        },
+        [operations.updateAsset.method]: {
+          operationId: operations.updateAsset.operationId,
+          summary: "Update asset metadata or folder",
+          parameters: [
+            pathParameter("assetId", "Asset ID"),
+            projectIdParameter,
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AssetMetadataUpdate" },
+              },
+            },
+          },
+          responses: {
+            200: schemaResponse("AssetMutationResult", "Updated asset"),
+            ...mutationErrorResponses,
+          },
+        },
+        [operations.deleteAsset.method]: {
+          operationId: operations.deleteAsset.operationId,
+          summary: "Delete an asset",
+          parameters: [
+            pathParameter("assetId", "Asset ID"),
+            projectIdParameter,
+          ],
+          responses: {
+            204: { description: "Asset deleted" },
+            ...mutationErrorResponses,
+          },
+        },
+      },
+      [operations.replaceAssetContent.path]: {
+        [operations.downloadAssetContent.method]: {
+          operationId: operations.downloadAssetContent.operationId,
+          summary: "Download asset content",
+          description:
+            "Streams the stored file through the authenticated Assets API. A single standard HTTP byte range is supported.",
+          parameters: [
+            pathParameter("assetId", "Asset ID"),
+            projectIdParameter,
+            {
+              name: "Range",
+              in: "header",
+              required: false,
+              description: "Single byte range, for example bytes=0-1023",
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            200: {
+              description: "Complete asset content",
+              content: {
+                "application/octet-stream": {
+                  schema: { type: "string", format: "binary" },
+                },
+              },
+            },
+            206: {
+              description: "Partial asset content",
+              headers: {
+                "Content-Range": { schema: { type: "string" } },
+              },
+              content: {
+                "application/octet-stream": {
+                  schema: { type: "string", format: "binary" },
+                },
+              },
+            },
+            416: schemaResponse("AssetMutationFailure", "Invalid byte range"),
+            ...mutationErrorResponses,
+          },
+        },
+        [operations.replaceAssetContent.method]: {
+          operationId: operations.replaceAssetContent.operationId,
+          summary: "Replace editable asset content",
+          parameters: [
+            pathParameter("assetId", "Asset ID"),
+            projectIdParameter,
+            queryParameter(
+              "expectedName",
+              "Current immutable storage name used for conflict detection",
+              true
+            ),
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/octet-stream": {
+                schema: { type: "string", format: "binary" },
+              },
+              "text/markdown": { schema: { type: "string" } },
+              "application/json": { schema: {} },
+            },
+          },
+          responses: {
+            200: schemaResponse("AssetMutationResult", "Updated asset"),
+            ...mutationErrorResponses,
+          },
+        },
+      },
+      [operations.listAssetFolders.path]: {
+        [operations.listAssetFolders.method]: {
+          operationId: operations.listAssetFolders.operationId,
+          summary: "List asset folders",
+          parameters: [projectIdParameter],
+          responses: {
+            200: schemaResponse(
+              "AssetFolderListResult",
+              "Project asset folders"
+            ),
+            ...mutationErrorResponses,
+          },
+        },
+        [operations.createAssetFolder.method]: {
+          operationId: operations.createAssetFolder.operationId,
+          summary: "Create an asset folder",
+          parameters: [projectIdParameter],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/AssetFolderCreateRequest",
+                },
+              },
+            },
+          },
+          responses: {
+            201: schemaResponse(
+              "AssetFolderMutationResult",
+              "Created asset folder"
+            ),
+            ...mutationErrorResponses,
+          },
+        },
+      },
+      [operations.updateAssetFolder.path]: {
+        [operations.getAssetFolder.method]: {
+          operationId: operations.getAssetFolder.operationId,
+          summary: "Get an asset folder",
+          parameters: [
+            pathParameter("folderId", "Asset folder ID"),
+            projectIdParameter,
+          ],
+          responses: {
+            200: schemaResponse("AssetFolderMutationResult", "Asset folder"),
+            ...mutationErrorResponses,
+          },
+        },
+        [operations.updateAssetFolder.method]: {
+          operationId: operations.updateAssetFolder.operationId,
+          summary: "Update an asset folder",
+          parameters: [
+            pathParameter("folderId", "Asset folder ID"),
+            projectIdParameter,
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/AssetFolderUpdateRequest",
+                },
+              },
+            },
+          },
+          responses: {
+            200: schemaResponse(
+              "AssetFolderMutationResult",
+              "Updated asset folder"
+            ),
+            ...mutationErrorResponses,
+          },
+        },
+        [operations.deleteAssetFolder.method]: {
+          operationId: operations.deleteAssetFolder.operationId,
+          summary: "Delete an empty asset folder",
+          description:
+            "Returns a conflict when the folder contains nested folders or assets.",
+          parameters: [
+            pathParameter("folderId", "Asset folder ID"),
+            projectIdParameter,
+          ],
+          responses: {
+            204: { description: "Asset folder deleted" },
+            ...mutationErrorResponses,
+          },
+        },
+      },
+      [operations.queryAssets.path]: {
+        [operations.queryAssets.method]: {
+          operationId: operations.queryAssets.operationId,
+          summary: "Query project assets",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AssetQueryRequest" },
+              },
+            },
+          },
+          responses: {
+            200: schemaResponse("AssetQueryResult", "Query result"),
+            ...errorResponses,
+          },
+        },
+      },
+      [operations.getAssetFieldCatalog.path]: {
+        [operations.getAssetFieldCatalog.method]: {
+          operationId: operations.getAssetFieldCatalog.operationId,
+          summary: "Get observed asset fields",
+          responses: {
+            200: schemaResponse(
+              "BuilderAssetFieldCatalog",
+              "Observed project fields"
+            ),
+            400: errorResponses[400],
+            403: errorResponses[403],
+            500: errorResponses[500],
+          },
+        },
+      },
+      [operations.getAssetQueryCapabilities.path]: {
+        [operations.getAssetQueryCapabilities.method]: {
+          operationId: operations.getAssetQueryCapabilities.operationId,
+          summary: "Get query-authoring capabilities",
+          responses: {
+            200: {
+              ...schemaResponse(
+                "QueryCapabilities",
+                "Project-specific query capabilities"
+              ),
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/QueryCapabilities" },
+                  example: capabilityExample.value,
+                  "x-webstudio-example-truncated": capabilityExample.truncated,
+                  "x-webstudio-complete-document":
+                    operations.getAssetQueryCapabilities.path,
+                },
+              },
+            },
+            400: errorResponses[400],
+            403: errorResponses[403],
+            500: errorResponses[500],
+          },
+        },
+      },
+      [operations.getAssetResourceOpenApi.path]: {
+        [operations.getAssetResourceOpenApi.method]: {
+          operationId: operations.getAssetResourceOpenApi.operationId,
+          summary: "Get this OpenAPI description",
+          responses: {
+            200: {
+              description: "OpenAPI description",
+              content: {
+                "application/vnd.oai.openapi+json;version=3.1": {
+                  schema: { type: "object", additionalProperties: true },
+                },
+              },
+            },
+            400: errorResponses[400],
+            403: errorResponses[403],
+            500: errorResponses[500],
+          },
+        },
+      },
+    },
+    components: {
+      schemas: {
+        AssetQueryRequest: toComponentSchema(
+          "AssetQueryRequest",
+          assetQueryRequest,
+          "input"
+        ),
+        AssetQueryResult: toComponentSchema(
+          "AssetQueryResult",
+          assetQueryResult,
+          "output"
+        ),
+        AssetResourceQueryFailure: toComponentSchema(
+          "AssetResourceQueryFailure",
+          assetResourceQueryFailure,
+          "output"
+        ),
+        BuilderAssetFieldCatalog: toComponentSchema(
+          "BuilderAssetFieldCatalog",
+          builderAssetFieldCatalog,
+          "output"
+        ),
+        QueryCapabilities: toComponentSchema(
+          "QueryCapabilities",
+          queryCapabilities,
+          "output"
+        ),
+        AssetUploadReservationRequest: toComponentSchema(
+          "AssetUploadReservationRequest",
+          assetUploadReservationRequest,
+          "input"
+        ),
+        AssetUploadTicket: toComponentSchema(
+          "AssetUploadTicket",
+          assetUploadTicket,
+          "output"
+        ),
+        AssetUploadResult: toComponentSchema(
+          "AssetUploadResult",
+          assetUploadResult,
+          "output"
+        ),
+        AssetListResult: toComponentSchema(
+          "AssetListResult",
+          assetListResult,
+          "output"
+        ),
+        AssetItemResult: toComponentSchema(
+          "AssetItemResult",
+          assetItemResult,
+          "output"
+        ),
+        AssetMetadataUpdate: toComponentSchema(
+          "AssetMetadataUpdate",
+          assetMetadataUpdate,
+          "input"
+        ),
+        AssetMutationResult: toComponentSchema(
+          "AssetMutationResult",
+          assetMutationResult,
+          "output"
+        ),
+        AssetMutationFailure: toComponentSchema(
+          "AssetMutationFailure",
+          assetMutationFailure,
+          "output"
+        ),
+        AssetFolderListResult: toComponentSchema(
+          "AssetFolderListResult",
+          assetFolderListResult,
+          "output"
+        ),
+        AssetFolderCreateRequest: toComponentSchema(
+          "AssetFolderCreateRequest",
+          assetFolderCreateRequest,
+          "input"
+        ),
+        AssetFolderUpdateRequest: toComponentSchema(
+          "AssetFolderUpdateRequest",
+          assetFolderUpdateRequest,
+          "input"
+        ),
+        AssetFolderMutationResult: toComponentSchema(
+          "AssetFolderMutationResult",
+          assetFolderMutationResult,
+          "output"
+        ),
+      },
+      securitySchemes: {
+        builderShareToken: {
+          type: "apiKey",
+          in: "header",
+          name: "x-auth-token",
+          description:
+            "Editable Webstudio project share token. An existing authenticated Builder session is also accepted.",
+        },
+      },
+    },
+    security: [{ builderShareToken: [] }],
+  } as const;
+
+  const bytes = new TextEncoder().encode(JSON.stringify(document)).byteLength;
+  if (bytes > assetResourceLimits.apiDescriptionBytes) {
+    throw new Error(
+      "Asset resource OpenAPI description exceeds the byte limit"
+    );
+  }
+  return document;
+};
+
+export type AssetResourceOpenApi = ReturnType<
+  typeof createAssetResourceOpenApi
+>;

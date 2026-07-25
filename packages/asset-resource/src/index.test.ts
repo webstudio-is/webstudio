@@ -11,18 +11,20 @@ describe("asset resource request transport", () => {
     );
     const resourceRequest = createAssetResourceRequest({
       query: {
-        filters: [
-          {
-            field: ["properties", "slug"],
-            operator: "eq",
-            value: "hello-world",
-          },
-          {
-            field: ["properties", "locale"],
-            operator: "eq",
-            value: "en",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "hello-world",
+            },
+            {
+              field: ["properties", "locale"],
+              operator: "eq",
+              value: "en",
+            },
+          ],
+        },
         limit: 1,
       },
       indexRevision: "index-7",

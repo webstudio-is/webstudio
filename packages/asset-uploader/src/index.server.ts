@@ -8,12 +8,15 @@ export * from "./patch";
 export * from "./asset-patch-core";
 export * from "./folder-persistence";
 export * from "./revision";
-export * from "./canonical-metadata-persistence";
-export * from "./canonical-metadata-backfill";
-export * from "./canonical-metadata-maintenance";
 export * from "./field-catalog";
 export * from "./query-preview";
 export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";
 export { assetDataOverride } from "./utils/get-asset-data";
-export type { AssetClient } from "./client";
+export type {
+  AssetClient,
+  AssetObjectReader,
+  AssetObjectStore,
+  AssetObjectWriter,
+  AssetUploadClient,
+} from "./client";

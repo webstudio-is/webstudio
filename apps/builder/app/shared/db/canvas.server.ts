@@ -10,8 +10,7 @@ import {
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   loadAssetDataByProject,
-  loadCanonicalAssetFileEntries,
-  synchronizeCanonicalAssets,
+  PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
@@ -23,10 +22,6 @@ import {
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
-import {
-  computeCanonicalAssetRevision,
-  createAssetIndex,
-} from "@webstudio-is/asset-resource";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
@@ -196,6 +191,11 @@ const addProjectMetadata = async (
   let publishedAssetFolders = data.assetFolders;
   if (hasAssetQueries) {
     const assetClient = createAssetClient();
+    const assetRepository = new PostgresAssetRepository({
+      projectId: project.id,
+      context,
+      assetStore: assetClient,
+    });
     const retainedFontIds = new Set(
       data.assets
         .filter((asset) => asset.type === "font")
@@ -203,31 +203,14 @@ const addProjectMetadata = async (
     );
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const assetDataBefore = await loadAssetDataByProject(project.id, context);
-      await synchronizeCanonicalAssets({
-        client: context.postgrest.client,
-        projectId: project.id,
-        assetClient,
-      });
-      const canonicalEntries = await loadCanonicalAssetFileEntries({
-        client: context.postgrest.client,
-        projectId: project.id,
-      });
-      const preparedIndex = await createAssetIndex({
-        projectId: project.id,
-        entries: canonicalEntries,
-      });
-      const [assetDataAfter, latestCanonical] = await Promise.all([
+      const preparedIndex = await assetRepository.prepareIndex();
+      const [assetDataAfter, latestIndex] = await Promise.all([
         loadAssetDataByProject(project.id, context),
-        loadCanonicalAssetFileEntries({
-          client: context.postgrest.client,
-          projectId: project.id,
-        }),
+        assetRepository.readIndex(),
       ]);
-      const latestAssetRevision =
-        await computeCanonicalAssetRevision(latestCanonical);
       const assetsStayedStable =
         JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter) &&
-        preparedIndex.assetRevision === latestAssetRevision;
+        preparedIndex.assetRevision === latestIndex.assetRevision;
       if (assetsStayedStable === false) {
         if (attempt === 0) {
           continue;

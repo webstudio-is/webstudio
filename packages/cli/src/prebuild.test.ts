@@ -368,7 +368,7 @@ const createQueryResource = (content: "none" | "full" = "none"): Resource => ({
   url: '"/$resources/assets"',
   headers: [],
   body: createStructuredAssetQueryResourceBody({
-    filters: [],
+    where: { all: [] },
     sort: [],
     limit: "100",
     offset: "0",
@@ -505,13 +505,15 @@ test("executes and hydrates an asset query from SSG public files", async () => {
     method: "POST",
     body: JSON.stringify({
       query: {
-        filters: [
-          {
-            field: ["properties", "slug"],
-            operator: "eq",
-            value: "post",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "post",
+            },
+          ],
+        },
         limit: 1,
         content: { mode: "full" },
       },
@@ -565,7 +567,7 @@ test("hydrates URL-encoded SSG asset filenames from their decoded filesystem pat
     method: "POST",
     body: JSON.stringify({
       query: {
-        filters: [{ field: ["id"], operator: "eq", value: "post-1" }],
+        where: { all: [{ field: ["id"], operator: "eq", value: "post-1" }] },
         limit: 1,
         content: { mode: "full" },
       },
@@ -1221,18 +1223,20 @@ describe("prebuild", () => {
           url: '"/$resources/assets"',
           headers: [],
           body: createStructuredAssetQueryResourceBody({
-            filters: [
-              {
-                field: ["properties", "draft"],
-                operator: "ne",
-                value: "true",
-              },
-              {
-                field: ["properties", "slug"],
-                operator: "eq",
-                value: "system.params.slug",
-              },
-            ],
+            where: {
+              all: [
+                {
+                  field: ["properties", "draft"],
+                  operator: "ne",
+                  value: "true",
+                },
+                {
+                  field: ["properties", "slug"],
+                  operator: "eq",
+                  value: "system.params.slug",
+                },
+              ],
+            },
             sort: [],
             limit: "1",
             offset: "0",
@@ -1285,13 +1289,15 @@ describe("prebuild", () => {
     ]);
     const resource = createQueryResource();
     resource.body = createStructuredAssetQueryResourceBody({
-      filters: [
-        {
-          field: ["properties", "slug"],
-          operator: "eq",
-          value: "system.params.slug",
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "system.params.slug",
+          },
+        ],
+      },
       sort: [],
       limit: "1",
       offset: "0",
@@ -1305,6 +1311,97 @@ describe("prebuild", () => {
         index,
       })
     ).toEqual([]);
+  });
+
+  test("prerenders canonical and alternative asset routes from any groups", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: {
+        slug: "hello-world",
+        id: "post-123",
+        aliases: ["original-title"],
+        draft: false,
+      },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "draft"],
+            operator: "ne",
+            value: "true",
+          },
+          {
+            any: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.identifier",
+              },
+              {
+                field: ["properties", "id"],
+                operator: "eq",
+                value: "system.params.identifier",
+              },
+              {
+                field: ["properties", "aliases"],
+                operator: "contains",
+                value: "system.params.identifier",
+              },
+            ],
+          },
+        ],
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:identifier",
+        resources: [["post", resource]],
+        index,
+      })
+    ).toEqual(["/blog/hello-world", "/blog/original-title", "/blog/post-123"]);
+  });
+
+  test("rejects ambiguous dynamic asset routes", async () => {
+    const index = await createTestAssetIndex([
+      { ...indexedDocument, properties: { slug: "shared" } },
+      {
+        ...indexedDocument,
+        _id: "other-post",
+        revision: "other-revision",
+        properties: { slug: "shared" },
+      },
+    ]);
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "system.params.slug",
+          },
+        ],
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      content: { mode: "none" },
+    });
+
+    expect(() =>
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["post", resource]],
+        index,
+      })
+    ).toThrow("/blog/shared");
   });
 
   test("prerenders SSG pages with asset query data", async () => {
@@ -1329,7 +1426,7 @@ describe("prebuild", () => {
           url: '"/$resources/assets"',
           headers: [],
           body: createStructuredAssetQueryResourceBody({
-            filters: [],
+            where: { all: [] },
             sort: [],
             limit: "10",
             offset: "0",

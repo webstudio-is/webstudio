@@ -10,9 +10,9 @@ describe("Assets resource mutation input", () => {
       name: "Posts",
       scopeInstanceId: "root",
       query: {
-        filters: [
-          { field: ["content"], operator: "contains", value: '"hello"' },
-        ],
+        where: {
+          all: [{ field: ["content"], operator: "contains", value: '"hello"' }],
+        },
       },
     });
 
@@ -21,11 +21,13 @@ describe("Assets resource mutation input", () => {
 
   test("rejects query limits on create and update", () => {
     const query = {
-      filters: Array.from({ length: 33 }, () => ({
-        field: ["extension"],
-        operator: "eq" as const,
-        value: { type: "literal" as const, value: "md" },
-      })),
+      where: {
+        all: Array.from({ length: 33 }, () => ({
+          field: ["extension"],
+          operator: "eq" as const,
+          value: { type: "literal" as const, value: "md" },
+        })),
+      },
     };
 
     expect(
@@ -49,23 +51,25 @@ describe("Assets resource mutation input", () => {
         name: "Post",
         scopeInstanceId: "root",
         query: {
-          filters: [
-            {
-              field: ["extension"],
-              operator: "eq",
-              value: { type: "literal", value: "md" },
-            },
-            {
-              field: ["properties", "slug"],
-              operator: "eq",
-              value: "system.params.slug",
-            },
-            {
-              field: ["properties", "draft"],
-              operator: "ne",
-              value: { type: "literal", value: true },
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["extension"],
+                operator: "eq",
+                value: { type: "literal", value: "md" },
+              },
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.slug",
+              },
+              {
+                field: ["properties", "draft"],
+                operator: "ne",
+                value: { type: "literal", value: true },
+              },
+            ],
+          },
           limit: { type: "literal", value: 20 },
           offset: { type: "literal", value: 0 },
           content: { mode: "markdown-body", maxBytes: 65_536 },

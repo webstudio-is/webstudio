@@ -8,6 +8,7 @@ import {
   type Patch,
 } from "./patch-utils";
 import { swapAssetFileWithClient } from "./revision";
+import type { AssetMetadataUpdate } from "@webstudio-is/sdk/asset-resource-api";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
 
@@ -128,6 +129,52 @@ export const deleteAssetsWithClient = async (
       .in("name", Array.from(unusedFileNames));
     assertPostgrestSuccess(deletedFiles);
   }
+};
+
+export const updateAssetMetadataWithClient = async (
+  {
+    projectId,
+    assetId,
+    values,
+  }: {
+    projectId: string;
+    assetId: Asset["id"];
+    values: AssetMetadataUpdate;
+  },
+  client: Client
+): Promise<Asset> => {
+  const update: {
+    filename?: string | null;
+    description?: string | null;
+    folderId?: string | null;
+  } = {};
+  if (Object.hasOwn(values, "filename")) {
+    update.filename = values.filename ?? null;
+  }
+  if (Object.hasOwn(values, "description")) {
+    update.description = values.description ?? null;
+  }
+  if (Object.hasOwn(values, "folderId")) {
+    update.folderId = values.folderId ?? null;
+  }
+  const result = await client
+    .from("Asset")
+    .update(update)
+    .eq("id", assetId)
+    .eq("projectId", projectId)
+    .select("id")
+    .single();
+  assertPostgrestSuccess(result);
+  if (result.data?.id !== assetId) {
+    throw new Error("Asset not found");
+  }
+
+  const assets = await loadAssetsByProjectWithClient(projectId, client);
+  const asset = assets.find((candidate) => candidate.id === assetId);
+  if (asset === undefined) {
+    throw new Error("Asset not found");
+  }
+  return asset;
 };
 
 /**

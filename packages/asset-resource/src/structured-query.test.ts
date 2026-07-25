@@ -80,6 +80,40 @@ const catalog: BuilderAssetFieldCatalog = {
 };
 
 describe("structured asset query", () => {
+  test("combines nested all and any filter groups", async () => {
+    const result = await executeAssetQuery({
+      catalog,
+      documents,
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: true,
+            },
+            {
+              any: [
+                {
+                  field: ["properties", "title"],
+                  operator: "eq",
+                  value: "Alpha",
+                },
+                {
+                  field: ["properties", "publishedAt"],
+                  operator: "eq",
+                  value: "2026-01-01",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result.items.map(({ id }) => id)).toEqual(["alpha", "gamma"]);
+  });
+
   test("reads only own JSON properties from dynamic field paths", () => {
     const inheritedNames = document({ id: "plain", properties: {} });
     expect(
@@ -109,13 +143,15 @@ describe("structured asset query", () => {
       validateAssetQueryAgainstCatalog({
         catalog,
         query: {
-          filters: [
-            {
-              field: ["properties", "constructor"],
-              operator: "eq",
-              value: "missing",
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["properties", "constructor"],
+                operator: "eq",
+                value: "missing",
+              },
+            ],
+          },
         },
       }).warnings
     ).toEqual(["Asset field properties.constructor is not currently observed"]);
@@ -123,13 +159,15 @@ describe("structured asset query", () => {
 
   test("treats dynamic fields absent from the current catalog as missing", async () => {
     const query = {
-      filters: [
-        {
-          field: ["properties", "missing"] as [string, string],
-          operator: "eq" as const,
-          value: true,
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "missing"] as [string, string],
+            operator: "eq" as const,
+            value: true,
+          },
+        ],
+      },
       content: { mode: "none" as const },
     };
     expect(
@@ -183,18 +221,20 @@ describe("structured asset query", () => {
       catalog,
       documents,
       query: {
-        filters: [
-          {
-            field: ["properties", "draft"],
-            operator: "ne",
-            value: true,
-          },
-          {
-            field: ["properties", "tags"],
-            operator: "contains",
-            value: "news",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: true,
+            },
+            {
+              field: ["properties", "tags"],
+              operator: "contains",
+              value: "news",
+            },
+          ],
+        },
         sort: [
           {
             field: ["properties", "publishedAt"],
@@ -230,7 +270,7 @@ describe("structured asset query", () => {
       catalog,
       documents: [{ ...documents[0], size: bytes.byteLength }],
       query: {
-        filters: [{ field: ["id"], operator: "eq", value: "alpha" }],
+        where: { all: [{ field: ["id"], operator: "eq", value: "alpha" }] },
         sort: [],
         limit: 1,
         offset: 0,
@@ -258,18 +298,20 @@ describe("structured asset query", () => {
       catalog,
       documents,
       query: {
-        filters: [
-          {
-            field: ["properties", "publishedAt"],
-            operator: "gte",
-            value: "2025-01-01",
-          },
-          {
-            field: ["properties", "draft"],
-            operator: "exists",
-            value: false,
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "publishedAt"],
+              operator: "gte",
+              value: "2025-01-01",
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "exists",
+              value: false,
+            },
+          ],
+        },
         sort: [],
         limit: 100,
         offset: 0,

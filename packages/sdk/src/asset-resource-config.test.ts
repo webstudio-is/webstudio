@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
+  formatExpressionObject,
+  parseExpressionObject,
+} from "@webstudio-is/query-builder";
+import {
   createStructuredAssetQueryResourceBody,
   isAssetsResource,
   isConfiguredAssetsResource,
@@ -41,18 +45,29 @@ describe("asset query resource configuration", () => {
 
   test("round-trips typed filters with Webstudio value expressions", () => {
     const configuration = {
-      filters: [
-        {
-          field: ["properties", "slug"],
-          operator: "eq" as const,
-          value: "$ws$dataSource$routeSlug",
-        },
-        {
-          field: ["properties", "draft"],
-          operator: "ne" as const,
-          value: "true",
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq" as const,
+            value: "$ws$dataSource$routeSlug",
+          },
+          {
+            any: [
+              {
+                field: ["properties", "draft"],
+                operator: "ne" as const,
+                value: "true",
+              },
+              {
+                field: ["properties", "id"],
+                operator: "eq" as const,
+                value: "$ws$dataSource$routeSlug",
+              },
+            ],
+          },
+        ],
+      },
       sort: [
         {
           field: ["properties", "publishedAt"],
@@ -71,7 +86,26 @@ describe("asset query resource configuration", () => {
 
   test("rejects malformed structured resource bodies", () => {
     expect(
-      parseStructuredAssetQueryResourceBody('{ "query": { "filters": 1 } }')
+      parseStructuredAssetQueryResourceBody('{ "query": { "where": 1 } }')
+    ).toBeUndefined();
+    const validBody = createStructuredAssetQueryResourceBody({
+      where: { all: [] },
+      sort: [],
+      limit: "20",
+      offset: "0",
+      content: { mode: "none" },
+    });
+    const query = parseExpressionObject(validBody).get("query");
+    expect(query).toBeDefined();
+    expect(
+      parseStructuredAssetQueryResourceBody(
+        formatExpressionObject(
+          new Map([
+            ["query", query ?? ""],
+            ["other", "true"],
+          ])
+        )
+      )
     ).toBeUndefined();
   });
 });

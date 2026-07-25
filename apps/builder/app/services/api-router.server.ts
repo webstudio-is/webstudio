@@ -28,6 +28,7 @@ import {
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
 import {
+  AssetIndexRevisionError,
   AssetQueryExecutionError,
   AssetResourceHydrationError,
   validateAssetQueryAgainstCatalog,
@@ -52,6 +53,7 @@ import {
 import { componentMetas } from "~/shared/component-metas.server";
 import {
   assetQueryRequest,
+  getAssetQueryWhereMetrics,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
@@ -117,6 +119,11 @@ const assetQueryValidationInput = projectIdInput.extend({
   query: assetQueryRequest.shape.query,
 });
 const throwAssetQueryApiError = (error: unknown): never => {
+  if (error instanceof AssetIndexRevisionError) {
+    return throwApiError("CONFLICT", error.message, {
+      webstudioCode: "STALE_INDEX",
+    });
+  }
   if (error instanceof AssetQueryExecutionError) {
     return throwApiError("BAD_REQUEST", error.message, {
       webstudioCode: "INVALID_REQUEST",
@@ -739,7 +746,8 @@ export const apiRouter = router({
           return {
             valid: true as const,
             referencedFieldPaths: validated.referencedFieldPaths,
-            filterCount: validated.query.filters.length,
+            filterCount: getAssetQueryWhereMetrics(validated.query.where)
+              .filters,
             sortCount: validated.query.sort.length,
             warnings: validated.warnings,
           };

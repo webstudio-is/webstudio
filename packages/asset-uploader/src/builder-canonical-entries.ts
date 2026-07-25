@@ -3,17 +3,22 @@ import {
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import type { AssetClient } from "./client";
-import { synchronizeCanonicalAssets } from "./canonical-metadata-backfill";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import type { AssetObjectReader } from "./client";
+import {
+  type AssetRepository,
+  PostgresAssetRepository,
+} from "./asset-repository";
 
-export type BuilderCanonicalEntriesDependencies = {
+export type BuilderAssetIndexDependencies = {
   hasProjectPermit?: typeof authorizeProject.hasProjectPermit;
-  synchronizeCanonicalAssets?: typeof synchronizeCanonicalAssets;
-  loadCanonicalAssetFileEntries?: typeof loadCanonicalAssetFileEntries;
+  createRepository?: (input: {
+    projectId: string;
+    context: AppContext;
+    assetClient: AssetObjectReader;
+  }) => Pick<AssetRepository, "prepareIndex" | "query">;
 };
 
-export const loadAuthorizedBuilderCanonicalEntries = async ({
+export const loadAuthorizedBuilderAssetRepository = async ({
   projectId,
   context,
   assetClient,
@@ -22,9 +27,9 @@ export const loadAuthorizedBuilderCanonicalEntries = async ({
 }: {
   projectId: string;
   context: AppContext;
-  assetClient: Pick<AssetClient, "readFile">;
+  assetClient: AssetObjectReader;
   authorizationError: string;
-  dependencies?: BuilderCanonicalEntriesDependencies;
+  dependencies?: BuilderAssetIndexDependencies;
 }) => {
   const canView = await (
     dependencies.hasProjectPermit ?? authorizeProject.hasProjectPermit
@@ -32,17 +37,9 @@ export const loadAuthorizedBuilderCanonicalEntries = async ({
   if (canView === false) {
     throw new AuthorizationError(authorizationError);
   }
-  await (dependencies.synchronizeCanonicalAssets ?? synchronizeCanonicalAssets)(
-    {
-      projectId,
-      client: context.postgrest.client,
-      assetClient,
-    }
-  );
-  return await (
-    dependencies.loadCanonicalAssetFileEntries ?? loadCanonicalAssetFileEntries
-  )({
-    client: context.postgrest.client,
-    projectId,
-  });
+  const repository = (
+    dependencies.createRepository ??
+    ((input) => new PostgresAssetRepository(input))
+  )({ projectId, context, assetClient });
+  return repository;
 };

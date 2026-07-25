@@ -107,10 +107,12 @@ const read = async (contentRef, range) => {
   };
 };
 const listingQuery = {
-  filters: [
-    { field: ["extension"], operator: "eq", value: "md" },
-    { field: ["properties", "locale"], operator: "eq", value: "en" },
-  ],
+  where: {
+    all: [
+      { field: ["extension"], operator: "eq", value: "md" },
+      { field: ["properties", "locale"], operator: "eq", value: "en" },
+    ],
+  },
   sort: [
     { field: ["properties", "publishedAt"], direction: "desc" },
     { field: ["id"], direction: "asc" },
@@ -118,13 +120,15 @@ const listingQuery = {
   limit: 20,
 };
 const detailQuery = {
-  filters: [
-    {
-      field: ["properties", "slug"],
-      operator: "eq",
-      value: "post-999",
-    },
-  ],
+  where: {
+    all: [
+      {
+        field: ["properties", "slug"],
+        operator: "eq",
+        value: "post-999",
+      },
+    ],
+  },
   limit: 1,
   content: { mode: "full" },
 };

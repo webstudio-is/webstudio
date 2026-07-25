@@ -1,5 +1,6 @@
 import { json } from "@remix-run/server-runtime";
 import {
+  AssetIndexRevisionError,
   AssetQueryExecutionError,
   readAssetQueryRequest,
   AssetResourceHydrationError,
@@ -103,6 +104,13 @@ export const loader = async (
         code: "FORBIDDEN",
         message: "You don't have access to preview this asset resource",
         status: 403,
+      });
+    }
+    if (error instanceof AssetIndexRevisionError) {
+      return failure({
+        code: "STALE_INDEX",
+        message: error.message,
+        status: 409,
       });
     }
     if (error instanceof AssetQueryExecutionError) {

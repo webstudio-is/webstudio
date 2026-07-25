@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { createUploadTicket, uploadFile } from "./upload";
+import { PostgresAssetRepository } from "./asset-repository";
 
 const server = createTestServer();
 
@@ -824,13 +825,15 @@ describe("uploadFile", () => {
       readFile,
     };
     await expect(
-      uploadFile(
-        "post.md",
-        new Blob([source]).stream(),
-        storage,
-        createContext(),
-        undefined
-      )
+      new PostgresAssetRepository({
+        projectId: "project-1",
+        context: createContext(),
+        assetStore: storage,
+      }).completeUpload({
+        name: "post.md",
+        data: new Blob([source]).stream(),
+        assetInfoFallback: undefined,
+      })
     ).resolves.toMatchObject({
       id: "asset-1",
       name: "post.md",

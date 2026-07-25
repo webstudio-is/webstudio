@@ -61,13 +61,15 @@ describe("published Markdown blog end-to-end", () => {
       });
 
     const listing = await request({
-      filters: [
-        {
-          field: ["properties", "draft"],
-          operator: "ne",
-          value: true,
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "draft"],
+            operator: "ne",
+            value: true,
+          },
+        ],
+      },
       sort: [{ field: ["properties", "publishedAt"], direction: "desc" }],
       limit: 20,
     });
@@ -84,13 +86,15 @@ describe("published Markdown blog end-to-end", () => {
     ).toHaveLength(0);
 
     const detail = await request({
-      filters: [
-        {
-          field: ["properties", "slug"],
-          operator: "eq",
-          value: "hello",
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "hello",
+          },
+        ],
+      },
       limit: 1,
       content: { mode: "full" },
     });

@@ -1,6 +1,7 @@
 import type { Server } from "node:http";
 import { fontFormat, fontMeta } from "@webstudio-is/fonts";
 import type { Asset } from "@webstudio-is/sdk";
+import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import React from "react";
 import type { BuilderState } from "@webstudio-is/project-build/state";
@@ -125,9 +126,14 @@ export const startHighImpactFixtureApi = async (
   const fixtureApi = await startRuntimeFixtureApi(
     async ({ request, response, pathname, operationPath, readInput }) => {
       let data: unknown;
-      if (request.method === "POST" && pathname.startsWith("/rest/assets/")) {
+      if (
+        request.method === "POST" &&
+        pathname.startsWith(`${assetsUploadsApiUrl}/`)
+      ) {
         const url = new URL(request.url ?? "", origin);
-        const name = decodeURIComponent(pathname.slice("/rest/assets/".length));
+        const name = decodeURIComponent(
+          pathname.slice(`${assetsUploadsApiUrl}/`.length)
+        );
         const body = await readRuntimeFixtureRequestBody(request);
         if (
           url.searchParams.get("projectId") !== projectId ||

@@ -258,97 +258,11 @@ export const serverOnlyRouterOperationMetadata = {
         query: {
           type: "object",
           properties: {
-            filters: {
-              default: [],
-              maxItems: 32,
-              type: "array",
-              items: {
-                oneOf: [
-                  {
-                    type: "object",
-                    properties: {
-                      field: {
-                        minItems: 1,
-                        maxItems: 9,
-                        type: "array",
-                        items: {
-                          type: "string",
-                          minLength: 1,
-                        },
-                      },
-                      operator: {
-                        type: "string",
-                        enum: [
-                          "eq",
-                          "ne",
-                          "contains",
-                          "startsWith",
-                          "endsWith",
-                          "gt",
-                          "gte",
-                          "lt",
-                          "lte",
-                        ],
-                      },
-                      value: {
-                        $ref: "#/$defs/__schema0",
-                      },
-                    },
-                    required: ["field", "operator", "value"],
-                    additionalProperties: false,
-                  },
-                  {
-                    type: "object",
-                    properties: {
-                      field: {
-                        minItems: 1,
-                        maxItems: 9,
-                        type: "array",
-                        items: {
-                          type: "string",
-                          minLength: 1,
-                        },
-                      },
-                      operator: {
-                        type: "string",
-                        const: "in",
-                      },
-                      value: {
-                        maxItems: 1000,
-                        type: "array",
-                        items: {
-                          $ref: "#/$defs/__schema1",
-                        },
-                      },
-                    },
-                    required: ["field", "operator", "value"],
-                    additionalProperties: false,
-                  },
-                  {
-                    type: "object",
-                    properties: {
-                      field: {
-                        minItems: 1,
-                        maxItems: 9,
-                        type: "array",
-                        items: {
-                          type: "string",
-                          minLength: 1,
-                        },
-                      },
-                      operator: {
-                        type: "string",
-                        enum: ["exists", "isEmpty"],
-                      },
-                      value: {
-                        type: "boolean",
-                      },
-                    },
-                    required: ["field", "operator", "value"],
-                    additionalProperties: false,
-                  },
-                ],
+            where: {
+              default: {
+                all: [],
               },
+              $ref: "#/$defs/__schema2",
             },
             sort: {
               default: [],
@@ -523,6 +437,123 @@ export const serverOnlyRouterOperationMetadata = {
             },
           ],
         },
+        __schema2: {
+          anyOf: [
+            {
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: [
+                        "eq",
+                        "ne",
+                        "contains",
+                        "startsWith",
+                        "endsWith",
+                        "gt",
+                        "gte",
+                        "lt",
+                        "lte",
+                      ],
+                    },
+                    value: {
+                      $ref: "#/$defs/__schema0",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      const: "in",
+                    },
+                    value: {
+                      maxItems: 1000,
+                      type: "array",
+                      items: {
+                        $ref: "#/$defs/__schema1",
+                      },
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: ["exists", "isEmpty"],
+                    },
+                    value: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+              ],
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
+            },
+          ],
+        },
       },
     },
   },
@@ -539,97 +570,11 @@ export const serverOnlyRouterOperationMetadata = {
         query: {
           type: "object",
           properties: {
-            filters: {
-              default: [],
-              maxItems: 32,
-              type: "array",
-              items: {
-                oneOf: [
-                  {
-                    type: "object",
-                    properties: {
-                      field: {
-                        minItems: 1,
-                        maxItems: 9,
-                        type: "array",
-                        items: {
-                          type: "string",
-                          minLength: 1,
-                        },
-                      },
-                      operator: {
-                        type: "string",
-                        enum: [
-                          "eq",
-                          "ne",
-                          "contains",
-                          "startsWith",
-                          "endsWith",
-                          "gt",
-                          "gte",
-                          "lt",
-                          "lte",
-                        ],
-                      },
-                      value: {
-                        $ref: "#/$defs/__schema0",
-                      },
-                    },
-                    required: ["field", "operator", "value"],
-                    additionalProperties: false,
-                  },
-                  {
-                    type: "object",
-                    properties: {
-                      field: {
-                        minItems: 1,
-                        maxItems: 9,
-                        type: "array",
-                        items: {
-                          type: "string",
-                          minLength: 1,
-                        },
-                      },
-                      operator: {
-                        type: "string",
-                        const: "in",
-                      },
-                      value: {
-                        maxItems: 1000,
-                        type: "array",
-                        items: {
-                          $ref: "#/$defs/__schema1",
-                        },
-                      },
-                    },
-                    required: ["field", "operator", "value"],
-                    additionalProperties: false,
-                  },
-                  {
-                    type: "object",
-                    properties: {
-                      field: {
-                        minItems: 1,
-                        maxItems: 9,
-                        type: "array",
-                        items: {
-                          type: "string",
-                          minLength: 1,
-                        },
-                      },
-                      operator: {
-                        type: "string",
-                        enum: ["exists", "isEmpty"],
-                      },
-                      value: {
-                        type: "boolean",
-                      },
-                    },
-                    required: ["field", "operator", "value"],
-                    additionalProperties: false,
-                  },
-                ],
+            where: {
+              default: {
+                all: [],
               },
+              $ref: "#/$defs/__schema2",
             },
             sort: {
               default: [],
@@ -806,6 +751,123 @@ export const serverOnlyRouterOperationMetadata = {
               additionalProperties: {
                 $ref: "#/$defs/__schema1",
               },
+            },
+          ],
+        },
+        __schema2: {
+          anyOf: [
+            {
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: [
+                        "eq",
+                        "ne",
+                        "contains",
+                        "startsWith",
+                        "endsWith",
+                        "gt",
+                        "gte",
+                        "lt",
+                        "lte",
+                      ],
+                    },
+                    value: {
+                      $ref: "#/$defs/__schema0",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      const: "in",
+                    },
+                    value: {
+                      maxItems: 1000,
+                      type: "array",
+                      items: {
+                        $ref: "#/$defs/__schema1",
+                      },
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: ["exists", "isEmpty"],
+                    },
+                    value: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+              ],
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
             },
           ],
         },

@@ -2077,18 +2077,20 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       scopeInstanceId: "body-id",
       dataSourceName: "posts",
       query: {
-        filters: [
-          {
-            field: ["extension"],
-            operator: "eq",
-            value: { type: "literal", value: "md" },
-          },
-          {
-            field: ["properties", "draft"],
-            operator: "ne",
-            value: "true",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: { type: "literal", value: "md" },
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: "true",
+            },
+          ],
+        },
         sort: [
           { field: ["properties", "publishedAt"], direction: "desc" },
           { field: ["id"], direction: "asc" },
@@ -2101,18 +2103,29 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       scopeInstanceId: "body-id",
       dataSourceName: "post",
       query: {
-        filters: [
-          {
-            field: ["extension"],
-            operator: "eq",
-            value: { type: "literal", value: "md" },
-          },
-          {
-            field: ["properties", "slug"],
-            operator: "eq",
-            value: "system.params.slug",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: { type: "literal", value: "md" },
+            },
+            {
+              any: [
+                {
+                  field: ["properties", "slug"],
+                  operator: "eq",
+                  value: "system.params.slug",
+                },
+                {
+                  field: ["properties", "id"],
+                  operator: "eq",
+                  value: "system.params.slug",
+                },
+              ],
+            },
+          ],
+        },
         limit: "1",
         content: { mode: "markdown-body", maxBytes: 1_048_576 },
       },
@@ -2132,13 +2145,15 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "validate-asset-query": [
     {
       query: {
-        filters: [
-          {
-            field: ["properties", "slug"],
-            operator: "eq",
-            value: "hello-world",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "hello-world",
+            },
+          ],
+        },
         limit: 1,
       },
     },
@@ -2146,13 +2161,15 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "preview-asset-query": [
     {
       query: {
-        filters: [
-          {
-            field: ["properties", "slug"],
-            operator: "eq",
-            value: "hello-world",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "hello-world",
+            },
+          ],
+        },
         limit: 1,
         content: { mode: "markdown-body", maxBytes: 1_048_576 },
       },

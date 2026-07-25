@@ -556,6 +556,7 @@ const expressionLinter = linter((view) => {
 });
 
 export const ExpressionEditor = ({
+  "aria-label": ariaLabel,
   editorApiRef,
   scope = emptyScope,
   aliases = emptyAliases,
@@ -566,6 +567,7 @@ export const ExpressionEditor = ({
   onChange,
   onChangeComplete,
 }: {
+  "aria-label"?: string;
   editorApiRef?: RefObject<undefined | EditorApi>;
   /**
    * object with variables and their data to autocomplete
@@ -663,6 +665,7 @@ export const ExpressionEditor = ({
 
   const content = (
     <EditorContent
+      aria-label={ariaLabel}
       editorApiRef={editorApiRef}
       extensions={extensions}
       invalid={color === "error"}

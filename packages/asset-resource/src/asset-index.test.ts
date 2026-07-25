@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import {
   createAssetIndex,
+  getAssetIndexStoragePath,
   serializeAssetIndex,
   verifyAssetIndex,
 } from "./asset-index";
@@ -45,6 +46,9 @@ describe("shared asset index", () => {
     expect(index).not.toHaveProperty("resourceId");
     expect(index).not.toHaveProperty("queryHash");
     expect(index).not.toHaveProperty("plan");
+    expect(getAssetIndexStoragePath(index)).toBe(
+      `assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`
+    );
     await expect(verifyAssetIndex(index)).resolves.toEqual(index);
   });
 

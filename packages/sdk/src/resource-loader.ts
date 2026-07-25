@@ -29,6 +29,27 @@ export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
 export const currentDateResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/current-date`;
 export const assetsResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets`;
 export const assetsFieldCatalogResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/field-catalog`;
+export const assetsQueryCapabilitiesResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/query-capabilities`;
+export const assetsOpenApiResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/openapi.json`;
+
+// Direct HTTP endpoints described by the Assets OpenAPI document. These are
+// separate from the virtual System resource URLs above, which are resolved
+// only inside Builder's batched resource loader.
+export const assetsApiUrl = "/rest/assets";
+export const assetsUploadsApiUrl = `${assetsApiUrl}/uploads`;
+export const assetsFoldersApiUrl = `${assetsApiUrl}/folders`;
+export const getAssetUploadApiUrl = (name: string) =>
+  `${assetsUploadsApiUrl}/${encodeURIComponent(name)}`;
+export const getAssetContentApiUrl = (assetId: string) =>
+  `${assetsApiUrl}/${encodeURIComponent(assetId)}/content`;
+export const getAssetApiUrl = (assetId: string) =>
+  `${assetsApiUrl}/${encodeURIComponent(assetId)}`;
+export const getAssetFolderApiUrl = (folderId: string) =>
+  `${assetsFoldersApiUrl}/${encodeURIComponent(folderId)}`;
+export const assetsQueryApiUrl = `${assetsApiUrl}/query`;
+export const assetsFieldCatalogApiUrl = `${assetsApiUrl}/field-catalog`;
+export const assetsQueryCapabilitiesApiUrl = `${assetsApiUrl}/query-capabilities`;
+export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;
 
 export type ResourceLoadOptions = {
   signal?: AbortSignal;

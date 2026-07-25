@@ -9,13 +9,15 @@ afterEach(() => {
 const createQueryRequest = () =>
   createAssetResourceRequest({
     query: {
-      filters: [
-        {
-          field: ["properties", "slug"],
-          operator: "eq",
-          value: "hello-world",
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "hello-world",
+          },
+        ],
+      },
       limit: 1,
     },
     indexRevision: "index-7",

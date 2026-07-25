@@ -22,3 +22,5 @@ export const createFsClient = (options: FsClientOptions): AssetClient => {
       readFromFs({ name, range, fileDirectory: options.fileDirectory }),
   };
 };
+
+export const createFsAssetObjectStore = createFsClient;

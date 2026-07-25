@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { createAssetIndex } from "@webstudio-is/asset-resource";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
 import { previewAssetResourceQuery } from "./query-preview";
 
@@ -8,19 +9,21 @@ const context = {
   postgrest: { client: {} },
 } as unknown as AppContext;
 const hasProjectPermit = vi.fn();
-const synchronizeCanonicalAssets = vi.fn();
-const loadCanonicalAssetFileEntries = vi.fn();
+const prepareIndex = vi.fn();
+const query = vi.fn();
 const dependencies = {
   hasProjectPermit,
-  synchronizeCanonicalAssets,
-  loadCanonicalAssetFileEntries,
+  createRepository: () => ({ prepareIndex, query }),
 };
 
 describe("Builder asset-resource API data boundary", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     hasProjectPermit.mockReset().mockResolvedValue(true);
-    synchronizeCanonicalAssets.mockReset();
-    loadCanonicalAssetFileEntries.mockReset().mockResolvedValue([]);
+    prepareIndex.mockReset();
+    prepareIndex.mockResolvedValue(
+      await createAssetIndex({ projectId, entries: [] })
+    );
+    query.mockResolvedValue({ items: [], totalCount: 0, hasMore: false });
   });
 
   test("catalog and preview synchronize before reading persisted rows", async () => {
@@ -39,7 +42,7 @@ describe("Builder asset-resource API data boundary", () => {
       dependencies,
     });
 
-    expect(synchronizeCanonicalAssets).toHaveBeenCalledTimes(2);
-    expect(loadCanonicalAssetFileEntries).toHaveBeenCalledTimes(2);
+    expect(prepareIndex).toHaveBeenCalledOnce();
+    expect(query).toHaveBeenCalledOnce();
   });
 });

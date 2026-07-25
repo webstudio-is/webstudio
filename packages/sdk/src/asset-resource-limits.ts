@@ -1,7 +1,10 @@
 /** Shared limits for asset indexing, authoring, and published query runtimes. */
 export const assetResourceLimits = {
   requestBytes: 512 * 1024,
+  apiDescriptionBytes: 512 * 1024,
+  apiDescriptionExampleBytes: 64 * 1024,
   filterCount: 32,
+  filterDepth: 8,
   sortCount: 8,
   fieldPathDepth: 9,
   defaultResultCount: 100,

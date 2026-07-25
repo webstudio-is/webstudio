@@ -6,10 +6,8 @@ import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { sha256Hex, validateStorageKey } from "@webstudio-is/project-store";
 import { verifyAssetIndex } from "./asset-index";
-import {
-  AssetQueryExecutionError,
-  executeAssetQuery,
-} from "./structured-query";
+import { AssetQueryExecutionError } from "./structured-query";
+import { createAssetQueryRepository } from "./query-repository";
 import { AssetResourceHydrationError } from "./hydration";
 import { readAssetQueryRequest } from "./request";
 
@@ -225,12 +223,9 @@ export const createPublishedAssetResourceFetch = ({
           status: 499,
         });
       }
-      const index = await loadIndex({ deploymentId, manifest, fetchAsset });
-      const result = await executeAssetQuery({
-        query: parsedRequest.query,
-        catalog: index.fieldCatalog,
-        documents: index.documents,
-        read: async (contentRef, range) => {
+      const result = await createAssetQueryRepository({
+        loadIndex: () => loadIndex({ deploymentId, manifest, fetchAsset }),
+        readContent: async (contentRef, range) => {
           const headers = new Headers();
           if (range !== undefined && range.length > 0) {
             headers.set(
@@ -252,7 +247,7 @@ export const createPublishedAssetResourceFetch = ({
               contentLength === null ? undefined : Number(contentLength),
           };
         },
-      });
+      }).query(parsedRequest);
       const response = jsonResponse(result);
       if (
         cacheKey !== undefined &&

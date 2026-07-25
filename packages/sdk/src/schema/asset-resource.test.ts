@@ -149,13 +149,15 @@ describe("assetQueryResourceConfigurationInput", () => {
   test("accepts JSON filter literals and bounded numeric pagination literals", () => {
     expect(
       assetQueryResourceConfigurationInput.safeParse({
-        filters: [
-          {
-            field: ["properties", "draft"],
-            operator: "ne",
-            value: { type: "literal", value: true },
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: { type: "literal", value: true },
+            },
+          ],
+        },
         limit: { type: "literal", value: 20 },
         offset: { type: "literal", value: 0 },
       }).success
@@ -165,19 +167,36 @@ describe("assetQueryResourceConfigurationInput", () => {
   test("rejects non-JSON literals and invalid numeric pagination literals", () => {
     expect(
       assetQueryResourceConfigurationInput.safeParse({
-        filters: [
-          {
-            field: ["properties", "publishedAt"],
-            operator: "eq",
-            value: { type: "literal", value: new Date() },
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "publishedAt"],
+              operator: "eq",
+              value: { type: "literal", value: new Date() },
+            },
+          ],
+        },
       }).success
     ).toBe(false);
     expect(
       assetQueryResourceConfigurationInput.safeParse({
         limit: { type: "literal", value: "20" },
       }).success
+    ).toBe(false);
+  });
+
+  test("rejects filter trees beyond the nesting limit", () => {
+    let where: unknown = {
+      field: ["properties", "slug"],
+      operator: "eq",
+      value: "hello",
+    };
+    for (let depth = 0; depth < 9; depth += 1) {
+      where = { all: [where] };
+    }
+
+    expect(
+      assetQueryResourceConfigurationInput.safeParse({ where }).success
     ).toBe(false);
   });
 });

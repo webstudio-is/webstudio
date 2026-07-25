@@ -1,13 +1,9 @@
-import {
-  createAssetIndex,
-  executeAssetQuery,
-} from "@webstudio-is/asset-resource";
 import { type AssetQueryRequestInput } from "@webstudio-is/sdk";
 import type { AssetClient } from "./client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
-  loadAuthorizedBuilderCanonicalEntries,
-  type BuilderCanonicalEntriesDependencies,
+  loadAuthorizedBuilderAssetRepository,
+  type BuilderAssetIndexDependencies,
 } from "./builder-canonical-entries";
 
 export const previewAssetResourceQuery = async ({
@@ -21,9 +17,9 @@ export const previewAssetResourceQuery = async ({
   request: AssetQueryRequestInput;
   context: AppContext;
   assetClient: Pick<AssetClient, "readFile">;
-  dependencies?: BuilderCanonicalEntriesDependencies;
+  dependencies?: BuilderAssetIndexDependencies;
 }) => {
-  const entries = await loadAuthorizedBuilderCanonicalEntries({
+  const repository = await loadAuthorizedBuilderAssetRepository({
     projectId,
     context,
     assetClient,
@@ -31,14 +27,5 @@ export const previewAssetResourceQuery = async ({
       "You don't have access to preview this project's asset resources",
     dependencies,
   });
-  const index = await createAssetIndex({
-    projectId,
-    entries,
-  });
-  return await executeAssetQuery({
-    query: request.query,
-    catalog: index.fieldCatalog,
-    documents: index.documents,
-    read: assetClient.readFile,
-  });
+  return await repository.query(request);
 };

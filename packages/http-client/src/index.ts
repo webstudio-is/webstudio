@@ -4,7 +4,18 @@ import {
   getAssetContentHash,
   type AssetQueryInput,
   type AssetQueryResourceConfigurationInput,
+  type AssetFolder,
 } from "@webstudio-is/sdk";
+import type { AssetMetadataUpdate } from "@webstudio-is/sdk/asset-resource-api";
+import type { AssetFolderUpdateRequest } from "@webstudio-is/sdk/asset-resource-api";
+import {
+  assetsApiUrl,
+  assetsFoldersApiUrl,
+  getAssetApiUrl,
+  getAssetContentApiUrl,
+  getAssetFolderApiUrl,
+  getAssetUploadApiUrl,
+} from "@webstudio-is/sdk/runtime";
 import {
   apiClientHeader,
   apiClientVersionHeader,
@@ -383,10 +394,7 @@ const getAssetUploadUrl = ({
   projectId: string;
 }) => {
   const { sourceOrigin } = parseBuilderUrl(origin);
-  const url = new URL(
-    `/rest/assets/${encodeURIComponent(asset.name)}`,
-    sourceOrigin
-  );
+  const url = new URL(getAssetUploadApiUrl(asset.name), sourceOrigin);
   url.searchParams.set("projectId", projectId);
   url.searchParams.set("type", asset.type);
   if (asset.folderId !== undefined) {
@@ -654,7 +662,7 @@ export const updateProjectAssetContent = async (
   const request = params.request ?? fetch;
   const { sourceOrigin } = parseBuilderUrl(params.origin);
   const url = new URL(
-    `/rest/assets/${encodeURIComponent(params.assetId)}/content`,
+    getAssetContentApiUrl(params.assetId),
     params.requestOrigin ?? sourceOrigin
   );
   url.searchParams.set("projectId", params.projectId);
@@ -673,6 +681,275 @@ export const updateProjectAssetContent = async (
     throw Object.assign(new Error(result.errors), { status: response.status });
   }
   return result;
+};
+
+export const updateProjectAsset = async (
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
+    assetId: string;
+    values: AssetMetadataUpdate;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ asset: Asset }> => {
+  const request = params.request ?? fetch;
+  const { sourceOrigin } = parseBuilderUrl(params.origin);
+  const url = new URL(
+    getAssetApiUrl(params.assetId),
+    params.requestOrigin ?? sourceOrigin
+  );
+  url.searchParams.set("projectId", params.projectId);
+  const response = await request(url, {
+    method: "PATCH",
+    body: JSON.stringify(params.values),
+    headers: createHeaders({
+      ...params.headers,
+      "x-auth-token": params.authToken,
+      "content-type": "application/json",
+    }),
+  });
+  const result = (await response.json()) as AssetContentUpdateResult;
+  if ("errors" in result) {
+    throw Object.assign(new Error(result.errors), { status: response.status });
+  }
+  return result;
+};
+
+export const deleteProjectAsset = async (
+  params: Omit<AuthProjectParams, "authToken"> & {
+    authToken?: string;
+    assetId: string;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+) => {
+  const request = params.request ?? fetch;
+  const { sourceOrigin } = parseBuilderUrl(params.origin);
+  const url = new URL(
+    getAssetApiUrl(params.assetId),
+    params.requestOrigin ?? sourceOrigin
+  );
+  url.searchParams.set("projectId", params.projectId);
+  const response = await request(url, {
+    method: "DELETE",
+    headers: createHeaders({
+      ...params.headers,
+      "x-auth-token": params.authToken,
+    }),
+  });
+  if (response.ok === false) {
+    const result = (await response.json()) as { errors?: string };
+    throw Object.assign(new Error(result.errors ?? "Asset deletion failed"), {
+      status: response.status,
+    });
+  }
+};
+
+const requestAssetRestJson = async <Result>(
+  request: typeof fetch,
+  url: URL,
+  init: RequestInit
+): Promise<Result> => {
+  const response = await request(url, init);
+  const result = (await response.json()) as Result | { errors?: string };
+  if (
+    response.ok === false ||
+    (typeof result === "object" && result !== null && "errors" in result)
+  ) {
+    const failure = result as { errors?: string };
+    throw Object.assign(
+      new Error(failure.errors ?? "Assets API request failed"),
+      { status: response.status }
+    );
+  }
+  return result as Result;
+};
+
+const createAssetRestUrl = ({
+  origin,
+  requestOrigin,
+  path,
+  projectId,
+}: {
+  origin: string;
+  requestOrigin?: string;
+  path: string;
+  projectId: string;
+}) => {
+  const { sourceOrigin } = parseBuilderUrl(origin);
+  const url = new URL(path, requestOrigin ?? sourceOrigin);
+  url.searchParams.set("projectId", projectId);
+  return url;
+};
+
+const createAssetRestHeaders = (
+  params: Pick<AuthProjectParams, "authToken" | "headers">
+) =>
+  createHeaders({
+    ...params.headers,
+    "x-auth-token": params.authToken,
+  });
+
+export const listProjectAssets = async (
+  params: AuthProjectParams & {
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ assets: Asset[] }> =>
+  await requestAssetRestJson(
+    params.request ?? fetch,
+    createAssetRestUrl({ ...params, path: assetsApiUrl }),
+    { headers: createAssetRestHeaders(params) }
+  );
+
+export const getProjectAsset = async (
+  params: AuthProjectParams & {
+    assetId: string;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ asset: Asset }> =>
+  await requestAssetRestJson(
+    params.request ?? fetch,
+    createAssetRestUrl({ ...params, path: getAssetApiUrl(params.assetId) }),
+    { headers: createAssetRestHeaders(params) }
+  );
+
+export const readProjectAssetContent = async (
+  params: AuthProjectParams & {
+    assetId: string;
+    range?: { offset: number; length: number };
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+) => {
+  const response = await (params.request ?? fetch)(
+    createAssetRestUrl({
+      ...params,
+      path: getAssetContentApiUrl(params.assetId),
+    }),
+    {
+      headers: createHeaders({
+        ...params.headers,
+        "x-auth-token": params.authToken,
+        range:
+          params.range === undefined
+            ? undefined
+            : `bytes=${params.range.offset}-${
+                params.range.offset + params.range.length - 1
+              }`,
+      }),
+    }
+  );
+  if (response.ok === false) {
+    const failure = (await response.json()) as { errors?: string };
+    throw Object.assign(
+      new Error(failure.errors ?? "Asset content download failed"),
+      { status: response.status }
+    );
+  }
+  return response;
+};
+
+export const listProjectAssetFolders = async (
+  params: AuthProjectParams & {
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ folders: AssetFolder[] }> =>
+  await requestAssetRestJson(
+    params.request ?? fetch,
+    createAssetRestUrl({ ...params, path: assetsFoldersApiUrl }),
+    { headers: createAssetRestHeaders(params) }
+  );
+
+export const getProjectAssetFolder = async (
+  params: AuthProjectParams & {
+    folderId: string;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ folder: AssetFolder }> =>
+  await requestAssetRestJson(
+    params.request ?? fetch,
+    createAssetRestUrl({
+      ...params,
+      path: getAssetFolderApiUrl(params.folderId),
+    }),
+    { headers: createAssetRestHeaders(params) }
+  );
+
+export const createProjectAssetFolder = async (
+  params: AuthProjectParams & {
+    name: string;
+    parentId?: string;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ folder: AssetFolder }> =>
+  await requestAssetRestJson(
+    params.request ?? fetch,
+    createAssetRestUrl({ ...params, path: assetsFoldersApiUrl }),
+    {
+      method: "POST",
+      body: JSON.stringify({ name: params.name, parentId: params.parentId }),
+      headers: createHeaders({
+        ...params.headers,
+        "x-auth-token": params.authToken,
+        "content-type": "application/json",
+      }),
+    }
+  );
+
+export const updateProjectAssetFolder = async (
+  params: AuthProjectParams & {
+    folderId: string;
+    values: AssetFolderUpdateRequest;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+): Promise<{ folder: AssetFolder }> =>
+  await requestAssetRestJson(
+    params.request ?? fetch,
+    createAssetRestUrl({
+      ...params,
+      path: getAssetFolderApiUrl(params.folderId),
+    }),
+    {
+      method: "PATCH",
+      body: JSON.stringify(params.values),
+      headers: createHeaders({
+        ...params.headers,
+        "x-auth-token": params.authToken,
+        "content-type": "application/json",
+      }),
+    }
+  );
+
+export const deleteProjectAssetFolder = async (
+  params: AuthProjectParams & {
+    folderId: string;
+    request?: typeof fetch;
+    requestOrigin?: string;
+  }
+) => {
+  const response = await (params.request ?? fetch)(
+    createAssetRestUrl({
+      ...params,
+      path: getAssetFolderApiUrl(params.folderId),
+    }),
+    {
+      method: "DELETE",
+      headers: createAssetRestHeaders(params),
+    }
+  );
+  if (response.ok === false) {
+    const failure = (await response.json()) as { errors?: string };
+    throw Object.assign(
+      new Error(failure.errors ?? "Asset folder deletion failed"),
+      { status: response.status }
+    );
+  }
 };
 
 export const loadProjectBundleByBuildId = async (

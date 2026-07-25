@@ -72,13 +72,15 @@ const queryRequest = (content = false) =>
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       query: {
-        filters: [
-          {
-            field: ["properties", "slug"],
-            operator: "eq",
-            value: "post",
-          },
-        ],
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "post",
+            },
+          ],
+        },
         limit: 1,
         content: content ? { mode: "full" } : { mode: "none" },
       },
@@ -145,7 +147,7 @@ describe("published asset resource runtime", () => {
       method: "POST",
       body: JSON.stringify({
         query: {
-          filters: [{ field: ["id"], operator: "eq", value: "post-1" }],
+          where: { all: [{ field: ["id"], operator: "eq", value: "post-1" }] },
           limit: 1,
           content: { mode: "full", maxBytes: 1 },
         },

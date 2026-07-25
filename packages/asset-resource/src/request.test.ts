@@ -4,7 +4,7 @@ import { readAssetQueryRequest } from "./request";
 
 const validRequest = JSON.stringify({
   query: {
-    filters: [],
+    where: { all: [] },
     sort: [],
     limit: 1,
     offset: 0,

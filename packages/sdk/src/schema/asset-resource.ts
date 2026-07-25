@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  createQueryWhereSchema,
+  getQueryWhereMetrics,
+} from "@webstudio-is/query-builder";
 export { assetResourceLimits } from "../asset-resource-limits";
 import { assetResourceLimits } from "../asset-resource-limits";
 
@@ -293,6 +297,37 @@ export const assetQueryFilter = z.discriminatedUnion("operator", [
 
 export type AssetQueryFilter = z.infer<typeof assetQueryFilter>;
 
+export type AssetQueryWhere =
+  | AssetQueryFilter
+  | { all: AssetQueryWhere[] }
+  | { any: AssetQueryWhere[] };
+
+const assetQueryWhereNode: z.ZodType<AssetQueryWhere, AssetQueryWhere> =
+  createQueryWhereSchema(assetQueryFilter);
+
+export const getAssetQueryWhereMetrics = (where: AssetQueryWhere) => {
+  const { conditions, depth } = getQueryWhereMetrics(where);
+  return { filters: conditions, depth };
+};
+
+export const assetQueryWhere = assetQueryWhereNode.superRefine(
+  (where, context) => {
+    const { filters, depth } = getAssetQueryWhereMetrics(where);
+    if (filters > assetResourceLimits.filterCount) {
+      context.addIssue({
+        code: "custom",
+        message: "Asset query exceeds the filter limit",
+      });
+    }
+    if (depth > assetResourceLimits.filterDepth) {
+      context.addIssue({
+        code: "custom",
+        message: "Asset query exceeds the filter nesting limit",
+      });
+    }
+  }
+);
+
 export const getAssetQueryOperatorsForFieldTypes = (
   fieldTypes: readonly AssetObservedFieldType[]
 ) => {
@@ -339,6 +374,47 @@ export type AssetQueryFilterValueExpression = z.infer<
   typeof assetQueryFilterValueExpression
 >;
 
+export type AssetQueryWhereExpression =
+  | {
+      field: AssetQueryFieldPath;
+      operator: AssetQueryFilter["operator"];
+      value: AssetQueryFilterValueExpression;
+    }
+  | { all: AssetQueryWhereExpression[] }
+  | { any: AssetQueryWhereExpression[] };
+
+const assetQueryWhereExpressionNode: z.ZodType<
+  AssetQueryWhereExpression,
+  AssetQueryWhereExpression
+> = createQueryWhereSchema(
+  z.strictObject({
+    field: assetQueryFieldPath.describe(
+      'Indexed file field path, for example ["extension"] or ["properties", "slug"].'
+    ),
+    operator: z.enum(assetQueryOperators),
+    value: assetQueryFilterValueExpression.describe(
+      'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.'
+    ),
+  })
+);
+
+export const assetQueryWhereExpression =
+  assetQueryWhereExpressionNode.superRefine((where, context) => {
+    const { conditions: filters, depth } = getQueryWhereMetrics(where);
+    if (filters > assetResourceLimits.filterCount) {
+      context.addIssue({
+        code: "custom",
+        message: "Asset query exceeds the filter limit",
+      });
+    }
+    if (depth > assetResourceLimits.filterDepth) {
+      context.addIssue({
+        code: "custom",
+        message: "Asset query exceeds the filter nesting limit",
+      });
+    }
+  });
+
 export const assetQueryLimitExpression = z.union([
   z.string(),
   assetQueryLiteral(
@@ -362,20 +438,11 @@ export type AssetQueryOffsetExpression = z.infer<
 >;
 
 export const assetQueryResourceConfigurationInput = z.strictObject({
-  filters: z
-    .array(
-      z.strictObject({
-        field: assetQueryFieldPath.describe(
-          'Indexed file field path, for example ["extension"] or ["properties", "slug"].'
-        ),
-        operator: z.enum(assetQueryOperators),
-        value: assetQueryFilterValueExpression.describe(
-          'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.'
-        ),
-      })
+  where: assetQueryWhereExpression
+    .describe(
+      "A boolean filter tree. Use { all: [...] } for AND and { any: [...] } for OR; leaves contain field, operator, and value."
     )
-    .max(assetResourceLimits.filterCount)
-    .default([]),
+    .default({ all: [] }),
   sort: z.array(assetQuerySort).max(assetResourceLimits.sortCount).default([]),
   limit: assetQueryLimitExpression
     .describe(
@@ -403,10 +470,7 @@ export type AssetQueryResourceConfiguration = z.output<
  * An omitted configuration preserves the legacy fetch-all behavior.
  */
 export const assetQuery = z.strictObject({
-  filters: z
-    .array(assetQueryFilter)
-    .max(assetResourceLimits.filterCount)
-    .default([]),
+  where: assetQueryWhere.default({ all: [] }),
   sort: z.array(assetQuerySort).max(assetResourceLimits.sortCount).default([]),
   limit: z
     .number()

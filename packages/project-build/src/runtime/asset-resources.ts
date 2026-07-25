@@ -8,7 +8,9 @@ import {
   SYSTEM_VARIABLE_ID,
   transpileExpression,
   type AssetQueryResourceConfiguration,
+  type AssetQueryWhereExpression,
   type Resource,
+  type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
@@ -53,18 +55,26 @@ const normalizeExpression = (
   value:
     | AssetQueryResourceConfiguration["limit"]
     | AssetQueryResourceConfiguration["offset"]
-    | AssetQueryResourceConfiguration["filters"][number]["value"]
+    | Extract<AssetQueryWhereExpression, { field: unknown }>["value"]
 ) => (typeof value === "string" ? value : JSON.stringify(value.value));
+
+const normalizeWhere = (
+  where: AssetQueryWhereExpression
+): StructuredAssetQueryWhereBinding => {
+  if ("field" in where) {
+    return { ...where, value: normalizeExpression(where.value) };
+  }
+  if ("all" in where) {
+    return { all: where.all.map(normalizeWhere) };
+  }
+  return { any: where.any.map(normalizeWhere) };
+};
 
 export const createAssetResourceBody = (
   configuration: z.output<typeof assetsQueryConfigurationInput>
 ) =>
   createStructuredAssetQueryResourceBody({
-    filters: configuration.filters.map(({ field, operator, value }) => ({
-      field,
-      operator,
-      value: normalizeExpression(value),
-    })),
+    where: normalizeWhere(configuration.where),
     sort: configuration.sort,
     limit: normalizeExpression(configuration.limit),
     offset: normalizeExpression(configuration.offset),
@@ -105,6 +115,24 @@ const toPublicExpression = ({
   }
 };
 
+const serializeWhere = (
+  where: StructuredAssetQueryWhereBinding,
+  dataSources: BuilderState["dataSources"] | undefined
+): AssetQueryWhereExpression => {
+  if ("field" in where) {
+    return {
+      ...where,
+      value: toPublicExpression({ expression: where.value, dataSources }),
+    };
+  }
+  if ("all" in where) {
+    return {
+      all: where.all.map((child) => serializeWhere(child, dataSources)),
+    };
+  }
+  return { any: where.any.map((child) => serializeWhere(child, dataSources)) };
+};
+
 const serializeAssetResource = ({
   resource,
   state,
@@ -137,16 +165,7 @@ const serializeAssetResource = ({
         ? {}
         : {
             query: {
-              filters: configuration.filters.map(
-                ({ field, operator, value }) => ({
-                  field,
-                  operator,
-                  value: toPublicExpression({
-                    expression: value,
-                    dataSources: state.dataSources,
-                  }),
-                })
-              ),
+              where: serializeWhere(configuration.where, state.dataSources),
               sort: configuration.sort,
               limit: toPublicExpression({
                 expression: configuration.limit,
@@ -271,9 +290,7 @@ export const updateAssetsResource = (
     storedConfiguration === undefined
       ? undefined
       : {
-          filters: storedConfiguration.filters.map(
-            ({ field, operator, value }) => ({ field, operator, value })
-          ),
+          where: storedConfiguration.where,
           sort: storedConfiguration.sort,
           limit: storedConfiguration.limit,
           offset: storedConfiguration.offset,

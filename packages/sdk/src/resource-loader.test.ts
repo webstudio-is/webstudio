@@ -9,11 +9,30 @@ import {
 } from "vitest";
 
 import {
+  assetsUploadsApiUrl,
+  getAssetApiUrl,
+  getAssetContentApiUrl,
+  getAssetFolderApiUrl,
+  getAssetUploadApiUrl,
   getResourceCacheKey,
   isLocalResource,
   loadResource,
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
+
+test("builds canonical Assets command URLs", () => {
+  expect(assetsUploadsApiUrl).toBe("/rest/assets/uploads");
+  expect(getAssetUploadApiUrl("folder/name.png")).toBe(
+    "/rest/assets/uploads/folder%2Fname.png"
+  );
+  expect(getAssetContentApiUrl("asset/id")).toBe(
+    "/rest/assets/asset%2Fid/content"
+  );
+  expect(getAssetApiUrl("asset/id")).toBe("/rest/assets/asset%2Fid");
+  expect(getAssetFolderApiUrl("folder/id")).toBe(
+    "/rest/assets/folders/folder%2Fid"
+  );
+});
 
 // Mock the fetch function
 
@@ -369,14 +388,14 @@ describe("loadResource", () => {
       searchParams: [],
       method: "post",
       headers: [{ name: "content-type", value: "application/json" }],
-      body: { query: { filters: [], limit: 20, offset: 0 } },
+      body: { query: { where: { all: [] }, limit: 20, offset: 0 } },
     });
 
     expect(mockFetch).toHaveBeenCalledWith("/$resources/assets", {
       method: "post",
       headers: new Headers([["content-type", "application/json"]]),
       body: JSON.stringify({
-        query: { filters: [], limit: 20, offset: 0 },
+        query: { where: { all: [] }, limit: 20, offset: 0 },
       }),
     });
   });

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AssetQueryExecutionError } from "@webstudio-is/asset-resource";
+import {
+  AssetIndexRevisionError,
+  AssetQueryExecutionError,
+} from "@webstudio-is/asset-resource";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { loader } from "./assets-query.server";
 
@@ -31,13 +34,15 @@ describe("configured Assets system resource", () => {
     };
     dependencies.previewAssetResourceQuery.mockResolvedValue(responseBody);
     const query = {
-      filters: [
-        {
-          field: ["properties", "draft"],
-          operator: "ne",
-          value: true,
-        },
-      ],
+      where: {
+        all: [
+          {
+            field: ["properties", "draft"],
+            operator: "ne",
+            value: true,
+          },
+        ],
+      },
       limit: 20,
     };
 
@@ -114,6 +119,23 @@ describe("configured Assets system resource", () => {
     expect(invalid.status).toBe(400);
     await expect(invalid.json()).resolves.toMatchObject({
       error: { code: "INVALID_REQUEST" },
+    });
+  });
+
+  test("maps stale revisions to conflict responses", async () => {
+    dependencies.previewAssetResourceQuery.mockRejectedValue(
+      new AssetIndexRevisionError()
+    );
+
+    const response = await loader(
+      { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
+      dependencies
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "STALE_INDEX", retryable: false },
     });
   });
 });

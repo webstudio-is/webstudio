@@ -1,0 +1,114 @@
+import { describe, expect, test, vi } from "vitest";
+import type { Asset } from "@webstudio-is/sdk";
+import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { createAssetAction } from "./rest.assets.$assetId";
+
+const asset: Asset = {
+  id: "asset-1",
+  projectId: "project-1",
+  name: "post.md",
+  filename: "Post",
+  description: null,
+  type: "file",
+  format: "md",
+  size: 10,
+  createdAt: "2026-07-25T00:00:00.000Z",
+  meta: {},
+};
+
+const createDependencies = () => {
+  const updateMetadata = vi.fn().mockResolvedValue(asset);
+  const deleteAsset = vi.fn().mockResolvedValue(undefined);
+  return {
+    updateMetadata,
+    deleteAsset,
+    dependencies: {
+      preventCrossOriginCookie: vi.fn(),
+      checkCsrf: vi.fn(),
+      createContext: vi.fn(async () => ({ context: true })) as never,
+      createAssetClient: vi.fn(() => ({ storage: true })) as never,
+      createRepository: vi.fn(() => ({
+        updateMetadata,
+        delete: deleteAsset,
+      })),
+    } satisfies Parameters<typeof createAssetAction>[0],
+  };
+};
+
+const callAction = (
+  action: ReturnType<typeof createAssetAction>,
+  request: Request
+) => action({ request, params: { assetId: "asset-1" } } as never);
+
+describe("mutable Assets REST route", () => {
+  test("updates metadata through the repository with browser CSRF protection", async () => {
+    const { dependencies, updateMetadata } = createDependencies();
+    const action = createAssetAction(dependencies);
+    const response = await callAction(
+      action,
+      new Request(
+        "https://webstudio.is/rest/assets/asset-1?projectId=project-1",
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ filename: "Post", folderId: null }),
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ asset });
+    expect(dependencies.checkCsrf).toHaveBeenCalledOnce();
+    expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
+      filename: "Post",
+      folderId: null,
+    });
+  });
+
+  test("deletes through the repository and accepts token-authenticated requests", async () => {
+    const { dependencies, deleteAsset } = createDependencies();
+    const action = createAssetAction(dependencies);
+    const response = await callAction(
+      action,
+      new Request(
+        "https://webstudio.is/rest/assets/asset-1?projectId=project-1",
+        {
+          method: "DELETE",
+          headers: { "x-auth-token": "token" },
+        }
+      )
+    );
+
+    expect(response.status).toBe(204);
+    expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(deleteAsset).toHaveBeenCalledWith(["asset-1"]);
+  });
+
+  test("returns a forbidden response for repository authorization failures", async () => {
+    const { dependencies, updateMetadata } = createDependencies();
+    updateMetadata.mockRejectedValue(
+      new AuthorizationError("You don't have access")
+    );
+    const report = vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await callAction(
+      createAssetAction(dependencies),
+      new Request(
+        "https://webstudio.is/rest/assets/asset-1?projectId=project-1",
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            "x-auth-token": "token",
+          },
+          body: JSON.stringify({ description: "Updated" }),
+        }
+      )
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      errors: "You don't have access",
+    });
+    report.mockRestore();
+  });
+});

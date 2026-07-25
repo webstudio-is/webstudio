@@ -2438,7 +2438,7 @@ describe("project audit and analysis", () => {
       url: '"/$resources/assets"',
       headers: [],
       searchParams: [],
-      body: "{ query: { filters: [], limit: 20, offset: 0 } }",
+      body: "{ query: { where: { all: [] }, limit: 20, offset: 0 } }",
     });
     const dataSources: NonNullable<BuilderState["dataSources"]> = new Map(
       state.dataSources

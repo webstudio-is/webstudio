@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
-  assetQueryFieldPath,
   assetQuerySort,
+  assetQueryWhereExpression,
   assetResourceContentOptions,
   assetType,
   compilerSettings,
@@ -192,26 +192,7 @@ const resource = looseObject({
   dataSourceId: id.optional(),
 });
 const assetResourceConfiguration = looseObject({
-  filters: z.array(
-    looseObject({
-      field: assetQueryFieldPath,
-      operator: z.enum([
-        "eq",
-        "ne",
-        "in",
-        "contains",
-        "startsWith",
-        "endsWith",
-        "gt",
-        "gte",
-        "lt",
-        "lte",
-        "exists",
-        "isEmpty",
-      ]),
-      value: z.string(),
-    })
-  ),
+  where: assetQueryWhereExpression,
   sort: z.array(assetQuerySort),
   limit: z.string(),
   offset: z.string(),

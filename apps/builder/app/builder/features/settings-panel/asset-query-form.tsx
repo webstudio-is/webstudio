@@ -1,486 +1,36 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  assetQueryResult,
-  assetResourceLimits,
-  builderAssetFieldCatalog,
-  isLiteralExpression,
-  getAssetQueryOperatorsForFieldTypes,
+  addConfiguredAssetQueryFields,
+  createAssetQueryCapabilities,
+  type AssetObservedFieldType,
   type AssetQueryFilter,
-  type AssetQuerySort,
-  type AssetResourceContentOptions,
-  type BuilderAssetFieldCatalog,
+  parseAssetQueryCapabilities,
+  type AssetQueryCapabilities,
   type Resource,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryResourceConfiguration,
 } from "@webstudio-is/sdk";
 import {
-  Flex,
-  Grid,
-  InputField,
-  Label,
-  Select,
-  SmallIconButton,
-  Switch,
-  Text,
-} from "@webstudio-is/design-system";
-import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
+  createStructuredQuery,
+  getQueryFieldKey,
+  getQueryConditions,
+  normalizeStructuredQuery,
+} from "@webstudio-is/query-builder";
+import { Flex, Label, Switch, Text } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
-import {
-  BindingControl,
-  BindingPopover,
-  evaluateExpressionWithinScope,
-} from "~/builder/shared/binding-popover";
-import { ExpressionEditor } from "~/builder/shared/expression-editor";
-import { CodeEditor } from "~/shared/code-editor";
-import {
-  loadBuilderAssetFieldCatalog,
-  previewBuilderAssetQuery,
-} from "~/shared/asset-resource-api.client";
+import { WebstudioQueryBuilder } from "~/builder/shared/query-builder";
+import { loadBuilderAssetQueryCapabilities } from "~/shared/asset-resource-api.client";
 import {
   createStructuredAssetQueryResourceBody,
-  getAssetQueryFieldKey,
-  getAssetQueryFieldOptions,
   getAssetQueryConfigurationError,
-  isEmptyAssetQueryResult,
   parseStructuredAssetQueryResourceBody,
 } from "./asset-query-form-utils";
-import type { AssetQueryFieldOption } from "./asset-query-form-utils";
 
-const getOperators = (types: AssetQueryFieldOption["types"]) =>
-  getAssetQueryOperatorsForFieldTypes(types);
-
-const operatorLabels: Record<AssetQueryFilter["operator"], string> = {
-  eq: "Equals",
-  ne: "Does not equal",
-  in: "Is one of",
-  contains: "Contains",
-  startsWith: "Starts with",
-  endsWith: "Ends with",
-  gt: "Greater than",
-  gte: "Greater than or equal",
-  lt: "Less than",
-  lte: "Less than or equal",
-  exists: "Exists",
-  isEmpty: "Is empty",
-};
-
-const defaultFilterValue = (operator: AssetQueryFilter["operator"]) =>
-  operator === "in"
-    ? "[]"
-    : operator === "exists" || operator === "isEmpty"
-      ? "true"
-      : '""';
-
-const BoundExpression = ({
-  label,
-  value,
-  scope,
-  aliases,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  scope: Record<string, unknown>;
-  aliases: Map<string, string>;
-  onChange: (value: string) => void;
-}) => (
-  <BindingControl>
-    <div>
-      <ExpressionEditor
-        aria-label={label}
-        value={value}
-        onChange={onChange}
-        onChangeComplete={onChange}
-      />
-    </div>
-    <BindingPopover
-      scope={scope}
-      aliases={aliases}
-      variant={isLiteralExpression(value) ? "default" : "bound"}
-      value={value}
-      onChange={onChange}
-      onRemove={(literal) => onChange(JSON.stringify(literal))}
-    />
-  </BindingControl>
-);
-
-const Filters = ({
-  fields,
-  filters,
-  scope,
-  aliases,
-  onChange,
-}: {
-  fields: AssetQueryFieldOption[];
-  filters: StructuredAssetQueryFilterBinding[];
-  scope: Record<string, unknown>;
-  aliases: Map<string, string>;
-  onChange: (filters: StructuredAssetQueryFilterBinding[]) => void;
-}) => (
-  <Grid gap={2}>
-    <Flex justify="between" align="center">
-      <Label>Filters</Label>
-      <SmallIconButton
-        aria-label="Add asset filter"
-        icon={<PlusIcon />}
-        disabled={filters.length >= assetResourceLimits.filterCount}
-        onClick={() =>
-          onChange([
-            ...filters,
-            { field: ["path"], operator: "startsWith", value: '""' },
-          ])
-        }
-      />
-    </Flex>
-    {filters.map((filter, index) => {
-      const selectedField =
-        fields.find(
-          (field) =>
-            getAssetQueryFieldKey(field.path) ===
-            getAssetQueryFieldKey(filter.field)
-        ) ?? fields[0];
-      const compatibleOperators = getOperators(selectedField.types);
-      const operators = compatibleOperators.includes(filter.operator)
-        ? compatibleOperators
-        : [filter.operator, ...compatibleOperators];
-      return (
-        <Grid key={index} gap={1}>
-          <Grid
-            gap={1}
-            align="center"
-            css={{ gridTemplateColumns: "1fr 1fr min-content" }}
-          >
-            <Select<AssetQueryFieldOption>
-              aria-label="Asset filter field"
-              options={fields}
-              getLabel={(field) => field.label}
-              getValue={(field) => getAssetQueryFieldKey(field.path)}
-              value={selectedField}
-              onChange={(field) => {
-                const next = [...filters];
-                const nextOperators = getOperators(field.types);
-                const operator = nextOperators.includes(filter.operator)
-                  ? filter.operator
-                  : nextOperators[0];
-                next[index] = {
-                  ...filter,
-                  field: field.path,
-                  operator,
-                  value:
-                    operator === filter.operator
-                      ? filter.value
-                      : defaultFilterValue(operator),
-                };
-                onChange(next);
-              }}
-            />
-            <Select<AssetQueryFilter["operator"]>
-              aria-label="Asset filter operator"
-              options={operators}
-              getLabel={(operator: AssetQueryFilter["operator"]) =>
-                operatorLabels[operator]
-              }
-              value={filter.operator}
-              onChange={(operator: AssetQueryFilter["operator"]) => {
-                const next = [...filters];
-                next[index] = {
-                  ...filter,
-                  operator,
-                  value: defaultFilterValue(operator),
-                };
-                onChange(next);
-              }}
-            />
-            <SmallIconButton
-              aria-label="Delete asset filter"
-              variant="destructive"
-              icon={<TrashIcon />}
-              onClick={() =>
-                onChange(filters.filter((_, position) => position !== index))
-              }
-            />
-          </Grid>
-          <BoundExpression
-            label="Asset filter value"
-            value={filter.value}
-            scope={scope}
-            aliases={aliases}
-            onChange={(value) => {
-              const next = [...filters];
-              next[index] = { ...filter, value };
-              onChange(next);
-            }}
-          />
-        </Grid>
-      );
-    })}
-    {filters.length === 0 && (
-      <Text color="subtle">All assets are included.</Text>
-    )}
-  </Grid>
-);
-
-const Sorting = ({
-  fields,
-  sort,
-  onChange,
-}: {
-  fields: AssetQueryFieldOption[];
-  sort: AssetQuerySort[];
-  onChange: (sort: AssetQuerySort[]) => void;
-}) => (
-  <Grid gap={2}>
-    <Flex justify="between" align="center">
-      <Label>Sort</Label>
-      <SmallIconButton
-        aria-label="Add asset sort"
-        icon={<PlusIcon />}
-        disabled={sort.length >= assetResourceLimits.sortCount}
-        onClick={() =>
-          onChange([...sort, { field: ["name"], direction: "asc" }])
-        }
-      />
-    </Flex>
-    {sort.map((order, index) => {
-      const selectedField =
-        fields.find(
-          (field) =>
-            getAssetQueryFieldKey(field.path) ===
-            getAssetQueryFieldKey(order.field)
-        ) ?? fields[0];
-      return (
-        <Grid
-          key={index}
-          gap={1}
-          align="center"
-          css={{ gridTemplateColumns: "1fr 110px min-content" }}
-        >
-          <Select<AssetQueryFieldOption>
-            aria-label="Asset sort field"
-            options={fields}
-            getLabel={(field) => field.label}
-            getValue={(field) => getAssetQueryFieldKey(field.path)}
-            value={selectedField}
-            onChange={(field) => {
-              const next = [...sort];
-              next[index] = { ...order, field: field.path };
-              onChange(next);
-            }}
-          />
-          <Select<AssetQuerySort["direction"]>
-            aria-label="Asset sort direction"
-            options={["asc", "desc"] as const}
-            getLabel={(direction: AssetQuerySort["direction"]) =>
-              direction === "asc" ? "Ascending" : "Descending"
-            }
-            value={order.direction}
-            onChange={(direction: AssetQuerySort["direction"]) => {
-              const next = [...sort];
-              next[index] = { ...order, direction };
-              onChange(next);
-            }}
-          />
-          <SmallIconButton
-            aria-label="Delete asset sort"
-            variant="destructive"
-            icon={<TrashIcon />}
-            onClick={() =>
-              onChange(sort.filter((_, position) => position !== index))
-            }
-          />
-        </Grid>
-      );
-    })}
-  </Grid>
-);
-
-const ContentOptions = ({
-  value,
-  onChange,
-}: {
-  value: AssetResourceContentOptions;
-  onChange: (value: AssetResourceContentOptions) => void;
-}) => (
-  <Grid gap={1}>
-    <Label>File content</Label>
-    <Select<AssetResourceContentOptions["mode"]>
-      aria-label="Asset content mode"
-      options={["none", "markdown-body", "full", "range"] as const}
-      getLabel={(mode: AssetResourceContentOptions["mode"]) =>
-        mode === "none"
-          ? "Metadata only"
-          : mode === "markdown-body"
-            ? "Markdown body"
-            : mode === "full"
-              ? "Full file"
-              : "Byte range"
-      }
-      value={value.mode}
-      onChange={(mode: AssetResourceContentOptions["mode"]) =>
-        onChange(
-          mode === "range"
-            ? { mode, offset: 0, length: 1024 }
-            : mode === "none"
-              ? { mode }
-              : { mode, maxBytes: assetResourceLimits.hydratedFileBytes }
-        )
-      }
-    />
-    {value.mode === "range" && (
-      <Grid gap={1} css={{ gridTemplateColumns: "1fr 1fr" }}>
-        <InputField
-          aria-label="Content byte offset"
-          type="number"
-          min={0}
-          value={String(value.offset)}
-          onChange={(event) =>
-            onChange({ ...value, offset: Number(event.target.value) })
-          }
-        />
-        <InputField
-          aria-label="Content byte length"
-          type="number"
-          min={1}
-          value={String(value.length)}
-          onChange={(event) =>
-            onChange({ ...value, length: Number(event.target.value) })
-          }
-        />
-      </Grid>
-    )}
-    {(value.mode === "full" || value.mode === "markdown-body") && (
-      <InputField
-        aria-label="Maximum content bytes"
-        type="number"
-        min={1}
-        value={value.maxBytes === undefined ? "" : String(value.maxBytes)}
-        onChange={(event) =>
-          onChange({
-            ...value,
-            maxBytes:
-              event.target.value === ""
-                ? undefined
-                : Number(event.target.value),
-          })
-        }
-      />
-    )}
-  </Grid>
-);
-
-const AssetQueryPreview = ({
-  configuration,
-  scope,
-  enabled,
-  indexRevision,
-}: {
-  configuration: StructuredAssetQueryResourceConfiguration;
-  scope: Record<string, unknown>;
-  enabled: boolean;
-  indexRevision?: string;
-}) => {
-  const [preview, setPreview] = useState<
-    | { type: "idle" }
-    | { type: "loading" }
-    | { type: "error"; message: string }
-    | { type: "success"; value: unknown }
-  >({ type: "idle" });
-  const input = {
-    indexRevision,
-    query: {
-      filters: configuration.filters.map(({ field, operator, value }) => ({
-        field,
-        operator,
-        value: evaluateExpressionWithinScope(value, scope),
-      })),
-      sort: configuration.sort,
-      limit: evaluateExpressionWithinScope(configuration.limit, scope),
-      offset: evaluateExpressionWithinScope(configuration.offset, scope),
-      content: configuration.content,
-    },
-  };
-  const inputKey = JSON.stringify(input);
-  const inputRef = useRef({ key: inputKey, input });
-  inputRef.current = { key: inputKey, input };
-
-  useEffect(() => {
-    let cancelled = false;
-    setPreview({ type: "idle" });
-    if (enabled === false) {
-      return;
-    }
-    const requestedKey = inputKey;
-    const timeout = setTimeout(async () => {
-      setPreview({ type: "loading" });
-      try {
-        const response = await previewBuilderAssetQuery(inputRef.current.input);
-        if (cancelled || inputRef.current.key !== requestedKey) {
-          return;
-        }
-        const parsed = assetQueryResult.safeParse(response.data);
-        if (parsed.success === false) {
-          const message =
-            typeof response.data === "object" &&
-            response.data !== null &&
-            "error" in response.data &&
-            typeof response.data.error === "object" &&
-            response.data.error !== null &&
-            "message" in response.data.error &&
-            typeof response.data.error.message === "string"
-              ? response.data.error.message
-              : "The preview response was invalid.";
-          setPreview({ type: "error", message });
-          return;
-        }
-        setPreview({ type: "success", value: parsed.data });
-      } catch {
-        if (cancelled === false && inputRef.current.key === requestedKey) {
-          setPreview({ type: "error", message: "The query preview failed." });
-        }
-      }
-    }, 500);
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
-  }, [enabled, inputKey]);
-
-  return (
-    <Grid gap={2}>
-      <Label>Preview</Label>
-      {preview.type === "loading" && (
-        <Text color="subtle">Loading preview…</Text>
-      )}
-      {preview.type === "error" && (
-        <Text color="destructive">{preview.message}</Text>
-      )}
-      {preview.type === "success" && isEmptyAssetQueryResult(preview.value) && (
-        <Text color="subtle">The query returned no assets.</Text>
-      )}
-      {preview.type === "success" &&
-        isEmptyAssetQueryResult(preview.value) === false && (
-          <CodeEditor
-            lang="json"
-            title="Query preview"
-            size="small"
-            readOnly={true}
-            value={JSON.stringify(preview.value, null, 2)}
-            onChange={() => {}}
-            onChangeComplete={() => {}}
-          />
-        )}
-    </Grid>
-  );
-};
-
-const defaultConfiguration: StructuredAssetQueryResourceConfiguration = {
-  filters: [],
-  sort: [],
-  limit: String(assetResourceLimits.defaultResultCount),
-  offset: "0",
-  content: { mode: "none" },
-};
+const fallbackCapabilities = createAssetQueryCapabilities({});
+const defaultConfiguration = createStructuredQuery(
+  fallbackCapabilities
+) as StructuredAssetQueryResourceConfiguration;
 
 export const AssetQueryForm = ({
   resource,
@@ -504,25 +54,38 @@ export const AssetQueryForm = ({
       defaultConfiguration,
     [resource?.body]
   );
-  const [filters, setFilters] = useState(initial.filters);
-  const [sort, setSort] = useState(initial.sort);
-  const [limit, setLimit] = useState(initial.limit);
-  const [offset, setOffset] = useState(initial.offset);
-  const [content, setContent] = useState(initial.content);
-  const [catalog, setCatalog] = useState<BuilderAssetFieldCatalog>();
-  const configuration = { filters, sort, limit, offset, content };
+  const [configuration, setConfiguration] =
+    useState<StructuredAssetQueryResourceConfiguration>(() =>
+      normalizeStructuredQuery(initial, fallbackCapabilities)
+    );
+  const [baseCapabilities, setBaseCapabilities] =
+    useState<AssetQueryCapabilities>(() => fallbackCapabilities);
   const configurationError = getAssetQueryConfigurationError(configuration);
-  const fields = useMemo(
-    () =>
-      getAssetQueryFieldOptions({
-        catalog,
-        configuredPaths: [
-          ...filters.map(({ field }) => field),
-          ...sort.map(({ field }) => field),
-        ],
-      }),
-    [catalog, filters, sort]
+  const configuredPathsSource = JSON.stringify(
+    [
+      ...getQueryConditions<StructuredAssetQueryFilterBinding>(
+        configuration.where
+      ).map(({ field }) => field),
+      ...configuration.sort.map(({ field }) => field),
+    ].sort((left, right) =>
+      getQueryFieldKey(left).localeCompare(getQueryFieldKey(right))
+    )
   );
+  const configuredPaths = useMemo(
+    () => JSON.parse(configuredPathsSource) as string[][],
+    [configuredPathsSource]
+  );
+  const capabilities = useMemo(() => {
+    return addConfiguredAssetQueryFields({
+      capabilities: baseCapabilities,
+      configuredPaths,
+    });
+  }, [baseCapabilities, configuredPaths]);
+
+  useEffect(() => {
+    setConfiguration(normalizeStructuredQuery(initial, fallbackCapabilities));
+  }, [initial, resource?.id]);
+
   const body =
     configurationError === undefined
       ? createStructuredAssetQueryResourceBody(configuration)
@@ -533,17 +96,16 @@ export const AssetQueryForm = ({
       return;
     }
     let ignore = false;
-    loadBuilderAssetFieldCatalog()
+    loadBuilderAssetQueryCapabilities()
       .then((response) => {
         if (ignore) {
           return;
         }
-        const parsed = builderAssetFieldCatalog.safeParse(response.data);
-        setCatalog(parsed.success ? parsed.data : undefined);
+        setBaseCapabilities(parseAssetQueryCapabilities(response.data));
       })
       .catch(() => {
         if (ignore === false) {
-          setCatalog(undefined);
+          setBaseCapabilities(createAssetQueryCapabilities({}));
         }
       });
     return () => {
@@ -571,46 +133,21 @@ export const AssetQueryForm = ({
           <input type="hidden" name="header-name" value="Content-Type" />
           <input type="hidden" name="header-value" value='"application/json"' />
           <input type="hidden" name="body" value={body} />
-          <Filters
-            fields={fields}
-            filters={filters}
+          <WebstudioQueryBuilder<
+            AssetObservedFieldType,
+            AssetQueryFilter["operator"],
+            StructuredAssetQueryResourceConfiguration
+          >
+            key={resource?.id}
+            value={configuration}
+            capabilities={capabilities}
             scope={scope}
             aliases={aliases}
-            onChange={setFilters}
+            onChange={setConfiguration}
           />
-          <Sorting fields={fields} sort={sort} onChange={setSort} />
-          <Grid gap={2} css={{ gridTemplateColumns: "1fr 1fr" }}>
-            <Grid gap={1}>
-              <Label>Limit</Label>
-              <BoundExpression
-                label="Asset query limit"
-                value={limit}
-                scope={scope}
-                aliases={aliases}
-                onChange={setLimit}
-              />
-            </Grid>
-            <Grid gap={1}>
-              <Label>Offset</Label>
-              <BoundExpression
-                label="Asset query offset"
-                value={offset}
-                scope={scope}
-                aliases={aliases}
-                onChange={setOffset}
-              />
-            </Grid>
-          </Grid>
-          <ContentOptions value={content} onChange={setContent} />
           {configurationError !== undefined && (
             <Text color="destructive">{configurationError}</Text>
           )}
-          <AssetQueryPreview
-            configuration={configuration}
-            scope={scope}
-            enabled={configurationError === undefined}
-            indexRevision={catalog?.canonicalRevision}
-          />
         </>
       )}
     </>

@@ -1,0 +1,76 @@
+import {
+  json,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "@remix-run/server-runtime";
+import {
+  assetFolderUpdateRequest,
+  assetResourceApiOperations,
+} from "@webstudio-is/sdk/asset-resource-api";
+import { requiresAssetMutationCsrf } from "~/services/asset-rest-auth.server";
+import {
+  AssetRestRequestError,
+  assetRestErrorResponse,
+  assetRestMethodNotAllowed,
+  createAssetRestRepository,
+} from "~/services/asset-rest.server";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
+import { checkCsrf } from "~/services/csrf-session.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  preventCrossOriginCookie(request);
+  if (
+    request.method.toLowerCase() !==
+    assetResourceApiOperations.getAssetFolder.method
+  ) {
+    return assetRestMethodNotAllowed(["GET"]);
+  }
+  try {
+    if (params.folderId === undefined) {
+      throw new AssetRestRequestError("Asset folder id is required");
+    }
+    const folder = await (
+      await createAssetRestRepository(request)
+    ).getFolder(params.folderId);
+    return json({ folder }, { headers: privateNoStoreResponseHeaders });
+  } catch (error) {
+    return assetRestErrorResponse(error);
+  }
+};
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  preventCrossOriginCookie(request);
+  if (requiresAssetMutationCsrf(request)) {
+    await checkCsrf(request);
+  }
+  try {
+    if (params.folderId === undefined) {
+      throw new AssetRestRequestError("Asset folder id is required");
+    }
+    const repository = await createAssetRestRepository(request);
+    if (
+      request.method.toLowerCase() ===
+      assetResourceApiOperations.updateAssetFolder.method
+    ) {
+      const folder = await repository.updateFolder(
+        params.folderId,
+        assetFolderUpdateRequest.parse(await request.json())
+      );
+      return json({ folder }, { headers: privateNoStoreResponseHeaders });
+    }
+    if (
+      request.method.toLowerCase() ===
+      assetResourceApiOperations.deleteAssetFolder.method
+    ) {
+      await repository.deleteFolder(params.folderId);
+      return new Response(null, {
+        status: 204,
+        headers: privateNoStoreResponseHeaders,
+      });
+    }
+    return assetRestMethodNotAllowed(["PATCH", "DELETE"]);
+  } catch (error) {
+    return assetRestErrorResponse(error);
+  }
+};

@@ -65,3 +65,5 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
       }),
   };
 };
+
+export const createS3AssetObjectStore = createS3Client;

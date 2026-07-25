@@ -3,6 +3,13 @@ import {
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
+import {
+  AssetIndexRevisionError,
+  createAssetIndex,
+  executeAssetQuery,
+} from "@webstudio-is/asset-resource";
+import type { AssetQueryRequestInput } from "@webstudio-is/sdk";
+import type { AssetObjectReader } from "./client";
 import { previewAssetResourceQuery } from "./query-preview";
 
 const projectId = "project-1";
@@ -12,12 +19,30 @@ const context = {
 } as unknown as AppContext;
 const revision = `sha256:${"b".repeat(64)}`;
 const hasProjectPermit = vi.fn();
-const synchronizeCanonicalAssets = vi.fn();
-const loadCanonicalAssetFileEntries = vi.fn();
+const prepareIndex = vi.fn();
+const query = vi.fn(
+  async (request: AssetQueryRequestInput, assetClient: AssetObjectReader) => {
+    const index = await prepareIndex();
+    if (
+      request.indexRevision !== undefined &&
+      request.indexRevision !== index.integrity.checksum
+    ) {
+      throw new AssetIndexRevisionError();
+    }
+    return await executeAssetQuery({
+      query: request.query,
+      catalog: index.fieldCatalog,
+      documents: index.documents,
+      read: assetClient.readFile,
+    });
+  }
+);
 const dependencies = {
   hasProjectPermit,
-  synchronizeCanonicalAssets,
-  loadCanonicalAssetFileEntries,
+  createRepository: ({ assetClient }: { assetClient: AssetObjectReader }) => ({
+    prepareIndex,
+    query: (request: AssetQueryRequestInput) => query(request, assetClient),
+  }),
 };
 
 const canonicalEntry = ({
@@ -48,28 +73,33 @@ const canonicalEntry = ({
 describe("previewAssetResourceQuery", () => {
   beforeEach(() => {
     hasProjectPermit.mockReset();
-    synchronizeCanonicalAssets.mockReset();
-    loadCanonicalAssetFileEntries.mockReset();
+    prepareIndex.mockReset();
+    query.mockClear();
   });
 
   test("evaluates the shared canonical metadata index without reading files", async () => {
     hasProjectPermit.mockResolvedValue(true);
-    loadCanonicalAssetFileEntries.mockResolvedValue([
-      canonicalEntry({ slug: "post", size: 100 }),
-    ]);
+    prepareIndex.mockResolvedValue(
+      await createAssetIndex({
+        projectId,
+        entries: [canonicalEntry({ slug: "post", size: 100 })],
+      })
+    );
     const readFile = vi.fn();
 
     const result = await previewAssetResourceQuery({
       projectId,
       request: {
         query: {
-          filters: [
-            {
-              field: ["properties", "slug"],
-              operator: "eq",
-              value: "post",
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "post",
+              },
+            ],
+          },
           limit: 1,
         },
       },
@@ -84,10 +114,7 @@ describe("previewAssetResourceQuery", () => {
         properties: { slug: "post" },
       }),
     ]);
-    expect(loadCanonicalAssetFileEntries).toHaveBeenCalledWith({
-      client: postgrestClient,
-      projectId,
-    });
+    expect(prepareIndex).toHaveBeenCalledOnce();
     expect(readFile).not.toHaveBeenCalled();
   });
 
@@ -102,15 +129,43 @@ describe("previewAssetResourceQuery", () => {
         dependencies,
       })
     ).rejects.toBeInstanceOf(AuthorizationError);
-    expect(loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
+    expect(prepareIndex).not.toHaveBeenCalled();
+  });
+
+  test("rejects a stale requested index revision", async () => {
+    hasProjectPermit.mockResolvedValue(true);
+    prepareIndex.mockResolvedValue(
+      await createAssetIndex({
+        projectId,
+        entries: [canonicalEntry({ slug: "post" })],
+      })
+    );
+
+    await expect(
+      previewAssetResourceQuery({
+        projectId,
+        request: { query: {}, indexRevision: `sha256:${"0".repeat(64)}` },
+        context,
+        assetClient: { readFile: vi.fn() },
+        dependencies,
+      })
+    ).rejects.toMatchObject({
+      name: "AssetIndexRevisionError",
+      message: "The requested asset index revision is stale",
+    });
   });
 
   test("hydrates exactly the selected detail file", async () => {
     hasProjectPermit.mockResolvedValue(true);
-    loadCanonicalAssetFileEntries.mockResolvedValue([
-      canonicalEntry({ slug: "first", size: 5 }),
-      canonicalEntry({ slug: "selected", size: 8 }),
-    ]);
+    prepareIndex.mockResolvedValue(
+      await createAssetIndex({
+        projectId,
+        entries: [
+          canonicalEntry({ slug: "first", size: 5 }),
+          canonicalEntry({ slug: "selected", size: 8 }),
+        ],
+      })
+    );
     const readFile = vi.fn(async (contentRef: string) => ({
       data: {
         async *[Symbol.asyncIterator]() {
@@ -126,13 +181,15 @@ describe("previewAssetResourceQuery", () => {
       projectId,
       request: {
         query: {
-          filters: [
-            {
-              field: ["properties", "slug"],
-              operator: "eq",
-              value: "selected",
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "selected",
+              },
+            ],
+          },
           limit: 1,
           content: { mode: "full" },
         },
@@ -157,11 +214,7 @@ describe("previewAssetResourceQuery", () => {
 
   test("rejects metadata sets beyond the shared index limit", async () => {
     hasProjectPermit.mockResolvedValue(true);
-    loadCanonicalAssetFileEntries.mockResolvedValue(
-      Array.from({ length: 1001 }, (_, index) =>
-        canonicalEntry({ slug: String(index), size: 1 })
-      )
-    );
+    prepareIndex.mockRejectedValue(new Error("document limit"));
 
     await expect(
       previewAssetResourceQuery({

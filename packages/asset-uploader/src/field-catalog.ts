@@ -1,12 +1,8 @@
-import {
-  createAssetFieldCatalog,
-  toBuilderAssetFieldCatalog,
-} from "@webstudio-is/asset-resource";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetClient } from "./client";
 import {
-  loadAuthorizedBuilderCanonicalEntries,
-  type BuilderCanonicalEntriesDependencies,
+  loadAuthorizedBuilderAssetRepository,
+  type BuilderAssetIndexDependencies,
 } from "./builder-canonical-entries";
 
 export const loadBuilderAssetFieldCatalog = async ({
@@ -18,9 +14,9 @@ export const loadBuilderAssetFieldCatalog = async ({
   projectId: string;
   context: AppContext;
   assetClient: Pick<AssetClient, "readFile">;
-  dependencies?: BuilderCanonicalEntriesDependencies;
+  dependencies?: BuilderAssetIndexDependencies;
 }) => {
-  const entries = await loadAuthorizedBuilderCanonicalEntries({
+  const repository = await loadAuthorizedBuilderAssetRepository({
     projectId,
     context,
     assetClient,
@@ -28,6 +24,5 @@ export const loadBuilderAssetFieldCatalog = async ({
       "You don't have access to this project's asset field catalog",
     dependencies,
   });
-  const catalog = await createAssetFieldCatalog(entries);
-  return toBuilderAssetFieldCatalog(catalog);
+  return (await repository.prepareIndex()).fieldCatalog;
 };

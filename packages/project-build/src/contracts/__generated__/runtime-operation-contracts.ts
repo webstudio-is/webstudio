@@ -67169,44 +67169,8 @@ export const runtimeOperationContractData = [
               query: {
                 type: "object",
                 properties: {
-                  filters: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        field: {
-                          minItems: 1,
-                          maxItems: 9,
-                          type: "array",
-                          items: {
-                            type: "string",
-                            minLength: 1,
-                          },
-                        },
-                        operator: {
-                          type: "string",
-                          enum: [
-                            "eq",
-                            "ne",
-                            "in",
-                            "contains",
-                            "startsWith",
-                            "endsWith",
-                            "gt",
-                            "gte",
-                            "lt",
-                            "lte",
-                            "exists",
-                            "isEmpty",
-                          ],
-                        },
-                        value: {
-                          type: "string",
-                        },
-                      },
-                      required: ["field", "operator", "value"],
-                      additionalProperties: {},
-                    },
+                  where: {
+                    $ref: "#/$defs/__schema1",
                   },
                   sort: {
                     type: "array",
@@ -67302,7 +67266,7 @@ export const runtimeOperationContractData = [
                     ],
                   },
                 },
-                required: ["filters", "sort", "limit", "offset", "content"],
+                required: ["where", "sort", "limit", "offset", "content"],
                 additionalProperties: {},
               },
               configurationError: {
@@ -67353,6 +67317,127 @@ export const runtimeOperationContractData = [
         "filters",
       ],
       additionalProperties: {},
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+        __schema1: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                field: {
+                  minItems: 1,
+                  maxItems: 9,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  description:
+                    'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                },
+                operator: {
+                  type: "string",
+                  enum: [
+                    "eq",
+                    "ne",
+                    "contains",
+                    "startsWith",
+                    "endsWith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "in",
+                    "exists",
+                    "isEmpty",
+                  ],
+                },
+                value: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "literal",
+                        },
+                        value: {
+                          $ref: "#/$defs/__schema0",
+                        },
+                      },
+                      required: ["type", "value"],
+                      additionalProperties: false,
+                    },
+                  ],
+                  description:
+                    'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
+                },
+              },
+              required: ["field", "operator", "value"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
+            },
+          ],
+        },
+      },
     },
     readNamespaces: ["dataSources", "resources"],
     writeNamespaces: [],
@@ -67401,44 +67486,8 @@ export const runtimeOperationContractData = [
             query: {
               type: "object",
               properties: {
-                filters: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      field: {
-                        minItems: 1,
-                        maxItems: 9,
-                        type: "array",
-                        items: {
-                          type: "string",
-                          minLength: 1,
-                        },
-                      },
-                      operator: {
-                        type: "string",
-                        enum: [
-                          "eq",
-                          "ne",
-                          "in",
-                          "contains",
-                          "startsWith",
-                          "endsWith",
-                          "gt",
-                          "gte",
-                          "lt",
-                          "lte",
-                          "exists",
-                          "isEmpty",
-                        ],
-                      },
-                      value: {
-                        type: "string",
-                      },
-                    },
-                    required: ["field", "operator", "value"],
-                    additionalProperties: {},
-                  },
+                where: {
+                  $ref: "#/$defs/__schema1",
                 },
                 sort: {
                   type: "array",
@@ -67534,7 +67583,7 @@ export const runtimeOperationContractData = [
                   ],
                 },
               },
-              required: ["filters", "sort", "limit", "offset", "content"],
+              required: ["where", "sort", "limit", "offset", "content"],
               additionalProperties: {},
             },
             configurationError: {
@@ -67547,6 +67596,127 @@ export const runtimeOperationContractData = [
       },
       required: ["resource"],
       additionalProperties: {},
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+        __schema1: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                field: {
+                  minItems: 1,
+                  maxItems: 9,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  description:
+                    'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                },
+                operator: {
+                  type: "string",
+                  enum: [
+                    "eq",
+                    "ne",
+                    "contains",
+                    "startsWith",
+                    "endsWith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "in",
+                    "exists",
+                    "isEmpty",
+                  ],
+                },
+                value: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "literal",
+                        },
+                        value: {
+                          $ref: "#/$defs/__schema0",
+                        },
+                      },
+                      required: ["type", "value"],
+                      additionalProperties: false,
+                    },
+                  ],
+                  description:
+                    'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
+                },
+              },
+              required: ["field", "operator", "value"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
+            },
+          ],
+        },
+      },
     },
     readNamespaces: ["dataSources", "resources"],
     writeNamespaces: [],
@@ -67568,68 +67738,99 @@ export const runtimeOperationContractData = [
         query: {
           type: "object",
           properties: {
-            filters: {
-              default: [],
-              maxItems: 32,
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  field: {
-                    minItems: 1,
-                    maxItems: 9,
-                    type: "array",
-                    items: {
-                      type: "string",
-                      minLength: 1,
-                    },
-                    description:
-                      'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
-                  },
-                  operator: {
-                    type: "string",
-                    enum: [
-                      "eq",
-                      "ne",
-                      "contains",
-                      "startsWith",
-                      "endsWith",
-                      "gt",
-                      "gte",
-                      "lt",
-                      "lte",
-                      "in",
-                      "exists",
-                      "isEmpty",
-                    ],
-                  },
-                  value: {
-                    anyOf: [
-                      {
-                        type: "string",
-                      },
-                      {
-                        type: "object",
-                        properties: {
-                          type: {
-                            type: "string",
-                            const: "literal",
-                          },
-                          value: {
-                            $ref: "#/$defs/__schema0",
-                          },
-                        },
-                        required: ["type", "value"],
-                        additionalProperties: false,
-                      },
-                    ],
-                    description:
-                      'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
-                  },
-                },
-                required: ["field", "operator", "value"],
-                additionalProperties: false,
+            where: {
+              default: {
+                all: [],
               },
+              description:
+                "A boolean filter tree. Use { all: [...] } for AND and { any: [...] } for OR; leaves contain field, operator, and value.",
+              anyOf: [
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                      description:
+                        'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                    },
+                    operator: {
+                      type: "string",
+                      enum: [
+                        "eq",
+                        "ne",
+                        "contains",
+                        "startsWith",
+                        "endsWith",
+                        "gt",
+                        "gte",
+                        "lt",
+                        "lte",
+                        "in",
+                        "exists",
+                        "isEmpty",
+                      ],
+                    },
+                    value: {
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: {
+                              type: "string",
+                              const: "literal",
+                            },
+                            value: {
+                              $ref: "#/$defs/__schema0",
+                            },
+                          },
+                          required: ["type", "value"],
+                          additionalProperties: false,
+                        },
+                      ],
+                      description:
+                        'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    all: {
+                      type: "array",
+                      items: {
+                        $ref: "#/$defs/__schema1",
+                      },
+                    },
+                  },
+                  required: ["all"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    any: {
+                      type: "array",
+                      items: {
+                        $ref: "#/$defs/__schema1",
+                      },
+                    },
+                  },
+                  required: ["any"],
+                  additionalProperties: false,
+                },
+              ],
+              $ref: "#/$defs/__schema1",
             },
             sort: {
               default: [],
@@ -67819,6 +68020,94 @@ export const runtimeOperationContractData = [
             },
           ],
         },
+        __schema1: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                field: {
+                  minItems: 1,
+                  maxItems: 9,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  description:
+                    'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                },
+                operator: {
+                  type: "string",
+                  enum: [
+                    "eq",
+                    "ne",
+                    "contains",
+                    "startsWith",
+                    "endsWith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "in",
+                    "exists",
+                    "isEmpty",
+                  ],
+                },
+                value: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "literal",
+                        },
+                        value: {
+                          $ref: "#/$defs/__schema0",
+                        },
+                      },
+                      required: ["type", "value"],
+                      additionalProperties: false,
+                    },
+                  ],
+                  description:
+                    'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
+                },
+              },
+              required: ["field", "operator", "value"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
+            },
+          ],
+        },
       },
     },
     outputSchema: {
@@ -67949,68 +68238,99 @@ export const runtimeOperationContractData = [
                 {
                   type: "object",
                   properties: {
-                    filters: {
-                      default: [],
-                      maxItems: 32,
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          field: {
-                            minItems: 1,
-                            maxItems: 9,
-                            type: "array",
-                            items: {
-                              type: "string",
-                              minLength: 1,
-                            },
-                            description:
-                              'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
-                          },
-                          operator: {
-                            type: "string",
-                            enum: [
-                              "eq",
-                              "ne",
-                              "contains",
-                              "startsWith",
-                              "endsWith",
-                              "gt",
-                              "gte",
-                              "lt",
-                              "lte",
-                              "in",
-                              "exists",
-                              "isEmpty",
-                            ],
-                          },
-                          value: {
-                            anyOf: [
-                              {
-                                type: "string",
-                              },
-                              {
-                                type: "object",
-                                properties: {
-                                  type: {
-                                    type: "string",
-                                    const: "literal",
-                                  },
-                                  value: {
-                                    $ref: "#/$defs/__schema0",
-                                  },
-                                },
-                                required: ["type", "value"],
-                                additionalProperties: false,
-                              },
-                            ],
-                            description:
-                              'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
-                          },
-                        },
-                        required: ["field", "operator", "value"],
-                        additionalProperties: false,
+                    where: {
+                      default: {
+                        all: [],
                       },
+                      description:
+                        "A boolean filter tree. Use { all: [...] } for AND and { any: [...] } for OR; leaves contain field, operator, and value.",
+                      anyOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            field: {
+                              minItems: 1,
+                              maxItems: 9,
+                              type: "array",
+                              items: {
+                                type: "string",
+                                minLength: 1,
+                              },
+                              description:
+                                'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                            },
+                            operator: {
+                              type: "string",
+                              enum: [
+                                "eq",
+                                "ne",
+                                "contains",
+                                "startsWith",
+                                "endsWith",
+                                "gt",
+                                "gte",
+                                "lt",
+                                "lte",
+                                "in",
+                                "exists",
+                                "isEmpty",
+                              ],
+                            },
+                            value: {
+                              anyOf: [
+                                {
+                                  type: "string",
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
+                                      const: "literal",
+                                    },
+                                    value: {
+                                      $ref: "#/$defs/__schema0",
+                                    },
+                                  },
+                                  required: ["type", "value"],
+                                  additionalProperties: false,
+                                },
+                              ],
+                              description:
+                                'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
+                            },
+                          },
+                          required: ["field", "operator", "value"],
+                          additionalProperties: false,
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            all: {
+                              type: "array",
+                              items: {
+                                $ref: "#/$defs/__schema1",
+                              },
+                            },
+                          },
+                          required: ["all"],
+                          additionalProperties: false,
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            any: {
+                              type: "array",
+                              items: {
+                                $ref: "#/$defs/__schema1",
+                              },
+                            },
+                          },
+                          required: ["any"],
+                          additionalProperties: false,
+                        },
+                      ],
+                      $ref: "#/$defs/__schema1",
                     },
                     sort: {
                       default: [],
@@ -68205,6 +68525,94 @@ export const runtimeOperationContractData = [
               additionalProperties: {
                 $ref: "#/$defs/__schema0",
               },
+            },
+          ],
+        },
+        __schema1: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                field: {
+                  minItems: 1,
+                  maxItems: 9,
+                  type: "array",
+                  items: {
+                    type: "string",
+                    minLength: 1,
+                  },
+                  description:
+                    'Indexed file field path, for example ["extension"] or ["properties", "slug"].',
+                },
+                operator: {
+                  type: "string",
+                  enum: [
+                    "eq",
+                    "ne",
+                    "contains",
+                    "startsWith",
+                    "endsWith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "in",
+                    "exists",
+                    "isEmpty",
+                  ],
+                },
+                value: {
+                  anyOf: [
+                    {
+                      type: "string",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          const: "literal",
+                        },
+                        value: {
+                          $ref: "#/$defs/__schema0",
+                        },
+                      },
+                      required: ["type", "value"],
+                      additionalProperties: false,
+                    },
+                  ],
+                  description:
+                    'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.',
+                },
+              },
+              required: ["field", "operator", "value"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema1",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
             },
           ],
         },

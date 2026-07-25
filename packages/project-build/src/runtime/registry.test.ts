@@ -1730,13 +1730,15 @@ describe("builder runtime read families", () => {
         name: "Blog posts",
         scopeInstanceId: "heading",
         query: {
-          filters: [
-            {
-              field: ["properties", "slug"],
-              operator: "eq",
-              value: "system.params.slug",
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.slug",
+              },
+            ],
+          },
           limit: "1",
           content: { mode: "markdown-body", maxBytes: 65_536 },
         },
@@ -1802,13 +1804,15 @@ describe("builder runtime read families", () => {
         scopeInstanceId: "heading",
         mode: "query",
         query: {
-          filters: [
-            {
-              field: ["properties", "slug"],
-              operator: "eq",
-              value: "system.params.slug",
-            },
-          ],
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "system.params.slug",
+              },
+            ],
+          },
           sort: [],
           limit: "1",
           offset: "0",

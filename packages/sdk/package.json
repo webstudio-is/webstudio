@@ -18,6 +18,11 @@
       "types": "./lib/types/runtime.d.ts",
       "import": "./lib/runtime.js"
     },
+    "./asset-resource-api": {
+      "webstudio": "./src/asset-resource-api.ts",
+      "types": "./lib/types/asset-resource-api.d.ts",
+      "import": "./lib/asset-resource-api.js"
+    },
     "./asset-resource-limits": {
       "webstudio": "./src/asset-resource-limits.ts",
       "types": "./lib/types/asset-resource-limits.d.ts",
@@ -65,7 +70,7 @@
     "test": "vitest run",
     "build:schema-org-data": "tsx scripts/schema-org-data.ts && oxfmt src/__generated__/schema-org-data.ts",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && oxfmt src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/asset-resource-api.ts src/asset-resource-limits.ts src/schema-org.ts src/link-utils.ts src/schema.ts src/__generated__/normalize.css.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
@@ -74,6 +79,7 @@
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/project-store": "workspace:*",
+    "@webstudio-is/query-builder": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
     "acorn": "^8.14.1",
     "acorn-walk": "^8.3.4",
@@ -85,12 +91,13 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "@types/papaparse": "^5.5.2",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "papaparse": "^5.5.3",
-    "@types/papaparse": "^5.5.2",
     "vitest": "^3.1.2"
   }
 }

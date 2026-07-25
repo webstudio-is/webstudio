@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { loadBuilderAssetResource } from "./asset-resource-api.client";
+import {
+  loadBuilderAssetQueryCapabilities,
+  loadBuilderAssetResource,
+} from "./asset-resource-api.client";
 
 describe("Builder asset resource client", () => {
   test("loads exactly one nested resource result", async () => {
@@ -23,7 +26,7 @@ describe("Builder asset resource client", () => {
           url: "/$resources/assets",
           searchParams: [],
           headers: [],
-          body: { query: { filters: [], limit: 20, offset: 0 } },
+          body: { query: { where: { all: [] }, limit: 20, offset: 0 } },
         },
         fetcher,
       })
@@ -50,5 +53,32 @@ describe("Builder asset resource client", () => {
         fetcher,
       })
     ).rejects.toThrow("response is invalid");
+  });
+
+  test("loads the normalized query capabilities system resource", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ version: 1 }), { status: 200 })
+      );
+
+    await expect(loadBuilderAssetQueryCapabilities(fetcher)).resolves.toEqual({
+      ok: true,
+      status: 200,
+      statusText: "",
+      data: { version: 1 },
+    });
+
+    expect(fetcher).toHaveBeenCalledWith("/rest/assets/query-capabilities");
+  });
+
+  test("rejects failed capability requests", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(undefined, { status: 403 }));
+
+    await expect(loadBuilderAssetQueryCapabilities(fetcher)).rejects.toThrow(
+      "capabilities request failed"
+    );
   });
 });

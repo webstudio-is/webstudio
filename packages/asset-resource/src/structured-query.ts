@@ -9,6 +9,7 @@ import {
   type AssetQueryFilter,
   type AssetQueryItem,
   type AssetQueryResult,
+  type AssetQueryWhere,
   type BuilderAssetFieldCatalog,
 } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
@@ -26,6 +27,13 @@ export class AssetQueryExecutionError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "AssetQueryExecutionError";
+  }
+}
+
+export class AssetIndexRevisionError extends Error {
+  constructor() {
+    super("The requested asset index revision is stale");
+    this.name = "AssetIndexRevisionError";
   }
 }
 
@@ -61,7 +69,14 @@ export const validateAssetQueryAgainstCatalog = ({
   const query = assetQuery.parse(input);
   const referencedFieldPaths = new Map<string, AssetQueryFieldPath>();
   const warnings: string[] = [];
-  for (const filter of query.filters) {
+  const visitWhere = (where: AssetQueryWhere) => {
+    if ("field" in where === false) {
+      for (const child of "all" in where ? where.all : where.any) {
+        visitWhere(child);
+      }
+      return;
+    }
+    const filter = where;
     const catalogPath = getCatalogPath(filter.field);
     referencedFieldPaths.set(catalogPath, filter.field);
     if (filter.field[0] === "properties") {
@@ -94,7 +109,8 @@ export const validateAssetQueryAgainstCatalog = ({
         );
       }
     }
-  }
+  };
+  visitWhere(query.where);
   for (const order of query.sort) {
     const catalogPath = getCatalogPath(order.field);
     referencedFieldPaths.set(catalogPath, order.field);
@@ -231,6 +247,19 @@ export const matchesAssetQueryFilter = (
   return compared <= 0;
 };
 
+export const matchesAssetQueryWhere = (
+  document: AssetFileDocument,
+  where: AssetQueryWhere
+): boolean => {
+  if ("field" in where) {
+    return matchesAssetQueryFilter(document, where);
+  }
+  if ("all" in where) {
+    return where.all.every((child) => matchesAssetQueryWhere(document, child));
+  }
+  return where.any.some((child) => matchesAssetQueryWhere(document, child));
+};
+
 const compareSortValues = (left: unknown, right: unknown) => {
   const leftMissing = left === undefined || left === null;
   const rightMissing = right === undefined || right === null;
@@ -298,7 +327,7 @@ export const executeAssetQuery = async ({
     );
   }
   const matched = documents.filter((document) =>
-    query.filters.every((filter) => matchesAssetQueryFilter(document, filter))
+    matchesAssetQueryWhere(document, query.where)
   );
   const sorted = [...matched].sort((left, right) => {
     for (const order of query.sort) {

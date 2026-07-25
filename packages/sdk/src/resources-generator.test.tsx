@@ -88,7 +88,7 @@ test("generates a configured Assets request on the standard endpoint", () => {
         url: '"/$resources/assets"',
         method: "post" as const,
         headers: [],
-        body: "{ query: { filters: [], limit: 20, offset: 0 } }",
+        body: "{ query: { where: { all: [] }, limit: 20, offset: 0 } }",
       },
     ]),
     props: new Map(),

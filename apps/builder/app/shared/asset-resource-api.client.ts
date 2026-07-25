@@ -1,9 +1,5 @@
-import { createAssetResourceRequest } from "@webstudio-is/asset-resource";
-import type {
-  AssetQueryRequestInput,
-  ResourceRequest,
-} from "@webstudio-is/sdk";
-import { assetsFieldCatalogResourceUrl } from "@webstudio-is/sdk/runtime";
+import type { ResourceRequest } from "@webstudio-is/sdk";
+import { assetsQueryCapabilitiesApiUrl } from "@webstudio-is/sdk/runtime";
 import { fetch as builderFetch } from "./fetch.client";
 import { restResourcesLoader } from "./router-utils";
 
@@ -41,19 +37,19 @@ export const loadBuilderAssetResource = async ({
   return entries[0][1] as BuilderResourceResult;
 };
 
-export const previewBuilderAssetQuery = async (input: AssetQueryRequestInput) =>
-  await loadBuilderAssetResource({
-    request: createAssetResourceRequest(input),
-  });
-
-export const loadBuilderAssetFieldCatalog = async () =>
-  await loadBuilderAssetResource({
-    request: {
-      name: "assets-field-catalog",
-      control: "system",
-      method: "get",
-      url: assetsFieldCatalogResourceUrl,
-      searchParams: [],
-      headers: [],
-    },
-  });
+export const loadBuilderAssetQueryCapabilities = async (
+  fetcher?: typeof globalThis.fetch
+) => {
+  const response = await (fetcher ?? builderFetch)(
+    assetsQueryCapabilitiesApiUrl
+  );
+  if (response.ok === false) {
+    throw new Error("Builder asset query capabilities request failed");
+  }
+  return {
+    ok: true,
+    status: response.status,
+    statusText: response.statusText,
+    data: await response.json(),
+  } satisfies BuilderResourceResult;
+};

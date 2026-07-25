@@ -20,6 +20,11 @@ export const checksumAssetIndex = async (index: AssetIndexV1) => {
 export const serializeAssetIndex = (value: unknown) =>
   serializeJsonDeterministically(assetIndexV1.parse(value));
 
+export const getAssetIndexStoragePath = (index: AssetIndexV1) => {
+  const checksum = index.integrity.checksum.replace(/^sha256:/, "");
+  return `assets/db/${checksum}.json`;
+};
+
 const assertAssetIndexSize = (index: AssetIndexV1) => {
   if (
     new TextEncoder().encode(serializeAssetIndex(index)).byteLength >

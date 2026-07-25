@@ -1,0 +1,67 @@
+import { describe, expect, test } from "vitest";
+import {
+  createQueryCondition,
+  createQuerySort,
+  createStructuredQuery,
+  getQueryConditions,
+  getQueryWhereMetrics,
+  normalizeStructuredQuery,
+} from "./query-utils";
+import { genericQueryCapabilities } from "./test-fixtures";
+
+const where = {
+  all: [
+    { field: ["extension"], operator: "eq", value: '"md"' },
+    {
+      any: [
+        { field: ["properties", "slug"], operator: "eq", value: "slug" },
+        { field: ["properties", "id"], operator: "eq", value: "slug" },
+      ],
+    },
+  ],
+};
+
+describe("structured query traversal", () => {
+  test("collects nested conditions", () => {
+    expect(getQueryConditions(where)).toHaveLength(3);
+  });
+
+  test("measures condition count and group depth", () => {
+    expect(getQueryWhereMetrics(where)).toEqual({ conditions: 3, depth: 2 });
+  });
+
+  test("derives query, condition, parameter, and sort defaults from capabilities", () => {
+    expect(createQueryCondition(genericQueryCapabilities)).toEqual({
+      field: ["title"],
+      operator: "eq",
+      value: '""',
+    });
+    expect(createQuerySort(genericQueryCapabilities)).toEqual({
+      field: ["publishedAt"],
+      direction: "desc",
+    });
+    expect(createStructuredQuery(genericQueryCapabilities)).toEqual({
+      where: { all: [] },
+      sort: [],
+      limit: "10",
+      offset: "0",
+      selection: { mode: "summary" },
+    });
+  });
+
+  test("normalizes a root condition with the declarative combinator default", () => {
+    expect(
+      normalizeStructuredQuery(
+        {
+          where: { field: ["title"], operator: "eq", value: '"Post"' },
+          sort: [],
+          limit: "10",
+          offset: "0",
+        },
+        genericQueryCapabilities
+      ).where
+    ).toEqual({
+      all: [{ field: ["title"], operator: "eq", value: '"Post"' }],
+    });
+  });
+});

@@ -11,7 +11,7 @@ export const validateAssetReadRange = (range: AssetReadRange) => {
   }
 };
 
-export type AssetUploadClient = {
+export type AssetObjectWriter = {
   uploadFile: (
     name: string,
     type: string,
@@ -23,7 +23,7 @@ export type AssetUploadClient = {
   ) => Promise<AssetData>;
 };
 
-export type AssetClient = AssetUploadClient & {
+export type AssetObjectReader = {
   readFile: (
     name: string,
     range?: AssetReadRange
@@ -32,3 +32,10 @@ export type AssetClient = AssetUploadClient & {
     contentLength?: number;
   }>;
 };
+
+export type AssetObjectStore = AssetObjectWriter & AssetObjectReader;
+
+// Compatibility names for callers that predate the storage-neutral
+// repository boundary.
+export type AssetUploadClient = AssetObjectWriter;
+export type AssetClient = AssetObjectStore;

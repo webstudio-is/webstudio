@@ -220,7 +220,7 @@ describe("getResourceKey - pure function tests", () => {
       headers: [{ name: "content-type", value: "application/json" }],
       body,
     });
-    const base = { query: { filters: [], limit: 20, offset: 0 } };
+    const base = { query: { where: { all: [] }, limit: 20, offset: 0 } };
     const requests = [
       base,
       { query: { ...base.query, limit: 10 } },

@@ -14,6 +14,7 @@ export * from "./published-runtime";
 export * from "./structured-query";
 export * from "./asset-index";
 export * from "./request";
+export * from "./query-repository";
 
 export const createAssetResourceRequest = (
   request: AssetQueryRequestInput

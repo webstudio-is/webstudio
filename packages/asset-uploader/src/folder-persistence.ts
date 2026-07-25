@@ -48,6 +48,46 @@ export const loadAssetFoldersByProjectWithClient = async (
   }));
 };
 
+export const upsertAssetFolderWithClient = async (
+  {
+    projectId,
+    folder,
+  }: {
+    projectId: string;
+    folder: AssetFolder;
+  },
+  client: Client
+): Promise<AssetFolder> => {
+  const current = new Map(
+    (await loadAssetFoldersByProjectWithClient(projectId, client)).map(
+      (item) => [item.id, item]
+    )
+  );
+  const validated = assetFolders.parse(new Map(current).set(folder.id, folder));
+  const value = validated.get(folder.id);
+  if (value === undefined) {
+    throw new Error("Asset folder was not validated");
+  }
+  const result = await client
+    .from("AssetFolder")
+    .upsert(createAssetFolderRows([value], projectId), {
+      onConflict: "id,projectId",
+    })
+    .select("id, projectId, name, parentId, createdAt")
+    .single();
+  assertPostgrestSuccess(result);
+  if (result.data?.id !== value.id) {
+    throw new Error("Asset folder was not persisted");
+  }
+  return {
+    id: result.data.id,
+    projectId: result.data.projectId,
+    name: result.data.name,
+    parentId: result.data.parentId ?? undefined,
+    createdAt: result.data.createdAt,
+  };
+};
+
 export const patchAssetFoldersWithClient = async (
   { projectId, client }: { projectId: string; client: Client },
   patches: Array<Patch>,
