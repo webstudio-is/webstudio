@@ -25,6 +25,7 @@ builder_backend_init
 
 export E2E_DB_BOOTSTRAP="${E2E_DB_BOOTSTRAP:-auto}"
 export E2E_GENERATE_PRISMA="${E2E_GENERATE_PRISMA:-auto}"
+export E2E_DOCKER_PULL_TIMEOUT_SECONDS="${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}"
 export E2E_DOCKER_TIMEOUT_SECONDS="${E2E_DOCKER_TIMEOUT_SECONDS:-60}"
 export E2E_MIGRATIONS_TIMEOUT_SECONDS="${E2E_MIGRATIONS_TIMEOUT_SECONDS:-300}"
 export E2E_INSTALL_PLAYWRIGHT="${E2E_INSTALL_PLAYWRIGHT:-auto}"
@@ -158,6 +159,9 @@ if [ "$E2E_RUN_TESTS" = "true" ]; then
   run_step "validate e2e test filter" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
     validate_test_filter
 fi
+
+run_step "pull e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
+  builder_backend_pull_db
 
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db

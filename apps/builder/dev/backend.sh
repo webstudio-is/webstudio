@@ -45,6 +45,10 @@ builder_backend_down() {
   builder_compose down "$@"
 }
 
+builder_backend_pull_db() {
+  builder_compose pull --policy missing db
+}
+
 builder_backend_start_db() {
   builder_compose up -d db
 }
