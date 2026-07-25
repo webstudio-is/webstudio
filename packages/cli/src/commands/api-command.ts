@@ -53,6 +53,7 @@ export type ApiCommandName = ProjectSessionApiCommand;
 
 let activeApiCommandDryRun = false;
 let activeApiCommandRefresh = false;
+let activeApiCommandSessionProjectId: string | undefined;
 
 export const apiCommandOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -1840,7 +1841,11 @@ const runProjectSessionCommand = async (
     command,
     input,
     connection,
-    createProjectSession: dependencies.createCliProjectSession,
+    createProjectSession: (options) =>
+      dependencies.createCliProjectSession({
+        ...options,
+        sessionProjectId: activeApiCommandSessionProjectId,
+      }),
     getServerApiContract: dependencies.getServerApiContract,
     dryRun: options.dryRun ?? activeApiCommandDryRun,
     refresh: activeApiCommandRefresh,
@@ -3200,12 +3205,15 @@ export const apiCommand = async (
     }
     const previousDryRun = activeApiCommandDryRun;
     const previousRefresh = activeApiCommandRefresh;
+    const previousSessionProjectId = activeApiCommandSessionProjectId;
     activeApiCommandDryRun = options.dryRun === true;
     activeApiCommandRefresh = options.refresh === true;
+    activeApiCommandSessionProjectId = options.project;
     const response = await query(options, apiConnection, dependencies).finally(
       () => {
         activeApiCommandDryRun = previousDryRun;
         activeApiCommandRefresh = previousRefresh;
+        activeApiCommandSessionProjectId = previousSessionProjectId;
       }
     );
     const session = isProjectSessionEnvelope(response)
