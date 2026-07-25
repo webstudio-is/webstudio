@@ -154,7 +154,7 @@ builder_backend_write_schema_snapshot() {
   # Supabase owns its extensions schema. Excluding it keeps a cached application
   # schema restorable into every fresh local or E2E database.
   if builder_compose exec -T db \
-    sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema-only --no-owner --no-privileges --exclude-schema=extensions' \
+    sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --schema-only --no-owner --no-privileges --exclude-schema=extensions' \
     >"$temporary_snapshot"; then
     mv "$temporary_snapshot" "$SCHEMA_SNAPSHOT"
   else
