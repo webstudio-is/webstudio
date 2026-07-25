@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
-import { createAssetAction } from "./rest.assets.$assetId";
+import { createAssetAction } from "./asset-rest-item.server";
 
 const asset: Asset = {
   id: "asset-1",
