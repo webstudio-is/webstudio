@@ -521,10 +521,12 @@ describe("PostgresAssetRepository", () => {
     ]);
     dependencies.createAssetIndex.mockImplementation(createAssetIndex);
     dependencies.verifyAssetIndex.mockImplementation(verifyAssetIndex);
+    const uploadFile = vi.fn<AssetObjectStore["uploadFile"]>();
+    const assetStore = { ...assetClient, uploadFile };
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore,
       dependencies,
     });
 
@@ -544,10 +546,11 @@ describe("PostgresAssetRepository", () => {
     expect(index.documents[0]).not.toHaveProperty("excerpt");
     expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledWith({
       client: context.postgrest.client,
-      assetClient,
+      assetClient: assetStore,
       projectId: "project-1",
       requirements: { structuredProperties: true, excerpt: false },
     });
+    expect(uploadFile).not.toHaveBeenCalled();
   });
 
   test("fails strict index preparation with per-asset diagnostics", async () => {

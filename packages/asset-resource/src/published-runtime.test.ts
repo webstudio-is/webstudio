@@ -112,6 +112,68 @@ describe("published asset resource runtime", () => {
     expect(open).not.toHaveBeenCalled();
   });
 
+  test("loads overview and detail queries through same-origin deployment assets", async () => {
+    const { index, manifest } = await createRuntime();
+    const fetchStaticAsset = vi.fn(async (input: RequestInfo | URL) => {
+      const request =
+        input instanceof Request ? input : new Request(input.toString());
+      const path = new URL(request.url).pathname;
+      if (path === manifest.indexPath) {
+        return Response.json(index);
+      }
+      if (path === "/assets/post.md") {
+        return new Response("Post", {
+          headers: { "content-length": "4" },
+        });
+      }
+      return new Response(null, { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchStaticAsset);
+    const generatedFetch = await createGeneratedAssetResourceFetch({
+      request: new Request("https://site.example/blog"),
+      context: undefined,
+      deploymentId: "build-same-origin",
+      manifest,
+      fallback: vi.fn(async () => new Response("fallback")),
+    });
+
+    const overview = await generatedFetch(queryRequest());
+    const detail = await generatedFetch(queryRequest(true));
+
+    expect(overview.status).toBe(200);
+    await expect(overview.json()).resolves.toMatchObject({
+      items: [{ id: "post-1" }],
+    });
+    await expect(detail.json()).resolves.toMatchObject({
+      items: [{ id: "post-1", content: { text: "Post" } }],
+    });
+    expect(
+      fetchStaticAsset.mock.calls.filter(([input]) =>
+        (input instanceof Request ? input.url : input.toString()).endsWith(
+          manifest.indexPath
+        )
+      )
+    ).toHaveLength(1);
+  });
+
+  test("prefers an available deployment asset binding", async () => {
+    const { index, manifest } = await createRuntime();
+    const bindingFetch = vi.fn(async () => Response.json(index));
+    const networkFetch = vi.fn();
+    vi.stubGlobal("fetch", networkFetch);
+    const generatedFetch = await createGeneratedAssetResourceFetch({
+      request: new Request("https://site.example/blog"),
+      context: { cloudflare: { env: { ASSETS: { fetch: bindingFetch } } } },
+      deploymentId: "build-binding",
+      manifest,
+      fallback: vi.fn(async () => new Response("fallback")),
+    });
+
+    expect((await generatedFetch(queryRequest())).status).toBe(200);
+    expect(bindingFetch).toHaveBeenCalledOnce();
+    expect(networkFetch).not.toHaveBeenCalled();
+  });
+
   test("runs multiple structured requests against one parsed index", async () => {
     const { runtimeFetch, fetchAsset } = await createRuntime();
     const first = await runtimeFetch(queryRequest());

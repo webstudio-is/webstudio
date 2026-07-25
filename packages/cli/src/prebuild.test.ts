@@ -372,6 +372,7 @@ const createQueryResource = (content: "none" | "full" = "none"): Resource => ({
     sort: [],
     limit: "100",
     offset: "0",
+    output: { mode: "all" },
     content: { mode: content },
   }),
 });
@@ -1061,6 +1062,39 @@ describe("prebuild", () => {
     expect(serverBundle).not.toContain("post-revision");
   }, 30_000);
 
+  test("materializes the deployment index when asset downloads are disabled", async () => {
+    const index = await createTestAssetIndex();
+    const siteData = {
+      ...createSiteData(),
+      assetIndex: index,
+    };
+    siteData.build.resources = [["posts", createQueryResource()]] as never;
+    siteData.build.dataSources = [
+      [
+        "posts-data",
+        {
+          id: "posts-data",
+          type: "resource",
+          name: "posts",
+          resourceId: "posts",
+          scopeInstanceId: "root",
+        },
+      ],
+    ] as never;
+    await writeSiteData(
+      siteData as unknown as ReturnType<typeof createSiteData>
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    await expect(
+      readFile(
+        `public/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`,
+        "utf8"
+      )
+    ).resolves.toContain(index.integrity.checksum);
+  });
+
   test("uses pass-through images in the base react-router template", async () => {
     await prebuild({ assets: false, template: ["react-router"] });
 
@@ -1240,6 +1274,7 @@ describe("prebuild", () => {
             sort: [],
             limit: "1",
             offset: "0",
+            output: { mode: "all" },
             content: { mode: "none" },
           }),
         },
@@ -1310,6 +1345,7 @@ describe("prebuild", () => {
       sort: [],
       limit: "1",
       offset: "0",
+      output: { mode: "all" },
       content: { mode: "none" },
     });
 
@@ -1365,6 +1401,7 @@ describe("prebuild", () => {
       sort: [],
       limit: "1",
       offset: "0",
+      output: { mode: "all" },
       content: { mode: "none" },
     });
 
@@ -1401,6 +1438,7 @@ describe("prebuild", () => {
       sort: [],
       limit: "1",
       offset: "0",
+      output: { mode: "all" },
       content: { mode: "none" },
     });
 
@@ -1439,6 +1477,7 @@ describe("prebuild", () => {
             sort: [],
             limit: "10",
             offset: "0",
+            output: { mode: "all" },
             content: { mode: "none" },
           }),
         },

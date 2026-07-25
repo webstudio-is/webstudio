@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "vite build && vike prerender",
+    "build": "vite build && vike prerender && node scripts/cleanup-derived-assets.mjs",
     "build:debug": "pnpm build && cd dist && oxfmt '**/*.html'",
     "dev": "vite dev",
     "typecheck": "tsc --noEmit",
