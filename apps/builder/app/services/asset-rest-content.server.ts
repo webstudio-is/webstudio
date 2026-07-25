@@ -9,17 +9,20 @@ import { PostgresAssetRepository } from "@webstudio-is/asset-uploader/index.serv
 import { getAssetMime, type Asset } from "@webstudio-is/sdk";
 import { assetResourceApiOperations } from "@webstudio-is/sdk/asset-resource-api";
 import { createAssetClient } from "~/shared/asset-client";
-import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "./no-cross-origin-cookie";
 import { checkCsrf } from "./csrf-session.server";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
-import { requiresAssetMutationCsrf } from "./asset-rest-auth.server";
+import {
+  createAssetRestContext,
+  requiresAssetMutationCsrf,
+} from "./asset-rest-auth.server";
 import {
   AssetRestRangeError,
-  AssetRestRequestError,
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
   createAssetRestRepository,
+  parseAssetRestFilename,
+  parseAssetRestIdentifier,
 } from "./asset-rest.server";
 
 export type AssetContentActionResponse = { asset: Asset } | { errors: string };
@@ -61,13 +64,11 @@ export const createAssetContentLoader =
       return assetRestMethodNotAllowed(["GET"]);
     }
     try {
-      if (params.assetId === undefined) {
-        throw new AssetRestRequestError("Asset id is required");
-      }
+      const assetId = parseAssetRestIdentifier(params.assetId);
       const repository = await dependencies.createRepository(request);
-      const asset = await repository.get(params.assetId);
+      const asset = await repository.get(assetId);
       const range = parseRequestRange(request.headers.get("range"), asset.size);
-      const content = await repository.readContent(params.assetId, range);
+      const content = await repository.readContent({ assetId, range, asset });
       const headers = new Headers(privateNoStoreResponseHeaders);
       headers.set(
         "content-type",
@@ -109,26 +110,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     ) {
       return assetRestMethodNotAllowed(["PUT"]);
     }
-    if (params.assetId === undefined) {
-      throw new AssetRestRequestError("Asset id is required");
-    }
+    const assetId = parseAssetRestIdentifier(params.assetId);
 
     const url = new URL(request.url);
-    const projectId = url.searchParams.get("projectId");
-    const expectedName = url.searchParams.get("expectedName");
-    if (projectId === null || expectedName === null) {
-      throw new AssetRestRequestError(
-        "Project id and expected asset name are required"
-      );
-    }
+    const projectId = parseAssetRestIdentifier(
+      url.searchParams.get("projectId")
+    );
+    const expectedName = parseAssetRestFilename(
+      url.searchParams.get("expectedName")
+    );
 
-    const context = await createContext(request);
+    const context = await createAssetRestContext(request);
     const asset = await new PostgresAssetRepository({
       projectId,
       context,
       assetClient: createAssetClient(),
     }).updateContent({
-      assetId: params.assetId,
+      assetId,
       expectedName,
       data: request.body,
     });

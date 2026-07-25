@@ -24,9 +24,10 @@ export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
 
 export const loadAssetsByProjectWithClient = async (
   projectId: string,
-  client: Client
+  client: Client,
+  assetIds?: string[]
 ): Promise<Asset[]> => {
-  const assets = await client
+  let query = client
     .from("Asset")
     // use inner to filter out assets without file
     // when file is not uploaded
@@ -41,7 +42,14 @@ export const loadAssetsByProjectWithClient = async (
       `
     )
     .eq("projectId", projectId)
-    .eq("file.status", "UPLOADED")
+    .eq("file.status", "UPLOADED");
+  if (assetIds !== undefined) {
+    if (assetIds.length === 0) {
+      return [];
+    }
+    query = query.in("id", assetIds);
+  }
+  const assets = await query
     // always sort by primary key to get stable list
     // required to not break fixtures
     .order("id");

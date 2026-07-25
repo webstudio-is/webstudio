@@ -5,15 +5,19 @@ import {
   assetResourceApiOperations,
   assetUploadReservationRequest,
 } from "@webstudio-is/sdk/asset-resource-api";
-import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { requiresAssetMutationCsrf } from "~/services/asset-rest-auth.server";
+import {
+  createAssetRestContext,
+  requiresAssetMutationCsrf,
+} from "~/services/asset-rest-auth.server";
 import {
   AssetRestRequestError,
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
+  readAssetRestFormData,
+  readAssetRestJson,
 } from "~/services/asset-rest.server";
 import { createAssetClient } from "~/shared/asset-client";
 
@@ -33,7 +37,7 @@ export const action = async (props: ActionFunctionArgs) => {
 
     const { request } = props;
 
-    const context = await createContext(request);
+    const context = await createAssetRestContext(request);
 
     if (
       request.method.toLowerCase() ===
@@ -41,8 +45,8 @@ export const action = async (props: ActionFunctionArgs) => {
     ) {
       const contentType = request.headers.get("content-type") ?? "";
       const rawInput = contentType.includes("application/json")
-        ? await request.json()
-        : Object.fromEntries(await request.formData());
+        ? await readAssetRestJson(request)
+        : Object.fromEntries(await readAssetRestFormData(request));
       const input = assetUploadReservationRequest.parse(rawInput);
       if (
         input.displayFilename !== undefined &&

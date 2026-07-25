@@ -17,6 +17,9 @@
     "acorn": "^8.14.1",
     "zod": "^4.4.3"
   },
+  "peerDependencies": {
+    "react": "18.3.0-canary-14898b6a9-20240318"
+  },
   "devDependencies": {
     "@testing-library/react": "^16.2.0",
     "@types/react": "^18.2.70",

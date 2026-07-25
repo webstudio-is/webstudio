@@ -4,12 +4,17 @@ import {
   AssetRepositoryNotFoundError,
 } from "@webstudio-is/asset-uploader/index.server";
 import { assetFolders } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import {
   AssetRestRangeError,
+  AssetRestPayloadTooLargeError,
   AssetRestRequestError,
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
+  parseAssetRestDescription,
+  parseAssetRestMetadataHeader,
+  readAssetRestJson,
 } from "./asset-rest.server";
 
 describe("Assets REST responses", () => {
@@ -19,6 +24,7 @@ describe("Assets REST responses", () => {
     [new AssetRepositoryNotFoundError("missing"), 404],
     [new AssetRepositoryConflictError("conflict"), 409],
     [new AssetRestRangeError("bad range"), 416],
+    [new AssetRestPayloadTooLargeError("too large"), 413],
   ])("maps domain errors to HTTP status", async (error, status) => {
     const response = assetRestErrorResponse(error);
     expect(response.status).toBe(status);
@@ -68,5 +74,52 @@ describe("Assets REST responses", () => {
       errors: "Internal Assets API error",
     });
     report.mockRestore();
+  });
+
+  test("bounds mutation bodies before parsing JSON", async () => {
+    await expect(
+      readAssetRestJson(
+        new Request("https://example.com/rest/assets", {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            "content-length": String(
+              assetResourceLimits.restMutationRequestBytes + 1
+            ),
+          },
+          body: "{}",
+        })
+      )
+    ).rejects.toBeInstanceOf(AssetRestPayloadTooLargeError);
+
+    await expect(
+      readAssetRestJson(
+        new Request("https://example.com/rest/assets", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            description: "x".repeat(
+              assetResourceLimits.restMutationRequestBytes
+            ),
+          }),
+        })
+      )
+    ).rejects.toBeInstanceOf(AssetRestPayloadTooLargeError);
+  });
+
+  test("bounds upload metadata carried in headers", () => {
+    expect(() =>
+      parseAssetRestDescription(
+        "x".repeat(assetResourceLimits.assetDescriptionCharacters + 1)
+      )
+    ).toThrow(AssetRestRequestError);
+    expect(() =>
+      parseAssetRestMetadataHeader(
+        "x".repeat(assetResourceLimits.restMutationRequestBytes + 1)
+      )
+    ).toThrow(AssetRestPayloadTooLargeError);
+    expect(() => parseAssetRestMetadataHeader("{")).toThrow(
+      AssetRestRequestError
+    );
   });
 });

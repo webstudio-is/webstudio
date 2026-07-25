@@ -60,9 +60,10 @@ describe("Assets REST content download", () => {
     expect(response.headers.get("content-range")).toBe("bytes 2-5/10");
     expect(response.headers.get("content-length")).toBe("4");
     expect(await response.text()).toBe("post");
-    expect(readContent).toHaveBeenCalledWith("asset-1", {
-      offset: 2,
-      length: 4,
+    expect(readContent).toHaveBeenCalledWith({
+      assetId: "asset-1",
+      range: { offset: 2, length: 4 },
+      asset,
     });
   });
 });

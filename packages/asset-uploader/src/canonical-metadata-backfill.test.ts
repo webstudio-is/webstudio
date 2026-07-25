@@ -145,6 +145,7 @@ describe("canonical asset metadata synchronization", () => {
       removed: 0,
       skipped: 0,
       inconsistent: 0,
+      issues: [],
     });
     expect(readFile).toHaveBeenCalledTimes(3);
     expect(persisted).toHaveLength(4);
@@ -736,6 +737,7 @@ describe("canonical asset metadata synchronization", () => {
       removed: 1,
       skipped: 0,
       inconsistent: 0,
+      issues: [],
     });
     expect(readFile).toHaveBeenCalledTimes(2);
     expect(readFile.mock.calls.map(([name]) => name).sort()).toEqual([
@@ -822,7 +824,70 @@ describe("canonical asset metadata synchronization", () => {
       removed: 0,
       skipped: 0,
       inconsistent: 1,
+      issues: [],
     });
     expect(readFile).toHaveBeenCalledOnce();
+  });
+
+  test("isolates an unreadable asset and removes its stale metadata", async () => {
+    const updatedAt = "2026-07-18T07:00:00.000Z";
+    const assets = ["broken", "healthy"].map((id) => ({
+      id,
+      projectId: "project-1",
+      filename: null,
+      folderId: null,
+      file: {
+        name: `${id}.md`,
+        size: 4,
+        updatedAt,
+        status: "UPLOADED",
+      },
+    }));
+    const replaced: string[] = [];
+    const deleted: string[][] = [];
+    server.use(
+      db.get("Asset", () => json(assets)),
+      db.get("AssetFolder", () => json([])),
+      db.get("AssetFileMetadata", () => json([])),
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        const input = (await request.json()) as ReplaceMetadataRpcArgs;
+        replaced.push(input.p_asset_id);
+        return json(true);
+      }),
+      db.post("rpc/delete_stale_asset_file_metadata", async ({ request }) => {
+        const input = (await request.json()) as { p_asset_ids: string[] };
+        deleted.push(input.p_asset_ids);
+        return json(1);
+      })
+    );
+    const readFile = vi.fn<AssetClient["readFile"]>(async (name) => {
+      if (name === "broken.md") {
+        throw new Error("Object is missing");
+      }
+      return {
+        data: {
+          async *[Symbol.asyncIterator]() {
+            yield encoder.encode("post");
+          },
+        },
+      };
+    });
+
+    const result = await synchronizeCanonicalAssets({
+      projectId: "project-1",
+      client: testContext.postgrest.client,
+      assetClient: { uploadFile: vi.fn(), readFile },
+    });
+
+    expect(result).toMatchObject({ scanned: 2, indexed: 1 });
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        assetId: "broken",
+        storageName: "broken.md",
+        message: "Object is missing",
+      }),
+    ]);
+    expect(replaced).toEqual(["healthy"]);
+    expect(deleted).toEqual([["broken"]]);
   });
 });

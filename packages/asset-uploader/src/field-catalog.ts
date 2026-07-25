@@ -24,5 +24,5 @@ export const loadBuilderAssetFieldCatalog = async ({
       "You don't have access to this project's asset field catalog",
     dependencies,
   });
-  return (await repository.prepareIndex()).fieldCatalog;
+  return (await repository.readIndex()).fieldCatalog;
 };

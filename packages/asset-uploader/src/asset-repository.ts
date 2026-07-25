@@ -1,6 +1,7 @@
 import {
   createAssetQueryRepository,
   createAssetIndex,
+  verifyAssetIndex,
 } from "@webstudio-is/asset-resource";
 import type {
   Asset,
@@ -45,7 +46,10 @@ import {
   synchronizeAllCanonicalAssetStandardMetadata,
   synchronizeCanonicalAssetStandardMetadata,
 } from "./canonical-metadata-backfill";
-import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
+import {
+  deleteStaleCanonicalAssetFileEntries,
+  loadCanonicalAssetFileEntries,
+} from "./canonical-metadata-persistence";
 import {
   deleteAssetFoldersWithClient,
   loadAssetFoldersByProjectWithClient,
@@ -73,8 +77,10 @@ const defaultDependencies = {
   synchronizeCanonicalAssets,
   synchronizeAllCanonicalAssetStandardMetadata,
   synchronizeCanonicalAssetStandardMetadata,
+  deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
   createAssetIndex,
+  verifyAssetIndex,
   reportMaintenanceError: (error: unknown) =>
     console.error("Asset repository maintenance failed", error),
 };
@@ -89,6 +95,22 @@ export type AssetBuildChange = {
 export class AssetRepositoryNotFoundError extends Error {}
 export class AssetRepositoryConflictError extends Error {}
 
+export class AssetIndexPreparationError extends Error {
+  readonly issues: Awaited<
+    ReturnType<typeof synchronizeCanonicalAssets>
+  >["issues"];
+
+  constructor(
+    issues: Awaited<ReturnType<typeof synchronizeCanonicalAssets>>["issues"]
+  ) {
+    super(
+      `Asset index preparation failed for ${issues.length} asset${issues.length === 1 ? "" : "s"}: ${issues.map(({ assetId, storageName, message }) => `${assetId} (${storageName}): ${message}`).join("; ")}`
+    );
+    this.name = "AssetIndexPreparationError";
+    this.issues = issues;
+  }
+}
+
 export type AssetContentRead = {
   asset: Asset;
   data: AsyncIterable<Uint8Array>;
@@ -98,10 +120,11 @@ export type AssetContentRead = {
 export interface AssetRepository {
   list(): Promise<Asset[]>;
   get(assetId: Asset["id"]): Promise<Asset>;
-  readContent(
-    assetId: Asset["id"],
-    range?: AssetReadRange
-  ): Promise<AssetContentRead>;
+  readContent(input: {
+    assetId: Asset["id"];
+    range?: AssetReadRange;
+    asset?: Asset;
+  }): Promise<AssetContentRead>;
   createUploadTicket(
     input: Omit<CreateUploadTicketInput, "projectId">,
     createId?: CreateId
@@ -136,25 +159,33 @@ export interface AssetRepository {
     values: AssetFolderUpdateRequest
   ): Promise<AssetFolder>;
   deleteFolder(folderId: string): Promise<void>;
+  readIndex(): ReturnType<typeof createAssetIndex>;
+  query(request: AssetQueryRequestInput): Promise<AssetQueryResult>;
+}
+
+/** Trusted repair/publication operations. Every method still verifies permits. */
+export interface AssetMaintenanceRepository {
   applyPatches(patches: Patch[]): Promise<void>;
   synchronizeBuildChanges(input: {
     changes: readonly AssetBuildChange[];
     force?: boolean;
   }): Promise<void>;
   synchronize(): ReturnType<typeof synchronizeCanonicalAssets>;
-  readIndex(): ReturnType<typeof createAssetIndex>;
   prepareIndex(): ReturnType<typeof createAssetIndex>;
-  query(request: AssetQueryRequestInput): Promise<AssetQueryResult>;
 }
 
 /**
- * PostgreSQL adapter for the storage-neutral Assets repository contract.
+ * Hosted Assets repository. PostgreSQL owns logical records and canonical
+ * metadata; the injected object store owns file bytes. Published runtimes use
+ * a separate storage-neutral index/query repository.
  *
  * All public mutations maintain the derived query index. The lower-level SQL
  * and object-store functions are adapter implementation details and must not be
  * coordinated independently by Builder, MCP, preview, or publication callers.
  */
-export class PostgresAssetRepository implements AssetRepository {
+export class PostgresAssetRepository
+  implements AssetRepository, AssetMaintenanceRepository
+{
   private readonly projectId: string;
   private readonly context: AppContext;
   private readonly assetStore: RepositoryObjectStore;
@@ -218,7 +249,17 @@ export class PostgresAssetRepository implements AssetRepository {
       });
     } catch (error) {
       // The primary mutation may already be committed. Full synchronization
-      // before preview/publication is the durable repair path.
+      // during repair/publication is the durable repair path. Remove a stale
+      // revision now so hosted reads never present it as current metadata.
+      try {
+        await this.dependencies.deleteStaleCanonicalAssetFileEntries({
+          client: this.context.postgrest.client,
+          projectId: this.projectId,
+          assetIds: [assetId],
+        });
+      } catch (cleanupError) {
+        this.dependencies.reportMaintenanceError(cleanupError);
+      }
       this.dependencies.reportMaintenanceError(error);
     }
   }
@@ -243,6 +284,18 @@ export class PostgresAssetRepository implements AssetRepository {
     if (canView === false) {
       throw new AuthorizationError(
         "You don't have access to view this project assets"
+      );
+    }
+  }
+
+  private async assertCanBuild() {
+    const canBuild = await this.dependencies.hasProjectPermit(
+      { projectId: this.projectId, permit: "build" },
+      this.context
+    );
+    if (canBuild === false) {
+      throw new AuthorizationError(
+        "You don't have access to build this project assets index"
       );
     }
   }
@@ -286,15 +339,30 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   async get(assetId: Asset["id"]) {
-    const asset = (await this.list()).find(({ id }) => id === assetId);
+    await this.assertCanView();
+    const [asset] = await this.dependencies.loadAssetsByProjectWithClient(
+      this.projectId,
+      this.context.postgrest.client,
+      [assetId]
+    );
     if (asset === undefined) {
       throw new AssetRepositoryNotFoundError("Asset not found");
     }
     return asset;
   }
 
-  async readContent(assetId: Asset["id"], range?: AssetReadRange) {
-    const asset = await this.get(assetId);
+  async readContent({
+    assetId,
+    range,
+    asset: knownAsset,
+  }: Parameters<AssetRepository["readContent"]>[0]) {
+    if (knownAsset !== undefined && knownAsset.id !== assetId) {
+      throw new Error("Known asset does not match requested asset id");
+    }
+    if (knownAsset !== undefined) {
+      await this.assertCanView();
+    }
+    const asset = knownAsset ?? (await this.get(assetId));
     const content = await this.assetStore.readFile(asset.name, range);
     return { asset, ...content };
   }
@@ -303,6 +371,7 @@ export class PostgresAssetRepository implements AssetRepository {
     input: Omit<CreateUploadTicketInput, "projectId">,
     createId?: CreateId
   ) {
+    await this.assertCanEdit();
     const ticket = await this.dependencies.createUploadTicket(
       { ...input, projectId: this.projectId },
       this.context,
@@ -345,6 +414,7 @@ export class PostgresAssetRepository implements AssetRepository {
     expectedName,
     data,
   }: Parameters<AssetRepository["updateContent"]>[0]) {
+    await this.assertCanEdit();
     const asset = await this.dependencies.updateAssetContent(
       {
         assetId,
@@ -402,7 +472,13 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   async getFolder(folderId: string) {
-    const folder = (await this.listFolders()).find(({ id }) => id === folderId);
+    await this.assertCanView();
+    const [folder] =
+      await this.dependencies.loadAssetFoldersByProjectWithClient(
+        this.projectId,
+        this.context.postgrest.client,
+        [folderId]
+      );
     if (folder === undefined) {
       throw new AssetRepositoryNotFoundError("Asset folder not found");
     }
@@ -492,6 +568,7 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   async applyPatches(patches: Patch[]) {
+    await this.assertCanEdit();
     await this.dependencies.patchAssetsWithClient(
       {
         projectId: this.projectId,
@@ -509,11 +586,12 @@ export class PostgresAssetRepository implements AssetRepository {
     changes: readonly AssetBuildChange[];
     force?: boolean;
   }) {
+    await this.assertCanEdit();
     const assetChanges = changes.filter(
       ({ namespace }) => namespace === "assets" || namespace === "assetFolders"
     );
     if (force) {
-      await this.synchronize();
+      await this.synchronizeTrusted();
       return;
     }
     if (assetChanges.length === 0) {
@@ -581,15 +659,25 @@ export class PostgresAssetRepository implements AssetRepository {
 
   private async maintainIndex() {
     try {
-      await this.synchronize();
+      const result = await this.synchronizeTrusted();
+      if (result.issues.length > 0) {
+        this.dependencies.reportMaintenanceError(
+          new AssetIndexPreparationError(result.issues)
+        );
+      }
     } catch (error) {
-      // As with single-file maintenance, the primary mutation may already be
-      // committed and a later read provides the durable repair path.
+      // The primary mutation may already be committed. Explicit repair and
+      // strict publication are the durable recovery paths.
       this.dependencies.reportMaintenanceError(error);
     }
   }
 
   async synchronize() {
+    await this.assertCanEdit();
+    return await this.synchronizeTrusted();
+  }
+
+  private async synchronizeTrusted() {
     return await this.dependencies.synchronizeCanonicalAssets({
       client: this.context.postgrest.client,
       assetClient: this.assetStore,
@@ -598,11 +686,20 @@ export class PostgresAssetRepository implements AssetRepository {
   }
 
   async prepareIndex() {
-    await this.synchronize();
-    return await this.readIndex();
+    await this.assertCanBuild();
+    const result = await this.synchronizeTrusted();
+    if (result.issues.length > 0) {
+      throw new AssetIndexPreparationError(result.issues);
+    }
+    return await this.dependencies.verifyAssetIndex(await this.loadIndex());
   }
 
   async readIndex() {
+    await this.assertCanView();
+    return await this.loadIndex();
+  }
+
+  private async loadIndex() {
     const entries = await this.dependencies.loadCanonicalAssetFileEntries({
       client: this.context.postgrest.client,
       projectId: this.projectId,
@@ -615,7 +712,7 @@ export class PostgresAssetRepository implements AssetRepository {
 
   async query(request: AssetQueryRequestInput) {
     return await createAssetQueryRepository({
-      loadIndex: () => this.prepareIndex(),
+      loadIndex: () => this.readIndex(),
       readContent: this.assetStore.readFile,
     }).query(request);
   }

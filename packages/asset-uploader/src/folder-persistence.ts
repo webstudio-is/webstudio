@@ -30,13 +30,20 @@ export const createAssetFolderRows = (
 
 export const loadAssetFoldersByProjectWithClient = async (
   projectId: string,
-  client: Client
+  client: Client,
+  folderIds?: string[]
 ): Promise<AssetFolder[]> => {
-  const result = await client
+  let query = client
     .from("AssetFolder")
     .select("id, projectId, name, parentId, createdAt")
-    .eq("projectId", projectId)
-    .order("id");
+    .eq("projectId", projectId);
+  if (folderIds !== undefined) {
+    if (folderIds.length === 0) {
+      return [];
+    }
+    query = query.in("id", folderIds);
+  }
+  const result = await query.order("id");
   assertPostgrestSuccess(result);
 
   return (result.data ?? []).map((folder) => ({

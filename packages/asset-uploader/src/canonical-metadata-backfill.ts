@@ -32,6 +32,16 @@ const jsonExtension = /\.json$/i;
 type CanonicalAssetClient = Pick<AssetClient, "readFile"> &
   Partial<Omit<AssetClient, "readFile">>;
 
+export type CanonicalAssetSynchronizationIssue = {
+  assetId: string;
+  storageName: string;
+  revision: string;
+  message: string;
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Unknown asset indexing failure";
+
 export const createAssetContentRevision = ({
   storageName,
   updatedAt,
@@ -330,6 +340,7 @@ export const synchronizeCanonicalAssets = async ({
   let indexed = 0;
   let metadataUpdated = 0;
   let unchanged = 0;
+  const issues: CanonicalAssetSynchronizationIssue[] = [];
   await runBounded(assets, concurrency, async (asset) => {
     const revision = createAssetContentRevision({
       storageName: asset.file.name,
@@ -339,14 +350,35 @@ export const synchronizeCanonicalAssets = async ({
     const assetEntries = entriesByAssetId.get(asset.id) ?? [];
     const current = assetEntries.find((entry) => entry.revision === revision);
     if (current === undefined || inconsistentAssetIdSet.has(asset.id)) {
-      await indexCanonicalAsset({
-        projectId,
-        asset,
-        hierarchy,
-        client,
-        assetClient,
-      });
-      indexed += 1;
+      try {
+        await indexCanonicalAsset({
+          projectId,
+          asset,
+          hierarchy,
+          client,
+          assetClient,
+        });
+        indexed += 1;
+      } catch (error) {
+        const issue: CanonicalAssetSynchronizationIssue = {
+          assetId: asset.id,
+          storageName: asset.file.name,
+          revision,
+          message: getErrorMessage(error),
+        };
+        try {
+          // Never leave a previous revision visible as if it represented the
+          // current object after re-indexing failed.
+          await deleteStaleCanonicalAssetFileEntries({
+            client,
+            projectId,
+            assetIds: [asset.id],
+          });
+        } catch (cleanupError) {
+          issue.message += `; stale metadata cleanup failed: ${getErrorMessage(cleanupError)}`;
+        }
+        issues.push(issue);
+      }
       return;
     }
 
@@ -396,8 +428,11 @@ export const synchronizeCanonicalAssets = async ({
     metadataUpdated,
     unchanged,
     removed,
-    skipped: 0,
+    skipped: issues.length,
     inconsistent: inconsistentAssetIds.length,
+    issues: issues.sort((left, right) =>
+      left.assetId.localeCompare(right.assetId)
+    ),
   };
 };
 

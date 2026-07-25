@@ -65,6 +65,32 @@ describe("mutable Assets REST route", () => {
     });
   });
 
+  test("returns the same metadata contract for project-token authentication", async () => {
+    const { dependencies, updateMetadata } = createDependencies();
+    const response = await callAction(
+      createAssetAction(dependencies),
+      new Request(
+        "https://webstudio.is/rest/assets/asset-1?projectId=project-1",
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            "x-auth-token": "token",
+          },
+          body: JSON.stringify({ filename: "Post", folderId: null }),
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ asset });
+    expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
+      filename: "Post",
+      folderId: null,
+    });
+  });
+
   test("deletes through the repository and accepts token-authenticated requests", async () => {
     const { dependencies, deleteAsset } = createDependencies();
     const action = createAssetAction(dependencies);

@@ -1,5 +1,5 @@
 import {
-  type AssetRepository,
+  type AssetMaintenanceRepository,
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/index.server";
 import type { BuildPatchChange } from "@webstudio-is/project/index.server";
@@ -11,7 +11,7 @@ type Dependencies = {
   createAssetClient: typeof createAssetClient;
   createRepository: (
     input: ConstructorParameters<typeof PostgresAssetRepository>[0]
-  ) => Pick<AssetRepository, "synchronizeBuildChanges">;
+  ) => Pick<AssetMaintenanceRepository, "synchronizeBuildChanges">;
 };
 
 const defaultDependencies: Dependencies = {

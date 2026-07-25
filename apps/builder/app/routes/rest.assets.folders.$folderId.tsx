@@ -9,10 +9,11 @@ import {
 } from "@webstudio-is/sdk/asset-resource-api";
 import { requiresAssetMutationCsrf } from "~/services/asset-rest-auth.server";
 import {
-  AssetRestRequestError,
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
   createAssetRestRepository,
+  parseAssetRestIdentifier,
+  readAssetRestJson,
 } from "~/services/asset-rest.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { checkCsrf } from "~/services/csrf-session.server";
@@ -27,12 +28,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     return assetRestMethodNotAllowed(["GET"]);
   }
   try {
-    if (params.folderId === undefined) {
-      throw new AssetRestRequestError("Asset folder id is required");
-    }
+    const folderId = parseAssetRestIdentifier(params.folderId);
     const folder = await (
       await createAssetRestRepository(request)
-    ).getFolder(params.folderId);
+    ).getFolder(folderId);
     return json({ folder }, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
     return assetRestErrorResponse(error);
@@ -45,17 +44,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     await checkCsrf(request);
   }
   try {
-    if (params.folderId === undefined) {
-      throw new AssetRestRequestError("Asset folder id is required");
-    }
+    const folderId = parseAssetRestIdentifier(params.folderId);
     const repository = await createAssetRestRepository(request);
     if (
       request.method.toLowerCase() ===
       assetResourceApiOperations.updateAssetFolder.method
     ) {
       const folder = await repository.updateFolder(
-        params.folderId,
-        assetFolderUpdateRequest.parse(await request.json())
+        folderId,
+        assetFolderUpdateRequest.parse(await readAssetRestJson(request))
       );
       return json({ folder }, { headers: privateNoStoreResponseHeaders });
     }
@@ -63,7 +60,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       request.method.toLowerCase() ===
       assetResourceApiOperations.deleteAssetFolder.method
     ) {
-      await repository.deleteFolder(params.folderId);
+      await repository.deleteFolder(folderId);
       return new Response(null, {
         status: 204,
         headers: privateNoStoreResponseHeaders,

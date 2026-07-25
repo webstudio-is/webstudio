@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/index.ts"],
+  "include": ["src/index.ts", "src/react.tsx"],
   "compilerOptions": {
     "noCheck": true,
     "declarationDir": "lib/types",

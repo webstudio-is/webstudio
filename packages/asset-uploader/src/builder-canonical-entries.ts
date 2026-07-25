@@ -15,7 +15,7 @@ export type BuilderAssetIndexDependencies = {
     projectId: string;
     context: AppContext;
     assetClient: AssetObjectReader;
-  }) => Pick<AssetRepository, "prepareIndex" | "query">;
+  }) => Pick<AssetRepository, "readIndex" | "query">;
 };
 
 export const loadAuthorizedBuilderAssetRepository = async ({

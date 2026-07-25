@@ -9,18 +9,18 @@ const context = {
   postgrest: { client: {} },
 } as unknown as AppContext;
 const hasProjectPermit = vi.fn();
-const prepareIndex = vi.fn();
+const readIndex = vi.fn();
 const query = vi.fn();
 const dependencies = {
   hasProjectPermit,
-  createRepository: () => ({ prepareIndex, query }),
+  createRepository: () => ({ readIndex, query }),
 };
 
 describe("Builder asset-resource API data boundary", () => {
   beforeEach(async () => {
     hasProjectPermit.mockReset().mockResolvedValue(true);
-    prepareIndex.mockReset();
-    prepareIndex.mockResolvedValue(
+    readIndex.mockReset();
+    readIndex.mockResolvedValue(
       await createAssetIndex({ projectId, entries: [] })
     );
     query.mockResolvedValue({ items: [], totalCount: 0, hasMore: false });
@@ -42,7 +42,7 @@ describe("Builder asset-resource API data boundary", () => {
       dependencies,
     });
 
-    expect(prepareIndex).toHaveBeenCalledOnce();
+    expect(readIndex).toHaveBeenCalledOnce();
     expect(query).toHaveBeenCalledOnce();
   });
 });

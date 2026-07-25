@@ -41,6 +41,7 @@ const dependencies = {
   hasProjectPermit,
   createRepository: ({ assetClient }: { assetClient: AssetObjectReader }) => ({
     prepareIndex,
+    readIndex: prepareIndex,
     query: (request: AssetQueryRequestInput) => query(request, assetClient),
   }),
 };

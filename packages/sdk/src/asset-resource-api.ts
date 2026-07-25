@@ -2,7 +2,11 @@ import { z } from "zod";
 import { queryCapabilities } from "@webstudio-is/query-builder";
 import { assetResourceLimits } from "./asset-resource-limits";
 import { asset, assetType } from "./schema/assets";
-import { assetFolder, assetFolderName } from "./schema/asset-folders";
+import {
+  assetFolder,
+  assetFolderId,
+  assetFolderName,
+} from "./schema/asset-folders";
 import {
   assetQueryRequest,
   assetQueryResult,
@@ -109,12 +113,26 @@ export const assetResourceApiOperations = {
 } as const;
 
 export const assetUploadReservationRequest = z.strictObject({
-  projectId: z.string().min(1),
+  projectId: z
+    .string()
+    .min(1)
+    .max(assetResourceLimits.assetIdentifierCharacters),
   type: assetType,
-  filename: z.string().min(1),
-  displayFilename: z.string().min(1).optional(),
-  description: z.string().optional(),
-  folderId: z.string().min(1).optional(),
+  filename: z.string().min(1).max(assetResourceLimits.assetFilenameCharacters),
+  displayFilename: z
+    .string()
+    .min(1)
+    .max(assetResourceLimits.assetFilenameCharacters)
+    .optional(),
+  description: z
+    .string()
+    .max(assetResourceLimits.assetDescriptionCharacters)
+    .optional(),
+  folderId: z
+    .string()
+    .min(1)
+    .max(assetResourceLimits.assetIdentifierCharacters)
+    .optional(),
   contentHash: z
     .string()
     .regex(/^[a-f0-9]{64}$/)
@@ -146,9 +164,23 @@ export const assetItemResult = z.strictObject({ asset });
 
 export const assetMetadataUpdate = z
   .strictObject({
-    filename: z.string().min(1).nullable().optional(),
-    description: z.string().nullable().optional(),
-    folderId: z.string().min(1).nullable().optional(),
+    filename: z
+      .string()
+      .min(1)
+      .max(assetResourceLimits.assetFilenameCharacters)
+      .nullable()
+      .optional(),
+    description: z
+      .string()
+      .max(assetResourceLimits.assetDescriptionCharacters)
+      .nullable()
+      .optional(),
+    folderId: z
+      .string()
+      .min(1)
+      .max(assetResourceLimits.assetIdentifierCharacters)
+      .nullable()
+      .optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "At least one asset metadata field is required",
@@ -163,13 +195,13 @@ export const assetFolderListResult = z.strictObject({
 
 export const assetFolderCreateRequest = z.strictObject({
   name: assetFolderName,
-  parentId: z.string().min(1).optional(),
+  parentId: assetFolderId.optional(),
 });
 
 export const assetFolderUpdateRequest = z
   .strictObject({
     name: assetFolderName.optional(),
-    parentId: z.string().min(1).nullable().optional(),
+    parentId: assetFolderId.nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "At least one asset folder field is required",
@@ -237,6 +269,7 @@ const mutationErrorResponses = {
   403: schemaResponse("AssetMutationFailure", "Access denied"),
   404: schemaResponse("AssetMutationFailure", "Asset or folder not found"),
   409: schemaResponse("AssetMutationFailure", "Asset revision conflict"),
+  413: schemaResponse("AssetMutationFailure", "Request body too large"),
   500: schemaResponse("AssetMutationFailure", "Internal error"),
 };
 
@@ -245,19 +278,28 @@ const pathParameter = (name: string, description: string) => ({
   in: "path",
   required: true,
   description,
-  schema: { type: "string", minLength: 1 },
+  schema: {
+    type: "string",
+    minLength: 1,
+    maxLength: assetResourceLimits.assetIdentifierCharacters,
+  },
 });
 
 const queryParameter = (
   name: string,
   description: string,
-  required = false
+  required = false,
+  maxLength: number = assetResourceLimits.assetIdentifierCharacters
 ) => ({
   name,
   in: "query",
   required,
   description,
-  schema: { type: "string", minLength: 1 },
+  schema: {
+    type: "string",
+    minLength: 1,
+    maxLength,
+  },
 });
 
 const projectIdParameter = queryParameter("projectId", "Owning project", true);
@@ -288,8 +330,10 @@ const createCapabilitiesExample = (capabilities: AssetQueryCapabilities) => {
  */
 export const createAssetResourceOpenApi = ({
   capabilities,
+  builderSessionCookieName,
 }: {
   capabilities: AssetQueryCapabilities;
+  builderSessionCookieName: string;
 }) => {
   queryCapabilities.parse(capabilities);
   const operations = assetResourceApiOperations;
@@ -301,7 +345,13 @@ export const createAssetResourceOpenApi = ({
       title: "Webstudio Assets resource API",
       version: "1.0.0",
       description:
-        "Unified project Assets API for uploads, metadata and content mutations, queries, and bounded content hydration.",
+        "Public project Assets API for uploads, metadata and content mutations, queries, and bounded content hydration. Project-token authentication is intended for server-to-server clients; cross-origin browser token access is not enabled by default.",
+    },
+    "x-webstudio-limits": {
+      mutationRequestBytes: assetResourceLimits.restMutationRequestBytes,
+      filenameCharacters: assetResourceLimits.assetFilenameCharacters,
+      descriptionCharacters: assetResourceLimits.assetDescriptionCharacters,
+      folderNameCharacters: assetResourceLimits.assetFolderNameCharacters,
     },
     paths: {
       [operations.listAssets.path]: {
@@ -319,6 +369,8 @@ export const createAssetResourceOpenApi = ({
         [operations.reserveAssetUpload.method]: {
           operationId: operations.reserveAssetUpload.operationId,
           summary: "Reserve an asset upload",
+          description:
+            "Supply contentHash when available so retries can reuse an existing identical asset instead of creating a duplicate reservation.",
           requestBody: {
             required: true,
             content: {
@@ -471,7 +523,8 @@ export const createAssetResourceOpenApi = ({
             queryParameter(
               "expectedName",
               "Current immutable storage name used for conflict detection",
-              true
+              true,
+              assetResourceLimits.assetFilenameCharacters
             ),
           ],
           requestBody: {
@@ -747,16 +800,23 @@ export const createAssetResourceOpenApi = ({
         ),
       },
       securitySchemes: {
-        builderShareToken: {
+        projectToken: {
           type: "apiKey",
           in: "header",
           name: "x-auth-token",
           description:
-            "Editable Webstudio project share token. An existing authenticated Builder session is also accepted.",
+            "Webstudio project token with public API access enabled and the permit required by the operation.",
+        },
+        builderSession: {
+          type: "apiKey",
+          in: "cookie",
+          name: builderSessionCookieName,
+          description:
+            "Authenticated Webstudio Builder session. Cookie-authenticated mutations also require the Builder CSRF token.",
         },
       },
     },
-    security: [{ builderShareToken: [] }],
+    security: [{ projectToken: [] }, { builderSession: [] }],
   } as const;
 
   const bytes = new TextEncoder().encode(JSON.stringify(document)).byteLength;

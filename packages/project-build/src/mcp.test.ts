@@ -4519,7 +4519,9 @@ describe("project session mcp adapter", () => {
           ),
           expect.stringContaining("Do not call meta.index after this guide"),
           expect.stringContaining("Never place credentials"),
-          expect.stringContaining("signed-out, loading, signed-in"),
+          expect.stringContaining(
+            "exact terms signed-out, loading, signed-in, and failed-auth"
+          ),
           expect.stringContaining("not an authorization boundary"),
           expect.stringContaining(
             "Use create-page's returned rootInstanceId directly"

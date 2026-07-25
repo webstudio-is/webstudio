@@ -14,15 +14,21 @@ import {
   createAssetClient,
   getMaxAssetUploadSize,
 } from "~/shared/asset-client";
-import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { requiresAssetMutationCsrf } from "~/services/asset-rest-auth.server";
+import {
+  createAssetRestContext,
+  requiresAssetMutationCsrf,
+} from "~/services/asset-rest-auth.server";
 import {
   AssetRestRequestError,
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
+  parseAssetRestDescription,
+  parseAssetRestFilename,
+  parseAssetRestIdentifier,
+  parseAssetRestMetadataHeader,
 } from "~/services/asset-rest.server";
 import { assertApiProjectPermit } from "~/services/api-permits.server";
 import {
@@ -111,9 +117,7 @@ export const action = async (props: ActionFunctionArgs) => {
 
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId");
-  const folderId = url.searchParams.get("folderId") ?? undefined;
-  const description =
-    request.headers.get("x-webstudio-asset-description") ?? undefined;
+  const folderIdValue = url.searchParams.get("folderId");
   const rawAssetMeta = request.headers.get("x-webstudio-asset-meta");
   const rawAssetType = url.searchParams.get("type");
   const isApiUpload = projectId !== null || rawAssetType !== null;
@@ -134,12 +138,18 @@ export const action = async (props: ActionFunctionArgs) => {
     const assetType = parseAssetType(rawAssetType);
 
     if (isApiUpload) {
-      if (isAssetFileName(params.name) === false) {
+      const filename = parseAssetRestFilename(params.name);
+      if (isAssetFileName(filename) === false) {
         throw new AssetRestRequestError("Asset name is invalid");
       }
-      if (projectId === null) {
-        throw new AssetRestRequestError("Project id is required");
-      }
+      const parsedProjectId = parseAssetRestIdentifier(projectId);
+      const folderId =
+        folderIdValue === null
+          ? undefined
+          : parseAssetRestIdentifier(folderIdValue);
+      const description = parseAssetRestDescription(
+        request.headers.get("x-webstudio-asset-description")
+      );
       if (assetType === undefined) {
         throw new AssetRestRequestError("Asset type is invalid");
       }
@@ -152,22 +162,22 @@ export const action = async (props: ActionFunctionArgs) => {
       });
       const assetInfoOverride = assetDataOverride.parse({
         format: url.searchParams.get("format") ?? undefined,
-        meta: rawAssetMeta === null ? undefined : JSON.parse(rawAssetMeta),
+        meta: parseAssetRestMetadataHeader(rawAssetMeta),
       });
 
-      const context = await createContext(request);
-      await assertApiProjectPermit(context, projectId, "build");
+      const context = await createAssetRestContext(request);
+      await assertApiProjectPermit(context, parsedProjectId, "build");
       const data = await readRequestBody(request.body, params.name);
       const force = url.searchParams.get("force") === "true";
       const assetClient = createAssetClient();
       const repository = new PostgresAssetRepository({
-        projectId,
+        projectId: parsedProjectId,
         context,
         assetClient,
       });
       const ticket = await repository.createUploadTicket({
         type: assetType,
-        filename: params.name,
+        filename,
         description,
         folderId,
         contentHash: force ? undefined : await getContentHash(data),
@@ -193,7 +203,7 @@ export const action = async (props: ActionFunctionArgs) => {
       searchParams: url.searchParams,
     });
 
-    const context = await createContext(request);
+    const context = await createAssetRestContext(request);
     const assetClient = createAssetClient();
     const repository = await PostgresAssetRepository.forUpload({
       name: params.name,

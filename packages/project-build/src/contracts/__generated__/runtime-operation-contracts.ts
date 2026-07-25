@@ -3696,6 +3696,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -3836,6 +3837,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -3901,6 +3903,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -6839,6 +6842,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -6979,6 +6983,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -7044,6 +7049,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -9993,6 +9999,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -10133,6 +10140,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -10198,6 +10206,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -13136,6 +13145,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -13276,6 +13286,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -13341,6 +13352,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -18974,6 +18986,7 @@ export const runtimeOperationContractData = [
                                     folderId: {
                                       type: "string",
                                       minLength: 1,
+                                      maxLength: 256,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -19122,6 +19135,7 @@ export const runtimeOperationContractData = [
                                     folderId: {
                                       type: "string",
                                       minLength: 1,
+                                      maxLength: 256,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -19187,6 +19201,7 @@ export const runtimeOperationContractData = [
                                     folderId: {
                                       type: "string",
                                       minLength: 1,
+                                      maxLength: 256,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -22320,6 +22335,7 @@ export const runtimeOperationContractData = [
                                     folderId: {
                                       type: "string",
                                       minLength: 1,
+                                      maxLength: 256,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -22468,6 +22484,7 @@ export const runtimeOperationContractData = [
                                     folderId: {
                                       type: "string",
                                       minLength: 1,
+                                      maxLength: 256,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -22533,6 +22550,7 @@ export const runtimeOperationContractData = [
                                     folderId: {
                                       type: "string",
                                       minLength: 1,
+                                      maxLength: 256,
                                     },
                                     createdAt: {
                                       type: "string",
@@ -36734,6 +36752,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -36874,6 +36893,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -36939,6 +36959,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -39952,6 +39973,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -40092,6 +40114,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -40157,6 +40180,7 @@ export const runtimeOperationContractData = [
                               folderId: {
                                 type: "string",
                                 minLength: 1,
+                                maxLength: 256,
                               },
                               createdAt: {
                                 type: "string",
@@ -46286,6 +46310,7 @@ export const runtimeOperationContractData = [
                       folderId: {
                         type: "string",
                         minLength: 1,
+                        maxLength: 256,
                       },
                       createdAt: {
                         type: "string",
@@ -46421,6 +46446,7 @@ export const runtimeOperationContractData = [
                       folderId: {
                         type: "string",
                         minLength: 1,
+                        maxLength: 256,
                       },
                       createdAt: {
                         type: "string",
@@ -46486,6 +46512,7 @@ export const runtimeOperationContractData = [
                       folderId: {
                         type: "string",
                         minLength: 1,
+                        maxLength: 256,
                       },
                       createdAt: {
                         type: "string",
@@ -52118,6 +52145,7 @@ export const runtimeOperationContractData = [
                       folderId: {
                         type: "string",
                         minLength: 1,
+                        maxLength: 256,
                       },
                       createdAt: {
                         type: "string",
@@ -52253,6 +52281,7 @@ export const runtimeOperationContractData = [
                       folderId: {
                         type: "string",
                         minLength: 1,
+                        maxLength: 256,
                       },
                       createdAt: {
                         type: "string",
@@ -52318,6 +52347,7 @@ export const runtimeOperationContractData = [
                       folderId: {
                         type: "string",
                         minLength: 1,
+                        maxLength: 256,
                       },
                       createdAt: {
                         type: "string",
@@ -69841,6 +69871,7 @@ export const runtimeOperationContractData = [
         name: {
           type: "string",
           minLength: 1,
+          maxLength: 256,
         },
         parentId: {
           type: "string",
@@ -69883,6 +69914,7 @@ export const runtimeOperationContractData = [
             name: {
               type: "string",
               minLength: 1,
+              maxLength: 256,
             },
             parentId: {
               anyOf: [
@@ -70747,6 +70779,7 @@ export const runtimeOperationContractData = [
                 folderId: {
                   type: "string",
                   minLength: 1,
+                  maxLength: 256,
                 },
                 createdAt: {
                   type: "string",
@@ -70882,6 +70915,7 @@ export const runtimeOperationContractData = [
                 folderId: {
                   type: "string",
                   minLength: 1,
+                  maxLength: 256,
                 },
                 createdAt: {
                   type: "string",
@@ -70947,6 +70981,7 @@ export const runtimeOperationContractData = [
                 folderId: {
                   type: "string",
                   minLength: 1,
+                  maxLength: 256,
                 },
                 createdAt: {
                   type: "string",

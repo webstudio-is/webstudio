@@ -13,6 +13,7 @@ import {
 
 const createDocument = () =>
   createAssetResourceOpenApi({
+    builderSessionCookieName: "__Host-_session_test",
     capabilities: createAssetQueryCapabilities({
       catalog: {
         format: "webstudio-builder-asset-field-catalog",
@@ -126,14 +127,24 @@ describe("Assets OpenAPI description", () => {
       "/rest/assets/query-capabilities",
       "/rest/assets/openapi.json",
     ]);
-    expect(document.components.securitySchemes.builderShareToken).toMatchObject(
-      {
-        type: "apiKey",
-        in: "header",
-        name: "x-auth-token",
-      }
-    );
-    expect(JSON.stringify(document)).not.toContain("__session");
+    expect(document.components.securitySchemes.projectToken).toMatchObject({
+      type: "apiKey",
+      in: "header",
+      name: "x-auth-token",
+    });
+    expect(document.components.securitySchemes.builderSession).toMatchObject({
+      type: "apiKey",
+      in: "cookie",
+      name: "__Host-_session_test",
+    });
+    expect(document.security).toEqual([
+      { projectToken: [] },
+      { builderSession: [] },
+    ]);
+    expect(document["x-webstudio-limits"]).toMatchObject({
+      mutationRequestBytes: assetResourceLimits.restMutationRequestBytes,
+      filenameCharacters: assetResourceLimits.assetFilenameCharacters,
+    });
   });
 
   test("describes and validates mutable asset operations", () => {
@@ -158,6 +169,18 @@ describe("Assets OpenAPI description", () => {
     expect(assetFolderUpdateRequest.safeParse({ parentId: null }).success).toBe(
       true
     );
+    expect(
+      assetMetadataUpdate.safeParse({
+        description: "x".repeat(
+          assetResourceLimits.assetDescriptionCharacters + 1
+        ),
+      }).success
+    ).toBe(false);
+    expect(
+      assetFolderCreateRequest.safeParse({
+        name: "x".repeat(assetResourceLimits.assetFolderNameCharacters + 1),
+      }).success
+    ).toBe(false);
 
     const document = createDocument();
     expect(
@@ -198,7 +221,10 @@ describe("Assets OpenAPI description", () => {
         })),
       ],
     };
-    const document = createAssetResourceOpenApi({ capabilities });
+    const document = createAssetResourceOpenApi({
+      capabilities,
+      builderSessionCookieName: "__Host-_session_test",
+    });
     const operation =
       document.paths[assetResourceApiOperations.getAssetQueryCapabilities.path]
         .get;

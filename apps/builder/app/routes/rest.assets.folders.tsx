@@ -12,6 +12,7 @@ import {
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
   createAssetRestRepository,
+  readAssetRestJson,
 } from "~/services/asset-rest.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { checkCsrf } from "~/services/csrf-session.server";
@@ -49,7 +50,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     const folder = await (
       await createAssetRestRepository(request)
-    ).createFolder(assetFolderCreateRequest.parse(await request.json()));
+    ).createFolder(
+      assetFolderCreateRequest.parse(await readAssetRestJson(request))
+    );
     return json(
       { folder },
       { status: 201, headers: privateNoStoreResponseHeaders }

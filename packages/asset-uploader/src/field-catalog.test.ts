@@ -13,22 +13,22 @@ const context = {
 } as unknown as AppContext;
 const assetClient = { readFile: vi.fn() };
 const hasProjectPermit = vi.fn();
-const prepareIndex = vi.fn();
+const readIndex = vi.fn();
 const query = vi.fn();
 const dependencies = {
   hasProjectPermit,
-  createRepository: () => ({ prepareIndex, query }),
+  createRepository: () => ({ readIndex, query }),
 };
 
 describe("loadBuilderAssetFieldCatalog", () => {
   beforeEach(() => {
     hasProjectPermit.mockReset();
-    prepareIndex.mockReset();
+    readIndex.mockReset();
   });
 
   test("authorizes view access and derives fields from persisted metadata", async () => {
     hasProjectPermit.mockResolvedValue(true);
-    prepareIndex.mockResolvedValue(
+    readIndex.mockResolvedValue(
       await createAssetIndex({
         projectId,
         entries: [
@@ -65,7 +65,7 @@ describe("loadBuilderAssetFieldCatalog", () => {
       { projectId, permit: "view" },
       context
     );
-    expect(prepareIndex).toHaveBeenCalledOnce();
+    expect(readIndex).toHaveBeenCalledOnce();
     expect(result.fields["properties.title"]).toEqual({
       queryPath: ["properties", "title"],
       types: ["string"],
@@ -84,6 +84,6 @@ describe("loadBuilderAssetFieldCatalog", () => {
         dependencies,
       })
     ).rejects.toBeInstanceOf(AuthorizationError);
-    expect(prepareIndex).not.toHaveBeenCalled();
+    expect(readIndex).not.toHaveBeenCalled();
   });
 });

@@ -3,12 +3,12 @@ import { loadBuilderAssetFieldCatalog } from "@webstudio-is/asset-uploader/index
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { createContext } from "../context.server";
+import { createAssetRestContext } from "~/services/asset-rest-auth.server";
 import { isBuilder } from "../router-utils";
 import { createAssetClient } from "../asset-client";
 
 export type AssetDescriptionDependencies = {
-  createContext: typeof createContext;
+  createContext: typeof createAssetRestContext;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,
     "readFile"
@@ -17,7 +17,7 @@ export type AssetDescriptionDependencies = {
 };
 
 const defaultDependencies: AssetDescriptionDependencies = {
-  createContext,
+  createContext: createAssetRestContext,
   createAssetClient,
   loadBuilderAssetFieldCatalog,
 };
