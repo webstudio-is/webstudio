@@ -65,7 +65,7 @@ export const resetDatabase = async () => {
       "db",
       "sh",
       "-c",
-      'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "$1"',
+      'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "$1"',
       "sh",
       sql,
     ],
