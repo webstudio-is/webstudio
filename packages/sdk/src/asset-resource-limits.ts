@@ -11,6 +11,7 @@ export const assetResourceLimits = {
   filterCount: 32,
   filterDepth: 8,
   sortCount: 8,
+  outputFieldCount: 256,
   fieldPathDepth: 9,
   defaultResultCount: 100,
   resultCount: 1000,

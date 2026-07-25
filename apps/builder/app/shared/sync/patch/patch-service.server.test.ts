@@ -20,41 +20,13 @@ import {
   applyPatchRequest,
   loadAuthorizedPatchState,
 } from "./patch-service.server";
-import { synchronizeAssetResourcesAfterBuildPatch } from "../../synchronize-asset-resource-patch.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
-
-const synchronizeBuildChanges = vi.fn();
-const createRepository = vi.fn(() => ({ synchronizeBuildChanges }));
-const createAssetClient = vi.fn(() => ({
-  readFile: vi.fn(async () => ({
-    data: {
-      async *[Symbol.asyncIterator]() {},
-    },
-  })),
-  uploadFile: vi.fn(async () => ({ format: "file", size: 0, meta: {} })),
-}));
-const synchronizationDependencies = {
-  createAssetClient,
-  createRepository,
-} satisfies Exclude<
-  Parameters<typeof synchronizeAssetResourcesAfterBuildPatch>[1],
-  undefined
->;
-const patchDependencies = {
-  synchronizeAssetResourcesAfterBuildPatch: (
-    input: Parameters<typeof synchronizeAssetResourcesAfterBuildPatch>[0]
-  ) =>
-    synchronizeAssetResourcesAfterBuildPatch(
-      input,
-      synchronizationDependencies
-    ),
-};
 
 const applyPatchRequestForTest = (
   context: AppContext,
   patch: NormalizedPatchRequest
-) => applyPatchRequest(context, patch, patchDependencies);
+) => applyPatchRequest(context, patch);
 
 const configuredResources = JSON.stringify([
   {
@@ -140,12 +112,9 @@ describe("applyPatchRequest", () => {
     patchLoadedBuild.mockReset();
     authorizePatchEntries.mockReset();
     createContentModeCapabilities.mockClear();
-    synchronizeBuildChanges.mockReset();
-    createRepository.mockClear();
-    createAssetClient.mockClear();
   });
 
-  test("synchronizes a changed asset once in a combined patch", async () => {
+  test("applies a combined resource and asset patch without derived work", async () => {
     const combinedEntry = {
       ...patch.entries[0],
       transaction: {
@@ -189,14 +158,9 @@ describe("applyPatchRequest", () => {
       ...patch,
       entries: [combinedEntry],
     });
-
-    expect(synchronizeBuildChanges).toHaveBeenCalledOnce();
-    expect(synchronizeBuildChanges).toHaveBeenCalledWith(
-      expect.objectContaining({ force: false })
-    );
   });
 
-  test("maintains canonical paths after asset-folder patches", async () => {
+  test("applies asset-folder patches without derived work", async () => {
     const folderEntry = {
       ...patch.entries[0],
       transaction: {
@@ -227,12 +191,9 @@ describe("applyPatchRequest", () => {
         entries: [folderEntry],
       })
     ).resolves.toMatchObject({ status: "ok" });
-    expect(synchronizeBuildChanges).toHaveBeenCalledWith(
-      expect.objectContaining({ force: false })
-    );
   });
 
-  test("indexes added assets", async () => {
+  test("applies added assets without derived work", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -267,13 +228,9 @@ describe("applyPatchRequest", () => {
         entries: [assetEntry],
       })
     ).resolves.toMatchObject({ status: "ok" });
-
-    expect(synchronizeBuildChanges).toHaveBeenCalledWith(
-      expect.objectContaining({ force: false })
-    );
   });
 
-  test("reparses a swapped asset revision", async () => {
+  test("applies a swapped asset revision without derived work", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -306,13 +263,9 @@ describe("applyPatchRequest", () => {
       ...patch,
       entries: [assetEntry],
     });
-
-    expect(synchronizeBuildChanges).toHaveBeenCalledWith(
-      expect.objectContaining({ force: false })
-    );
   });
 
-  test("does not reparse files after standard asset metadata changes", async () => {
+  test("applies standard asset metadata changes without derived work", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -345,11 +298,9 @@ describe("applyPatchRequest", () => {
       ...patch,
       entries: [assetEntry],
     });
-
-    expect(synchronizeBuildChanges).toHaveBeenCalledOnce();
   });
 
-  test("skips metadata maintenance for asset descriptions", async () => {
+  test("applies asset descriptions without derived work", async () => {
     const assetEntry = {
       ...patch.entries[0],
       transaction: {
@@ -382,8 +333,6 @@ describe("applyPatchRequest", () => {
       ...patch,
       entries: [assetEntry],
     });
-
-    expect(synchronizeBuildChanges).toHaveBeenCalledOnce();
   });
 
   test("returns per-entry partial results while applying authorized entries", async () => {
@@ -507,7 +456,7 @@ describe("applyPatchRequest", () => {
     });
   });
 
-  test("loads resources for asset-only metadata synchronization", async () => {
+  test("does not load resources for an asset-only patch", async () => {
     const assetsPatch: NormalizedPatchRequest = {
       ...patch,
       entries: [
@@ -533,7 +482,7 @@ describe("applyPatchRequest", () => {
 
     expect(context.selectedColumns).toEqual([
       "projectId, version",
-      "projectId, version, lastTransactionId, resources",
+      "projectId, version, lastTransactionId",
     ]);
     expect(patchLoadedBuild).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -541,7 +490,6 @@ describe("applyPatchRequest", () => {
           projectId: "project-1",
           version: 3,
           lastTransactionId: null,
-          resources: configuredResources,
         }),
         transactions: [assetsPatch.entries[0].transaction],
       }),

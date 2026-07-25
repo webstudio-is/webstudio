@@ -12,6 +12,7 @@ export * from "./field-catalog";
 export * from "./hydration";
 export * from "./published-runtime";
 export * from "./structured-query";
+export * from "./projection";
 export * from "./asset-index";
 export * from "./request";
 export * from "./query-repository";

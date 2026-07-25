@@ -266,16 +266,14 @@ export const createQuerySourceCodec = <
         return { success: false, message: "Enter a valid query expression." };
       }
       const query = parseExpressionObject(queryExpression);
+      const coreKeys = ["where", "sort", "limit", "offset"];
       const expectedKeys = [
-        "where",
-        "sort",
-        "limit",
-        "offset",
+        ...coreKeys,
         ...capabilities.source.parameters.map(({ key }) => key),
       ];
       if (
-        query.size !== expectedKeys.length ||
-        expectedKeys.some((key) => query.has(key) === false)
+        coreKeys.some((key) => query.has(key) === false) ||
+        [...query.keys()].some((key) => expectedKeys.includes(key) === false)
       ) {
         return { success: false, message: "Complete every query field." };
       }
@@ -331,7 +329,11 @@ export const createQuerySourceCodec = <
       }
       const parameters: Record<string, unknown> = {};
       for (const parameter of capabilities.source.parameters) {
-        const value = parseJsonExpression(query.get(parameter.key));
+        const source = query.get(parameter.key);
+        const value =
+          source === undefined
+            ? structuredClone(parameter.defaultValue)
+            : parseJsonExpression(source);
         const parsed = parameterParsers.get(parameter.key)?.(value);
         if (parsed === undefined) {
           return { success: false, message: "Query capabilities are invalid." };
@@ -387,7 +389,7 @@ export const createQuerySourceCodec = <
         ["offset", query.offset],
       ]);
       for (const parameter of capabilities.source.parameters) {
-        const value = query[parameter.key];
+        const value = query[parameter.key] ?? parameter.defaultValue;
         const parsed = parameterParsers.get(parameter.key)?.(value);
         if (parsed === undefined) {
           throw new Error("Query capabilities are invalid");

@@ -186,6 +186,52 @@ const nearLimitMemoryBefore = process.memoryUsage().heapUsed;
 const nearLimitParsed = await verifyAssetIndex(JSON.parse(nearLimitSerialized));
 const nearLimitMemoryAfter = process.memoryUsage().heapUsed;
 
+const projectEntryTier = (entry, tier) => {
+  const { excerpt, ...withoutExcerpt } = entry.document;
+  return createCanonicalAssetFileEntry({
+    projectId,
+    metadataRequirements: {
+      structuredProperties: tier === "metadata" || tier === "content",
+      excerpt: tier === "excerpt" || tier === "content",
+    },
+    document: {
+      ...withoutExcerpt,
+      properties:
+        tier === "metadata" || tier === "content"
+          ? entry.document.properties
+          : {},
+      ...(tier === "excerpt" || tier === "content" ? { excerpt } : {}),
+    },
+  });
+};
+
+const benchmarkTierArtifacts = async (count) => {
+  const selectedEntries = entries.slice(0, count);
+  const tiers = {};
+  for (const tier of ["base", "metadata", "excerpt", "content"]) {
+    const tierIndex = await createAssetIndex({
+      projectId,
+      entries: selectedEntries.map((entry) => projectEntryTier(entry, tier)),
+    });
+    const bytes = encoder.encode(serializeAssetIndex(tierIndex));
+    tiers[tier] = {
+      objectReads: tier === "base" ? 0 : count,
+      parserRuns: tier === "base" ? 0 : count,
+      jsonBytes: bytes.byteLength,
+      gzipBytes: gzipSync(bytes).byteLength,
+    };
+  }
+  return {
+    inactive: { objectReads: 0, parserRuns: 0, jsonBytes: 0, gzipBytes: 0 },
+    ...tiers,
+  };
+};
+
+const tierArtifacts = {
+  assets350: await benchmarkTierArtifacts(350),
+  assets1000: await benchmarkTierArtifacts(1000),
+};
+
 console.info(
   JSON.stringify(
     {
@@ -226,6 +272,7 @@ console.info(
           Math.round((memoryAfter - memoryBefore) / retainedCopies.length)
         ),
       },
+      queryTiers: tierArtifacts,
     },
     null,
     2

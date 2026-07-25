@@ -15,7 +15,6 @@ import type {
   NormalizedPatchRequest,
   PatchEntry,
 } from "./patch-normalize.server";
-import { synchronizeAssetResourcesAfterBuildPatch } from "../../synchronize-asset-resource-patch.server";
 
 type BuildRow = Database["public"]["Tables"]["Build"]["Row"];
 type BuildColumn = keyof BuildRow;
@@ -41,10 +40,6 @@ const namespaceBuildColumns = {
   breakpoints: ["breakpoints"],
   instances: ["instances"],
   props: ["props"],
-  // Asset metadata synchronization is conditional on configured Assets
-  // resources, so asset-only patches still need the current resource set.
-  assets: ["resources"],
-  assetFolders: ["resources"],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
   styles: ["styles"],
@@ -325,8 +320,7 @@ const applyAuthorizedEntries = async ({
 
 export const applyPatchRequest = async (
   context: AppContext,
-  patch: NormalizedPatchRequest,
-  dependencies = { synchronizeAssetResourcesAfterBuildPatch }
+  patch: NormalizedPatchRequest
 ): Promise<PatchResult> => {
   const state = await loadBuildState(context, patch.buildId);
   assertBuildProject(state, patch);
@@ -364,15 +358,6 @@ export const applyPatchRequest = async (
   if (applied.status === "version_mismatched") {
     return applied;
   }
-
-  await dependencies.synchronizeAssetResourcesAfterBuildPatch({
-    context,
-    buildId: patch.buildId,
-    projectId: patch.projectId,
-    previousResources: build?.resources,
-    resources: applied.build?.resources,
-    changes: authorized.flatMap(({ entry }) => entry.transaction.payload),
-  });
 
   const entriesByTransactionId = new Map<string, PatchEntryResult[]>();
   for (const entryResult of [

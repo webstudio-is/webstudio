@@ -76,6 +76,7 @@ describe("asset query resource configuration", () => {
       ],
       limit: "20",
       offset: "$ws$dataSource$offset",
+      output: { mode: "all" as const },
       content: { mode: "none" as const },
     };
     const body = createStructuredAssetQueryResourceBody(configuration);
@@ -93,6 +94,7 @@ describe("asset query resource configuration", () => {
       sort: [],
       limit: "20",
       offset: "0",
+      output: { mode: "all" },
       content: { mode: "none" },
     });
     const query = parseExpressionObject(validBody).get("query");

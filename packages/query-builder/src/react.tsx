@@ -25,6 +25,7 @@ import {
 import { createQuerySourceCodec } from "./source";
 import type {
   QueryCondition,
+  QueryField,
   QueryGroup,
   QuerySort,
   QueryCapabilities,
@@ -413,10 +414,12 @@ const Sorting = <FieldType extends string, Operator extends string>({
 
 const QueryParameters = ({
   parameters,
+  fields,
   value,
   onChange,
 }: {
   parameters: readonly QueryParameter[];
+  fields: readonly QueryField[];
   value: Record<string, unknown>;
   onChange: (key: string, value: unknown) => void;
 }) => (
@@ -452,35 +455,110 @@ const QueryParameters = ({
             }
           />
           {selected.fields.length > 0 && (
-            <Grid
-              gap={1}
-              css={{
-                gridTemplateColumns: `repeat(${selected.fields.length}, minmax(0, 1fr))`,
-              }}
-            >
-              {selected.fields.map((field) => (
-                <InputField
-                  key={field.key}
-                  aria-label={field.label}
-                  type="number"
-                  min={field.min}
-                  max={field.max}
-                  value={
-                    current[field.key] === undefined
-                      ? ""
-                      : String(current[field.key])
-                  }
-                  onChange={(event) =>
-                    onChange(parameter.key, {
-                      ...current,
-                      [field.key]:
-                        field.optional && event.target.value === ""
-                          ? undefined
-                          : Number(event.target.value),
-                    })
-                  }
-                />
-              ))}
+            <Grid gap={1}>
+              {selected.fields.map((field) => {
+                if (field.type === "number") {
+                  return (
+                    <InputField
+                      key={field.key}
+                      aria-label={field.label}
+                      type="number"
+                      min={field.min}
+                      max={field.max}
+                      value={
+                        current[field.key] === undefined
+                          ? ""
+                          : String(current[field.key])
+                      }
+                      onChange={(event) =>
+                        onChange(parameter.key, {
+                          ...current,
+                          [field.key]:
+                            field.optional && event.target.value === ""
+                              ? undefined
+                              : Number(event.target.value),
+                        })
+                      }
+                    />
+                  );
+                }
+                const paths = Array.isArray(current[field.key])
+                  ? (current[field.key] as unknown[]).filter(
+                      (path): path is string[] =>
+                        Array.isArray(path) &&
+                        path.every((segment) => typeof segment === "string")
+                    )
+                  : [];
+                const selectedKeys = new Set(paths.map(getQueryFieldKey));
+                const available = fields.filter(
+                  ({ path }) =>
+                    selectedKeys.has(getQueryFieldKey(path)) === false
+                );
+                return (
+                  <Grid key={field.key} gap={1}>
+                    {paths.map((path, index) => {
+                      const selectedField = fields.find(
+                        (candidate) =>
+                          getQueryFieldKey(candidate.path) ===
+                          getQueryFieldKey(path)
+                      ) ?? {
+                        path,
+                        label: path.join("."),
+                        types: [],
+                      };
+                      return (
+                        <Grid
+                          key={`${getQueryFieldKey(path)}:${index}`}
+                          gap={1}
+                          css={{ gridTemplateColumns: "1fr auto" }}
+                        >
+                          <Select<QueryField>
+                            aria-label={`${field.label} ${index + 1}`}
+                            options={[selectedField, ...available]}
+                            getLabel={(option) => option.label}
+                            getValue={(option) => getQueryFieldKey(option.path)}
+                            value={selectedField}
+                            onChange={(option) =>
+                              onChange(parameter.key, {
+                                ...current,
+                                [field.key]: paths.map((value, position) =>
+                                  position === index ? option.path : value
+                                ),
+                              })
+                            }
+                          />
+                          <SmallIconButton
+                            aria-label={`Delete ${field.label.toLowerCase()}`}
+                            variant="destructive"
+                            icon={<TrashIcon />}
+                            onClick={() =>
+                              onChange(parameter.key, {
+                                ...current,
+                                [field.key]: paths.filter(
+                                  (_, position) => position !== index
+                                ),
+                              })
+                            }
+                          />
+                        </Grid>
+                      );
+                    })}
+                    {available.length > 0 &&
+                      (field.max === undefined || paths.length < field.max) && (
+                        <SmallIconButton
+                          aria-label={`Add ${field.label.toLowerCase()}`}
+                          icon={<PlusIcon />}
+                          onClick={() =>
+                            onChange(parameter.key, {
+                              ...current,
+                              [field.key]: [...paths, available[0].path],
+                            })
+                          }
+                        />
+                      )}
+                  </Grid>
+                );
+              })}
             </Grid>
           )}
         </Grid>
@@ -639,6 +717,7 @@ export const StructuredQueryBuilder = <
       )}
       <QueryParameters
         parameters={capabilities.source.parameters}
+        fields={capabilities.fields}
         value={value}
         onChange={(key, parameterValue) =>
           commit({ ...value, [key]: parameterValue })

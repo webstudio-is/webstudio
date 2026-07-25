@@ -57,6 +57,17 @@ export type QueryNumberControl = {
   optional?: boolean;
 };
 
+export type QueryFieldListControl = {
+  key: string;
+  label: string;
+  type: "field-list";
+  max?: number;
+};
+
+export type QueryParameterControlField =
+  | QueryNumberControl
+  | QueryFieldListControl;
+
 export type QueryParameter = {
   key: string;
   label: string;
@@ -69,7 +80,7 @@ export type QueryParameter = {
       value: string;
       label: string;
       defaultValue: Record<string, unknown>;
-      fields: readonly QueryNumberControl[];
+      fields: readonly QueryParameterControlField[];
     }[];
   };
 };

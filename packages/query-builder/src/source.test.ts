@@ -83,6 +83,33 @@ describe("structured query source", () => {
     });
   });
 
+  test("uses capability defaults when a newly introduced parameter is absent", () => {
+    const codec = createQuerySourceCodec<
+      "string" | "date",
+      "eq" | "after",
+      GenericQuery
+    >(genericQueryCapabilities);
+    const source = `{
+      query: {
+        where: { all: [] },
+        sort: [],
+        limit: 10,
+        offset: 0,
+      },
+    }`;
+
+    expect(codec.parse(source)).toEqual({
+      success: true,
+      value: {
+        where: { all: [] },
+        sort: [],
+        limit: "10",
+        offset: "0",
+        selection: { mode: "summary" },
+      },
+    });
+  });
+
   test("rejects source features disabled by capabilities", () => {
     const capabilities = {
       ...genericQueryCapabilities,

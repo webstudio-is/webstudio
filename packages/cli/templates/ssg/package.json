@@ -3,7 +3,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "vite build && vike prerender",
+    "build": "vite build && vike prerender && node scripts/cleanup-derived-assets.mjs",
     "dev": "vite dev",
     "start": "vite preview",
     "typecheck": "tsc --noEmit"

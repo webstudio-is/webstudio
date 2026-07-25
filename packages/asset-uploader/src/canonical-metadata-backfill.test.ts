@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { createCanonicalAssetFileEntry } from "@webstudio-is/asset-resource";
+import {
+  createCanonicalAssetFileEntry,
+  getCanonicalAssetMetadataTier,
+} from "@webstudio-is/asset-resource";
 import {
   createTestServer,
   db,
@@ -9,6 +12,7 @@ import {
 import type { AssetClient } from "./client";
 import {
   createAssetContentRevision,
+  loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssetStandardMetadata,
   synchronizeCanonicalAsset,
   synchronizeCanonicalAssets,
@@ -34,6 +38,219 @@ const entryFromReplaceRpc = (value: ReplaceMetadataRpcArgs) => ({
 });
 
 describe("canonical asset metadata synchronization", () => {
+  test("builds base documents from records without canonical writes or object reads", async () => {
+    server.use(
+      db.get("Asset", () =>
+        json([
+          {
+            id: "post",
+            projectId: "project-1",
+            filename: "Hello",
+            folderId: "blog",
+            file: {
+              name: "stored-post.md",
+              size: 20,
+              updatedAt: "2026-07-18T01:00:00.000Z",
+              status: "UPLOADED",
+            },
+          },
+        ])
+      ),
+      db.get("AssetFolder", () =>
+        json([
+          {
+            id: "blog",
+            projectId: "project-1",
+            name: "Blog",
+            parentId: null,
+            createdAt: "2026-07-18T00:00:00.000Z",
+          },
+        ])
+      )
+    );
+
+    await expect(
+      loadCanonicalAssetBaseEntries({
+        projectId: "project-1",
+        client: testContext.postgrest.client,
+      })
+    ).resolves.toEqual([
+      expect.objectContaining({
+        assetId: "post",
+        document: expect.objectContaining({
+          name: "Hello.md",
+          path: "Blog/Hello.md",
+          contentRef: "stored-post.md",
+          properties: {},
+        }),
+      }),
+    ]);
+  });
+
+  test.each([
+    {
+      name: "structured properties",
+      requirements: { structuredProperties: true, excerpt: false },
+      expectedProperties: { title: "Post" },
+      expectedExcerpt: undefined,
+    },
+    {
+      name: "excerpt",
+      requirements: { structuredProperties: false, excerpt: true },
+      expectedProperties: {},
+      expectedExcerpt: "Post body",
+    },
+  ])("prepares only requested Markdown $name", async (scenario) => {
+    const source = "---\ntitle: Post\n---\nPost body";
+    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
+      data: {
+        async *[Symbol.asyncIterator]() {
+          yield encoder.encode(source);
+        },
+      },
+    }));
+    let storedDocument: Record<string, unknown> | undefined;
+    server.use(
+      db.get("Asset", () =>
+        json([
+          {
+            id: "post",
+            projectId: "project-1",
+            filename: null,
+            folderId: null,
+            file: {
+              name: "post.md",
+              size: encoder.encode(source).byteLength,
+              updatedAt: "2026-07-18T01:00:00.000Z",
+              status: "UPLOADED",
+            },
+          },
+        ])
+      ),
+      db.get("AssetFolder", () => json([])),
+      db.get("AssetFileMetadata", () => json([])),
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        const value = (await request.json()) as ReplaceMetadataRpcArgs;
+        storedDocument = value.p_document;
+        return json(true);
+      })
+    );
+
+    await synchronizeCanonicalAssets({
+      projectId: "project-1",
+      client: testContext.postgrest.client,
+      assetClient: { readFile, uploadFile: vi.fn() },
+      requirements: scenario.requirements,
+    });
+
+    expect(readFile).toHaveBeenCalledOnce();
+    expect(storedDocument).toMatchObject({
+      properties: scenario.expectedProperties,
+      $webstudioMetadataRequirements: getCanonicalAssetMetadataTier(
+        scenario.requirements
+      ),
+    });
+    if (scenario.expectedExcerpt === undefined) {
+      expect(storedDocument).not.toHaveProperty("excerpt");
+    } else {
+      expect(storedDocument).toHaveProperty(
+        "excerpt",
+        scenario.expectedExcerpt
+      );
+    }
+  });
+
+  test("expands a cached metadata tier without reparsing completed dimensions", async () => {
+    const source = "---\ntitle: Post\n---\nPost body";
+    const bytes = encoder.encode(source);
+    const updatedAt = "2026-07-18T01:00:00.000Z";
+    const revision = createAssetContentRevision({
+      storageName: "post.md",
+      updatedAt,
+      size: bytes.byteLength,
+    });
+    const cached = createCanonicalAssetFileEntry({
+      projectId: "project-1",
+      metadataRequirements: {
+        structuredProperties: true,
+        excerpt: false,
+      },
+      document: {
+        _id: "post",
+        _type: "asset.file",
+        name: "post.md",
+        path: "post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: bytes.byteLength,
+        revision,
+        contentRef: "post.md",
+        properties: { title: "Post" },
+      },
+    });
+    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
+      data: {
+        async *[Symbol.asyncIterator]() {
+          yield bytes;
+        },
+      },
+    }));
+    let storedDocument: Record<string, unknown> | undefined;
+    server.use(
+      db.get("Asset", () =>
+        json([
+          {
+            id: "post",
+            projectId: "project-1",
+            filename: null,
+            folderId: null,
+            file: {
+              name: "post.md",
+              size: bytes.byteLength,
+              updatedAt,
+              status: "UPLOADED",
+            },
+          },
+        ])
+      ),
+      db.get("AssetFolder", () => json([])),
+      db.get("AssetFileMetadata", () =>
+        json([
+          {
+            ...cached,
+            document: {
+              ...cached.document,
+              $webstudioMetadataRequirements: "properties",
+            },
+            createdAt: updatedAt,
+            updatedAt,
+          },
+        ])
+      ),
+      db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
+        storedDocument = ((await request.json()) as ReplaceMetadataRpcArgs)
+          .p_document;
+        return json(true);
+      }),
+      db.post("rpc/delete_stale_asset_file_metadata", () => json(0))
+    );
+
+    await synchronizeCanonicalAssets({
+      projectId: "project-1",
+      client: testContext.postgrest.client,
+      assetClient: { uploadFile: vi.fn(), readFile },
+      requirements: { structuredProperties: false, excerpt: true },
+    });
+
+    expect(readFile).toHaveBeenCalledOnce();
+    expect(storedDocument).toMatchObject({
+      properties: { title: "Post" },
+      excerpt: "Post body",
+      $webstudioMetadataRequirements: "properties+excerpt",
+    });
+  });
+
   test("indexes Markdown and JSON metadata without reading binary files", async () => {
     const contents = new Map([
       ["stored-one.md", "---\ntitle: One\n---\n# First post"],

@@ -3,6 +3,7 @@ import {
   assetQuerySort,
   assetQueryWhereExpression,
   assetResourceContentOptions,
+  assetResourceOutputSelection,
   assetType,
   compilerSettings,
   dataSourceVariableValue,
@@ -196,6 +197,7 @@ const assetResourceConfiguration = looseObject({
   sort: z.array(assetQuerySort),
   limit: z.string(),
   offset: z.string(),
+  output: assetResourceOutputSelection.default({ mode: "all" }),
   content: assetResourceContentOptions,
 });
 const assetResource = looseObject({

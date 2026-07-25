@@ -1,14 +1,17 @@
 import {
   createAssetQueryRepository,
   createAssetIndex,
+  selectAssetProperties,
   verifyAssetIndex,
 } from "@webstudio-is/asset-resource";
 import type {
   Asset,
   AssetFolder,
+  AssetQueryRequirements,
   AssetQueryRequestInput,
   AssetQueryResult,
 } from "@webstudio-is/sdk";
+import { assetQuery, getAssetQueryRequirements } from "@webstudio-is/sdk";
 import type {
   AssetFolderUpdateRequest,
   AssetMetadataUpdate,
@@ -34,17 +37,13 @@ import {
 import { updateAssetContent } from "./revision";
 import {
   deleteAssetsWithClient,
-  patchAssetsWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
 } from "./asset-patch-core";
-import type { Patch } from "immer";
 import type { UploadTicket } from "./types";
 import {
-  synchronizeCanonicalAsset,
+  loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,
-  synchronizeAllCanonicalAssetStandardMetadata,
-  synchronizeCanonicalAssetStandardMetadata,
 } from "./canonical-metadata-backfill";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import {
@@ -62,7 +61,6 @@ const defaultDependencies = {
   uploadFile,
   updateAssetContent,
   deleteAssetsWithClient,
-  patchAssetsWithClient,
   updateAssetMetadataWithClient,
   loadAssetsByProjectWithClient,
   loadAssetFoldersByProjectWithClient,
@@ -70,23 +68,14 @@ const defaultDependencies = {
   deleteAssetFoldersWithClient,
   createId: (): string => nanoid(),
   now: () => new Date(),
-  synchronizeCanonicalAsset,
+  loadCanonicalAssetBaseEntries,
   synchronizeCanonicalAssets,
-  synchronizeAllCanonicalAssetStandardMetadata,
-  synchronizeCanonicalAssetStandardMetadata,
   loadCanonicalAssetFileEntries,
   createAssetIndex,
   verifyAssetIndex,
-  reportMaintenanceError: (error: unknown) =>
-    console.error("Asset repository maintenance failed", error),
 };
 
 type AssetRepositoryDependencies = typeof defaultDependencies;
-
-export type AssetBuildChange = {
-  namespace: string;
-  patches: ReadonlyArray<{ path: ReadonlyArray<string | number> }>;
-};
 
 export class AssetRepositoryNotFoundError extends Error {}
 export class AssetRepositoryConflictError extends Error {}
@@ -155,19 +144,18 @@ export interface AssetRepository {
     values: AssetFolderUpdateRequest
   ): Promise<AssetFolder>;
   deleteFolder(folderId: string): Promise<void>;
-  readIndex(): ReturnType<typeof createAssetIndex>;
+  readIndex(
+    requirements?: AssetQueryRequirements
+  ): ReturnType<typeof createAssetIndex>;
   query(request: AssetQueryRequestInput): Promise<AssetQueryResult>;
 }
 
 /** Trusted repair/publication operations. Every method still verifies permits. */
 export interface AssetMaintenanceRepository {
-  applyPatches(patches: Patch[]): Promise<void>;
-  synchronizeBuildChanges(input: {
-    changes: readonly AssetBuildChange[];
-    force?: boolean;
-  }): Promise<void>;
   synchronize(): ReturnType<typeof synchronizeCanonicalAssets>;
-  prepareIndex(): ReturnType<typeof createAssetIndex>;
+  prepareIndex(
+    requirements?: AssetQueryRequirements
+  ): ReturnType<typeof createAssetIndex>;
 }
 
 /**
@@ -175,9 +163,9 @@ export interface AssetMaintenanceRepository {
  * metadata; the injected object store owns file bytes. Published runtimes use
  * a separate storage-neutral index/query repository.
  *
- * All public mutations maintain the derived query index. The lower-level SQL
- * and object-store functions are adapter implementation details and must not be
- * coordinated independently by Builder, MCP, preview, or publication callers.
+ * Public mutations update only logical records and object bytes. Query reads
+ * and publication lazily reconcile derived metadata so projects that do not
+ * use configured Assets queries never open or parse stored file contents.
  */
 export class PostgresAssetRepository
   implements AssetRepository, AssetMaintenanceRepository
@@ -233,22 +221,6 @@ export class PostgresAssetRepository
       context,
       assetStore,
     });
-  }
-
-  private async maintainAsset(assetId: Asset["id"]) {
-    try {
-      return await this.dependencies.synchronizeCanonicalAsset({
-        client: this.context.postgrest.client,
-        assetClient: this.assetStore,
-        projectId: this.projectId,
-        assetId,
-      });
-    } catch (error) {
-      // Synchronization removes an obsolete revision with a guarded database
-      // write before propagating the failure. Publication is the strict repair
-      // boundary for persistent object-storage or parsing failures.
-      this.dependencies.reportMaintenanceError(error);
-    }
   }
 
   private async assertCanEdit() {
@@ -364,12 +336,6 @@ export class PostgresAssetRepository
       this.context,
       createId
     );
-    // A non-deduplicated ticket only reserves an upload. Deduplication can
-    // restore or create a complete logical asset immediately, so it must pass
-    // through the same derived-document boundary as upload completion.
-    if (ticket.deduplicated) {
-      await this.maintainAsset(ticket.assetId);
-    }
     return ticket;
   }
 
@@ -392,7 +358,6 @@ export class PostgresAssetRepository
       assetDataOverride,
       this.getUploadErrorCleanup(assetId)
     );
-    await this.maintainAsset(asset.id);
     return asset;
   }
 
@@ -412,7 +377,6 @@ export class PostgresAssetRepository
       this.getWritableStore(),
       this.context
     );
-    await this.maintainAsset(assetId);
     return asset;
   }
 
@@ -423,21 +387,6 @@ export class PostgresAssetRepository
       this.context.postgrest.client
     );
 
-    if (
-      Object.hasOwn(values, "filename") ||
-      Object.hasOwn(values, "folderId")
-    ) {
-      try {
-        await this.dependencies.synchronizeCanonicalAssetStandardMetadata({
-          client: this.context.postgrest.client,
-          projectId: this.projectId,
-          assetIds: [assetId],
-        });
-      } catch (error) {
-        this.dependencies.reportMaintenanceError(error);
-      }
-    }
-
     return asset;
   }
 
@@ -447,7 +396,6 @@ export class PostgresAssetRepository
       { projectId: this.projectId, ids },
       this.context.postgrest.client
     );
-    await this.maintainIndex();
   }
 
   async listFolders() {
@@ -514,14 +462,6 @@ export class PostgresAssetRepository
       },
       this.context.postgrest.client
     );
-    try {
-      await this.dependencies.synchronizeAllCanonicalAssetStandardMetadata({
-        client: this.context.postgrest.client,
-        projectId: this.projectId,
-      });
-    } catch (error) {
-      this.dependencies.reportMaintenanceError(error);
-    }
     return updated;
   }
 
@@ -554,152 +494,105 @@ export class PostgresAssetRepository
     );
   }
 
-  async applyPatches(patches: Patch[]) {
-    await this.assertCanEdit();
-    await this.dependencies.patchAssetsWithClient(
-      {
-        projectId: this.projectId,
-        client: this.context.postgrest.client,
-      },
-      patches
-    );
-    await this.maintainIndex();
-  }
-
-  async synchronizeBuildChanges({
-    changes,
-    force = false,
-  }: {
-    changes: readonly AssetBuildChange[];
-    force?: boolean;
-  }) {
-    await this.assertCanEdit();
-    const assetChanges = changes.filter(
-      ({ namespace }) => namespace === "assets" || namespace === "assetFolders"
-    );
-    if (force) {
-      await this.synchronizeTrusted();
-      return;
-    }
-    if (assetChanges.length === 0) {
-      return;
-    }
-
-    const hasFolderChanges = assetChanges.some(
-      ({ namespace }) => namespace === "assetFolders"
-    );
-    if (hasFolderChanges) {
-      await this.dependencies.synchronizeAllCanonicalAssetStandardMetadata({
-        client: this.context.postgrest.client,
-        projectId: this.projectId,
-      });
-    }
-
-    const changedAssetIds = new Set<string>();
-    const contentAssetIds = new Set<string>();
-    for (const { namespace, patches } of assetChanges) {
-      if (namespace !== "assets") {
-        continue;
-      }
-      for (const { path } of patches) {
-        const assetId = path[0];
-        const field = path[1];
-        if (typeof assetId !== "string") {
-          continue;
-        }
-        if (
-          path.length !== 1 &&
-          field !== "name" &&
-          field !== "filename" &&
-          field !== "folderId"
-        ) {
-          continue;
-        }
-        changedAssetIds.add(assetId);
-        if (path.length === 1 || field === "name") {
-          contentAssetIds.add(assetId);
-        }
-      }
-    }
-
-    if (hasFolderChanges === false) {
-      const standardMetadataAssetIds = [...changedAssetIds].filter(
-        (assetId) => contentAssetIds.has(assetId) === false
-      );
-      if (standardMetadataAssetIds.length > 0) {
-        await this.dependencies.synchronizeCanonicalAssetStandardMetadata({
-          client: this.context.postgrest.client,
-          projectId: this.projectId,
-          assetIds: standardMetadataAssetIds,
-        });
-      }
-    }
-    for (const assetId of contentAssetIds) {
-      await this.dependencies.synchronizeCanonicalAsset({
-        client: this.context.postgrest.client,
-        assetClient: this.assetStore,
-        projectId: this.projectId,
-        assetId,
-      });
-    }
-  }
-
-  private async maintainIndex() {
-    try {
-      const result = await this.synchronizeTrusted();
-      if (result.issues.length > 0) {
-        this.dependencies.reportMaintenanceError(
-          new AssetIndexPreparationError(result.issues)
-        );
-      }
-    } catch (error) {
-      // The primary mutation may already be committed. Explicit repair and
-      // strict publication are the durable recovery paths.
-      this.dependencies.reportMaintenanceError(error);
-    }
-  }
-
   async synchronize() {
     await this.assertCanEdit();
     return await this.synchronizeTrusted();
   }
 
-  private async synchronizeTrusted() {
+  private async synchronizeTrusted(requirements?: AssetQueryRequirements) {
     return await this.dependencies.synchronizeCanonicalAssets({
       client: this.context.postgrest.client,
       assetClient: this.assetStore,
       projectId: this.projectId,
+      ...(requirements === undefined
+        ? {}
+        : {
+            requirements: {
+              structuredProperties: requirements.structuredProperties,
+              excerpt: requirements.excerpt,
+            },
+          }),
     });
   }
 
-  async prepareIndex() {
+  async prepareIndex(requirements?: AssetQueryRequirements) {
     await this.assertCanBuild();
-    const result = await this.synchronizeTrusted();
-    if (result.issues.length > 0) {
-      throw new AssetIndexPreparationError(result.issues);
+    return await this.prepareIndexAfterAuthorization(requirements, true);
+  }
+
+  private async prepareIndexAfterAuthorization(
+    requirements: AssetQueryRequirements | undefined,
+    strict: boolean
+  ) {
+    if (
+      requirements === undefined ||
+      requirements.structuredProperties ||
+      requirements.excerpt
+    ) {
+      const result = await this.synchronizeTrusted(requirements);
+      if (strict && result.issues.length > 0) {
+        throw new AssetIndexPreparationError(result.issues);
+      }
+      return await this.dependencies.verifyAssetIndex(
+        await this.loadIndex(requirements)
+      );
     }
-    return await this.dependencies.verifyAssetIndex(await this.loadIndex());
+    const entries = await this.dependencies.loadCanonicalAssetBaseEntries({
+      client: this.context.postgrest.client,
+      projectId: this.projectId,
+    });
+    return await this.dependencies.verifyAssetIndex(
+      await this.dependencies.createAssetIndex({
+        projectId: this.projectId,
+        entries,
+      })
+    );
   }
 
-  async readIndex() {
+  async readIndex(requirements?: AssetQueryRequirements) {
     await this.assertCanView();
-    return await this.loadIndex();
+    return await this.prepareIndexAfterAuthorization(requirements, false);
   }
 
-  private async loadIndex() {
+  private async loadIndex(requirements?: AssetQueryRequirements) {
     const entries = await this.dependencies.loadCanonicalAssetFileEntries({
       client: this.context.postgrest.client,
       projectId: this.projectId,
     });
+    const projectedEntries =
+      requirements === undefined
+        ? entries
+        : entries.map((entry) => {
+            const { excerpt, ...document } = entry.document;
+            return {
+              ...entry,
+              document: {
+                ...document,
+                properties:
+                  requirements.structuredPropertyPaths === "all"
+                    ? entry.document.properties
+                    : selectAssetProperties({
+                        properties: entry.document.properties,
+                        fields: requirements.structuredPropertyPaths,
+                      }),
+                ...(requirements.excerpt && excerpt !== undefined
+                  ? { excerpt }
+                  : {}),
+              },
+            };
+          });
     return await this.dependencies.createAssetIndex({
       projectId: this.projectId,
-      entries,
+      entries: projectedEntries,
     });
   }
 
   async query(request: AssetQueryRequestInput) {
     return await createAssetQueryRepository({
-      loadIndex: () => this.readIndex(),
+      loadIndex: () =>
+        this.readIndex(
+          getAssetQueryRequirements(assetQuery.parse(request.query))
+        ),
       readContent: this.assetStore.readFile,
     }).query(request);
   }

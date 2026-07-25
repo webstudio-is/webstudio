@@ -15,7 +15,6 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { assertApiProjectPermit } from "./api-permits.server";
 import { throwApiError } from "./api-errors.server";
-import { synchronizeAssetResourcesAfterBuildPatch } from "../shared/synchronize-asset-resource-patch.server";
 
 export const loadBuildByProjectVersion = async (
   ctx: AppContext,
@@ -164,24 +163,7 @@ export const commitBuildTransactions = async ({
       clientVersion,
       transactions,
     },
-    ctx,
-    async ({ previousBuild, build, changes }) => {
-      try {
-        await synchronizeAssetResourcesAfterBuildPatch({
-          context: ctx,
-          buildId,
-          projectId,
-          previousResources: previousBuild.resources,
-          resources: build.resources,
-          changes,
-        });
-      } catch (error) {
-        console.error(
-          "Asset resource post-patch synchronization failed",
-          error
-        );
-      }
-    }
+    ctx
   );
   if (result.status === "version_mismatched") {
     throwApiError("CONFLICT", result.errors);

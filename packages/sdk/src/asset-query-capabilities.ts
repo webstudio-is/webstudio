@@ -12,6 +12,7 @@ import {
   assetQueryStandardFields,
   assetQueryStandardFieldTypes,
   assetResourceContentOptions,
+  assetResourceOutputSelection,
   getAssetQueryOperatorsForFieldTypes,
   type AssetObservedFieldType,
   type AssetQueryOperator,
@@ -57,6 +58,11 @@ const getDefaultFilterValue = (operator: AssetQueryOperator) =>
       : '""';
 
 const contentSchema = z.toJSONSchema(assetResourceContentOptions, {
+  target: "draft-2020-12",
+  io: "input",
+});
+
+const outputSchema = z.toJSONSchema(assetResourceOutputSelection, {
   target: "draft-2020-12",
   io: "input",
 });
@@ -186,6 +192,43 @@ export const createAssetQueryCapabilities = ({
           io: "input",
         }),
         parameters: [
+          {
+            key: "output",
+            label: "Output fields",
+            defaultValue: { mode: "all" },
+            schema: outputSchema,
+            control: {
+              type: "variant",
+              discriminator: "mode",
+              options: [
+                {
+                  value: "all",
+                  label: "All indexed fields",
+                  defaultValue: { mode: "all" },
+                  fields: [],
+                },
+                {
+                  value: "base",
+                  label: "File metadata only",
+                  defaultValue: { mode: "base" },
+                  fields: [],
+                },
+                {
+                  value: "fields",
+                  label: "Selected fields",
+                  defaultValue: { mode: "fields", fields: [] },
+                  fields: [
+                    {
+                      key: "fields",
+                      label: "Fields",
+                      type: "field-list",
+                      max: assetResourceLimits.outputFieldCount,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
           {
             key: "content",
             label: "File content",

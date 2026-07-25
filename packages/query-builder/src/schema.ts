@@ -68,6 +68,18 @@ const queryNumberControl = z.strictObject({
   optional: z.boolean().optional(),
 });
 
+const queryFieldListControl = z.strictObject({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  type: z.literal("field-list"),
+  max: z.number().int().positive().optional(),
+});
+
+const queryParameterControlField = z.discriminatedUnion("type", [
+  queryNumberControl,
+  queryFieldListControl,
+]);
+
 const queryParameter = z.strictObject({
   key: z.string().min(1),
   label: z.string().min(1),
@@ -82,7 +94,7 @@ const queryParameter = z.strictObject({
           value: z.string().min(1),
           label: z.string().min(1),
           defaultValue: z.record(z.string(), z.json()),
-          fields: z.array(queryNumberControl),
+          fields: z.array(queryParameterControlField),
         })
       )
       .min(1),

@@ -1272,6 +1272,15 @@ describe("prebuild", () => {
     await expect(
       readFile("dist/client/blog/hello-world/index.html", "utf8")
     ).resolves.toContain("<!DOCTYPE html>");
+    await import(
+      `${pathToFileURL(join(tempDir, "scripts/cleanup-derived-assets.mjs")).href}?test=${crypto.randomUUID()}`
+    );
+    await expect(
+      readFile(
+        `dist/client/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`,
+        "utf8"
+      )
+    ).rejects.toThrow("ENOENT");
   }, 30_000);
 
   test("does not prerender dynamic Assets paths that cannot match string route params", async () => {

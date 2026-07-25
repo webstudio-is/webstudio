@@ -252,6 +252,27 @@ export const assetQueryFieldPath = z
 
 export type AssetQueryFieldPath = z.infer<typeof assetQueryFieldPath>;
 
+export const assetResourceOutputSelection = z.discriminatedUnion("mode", [
+  z.strictObject({ mode: z.literal("all") }),
+  z.strictObject({ mode: z.literal("base") }),
+  z.strictObject({
+    mode: z.literal("fields"),
+    fields: z
+      .array(assetQueryFieldPath)
+      .max(assetResourceLimits.outputFieldCount)
+      .refine(
+        (fields) =>
+          new Set(fields.map((field) => JSON.stringify(field))).size ===
+          fields.length,
+        { error: "Selected output fields must be unique" }
+      ),
+  }),
+]);
+
+export type AssetResourceOutputSelection = z.infer<
+  typeof assetResourceOutputSelection
+>;
+
 export const assetQueryValueOperators = [
   "eq",
   "ne",
@@ -454,6 +475,7 @@ export const assetQueryResourceConfigurationInput = z.strictObject({
       'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.'
     )
     .default("0"),
+  output: assetResourceOutputSelection.default({ mode: "all" }),
   content: assetResourceContentOptions.default({ mode: "none" }),
 });
 
@@ -484,6 +506,7 @@ export const assetQuery = z.strictObject({
     .nonnegative()
     .max(assetResourceLimits.candidateDocuments)
     .default(0),
+  output: assetResourceOutputSelection.default({ mode: "all" }),
   content: assetResourceContentOptions.default({ mode: "none" }),
 });
 

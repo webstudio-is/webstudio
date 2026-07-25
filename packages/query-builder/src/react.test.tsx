@@ -23,6 +23,34 @@ const QueryBuilderFixture = () => {
   );
 };
 
+const FieldSelectionFixture = () => {
+  const [query, setQuery] = useState<GenericQuery>({
+    ...(createStructuredQuery(genericQueryCapabilities) as GenericQuery),
+    selection: { mode: "fields", fields: [] },
+  });
+  return (
+    <StructuredQueryBuilder
+      value={query}
+      capabilities={genericQueryCapabilities}
+      onChange={setQuery}
+    />
+  );
+};
+
+const UnknownFieldSelectionFixture = () => {
+  const [query, setQuery] = useState<GenericQuery>({
+    ...(createStructuredQuery(genericQueryCapabilities) as GenericQuery),
+    selection: { mode: "fields", fields: [["legacy", "field"]] },
+  });
+  return (
+    <StructuredQueryBuilder
+      value={query}
+      capabilities={genericQueryCapabilities}
+      onChange={setQuery}
+    />
+  );
+};
+
 describe("structured query builder", () => {
   test("renders and edits solely from provider-neutral capabilities", () => {
     render(<QueryBuilderFixture />);
@@ -37,5 +65,23 @@ describe("structured query builder", () => {
 
     const source = screen.getByLabelText("Query source");
     expect((source as HTMLTextAreaElement).value).toContain("pageSize ?? 20");
+  });
+
+  test("edits a declarative field-list parameter", () => {
+    render(<FieldSelectionFixture />);
+
+    fireEvent.click(screen.getByLabelText("Add fields"));
+    expect(
+      (screen.getByLabelText("Query source") as HTMLTextAreaElement).value
+    ).toContain('"fields":[["title"]]');
+  });
+
+  test("preserves a selected field that is absent from current capabilities", () => {
+    render(<UnknownFieldSelectionFixture />);
+
+    expect(screen.getByText("legacy.field")).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Query source") as HTMLTextAreaElement).value
+    ).toContain('"fields":[["legacy","field"]]');
   });
 });

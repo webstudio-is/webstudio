@@ -67231,6 +67231,59 @@ export const runtimeOperationContractData = [
                   offset: {
                     type: "string",
                   },
+                  output: {
+                    default: {
+                      mode: "all",
+                    },
+                    oneOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "all",
+                          },
+                        },
+                        required: ["mode"],
+                        additionalProperties: false,
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "base",
+                          },
+                        },
+                        required: ["mode"],
+                        additionalProperties: false,
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          mode: {
+                            type: "string",
+                            const: "fields",
+                          },
+                          fields: {
+                            maxItems: 256,
+                            type: "array",
+                            items: {
+                              minItems: 1,
+                              maxItems: 9,
+                              type: "array",
+                              items: {
+                                type: "string",
+                                minLength: 1,
+                              },
+                            },
+                          },
+                        },
+                        required: ["mode", "fields"],
+                        additionalProperties: false,
+                      },
+                    ],
+                  },
                   content: {
                     oneOf: [
                       {
@@ -67547,6 +67600,59 @@ export const runtimeOperationContractData = [
                 },
                 offset: {
                   type: "string",
+                },
+                output: {
+                  default: {
+                    mode: "all",
+                  },
+                  oneOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "all",
+                        },
+                      },
+                      required: ["mode"],
+                      additionalProperties: false,
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "base",
+                        },
+                      },
+                      required: ["mode"],
+                      additionalProperties: false,
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        mode: {
+                          type: "string",
+                          const: "fields",
+                        },
+                        fields: {
+                          maxItems: 256,
+                          type: "array",
+                          items: {
+                            minItems: 1,
+                            maxItems: 9,
+                            type: "array",
+                            items: {
+                              type: "string",
+                              minLength: 1,
+                            },
+                          },
+                        },
+                      },
+                      required: ["mode", "fields"],
+                      additionalProperties: false,
+                    },
+                  ],
                 },
                 content: {
                   oneOf: [
@@ -67938,6 +68044,59 @@ export const runtimeOperationContractData = [
               ],
               description:
                 'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.',
+            },
+            output: {
+              default: {
+                mode: "all",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "all",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "base",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "fields",
+                    },
+                    fields: {
+                      maxItems: 256,
+                      type: "array",
+                      items: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                    },
+                  },
+                  required: ["mode", "fields"],
+                  additionalProperties: false,
+                },
+              ],
             },
             content: {
               default: {
@@ -68438,6 +68597,59 @@ export const runtimeOperationContractData = [
                       ],
                       description:
                         'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.',
+                    },
+                    output: {
+                      default: {
+                        mode: "all",
+                      },
+                      oneOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "all",
+                            },
+                          },
+                          required: ["mode"],
+                          additionalProperties: false,
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "base",
+                            },
+                          },
+                          required: ["mode"],
+                          additionalProperties: false,
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            mode: {
+                              type: "string",
+                              const: "fields",
+                            },
+                            fields: {
+                              maxItems: 256,
+                              type: "array",
+                              items: {
+                                minItems: 1,
+                                maxItems: 9,
+                                type: "array",
+                                items: {
+                                  type: "string",
+                                  minLength: 1,
+                                },
+                              },
+                            },
+                          },
+                          required: ["mode", "fields"],
+                          additionalProperties: false,
+                        },
+                      ],
                     },
                     content: {
                       default: {

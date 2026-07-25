@@ -20,6 +20,7 @@ export * from "./asset-folder-hierarchy";
 export * from "./asset-folder-normalization";
 export * from "./asset-resource-config";
 export * from "./asset-query-capabilities";
+export * from "./asset-query-requirements";
 export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";

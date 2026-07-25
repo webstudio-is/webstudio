@@ -8,6 +8,7 @@ import {
   type AssetQueryFilter,
   type AssetQuerySort,
   type AssetResourceContentOptions,
+  type AssetResourceOutputSelection,
 } from "./schema/asset-resource";
 import type { Resource } from "./schema/resources";
 
@@ -43,6 +44,7 @@ export type StructuredAssetQueryResourceConfiguration = {
   sort: AssetQuerySort[];
   limit: string;
   offset: string;
+  output: AssetResourceOutputSelection;
   content: AssetResourceContentOptions;
 };
 
@@ -72,6 +74,7 @@ export const createStructuredAssetQueryResourceBody = ({
   sort,
   limit,
   offset,
+  output = { mode: "all" },
   content,
 }: StructuredAssetQueryResourceConfiguration) =>
   assetQuerySourceCodec.format({
@@ -79,5 +82,6 @@ export const createStructuredAssetQueryResourceBody = ({
     sort,
     limit,
     offset,
+    output,
     content: assetResourceContentOptions.parse(content),
   });

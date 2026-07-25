@@ -293,6 +293,50 @@ describe("structured asset query", () => {
     expect(result.items[0].content).not.toHaveProperty("contentRef");
   });
 
+  test("projects explicit output fields while retaining base file metadata", async () => {
+    const selected = await executeAssetQuery({
+      catalog,
+      documents,
+      query: {
+        where: { all: [] },
+        sort: [],
+        limit: 1,
+        offset: 0,
+        output: {
+          mode: "fields",
+          fields: [["properties", "title"], ["excerpt"]],
+        },
+        content: { mode: "none" },
+      },
+    });
+    expect(selected.items[0]).toMatchObject({
+      id: "alpha",
+      name: "alpha.md",
+      properties: { title: "Alpha" },
+      excerpt: "Alpha excerpt",
+    });
+    expect(selected.items[0].properties).not.toHaveProperty("draft");
+
+    const base = await executeAssetQuery({
+      catalog,
+      documents,
+      query: {
+        where: { all: [] },
+        sort: [],
+        limit: 1,
+        offset: 0,
+        output: { mode: "base" },
+        content: { mode: "none" },
+      },
+    });
+    expect(base.items[0]).toMatchObject({
+      id: "alpha",
+      name: "alpha.md",
+      properties: {},
+    });
+    expect(base.items[0]).not.toHaveProperty("excerpt");
+  });
+
   test("supports lexical date ranges and missing-field checks", async () => {
     const result = await executeAssetQuery({
       catalog,

@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 import { assetResourceLimits } from "@webstudio-is/sdk";
 import {
   createCanonicalAssetFileEntry,
+  getCanonicalAssetMetadataTier,
   getFieldContributions,
   normalizeAssetFileDocument,
+  satisfiesCanonicalAssetMetadataRequirements,
 } from "./canonical";
 
 const asset = {
@@ -16,6 +18,45 @@ const asset = {
   revision: "sha256:content",
   contentRef: "private:asset-1:sha256:content",
 };
+
+test("identifies and compares metadata cache tiers deterministically", () => {
+  expect(
+    getCanonicalAssetMetadataTier({
+      structuredProperties: false,
+      excerpt: false,
+    })
+  ).toBe("base");
+  expect(
+    getCanonicalAssetMetadataTier({
+      structuredProperties: true,
+      excerpt: false,
+    })
+  ).toBe("properties");
+  expect(
+    getCanonicalAssetMetadataTier({
+      structuredProperties: false,
+      excerpt: true,
+    })
+  ).toBe("excerpt");
+  expect(
+    getCanonicalAssetMetadataTier({
+      structuredProperties: true,
+      excerpt: true,
+    })
+  ).toBe("properties+excerpt");
+  expect(
+    satisfiesCanonicalAssetMetadataRequirements({
+      cached: { structuredProperties: true, excerpt: false },
+      required: { structuredProperties: false, excerpt: false },
+    })
+  ).toBe(true);
+  expect(
+    satisfiesCanonicalAssetMetadataRequirements({
+      cached: { structuredProperties: true, excerpt: false },
+      required: { structuredProperties: false, excerpt: true },
+    })
+  ).toBe(false);
+});
 
 describe("normalizeAssetFileDocument", () => {
   test("derives normalized standard metadata", () => {

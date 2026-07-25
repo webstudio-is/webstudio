@@ -10,6 +10,7 @@ import {
   type AssetQueryItem,
   type AssetQueryResult,
   type AssetQueryWhere,
+  type AssetResourceOutputSelection,
   type BuilderAssetFieldCatalog,
 } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
@@ -22,6 +23,7 @@ import {
   type AssetResourceContentReader,
 } from "./hydration";
 import { appendAssetFieldPath } from "./canonical";
+import { selectAssetProperties } from "./projection";
 
 export class AssetQueryExecutionError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -281,7 +283,32 @@ const compareSortValues = (left: unknown, right: unknown) => {
   );
 };
 
-const toQueryItem = (document: AssetFileDocument): AssetQueryItem => ({
+const selectProperties = (
+  document: AssetFileDocument,
+  output: AssetResourceOutputSelection
+) => {
+  if (output.mode === "all") {
+    return document.properties;
+  }
+  return output.mode === "fields"
+    ? selectAssetProperties({
+        properties: document.properties,
+        fields: output.fields,
+      })
+    : {};
+};
+
+const includesExcerpt = (output: AssetResourceOutputSelection) =>
+  output.mode === "all" ||
+  (output.mode === "fields" &&
+    output.fields.some(
+      (field) => field.length === 1 && field[0] === "excerpt"
+    ));
+
+const toQueryItem = (
+  document: AssetFileDocument,
+  output: AssetResourceOutputSelection
+): AssetQueryItem => ({
   id: document._id,
   name: document.name,
   path: document.path,
@@ -291,8 +318,10 @@ const toQueryItem = (document: AssetFileDocument): AssetQueryItem => ({
   mimeType: document.mimeType,
   size: document.size,
   revision: document.revision,
-  properties: document.properties,
-  ...(document.excerpt === undefined ? {} : { excerpt: document.excerpt }),
+  properties: selectProperties(document, output),
+  ...(document.excerpt === undefined || includesExcerpt(output) === false
+    ? {}
+    : { excerpt: document.excerpt }),
   ...(document.metadataError === undefined
     ? {}
     : { metadataError: document.metadataError }),
@@ -342,7 +371,7 @@ export const executeAssetQuery = async ({
     return compareStrings(left._id, right._id);
   });
   const selected = sorted.slice(query.offset, query.offset + query.limit);
-  let items = selected.map(toQueryItem);
+  let items = selected.map((document) => toQueryItem(document, query.output));
   if (query.content.mode !== "none") {
     const contentOptions = query.content;
     if (read === undefined) {

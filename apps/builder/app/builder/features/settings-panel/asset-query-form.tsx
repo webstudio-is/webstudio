@@ -67,6 +67,9 @@ export const AssetQueryForm = ({
         configuration.where
       ).map(({ field }) => field),
       ...configuration.sort.map(({ field }) => field),
+      ...(configuration.output.mode === "fields"
+        ? configuration.output.fields
+        : []),
     ].sort((left, right) =>
       getQueryFieldKey(left).localeCompare(getQueryFieldKey(right))
     )

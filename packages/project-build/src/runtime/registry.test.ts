@@ -1816,6 +1816,7 @@ describe("builder runtime read families", () => {
           sort: [],
           limit: "1",
           offset: "0",
+          output: { mode: "all" },
           content: { mode: "markdown-body", maxBytes: 65_536 },
         },
       }),

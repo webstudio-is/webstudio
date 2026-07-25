@@ -78,6 +78,7 @@ export const createAssetResourceBody = (
     sort: configuration.sort,
     limit: normalizeExpression(configuration.limit),
     offset: normalizeExpression(configuration.offset),
+    output: configuration.output,
     content: configuration.content,
   });
 
@@ -175,6 +176,7 @@ const serializeAssetResource = ({
                 expression: configuration.offset,
                 dataSources: state.dataSources,
               }),
+              output: configuration.output,
               content: configuration.content,
             },
           }),
@@ -294,6 +296,7 @@ export const updateAssetsResource = (
           sort: storedConfiguration.sort,
           limit: storedConfiguration.limit,
           offset: storedConfiguration.offset,
+          output: storedConfiguration.output,
           content: storedConfiguration.content,
         };
   const query =

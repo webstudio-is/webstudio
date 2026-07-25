@@ -18,6 +18,7 @@ import {
   getAllPages,
   getStyleDeclKey,
   isConfiguredAssetsResource,
+  mergeAssetQueryRequirements,
   parseStructuredAssetQueryResourceBody,
   type Asset,
   type AssetFolder,
@@ -170,26 +171,27 @@ const addProjectMetadata = async (
       reachableResourceIds.add(dataSource.resourceId);
     }
   }
-  const hasAssetQueries = data.build.resources
-    .map(([, resource]) => resource)
-    .some((resource) => {
-      if (reachableResourceIds.has(resource.id) === false) {
-        return false;
-      }
-      if (isConfiguredAssetsResource(resource) === false) {
-        return false;
-      }
-      if (parseStructuredAssetQueryResourceBody(resource.body) === undefined) {
-        throw new Error(
-          `Assets resource ${JSON.stringify(resource.id)} has an invalid query configuration`
-        );
-      }
-      return true;
-    });
+  const assetQueries = [];
+  for (const [, resource] of data.build.resources) {
+    if (
+      reachableResourceIds.has(resource.id) === false ||
+      isConfiguredAssetsResource(resource) === false
+    ) {
+      continue;
+    }
+    const query = parseStructuredAssetQueryResourceBody(resource.body);
+    if (query === undefined) {
+      throw new Error(
+        `Assets resource ${JSON.stringify(resource.id)} has an invalid query configuration`
+      );
+    }
+    assetQueries.push(query);
+  }
+  const assetRequirements = mergeAssetQueryRequirements(assetQueries);
   let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
-  if (hasAssetQueries) {
+  if (assetRequirements !== undefined) {
     const assetClient = createAssetClient();
     const assetRepository = new PostgresAssetRepository({
       projectId: project.id,
@@ -203,10 +205,11 @@ const addProjectMetadata = async (
     );
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const assetDataBefore = await loadAssetDataByProject(project.id, context);
-      const preparedIndex = await assetRepository.prepareIndex();
+      const preparedIndex =
+        await assetRepository.prepareIndex(assetRequirements);
       const [assetDataAfter, latestIndex] = await Promise.all([
         loadAssetDataByProject(project.id, context),
-        assetRepository.readIndex(),
+        assetRepository.readIndex(assetRequirements),
       ]);
       const assetsStayedStable =
         JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter) &&

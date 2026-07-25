@@ -47,7 +47,17 @@ export const genericQueryCapabilities = {
         defaultValue: { mode: "summary" },
         schema: {
           type: "object",
-          properties: { mode: { enum: ["summary", "full"] } },
+          properties: {
+            mode: { enum: ["summary", "full", "fields"] },
+            fields: {
+              type: "array",
+              items: {
+                type: "array",
+                items: { type: "string" },
+                minItems: 1,
+              },
+            },
+          },
           required: ["mode"],
           additionalProperties: false,
         },
@@ -67,6 +77,19 @@ export const genericQueryCapabilities = {
               defaultValue: { mode: "full" },
               fields: [],
             },
+            {
+              value: "fields",
+              label: "Fields",
+              defaultValue: { mode: "fields", fields: [] },
+              fields: [
+                {
+                  key: "fields",
+                  label: "Fields",
+                  type: "field-list",
+                  max: 2,
+                },
+              ],
+            },
           ],
         },
       },
@@ -77,5 +100,10 @@ export const genericQueryCapabilities = {
 export type GenericQuery = StructuredQuery<
   string[],
   "eq" | "after",
-  { selection: { mode: "summary" | "full" } }
+  {
+    selection: {
+      mode: "summary" | "full" | "fields";
+      fields?: string[][];
+    };
+  }
 >;

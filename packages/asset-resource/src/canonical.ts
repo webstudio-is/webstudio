@@ -26,7 +26,51 @@ export type CanonicalAssetFileEntry = {
   assetId: string;
   revision: string;
   document: AssetFileDocument;
+  metadataRequirements?: CanonicalAssetMetadataRequirements;
 };
+
+export type CanonicalAssetMetadataRequirements = {
+  structuredProperties: boolean;
+  excerpt: boolean;
+};
+
+export const fullCanonicalAssetMetadataRequirements = {
+  structuredProperties: true,
+  excerpt: true,
+} as const satisfies CanonicalAssetMetadataRequirements;
+
+export type CanonicalAssetMetadataTier =
+  | "base"
+  | "properties"
+  | "excerpt"
+  | "properties+excerpt";
+
+/** Stable cache identity for the four supported metadata preparation tiers. */
+export const getCanonicalAssetMetadataTier = ({
+  structuredProperties,
+  excerpt,
+}: CanonicalAssetMetadataRequirements): CanonicalAssetMetadataTier => {
+  if (structuredProperties && excerpt) {
+    return "properties+excerpt";
+  }
+  if (structuredProperties) {
+    return "properties";
+  }
+  if (excerpt) {
+    return "excerpt";
+  }
+  return "base";
+};
+
+export const satisfiesCanonicalAssetMetadataRequirements = ({
+  cached,
+  required,
+}: {
+  cached: CanonicalAssetMetadataRequirements;
+  required: CanonicalAssetMetadataRequirements;
+}) =>
+  (required.structuredProperties === false || cached.structuredProperties) &&
+  (required.excerpt === false || cached.excerpt);
 
 export type ObservedFieldType =
   | "null"
@@ -226,9 +270,11 @@ export const getFieldContributions = (
 export const createCanonicalAssetFileEntry = ({
   projectId,
   document,
+  metadataRequirements = fullCanonicalAssetMetadataRequirements,
 }: {
   projectId: string;
   document: unknown;
+  metadataRequirements?: CanonicalAssetMetadataRequirements;
 }): CanonicalAssetFileEntry => {
   const parsedDocument = assetFileDocument.parse(document);
   if (
@@ -242,6 +288,7 @@ export const createCanonicalAssetFileEntry = ({
     assetId: parsedDocument._id,
     revision: parsedDocument.revision,
     document: parsedDocument,
+    metadataRequirements,
   };
 };
 

@@ -184,7 +184,7 @@ describe("asset content revisions", () => {
     });
   });
 
-  test("reindexes Markdown metadata after replacing its content", async () => {
+  test("reindexes replaced Markdown content only at a query synchronization boundary", async () => {
     const source = "---\ntitle: Updated post\n---\n\nUpdated body";
     const sourceBytes = new TextEncoder().encode(source);
     const markdownFile = {
@@ -245,6 +245,7 @@ describe("asset content revisions", () => {
         HttpResponse.json("updated")
       ),
       db.get("AssetFolder", () => json([])),
+      db.get("AssetFileMetadata", () => json([])),
       db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
         canonicalDocument = (
           (await request.json()) as {
@@ -255,7 +256,7 @@ describe("asset content revisions", () => {
       })
     );
 
-    await new PostgresAssetRepository({
+    const repository = new PostgresAssetRepository({
       projectId: "project",
       context: createContext(),
       assetStore: {
@@ -269,12 +270,15 @@ describe("asset content revisions", () => {
           return { data: new Blob([source]).stream() };
         },
       },
-    }).updateContent({
+    });
+    await repository.updateContent({
       assetId: "asset",
       expectedName: markdownFile.name,
       data: new Blob([source]).stream(),
     });
 
+    expect(canonicalDocument).toBeUndefined();
+    await repository.synchronize();
     expect(canonicalDocument).toMatchObject({
       _id: "asset",
       name: "post.md",

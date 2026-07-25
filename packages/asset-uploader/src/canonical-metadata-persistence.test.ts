@@ -34,6 +34,10 @@ const entry = createCanonicalAssetFileEntry({
   projectId: "project-1",
   document,
 });
+const storedDocument = {
+  ...document,
+  $webstudioMetadataRequirements: "properties+excerpt",
+};
 const row = {
   ...entry,
   document,
@@ -70,7 +74,7 @@ describe("canonical asset metadata persistence", () => {
           p_project_id: "project-1",
           p_asset_id: "asset-1",
           p_revision: "sha256:one",
-          p_document: document,
+          p_document: storedDocument,
           p_source: {
             storageName: "stored.md",
             fileUpdatedAt: "2026-07-18T00:00:00.000Z",
@@ -141,6 +145,36 @@ describe("canonical asset metadata persistence", () => {
     ).resolves.toEqual([entry]);
   });
 
+  test("loads cached metadata requirements without exposing the storage marker", async () => {
+    server.use(
+      db.get("AssetFileMetadata", () =>
+        json({
+          ...row,
+          document: {
+            ...document,
+            properties: {},
+            $webstudioMetadataRequirements: "excerpt",
+          },
+        })
+      )
+    );
+
+    const loaded = await loadCanonicalAssetFileEntry({
+      client: testContext.postgrest.client,
+      projectId: "project-1",
+      assetId: "asset-1",
+      revision: "sha256:one",
+    });
+
+    expect(loaded?.metadataRequirements).toEqual({
+      structuredProperties: false,
+      excerpt: true,
+    });
+    expect(loaded?.document).not.toHaveProperty(
+      "$webstudioMetadataRequirements"
+    );
+  });
+
   test("rejects rows whose database and document identities disagree", async () => {
     server.use(
       db.get("AssetFileMetadata", () => json({ ...row, assetId: "asset-2" }))
@@ -183,7 +217,7 @@ describe("canonical asset metadata persistence", () => {
             p_project_id: "project-1",
             p_asset_id: "asset-1",
             p_revision: "sha256:one",
-            p_document: document,
+            p_document: storedDocument,
           });
           return json(1);
         }
