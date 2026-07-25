@@ -301,6 +301,59 @@ export const serverOnlyRouterOperationMetadata = {
               minimum: 0,
               maximum: 1000,
             },
+            output: {
+              default: {
+                mode: "all",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "all",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "base",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "fields",
+                    },
+                    fields: {
+                      maxItems: 256,
+                      type: "array",
+                      items: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                    },
+                  },
+                  required: ["mode", "fields"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             content: {
               default: {
                 mode: "none",
@@ -612,6 +665,59 @@ export const serverOnlyRouterOperationMetadata = {
               type: "integer",
               minimum: 0,
               maximum: 1000,
+            },
+            output: {
+              default: {
+                mode: "all",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "all",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "base",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "fields",
+                    },
+                    fields: {
+                      maxItems: 256,
+                      type: "array",
+                      items: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                    },
+                  },
+                  required: ["mode", "fields"],
+                  additionalProperties: false,
+                },
+              ],
             },
             content: {
               default: {
