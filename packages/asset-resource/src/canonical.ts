@@ -6,7 +6,7 @@ import {
 import {
   compareStrings,
   serializeJsonDeterministically,
-} from "@webstudio-is/project-store/json";
+} from "@webstudio-is/project-store";
 import { getStructuredDataByteLength } from "./structured-data";
 
 export type AssetFileMetadataInput = {

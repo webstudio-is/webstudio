@@ -15,7 +15,7 @@ import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   compareStrings,
   serializeJsonDeterministically,
-} from "@webstudio-is/project-store/json";
+} from "@webstudio-is/project-store";
 import {
   hydrateAssetResourceResult,
   type AssetResourceContentReader,

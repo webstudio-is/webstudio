@@ -11,7 +11,10 @@ export COMPOSE_PROJECT_NAME="${E2E_COMPOSE_PROJECT_NAME:-builder-e2e}"
 export PGPORT="${E2E_PGPORT:-55434}"
 export POSTGREST_PORT="${E2E_POSTGREST_PORT:-55435}"
 export POSTGRES_DB="${E2E_POSTGRES_DB:-webstudio}"
-export POSTGRES_USER="${E2E_POSTGRES_USER:-postgres}"
+# The Supabase image owns the schema as this required bootstrap role. Callers
+# can still replace migration connections through E2E_DATABASE_URL and
+# E2E_DIRECT_URL.
+export POSTGRES_USER="supabase_admin"
 export POSTGRES_PASSWORD="${E2E_POSTGRES_PASSWORD:-pass}"
 export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}?pgbouncer=true}"
 export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}}"

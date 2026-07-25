@@ -4,14 +4,12 @@ CREATE TABLE "AssetFileMetadata" (
   "projectId" TEXT NOT NULL,
   "assetId" TEXT NOT NULL,
   "revision" TEXT NOT NULL,
-  "metadataToken" TEXT NOT NULL DEFAULT gen_random_uuid()::TEXT,
   "document" JSONB NOT NULL,
-  "fieldContributions" JSONB NOT NULL DEFAULT '[]',
   "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT "AssetFileMetadata_pkey"
-    PRIMARY KEY ("projectId", "assetId", "revision"),
+    PRIMARY KEY ("projectId", "assetId"),
   CONSTRAINT "AssetFileMetadata_document_identity_check"
     CHECK ((
       jsonb_typeof("document") = 'object'
@@ -20,8 +18,6 @@ CREATE TABLE "AssetFileMetadata" (
       AND jsonb_typeof("document"->'revision') = 'string'
       AND "document"->>'revision' = "revision"
     ) IS TRUE),
-  CONSTRAINT "AssetFileMetadata_field_contributions_check"
-    CHECK (jsonb_typeof("fieldContributions") = 'array'),
   CONSTRAINT "AssetFileMetadata_assetId_projectId_fkey"
     FOREIGN KEY ("assetId", "projectId") REFERENCES "Asset"("id", "projectId")
     ON DELETE CASCADE ON UPDATE CASCADE
@@ -32,7 +28,6 @@ CREATE FUNCTION replace_asset_file_metadata(
   p_asset_id TEXT,
   p_revision TEXT,
   p_document JSONB,
-  p_field_contributions JSONB,
   p_source JSONB
 )
 RETURNS BOOLEAN
@@ -68,29 +63,21 @@ BEGIN
     "assetId",
     "revision",
     "document",
-    "fieldContributions",
     "updatedAt"
   ) VALUES (
     p_project_id,
     p_asset_id,
     p_revision,
     p_document,
-    p_field_contributions,
     CURRENT_TIMESTAMP
   )
-  ON CONFLICT ("projectId", "assetId", "revision")
+  ON CONFLICT ("projectId", "assetId")
   DO UPDATE SET
-    "metadataToken" = gen_random_uuid()::TEXT,
+    "revision" = EXCLUDED."revision",
     "document" = EXCLUDED."document",
-    "fieldContributions" = EXCLUDED."fieldContributions",
     "updatedAt" = EXCLUDED."updatedAt"
-  WHERE "AssetFileMetadata"."document" IS DISTINCT FROM EXCLUDED."document"
-    OR "AssetFileMetadata"."fieldContributions" IS DISTINCT FROM EXCLUDED."fieldContributions";
-
-  DELETE FROM public."AssetFileMetadata"
-  WHERE "projectId" = p_project_id
-    AND "assetId" = p_asset_id
-    AND "revision" <> p_revision;
+  WHERE "AssetFileMetadata"."revision" IS DISTINCT FROM EXCLUDED."revision"
+    OR "AssetFileMetadata"."document" IS DISTINCT FROM EXCLUDED."document";
 
   RETURN TRUE;
 END;

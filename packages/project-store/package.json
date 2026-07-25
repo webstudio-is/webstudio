@@ -1,17 +1,20 @@
 {
   "name": "@webstudio-is/project-store",
   "version": "0.0.0-webstudio-version",
-  "description": "Portable storage and deterministic JSON primitives",
+  "description": "Portable storage and canonical JSON primitives",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf lib && esbuild src/index.ts src/json.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "canonicalize": "3.0.0"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
@@ -24,12 +27,6 @@
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js",
       "default": "./src/index.ts"
-    },
-    "./json": {
-      "webstudio": "./src/json.ts",
-      "types": "./lib/types/json.d.ts",
-      "import": "./lib/json.js",
-      "default": "./src/json.ts"
     }
   },
   "files": [

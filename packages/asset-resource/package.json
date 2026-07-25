@@ -10,7 +10,7 @@
   "scripts": {
     "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
     "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
-    "build": "rm -rf lib && esbuild src/index.ts src/published-runtime.ts src/markdown.ts src/json.ts src/indexing.ts src/structured-query.ts src/asset-index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/published-runtime.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -39,24 +39,6 @@
       "types": "./lib/types/published-runtime.d.ts",
       "import": "./lib/published-runtime.js",
       "default": "./src/published-runtime.ts"
-    },
-    "./markdown": {
-      "webstudio": "./src/markdown.ts",
-      "types": "./lib/types/markdown.d.ts",
-      "import": "./lib/markdown.js",
-      "default": "./src/markdown.ts"
-    },
-    "./json": {
-      "webstudio": "./src/json.ts",
-      "types": "./lib/types/json.d.ts",
-      "import": "./lib/json.js",
-      "default": "./src/json.ts"
-    },
-    "./indexing": {
-      "webstudio": "./src/indexing.ts",
-      "types": "./lib/types/indexing.d.ts",
-      "import": "./lib/indexing.js",
-      "default": "./src/indexing.ts"
     }
   },
   "files": [
