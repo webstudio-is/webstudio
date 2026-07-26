@@ -248,6 +248,13 @@ export class PostgresAssetRepository
   }
 
   private async assertCanBuild() {
+    // The publisher loads an immutable production build with service
+    // credentials and prepares its derived Assets index as part of that build.
+    // Keep this exception scoped to index preparation: service credentials do
+    // not bypass the edit checks used by asset mutations.
+    if (this.context.authorization?.type === "service") {
+      return;
+    }
     const canBuild = await this.dependencies.hasProjectPermit(
       { projectId: this.projectId, permit: "build" },
       this.context

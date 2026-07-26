@@ -390,6 +390,33 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
   });
 
+  test("allows the publisher service to prepare an index without granting asset edits", async () => {
+    const dependencies = createDependencies();
+    dependencies.hasProjectPermit.mockResolvedValue(false);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const serviceContext = {
+      ...context,
+      authorization: { type: "service", isServiceCall: true },
+    } as AppContext;
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context: serviceContext,
+      assetClient,
+      dependencies,
+    });
+
+    await expect(repository.prepareIndex()).resolves.toMatchObject({
+      documents: [],
+    });
+    await expect(repository.synchronize()).rejects.toThrow("access to edit");
+    expect(dependencies.hasProjectPermit).toHaveBeenCalledOnce();
+    expect(dependencies.hasProjectPermit).toHaveBeenCalledWith(
+      { projectId: "project-1", permit: "edit" },
+      serviceContext
+    );
+  });
+
   test("repairs canonical metadata before creating an index", async () => {
     const dependencies = createDependencies();
     const entries = [
