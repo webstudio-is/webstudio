@@ -14,7 +14,7 @@ import {
   publicApiOperations,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
-import { getHomePage } from "@webstudio-is/sdk";
+import { getHomePage, isConfiguredAssetsResource } from "@webstudio-is/sdk";
 import {
   createProjectSession,
   createDefaultProjectSessionCompatibility,
@@ -517,9 +517,26 @@ export type CliProjectSessionSnapshot = {
   freshness: BuilderStateFreshness;
 };
 
+export const loadCliProjectSessionAssetIndex = async (
+  snapshot: ProjectSessionSnapshot,
+  connection: ApiConnection,
+  loadProjectBundle = httpClient.loadProjectBundleByProjectId
+) => {
+  const hasConfiguredAssetsResource = Array.from(
+    snapshot.state.resources?.values() ?? []
+  ).some(isConfiguredAssetsResource);
+  if (hasConfiguredAssetsResource === false) {
+    return;
+  }
+  return (await loadProjectBundle(connection)).assetIndex;
+};
+
 export const createLocalProjectBundleFromSessionSnapshot = (
   snapshot: ProjectSessionSnapshot,
-  options: { origin?: string } = {}
+  options: {
+    origin?: string;
+    assetIndex?: PublishedProjectBundle["assetIndex"];
+  } = {}
 ): PublishedProjectBundle => {
   const pages = snapshot.state.pages;
   if (pages === undefined) {
@@ -545,6 +562,7 @@ export const createLocalProjectBundleFromSessionSnapshot = (
     pages: Array.from(persistedPages.pages.values()),
     assets: Array.from(snapshot.state.assets?.values() ?? []),
     assetFolders: Array.from(snapshot.state.assetFolders?.values() ?? []),
+    assetIndex: options.assetIndex,
     build: {
       id: snapshot.buildId,
       projectId: snapshot.projectId,
@@ -560,7 +578,10 @@ export const createLocalProjectBundleFromSessionSnapshot = (
 export const writeCliProjectSessionDataFile = async (
   snapshot: ProjectSessionSnapshot,
   path = join(cwd(), LOCAL_DATA_FILE),
-  options: { origin?: string } = {}
+  options: {
+    origin?: string;
+    assetIndex?: PublishedProjectBundle["assetIndex"];
+  } = {}
 ) => {
   const data = createLocalProjectBundleFromSessionSnapshot(snapshot, options);
   await writeFileAtomic(path, `${JSON.stringify(data, undefined, 2)}\n`);

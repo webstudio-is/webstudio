@@ -26,7 +26,9 @@ const createDependencies = () => {
     dependencies: {
       preventCrossOriginCookie: vi.fn(),
       checkCsrf: vi.fn(),
-      createAssetRestContext: vi.fn(async () => ({ context: true })) as never,
+      authorizeAssetRestProject: vi.fn(async () => ({
+        context: true,
+      })) as never,
       createAssetClient: vi.fn(() => ({ storage: true })) as never,
       createRepository: vi.fn(() => ({
         updateMetadata,
@@ -86,7 +88,11 @@ describe("mutable Assets REST route", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ asset });
     expect(dependencies.checkCsrf).not.toHaveBeenCalled();
-    expect(dependencies.createAssetRestContext).toHaveBeenCalledOnce();
+    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+      expect.any(Request),
+      "project-1",
+      "build"
+    );
     expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
       filename: "Post",
       folderId: null,

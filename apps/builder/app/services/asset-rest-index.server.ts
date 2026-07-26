@@ -31,7 +31,7 @@ export const createAssetIndexRefreshAction =
     }
     try {
       const result = await (
-        await dependencies.createRepository(request)
+        await dependencies.createRepository(request, "build")
       ).synchronize();
       return json(result, {
         status: result.issues.length === 0 ? 200 : 503,

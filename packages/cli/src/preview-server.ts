@@ -350,6 +350,29 @@ export const waitForPreviewReady = async (
         method: "GET",
         signal: AbortSignal.timeout(attemptTimeoutMs),
       });
+      if (response.status === 401 && requiredProject !== undefined) {
+        const identityResponse = await dependencies.fetch(
+          new URL("/__webstudio/preview.json", url),
+          {
+            method: "GET",
+            signal: AbortSignal.timeout(attemptTimeoutMs),
+          }
+        );
+        if (identityResponse.ok) {
+          const identity = (await identityResponse.json()) as {
+            projectId?: unknown;
+            version?: unknown;
+          };
+          if (
+            identity.projectId === requiredProject.projectId &&
+            (requiredProject.version === undefined ||
+              identity.version === requiredProject.version)
+          ) {
+            return;
+          }
+          sawUnexpectedProject = true;
+        }
+      }
       if (response.status < 500) {
         if (requiredAssetNames.length === 0 && requiredProject === undefined) {
           return;

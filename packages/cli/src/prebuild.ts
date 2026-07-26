@@ -430,6 +430,23 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   );
 };
 
+const removeUnusedAssetResourceDependency = async () => {
+  const packagePath = join(cwd(), "package.json");
+  const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as {
+    dependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  };
+  delete packageJson.dependencies?.["@webstudio-is/asset-resource"];
+  const buildScript = packageJson.scripts?.build;
+  if (buildScript !== undefined) {
+    packageJson.scripts!.build = buildScript.replace(
+      " && node scripts/cleanup-derived-assets.mjs",
+      ""
+    );
+  }
+  await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+};
+
 export const getRequiredAssetResourceContentRefs = ({
   index,
   resources,
@@ -705,6 +722,8 @@ export const prebuild = async (options: {
   incremental?: boolean;
   /** Retain route template inputs for a later incremental generation. */
   preserveRouteTemplates?: boolean;
+  /** Emit a public identity marker used only by the local preview controller. */
+  previewIdentity?: boolean;
 }) => {
   const buildRoot = cwd();
   const feedback = options.silent
@@ -817,6 +836,9 @@ export const prebuild = async (options: {
     );
   }
   const siteData = parsedSiteData.data;
+  if (siteData.assetIndex === undefined) {
+    await removeUnusedAssetResourceDependency();
+  }
 
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
@@ -1296,6 +1318,19 @@ export const prebuild = async (options: {
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
   });
+
+  if (options.previewIdentity) {
+    const previewIdentityDirectory = join(buildRoot, "public", "__webstudio");
+    await createFolderIfNotExists(previewIdentityDirectory);
+    await writeFile(
+      join(previewIdentityDirectory, "preview.json"),
+      JSON.stringify({
+        projectId: siteData.build.projectId,
+        version: siteData.build.version,
+      }),
+      "utf8"
+    );
+  }
 
   // Generate assets resource file.
   // Use a placeholder origin to preserve runtime metadata before overriding the

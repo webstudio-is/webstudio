@@ -128,7 +128,7 @@ export const getProjectPublishJob = async (
 ) => {
   const result = await context.postgrest.client
     .from("Build")
-    .select("id, version, createdAt, deployment")
+    .select("id, version, createdAt, updatedAt, deployment, publishStatus")
     .eq("projectId", input.projectId)
     .eq("id", input.jobId)
     .maybeSingle();
@@ -142,16 +142,27 @@ export const getProjectPublishJob = async (
   }
 
   const deployment = parseDeployment(publishJob.deployment);
+  const status =
+    deployment === undefined
+      ? "removed"
+      : publishJob.publishStatus === "PUBLISHED"
+        ? "success"
+        : publishJob.publishStatus === "FAILED"
+          ? "failed"
+          : "pending";
   return {
     id: publishJob.id,
     version: publishJob.version,
-    status: deployment === undefined ? "removed" : "success",
+    status,
     domains:
       deployment !== undefined && deployment.destination !== "static"
         ? deployment.domains
         : [],
     createdAt: publishJob.createdAt,
-    completedAt: publishJob.createdAt,
+    completedAt:
+      status === "success" || status === "failed"
+        ? publishJob.updatedAt
+        : undefined,
   };
 };
 

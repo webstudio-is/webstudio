@@ -952,6 +952,26 @@ export const deleteProjectAssetFolder = async (
   }
 };
 
+// Bundle reads remain structurally compatible across this Assets rollout: the
+// new index is optional derived data and the folder changes only add limits.
+// Retry the immediately preceding contract so a new CLI can sync while an old
+// Builder API is still serving during a rolling deployment.
+const previousBundleVersion = "bundle-1l6lbch";
+
+const loadRollingReleaseProjectBundle = async (
+  load: (bundleVersion: string) => Promise<unknown>
+) => {
+  try {
+    return await load(currentBundleVersion);
+  } catch (error) {
+    const compatibility = getApiCompatibilityPayload(error);
+    if (compatibility?.reason !== "clientVersionUnsupported") {
+      throw error;
+    }
+    return await load(previousBundleVersion);
+  }
+};
+
 export const loadProjectBundleByBuildId = async (
   params: {
     buildId: string;
@@ -972,26 +992,29 @@ export const loadProjectBundleByBuildId = async (
         ? { "x-auth-token": params.authToken }
         : {};
 
-  const data = await createTrpcClient(params.origin, {
+  const client = createTrpcClient(params.origin, {
     ...params.headers,
     ...headers,
-  }).query("build.loadProjectBundleByBuildId", {
-    buildId: params.buildId,
-    bundleVersion: currentBundleVersion,
   });
+  const load = async (bundleVersion: string) =>
+    await client.query("build.loadProjectBundleByBuildId", {
+      buildId: params.buildId,
+      bundleVersion,
+    });
+  const data = await loadRollingReleaseProjectBundle(load);
   return publishedProjectBundle.parse(data);
 };
 
 export const loadProjectBundleByProjectId = async (
   params: AuthProjectParams
 ): Promise<PublishedProjectBundle> => {
-  const data = await createAuthTrpcClient(params).query(
-    "build.loadProjectBundleByProjectId",
-    {
+  const client = createAuthTrpcClient(params);
+  const load = async (bundleVersion: string) =>
+    await client.query("build.loadProjectBundleByProjectId", {
       projectId: params.projectId,
-      bundleVersion: currentBundleVersion,
-    }
-  );
+      bundleVersion,
+    });
+  const data = await loadRollingReleaseProjectBundle(load);
   return publishedProjectBundle.parse(data);
 };
 

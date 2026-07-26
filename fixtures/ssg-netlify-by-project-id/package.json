@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "vite build && vike prerender && node scripts/cleanup-derived-assets.mjs",
+    "build": "vite build && vike prerender",
     "build:debug": "pnpm build && cd dist && oxfmt '**/*.html'",
     "dev": "vite dev",
     "typecheck": "tsc --noEmit",
@@ -42,7 +42,6 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "vike": "^0.4.229",
-    "@webstudio-is/wsauth": "workspace:*",
-    "@webstudio-is/asset-resource": "workspace:*"
+    "@webstudio-is/wsauth": "workspace:*"
   }
 }

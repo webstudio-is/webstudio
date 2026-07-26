@@ -17,7 +17,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return assetRestMethodNotAllowed(["GET"]);
   }
   try {
-    const assets = await (await createAssetRestRepository(request)).list();
+    const assets = await (
+      await createAssetRestRepository(request, "view")
+    ).list();
     return json({ assets }, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
     return assetRestErrorResponse(error);

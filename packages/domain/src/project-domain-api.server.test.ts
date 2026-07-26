@@ -387,6 +387,8 @@ test("returns publish job status from deployment record", async () => {
         id: "build-prod",
         version: 3,
         createdAt: "2024-01-03T00:00:00.000Z",
+        updatedAt: "2024-01-03T00:01:00.000Z",
+        publishStatus: "PUBLISHED",
         deployment: JSON.stringify({
           destination: "saas",
           domains: ["example.com"],
@@ -406,9 +408,40 @@ test("returns publish job status from deployment record", async () => {
     status: "success",
     domains: ["example.com"],
     createdAt: "2024-01-03T00:00:00.000Z",
-    completedAt: "2024-01-03T00:00:00.000Z",
+    completedAt: "2024-01-03T00:01:00.000Z",
   });
 });
+
+test.each([
+  ["PENDING", "pending", undefined],
+  ["FAILED", "failed", "2024-01-03T00:01:00.000Z"],
+] as const)(
+  "maps %s publisher state without claiming success",
+  async (publishStatus, status, completedAt) => {
+    server.use(
+      db.get("Build", () =>
+        json({
+          id: "build-prod",
+          version: 3,
+          createdAt: "2024-01-03T00:00:00.000Z",
+          updatedAt: "2024-01-03T00:01:00.000Z",
+          publishStatus,
+          deployment: JSON.stringify({
+            destination: "saas",
+            domains: ["example.com"],
+          }),
+        })
+      )
+    );
+
+    await expect(
+      getProjectPublishJob(
+        { projectId: "project-1", jobId: "build-prod" },
+        context
+      )
+    ).resolves.toMatchObject({ status, completedAt });
+  }
+);
 
 test("returns undefined when publish job is missing", async () => {
   server.use(db.get("Build", () => empty({ status: 204 })));

@@ -41,6 +41,7 @@ import { sync, defaultSyncDependencies, type SyncDependencies } from "./sync";
 import { resolveApiConnection } from "../api-connection";
 import {
   createCliProjectSession,
+  loadCliProjectSessionAssetIndex,
   writeCliProjectSessionDataFile,
 } from "../project-session";
 import { LOCAL_ASSETS_DIR } from "../asset-files";
@@ -441,8 +442,13 @@ export const preparePreviewProject = async ({
     const session = createCliProjectSession({ connection });
     await session.initialize();
     const snapshot = await session.ensureNamespaces(builderNamespaces);
+    const assetIndex = await loadCliProjectSessionAssetIndex(
+      snapshot,
+      connection
+    );
     await writeCliProjectSessionDataFile(snapshot, undefined, {
       origin: connection.origin,
+      assetIndex,
     });
   },
 }: {
@@ -528,6 +534,7 @@ export const preparePreviewProject = async ({
         await prebuildProject({
           assets,
           template: getPreviewTemplates(template),
+          previewIdentity: true,
           ...(silent ? { silent: true } : {}),
           ...(includeDraftPages ? { includeDraftPages: true } : {}),
           ...(reuseGeneratedProject ? { incremental: true } : {}),

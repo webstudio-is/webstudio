@@ -1,4 +1,5 @@
 import { json } from "@remix-run/server-runtime";
+import { TRPCError } from "@trpc/server";
 import {
   readBoundedRequestBytes,
   RequestByteLimitError,
@@ -17,7 +18,7 @@ import { ZodError } from "zod";
 import { createAssetClient } from "~/shared/asset-client";
 import { parseError } from "~/shared/error/error-parse";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
-import { createAssetRestContext } from "./asset-rest-auth.server";
+import { authorizeAssetRestProject } from "./asset-rest-auth.server";
 
 export class AssetRestRequestError extends Error {}
 export class AssetRestRangeError extends Error {}
@@ -129,16 +130,25 @@ export const getAssetRestProjectId = (request: Request) => {
   return parseAssetRestIdentifier(projectId);
 };
 
-export const createAssetRestRepository = async (request: Request) => {
+export const createAssetRestRepository = async (
+  request: Request,
+  permit: "view" | "edit" | "build" = "view"
+) => {
   const projectId = getAssetRestProjectId(request);
   return new PostgresAssetRepository({
     projectId,
-    context: await createAssetRestContext(request),
+    context: await authorizeAssetRestProject(request, projectId, permit),
     assetStore: createAssetClient(),
   });
 };
 
 const getAssetRestErrorStatus = (error: unknown) => {
+  if (error instanceof TRPCError && error.code === "UNAUTHORIZED") {
+    return 401;
+  }
+  if (error instanceof TRPCError && error.code === "FORBIDDEN") {
+    return 403;
+  }
   if (error instanceof AuthorizationError) {
     return 403;
   }

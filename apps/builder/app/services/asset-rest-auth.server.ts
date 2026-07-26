@@ -1,4 +1,32 @@
-export { createContext as createAssetRestContext } from "~/shared/context.server";
+import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import { apiClientHeader } from "@webstudio-is/trpc-interface/api-compatibility";
+import { assertApiProjectPermit } from "./api-permits.server";
+import { createContext } from "~/shared/context.server";
+
+export const createAssetRestContext = createContext;
+
+type AssetRestProjectPermit = Extract<AuthPermit, "view" | "edit" | "build">;
+
+/**
+ * Builder requests rely on the repository's normal project authorization,
+ * including share-link sessions that use a token internally. Non-Builder token
+ * clients must additionally be enabled for the public API.
+ */
+export const authorizeAssetRestProject = async (
+  request: Request,
+  projectId: string,
+  permit: AssetRestProjectPermit,
+  dependencies = { createAssetRestContext, assertApiProjectPermit }
+) => {
+  const context = await dependencies.createAssetRestContext(request);
+  if (
+    context.authorization.type === "token" &&
+    request.headers.get(apiClientHeader) !== "browser"
+  ) {
+    await dependencies.assertApiProjectPermit(context, projectId, permit);
+  }
+  return context;
+};
 
 /**
  * Browser mutations use cookie authentication and therefore require CSRF
@@ -8,4 +36,5 @@ export { createContext as createAssetRestContext } from "~/shared/context.server
  * authentication behavior.
  */
 export const requiresAssetMutationCsrf = (request: Request) =>
+  request.headers.get(apiClientHeader) === "browser" ||
   request.headers.has("x-auth-token") === false;

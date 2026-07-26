@@ -3,12 +3,12 @@ import { loadBuilderAssetFieldCatalog } from "@webstudio-is/asset-uploader/index
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { createAssetRestContext } from "~/services/asset-rest-auth.server";
+import { authorizeAssetRestProject } from "~/services/asset-rest-auth.server";
 import { isBuilder } from "../router-utils";
 import { createAssetClient } from "../asset-client";
 
 export type AssetDescriptionDependencies = {
-  createAssetRestContext: typeof createAssetRestContext;
+  authorizeAssetRestProject: typeof authorizeAssetRestProject;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,
     "readFile"
@@ -17,7 +17,7 @@ export type AssetDescriptionDependencies = {
 };
 
 const defaultDependencies: AssetDescriptionDependencies = {
-  createAssetRestContext,
+  authorizeAssetRestProject,
   createAssetClient,
   loadBuilderAssetFieldCatalog,
 };
@@ -69,7 +69,11 @@ export const createAssetDescriptionLoader =
     }
 
     try {
-      const context = await dependencies.createAssetRestContext(request);
+      const context = await dependencies.authorizeAssetRestProject(
+        request,
+        projectId,
+        "view"
+      );
       const catalog = await dependencies.loadBuilderAssetFieldCatalog({
         projectId,
         context,

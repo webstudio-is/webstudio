@@ -8,7 +8,7 @@ import { loader } from "./assets-query.server";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const dependencies = {
-  createAssetRestContext: vi.fn(),
+  authorizeAssetRestProject: vi.fn(),
   createAssetClient: vi.fn(() => ({ readFile: vi.fn() })),
   previewAssetResourceQuery: vi.fn(),
 };
@@ -22,7 +22,7 @@ const innerRequest = (body: unknown) =>
 
 describe("configured Assets system resource", () => {
   beforeEach(() => {
-    dependencies.createAssetRestContext.mockResolvedValue({} as never);
+    dependencies.authorizeAssetRestProject.mockResolvedValue({} as never);
     dependencies.previewAssetResourceQuery.mockReset();
   });
 
@@ -53,7 +53,11 @@ describe("configured Assets system resource", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(responseBody);
-    expect(dependencies.createAssetRestContext).toHaveBeenCalledOnce();
+    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+      expect.any(Request),
+      projectId,
+      "view"
+    );
     expect(dependencies.previewAssetResourceQuery).toHaveBeenCalledWith({
       projectId,
       request: {

@@ -13,7 +13,7 @@ import { preventCrossOriginCookie } from "./no-cross-origin-cookie";
 import { checkCsrf } from "./csrf-session.server";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
 import {
-  createAssetRestContext,
+  authorizeAssetRestProject,
   requiresAssetMutationCsrf,
 } from "./asset-rest-auth.server";
 import {
@@ -65,7 +65,7 @@ export const createAssetContentLoader =
     }
     try {
       const assetId = parseAssetRestIdentifier(params.assetId);
-      const repository = await dependencies.createRepository(request);
+      const repository = await dependencies.createRepository(request, "view");
       const asset = await repository.get(assetId);
       const range = parseRequestRange(request.headers.get("range"), asset.size);
       const content = await repository.readContent({ assetId, range, asset });
@@ -120,7 +120,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       url.searchParams.get("expectedName")
     );
 
-    const context = await createAssetRestContext(request);
+    const context = await authorizeAssetRestProject(
+      request,
+      projectId,
+      "build"
+    );
     const asset = await new PostgresAssetRepository({
       projectId,
       context,

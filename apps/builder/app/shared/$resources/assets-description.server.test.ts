@@ -8,7 +8,7 @@ import { builderSessionCookieName } from "~/services/builder-session.server";
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const assetClient = { readFile: vi.fn() };
 const dependencies = {
-  createAssetRestContext: vi.fn(),
+  authorizeAssetRestProject: vi.fn(),
   createAssetClient: vi.fn(() => assetClient),
   loadBuilderAssetFieldCatalog: vi.fn(),
 };
@@ -32,7 +32,7 @@ const request = (path: string, hostname = `p-${projectId}.localhost`) =>
 describe("asset API descriptions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    dependencies.createAssetRestContext.mockResolvedValue({} as never);
+    dependencies.authorizeAssetRestProject.mockResolvedValue({} as never);
     dependencies.loadBuilderAssetFieldCatalog.mockResolvedValue(catalog);
   });
 
@@ -75,7 +75,11 @@ describe("asset API descriptions", () => {
         },
       },
     });
-    expect(dependencies.createAssetRestContext).toHaveBeenCalledOnce();
+    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+      expect.any(Request),
+      projectId,
+      "view"
+    );
     expect(dependencies.loadBuilderAssetFieldCatalog).toHaveBeenCalledWith({
       projectId,
       context: expect.anything(),

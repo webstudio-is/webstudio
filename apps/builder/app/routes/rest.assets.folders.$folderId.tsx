@@ -30,7 +30,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   try {
     const folderId = parseAssetRestIdentifier(params.folderId);
     const folder = await (
-      await createAssetRestRepository(request)
+      await createAssetRestRepository(request, "view")
     ).getFolder(folderId);
     return json({ folder }, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
@@ -45,7 +45,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
   try {
     const folderId = parseAssetRestIdentifier(params.folderId);
-    const repository = await createAssetRestRepository(request);
+    const repository = await createAssetRestRepository(request, "build");
     if (
       request.method.toLowerCase() ===
       assetResourceApiOperations.updateAssetFolder.method

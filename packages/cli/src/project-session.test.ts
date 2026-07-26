@@ -13,6 +13,7 @@ import {
   getCliProjectSessionFile,
   getCliProjectRestorePointsFile,
   getSupportedPublicApiOperations,
+  loadCliProjectSessionAssetIndex,
 } from "./project-session";
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -28,6 +29,51 @@ test("scopes project session files for explicitly selected projects", () => {
 });
 
 const temporaryDirectories: string[] = [];
+
+test("loads a preview index only for configured Assets resources", async () => {
+  const loadProjectBundle = vi.fn().mockResolvedValue({
+    assetIndex: { marker: "index" },
+  });
+  const connection = {
+    projectId: "project",
+    origin: "https://example.com",
+    authToken: "token",
+  };
+  const snapshot = (resources: Map<string, unknown>) =>
+    ({ state: { resources } }) as never;
+
+  await expect(
+    loadCliProjectSessionAssetIndex(
+      snapshot(new Map()),
+      connection,
+      loadProjectBundle
+    )
+  ).resolves.toBeUndefined();
+  expect(loadProjectBundle).not.toHaveBeenCalled();
+
+  await expect(
+    loadCliProjectSessionAssetIndex(
+      snapshot(
+        new Map([
+          [
+            "posts",
+            {
+              id: "posts",
+              name: "Posts",
+              control: "system",
+              method: "post",
+              url: '"/$resources/assets"',
+              headers: [],
+            },
+          ],
+        ])
+      ),
+      connection,
+      loadProjectBundle
+    )
+  ).resolves.toEqual({ marker: "index" });
+  expect(loadProjectBundle).toHaveBeenCalledOnce();
+});
 
 const createTemporaryDirectory = async () => {
   const directory = await mkdtemp(join(tmpdir(), "webstudio-session-"));
@@ -340,6 +386,7 @@ test("creates preview bundle from project session snapshot", () => {
     ],
   });
 
+  const assetIndex = { marker: "derived-index" } as never;
   const bundle = createLocalProjectBundleFromSessionSnapshot(
     {
       projectId: "project",
@@ -354,10 +401,11 @@ test("creates preview bundle from project session snapshot", () => {
         projectSchemaVersion: "test-schema",
       },
     },
-    { origin: "https://assets.example.com" }
+    { origin: "https://assets.example.com", assetIndex }
   );
 
   expect(bundle.origin).toBe("https://assets.example.com");
+  expect(bundle.assetIndex).toBe(assetIndex);
   expect(bundle.projectTitle).toBe("Session Site");
   expect(bundle.page.id).toBe("home");
   expect(bundle.pages.map((page) => page.path)).toEqual(["", "/design-system"]);

@@ -582,6 +582,26 @@ test("hydrates URL-encoded SSG asset filenames from their decoded filesystem pat
 });
 
 describe("prebuild", () => {
+  test("emits the identity marker only for local previews", async () => {
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      previewIdentity: true,
+    });
+
+    await expect(
+      readFile("public/__webstudio/preview.json", "utf8")
+    ).resolves.toBe(JSON.stringify({ projectId: "project-id", version: 1 }));
+  });
+
+  test("does not add the local preview marker to deployable builds", async () => {
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    await expect(
+      readFile("public/__webstudio/preview.json", "utf8")
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
   test("incrementally replaces only changed generated files", async () => {
     const siteData = createSiteData({
       pages: [
@@ -913,6 +933,9 @@ describe("prebuild", () => {
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
     expect(packageJson.dependencies).not.toHaveProperty("h3");
     expect(packageJson.dependencies).not.toHaveProperty("ipx");
+    expect(packageJson.dependencies).not.toHaveProperty(
+      "@webstudio-is/asset-resource"
+    );
   });
 
   test("generates homepage, leaf, nested, dynamic, and 404 React Router routes", async () => {
@@ -1194,8 +1217,11 @@ describe("prebuild", () => {
       "createSsgAssetResourceFetch"
     );
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
-    expect(packageJson.dependencies).toHaveProperty(
+    expect(packageJson.dependencies).not.toHaveProperty(
       "@webstudio-is/asset-resource"
+    );
+    expect(packageJson.scripts.build).not.toContain(
+      "cleanup-derived-assets.mjs"
     );
   });
 

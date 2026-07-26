@@ -28,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
   try {
     const folders = await (
-      await createAssetRestRepository(request)
+      await createAssetRestRepository(request, "view")
     ).listFolders();
     return json({ folders }, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
@@ -49,7 +49,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   try {
     const folder = await (
-      await createAssetRestRepository(request)
+      await createAssetRestRepository(request, "build")
     ).createFolder(
       assetFolderCreateRequest.parse(await readAssetRestJson(request))
     );

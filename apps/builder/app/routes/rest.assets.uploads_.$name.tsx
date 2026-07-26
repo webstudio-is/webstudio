@@ -18,6 +18,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
+  authorizeAssetRestProject,
   createAssetRestContext,
   requiresAssetMutationCsrf,
 } from "~/services/asset-rest-auth.server";
@@ -30,7 +31,6 @@ import {
   parseAssetRestIdentifier,
   parseAssetRestMetadataHeader,
 } from "~/services/asset-rest.server";
-import { assertApiProjectPermit } from "~/services/api-permits.server";
 import {
   getAssetInfoFallback,
   getBrowserAssetFormat,
@@ -122,7 +122,7 @@ export const action = async (props: ActionFunctionArgs) => {
   const rawAssetType = url.searchParams.get("type");
   const isApiUpload = projectId !== null || rawAssetType !== null;
 
-  if (isApiUpload === false && requiresAssetMutationCsrf(request)) {
+  if (requiresAssetMutationCsrf(request)) {
     await checkCsrf(request);
   }
 
@@ -165,8 +165,11 @@ export const action = async (props: ActionFunctionArgs) => {
         meta: parseAssetRestMetadataHeader(rawAssetMeta),
       });
 
-      const context = await createAssetRestContext(request);
-      await assertApiProjectPermit(context, parsedProjectId, "build");
+      const context = await authorizeAssetRestProject(
+        request,
+        parsedProjectId,
+        "build"
+      );
       const data = await readRequestBody(request.body, params.name);
       const force = url.searchParams.get("force") === "true";
       const assetClient = createAssetClient();

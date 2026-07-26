@@ -13,12 +13,12 @@ import {
 } from "@webstudio-is/sdk";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { createAssetRestContext } from "~/services/asset-rest-auth.server";
+import { authorizeAssetRestProject } from "~/services/asset-rest-auth.server";
 import { isBuilder } from "../router-utils";
 import { createAssetClient } from "../asset-client";
 
 type Dependencies = {
-  createAssetRestContext: typeof createAssetRestContext;
+  authorizeAssetRestProject: typeof authorizeAssetRestProject;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,
     "readFile"
@@ -27,7 +27,7 @@ type Dependencies = {
 };
 
 const defaultDependencies: Dependencies = {
-  createAssetRestContext,
+  authorizeAssetRestProject,
   createAssetClient,
   previewAssetResourceQuery,
 };
@@ -90,7 +90,11 @@ export const loader = async (
     });
   }
   try {
-    const context = await dependencies.createAssetRestContext(request);
+    const context = await dependencies.authorizeAssetRestProject(
+      request,
+      projectId,
+      "view"
+    );
     const result = await dependencies.previewAssetResourceQuery({
       projectId,
       request: parsed,

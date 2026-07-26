@@ -170,6 +170,7 @@ test("prepares preview by syncing missing data and generating the app template",
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
     template: ["react-router"],
+    previewIdentity: true,
   });
   expect(result.cwd).toBe(getPreviewProjectDir());
 });
@@ -199,6 +200,7 @@ test("prepares local verification previews with draft routes", async () => {
     assets: true,
     template: ["react-router"],
     includeDraftPages: true,
+    previewIdentity: true,
   });
 });
 
@@ -260,6 +262,7 @@ test("generates preview project in isolated directory", async () => {
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
     template: ["react-router"],
+    previewIdentity: true,
   });
   expect(ensureDependencies).toHaveBeenCalledOnce();
 });
@@ -337,6 +340,7 @@ test("regenerates a production cache before using it for iterative preview", asy
     assets: true,
     template: ["react-router"],
     preserveRouteTemplates: true,
+    previewIdentity: true,
   });
 });
 
@@ -535,6 +539,7 @@ test("materializes session data before previewing from session source", async ()
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
     template: ["react-router"],
+    previewIdentity: true,
   });
 });
 
@@ -615,6 +620,7 @@ test("keeps the standalone React Router preview template", async () => {
   expect(prebuildProject).toHaveBeenCalledWith({
     assets: true,
     template: ["react-router"],
+    previewIdentity: true,
   });
 });
 

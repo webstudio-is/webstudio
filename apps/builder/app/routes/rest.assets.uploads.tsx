@@ -9,7 +9,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
-  createAssetRestContext,
+  authorizeAssetRestProject,
   requiresAssetMutationCsrf,
 } from "~/services/asset-rest-auth.server";
 import {
@@ -37,8 +37,6 @@ export const action = async (props: ActionFunctionArgs) => {
 
     const { request } = props;
 
-    const context = await createAssetRestContext(request);
-
     if (
       request.method.toLowerCase() ===
       assetResourceApiOperations.reserveAssetUpload.method
@@ -48,6 +46,11 @@ export const action = async (props: ActionFunctionArgs) => {
         ? await readAssetRestJson(request)
         : Object.fromEntries(await readAssetRestFormData(request));
       const input = assetUploadReservationRequest.parse(rawInput);
+      const context = await authorizeAssetRestProject(
+        request,
+        input.projectId,
+        "build"
+      );
       if (
         input.displayFilename !== undefined &&
         isValidFilename(input.displayFilename) === false

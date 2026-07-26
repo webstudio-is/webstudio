@@ -14,7 +14,7 @@ import {
 import { createAssetClient } from "~/shared/asset-client";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
 import {
-  createAssetRestContext,
+  authorizeAssetRestProject,
   requiresAssetMutationCsrf,
 } from "./asset-rest-auth.server";
 import { checkCsrf } from "./csrf-session.server";
@@ -30,7 +30,7 @@ import {
 type Dependencies = {
   preventCrossOriginCookie: typeof preventCrossOriginCookie;
   checkCsrf: typeof checkCsrf;
-  createAssetRestContext: typeof createAssetRestContext;
+  authorizeAssetRestProject: typeof authorizeAssetRestProject;
   createAssetClient: typeof createAssetClient;
   createRepository: (
     input: ConstructorParameters<typeof PostgresAssetRepository>[0]
@@ -40,7 +40,7 @@ type Dependencies = {
 const defaultDependencies: Dependencies = {
   preventCrossOriginCookie,
   checkCsrf,
-  createAssetRestContext,
+  authorizeAssetRestProject,
   createAssetClient,
   createRepository: (input) => new PostgresAssetRepository(input),
 };
@@ -59,7 +59,11 @@ export const createAssetAction =
         new URL(request.url).searchParams.get("projectId")
       );
 
-      const context = await dependencies.createAssetRestContext(request);
+      const context = await dependencies.authorizeAssetRestProject(
+        request,
+        projectId,
+        "build"
+      );
       const repository = dependencies.createRepository({
         projectId,
         context,

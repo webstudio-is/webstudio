@@ -31,8 +31,7 @@
     "vite": "^6.3.4",
     "webstudio": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
-    "@react-router/serve": "^7.5.3",
-    "@webstudio-is/asset-resource": "workspace:*"
+    "@react-router/serve": "^7.5.3"
   },
   "type": "module",
   "private": true,

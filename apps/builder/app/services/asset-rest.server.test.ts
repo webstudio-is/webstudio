@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { TRPCError } from "@trpc/server";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
@@ -23,6 +24,8 @@ describe("Assets REST responses", () => {
   test.each([
     [new AssetRestRequestError("bad request"), 400],
     [new AuthorizationError("forbidden"), 403],
+    [new TRPCError({ code: "UNAUTHORIZED" }), 401],
+    [new TRPCError({ code: "FORBIDDEN" }), 403],
     [new AssetRepositoryNotFoundError("missing"), 404],
     [new AssetRepositoryConflictError("conflict"), 409],
     [new AssetRestRangeError("bad range"), 416],
