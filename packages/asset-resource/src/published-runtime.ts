@@ -342,6 +342,7 @@ export const createGeneratedAssetResourceFetch = async ({
     // domains can serve their generated index and content files.
     const authorization = request.headers.get("authorization");
     if (
+      assetRequest.url.startsWith(`${new URL(request.url).origin}/`) &&
       authorization !== null &&
       assetRequest.headers.has("authorization") === false
     ) {

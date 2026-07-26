@@ -179,6 +179,30 @@ describe("published asset resource runtime", () => {
     expect(fetchStaticAsset).toHaveBeenCalledOnce();
   });
 
+  test("does not forward authorization to a cross-origin deployment asset", async () => {
+    const { index, manifest } = await createRuntime();
+    manifest.indexPath = "https://assets.example/index.json";
+    const fetchStaticAsset = vi.fn(async (input: RequestInfo | URL) => {
+      const request =
+        input instanceof Request ? input : new Request(input.toString());
+      expect(request.headers.has("authorization")).toBe(false);
+      return Response.json(index);
+    });
+    vi.stubGlobal("fetch", fetchStaticAsset);
+    const generatedFetch = await createGeneratedAssetResourceFetch({
+      request: new Request("https://site.example/blog", {
+        headers: { authorization: "Basic staging" },
+      }),
+      context: undefined,
+      deploymentId: "build-cross-origin",
+      manifest,
+      fallback: vi.fn(async () => new Response("fallback")),
+    });
+
+    expect((await generatedFetch(queryRequest())).status).toBe(200);
+    expect(fetchStaticAsset).toHaveBeenCalledOnce();
+  });
+
   test("prefers an available deployment asset binding", async () => {
     const { index, manifest } = await createRuntime();
     const bindingFetch = vi.fn(async () => Response.json(index));
