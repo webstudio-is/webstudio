@@ -61,6 +61,10 @@ jobs:
       - name: pnpm deploy
         run: pnpm --filter 'ssg-cloudflare-pages' deploy "${{ github.workspace }}/../ssg-template"
 
+      - name: Verify optional Assets build dependency
+        run: test -e node_modules/@webstudio-is/asset-resource/package.json
+        working-directory: ${{ github.workspace }}/../ssg-template
+
       - name: Make archive
         run: |
           tar --use-compress-program="zstd -19" -cf ssg-template.tar.zst ssg-template

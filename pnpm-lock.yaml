@@ -848,6 +848,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.4.1
         version: 4.4.1(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -985,6 +988,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.2
