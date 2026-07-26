@@ -162,6 +162,7 @@ export const createMcpPreviewHandlers = ({
   prepareSessionDataFile,
   captureScreenshot = captureScreenshotWithBrowserInstall,
   createCaptureSession,
+  getHttpCredentials,
   sleep = defaultSleep,
 }: {
   preview: McpPreviewController;
@@ -173,6 +174,9 @@ export const createMcpPreviewHandlers = ({
   captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
   createCaptureSession?: typeof createScreenshotCaptureSession;
   sleep?: (durationMs: number) => Promise<void>;
+  getHttpCredentials?: (
+    path: string
+  ) => { username: string; password: string } | undefined;
 }) => {
   let captureSession:
     | ReturnType<typeof createScreenshotCaptureSession>
@@ -309,6 +313,12 @@ export const createMcpPreviewHandlers = ({
   };
   const getCaptureOptions = (input: McpScreenshotInput, url: string) => ({
     url,
+    httpCredentials:
+      input.path !== undefined &&
+      input.url === undefined &&
+      input.baseUrl === undefined
+        ? getHttpCredentials?.(input.path)
+        : undefined,
     output: input.output,
     width: input.viewport.width,
     height: input.viewport.height,

@@ -21,6 +21,7 @@ import {
   type StyleDecl,
   type Styles,
   assetType,
+  assetMetaUpdate,
   fileAsset,
   fontAsset,
   imageAsset,
@@ -102,7 +103,11 @@ export const assetUpdateInput = z.object({
         .optional(),
       description: z.union([z.string(), z.null()]).optional(),
       folderId: z.union([z.string().min(1), z.null()]).optional(),
-      meta: z.record(z.string(), z.unknown()).optional(),
+      meta: assetMetaUpdate
+        .describe(
+          "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files."
+        )
+        .optional(),
     })
     .refine(
       (values) => Object.keys(values).length > 0,

@@ -1128,7 +1128,10 @@ describe("updateAsset", () => {
     expect(() =>
       updateAsset(
         { assets: new Map([["font-1", fontAsset("font-1")]]) },
-        { assetId: "font-1", values: { meta: { weight: "heavy" } } }
+        {
+          assetId: "font-1",
+          values: { meta: { weight: "heavy" as never } },
+        }
       )
     ).toThrow("Invalid metadata for font asset");
 
@@ -1150,6 +1153,23 @@ describe("updateAsset", () => {
       assetId: "font-1",
       values: { meta: { family: "Rajdhani Display", weight: 600 } },
     });
+
+    expect(
+      assetUpdateInput.parse({
+        assetId: "image-1",
+        values: { meta: { width: 1200 } },
+      })
+    ).toEqual({
+      assetId: "image-1",
+      values: { meta: { width: 1200 } },
+    });
+
+    expect(
+      assetUpdateInput.safeParse({
+        assetId: "file-1",
+        values: { meta: { arbitrary: true } },
+      }).success
+    ).toBe(false);
   });
 
   test("updates filename and description", () => {

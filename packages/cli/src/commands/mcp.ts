@@ -11,7 +11,10 @@ import {
   type ProjectSessionScreenshotInput,
   type ProjectSessionMcpTool,
 } from "@webstudio-is/project-build/mcp";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
+import {
+  getProjectBasicAuthCredentials,
+  type BuilderNamespace,
+} from "@webstudio-is/project-build/contracts";
 import { diffPngFiles } from "@webstudio-is/project-build/visual";
 import {
   publicApiOperationRequiresServerSupport,
@@ -939,6 +942,12 @@ const createCliMcpHost = async ({
     isStale: previewFreshness.isStale,
     captureFreshness: previewFreshness.capture,
     markFresh: previewFreshness.markFresh,
+    getHttpCredentials: (pagePath) =>
+      getProjectBasicAuthCredentials(
+        getLoadedProjectSessionSnapshot(session).state.projectSettings?.meta
+          .auth,
+        pagePath
+      ),
     prepareSessionDataFile: async () => {
       const snapshot = getLoadedProjectSessionSnapshot(session);
       const assetIndex = await loadCliProjectSessionAssetIndex(

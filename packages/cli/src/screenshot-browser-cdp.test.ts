@@ -637,6 +637,34 @@ test("reuses one browser process across screenshot captures", async () => {
   expect(browserProcess.kill).toHaveBeenCalledOnce();
 });
 
+test("uses HTTP credentials for navigation without exposing them in results", async () => {
+  const socket = new FakeWebSocket();
+  const result = await captureBrowserScreenshot(
+    {
+      url: "http://127.0.0.1:5173/blog",
+      httpCredentials: { username: "editor", password: "secret phrase" },
+      output: "/tmp/authenticated.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({ socket })
+  );
+
+  expect(
+    socket.sentMessages.find((message) => message.method === "Page.navigate")
+      ?.params?.url
+  ).toBe("http://editor:secret%20phrase@127.0.0.1:5173/blog");
+  expect(result.navigation).toMatchObject({
+    requestedUrl: "http://127.0.0.1:5173/blog",
+    finalUrl: "http://127.0.0.1:5173/blog",
+  });
+  expect(JSON.stringify(result)).not.toContain("secret");
+});
+
 test("navigates once while resizing one page through multiple viewports", async () => {
   const socket = new FakeWebSocket();
   const dependencies = createDependencies({ socket });

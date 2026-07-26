@@ -505,6 +505,7 @@ let screenshotBatchSequence = 0;
 
 type CaptureScreenshotOptions = {
   url: string;
+  httpCredentials?: { username: string; password: string };
   output?: string;
   width: number;
   height: number;
@@ -538,6 +539,7 @@ const getBrowserScreenshotOptions = (
   includeResourceMetrics: options.includeResourceMetrics,
   includeContrastMetrics: options.includeContrastMetrics,
   url: options.url,
+  httpCredentials: options.httpCredentials,
   uid: dependencies.getuid(),
   waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
   waitForSelector: options.waitForSelector,

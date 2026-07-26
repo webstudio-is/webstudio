@@ -17,6 +17,7 @@ export type BrowserScreenshotOptions = {
   includeResourceMetrics?: boolean;
   includeContrastMetrics?: boolean;
   url: string;
+  httpCredentials?: { username: string; password: string };
   uid?: number;
   waitUntil: ScreenshotWaitUntil;
   waitForSelector?: string;
@@ -25,6 +26,30 @@ export type BrowserScreenshotOptions = {
   format?: "png" | "jpeg" | "webp";
   quality?: number;
   scale?: number;
+};
+
+const getNavigationUrl = (options: BrowserScreenshotOptions) => {
+  if (options.httpCredentials === undefined) {
+    return options.url;
+  }
+  const url = new URL(options.url);
+  url.username = options.httpCredentials.username;
+  url.password = options.httpCredentials.password;
+  return url.toString();
+};
+
+const removeUrlCredentials = (value: string) => {
+  try {
+    const url = new URL(value);
+    if (url.username === "" && url.password === "") {
+      return value;
+    }
+    url.username = "";
+    url.password = "";
+    return url.toString();
+  } catch {
+    return value;
+  }
 };
 
 export type BrowserScreenshotTimings = {
@@ -1309,7 +1334,7 @@ const capturePageWithBrowserRuntime = async (
             return;
           }
           const redirects = redirectsByFrame.get(params.frameId) ?? [];
-          redirects.push(params.redirectResponse.url);
+          redirects.push(removeUrlCredentials(params.redirectResponse.url));
           redirectsByFrame.set(params.frameId, redirects);
         });
         cdp.on("Network.responseReceived", (params) => {
@@ -1334,7 +1359,7 @@ const capturePageWithBrowserRuntime = async (
             return;
           }
           documentResponsesByFrame.set(params.frameId, {
-            url: response.url,
+            url: removeUrlCredentials(response.url),
             status: response.status,
             ...(typeof response.statusText === "string"
               ? { statusText: response.statusText }
@@ -1377,7 +1402,7 @@ const capturePageWithBrowserRuntime = async (
               async () =>
                 await send<NavigationResult>(
                   "Page.navigate",
-                  { url: options.url },
+                  { url: getNavigationUrl(options) },
                   options.timeout
                 )
             );
@@ -1492,13 +1517,14 @@ const capturePageWithBrowserRuntime = async (
             contrastInspectionPromise,
             screenshotPromise,
           ]);
-          const finalUrl =
+          const finalUrl = removeUrlCredentials(
             typeof locationResult.result?.value === "string"
               ? locationResult.result.value
               : ((navigationFrameId === undefined
                   ? undefined
                   : documentResponsesByFrame.get(navigationFrameId)?.url) ??
-                options.url);
+                  options.url)
+          );
           const documentResponse =
             navigationFrameId === undefined
               ? undefined

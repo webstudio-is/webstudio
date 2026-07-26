@@ -805,6 +805,9 @@ importers:
 
   fixtures/ssg-cloudflare-pages:
     dependencies:
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -860,6 +863,9 @@ importers:
 
   fixtures/ssg-netlify-by-project-id:
     dependencies:
+      '@webstudio-is/asset-resource':
+        specifier: workspace:*
+        version: link:../../packages/asset-resource
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image

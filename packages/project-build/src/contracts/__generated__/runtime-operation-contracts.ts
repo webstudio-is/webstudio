@@ -70839,11 +70839,100 @@ export const runtimeOperationContractData = [
               ],
             },
             meta: {
-              type: "object",
-              propertyNames: {
-                type: "string",
-              },
-              additionalProperties: {},
+              anyOf: [
+                {
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        family: {
+                          type: "string",
+                        },
+                        style: {
+                          type: "string",
+                          enum: ["normal", "italic", "oblique"],
+                        },
+                        weight: {
+                          type: "number",
+                        },
+                      },
+                      additionalProperties: false,
+                      required: [],
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        family: {
+                          type: "string",
+                        },
+                        variationAxes: {
+                          type: "object",
+                          propertyNames: {
+                            type: "string",
+                            enum: [
+                              "wght",
+                              "wdth",
+                              "slnt",
+                              "opsz",
+                              "ital",
+                              "GRAD",
+                              "XTRA",
+                              "XOPQ",
+                              "YOPQ",
+                              "YTLC",
+                              "YTUC",
+                              "YTAS",
+                              "YTDE",
+                              "YTFI",
+                            ],
+                          },
+                          additionalProperties: {
+                            type: "object",
+                            properties: {
+                              name: {
+                                type: "string",
+                              },
+                              min: {
+                                type: "number",
+                              },
+                              default: {
+                                type: "number",
+                              },
+                              max: {
+                                type: "number",
+                              },
+                            },
+                            required: ["name", "min", "default", "max"],
+                          },
+                        },
+                      },
+                      additionalProperties: false,
+                      required: [],
+                    },
+                  ],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    width: {
+                      type: "number",
+                    },
+                    height: {
+                      type: "number",
+                    },
+                  },
+                  additionalProperties: false,
+                  required: [],
+                },
+                {
+                  type: "object",
+                  properties: {},
+                  additionalProperties: false,
+                  required: [],
+                },
+              ],
+              description:
+                "Type-specific metadata: family/style/weight or variationAxes for fonts, width/height for images, and no fields for generic files.",
             },
           },
           required: [],
