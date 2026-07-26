@@ -32,7 +32,6 @@
     "webstudio": "workspace:*"
   },
   "dependencies": {
-    "@webstudio-is/asset-resource": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",

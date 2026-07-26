@@ -445,6 +445,16 @@ const removeUnusedAssetResourceDependency = async () => {
     );
   }
   await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+
+  const ssgFetchPath = join(cwd(), "app", "asset-resource-fetch.ts");
+  if (existsSync(ssgFetchPath)) {
+    await writeFile(
+      ssgFetchPath,
+      `export const createSsgAssetResourceFetch = (_options: unknown) =>
+  async (_input: RequestInfo | URL, _init?: RequestInit) => undefined;\n`,
+      "utf8"
+    );
+  }
 };
 
 export const getRequiredAssetResourceContentRefs = ({

@@ -1216,6 +1216,9 @@ describe("prebuild", () => {
     await expect(readFile("pages/index/+data.ts", "utf8")).resolves.toContain(
       "createSsgAssetResourceFetch"
     );
+    await expect(
+      readFile("app/asset-resource-fetch.ts", "utf8")
+    ).resolves.not.toContain("@webstudio-is/asset-resource");
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
     expect(packageJson.dependencies).not.toHaveProperty(
       "@webstudio-is/asset-resource"
