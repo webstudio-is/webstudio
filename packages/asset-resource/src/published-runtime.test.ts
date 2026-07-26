@@ -156,6 +156,29 @@ describe("published asset resource runtime", () => {
     ).toHaveLength(1);
   });
 
+  test("preserves authorization when deployment assets use same-origin fetch", async () => {
+    const { index, manifest } = await createRuntime();
+    const fetchStaticAsset = vi.fn(async (input: RequestInfo | URL) => {
+      const request =
+        input instanceof Request ? input : new Request(input.toString());
+      expect(request.headers.get("authorization")).toBe("Basic staging");
+      return Response.json(index);
+    });
+    vi.stubGlobal("fetch", fetchStaticAsset);
+    const generatedFetch = await createGeneratedAssetResourceFetch({
+      request: new Request("https://site.example/blog", {
+        headers: { authorization: "Basic staging" },
+      }),
+      context: undefined,
+      deploymentId: "build-protected-origin",
+      manifest,
+      fallback: vi.fn(async () => new Response("fallback")),
+    });
+
+    expect((await generatedFetch(queryRequest())).status).toBe(200);
+    expect(fetchStaticAsset).toHaveBeenCalledOnce();
+  });
+
   test("prefers an available deployment asset binding", async () => {
     const { index, manifest } = await createRuntime();
     const bindingFetch = vi.fn(async () => Response.json(index));

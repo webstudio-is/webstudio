@@ -334,7 +334,20 @@ export const createGeneratedAssetResourceFetch = async ({
   const binding = getAssetBinding(context);
   const fetchAsset = (path: string, init?: RequestInit) => {
     const assetRequest = new Request(new URL(path, request.url), init);
-    return binding?.fetch(assetRequest) ?? fetch(assetRequest);
+    if (binding !== undefined) {
+      return binding.fetch(assetRequest);
+    }
+    // Without an asset binding, the request goes back through the site's own
+    // edge dispatcher. Preserve same-origin authorization so protected staging
+    // domains can serve their generated index and content files.
+    const authorization = request.headers.get("authorization");
+    if (
+      authorization !== null &&
+      assetRequest.headers.has("authorization") === false
+    ) {
+      assetRequest.headers.set("authorization", authorization);
+    }
+    return fetch(assetRequest);
   };
   const cacheStorage = globalThis.caches;
   let cachePromise: Promise<Cache> | undefined;
