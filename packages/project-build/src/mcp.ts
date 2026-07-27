@@ -1582,8 +1582,10 @@ const previewInputSchema = {
     },
     port: {
       type: "number",
-      description:
-        "Optional fixed port. Omit it to allocate an available local port automatically.",
+      default: 0,
+      minimum: 0,
+      maximum: 65535,
+      description: "Use 0 to select an available local port automatically.",
     },
     source: {
       type: "string",
@@ -6759,9 +6761,9 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   const port = typeof input.port === "number" ? input.port : undefined;
   if (
     port !== undefined &&
-    (Number.isInteger(port) === false || port <= 0 || port > 65535)
+    (Number.isInteger(port) === false || port < 0 || port > 65535)
   ) {
-    throw new Error("preview port must be an integer between 1 and 65535.");
+    throw new Error("preview port must be an integer between 0 and 65535.");
   }
   const source = input.source === undefined ? undefined : input.source;
   if (source !== undefined && isProjectSessionPreviewSource(source) === false) {

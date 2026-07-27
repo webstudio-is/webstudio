@@ -6646,7 +6646,29 @@ describe("project session mcp adapter", () => {
         name: "preview.start",
         input: { port: 70000 },
       })
-    ).rejects.toThrow("preview port must be an integer between 1 and 65535.");
+    ).rejects.toThrow("preview port must be an integer between 0 and 65535.");
+  });
+
+  test("allows preview hosts to allocate a port", async () => {
+    const startPreview = vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview,
+      getPreviewStatus: vi.fn(),
+    });
+
+    await adapter.callTool({ name: "preview.start", input: { port: 0 } });
+
+    expect(startPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ port: 0 }),
+      expect.objectContaining({ report: expect.any(Function) })
+    );
   });
 
   test("rejects empty preview host", async () => {
