@@ -1,5 +1,6 @@
 import { assetFileDocument, type AssetFileDocument } from "./schema";
 import { contentEngineLimits } from "./limits";
+import { z } from "zod";
 import {
   compareStrings,
   serializeJsonDeterministically,
@@ -18,6 +19,11 @@ export type AssetFileMetadataInput = {
   revision: string;
   contentRef: string;
 };
+
+const canonicalDateTime = z
+  .string()
+  .datetime({ offset: true })
+  .transform((value) => new Date(value).toISOString());
 
 export type CanonicalAssetFileEntry = {
   projectId: string;
@@ -349,7 +355,9 @@ export const normalizeAssetFileDocument = ({
     extension,
     mimeType: asset.mimeType,
     size: asset.size,
-    ...(asset.createdAt === undefined ? {} : { createdAt: asset.createdAt }),
+    ...(asset.createdAt === undefined
+      ? {}
+      : { createdAt: canonicalDateTime.parse(asset.createdAt) }),
     revision: asset.revision,
     contentRef: asset.contentRef,
     properties,

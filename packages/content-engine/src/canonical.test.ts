@@ -105,6 +105,15 @@ describe("normalizeAssetFileDocument", () => {
     });
   });
 
+  test("normalizes source timestamps with timezone offsets", () => {
+    expect(
+      normalizeAssetFileDocument({
+        asset: { ...asset, createdAt: "2026-07-27T16:40:49.007+00:00" },
+        properties: {},
+      }).createdAt
+    ).toBe("2026-07-27T16:40:49.007Z");
+  });
+
   test.each([
     [".", "%2E"],
     ["..", "%2E%2E"],
