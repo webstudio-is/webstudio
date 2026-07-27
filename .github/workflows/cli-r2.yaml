@@ -63,7 +63,7 @@ jobs:
         run: pnpm --filter 'webstudio-cloudflare-template' deploy "${{ github.workspace }}/../cloudflare-template"
 
       - name: Verify optional Assets build dependency
-        run: test -e node_modules/@webstudio-is/asset-resource/package.json
+        run: test -e node_modules/@webstudio-is/content-engine/package.json
         working-directory: ${{ github.workspace }}/../cloudflare-template
 
       - name: Make archive
