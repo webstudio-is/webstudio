@@ -78,6 +78,15 @@ describe("Assets resource mutation input", () => {
     ).toBe(true);
   });
 
+  test("keeps omitted query update fields absent for patch merging", () => {
+    expect(
+      assetsResourceUpdateInput.parse({
+        resourceId: "posts",
+        values: { query: { limit: "50" } },
+      }).values.query
+    ).toEqual({ limit: "50" });
+  });
+
   test("rejects out-of-range literal pagination", () => {
     expect(
       assetsResourceCreateInput.safeParse({

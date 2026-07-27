@@ -3,6 +3,7 @@ import type {
   AssetQueryRequestInput,
   AssetQueryResult,
   BuilderAssetFieldCatalog,
+  ContentDatabaseStats,
 } from "./schema";
 import { serializeContentArtifact } from "./content-artifact";
 import { AssetIndexRevisionError, executeAssetQuery } from "./structured-query";
@@ -14,18 +15,6 @@ export type AssetContentReader = (
   data: AsyncIterable<Uint8Array>;
   contentLength?: number;
 }>;
-
-export type ContentDatabaseStats = {
-  format: ContentArtifactV1["format"];
-  version: ContentArtifactV1["version"];
-  revision: string;
-  usedBytes: number;
-  maxBytes: number;
-  unboundedBytes: number;
-  includedDocumentCount: number;
-  omittedDocumentCount: number;
-  truncated: boolean;
-};
 
 export type ContentDatabase = {
   query(

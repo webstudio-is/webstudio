@@ -624,7 +624,10 @@ export const parseArrayExpression = (expression: string) => {
   } catch {
     return;
   }
-  if (root.type !== "ArrayExpression") {
+  if (
+    root.type !== "ArrayExpression" ||
+    expression.slice(root.end).trim() !== ""
+  ) {
     return;
   }
   for (const element of root.elements) {

@@ -1,5 +1,6 @@
 import {
   assetQueryResourceConfigurationInput,
+  assetQueryResourceConfigurationPatchInput,
   createStructuredAssetQueryResourceBody,
   decodeDataSourceVariable,
   isAssetsResource,
@@ -42,7 +43,7 @@ export const assetsResourceUpdateInput = z.object({
   values: z
     .object({
       name: z.string().min(1).optional(),
-      query: assetsQueryConfigurationInput.nullable().optional(),
+      query: assetQueryResourceConfigurationPatchInput.nullable().optional(),
     })
     .refine((values) => Object.keys(values).length > 0, {
       error: "At least one Assets resource value is required.",
@@ -304,7 +305,10 @@ export const updateAssetsResource = (
       ? currentQuery
       : queryUpdate === null
         ? undefined
-        : queryUpdate;
+        : assetsQueryConfigurationInput.parse({
+            ...currentQuery,
+            ...queryUpdate,
+          });
   return updateResource(
     state,
     {

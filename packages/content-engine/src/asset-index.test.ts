@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { contentEngineLimits, parseContentDatabaseMaxBytes } from "./limits";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { createContentDatabase } from "./content-database";
+import { assetQueryResult } from "./schema";
 import {
   compileContentArtifact,
   createAssetIndex,
@@ -256,11 +257,14 @@ describe("shared asset index", () => {
       contentLength: content.length,
     });
 
-    await expect(
-      database.query({ query: { content: { mode: "full" } } }, readContent)
-    ).resolves.toMatchObject({
+    const result = await database.query(
+      { query: { content: { mode: "full" } } },
+      readContent
+    );
+    expect(result).toMatchObject({
       items: [{ content: { text: content } }],
     });
+    expect(assetQueryResult.safeParse(result).success).toBe(true);
     await expect(
       database.query({ query: { content: { mode: "full" } } })
     ).rejects.toThrow("Content is not embedded");

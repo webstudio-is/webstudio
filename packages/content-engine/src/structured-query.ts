@@ -317,6 +317,9 @@ const toQueryItem = (
   extension: document.extension,
   mimeType: document.mimeType,
   size: document.size,
+  ...(document.createdAt === undefined
+    ? {}
+    : { createdAt: document.createdAt }),
   revision: document.revision,
   properties: selectProperties(document, output),
   ...(document.excerpt === undefined || includesExcerpt(output) === false

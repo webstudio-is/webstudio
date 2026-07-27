@@ -1,6 +1,7 @@
 import type { ProjectPermit } from "@webstudio-is/trpc-interface/index.server";
 import { apiClientHeader } from "@webstudio-is/trpc-interface/api-compatibility";
 import { assertApiProjectPermit } from "./api-permits.server";
+import { checkCsrf } from "./csrf-session.server";
 import { createContext } from "~/shared/context.server";
 
 /**
@@ -15,14 +16,16 @@ export const authorizeAssetRestProject = async (
   dependencies = {
     createContext,
     assertApiProjectPermit,
+    checkCsrf,
   }
 ) => {
   const context = await dependencies.createContext(request);
-  if (
-    context.authorization.type === "token" &&
-    request.headers.get(apiClientHeader) !== "browser"
-  ) {
-    await dependencies.assertApiProjectPermit(context, projectId, permit);
+  if (context.authorization.type === "token") {
+    if (request.headers.get(apiClientHeader) === "browser") {
+      await dependencies.checkCsrf(request);
+    } else {
+      await dependencies.assertApiProjectPermit(context, projectId, permit);
+    }
   }
   return context;
 };

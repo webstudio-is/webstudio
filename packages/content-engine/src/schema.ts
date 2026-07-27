@@ -483,6 +483,8 @@ export const assetQueryItem = assetFileDocument
 export type AssetQueryItem = z.infer<typeof assetQueryItem>;
 
 export const contentDatabaseStats = z.strictObject({
+  format: z.literal("webstudio-content-database"),
+  version: z.literal(1),
   revision: sha256Revision,
   usedBytes: z.number().int().nonnegative(),
   maxBytes: z.number().int().positive(),
@@ -491,6 +493,8 @@ export const contentDatabaseStats = z.strictObject({
   omittedDocumentCount: z.number().int().nonnegative(),
   truncated: z.boolean(),
 });
+
+export type ContentDatabaseStats = z.infer<typeof contentDatabaseStats>;
 
 export const assetQueryResult = z.strictObject({
   items: z.array(assetQueryItem),

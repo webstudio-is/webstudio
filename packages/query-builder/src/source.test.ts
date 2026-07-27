@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import {
   createQuerySourceCodec,
   formatExpressionObject,
-  parseExpressionArray,
   parseExpressionObject,
 } from "./source";
 import { genericQueryCapabilities, type GenericQuery } from "./test-fixtures";
@@ -21,11 +20,10 @@ describe("structured query source", () => {
     );
   });
 
-  test("rejects trailing source and spread array items", () => {
+  test("rejects invalid object source", () => {
     expect(parseExpressionObject("{} trailing")).toEqual(new Map());
     expect(parseExpressionObject("{ value: 1, ...other }")).toEqual(new Map());
     expect(parseExpressionObject("{ value: 1, value: 2 }")).toEqual(new Map());
-    expect(parseExpressionArray("[...items]")).toBeUndefined();
   });
 
   test("formats an expression object", () => {

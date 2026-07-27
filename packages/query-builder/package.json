@@ -1,36 +1,25 @@
 {
   "name": "@webstudio-is/query-builder",
   "version": "0.0.0-webstudio-version",
-  "description": "Structured query authoring core and UI",
+  "description": "Framework-independent structured query authoring core",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf lib && esbuild src/index.ts src/react.tsx --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@webstudio-is/expression": "workspace:*",
     "acorn": "^8.14.1",
     "zod": "^4.4.3"
   },
-  "peerDependencies": {
-    "@webstudio-is/design-system": "workspace:*",
-    "@webstudio-is/icons": "workspace:*",
-    "react": "18.3.0-canary-14898b6a9-20240318"
-  },
   "devDependencies": {
-    "@testing-library/react": "^16.2.0",
-    "@types/react": "^18.2.70",
-    "@types/react-dom": "^18.2.25",
-    "@webstudio-is/design-system": "workspace:*",
-    "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "vitest": "^3.1.2"
   },
   "exports": {
@@ -38,11 +27,6 @@
       "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js"
-    },
-    "./react": {
-      "webstudio": "./src/react.tsx",
-      "types": "./lib/types/react.d.ts",
-      "import": "./lib/react.js"
     }
   },
   "files": [

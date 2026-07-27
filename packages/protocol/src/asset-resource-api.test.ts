@@ -213,6 +213,12 @@ describe("Assets OpenAPI description", () => {
     ).toBe(false);
 
     const document = createDocument();
+    const uploadContent =
+      document.paths[assetResourceApiOperations.uploadAssetContent.path].post;
+    expect(uploadContent.parameters.map(({ name }) => name)).toEqual(["name"]);
+    expect(Object.keys(uploadContent.requestBody.content)).toEqual([
+      "application/octet-stream",
+    ]);
     expect(
       document.paths[assetResourceApiOperations.updateAsset.path].patch
         .requestBody.content["application/json"].schema.$ref

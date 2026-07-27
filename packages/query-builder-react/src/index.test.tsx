@@ -4,8 +4,8 @@
 import { useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
-import { createStructuredQuery } from "./query-utils";
-import { StructuredQueryBuilder } from "./react";
+import { createStructuredQuery } from "@webstudio-is/query-builder";
+import { StructuredQueryBuilder } from "./index";
 import { genericQueryCapabilities, type GenericQuery } from "./test-fixtures";
 
 afterEach(cleanup);

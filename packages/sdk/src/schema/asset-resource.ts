@@ -110,6 +110,27 @@ export const assetQueryResourceConfigurationInput = z.strictObject({
   content: assetResourceContentOptions.default({ mode: "none" }),
 });
 
+export const assetQueryResourceConfigurationPatchInput = z.strictObject({
+  where: assetQueryResourceConfigurationInput.shape.where
+    .removeDefault()
+    .optional(),
+  sort: assetQueryResourceConfigurationInput.shape.sort
+    .removeDefault()
+    .optional(),
+  limit: assetQueryResourceConfigurationInput.shape.limit
+    .removeDefault()
+    .optional(),
+  offset: assetQueryResourceConfigurationInput.shape.offset
+    .removeDefault()
+    .optional(),
+  output: assetQueryResourceConfigurationInput.shape.output
+    .removeDefault()
+    .optional(),
+  content: assetQueryResourceConfigurationInput.shape.content
+    .removeDefault()
+    .optional(),
+});
+
 export type AssetQueryResourceConfigurationInput = z.input<
   typeof assetQueryResourceConfigurationInput
 >;

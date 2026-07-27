@@ -21,8 +21,8 @@ import {
   getCompatibleQueryOperators,
   getQueryFieldKey,
   getQueryWhereMetrics,
-} from "./query-utils";
-import { createQuerySourceCodec } from "./source";
+} from "@webstudio-is/query-builder";
+import { createQuerySourceCodec } from "@webstudio-is/query-builder";
 import type {
   QueryCondition,
   QueryField,
@@ -32,7 +32,7 @@ import type {
   QueryParameter,
   QueryWhere,
   StructuredQuery,
-} from "./types";
+} from "@webstudio-is/query-builder";
 
 export type QueryValueEditorProps = {
   "aria-label": string;

@@ -68428,9 +68428,6 @@ export const runtimeOperationContractData = [
                   type: "object",
                   properties: {
                     where: {
-                      default: {
-                        all: [],
-                      },
                       description:
                         "A boolean filter tree. Use { all: [...] } for AND and { any: [...] } for OR; leaves contain field, operator, and value.",
                       anyOf: [
@@ -68522,7 +68519,6 @@ export const runtimeOperationContractData = [
                       $ref: "#/$defs/__schema1",
                     },
                     sort: {
-                      default: [],
                       maxItems: 8,
                       type: "array",
                       items: {
@@ -68547,7 +68543,6 @@ export const runtimeOperationContractData = [
                       },
                     },
                     limit: {
-                      default: "100",
                       anyOf: [
                         {
                           type: "string",
@@ -68573,7 +68568,6 @@ export const runtimeOperationContractData = [
                         'A Webstudio expression, or { type: "literal", value: number } for a fixed result limit.',
                     },
                     offset: {
-                      default: "0",
                       anyOf: [
                         {
                           type: "string",
@@ -68599,9 +68593,6 @@ export const runtimeOperationContractData = [
                         'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.',
                     },
                     output: {
-                      default: {
-                        mode: "all",
-                      },
                       oneOf: [
                         {
                           type: "object",
@@ -68652,9 +68643,6 @@ export const runtimeOperationContractData = [
                       ],
                     },
                     content: {
-                      default: {
-                        mode: "none",
-                      },
                       oneOf: [
                         {
                           type: "object",

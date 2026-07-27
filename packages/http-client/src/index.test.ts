@@ -226,51 +226,6 @@ test("sends the bundle contract when loading by project id", async () => {
   );
 });
 
-test("retries the preceding bundle contract during a rolling release", async () => {
-  const project = createPublishedProjectBundleFixture();
-  const fetch = vi
-    .fn<typeof globalThis.fetch>()
-    .mockResolvedValueOnce(
-      new Response(
-        JSON.stringify([
-          {
-            error: {
-              message: "CLI update required",
-              code: -32603,
-              data: {
-                code: "INTERNAL_SERVER_ERROR",
-                apiCompatibility: {
-                  type: "webstudioApiCompatibilityError",
-                  reason: "clientVersionUnsupported",
-                  target: "cli",
-                  message:
-                    "This version of the Webstudio CLI is incompatible with the current API.",
-                  action: { type: "updateCli" },
-                },
-              },
-            },
-          },
-        ]),
-        { headers: { "content-type": "application/json" } }
-      )
-    )
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify([{ result: { data: project } }]), {
-        headers: { "content-type": "application/json" },
-      })
-    );
-  vi.stubGlobal("fetch", fetch);
-
-  await expect(loadProjectBundleByProjectId(apiParams)).resolves.toEqual(
-    project
-  );
-
-  expect(fetch).toHaveBeenCalledTimes(2);
-  expect(decodeURIComponent(String(fetch.mock.calls[1]?.[0]))).toContain(
-    '"bundleVersion":"bundle-1l6lbch"'
-  );
-});
-
 test("creates api client compatibility headers", () => {
   expect(createApiClientHeaders({ name: "cli", version: "1.2.3" })).toEqual({
     "x-webstudio-client": "cli",

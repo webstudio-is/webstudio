@@ -1,3 +1,4 @@
+import { parseArrayExpression } from "@webstudio-is/expression";
 import { parseExpressionAt } from "acorn";
 import { z } from "zod";
 import type {
@@ -41,26 +42,6 @@ export const parseExpressionObject = (source: string) => {
   return fields;
 };
 
-export const parseExpressionArray = (source: string) => {
-  let root;
-  try {
-    root = parseExpressionAt(source, 0, { ecmaVersion: "latest" });
-  } catch {
-    return;
-  }
-  if (root.type !== "ArrayExpression" || source.slice(root.end).trim() !== "") {
-    return;
-  }
-  const items: string[] = [];
-  for (const element of root.elements) {
-    if (element === null || element.type === "SpreadElement") {
-      return;
-    }
-    items.push(source.slice(element.start, element.end));
-  }
-  return items;
-};
-
 export const formatExpressionObject = (fields: ReadonlyMap<string, string>) => {
   let source = "{\n";
   for (const [key, value] of fields) {
@@ -91,7 +72,7 @@ const createJsonSchemaParser = (schema: boolean | Record<string, unknown>) => {
 };
 
 export const isQueryExpression = (value: string) =>
-  value.trim() !== "" && parseExpressionArray(`[${value}]`)?.length === 1;
+  value.trim() !== "" && parseArrayExpression(`[${value}]`)?.length === 1;
 
 const isOperatorCompatible = <
   FieldType extends string,
@@ -149,7 +130,7 @@ const parseWhere = <FieldType extends string, Operator extends string>({
     ) {
       return;
     }
-    const items = parseExpressionArray(fields.get(combinator) ?? "");
+    const items = parseArrayExpression(fields.get(combinator) ?? "");
     if (items === undefined) {
       return;
     }

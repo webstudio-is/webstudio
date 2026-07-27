@@ -12,6 +12,8 @@ describe("content database preview warning", () => {
           totalCount: 0,
           hasMore: false,
           database: {
+            format: "webstudio-content-database",
+            version: 1,
             revision,
             usedBytes: 500 * 1024,
             maxBytes: 500 * 1024,
@@ -35,6 +37,8 @@ describe("content database preview warning", () => {
           totalCount: 0,
           hasMore: false,
           database: {
+            format: "webstudio-content-database",
+            version: 1,
             revision,
             usedBytes: 100,
             maxBytes: 500,

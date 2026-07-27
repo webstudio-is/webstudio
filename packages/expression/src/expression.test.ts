@@ -873,6 +873,7 @@ describe("object expression transformations", () => {
     expect(parseArrayExpression("0")).toBeUndefined();
     expect(parseArrayExpression("[...items]")).toBeUndefined();
     expect(parseArrayExpression("[")).toBeUndefined();
+    expect(parseArrayExpression("[1] trailing")).toBeUndefined();
   });
 
   test("parse object expression", () => {

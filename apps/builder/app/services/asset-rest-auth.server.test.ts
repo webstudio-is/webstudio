@@ -38,6 +38,7 @@ test("requires API enablement for explicit Assets API tokens", async () => {
   const dependencies = {
     createContext: vi.fn().mockResolvedValue(context),
     assertApiProjectPermit: vi.fn().mockResolvedValue(undefined),
+    checkCsrf: vi.fn(),
   };
 
   await expect(
@@ -60,6 +61,7 @@ test("keeps cookie-authenticated Assets requests on repository authorization", a
   const dependencies = {
     createContext: vi.fn().mockResolvedValue(context),
     assertApiProjectPermit: vi.fn(),
+    checkCsrf: vi.fn(),
   };
 
   await authorizeAssetRestProject(
@@ -76,6 +78,7 @@ test("keeps Builder share-token requests on repository authorization", async () 
   const dependencies = {
     createContext: vi.fn().mockResolvedValue(context),
     assertApiProjectPermit: vi.fn(),
+    checkCsrf: vi.fn().mockResolvedValue(undefined),
   };
 
   await authorizeAssetRestProject(
@@ -86,5 +89,28 @@ test("keeps Builder share-token requests on repository authorization", async () 
     "build",
     dependencies
   );
+  expect(dependencies.assertApiProjectPermit).not.toHaveBeenCalled();
+  expect(dependencies.checkCsrf).toHaveBeenCalledOnce();
+});
+
+test("does not trust the Builder client marker without valid CSRF", async () => {
+  const context = { authorization: { type: "token" } } as never;
+  const csrfError = new Response("Forbidden", { status: 403 });
+  const dependencies = {
+    createContext: vi.fn().mockResolvedValue(context),
+    assertApiProjectPermit: vi.fn(),
+    checkCsrf: vi.fn().mockRejectedValue(csrfError),
+  };
+
+  await expect(
+    authorizeAssetRestProject(
+      new Request("https://example.com/rest/assets", {
+        headers: { "x-webstudio-client": "browser", "x-auth-token": "token" },
+      }),
+      "project-1",
+      "view",
+      dependencies
+    )
+  ).rejects.toBe(csrfError);
   expect(dependencies.assertApiProjectPermit).not.toHaveBeenCalled();
 });

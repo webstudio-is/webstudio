@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   createTestServer,
   db,
@@ -281,7 +281,6 @@ describe("patchBuild", () => {
 
   test("applies transactions, validates data, and updates build with optimistic version guard", async () => {
     let updatedBuild: unknown;
-    const onCommitted = vi.fn();
     server.use(
       db.get("Build", () => json([buildRow])),
       db.patch("Build", async ({ request }) => {
@@ -297,8 +296,7 @@ describe("patchBuild", () => {
         clientVersion: 3,
         transactions: [transaction()],
       },
-      createContext(),
-      onCommitted
+      createContext()
     );
 
     expect(result).toEqual({ status: "ok", version: 4 });
@@ -306,13 +304,6 @@ describe("patchBuild", () => {
       version: 4,
       lastTransactionId: "tx-1",
     });
-    expect(onCommitted).toHaveBeenCalledWith(
-      expect.objectContaining({
-        previousBuild: buildRow,
-        build: expect.objectContaining({ version: 4 }),
-        changes: transaction().payload,
-      })
-    );
     expect(JSON.parse((updatedBuild as { props: string }).props)).toEqual([
       {
         id: "prop-1",

@@ -10,10 +10,12 @@ const document = ({
   id,
   properties,
   excerpt,
+  createdAt,
 }: {
   id: string;
   properties: AssetFileDocument["properties"];
   excerpt?: string;
+  createdAt?: string;
 }): AssetFileDocument => ({
   _id: id,
   _type: "asset.file",
@@ -23,6 +25,7 @@ const document = ({
   extension: "md",
   mimeType: "text/markdown",
   size: 20,
+  createdAt,
   revision: `revision-${id}`,
   contentRef: `files/${id}.md`,
   properties,
@@ -32,6 +35,7 @@ const document = ({
 const documents = [
   document({
     id: "alpha",
+    createdAt: "2026-07-27T00:00:00.000Z",
     excerpt: "Alpha excerpt",
     properties: {
       title: "Alpha",
@@ -109,6 +113,7 @@ describe("structured asset query", () => {
     });
 
     expect(result.items.map(({ id }) => id)).toEqual(["alpha", "gamma"]);
+    expect(result.items[0]?.createdAt).toBe("2026-07-27T00:00:00.000Z");
   });
 
   test("reads only own JSON properties from dynamic field paths", () => {

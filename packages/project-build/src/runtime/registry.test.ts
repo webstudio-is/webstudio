@@ -1847,6 +1847,13 @@ describe("builder runtime read families", () => {
         expect.objectContaining({ namespace: "resources" }),
       ])
     );
+    const updatedPayload = JSON.stringify(
+      (updated as { payload: unknown }).payload
+    );
+    expect(updatedPayload).toContain("properties");
+    expect(updatedPayload).toContain("system.params.slug");
+    expect(updatedPayload).toContain("markdown-body");
+    expect(updatedPayload).toContain('\\"limit\\": 2');
 
     const disabled = executeBuilderRuntimeOperation({
       id: "assetsResources.update",

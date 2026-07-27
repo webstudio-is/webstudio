@@ -402,7 +402,7 @@ describe("loadResource", () => {
 });
 
 describe("getResourceCacheKey", () => {
-  test("separates asset query, variables, and index revision", async () => {
+  test("separates structured Assets queries and index revisions", async () => {
     const createRequest = (body: Record<string, unknown>) =>
       new Request("https://example.com/$resources/assets", {
         method: "POST",
@@ -410,15 +410,34 @@ describe("getResourceCacheKey", () => {
         body: JSON.stringify(body),
       });
     const base = {
-      query:
-        "query Post($slug: String!) { assets(where: { properties: { slug: { eq: $slug } } }, first: 1) { items { id } } }",
-      variables: { slug: "first" },
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "first",
+            },
+          ],
+        },
+        sort: [{ field: ["createdAt"], direction: "desc" }],
+        limit: 1,
+        offset: 0,
+        output: { mode: "all" },
+        content: { mode: "none" },
+      },
       indexRevision: "index-1",
     };
     const requests = [
       base,
-      { ...base, query: "query Assets { assets { items { id } } }" },
-      { ...base, variables: { slug: "second" } },
+      { ...base, query: { ...base.query, limit: 2 } },
+      {
+        ...base,
+        query: {
+          ...base.query,
+          content: { mode: "markdown-body", maxBytes: 1024 },
+        },
+      },
       { ...base, indexRevision: "index-2" },
     ];
     const keys = await Promise.all(

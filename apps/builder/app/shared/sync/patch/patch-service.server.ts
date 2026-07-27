@@ -243,7 +243,6 @@ const applyAuthorizedEntries = async ({
       version,
       entries: [] satisfies PatchEntryResult[],
       status: "ok" as const,
-      build: undefined,
     };
   }
   if (build === undefined) {
@@ -269,12 +268,10 @@ const applyAuthorizedEntries = async ({
     );
 
     if (batchResult.status === "ok") {
-      currentBuild = batchResult.build;
       return {
         status: "ok" as const,
         version: batchResult.version,
         entries: authorized.map(({ entry }) => acceptedResult(entry)),
-        build: currentBuild,
       };
     }
 
@@ -314,7 +311,6 @@ const applyAuthorizedEntries = async ({
     status: "partial" as const,
     version: currentVersion,
     entries,
-    build: currentBuild,
   };
 };
 

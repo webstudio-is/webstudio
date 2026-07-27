@@ -425,27 +425,13 @@ export const createAssetResourceOpenApi = ({
           summary: "Upload asset content",
           security: mutationSecurity,
           parameters: [
-            pathParameter(
-              "name",
-              "Reserved storage name or requested filename"
-            ),
-            queryParameter("projectId", "Project receiving the asset"),
-            queryParameter("type", "Asset type: file, image, or font"),
-            queryParameter("folderId", "Destination asset folder"),
+            pathParameter("name", "Storage name returned by the reservation"),
           ],
           requestBody: {
             required: true,
             content: {
               "application/octet-stream": {
                 schema: { type: "string", format: "binary" },
-              },
-              "application/json": {
-                schema: {
-                  type: "object",
-                  required: ["url"],
-                  properties: { url: { type: "string", format: "uri" } },
-                  additionalProperties: false,
-                },
               },
             },
           },

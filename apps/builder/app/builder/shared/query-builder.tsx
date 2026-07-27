@@ -2,7 +2,7 @@ import { isLiteralExpression } from "@webstudio-is/expression";
 import {
   StructuredQueryBuilder,
   type QueryValueEditorProps,
-} from "@webstudio-is/query-builder/react";
+} from "@webstudio-is/query-builder-react";
 import type {
   QueryCapabilities,
   StructuredQuery,
