@@ -3,7 +3,7 @@ import {
   type ContentArtifactV1,
   type AssetResourceQueryFailure,
 } from "./schema";
-import { sha256Hex } from "@webstudio-is/project-store";
+import { sha256Hex } from "./canonical-json";
 import { AssetQueryExecutionError } from "./structured-query";
 import { createContentDatabase } from "./content-database";
 import { AssetResourceHydrationError } from "./hydration";

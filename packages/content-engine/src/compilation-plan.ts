@@ -11,7 +11,7 @@ import {
   compareAssetQuerySortValues,
   getAssetQueryFieldValue,
 } from "./structured-query";
-import { compareStrings } from "@webstudio-is/project-store";
+import { compareStrings } from "./canonical-json";
 
 export type ContentCompilationValue =
   | { type: "literal"; value: unknown }

@@ -2,7 +2,6 @@ import { dirname, join } from "node:path";
 import { readdirSync } from "node:fs";
 import envPaths from "env-paths";
 import { z } from "zod";
-import { encodeStoragePathSegment } from "@webstudio-is/project-store";
 
 const GLOBAL_CONFIG_FOLDER =
   process.env.WEBSTUDIO_CONFIG_DIR ?? envPaths("webstudio").config;
@@ -15,6 +14,15 @@ export const GLOBAL_CONFIG_FILE = join(
 export const LOCAL_CONFIG_FILE = ".webstudio/config.json";
 export const LOCAL_DATA_FILE = ".webstudio/data.json";
 
+// URI encoding preserves path separators but leaves `.` untouched. Encode dots
+// too so opaque project ids cannot become filesystem traversal segments.
+const encodeProjectStatePathSegment = (value: string) => {
+  if (value.length === 0) {
+    throw new Error("Project id cannot be empty");
+  }
+  return encodeURIComponent(value).replaceAll(".", "%2E");
+};
+
 export const getLocalProjectStateDirectory = (
   projectRoot: string,
   projectId?: string
@@ -25,7 +33,7 @@ export const getLocalProjectStateDirectory = (
         projectRoot,
         dirname(LOCAL_CONFIG_FILE),
         "projects",
-        encodeStoragePathSegment(projectId)
+        encodeProjectStatePathSegment(projectId)
       );
 
 const zLocalConfig = z.object({

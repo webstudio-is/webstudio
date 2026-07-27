@@ -75,7 +75,6 @@
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
-    "@webstudio-is/project-store": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
     "acorn": "^8.14.1",

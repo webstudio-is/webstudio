@@ -12,7 +12,7 @@ import {
 import {
   createAssetFolderRows,
   createAssetRows,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
   migratePages,

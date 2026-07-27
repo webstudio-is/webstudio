@@ -1,14 +1,12 @@
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
+import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
 import type { AssetType, UploadTicket } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { Image, wsImageLoader } from "@webstudio-is/image";
-import {
-  restAssetsUploadPath,
-  restAssetsUploadsPath,
-} from "~/shared/router-utils";
+import { restAssetsUploadPath } from "~/shared/router-utils";
 import { fetch } from "~/shared/fetch.client";
 import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
@@ -324,7 +322,7 @@ const createUploadTicket = async ({
 
   const authHeaders = createAssetUploadHeaders(authToken);
 
-  const metaResponse = await request(restAssetsUploadsPath(), {
+  const metaResponse = await request(assetsUploadsApiUrl, {
     method: "POST",
     body: metaFormData,
     headers: authHeaders,

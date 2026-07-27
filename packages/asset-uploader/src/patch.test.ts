@@ -11,6 +11,7 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   loadAssetsByProjectWithClient,
   patchAssetsWithClient,
+  updateAssetMetadataWithClient,
 } from "./asset-patch-core";
 import {
   deleteAssetFoldersWithClient,
@@ -273,6 +274,73 @@ const assetRow = {
     status: "UPLOADED",
   },
 };
+
+describe("asset patch persistence", () => {
+  test("loads only requested assets", async () => {
+    const projectId = uid();
+    let idFilter: string | null = null;
+    server.use(
+      db.get("Asset", ({ request }) => {
+        idFilter = new URL(request.url).searchParams.get("id");
+        return json([{ ...assetRow, projectId }]);
+      })
+    );
+
+    await expect(
+      loadAssetsByProjectWithClient(projectId, testContext.postgrest.client, [
+        "asset-1",
+      ])
+    ).resolves.toEqual([expect.objectContaining({ id: "asset-1" })]);
+    expect(idFilter).toBe("in.(asset-1)");
+  });
+
+  test("does not query when no asset ids are requested", async () => {
+    const projectId = uid();
+    let requestCount = 0;
+    server.use(
+      db.get("Asset", () => {
+        requestCount += 1;
+        return json([]);
+      })
+    );
+
+    await expect(
+      loadAssetsByProjectWithClient(projectId, testContext.postgrest.client, [])
+    ).resolves.toEqual([]);
+    expect(requestCount).toBe(0);
+  });
+
+  test("updates only supplied metadata and reloads only that asset", async () => {
+    const projectId = uid();
+    let update: unknown;
+    let readIdFilter: string | null = null;
+    server.use(
+      db.patch("Asset", async ({ request }) => {
+        update = await request.json();
+        return json({ id: "asset-1" });
+      }),
+      db.get("Asset", ({ request }) => {
+        readIdFilter = new URL(request.url).searchParams.get("id");
+        return json([{ ...assetRow, projectId, description: null }]);
+      })
+    );
+
+    await expect(
+      updateAssetMetadataWithClient(
+        {
+          projectId,
+          assetId: "asset-1",
+          values: { description: null },
+        },
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual(
+      expect.objectContaining({ id: "asset-1", description: undefined })
+    );
+    expect(update).toEqual({ description: null });
+    expect(readIdFilter).toBe("in.(asset-1)");
+  });
+});
 
 describe("patchAssets (msw)", () => {
   test("throws when caller lacks edit access", async () => {

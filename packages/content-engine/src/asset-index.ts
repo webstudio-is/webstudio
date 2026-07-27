@@ -1,7 +1,7 @@
 import {
   compareStrings,
   serializeJsonDeterministically,
-} from "@webstudio-is/project-store";
+} from "./canonical-json";
 import { contentArtifactV1, type ContentArtifactV1 } from "./schema";
 import type { CanonicalAssetFileEntry } from "./canonical";
 import {

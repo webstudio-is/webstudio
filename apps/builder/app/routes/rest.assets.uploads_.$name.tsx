@@ -3,12 +3,11 @@ import { arrayBuffer } from "node:stream/consumers";
 import {
   createSizeLimiter,
   assetDataOverride,
-  getContentHash,
   PostgresAssetRepository,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import { isAssetFileName } from "@webstudio-is/protocol";
 import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
-import type { Asset } from "@webstudio-is/sdk";
+import { getAssetContentHash, type Asset } from "@webstudio-is/sdk";
 import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
   createAssetClient,
@@ -19,9 +18,9 @@ import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
   authorizeAssetRestProject,
-  createAssetRestContext,
   requiresAssetMutationCsrf,
 } from "~/services/asset-rest-auth.server";
+import { createContext } from "~/shared/context.server";
 import {
   AssetRestRequestError,
   assetRestErrorResponse,
@@ -183,7 +182,7 @@ export const action = async (props: ActionFunctionArgs) => {
         filename,
         description,
         folderId,
-        contentHash: force ? undefined : await getContentHash(data),
+        contentHash: force ? undefined : await getAssetContentHash(data),
       });
       if (ticket.deduplicated) {
         return createDeduplicatedAssetResponse(ticket.asset);
@@ -206,7 +205,7 @@ export const action = async (props: ActionFunctionArgs) => {
       searchParams: url.searchParams,
     });
 
-    const context = await createAssetRestContext(request);
+    const context = await createContext(request);
     const assetClient = createAssetClient();
     const repository = await PostgresAssetRepository.forUpload({
       name: params.name,

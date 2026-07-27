@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import { assetFolders } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
@@ -18,7 +18,7 @@ import {
   readAssetRestFormData,
   readAssetRestJson,
 } from "./asset-rest.server";
-import { AssetUploadSizeLimitError } from "@webstudio-is/asset-uploader/index.server";
+import { AssetUploadSizeLimitError } from "@webstudio-is/asset-uploader/server";
 
 describe("Assets REST responses", () => {
   test.each([

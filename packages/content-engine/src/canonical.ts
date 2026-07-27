@@ -4,7 +4,7 @@ import { z } from "zod";
 import {
   compareStrings,
   serializeJsonDeterministically,
-} from "@webstudio-is/project-store";
+} from "./canonical-json";
 import { getStructuredDataByteLength } from "./structured-data";
 
 export type AssetFileMetadataInput = {

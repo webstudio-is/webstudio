@@ -1,11 +1,7 @@
-import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import type { ProjectPermit } from "@webstudio-is/trpc-interface/index.server";
 import { apiClientHeader } from "@webstudio-is/trpc-interface/api-compatibility";
 import { assertApiProjectPermit } from "./api-permits.server";
 import { createContext } from "~/shared/context.server";
-
-export const createAssetRestContext = createContext;
-
-type AssetRestProjectPermit = Extract<AuthPermit, "view" | "edit" | "build">;
 
 /**
  * Builder requests rely on the repository's normal project authorization,
@@ -15,10 +11,13 @@ type AssetRestProjectPermit = Extract<AuthPermit, "view" | "edit" | "build">;
 export const authorizeAssetRestProject = async (
   request: Request,
   projectId: string,
-  permit: AssetRestProjectPermit,
-  dependencies = { createAssetRestContext, assertApiProjectPermit }
+  permit: ProjectPermit,
+  dependencies = {
+    createContext,
+    assertApiProjectPermit,
+  }
 ) => {
-  const context = await dependencies.createAssetRestContext(request);
+  const context = await dependencies.createContext(request);
   if (
     context.authorization.type === "token" &&
     request.headers.get(apiClientHeader) !== "browser"

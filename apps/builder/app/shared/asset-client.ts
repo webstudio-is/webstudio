@@ -3,7 +3,7 @@ import { maxSize } from "@webstudio-is/asset-uploader";
 import {
   createFsAssetObjectStore,
   createS3AssetObjectStore,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import env from "~/env/env.server";
 
 export const fileUploadPath = "public/cgi/asset";

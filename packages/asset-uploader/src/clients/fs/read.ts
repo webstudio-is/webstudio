@@ -2,7 +2,7 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import {
-  type AssetClient,
+  type AssetObjectStore,
   type AssetReadRange,
   validateAssetReadRange,
 } from "../../client";
@@ -15,7 +15,7 @@ export const readFromFs = async ({
   name: string;
   range?: AssetReadRange;
   fileDirectory: string;
-}): ReturnType<AssetClient["readFile"]> => {
+}): ReturnType<AssetObjectStore["readFile"]> => {
   const root = resolve(fileDirectory);
   const filepath = resolve(root, name);
   if (filepath.startsWith(`${root}${sep}`) === false) {

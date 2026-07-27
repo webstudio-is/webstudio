@@ -6,7 +6,7 @@ import {
   parseContentDatabaseMaxBytes,
   AssetResourceHydrationError,
 } from "@webstudio-is/content-engine";
-import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/index.server";
+import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/server";
 import {
   assetResourceQueryFailure,
   type AssetResourceErrorCode,

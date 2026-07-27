@@ -177,8 +177,9 @@ export const updateAssetMetadataWithClient = async (
     throw new Error("Asset not found");
   }
 
-  const assets = await loadAssetsByProjectWithClient(projectId, client);
-  const asset = assets.find((candidate) => candidate.id === assetId);
+  const [asset] = await loadAssetsByProjectWithClient(projectId, client, [
+    assetId,
+  ]);
   if (asset === undefined) {
     throw new Error("Asset not found");
   }

@@ -19,7 +19,7 @@ import {
 } from "@webstudio-is/query-builder";
 import { Flex, Label, Switch, Text } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
-import { WebstudioQueryBuilder } from "~/builder/shared/query-builder";
+import { BindableQueryBuilder } from "~/builder/shared/query-builder";
 import { loadBuilderAssetQueryCapabilities } from "~/shared/asset-resource-api.client";
 import {
   createStructuredAssetQueryResourceBody,
@@ -136,7 +136,7 @@ export const AssetQueryForm = ({
           <input type="hidden" name="header-name" value="Content-Type" />
           <input type="hidden" name="header-value" value='"application/json"' />
           <input type="hidden" name="body" value={body} />
-          <WebstudioQueryBuilder<
+          <BindableQueryBuilder<
             AssetObservedFieldType,
             AssetQueryFilter["operator"],
             StructuredAssetQueryResourceConfiguration

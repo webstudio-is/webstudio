@@ -201,12 +201,6 @@ export const contentArtifactV1 = z
 
 export type ContentArtifactV1 = z.infer<typeof contentArtifactV1>;
 
-// Webstudio transport contracts still use the historical asset-index field
-// name. Keep this alias at the integration boundary while the content engine
-// uses the general artifact terminology internally.
-export const assetIndexV1 = contentArtifactV1;
-export type AssetIndexV1 = ContentArtifactV1;
-
 export const assetResourceContentOptions = z.discriminatedUnion("mode", [
   z.object({ mode: z.literal("none") }),
   z.object({

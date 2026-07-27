@@ -65,7 +65,7 @@ import {
   getAssetQueryFieldValue,
   matchesAssetQueryFilter,
 } from "@webstudio-is/content-engine";
-import { serializeAssetIndex } from "@webstudio-is/content-engine/compiler";
+import { serializeContentArtifact } from "@webstudio-is/content-engine/compiler";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -526,7 +526,7 @@ export const assetQueryDatabase = undefined;
       : `import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 
 export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
-export const assetQueryDatabase: ContentArtifactV1 = ${serializeAssetIndex(index)};
+export const assetQueryDatabase: ContentArtifactV1 = ${serializeContentArtifact(index)};
 `,
     "utf8"
   );

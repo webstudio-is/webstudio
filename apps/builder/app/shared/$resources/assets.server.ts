@@ -1,6 +1,6 @@
 import { json } from "@remix-run/server-runtime";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
-import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetsByProject } from "@webstudio-is/asset-uploader/server";
 import { toRuntimeAsset } from "@webstudio-is/sdk";
 import { isBuilder } from "../router-utils";
 import { createContext } from "../context.server";

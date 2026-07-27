@@ -1,8 +1,5 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
-import {
-  assetsUploadsApiUrl,
-  getAssetUploadApiUrl,
-} from "@webstudio-is/sdk/runtime";
+import { getAssetUploadApiUrl } from "@webstudio-is/sdk/runtime";
 import { getAuthorizationServerOrigin } from "./origins";
 import type { BuilderMode } from "../nano-states/misc";
 
@@ -126,10 +123,6 @@ export const authPath = ({
 }: {
   provider: "google" | "github" | "dev";
 }) => `/auth/${provider}`;
-
-export const restAssetsUploadsPath = () => {
-  return assetsUploadsApiUrl;
-};
 
 export const restAssetsUploadPath = ({
   name,

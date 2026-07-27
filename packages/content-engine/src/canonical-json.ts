@@ -1,15 +1,12 @@
 import canonicalize from "canonicalize";
-import type { JsonValue } from "./types";
 
-export const compareStrings = (left: string, right: string) => {
-  if (left < right) {
-    return -1;
-  }
-  if (left > right) {
-    return 1;
-  }
-  return 0;
-};
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue =
+  | JsonPrimitive
+  | readonly JsonValue[]
+  | { readonly [key: string]: JsonValue };
+
+type HashSource = string | ArrayBuffer | ArrayBufferView<ArrayBuffer>;
 
 const assertValidUnicode = (value: string) => {
   for (let index = 0; index < value.length; index += 1) {
@@ -32,11 +29,6 @@ const assertValidUnicode = (value: string) => {
   }
 };
 
-/**
- * Converts validated application data to the portable JSON value model.
- * Optional object properties are omitted deliberately; unlike JSON.stringify,
- * every other non-JSON value is rejected instead of being changed silently.
- */
 const normalizeJsonValueInternal = (
   value: unknown,
   ancestors: Set<object>
@@ -125,3 +117,25 @@ export const serializeJsonDeterministically = (value: unknown): string => {
   }
   return result;
 };
+
+export const compareStrings = (left: string, right: string) => {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
+};
+
+export const sha256Hex = async (value: HashSource) => {
+  const source =
+    typeof value === "string" ? new TextEncoder().encode(value) : value;
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", source);
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+};
+
+export const sha256 = async (value: HashSource) =>
+  `sha256:${await sha256Hex(value)}` as const;

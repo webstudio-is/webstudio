@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { getContentDatabasePublishWarning } from "./content-database-publish-warning";
 
 describe("content database publish warning", () => {
-  test("describes bounded files and dynamic resources conservatively", () => {
+  test("reports bounded files and dynamic resources", () => {
     expect(
       getContentDatabasePublishWarning({
         stats: {
@@ -18,9 +18,15 @@ describe("content database publish warning", () => {
         ],
         hasDynamicValues: true,
       })
-    ).toBe(
-      "The published content database will include 80 of 100 files (500 of 500 KiB). 20 files will be omitted. Queries with route or variable values may be incomplete in: Blog overview, Blog article."
-    );
+    ).toEqual({
+      includedDocumentCount: 80,
+      totalDocumentCount: 100,
+      omittedDocumentCount: 20,
+      usedKiB: 500,
+      maxKiB: 500,
+      affectedResourceNames: ["Blog overview", "Blog article"],
+      affectedResourceKind: "dynamic",
+    });
   });
 
   test("does not warn for a complete database", () => {
@@ -37,5 +43,25 @@ describe("content database publish warning", () => {
         hasDynamicValues: false,
       })
     ).toBeUndefined();
+  });
+
+  test("identifies statically affected resources", () => {
+    expect(
+      getContentDatabasePublishWarning({
+        stats: {
+          usedBytes: 1025,
+          maxBytes: 2048,
+          includedDocumentCount: 1,
+          omittedDocumentCount: 1,
+          truncated: true,
+        },
+        potentiallyAffectedResources: [{ id: "overview", name: "Overview" }],
+        hasDynamicValues: false,
+      })
+    ).toMatchObject({
+      usedKiB: 2,
+      affectedResourceNames: ["Overview"],
+      affectedResourceKind: "static",
+    });
   });
 });

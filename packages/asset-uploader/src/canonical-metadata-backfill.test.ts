@@ -9,7 +9,7 @@ import {
   json,
   testContext,
 } from "@webstudio-is/postgrest/testing";
-import type { AssetClient } from "./client";
+import type { AssetObjectStore } from "./client";
 import {
   createAssetContentRevision,
   loadCanonicalAssetBaseEntries,
@@ -102,7 +102,7 @@ describe("canonical asset metadata synchronization", () => {
     },
   ])("prepares only requested Markdown $name", async (scenario) => {
     const source = "---\ntitle: Post\n---\nPost body";
-    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async () => ({
       data: {
         async *[Symbol.asyncIterator]() {
           yield encoder.encode(source);
@@ -189,7 +189,7 @@ describe("canonical asset metadata synchronization", () => {
         properties: { title: "Post" },
       },
     });
-    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async () => ({
       data: {
         async *[Symbol.asyncIterator]() {
           yield bytes;
@@ -257,7 +257,7 @@ describe("canonical asset metadata synchronization", () => {
       ["stored-two.md", "---\ntitle: Two\ndraft: true\n---\nSecond post"],
       ["stored-data.json", '{"title":"Data","draft":false}'],
     ]);
-    const readFile = vi.fn<AssetClient["readFile"]>(async (name) => ({
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async (name) => ({
       data: {
         async *[Symbol.asyncIterator]() {
           yield encoder.encode(contents.get(name) ?? "");
@@ -404,7 +404,7 @@ describe("canonical asset metadata synchronization", () => {
 
   test("indexes an empty Markdown file without a storage range read", async () => {
     const storageName = "empty_abcdefghijklmnopqrstu.md";
-    const readFile = vi.fn<AssetClient["readFile"]>();
+    const readFile = vi.fn<AssetObjectStore["readFile"]>();
     let document: Record<string, unknown> | undefined;
     server.use(
       db.get("Asset", () =>
@@ -475,7 +475,7 @@ describe("canonical asset metadata synchronization", () => {
 
   test("reindexes only the selected Markdown asset after a content change", async () => {
     const source = "---\ntitle: Updated\n---\nUpdated body";
-    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async () => ({
       data: {
         async *[Symbol.asyncIterator]() {
           yield encoder.encode(source);
@@ -581,7 +581,7 @@ describe("canonical asset metadata synchronization", () => {
   test("persists standard metadata and a parse error for invalid YAML", async () => {
     const source = "---\ntitle: [broken\n---\nBody";
     const bytes = encoder.encode(source);
-    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async () => ({
       data: {
         async *[Symbol.asyncIterator]() {
           yield bytes;
@@ -905,7 +905,7 @@ describe("canonical asset metadata synchronization", () => {
         revision: "file:stale.md:old:20",
       }),
     ];
-    const readFile = vi.fn<AssetClient["readFile"]>(async (name) => ({
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async (name) => ({
       data: {
         async *[Symbol.asyncIterator]() {
           yield encoder.encode(sources.get(name) ?? "");
@@ -989,7 +989,7 @@ describe("canonical asset metadata synchronization", () => {
         properties: { title: "Old" },
       },
     });
-    const readFile = vi.fn<AssetClient["readFile"]>(async () => ({
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async () => ({
       data: {
         async *[Symbol.asyncIterator]() {
           yield bytes;
@@ -1107,7 +1107,7 @@ describe("canonical asset metadata synchronization", () => {
       ),
       db.post("rpc/delete_stale_asset_file_metadata", () => json(0))
     );
-    const readFile = vi.fn<AssetClient["readFile"]>(async (name) => {
+    const readFile = vi.fn<AssetObjectStore["readFile"]>(async (name) => {
       if (name === "broken.md") {
         throw new Error("Object is missing");
       }

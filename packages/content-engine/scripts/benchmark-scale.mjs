@@ -7,8 +7,8 @@ import {
   createCanonicalAssetFileEntry,
   extractMarkdownFrontmatter,
   normalizeAssetFileDocument,
-  serializeAssetIndex,
-  verifyAssetIndex,
+  serializeContentArtifact,
+  verifyContentArtifact,
 } from "../src/compiler.ts";
 import { executeAssetQuery } from "../src/index.ts";
 import { createScaleMarkdownFixture } from "../src/scale-fixture.ts";
@@ -81,10 +81,10 @@ const incrementalStartedAt = performance.now();
 await deriveEntry(changedFile, "revision-post-0999-v2");
 const incrementalMs = performance.now() - incrementalStartedAt;
 
-const serialized = serializeAssetIndex(index);
+const serialized = serializeContentArtifact(index);
 const indexBytes = encoder.encode(serialized);
 const coldParseAndVerify = await measure(10, () =>
-  verifyAssetIndex(JSON.parse(serialized))
+  verifyContentArtifact(JSON.parse(serialized))
 );
 
 const read = async (contentRef, range) => {
@@ -181,9 +181,11 @@ const nearLimitIndex = await createAssetIndex({
   projectId,
   entries: nearLimitEntries,
 });
-const nearLimitSerialized = serializeAssetIndex(nearLimitIndex);
+const nearLimitSerialized = serializeContentArtifact(nearLimitIndex);
 const nearLimitMemoryBefore = process.memoryUsage().heapUsed;
-const nearLimitParsed = await verifyAssetIndex(JSON.parse(nearLimitSerialized));
+const nearLimitParsed = await verifyContentArtifact(
+  JSON.parse(nearLimitSerialized)
+);
 const nearLimitMemoryAfter = process.memoryUsage().heapUsed;
 
 const projectEntryTier = (entry, tier) => {
@@ -213,7 +215,7 @@ const benchmarkTierArtifacts = async (count) => {
       projectId,
       entries: selectedEntries.map((entry) => projectEntryTier(entry, tier)),
     });
-    const bytes = encoder.encode(serializeAssetIndex(tierIndex));
+    const bytes = encoder.encode(serializeContentArtifact(tierIndex));
     tiers[tier] = {
       objectReads: tier === "base" ? 0 : count,
       parserRuns: tier === "base" ? 0 : count,

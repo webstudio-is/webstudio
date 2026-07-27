@@ -7,7 +7,7 @@ import {
   compareStrings,
   serializeJsonDeterministically,
   sha256,
-} from "@webstudio-is/project-store";
+} from "./canonical-json";
 import {
   createCanonicalAssetFileEntry,
   getFieldContributions,

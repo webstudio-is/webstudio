@@ -1,12 +1,16 @@
-import { validateProjectAssetReadRange } from "@webstudio-is/project-store";
 import type { AssetData, AssetDataOverride } from "./utils/get-asset-data";
 
 export type AssetReadRange = { offset: number; length: number };
 
 export const validateAssetReadRange = (range: AssetReadRange) => {
-  try {
-    validateProjectAssetReadRange(range);
-  } catch {
+  const end = range.offset + range.length;
+  if (
+    Number.isSafeInteger(range.offset) === false ||
+    range.offset < 0 ||
+    Number.isSafeInteger(range.length) === false ||
+    range.length <= 0 ||
+    Number.isSafeInteger(end) === false
+  ) {
     throw new Error("Asset read range is invalid");
   }
 };
@@ -34,8 +38,3 @@ export type AssetObjectReader = {
 };
 
 export type AssetObjectStore = AssetObjectWriter & AssetObjectReader;
-
-// Compatibility names for callers that predate the storage-neutral
-// repository boundary.
-export type AssetUploadClient = AssetObjectWriter;
-export type AssetClient = AssetObjectStore;

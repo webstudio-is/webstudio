@@ -22,7 +22,7 @@ import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
-import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/server";
 import { createContentDatabase } from "@webstudio-is/content-engine";
 import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
 import {

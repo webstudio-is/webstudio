@@ -105,7 +105,10 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
-import { getContentDatabasePublishWarning } from "./content-database-publish-warning";
+import {
+  getContentDatabasePublishWarning,
+  type ContentDatabasePublishWarning,
+} from "./content-database-publish-warning";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -202,6 +205,32 @@ const loadContentDatabasePublishWarning = async (projectId: string) => {
     })
   );
 };
+
+const ContentDatabasePublishWarningMessage = ({
+  warning,
+}: {
+  warning: ContentDatabasePublishWarning;
+}) => (
+  <>
+    The published content database will include {warning.includedDocumentCount}{" "}
+    of {warning.totalDocumentCount} files ({warning.usedKiB} of {warning.maxKiB}{" "}
+    KiB). {warning.omittedDocumentCount} files will be omitted.
+    {warning.affectedResourceKind === "dynamic" && (
+      <>
+        {" "}
+        Queries with route or variable values may be incomplete in:{" "}
+        {warning.affectedResourceNames.join(", ")}.
+      </>
+    )}
+    {warning.affectedResourceKind === "static" && (
+      <>
+        {" "}
+        Potentially affected Assets resources:{" "}
+        {warning.affectedResourceNames.join(", ")}.
+      </>
+    )}
+  </>
+);
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -670,8 +699,11 @@ const Publish = ({
           project.id
         );
         if (contentWarning !== undefined) {
-          toast.warn(contentWarning);
-          setPublishWarning(contentWarning);
+          const message = (
+            <ContentDatabasePublishWarningMessage warning={contentWarning} />
+          );
+          toast.warn(message);
+          setPublishWarning(message);
         }
       } catch (error) {
         const message =
@@ -835,8 +867,13 @@ const PublishStatic = ({
                 const contentWarning =
                   await loadContentDatabasePublishWarning(projectId);
                 if (contentWarning !== undefined) {
-                  toast.warn(contentWarning);
-                  setPublishWarning(contentWarning);
+                  const message = (
+                    <ContentDatabasePublishWarningMessage
+                      warning={contentWarning}
+                    />
+                  );
+                  toast.warn(message);
+                  setPublishWarning(message);
                 }
 
                 const result = await nativeClient.domain.publish.mutate({

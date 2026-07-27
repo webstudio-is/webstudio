@@ -2,10 +2,12 @@ import { describe, expect, test } from "vitest";
 import {
   normalizeJsonValue,
   serializeJsonDeterministically,
-} from "./stable-json";
-import type { JsonValue } from "./types";
+  sha256,
+  sha256Hex,
+  type JsonValue,
+} from "./canonical-json";
 
-describe("portable JSON", () => {
+describe("canonical JSON", () => {
   test("omits optional object properties and preserves canonical values", () => {
     const value = normalizeJsonValue({
       omitted: undefined,
@@ -84,5 +86,16 @@ describe("portable JSON", () => {
     ).toBe(
       '{"\\r":"Carriage Return","1":"One","":"Control","ö":"Latin Small Letter O With Diaeresis","€":"Euro Sign","😀":"Emoji: Grinning Face","דּ":"Hebrew Letter Dalet With Dagesh"}'
     );
+  });
+
+  test("hashes strings, buffers, and views consistently", async () => {
+    const bytes = new TextEncoder().encode("hello");
+    const expected =
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
+
+    await expect(sha256Hex("hello")).resolves.toBe(expected);
+    await expect(sha256Hex(bytes)).resolves.toBe(expected);
+    await expect(sha256Hex(bytes.buffer)).resolves.toBe(expected);
+    await expect(sha256("hello")).resolves.toBe(`sha256:${expected}`);
   });
 });

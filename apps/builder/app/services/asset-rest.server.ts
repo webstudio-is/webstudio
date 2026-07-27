@@ -10,8 +10,11 @@ import {
   AssetRevisionConflictError,
   AssetUploadSizeLimitError,
   PostgresAssetRepository,
-} from "@webstudio-is/asset-uploader/index.server";
-import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+} from "@webstudio-is/asset-uploader/server";
+import {
+  AuthorizationError,
+  type ProjectPermit,
+} from "@webstudio-is/trpc-interface/index.server";
 import { assetFolderIssue } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
@@ -135,7 +138,7 @@ export const getAssetRestProjectId = (request: Request) => {
 
 export const createAssetRestRepository = async (
   request: Request,
-  permit: "view" | "edit" | "build" = "view"
+  permit: ProjectPermit = "view"
 ) => {
   const projectId = getAssetRestProjectId(request);
   return new PostgresAssetRepository({

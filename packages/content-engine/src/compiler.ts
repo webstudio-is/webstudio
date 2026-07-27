@@ -8,4 +8,5 @@ export * from "./field-catalog";
 export * from "./asset-index";
 export * from "./content-source";
 export * from "./document-metadata";
+export { serializeJsonDeterministically } from "./canonical-json";
 export { decodeUtf8, readBoundedBytes } from "./byte-stream";

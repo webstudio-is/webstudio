@@ -14,9 +14,7 @@ export * from "./clients/fs/fs";
 export * from "./clients/s3/s3";
 export { assetDataOverride } from "./utils/get-asset-data";
 export type {
-  AssetClient,
   AssetObjectReader,
   AssetObjectStore,
   AssetObjectWriter,
-  AssetUploadClient,
 } from "./client";

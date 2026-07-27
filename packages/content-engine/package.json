@@ -16,8 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@webstudio-is/project-store": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
+    "canonicalize": "3.0.0",
     "remark-parse": "10.0.2",
     "unified": "10.1.2",
     "yaml": "2.9.0",

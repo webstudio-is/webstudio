@@ -12,7 +12,7 @@ import {
   type Asset,
 } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-import type { AssetUploadClient } from "./client";
+import type { AssetObjectWriter } from "./client";
 import type { AssetDataOverride } from "./utils/get-asset-data";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
@@ -382,7 +382,7 @@ export const createUploadTicket = async (
 export const uploadFileData = async (
   name: string,
   data: ReadableStream<Uint8Array>,
-  client: AssetUploadClient,
+  client: AssetObjectWriter,
   context: AppContext,
   assetInfoFallback:
     | { width: number; height: number; format: string }
@@ -492,7 +492,7 @@ export const getUploadedAsset = async ({
 export const uploadFile = async (
   name: string,
   data: ReadableStream<Uint8Array>,
-  client: AssetUploadClient,
+  client: AssetObjectWriter,
   context: AppContext,
   assetInfoFallback:
     | { width: number; height: number; format: string }

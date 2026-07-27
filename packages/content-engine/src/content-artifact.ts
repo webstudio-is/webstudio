@@ -1,9 +1,6 @@
 import { contentArtifactV1, type ContentArtifactV1 } from "./schema";
 import { contentEngineLimits } from "./limits";
-import {
-  serializeJsonDeterministically,
-  sha256,
-} from "@webstudio-is/project-store";
+import { serializeJsonDeterministically, sha256 } from "./canonical-json";
 
 export const checksumContentArtifact = async (index: ContentArtifactV1) => {
   const { integrity: _integrity, ...payload } = index;
@@ -32,7 +29,3 @@ export const verifyContentArtifact = async (value: unknown) => {
   }
   return index;
 };
-
-export const checksumAssetIndex = checksumContentArtifact;
-export const serializeAssetIndex = serializeContentArtifact;
-export const verifyAssetIndex = verifyContentArtifact;

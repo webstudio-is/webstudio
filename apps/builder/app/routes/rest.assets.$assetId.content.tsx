@@ -1,5 +1,5 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
-import { PostgresAssetRepository } from "@webstudio-is/asset-uploader/index.server";
+import { PostgresAssetRepository } from "@webstudio-is/asset-uploader/server";
 import { type Asset } from "@webstudio-is/sdk";
 import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
 import { createAssetClient } from "~/shared/asset-client";

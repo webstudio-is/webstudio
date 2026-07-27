@@ -17,7 +17,7 @@ import { contentEngineLimits } from "./limits";
 import {
   compareStrings,
   serializeJsonDeterministically,
-} from "@webstudio-is/project-store";
+} from "./canonical-json";
 import {
   hydrateAssetResourceResult,
   type AssetResourceContentReader,

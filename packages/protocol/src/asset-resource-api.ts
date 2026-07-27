@@ -193,8 +193,6 @@ export const assetMetadataUpdate = z
   });
 export type AssetMetadataUpdate = z.infer<typeof assetMetadataUpdate>;
 
-export const assetMutationResult = assetItemResult;
-
 export const assetFolderListResult = z.strictObject({
   folders: z.array(assetFolder),
 });
@@ -814,7 +812,7 @@ export const createAssetResourceOpenApi = ({
         ),
         AssetMutationResult: toComponentSchema(
           "AssetMutationResult",
-          assetMutationResult,
+          assetItemResult,
           "output"
         ),
         AssetMutationFailure: toComponentSchema(

@@ -1,5 +1,5 @@
 import { type AssetQueryRequestInput } from "@webstudio-is/sdk";
-import type { AssetClient } from "./client";
+import type { AssetObjectStore } from "./client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   loadAuthorizedBuilderAssetRepository,
@@ -17,7 +17,7 @@ export const previewAssetResourceQuery = async ({
   projectId: string;
   request: AssetQueryRequestInput;
   context: AppContext;
-  assetClient: Pick<AssetClient, "readFile">;
+  assetClient: Pick<AssetObjectStore, "readFile">;
   dependencies?: BuilderAssetIndexDependencies;
   contentDatabaseMaxBytes?: number;
 }) => {

@@ -1,6 +1,6 @@
 import type { SignatureV4 } from "@smithy/signature-v4";
 import {
-  type AssetClient,
+  type AssetObjectStore,
   type AssetReadRange,
   validateAssetReadRange,
 } from "../../client";
@@ -19,7 +19,7 @@ export const readFromS3 = async ({
   range?: AssetReadRange;
   endpoint: string;
   bucket: string;
-}): ReturnType<AssetClient["readFile"]> => {
+}): ReturnType<AssetObjectStore["readFile"]> => {
   if (range !== undefined) {
     validateAssetReadRange(range);
   }

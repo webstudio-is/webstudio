@@ -15,7 +15,6 @@
     "@webstudio-is/content-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/postgrest": "workspace:*",
-    "@webstudio-is/project-store": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "fontkit": "^2.0.4",
@@ -36,8 +35,8 @@
     ".": {
       "webstudio": "./src/index.ts"
     },
-    "./index.server": {
-      "webstudio": "./src/index.server.ts"
+    "./server": {
+      "webstudio": "./src/server.ts"
     },
     "./patch-assets-core.server": {
       "webstudio": "./src/asset-patch-core.ts",

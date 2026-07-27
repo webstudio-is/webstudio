@@ -10,6 +10,16 @@ type ContentDatabasePublishDiagnostics = {
   hasDynamicValues: boolean;
 };
 
+export type ContentDatabasePublishWarning = {
+  includedDocumentCount: number;
+  totalDocumentCount: number;
+  omittedDocumentCount: number;
+  usedKiB: number;
+  maxKiB: number;
+  affectedResourceNames: string[];
+  affectedResourceKind: "dynamic" | "static" | undefined;
+};
+
 export const getContentDatabasePublishWarning = (
   diagnostics: ContentDatabasePublishDiagnostics | undefined
 ) => {
@@ -17,15 +27,22 @@ export const getContentDatabasePublishWarning = (
     return;
   }
   const { stats } = diagnostics;
-  const total = stats.includedDocumentCount + stats.omittedDocumentCount;
-  const names = diagnostics.potentiallyAffectedResources
-    .map(({ name }) => name)
-    .join(", ");
-  const resources =
-    names === ""
-      ? ""
-      : diagnostics.hasDynamicValues
-        ? ` Queries with route or variable values may be incomplete in: ${names}.`
-        : ` Potentially affected Assets resources: ${names}.`;
-  return `The published content database will include ${stats.includedDocumentCount} of ${total} files (${Math.ceil(stats.usedBytes / 1024)} of ${Math.ceil(stats.maxBytes / 1024)} KiB). ${stats.omittedDocumentCount} files will be omitted.${resources}`;
+  const affectedResourceNames = diagnostics.potentiallyAffectedResources.map(
+    ({ name }) => name
+  );
+  return {
+    includedDocumentCount: stats.includedDocumentCount,
+    totalDocumentCount:
+      stats.includedDocumentCount + stats.omittedDocumentCount,
+    omittedDocumentCount: stats.omittedDocumentCount,
+    usedKiB: Math.ceil(stats.usedBytes / 1024),
+    maxKiB: Math.ceil(stats.maxBytes / 1024),
+    affectedResourceNames,
+    affectedResourceKind:
+      affectedResourceNames.length === 0
+        ? undefined
+        : diagnostics.hasDynamicValues
+          ? "dynamic"
+          : "static",
+  } satisfies ContentDatabasePublishWarning;
 };

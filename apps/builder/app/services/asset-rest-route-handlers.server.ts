@@ -8,7 +8,7 @@ import parseRange from "range-parser";
 import {
   type AssetRepository,
   PostgresAssetRepository,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import { getAssetMime } from "@webstudio-is/sdk";
 import {
   assetMetadataUpdate,

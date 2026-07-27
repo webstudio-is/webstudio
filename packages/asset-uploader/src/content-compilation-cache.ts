@@ -2,8 +2,10 @@ import {
   createContentDatabase,
   type ContentArtifactV1,
 } from "@webstudio-is/content-engine";
-import type { ContentCompilationPlan } from "@webstudio-is/content-engine/compiler";
-import { serializeJsonDeterministically } from "@webstudio-is/project-store";
+import {
+  serializeJsonDeterministically,
+  type ContentCompilationPlan,
+} from "@webstudio-is/content-engine/compiler";
 
 export type ContentCompilationCache = ReturnType<
   typeof createContentCompilationCache

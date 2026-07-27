@@ -40,7 +40,7 @@ const BoundExpression = ({
   </BindingControl>
 );
 
-export const WebstudioQueryBuilder = <
+export const BindableQueryBuilder = <
   FieldType extends string,
   Operator extends string,
   Query extends StructuredQuery<string[], Operator>,

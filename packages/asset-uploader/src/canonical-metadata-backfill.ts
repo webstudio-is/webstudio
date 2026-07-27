@@ -16,7 +16,7 @@ import {
   type AssetFileDocument,
 } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
-import type { AssetClient } from "./client";
+import type { AssetObjectStore } from "./client";
 import { loadAssetFoldersByProjectWithClient } from "./folder-persistence";
 import { assertPostgrestSuccess } from "./patch-utils";
 import {
@@ -28,8 +28,8 @@ import {
 } from "./canonical-metadata-persistence";
 import { runBounded } from "./async-utils";
 
-type CanonicalAssetClient = Pick<AssetClient, "readFile"> &
-  Partial<Omit<AssetClient, "readFile">>;
+type CanonicalAssetClient = Pick<AssetObjectStore, "readFile"> &
+  Partial<Omit<AssetObjectStore, "readFile">>;
 
 const getEntryRequirements = (entry: CanonicalAssetFileEntry) =>
   entry.metadataRequirements ?? fullCanonicalAssetMetadataRequirements;

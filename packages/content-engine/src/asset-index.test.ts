@@ -5,8 +5,8 @@ import { createContentDatabase } from "./content-database";
 import {
   compileContentArtifact,
   createAssetIndex,
-  serializeAssetIndex,
-  verifyAssetIndex,
+  serializeContentArtifact,
+  verifyContentArtifact,
 } from "./asset-index";
 
 const entry = ({
@@ -48,7 +48,7 @@ describe("shared asset index", () => {
     expect(index).not.toHaveProperty("resourceId");
     expect(index).not.toHaveProperty("queryHash");
     expect(index).not.toHaveProperty("plan");
-    await expect(verifyAssetIndex(index)).resolves.toEqual(index);
+    await expect(verifyContentArtifact(index)).resolves.toEqual(index);
   });
 
   test("rejects mixed projects, duplicate assets, and corrupted bytes", async () => {
@@ -97,12 +97,12 @@ describe("shared asset index", () => {
       entries: [entry({ id: "alpha" })],
     });
     await expect(
-      verifyAssetIndex({
+      verifyContentArtifact({
         ...index,
         documents: [{ ...index.documents[0], name: "changed.md" }],
       })
     ).rejects.toThrow("checksum");
-    expect(serializeAssetIndex(index)).toContain(
+    expect(serializeContentArtifact(index)).toContain(
       '"webstudio-content-database"'
     );
   });

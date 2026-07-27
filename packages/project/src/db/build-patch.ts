@@ -2,7 +2,7 @@ import {
   deleteAssetFoldersWithClient,
   patchAssetFoldersWithClient,
   patchAssets,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import type { Build } from "@webstudio-is/project-build";
 import { loadRawBuildById } from "@webstudio-is/project-build/server";
 import type { Database } from "@webstudio-is/postgrest/index.server";

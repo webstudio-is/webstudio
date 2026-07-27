@@ -36,7 +36,7 @@ test("requires CSRF for Builder share-token mutations", () => {
 test("requires API enablement for explicit Assets API tokens", async () => {
   const context = { authorization: { type: "token" } } as never;
   const dependencies = {
-    createAssetRestContext: vi.fn().mockResolvedValue(context),
+    createContext: vi.fn().mockResolvedValue(context),
     assertApiProjectPermit: vi.fn().mockResolvedValue(undefined),
   };
 
@@ -58,7 +58,7 @@ test("requires API enablement for explicit Assets API tokens", async () => {
 test("keeps cookie-authenticated Assets requests on repository authorization", async () => {
   const context = { authorization: { type: "user" } } as never;
   const dependencies = {
-    createAssetRestContext: vi.fn().mockResolvedValue(context),
+    createContext: vi.fn().mockResolvedValue(context),
     assertApiProjectPermit: vi.fn(),
   };
 
@@ -74,7 +74,7 @@ test("keeps cookie-authenticated Assets requests on repository authorization", a
 test("keeps Builder share-token requests on repository authorization", async () => {
   const context = { authorization: { type: "token" } } as never;
   const dependencies = {
-    createAssetRestContext: vi.fn().mockResolvedValue(context),
+    createContext: vi.fn().mockResolvedValue(context),
     assertApiProjectPermit: vi.fn(),
   };
 

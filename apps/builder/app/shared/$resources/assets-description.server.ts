@@ -1,5 +1,5 @@
 import { json } from "@remix-run/server-runtime";
-import { loadBuilderAssetFieldCatalog } from "@webstudio-is/asset-uploader/index.server";
+import { loadBuilderAssetFieldCatalog } from "@webstudio-is/asset-uploader/server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { authorizeAssetRestProject } from "~/services/asset-rest-auth.server";

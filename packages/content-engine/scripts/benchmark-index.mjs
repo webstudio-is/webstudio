@@ -3,8 +3,8 @@ import { performance } from "node:perf_hooks";
 import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
-  serializeAssetIndex,
-  verifyAssetIndex,
+  serializeContentArtifact,
+  verifyContentArtifact,
 } from "../src/compiler.ts";
 
 const documents = Array.from({ length: 1000 }, (_, index) => ({
@@ -62,7 +62,7 @@ for (let iteration = 0; iteration < 3; iteration += 1) {
   await build();
 }
 const index = await build();
-const serialized = serializeAssetIndex(index);
+const serialized = serializeContentArtifact(index);
 const encoded = new TextEncoder().encode(serialized);
 const parsed = JSON.parse(serialized);
 
@@ -73,7 +73,7 @@ const result = {
   gzipBytes: gzipSync(encoded).byteLength,
   build: await measure(20, build),
   parse: await measure(100, () => JSON.parse(serialized)),
-  verify: await measure(20, () => verifyAssetIndex(parsed)),
+  verify: await measure(20, () => verifyContentArtifact(parsed)),
 };
 
 console.info(JSON.stringify(result, null, 2));

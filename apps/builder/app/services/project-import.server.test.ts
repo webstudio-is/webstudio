@@ -5,7 +5,7 @@ import {
   createPublishedProjectBundleFixture,
 } from "@webstudio-is/protocol/fixtures";
 import { type PublishedProjectBundle } from "@webstudio-is/protocol";
-import { createAssetRows } from "@webstudio-is/asset-uploader/index.server";
+import { createAssetRows } from "@webstudio-is/asset-uploader/server";
 import {
   __testing__,
   importPublishedProjectBundle,

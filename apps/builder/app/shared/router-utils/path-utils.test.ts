@@ -1,10 +1,5 @@
 import { expect, test } from "vitest";
-import {
-  builderPath,
-  builderUrl,
-  restAssetsUploadPath,
-  restAssetsUploadsPath,
-} from "./path-utils";
+import { builderPath, builderUrl, restAssetsUploadPath } from "./path-utils";
 
 test("includes an instance deep link in builder paths", () => {
   expect(
@@ -29,8 +24,7 @@ test("includes an instance deep link in builder urls", () => {
   );
 });
 
-test("keeps asset commands in distinct collection and item routes", () => {
-  expect(restAssetsUploadsPath()).toBe("/rest/assets/uploads");
+test("builds the asset upload item route", () => {
   expect(restAssetsUploadPath({ name: "query", width: 100, height: 200 })).toBe(
     "/rest/assets/uploads/query?width=100&height=200"
   );

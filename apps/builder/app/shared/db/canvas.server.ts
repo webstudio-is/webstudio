@@ -12,7 +12,7 @@ import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/r
 import {
   loadAssetDataByProject,
   PostgresAssetRepository,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   findPageByIdOrPath,

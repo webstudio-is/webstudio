@@ -1,5 +1,5 @@
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import type { AssetClient } from "./client";
+import type { AssetObjectStore } from "./client";
 import {
   loadAuthorizedBuilderAssetRepository,
   type BuilderAssetIndexDependencies,
@@ -13,7 +13,7 @@ export const loadBuilderAssetFieldCatalog = async ({
 }: {
   projectId: string;
   context: AppContext;
-  assetClient: Pick<AssetClient, "readFile">;
+  assetClient: Pick<AssetObjectStore, "readFile">;
   dependencies?: BuilderAssetIndexDependencies;
 }) => {
   const repository = await loadAuthorizedBuilderAssetRepository({

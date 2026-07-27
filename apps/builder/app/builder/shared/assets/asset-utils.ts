@@ -10,10 +10,10 @@ import {
   getFileExtension,
   IMAGE_EXTENSIONS,
   detectAssetType,
+  getAssetContentHash,
   getAssetUrl,
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
-import { getContentHash } from "@webstudio-is/asset-uploader";
 
 export { getAssetUrl };
 
@@ -58,7 +58,7 @@ const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
 
 export const getSha256Hash = async (data: string) => {
   const encoder = new TextEncoder();
-  return getContentHash(encoder.encode(data));
+  return getAssetContentHash(encoder.encode(data));
 };
 
 const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> =>
@@ -71,7 +71,7 @@ const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> =>
 
 export const getSha256HashOfFile = async (file: File) => {
   const arrayBuffer = await readFileAsArrayBuffer(file);
-  return getContentHash(arrayBuffer);
+  return getAssetContentHash(arrayBuffer);
 };
 
 export const getFileUploadFingerprint = async (

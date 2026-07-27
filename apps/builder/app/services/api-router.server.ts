@@ -38,7 +38,7 @@ import {
   loadAssetDataByProject,
   loadAssetFoldersByProject,
   previewAssetResourceQuery,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
   publicApiContractVersion,

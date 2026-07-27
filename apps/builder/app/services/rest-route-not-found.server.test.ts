@@ -5,7 +5,7 @@ import {
 } from "@webstudio-is/trpc-interface/api-compatibility";
 import { action } from "../routes/rest.$";
 
-const requestLegacyRoute = async (client: "browser" | "cli") => {
+const requestUnknownRoute = async (client: "browser" | "cli") => {
   const response = await action({
     request: new Request("https://webstudio.is/rest/assets/legacy-name.png", {
       method: "POST",
@@ -15,9 +15,9 @@ const requestLegacyRoute = async (client: "browser" | "cli") => {
   return { response, body: await response.json() };
 };
 
-describe("unknown REST route compatibility", () => {
-  test("asks stale browser asset-upload callers to reload", async () => {
-    const { response, body } = await requestLegacyRoute("browser");
+describe("unknown REST route", () => {
+  test("asks browser callers to reload", async () => {
+    const { response, body } = await requestUnknownRoute("browser");
 
     expect(response.status).toBe(426);
     expect(getApiCompatibilityPayload(body)).toMatchObject({
@@ -27,8 +27,8 @@ describe("unknown REST route compatibility", () => {
     });
   });
 
-  test("asks stale CLI asset-upload callers to update", async () => {
-    const { response, body } = await requestLegacyRoute("cli");
+  test("asks CLI callers to update", async () => {
+    const { response, body } = await requestUnknownRoute("cli");
 
     expect(response.status).toBe(426);
     expect(getApiCompatibilityPayload(body)).toMatchObject({
