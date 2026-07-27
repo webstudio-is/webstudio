@@ -1,4 +1,4 @@
-import { type AssetQueryRequestInput } from "@webstudio-is/sdk";
+import { type AssetQueryRequestInput } from "@webstudio-is/content-engine";
 import type { AssetObjectStore } from "./client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {

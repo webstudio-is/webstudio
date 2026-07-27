@@ -28,7 +28,6 @@ import type {
   DataSource,
   Deployment,
   Asset,
-  AssetFileDocument,
   Resource,
   WsComponentMeta,
   Pages,
@@ -51,20 +50,21 @@ import {
   ROOT_INSTANCE_ID,
   elementComponent,
   toRuntimeAsset,
-  assetResourceLimits,
   matchPathnameParams,
-  assetQueryFilter,
   parseStructuredAssetQueryResourceBody,
-  type AssetQueryFilter,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
+  assetQueryFilter,
+  type AssetFileDocument,
+  type AssetQueryFilter,
   getAssetQueryFieldValue,
   matchesAssetQueryFilter,
 } from "@webstudio-is/content-engine";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { serializeContentArtifact } from "@webstudio-is/content-engine/compiler";
 import {
   publishedProjectBundle,
@@ -90,6 +90,7 @@ export const generatedFilesManifest = join(
   ".webstudio",
   "generated-files.json"
 );
+const contentRuntimeStatePath = join(".webstudio", "content-runtime.json");
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
 const routesDir = join(appRoot, "routes");
@@ -435,24 +436,42 @@ const configureContentRuntime = async ({ enabled }: { enabled: boolean }) => {
     dependencies?: Record<string, string>;
   };
   const dependencies = packageJson.dependencies ?? {};
+  const previousState = await loadJSONFile<unknown>(contentRuntimeStatePath);
+  const injectedVersion =
+    typeof previousState === "object" &&
+    previousState !== null &&
+    "injectedVersion" in previousState &&
+    typeof previousState.injectedVersion === "string"
+      ? previousState.injectedVersion
+      : undefined;
+  const currentVersion = dependencies["@webstudio-is/content-engine"];
   let packageChanged = false;
+  let nextInjectedVersion =
+    currentVersion === injectedVersion ? injectedVersion : undefined;
   if (enabled) {
-    if (dependencies["@webstudio-is/content-engine"] === undefined) {
-      dependencies["@webstudio-is/content-engine"] =
+    if (currentVersion === undefined) {
+      nextInjectedVersion =
         dependencies["@webstudio-is/react-sdk"] ?? "0.0.0-webstudio-version";
+      dependencies["@webstudio-is/content-engine"] = nextInjectedVersion;
       packageJson.dependencies = dependencies;
       packageChanged = true;
     }
+  } else if (
+    injectedVersion !== undefined &&
+    currentVersion === injectedVersion
+  ) {
+    delete dependencies["@webstudio-is/content-engine"];
+    nextInjectedVersion = undefined;
+    packageChanged = true;
+  }
+  if (nextInjectedVersion === undefined) {
+    await rm(contentRuntimeStatePath, { force: true });
   } else {
-    for (const dependency of [
-      "@webstudio-is/content-engine",
-      "@webstudio-is/asset-resource",
-    ]) {
-      if (dependencies[dependency] !== undefined) {
-        delete dependencies[dependency];
-        packageChanged = true;
-      }
-    }
+    await writeFile(
+      contentRuntimeStatePath,
+      `${JSON.stringify({ injectedVersion: nextInjectedVersion }, null, 2)}\n`,
+      "utf8"
+    );
   }
   if (packageChanged) {
     await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);

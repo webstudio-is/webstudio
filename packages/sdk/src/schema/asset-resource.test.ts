@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
+import { assetQueryResourceConfigurationInput } from "./asset-resource";
 import {
   assetFileDocument,
-  assetQueryResourceConfigurationInput,
   builderAssetFieldCatalog,
-} from "./asset-resource";
+} from "@webstudio-is/content-engine";
 
 const document = {
   _id: "asset-1",

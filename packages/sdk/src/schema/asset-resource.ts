@@ -14,9 +14,6 @@ import {
 } from "@webstudio-is/content-engine";
 import { assetResourceLimits } from "../asset-resource-limits";
 
-export * from "@webstudio-is/content-engine";
-export { assetResourceLimits } from "../asset-resource-limits";
-
 const assetQueryLiteral = <Schema extends z.ZodType>(value: Schema) =>
   z.strictObject({ type: z.literal("literal"), value });
 

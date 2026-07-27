@@ -6,15 +6,15 @@ import {
   normalizeAssetFileDocument,
   type CanonicalAssetFileEntry,
   type CanonicalAssetMetadataRequirements,
+  type AssetFileDocument,
 } from "@webstudio-is/content-engine/compiler";
 import {
-  assetResourceLimits,
   createAssetFolderHierarchy,
   formatAssetName,
   getFileNameParts,
   getMimeTypeByFilename,
-  type AssetFileDocument,
 } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetObjectStore } from "./client";
 import { loadAssetFoldersByProjectWithClient } from "./folder-persistence";

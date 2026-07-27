@@ -12,7 +12,7 @@ import {
   assetQueryResult,
   assetResourceQueryFailure,
   builderAssetFieldCatalog,
-} from "@webstudio-is/sdk/schema";
+} from "@webstudio-is/content-engine";
 import {
   assetsFieldCatalogApiUrl,
   assetsOpenApiUrl,
@@ -360,6 +360,10 @@ export const createAssetResourceOpenApi = ({
   queryCapabilities.parse(capabilities);
   const operations = assetResourceApiOperations;
   const capabilityExample = createCapabilitiesExample(capabilities);
+  const mutationSecurity = [
+    { projectToken: [] },
+    { builderSession: [], csrfToken: [] },
+  ] as const;
   const document = {
     openapi: "3.1.1",
     jsonSchemaDialect: "https://json-schema.org/draft/2020-12/schema",
@@ -391,6 +395,7 @@ export const createAssetResourceOpenApi = ({
         [operations.reserveAssetUpload.method]: {
           operationId: operations.reserveAssetUpload.operationId,
           summary: "Reserve an asset upload",
+          security: mutationSecurity,
           description:
             "Supply contentHash when available so retries can reuse an existing identical asset instead of creating a duplicate reservation.",
           requestBody: {
@@ -418,6 +423,7 @@ export const createAssetResourceOpenApi = ({
         [operations.uploadAssetContent.method]: {
           operationId: operations.uploadAssetContent.operationId,
           summary: "Upload asset content",
+          security: mutationSecurity,
           parameters: [
             pathParameter(
               "name",
@@ -465,6 +471,7 @@ export const createAssetResourceOpenApi = ({
         [operations.updateAsset.method]: {
           operationId: operations.updateAsset.operationId,
           summary: "Update asset metadata or folder",
+          security: mutationSecurity,
           parameters: [
             pathParameter("assetId", "Asset ID"),
             projectIdParameter,
@@ -485,6 +492,7 @@ export const createAssetResourceOpenApi = ({
         [operations.deleteAsset.method]: {
           operationId: operations.deleteAsset.operationId,
           summary: "Delete an asset",
+          security: mutationSecurity,
           parameters: [
             pathParameter("assetId", "Asset ID"),
             projectIdParameter,
@@ -539,6 +547,7 @@ export const createAssetResourceOpenApi = ({
         [operations.replaceAssetContent.method]: {
           operationId: operations.replaceAssetContent.operationId,
           summary: "Replace editable asset content",
+          security: mutationSecurity,
           parameters: [
             pathParameter("assetId", "Asset ID"),
             projectIdParameter,
@@ -581,6 +590,7 @@ export const createAssetResourceOpenApi = ({
         [operations.createAssetFolder.method]: {
           operationId: operations.createAssetFolder.operationId,
           summary: "Create an asset folder",
+          security: mutationSecurity,
           parameters: [projectIdParameter],
           requestBody: {
             required: true,
@@ -617,6 +627,7 @@ export const createAssetResourceOpenApi = ({
         [operations.updateAssetFolder.method]: {
           operationId: operations.updateAssetFolder.operationId,
           summary: "Update an asset folder",
+          security: mutationSecurity,
           parameters: [
             pathParameter("folderId", "Asset folder ID"),
             projectIdParameter,
@@ -642,6 +653,7 @@ export const createAssetResourceOpenApi = ({
         [operations.deleteAssetFolder.method]: {
           operationId: operations.deleteAssetFolder.operationId,
           summary: "Delete an empty asset folder",
+          security: mutationSecurity,
           description:
             "Returns a conflict when the folder contains nested folders or assets.",
           parameters: [
@@ -658,6 +670,7 @@ export const createAssetResourceOpenApi = ({
         [operations.queryAssets.method]: {
           operationId: operations.queryAssets.operationId,
           summary: "Query project assets",
+          parameters: [projectIdParameter],
           requestBody: {
             required: true,
             content: {
@@ -676,6 +689,7 @@ export const createAssetResourceOpenApi = ({
         [operations.getAssetFieldCatalog.method]: {
           operationId: operations.getAssetFieldCatalog.operationId,
           summary: "Get observed asset fields",
+          parameters: [projectIdParameter],
           responses: {
             200: schemaResponse(
               "BuilderAssetFieldCatalog",
@@ -691,6 +705,7 @@ export const createAssetResourceOpenApi = ({
         [operations.getAssetQueryCapabilities.method]: {
           operationId: operations.getAssetQueryCapabilities.operationId,
           summary: "Get query-authoring capabilities",
+          parameters: [projectIdParameter],
           responses: {
             200: {
               ...schemaResponse(
@@ -717,6 +732,7 @@ export const createAssetResourceOpenApi = ({
         [operations.getAssetResourceOpenApi.method]: {
           operationId: operations.getAssetResourceOpenApi.operationId,
           summary: "Get this OpenAPI description",
+          parameters: [projectIdParameter],
           responses: {
             200: {
               description: "OpenAPI description",
@@ -736,6 +752,7 @@ export const createAssetResourceOpenApi = ({
         [operations.refreshAssetIndex.method]: {
           operationId: operations.refreshAssetIndex.operationId,
           summary: "Repair and refresh project asset metadata",
+          security: mutationSecurity,
           description:
             "Re-reads missing or changed file metadata. A 503 response includes per-file issues when repair is incomplete.",
           parameters: [projectIdParameter],
@@ -860,6 +877,13 @@ export const createAssetResourceOpenApi = ({
           name: builderSessionCookieName,
           description:
             "Authenticated Webstudio Builder session. Cookie-authenticated mutations also require the Builder CSRF token.",
+        },
+        csrfToken: {
+          type: "apiKey",
+          in: "header",
+          name: "X-CSRF-Token",
+          description:
+            "Builder CSRF token supplied by the authenticated Builder bootstrap. Required together with builderSession for mutations.",
         },
       },
     },

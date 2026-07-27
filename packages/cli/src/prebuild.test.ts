@@ -20,10 +20,10 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
+  type AssetFileDocument,
 } from "@webstudio-is/content-engine/compiler";
 import {
   createStructuredAssetQueryResourceBody,
-  type AssetFileDocument,
   type Resource,
 } from "@webstudio-is/sdk";
 import {
@@ -504,7 +504,11 @@ describe("prebuild", () => {
   });
 
   test("does not add the local preview marker to deployable builds", async () => {
-    await prebuild({ assets: false, template: ["react-router"] });
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
 
     await expect(
       readFile("public/__webstudio/preview.json", "utf8")
@@ -1037,7 +1041,11 @@ describe("prebuild", () => {
       siteData as unknown as ReturnType<typeof createSiteData>
     );
 
-    await prebuild({ assets: false, template: ["react-router"] });
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
 
     await expect(
       readFile("app/__generated__/$resources.asset-query-manifest.ts", "utf8")
@@ -1047,6 +1055,20 @@ describe("prebuild", () => {
       "@webstudio-is/content-engine",
       "0.0.0-webstudio-version"
     );
+
+    await writeSiteData();
+    await prebuild({
+      assets: false,
+      incremental: true,
+      template: ["react-router"],
+    });
+    const withoutQuery = JSON.parse(await readFile("package.json", "utf8"));
+    expect(withoutQuery.dependencies).not.toHaveProperty(
+      "@webstudio-is/content-engine"
+    );
+    await expect(
+      readFile(".webstudio/content-runtime.json", "utf8")
+    ).rejects.toThrow("ENOENT");
   });
 
   test("uses pass-through images in the base react-router template", async () => {
@@ -1073,6 +1095,29 @@ describe("prebuild", () => {
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
     expect(packageJson.dependencies).not.toHaveProperty("h3");
     expect(packageJson.dependencies).not.toHaveProperty("ipx");
+  });
+
+  test("preserves a content-engine dependency not injected by generation", async () => {
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    packageJson.dependencies["@webstudio-is/content-engine"] = "custom-version";
+    await writeFile("package.json", JSON.stringify(packageJson), "utf8");
+
+    await prebuild({
+      assets: false,
+      incremental: true,
+      template: ["react-router"],
+    });
+
+    const preserved = JSON.parse(await readFile("package.json", "utf8"));
+    expect(preserved.dependencies).toHaveProperty(
+      "@webstudio-is/content-engine",
+      "custom-version"
+    );
   });
 
   test("omits the asset query runtime from dynamic app bundles without asset queries", async () => {

@@ -2,10 +2,10 @@ import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { Upload } from "tus-js-client";
 import {
   getAssetContentHash,
-  type AssetQueryInput,
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
 } from "@webstudio-is/sdk";
+import type { AssetQueryInput } from "@webstudio-is/content-engine";
 import type { AssetMetadataUpdate } from "@webstudio-is/protocol/asset-resource-api";
 import type { AssetFolderUpdateRequest } from "@webstudio-is/protocol/asset-resource-api";
 import {

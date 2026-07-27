@@ -69,6 +69,24 @@ type SharedProps<FieldType extends string, Operator extends string> = {
   renderExpressionEditor: QueryBuilderEditors["expression"];
 };
 
+const getFieldSelection = <FieldType extends string>(
+  fields: readonly QueryField<FieldType>[],
+  path: string[]
+) => {
+  const selected = fields.find(
+    (field) => getQueryFieldKey(field.path) === getQueryFieldKey(path)
+  );
+  if (selected !== undefined) {
+    return { selected, options: fields };
+  }
+  const unknown: QueryField<FieldType> = {
+    path,
+    label: path.join("."),
+    types: [],
+  };
+  return { selected: unknown, options: [unknown, ...fields] };
+};
+
 const Condition = <FieldType extends string, Operator extends string>({
   capabilities,
   renderExpressionEditor,
@@ -80,14 +98,13 @@ const Condition = <FieldType extends string, Operator extends string>({
   onChange: (condition: QueryCondition<string[], Operator>) => void;
   onDelete: () => void;
 }) => {
-  const selectedField =
-    capabilities.fields.find(
-      (field) =>
-        getQueryFieldKey(field.path) === getQueryFieldKey(condition.field)
-    ) ?? capabilities.fields[0];
-  if (selectedField === undefined) {
+  if (capabilities.fields.length === 0) {
     return <Text color="destructive">No query fields are available.</Text>;
   }
+  const { selected: selectedField, options: fieldOptions } = getFieldSelection(
+    capabilities.fields,
+    condition.field
+  );
   const compatibleOperators = getCompatibleQueryOperators(
     selectedField.types,
     capabilities.operators
@@ -120,7 +137,7 @@ const Condition = <FieldType extends string, Operator extends string>({
       >
         <Select<(typeof capabilities.fields)[number]>
           aria-label="Query field"
-          options={capabilities.fields}
+          options={fieldOptions}
           getLabel={(field) => field.label}
           getValue={(field) => getQueryFieldKey(field.path)}
           value={selectedField}
@@ -358,14 +375,11 @@ const Sorting = <FieldType extends string, Operator extends string>({
       />
     </Flex>
     {sort.map((order, index) => {
-      const selectedField =
-        capabilities.fields.find(
-          (field) =>
-            getQueryFieldKey(field.path) === getQueryFieldKey(order.field)
-        ) ?? capabilities.fields[0];
-      if (selectedField === undefined) {
+      if (capabilities.fields.length === 0) {
         return null;
       }
+      const { selected: selectedField, options: fieldOptions } =
+        getFieldSelection(capabilities.fields, order.field);
       return (
         <Grid
           key={index}
@@ -375,7 +389,7 @@ const Sorting = <FieldType extends string, Operator extends string>({
         >
           <Select<(typeof capabilities.fields)[number]>
             aria-label="Query sort field"
-            options={capabilities.fields}
+            options={fieldOptions}
             getLabel={(field) => field.label}
             getValue={(field) => getQueryFieldKey(field.path)}
             value={selectedField}

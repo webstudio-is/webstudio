@@ -75,9 +75,12 @@ export const prepareCanonicalContentMetadata = async ({
     requirements.excerpt && cachedRequirements.excerpt === false;
 
   if (isMarkdown(base) && (needsProperties || needsExcerpt)) {
-    const bytes = await readBytes(
-      Math.min(base.document.size, contentEngineLimits.hydratedFileBytes)
-    );
+    // Frontmatter discovery needs only the bounded opening block. Excerpt
+    // generation still receives the larger Markdown body budget.
+    const maximumBytes = needsExcerpt
+      ? contentEngineLimits.hydratedFileBytes
+      : contentEngineLimits.frontmatterBytes + 13;
+    const bytes = await readBytes(Math.min(base.document.size, maximumBytes));
     if (needsProperties) {
       try {
         properties = (await extractMarkdownFrontmatter(bytes)).properties;

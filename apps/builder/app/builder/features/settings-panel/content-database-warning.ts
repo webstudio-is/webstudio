@@ -1,4 +1,4 @@
-import { assetQueryResult } from "@webstudio-is/sdk";
+import { assetQueryResult } from "@webstudio-is/content-engine";
 
 export const getContentDatabasePreviewWarning = (value: unknown) => {
   if (

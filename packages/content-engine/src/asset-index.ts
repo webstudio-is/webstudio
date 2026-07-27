@@ -52,6 +52,28 @@ const getEntryBytes = (entry: ContentCompilerInput) =>
   getDocumentBytes(entry) +
   (entry.content === undefined ? 0 : getByteLength(entry.content));
 
+const getMinimumAdditionalBytes = ({
+  entries,
+  selectedContentRefs,
+}: {
+  entries: readonly ContentCompilerInput[];
+  selectedContentRefs: ReadonlySet<string>;
+}) => {
+  const contentRefs = new Set(selectedContentRefs);
+  let bytes = 0;
+  for (const entry of entries) {
+    bytes += getDocumentBytes(entry);
+    if (
+      entry.content !== undefined &&
+      contentRefs.has(entry.document.contentRef) === false
+    ) {
+      contentRefs.add(entry.document.contentRef);
+      bytes += getByteLength(entry.content);
+    }
+  }
+  return bytes;
+};
+
 const compareEntryPriority = (
   left: CanonicalAssetFileEntry,
   right: CanonicalAssetFileEntry
@@ -218,20 +240,60 @@ export const compileContentArtifact = async ({
   if (unboundedBytes <= maxBytes) {
     selected.push(...entries);
   } else {
-    for (const entry of [...entries].sort(compareEntryPriority)) {
-      const trial = await buildAssetIndex({
-        entries: [...selected, entry],
-        sourceDocumentCount,
-        maxBytes,
-        unboundedBytes,
-        finalize: false,
-      });
-      if (getByteLength(serializeContentArtifact(trial)) <= maxBytes) {
-        selected.push(entry);
-      } else {
-        omitted.push(entry);
-      }
+    const prioritized = [...entries].sort(compareEntryPriority);
+    let selectedContentRefs = new Set<string>();
+    const emptyArtifact = await buildAssetIndex({
+      entries: selected,
+      sourceDocumentCount,
+      maxBytes,
+      unboundedBytes,
+      finalize: false,
+    });
+    let selectedBytes = getByteLength(serializeContentArtifact(emptyArtifact));
+    if (selectedBytes > maxBytes) {
+      throw new Error("Content database byte limit is too small");
     }
+
+    const selectCandidates = async (
+      candidates: readonly ContentCompilerInput[]
+    ): Promise<void> => {
+      if (candidates.length === 0) {
+        return;
+      }
+      const minimumAdditionalBytes = getMinimumAdditionalBytes({
+        entries: candidates,
+        selectedContentRefs,
+      });
+      if (minimumAdditionalBytes <= maxBytes - selectedBytes) {
+        const trial = await buildAssetIndex({
+          entries: [...selected, ...candidates],
+          sourceDocumentCount,
+          maxBytes,
+          unboundedBytes,
+          finalize: false,
+        });
+        const trialBytes = getByteLength(serializeContentArtifact(trial));
+        if (trialBytes <= maxBytes) {
+          selected.push(...candidates);
+          selectedBytes = trialBytes;
+          selectedContentRefs = new Set(
+            selected
+              .filter(({ content }) => content !== undefined)
+              .map(({ document }) => document.contentRef)
+          );
+          return;
+        }
+      }
+      if (candidates.length === 1) {
+        omitted.push(candidates[0]);
+        return;
+      }
+      const middle = Math.floor(candidates.length / 2);
+      await selectCandidates(candidates.slice(0, middle));
+      await selectCandidates(candidates.slice(middle));
+    };
+
+    await selectCandidates(prioritized);
   }
   const artifact = await verifyContentArtifact(
     await buildAssetIndex({
@@ -242,6 +304,9 @@ export const compileContentArtifact = async ({
     })
   );
   const boundedBytes = getByteLength(serializeContentArtifact(artifact));
+  if (boundedBytes > maxBytes) {
+    throw new Error("Content database selection exceeds the byte limit");
+  }
   const describe = (entry: ContentCompilerInput) => ({
     id: entry.assetId,
     path: entry.document.path,

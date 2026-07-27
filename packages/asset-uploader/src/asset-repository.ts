@@ -7,6 +7,8 @@ import {
   isContentDocumentCandidate,
   selectContentHydrationCandidates,
   selectAssetProperties,
+  type AssetQueryRequestInput,
+  type AssetQueryResult,
   type BuilderAssetFieldCatalog,
   type ContentCompilationPlan,
 } from "@webstudio-is/content-engine";
@@ -20,12 +22,7 @@ import {
   readBoundedBytes,
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
-import type {
-  Asset,
-  AssetFolder,
-  AssetQueryRequestInput,
-  AssetQueryResult,
-} from "@webstudio-is/sdk";
+import type { Asset, AssetFolder } from "@webstudio-is/sdk";
 import type {
   AssetFolderUpdate,
   AssetMetadataUpdate,
@@ -681,7 +678,8 @@ export class PostgresAssetRepository
       }
       return await this.loadCanonicalCompilerEntries(
         requirements,
-        candidateAssetIds
+        candidateAssetIds,
+        strict
       );
     }
     return candidateBaseEntries;
@@ -701,7 +699,8 @@ export class PostgresAssetRepository
 
   private async loadCanonicalCompilerEntries(
     requirements?: ContentCompilationPlan,
-    assetIds?: string[]
+    assetIds?: string[],
+    strict = false
   ) {
     const entries = await this.dependencies.loadCanonicalAssetFileEntries({
       client: this.context.postgrest.client,
@@ -773,6 +772,16 @@ export class PostgresAssetRepository
         try {
           content = decodeUtf8(bytes);
         } catch {
+          if (strict) {
+            throw new AssetIndexPreparationError([
+              {
+                assetId: entry.assetId,
+                storageName: entry.document.contentRef,
+                revision: entry.revision,
+                message: "Selected asset content is not valid UTF-8",
+              },
+            ]);
+          }
           return entry;
         }
         return { ...entry, content };

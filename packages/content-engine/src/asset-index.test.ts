@@ -218,6 +218,30 @@ describe("shared asset index", () => {
     ).toBeGreaterThan(0);
   });
 
+  test("bounds a thousand oversized documents without rebuilding per document", async () => {
+    const entries = Array.from({ length: 1_000 }, (_, index) =>
+      createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: {
+          ...entry({ id: String(index) }).document,
+          createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString(),
+          properties: { payload: "x".repeat(3_000) },
+        },
+      })
+    );
+
+    const { artifact, diagnostics } = await compileContentArtifact({
+      projectId: "project",
+      entries,
+    });
+
+    expect(artifact.documents.length).toBeGreaterThan(0);
+    expect(diagnostics.omittedDocumentCount).toBeGreaterThan(0);
+    expect(diagnostics.boundedBytes).toBeLessThanOrEqual(
+      contentEngineLimits.databaseBytes
+    );
+  }, 5_000);
+
   test("uses a query-scoped content reader without retaining it", async () => {
     const index = await createAssetIndex({
       projectId: "project",

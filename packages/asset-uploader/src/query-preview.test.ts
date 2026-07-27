@@ -8,7 +8,7 @@ import {
   executeAssetQuery,
 } from "@webstudio-is/content-engine";
 import { createAssetIndex } from "@webstudio-is/content-engine/compiler";
-import type { AssetQueryRequestInput } from "@webstudio-is/sdk";
+import type { AssetQueryRequestInput } from "@webstudio-is/content-engine";
 import type { AssetObjectReader } from "./client";
 import { previewAssetResourceQuery } from "./query-preview";
 

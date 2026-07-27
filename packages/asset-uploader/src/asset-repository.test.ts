@@ -10,6 +10,8 @@ import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence"
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
+  assetQuery,
+  type AssetQueryInput,
   type AssetFileDocument,
 } from "@webstudio-is/content-engine";
 import {
@@ -17,7 +19,6 @@ import {
   type CanonicalAssetFileEntry,
 } from "@webstudio-is/content-engine/compiler";
 import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
-import { assetQuery, type AssetQueryInput } from "@webstudio-is/sdk";
 import {
   AssetIndexPreparationError,
   PostgresAssetRepository,
@@ -930,6 +931,61 @@ describe("PostgresAssetRepository", () => {
     expect(index.documents.map(({ _id }) => _id)).toEqual(["alpha", "beta"]);
     expect(index.contents).toEqual({ "alpha.md": "Post" });
     expect(readFile).toHaveBeenCalledOnce();
+  });
+
+  test("fails publication when selected text content cannot be embedded", async () => {
+    const dependencies = createDependencies();
+    const entry = {
+      projectId: "project-1",
+      assetId: "post",
+      revision: "revision-post",
+      document: {
+        _id: "post",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "blog/post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 1,
+        revision: "revision-post",
+        contentRef: "post.md",
+        properties: {},
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: {
+        readFile: vi.fn().mockResolvedValue({
+          data: new Blob([new Uint8Array([0xff])]).stream(),
+          contentLength: 1,
+        }),
+      },
+      dependencies,
+    });
+
+    await expect(
+      repository.prepareIndex(
+        createCompilationPlan({
+          where: { all: [] },
+          sort: [],
+          limit: 1,
+          content: { mode: "full" },
+        })
+      )
+    ).rejects.toMatchObject({
+      name: "AssetIndexPreparationError",
+      issues: [
+        expect.objectContaining({
+          assetId: "post",
+          message: "Selected asset content is not valid UTF-8",
+        }),
+      ],
+    });
   });
 
   test("fails strict index preparation with per-asset diagnostics", async () => {

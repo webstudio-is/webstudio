@@ -51,6 +51,23 @@ const UnknownFieldSelectionFixture = () => {
   );
 };
 
+const UnknownFilterAndSortFixture = () => {
+  const [query, setQuery] = useState<GenericQuery>({
+    ...(createStructuredQuery(genericQueryCapabilities) as GenericQuery),
+    where: {
+      all: [{ field: ["legacy", "filter"], operator: "eq", value: '"yes"' }],
+    },
+    sort: [{ field: ["legacy", "sort"], direction: "asc" }],
+  });
+  return (
+    <StructuredQueryBuilder
+      value={query}
+      capabilities={genericQueryCapabilities}
+      onChange={setQuery}
+    />
+  );
+};
+
 describe("structured query builder", () => {
   test("renders and edits solely from provider-neutral capabilities", () => {
     render(<QueryBuilderFixture />);
@@ -83,5 +100,17 @@ describe("structured query builder", () => {
     expect(
       (screen.getByLabelText("Query source") as HTMLTextAreaElement).value
     ).toContain('"fields":[["legacy","field"]]');
+  });
+
+  test("shows configured filter and sort fields that are absent from capabilities", () => {
+    render(<UnknownFilterAndSortFixture />);
+
+    expect(screen.getByText("legacy.filter")).toBeTruthy();
+    expect(screen.getByText("legacy.sort")).toBeTruthy();
+    const source = (
+      screen.getByLabelText("Query source") as HTMLTextAreaElement
+    ).value;
+    expect(source).toContain('["legacy","filter"]');
+    expect(source).toContain('["legacy","sort"]');
   });
 });

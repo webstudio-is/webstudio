@@ -1,10 +1,10 @@
 import {
-  assetResourceLimits,
   createStructuredAssetQueryResourceBody,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryResourceConfiguration,
   type StructuredAssetQueryFilterBinding,
 } from "@webstudio-is/sdk";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   getQueryConditions,
   getQueryWhereMetrics,

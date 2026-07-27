@@ -1,9 +1,6 @@
 import { z } from "zod";
 import {
-  assetQuerySort,
   assetQueryWhereExpression,
-  assetResourceContentOptions,
-  assetResourceOutputSelection,
   assetType,
   compilerSettings,
   dataSourceVariableValue,
@@ -15,6 +12,11 @@ import {
   prop,
   instance,
 } from "@webstudio-is/sdk";
+import {
+  assetQuerySort,
+  assetResourceContentOptions,
+  assetResourceOutputSelection,
+} from "@webstudio-is/content-engine";
 import { paginatedOutputMetadataSchema } from "./output";
 import { builderNamespaces } from "../contracts/namespaces";
 import { builderPatchSchema } from "../contracts/patch";

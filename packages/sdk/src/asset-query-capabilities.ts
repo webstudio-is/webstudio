@@ -17,7 +17,7 @@ import {
   type AssetObservedFieldType,
   type AssetQueryOperator,
   type BuilderAssetFieldCatalog,
-} from "./schema/asset-resource";
+} from "@webstudio-is/content-engine";
 
 const standardFieldLabels: Record<
   (typeof assetQueryStandardFields)[number],

@@ -1844,6 +1844,9 @@ importers:
       '@trpc/client':
         specifier: ^10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
+      '@webstudio-is/content-engine':
+        specifier: workspace:*
+        version: link:../content-engine
       '@webstudio-is/protocol':
         specifier: workspace:*
         version: link:../protocol
@@ -2203,6 +2206,9 @@ importers:
       '@emotion/hash':
         specifier: ^0.9.2
         version: 0.9.2
+      '@webstudio-is/content-engine':
+        specifier: workspace:*
+        version: link:../content-engine
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine

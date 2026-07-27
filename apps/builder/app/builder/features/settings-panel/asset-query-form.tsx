@@ -3,14 +3,16 @@ import { useStore } from "@nanostores/react";
 import {
   addConfiguredAssetQueryFields,
   createAssetQueryCapabilities,
-  type AssetObservedFieldType,
-  type AssetQueryFilter,
   parseAssetQueryCapabilities,
   type AssetQueryCapabilities,
   type Resource,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryResourceConfiguration,
 } from "@webstudio-is/sdk";
+import type {
+  AssetObservedFieldType,
+  AssetQueryFilter,
+} from "@webstudio-is/content-engine";
 import {
   createStructuredQuery,
   getQueryFieldKey,

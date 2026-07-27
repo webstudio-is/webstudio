@@ -31,6 +31,8 @@ import {
   AssetIndexRevisionError,
   AssetQueryExecutionError,
   AssetResourceHydrationError,
+  assetQueryRequest,
+  getAssetQueryWhereMetrics,
   validateAssetQueryAgainstCatalog,
 } from "@webstudio-is/content-engine";
 import {
@@ -51,12 +53,7 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import {
-  assetQueryRequest,
-  getAssetQueryWhereMetrics,
-  type Asset,
-  type AssetFolder,
-} from "@webstudio-is/sdk";
+import { type Asset, type AssetFolder } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,

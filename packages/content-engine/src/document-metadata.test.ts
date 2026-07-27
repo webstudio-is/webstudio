@@ -91,15 +91,38 @@ describe("content metadata cache", () => {
   });
 
   test("works without a persistence cache", async () => {
+    const readBytes = vi.fn(async () =>
+      new TextEncoder().encode("---\ntitle: Local\n---\nBody")
+    );
     await expect(
       prepareCanonicalContentMetadata({
-        base: createEntry(),
+        base: createCanonicalAssetFileEntry({
+          ...createEntry(),
+          document: { ...createEntry().document, size: 1024 * 1024 },
+        }),
         requirements: { structuredProperties: true, excerpt: false },
-        readBytes: async () =>
-          new TextEncoder().encode("---\ntitle: Local\n---\nBody"),
+        readBytes,
       })
     ).resolves.toMatchObject({
       document: { properties: { title: "Local" } },
     });
+    expect(readBytes).toHaveBeenCalledWith(64 * 1024 + 13);
+  });
+
+  test("retains the full Markdown budget when an excerpt is required", async () => {
+    const readBytes = vi.fn(async () =>
+      new TextEncoder().encode("---\ntitle: Local\n---\nBody")
+    );
+
+    await prepareCanonicalContentMetadata({
+      base: createCanonicalAssetFileEntry({
+        ...createEntry(),
+        document: { ...createEntry().document, size: 2 * 1024 * 1024 },
+      }),
+      requirements: { structuredProperties: false, excerpt: true },
+      readBytes,
+    });
+
+    expect(readBytes).toHaveBeenCalledWith(1024 * 1024);
   });
 });

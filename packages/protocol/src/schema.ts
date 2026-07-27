@@ -1,9 +1,5 @@
-import {
-  asset,
-  assetFolder,
-  contentArtifactV1,
-  page,
-} from "@webstudio-is/sdk/schema";
+import { asset, assetFolder, page } from "@webstudio-is/sdk/schema";
+import { contentArtifactV1 } from "@webstudio-is/content-engine";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import {
   builderPatchSchema as internalBuilderPatchSchema,

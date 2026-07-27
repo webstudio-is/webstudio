@@ -48,6 +48,9 @@ model Asset {
   description      String?
   folderId         String?
   folder           AssetFolder?        @relation(fields: [folderId, projectId], references: [id, projectId], onDelete: NoAction)
+  // The child primary key permits one row. Prisma represents this as a list
+  // because the relation field order differs from the project-first key and a
+  // singular relation would require a redundant reverse-order unique index.
   fileMetadata     AssetFileMetadata[]
   Project          Project[]
   DashboardProject DashboardProject[]

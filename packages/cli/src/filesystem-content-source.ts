@@ -277,7 +277,9 @@ export const createFileSystemContentSource = ({
               try {
                 return { ...entry, content: decodeUtf8(bytes) };
               } catch {
-                return entry;
+                throw new Error(
+                  `Selected content source file is not valid UTF-8: ${entry.document.path}`
+                );
               }
             })
         );

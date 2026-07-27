@@ -138,6 +138,11 @@ describe("Assets OpenAPI description", () => {
       in: "cookie",
       name: "__Host-_session_test",
     });
+    expect(document.components.securitySchemes.csrfToken).toMatchObject({
+      type: "apiKey",
+      in: "header",
+      name: "X-CSRF-Token",
+    });
     expect(document.security).toEqual([
       { projectToken: [] },
       { builderSession: [] },
@@ -146,6 +151,30 @@ describe("Assets OpenAPI description", () => {
       mutationRequestBytes: assetResourceLimits.restMutationRequestBytes,
       filenameCharacters: assetResourceLimits.assetFilenameCharacters,
     });
+  });
+
+  test("describes project scope and cookie mutation CSRF requirements", () => {
+    const document = createDocument();
+    for (const operation of [
+      assetResourceApiOperations.queryAssets,
+      assetResourceApiOperations.getAssetFieldCatalog,
+      assetResourceApiOperations.getAssetQueryCapabilities,
+      assetResourceApiOperations.getAssetResourceOpenApi,
+    ]) {
+      const definition = (
+        document.paths as unknown as Record<
+          string,
+          Record<string, { parameters?: readonly { name: string }[] }>
+        >
+      )[operation.path][operation.method];
+      expect(definition.parameters?.map(({ name }) => name)).toContain(
+        "projectId"
+      );
+    }
+
+    expect(
+      document.paths[assetResourceApiOperations.updateAsset.path].patch.security
+    ).toEqual([{ projectToken: [] }, { builderSession: [], csrfToken: [] }]);
   });
 
   test("describes and validates mutable asset operations", () => {

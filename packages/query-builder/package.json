@@ -8,7 +8,7 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/react.tsx --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -18,6 +18,8 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
+    "@webstudio-is/design-system": "workspace:*",
+    "@webstudio-is/icons": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318"
   },
   "devDependencies": {
@@ -38,7 +40,9 @@
       "import": "./lib/index.js"
     },
     "./react": {
-      "webstudio": "./src/react.tsx"
+      "webstudio": "./src/react.tsx",
+      "types": "./lib/types/react.d.ts",
+      "import": "./lib/react.js"
     }
   },
   "files": [

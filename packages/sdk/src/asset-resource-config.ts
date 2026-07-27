@@ -17,7 +17,7 @@ import {
   type AssetQuerySort,
   type AssetResourceContentOptions,
   type AssetResourceOutputSelection,
-} from "./schema/asset-resource";
+} from "@webstudio-is/content-engine";
 import type { Resource, ResourceRequest } from "./schema/resources";
 import type { Prop } from "./schema/props";
 import type { DataSource } from "./schema/data-sources";

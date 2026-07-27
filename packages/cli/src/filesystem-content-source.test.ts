@@ -134,4 +134,33 @@ describe("filesystem content source", () => {
 
     await expect(snapshot.isCurrent()).resolves.toBe(false);
   });
+
+  test("rejects selected content that cannot be embedded as UTF-8", async () => {
+    const directory = await createTemporaryDirectory();
+    const name = "invalid_hash.md";
+    await writeFile(join(directory, name), new Uint8Array([0xff]));
+    const snapshot = await createFileSystemContentSource({
+      projectId: "project",
+      assets: [createAsset(name)],
+      folders,
+      assetsDirectory: directory,
+    }).openSnapshot();
+
+    const fullContentPlan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "all-posts",
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 1,
+          offset: 0,
+          output: { mode: "base" },
+          content: { mode: "full" },
+        },
+      }),
+    ]);
+    await expect(snapshot.loadEntries(fullContentPlan)).rejects.toThrow(
+      "Selected content source file is not valid UTF-8"
+    );
+  });
 });
