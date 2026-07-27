@@ -6,8 +6,8 @@ import {
   type AssetQueryResourceConfigurationInput,
   type AssetFolder,
 } from "@webstudio-is/sdk";
-import type { AssetMetadataUpdate } from "@webstudio-is/sdk/asset-resource-api";
-import type { AssetFolderUpdateRequest } from "@webstudio-is/sdk/asset-resource-api";
+import type { AssetMetadataUpdate } from "@webstudio-is/protocol/asset-resource-api";
+import type { AssetFolderUpdateRequest } from "@webstudio-is/protocol/asset-resource-api";
 import {
   assetsApiUrl,
   assetsFoldersApiUrl,

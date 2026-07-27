@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { createAssetIndex } from "@webstudio-is/asset-resource";
+import { createAssetIndex } from "@webstudio-is/content-engine/compiler";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
 import { previewAssetResourceQuery } from "./query-preview";
 
@@ -9,19 +9,19 @@ const context = {
   postgrest: { client: {} },
 } as unknown as AppContext;
 const hasProjectPermit = vi.fn();
-const readIndex = vi.fn();
+const readFieldCatalog = vi.fn();
 const query = vi.fn();
 const dependencies = {
   hasProjectPermit,
-  createRepository: () => ({ readIndex, query }),
+  createRepository: () => ({ readFieldCatalog, query }),
 };
 
 describe("Builder asset-resource API data boundary", () => {
   beforeEach(async () => {
     hasProjectPermit.mockReset().mockResolvedValue(true);
-    readIndex.mockReset();
-    readIndex.mockResolvedValue(
-      await createAssetIndex({ projectId, entries: [] })
+    readFieldCatalog.mockReset();
+    readFieldCatalog.mockResolvedValue(
+      (await createAssetIndex({ projectId, entries: [] })).fieldCatalog
     );
     query.mockResolvedValue({ items: [], totalCount: 0, hasMore: false });
   });
@@ -42,7 +42,7 @@ describe("Builder asset-resource API data boundary", () => {
       dependencies,
     });
 
-    expect(readIndex).toHaveBeenCalledOnce();
+    expect(readFieldCatalog).toHaveBeenCalledOnce();
     expect(query).toHaveBeenCalledOnce();
   });
 });

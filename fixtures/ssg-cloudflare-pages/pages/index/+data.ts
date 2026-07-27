@@ -7,16 +7,16 @@ import {
 import { assets } from "../../app/__generated__/$resources.assets";
 import {
   assetQueryDeploymentId,
-  assetQueryManifest,
+  assetQueryDatabase,
 } from "../../app/__generated__/$resources.asset-query-manifest";
 import { createSsgAssetResourceFetch } from "../../app/asset-resource-fetch";
 
 const fetchAssetResource =
-  assetQueryManifest === undefined
+  assetQueryDatabase === undefined
     ? undefined
     : createSsgAssetResourceFetch({
         deploymentId: assetQueryDeploymentId,
-        manifest: assetQueryManifest,
+        artifact: assetQueryDatabase,
       });
 
 const customFetch: typeof fetch = async (input, init) => {

@@ -9,14 +9,11 @@ import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getAllPages,
-  getExpressionIdentifiers,
   getStyleDeclKey,
-  isLiteralExpression,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
   systemParameter,
-  transpileExpression,
   type DataSource,
   type DataSources,
   type Instance,
@@ -28,6 +25,11 @@ import {
   type Resources,
   type WebstudioData,
 } from "@webstudio-is/sdk";
+import {
+  getExpressionIdentifiers,
+  isLiteralExpression,
+  transpileExpression,
+} from "@webstudio-is/expression";
 import { z } from "zod";
 import { produceWithPatches } from "immer";
 import {

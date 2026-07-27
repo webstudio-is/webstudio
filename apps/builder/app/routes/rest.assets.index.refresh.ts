@@ -1,1 +1,3 @@
-export { action } from "~/services/asset-rest-index.server";
+import { createAssetIndexRefreshAction } from "~/services/asset-rest-route-handlers.server";
+
+export const action = createAssetIndexRefreshAction();

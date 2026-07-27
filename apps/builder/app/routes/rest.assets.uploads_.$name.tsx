@@ -7,7 +7,7 @@ import {
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/index.server";
 import { isAssetFileName } from "@webstudio-is/protocol";
-import { assetResourceApiOperations } from "@webstudio-is/sdk/asset-resource-api";
+import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
@@ -168,7 +168,7 @@ export const action = async (props: ActionFunctionArgs) => {
       const context = await authorizeAssetRestProject(
         request,
         parsedProjectId,
-        "build"
+        "edit"
       );
       const data = await readRequestBody(request.body, params.name);
       const force = url.searchParams.get("force") === "true";

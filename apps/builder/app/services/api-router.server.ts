@@ -32,7 +32,7 @@ import {
   AssetQueryExecutionError,
   AssetResourceHydrationError,
   validateAssetQueryAgainstCatalog,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine";
 import {
   loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,

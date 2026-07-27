@@ -1,16 +1,12 @@
 import {
   createCanonicalAssetFileEntry,
-  extractJsonProperties,
-  extractMarkdownBodyAndExcerpt,
-  extractMarkdownFrontmatter,
   fullCanonicalAssetMetadataRequirements,
+  prepareCanonicalContentMetadata,
   satisfiesCanonicalAssetMetadataRequirements,
-  JsonMetadataError,
-  MarkdownMetadataError,
   normalizeAssetFileDocument,
   type CanonicalAssetFileEntry,
   type CanonicalAssetMetadataRequirements,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine/compiler";
 import {
   assetResourceLimits,
   createAssetFolderHierarchy,
@@ -32,8 +28,6 @@ import {
 } from "./canonical-metadata-persistence";
 import { runBounded } from "./async-utils";
 
-const markdownExtension = /\.md$/i;
-const jsonExtension = /\.json$/i;
 type CanonicalAssetClient = Pick<AssetClient, "readFile"> &
   Partial<Omit<AssetClient, "readFile">>;
 
@@ -95,6 +89,7 @@ type UploadedAssetRow = {
   file: {
     name: string;
     size: number;
+    createdAt?: string;
     updatedAt: string;
   };
 };
@@ -107,11 +102,14 @@ const loadUploadedAssets = async (
   let query = client
     .from("Asset")
     .select(
-      "id, projectId, filename, folderId, file:File!inner(name, size, updatedAt, status)"
+      "id, projectId, filename, folderId, file:File!inner(name, size, createdAt, updatedAt, status)"
     )
     .eq("projectId", projectId)
     .eq("file.status", "UPLOADED");
-  if (assetIds !== undefined && assetIds.length > 0) {
+  if (assetIds !== undefined) {
+    if (assetIds.length === 0) {
+      return [];
+    }
     query = query.in("id", assetIds);
   }
   const result = await query.order("id");
@@ -159,6 +157,7 @@ const createCanonicalDocument = ({
       ...(folderId === undefined ? {} : { folderId, folderNames }),
       mimeType: getMimeTypeByFilename(asset.file.name),
       size: asset.file.size,
+      createdAt: asset.file.createdAt,
       revision,
       contentRef: asset.file.name,
     },
@@ -216,6 +215,7 @@ const hasMatchingStandardMetadata = (
   document.extension === expected.extension &&
   document.mimeType === expected.mimeType &&
   document.size === expected.size &&
+  document.createdAt === expected.createdAt &&
   document.contentRef === expected.contentRef;
 
 const indexCanonicalAsset = async ({
@@ -235,106 +235,43 @@ const indexCanonicalAsset = async ({
   requirements: CanonicalAssetMetadataRequirements;
   current?: CanonicalAssetFileEntry;
 }) => {
-  let properties: Record<string, unknown> = current?.document.properties ?? {};
-  let excerpt = current?.document.excerpt;
-  let metadataError = current?.document.metadataError;
-  const needsProperties =
-    requirements.structuredProperties &&
-    (current === undefined ||
-      getEntryRequirements(current).structuredProperties === false);
-  const needsExcerpt =
-    requirements.excerpt &&
-    (current === undefined || getEntryRequirements(current).excerpt === false);
-  if (
-    markdownExtension.test(asset.file.name) &&
-    (needsProperties || needsExcerpt)
-  ) {
-    const prefixLength = Math.min(
-      asset.file.size,
-      assetResourceLimits.hydratedFileBytes
-    );
-    const bytes =
-      prefixLength === 0
-        ? new Uint8Array()
-        : await assetClient
-            .readFile(asset.file.name, { offset: 0, length: prefixLength })
-            .then((stored) => readPrefix(stored.data, prefixLength));
-    if (needsProperties) {
-      try {
-        properties = (await extractMarkdownFrontmatter(bytes)).properties;
-      } catch (error) {
-        if (error instanceof MarkdownMetadataError === false) {
-          throw error;
-        }
-        metadataError = { code: error.code, message: error.message };
-      }
-    }
-    if (needsExcerpt) {
-      try {
-        excerpt = (await extractMarkdownBodyAndExcerpt(bytes)).excerpt;
-      } catch (error) {
-        if (error instanceof MarkdownMetadataError === false) {
-          throw error;
-        }
-        metadataError ??= { code: error.code, message: error.message };
-      }
-    }
-  } else if (jsonExtension.test(asset.file.name) && needsProperties) {
-    if (asset.file.size > assetResourceLimits.jsonBytes) {
-      const error = new JsonMetadataError(
-        "JSON_BYTES_EXCEEDED",
-        "JSON metadata exceeds the byte limit"
-      );
-      metadataError = { code: error.code, message: error.message };
-    } else {
-      const bytes =
-        asset.file.size === 0
-          ? new Uint8Array()
-          : await assetClient
-              .readFile(asset.file.name, {
-                offset: 0,
-                length: asset.file.size,
-              })
-              .then((stored) => readPrefix(stored.data, asset.file.size));
-      try {
-        properties = (await extractJsonProperties(bytes)).properties;
-      } catch (error) {
-        if (error instanceof JsonMetadataError === false) {
-          throw error;
-        }
-        metadataError = { code: error.code, message: error.message };
-      }
-    }
-  }
   const revision = createAssetContentRevision({
     storageName: asset.file.name,
     updatedAt: asset.file.updatedAt,
     size: asset.file.size,
   });
-  const document = createCanonicalDocument({
-    asset,
-    hierarchy,
-    revision,
-    properties,
-    excerpt,
-    metadataError,
-  });
-  await replaceCanonicalAssetFileEntry({
-    client,
-    entry: createCanonicalAssetFileEntry({
-      projectId,
-      document,
-      metadataRequirements: {
-        structuredProperties:
-          (current !== undefined &&
-            getEntryRequirements(current).structuredProperties) ||
-          requirements.structuredProperties,
-        excerpt:
-          (current !== undefined && getEntryRequirements(current).excerpt) ||
-          requirements.excerpt,
-      },
+  const base = createCanonicalAssetFileEntry({
+    projectId,
+    metadataRequirements: { structuredProperties: false, excerpt: false },
+    document: createCanonicalDocument({
+      asset,
+      hierarchy,
+      revision,
+      properties: {},
     }),
-    source: getCanonicalMetadataSource(asset),
+  });
+  await prepareCanonicalContentMetadata({
+    base,
+    requirements,
+    cache: {
+      get: async () => current,
+      set: async ({ entry }) => {
+        await replaceCanonicalAssetFileEntry({
+          client,
+          entry,
+          source: getCanonicalMetadataSource(asset),
+        });
+      },
+    },
+    readBytes: async (maximumBytes) =>
+      maximumBytes === 0
+        ? new Uint8Array()
+        : await assetClient
+            .readFile(asset.file.name, {
+              offset: 0,
+              length: maximumBytes,
+            })
+            .then((stored) => readPrefix(stored.data, maximumBytes)),
   });
   return revision;
 };
@@ -435,12 +372,14 @@ export const synchronizeCanonicalAssets = async ({
   assetClient,
   concurrency = assetResourceLimits.concurrentContentReads,
   requirements = fullCanonicalAssetMetadataRequirements,
+  assetIds,
 }: {
   projectId: string;
   client: Client;
   assetClient: CanonicalAssetClient;
   concurrency?: number;
   requirements?: CanonicalAssetMetadataRequirements;
+  assetIds?: string[];
 }) => {
   if (Number.isInteger(concurrency) === false || concurrency <= 0) {
     throw new Error(
@@ -452,9 +391,13 @@ export const synchronizeCanonicalAssets = async ({
   }
 
   const [assets, folders, recoveryState] = await Promise.all([
-    loadUploadedAssets(projectId, client),
+    loadUploadedAssets(projectId, client, assetIds),
     loadAssetFoldersByProjectWithClient(projectId, client),
-    loadCanonicalAssetFileEntriesForRecovery({ client, projectId }),
+    loadCanonicalAssetFileEntriesForRecovery({
+      client,
+      projectId,
+      assetIds,
+    }),
   ]);
   const { entries, inconsistentAssetIds } = recoveryState;
   const inconsistentAssetIdSet = new Set(inconsistentAssetIds);

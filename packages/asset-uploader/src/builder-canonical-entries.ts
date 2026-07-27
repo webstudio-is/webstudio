@@ -15,7 +15,7 @@ export type BuilderAssetIndexDependencies = {
     projectId: string;
     context: AppContext;
     assetClient: AssetObjectReader;
-  }) => Pick<AssetRepository, "readIndex" | "query">;
+  }) => Pick<AssetRepository, "readFieldCatalog" | "query">;
 };
 
 export const loadAuthorizedBuilderAssetRepository = async ({
@@ -24,12 +24,14 @@ export const loadAuthorizedBuilderAssetRepository = async ({
   assetClient,
   authorizationError,
   dependencies = {},
+  contentDatabaseMaxBytes,
 }: {
   projectId: string;
   context: AppContext;
   assetClient: AssetObjectReader;
   authorizationError: string;
   dependencies?: BuilderAssetIndexDependencies;
+  contentDatabaseMaxBytes?: number;
 }) => {
   const canView = await (
     dependencies.hasProjectPermit ?? authorizeProject.hasProjectPermit
@@ -39,7 +41,8 @@ export const loadAuthorizedBuilderAssetRepository = async ({
   }
   const repository = (
     dependencies.createRepository ??
-    ((input) => new PostgresAssetRepository(input))
+    ((input) =>
+      new PostgresAssetRepository({ ...input, contentDatabaseMaxBytes }))
   )({ projectId, context, assetClient });
   return repository;
 };

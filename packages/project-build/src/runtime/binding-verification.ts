@@ -2,14 +2,16 @@ import {
   decodeDataVariableId,
   encodeDataVariableId,
   findTreeInstanceIds,
-  getExpressionIdentifiers,
-  lintExpression,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
-  isLiteralExpression,
   type Instance,
   type Page,
 } from "@webstudio-is/sdk";
+import {
+  getExpressionIdentifiers,
+  isLiteralExpression,
+  lintExpression,
+} from "@webstudio-is/expression";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";

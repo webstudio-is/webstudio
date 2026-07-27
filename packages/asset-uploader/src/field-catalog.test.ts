@@ -3,7 +3,7 @@ import {
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import { createAssetIndex } from "@webstudio-is/asset-resource";
+import { createAssetIndex } from "@webstudio-is/content-engine/compiler";
 import { loadBuilderAssetFieldCatalog } from "./field-catalog";
 
 const projectId = "project-1";
@@ -13,45 +13,47 @@ const context = {
 } as unknown as AppContext;
 const assetClient = { readFile: vi.fn() };
 const hasProjectPermit = vi.fn();
-const readIndex = vi.fn();
+const readFieldCatalog = vi.fn();
 const query = vi.fn();
 const dependencies = {
   hasProjectPermit,
-  createRepository: () => ({ readIndex, query }),
+  createRepository: () => ({ readFieldCatalog, query }),
 };
 
 describe("loadBuilderAssetFieldCatalog", () => {
   beforeEach(() => {
     hasProjectPermit.mockReset();
-    readIndex.mockReset();
+    readFieldCatalog.mockReset();
   });
 
   test("authorizes view access and derives fields from persisted metadata", async () => {
     hasProjectPermit.mockResolvedValue(true);
-    readIndex.mockResolvedValue(
-      await createAssetIndex({
-        projectId,
-        entries: [
-          {
-            projectId,
-            assetId: "post-1",
-            revision: `sha256:${"b".repeat(64)}`,
-            document: {
-              _id: "post-1",
-              _type: "asset.file",
-              name: "post.md",
-              path: "blog/post.md",
-              key: "blog/post.md",
-              extension: "md",
-              mimeType: "text/markdown",
-              size: 100,
+    readFieldCatalog.mockResolvedValue(
+      (
+        await createAssetIndex({
+          projectId,
+          entries: [
+            {
+              projectId,
+              assetId: "post-1",
               revision: `sha256:${"b".repeat(64)}`,
-              contentRef: "assets/post-1",
-              properties: { title: "Post" },
+              document: {
+                _id: "post-1",
+                _type: "asset.file",
+                name: "post.md",
+                path: "blog/post.md",
+                key: "blog/post.md",
+                extension: "md",
+                mimeType: "text/markdown",
+                size: 100,
+                revision: `sha256:${"b".repeat(64)}`,
+                contentRef: "assets/post-1",
+                properties: { title: "Post" },
+              },
             },
-          },
-        ],
-      })
+          ],
+        })
+      ).fieldCatalog
     );
 
     const result = await loadBuilderAssetFieldCatalog({
@@ -65,7 +67,7 @@ describe("loadBuilderAssetFieldCatalog", () => {
       { projectId, permit: "view" },
       context
     );
-    expect(readIndex).toHaveBeenCalledOnce();
+    expect(readFieldCatalog).toHaveBeenCalledOnce();
     expect(result.fields["properties.title"]).toEqual({
       queryPath: ["properties", "title"],
       types: ["string"],
@@ -84,6 +86,6 @@ describe("loadBuilderAssetFieldCatalog", () => {
         dependencies,
       })
     ).rejects.toBeInstanceOf(AuthorizationError);
-    expect(readIndex).not.toHaveBeenCalled();
+    expect(readFieldCatalog).not.toHaveBeenCalled();
   });
 });

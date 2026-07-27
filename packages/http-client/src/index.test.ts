@@ -1742,7 +1742,7 @@ test("keeps browser asset content updates on the requested origin", async () => 
 
 test("normalizes synced project bundles for local storage", () => {
   const index = {
-    format: "webstudio-asset-index" as const,
+    format: "webstudio-content-database" as const,
     version: 1 as const,
     assetRevision: `sha256:${"b".repeat(64)}`,
     documents: [],

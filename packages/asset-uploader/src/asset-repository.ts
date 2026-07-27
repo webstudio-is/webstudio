@@ -1,21 +1,35 @@
 import {
-  createAssetQueryRepository,
-  createAssetIndex,
+  assetQuery,
+  contentEngineLimits,
+  createContentCompilationPlan,
+  createContentFieldCatalogCompilationPlan,
+  createLiteralContentCompilationQuery,
+  isContentDocumentCandidate,
+  selectContentHydrationCandidates,
   selectAssetProperties,
-  verifyAssetIndex,
-} from "@webstudio-is/asset-resource";
+  type BuilderAssetFieldCatalog,
+  type ContentCompilationPlan,
+} from "@webstudio-is/content-engine";
+import {
+  createAssetIndex,
+  computeCanonicalAssetRevision,
+  decodeUtf8,
+  materializeContentSource,
+  materializeContentSnapshot,
+  ContentSourceChangedError,
+  readBoundedBytes,
+  type ContentSource,
+} from "@webstudio-is/content-engine/compiler";
 import type {
   Asset,
   AssetFolder,
-  AssetQueryRequirements,
   AssetQueryRequestInput,
   AssetQueryResult,
 } from "@webstudio-is/sdk";
-import { assetQuery, getAssetQueryRequirements } from "@webstudio-is/sdk";
 import type {
-  AssetFolderUpdateRequest,
+  AssetFolderUpdate,
   AssetMetadataUpdate,
-} from "@webstudio-is/sdk/asset-resource-api";
+} from "./asset-mutation-types";
 import {
   authorizeProject,
   AuthorizationError,
@@ -51,6 +65,12 @@ import {
   loadAssetFoldersByProjectWithClient,
   upsertAssetFolderWithClient,
 } from "./folder-persistence";
+import {
+  createContentCompilationCacheKey,
+  getContentDatabaseForArtifact,
+  sharedContentCompilationCache,
+  type ContentCompilationCache,
+} from "./content-compilation-cache";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
@@ -72,7 +92,6 @@ const defaultDependencies = {
   synchronizeCanonicalAssets,
   loadCanonicalAssetFileEntries,
   createAssetIndex,
-  verifyAssetIndex,
 };
 
 type AssetRepositoryDependencies = typeof defaultDependencies;
@@ -141,12 +160,13 @@ export interface AssetRepository {
   }): Promise<AssetFolder>;
   updateFolder(
     folderId: string,
-    values: AssetFolderUpdateRequest
+    values: AssetFolderUpdate
   ): Promise<AssetFolder>;
   deleteFolder(folderId: string): Promise<void>;
   readIndex(
-    requirements?: AssetQueryRequirements
+    requirements?: ContentCompilationPlan
   ): ReturnType<typeof createAssetIndex>;
+  readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
   query(request: AssetQueryRequestInput): Promise<AssetQueryResult>;
 }
 
@@ -154,7 +174,7 @@ export interface AssetRepository {
 export interface AssetMaintenanceRepository {
   synchronize(): ReturnType<typeof synchronizeCanonicalAssets>;
   prepareIndex(
-    requirements?: AssetQueryRequirements
+    requirements?: ContentCompilationPlan
   ): ReturnType<typeof createAssetIndex>;
 }
 
@@ -174,6 +194,8 @@ export class PostgresAssetRepository
   private readonly context: AppContext;
   private readonly assetStore: RepositoryObjectStore;
   private readonly dependencies: AssetRepositoryDependencies;
+  private readonly contentDatabaseMaxBytes: number;
+  private readonly compilationCache: ContentCompilationCache | undefined;
 
   constructor({
     projectId,
@@ -181,12 +203,16 @@ export class PostgresAssetRepository
     assetClient,
     assetStore = assetClient,
     dependencies,
+    contentDatabaseMaxBytes = contentEngineLimits.databaseBytes,
+    compilationCache,
   }: {
     projectId: string;
     context: AppContext;
     assetClient?: RepositoryObjectStore;
     assetStore?: RepositoryObjectStore;
     dependencies?: Partial<AssetRepositoryDependencies>;
+    contentDatabaseMaxBytes?: number;
+    compilationCache?: ContentCompilationCache;
   }) {
     if (assetStore === undefined) {
       throw new Error("Asset object storage is required");
@@ -195,6 +221,10 @@ export class PostgresAssetRepository
     this.context = context;
     this.assetStore = assetStore;
     this.dependencies = { ...defaultDependencies, ...dependencies };
+    this.contentDatabaseMaxBytes = contentDatabaseMaxBytes;
+    this.compilationCache =
+      compilationCache ??
+      (dependencies === undefined ? sharedContentCompilationCache : undefined);
   }
 
   static async forUpload({
@@ -444,7 +474,7 @@ export class PostgresAssetRepository
     );
   }
 
-  async updateFolder(folderId: string, values: AssetFolderUpdateRequest) {
+  async updateFolder(folderId: string, values: AssetFolderUpdate) {
     await this.assertCanEdit();
     const folder = (
       await this.dependencies.loadAssetFoldersByProjectWithClient(
@@ -506,11 +536,15 @@ export class PostgresAssetRepository
     return await this.synchronizeTrusted();
   }
 
-  private async synchronizeTrusted(requirements?: AssetQueryRequirements) {
+  private async synchronizeTrusted(
+    requirements?: ContentCompilationPlan,
+    assetIds?: string[]
+  ) {
     return await this.dependencies.synchronizeCanonicalAssets({
       client: this.context.postgrest.client,
       assetClient: this.assetStore,
       projectId: this.projectId,
+      assetIds,
       ...(requirements === undefined
         ? {}
         : {
@@ -522,49 +556,157 @@ export class PostgresAssetRepository
     });
   }
 
-  async prepareIndex(requirements?: AssetQueryRequirements) {
+  async prepareIndex(requirements?: ContentCompilationPlan) {
     await this.assertCanBuild();
     return await this.prepareIndexAfterAuthorization(requirements, true);
   }
 
   private async prepareIndexAfterAuthorization(
-    requirements: AssetQueryRequirements | undefined,
+    requirements: ContentCompilationPlan | undefined,
     strict: boolean
   ) {
-    if (
-      requirements === undefined ||
-      requirements.structuredProperties ||
-      requirements.excerpt
-    ) {
-      const result = await this.synchronizeTrusted(requirements);
-      if (strict && result.issues.length > 0) {
-        throw new AssetIndexPreparationError(result.issues);
-      }
-      return await this.dependencies.verifyAssetIndex(
-        await this.loadIndex(requirements)
-      );
-    }
-    const entries = await this.dependencies.loadCanonicalAssetBaseEntries({
-      client: this.context.postgrest.client,
-      projectId: this.projectId,
-    });
-    return await this.dependencies.verifyAssetIndex(
+    const source = this.createContentSource(strict);
+    const compile = async (
+      entries: Parameters<typeof createAssetIndex>[0]["entries"]
+    ) =>
       await this.dependencies.createAssetIndex({
         projectId: this.projectId,
         entries,
-      })
-    );
+        maxBytes: this.contentDatabaseMaxBytes,
+        ...(requirements === undefined ? {} : { plan: requirements }),
+      });
+    if (this.compilationCache === undefined) {
+      const { entries } = await materializeContentSource({
+        source,
+        plan: requirements,
+      });
+      return await compile(entries);
+    }
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const snapshot = await source.openSnapshot();
+      const key = createContentCompilationCacheKey({
+        projectId: this.projectId,
+        sourceRevision: snapshot.revision,
+        plan: requirements,
+        strict,
+        maxBytes: this.contentDatabaseMaxBytes,
+      });
+      try {
+        return await this.compilationCache.getOrCreate(key, async () => {
+          const { entries } = await materializeContentSnapshot({
+            snapshot,
+            plan: requirements,
+          });
+          return await compile(entries);
+        });
+      } catch (error) {
+        if (error instanceof ContentSourceChangedError === false) {
+          throw error;
+        }
+      }
+    }
+    throw new ContentSourceChangedError();
   }
 
-  async readIndex(requirements?: AssetQueryRequirements) {
+  private createContentSource(strict: boolean): ContentSource {
+    const loadBaseEntries = () =>
+      this.dependencies.loadCanonicalAssetBaseEntries({
+        client: this.context.postgrest.client,
+        projectId: this.projectId,
+      });
+    return {
+      openSnapshot: async () => {
+        const baseEntries = await loadBaseEntries();
+        const revision = await computeCanonicalAssetRevision(baseEntries);
+        return {
+          revision,
+          files: baseEntries.map(({ document }) => ({
+            id: document._id,
+            path: document.path,
+            contentType: document.mimeType,
+            contentRef: document.contentRef,
+            revision: document.revision,
+            size: document.size,
+            createdAt: document.createdAt,
+          })),
+          loadEntries: (plan) =>
+            this.loadCompilerEntries({
+              baseEntries,
+              requirements: plan,
+              strict,
+            }),
+          isCurrent: async () =>
+            (await computeCanonicalAssetRevision(await loadBaseEntries())) ===
+            revision,
+        };
+      },
+    };
+  }
+
+  private async loadCompilerEntries({
+    baseEntries,
+    requirements,
+    strict,
+  }: {
+    baseEntries: Awaited<ReturnType<typeof loadCanonicalAssetBaseEntries>>;
+    requirements?: ContentCompilationPlan;
+    strict: boolean;
+  }) {
+    const candidateBaseEntries =
+      requirements === undefined
+        ? baseEntries
+        : baseEntries.filter(({ document }) =>
+            isContentDocumentCandidate({
+              document,
+              plan: requirements,
+              available: "base",
+            })
+          );
+    const candidateAssetIds =
+      requirements === undefined
+        ? undefined
+        : candidateBaseEntries.map(({ assetId }) => assetId);
+    if (
+      requirements === undefined ||
+      requirements.structuredProperties ||
+      requirements.excerpt ||
+      requirements.hydratedContent
+    ) {
+      const result = await this.synchronizeTrusted(
+        requirements,
+        candidateAssetIds
+      );
+      if (strict && result.issues.length > 0) {
+        throw new AssetIndexPreparationError(result.issues);
+      }
+      return await this.loadCanonicalCompilerEntries(
+        requirements,
+        candidateAssetIds
+      );
+    }
+    return candidateBaseEntries;
+  }
+
+  async readIndex(requirements?: ContentCompilationPlan) {
     await this.assertCanView();
     return await this.prepareIndexAfterAuthorization(requirements, false);
   }
 
-  private async loadIndex(requirements?: AssetQueryRequirements) {
+  async readFieldCatalog() {
+    const database = getContentDatabaseForArtifact(
+      await this.readIndex(createContentFieldCatalogCompilationPlan())
+    );
+    return database.getFieldCatalog();
+  }
+
+  private async loadCanonicalCompilerEntries(
+    requirements?: ContentCompilationPlan,
+    assetIds?: string[]
+  ) {
     const entries = await this.dependencies.loadCanonicalAssetFileEntries({
       client: this.context.postgrest.client,
       projectId: this.projectId,
+      assetIds,
     });
     const projectedEntries =
       requirements === undefined
@@ -588,19 +730,63 @@ export class PostgresAssetRepository
               },
             };
           });
-    return await this.dependencies.createAssetIndex({
-      projectId: this.projectId,
-      entries: projectedEntries,
-    });
+    const hydrationAssetIds =
+      requirements === undefined
+        ? undefined
+        : selectContentHydrationCandidates({
+            documents: projectedEntries.map(({ document }) => document),
+            plan: requirements,
+          });
+    const candidateEntries =
+      requirements === undefined
+        ? projectedEntries
+        : projectedEntries.filter(({ document }) =>
+            isContentDocumentCandidate({
+              document,
+              plan: requirements,
+              available: "all",
+            })
+          );
+    const compilerEntries = await Promise.all(
+      candidateEntries.map(async (entry) => {
+        if (
+          requirements === undefined ||
+          hydrationAssetIds?.has(entry.assetId) !== true
+        ) {
+          return entry;
+        }
+        if (entry.document.size > contentEngineLimits.hydratedFileBytes) {
+          return entry;
+        }
+        const response = await this.assetStore.readFile(
+          entry.document.contentRef,
+          { offset: 0, length: entry.document.size }
+        );
+        const bytes = await readBoundedBytes(
+          response.data,
+          entry.document.size
+        );
+        if (bytes.byteLength !== entry.document.size) {
+          throw new Error("Asset content does not match its canonical size");
+        }
+        let content: string;
+        try {
+          content = decodeUtf8(bytes);
+        } catch {
+          return entry;
+        }
+        return { ...entry, content };
+      })
+    );
+    return compilerEntries;
   }
 
   async query(request: AssetQueryRequestInput) {
-    return await createAssetQueryRepository({
-      loadIndex: () =>
-        this.readIndex(
-          getAssetQueryRequirements(assetQuery.parse(request.query))
-        ),
-      readContent: this.assetStore.readFile,
-    }).query(request);
+    const query = assetQuery.parse(request.query);
+    const plan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({ id: "preview", query }),
+    ]);
+    const database = getContentDatabaseForArtifact(await this.readIndex(plan));
+    return await database.query(request, this.assetStore.readFile);
   }
 }

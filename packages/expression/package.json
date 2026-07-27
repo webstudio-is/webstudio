@@ -1,0 +1,37 @@
+{
+  "name": "@webstudio-is/expression",
+  "version": "0.0.0-webstudio-version",
+  "description": "Framework-independent expression language utilities",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib/**/*",
+    "!*.test.*"
+  ],
+  "scripts": {
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "acorn": "^8.14.1",
+    "acorn-walk": "^8.3.4"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "3.1.2",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "vitest": "^3.1.2"
+  }
+}

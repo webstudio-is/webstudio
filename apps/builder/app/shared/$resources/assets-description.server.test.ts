@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { parseAssetQueryCapabilities } from "@webstudio-is/sdk";
-import { loader as capabilitiesLoader } from "./assets-query-capabilities.server";
-import { loader as openApiLoader } from "./assets-openapi.server";
+import { loader as capabilitiesLoader } from "../../routes/rest.assets.query-capabilities";
+import { loader as openApiLoader } from "../../routes/rest.assets.openapi[.]json";
 import { builderSessionCookieName } from "~/services/builder-session.server";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
@@ -11,6 +11,7 @@ const dependencies = {
   authorizeAssetRestProject: vi.fn(),
   createAssetClient: vi.fn(() => assetClient),
   loadBuilderAssetFieldCatalog: vi.fn(),
+  preventCrossOriginCookie: vi.fn(),
 };
 const catalog = {
   format: "webstudio-builder-asset-field-catalog" as const,
@@ -87,7 +88,7 @@ describe("asset API descriptions", () => {
     });
   });
 
-  test("rejects requests outside Builder before loading project data", async () => {
+  test("requires a project outside Builder", async () => {
     const response = await capabilitiesLoader(
       {
         request: request(
@@ -98,8 +99,26 @@ describe("asset API descriptions", () => {
       dependencies
     );
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(400);
     expect(dependencies.loadBuilderAssetFieldCatalog).not.toHaveBeenCalled();
+  });
+
+  test("serves token-authenticated REST descriptions with a project query", async () => {
+    const directRequest = request(
+      `/rest/assets/query-capabilities?projectId=${projectId}`,
+      "api.example"
+    );
+    const response = await capabilitiesLoader(
+      { request: directRequest },
+      dependencies
+    );
+
+    expect(response.status).toBe(200);
+    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+      directRequest,
+      projectId,
+      "view"
+    );
   });
 
   test("does not expose descriptions without project authorization", async () => {

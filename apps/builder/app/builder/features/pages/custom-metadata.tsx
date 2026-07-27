@@ -11,7 +11,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
-import { isLiteralExpression } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   BindingControl,

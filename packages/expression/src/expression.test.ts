@@ -1,0 +1,929 @@
+import { describe, expect, test } from "vitest";
+import { parseExpressionAt } from "acorn";
+import {
+  type Diagnostic,
+  getExpressionValueKind,
+  isLiteralExpression,
+  lintExpression,
+  transpileExpression,
+  getExpressionIdentifiers,
+  parseObjectExpression,
+  parseArrayExpression,
+  generateObjectExpression,
+  allowedArrayMethods,
+  allowedStringMethods,
+} from "./index";
+
+describe("lint expression", () => {
+  const error = (from: number, to: number, message: string): Diagnostic => ({
+    from,
+    to,
+    severity: "error",
+    message,
+  });
+
+  const warn = (from: number, to: number, message: string): Diagnostic => ({
+    from,
+    to,
+    severity: "warning",
+    message,
+  });
+
+  test("forbid empty expression", () => {
+    expect(lintExpression({ expression: `` })).toEqual([
+      error(0, 0, `Expression cannot be empty`),
+    ]);
+    expect(lintExpression({ expression: `  ` })).toEqual([
+      error(0, 0, `Expression cannot be empty`),
+    ]);
+  });
+
+  test("output parse error as diagnostic", () => {
+    expect(lintExpression({ expression: `a + ` })).toEqual([
+      error(4, 4, "Unexpected token"),
+    ]);
+    expect(lintExpression({ expression: `"string" + a)` })).toEqual([
+      error(13, 13, "Unexpected token"),
+    ]);
+  });
+
+  test("restrict expression syntax", () => {
+    expect(lintExpression({ expression: `var a = 1` })).toEqual([
+      error(0, 0, "Unexpected token"),
+    ]);
+  });
+
+  test("lint whole expression instead of only first valid part", () => {
+    expect(
+      lintExpression({ expression: `a""`, availableVariables: new Set(["a"]) })
+    ).toEqual([error(1, 1, `Unexpected token`)]);
+    expect(
+      lintExpression({
+        expression: `/movie/{{CollectionItem['title']}}\n`,
+        availableVariables: new Set([""]),
+      })
+    ).toEqual([error(7, 7, `Unexpected token`)]);
+  });
+
+  test("supports accessing variable fields", () => {
+    expect(
+      lintExpression({
+        expression: `a.b.c`,
+        availableVariables: new Set(["a"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("supports literals", () => {
+    expect(
+      lintExpression({
+        expression: `"" + 0 + true + [] + {}`,
+      })
+    ).toEqual([]);
+  });
+
+  test("supports ternary operator", () => {
+    expect(
+      lintExpression({
+        expression: `true ? false : true`,
+      })
+    ).toEqual([]);
+  });
+
+  test("supports template literals", () => {
+    expect(
+      lintExpression({
+        expression: "`my ${1} template ${'2'}`",
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: "`my template",
+      })
+    ).toEqual([error(1, 1, "Unterminated template")]);
+  });
+
+  test("supports parentheses", () => {
+    expect(
+      lintExpression({
+        expression: "(1 + 1) * 2",
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid assignment until enabled", () => {
+    expect(
+      lintExpression({
+        expression: ` a = 1`,
+        availableVariables: new Set(["a"]),
+      })
+    ).toEqual([error(1, 6, "Assignment is not supported in this context")]);
+    expect(
+      lintExpression({
+        expression: ` a = 1`,
+        allowAssignment: true,
+        availableVariables: new Set(["a"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("lint member assignment targets", () => {
+    expect(
+      lintExpression({
+        expression: ` a[b].c = d`,
+        allowAssignment: true,
+        availableVariables: new Set(["a", "b", "d"]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: ` a.b = c`,
+        allowAssignment: true,
+        availableVariables: new Set(["c"]),
+      })
+    ).toEqual([warn(1, 2, `"a" is not defined in the scope`)]);
+  });
+
+  test("lint assignment operators and targets", () => {
+    const assignmentExpressions = [
+      ` a = b`,
+      ` a += b`,
+      ` a -= b`,
+      ` a *= b`,
+      ` a /= b`,
+      ` a %= b`,
+      ` a **= b`,
+      ` a ||= b`,
+      ` a &&= b`,
+      ` a ??= b`,
+      ` a.b = c`,
+      ` a[b] = c`,
+      ` a[b].c = d`,
+      ` a.b[c.d].e ??= f.g`,
+    ];
+
+    for (const expression of assignmentExpressions) {
+      expect(
+        lintExpression({
+          expression,
+          allowAssignment: true,
+          availableVariables: new Set(["a", "b", "c", "d", "f"]),
+        })
+      ).toEqual([]);
+    }
+  });
+
+  test("forbid destructuring assignment", () => {
+    expect(
+      lintExpression({
+        expression: ` ({ a } = b)`,
+        allowAssignment: true,
+        availableVariables: new Set(["b"]),
+      })
+    ).toEqual([error(2, 7, "Destructuring assignment is not supported")]);
+    expect(
+      lintExpression({
+        expression: ` [a] = b`,
+        allowAssignment: true,
+        availableVariables: new Set(["b"]),
+      })
+    ).toEqual([error(1, 4, "Destructuring assignment is not supported")]);
+    expect(
+      lintExpression({
+        expression: ` ({ nested: a } = b)`,
+        allowAssignment: true,
+        availableVariables: new Set(["b"]),
+      })
+    ).toEqual([error(2, 15, "Destructuring assignment is not supported")]);
+  });
+
+  test("forbid unavailable variables", () => {
+    expect(
+      lintExpression({ expression: ` a = b + 1`, allowAssignment: true })
+    ).toEqual([
+      warn(5, 6, `"b" is not defined in the scope`),
+      warn(1, 2, `"a" is not defined in the scope`),
+    ]);
+    expect(
+      lintExpression({
+        expression: ` a = b + 1`,
+        allowAssignment: true,
+        availableVariables: new Set(["a", "b"]),
+      })
+    ).toEqual([]);
+  });
+
+  test(`forbid "this" keyword`, () => {
+    expect(lintExpression({ expression: ` this.name` })).toEqual([
+      error(1, 5, `"this" keyword is not supported`),
+    ]);
+  });
+
+  test("forbid functions", () => {
+    expect(
+      lintExpression({
+        expression: ` function(){} + (() => {}) + fn()`,
+        availableVariables: new Set(["fn"]),
+      })
+    ).toEqual([
+      error(1, 13, "Functions are not supported"),
+      error(17, 25, "Functions are not supported"),
+      error(29, 33, `"fn" function is not supported`),
+    ]);
+  });
+
+  test("forbid increment and decrement", () => {
+    expect(
+      lintExpression({
+        expression: ` ++i + --j`,
+        availableVariables: new Set(["j", "i"]),
+      })
+    ).toEqual([
+      error(1, 4, "Increment and decrement are not supported"),
+      error(7, 10, "Increment and decrement are not supported"),
+    ]);
+  });
+
+  test("forbid sequence expression", () => {
+    expect(lintExpression({ expression: ` 1, 2, 3` })).toEqual([
+      error(1, 8, "Only single expression is supported"),
+    ]);
+  });
+
+  test(`forbid "yield" keyword`, () => {
+    expect(lintExpression({ expression: ` yield 1` })).toEqual([
+      error(1, 1, `The keyword 'yield' is reserved`),
+    ]);
+  });
+
+  test("forbid tagged template", () => {
+    expect(
+      lintExpression({
+        expression: " tag`hello`",
+        availableVariables: new Set(["tag"]),
+      })
+    ).toEqual([error(1, 11, "Tagged template is not supported")]);
+  });
+
+  test("forbid classes", () => {
+    expect(
+      lintExpression({
+        expression: ` class {} + new MyClass()`,
+        availableVariables: new Set(["MyClass"]),
+      })
+    ).toEqual([
+      error(1, 9, "Classes are not supported"),
+      error(12, 25, "Classes are not supported"),
+    ]);
+  });
+
+  test("forbid imports", () => {
+    expect(
+      lintExpression({ expression: ` import("") + import.meta.url` })
+    ).toEqual([
+      error(1, 11, "Imports are not supported"),
+      error(14, 25, "Imports are not supported"),
+    ]);
+  });
+
+  test(`forbid "await" keyword`, () => {
+    expect(lintExpression({ expression: ` await 1` })).toEqual([
+      error(1, 8, `"await" keyword is not supported`),
+    ]);
+  });
+
+  test.each([
+    "toLowerCase",
+    "replace",
+    "split",
+    "at",
+    "slice",
+    "endsWith",
+    "includes",
+    "startsWith",
+    "toString",
+    "toUpperCase",
+    "toLocaleLowerCase",
+    "toLocaleUpperCase",
+  ])("allow safe string method: %s", (method) => {
+    expect(
+      lintExpression({
+        expression: `title.${method}()`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+  });
+
+  test.each(["at", "includes", "join", "slice", "toString"])(
+    "allow safe array method: %s",
+    (method) => {
+      expect(
+        lintExpression({
+          expression: `arr.${method}()`,
+          availableVariables: new Set(["arr"]),
+        })
+      ).toEqual([]);
+    }
+  );
+
+  test("allow supported methods on known native-compatible receivers", () => {
+    expect(
+      lintExpression({
+        expression: `title.split("").toString()`,
+        availableVariables: new Set(["title"]),
+        variableValues: new Map([["title", "Test"]]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `arr.join("").split("").toString()`,
+        availableVariables: new Set(["arr"]),
+        variableValues: new Map([["arr", ["T", "e", "s", "t"]]]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `count.toString() + flag.toString() + object.toString()`,
+        availableVariables: new Set(["count", "flag", "object"]),
+        variableValues: new Map<string, unknown>([
+          ["count", 2],
+          ["flag", true],
+          ["object", {}],
+        ]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `title.replace("e", "a").toLowerCase()`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `arr.join("").toLowerCase()`,
+        availableVariables: new Set(["arr"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid supported method names on known native-incompatible receivers", () => {
+    expect(
+      lintExpression({
+        expression: `arr.split()`,
+        availableVariables: new Set(["arr"]),
+        variableValues: new Map([["arr", []]]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"split" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `title.join()`,
+        availableVariables: new Set(["title"]),
+        variableValues: new Map([["title", "Test"]]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"join" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `[1, 2, 3].toLowerCase()`,
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"toLowerCase" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `"Test".join()`,
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"join" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `title.split("").toLowerCase()`,
+        availableVariables: new Set(["title"]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"toLowerCase" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `arr.join("").join()`,
+        availableVariables: new Set(["arr"]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"join" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `null.toString() + undefined.toString()`,
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([
+      `"toString" function is not supported`,
+      `"undefined" is not defined in the scope`,
+      `"toString" function is not supported`,
+    ]);
+  });
+
+  test("allow chained string methods", () => {
+    expect(
+      lintExpression({
+        expression: `title.toLowerCase().replace(" ", "-").split("-")`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid unsafe method calls", () => {
+    expect(
+      lintExpression({
+        expression: `arr.pop()`,
+        availableVariables: new Set(["arr"]),
+      })
+    ).toEqual([error(0, 9, `"pop" function is not supported`)]);
+    expect(
+      lintExpression({
+        expression: `obj.push(1)`,
+        availableVariables: new Set(["obj"]),
+      })
+    ).toEqual([error(0, 11, `"push" function is not supported`)]);
+  });
+
+  test("forbid standalone function calls", () => {
+    expect(
+      lintExpression({
+        expression: `func()`,
+        availableVariables: new Set(["func"]),
+      })
+    ).toEqual([error(0, 6, `"func" function is not supported`)]);
+  });
+
+  test("visits supported unary, logical, and optional-chain syntax", () => {
+    expect(
+      lintExpression({
+        expression: `!value || record?.enabled`,
+        availableVariables: new Set(["value", "record"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("rejects calls without a named callee", () => {
+    expect(
+      lintExpression({ expression: `(function () {})()` }).map(
+        ({ message }) => message
+      )
+    ).toEqual(["Functions are not supported", "Functions are not supported"]);
+  });
+});
+
+describe("expression value kinds", () => {
+  test.each([
+    ["[]", "array"],
+    ["1n", "bigint"],
+    ["true", "boolean"],
+    ["undefined", "nullish"],
+    ["null", "nullish"],
+    ["1", "number"],
+    ["{}", "object"],
+    ['"text"', "string"],
+    ["`text`", "string"],
+    ["value +", "unknown"],
+  ] as const)("classifies %s as %s", (expression, kind) => {
+    expect(getExpressionValueKind({ expression })).toBe(kind);
+  });
+
+  test("uses map and record variable values", () => {
+    expect(
+      getExpressionValueKind({
+        expression: "value",
+        variableValues: new Map([["value", [1, 2]]]),
+      })
+    ).toBe("array");
+    expect(
+      getExpressionValueKind({
+        expression: "value",
+        variableValues: { value: "text" },
+      })
+    ).toBe("string");
+    expect(
+      getExpressionValueKind({
+        expression: "missing",
+        variableValues: new Map(),
+      })
+    ).toBe("unknown");
+    expect(
+      getExpressionValueKind({
+        expression: "missing",
+        variableValues: {},
+      })
+    ).toBe("unknown");
+    expect(
+      getExpressionValueKind({
+        expression: "callback",
+        variableValues: { callback: () => undefined },
+      })
+    ).toBe("unknown");
+  });
+
+  test("infers supported method return kinds", () => {
+    expect(getExpressionValueKind({ expression: '"text".split("")' })).toBe(
+      "array"
+    );
+    expect(getExpressionValueKind({ expression: "[].join(',')" })).toBe(
+      "string"
+    );
+    expect(
+      getExpressionValueKind({ expression: "unknownValue.split('')" })
+    ).toBe("array");
+    expect(
+      getExpressionValueKind({ expression: "unknownValue.join(',')" })
+    ).toBe("string");
+    expect(getExpressionValueKind({ expression: "unknownValue.at(0)" })).toBe(
+      "unknown"
+    );
+    expect(getExpressionValueKind({ expression: "unknownValue.slice()" })).toBe(
+      "unknown"
+    );
+    expect(getExpressionValueKind({ expression: "true.toString()" })).toBe(
+      "string"
+    );
+    expect(getExpressionValueKind({ expression: "true.slice()" })).toBe(
+      "unknown"
+    );
+    expect(getExpressionValueKind({ expression: "value?.name" })).toBe(
+      "unknown"
+    );
+  });
+});
+
+test("check simple literals", () => {
+  expect(isLiteralExpression(`""`)).toEqual(true);
+  expect(isLiteralExpression(`''`)).toEqual(true);
+  expect(isLiteralExpression(`0`)).toEqual(true);
+  expect(isLiteralExpression(`true`)).toEqual(true);
+  expect(isLiteralExpression(`[]`)).toEqual(true);
+  expect(isLiteralExpression(`{}`)).toEqual(true);
+  expect(isLiteralExpression(`undefined`)).toEqual(true);
+  expect(isLiteralExpression(`"" + ""`)).toEqual(false);
+  expect(isLiteralExpression(`{}.field`)).toEqual(false);
+  expect(isLiteralExpression(`variable`)).toEqual(false);
+  expect(isLiteralExpression(``)).toEqual(false);
+});
+
+test("check complex objects and arrays", () => {
+  expect(isLiteralExpression(`[1, 2, 3]`)).toEqual(true);
+  expect(isLiteralExpression(`[1, 2, variable]`)).toEqual(false);
+  expect(isLiteralExpression(`[...variable]`)).toEqual(false);
+  expect(isLiteralExpression(`{ param: 0 }`)).toEqual(true);
+  expect(isLiteralExpression(`{ "param": 0 }`)).toEqual(true);
+  expect(isLiteralExpression(`{ param: variable }`)).toEqual(false);
+  expect(isLiteralExpression(`{ ["param"]: 0 }`)).toEqual(true);
+  expect(isLiteralExpression(`{ [variable]: 0 }`)).toEqual(false);
+  expect(isLiteralExpression(`{ ...variable }`)).toEqual(false);
+});
+
+describe("get expression identifiers", () => {
+  test("find all identifiers", () => {
+    expect(getExpressionIdentifiers("a = b * c.d")).toEqual(
+      new Set(["a", "b", "c"])
+    );
+  });
+
+  test("find identifiers in assignment targets", () => {
+    expect(getExpressionIdentifiers("a[b].c = d.e")).toEqual(
+      new Set(["a", "b", "d"])
+    );
+    expect(getExpressionIdentifiers("a.b[c.d].e ??= f.g")).toEqual(
+      new Set(["a", "c", "f"])
+    );
+  });
+
+  test("deduplicate identifiers", () => {
+    expect(getExpressionIdentifiers("a = a + b")).toEqual(new Set(["a", "b"]));
+  });
+
+  test("not fail when invalid syntax", () => {
+    expect(getExpressionIdentifiers("")).toEqual(new Set());
+    expect(getExpressionIdentifiers("a = a +")).toEqual(new Set());
+  });
+});
+
+describe("transpile expression", () => {
+  const expectTranspiledExpressionToMatchNative = (expression: string) => {
+    const nativeResult = new Function(`return (${expression})`)();
+    const transpiledResult = new Function(
+      `return (${transpileExpression({ expression, executable: true })})`
+    )();
+    expect(transpiledResult).toEqual(nativeResult);
+  };
+
+  test("preserve spaces and parentheses", () => {
+    expect(
+      transpileExpression({ expression: " 1 + (2 + 3) ", executable: true })
+    ).toEqual(" 1 + (2 + 3) ");
+  });
+
+  test("add optional chaining with dot syntax", () => {
+    expect(
+      transpileExpression({ expression: "a.b . c", executable: true })
+    ).toEqual("a?.b ?. c");
+  });
+
+  test("add optional chaining with computed", () => {
+    expect(
+      transpileExpression({ expression: "a['b'] [c]", executable: true })
+    ).toEqual("a?.['b'] ?.[c]");
+  });
+
+  test("skip optional chaining", () => {
+    expect(
+      transpileExpression({ expression: "a?.['b']?.c", executable: true })
+    ).toEqual("a?.['b']?.c");
+  });
+
+  test("skip optional chaining in assignment targets", () => {
+    expect(
+      transpileExpression({ expression: "a.b = c.d", executable: true })
+    ).toEqual("a.b = c?.d");
+    expect(
+      transpileExpression({ expression: "a[b.c].d = e.f", executable: true })
+    ).toEqual("a[b?.c].d = e?.f");
+  });
+
+  test("skip optional chaining in assignment targets for all assignment operators", () => {
+    const operators = [
+      "=",
+      "+=",
+      "-=",
+      "*=",
+      "/=",
+      "%=",
+      "**=",
+      "||=",
+      "&&=",
+      "??=",
+    ];
+
+    for (const operator of operators) {
+      const expression = `a.b ${operator} c.d`;
+      const transpiled = transpileExpression({ expression, executable: true });
+      expect(transpiled).toEqual(`a.b ${operator} c?.d`);
+      expect(() =>
+        parseExpressionAt(transpiled, 0, { ecmaVersion: "latest" })
+      ).not.toThrow();
+    }
+  });
+
+  test("transpile executable assignment expressions", () => {
+    const cases = [
+      ["a.b = c.d", "a.b = c?.d"],
+      ["a[b] = c.d", "a[b] = c?.d"],
+      ["a[b.c] = d.e", "a[b?.c] = d?.e"],
+      ["a[b.c].d = e.f", "a[b?.c].d = e?.f"],
+      ["a.b[c.d].e ??= f.g", "a.b[c?.d].e ??= f?.g"],
+    ] as const;
+
+    for (const [expression, expected] of cases) {
+      const transpiled = transpileExpression({ expression, executable: true });
+      expect(transpiled).toEqual(expected);
+      expect(() =>
+        parseExpressionAt(transpiled, 0, { ecmaVersion: "latest" })
+      ).not.toThrow();
+    }
+  });
+
+  test("replace variable", () => {
+    expect(
+      transpileExpression({
+        expression: "(a + c) * b",
+        replaceVariable: (identifier) => identifier + "_1",
+      })
+    ).toEqual("(a_1 + c_1) * b_1");
+    expect(
+      transpileExpression({
+        expression: "a = c",
+        replaceVariable: (identifier) => identifier + "_1",
+      })
+    ).toEqual("a_1 = c_1");
+  });
+
+  test("skip identifiers in nested member expressions", () => {
+    const identifiers: string[] = [];
+    const transpiled = transpileExpression({
+      expression: "a.b + c.d * e[f]",
+      replaceVariable: (identifier) => {
+        identifiers.push(identifier);
+        return identifier + "_1";
+      },
+    });
+    expect(identifiers).toEqual(["a", "c", "e", "f"]);
+    expect(transpiled).toEqual("a_1.b + c_1.d * e_1[f_1]");
+  });
+
+  test("inform identifier is an assignee", () => {
+    const replaceVariable = (identifier: string, assignee: boolean) => {
+      const suffix = assignee ? "_assignee" : "_assigner";
+      return identifier + suffix;
+    };
+
+    const cases = [
+      ["a = b", "a_assignee = b_assigner"],
+      ["a += b", "a_assignee += b_assigner"],
+      ["a ||= b", "a_assignee ||= b_assigner"],
+      ["a ??= b", "a_assignee ??= b_assigner"],
+      ["a.b = c", "a_assignee.b = c_assigner"],
+      ["a[b] = c", "a_assignee[b_assigner] = c_assigner"],
+      ["a[b].c = d", "a_assignee[b_assigner].c = d_assigner"],
+      ["a.b[c.d].e ??= f.g", "a_assignee.b[c_assigner.d].e ??= f_assigner.g"],
+    ] as const;
+
+    for (const [expression, expected] of cases) {
+      expect(transpileExpression({ expression, replaceVariable })).toEqual(
+        expected
+      );
+    }
+  });
+
+  test("transpile object literal without changes", () => {
+    expect(
+      transpileExpression({
+        expression: `{ ...name }`,
+      })
+    ).toEqual(`{ ...name }`);
+  });
+
+  test("output more readable syntax error", () => {
+    let errorString = "";
+    try {
+      transpileExpression({ expression: `` });
+    } catch (error) {
+      errorString = (error as Error).message;
+    }
+    expect(errorString).toEqual(`Unexpected token (1:0) in ""`);
+  });
+
+  test("transpile string methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "title.toLowerCase()",
+        executable: true,
+      })
+    ).toEqual("title?.toLowerCase?.()");
+    expect(
+      transpileExpression({
+        expression: "user.name.replace(' ', '-')",
+        executable: true,
+      })
+    ).toEqual("user?.name?.replace?.(' ', '-')");
+    expect(
+      transpileExpression({
+        expression: "data.title.split('-')",
+        executable: true,
+      })
+    ).toEqual("data?.title?.split?.('-')");
+  });
+
+  test("preserve native behavior for all supported string methods", () => {
+    const expressionsByMethod = {
+      at: `"Hello".at(1)`,
+      endsWith: `"Hello".endsWith("lo")`,
+      includes: `"Hello".includes("ell")`,
+      replace: `"Hello".replace("l", "x")`,
+      slice: `"Hello".slice(1, 4)`,
+      split: `"Hello".split("l")`,
+      startsWith: `"Hello".startsWith("He")`,
+      toLocaleLowerCase: `"Hello".toLocaleLowerCase()`,
+      toLocaleUpperCase: `"Hello".toLocaleUpperCase()`,
+      toLowerCase: `"Hello".toLowerCase()`,
+      toString: `"Hello".toString()`,
+      toUpperCase: `"Hello".toUpperCase()`,
+    };
+
+    expect(new Set(Object.keys(expressionsByMethod))).toEqual(
+      allowedStringMethods
+    );
+    for (const expression of Object.values(expressionsByMethod)) {
+      expectTranspiledExpressionToMatchNative(expression);
+    }
+    expectTranspiledExpressionToMatchNative(`"Test".split(2).toString()`);
+  });
+
+  test("preserve native behavior for all supported array methods", () => {
+    const expressionsByMethod = {
+      at: `["a", "b", "c"].at(1)`,
+      includes: `["a", "b", "c"].includes("b")`,
+      join: `["a", "b", "c"].join("-")`,
+      slice: `["a", "b", "c"].slice(1, 3)`,
+      toString: `["a", "b", "c"].toString()`,
+    };
+
+    expect(new Set(Object.keys(expressionsByMethod))).toEqual(
+      allowedArrayMethods
+    );
+    for (const expression of Object.values(expressionsByMethod)) {
+      expectTranspiledExpressionToMatchNative(expression);
+    }
+  });
+
+  test("transpile chained string methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "title.toLowerCase().replace(/\\s+/g, '-')",
+        executable: true,
+      })
+    ).toEqual("title?.toLowerCase?.()?.replace?.(/\\s+/g, '-')");
+    expect(
+      transpileExpression({
+        expression: "user.name.toLowerCase().replace(' ', '-').split('-')",
+        executable: true,
+      })
+    ).toEqual("user?.name?.toLowerCase?.()?.replace?.(' ', '-')?.split?.('-')");
+  });
+
+  test("transpile array methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "items.map(item => item.id)",
+        executable: true,
+      })
+    ).toEqual("items?.map?.(item => item?.id)");
+  });
+
+  test("transpile nested method calls with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "obj.method().prop.anotherMethod()",
+        executable: true,
+      })
+    ).toEqual("obj?.method?.()?.prop?.anotherMethod?.()");
+  });
+
+  test("preserve existing optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "obj?.method?.()",
+        executable: true,
+      })
+    ).toEqual("obj?.method?.()");
+    expect(
+      transpileExpression({
+        expression: "obj?.prop?.method?.()",
+        executable: true,
+      })
+    ).toEqual("obj?.prop?.method?.()");
+  });
+});
+
+describe("object expression transformations", () => {
+  test("parse array expression", () => {
+    expect(parseArrayExpression(`[0, "", $c + 1]`)).toEqual([
+      "0",
+      '""',
+      "$c + 1",
+    ]);
+    expect(parseArrayExpression("0")).toBeUndefined();
+    expect(parseArrayExpression("[...items]")).toBeUndefined();
+    expect(parseArrayExpression("[")).toBeUndefined();
+  });
+
+  test("parse object expression", () => {
+    expect(parseObjectExpression(`{ a: 0, b: "", c: $c + 1 }`)).toEqual(
+      new Map([
+        ["a", `0`],
+        ["b", `""`],
+        ["c", `$c + 1`],
+      ])
+    );
+  });
+
+  test("parse unsupported syntax", () => {
+    expect(parseObjectExpression(``)).toEqual(new Map());
+    expect(parseObjectExpression(`0`)).toEqual(new Map());
+    expect(parseObjectExpression(`{ a: 0, ...spread }`)).toEqual(
+      new Map([["a", "0"]])
+    );
+    expect(parseObjectExpression(`{ a: 0, [b]: 0 }`)).toEqual(
+      new Map([["a", "0"]])
+    );
+    expect(parseObjectExpression(`{ "a-b": 0 }`)).toEqual(
+      new Map([["a-b", "0"]])
+    );
+    expect(parseObjectExpression(`{ 1: true, valid: false }`)).toEqual(
+      new Map([["valid", "false"]])
+    );
+  });
+
+  test("generate object expression", () => {
+    expect(
+      generateObjectExpression(
+        new Map([
+          ["a", `0`],
+          ["b-c", `""`],
+          ["d", `$d`],
+        ])
+      )
+    ).toMatchInlineSnapshot(`
+    "{
+      "a": 0,
+      "b-c": "",
+      "d": $d,
+    }"
+    `);
+  });
+
+  test("generate empty object expression", () => {
+    expect(generateObjectExpression(new Map())).toMatchInlineSnapshot(`
+    "{
+    }"
+    `);
+  });
+});

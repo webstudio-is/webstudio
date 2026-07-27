@@ -1,14 +1,17 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   formatExpressionObject,
   parseExpressionObject,
 } from "@webstudio-is/query-builder";
 import {
+  createAssetResourceRequest,
+  createReachableAssetContentCompilationPlan,
   createStructuredAssetQueryResourceBody,
   isAssetsResource,
   isConfiguredAssetsResource,
   parseStructuredAssetQueryResourceBody,
 } from "./asset-resource-config";
+import { loadResource } from "./resource-loader";
 import type { Resource } from "./schema/resources";
 
 const createResource = (overrides: Partial<Resource> = {}): Resource => ({
@@ -22,6 +25,91 @@ const createResource = (overrides: Partial<Resource> = {}): Resource => ({
 });
 
 describe("asset query resource configuration", () => {
+  test("compiles only Assets queries reachable from bindings", () => {
+    const body = createStructuredAssetQueryResourceBody({
+      where: { all: [] },
+      sort: [],
+      limit: "10",
+      offset: "0",
+      output: { mode: "base" },
+      content: { mode: "none" },
+    });
+    expect(
+      createReachableAssetContentCompilationPlan({
+        props: [
+          {
+            id: "prop",
+            instanceId: "instance",
+            name: "posts",
+            type: "resource",
+            value: "used",
+          },
+        ],
+        dataSources: [],
+        resources: [
+          createResource({ id: "used", body }),
+          createResource({ id: "unused", body }),
+        ],
+      })?.queries.map(({ id }) => id)
+    ).toEqual(["used"]);
+    expect(
+      createReachableAssetContentCompilationPlan({
+        props: [],
+        dataSources: [],
+        resources: [createResource({ id: "unused", body })],
+      })
+    ).toBeUndefined();
+  });
+
+  test("rejects invalid reachable Assets query configuration", () => {
+    expect(() =>
+      createReachableAssetContentCompilationPlan({
+        props: [
+          {
+            id: "prop",
+            instanceId: "instance",
+            name: "posts",
+            type: "resource",
+            value: "posts",
+          },
+        ],
+        dataSources: [],
+        resources: [createResource({ body: "invalid" })],
+      })
+    ).toThrow('Assets resource "posts" has an invalid query configuration');
+  });
+
+  test("serializes a typed Assets query through the resource transport", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const resourceRequest = createAssetResourceRequest({
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "hello-world",
+            },
+          ],
+        },
+        limit: 1,
+      },
+      indexRevision: "index-7",
+    });
+
+    await loadResource(fetch, resourceRequest, "https://example.com/blog/post");
+
+    expect(fetch).toHaveBeenCalledWith("/$resources/assets", {
+      method: "post",
+      headers: new Headers([["content-type", "application/json"]]),
+      body: JSON.stringify(resourceRequest.body),
+    });
+  });
+
   test("only recognizes exact system Assets resource contracts", () => {
     expect(isAssetsResource(createResource())).toBe(true);
     expect(

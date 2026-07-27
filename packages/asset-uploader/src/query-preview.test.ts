@@ -5,9 +5,9 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import {
   AssetIndexRevisionError,
-  createAssetIndex,
   executeAssetQuery,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine";
+import { createAssetIndex } from "@webstudio-is/content-engine/compiler";
 import type { AssetQueryRequestInput } from "@webstudio-is/sdk";
 import type { AssetObjectReader } from "./client";
 import { previewAssetResourceQuery } from "./query-preview";
@@ -40,8 +40,7 @@ const query = vi.fn(
 const dependencies = {
   hasProjectPermit,
   createRepository: ({ assetClient }: { assetClient: AssetObjectReader }) => ({
-    prepareIndex,
-    readIndex: prepareIndex,
+    readFieldCatalog: vi.fn(),
     query: (request: AssetQueryRequestInput) => query(request, assetClient),
   }),
 };

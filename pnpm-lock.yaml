@@ -233,15 +233,15 @@ importers:
       '@vercel/remix':
         specifier: 2.15.3
         version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@7.0.2))(@remix-run/serve@2.16.5(typescript@7.0.2))(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(typescript@7.0.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0))(yaml@2.9.0))(@remix-run/node@2.16.5(typescript@7.0.2))(@remix-run/server-runtime@2.16.5(typescript@7.0.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@webstudio-is/asset-resource':
-        specifier: workspace:0.0.0-webstudio-version
-        version: link:../../packages/asset-resource
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
         version: link:../../packages/asset-uploader
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../../packages/authorization-token
+      '@webstudio-is/content-engine':
+        specifier: workspace:0.0.0-webstudio-version
+        version: link:../../packages/content-engine
       '@webstudio-is/css-data':
         specifier: workspace:*
         version: link:../../packages/css-data
@@ -257,6 +257,9 @@ importers:
       '@webstudio-is/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@webstudio-is/expression':
+        specifier: workspace:*
+        version: link:../../packages/expression
       '@webstudio-is/feature-flags':
         specifier: workspace:*
         version: link:../../packages/feature-flags
@@ -848,9 +851,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.4.1
         version: 4.4.1(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))
-      '@webstudio-is/asset-resource':
+      '@webstudio-is/content-engine':
         specifier: workspace:*
-        version: link:../../packages/asset-resource
+        version: link:../../packages/content-engine
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -988,9 +991,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
-      '@webstudio-is/asset-resource':
+      '@webstudio-is/content-engine':
         specifier: workspace:*
-        version: link:../../packages/asset-resource
+        version: link:../../packages/content-engine
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.2
@@ -1077,34 +1080,6 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
-  packages/asset-resource:
-    dependencies:
-      '@webstudio-is/project-store':
-        specifier: workspace:*
-        version: link:../project-store
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../sdk
-      remark-parse:
-        specifier: 10.0.2
-        version: 10.0.2
-      unified:
-        specifier: 10.1.2
-        version: 10.1.2
-      yaml:
-        specifier: 2.9.0
-        version: 2.9.0
-    devDependencies:
-      '@webstudio-is/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      esbuild:
-        specifier: ^0.25.3
-        version: 0.25.3
-      vitest:
-        specifier: ^3.1.2
-        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
-
   packages/asset-uploader:
     dependencies:
       '@aws-crypto/sha256-js':
@@ -1113,9 +1088,9 @@ importers:
       '@smithy/signature-v4':
         specifier: ^5.1.3
         version: 5.1.3
-      '@webstudio-is/asset-resource':
+      '@webstudio-is/content-engine':
         specifier: workspace:*
-        version: link:../asset-resource
+        version: link:../content-engine
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
@@ -1205,6 +1180,9 @@ importers:
       '@trpc/client':
         specifier: ^10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
+      '@webstudio-is/content-engine':
+        specifier: workspace:*
+        version: link:../content-engine
       '@webstudio-is/http-client':
         specifier: workspace:*
         version: link:../http-client
@@ -1338,9 +1316,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.4.1
         version: 4.4.1(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))
-      '@webstudio-is/asset-resource':
-        specifier: workspace:*
-        version: link:../asset-resource
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -1434,6 +1409,37 @@ importers:
       wrangler:
         specifier: ^3.63.2
         version: 3.63.2(@cloudflare/workers-types@4.20240718.0)
+
+  packages/content-engine:
+    dependencies:
+      '@webstudio-is/project-store':
+        specifier: workspace:*
+        version: link:../project-store
+      '@webstudio-is/query-builder':
+        specifier: workspace:*
+        version: link:../query-builder
+      remark-parse:
+        specifier: 10.0.2
+        version: 10.0.2
+      unified:
+        specifier: 10.1.2
+        version: 10.1.2
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      esbuild:
+        specifier: ^0.25.3
+        version: 0.25.3
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
 
   packages/css-data:
     dependencies:
@@ -1746,6 +1752,25 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
 
+  packages/expression:
+    dependencies:
+      acorn:
+        specifier: ^8.14.1
+        version: 8.17.0
+      acorn-walk:
+        specifier: ^8.3.4
+        version: 8.3.5
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: 3.1.2
+        version: 3.1.2(@vitest/browser@3.1.2)(vitest@3.1.2)
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(lightningcss@1.31.1)(msw@2.13.2(@types/node@22.13.10)(typescript@7.0.2))(tsx@4.19.3)(yaml@2.9.0)
+
   packages/feature-flags:
     devDependencies:
       '@webstudio-is/tsconfig':
@@ -2041,18 +2066,21 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.10.0
         version: 1.10.0
-      '@webstudio-is/asset-resource':
-        specifier: workspace:*
-        version: link:../asset-resource
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../authorization-token
+      '@webstudio-is/content-engine':
+        specifier: workspace:*
+        version: link:../content-engine
       '@webstudio-is/css-data':
         specifier: workspace:*
         version: link:../css-data
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
+      '@webstudio-is/expression':
+        specifier: workspace:*
+        version: link:../expression
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
@@ -2203,6 +2231,9 @@ importers:
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
+      '@webstudio-is/query-builder':
+        specifier: workspace:*
+        version: link:../query-builder
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -2210,6 +2241,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@apidevtools/swagger-parser':
+        specifier: ^12.1.0
+        version: 12.1.0(openapi-types@12.1.3)
       '@webstudio-is/project-build':
         specifier: workspace:*
         version: link:../project-build
@@ -2265,6 +2299,9 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
+      '@webstudio-is/expression':
+        specifier: workspace:*
+        version: link:../expression
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
@@ -2323,9 +2360,15 @@ importers:
       '@emotion/hash':
         specifier: ^0.9.2
         version: 0.9.2
+      '@webstudio-is/content-engine':
+        specifier: workspace:*
+        version: link:../content-engine
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
+      '@webstudio-is/expression':
+        specifier: workspace:*
+        version: link:../expression
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
@@ -2344,9 +2387,6 @@ importers:
       acorn:
         specifier: ^8.14.1
         version: 8.14.1
-      acorn-walk:
-        specifier: ^8.3.4
-        version: 8.3.4
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -2366,9 +2406,6 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@apidevtools/swagger-parser':
-        specifier: ^12.1.0
-        version: 12.1.0(openapi-types@12.1.3)
       '@types/papaparse':
         specifier: ^5.5.2
         version: 5.5.2
@@ -15665,7 +15702,6 @@ snapshots:
   acorn-walk@8.3.5:
     dependencies:
       acorn: 8.17.0
-    optional: true
 
   acorn@8.14.0: {}
 
@@ -18565,7 +18601,7 @@ snapshots:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       acorn: 8.17.0
-      acorn-walk: 8.3.4
+      acorn-walk: 8.3.5
       capnp-ts: 0.7.0
       exit-hook: 2.2.1
       glob-to-regexp: 0.4.1

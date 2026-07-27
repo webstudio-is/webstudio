@@ -75,7 +75,10 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import { type Templates } from "@webstudio-is/sdk";
+import {
+  createReachableAssetContentCompilationPlan,
+  type Templates,
+} from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -102,6 +105,7 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
+import { getContentDatabasePublishWarning } from "./content-database-publish-warning";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -181,6 +185,22 @@ const getPrePublishAuditMessages = () => {
     error: getMessage("error"),
     warning: getMessage("warning"),
   };
+};
+
+const loadContentDatabasePublishWarning = async (projectId: string) => {
+  const plan = createReachableAssetContentCompilationPlan({
+    props: [...$props.get().values()],
+    dataSources: [...$dataSources.get().values()],
+    resources: [...$resources.get().values()],
+  });
+  if (plan === undefined) {
+    return;
+  }
+  return getContentDatabasePublishWarning(
+    await nativeClient.build.contentDatabasePublishDiagnostics.query({
+      projectId,
+    })
+  );
 };
 
 type ChangeProjectDomainProps = {
@@ -645,6 +665,23 @@ const Publish = ({
     }
 
     startTransition(async () => {
+      try {
+        const contentWarning = await loadContentDatabasePublishWarning(
+          project.id
+        );
+        if (contentWarning !== undefined) {
+          toast.warn(contentWarning);
+          setPublishWarning(contentWarning);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Content database validation failed";
+        toast.error(message);
+        setPublishError(message);
+        return;
+      }
       await publish(domains);
     });
   };
@@ -794,6 +831,13 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
+
+                const contentWarning =
+                  await loadContentDatabasePublishWarning(projectId);
+                if (contentWarning !== undefined) {
+                  toast.warn(contentWarning);
+                  setPublishWarning(contentWarning);
+                }
 
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,

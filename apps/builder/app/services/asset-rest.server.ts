@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import {
   readBoundedRequestBytes,
   RequestByteLimitError,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
@@ -14,6 +14,7 @@ import {
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { assetFolderIssue } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { ZodError } from "zod";
 import { createAssetClient } from "~/shared/asset-client";
 import { parseError } from "~/shared/error/error-parse";
@@ -126,7 +127,9 @@ export const parseAssetRestMetadataHeader = (
 };
 
 export const getAssetRestProjectId = (request: Request) => {
-  const projectId = new URL(request.url).searchParams.get("projectId");
+  const projectId =
+    parseBuilderUrl(request.url).projectId ??
+    new URL(request.url).searchParams.get("projectId");
   return parseAssetRestIdentifier(projectId);
 };
 

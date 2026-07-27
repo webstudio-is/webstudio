@@ -444,7 +444,8 @@ export const preparePreviewProject = async ({
     const snapshot = await session.ensureNamespaces(builderNamespaces);
     const assetIndex = await loadCliProjectSessionAssetIndex(
       snapshot,
-      connection
+      connection,
+      join(cwd(), LOCAL_ASSETS_DIR)
     );
     await writeCliProjectSessionDataFile(snapshot, undefined, {
       origin: connection.origin,

@@ -1,4 +1,4 @@
-import { lintExpression } from "@webstudio-is/sdk";
+import { lintExpression } from "@webstudio-is/expression";
 import { z } from "zod";
 import type { SemanticValidationIssue } from "./errors";
 

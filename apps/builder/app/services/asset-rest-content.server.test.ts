@@ -3,7 +3,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   createAssetContentLoader,
   parseRequestRange,
-} from "./asset-rest-content.server";
+} from "./asset-rest-route-handlers.server";
 
 const asset: Asset = {
   id: "asset-1",

@@ -18,7 +18,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { blockComponent } from "@webstudio-is/sdk";
-import { AssetIndexRevisionError } from "@webstudio-is/asset-resource";
+import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
 import * as assetUploader from "@webstudio-is/asset-uploader/index.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import {

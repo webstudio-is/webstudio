@@ -16,11 +16,8 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  documentTypes,
-  isLiteralExpression,
-  type Pages,
-} from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
+import { documentTypes, type Pages } from "@webstudio-is/sdk";
 import { HomeIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import {
   BindingControl,

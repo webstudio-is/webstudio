@@ -1,4 +1,4 @@
-import { isLiteralExpression } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import {
   StructuredQueryBuilder,
   type QueryValueEditorProps,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import { isLiteralExpression } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,

@@ -1,5 +1,5 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
-import { assetResourceApiOperations } from "@webstudio-is/sdk/asset-resource-api";
+import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
   assetRestErrorResponse,

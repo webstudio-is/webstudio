@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
-import { loader } from "./assets-field-catalog.server";
+import { loader } from "../../routes/rest.assets.field-catalog";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const assetClient = { readFile: vi.fn() };
@@ -8,6 +8,7 @@ const dependencies = {
   authorizeAssetRestProject: vi.fn(),
   createAssetClient: vi.fn(() => assetClient),
   loadBuilderAssetFieldCatalog: vi.fn(),
+  preventCrossOriginCookie: vi.fn(),
 };
 const catalog = {
   format: "webstudio-builder-asset-field-catalog" as const,

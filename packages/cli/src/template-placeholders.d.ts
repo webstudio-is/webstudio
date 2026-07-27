@@ -1,8 +1,8 @@
 declare module "__ASSET_QUERY_MANIFEST__" {
-  import type { PublishedAssetIndexManifest } from "@webstudio-is/asset-resource/runtime";
+  import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 
   export const assetQueryDeploymentId: string;
-  export const assetQueryManifest: PublishedAssetIndexManifest | undefined;
+  export const assetQueryDatabase: ContentArtifactV1 | undefined;
 }
 
 declare module "__ASSET_QUERY_RUNTIME__" {
@@ -14,11 +14,11 @@ declare module "__ASSET_QUERY_RUNTIME__" {
 }
 
 declare module "__ASSET_RESOURCE_FETCH__" {
-  import type { PublishedAssetIndexManifest } from "@webstudio-is/asset-resource/runtime";
+  import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 
   export const createSsgAssetResourceFetch: (options: {
     deploymentId: string;
-    manifest: PublishedAssetIndexManifest;
+    artifact: ContentArtifactV1;
   }) => (
     input: RequestInfo | URL,
     init?: RequestInit

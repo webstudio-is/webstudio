@@ -21,13 +21,15 @@ import {
 } from "@webstudio-is/sdk";
 import {
   encodeDataVariableId,
-  generateObjectExpression,
   isConfiguredAssetsResource,
-  isLiteralExpression,
-  parseObjectExpression,
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
+import {
+  generateObjectExpression,
+  isLiteralExpression,
+  parseObjectExpression,
+} from "@webstudio-is/expression";
 import {
   serializeValue,
   sitemapResourceUrl,

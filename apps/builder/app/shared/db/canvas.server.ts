@@ -1,3 +1,4 @@
+import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
 import {
   bundleVersion,
   type PublishedProjectBundle,
@@ -15,11 +16,9 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   findPageByIdOrPath,
+  createReachableAssetContentCompilationPlan,
   getAllPages,
   getStyleDeclKey,
-  isConfiguredAssetsResource,
-  mergeAssetQueryRequirements,
-  parseStructuredAssetQueryResourceBody,
   type Asset,
   type AssetFolder,
 } from "@webstudio-is/sdk";
@@ -160,34 +159,11 @@ const addProjectMetadata = async (
       ? undefined
       : await getUserById(context, project.userId);
 
-  const reachableResourceIds = new Set<string>();
-  for (const [, prop] of data.build.props) {
-    if (prop.type === "resource") {
-      reachableResourceIds.add(prop.value);
-    }
-  }
-  for (const [, dataSource] of data.build.dataSources) {
-    if (dataSource.type === "resource") {
-      reachableResourceIds.add(dataSource.resourceId);
-    }
-  }
-  const assetQueries = [];
-  for (const [, resource] of data.build.resources) {
-    if (
-      reachableResourceIds.has(resource.id) === false ||
-      isConfiguredAssetsResource(resource) === false
-    ) {
-      continue;
-    }
-    const query = parseStructuredAssetQueryResourceBody(resource.body);
-    if (query === undefined) {
-      throw new Error(
-        `Assets resource ${JSON.stringify(resource.id)} has an invalid query configuration`
-      );
-    }
-    assetQueries.push(query);
-  }
-  const assetRequirements = mergeAssetQueryRequirements(assetQueries);
+  const assetRequirements = createReachableAssetContentCompilationPlan({
+    props: data.build.props.map(([, prop]) => prop),
+    dataSources: data.build.dataSources.map(([, dataSource]) => dataSource),
+    resources: data.build.resources.map(([, resource]) => resource),
+  });
   let assetIndex: PublishedProjectBundle["assetIndex"];
   let publishedAssets = data.assets;
   let publishedAssetFolders = data.assetFolders;
@@ -197,6 +173,9 @@ const addProjectMetadata = async (
       projectId: project.id,
       context,
       assetStore: assetClient,
+      contentDatabaseMaxBytes: parseContentDatabaseMaxBytes(
+        process.env.CONTENT_DATABASE_MAX_BYTES
+      ),
     });
     const retainedFontIds = new Set(
       data.assets
@@ -207,13 +186,9 @@ const addProjectMetadata = async (
       const assetDataBefore = await loadAssetDataByProject(project.id, context);
       const preparedIndex =
         await assetRepository.prepareIndex(assetRequirements);
-      const [assetDataAfter, latestIndex] = await Promise.all([
-        loadAssetDataByProject(project.id, context),
-        assetRepository.readIndex(assetRequirements),
-      ]);
+      const assetDataAfter = await loadAssetDataByProject(project.id, context);
       const assetsStayedStable =
-        JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter) &&
-        preparedIndex.assetRevision === latestIndex.assetRevision;
+        JSON.stringify(assetDataBefore) === JSON.stringify(assetDataAfter);
       if (assetsStayedStable === false) {
         if (attempt === 0) {
           continue;

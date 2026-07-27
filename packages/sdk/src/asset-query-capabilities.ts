@@ -31,6 +31,7 @@ const standardFieldLabels: Record<
   extension: "Extension",
   mimeType: "MIME type",
   size: "Size",
+  createdAt: "Created at",
   revision: "Revision",
   excerpt: "Excerpt",
 };

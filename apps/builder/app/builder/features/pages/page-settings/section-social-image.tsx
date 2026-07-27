@@ -17,7 +17,7 @@ import type {
 } from "@webstudio-is/project-build/runtime";
 import { ImageControl } from "~/shared/project-settings";
 import { $assets } from "~/shared/sync/data-stores";
-import { isLiteralExpression } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import { $pageRootScope } from "../page-utils";
 import { ImageInfo } from "../image-info";
 import { SocialPreview } from "../social-preview";

@@ -12,12 +12,14 @@ export const previewAssetResourceQuery = async ({
   context,
   assetClient,
   dependencies = {},
+  contentDatabaseMaxBytes,
 }: {
   projectId: string;
   request: AssetQueryRequestInput;
   context: AppContext;
   assetClient: Pick<AssetClient, "readFile">;
   dependencies?: BuilderAssetIndexDependencies;
+  contentDatabaseMaxBytes?: number;
 }) => {
   const repository = await loadAuthorizedBuilderAssetRepository({
     projectId,
@@ -26,6 +28,7 @@ export const previewAssetResourceQuery = async ({
     authorizationError:
       "You don't have access to preview this project's asset resources",
     dependencies,
+    contentDatabaseMaxBytes,
   });
   return await repository.query(request);
 };

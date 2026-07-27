@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createCanonicalAssetFileEntry } from "@webstudio-is/asset-resource";
+import { createCanonicalAssetFileEntry } from "@webstudio-is/content-engine/compiler";
 import {
   createTestServer,
   db,

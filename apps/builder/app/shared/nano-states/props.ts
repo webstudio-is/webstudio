@@ -9,13 +9,13 @@ import type {
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  transpileExpression,
   collectionComponent,
   portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   findTreeInstanceIds,
 } from "@webstudio-is/sdk";
+import { transpileExpression } from "@webstudio-is/expression";
 import {
   normalizeProps,
   textContentAttribute,

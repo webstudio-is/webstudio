@@ -28,12 +28,12 @@ import {
 import { javascript } from "@codemirror/lang-javascript";
 import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
 import {
-  decodeDataVariableId,
   lintExpression,
   allowedStringMethods,
   allowedArrayMethods,
   getExpressionValueKind,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/expression";
+import { decodeDataVariableId } from "@webstudio-is/sdk";
 import {
   EditorContent,
   EditorDialog,

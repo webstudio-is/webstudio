@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { Grid, Label, Text, TextArea } from "@webstudio-is/design-system";
-import { isLiteralExpression } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import {
   BindingControl,
   BindingPopover,

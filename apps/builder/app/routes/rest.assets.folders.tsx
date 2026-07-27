@@ -6,7 +6,7 @@ import {
 import {
   assetFolderCreateRequest,
   assetResourceApiOperations,
-} from "@webstudio-is/sdk/asset-resource-api";
+} from "@webstudio-is/protocol/asset-resource-api";
 import { requiresAssetMutationCsrf } from "~/services/asset-rest-auth.server";
 import {
   assetRestErrorResponse,
@@ -49,7 +49,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   try {
     const folder = await (
-      await createAssetRestRepository(request, "build")
+      await createAssetRestRepository(request, "edit")
     ).createFolder(
       assetFolderCreateRequest.parse(await readAssetRestJson(request))
     );

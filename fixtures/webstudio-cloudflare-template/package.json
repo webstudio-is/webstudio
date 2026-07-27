@@ -51,7 +51,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",
     "@remix-run/dev": "2.16.5",
-    "@webstudio-is/asset-resource": "workspace:*",
+    "@webstudio-is/content-engine": "workspace:*",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "fast-glob": "^3.3.2",

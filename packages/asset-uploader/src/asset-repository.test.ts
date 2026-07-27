@@ -8,14 +8,21 @@ import {
 } from "./canonical-metadata-backfill";
 import { loadCanonicalAssetFileEntries } from "./canonical-metadata-persistence";
 import {
+  createContentCompilationPlan,
+  createLiteralContentCompilationQuery,
+  type AssetFileDocument,
+} from "@webstudio-is/content-engine";
+import {
   createAssetIndex,
-  createPublishedAssetResourceFetch,
-  verifyAssetIndex,
-} from "@webstudio-is/asset-resource";
+  type CanonicalAssetFileEntry,
+} from "@webstudio-is/content-engine/compiler";
+import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
+import { assetQuery, type AssetQueryInput } from "@webstudio-is/sdk";
 import {
   AssetIndexPreparationError,
   PostgresAssetRepository,
 } from "./asset-repository";
+import { createContentCompilationCache } from "./content-compilation-cache";
 import { updateAssetMetadataWithClient } from "./asset-patch-core";
 import {
   deleteAssetsWithClient,
@@ -36,6 +43,19 @@ const assetClient: AssetObjectStore = {
   uploadFile: vi.fn(),
 };
 
+const createCompilationPlan = (query: AssetQueryInput) => {
+  const plan = createContentCompilationPlan([
+    createLiteralContentCompilationQuery({
+      id: "resource",
+      query: assetQuery.parse(query),
+    }),
+  ]);
+  if (plan === undefined) {
+    throw new Error("Expected a content compilation plan");
+  }
+  return plan;
+};
+
 const createDependencies = () => ({
   hasProjectPermit: vi.fn().mockResolvedValue(true),
   createUploadTicket: vi.fn<typeof createUploadTicket>(),
@@ -54,14 +74,11 @@ const createDependencies = () => ({
       inconsistent: 0,
       issues: [],
     }),
-  loadCanonicalAssetBaseEntries: vi.fn<typeof loadCanonicalAssetBaseEntries>(),
+  loadCanonicalAssetBaseEntries: vi
+    .fn<typeof loadCanonicalAssetBaseEntries>()
+    .mockResolvedValue([]),
   loadCanonicalAssetFileEntries: vi.fn<typeof loadCanonicalAssetFileEntries>(),
   createAssetIndex: vi.fn<typeof createAssetIndex>(),
-  verifyAssetIndex: vi
-    .fn<typeof verifyAssetIndex>()
-    .mockImplementation(
-      async (index) => index as Awaited<ReturnType<typeof verifyAssetIndex>>
-    ),
   updateAssetMetadataWithClient: vi.fn<typeof updateAssetMetadataWithClient>(),
   loadAssetsByProjectWithClient: vi.fn<typeof loadAssetsByProjectWithClient>(),
   loadAssetFoldersByProjectWithClient:
@@ -440,6 +457,7 @@ describe("PostgresAssetRepository", () => {
       },
     ];
     const index = { integrity: { checksum: `sha256:${"b".repeat(64)}` } };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
     dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
     dependencies.createAssetIndex.mockResolvedValue(index as never);
     const repository = new PostgresAssetRepository({
@@ -466,9 +484,89 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.createAssetIndex).toHaveBeenCalledWith({
       projectId: "project-1",
       entries,
+      maxBytes: 500 * 1024,
     });
-    expect(dependencies.verifyAssetIndex).toHaveBeenCalledWith(index);
   });
+
+  test.each([
+    {
+      name: "replacement",
+      update: (entry: CanonicalAssetFileEntry) => ({
+        ...entry,
+        revision: "revision-replaced",
+        document: {
+          ...entry.document,
+          revision: "revision-replaced",
+          contentRef: "assets/post-replaced.md",
+        },
+      }),
+      expectedPath: "post.md",
+    },
+    {
+      name: "deletion",
+      update: () => undefined,
+      expectedPath: undefined,
+    },
+    {
+      name: "folder movement",
+      update: (entry: CanonicalAssetFileEntry) => ({
+        ...entry,
+        document: { ...entry.document, path: "archive/post.md" },
+      }),
+      expectedPath: "archive/post.md",
+    },
+  ])(
+    "retries a snapshot after asset $name",
+    async ({ update, expectedPath }) => {
+      const dependencies = createDependencies();
+      const initial = {
+        projectId: "project-1",
+        assetId: "asset-1",
+        revision: "revision-1",
+        document: {
+          _id: "asset-1",
+          _type: "asset.file" as const,
+          name: "post.md",
+          path: "post.md",
+          key: "post",
+          extension: "md",
+          mimeType: "text/markdown",
+          size: 10,
+          revision: "revision-1",
+          contentRef: "assets/post.md",
+          properties: {},
+        },
+      };
+      const updated = update(initial);
+      const current = updated === undefined ? [] : [updated];
+      dependencies.loadCanonicalAssetBaseEntries
+        .mockResolvedValueOnce([initial])
+        .mockResolvedValueOnce(current)
+        .mockResolvedValueOnce(current)
+        .mockResolvedValueOnce(current);
+      dependencies.loadCanonicalAssetFileEntries
+        .mockResolvedValueOnce([initial])
+        .mockResolvedValueOnce(current);
+      dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+      const repository = new PostgresAssetRepository({
+        projectId: "project-1",
+        context,
+        assetClient,
+        dependencies,
+      });
+
+      const index = await repository.prepareIndex();
+
+      expect(index.documents[0]?.path).toBe(expectedPath);
+      expect(dependencies.loadCanonicalAssetBaseEntries).toHaveBeenCalledTimes(
+        4
+      );
+      expect(dependencies.loadCanonicalAssetFileEntries).toHaveBeenCalledTimes(
+        2
+      );
+      expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
+    }
+  );
 
   test("creates a base-only index without synchronizing or reading content", async () => {
     const dependencies = createDependencies();
@@ -504,14 +602,12 @@ describe("PostgresAssetRepository", () => {
     });
 
     await expect(
-      repository.prepareIndex({
-        baseMetadata: true,
-        structuredProperties: false,
-        structuredPropertyPaths: [],
-        excerpt: false,
-        hydratedContent: false,
-        output: { mode: "base" },
-      })
+      repository.prepareIndex(
+        createCompilationPlan({
+          where: { all: [] },
+          output: { mode: "base" },
+        })
+      )
     ).resolves.toBe(index);
 
     expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
@@ -523,16 +619,128 @@ describe("PostgresAssetRepository", () => {
     expect(readFile).not.toHaveBeenCalled();
   });
 
+  test("discovers fields without preparing excerpts or file bodies", async () => {
+    const dependencies = createDependencies();
+    const entry = {
+      projectId: "project-1",
+      assetId: "asset-1",
+      revision: "revision-1",
+      document: {
+        _id: "asset-1",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision: "revision-1",
+        contentRef: "post.md",
+        properties: { title: "Post" },
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      { ...entry, document: { ...entry.document, properties: {} } },
+    ]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn();
+    const assetStore = { readFile };
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore,
+      dependencies,
+    });
+
+    await expect(repository.readFieldCatalog()).resolves.toMatchObject({
+      fields: { "properties.title": expect.any(Object) },
+    });
+    expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledWith({
+      client: context.postgrest.client,
+      assetClient: assetStore,
+      projectId: "project-1",
+      assetIds: ["asset-1"],
+      requirements: { structuredProperties: true, excerpt: false },
+    });
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
+  test("coalesces and reuses compilation by source revision and plan", async () => {
+    const dependencies = createDependencies();
+    const entry = {
+      projectId: "project-1",
+      assetId: "asset-1",
+      revision: "revision-1",
+      document: {
+        _id: "asset-1",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "post.md",
+        key: "post",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
+        revision: "revision-1",
+        contentRef: "post.md",
+        properties: { title: "Post" },
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([entry]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetClient,
+      dependencies,
+      compilationCache: createContentCompilationCache(),
+    });
+
+    const [first, second] = await Promise.all([
+      repository.readIndex(),
+      repository.readIndex(),
+    ]);
+    const third = await repository.readIndex();
+
+    expect(first).toBe(second);
+    expect(second).toBe(third);
+    expect(dependencies.createAssetIndex).toHaveBeenCalledOnce();
+    expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledOnce();
+    expect(dependencies.loadCanonicalAssetFileEntries).toHaveBeenCalledOnce();
+
+    const updatedEntry = {
+      ...entry,
+      revision: "revision-2",
+      document: {
+        ...entry.document,
+        revision: "revision-2",
+        contentRef: "post-revision-2.md",
+      },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      updatedEntry,
+    ]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([
+      updatedEntry,
+    ]);
+
+    const updated = await repository.readIndex();
+
+    expect(updated).not.toBe(first);
+    expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(2);
+  });
+
   test("keeps only required properties and excerpts in a prepared index", async () => {
     const dependencies = createDependencies();
-    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([
+    const entries = [
       {
         projectId: "project-1",
         assetId: "asset-1",
         revision: "revision-1",
         document: {
           _id: "asset-1",
-          _type: "asset.file",
+          _type: "asset.file" as const,
           name: "post.md",
           path: "post.md",
           key: "post",
@@ -545,9 +753,15 @@ describe("PostgresAssetRepository", () => {
           excerpt: "Excerpt",
         },
       },
-    ]);
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(
+      entries.map((entry) => ({
+        ...entry,
+        document: { ...entry.document, properties: {}, excerpt: undefined },
+      }))
+    );
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
     dependencies.createAssetIndex.mockImplementation(createAssetIndex);
-    dependencies.verifyAssetIndex.mockImplementation(verifyAssetIndex);
     const uploadFile = vi.fn<AssetObjectStore["uploadFile"]>();
     const assetStore = { ...assetClient, uploadFile };
     const repository = new PostgresAssetRepository({
@@ -557,17 +771,15 @@ describe("PostgresAssetRepository", () => {
       dependencies,
     });
 
-    const index = await repository.prepareIndex({
-      baseMetadata: true,
-      structuredProperties: true,
-      structuredPropertyPaths: [["properties", "title"]],
-      excerpt: false,
-      hydratedContent: false,
-      output: {
-        mode: "fields",
-        fields: [["properties", "title"]],
-      },
-    });
+    const index = await repository.prepareIndex(
+      createCompilationPlan({
+        where: { all: [] },
+        output: {
+          mode: "fields",
+          fields: [["properties", "title"]],
+        },
+      })
+    );
 
     expect(index.documents[0].properties).toEqual({ title: "Post" });
     expect(index.documents[0]).not.toHaveProperty("excerpt");
@@ -575,9 +787,149 @@ describe("PostgresAssetRepository", () => {
       client: context.postgrest.client,
       assetClient: assetStore,
       projectId: "project-1",
+      assetIds: ["asset-1"],
       requirements: { structuredProperties: true, excerpt: false },
     });
     expect(uploadFile).not.toHaveBeenCalled();
+  });
+
+  test("prepares only files that can be used by configured queries", async () => {
+    const dependencies = createDependencies();
+    const createEntry = ({
+      id,
+      extension,
+      properties,
+    }: {
+      id: string;
+      extension: "md" | "json";
+      properties: AssetFileDocument["properties"];
+    }) => ({
+      projectId: "project-1",
+      assetId: id,
+      revision: `revision-${id}`,
+      document: {
+        _id: id,
+        _type: "asset.file" as const,
+        name: `${id}.${extension}`,
+        path: `content/${id}.${extension}`,
+        key: id,
+        extension,
+        mimeType: extension === "md" ? "text/markdown" : "application/json",
+        size: 10,
+        revision: `revision-${id}`,
+        contentRef: `${id}.${extension}`,
+        properties,
+      },
+    });
+    const entries = [
+      createEntry({
+        id: "published",
+        extension: "md",
+        properties: { draft: false },
+      }),
+      createEntry({
+        id: "draft",
+        extension: "md",
+        properties: { draft: true },
+      }),
+      createEntry({
+        id: "data",
+        extension: "json",
+        properties: { draft: false },
+      }),
+    ];
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(
+      entries.map((entry) => ({
+        ...entry,
+        document: { ...entry.document, properties: {} },
+      }))
+    );
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetClient,
+      dependencies,
+    });
+
+    const index = await repository.prepareIndex(
+      createCompilationPlan({
+        where: {
+          all: [
+            { field: ["extension"], operator: "eq", value: "md" },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: true,
+            },
+          ],
+        },
+        output: { mode: "base" },
+      })
+    );
+
+    expect(dependencies.synchronizeCanonicalAssets).toHaveBeenCalledWith({
+      client: context.postgrest.client,
+      assetClient,
+      projectId: "project-1",
+      assetIds: ["published", "draft"],
+      requirements: { structuredProperties: true, excerpt: false },
+    });
+    expect(dependencies.loadCanonicalAssetFileEntries).toHaveBeenCalledWith({
+      client: context.postgrest.client,
+      projectId: "project-1",
+      assetIds: ["published", "draft"],
+    });
+    expect(index.documents.map(({ _id }) => _id)).toEqual(["published"]);
+  });
+
+  test("keeps matching metadata for totals while embedding only the selected content window", async () => {
+    const dependencies = createDependencies();
+    const entries = ["alpha", "beta"].map((id) => ({
+      projectId: "project-1",
+      assetId: id,
+      revision: `revision-${id}`,
+      document: {
+        _id: id,
+        _type: "asset.file" as const,
+        name: `${id}.md`,
+        path: `blog/${id}.md`,
+        key: id,
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 4,
+        revision: `revision-${id}`,
+        contentRef: `${id}.md`,
+        properties: {},
+      },
+    }));
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue(entries);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue(entries);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
+    const readFile = vi.fn().mockResolvedValue({
+      data: new Blob(["Post"]).stream(),
+      contentLength: 4,
+    });
+    const repository = new PostgresAssetRepository({
+      projectId: "project-1",
+      context,
+      assetStore: { readFile },
+      dependencies,
+    });
+
+    const index = await repository.prepareIndex(
+      createCompilationPlan({
+        where: { all: [] },
+        sort: [{ field: ["id"], direction: "asc" }],
+        limit: 1,
+        content: { mode: "full" },
+      })
+    );
+
+    expect(index.documents.map(({ _id }) => _id)).toEqual(["alpha", "beta"]);
+    expect(index.contents).toEqual({ "alpha.md": "Post" });
+    expect(readFile).toHaveBeenCalledOnce();
   });
 
   test("fails strict index preparation with per-asset diagnostics", async () => {
@@ -757,26 +1109,28 @@ describe("PostgresAssetRepository", () => {
       meta: {},
     };
     dependencies.uploadFile.mockResolvedValue(uploadedAsset);
-    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([
-      {
-        projectId: "project-1",
-        assetId: "asset-1",
+    const entry = {
+      projectId: "project-1",
+      assetId: "asset-1",
+      revision,
+      document: {
+        _id: "asset-1",
+        _type: "asset.file" as const,
+        name: "post.md",
+        path: "post.md",
+        key: "post.md",
+        extension: "md",
+        mimeType: "text/markdown",
+        size: 10,
         revision,
-        document: {
-          _id: "asset-1",
-          _type: "asset.file",
-          name: "post.md",
-          path: "post.md",
-          key: "post.md",
-          extension: "md",
-          mimeType: "text/markdown",
-          size: 10,
-          revision,
-          contentRef: "post.md",
-          properties: { title: "New post" },
-        },
+        contentRef: "post.md",
+        properties: { title: "New post" },
       },
+    };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([
+      { ...entry, document: { ...entry.document, properties: {} } },
     ]);
+    dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([entry]);
     dependencies.createAssetIndex.mockImplementation(createAssetIndex);
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
@@ -808,10 +1162,8 @@ describe("PostgresAssetRepository", () => {
       client: context.postgrest.client,
       assetClient,
       projectId: "project-1",
-      requirements: {
-        structuredProperties: true,
-        excerpt: true,
-      },
+      assetIds: ["asset-1"],
+      requirements: { structuredProperties: true, excerpt: true },
     });
     expect(result.items).toEqual([
       expect.objectContaining({
@@ -820,24 +1172,28 @@ describe("PostgresAssetRepository", () => {
       }),
     ]);
 
-    const publishedIndex = await repository.prepareIndex();
+    vi.mocked(assetClient.readFile).mockResolvedValue({
+      data: new Blob(["# New post"]).stream(),
+      contentLength: 10,
+    });
+    const publishedIndex = await repository.prepareIndex(
+      createCompilationPlan({
+        where: {
+          all: [
+            {
+              field: ["properties", "title"],
+              operator: "eq",
+              value: "New post",
+            },
+          ],
+        },
+        content: { mode: "full" },
+      })
+    );
     const publishedFetch = createPublishedAssetResourceFetch({
       baseUrl: "https://blog.example",
       deploymentId: "deployment-1",
-      manifest: {
-        revision: publishedIndex.integrity.checksum,
-        assetRevision: publishedIndex.assetRevision,
-        indexPath: "/assets/db/index.json",
-      },
-      fetchAsset: async (path) => {
-        if (path === "/assets/db/index.json") {
-          return Response.json(publishedIndex);
-        }
-        if (path === "/assets/post.md") {
-          return new Response("# New post");
-        }
-        return new Response(null, { status: 404 });
-      },
+      artifact: publishedIndex,
     });
     const publishedResponse = await publishedFetch("/$resources/assets", {
       method: "POST",

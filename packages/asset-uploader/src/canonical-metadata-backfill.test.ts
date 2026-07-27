@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import {
   createCanonicalAssetFileEntry,
   getCanonicalAssetMetadataTier,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine/compiler";
 import {
   createTestServer,
   db,

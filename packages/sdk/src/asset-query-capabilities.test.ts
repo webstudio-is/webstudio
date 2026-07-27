@@ -12,6 +12,11 @@ describe("asset query capabilities", () => {
       label: "Size",
       types: ["number"],
     });
+    expect(capabilities.fields).toContainEqual({
+      path: ["createdAt"],
+      label: "Created at",
+      types: ["string"],
+    });
     expect(
       capabilities.operators.find(({ value }) => value === "contains")?.types
     ).toEqual(expect.arrayContaining(["string", "array"]));

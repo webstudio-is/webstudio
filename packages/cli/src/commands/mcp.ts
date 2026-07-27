@@ -56,6 +56,7 @@ import {
   createLocalUpdateAssetContentInput,
   downloadAssetFile,
   getLocalAssetPath,
+  LOCAL_ASSETS_DIR,
 } from "../asset-files";
 import {
   getVisionVerificationLoop,
@@ -952,7 +953,8 @@ const createCliMcpHost = async ({
       const snapshot = getLoadedProjectSessionSnapshot(session);
       const assetIndex = await loadCliProjectSessionAssetIndex(
         snapshot,
-        apiConnection
+        apiConnection,
+        path.join(projectRoot, LOCAL_ASSETS_DIR)
       );
       await writeCliProjectSessionDataFile(
         snapshot,

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AssetIndexRevisionError,
   AssetQueryExecutionError,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { loader } from "./assets-query.server";
 
@@ -11,6 +11,7 @@ const dependencies = {
   authorizeAssetRestProject: vi.fn(),
   createAssetClient: vi.fn(() => ({ readFile: vi.fn() })),
   previewAssetResourceQuery: vi.fn(),
+  preventCrossOriginCookie: vi.fn(),
 };
 const outerRequest = () =>
   new Request(`https://p-${projectId}.localhost/rest/resources-loader`);
@@ -70,7 +71,32 @@ describe("configured Assets system resource", () => {
       },
       context: expect.anything(),
       assetClient: expect.objectContaining({ readFile: expect.any(Function) }),
+      contentDatabaseMaxBytes: 512_000,
     });
+  });
+
+  test("supports the public REST URL with an explicit project", async () => {
+    dependencies.previewAssetResourceQuery.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      hasMore: false,
+    });
+    const request = new Request(
+      `https://api.example/rest/assets/query?projectId=${projectId}`,
+      { method: "POST", body: JSON.stringify({ query: {} }) }
+    );
+
+    const response = await loader(
+      { request, resourceRequest: request.clone() },
+      dependencies
+    );
+
+    expect(response.status).toBe(200);
+    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+      request,
+      projectId,
+      "view"
+    );
   });
 
   test("returns structured invalid-request and forbidden failures", async () => {

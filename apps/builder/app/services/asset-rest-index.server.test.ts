@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { createAssetIndexRefreshAction } from "./asset-rest-index.server";
+import { createAssetIndexRefreshAction } from "./asset-rest-route-handlers.server";
 
 const call = (
   action: ReturnType<typeof createAssetIndexRefreshAction>,

@@ -2,6 +2,10 @@ import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import {
+  compileContentSource,
+  parseContentDatabaseMaxBytes,
+} from "@webstudio-is/content-engine/compiler";
+import {
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
@@ -14,7 +18,10 @@ import {
   publicApiOperations,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
-import { getHomePage, isConfiguredAssetsResource } from "@webstudio-is/sdk";
+import {
+  createReachableAssetContentCompilationPlan,
+  getHomePage,
+} from "@webstudio-is/sdk";
 import {
   createProjectSession,
   createDefaultProjectSessionCompatibility,
@@ -44,6 +51,8 @@ import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
 import { loadJSONFile, withFileLock, writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
+import { createFileSystemContentSource } from "./filesystem-content-source";
+import { LOCAL_ASSETS_DIR } from "./asset-files";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -520,15 +529,33 @@ export type CliProjectSessionSnapshot = {
 export const loadCliProjectSessionAssetIndex = async (
   snapshot: ProjectSessionSnapshot,
   connection: ApiConnection,
-  loadProjectBundle = httpClient.loadProjectBundleByProjectId
+  assetsDirectory = LOCAL_ASSETS_DIR
 ) => {
-  const hasConfiguredAssetsResource = Array.from(
-    snapshot.state.resources?.values() ?? []
-  ).some(isConfiguredAssetsResource);
-  if (hasConfiguredAssetsResource === false) {
+  if (connection.projectId !== snapshot.projectId) {
+    throw new Error("CLI connection does not match the project session");
+  }
+  const plan = createReachableAssetContentCompilationPlan({
+    props: snapshot.state.props?.values() ?? [],
+    dataSources: snapshot.state.dataSources?.values() ?? [],
+    resources: snapshot.state.resources?.values() ?? [],
+  });
+  if (plan === undefined) {
     return;
   }
-  return (await loadProjectBundle(connection)).assetIndex;
+  const { artifact } = await compileContentSource({
+    source: createFileSystemContentSource({
+      projectId: snapshot.projectId,
+      assets: Array.from(snapshot.state.assets?.values() ?? []),
+      folders: snapshot.state.assetFolders ?? new Map(),
+      assetsDirectory,
+    }),
+    projectId: snapshot.projectId,
+    plan,
+    maxBytes: parseContentDatabaseMaxBytes(
+      process.env.CONTENT_DATABASE_MAX_BYTES
+    ),
+  });
+  return artifact;
 };
 
 export const createLocalProjectBundleFromSessionSnapshot = (

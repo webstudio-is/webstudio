@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
-import { createAssetAction } from "./asset-rest-item.server";
+import { createAssetAction } from "./asset-rest-route-handlers.server";
 
 const asset: Asset = {
   id: "asset-1",
@@ -91,7 +91,7 @@ describe("mutable Assets REST route", () => {
     expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
       expect.any(Request),
       "project-1",
-      "build"
+      "edit"
     );
     expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
       filename: "Post",

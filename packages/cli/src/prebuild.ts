@@ -63,10 +63,9 @@ import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   getAssetQueryFieldValue,
-  getAssetIndexStoragePath,
   matchesAssetQueryFilter,
-  serializeAssetIndex,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine";
+import { serializeAssetIndex } from "@webstudio-is/content-engine/compiler";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -430,128 +429,112 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   );
 };
 
-const removeUnusedAssetResourceDependency = async () => {
+const configureContentRuntime = async ({ enabled }: { enabled: boolean }) => {
   const packagePath = join(cwd(), "package.json");
   const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as {
     dependencies?: Record<string, string>;
-    scripts?: Record<string, string>;
   };
-  delete packageJson.dependencies?.["@webstudio-is/asset-resource"];
-  const buildScript = packageJson.scripts?.build;
-  if (buildScript !== undefined) {
-    packageJson.scripts!.build = buildScript.replace(
-      " && node scripts/cleanup-derived-assets.mjs",
-      ""
-    );
+  const dependencies = packageJson.dependencies ?? {};
+  let packageChanged = false;
+  if (enabled) {
+    if (dependencies["@webstudio-is/content-engine"] === undefined) {
+      dependencies["@webstudio-is/content-engine"] =
+        dependencies["@webstudio-is/react-sdk"] ?? "0.0.0-webstudio-version";
+      packageJson.dependencies = dependencies;
+      packageChanged = true;
+    }
+  } else {
+    for (const dependency of [
+      "@webstudio-is/content-engine",
+      "@webstudio-is/asset-resource",
+    ]) {
+      if (dependencies[dependency] !== undefined) {
+        delete dependencies[dependency];
+        packageChanged = true;
+      }
+    }
   }
-  await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  if (packageChanged) {
+    await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  }
 
   const ssgFetchPath = join(cwd(), "app", "asset-resource-fetch.ts");
   if (existsSync(ssgFetchPath)) {
-    await writeFile(
-      ssgFetchPath,
-      `export const createSsgAssetResourceFetch = (_options: unknown) =>
-  async (_input: RequestInfo | URL, _init?: RequestInit) => undefined;\n`,
-      "utf8"
-    );
-  }
-};
+    const content = enabled
+      ? `import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
+import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 
-export const getRequiredAssetResourceContentRefs = ({
-  index,
-  resources,
+export const createSsgAssetResourceFetch = ({
+  deploymentId,
+  artifact,
 }: {
-  index: PublishedProjectBundle["assetIndex"];
-  resources: PublishedProjectBundle["build"]["resources"];
-}) => {
-  if (index === undefined) {
-    return new Set<string>();
-  }
-  const selectsContent = resources.some(([, resource]) => {
-    if (isConfiguredAssetsResource(resource) === false) {
-      return false;
-    }
-    const configuration = parseStructuredAssetQueryResourceBody(resource.body);
-    return configuration !== undefined && configuration.content.mode !== "none";
+  deploymentId: string;
+  artifact: ContentArtifactV1;
+}) =>
+  createPublishedAssetResourceFetch({
+    baseUrl: "https://webstudio.local",
+    deploymentId,
+    artifact,
   });
-  return new Set(
-    selectsContent ? index.documents.map(({ contentRef }) => contentRef) : []
-  );
+`
+      : `export const createSsgAssetResourceFetch = (_options: unknown) =>
+  async (_input: RequestInfo | URL, _init?: RequestInit) => undefined;\n`;
+    await writeFileIfChanged(ssgFetchPath, content);
+  }
 };
 
 export const generateAssetQueryRuntimeModule = ({
   deploymentId,
-  manifest,
+  index,
 }: {
   deploymentId: string;
-  manifest?: {
-    revision: string;
-    assetRevision: string;
-    indexPath: string;
-  };
+  index: PublishedProjectBundle["assetIndex"];
 }) => {
   const inputType = `{
     request: Request;
     context: unknown;
     fallback: typeof fetch;
   }`;
-  if (manifest === undefined) {
+  if (index === undefined) {
     return `export const createGeneratedAssetResourceFetch = async ({ fallback }: ${inputType}): Promise<typeof fetch> => fallback;\n`;
   }
-  return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/asset-resource/runtime";
+  return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/content-engine/runtime";
+import { assetQueryDatabase } from "./$resources.asset-query-manifest";
 
 const deploymentId = ${JSON.stringify(deploymentId)};
-const manifest = ${JSON.stringify(manifest, null, 2)};
 
-export const createGeneratedAssetResourceFetch = ({ request, context, fallback }: ${inputType}) =>
-  createRuntimeFetch({ request, context, deploymentId, manifest, fallback });
+export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${inputType}) =>
+  createRuntimeFetch({ request, deploymentId, artifact: assetQueryDatabase, fallback });
 `;
 };
 
 export const materializeAssetIndex = async ({
   index,
-  publicDirectory,
   generatedDirectory,
   deploymentId,
 }: {
   index: PublishedProjectBundle["assetIndex"];
-  publicDirectory: string;
   generatedDirectory: string;
   deploymentId: string;
 }) => {
-  const targetDirectory = join(publicDirectory, "assets", "db");
-  // This directory contains generated database artifacts only. Replace it as a
-  // unit so disabling or changing queries cannot publish a stale index.
-  await rm(targetDirectory, { recursive: true, force: true });
-  let manifest:
-    | { revision: string; assetRevision: string; indexPath: string }
-    | undefined;
-  if (index !== undefined) {
-    const indexPath = `/${getAssetIndexStoragePath(index)}`;
-    manifest = {
-      revision: index.integrity.checksum,
-      assetRevision: index.assetRevision,
-      indexPath,
-    };
-    await createFolderIfNotExists(targetDirectory);
-    await writeFile(
-      join(publicDirectory, indexPath.slice(1)),
-      serializeAssetIndex(index),
-      "utf8"
-    );
-  }
   await writeFile(
     join(generatedDirectory, "$resources.asset-query-manifest.ts"),
-    `export const assetQueryDeploymentId = ${JSON.stringify(
-      deploymentId
-    )};\nexport const assetQueryManifest = ${JSON.stringify(manifest, null, 2)};\n`,
+    index === undefined
+      ? `export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
+export const assetQueryDatabase = undefined;
+`
+      : `import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
+
+export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
+export const assetQueryDatabase: ContentArtifactV1 = ${serializeAssetIndex(index)};
+`,
     "utf8"
   );
   await writeFile(
     join(generatedDirectory, "$resources.asset-query-runtime.ts"),
     generateAssetQueryRuntimeModule({
       deploymentId,
-      manifest,
+      index,
     }),
     "utf8"
   );
@@ -846,9 +829,7 @@ export const prebuild = async (options: {
     );
   }
   const siteData = parsedSiteData.data;
-  if (siteData.assetIndex === undefined) {
-    await removeUnusedAssetResourceDependency();
-  }
+  await configureContentRuntime({ enabled: siteData.assetIndex !== undefined });
 
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
@@ -1324,7 +1305,6 @@ export const prebuild = async (options: {
 
   await materializeAssetIndex({
     index: siteData.assetIndex,
-    publicDirectory: join(buildRoot, "public"),
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
   });
@@ -1389,36 +1369,8 @@ export const prebuild = async (options: {
   if (options.assets === true && siteData.assets.length > 0) {
     const downloading = createProgress();
     downloading.start("Downloading assets");
-    const requiredContentRefs = getRequiredAssetResourceContentRefs({
-      index: siteData.assetIndex,
-      resources: siteData.build.resources,
-    });
-    const requiredAssets: Asset[] = [];
-    const bestEffortAssets: Asset[] = [];
-    for (const asset of siteData.assets) {
-      if (requiredContentRefs.delete(asset.name)) {
-        requiredAssets.push(asset);
-      } else {
-        bestEffortAssets.push(asset);
-      }
-    }
-    if (requiredContentRefs.size > 0) {
-      throw new Error(
-        `Published asset index references missing assets: ${[
-          ...requiredContentRefs,
-        ]
-          .sort()
-          .join(", ")}`
-      );
-    }
     await materializeAssetFiles({
-      assets: requiredAssets,
-      origin: siteData.origin || "",
-      sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),
-      targetAssetsDirectory: join(buildRoot, "public", assetBaseUrl),
-    });
-    await materializeAssetFiles({
-      assets: bestEffortAssets,
+      assets: siteData.assets,
       continueOnError: true,
       origin: siteData.origin || "",
       sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),

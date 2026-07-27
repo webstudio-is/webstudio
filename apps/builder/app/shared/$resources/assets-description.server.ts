@@ -1,10 +1,10 @@
 import { json } from "@remix-run/server-runtime";
 import { loadBuilderAssetFieldCatalog } from "@webstudio-is/asset-uploader/index.server";
-import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { authorizeAssetRestProject } from "~/services/asset-rest-auth.server";
-import { isBuilder } from "../router-utils";
+import { getAssetRestProjectId } from "~/services/asset-rest.server";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createAssetClient } from "../asset-client";
 
 export type AssetDescriptionDependencies = {
@@ -14,12 +14,14 @@ export type AssetDescriptionDependencies = {
     "readFile"
   >;
   loadBuilderAssetFieldCatalog: typeof loadBuilderAssetFieldCatalog;
+  preventCrossOriginCookie: typeof preventCrossOriginCookie;
 };
 
 const defaultDependencies: AssetDescriptionDependencies = {
   authorizeAssetRestProject,
   createAssetClient,
   loadBuilderAssetFieldCatalog,
+  preventCrossOriginCookie,
 };
 
 const failure = ({
@@ -52,15 +54,11 @@ export const createAssetDescriptionLoader =
     { request }: { request: Request },
     dependencies: AssetDescriptionDependencies = defaultDependencies
   ) => {
-    if (isBuilder(request) === false) {
-      return failure({
-        code: "FORBIDDEN",
-        message: "Asset API descriptions are only available in Builder",
-        status: 403,
-      });
-    }
-    const { projectId } = parseBuilderUrl(request.url);
-    if (projectId === undefined) {
+    dependencies.preventCrossOriginCookie(request);
+    let projectId: string;
+    try {
+      projectId = getAssetRestProjectId(request);
+    } catch {
       return failure({
         code: "INVALID_REQUEST",
         message: "Project ID is required to describe project assets",

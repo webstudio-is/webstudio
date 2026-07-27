@@ -92,6 +92,7 @@ import {
   getResourceKey,
   invalidateResource,
 } from "~/shared/resources";
+import { getContentDatabasePreviewWarning } from "./content-database-warning";
 
 const NameField = ({
   variable,
@@ -738,6 +739,8 @@ const VariablePreview = ({
     }
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
+  const contentDatabaseWarning =
+    getContentDatabasePreviewWarning(computedValue);
   const editorProps = {
     readOnly: true,
     extensions,
@@ -756,8 +759,17 @@ const VariablePreview = ({
         overflow: "hidden",
         boxSizing: "content-box",
         position: "relative",
+        gridTemplateRows:
+          contentDatabaseWarning === undefined
+            ? "minmax(0, 1fr)"
+            : "auto minmax(0, 1fr)",
       }}
     >
+      {contentDatabaseWarning !== undefined && (
+        <PanelBanner variant="warning">
+          <Text>{contentDatabaseWarning}</Text>
+        </PanelBanner>
+      )}
       <EditorContent {...editorProps} />
       {isResource && !computedValue && (
         <Flex

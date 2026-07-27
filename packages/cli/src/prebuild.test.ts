@@ -20,7 +20,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine/compiler";
 import {
   createStructuredAssetQueryResourceBody,
   type AssetFileDocument,
@@ -29,14 +29,10 @@ import {
 import {
   generateRedirectsModule,
   getAssetResourcePrerenderPaths,
-  getRequiredAssetResourceContentRefs,
   materializeAssetIndex,
   prebuild,
 } from "./prebuild";
-import {
-  createSsgAssetResourceFetch,
-  fetchSsgPublicAsset,
-} from "../templates/ssg/app/asset-resource-fetch";
+import { createSsgAssetResourceFetch } from "../templates/ssg/app/asset-resource-fetch";
 
 const originalCwd = process.cwd();
 const execFileAsync = promisify(execFile);
@@ -347,16 +343,19 @@ const indexedDocument: AssetFileDocument = {
 };
 
 const createTestAssetIndex = (
-  documents: AssetFileDocument | AssetFileDocument[] = indexedDocument
+  documents: AssetFileDocument | AssetFileDocument[] = indexedDocument,
+  contents: Record<string, string> = {}
 ) =>
   createAssetIndex({
     projectId: "project-1",
     entries: (Array.isArray(documents) ? documents : [documents]).map(
-      (document) =>
-        createCanonicalAssetFileEntry({
+      (document) => ({
+        ...createCanonicalAssetFileEntry({
           projectId: "project-1",
           document,
-        })
+        }),
+        content: contents[document.contentRef],
+      })
     ),
   });
 
@@ -377,129 +376,49 @@ const createQueryResource = (content: "none" | "full" = "none"): Resource => ({
   }),
 });
 
-test("requires candidate files only when an asset query can hydrate content", async () => {
+test("embeds one shared content database in a server module", async () => {
   const index = await createTestAssetIndex();
-
-  expect(
-    getRequiredAssetResourceContentRefs({
-      index,
-      resources: [["posts", createQueryResource()]],
-    })
-  ).toEqual(new Set());
-  expect(
-    getRequiredAssetResourceContentRefs({
-      index,
-      resources: [["posts", createQueryResource("full")]],
-    })
-  ).toEqual(new Set(["post.md"]));
-  expect(
-    getRequiredAssetResourceContentRefs({
-      index,
-      resources: [
-        [
-          "external",
-          {
-            ...createQueryResource("full"),
-            id: "external",
-            control: "graphql",
-            url: '"https://example.com/assets"',
-          },
-        ],
-      ],
-    })
-  ).toEqual(new Set());
-});
-
-test("materializes one shared asset index and a reference-only module", async () => {
-  const index = await createTestAssetIndex();
-  const indexPath = `/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`;
   await mkdir("public", { recursive: true });
   await mkdir("app/__generated__", { recursive: true });
 
   await materializeAssetIndex({
     index,
-    publicDirectory: "public",
     generatedDirectory: "app/__generated__",
     deploymentId: "build-1",
   });
 
-  expect(JSON.parse(await readFile(`public${indexPath}`, "utf8"))).toEqual(
-    index
-  );
+  await expect(stat("public/assets/db")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
   const manifestModule = await readFile(
     "app/__generated__/$resources.asset-query-manifest.ts",
     "utf8"
   );
   expect(manifestModule).toContain('assetQueryDeploymentId = "build-1"');
-  expect(manifestModule).toContain(indexPath);
-  expect(manifestModule).not.toContain('"documents"');
-  expect(manifestModule).not.toContain('"properties"');
+  expect(manifestModule).toContain('"documents"');
+  expect(manifestModule).toContain('"properties"');
   const runtimeModule = await readFile(
     "app/__generated__/$resources.asset-query-runtime.ts",
     "utf8"
   );
   expect(runtimeModule).toContain(
-    'from "@webstudio-is/asset-resource/runtime"'
+    'from "@webstudio-is/content-engine/runtime"'
   );
-  expect(runtimeModule).not.toContain('"documents"');
-  expect(runtimeModule).not.toContain('"properties"');
+  expect(runtimeModule).toContain("assetQueryDatabase");
 });
 
-test("removes generated asset indexes when queries are disabled", async () => {
-  const index = await createTestAssetIndex();
-  const indexPath = `public/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`;
-  await mkdir("public", { recursive: true });
-  await mkdir("app/__generated__", { recursive: true });
-  await materializeAssetIndex({
-    index,
-    publicDirectory: "public",
-    generatedDirectory: "app/__generated__",
-    deploymentId: "build-1",
-  });
-  await expect(stat(indexPath)).resolves.toBeDefined();
-
-  await materializeAssetIndex({
-    index: undefined,
-    publicDirectory: "public",
-    generatedDirectory: "app/__generated__",
-    deploymentId: "build-2",
-  });
-  await expect(stat(indexPath)).rejects.toMatchObject({ code: "ENOENT" });
-});
-
-test("executes and hydrates an asset query from SSG public files", async () => {
+test("executes and hydrates an asset query from an embedded SSG database", async () => {
   const source = "# Prerendered post\n";
-  const index = await createTestAssetIndex({
-    ...indexedDocument,
-    size: new TextEncoder().encode(source).byteLength,
-  });
-  await mkdir("public/assets", { recursive: true });
-  await mkdir("app/__generated__", { recursive: true });
-  await writeFile("public/assets/post.md", source, "utf8");
-  await materializeAssetIndex({
-    index,
-    publicDirectory: "public",
-    generatedDirectory: "app/__generated__",
-    deploymentId: "build-1",
-  });
-  const indexPath = `/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`;
-  await expect((await fetchSsgPublicAsset(indexPath)).json()).resolves.toEqual(
-    index
+  const index = await createTestAssetIndex(
+    {
+      ...indexedDocument,
+      size: new TextEncoder().encode(source).byteLength,
+    },
+    { "post.md": source }
   );
-  await expect(
-    (
-      await fetchSsgPublicAsset("/assets/post.md", {
-        headers: { range: `bytes=0-${source.length - 1}` },
-      })
-    ).text()
-  ).resolves.toBe(source);
   const runtimeFetch = createSsgAssetResourceFetch({
     deploymentId: "build-1",
-    manifest: {
-      revision: index.integrity.checksum,
-      assetRevision: index.assetRevision,
-      indexPath,
-    },
+    artifact: index,
   });
 
   const response = await runtimeFetch("/$resources/assets", {
@@ -538,30 +457,20 @@ test("executes and hydrates an asset query from SSG public files", async () => {
   });
 });
 
-test("hydrates URL-encoded SSG asset filenames from their decoded filesystem paths", async () => {
+test("hydrates encoded filenames from an embedded SSG database", async () => {
   const contentRef = "post!-你好.md";
   const source = "# Encoded filename\n";
-  const index = await createTestAssetIndex({
-    ...indexedDocument,
-    contentRef,
-    size: new TextEncoder().encode(source).byteLength,
-  });
-  await mkdir("public/assets", { recursive: true });
-  await mkdir("app/__generated__", { recursive: true });
-  await writeFile(`public/assets/${contentRef}`, source, "utf8");
-  await materializeAssetIndex({
-    index,
-    publicDirectory: "public",
-    generatedDirectory: "app/__generated__",
-    deploymentId: "build-encoded",
-  });
+  const index = await createTestAssetIndex(
+    {
+      ...indexedDocument,
+      contentRef,
+      size: new TextEncoder().encode(source).byteLength,
+    },
+    { [contentRef]: source }
+  );
   const runtimeFetch = createSsgAssetResourceFetch({
     deploymentId: "build-encoded",
-    manifest: {
-      revision: index.integrity.checksum,
-      assetRevision: index.assetRevision,
-      indexPath: `/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`,
-    },
+    artifact: index,
   });
 
   const response = await runtimeFetch("/$resources/assets", {
@@ -931,10 +840,16 @@ describe("prebuild", () => {
       "ENOENT"
     );
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.dependencies).not.toHaveProperty(
+      "@webstudio-is/asset-resource"
+    );
+    expect(packageJson.dependencies).not.toHaveProperty(
+      "@webstudio-is/content-engine"
+    );
     expect(packageJson.dependencies).not.toHaveProperty("h3");
     expect(packageJson.dependencies).not.toHaveProperty("ipx");
     expect(packageJson.dependencies).not.toHaveProperty(
-      "@webstudio-is/asset-resource"
+      "@webstudio-is/content-engine"
     );
   });
 
@@ -995,14 +910,17 @@ describe("prebuild", () => {
     await expectGeneratedRedirectFallback("app/routes/$.tsx");
   });
 
-  test("generates one dynamic SSR blog route with external index and published Markdown assets", async () => {
+  test("generates one dynamic SSR blog route with an embedded content database", async () => {
     const source = "# Published post\n";
-    const index = await createTestAssetIndex({
-      ...indexedDocument,
-      path: "blog/post.md",
-      size: new TextEncoder().encode(source).byteLength,
-      properties: { slug: "post" },
-    });
+    const index = await createTestAssetIndex(
+      {
+        ...indexedDocument,
+        path: "blog/post.md",
+        size: new TextEncoder().encode(source).byteLength,
+        properties: { slug: "post" },
+      },
+      { "post.md": source }
+    );
     const siteData = {
       ...createSiteData({
         pages: [
@@ -1059,7 +977,7 @@ describe("prebuild", () => {
       "app/__generated__/$resources.asset-query-manifest.ts",
       "utf8"
     );
-    expect(manifest).not.toContain("Published post");
+    expect(manifest).toContain("Published post");
     expect(manifest).not.toContain("draft secret");
     await expect(
       readFile("app/asset-resource-fetch.ts", "utf8")
@@ -1080,12 +998,23 @@ describe("prebuild", () => {
           .map((path) => readFile(path, "utf8"))
       )
     ).join("\n");
-    expect(serverBundle).not.toContain("Published post");
+    expect(serverBundle).toContain("Published post");
     expect(serverBundle).not.toContain("draft secret");
-    expect(serverBundle).not.toContain("post-revision");
+    expect(serverBundle).toContain("post-revision");
+    const clientBundle = (
+      await Promise.all(
+        (
+          await getFilePaths("build/client")
+        )
+          .filter((path) => path.endsWith(".js"))
+          .map((path) => readFile(path, "utf8"))
+      )
+    ).join("\n");
+    expect(clientBundle).not.toContain("Published post");
+    expect(clientBundle).not.toContain("post-revision");
   }, 30_000);
 
-  test("materializes the deployment index when asset downloads are disabled", async () => {
+  test("embeds the deployment database when asset downloads are disabled", async () => {
     const index = await createTestAssetIndex();
     const siteData = {
       ...createSiteData(),
@@ -1111,11 +1040,13 @@ describe("prebuild", () => {
     await prebuild({ assets: false, template: ["react-router"] });
 
     await expect(
-      readFile(
-        `public/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`,
-        "utf8"
-      )
+      readFile("app/__generated__/$resources.asset-query-manifest.ts", "utf8")
     ).resolves.toContain(index.integrity.checksum);
+    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.dependencies).toHaveProperty(
+      "@webstudio-is/content-engine",
+      "0.0.0-webstudio-version"
+    );
   });
 
   test("uses pass-through images in the base react-router template", async () => {
@@ -1123,13 +1054,16 @@ describe("prebuild", () => {
 
     const route = await readFile("app/routes/_index.tsx", "utf8");
     expect(route).toContain("$resources.asset-query-runtime");
-    expect(route).not.toContain("@webstudio-is/asset-resource");
+    expect(route).not.toContain("@webstudio-is/content-engine");
     const assetQueryRuntime = await readFile(
       "app/__generated__/$resources.asset-query-runtime.ts",
       "utf8"
     );
-    expect(assetQueryRuntime).not.toContain("@webstudio-is/asset-resource");
+    expect(assetQueryRuntime).not.toContain("@webstudio-is/content-engine");
     expect(assetQueryRuntime).toContain("=> fallback");
+    await expect(
+      readFile("app/__generated__/$resources.asset-query-manifest.ts", "utf8")
+    ).resolves.not.toContain("@webstudio-is/content-engine");
     await expect(readFile("app/constants.mjs", "utf8")).resolves.toContain(
       "return props.src"
     );
@@ -1156,7 +1090,7 @@ describe("prebuild", () => {
           .map((path) => readFile(path, "utf8"))
       )
     ).join("\n");
-    expect(serverBundle).not.toContain("@webstudio-is/asset-resource");
+    expect(serverBundle).not.toContain("@webstudio-is/content-engine");
   }, 30_000);
 
   test("keeps IPX image optimization in the react-router Docker overlay", async () => {
@@ -1218,10 +1152,10 @@ describe("prebuild", () => {
     );
     await expect(
       readFile("app/asset-resource-fetch.ts", "utf8")
-    ).resolves.not.toContain("@webstudio-is/asset-resource");
+    ).resolves.not.toContain("@webstudio-is/content-engine");
     const packageJson = JSON.parse(await readFile("package.json", "utf8"));
     expect(packageJson.dependencies).not.toHaveProperty(
-      "@webstudio-is/asset-resource"
+      "@webstudio-is/content-engine"
     );
     expect(packageJson.scripts.build).not.toContain(
       "cleanup-derived-assets.mjs"
@@ -1336,15 +1270,16 @@ describe("prebuild", () => {
     await expect(
       readFile("dist/client/blog/hello-world/index.html", "utf8")
     ).resolves.toContain("<!DOCTYPE html>");
-    await import(
-      `${pathToFileURL(join(tempDir, "scripts/cleanup-derived-assets.mjs")).href}?test=${crypto.randomUUID()}`
-    );
-    await expect(
-      readFile(
-        `dist/client/assets/db/${index.integrity.checksum.replace("sha256:", "")}.json`,
-        "utf8"
+    const staticRuntimeOutput = (
+      await Promise.all(
+        (
+          await getFilePaths("dist/client")
+        )
+          .filter((path) => path.endsWith(".js") || path.endsWith(".json"))
+          .map((path) => readFile(path, "utf8"))
       )
-    ).rejects.toThrow("ENOENT");
+    ).join("\n");
+    expect(staticRuntimeOutput).not.toContain(index.integrity.checksum);
   }, 30_000);
 
   test("does not prerender dynamic Assets paths that cannot match string route params", async () => {

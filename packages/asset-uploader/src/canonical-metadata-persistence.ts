@@ -4,7 +4,7 @@ import {
   getCanonicalAssetMetadataTier,
   type CanonicalAssetFileEntry,
   type CanonicalAssetMetadataRequirements,
-} from "@webstudio-is/asset-resource";
+} from "@webstudio-is/content-engine/compiler";
 import type { Client, Database } from "@webstudio-is/postgrest/index.server";
 import { assertPostgrestSuccess } from "./patch-utils";
 
@@ -225,13 +225,16 @@ export const loadCanonicalAssetFileEntries = async ({
 export const loadCanonicalAssetFileEntriesForRecovery = async ({
   client,
   projectId,
+  assetIds,
 }: {
   client: Client;
   projectId: string;
+  assetIds?: string[];
 }) => {
   const rows = await loadCanonicalAssetFileMetadataRows({
     client,
     projectId,
+    assetIds,
   });
   const entries: CanonicalAssetFileEntry[] = [];
   const inconsistentAssetIds = new Set<string>();

@@ -24,7 +24,7 @@
   "private": true,
   "sideEffects": false,
   "devDependencies": {
-    "@webstudio-is/asset-resource": "workspace:*",
+    "@webstudio-is/content-engine": "workspace:*",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@vitejs/plugin-react": "^4.4.1",

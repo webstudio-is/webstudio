@@ -4,11 +4,17 @@ import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixt
 import { buildRouter, __testing__ } from "./build-router.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
+import { createStructuredAssetQueryResourceBody } from "@webstudio-is/sdk";
+import {
+  createAssetIndex,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/content-engine/compiler";
 
 const {
   assertCliBundleVersion,
   createImportProjectBundleHandler,
   prepareProjectBundleForClient,
+  getContentDatabasePublishDiagnostics,
 } = __testing__;
 
 afterEach(() => {
@@ -72,6 +78,91 @@ describe("build router project bundle compatibility", () => {
     expect(result.build.projectSettings?.meta.agentInstructions).toBe(
       "Internal guidance"
     );
+  });
+});
+
+describe("content database publish diagnostics", () => {
+  test("reports bounded database stats and conservatively affected resources", async () => {
+    const resourceId = "blog-posts";
+    const createEntry = (id: string, bytes: number) =>
+      createCanonicalAssetFileEntry({
+        projectId: "source-project",
+        document: {
+          _id: id,
+          _type: "asset.file",
+          name: `${id}.md`,
+          path: `blog/${id}.md`,
+          key: id,
+          extension: "md",
+          mimeType: "text/markdown",
+          size: bytes,
+          revision: `revision-${id}`,
+          contentRef: `files/${id}.md`,
+          properties: { value: "x".repeat(bytes) },
+        },
+      });
+    const assetIndex = await createAssetIndex({
+      projectId: "source-project",
+      entries: [createEntry("small", 100), createEntry("large", 10_000)],
+      maxBytes: 5_000,
+    });
+    const bundle = createPublishedProjectBundleFixture({
+      build: {
+        props: [
+          [
+            "posts-prop",
+            {
+              id: "posts-prop",
+              instanceId: "collection",
+              name: "data",
+              type: "resource",
+              value: resourceId,
+            },
+          ],
+        ],
+        resources: [
+          [
+            resourceId,
+            {
+              id: resourceId,
+              name: "Blog posts",
+              control: "system",
+              method: "post",
+              url: '"/$resources/assets"',
+              headers: [],
+              body: createStructuredAssetQueryResourceBody({
+                where: { all: [] },
+                sort: [],
+                limit: "pageSize",
+                offset: "0",
+                output: { mode: "base" },
+                content: { mode: "none" },
+              }),
+            },
+          ],
+        ],
+      },
+      assetIndex,
+    });
+
+    expect(getContentDatabasePublishDiagnostics(bundle)).toMatchObject({
+      stats: {
+        maxBytes: 5_000,
+        includedDocumentCount: 1,
+        omittedDocumentCount: 1,
+        truncated: true,
+      },
+      potentiallyAffectedResources: [{ id: resourceId, name: "Blog posts" }],
+      hasDynamicValues: true,
+    });
+  });
+
+  test("does nothing when the build has no content query", () => {
+    expect(
+      getContentDatabasePublishDiagnostics(
+        createPublishedProjectBundleFixture()
+      )
+    ).toBeUndefined();
   });
 });
 

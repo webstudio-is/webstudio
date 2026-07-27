@@ -4,8 +4,6 @@ import {
   type BuilderNamespace,
 } from "./contracts/namespaces";
 import {
-  allowedArrayMethods,
-  allowedStringMethods,
   getInputJsonSchemaMetadata,
   getInputJsonSchemaProperties,
   inputJsonSchemaAcceptsType,
@@ -14,6 +12,10 @@ import {
   type InputJsonSchema,
   type InputJsonSchemaValue,
 } from "@webstudio-is/sdk";
+import {
+  allowedArrayMethods,
+  allowedStringMethods,
+} from "@webstudio-is/expression";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {

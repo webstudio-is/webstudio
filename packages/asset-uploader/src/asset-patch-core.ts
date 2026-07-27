@@ -8,7 +8,7 @@ import {
   type Patch,
 } from "./patch-utils";
 import { swapAssetFileWithClient } from "./revision";
-import type { AssetMetadataUpdate } from "@webstudio-is/sdk/asset-resource-api";
+import type { AssetMetadataUpdate } from "./asset-mutation-types";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
 

@@ -6,12 +6,12 @@ import {
   isConfiguredAssetsResource,
   parseStructuredAssetQueryResourceBody,
   SYSTEM_VARIABLE_ID,
-  transpileExpression,
   type AssetQueryResourceConfiguration,
   type AssetQueryWhereExpression,
   type Resource,
   type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
+import { transpileExpression } from "@webstudio-is/expression";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";

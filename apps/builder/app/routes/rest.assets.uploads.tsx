@@ -4,7 +4,7 @@ import isValidFilename from "valid-filename";
 import {
   assetResourceApiOperations,
   assetUploadReservationRequest,
-} from "@webstudio-is/sdk/asset-resource-api";
+} from "@webstudio-is/protocol/asset-resource-api";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
@@ -49,7 +49,7 @@ export const action = async (props: ActionFunctionArgs) => {
       const context = await authorizeAssetRestProject(
         request,
         input.projectId,
-        "build"
+        "edit"
       );
       if (
         input.displayFilename !== undefined &&

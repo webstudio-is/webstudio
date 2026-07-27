@@ -1,0 +1,203 @@
+import { contentEngineLimits } from "./limits";
+import { parseDocument } from "yaml";
+import {
+  decodeUtf8 as decodeUtf8Bytes,
+  appendBytes,
+  toByteChunks,
+  type ByteSource,
+} from "./byte-stream";
+import {
+  normalizeStructuredDataObject,
+  StructuredDataError,
+} from "./structured-data";
+import { MarkdownMetadataError } from "./markdown-errors";
+import {
+  findMarkdownFrontmatter,
+  markdownByteOrderMark,
+} from "./markdown-scanner";
+
+export type MarkdownFrontmatter = {
+  properties: Record<string, unknown>;
+  frontmatterBytes: number;
+  consumedBytes: number;
+};
+
+type FrontmatterLimits = {
+  bytes: number;
+  depth: number;
+  fields: number;
+  stringBytes: number;
+  serializedBytes: number;
+};
+
+const defaultFrontmatterLimits: FrontmatterLimits = {
+  bytes: contentEngineLimits.frontmatterBytes,
+  depth: contentEngineLimits.frontmatterDepth,
+  fields: contentEngineLimits.frontmatterFields,
+  stringBytes: contentEngineLimits.frontmatterStringBytes,
+  serializedBytes: contentEngineLimits.indexedPropertiesBytes,
+};
+
+const decodeUtf8 = (bytes: Uint8Array) => {
+  try {
+    return decodeUtf8Bytes(bytes);
+  } catch {
+    throw new MarkdownMetadataError(
+      "FRONTMATTER_DECODING_FAILED",
+      "Markdown frontmatter is not valid UTF-8"
+    );
+  }
+};
+
+const parseYamlProperties = (
+  source: string,
+  limits: FrontmatterLimits
+): Record<string, unknown> => {
+  const document = parseDocument(source, {
+    schema: "core",
+    uniqueKeys: true,
+  });
+  if (document.errors.length > 0) {
+    throw new MarkdownMetadataError(
+      "FRONTMATTER_INVALID",
+      "Markdown frontmatter contains invalid YAML"
+    );
+  }
+
+  let value: unknown;
+  try {
+    value = document.toJS({ maxAliasCount: 0 });
+  } catch {
+    throw new MarkdownMetadataError(
+      "FRONTMATTER_INVALID",
+      "Markdown frontmatter contains unsupported YAML aliases"
+    );
+  }
+  if (value === null) {
+    return {};
+  }
+  try {
+    return normalizeStructuredDataObject(value, limits);
+  } catch (error) {
+    if (error instanceof StructuredDataError) {
+      if (error.code === "DEPTH_EXCEEDED") {
+        throw new MarkdownMetadataError(
+          "FRONTMATTER_DEPTH_EXCEEDED",
+          "Markdown frontmatter exceeds the nesting limit"
+        );
+      }
+      if (error.code === "FIELDS_EXCEEDED") {
+        throw new MarkdownMetadataError(
+          "FRONTMATTER_FIELDS_EXCEEDED",
+          "Markdown frontmatter exceeds the field limit"
+        );
+      }
+      if (error.code === "STRING_BYTES_EXCEEDED") {
+        throw new MarkdownMetadataError(
+          "FRONTMATTER_STRING_BYTES_EXCEEDED",
+          "Markdown frontmatter contains a string that exceeds the byte limit"
+        );
+      }
+      if (error.code === "SERIALIZED_BYTES_EXCEEDED") {
+        throw new MarkdownMetadataError(
+          "FRONTMATTER_BYTES_EXCEEDED",
+          "Markdown frontmatter properties exceed the indexed byte limit"
+        );
+      }
+      throw new MarkdownMetadataError(
+        "FRONTMATTER_INVALID",
+        "Markdown frontmatter must contain a JSON-compatible object"
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Reads only the bounded opening frontmatter block from a Markdown byte stream.
+ * Iteration stops as soon as the closing delimiter is found, so the body is
+ * neither decoded nor retained by list-query metadata indexing. MDX can reuse
+ * this path because its frontmatter plugins recognize blocks but do not parse
+ * the YAML data contained by them.
+ */
+export const extractMarkdownFrontmatter = async (
+  source: ByteSource,
+  overrides: Partial<FrontmatterLimits> = {}
+): Promise<MarkdownFrontmatter> => {
+  const limits = { ...defaultFrontmatterLimits, ...overrides };
+  const maximumReadBytes = limits.bytes + markdownByteOrderMark.byteLength + 10;
+  let bytes = new Uint8Array();
+
+  for await (const chunk of toByteChunks(source)) {
+    let offset = 0;
+    while (offset < chunk.byteLength) {
+      const available = maximumReadBytes - bytes.byteLength;
+      if (available <= 0) {
+        break;
+      }
+      const initialRead = Math.max(0, 6 - bytes.byteLength);
+      let length = Math.min(chunk.byteLength - offset, initialRead);
+      if (initialRead === 0) {
+        const remaining = chunk.subarray(
+          offset,
+          Math.min(chunk.byteLength, offset + available)
+        );
+        const newline = remaining.indexOf(0x0a);
+        length = newline === -1 ? remaining.byteLength : newline + 1;
+      }
+      bytes = appendBytes(bytes, chunk.subarray(offset, offset + length));
+      offset += length;
+
+      const located = findMarkdownFrontmatter(bytes, false);
+      if (located === null) {
+        return {
+          properties: {},
+          frontmatterBytes: 0,
+          consumedBytes: bytes.length,
+        };
+      }
+      if (located !== undefined) {
+        const frontmatterBytes = located.yamlEnd - located.yamlStart;
+        if (frontmatterBytes > limits.bytes) {
+          throw new MarkdownMetadataError(
+            "FRONTMATTER_BYTES_EXCEEDED",
+            "Markdown frontmatter exceeds the byte limit"
+          );
+        }
+        const yaml = decodeUtf8(
+          bytes.subarray(located.yamlStart, located.yamlEnd)
+        );
+        return {
+          properties: parseYamlProperties(yaml, limits),
+          frontmatterBytes,
+          consumedBytes: located.blockEnd,
+        };
+      }
+    }
+    if (bytes.byteLength >= maximumReadBytes) {
+      break;
+    }
+  }
+
+  const located = findMarkdownFrontmatter(bytes, true);
+  if (located === null) {
+    return { properties: {}, frontmatterBytes: 0, consumedBytes: bytes.length };
+  }
+  if (located !== undefined) {
+    const frontmatterBytes = located.yamlEnd - located.yamlStart;
+    if (frontmatterBytes <= limits.bytes) {
+      const yaml = decodeUtf8(
+        bytes.subarray(located.yamlStart, located.yamlEnd)
+      );
+      return {
+        properties: parseYamlProperties(yaml, limits),
+        frontmatterBytes,
+        consumedBytes: located.blockEnd,
+      };
+    }
+  }
+  throw new MarkdownMetadataError(
+    "FRONTMATTER_BYTES_EXCEEDED",
+    "Markdown frontmatter is not closed within the byte limit"
+  );
+};

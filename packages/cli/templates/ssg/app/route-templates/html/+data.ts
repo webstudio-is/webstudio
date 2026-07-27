@@ -4,16 +4,16 @@ import { getPageMeta, getResources } from "__SERVER__";
 import { assets } from "__ASSETS__";
 import {
   assetQueryDeploymentId,
-  assetQueryManifest,
+  assetQueryDatabase,
 } from "__ASSET_QUERY_MANIFEST__";
 import { createSsgAssetResourceFetch } from "__ASSET_RESOURCE_FETCH__";
 
 const fetchAssetResource =
-  assetQueryManifest === undefined
+  assetQueryDatabase === undefined
     ? undefined
     : createSsgAssetResourceFetch({
         deploymentId: assetQueryDeploymentId,
-        manifest: assetQueryManifest,
+        artifact: assetQueryDatabase,
       });
 
 const customFetch: typeof fetch = async (input, init) => {
