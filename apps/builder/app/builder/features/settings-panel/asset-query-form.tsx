@@ -3,7 +3,9 @@ import { useStore } from "@nanostores/react";
 import {
   addConfiguredAssetQueryFields,
   createAssetQueryCapabilities,
+  createStructuredAssetQueryResourceBody,
   parseAssetQueryCapabilities,
+  parseStructuredAssetQueryResourceBody,
   type AssetQueryCapabilities,
   type Resource,
   type StructuredAssetQueryFilterBinding,
@@ -23,11 +25,7 @@ import { Flex, Label, Switch, Text } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
 import { BindableQueryBuilder } from "~/builder/shared/query-builder";
 import { loadBuilderAssetQueryCapabilities } from "~/shared/asset-resource-api.client";
-import {
-  createStructuredAssetQueryResourceBody,
-  getAssetQueryConfigurationError,
-  parseStructuredAssetQueryResourceBody,
-} from "./asset-query-form-utils";
+import { getAssetQueryConfigurationError } from "./asset-query-form-utils";
 
 const fallbackCapabilities = createAssetQueryCapabilities({});
 const defaultConfiguration = createStructuredQuery(

@@ -9,10 +9,12 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
+  deleteAssetsWithClient,
   loadAssetsByProjectWithClient,
   patchAssetsWithClient,
   updateAssetMetadataWithClient,
 } from "./asset-patch-core";
+import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 import {
   deleteAssetFoldersWithClient,
   patchAssetFoldersWithClient,
@@ -85,6 +87,80 @@ describe("asset folder persistence", () => {
         testContext.postgrest.client
       )
     ).rejects.toThrow("Parent folder must exist");
+  });
+
+  test("serializes concurrent folder updates before validating cycles", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders = [
+      { id: "a", projectId, name: "A", parentId: null, createdAt },
+      { id: "b", projectId, name: "B", parentId: null, createdAt },
+    ];
+    let readCount = 0;
+    let writeCount = 0;
+    let startFirstWrite = () => {};
+    const firstWriteStarted = new Promise<void>((resolve) => {
+      startFirstWrite = resolve;
+    });
+    let releaseFirstWrite = () => {};
+    const firstWriteCanFinish = new Promise<void>((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+    server.use(
+      db.get("AssetFolder", () => {
+        readCount += 1;
+        return json(folders);
+      }),
+      db.post("AssetFolder", async ({ request }) => {
+        writeCount += 1;
+        if (writeCount === 1) {
+          startFirstWrite();
+          await firstWriteCanFinish;
+        }
+        const [folder] = (await request.json()) as typeof folders;
+        folders = folders.map((current) =>
+          current.id === folder.id ? folder : current
+        );
+        return json(folder);
+      })
+    );
+
+    const moveA = upsertAssetFolderWithClient(
+      {
+        projectId,
+        folder: {
+          id: "a",
+          projectId,
+          name: "A",
+          parentId: "b",
+          createdAt,
+        },
+      },
+      testContext.postgrest.client
+    );
+    await firstWriteStarted;
+    const moveB = upsertAssetFolderWithClient(
+      {
+        projectId,
+        folder: {
+          id: "b",
+          projectId,
+          name: "B",
+          parentId: "a",
+          createdAt,
+        },
+      },
+      testContext.postgrest.client
+    );
+
+    await Promise.resolve();
+    expect(readCount).toBe(1);
+    releaseFirstWrite();
+
+    await expect(moveA).resolves.toMatchObject({ id: "a", parentId: "b" });
+    await expect(moveB).rejects.toThrow("Folders can't contain cycles");
+    expect(readCount).toBe(2);
+    expect(writeCount).toBe(1);
   });
 
   test("inserts parents before children", async () => {
@@ -339,6 +415,34 @@ describe("asset patch persistence", () => {
     );
     expect(update).toEqual({ description: null });
     expect(readIdFilter).toBe("in.(asset-1)");
+  });
+
+  test("reports a missing metadata update as a repository not-found error", async () => {
+    const projectId = uid();
+    server.use(db.patch("Asset", () => json(null)));
+
+    await expect(
+      updateAssetMetadataWithClient(
+        {
+          projectId,
+          assetId: "missing",
+          values: { description: "Missing" },
+        },
+        testContext.postgrest.client
+      )
+    ).rejects.toBeInstanceOf(AssetRepositoryNotFoundError);
+  });
+
+  test("reports a missing deletion as a repository not-found error", async () => {
+    const projectId = uid();
+    server.use(db.get("Asset", () => json([])));
+
+    await expect(
+      deleteAssetsWithClient(
+        { projectId, ids: ["missing"] },
+        testContext.postgrest.client
+      )
+    ).rejects.toBeInstanceOf(AssetRepositoryNotFoundError);
   });
 });
 

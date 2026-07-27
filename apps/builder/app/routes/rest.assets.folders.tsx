@@ -7,7 +7,7 @@ import {
   assetFolderCreateRequest,
   assetResourceApiOperations,
 } from "@webstudio-is/protocol/asset-resource-api";
-import { requiresAssetMutationCsrf } from "~/services/asset-rest-auth.server";
+import { requiresApiCsrf } from "~/services/api-auth.server";
 import {
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
@@ -38,7 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
-  if (requiresAssetMutationCsrf(request)) {
+  if (requiresApiCsrf(request)) {
     await checkCsrf(request);
   }
   if (

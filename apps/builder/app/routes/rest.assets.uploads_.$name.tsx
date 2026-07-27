@@ -17,9 +17,9 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
-  authorizeAssetRestProject,
-  requiresAssetMutationCsrf,
-} from "~/services/asset-rest-auth.server";
+  authorizeApiProject,
+  requiresApiCsrf,
+} from "~/services/api-auth.server";
 import { createContext } from "~/shared/context.server";
 import {
   AssetRestRequestError,
@@ -121,7 +121,7 @@ export const action = async (props: ActionFunctionArgs) => {
   const rawAssetType = url.searchParams.get("type");
   const isApiUpload = projectId !== null || rawAssetType !== null;
 
-  if (requiresAssetMutationCsrf(request)) {
+  if (requiresApiCsrf(request)) {
     await checkCsrf(request);
   }
 
@@ -164,7 +164,7 @@ export const action = async (props: ActionFunctionArgs) => {
         meta: parseAssetRestMetadataHeader(rawAssetMeta),
       });
 
-      const context = await authorizeAssetRestProject(
+      const context = await authorizeApiProject(
         request,
         parsedProjectId,
         "edit"

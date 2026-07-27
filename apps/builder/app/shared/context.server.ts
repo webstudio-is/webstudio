@@ -33,13 +33,19 @@ export const extractAuthFromRequest = async (request: Request) => {
     request.headers.get("x-auth-token") ??
     undefined;
 
-  const sessionData = isBuilder(request)
-    ? await builderAuthenticator.isAuthenticated(request)
-    : await authenticator.isAuthenticated(request);
-
   const isServiceCall = isServiceAuthorization(
     request.headers.get("Authorization")
   );
+
+  // Explicit credentials always win. In particular, an invalid supplied token
+  // must fail during context creation instead of falling back to a potentially
+  // more privileged browser session.
+  const sessionData =
+    authToken === undefined && isServiceCall === false
+      ? isBuilder(request)
+        ? await builderAuthenticator.isAuthenticated(request)
+        : await authenticator.isAuthenticated(request)
+      : undefined;
 
   return {
     authToken,

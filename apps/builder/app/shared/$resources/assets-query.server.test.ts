@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TRPCError } from "@trpc/server";
 import {
   AssetIndexRevisionError,
   AssetQueryExecutionError,
@@ -8,7 +9,7 @@ import { loader } from "./assets-query.server";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const dependencies = {
-  authorizeAssetRestProject: vi.fn(),
+  authorizeApiProject: vi.fn(),
   createAssetClient: vi.fn(() => ({ readFile: vi.fn() })),
   previewAssetResourceQuery: vi.fn(),
   preventCrossOriginCookie: vi.fn(),
@@ -23,7 +24,7 @@ const innerRequest = (body: unknown) =>
 
 describe("configured Assets system resource", () => {
   beforeEach(() => {
-    dependencies.authorizeAssetRestProject.mockResolvedValue({} as never);
+    dependencies.authorizeApiProject.mockResolvedValue({} as never);
     dependencies.previewAssetResourceQuery.mockReset();
   });
 
@@ -54,7 +55,7 @@ describe("configured Assets system resource", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(responseBody);
-    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+    expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       expect.any(Request),
       projectId,
       "view"
@@ -92,7 +93,7 @@ describe("configured Assets system resource", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+    expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       request,
       projectId,
       "view"
@@ -124,6 +125,34 @@ describe("configured Assets system resource", () => {
     await expect(forbidden.json()).resolves.toMatchObject({
       ok: false,
       error: { code: "FORBIDDEN" },
+    });
+  });
+
+  test("preserves authentication and CSRF response statuses", async () => {
+    dependencies.authorizeApiProject.mockRejectedValueOnce(
+      new TRPCError({ code: "UNAUTHORIZED", message: "token required" })
+    );
+    const unauthorized = await loader(
+      { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
+      dependencies
+    );
+    expect(unauthorized.status).toBe(401);
+    await expect(unauthorized.json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "UNAUTHORIZED", retryable: false },
+    });
+
+    dependencies.authorizeApiProject.mockRejectedValueOnce(
+      new Response("CSRF failed", { status: 403 })
+    );
+    const csrf = await loader(
+      { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
+      dependencies
+    );
+    expect(csrf.status).toBe(403);
+    await expect(csrf.json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN", retryable: false },
     });
   });
 

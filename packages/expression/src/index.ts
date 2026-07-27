@@ -435,6 +435,45 @@ export const isLiteralExpression = (expression: string) => {
   }
 };
 
+const getStaticMemberPath = (node: Expression): string[] | undefined => {
+  if (node.type === "Identifier") {
+    return [node.name];
+  }
+  if (node.type === "ChainExpression") {
+    return getStaticMemberPath(node.expression);
+  }
+  if (node.type !== "MemberExpression" || node.object.type === "Super") {
+    return;
+  }
+  const objectPath = getStaticMemberPath(node.object);
+  if (objectPath === undefined) {
+    return;
+  }
+  const property = node.property;
+  const propertyName = node.computed
+    ? property.type === "Literal" &&
+      (typeof property.value === "string" || typeof property.value === "number")
+      ? String(property.value)
+      : undefined
+    : property.type === "Identifier"
+      ? property.name
+      : undefined;
+  return propertyName === undefined ? undefined : [...objectPath, propertyName];
+};
+
+/** Parse an identifier/member expression whose complete property path is static. */
+export const parseStaticMemberPath = (expression: string) => {
+  try {
+    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    if (expression.slice(node.end).trim() !== "") {
+      return;
+    }
+    return getStaticMemberPath(node);
+  } catch {
+    return;
+  }
+};
+
 export const getExpressionIdentifiers = (expression: string) => {
   const identifiers = new Set<string>();
   try {

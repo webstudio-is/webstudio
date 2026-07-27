@@ -508,6 +508,7 @@ export type AssetQueryResult = z.infer<typeof assetQueryResult>;
 export const assetResourceErrorCode = z.enum([
   "INVALID_REQUEST",
   "REQUEST_CANCELLED",
+  "UNAUTHORIZED",
   "FORBIDDEN",
   "STALE_INDEX",
   "CONTENT_IDENTITY_REQUIRED",

@@ -351,7 +351,9 @@ describe("api router permits", () => {
     ).toEqual(["view", "edit", "build", "admin", "api"]);
   });
 
-  test("requires token auth for project-scoped api procedures", async () => {
+  test("accepts cookie auth for project-scoped api procedures", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+
     await expect(
       assertApiProjectPermit(
         createContext(true, {
@@ -363,10 +365,48 @@ describe("api router permits", () => {
         "project-1",
         "view"
       )
-    ).rejects.toMatchObject({
-      code: "FORBIDDEN",
-      message: "Builder API requires an API token",
+    ).resolves.toEqual({
+      type: "user",
+      permits: ["view"],
     });
+  });
+
+  test("rejects cookie auth without the requested project permit", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(false);
+
+    await expect(
+      assertApiProjectPermit(
+        createContext(true, {
+          type: "user",
+          userId: "user-1",
+          sessionCreatedAt: 0,
+          isLoggedInToBuilder: async () => true,
+        }),
+        "project-1",
+        "edit"
+      )
+    ).rejects.toThrow("You don't have access to this project");
+  });
+
+  test("preserves content-only permissions for cookie-authenticated editors", async () => {
+    const hasProjectPermit = vi
+      .spyOn(authorizeProject, "hasProjectPermit")
+      .mockImplementation(async ({ permit }) => permit === "edit");
+    const context = createContext(true, {
+      type: "user",
+      userId: "user-1",
+      sessionCreatedAt: 0,
+      isLoggedInToBuilder: async () => true,
+    });
+
+    await expect(
+      assertApiProjectPermit(context, "project-1", "edit")
+    ).resolves.toEqual({ type: "user", permits: ["edit"] });
+
+    hasProjectPermit.mockResolvedValue(true);
+    await expect(
+      assertApiProjectPermit(context, "project-1", "edit")
+    ).resolves.toEqual({ type: "user", permits: ["edit", "build"] });
   });
 
   test("rejects tokens from another project", async () => {
@@ -529,6 +569,7 @@ describe("api router permits", () => {
     await expect(
       assertApiProjectPermit(createContext(true), "project-1", "edit")
     ).resolves.toEqual({
+      type: "token",
       token,
       permits: ["view", "edit", "api"],
     });
@@ -539,7 +580,16 @@ describe("api router permits", () => {
 
     expect(() =>
       assertApiPublishDomains({
+        auth: { type: "user", permits: ["edit"] },
+        domains: ["custom.example.com"],
+        project,
+      })
+    ).not.toThrow();
+
+    expect(() =>
+      assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "editors", canPublish: false }),
           permits: ["view", "edit", "api"],
         },
@@ -551,6 +601,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "editors", canPublish: true }),
           permits: ["view", "edit", "api"],
         },
@@ -562,6 +613,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "builders", canPublish: false }),
           permits: ["view", "edit", "build", "api"],
         },
@@ -573,6 +625,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "builders", canPublish: false }),
           permits: ["view", "edit", "build", "api"],
         },
@@ -584,6 +637,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({
             relation: "administrators",
             canPublish: true,
@@ -629,10 +683,12 @@ describe("api router permits", () => {
       marketplaceProduct: {},
     } as unknown as CompactBuild;
     const editorAuth = {
+      type: "token",
       token: createToken({ relation: "editors" }),
       permits: ["view", "edit", "api"],
     } satisfies Awaited<ReturnType<typeof assertApiProjectPermit>>;
     const builderAuth = {
+      type: "token",
       token: createToken({ relation: "builders" }),
       permits: ["view", "edit", "build", "api"],
     } satisfies Awaited<ReturnType<typeof assertApiProjectPermit>>;

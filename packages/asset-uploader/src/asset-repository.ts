@@ -68,6 +68,10 @@ import {
   sharedContentCompilationCache,
   type ContentCompilationCache,
 } from "./content-compilation-cache";
+import {
+  AssetRepositoryConflictError,
+  AssetRepositoryNotFoundError,
+} from "./asset-repository-errors";
 
 type CreateId = () => Asset["id"];
 type RepositoryObjectStore = AssetObjectReader & Partial<AssetObjectWriter>;
@@ -92,9 +96,6 @@ const defaultDependencies = {
 };
 
 type AssetRepositoryDependencies = typeof defaultDependencies;
-
-export class AssetRepositoryNotFoundError extends Error {}
-export class AssetRepositoryConflictError extends Error {}
 
 export class AssetIndexPreparationError extends Error {
   readonly issues: Awaited<

@@ -69,6 +69,7 @@ import { extractAuthFromRequest } from "./context.server";
 
 describe("extractAuthFromRequest", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     env.TRPC_SERVER_API_TOKEN = undefined;
     authenticator.isAuthenticated.mockResolvedValue(undefined);
     builderAuthenticator.isAuthenticated.mockResolvedValue(undefined);
@@ -96,5 +97,30 @@ describe("extractAuthFromRequest", () => {
     const auth = await extractAuthFromRequest(request);
 
     expect(auth.isServiceCall).toBe(true);
+    expect(authenticator.isAuthenticated).not.toHaveBeenCalled();
+  });
+
+  test("prefers an explicit token without reading the cookie session", async () => {
+    const request = new Request("https://webstudio.is/trpc", {
+      headers: { "x-auth-token": "project-token" },
+    });
+
+    const auth = await extractAuthFromRequest(request);
+
+    expect(auth.authToken).toBe("project-token");
+    expect(auth.sessionData).toBeUndefined();
+    expect(authenticator.isAuthenticated).not.toHaveBeenCalled();
+  });
+
+  test("reads the cookie session when no explicit credential is available", async () => {
+    const sessionData = { userId: "user-1", createdAt: 1 };
+    authenticator.isAuthenticated.mockResolvedValue(sessionData);
+
+    const auth = await extractAuthFromRequest(
+      new Request("https://webstudio.is/trpc")
+    );
+
+    expect(auth.authToken).toBeUndefined();
+    expect(auth.sessionData).toBe(sessionData);
   });
 });

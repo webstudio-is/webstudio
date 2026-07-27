@@ -1423,6 +1423,38 @@ describe("prebuild", () => {
     ).toEqual(["/blog/hello-world", "/blog/original-title", "/blog/post-123"]);
   });
 
+  test("prerenders asset routes bound with optional member expressions", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world" },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: 'system?.params?.["slug"]',
+          },
+        ],
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      output: { mode: "all" },
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["post", resource]],
+        index,
+      })
+    ).toEqual(["/blog/hello-world"]);
+  });
+
   test("rejects ambiguous dynamic asset routes", async () => {
     const index = await createTestAssetIndex([
       { ...indexedDocument, properties: { slug: "shared" } },

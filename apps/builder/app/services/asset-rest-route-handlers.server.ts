@@ -16,10 +16,7 @@ import {
 } from "@webstudio-is/protocol/asset-resource-api";
 import { createAssetClient } from "~/shared/asset-client";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
-import {
-  authorizeAssetRestProject,
-  requiresAssetMutationCsrf,
-} from "./asset-rest-auth.server";
+import { authorizeApiProject, requiresApiCsrf } from "./api-auth.server";
 import {
   AssetRestRangeError,
   assetRestErrorResponse,
@@ -103,7 +100,7 @@ export const createAssetContentLoader =
 type AssetActionDependencies = {
   preventCrossOriginCookie: typeof preventCrossOriginCookie;
   checkCsrf: typeof checkCsrf;
-  authorizeAssetRestProject: typeof authorizeAssetRestProject;
+  authorizeApiProject: typeof authorizeApiProject;
   createAssetClient: typeof createAssetClient;
   createRepository: (
     input: ConstructorParameters<typeof PostgresAssetRepository>[0]
@@ -113,7 +110,7 @@ type AssetActionDependencies = {
 const defaultAssetActionDependencies: AssetActionDependencies = {
   preventCrossOriginCookie,
   checkCsrf,
-  authorizeAssetRestProject,
+  authorizeApiProject,
   createAssetClient,
   createRepository: (input) => new PostgresAssetRepository(input),
 };
@@ -122,7 +119,7 @@ export const createAssetAction =
   (dependencies: AssetActionDependencies = defaultAssetActionDependencies) =>
   async ({ request, params }: ActionFunctionArgs) => {
     dependencies.preventCrossOriginCookie(request);
-    if (requiresAssetMutationCsrf(request)) {
+    if (requiresApiCsrf(request)) {
       await dependencies.checkCsrf(request);
     }
 
@@ -131,7 +128,7 @@ export const createAssetAction =
       const projectId = parseAssetRestIdentifier(
         new URL(request.url).searchParams.get("projectId")
       );
-      const context = await dependencies.authorizeAssetRestProject(
+      const context = await dependencies.authorizeApiProject(
         request,
         projectId,
         "edit"
@@ -178,7 +175,7 @@ export const createAssetIndexRefreshAction =
   (dependencies = defaultAssetIndexRefreshDependencies) =>
   async ({ request }: ActionFunctionArgs) => {
     dependencies.preventCrossOriginCookie(request);
-    if (requiresAssetMutationCsrf(request)) {
+    if (requiresApiCsrf(request)) {
       await dependencies.checkCsrf(request);
     }
     if (

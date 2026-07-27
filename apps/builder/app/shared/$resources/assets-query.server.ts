@@ -9,15 +9,17 @@ import {
   type AssetResourceErrorCode,
 } from "@webstudio-is/content-engine";
 import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/server";
-import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { authorizeAssetRestProject } from "~/services/asset-rest-auth.server";
+import {
+  authorizeApiProject,
+  getApiAuthorizationFailure,
+} from "~/services/api-auth.server";
 import { getAssetRestProjectId } from "~/services/asset-rest.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createAssetClient } from "../asset-client";
 
 type Dependencies = {
-  authorizeAssetRestProject: typeof authorizeAssetRestProject;
+  authorizeApiProject: typeof authorizeApiProject;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,
     "readFile"
@@ -27,7 +29,7 @@ type Dependencies = {
 };
 
 const defaultDependencies: Dependencies = {
-  authorizeAssetRestProject,
+  authorizeApiProject,
   createAssetClient,
   previewAssetResourceQuery,
   preventCrossOriginCookie,
@@ -87,7 +89,7 @@ export const loader = async (
     });
   }
   try {
-    const context = await dependencies.authorizeAssetRestProject(
+    const context = await dependencies.authorizeApiProject(
       request,
       projectId,
       "view"
@@ -103,12 +105,9 @@ export const loader = async (
     });
     return json(result, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
-    if (error instanceof AuthorizationError) {
-      return failure({
-        code: "FORBIDDEN",
-        message: "You don't have access to preview this asset resource",
-        status: 403,
-      });
+    const authorizationFailure = getApiAuthorizationFailure(error);
+    if (authorizationFailure !== undefined) {
+      return failure(authorizationFailure);
     }
     if (error instanceof AssetIndexRevisionError) {
       return failure({

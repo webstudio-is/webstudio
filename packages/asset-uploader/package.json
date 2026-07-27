@@ -18,7 +18,6 @@
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "fontkit": "^2.0.4",
-    "fast-xml-parser": "5.10.1",
     "image-meta": "^0.2.1",
     "immer": "^10.1.1",
     "nanoid": "^5.1.5",

@@ -2,9 +2,9 @@ import { describe, expect, test } from "vitest";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import {
   createStructuredAssetQueryResourceBody,
-  getAssetQueryConfigurationError,
   parseStructuredAssetQueryResourceBody,
-} from "./asset-query-form-utils";
+} from "@webstudio-is/sdk";
+import { getAssetQueryConfigurationError } from "./asset-query-form-utils";
 
 describe("structured asset query resource body", () => {
   test("preserves runtime values as expressions", () => {

@@ -5,7 +5,7 @@ import { loader } from "../../routes/rest.assets.field-catalog";
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const assetClient = { readFile: vi.fn() };
 const dependencies = {
-  authorizeAssetRestProject: vi.fn(),
+  authorizeApiProject: vi.fn(),
   createAssetClient: vi.fn(() => assetClient),
   loadBuilderAssetFieldCatalog: vi.fn(),
   preventCrossOriginCookie: vi.fn(),
@@ -25,7 +25,7 @@ const catalog = {
 
 describe("asset field catalog system resource", () => {
   beforeEach(() => {
-    dependencies.authorizeAssetRestProject.mockResolvedValue({} as never);
+    dependencies.authorizeApiProject.mockResolvedValue({} as never);
     dependencies.loadBuilderAssetFieldCatalog.mockResolvedValue(catalog);
   });
 
@@ -42,7 +42,7 @@ describe("asset field catalog system resource", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("private");
     await expect(response.json()).resolves.toEqual(catalog);
-    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+    expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       expect.any(Request),
       projectId,
       "view"

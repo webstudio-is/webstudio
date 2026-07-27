@@ -3,6 +3,7 @@ export * from "./content-hash";
 export * from "./utils/size-limiter";
 export * from "./upload";
 export * from "./asset-repository";
+export * from "./asset-repository-errors";
 export * from "./delete";
 export * from "./patch";
 export * from "./asset-patch-core";

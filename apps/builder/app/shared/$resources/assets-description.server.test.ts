@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TRPCError } from "@trpc/server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { parseAssetQueryCapabilities } from "@webstudio-is/sdk";
 import { loader as capabilitiesLoader } from "../../routes/rest.assets.query-capabilities";
@@ -8,7 +9,7 @@ import { builderSessionCookieName } from "~/services/builder-session.server";
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const assetClient = { readFile: vi.fn() };
 const dependencies = {
-  authorizeAssetRestProject: vi.fn(),
+  authorizeApiProject: vi.fn(),
   createAssetClient: vi.fn(() => assetClient),
   loadBuilderAssetFieldCatalog: vi.fn(),
   preventCrossOriginCookie: vi.fn(),
@@ -33,7 +34,7 @@ const request = (path: string, hostname = `p-${projectId}.localhost`) =>
 describe("asset API descriptions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    dependencies.authorizeAssetRestProject.mockResolvedValue({} as never);
+    dependencies.authorizeApiProject.mockResolvedValue({} as never);
     dependencies.loadBuilderAssetFieldCatalog.mockResolvedValue(catalog);
   });
 
@@ -76,7 +77,7 @@ describe("asset API descriptions", () => {
         },
       },
     });
-    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+    expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       expect.any(Request),
       projectId,
       "view"
@@ -114,7 +115,7 @@ describe("asset API descriptions", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+    expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       directRequest,
       projectId,
       "view"
@@ -135,6 +136,23 @@ describe("asset API descriptions", () => {
     await expect(response.json()).resolves.toMatchObject({
       ok: false,
       error: { code: "FORBIDDEN", retryable: false },
+    });
+  });
+
+  test("preserves authentication failures in description responses", async () => {
+    dependencies.authorizeApiProject.mockRejectedValueOnce(
+      new TRPCError({ code: "UNAUTHORIZED", message: "token required" })
+    );
+
+    const response = await capabilitiesLoader(
+      { request: request("/$resources/assets/query-capabilities") },
+      dependencies
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "UNAUTHORIZED", retryable: false },
     });
   });
 });

@@ -51,6 +51,31 @@ export const assertApiProjectPermit = async (
   projectId: string,
   permit: ProjectApiPermit
 ) => {
+  if (ctx.authorization.type === "user") {
+    const canUseProject = await authorizeProject.hasProjectPermit(
+      { projectId, permit },
+      ctx
+    );
+    if (canUseProject === false) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You don't have access to this project",
+      });
+    }
+
+    const permits: ProjectApiPermit[] = [permit];
+    if (
+      permit === "edit" &&
+      (await authorizeProject.hasProjectPermit(
+        { projectId, permit: "build" },
+        ctx
+      ))
+    ) {
+      permits.push("build");
+    }
+    return { type: "user" as const, permits };
+  }
+
   const { token, permits } = await assertApiTokenPermit(ctx);
   if (token.projectId !== projectId) {
     throw new TRPCError({
@@ -77,5 +102,5 @@ export const assertApiProjectPermit = async (
     });
   }
 
-  return { token, permits };
+  return { type: "token" as const, token, permits };
 };

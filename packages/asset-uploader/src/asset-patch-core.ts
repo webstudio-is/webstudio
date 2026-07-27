@@ -9,6 +9,7 @@ import {
 } from "./patch-utils";
 import { swapAssetFileWithClient } from "./revision";
 import type { AssetMetadataUpdate } from "./asset-mutation-types";
+import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 
 const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
 
@@ -103,7 +104,7 @@ export const deleteAssetsWithClient = async (
   assertPostgrestSuccess(assets);
 
   if ((assets.data ?? []).length === 0) {
-    throw new Error("Assets not found");
+    throw new AssetRepositoryNotFoundError("Assets not found");
   }
 
   const previewUpdate = await client
@@ -171,17 +172,17 @@ export const updateAssetMetadataWithClient = async (
     .eq("id", assetId)
     .eq("projectId", projectId)
     .select("id")
-    .single();
+    .maybeSingle();
   assertPostgrestSuccess(result);
   if (result.data?.id !== assetId) {
-    throw new Error("Asset not found");
+    throw new AssetRepositoryNotFoundError("Asset not found");
   }
 
   const [asset] = await loadAssetsByProjectWithClient(projectId, client, [
     assetId,
   ]);
   if (asset === undefined) {
-    throw new Error("Asset not found");
+    throw new AssetRepositoryNotFoundError("Asset not found");
   }
   return asset;
 };

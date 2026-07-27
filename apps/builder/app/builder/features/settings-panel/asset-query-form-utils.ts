@@ -1,6 +1,5 @@
 import {
   createStructuredAssetQueryResourceBody,
-  parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryResourceConfiguration,
   type StructuredAssetQueryFilterBinding,
 } from "@webstudio-is/sdk";
@@ -10,12 +9,6 @@ import {
   getQueryWhereMetrics,
 } from "@webstudio-is/query-builder";
 import { getExpressionErrorMessages } from "@webstudio-is/project-build/runtime";
-
-export {
-  createStructuredAssetQueryResourceBody,
-  parseStructuredAssetQueryResourceBody,
-};
-export type { StructuredAssetQueryResourceConfiguration };
 
 export const getAssetQueryConfigurationError = (
   configuration: StructuredAssetQueryResourceConfiguration

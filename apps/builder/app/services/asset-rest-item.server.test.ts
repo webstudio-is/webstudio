@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { AssetRepositoryNotFoundError } from "@webstudio-is/asset-uploader/server";
 import { createAssetAction } from "./asset-rest-route-handlers.server";
 
 const asset: Asset = {
@@ -26,7 +27,7 @@ const createDependencies = () => {
     dependencies: {
       preventCrossOriginCookie: vi.fn(),
       checkCsrf: vi.fn(),
-      authorizeAssetRestProject: vi.fn(async () => ({
+      authorizeApiProject: vi.fn(async () => ({
         context: true,
       })) as never,
       createAssetClient: vi.fn(() => ({ storage: true })) as never,
@@ -88,7 +89,7 @@ describe("mutable Assets REST route", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ asset });
     expect(dependencies.checkCsrf).not.toHaveBeenCalled();
-    expect(dependencies.authorizeAssetRestProject).toHaveBeenCalledWith(
+    expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       expect.any(Request),
       "project-1",
       "edit"
@@ -145,6 +146,41 @@ describe("mutable Assets REST route", () => {
     });
     report.mockRestore();
   });
+
+  test.each([
+    ["PATCH", "updateMetadata"],
+    ["DELETE", "deleteAsset"],
+  ] as const)(
+    "returns not found when %s targets a missing asset",
+    async (method, operation) => {
+      const dependencies = createDependencies();
+      dependencies[operation].mockRejectedValue(
+        new AssetRepositoryNotFoundError("Asset not found")
+      );
+      const requestInit: RequestInit = {
+        method,
+        headers: { "x-auth-token": "token" },
+      };
+      if (method === "PATCH") {
+        requestInit.headers = {
+          ...requestInit.headers,
+          "content-type": "application/json",
+        };
+        requestInit.body = JSON.stringify({ description: "Missing" });
+      }
+
+      const response = await callAction(
+        createAssetAction(dependencies.dependencies),
+        new Request(
+          "https://webstudio.is/rest/assets/missing?projectId=project-1",
+          requestInit
+        )
+      );
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ errors: "Asset not found" });
+    }
+  );
 
   test("rejects oversized JSON before calling the repository", async () => {
     const { dependencies, updateMetadata } = createDependencies();

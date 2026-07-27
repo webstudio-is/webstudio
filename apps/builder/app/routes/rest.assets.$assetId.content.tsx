@@ -8,9 +8,9 @@ import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { createAssetContentLoader } from "~/services/asset-rest-route-handlers.server";
 import {
-  authorizeAssetRestProject,
-  requiresAssetMutationCsrf,
-} from "~/services/asset-rest-auth.server";
+  authorizeApiProject,
+  requiresApiCsrf,
+} from "~/services/api-auth.server";
 import {
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
@@ -24,7 +24,7 @@ export const loader = createAssetContentLoader();
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
-  if (requiresAssetMutationCsrf(request)) {
+  if (requiresApiCsrf(request)) {
     await checkCsrf(request);
   }
 
@@ -46,7 +46,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       url.searchParams.get("expectedName")
     );
 
-    const context = await authorizeAssetRestProject(request, projectId, "edit");
+    const context = await authorizeApiProject(request, projectId, "edit");
     const asset = await new PostgresAssetRepository({
       projectId,
       context,

@@ -9,10 +9,27 @@ import {
   getExpressionIdentifiers,
   parseObjectExpression,
   parseArrayExpression,
+  parseStaticMemberPath,
   generateObjectExpression,
   allowedArrayMethods,
   allowedStringMethods,
 } from "./index";
+
+describe("static member paths", () => {
+  test.each([
+    ["system.params.slug", ["system", "params", "slug"]],
+    ['system.params["slug"]', ["system", "params", "slug"]],
+    ["system?.params?.slug", ["system", "params", "slug"]],
+    ['system?.params?.["slug"]', ["system", "params", "slug"]],
+    ["items[0].title", ["items", "0", "title"]],
+    ["system.params[slug]", undefined],
+    ["system.params.slug ?? fallback", undefined],
+    ["system.params.slug trailing", undefined],
+    ["system.params.", undefined],
+  ])("parses %s", (source, expected) => {
+    expect(parseStaticMemberPath(source)).toEqual(expected);
+  });
+});
 
 describe("lint expression", () => {
   const error = (from: number, to: number, message: string): Diagnostic => ({

@@ -93,6 +93,9 @@ const assertApiPublishDomains = ({
   domains: string[];
   project: { domain: string };
 }) => {
+  if (auth.type === "user") {
+    return;
+  }
   const { token } = auth;
   if (token.canPublish === true) {
     return;

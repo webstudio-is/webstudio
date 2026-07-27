@@ -9,9 +9,9 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
-  authorizeAssetRestProject,
-  requiresAssetMutationCsrf,
-} from "~/services/asset-rest-auth.server";
+  authorizeApiProject,
+  requiresApiCsrf,
+} from "~/services/api-auth.server";
 import {
   AssetRestRequestError,
   assetRestErrorResponse,
@@ -31,7 +31,7 @@ export const loader = async () => {
 export const action = async (props: ActionFunctionArgs) => {
   try {
     preventCrossOriginCookie(props.request);
-    if (requiresAssetMutationCsrf(props.request)) {
+    if (requiresApiCsrf(props.request)) {
       await checkCsrf(props.request);
     }
 
@@ -46,7 +46,7 @@ export const action = async (props: ActionFunctionArgs) => {
         ? await readAssetRestJson(request)
         : Object.fromEntries(await readAssetRestFormData(request));
       const input = assetUploadReservationRequest.parse(rawInput);
-      const context = await authorizeAssetRestProject(
+      const context = await authorizeApiProject(
         request,
         input.projectId,
         "edit"

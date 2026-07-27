@@ -1,14 +1,16 @@
 import { json } from "@remix-run/server-runtime";
 import { loadBuilderAssetFieldCatalog } from "@webstudio-is/asset-uploader/server";
-import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { authorizeAssetRestProject } from "~/services/asset-rest-auth.server";
+import {
+  authorizeApiProject,
+  getApiAuthorizationFailure,
+} from "~/services/api-auth.server";
 import { getAssetRestProjectId } from "~/services/asset-rest.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createAssetClient } from "../asset-client";
 
 export type AssetDescriptionDependencies = {
-  authorizeAssetRestProject: typeof authorizeAssetRestProject;
+  authorizeApiProject: typeof authorizeApiProject;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,
     "readFile"
@@ -18,7 +20,7 @@ export type AssetDescriptionDependencies = {
 };
 
 const defaultDependencies: AssetDescriptionDependencies = {
-  authorizeAssetRestProject,
+  authorizeApiProject,
   createAssetClient,
   loadBuilderAssetFieldCatalog,
   preventCrossOriginCookie,
@@ -30,7 +32,7 @@ const failure = ({
   status,
   retryable = false,
 }: {
-  code: "INVALID_REQUEST" | "FORBIDDEN" | "INTERNAL_ERROR";
+  code: "INVALID_REQUEST" | "UNAUTHORIZED" | "FORBIDDEN" | "INTERNAL_ERROR";
   message: string;
   status: number;
   retryable?: boolean;
@@ -67,7 +69,7 @@ export const createAssetDescriptionLoader =
     }
 
     try {
-      const context = await dependencies.authorizeAssetRestProject(
+      const context = await dependencies.authorizeApiProject(
         request,
         projectId,
         "view"
@@ -84,12 +86,9 @@ export const createAssetDescriptionLoader =
         },
       });
     } catch (error) {
-      if (error instanceof AuthorizationError) {
-        return failure({
-          code: "FORBIDDEN",
-          message: "You don't have access to this project's asset API",
-          status: 403,
-        });
+      const authorizationFailure = getApiAuthorizationFailure(error);
+      if (authorizationFailure !== undefined) {
+        return failure(authorizationFailure);
       }
       return failure({
         code: "INTERNAL_ERROR",

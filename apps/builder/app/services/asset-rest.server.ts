@@ -1,5 +1,4 @@
 import { json } from "@remix-run/server-runtime";
-import { TRPCError } from "@trpc/server";
 import {
   readBoundedRequestBytes,
   RequestByteLimitError,
@@ -11,10 +10,7 @@ import {
   AssetUploadSizeLimitError,
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
-import {
-  AuthorizationError,
-  type ProjectPermit,
-} from "@webstudio-is/trpc-interface/index.server";
+import type { ProjectPermit } from "@webstudio-is/trpc-interface/index.server";
 import { assetFolderIssue } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
@@ -22,7 +18,10 @@ import { ZodError } from "zod";
 import { createAssetClient } from "~/shared/asset-client";
 import { parseError } from "~/shared/error/error-parse";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
-import { authorizeAssetRestProject } from "./asset-rest-auth.server";
+import {
+  authorizeApiProject,
+  getApiAuthorizationFailure,
+} from "./api-auth.server";
 
 export class AssetRestRequestError extends Error {}
 export class AssetRestRangeError extends Error {}
@@ -143,20 +142,15 @@ export const createAssetRestRepository = async (
   const projectId = getAssetRestProjectId(request);
   return new PostgresAssetRepository({
     projectId,
-    context: await authorizeAssetRestProject(request, projectId, permit),
+    context: await authorizeApiProject(request, projectId, permit),
     assetStore: createAssetClient(),
   });
 };
 
 const getAssetRestErrorStatus = (error: unknown) => {
-  if (error instanceof TRPCError && error.code === "UNAUTHORIZED") {
-    return 401;
-  }
-  if (error instanceof TRPCError && error.code === "FORBIDDEN") {
-    return 403;
-  }
-  if (error instanceof AuthorizationError) {
-    return 403;
+  const authorizationFailure = getApiAuthorizationFailure(error);
+  if (authorizationFailure !== undefined) {
+    return authorizationFailure.status;
   }
   if (error instanceof AssetRepositoryNotFoundError) {
     return 404;

@@ -66,6 +66,7 @@ import {
 } from "@webstudio-is/content-engine";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { serializeContentArtifact } from "@webstudio-is/content-engine/compiler";
+import { parseStaticMemberPath } from "@webstudio-is/expression";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -112,46 +113,11 @@ type SiteDataByPage = {
   };
 };
 
-const getExpressionMemberPath = (node: unknown): string[] | undefined => {
-  if (typeof node !== "object" || node === null) {
-    return;
-  }
-  if (
-    Reflect.get(node, "type") === "Identifier" &&
-    typeof Reflect.get(node, "name") === "string"
-  ) {
-    return [Reflect.get(node, "name") as string];
-  }
-  if (Reflect.get(node, "type") !== "MemberExpression") {
-    return;
-  }
-  const base = getExpressionMemberPath(Reflect.get(node, "object"));
-  if (base === undefined) {
-    return;
-  }
-  const computed = Reflect.get(node, "computed") === true;
-  const property = Reflect.get(node, "property");
-  const name = computed
-    ? Reflect.get(property, "value")
-    : Reflect.get(property, "name");
-  return typeof name === "string" ? [...base, name] : undefined;
-};
-
 const getBoundSystemRouteParameter = (expression: string) => {
-  try {
-    const program = parse(`(${expression})`, { ecmaVersion: "latest" });
-    const statement = program.body[0];
-    const node =
-      statement?.type === "ExpressionStatement"
-        ? statement.expression
-        : undefined;
-    const path = getExpressionMemberPath(node);
-    return path?.length === 3 && path[0] === "system" && path[1] === "params"
-      ? path[2]
-      : undefined;
-  } catch {
-    return;
-  }
+  const path = parseStaticMemberPath(expression);
+  return path?.length === 3 && path[0] === "system" && path[1] === "params"
+    ? path[2]
+    : undefined;
 };
 
 const getStaticAssetQueryFilter = (

@@ -5,23 +5,16 @@ import { appRouter } from "~/services/trcp-router.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getTrpcResponseMeta } from "~/services/trpc-response-meta.server";
-import { isCliApiRequest } from "~/services/trpc-request.server";
+import { requiresApiCsrf } from "~/services/api-auth.server";
 
 const isServiceRequest = (request: Request) => {
   return isServiceAuthorization(request.headers.get("Authorization"));
 };
 
-const isAuthTokenRequest = (request: Request) => {
-  return request.headers.has("x-auth-token");
-};
-
 export const action = async ({ request }: ActionFunctionArgs) => {
-  if (
-    isServiceRequest(request) === false &&
-    isCliApiRequest(request) === false
-  ) {
+  if (isServiceRequest(request) === false) {
     preventCrossOriginCookie(request);
-    if (isAuthTokenRequest(request) === false) {
+    if (requiresApiCsrf(request)) {
       await checkCsrf(request);
     }
   }
