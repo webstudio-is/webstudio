@@ -28,6 +28,7 @@ import {
 import {
   getExpressionIdentifiers,
   isLiteralExpression,
+  parseStringLiteralExpression,
   transpileExpression,
 } from "@webstudio-is/expression";
 import { z } from "zod";
@@ -54,7 +55,7 @@ import {
   throwBuilderValidationError,
   type SemanticValidationIssue,
 } from "./errors";
-import { getStaticStringLiteral, replaceTextValue } from "./text-replacement";
+import { replaceTextValue } from "./text-replacement";
 import {
   getNamedExpressionErrors,
   getNamedExpressionValidationIssues,
@@ -2029,7 +2030,7 @@ const getResourceWarnings = ({
     fields.method === "get" ||
     (fields.control === "system" &&
       fields.method === "post" &&
-      getStaticStringLiteral(fields.url) === assetsResourceUrl);
+      parseStringLiteralExpression(fields.url) === assetsResourceUrl);
   if (exposeAsDataSource && isRenderTimeRead === false) {
     warnings.push({
       severity: "warning",
@@ -2806,7 +2807,7 @@ export const replaceResourceText = (
     if (input.fields.includes("url")) {
       fields.push({
         field: "url",
-        before: getStaticStringLiteral(resource.url),
+        before: parseStringLiteralExpression(resource.url),
       });
     }
     for (const { field, before } of fields) {

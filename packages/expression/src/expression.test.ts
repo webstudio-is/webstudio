@@ -10,6 +10,7 @@ import {
   parseObjectExpression,
   parseArrayExpression,
   parseStaticMemberPath,
+  parseStringLiteralExpression,
   generateObjectExpression,
   allowedArrayMethods,
   allowedStringMethods,
@@ -28,6 +29,18 @@ describe("static member paths", () => {
     ["system.params.", undefined],
   ])("parses %s", (source, expected) => {
     expect(parseStaticMemberPath(source)).toEqual(expected);
+  });
+});
+
+describe("string literal expressions", () => {
+  test.each([
+    ['"assets"', "assets"],
+    ["'assets'", undefined],
+    [' "assets"', undefined],
+    ['"assets" trailing', undefined],
+    ["assets", undefined],
+  ])("parses %s", (source, expected) => {
+    expect(parseStringLiteralExpression(source)).toBe(expected);
   });
 });
 

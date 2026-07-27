@@ -435,6 +435,17 @@ export const isLiteralExpression = (expression: string) => {
   }
 };
 
+export const parseStringLiteralExpression = (expression: string) => {
+  try {
+    const value = JSON.parse(expression);
+    return typeof value === "string" && JSON.stringify(value) === expression
+      ? value
+      : undefined;
+  } catch {
+    return;
+  }
+};
+
 const getStaticMemberPath = (node: Expression): string[] | undefined => {
   if (node.type === "Identifier") {
     return [node.name];

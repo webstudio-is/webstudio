@@ -3,6 +3,7 @@ import {
   assetQueryStandardFieldTypes,
   getAssetQueryOperatorsForFieldTypes,
   type AssetFileDocument,
+  type AssetQuery,
   type AssetObservedFieldType,
   type AssetQueryInput,
   type AssetQueryFieldPath,
@@ -262,7 +263,7 @@ export const matchesAssetQueryWhere = (
   return where.any.some((child) => matchesAssetQueryWhere(document, child));
 };
 
-export const compareAssetQuerySortValues = (left: unknown, right: unknown) => {
+const compareAssetQuerySortValues = (left: unknown, right: unknown) => {
   const leftMissing = left === undefined || left === null;
   const rightMissing = right === undefined || right === null;
   if (leftMissing || rightMissing) {
@@ -281,6 +282,23 @@ export const compareAssetQuerySortValues = (left: unknown, right: unknown) => {
     serializeJsonDeterministically(left),
     serializeJsonDeterministically(right)
   );
+};
+
+export const compareAssetQueryDocuments = (
+  left: AssetFileDocument,
+  right: AssetFileDocument,
+  sort: AssetQuery["sort"]
+) => {
+  for (const order of sort) {
+    const compared = compareAssetQuerySortValues(
+      getAssetQueryFieldValue(left, order.field),
+      getAssetQueryFieldValue(right, order.field)
+    );
+    if (compared !== 0) {
+      return order.direction === "asc" ? compared : -compared;
+    }
+  }
+  return compareStrings(left._id, right._id);
 };
 
 const selectProperties = (
@@ -361,18 +379,9 @@ export const executeAssetQuery = async ({
   const matched = documents.filter((document) =>
     matchesAssetQueryWhere(document, query.where)
   );
-  const sorted = [...matched].sort((left, right) => {
-    for (const order of query.sort) {
-      const compared = compareAssetQuerySortValues(
-        getAssetQueryFieldValue(left, order.field),
-        getAssetQueryFieldValue(right, order.field)
-      );
-      if (compared !== 0) {
-        return order.direction === "asc" ? compared : -compared;
-      }
-    }
-    return compareStrings(left._id, right._id);
-  });
+  const sorted = [...matched].sort((left, right) =>
+    compareAssetQueryDocuments(left, right, query.sort)
+  );
   const selected = sorted.slice(query.offset, query.offset + query.limit);
   let items = selected.map((document) => toQueryItem(document, query.output));
   if (query.content.mode !== "none") {

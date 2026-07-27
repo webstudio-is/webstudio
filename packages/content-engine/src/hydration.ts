@@ -142,7 +142,7 @@ const decodeText = (bytes: Uint8Array) => {
   }
 };
 
-export const getAssetResourceHydrationReadLength = (
+const getAssetResourceHydrationReadLength = (
   document: AssetFileDocument,
   options: Exclude<AssetResourceContentOptions, { mode: "none" }>
 ) => {

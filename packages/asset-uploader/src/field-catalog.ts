@@ -1,9 +1,9 @@
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetObjectStore } from "./client";
 import {
-  loadAuthorizedBuilderAssetRepository,
-  type BuilderAssetIndexDependencies,
-} from "./builder-canonical-entries";
+  createBuilderAssetRepository,
+  type BuilderAssetRepositoryDependencies,
+} from "./builder-asset-repository";
 
 export const loadBuilderAssetFieldCatalog = async ({
   projectId,
@@ -14,14 +14,12 @@ export const loadBuilderAssetFieldCatalog = async ({
   projectId: string;
   context: AppContext;
   assetClient: Pick<AssetObjectStore, "readFile">;
-  dependencies?: BuilderAssetIndexDependencies;
+  dependencies?: BuilderAssetRepositoryDependencies;
 }) => {
-  const repository = await loadAuthorizedBuilderAssetRepository({
+  const repository = createBuilderAssetRepository({
     projectId,
     context,
     assetClient,
-    authorizationError:
-      "You don't have access to this project's asset field catalog",
     dependencies,
   });
   return await repository.readFieldCatalog();

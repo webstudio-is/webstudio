@@ -7,4 +7,3 @@ export * from "./projection";
 export * from "./content-artifact";
 export * from "./content-database";
 export * from "./request";
-export * from "./query-repository";

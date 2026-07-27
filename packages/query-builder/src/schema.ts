@@ -1,20 +1,15 @@
 import { z } from "zod";
 import { isQueryExpression } from "./source";
 
-export const queryFieldPath = z.array(z.string().min(1)).min(1);
+const queryFieldPath = z.array(z.string().min(1)).min(1);
 
-export const queryCondition = z.strictObject({
+const queryCondition = z.strictObject({
   field: queryFieldPath,
   operator: z.string().min(1),
   value: z.string().min(1),
 });
 
-export type QueryWhereInput =
-  | z.infer<typeof queryCondition>
-  | { all: QueryWhereInput[] }
-  | { any: QueryWhereInput[] };
-
-export type QueryWhereValue<Condition> =
+type QueryWhereValue<Condition> =
   | Condition
   | { all: QueryWhereValue<Condition>[] }
   | { any: QueryWhereValue<Condition>[] };
@@ -34,20 +29,18 @@ export const createQueryWhereSchema = <ConditionSchema extends z.ZodType>(
   return node;
 };
 
-export const queryWhere = createQueryWhereSchema(queryCondition);
-
-export const querySort = z.strictObject({
+const querySort = z.strictObject({
   field: queryFieldPath,
   direction: z.enum(["asc", "desc"]),
 });
 
-export const queryField = z.strictObject({
+const queryField = z.strictObject({
   path: queryFieldPath,
   label: z.string().min(1),
   types: z.array(z.string().min(1)).min(1),
 });
 
-export const queryOperator = z.strictObject({
+const queryOperator = z.strictObject({
   value: z.string().min(1),
   label: z.string().min(1),
   types: z.array(z.string().min(1)).min(1),
@@ -101,7 +94,7 @@ const queryParameter = z.strictObject({
   }),
 });
 
-export const queryLimits = z.strictObject({
+const queryLimits = z.strictObject({
   conditions: z.number().int().nonnegative(),
   depth: z.number().int().nonnegative(),
   sortFields: z.number().int().nonnegative(),
@@ -325,10 +318,3 @@ export const queryCapabilities = z
       }
     }
   );
-
-export const structuredQuery = z.strictObject({
-  where: queryWhere,
-  sort: z.array(querySort),
-  limit: z.string().min(1),
-  offset: z.string().min(1),
-});

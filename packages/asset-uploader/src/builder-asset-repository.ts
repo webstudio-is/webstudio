@@ -1,16 +1,11 @@
-import {
-  authorizeProject,
-  AuthorizationError,
-  type AppContext,
-} from "@webstudio-is/trpc-interface/index.server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { AssetObjectReader } from "./client";
 import {
   type AssetRepository,
   PostgresAssetRepository,
 } from "./asset-repository";
 
-export type BuilderAssetIndexDependencies = {
-  hasProjectPermit?: typeof authorizeProject.hasProjectPermit;
+export type BuilderAssetRepositoryDependencies = {
   createRepository?: (input: {
     projectId: string;
     context: AppContext;
@@ -18,31 +13,21 @@ export type BuilderAssetIndexDependencies = {
   }) => Pick<AssetRepository, "readFieldCatalog" | "query">;
 };
 
-export const loadAuthorizedBuilderAssetRepository = async ({
+export const createBuilderAssetRepository = ({
   projectId,
   context,
   assetClient,
-  authorizationError,
   dependencies = {},
   contentDatabaseMaxBytes,
 }: {
   projectId: string;
   context: AppContext;
   assetClient: AssetObjectReader;
-  authorizationError: string;
-  dependencies?: BuilderAssetIndexDependencies;
+  dependencies?: BuilderAssetRepositoryDependencies;
   contentDatabaseMaxBytes?: number;
-}) => {
-  const canView = await (
-    dependencies.hasProjectPermit ?? authorizeProject.hasProjectPermit
-  )({ projectId, permit: "view" }, context);
-  if (canView === false) {
-    throw new AuthorizationError(authorizationError);
-  }
-  const repository = (
+}) =>
+  (
     dependencies.createRepository ??
     ((input) =>
       new PostgresAssetRepository({ ...input, contentDatabaseMaxBytes }))
   )({ projectId, context, assetClient });
-  return repository;
-};

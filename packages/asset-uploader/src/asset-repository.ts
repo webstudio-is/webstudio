@@ -5,8 +5,7 @@ import {
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
   isContentDocumentCandidate,
-  selectContentHydrationCandidates,
-  selectAssetProperties,
+  prepareContentCompilerEntries,
   type AssetQueryRequestInput,
   type AssetQueryResult,
   type BuilderAssetFieldCatalog,
@@ -169,13 +168,6 @@ export interface AssetRepository {
 }
 
 /** Trusted repair/publication operations. Every method still verifies permits. */
-export interface AssetMaintenanceRepository {
-  synchronize(): ReturnType<typeof synchronizeCanonicalAssets>;
-  prepareIndex(
-    requirements?: ContentCompilationPlan
-  ): ReturnType<typeof createAssetIndex>;
-}
-
 /**
  * Hosted Assets repository. PostgreSQL owns logical records and canonical
  * metadata; the injected object store owns file bytes. Published runtimes use
@@ -185,9 +177,7 @@ export interface AssetMaintenanceRepository {
  * and publication lazily reconcile derived metadata so projects that do not
  * use configured Assets queries never open or parse stored file contents.
  */
-export class PostgresAssetRepository
-  implements AssetRepository, AssetMaintenanceRepository
-{
+export class PostgresAssetRepository implements AssetRepository {
   private readonly projectId: string;
   private readonly context: AppContext;
   private readonly assetStore: RepositoryObjectStore;
@@ -708,56 +698,10 @@ export class PostgresAssetRepository
       projectId: this.projectId,
       assetIds,
     });
-    const projectedEntries =
-      requirements === undefined
-        ? entries
-        : entries.map((entry) => {
-            const { excerpt, ...document } = entry.document;
-            return {
-              ...entry,
-              document: {
-                ...document,
-                properties:
-                  requirements.structuredPropertyPaths === "all"
-                    ? entry.document.properties
-                    : selectAssetProperties({
-                        properties: entry.document.properties,
-                        fields: requirements.structuredPropertyPaths,
-                      }),
-                ...(requirements.excerpt && excerpt !== undefined
-                  ? { excerpt }
-                  : {}),
-              },
-            };
-          });
-    const hydrationAssetIds =
-      requirements === undefined
-        ? undefined
-        : selectContentHydrationCandidates({
-            documents: projectedEntries.map(({ document }) => document),
-            plan: requirements,
-          });
-    const candidateEntries =
-      requirements === undefined
-        ? projectedEntries
-        : projectedEntries.filter(({ document }) =>
-            isContentDocumentCandidate({
-              document,
-              plan: requirements,
-              available: "all",
-            })
-          );
-    const compilerEntries = await Promise.all(
-      candidateEntries.map(async (entry) => {
-        if (
-          requirements === undefined ||
-          hydrationAssetIds?.has(entry.assetId) !== true
-        ) {
-          return entry;
-        }
-        if (entry.document.size > contentEngineLimits.hydratedFileBytes) {
-          return entry;
-        }
+    return await prepareContentCompilerEntries({
+      entries,
+      plan: requirements,
+      loadContent: async (entry) => {
         const response = await this.assetStore.readFile(
           entry.document.contentRef,
           { offset: 0, length: entry.document.size }
@@ -783,12 +727,11 @@ export class PostgresAssetRepository
               },
             ]);
           }
-          return entry;
+          return;
         }
-        return { ...entry, content };
-      })
-    );
-    return compilerEntries;
+        return content;
+      },
+    });
   }
 
   async query(request: AssetQueryRequestInput) {

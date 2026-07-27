@@ -1,4 +1,5 @@
 import { createQuerySourceCodec } from "@webstudio-is/query-builder";
+import { parseStringLiteralExpression } from "@webstudio-is/expression";
 import {
   createContentCompilationPlan,
   type ContentCompilationPlan,
@@ -34,21 +35,10 @@ export const createAssetResourceRequest = (
   body: assetQueryRequest.parse(request),
 });
 
-const getStaticStringLiteral = (expression: string) => {
-  try {
-    const value = JSON.parse(expression);
-    return typeof value === "string" && JSON.stringify(value) === expression
-      ? value
-      : undefined;
-  } catch {
-    return;
-  }
-};
-
 export const isAssetsResource = (resource: Resource) =>
   resource.control === "system" &&
   (resource.method === "get" || resource.method === "post") &&
-  getStaticStringLiteral(resource.url) === assetsResourceUrl;
+  parseStringLiteralExpression(resource.url) === assetsResourceUrl;
 
 export type StructuredAssetQueryFilterBinding = {
   field: AssetQueryFieldPath;
@@ -106,7 +96,7 @@ const toContentCompilationInteger = (expression: string) => {
   return { type: "dynamic" } as const;
 };
 
-export const createAssetContentCompilationQuery = ({
+const createAssetContentCompilationQuery = ({
   resourceId,
   configuration,
 }: {
@@ -125,7 +115,7 @@ export const createAssetContentCompilationQuery = ({
 export const isConfiguredAssetsResource = (resource: Resource) =>
   resource.control === "system" &&
   resource.method === "post" &&
-  getStaticStringLiteral(resource.url) === assetsResourceUrl;
+  parseStringLiteralExpression(resource.url) === assetsResourceUrl;
 
 export const createReachableAssetContentCompilationPlan = ({
   props,

@@ -25,6 +25,10 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import type { AssetQueryCapabilities } from "@webstudio-is/sdk";
 
+const assetItemApiPath = `${assetsApiUrl}/{assetId}`;
+const assetContentApiPath = `${assetItemApiPath}/content`;
+const assetFolderItemApiPath = `${assetsFoldersApiUrl}/{folderId}`;
+
 export const assetResourceApiOperations = {
   listAssets: {
     operationId: "listAssets",
@@ -44,27 +48,27 @@ export const assetResourceApiOperations = {
   updateAsset: {
     operationId: "updateAsset",
     method: "patch",
-    path: "/rest/assets/{assetId}",
+    path: assetItemApiPath,
   },
   getAsset: {
     operationId: "getAsset",
     method: "get",
-    path: "/rest/assets/{assetId}",
+    path: assetItemApiPath,
   },
   deleteAsset: {
     operationId: "deleteAsset",
     method: "delete",
-    path: "/rest/assets/{assetId}",
+    path: assetItemApiPath,
   },
   replaceAssetContent: {
     operationId: "replaceAssetContent",
     method: "put",
-    path: "/rest/assets/{assetId}/content",
+    path: assetContentApiPath,
   },
   downloadAssetContent: {
     operationId: "downloadAssetContent",
     method: "get",
-    path: "/rest/assets/{assetId}/content",
+    path: assetContentApiPath,
   },
   listAssetFolders: {
     operationId: "listAssetFolders",
@@ -79,17 +83,17 @@ export const assetResourceApiOperations = {
   updateAssetFolder: {
     operationId: "updateAssetFolder",
     method: "patch",
-    path: "/rest/assets/folders/{folderId}",
+    path: assetFolderItemApiPath,
   },
   getAssetFolder: {
     operationId: "getAssetFolder",
     method: "get",
-    path: "/rest/assets/folders/{folderId}",
+    path: assetFolderItemApiPath,
   },
   deleteAssetFolder: {
     operationId: "deleteAssetFolder",
     method: "delete",
-    path: "/rest/assets/folders/{folderId}",
+    path: assetFolderItemApiPath,
   },
   queryAssets: {
     operationId: "queryAssets",
@@ -145,7 +149,7 @@ export const assetUploadReservationRequest = z.strictObject({
     .optional(),
 });
 
-export const assetUploadTicket = z.discriminatedUnion("deduplicated", [
+const assetUploadTicket = z.discriminatedUnion("deduplicated", [
   z.strictObject({
     assetId: z.string().min(1),
     name: z.string().min(1),
@@ -159,14 +163,14 @@ export const assetUploadTicket = z.discriminatedUnion("deduplicated", [
   }),
 ]);
 
-export const assetUploadResult = z.strictObject({
+const assetUploadResult = z.strictObject({
   uploadedAssets: z.array(asset),
   deduplicated: z.boolean(),
 });
 
-export const assetListResult = z.strictObject({ assets: z.array(asset) });
+const assetListResult = z.strictObject({ assets: z.array(asset) });
 
-export const assetItemResult = z.strictObject({ asset });
+const assetItemResult = z.strictObject({ asset });
 
 export const assetMetadataUpdate = z
   .strictObject({
@@ -193,7 +197,7 @@ export const assetMetadataUpdate = z
   });
 export type AssetMetadataUpdate = z.infer<typeof assetMetadataUpdate>;
 
-export const assetFolderListResult = z.strictObject({
+const assetFolderListResult = z.strictObject({
   folders: z.array(assetFolder),
 });
 
@@ -212,15 +216,15 @@ export const assetFolderUpdateRequest = z
   });
 export type AssetFolderUpdateRequest = z.infer<typeof assetFolderUpdateRequest>;
 
-export const assetFolderMutationResult = z.strictObject({
+const assetFolderMutationResult = z.strictObject({
   folder: assetFolder,
 });
 
-export const assetMutationFailure = z.strictObject({
+const assetMutationFailure = z.strictObject({
   errors: z.string().min(1),
 });
 
-export const assetIndexRefreshResult = z.strictObject({
+const assetIndexRefreshResult = z.strictObject({
   scanned: z.number().int().nonnegative(),
   indexed: z.number().int().nonnegative(),
   metadataUpdated: z.number().int().nonnegative(),
@@ -269,6 +273,42 @@ const toComponentSchema = (
   });
   return rewriteLocalReferences(jsonSchema, component) as JsonSchema;
 };
+
+const inputComponentSchemas = {
+  AssetQueryRequest: assetQueryRequest,
+  AssetUploadReservationRequest: assetUploadReservationRequest,
+  AssetMetadataUpdate: assetMetadataUpdate,
+  AssetFolderCreateRequest: assetFolderCreateRequest,
+  AssetFolderUpdateRequest: assetFolderUpdateRequest,
+};
+
+const outputComponentSchemas = {
+  AssetQueryResult: assetQueryResult,
+  AssetResourceQueryFailure: assetResourceQueryFailure,
+  BuilderAssetFieldCatalog: builderAssetFieldCatalog,
+  QueryCapabilities: queryCapabilities,
+  AssetUploadTicket: assetUploadTicket,
+  AssetUploadResult: assetUploadResult,
+  AssetListResult: assetListResult,
+  AssetItemResult: assetItemResult,
+  AssetMutationResult: assetItemResult,
+  AssetMutationFailure: assetMutationFailure,
+  AssetIndexRefreshResult: assetIndexRefreshResult,
+  AssetFolderListResult: assetFolderListResult,
+  AssetFolderMutationResult: assetFolderMutationResult,
+};
+
+const createComponentSchemas = () =>
+  Object.fromEntries([
+    ...Object.entries(inputComponentSchemas).map(([name, schema]) => [
+      name,
+      toComponentSchema(name, schema, "input"),
+    ]),
+    ...Object.entries(outputComponentSchemas).map(([name, schema]) => [
+      name,
+      toComponentSchema(name, schema, "output"),
+    ]),
+  ]);
 
 const schemaResponse = (component: string, description: string) => ({
   description,
@@ -757,98 +797,7 @@ export const createAssetResourceOpenApi = ({
       },
     },
     components: {
-      schemas: {
-        AssetQueryRequest: toComponentSchema(
-          "AssetQueryRequest",
-          assetQueryRequest,
-          "input"
-        ),
-        AssetQueryResult: toComponentSchema(
-          "AssetQueryResult",
-          assetQueryResult,
-          "output"
-        ),
-        AssetResourceQueryFailure: toComponentSchema(
-          "AssetResourceQueryFailure",
-          assetResourceQueryFailure,
-          "output"
-        ),
-        BuilderAssetFieldCatalog: toComponentSchema(
-          "BuilderAssetFieldCatalog",
-          builderAssetFieldCatalog,
-          "output"
-        ),
-        QueryCapabilities: toComponentSchema(
-          "QueryCapabilities",
-          queryCapabilities,
-          "output"
-        ),
-        AssetUploadReservationRequest: toComponentSchema(
-          "AssetUploadReservationRequest",
-          assetUploadReservationRequest,
-          "input"
-        ),
-        AssetUploadTicket: toComponentSchema(
-          "AssetUploadTicket",
-          assetUploadTicket,
-          "output"
-        ),
-        AssetUploadResult: toComponentSchema(
-          "AssetUploadResult",
-          assetUploadResult,
-          "output"
-        ),
-        AssetListResult: toComponentSchema(
-          "AssetListResult",
-          assetListResult,
-          "output"
-        ),
-        AssetItemResult: toComponentSchema(
-          "AssetItemResult",
-          assetItemResult,
-          "output"
-        ),
-        AssetMetadataUpdate: toComponentSchema(
-          "AssetMetadataUpdate",
-          assetMetadataUpdate,
-          "input"
-        ),
-        AssetMutationResult: toComponentSchema(
-          "AssetMutationResult",
-          assetItemResult,
-          "output"
-        ),
-        AssetMutationFailure: toComponentSchema(
-          "AssetMutationFailure",
-          assetMutationFailure,
-          "output"
-        ),
-        AssetIndexRefreshResult: toComponentSchema(
-          "AssetIndexRefreshResult",
-          assetIndexRefreshResult,
-          "output"
-        ),
-        AssetFolderListResult: toComponentSchema(
-          "AssetFolderListResult",
-          assetFolderListResult,
-          "output"
-        ),
-        AssetFolderCreateRequest: toComponentSchema(
-          "AssetFolderCreateRequest",
-          assetFolderCreateRequest,
-          "input"
-        ),
-        AssetFolderUpdateRequest: toComponentSchema(
-          "AssetFolderUpdateRequest",
-          assetFolderUpdateRequest,
-          "input"
-        ),
-        AssetFolderMutationResult: toComponentSchema(
-          "AssetFolderMutationResult",
-          assetFolderMutationResult,
-          "output"
-        ),
-      },
+      schemas: createComponentSchemas(),
       securitySchemes: {
         projectToken: {
           type: "apiKey",
@@ -884,7 +833,3 @@ export const createAssetResourceOpenApi = ({
   }
   return document;
 };
-
-export type AssetResourceOpenApi = ReturnType<
-  typeof createAssetResourceOpenApi
->;

@@ -7,11 +7,10 @@ import type {
 } from "./schema";
 import { assetQueryFilter } from "./schema";
 import { matchesAssetQueryFilter } from "./structured-query";
-import {
-  compareAssetQuerySortValues,
-  getAssetQueryFieldValue,
-} from "./structured-query";
-import { compareStrings } from "./canonical-json";
+import { compareAssetQueryDocuments } from "./structured-query";
+import { contentEngineLimits } from "./limits";
+import { selectAssetProperties } from "./projection";
+import type { CanonicalAssetFileEntry } from "./canonical";
 
 export type ContentCompilationValue =
   | { type: "literal"; value: unknown }
@@ -111,21 +110,6 @@ export const isContentDocumentCandidate = (input: {
   available: "base" | "all";
 }) => getContentDocumentCandidateQueryIds(input).length > 0;
 
-export const isContentDocumentHydrationCandidate = ({
-  document,
-  plan,
-  available,
-}: {
-  document: AssetFileDocument;
-  plan: ContentCompilationPlan;
-  available: "base" | "all";
-}) =>
-  plan.queries.some(
-    ({ where, content }) =>
-      content.mode !== "none" &&
-      evaluateWhere({ document, where, available }) !== false
-  );
-
 const hasDynamicWhere = (where: ContentCompilationWhere): boolean => {
   if ("field" in where) {
     return where.value.type === "dynamic";
@@ -160,18 +144,9 @@ export const selectContentHydrationCandidates = ({
       }
       continue;
     }
-    const sorted = [...matched].sort((left, right) => {
-      for (const order of query.sort) {
-        const compared = compareAssetQuerySortValues(
-          getAssetQueryFieldValue(left, order.field),
-          getAssetQueryFieldValue(right, order.field)
-        );
-        if (compared !== 0) {
-          return order.direction === "asc" ? compared : -compared;
-        }
-      }
-      return compareStrings(left._id, right._id);
-    });
+    const sorted = [...matched].sort((left, right) =>
+      compareAssetQueryDocuments(left, right, query.sort)
+    );
     const offset = Number(query.offset.value);
     const limit = Number(query.limit.value);
     for (const document of sorted.slice(offset, offset + limit)) {
@@ -179,6 +154,56 @@ export const selectContentHydrationCandidates = ({
     }
   }
   return selected;
+};
+
+export const prepareContentCompilerEntries = async ({
+  entries,
+  plan,
+  loadContent,
+}: {
+  entries: readonly CanonicalAssetFileEntry[];
+  plan?: ContentCompilationPlan;
+  loadContent: (entry: CanonicalAssetFileEntry) => Promise<string | undefined>;
+}) => {
+  if (plan === undefined) {
+    return entries;
+  }
+  const projected = entries.map((entry) => {
+    const { excerpt, ...document } = entry.document;
+    return {
+      ...entry,
+      document: {
+        ...document,
+        properties:
+          plan.structuredPropertyPaths === "all"
+            ? entry.document.properties
+            : selectAssetProperties({
+                properties: entry.document.properties,
+                fields: plan.structuredPropertyPaths,
+              }),
+        ...(plan.excerpt && excerpt !== undefined ? { excerpt } : {}),
+      },
+    };
+  });
+  const hydrationIds = selectContentHydrationCandidates({
+    documents: projected.map(({ document }) => document),
+    plan,
+  });
+  const candidates = projected.filter(({ document }) =>
+    isContentDocumentCandidate({ document, plan, available: "all" })
+  );
+  return await Promise.all(
+    candidates.map(async (entry) => {
+      if (
+        hydrationIds.has(entry.assetId) === false ||
+        entry.document.size > contentEngineLimits.hydratedFileBytes
+      ) {
+        return entry;
+      }
+      const content = await loadContent(entry);
+      return content === undefined ? entry : { ...entry, content };
+    })
+  );
 };
 
 const visitWhere = (

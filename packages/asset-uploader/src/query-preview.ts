@@ -2,9 +2,9 @@ import { type AssetQueryRequestInput } from "@webstudio-is/content-engine";
 import type { AssetObjectStore } from "./client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
-  loadAuthorizedBuilderAssetRepository,
-  type BuilderAssetIndexDependencies,
-} from "./builder-canonical-entries";
+  createBuilderAssetRepository,
+  type BuilderAssetRepositoryDependencies,
+} from "./builder-asset-repository";
 
 export const previewAssetResourceQuery = async ({
   projectId,
@@ -18,15 +18,13 @@ export const previewAssetResourceQuery = async ({
   request: AssetQueryRequestInput;
   context: AppContext;
   assetClient: Pick<AssetObjectStore, "readFile">;
-  dependencies?: BuilderAssetIndexDependencies;
+  dependencies?: BuilderAssetRepositoryDependencies;
   contentDatabaseMaxBytes?: number;
 }) => {
-  const repository = await loadAuthorizedBuilderAssetRepository({
+  const repository = createBuilderAssetRepository({
     projectId,
     context,
     assetClient,
-    authorizationError:
-      "You don't have access to preview this project's asset resources",
     dependencies,
     contentDatabaseMaxBytes,
   });

@@ -68,6 +68,15 @@ const outputSchema = z.toJSONSchema(assetResourceOutputSelection, {
   io: "input",
 });
 
+const maximumContentBytesField = {
+  key: "maxBytes",
+  label: "Maximum content bytes",
+  type: "number" as const,
+  min: 1,
+  max: assetResourceLimits.hydratedFileBytes,
+  optional: true,
+};
+
 export type AssetQueryCapabilities = QueryCapabilities<
   AssetObservedFieldType,
   AssetQueryOperator
@@ -252,16 +261,7 @@ export const createAssetQueryCapabilities = ({
                     mode: "markdown-body",
                     maxBytes: assetResourceLimits.hydratedFileBytes,
                   },
-                  fields: [
-                    {
-                      key: "maxBytes",
-                      label: "Maximum content bytes",
-                      type: "number",
-                      min: 1,
-                      max: assetResourceLimits.hydratedFileBytes,
-                      optional: true,
-                    },
-                  ],
+                  fields: [maximumContentBytesField],
                 },
                 {
                   value: "full",
@@ -270,16 +270,7 @@ export const createAssetQueryCapabilities = ({
                     mode: "full",
                     maxBytes: assetResourceLimits.hydratedFileBytes,
                   },
-                  fields: [
-                    {
-                      key: "maxBytes",
-                      label: "Maximum content bytes",
-                      type: "number",
-                      min: 1,
-                      max: assetResourceLimits.hydratedFileBytes,
-                      optional: true,
-                    },
-                  ],
+                  fields: [maximumContentBytesField],
                 },
                 {
                   value: "range",

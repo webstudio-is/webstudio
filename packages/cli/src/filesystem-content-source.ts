@@ -8,10 +8,8 @@ import {
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
 import {
-  contentEngineLimits,
   isContentDocumentCandidate,
-  selectAssetProperties,
-  selectContentHydrationCandidates,
+  prepareContentCompilerEntries,
   type ContentCompilationPlan,
 } from "@webstudio-is/content-engine";
 import {
@@ -215,74 +213,31 @@ export const createFileSystemContentSource = ({
                 })
           )
         );
-        const projected =
-          plan === undefined
-            ? prepared
-            : prepared.map((entry) => {
-                const { excerpt, ...document } = entry.document;
-                return {
-                  ...entry,
-                  document: {
-                    ...document,
-                    properties:
-                      plan.structuredPropertyPaths === "all"
-                        ? entry.document.properties
-                        : selectAssetProperties({
-                            properties: entry.document.properties,
-                            fields: plan.structuredPropertyPaths,
-                          }),
-                    ...(plan.excerpt && excerpt !== undefined
-                      ? { excerpt }
-                      : {}),
-                  },
-                };
-              });
-        const hydrationIds =
-          plan === undefined
-            ? new Set<string>()
-            : selectContentHydrationCandidates({
-                documents: projected.map(({ document }) => document),
-                plan,
-              });
-        return await Promise.all(
-          projected
-            .filter(
-              ({ document }) =>
-                plan === undefined ||
-                isContentDocumentCandidate({
-                  document,
-                  plan,
-                  available: "all",
-                })
-            )
-            .map(async (entry) => {
-              if (
-                hydrationIds.has(entry.assetId) === false ||
-                entry.document.size > contentEngineLimits.hydratedFileBytes
-              ) {
-                return entry;
-              }
-              const capturedFile = capturedById.get(entry.assetId);
-              if (capturedFile === undefined) {
-                throw new Error("Content source snapshot is incomplete");
-              }
-              const bytes = await readSnapshotFile({
-                path: capturedFile.filePath,
-                identity: capturedFile.identity,
-                maximumBytes: entry.document.size,
-              });
-              if (bytes.byteLength !== entry.document.size) {
-                throw new Error("Content source file size changed");
-              }
-              try {
-                return { ...entry, content: decodeUtf8(bytes) };
-              } catch {
-                throw new Error(
-                  `Selected content source file is not valid UTF-8: ${entry.document.path}`
-                );
-              }
-            })
-        );
+        return await prepareContentCompilerEntries({
+          entries: prepared,
+          plan,
+          loadContent: async (entry) => {
+            const capturedFile = capturedById.get(entry.assetId);
+            if (capturedFile === undefined) {
+              throw new Error("Content source snapshot is incomplete");
+            }
+            const bytes = await readSnapshotFile({
+              path: capturedFile.filePath,
+              identity: capturedFile.identity,
+              maximumBytes: entry.document.size,
+            });
+            if (bytes.byteLength !== entry.document.size) {
+              throw new Error("Content source file size changed");
+            }
+            try {
+              return decodeUtf8(bytes);
+            } catch {
+              throw new Error(
+                `Selected content source file is not valid UTF-8: ${entry.document.path}`
+              );
+            }
+          },
+        });
       },
       isCurrent: async () => {
         try {

@@ -6,6 +6,7 @@ import {
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { parseStringLiteralExpression } from "@webstudio-is/expression";
 import {
   createWebstudioDataFromBuild,
   findAvailableVariables,
@@ -38,7 +39,6 @@ import { paginateOutput, type PaginatedOutputInput } from "./output";
 import { pageCopyNamespaces } from "../contracts/namespaces";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
-import { getStaticStringLiteral } from "./text-replacement";
 import {
   collectExclusiveInstanceIds,
   createInstanceCleanupPayload,
@@ -664,7 +664,7 @@ const applyCopiedPageTextSubstitutions = ({
     return;
   }
   const replaceFixedExpression = (expression: string) => {
-    const value = getStaticStringLiteral(expression);
+    const value = parseStringLiteralExpression(expression);
     const replacement =
       value === undefined ? undefined : replacementsByText.get(value);
     return replacement === undefined ? expression : JSON.stringify(replacement);

@@ -362,23 +362,21 @@ export const getAssetQueryWhereMetrics = (where: AssetQueryWhere) => {
   return { filters: conditions, depth };
 };
 
-export const assetQueryWhere = assetQueryWhereNode.superRefine(
-  (where, context) => {
-    const { filters, depth } = getAssetQueryWhereMetrics(where);
-    if (filters > contentEngineLimits.filterCount) {
-      context.addIssue({
-        code: "custom",
-        message: "Asset query exceeds the filter limit",
-      });
-    }
-    if (depth > contentEngineLimits.filterDepth) {
-      context.addIssue({
-        code: "custom",
-        message: "Asset query exceeds the filter nesting limit",
-      });
-    }
+const assetQueryWhere = assetQueryWhereNode.superRefine((where, context) => {
+  const { filters, depth } = getAssetQueryWhereMetrics(where);
+  if (filters > contentEngineLimits.filterCount) {
+    context.addIssue({
+      code: "custom",
+      message: "Asset query exceeds the filter limit",
+    });
   }
-);
+  if (depth > contentEngineLimits.filterDepth) {
+    context.addIssue({
+      code: "custom",
+      message: "Asset query exceeds the filter nesting limit",
+    });
+  }
+});
 
 export const getAssetQueryOperatorsForFieldTypes = (
   fieldTypes: readonly AssetObservedFieldType[]
@@ -465,13 +463,11 @@ export const hydratedAssetContent = z.object({
 
 export type HydratedAssetContent = z.infer<typeof hydratedAssetContent>;
 
-export const assetQueryContent = hydratedAssetContent.omit({
+const assetQueryContent = hydratedAssetContent.omit({
   _id: true,
   revision: true,
   contentRef: true,
 });
-
-export type AssetQueryContent = z.infer<typeof assetQueryContent>;
 
 export const assetQueryItem = assetFileDocument
   .omit({ _id: true, _type: true, contentRef: true })

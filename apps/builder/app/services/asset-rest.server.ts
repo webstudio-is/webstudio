@@ -70,29 +70,39 @@ export const readAssetRestFormData = async (request: Request) => {
   }
 };
 
-export const parseAssetRestIdentifier = (value: string | undefined | null) => {
+const parseRequiredAssetString = ({
+  value,
+  maximumCharacters,
+  name,
+}: {
+  value: string | undefined | null;
+  maximumCharacters: number;
+  name: string;
+}) => {
   if (
     value === undefined ||
     value === null ||
     value.length === 0 ||
-    value.length > assetResourceLimits.assetIdentifierCharacters
+    value.length > maximumCharacters
   ) {
-    throw new AssetRestRequestError("Assets API identifier is invalid");
+    throw new AssetRestRequestError(`Assets API ${name} is invalid`);
   }
   return value;
 };
 
-export const parseAssetRestFilename = (value: string | undefined | null) => {
-  if (
-    value === undefined ||
-    value === null ||
-    value.length === 0 ||
-    value.length > assetResourceLimits.assetFilenameCharacters
-  ) {
-    throw new AssetRestRequestError("Assets API filename is invalid");
-  }
-  return value;
-};
+export const parseAssetRestIdentifier = (value: string | undefined | null) =>
+  parseRequiredAssetString({
+    value,
+    maximumCharacters: assetResourceLimits.assetIdentifierCharacters,
+    name: "identifier",
+  });
+
+export const parseAssetRestFilename = (value: string | undefined | null) =>
+  parseRequiredAssetString({
+    value,
+    maximumCharacters: assetResourceLimits.assetFilenameCharacters,
+    name: "filename",
+  });
 
 export const parseAssetRestDescription = (value: string | undefined | null) => {
   if (

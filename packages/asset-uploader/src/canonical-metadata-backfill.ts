@@ -44,7 +44,7 @@ export type CanonicalAssetSynchronizationIssue = {
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Unknown asset indexing failure";
 
-export const createAssetContentRevision = ({
+const createAssetContentRevision = ({
   storageName,
   updatedAt,
   size,
@@ -310,62 +310,6 @@ const deleteObsoleteCanonicalAssetMetadata = async ({
   }
 };
 
-export const synchronizeCanonicalAsset = async ({
-  projectId,
-  assetId,
-  client,
-  assetClient,
-}: {
-  projectId: string;
-  assetId: string;
-  client: Client;
-  assetClient: CanonicalAssetClient;
-}) => {
-  const assets = await loadUploadedAssets(projectId, client, [assetId]);
-  const asset = assets[0];
-  if (asset === undefined) {
-    await deleteStaleCanonicalAssetFileEntries({
-      client,
-      projectId,
-      assetIds: [assetId],
-    });
-    return { status: "deleted" as const };
-  }
-
-  let revision: string;
-  try {
-    const folders = await loadAssetFoldersByProjectWithClient(
-      projectId,
-      client
-    );
-    const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
-    const hierarchy = createAssetFolderHierarchy(folderMap);
-    revision = await indexCanonicalAsset({
-      projectId,
-      asset,
-      hierarchy,
-      client,
-      assetClient,
-      requirements: fullCanonicalAssetMetadataRequirements,
-    });
-  } catch (error) {
-    try {
-      await deleteObsoleteCanonicalAssetMetadata({
-        client,
-        projectId,
-        assetId,
-      });
-    } catch (cleanupError) {
-      throw new AggregateError(
-        [error, cleanupError],
-        `${getErrorMessage(error)}; stale metadata cleanup failed: ${getErrorMessage(cleanupError)}`
-      );
-    }
-    throw error;
-  }
-  return { status: "indexed" as const, revision };
-};
-
 export const synchronizeCanonicalAssets = async ({
   projectId,
   client,
@@ -522,100 +466,4 @@ export const synchronizeCanonicalAssets = async ({
       left.assetId.localeCompare(right.assetId)
     ),
   };
-};
-
-export const synchronizeCanonicalAssetStandardMetadata = async ({
-  projectId,
-  assetIds,
-  client,
-}: {
-  projectId: string;
-  assetIds: string[];
-  client: Client;
-}) => {
-  if (assetIds.length === 0) {
-    return 0;
-  }
-  const entries = await loadCanonicalAssetFileEntries({
-    client,
-    projectId,
-    assetIds,
-  });
-  if (entries.length === 0) {
-    return 0;
-  }
-  const [assets, folders] = await Promise.all([
-    loadUploadedAssets(projectId, client, assetIds),
-    loadAssetFoldersByProjectWithClient(projectId, client),
-  ]);
-  const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
-  const entriesByAssetId = new Map<string, typeof entries>();
-  for (const entry of entries) {
-    const assetEntries = entriesByAssetId.get(entry.assetId) ?? [];
-    assetEntries.push(entry);
-    entriesByAssetId.set(entry.assetId, assetEntries);
-  }
-  const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
-  const hierarchy = createAssetFolderHierarchy(folderMap);
-  let updated = 0;
-  for (const asset of assetsById.values()) {
-    const revision = createAssetContentRevision({
-      storageName: asset.file.name,
-      updatedAt: asset.file.updatedAt,
-      size: asset.file.size,
-    });
-    const assetEntries = entriesByAssetId.get(asset.id) ?? [];
-    const entry = assetEntries.find(
-      (candidate) => candidate.revision === revision
-    );
-    if (entry === undefined) {
-      continue;
-    }
-    const document = createCanonicalDocument({
-      asset,
-      hierarchy,
-      revision,
-      properties: entry.document.properties,
-      excerpt: entry.document.excerpt,
-      metadataError: entry.document.metadataError,
-    });
-    try {
-      await replaceCanonicalAssetFileEntry({
-        client,
-        entry: createCanonicalAssetFileEntry({
-          projectId,
-          document,
-          metadataRequirements: getEntryRequirements(entry),
-        }),
-        source: getCanonicalMetadataSource(asset),
-      });
-    } catch (error) {
-      try {
-        await deleteCanonicalAssetFileEntryIfMatches({ client, entry });
-      } catch (cleanupError) {
-        throw new AggregateError(
-          [error, cleanupError],
-          `${getErrorMessage(error)}; stale metadata cleanup failed: ${getErrorMessage(cleanupError)}`
-        );
-      }
-      throw error;
-    }
-    updated += 1;
-  }
-  return updated;
-};
-
-export const synchronizeAllCanonicalAssetStandardMetadata = async ({
-  projectId,
-  client,
-}: {
-  projectId: string;
-  client: Client;
-}) => {
-  const entries = await loadCanonicalAssetFileEntries({ client, projectId });
-  return await synchronizeCanonicalAssetStandardMetadata({
-    projectId,
-    client,
-    assetIds: [...new Set(entries.map(({ assetId }) => assetId))],
-  });
 };
