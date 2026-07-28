@@ -340,7 +340,11 @@ export const createContentFieldCatalogCompilationPlan = (
       sort: [],
       limit: { type: "literal", value: 0 },
       offset: { type: "literal", value: 0 },
-      output: { mode: "fields", fields: [["properties"]] },
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["properties"]],
+      },
       content: { mode: "none" },
     },
   ],

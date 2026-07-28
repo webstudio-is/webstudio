@@ -25,7 +25,7 @@ test("field catalog plan requests properties without excerpts or bodies", () => 
 
 const query = assetQuery.parse({
   where: { all: [] },
-  output: { mode: "base" as const },
+  output: { mode: "base" as const, includeMetadata: true },
 });
 
 const compilationQuery = (id: string, value: AssetQuery = query) =>
@@ -90,6 +90,7 @@ describe("content compilation plan", () => {
           ...query,
           output: {
             mode: "fields",
+            includeMetadata: true,
             fields: [["properties", "title"]],
           },
         }),
@@ -97,6 +98,7 @@ describe("content compilation plan", () => {
           ...query,
           output: {
             mode: "fields",
+            includeMetadata: true,
             fields: [["excerpt"], ["properties", "slug"]],
           },
         }),
@@ -115,7 +117,10 @@ describe("content compilation plan", () => {
     expect(
       createContentCompilationPlan([
         compilationQuery("base"),
-        compilationQuery("all", { ...query, output: { mode: "all" } }),
+        compilationQuery("all", {
+          ...query,
+          output: { mode: "all", includeMetadata: true },
+        }),
       ])
     ).toMatchObject({
       structuredPropertyPaths: "all",

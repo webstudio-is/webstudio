@@ -23,10 +23,13 @@ describe("structured query source", () => {
       sort: [{ field: ["publishedAt"], direction: "desc" }],
       limit: "pageSize ?? 10",
       offset: "0",
-      selection: { mode: "full" },
+      selection: { mode: "full", includeMetadata: true },
     };
 
     const source = codec.format(query);
+    expect(source.startsWith("({\n")).toBe(true);
+    expect(source.endsWith("})")).toBe(true);
+    expect(source).not.toContain("query:");
     expect(codec.parse(source)).toEqual({ success: true, value: query });
   });
 
@@ -36,15 +39,13 @@ describe("structured query source", () => {
       "eq" | "after",
       GenericQuery
     >(genericQueryCapabilities);
-    const invalid = `{
-      query: {
-        where: { all: [] },
-        sort: [],
-        limit: 10,
-        offset: 0,
-        selection: { mode: "unsupported" },
-      },
-    }`;
+    const invalid = `({
+      where: { all: [] },
+      sort: [],
+      limit: 10,
+      offset: 0,
+      selection: { mode: "unsupported", includeMetadata: true },
+    })`;
 
     expect(codec.parse(invalid)).toEqual({
       success: false,
@@ -58,14 +59,12 @@ describe("structured query source", () => {
       "eq" | "after",
       GenericQuery
     >(genericQueryCapabilities);
-    const source = `{
-      query: {
-        where: { all: [] },
-        sort: [],
-        limit: 10,
-        offset: 0,
-      },
-    }`;
+    const source = `({
+      where: { all: [] },
+      sort: [],
+      limit: 10,
+      offset: 0,
+    })`;
 
     expect(codec.parse(source)).toEqual({
       success: true,
@@ -74,33 +73,32 @@ describe("structured query source", () => {
         sort: [],
         limit: "10",
         offset: "0",
-        selection: { mode: "summary" },
+        selection: { mode: "summary", includeMetadata: true },
       },
     });
   });
 
-  test("rejects source features disabled by capabilities", () => {
+  test("uses only the controls declared by the provider", () => {
     const capabilities = {
       ...genericQueryCapabilities,
-      features: {
-        ...genericQueryCapabilities.features,
-        sort: false,
-        limit: false,
-        offset: false,
+      source: {
+        ...genericQueryCapabilities.source,
+        controls: [
+          {
+            type: "expression",
+            key: "pageSize",
+            label: "Page size",
+            defaultValue: "25",
+            input: "number",
+          },
+        ],
       },
-      limits: { ...genericQueryCapabilities.limits, sortFields: 0 },
     } as const;
     const codec = createQuerySourceCodec(capabilities);
-    const source = `{
-      query: {
-        where: { all: [] },
-        sort: [{ field: ["title"], direction: "asc" }],
-        limit: 20,
-        offset: 10,
-        selection: { mode: "summary" },
-      },
-    }`;
-
-    expect(codec.parse(source).success).toBe(false);
+    expect(codec.parse("({ pageSize: 50 })")).toEqual({
+      success: true,
+      value: { pageSize: "50" },
+    });
+    expect(codec.parse("({ limit: 50 })").success).toBe(false);
   });
 });

@@ -306,6 +306,7 @@ describe("structured asset query", () => {
         offset: 0,
         output: {
           mode: "fields",
+          includeMetadata: true,
           fields: [["properties", "title"], ["excerpt"]],
         },
         content: { mode: "none" },
@@ -327,16 +328,54 @@ describe("structured asset query", () => {
         sort: [],
         limit: 1,
         offset: 0,
-        output: { mode: "base" },
+        output: { mode: "base", includeMetadata: true },
         content: { mode: "none" },
       },
     });
     expect(base.items[0]).toMatchObject({
       id: "alpha",
       name: "alpha.md",
-      properties: {},
     });
+    expect(base.items[0]).not.toHaveProperty("properties");
     expect(base.items[0]).not.toHaveProperty("excerpt");
+
+    const withoutMetadata = await executeAssetQuery({
+      catalog,
+      documents,
+      query: {
+        where: { all: [] },
+        sort: [],
+        limit: 1,
+        offset: 0,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["name"], ["properties", "title"]],
+        },
+        content: { mode: "none" },
+      },
+    });
+    expect(withoutMetadata.items[0]).toEqual({
+      name: "alpha.md",
+      properties: { title: "Alpha" },
+    });
+  });
+
+  test("rejects a query without any output", async () => {
+    await expect(
+      executeAssetQuery({
+        catalog,
+        documents,
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 1,
+          offset: 0,
+          output: { mode: "base", includeMetadata: false },
+          content: { mode: "none" },
+        },
+      })
+    ).rejects.toThrow("Select at least one asset query output");
   });
 
   test("supports lexical date ranges and missing-field checks", async () => {

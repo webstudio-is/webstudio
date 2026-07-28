@@ -694,14 +694,20 @@ export const parseExpressionObject = (expression: string) => {
   const fields = new Map<string, string>();
   let root;
   try {
-    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    root = parseExpressionAt(expression, 0, {
+      ecmaVersion: "latest",
+      preserveParens: true,
+    });
   } catch {
     return fields;
   }
-  if (
-    root.type !== "ObjectExpression" ||
-    expression.slice(root.end).trim() !== ""
-  ) {
+  if (expression.slice(root.end).trim() !== "") {
+    return fields;
+  }
+  while (root.type === "ParenthesizedExpression") {
+    root = root.expression;
+  }
+  if (root.type !== "ObjectExpression") {
     return fields;
   }
   for (const property of root.properties) {
@@ -723,13 +729,158 @@ export const parseExpressionObject = (expression: string) => {
   return fields;
 };
 
-/** Generate property expressions as an object expression. */
+const formatObjectPropertyKey = (key: string) => {
+  const source = `{${key}: 0}`;
+  try {
+    const root = parseExpressionAt(source, 0, { ecmaVersion: "latest" });
+    const property =
+      root.type === "ObjectExpression" ? root.properties[0] : undefined;
+    if (
+      root.type === "ObjectExpression" &&
+      root.end === source.length &&
+      root.properties.length === 1 &&
+      property?.type === "Property" &&
+      property.computed === false &&
+      property.method === false &&
+      property.shorthand === false &&
+      property.key.type === "Identifier" &&
+      property.key.start === 1 &&
+      property.key.end === key.length + 1
+    ) {
+      return key;
+    }
+  } catch {
+    // Property names outside JavaScript's identifier grammar remain quoted.
+  }
+  return JSON.stringify(key);
+};
+
+/** Generate property expressions as a readable JavaScript object expression. */
 export const generateObjectExpression = (
   fields: ReadonlyMap<string, string>
 ) => {
   let expression = "{\n";
   for (const [key, value] of fields) {
-    expression += `  ${JSON.stringify(key)}: ${value},\n`;
+    const indentedValue = value.replaceAll("\n", "\n  ");
+    expression += `  ${formatObjectPropertyKey(key)}: ${indentedValue},\n`;
   }
   return `${expression}}`;
+};
+
+/** Generate a JSON value as readable JavaScript expression source. */
+export const generateJsonExpression = (value: unknown): string => {
+  if (
+    value === null ||
+    typeof value === "boolean" ||
+    typeof value === "string"
+  ) {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(generateJsonExpression).join(", ")}]`;
+  }
+  if (typeof value === "object") {
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new Error("Only JSON values can be converted to expression source");
+    }
+    return generateObjectExpression(
+      new Map(
+        Object.entries(value).map(([key, item]) => [
+          key,
+          generateJsonExpression(item),
+        ])
+      )
+    );
+  }
+  throw new Error("Only JSON values can be converted to expression source");
+};
+
+type ParsedJsonExpression =
+  | { success: true; value: unknown }
+  | { success: false };
+
+const parseJsonNode = (node: Expression): ParsedJsonExpression => {
+  if (node.type === "Literal") {
+    if (
+      node.regex !== undefined ||
+      typeof node.value === "bigint" ||
+      (typeof node.value === "number" && Number.isFinite(node.value) === false)
+    ) {
+      return { success: false };
+    }
+    return { success: true, value: node.value };
+  }
+  if (
+    node.type === "UnaryExpression" &&
+    node.operator === "-" &&
+    node.argument.type === "Literal" &&
+    typeof node.argument.value === "number" &&
+    Number.isFinite(node.argument.value)
+  ) {
+    return { success: true, value: -node.argument.value };
+  }
+  if (node.type === "ArrayExpression") {
+    const value = [];
+    for (const element of node.elements) {
+      if (element === null || element.type === "SpreadElement") {
+        return { success: false };
+      }
+      const parsed = parseJsonNode(element);
+      if (parsed.success === false) {
+        return parsed;
+      }
+      value.push(parsed.value);
+    }
+    return { success: true, value };
+  }
+  if (node.type === "ObjectExpression") {
+    const entries: [string, unknown][] = [];
+    const keys = new Set<string>();
+    for (const property of node.properties) {
+      if (
+        property.type === "SpreadElement" ||
+        property.computed ||
+        property.method ||
+        property.shorthand
+      ) {
+        return { success: false };
+      }
+      const key =
+        property.key.type === "Identifier"
+          ? property.key.name
+          : property.key.type === "Literal" &&
+              typeof property.key.value === "string"
+            ? property.key.value
+            : undefined;
+      const parsed = parseJsonNode(property.value);
+      if (key === undefined || keys.has(key) || parsed.success === false) {
+        return { success: false };
+      }
+      keys.add(key);
+      entries.push([key, parsed.value]);
+    }
+    return { success: true, value: Object.fromEntries(entries) };
+  }
+  return { success: false };
+};
+
+/** Parse JSON-compatible JavaScript expression source without evaluating it. */
+export const parseJsonExpression = (expression: string | undefined) => {
+  if (expression === undefined) {
+    return;
+  }
+  try {
+    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    if (expression.slice(node.end).trim() !== "") {
+      return;
+    }
+    const parsed = parseJsonNode(node);
+    return parsed.success ? parsed.value : undefined;
+  } catch {
+    return;
+  }
 };

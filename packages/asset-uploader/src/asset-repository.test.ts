@@ -606,7 +606,7 @@ describe("PostgresAssetRepository", () => {
       repository.prepareIndex(
         createCompilationPlan({
           where: { all: [] },
-          output: { mode: "base" },
+          output: { mode: "base", includeMetadata: true },
         })
       )
     ).resolves.toBe(index);
@@ -866,7 +866,7 @@ describe("PostgresAssetRepository", () => {
             },
           ],
         },
-        output: { mode: "base" },
+        output: { mode: "base", includeMetadata: true },
       })
     );
 

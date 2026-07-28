@@ -9,5 +9,4 @@ export const assetResourceLimits = {
   assetFolderNameCharacters: 256,
   assetIdentifierCharacters: 256,
   apiDescriptionBytes: 512 * 1024,
-  apiDescriptionExampleBytes: 64 * 1024,
 } as const;

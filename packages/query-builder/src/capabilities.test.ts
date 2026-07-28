@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getCompatibleQueryOperators } from "./query-utils";
-import { queryCapabilities } from "./schema";
+import { queryDefinition } from "./schema";
 
 const capabilities = {
   version: 1,
@@ -25,63 +25,95 @@ const capabilities = {
       input: { control: "expression", defaultValue: "0" },
     },
   ],
-  features: {
-    combinators: ["all", "any"],
-    sort: true,
-    limit: true,
-    offset: true,
-  },
-  limits: { conditions: 20, depth: 4, sortFields: 3 },
-  defaults: {
-    condition: { field: ["title"], operator: "eq" },
-    sort: { field: ["title"], direction: "asc" },
-    limit: "20",
-    offset: "0",
-  },
   source: {
-    rootKey: "query",
     fieldPathSchema: {
       type: "array",
       items: { type: "string" },
       minItems: 1,
     },
-    parameters: [],
+    controls: [
+      {
+        type: "filter",
+        key: "where",
+        label: "Filters",
+        defaultValue: { all: [] },
+        combinators: ["all", "any"],
+        limits: { conditions: 20, depth: 4 },
+        defaultCondition: { field: ["title"], operator: "eq" },
+      },
+      {
+        type: "sort",
+        key: "sort",
+        label: "Sort",
+        defaultValue: [],
+        defaultItem: { field: ["title"], direction: "asc" },
+        max: 3,
+      },
+      {
+        type: "expression",
+        key: "pageSize",
+        label: "Page size",
+        defaultValue: "20",
+        input: "number",
+      },
+    ],
   },
 } as const;
 
 describe("query capabilities", () => {
   test("validates a provider-neutral capability document", () => {
-    expect(queryCapabilities.parse(capabilities)).toEqual(capabilities);
+    expect(queryDefinition.parse(capabilities)).toEqual(capabilities);
   });
 
   test("rejects duplicate fields, operators, and combinators", () => {
     expect(
-      queryCapabilities.safeParse({
+      queryDefinition.safeParse({
         ...capabilities,
         fields: [...capabilities.fields, capabilities.fields[0]],
         operators: [...capabilities.operators, capabilities.operators[0]],
-        features: { ...capabilities.features, combinators: ["all", "all"] },
+        source: {
+          ...capabilities.source,
+          controls: capabilities.source.controls.map((control) =>
+            control.type === "filter"
+              ? { ...control, combinators: ["all", "all"] }
+              : control
+          ),
+        },
       }).success
     ).toBe(false);
   });
 
-  test("rejects a nonzero sort limit when sorting is unsupported", () => {
+  test("accepts definitions without sorting", () => {
     expect(
-      queryCapabilities.safeParse({
+      queryDefinition.safeParse({
         ...capabilities,
-        features: { ...capabilities.features, sort: false },
+        source: {
+          ...capabilities.source,
+          controls: capabilities.source.controls.filter(
+            (control) => control.type !== "sort"
+          ),
+        },
       }).success
-    ).toBe(false);
+    ).toBe(true);
   });
 
   test("rejects defaults that the declared fields and operators cannot use", () => {
     expect(
-      queryCapabilities.safeParse({
+      queryDefinition.safeParse({
         ...capabilities,
-        defaults: {
-          ...capabilities.defaults,
-          condition: { field: ["missing"], operator: "missing" },
-          sort: { field: ["missing"], direction: "asc" },
+        source: {
+          ...capabilities.source,
+          controls: capabilities.source.controls.map((control) =>
+            control.type === "filter"
+              ? {
+                  ...control,
+                  defaultCondition: {
+                    field: ["missing"],
+                    operator: "missing",
+                  },
+                }
+              : control
+          ),
         },
       }).success
     ).toBe(false);
@@ -89,7 +121,7 @@ describe("query capabilities", () => {
 
   test("rejects defaults that are not valid expressions", () => {
     expect(
-      queryCapabilities.safeParse({
+      queryDefinition.safeParse({
         ...capabilities,
         operators: [
           {
@@ -98,19 +130,27 @@ describe("query capabilities", () => {
           },
           ...capabilities.operators.slice(1),
         ],
-        defaults: { ...capabilities.defaults, limit: "(" },
+        source: {
+          ...capabilities.source,
+          controls: capabilities.source.controls.map((control) =>
+            control.type === "expression"
+              ? { ...control, defaultValue: "(" }
+              : control
+          ),
+        },
       }).success
     ).toBe(false);
   });
 
   test("rejects parameter controls that disagree with their JSON Schema", () => {
     expect(
-      queryCapabilities.safeParse({
+      queryDefinition.safeParse({
         ...capabilities,
         source: {
           ...capabilities.source,
-          parameters: [
+          controls: [
             {
+              type: "variant",
               key: "selection",
               label: "Selection",
               defaultValue: { mode: "invalid" },
@@ -120,14 +160,81 @@ describe("query capabilities", () => {
                 required: ["mode"],
                 additionalProperties: false,
               },
-              control: {
-                type: "variant",
+              config: {
                 discriminator: "mode",
                 options: [
                   {
                     value: "summary",
                     label: "Summary",
                     defaultValue: { mode: "invalid" },
+                    fields: [],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }).success
+    ).toBe(false);
+  });
+
+  test("rejects selection controls without their declared empty option", () => {
+    expect(
+      queryDefinition.safeParse({
+        ...capabilities,
+        source: {
+          ...capabilities.source,
+          controls: [
+            {
+              type: "variant",
+              key: "selection",
+              label: "Selection",
+              defaultValue: { mode: "summary" },
+              schema: true,
+              config: {
+                discriminator: "mode",
+                selection: { label: "Select", emptyOption: "missing" },
+                options: [
+                  {
+                    value: "summary",
+                    label: "Summary",
+                    defaultValue: { mode: "summary" },
+                    fields: [],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }).success
+    ).toBe(false);
+  });
+
+  test("rejects selection baselines without a boolean option value", () => {
+    expect(
+      queryDefinition.safeParse({
+        ...capabilities,
+        source: {
+          ...capabilities.source,
+          controls: [
+            {
+              type: "variant",
+              key: "selection",
+              label: "Selection",
+              defaultValue: { mode: "summary" },
+              schema: true,
+              config: {
+                discriminator: "mode",
+                selection: {
+                  label: "Output",
+                  emptyOption: "summary",
+                  baseline: { key: "includeMetadata", label: "Metadata" },
+                },
+                options: [
+                  {
+                    value: "summary",
+                    label: "Summary",
+                    defaultValue: { mode: "summary" },
                     fields: [],
                   },
                 ],

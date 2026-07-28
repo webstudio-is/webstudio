@@ -26,7 +26,7 @@ describe("structured asset query resource body", () => {
       ],
       limit: "10",
       offset: "0",
-      output: { mode: "all" as const },
+      output: { mode: "all" as const, includeMetadata: true },
       content: { mode: "none" as const },
     };
     const body = createStructuredAssetQueryResourceBody(configuration);
@@ -47,7 +47,7 @@ describe("structured asset query resource body", () => {
         sort: [{ field: ["properties", "publishedAt"], direction: "desc" }],
         limit: 10,
         offset: 0,
-        output: { mode: "all" },
+        output: { mode: "all", includeMetadata: true },
         content: { mode: "none" },
       },
     });
@@ -60,7 +60,7 @@ describe("structured asset query resource body", () => {
       sort: [],
       limit: "10",
       offset: "0",
-      output: { mode: "all" as const },
+      output: { mode: "all" as const, includeMetadata: true },
       content: { mode: "none" as const },
     };
     expect(getAssetQueryConfigurationError(configuration)).toBeUndefined();

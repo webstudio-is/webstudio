@@ -3,22 +3,21 @@ import { isQueryExpression } from "./source";
 import { getQueryFieldKey } from "./query-utils";
 import type { QueryWhereTree } from "./types";
 
-const queryFieldPath = z.array(z.string().min(1)).min(1);
-
-const queryCondition = z.strictObject({
-  field: queryFieldPath,
+const fieldPath = z.array(z.string().min(1)).min(1);
+const condition = z.strictObject({
+  field: fieldPath,
   operator: z.string().min(1),
   value: z.string().min(1),
 });
 
 export const createQueryWhereSchema = <ConditionSchema extends z.ZodType>(
-  condition: ConditionSchema
+  conditionSchema: ConditionSchema
 ) => {
   type Input = QueryWhereTree<z.input<ConditionSchema>>;
   type Output = QueryWhereTree<z.output<ConditionSchema>>;
   const node: z.ZodType<Output, Input> = z.lazy(() =>
     z.union([
-      condition,
+      conditionSchema,
       z.strictObject({ all: z.array(node) }),
       z.strictObject({ any: z.array(node) }),
     ])
@@ -26,293 +25,258 @@ export const createQueryWhereSchema = <ConditionSchema extends z.ZodType>(
   return node;
 };
 
-const querySort = z.strictObject({
-  field: queryFieldPath,
+const sortItem = z.strictObject({
+  field: fieldPath,
   direction: z.enum(["asc", "desc"]),
 });
-
-const queryField = z.strictObject({
-  path: queryFieldPath,
-  label: z.string().min(1),
-  types: z.array(z.string().min(1)).min(1),
-});
-
-const queryOperator = z.strictObject({
-  value: z.string().min(1),
-  label: z.string().min(1),
-  types: z.array(z.string().min(1)).min(1),
-  input: z.strictObject({
-    control: z.enum(["expression", "none"]),
-    defaultValue: z.string().min(1),
-  }),
-});
-
 const jsonSchema = z.union([z.boolean(), z.record(z.string(), z.json())]);
-
-const queryNumberControl = z.strictObject({
-  key: z.string().min(1),
-  label: z.string().min(1),
-  type: z.literal("number"),
-  min: z.number().optional(),
-  max: z.number().optional(),
-  optional: z.boolean().optional(),
-});
-
-const queryFieldListControl = z.strictObject({
-  key: z.string().min(1),
-  label: z.string().min(1),
-  type: z.literal("field-list"),
-  max: z.number().int().positive().optional(),
-});
-
-const queryParameterControlField = z.discriminatedUnion("type", [
-  queryNumberControl,
-  queryFieldListControl,
-]);
-
-const queryParameter = z.strictObject({
-  key: z.string().min(1),
-  label: z.string().min(1),
-  defaultValue: z.json(),
-  schema: jsonSchema,
-  control: z.strictObject({
-    type: z.literal("variant"),
-    discriminator: z.string().min(1),
-    options: z
-      .array(
-        z.strictObject({
-          value: z.string().min(1),
-          label: z.string().min(1),
-          defaultValue: z.record(z.string(), z.json()),
-          fields: z.array(queryParameterControlField),
-        })
-      )
-      .min(1),
+const parameterField = z.discriminatedUnion("type", [
+  z.strictObject({
+    key: z.string().min(1),
+    label: z.string().min(1),
+    type: z.literal("number"),
+    min: z.number().optional(),
+    max: z.number().optional(),
+    optional: z.boolean().optional(),
   }),
+  z.strictObject({
+    key: z.string().min(1),
+    label: z.string().min(1),
+    type: z.literal("field-list"),
+    max: z.number().int().positive().optional(),
+  }),
+]);
+const variantConfig = z.strictObject({
+  discriminator: z.string().min(1),
+  selection: z
+    .strictObject({
+      label: z.string().min(1),
+      emptyOption: z.string().min(1),
+      baseline: z
+        .strictObject({ key: z.string().min(1), label: z.string().min(1) })
+        .optional(),
+    })
+    .optional(),
+  options: z
+    .array(
+      z.strictObject({
+        value: z.string().min(1),
+        label: z.string().min(1),
+        defaultValue: z.record(z.string(), z.json()),
+        fields: z.array(parameterField),
+      })
+    )
+    .min(1),
 });
 
-const queryLimits = z.strictObject({
-  conditions: z.number().int().nonnegative(),
-  depth: z.number().int().nonnegative(),
-  sortFields: z.number().int().nonnegative(),
-});
-
-export const queryCapabilities = z
-  .strictObject({
-    version: z.literal(1),
-    fields: z.array(queryField).min(1),
-    operators: z.array(queryOperator).min(1),
-    features: z.strictObject({
-      combinators: z
-        .array(z.enum(["all", "any"]))
-        .min(1)
-        .max(2),
-      sort: z.boolean(),
-      limit: z.boolean(),
-      offset: z.boolean(),
+const control = z.discriminatedUnion("type", [
+  z.strictObject({
+    type: z.literal("filter"),
+    key: z.string().min(1),
+    label: z.string().min(1),
+    defaultValue: createQueryWhereSchema(condition),
+    combinators: z
+      .array(z.enum(["all", "any"]))
+      .min(1)
+      .max(2),
+    limits: z.strictObject({
+      conditions: z.number().int().nonnegative(),
+      depth: z.number().int().nonnegative(),
     }),
-    limits: queryLimits,
-    defaults: z.strictObject({
-      condition: queryCondition.omit({ value: true }),
-      sort: querySort,
-      limit: z.string().min(1),
-      offset: z.string().min(1),
-    }),
-    source: z.strictObject({
-      rootKey: z.string().min(1),
-      fieldPathSchema: jsonSchema,
-      parameters: z.array(queryParameter),
-    }),
+    defaultCondition: condition.omit({ value: true }),
     labels: z
       .strictObject({
         condition: z.string().min(1).optional(),
         conditionGroup: z.string().min(1).optional(),
-        emptyAll: z.string().min(1).optional(),
-        emptyAny: z.string().min(1).optional(),
       })
       .optional(),
+  }),
+  z.strictObject({
+    type: z.literal("sort"),
+    key: z.string().min(1),
+    label: z.string().min(1),
+    defaultValue: z.array(sortItem),
+    defaultItem: sortItem,
+    max: z.number().int().nonnegative(),
+  }),
+  z.strictObject({
+    type: z.literal("expression"),
+    key: z.string().min(1),
+    label: z.string().min(1),
+    defaultValue: z.string().min(1),
+    input: z.enum(["number", "expression"]),
+    min: z.number().optional(),
+    max: z.number().optional(),
+  }),
+  z.strictObject({
+    type: z.literal("variant"),
+    key: z.string().min(1),
+    label: z.string().min(1),
+    defaultValue: z.json(),
+    schema: jsonSchema,
+    config: variantConfig,
+  }),
+]);
+
+export const queryDefinition = z
+  .strictObject({
+    version: z.literal(1),
+    fields: z.array(
+      z.strictObject({
+        path: fieldPath,
+        label: z.string().min(1),
+        types: z.array(z.string().min(1)).min(1),
+        operators: z.array(z.string().min(1)).optional(),
+      })
+    ),
+    operators: z.array(
+      z.strictObject({
+        value: z.string().min(1),
+        label: z.string().min(1),
+        types: z.array(z.string().min(1)).min(1),
+        input: z.strictObject({
+          control: z.enum(["expression", "none"]),
+          defaultValue: z.string().min(1),
+        }),
+      })
+    ),
+    source: z.strictObject({
+      fieldPathSchema: jsonSchema,
+      controls: z.array(control).min(1),
+    }),
   })
-  .superRefine(
-    ({ fields, operators, features, limits, defaults, source }, context) => {
-      const fieldPaths = new Set<string>();
-      for (const [index, field] of fields.entries()) {
-        const key = getQueryFieldKey(field.path);
-        if (fieldPaths.has(key)) {
-          context.addIssue({
-            code: "custom",
-            message: "Query capability fields must have unique paths",
-            path: ["fields", index, "path"],
-          });
-        }
-        fieldPaths.add(key);
-      }
-
-      const operatorValues = new Set<string>();
-      for (const [index, operator] of operators.entries()) {
-        if (operatorValues.has(operator.value)) {
-          context.addIssue({
-            code: "custom",
-            message: "Query capability operators must be unique",
-            path: ["operators", index, "value"],
-          });
-        }
-        operatorValues.add(operator.value);
-        if (isQueryExpression(operator.input.defaultValue) === false) {
-          context.addIssue({
-            code: "custom",
-            message: "Query operator defaults must be valid expressions",
-            path: ["operators", index, "input", "defaultValue"],
-          });
-        }
-      }
-
-      if (new Set(features.combinators).size !== features.combinators.length) {
+  .superRefine(({ fields, operators, source }, context) => {
+    const fieldKeys = fields.map(({ path }) => getQueryFieldKey(path));
+    if (new Set(fieldKeys).size !== fieldKeys.length) {
+      context.addIssue({ code: "custom", message: "Fields must be unique" });
+    }
+    const operatorValues = operators.map(({ value }) => value);
+    if (new Set(operatorValues).size !== operatorValues.length) {
+      context.addIssue({ code: "custom", message: "Operators must be unique" });
+    }
+    for (const [index, operator] of operators.entries()) {
+      if (isQueryExpression(operator.input.defaultValue) === false) {
         context.addIssue({
           code: "custom",
-          message: "Query capability combinators must be unique",
-          path: ["features", "combinators"],
+          message: "Operator defaults must be expressions",
+          path: ["operators", index, "input", "defaultValue"],
         });
       }
-      if (features.sort === false && limits.sortFields !== 0) {
-        context.addIssue({
-          code: "custom",
-          message:
-            "Query capabilities without sorting must use a zero sort limit",
-          path: ["limits", "sortFields"],
-        });
-      }
-      for (const key of ["limit", "offset"] as const) {
-        if (isQueryExpression(defaults[key]) === false) {
-          context.addIssue({
-            code: "custom",
-            message: `The default ${key} must be a valid expression`,
-            path: ["defaults", key],
-          });
-        }
-      }
-      const defaultConditionField = fields.find(
-        (field) =>
-          getQueryFieldKey(field.path) ===
-          getQueryFieldKey(defaults.condition.field)
-      );
-      if (defaultConditionField === undefined) {
-        context.addIssue({
-          code: "custom",
-          message: "The default condition field must be available",
-          path: ["defaults", "condition", "field"],
-        });
-      }
-      const defaultConditionOperator = operators.find(
-        (operator) => operator.value === defaults.condition.operator
-      );
-      if (defaultConditionOperator === undefined) {
-        context.addIssue({
-          code: "custom",
-          message: "The default condition operator must be available",
-          path: ["defaults", "condition", "operator"],
-        });
-      } else if (
-        defaultConditionField !== undefined &&
-        defaultConditionOperator.types.some((type) =>
-          defaultConditionField.types.includes(type)
-        ) === false
-      ) {
-        context.addIssue({
-          code: "custom",
-          message: "The default condition operator must support its field",
-          path: ["defaults", "condition", "operator"],
-        });
-      }
+    }
+    const keys = source.controls.map(({ key }) => key);
+    if (new Set(keys).size !== keys.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Control keys must be unique",
+      });
+    }
+    for (const [index, item] of source.controls.entries()) {
       if (
-        fields.some(
-          (field) =>
-            getQueryFieldKey(field.path) ===
-            getQueryFieldKey(defaults.sort.field)
-        ) === false
+        item.type === "expression" &&
+        isQueryExpression(item.defaultValue) === false
       ) {
         context.addIssue({
           code: "custom",
-          message: "The default sort field must be available",
-          path: ["defaults", "sort", "field"],
+          message: "Expression defaults must be valid expressions",
+          path: ["source", "controls", index, "defaultValue"],
         });
       }
-      const parameterKeys = new Set<string>();
-      for (const [index, parameter] of source.parameters.entries()) {
+      if (item.type === "filter") {
+        if (new Set(item.combinators).size !== item.combinators.length) {
+          context.addIssue({
+            code: "custom",
+            message: "Combinators must be unique",
+          });
+        }
         if (
-          ["where", "sort", "limit", "offset"].includes(parameter.key) ||
-          parameterKeys.has(parameter.key)
+          fieldKeys.includes(getQueryFieldKey(item.defaultCondition.field)) ===
+          false
         ) {
           context.addIssue({
             code: "custom",
-            message: "Query source parameter keys must be unique and non-core",
-            path: ["source", "parameters", index, "key"],
+            message: "Default filter field is unavailable",
           });
         }
-        parameterKeys.add(parameter.key);
-        let parameterSchema: z.ZodType | undefined;
+        if (operatorValues.includes(item.defaultCondition.operator) === false) {
+          context.addIssue({
+            code: "custom",
+            message: "Default filter operator is unavailable",
+          });
+        }
+      }
+      if (
+        item.type === "sort" &&
+        fieldKeys.includes(getQueryFieldKey(item.defaultItem.field)) === false
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Default sort field is unavailable",
+        });
+      }
+      if (item.type === "variant") {
+        let parser: z.ZodType | undefined;
         try {
-          parameterSchema = z.fromJSONSchema(parameter.schema as never);
+          parser = z.fromJSONSchema(item.schema as never);
         } catch {
           context.addIssue({
             code: "custom",
-            message: "Query parameter schema must be valid JSON Schema",
-            path: ["source", "parameters", index, "schema"],
+            message: "Control JSON Schema is invalid",
           });
         }
-        if (
-          parameterSchema !== undefined &&
-          parameterSchema.safeParse(parameter.defaultValue).success === false
-        ) {
+        if (parser?.safeParse(item.defaultValue).success === false) {
           context.addIssue({
             code: "custom",
-            message: "Query parameter default must match its schema",
-            path: ["source", "parameters", index, "defaultValue"],
+            message: "Control default does not match its schema",
           });
         }
-        const optionValues = new Set<string>();
-        for (const [
-          optionIndex,
-          option,
-        ] of parameter.control.options.entries()) {
+        const optionValues = item.config.options.map(({ value }) => value);
+        if (new Set(optionValues).size !== optionValues.length) {
+          context.addIssue({
+            code: "custom",
+            message: "Variant options must be unique",
+          });
+        }
+        for (const option of item.config.options) {
           if (
-            optionValues.has(option.value) ||
-            option.defaultValue[parameter.control.discriminator] !==
-              option.value ||
-            (parameterSchema !== undefined &&
-              parameterSchema.safeParse(option.defaultValue).success === false)
+            option.defaultValue[item.config.discriminator] !== option.value ||
+            parser?.safeParse(option.defaultValue).success === false
           ) {
             context.addIssue({
               code: "custom",
-              message:
-                "Query parameter options must be unique and match their defaults",
-              path: [
-                "source",
-                "parameters",
-                index,
-                "control",
-                "options",
-                optionIndex,
-              ],
+              message: "Variant option default is invalid",
             });
           }
-          optionValues.add(option.value);
           const fieldKeys = option.fields.map(({ key }) => key);
           if (new Set(fieldKeys).size !== fieldKeys.length) {
             context.addIssue({
               code: "custom",
-              message: "Query parameter control fields must be unique",
-              path: [
-                "source",
-                "parameters",
-                index,
-                "control",
-                "options",
-                optionIndex,
-                "fields",
-              ],
+              message: "Variant option fields must be unique",
             });
           }
         }
+        const selection = item.config.selection;
+        if (
+          selection !== undefined &&
+          optionValues.includes(selection.emptyOption) === false
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "Selection empty option is unavailable",
+          });
+        }
+        if (
+          selection?.baseline !== undefined &&
+          item.config.options.some(
+            (option) =>
+              typeof option.defaultValue[selection.baseline?.key ?? ""] !==
+              "boolean"
+          )
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "Selection baseline must reference a boolean",
+          });
+        }
       }
     }
-  );
+  });

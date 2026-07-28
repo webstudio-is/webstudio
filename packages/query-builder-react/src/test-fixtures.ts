@@ -1,7 +1,4 @@
-import type {
-  QueryCapabilities,
-  StructuredQuery,
-} from "@webstudio-is/query-builder";
+import type { QueryDefinition } from "@webstudio-is/query-builder";
 
 export const genericQueryCapabilities = {
   version: 1,
@@ -23,35 +20,54 @@ export const genericQueryCapabilities = {
       input: { control: "expression", defaultValue: '"2026-01-01"' },
     },
   ],
-  features: {
-    combinators: ["all", "any"],
-    sort: true,
-    limit: true,
-    offset: true,
-  },
-  limits: { conditions: 8, depth: 3, sortFields: 2 },
-  defaults: {
-    condition: { field: ["title"], operator: "eq" },
-    sort: { field: ["publishedAt"], direction: "desc" },
-    limit: "10",
-    offset: "0",
-  },
   source: {
-    rootKey: "query",
     fieldPathSchema: {
       type: "array",
       items: { type: "string" },
       minItems: 1,
     },
-    parameters: [
+    controls: [
       {
+        type: "filter",
+        key: "where",
+        label: "Filters",
+        defaultValue: { all: [] },
+        combinators: ["all", "any"],
+        limits: { conditions: 8, depth: 3 },
+        defaultCondition: { field: ["title"], operator: "eq" },
+      },
+      {
+        type: "sort",
+        key: "sort",
+        label: "Sort",
+        defaultValue: [],
+        defaultItem: { field: ["publishedAt"], direction: "desc" },
+        max: 2,
+      },
+      {
+        type: "expression",
+        key: "limit",
+        label: "Limit",
+        defaultValue: "10",
+        input: "number",
+      },
+      {
+        type: "expression",
+        key: "offset",
+        label: "Offset",
+        defaultValue: "0",
+        input: "number",
+      },
+      {
+        type: "variant",
         key: "selection",
         label: "Selection",
-        defaultValue: { mode: "summary" },
+        defaultValue: { mode: "summary", includeMetadata: true },
         schema: {
           type: "object",
           properties: {
             mode: { enum: ["summary", "full", "fields"] },
+            includeMetadata: { type: "boolean" },
             fields: {
               type: "array",
               items: {
@@ -61,29 +77,32 @@ export const genericQueryCapabilities = {
               },
             },
           },
-          required: ["mode"],
+          required: ["mode", "includeMetadata"],
           additionalProperties: false,
         },
-        control: {
-          type: "variant",
+        config: {
           discriminator: "mode",
           options: [
             {
               value: "summary",
               label: "Summary",
-              defaultValue: { mode: "summary" },
+              defaultValue: { mode: "summary", includeMetadata: true },
               fields: [],
             },
             {
               value: "full",
               label: "Full",
-              defaultValue: { mode: "full" },
+              defaultValue: { mode: "full", includeMetadata: true },
               fields: [],
             },
             {
               value: "fields",
               label: "Fields",
-              defaultValue: { mode: "fields", fields: [] },
+              defaultValue: {
+                mode: "fields",
+                includeMetadata: true,
+                fields: [],
+              },
               fields: [
                 {
                   key: "fields",
@@ -98,15 +117,20 @@ export const genericQueryCapabilities = {
       },
     ],
   },
-} as const satisfies QueryCapabilities<"string" | "date", "eq" | "after">;
+} as const satisfies QueryDefinition<"string" | "date", "eq" | "after">;
 
-export type GenericQuery = StructuredQuery<
-  string[],
-  "eq" | "after",
-  {
-    selection: {
-      mode: "summary" | "full" | "fields";
-      fields?: string[][];
-    };
-  }
->;
+export type GenericQuery = {
+  where: import("@webstudio-is/query-builder").QueryWhere<
+    string[],
+    "eq" | "after"
+  >;
+  sort: import("@webstudio-is/query-builder").QuerySort<string[]>[];
+  limit: string;
+  offset: string;
+  selection: {
+    mode: "summary" | "full" | "fields";
+    includeMetadata: boolean;
+    fields?: string[][];
+    maxBytes?: number;
+  };
+};

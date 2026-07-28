@@ -135,7 +135,7 @@ describe("content database publish diagnostics", () => {
                 sort: [],
                 limit: "pageSize",
                 offset: "0",
-                output: { mode: "base" },
+                output: { mode: "base", includeMetadata: true },
                 content: { mode: "none" },
               }),
             },

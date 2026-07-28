@@ -8,7 +8,6 @@ import { loader as currentDateLoader } from "../shared/$resources/current-date.s
 import { loader as assetsLoader } from "../shared/$resources/assets.server";
 import { loader as assetsFieldCatalogLoader } from "./rest.assets.field-catalog";
 import { loader as assetsQueryLoader } from "../shared/$resources/assets-query.server";
-import { loader as assetsQueryCapabilitiesLoader } from "./rest.assets.query-capabilities";
 import { loader as assetsOpenApiLoader } from "./rest.assets.openapi[.]json";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
@@ -43,10 +42,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (isLocalResource(input, "assets/field-catalog")) {
       return assetsFieldCatalogLoader({ request });
-    }
-
-    if (isLocalResource(input, "assets/query-capabilities")) {
-      return assetsQueryCapabilitiesLoader({ request });
     }
 
     if (isLocalResource(input, "assets/openapi.json")) {

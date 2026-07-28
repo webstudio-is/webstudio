@@ -1170,6 +1170,8 @@ describe("project session mcp adapter", () => {
     expect(assetsResourceTools).toHaveLength(2);
 
     for (const tool of assetsResourceTools) {
+      expect(tool.description).toContain("structured tool input");
+      expect(tool.description).toContain("Webstudio JavaScript expression");
       expect(tool.description).toContain("<dataSourceName>.data.items");
       expect(tool.description).toContain(".properties");
       expect(tool.description).toContain(".excerpt");
@@ -7051,6 +7053,9 @@ describe("project session mcp adapter", () => {
     expect(expressions.contents[0]?.text).toContain("Supported string methods");
     expect(expressions.contents[0]?.text).toContain("- `toLowerCase`");
     expect(expressions.contents[0]?.text).toContain("- `join`");
+    expect(expressions.contents[0]?.text).toContain(
+      "leave identifier property names unquoted"
+    );
     expect(expressions.contents[0]?.text).not.toContain(
       "{{allowedStringMethods}}"
     );

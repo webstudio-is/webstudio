@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TRPCError } from "@trpc/server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
-import { parseAssetQueryCapabilities } from "@webstudio-is/sdk";
-import { loader as capabilitiesLoader } from "../../routes/rest.assets.query-capabilities";
+import { getOpenApiQueryConfiguration } from "@webstudio-is/query-builder";
 import { loader as openApiLoader } from "../../routes/rest.assets.openapi[.]json";
 import { builderSessionCookieName } from "~/services/builder-session.server";
 
@@ -38,22 +37,6 @@ describe("asset API descriptions", () => {
     dependencies.loadBuilderAssetFieldCatalog.mockResolvedValue(catalog);
   });
 
-  test("serves authenticated project-specific query capabilities", async () => {
-    const response = await capabilitiesLoader(
-      { request: request("/$resources/assets/query-capabilities") },
-      dependencies
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("private");
-    const capabilities = parseAssetQueryCapabilities(await response.json());
-    expect(capabilities.fields).toContainEqual({
-      path: ["properties", "slug"],
-      label: "properties / slug",
-      types: ["string"],
-    });
-  });
-
   test("serves project-specific OpenAPI without storage configuration", async () => {
     const response = await openApiLoader(
       { request: request("/$resources/assets/openapi.json") },
@@ -64,7 +47,8 @@ describe("asset API descriptions", () => {
     expect(response.headers.get("content-type")).toBe(
       "application/vnd.oai.openapi+json;version=3.1"
     );
-    await expect(response.json()).resolves.toMatchObject({
+    const document = await response.json();
+    expect(document).toMatchObject({
       openapi: "3.1.1",
       paths: {
         "/rest/assets/query": {
@@ -77,6 +61,31 @@ describe("asset API descriptions", () => {
         },
       },
     });
+    const definition = getOpenApiQueryConfiguration({
+      document,
+      operationId: "queryAssets",
+    }).definition;
+    expect(definition.fields).toContainEqual(
+      expect.objectContaining({
+        path: ["properties", "slug"],
+        label: "properties / slug",
+        operators: expect.arrayContaining(["eq", "contains"]),
+      })
+    );
+    expect(definition.source.controls).toContainEqual(
+      expect.objectContaining({
+        type: "variant",
+        key: "output",
+        defaultValue: { mode: "all", includeMetadata: true },
+        config: expect.objectContaining({
+          selection: {
+            label: "Output",
+            emptyOption: "base",
+            baseline: { key: "includeMetadata", label: "File metadata" },
+          },
+        }),
+      })
+    );
     expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
       expect.any(Request),
       projectId,
@@ -90,12 +99,9 @@ describe("asset API descriptions", () => {
   });
 
   test("requires a project outside Builder", async () => {
-    const response = await capabilitiesLoader(
+    const response = await openApiLoader(
       {
-        request: request(
-          "/$resources/assets/query-capabilities",
-          "example.com"
-        ),
+        request: request("/$resources/assets/openapi.json", "example.com"),
       },
       dependencies
     );
@@ -106,10 +112,10 @@ describe("asset API descriptions", () => {
 
   test("serves token-authenticated REST descriptions with a project query", async () => {
     const directRequest = request(
-      `/rest/assets/query-capabilities?projectId=${projectId}`,
+      `/rest/assets/openapi.json?projectId=${projectId}`,
       "api.example"
     );
-    const response = await capabilitiesLoader(
+    const response = await openApiLoader(
       { request: directRequest },
       dependencies
     );
@@ -144,8 +150,8 @@ describe("asset API descriptions", () => {
       new TRPCError({ code: "UNAUTHORIZED", message: "token required" })
     );
 
-    const response = await capabilitiesLoader(
-      { request: request("/$resources/assets/query-capabilities") },
+    const response = await openApiLoader(
+      { request: request("/$resources/assets/openapi.json") },
       dependencies
     );
 

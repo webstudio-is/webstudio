@@ -61,7 +61,7 @@ test("loads a preview index only for configured Assets resources", async () => {
       sort: [],
       limit: "10",
       offset: "0",
-      output: { mode: "all" },
+      output: { mode: "all", includeMetadata: true },
       content: { mode: "none" },
     }),
   };

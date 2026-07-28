@@ -78,6 +78,7 @@ import {
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";
+import { Row } from "./shared";
 const AssetQueryForm = lazy(() =>
   import("./asset-query-form").then(({ AssetQueryForm }) => ({
     default: AssetQueryForm,
@@ -828,87 +829,99 @@ export const ResourceForm = forwardRef<
 
   return (
     <>
-      <MethodField value={method} onChange={setMethod} />
-      <UrlField
-        scope={scope}
-        aliases={aliases}
-        value={url}
-        onChange={(urlExpression, searchParams) => {
-          setUrl(urlExpression);
-          if (searchParams) {
-            setSearchParams((prev) => [...prev, ...searchParams]);
-          }
-        }}
-        onCurlPaste={(curl) => {
-          // update all feilds when curl is paste into url field
-          setMethod(curl.method);
-          setUrl(JSON.stringify(curl.url));
-          setSearchParams(
-            (curl.searchParams ?? []).map((header) => ({
-              name: header.name,
-              value: JSON.stringify(header.value),
-            }))
-          );
-          const parsedHeaders = parseHeaders(
-            curl.headers.map((header) => ({
-              name: header.name,
-              value: JSON.stringify(header.value),
-            }))
-          );
-          setMaxAge(parsedHeaders.maxAge);
-          setHeaders(parsedHeaders.headers);
-          setBodyType(parsedHeaders.bodyType);
-          setBody(JSON.stringify(curl.body));
-        }}
-      />
-      <SearchParams
-        scope={scope}
-        aliases={aliases}
-        searchParams={searchParams}
-        onChange={setSearchParams}
-      />
-      <CacheMaxAge
-        value={maxAge}
-        onChange={(newMaxAge) => {
-          setMaxAge(newMaxAge);
-          // reset header
-          setHeaders((headers) =>
-            headers.filter(({ name }) => !isCacheControl(name))
-          );
-        }}
-      />
-      <Headers
-        scope={scope}
-        aliases={aliases}
-        headers={headers}
-        onChange={(newHeaders) => {
-          // reset dedicated fields
-          if (newHeaders.some(({ name }) => isCacheControl(name))) {
-            setMaxAge(undefined);
-          }
-          if (newHeaders.some(({ name }) => isContentType(name))) {
-            setBodyType(undefined);
-          }
-          setHeaders(newHeaders);
-        }}
-      />
-      {method !== "get" && (
-        <BodyField
+      <Row>
+        <MethodField value={method} onChange={setMethod} />
+      </Row>
+      <Row>
+        <UrlField
           scope={scope}
           aliases={aliases}
-          value={body ?? ""}
-          bodyType={bodyType}
-          onChange={(newBody, newBodyType) => {
-            setBodyType(newBodyType);
-            // reset header
-            if (newBodyType) {
-              setHeaders((headers) =>
-                headers.filter(({ name }) => !isContentType(name))
-              );
+          value={url}
+          onChange={(urlExpression, searchParams) => {
+            setUrl(urlExpression);
+            if (searchParams) {
+              setSearchParams((prev) => [...prev, ...searchParams]);
             }
-            setBody(newBody);
+          }}
+          onCurlPaste={(curl) => {
+            // update all feilds when curl is paste into url field
+            setMethod(curl.method);
+            setUrl(JSON.stringify(curl.url));
+            setSearchParams(
+              (curl.searchParams ?? []).map((header) => ({
+                name: header.name,
+                value: JSON.stringify(header.value),
+              }))
+            );
+            const parsedHeaders = parseHeaders(
+              curl.headers.map((header) => ({
+                name: header.name,
+                value: JSON.stringify(header.value),
+              }))
+            );
+            setMaxAge(parsedHeaders.maxAge);
+            setHeaders(parsedHeaders.headers);
+            setBodyType(parsedHeaders.bodyType);
+            setBody(JSON.stringify(curl.body));
           }}
         />
+      </Row>
+      <Row>
+        <SearchParams
+          scope={scope}
+          aliases={aliases}
+          searchParams={searchParams}
+          onChange={setSearchParams}
+        />
+      </Row>
+      <Row>
+        <CacheMaxAge
+          value={maxAge}
+          onChange={(newMaxAge) => {
+            setMaxAge(newMaxAge);
+            // reset header
+            setHeaders((headers) =>
+              headers.filter(({ name }) => !isCacheControl(name))
+            );
+          }}
+        />
+      </Row>
+      <Row>
+        <Headers
+          scope={scope}
+          aliases={aliases}
+          headers={headers}
+          onChange={(newHeaders) => {
+            // reset dedicated fields
+            if (newHeaders.some(({ name }) => isCacheControl(name))) {
+              setMaxAge(undefined);
+            }
+            if (newHeaders.some(({ name }) => isContentType(name))) {
+              setBodyType(undefined);
+            }
+            setHeaders(newHeaders);
+          }}
+        />
+      </Row>
+      {method !== "get" && (
+        <Row>
+          <BodyField
+            scope={scope}
+            aliases={aliases}
+            value={body ?? ""}
+            bodyType={bodyType}
+            onChange={(newBody, newBodyType) => {
+              setBodyType(newBodyType);
+              // reset header
+              if (newBodyType) {
+                setHeaders((headers) =>
+                  headers.filter(({ name }) => !isContentType(name))
+                );
+              }
+              setBody(newBody);
+            }}
+          />
+        </Row>
       )}
     </>
   );
@@ -942,7 +955,7 @@ export const SystemResourceForm = forwardRef<
       description: "Resource that loads the sitemap data of the current site.",
     },
     {
-      label: "Current Date",
+      label: "Current date",
       value: JSON.stringify(currentDateResourceUrl),
       description:
         "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
@@ -962,9 +975,9 @@ export const SystemResourceForm = forwardRef<
   });
   const isAssetsResource =
     localResource.value === JSON.stringify(assetsResourceUrl);
-  const [isAssetQueryEnabled, setIsAssetQueryEnabled] =
+  const [isAssetQueryDefined, setIsAssetQueryDefined] =
     useState(isStoredAssetQuery);
-  const isAssetQuery = isAssetsResource && isAssetQueryEnabled;
+  const isAssetQuery = isAssetsResource && isAssetQueryDefined;
   useImperativeHandle(ref, () => ({
     save: (formData) => {
       if (formData.get("asset-query-valid") === "false") {
@@ -994,7 +1007,6 @@ export const SystemResourceForm = forwardRef<
   }));
 
   const resourceId = useId();
-  const assetQueryEnabledId = useId();
 
   return (
     <>
@@ -1004,37 +1016,42 @@ export const SystemResourceForm = forwardRef<
         value={isAssetQuery ? "post" : "get"}
       />
       <input type="hidden" name="url" value={localResource.value} />
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={resourceId}>Resource</Label>
-        <Select
-          options={localResources}
-          getLabel={(option) => option.label}
-          getValue={(option) => option.value}
-          getDescription={(option) => {
-            return (
-              <Box css={{ width: theme.spacing[25] }}>
-                {option?.description}
-              </Box>
-            );
-          }}
-          value={localResource}
-          onChange={setLocalResource}
-        />
-        {isAssetsResource && (
-          <Suspense
-            fallback={<Text color="subtle">Loading query editor…</Text>}
-          >
-            <AssetQueryForm
-              resource={resource}
-              scope={scope}
-              aliases={aliases}
-              enabled={isAssetQuery}
-              enabledId={assetQueryEnabledId}
-              onEnabledChange={setIsAssetQueryEnabled}
-            />
-          </Suspense>
-        )}
-      </Flex>
+      <Row>
+        <Grid gap={1}>
+          <Label htmlFor={resourceId}>Resource</Label>
+          <Select
+            options={localResources}
+            getLabel={(option) => option.label}
+            getValue={(option) => option.value}
+            getDescription={(option) => {
+              return (
+                <Box css={{ width: theme.spacing[25] }}>
+                  {option?.description}
+                </Box>
+              );
+            }}
+            value={localResource}
+            onChange={setLocalResource}
+          />
+        </Grid>
+      </Row>
+      {isAssetsResource && (
+        <Suspense
+          fallback={
+            <Row>
+              <Text color="subtle">Loading query editor…</Text>
+            </Row>
+          }
+        >
+          <AssetQueryForm
+            resource={resource}
+            scope={scope}
+            aliases={aliases}
+            queryDefined={isAssetQuery}
+            onQueryDefined={() => setIsAssetQueryDefined(true)}
+          />
+        </Suspense>
+      )}
     </>
   );
 });
@@ -1138,129 +1155,141 @@ export const GraphqlResourceForm = forwardRef<
         )}
       />
 
-      <UrlField
-        scope={scope}
-        aliases={aliases}
-        value={url}
-        onChange={setUrl}
-        onCurlPaste={(curl) => {
-          // update all feilds when curl is paste into url field
-          setUrl(JSON.stringify(curl.url));
-          const parsedHeaders = parseHeaders(
-            curl.headers.map((header) => ({
-              name: header.name,
-              value: JSON.stringify(header.value),
-            }))
-          );
-          setMaxAge(parsedHeaders.maxAge);
-          setHeaders(parsedHeaders.headers);
-          const body = zGraphqlBody.safeParse(curl.body);
-          if (body.success) {
-            setQuery(body.data.query);
-            setVariables(JSON.stringify(body.data.variables, null, 2));
-          }
-        }}
-      />
-
-      <Grid gap={1}>
-        <Label htmlFor={queryId}>Query</Label>
-        <EditorDialogControl>
-          <TextArea
-            name="query"
-            id={queryId}
-            rows={3}
-            maxRows={10}
-            autoGrow={true}
-            value={query}
-            onChange={setQuery}
-          />
-          <EditorDialog
-            title="GraphQL Query"
-            content={<TextArea grow={true} value={query} onChange={setQuery} />}
-          >
-            <EditorDialogButton />
-          </EditorDialog>
-        </EditorDialogControl>
-      </Grid>
-
-      <Grid gap={1}>
-        <Label>GraphQL variables</Label>
-        {/* use invisible text input to reflect expression editor in form
-            type=hidden does not emit invalid event */}
-        <input
-          ref={variablesRef}
-          style={{ display: "none" }}
-          type="text"
-          name="variables"
-          data-color={variablesError ? "error" : undefined}
-          value={variables}
-          onChange={() => {}}
-          onInvalid={(event) =>
-            setVariablesError(event.currentTarget.validationMessage)
-          }
+      <Row>
+        <UrlField
+          scope={scope}
+          aliases={aliases}
+          value={url}
+          onChange={setUrl}
+          onCurlPaste={(curl) => {
+            // update all feilds when curl is paste into url field
+            setUrl(JSON.stringify(curl.url));
+            const parsedHeaders = parseHeaders(
+              curl.headers.map((header) => ({
+                name: header.name,
+                value: JSON.stringify(header.value),
+              }))
+            );
+            setMaxAge(parsedHeaders.maxAge);
+            setHeaders(parsedHeaders.headers);
+            const body = zGraphqlBody.safeParse(curl.body);
+            if (body.success) {
+              setQuery(body.data.query);
+              setVariables(JSON.stringify(body.data.variables, null, 2));
+            }
+          }}
         />
-        <BindingControl>
-          <InputErrorsTooltip
-            errors={variablesError ? [variablesError] : undefined}
-          >
-            {/* wrap with div to position error tooltip */}
-            <div>
-              <ExpressionEditor
-                color={variablesError ? "error" : undefined}
-                readOnly={isVariablesLiteral === false}
-                value={
-                  isVariablesLiteral
-                    ? variables
-                    : (JSON.stringify(
-                        evaluateExpressionWithinScope(variables, scope),
-                        null,
-                        2
-                      ) ?? "")
-                }
-                onChange={setVariables}
-                onChangeComplete={() => variablesRef.current?.checkValidity()}
-              />
-            </div>
-          </InputErrorsTooltip>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isVariablesLiteral ? "default" : "bound"}
+      </Row>
+
+      <Row>
+        <Grid gap={1}>
+          <Label htmlFor={queryId}>Query</Label>
+          <EditorDialogControl>
+            <TextArea
+              name="query"
+              id={queryId}
+              rows={3}
+              maxRows={10}
+              autoGrow={true}
+              value={query}
+              onChange={setQuery}
+            />
+            <EditorDialog
+              title="GraphQL Query"
+              content={
+                <TextArea grow={true} value={query} onChange={setQuery} />
+              }
+            >
+              <EditorDialogButton />
+            </EditorDialog>
+          </EditorDialogControl>
+        </Grid>
+      </Row>
+
+      <Row>
+        <Grid gap={1}>
+          <Label>GraphQL variables</Label>
+          {/* use invisible text input to reflect expression editor in form
+            type=hidden does not emit invalid event */}
+          <input
+            ref={variablesRef}
+            style={{ display: "none" }}
+            type="text"
+            name="variables"
+            data-color={variablesError ? "error" : undefined}
             value={variables}
-            onChange={(value) => {
-              setVariables(value);
-              setIsVariablesLiteral(isLiteralExpression(value));
-            }}
-            onRemove={(evaluatedValue) => {
-              setVariables(JSON.stringify(evaluatedValue));
-              setIsVariablesLiteral(true);
-            }}
+            onChange={() => {}}
+            onInvalid={(event) =>
+              setVariablesError(event.currentTarget.validationMessage)
+            }
           />
-        </BindingControl>
-      </Grid>
+          <BindingControl>
+            <InputErrorsTooltip
+              errors={variablesError ? [variablesError] : undefined}
+            >
+              {/* wrap with div to position error tooltip */}
+              <div>
+                <ExpressionEditor
+                  color={variablesError ? "error" : undefined}
+                  readOnly={isVariablesLiteral === false}
+                  value={
+                    isVariablesLiteral
+                      ? variables
+                      : (JSON.stringify(
+                          evaluateExpressionWithinScope(variables, scope),
+                          null,
+                          2
+                        ) ?? "")
+                  }
+                  onChange={setVariables}
+                  onChangeComplete={() => variablesRef.current?.checkValidity()}
+                />
+              </div>
+            </InputErrorsTooltip>
+            <BindingPopover
+              scope={scope}
+              aliases={aliases}
+              variant={isVariablesLiteral ? "default" : "bound"}
+              value={variables}
+              onChange={(value) => {
+                setVariables(value);
+                setIsVariablesLiteral(isLiteralExpression(value));
+              }}
+              onRemove={(evaluatedValue) => {
+                setVariables(JSON.stringify(evaluatedValue));
+                setIsVariablesLiteral(true);
+              }}
+            />
+          </BindingControl>
+        </Grid>
+      </Row>
 
-      <CacheMaxAge
-        value={maxAge}
-        onChange={(newMaxAge) => {
-          setMaxAge(newMaxAge);
-          setHeaders((headers) =>
-            headers.filter(({ name }) => !isCacheControl(name))
-          );
-        }}
-      />
+      <Row>
+        <CacheMaxAge
+          value={maxAge}
+          onChange={(newMaxAge) => {
+            setMaxAge(newMaxAge);
+            setHeaders((headers) =>
+              headers.filter(({ name }) => !isCacheControl(name))
+            );
+          }}
+        />
+      </Row>
 
-      <Headers
-        scope={scope}
-        aliases={aliases}
-        headers={headers}
-        onChange={(newHeaders) => {
-          // reset dedicated fields
-          if (newHeaders.some(({ name }) => isCacheControl(name))) {
-            setMaxAge(undefined);
-          }
-          setHeaders(newHeaders);
-        }}
-      />
+      <Row>
+        <Headers
+          scope={scope}
+          aliases={aliases}
+          headers={headers}
+          onChange={(newHeaders) => {
+            // reset dedicated fields
+            if (newHeaders.some(({ name }) => isCacheControl(name))) {
+              setMaxAge(undefined);
+            }
+            setHeaders(newHeaders);
+          }}
+        />
+      </Row>
     </>
   );
 });

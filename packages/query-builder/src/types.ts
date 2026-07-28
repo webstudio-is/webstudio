@@ -22,21 +22,11 @@ export type QuerySort<Field = string[]> = {
   direction: "asc" | "desc";
 };
 
-export type StructuredQuery<
-  Field = string[],
-  Operator = string,
-  Extension extends object = object,
-> = {
-  where: QueryWhere<Field, Operator>;
-  sort: QuerySort<Field>[];
-  limit: string;
-  offset: string;
-} & Extension;
-
 export type QueryField<FieldType extends string = string> = {
   path: string[];
   label: string;
   types: readonly FieldType[];
+  operators?: readonly string[];
 };
 
 export type QueryOperator<
@@ -72,14 +62,22 @@ export type QueryParameterControlField =
   | QueryNumberControl
   | QueryFieldListControl;
 
-export type QueryParameter = {
+export type QueryVariantControl = {
+  type: "variant";
   key: string;
   label: string;
   defaultValue: unknown;
   schema: boolean | Record<string, unknown>;
-  control: {
-    type: "variant";
+  config: {
     discriminator: string;
+    selection?: {
+      label: string;
+      emptyOption: string;
+      baseline?: {
+        key: string;
+        label: string;
+      };
+    };
     options: readonly {
       value: string;
       label: string;
@@ -89,42 +87,72 @@ export type QueryParameter = {
   };
 };
 
-export type QueryLimits = {
-  conditions: number;
-  depth: number;
-  sortFields: number;
+export type QueryFilterControl<Operator extends string = string> = {
+  type: "filter";
+  key: string;
+  label: string;
+  defaultValue: QueryWhere<string[], Operator>;
+  combinators: readonly ("all" | "any")[];
+  limits: { conditions: number; depth: number };
+  defaultCondition: Omit<QueryCondition<string[], Operator>, "value">;
+  labels?: { condition?: string; conditionGroup?: string };
 };
 
-export type QueryCapabilities<
+export type QuerySortControl = {
+  type: "sort";
+  key: string;
+  label: string;
+  defaultValue: QuerySort<string[]>[];
+  defaultItem: QuerySort<string[]>;
+  max: number;
+};
+
+export type QueryExpressionControl = {
+  type: "expression";
+  key: string;
+  label: string;
+  defaultValue: string;
+  input: "number" | "expression";
+  min?: number;
+  max?: number;
+};
+
+export type QueryControl<Operator extends string = string> =
+  | QueryFilterControl<Operator>
+  | QuerySortControl
+  | QueryExpressionControl
+  | QueryVariantControl;
+
+export type QueryDefinition<
   FieldType extends string = string,
   Operator extends string = string,
 > = {
   version: 1;
   fields: readonly QueryField<FieldType>[];
   operators: readonly QueryOperator<FieldType, Operator>[];
-  features: {
-    combinators: readonly ("all" | "any")[];
-    sort: boolean;
-    limit: boolean;
-    offset: boolean;
-  };
-  limits: QueryLimits;
-  defaults: {
-    condition: Omit<QueryCondition<string[], Operator>, "value">;
-    sort: QuerySort<string[]>;
-    limit: string;
-    offset: string;
-  };
   source: {
-    rootKey: string;
     fieldPathSchema: boolean | Record<string, unknown>;
-    parameters: readonly QueryParameter[];
+    controls: readonly QueryControl<Operator>[];
   };
-  labels?: {
-    condition?: string;
-    conditionGroup?: string;
-    emptyAll?: string;
-    emptyAny?: string;
+};
+
+export type QuerySourceVariantControl = Pick<
+  QueryVariantControl,
+  "type" | "key" | "label" | "defaultValue" | "schema"
+>;
+
+export type QuerySourceDefinition<
+  FieldType extends string = string,
+  Operator extends string = string,
+> = Pick<QueryDefinition<FieldType, Operator>, "fields" | "operators"> & {
+  source: {
+    fieldPathSchema: boolean | Record<string, unknown>;
+    controls: readonly (
+      | QueryFilterControl<Operator>
+      | QuerySortControl
+      | QueryExpressionControl
+      | QuerySourceVariantControl
+    )[];
   };
 };
 

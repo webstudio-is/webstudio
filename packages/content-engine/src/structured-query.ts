@@ -302,13 +302,25 @@ const selectProperties = (
   if (output.mode === "all") {
     return document.properties;
   }
-  return output.mode === "fields"
-    ? selectAssetProperties({
-        properties: document.properties,
-        fields: output.fields,
-      })
-    : {};
+  if (
+    output.mode !== "fields" ||
+    output.fields.some((field) => field[0] === "properties") === false
+  ) {
+    return;
+  }
+  return selectAssetProperties({
+    properties: document.properties,
+    fields: output.fields,
+  });
 };
+
+const includesOutputField = (
+  output: AssetResourceOutputSelection,
+  field: string
+) =>
+  output.includeMetadata ||
+  (output.mode === "fields" &&
+    output.fields.some((path) => path.length === 1 && path[0] === field));
 
 const includesExcerpt = (output: AssetResourceOutputSelection) =>
   output.mode === "all" ||
@@ -320,27 +332,40 @@ const includesExcerpt = (output: AssetResourceOutputSelection) =>
 const toQueryItem = (
   document: AssetFileDocument,
   output: AssetResourceOutputSelection
-): AssetQueryItem => ({
-  id: document._id,
-  name: document.name,
-  path: document.path,
-  key: document.key,
-  ...(document.folderId === undefined ? {} : { folderId: document.folderId }),
-  extension: document.extension,
-  mimeType: document.mimeType,
-  size: document.size,
-  ...(document.createdAt === undefined
-    ? {}
-    : { createdAt: document.createdAt }),
-  revision: document.revision,
-  properties: selectProperties(document, output),
-  ...(document.excerpt === undefined || includesExcerpt(output) === false
-    ? {}
-    : { excerpt: document.excerpt }),
-  ...(document.metadataError === undefined
-    ? {}
-    : { metadataError: document.metadataError }),
-});
+): AssetQueryItem => {
+  const properties = selectProperties(document, output);
+  return {
+    ...(includesOutputField(output, "id") ? { id: document._id } : {}),
+    ...(includesOutputField(output, "name") ? { name: document.name } : {}),
+    ...(includesOutputField(output, "path") ? { path: document.path } : {}),
+    ...(includesOutputField(output, "key") ? { key: document.key } : {}),
+    ...(document.folderId === undefined ||
+    includesOutputField(output, "folderId") === false
+      ? {}
+      : { folderId: document.folderId }),
+    ...(includesOutputField(output, "extension")
+      ? { extension: document.extension }
+      : {}),
+    ...(includesOutputField(output, "mimeType")
+      ? { mimeType: document.mimeType }
+      : {}),
+    ...(includesOutputField(output, "size") ? { size: document.size } : {}),
+    ...(document.createdAt === undefined ||
+    includesOutputField(output, "createdAt") === false
+      ? {}
+      : { createdAt: document.createdAt }),
+    ...(includesOutputField(output, "revision")
+      ? { revision: document.revision }
+      : {}),
+    ...(properties === undefined ? {} : { properties }),
+    ...(document.excerpt === undefined || includesExcerpt(output) === false
+      ? {}
+      : { excerpt: document.excerpt }),
+    ...(document.metadataError === undefined || output.includeMetadata === false
+      ? {}
+      : { metadataError: document.metadataError }),
+  };
+};
 
 const assertResultSize = (result: AssetQueryResult) => {
   if (

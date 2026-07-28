@@ -92,6 +92,7 @@ import {
   invalidateResource,
 } from "~/shared/resources";
 import { getContentDatabasePreviewWarning } from "./content-database-warning";
+import { Row } from "./shared";
 
 const NameField = ({
   variable,
@@ -244,11 +245,11 @@ const TypeField = ({
       value: "system-resource",
       label: (
         <Flex direction="row" gap="2" align="center">
-          System Resource
+          System resource
           {allowDynamicData === false && <ProChip>Pro</ProChip>}
         </Flex>
       ),
-      description: "A System Resource is a configuration for Webstudio data.",
+      description: "A system resource is a configuration for Webstudio data.",
     },
   ];
   const options = new Map(optionsList.map((option) => [option.value, option]));
@@ -564,48 +565,63 @@ const VariablePanelForm = forwardRef<
           direction="column"
           css={{
             overflow: "hidden",
-            padding: theme.panel.padding,
+            paddingBlock: theme.panel.paddingBlock,
             gap: theme.spacing[7],
           }}
         >
-          <NameField variable={variable} defaultValue={variable?.name ?? ""} />
+          <Row>
+            <NameField
+              variable={variable}
+              defaultValue={variable?.name ?? ""}
+            />
+          </Row>
           {variableType !== "parameter" && (
-            <TypeField value={variableType} onChange={onVariableTypeChange} />
+            <Row>
+              <TypeField value={variableType} onChange={onVariableTypeChange} />
+            </Row>
           )}
           {variableType === "parameter" && (
             <ParameterForm ref={ref} variable={variable} />
           )}
           {variableType === "string" && (
-            <StringForm
-              ref={ref}
-              variable={variable}
-              value={value}
-              onChange={onValueChange}
-            />
+            <Row>
+              <StringForm
+                ref={ref}
+                variable={variable}
+                value={value}
+                onChange={onValueChange}
+              />
+            </Row>
           )}
           {variableType === "number" && (
-            <NumberForm
-              ref={ref}
-              variable={variable}
-              value={value}
-              onChange={onValueChange}
-            />
+            <Row>
+              <NumberForm
+                ref={ref}
+                variable={variable}
+                value={value}
+                onChange={onValueChange}
+              />
+            </Row>
           )}
           {variableType === "boolean" && (
-            <BooleanForm
-              ref={ref}
-              variable={variable}
-              value={value}
-              onChange={onValueChange}
-            />
+            <Row>
+              <BooleanForm
+                ref={ref}
+                variable={variable}
+                value={value}
+                onChange={onValueChange}
+              />
+            </Row>
           )}
           {variableType === "json" && (
-            <JsonForm
-              ref={ref}
-              variable={variable}
-              value={value}
-              onChange={onValueChange}
-            />
+            <Row>
+              <JsonForm
+                ref={ref}
+                variable={variable}
+                value={value}
+                onChange={onValueChange}
+              />
+            </Row>
           )}
           {variableType === "resource" && (
             <ResourceForm ref={ref} variable={variable} />

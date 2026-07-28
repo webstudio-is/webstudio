@@ -1,20 +1,36 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  CssValueListArrowFocus,
+  CssValueListItem,
   Flex,
   Grid,
   InputField,
   Label,
+  Popover,
+  PopoverContent,
+  PopoverTitle,
+  PopoverTrigger,
   Select,
   SmallIconButton,
   Text,
   TextArea,
   theme,
 } from "@webstudio-is/design-system";
-import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import {
   createQueryCondition,
   createQuerySort,
@@ -22,22 +38,26 @@ import {
   getCompatibleQueryOperators,
   getQueryFieldKey,
   getQueryWhereMetrics,
-  normalizeStructuredQuery,
   type QueryCondition,
   type QueryField,
   type QueryGroup,
   type QuerySort,
-  type QueryCapabilities,
-  type QueryParameter,
+  type QueryDefinition,
+  type QueryFilterControl,
+  type QueryExpressionControl,
+  type QuerySortControl,
+  type QueryVariantControl,
   type QueryWhere,
-  type StructuredQuery,
 } from "@webstudio-is/query-builder";
 
 export type QueryValueEditorProps = {
   "aria-label": string;
   value: string;
   onChange: (value: string) => void;
-  role: "condition" | "limit" | "offset";
+  role: "condition" | "value";
+  input: "expression" | "number";
+  min?: number;
+  max?: number;
 };
 
 export type QuerySourceEditorProps = {
@@ -55,17 +75,72 @@ export type QueryBuilderEditors = {
 type BuilderProps<
   FieldType extends string,
   Operator extends string,
-  Query extends StructuredQuery<string[], Operator, Record<string, unknown>>,
+  Query extends Record<string, unknown>,
 > = {
   value: Query;
-  capabilities: QueryCapabilities<FieldType, Operator>;
+  capabilities: QueryDefinition<FieldType, Operator>;
   editors?: Partial<QueryBuilderEditors>;
+  sectionPaddingInline?: string;
   onChange: (value: Query) => void;
 };
 
 type SharedProps<FieldType extends string, Operator extends string> = {
-  capabilities: QueryCapabilities<FieldType, Operator>;
+  capabilities: QueryDefinition<FieldType, Operator>;
+  filter: QueryFilterControl<Operator>;
   renderExpressionEditor: QueryBuilderEditors["expression"];
+  sectionPaddingInline?: string;
+};
+
+const QuerySelectionListItem = ({
+  id,
+  index,
+  label,
+  canDelete,
+  onDelete,
+  settings,
+}: {
+  id: string;
+  index: number;
+  label: string;
+  canDelete: boolean;
+  onDelete: () => void;
+  settings?: ReactNode;
+}) => {
+  const item = (
+    <CssValueListItem
+      id={id}
+      index={index}
+      type="button"
+      label={<Label>{label}</Label>}
+      buttons={
+        <SmallIconButton
+          tabIndex={-1}
+          aria-label={`Delete ${label.toLowerCase()}`}
+          disabled={canDelete === false}
+          variant="destructive"
+          icon={<MinusIcon />}
+          onClick={onDelete}
+        />
+      }
+    />
+  );
+  if (settings === undefined) {
+    return item;
+  }
+  return (
+    <Popover>
+      <PopoverTrigger asChild>{item}</PopoverTrigger>
+      <PopoverContent align="start">
+        <PopoverTitle>{label}</PopoverTitle>
+        <Grid
+          gap={2}
+          css={{ padding: theme.spacing[5], minWidth: theme.spacing[35] }}
+        >
+          {settings}
+        </Grid>
+      </PopoverContent>
+    </Popover>
+  );
 };
 
 const getField = <FieldType extends string>(
@@ -113,7 +188,8 @@ const Condition = <FieldType extends string, Operator extends string>({
   );
   const compatibleOperators = getCompatibleQueryOperators(
     selectedField.types,
-    capabilities.operators
+    capabilities.operators,
+    selectedField.operators
   );
   const selectedOperator = compatibleOperators.find(
     (operator) => operator.value === condition.operator
@@ -150,7 +226,8 @@ const Condition = <FieldType extends string, Operator extends string>({
           onChange={(field) => {
             const nextOperators = getCompatibleQueryOperators(
               field.types,
-              capabilities.operators
+              capabilities.operators,
+              field.operators
             );
             const operator = nextOperators.some(
               (option) => option.value === condition.operator
@@ -196,7 +273,7 @@ const Condition = <FieldType extends string, Operator extends string>({
         <SmallIconButton
           aria-label="Delete query condition"
           variant="destructive"
-          icon={<TrashIcon />}
+          icon={<MinusIcon />}
           onClick={onDelete}
         />
       </Grid>
@@ -206,6 +283,7 @@ const Condition = <FieldType extends string, Operator extends string>({
           "aria-label": "Query condition value",
           value: condition.value,
           role: "condition",
+          input: "expression",
           onChange: (value) => onChange({ ...condition, value }),
         })}
     </Grid>
@@ -230,29 +308,27 @@ const Group = <FieldType extends string, Operator extends string>({
 }) => {
   const combinator = "all" in group ? "all" : "any";
   const children = "all" in group ? group.all : group.any;
-  const defaultCombinator =
-    shared.capabilities.features.combinators[0] ?? "all";
+  const defaultCombinator = shared.filter.combinators[0] ?? "all";
   const combinators: readonly ("all" | "any")[] =
-    shared.capabilities.features.combinators.includes(combinator)
-      ? shared.capabilities.features.combinators
-      : [combinator, ...shared.capabilities.features.combinators];
+    shared.filter.combinators.includes(combinator)
+      ? shared.filter.combinators
+      : [combinator, ...shared.filter.combinators];
   const updateChildren = (next: QueryWhere<string[], Operator>[]) =>
     onChange(combinator === "all" ? { all: next } : { any: next });
-  const canAddCondition =
-    conditionCount < shared.capabilities.limits.conditions;
-  const canAddGroup = depth < shared.capabilities.limits.depth;
+  const canAddCondition = conditionCount < shared.filter.limits.conditions;
+  const canAddGroup = depth < shared.filter.limits.depth;
 
   return (
     <Grid
       gap={2}
-      css={
-        root
-          ? undefined
+      css={{
+        ...(root
+          ? { paddingInline: shared.sectionPaddingInline }
           : {
               paddingLeft: theme.spacing[3],
               borderLeft: `1px solid ${theme.colors.borderMain}`,
-            }
-      }
+            }),
+      }}
     >
       <Flex justify="between" align="center" gap={1}>
         {root ? <Label>Filters</Label> : <Text>Filter group</Text>}
@@ -286,7 +362,7 @@ const Group = <FieldType extends string, Operator extends string>({
                   ])
                 }
               >
-                {shared.capabilities.labels?.condition ?? "Condition"}
+                {shared.filter.labels?.condition ?? "Condition"}
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={canAddGroup === false}
@@ -297,8 +373,7 @@ const Group = <FieldType extends string, Operator extends string>({
                   ])
                 }
               >
-                {shared.capabilities.labels?.conditionGroup ??
-                  "Condition group"}
+                {shared.filter.labels?.conditionGroup ?? "Condition group"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -306,7 +381,7 @@ const Group = <FieldType extends string, Operator extends string>({
             <SmallIconButton
               aria-label="Delete query group"
               variant="destructive"
-              icon={<TrashIcon />}
+              icon={<MinusIcon />}
               onClick={onDelete}
             />
           )}
@@ -349,15 +424,6 @@ const Group = <FieldType extends string, Operator extends string>({
           />
         )
       )}
-      {children.length === 0 && (
-        <Text color="subtle">
-          {combinator === "all"
-            ? (shared.capabilities.labels?.emptyAll ??
-              "All records are included.")
-            : (shared.capabilities.labels?.emptyAny ??
-              "No records are included.")}
-        </Text>
-      )}
     </Grid>
   );
 };
@@ -366,17 +432,23 @@ const Sorting = <FieldType extends string, Operator extends string>({
   sort,
   onChange,
   capabilities,
-}: Pick<SharedProps<FieldType, Operator>, "capabilities"> & {
+  control,
+  sectionPaddingInline,
+}: Pick<
+  SharedProps<FieldType, Operator>,
+  "capabilities" | "sectionPaddingInline"
+> & {
+  control: QuerySortControl;
   sort: QuerySort<string[]>[];
   onChange: (sort: QuerySort<string[]>[]) => void;
 }) => (
-  <Grid gap={2}>
+  <Grid gap={2} css={{ paddingInline: sectionPaddingInline }}>
     <Flex justify="between" align="center">
       <Label>Sort</Label>
       <SmallIconButton
         aria-label="Add query sort"
         icon={<PlusIcon />}
-        disabled={sort.length >= capabilities.limits.sortFields}
+        disabled={sort.length >= control.max}
         onClick={() => onChange([...sort, createQuerySort(capabilities)])}
       />
     </Flex>
@@ -421,7 +493,7 @@ const Sorting = <FieldType extends string, Operator extends string>({
           <SmallIconButton
             aria-label="Delete query sort"
             variant="destructive"
-            icon={<TrashIcon />}
+            icon={<MinusIcon />}
             onClick={() =>
               onChange(sort.filter((_, position) => position !== index))
             }
@@ -436,156 +508,465 @@ const QueryParameters = ({
   parameters,
   fields,
   value,
+  sectionPaddingInline,
   onChange,
 }: {
-  parameters: readonly QueryParameter[];
+  parameters: readonly QueryVariantControl[];
   fields: readonly QueryField[];
   value: Record<string, unknown>;
+  sectionPaddingInline?: string;
   onChange: (key: string, value: unknown) => void;
-}) => (
-  <>
-    {parameters.map((parameter) => {
-      const current =
-        typeof value[parameter.key] === "object" &&
-        value[parameter.key] !== null &&
-        Array.isArray(value[parameter.key]) === false
-          ? (value[parameter.key] as Record<string, unknown>)
-          : parameter.control.options[0]?.defaultValue;
-      if (current === undefined) {
-        return null;
-      }
-      const selected =
-        parameter.control.options.find(
-          (option) => current[parameter.control.discriminator] === option.value
-        ) ?? parameter.control.options[0];
-      if (selected === undefined) {
-        return null;
-      }
-      return (
-        <Grid key={parameter.key} gap={1}>
-          <Label>{parameter.label}</Label>
-          <Select<(typeof parameter.control.options)[number]>
-            aria-label={parameter.label}
-            options={parameter.control.options}
-            getLabel={(option) => option.label}
-            getValue={(option) => option.value}
-            value={selected}
-            onChange={(option) =>
-              onChange(parameter.key, structuredClone(option.defaultValue))
+}) => {
+  const getCurrent = (parameter: QueryVariantControl) =>
+    typeof value[parameter.key] === "object" &&
+    value[parameter.key] !== null &&
+    Array.isArray(value[parameter.key]) === false
+      ? (value[parameter.key] as Record<string, unknown>)
+      : parameter.config.options[0]?.defaultValue;
+  const getSelected = (parameter: QueryVariantControl) => {
+    const current = getCurrent(parameter);
+    return {
+      current,
+      option: parameter.config.options.find(
+        (option) => current?.[parameter.config.discriminator] === option.value
+      ),
+    };
+  };
+  const selectionParameters = parameters.filter(
+    (parameter) => parameter.config.selection !== undefined
+  );
+  const regularParameters = parameters.filter(
+    (parameter) => parameter.config.selection === undefined
+  );
+  const selectionLabel =
+    selectionParameters[0]?.config.selection?.label ?? "Selection";
+
+  const renderNumberFields = (
+    parameter: QueryVariantControl,
+    current: Record<string, unknown>,
+    option: QueryVariantControl["config"]["options"][number]
+  ) =>
+    option.fields.map((field) =>
+      field.type === "number" ? (
+        <Grid key={field.key} gap={1}>
+          <Label>{field.label}</Label>
+          <InputField
+            aria-label={field.label}
+            type="number"
+            min={field.min}
+            max={field.max}
+            value={
+              current[field.key] === undefined ? "" : String(current[field.key])
+            }
+            onChange={(event) =>
+              onChange(parameter.key, {
+                ...current,
+                [field.key]:
+                  field.optional && event.target.value === ""
+                    ? undefined
+                    : Number(event.target.value),
+              })
             }
           />
-          {selected.fields.length > 0 && (
-            <Grid gap={1}>
-              {selected.fields.map((field) => {
-                if (field.type === "number") {
-                  return (
-                    <InputField
-                      key={field.key}
-                      aria-label={field.label}
-                      type="number"
-                      min={field.min}
-                      max={field.max}
-                      value={
-                        current[field.key] === undefined
-                          ? ""
-                          : String(current[field.key])
-                      }
-                      onChange={(event) =>
-                        onChange(parameter.key, {
-                          ...current,
-                          [field.key]:
-                            field.optional && event.target.value === ""
-                              ? undefined
-                              : Number(event.target.value),
-                        })
-                      }
-                    />
-                  );
-                }
-                const paths = Array.isArray(current[field.key])
-                  ? (current[field.key] as unknown[]).filter(
-                      (path): path is string[] =>
-                        Array.isArray(path) &&
-                        path.every((segment) => typeof segment === "string")
-                    )
-                  : [];
-                const selectedKeys = new Set(paths.map(getQueryFieldKey));
-                const available = fields.filter(
-                  ({ path }) =>
-                    selectedKeys.has(getQueryFieldKey(path)) === false
-                );
-                return (
-                  <Grid key={field.key} gap={1}>
-                    {paths.map((path, index) => {
-                      const selectedField = getField(fields, path);
-                      return (
-                        <Grid
-                          key={`${getQueryFieldKey(path)}:${index}`}
-                          gap={1}
-                          css={{ gridTemplateColumns: "1fr auto" }}
-                        >
-                          <Select<QueryField>
-                            aria-label={`${field.label} ${index + 1}`}
-                            options={[selectedField, ...available]}
-                            getLabel={(option) => option.label}
-                            getValue={(option) => getQueryFieldKey(option.path)}
-                            value={selectedField}
-                            onChange={(option) =>
-                              onChange(parameter.key, {
-                                ...current,
-                                [field.key]: paths.map((value, position) =>
-                                  position === index ? option.path : value
-                                ),
-                              })
-                            }
-                          />
-                          <SmallIconButton
-                            aria-label={`Delete ${field.label.toLowerCase()}`}
-                            variant="destructive"
-                            icon={<TrashIcon />}
-                            onClick={() =>
-                              onChange(parameter.key, {
-                                ...current,
-                                [field.key]: paths.filter(
-                                  (_, position) => position !== index
-                                ),
-                              })
-                            }
-                          />
-                        </Grid>
-                      );
-                    })}
-                    {available.length > 0 &&
-                      (field.max === undefined || paths.length < field.max) && (
-                        <SmallIconButton
-                          aria-label={`Add ${field.label.toLowerCase()}`}
-                          icon={<PlusIcon />}
-                          onClick={() =>
-                            onChange(parameter.key, {
-                              ...current,
-                              [field.key]: [...paths, available[0].path],
-                            })
-                          }
-                        />
-                      )}
-                  </Grid>
-                );
-              })}
-            </Grid>
-          )}
         </Grid>
+      ) : null
+    );
+
+  const renderRegularFields = (
+    parameter: QueryVariantControl,
+    current: Record<string, unknown>,
+    option: QueryVariantControl["config"]["options"][number]
+  ) => (
+    <Grid gap={1}>
+      {option.fields.map((control) => {
+        if (control.type === "number") {
+          return renderNumberFields(parameter, current, {
+            ...option,
+            fields: [control],
+          });
+        }
+        const paths = Array.isArray(current[control.key])
+          ? (current[control.key] as unknown[]).filter(
+              (path): path is string[] =>
+                Array.isArray(path) &&
+                path.every((segment) => typeof segment === "string")
+            )
+          : [];
+        const selectedKeys = new Set(paths.map(getQueryFieldKey));
+        const available = fields.filter(
+          ({ path }) => selectedKeys.has(getQueryFieldKey(path)) === false
+        );
+        return (
+          <Grid key={control.key} gap={1}>
+            {paths.map((path, index) => {
+              const selectedField = getField(fields, path);
+              return (
+                <Grid
+                  key={`${getQueryFieldKey(path)}:${index}`}
+                  gap={1}
+                  css={{ gridTemplateColumns: "1fr auto" }}
+                >
+                  <Select<QueryField>
+                    aria-label={`${control.label} ${index + 1}`}
+                    options={[selectedField, ...available]}
+                    getLabel={(field) => field.label}
+                    getValue={(field) => getQueryFieldKey(field.path)}
+                    value={selectedField}
+                    onChange={(field) =>
+                      onChange(parameter.key, {
+                        ...current,
+                        [control.key]: paths.map((value, position) =>
+                          position === index ? field.path : value
+                        ),
+                      })
+                    }
+                  />
+                  <SmallIconButton
+                    aria-label={`Delete ${control.label.toLowerCase()}`}
+                    variant="destructive"
+                    icon={<MinusIcon />}
+                    onClick={() =>
+                      onChange(parameter.key, {
+                        ...current,
+                        [control.key]: paths.filter(
+                          (_, position) => position !== index
+                        ),
+                      })
+                    }
+                  />
+                </Grid>
+              );
+            })}
+            {available.length > 0 &&
+              (control.max === undefined || paths.length < control.max) && (
+                <SmallIconButton
+                  aria-label={`Add ${control.label.toLowerCase()}`}
+                  icon={<PlusIcon />}
+                  onClick={() =>
+                    onChange(parameter.key, {
+                      ...current,
+                      [control.key]: [...paths, available[0].path],
+                    })
+                  }
+                />
+              )}
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
+
+  const getOptionPaths = (
+    current: Record<string, unknown>,
+    option: QueryVariantControl["config"]["options"][number]
+  ) => {
+    const fieldList = option.fields.find(
+      (field) => field.type === "field-list"
+    );
+    return {
+      fieldList,
+      paths:
+        fieldList !== undefined && Array.isArray(current[fieldList.key])
+          ? (current[fieldList.key] as string[][])
+          : [],
+    };
+  };
+
+  const withCurrentBaseline = (
+    parameter: QueryVariantControl,
+    current: Record<string, unknown>,
+    next: Record<string, unknown>
+  ) => {
+    const baseline = parameter.config.selection?.baseline;
+    return baseline === undefined
+      ? next
+      : { ...next, [baseline.key]: current[baseline.key] !== false };
+  };
+
+  let selectionItemCount = 0;
+  for (const parameter of selectionParameters) {
+    const { current, option } = getSelected(parameter);
+    const selection = parameter.config.selection;
+    if (
+      current === undefined ||
+      option === undefined ||
+      selection === undefined
+    ) {
+      continue;
+    }
+    if (
+      selection.baseline !== undefined &&
+      current[selection.baseline.key] !== false
+    ) {
+      selectionItemCount += 1;
+    }
+    if (option.value !== selection.emptyOption) {
+      const { fieldList, paths } = getOptionPaths(current, option);
+      selectionItemCount += fieldList === undefined ? 1 : paths.length;
+    }
+  }
+  let selectionItemIndex = 0;
+
+  const getSelectionMenuItems = (parameter: QueryVariantControl) => {
+    const { current, option: selected } = getSelected(parameter);
+    const selection = parameter.config.selection;
+    if (current === undefined || selection === undefined) {
+      return [];
+    }
+    const items: ReactNode[] = [];
+    const baseline = selection.baseline;
+    if (baseline !== undefined && current[baseline.key] === false) {
+      items.push(
+        <DropdownMenuItem
+          key={`${parameter.key}:${baseline.key}`}
+          onSelect={() =>
+            onChange(parameter.key, {
+              ...current,
+              [baseline.key]: true,
+            })
+          }
+        >
+          {baseline.label}
+        </DropdownMenuItem>
       );
-    })}
-  </>
-);
+    }
+    for (const option of parameter.config.options) {
+      if (option.value === selection.emptyOption) {
+        continue;
+      }
+      const fieldList = option.fields.find(
+        (field) => field.type === "field-list"
+      );
+      if (fieldList === undefined) {
+        items.push(
+          <DropdownMenuItem
+            key={`${parameter.key}:${option.value}`}
+            disabled={selected?.value === option.value}
+            onSelect={() =>
+              onChange(
+                parameter.key,
+                withCurrentBaseline(
+                  parameter,
+                  current,
+                  structuredClone(option.defaultValue)
+                )
+              )
+            }
+          >
+            {option.label}
+          </DropdownMenuItem>
+        );
+        continue;
+      }
+      const paths =
+        selected?.value === option.value &&
+        Array.isArray(current[fieldList.key])
+          ? (current[fieldList.key] as string[][])
+          : [];
+      const selectedKeys = new Set(paths.map(getQueryFieldKey));
+      for (const field of fields) {
+        items.push(
+          <DropdownMenuItem
+            key={`${parameter.key}:${option.value}:${getQueryFieldKey(field.path)}`}
+            disabled={
+              selectedKeys.has(getQueryFieldKey(field.path)) ||
+              (fieldList.max !== undefined && paths.length >= fieldList.max)
+            }
+            onSelect={() =>
+              onChange(parameter.key, {
+                ...withCurrentBaseline(
+                  parameter,
+                  current,
+                  structuredClone(option.defaultValue)
+                ),
+                [fieldList.key]: [...paths, field.path],
+              })
+            }
+          >
+            {field.label}
+          </DropdownMenuItem>
+        );
+      }
+    }
+    return items;
+  };
+
+  return (
+    <>
+      {selectionParameters.length > 0 && (
+        <Grid
+          gap={2}
+          css={{
+            borderTop: `1px solid ${theme.colors.borderMain}`,
+            paddingTop: theme.spacing[7],
+          }}
+        >
+          <Flex
+            justify="between"
+            align="center"
+            css={{ paddingInline: sectionPaddingInline }}
+          >
+            <Label>{selectionLabel}</Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SmallIconButton
+                  aria-label={`Add ${selectionLabel.toLowerCase()}`}
+                  icon={<PlusIcon />}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={4}>
+                {selectionParameters.map((parameter, index) => (
+                  <Fragment key={parameter.key}>
+                    {index > 0 && <DropdownMenuSeparator />}
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel>{parameter.label}</DropdownMenuLabel>
+                      {getSelectionMenuItems(parameter)}
+                    </DropdownMenuGroup>
+                  </Fragment>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </Flex>
+          <CssValueListArrowFocus>
+            {selectionParameters.map((parameter) => {
+              const { current, option } = getSelected(parameter);
+              const selection = parameter.config.selection;
+              if (
+                current === undefined ||
+                option === undefined ||
+                selection === undefined
+              ) {
+                return null;
+              }
+              const empty = parameter.config.options.find(
+                ({ value }) => value === selection.emptyOption
+              );
+              const { fieldList, paths } = getOptionPaths(current, option);
+              const baseline = selection.baseline;
+              const canDelete = selectionItemCount > 1;
+              return (
+                <Grid key={parameter.key} gap={1}>
+                  {baseline !== undefined &&
+                    current[baseline.key] !== false && (
+                      <QuerySelectionListItem
+                        id={`${parameter.key}:${baseline.key}`}
+                        index={selectionItemIndex++}
+                        label={baseline.label}
+                        canDelete={canDelete}
+                        onDelete={() =>
+                          onChange(parameter.key, {
+                            ...current,
+                            [baseline.key]: false,
+                          })
+                        }
+                      />
+                    )}
+                  {option.value !== selection.emptyOption &&
+                    (fieldList === undefined ? (
+                      <QuerySelectionListItem
+                        id={`${parameter.key}:${option.value}`}
+                        index={selectionItemIndex++}
+                        label={option.label}
+                        canDelete={canDelete}
+                        onDelete={() =>
+                          empty !== undefined &&
+                          onChange(
+                            parameter.key,
+                            withCurrentBaseline(
+                              parameter,
+                              current,
+                              structuredClone(empty.defaultValue)
+                            )
+                          )
+                        }
+                        settings={
+                          option.fields.some((field) => field.type === "number")
+                            ? renderNumberFields(parameter, current, option)
+                            : undefined
+                        }
+                      />
+                    ) : (
+                      paths.map((path, index) => {
+                        const selectedField = getField(fields, path);
+                        return (
+                          <QuerySelectionListItem
+                            key={`${getQueryFieldKey(path)}:${index}`}
+                            id={`${parameter.key}:${getQueryFieldKey(path)}:${index}`}
+                            index={selectionItemIndex++}
+                            label={selectedField.label}
+                            canDelete={canDelete}
+                            onDelete={() => {
+                              const nextPaths = paths.filter(
+                                (_, position) => position !== index
+                              );
+                              onChange(
+                                parameter.key,
+                                nextPaths.length === 0 && empty !== undefined
+                                  ? withCurrentBaseline(
+                                      parameter,
+                                      current,
+                                      structuredClone(empty.defaultValue)
+                                    )
+                                  : {
+                                      ...current,
+                                      [fieldList.key]: nextPaths,
+                                    }
+                              );
+                            }}
+                          />
+                        );
+                      })
+                    ))}
+                </Grid>
+              );
+            })}
+          </CssValueListArrowFocus>
+        </Grid>
+      )}
+      {regularParameters.map((parameter) => {
+        const { current, option } = getSelected(parameter);
+        if (current === undefined || option === undefined) {
+          return null;
+        }
+        return (
+          <Grid
+            key={parameter.key}
+            gap={1}
+            css={{ paddingInline: sectionPaddingInline }}
+          >
+            <Label>{parameter.label}</Label>
+            <Select<(typeof parameter.config.options)[number]>
+              aria-label={parameter.label}
+              options={parameter.config.options}
+              getLabel={(item) => item.label}
+              getValue={(item) => item.value}
+              value={option}
+              onChange={(item) =>
+                onChange(parameter.key, structuredClone(item.defaultValue))
+              }
+            />
+            {renderRegularFields(parameter, current, option)}
+          </Grid>
+        );
+      })}
+    </>
+  );
+};
 
 const defaultExpressionEditor = ({
   "aria-label": ariaLabel,
   value,
   onChange,
+  input,
+  min,
+  max,
 }: QueryValueEditorProps) => (
   <InputField
     aria-label={ariaLabel}
+    type={input === "number" ? "number" : "text"}
+    min={input === "number" ? min : undefined}
+    max={input === "number" ? max : undefined}
+    step={input === "number" ? 1 : undefined}
     value={value}
     onChange={(event) => onChange(event.target.value)}
   />
@@ -609,11 +990,12 @@ const defaultSourceEditor = ({
 export const StructuredQueryBuilder = <
   FieldType extends string,
   Operator extends string,
-  Query extends StructuredQuery<string[], Operator>,
+  Query extends Record<string, unknown>,
 >({
   value,
   capabilities,
   editors,
+  sectionPaddingInline,
   onChange,
 }: BuilderProps<FieldType, Operator, Query>) => {
   const sourceCodec = useMemo(
@@ -661,78 +1043,131 @@ export const StructuredQueryBuilder = <
       sourceInvalidRef.current = true;
     }
   };
-  const where = normalizeStructuredQuery(value, capabilities).where;
-  const metrics = getQueryWhereMetrics(where);
   const renderExpressionEditor = editors?.expression ?? defaultExpressionEditor;
   const renderSourceEditor = editors?.source ?? defaultSourceEditor;
-  const shared = {
-    capabilities,
-    renderExpressionEditor,
-  };
-
   return (
-    <Grid gap={3}>
-      <Group
-        {...shared}
-        group={where}
-        conditionCount={metrics.conditions}
-        depth={1}
-        root={true}
-        onChange={(nextWhere) => commit({ ...value, where: nextWhere })}
-      />
-      {capabilities.features.sort && (
-        <Sorting
-          capabilities={capabilities}
-          sort={value.sort}
-          onChange={(sort) => commit({ ...value, sort })}
-        />
-      )}
-      {(capabilities.features.limit || capabilities.features.offset) && (
-        <Grid
-          gap={2}
-          css={{
-            gridTemplateColumns:
-              capabilities.features.limit && capabilities.features.offset
-                ? "1fr 1fr"
-                : "1fr",
-          }}
-        >
-          {capabilities.features.limit && (
-            <Grid gap={1}>
-              <Label>Limit</Label>
-              {renderExpressionEditor({
-                "aria-label": "Query limit",
-                value: value.limit,
-                role: "limit",
-                onChange: (limit) => commit({ ...value, limit }),
-              })}
-            </Grid>
-          )}
-          {capabilities.features.offset && (
-            <Grid gap={1}>
-              <Label>Offset</Label>
-              {renderExpressionEditor({
-                "aria-label": "Query offset",
-                value: value.offset,
-                role: "offset",
-                onChange: (offset) => commit({ ...value, offset }),
-              })}
-            </Grid>
-          )}
-        </Grid>
-      )}
-      <QueryParameters
-        parameters={capabilities.source.parameters}
-        fields={capabilities.fields}
-        value={value}
-        onChange={(key, parameterValue) =>
-          commit({ ...value, [key]: parameterValue })
+    <Grid css={{ gap: theme.spacing[7] }}>
+      {capabilities.source.controls.map((control) => {
+        if (control.type === "variant") {
+          const selectionLabel = control.config.selection?.label;
+          const parameters = capabilities.source.controls.filter(
+            (candidate): candidate is QueryVariantControl =>
+              candidate.type === "variant" &&
+              (selectionLabel === undefined
+                ? candidate.key === control.key
+                : candidate.config.selection?.label === selectionLabel)
+          );
+          if (parameters[0] !== control) {
+            return null;
+          }
+          return (
+            <QueryParameters
+              key={control.key}
+              parameters={parameters}
+              fields={capabilities.fields}
+              value={value}
+              sectionPaddingInline={sectionPaddingInline}
+              onChange={(key, parameterValue) =>
+                commit({ ...value, [key]: parameterValue } as Query)
+              }
+            />
+          );
         }
-      />
-      <Grid gap={1}>
-        <Label>Query source</Label>
+        if (control.type === "filter") {
+          const current = value[control.key] ?? control.defaultValue;
+          const where =
+            "field" in (current as QueryWhere<string[], Operator>)
+              ? control.combinators[0] === "any"
+                ? { any: [current as QueryWhere<string[], Operator>] }
+                : { all: [current as QueryWhere<string[], Operator>] }
+              : (current as QueryGroup<string[], Operator>);
+          const metrics = getQueryWhereMetrics(where);
+          return (
+            <Group
+              key={control.key}
+              capabilities={capabilities}
+              filter={control}
+              renderExpressionEditor={renderExpressionEditor}
+              sectionPaddingInline={sectionPaddingInline}
+              group={where}
+              conditionCount={metrics.conditions}
+              depth={1}
+              root={true}
+              onChange={(next) =>
+                commit({ ...value, [control.key]: next } as Query)
+              }
+            />
+          );
+        }
+        if (control.type === "sort") {
+          return (
+            <Sorting
+              key={control.key}
+              capabilities={capabilities}
+              control={control}
+              sectionPaddingInline={sectionPaddingInline}
+              sort={
+                (value[control.key] ?? control.defaultValue) as QuerySort<
+                  string[]
+                >[]
+              }
+              onChange={(next) =>
+                commit({ ...value, [control.key]: next } as Query)
+              }
+            />
+          );
+        }
+        const controlIndex = capabilities.source.controls.indexOf(control);
+        let expressionRunStart = controlIndex;
+        while (
+          capabilities.source.controls[expressionRunStart - 1]?.type ===
+          "expression"
+        ) {
+          expressionRunStart -= 1;
+        }
+        if ((controlIndex - expressionRunStart) % 2 === 1) {
+          return null;
+        }
+        const expressionControls = capabilities.source.controls
+          .slice(controlIndex, controlIndex + 2)
+          .filter(
+            (candidate): candidate is QueryExpressionControl =>
+              candidate.type === "expression"
+          );
+        if (expressionControls[0] !== control) {
+          return null;
+        }
+        return (
+          <Grid
+            key={control.key}
+            gap={2}
+            css={{
+              paddingInline: sectionPaddingInline,
+              gridTemplateColumns: `repeat(${expressionControls.length}, 1fr)`,
+            }}
+          >
+            {expressionControls.map((item) => (
+              <Grid key={item.key} gap={1}>
+                <Label>{item.label}</Label>
+                {renderExpressionEditor({
+                  "aria-label": item.label,
+                  value: String(value[item.key] ?? item.defaultValue),
+                  role: "value",
+                  input: item.input,
+                  min: item.min,
+                  max: item.max,
+                  onChange: (next) =>
+                    commit({ ...value, [item.key]: next } as Query),
+                })}
+              </Grid>
+            ))}
+          </Grid>
+        );
+      })}
+      <Grid gap={1} css={{ paddingInline: sectionPaddingInline }}>
+        <Label>Query</Label>
         {renderSourceEditor({
-          "aria-label": "Query source",
+          "aria-label": "Query",
           value: source,
           onChange: setSource,
           onChangeComplete: commitSource,

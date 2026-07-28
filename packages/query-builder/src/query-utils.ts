@@ -1,9 +1,7 @@
 import type {
-  QueryCapabilities,
   QueryCondition,
-  QueryGroup,
+  QueryDefinition,
   QuerySort,
-  StructuredQuery,
   QueryWhereTree,
 } from "./types";
 
@@ -43,6 +41,36 @@ export const mapQueryWhere = <
 export const getQueryFieldKey = (field: readonly string[]) =>
   JSON.stringify(field);
 
+export const addConfiguredQueryFields = <
+  FieldType extends string,
+  Operator extends string,
+>({
+  definition,
+  paths,
+  fallbackType,
+}: {
+  definition: QueryDefinition<FieldType, Operator>;
+  paths: readonly string[][];
+  fallbackType: FieldType;
+}): QueryDefinition<FieldType, Operator> => {
+  const fields = new Map(
+    definition.fields.map((field) => [getQueryFieldKey(field.path), field])
+  );
+  for (const path of paths) {
+    const key = getQueryFieldKey(path);
+    if (fields.has(key)) {
+      continue;
+    }
+    fields.set(key, {
+      path,
+      label: path.join(" / "),
+      types: [fallbackType],
+      operators: definition.operators.map(({ value }) => value),
+    });
+  }
+  return { ...definition, fields: [...fields.values()] };
+};
+
 export const getQueryWhereMetrics = (
   where: QueryWhereTree<{ field: unknown }>
 ): { conditions: number; depth: number } => {
@@ -69,8 +97,13 @@ export const getCompatibleQueryOperators = <
   },
 >(
   fieldTypes: readonly FieldType[],
-  operators: readonly Item[]
+  operators: readonly Item[],
+  supportedOperators?: readonly string[]
 ) => {
+  if (supportedOperators !== undefined) {
+    const supported = new Set(supportedOperators);
+    return operators.filter(({ value }) => supported.has(value));
+  }
   const types = new Set(fieldTypes);
   return operators.filter((operator) =>
     operator.types.some((type) => types.has(type))
@@ -80,67 +113,53 @@ export const getCompatibleQueryOperators = <
 export const createQueryCondition = <
   FieldType extends string,
   Operator extends string,
->({
-  defaults,
-  operators,
-}: QueryCapabilities<FieldType, Operator>): QueryCondition<
-  string[],
-  Operator
-> => ({
-  field: [...defaults.condition.field],
-  operator: defaults.condition.operator,
-  value:
-    operators.find(({ value }) => value === defaults.condition.operator)?.input
-      .defaultValue ?? "null",
-});
+>(
+  capabilities: QueryDefinition<FieldType, Operator>
+): QueryCondition<string[], Operator> => {
+  const control = capabilities.source.controls.find(
+    (item) => item.type === "filter"
+  );
+  if (control === undefined) {
+    throw new Error("A filter control is required");
+  }
+  return {
+    field: [...control.defaultCondition.field],
+    operator: control.defaultCondition.operator,
+    value:
+      capabilities.operators.find(
+        ({ value }) => value === control.defaultCondition.operator
+      )?.input.defaultValue ?? "null",
+  };
+};
 
 export const createQuerySort = <
   FieldType extends string,
   Operator extends string,
->({
-  defaults,
-}: QueryCapabilities<FieldType, Operator>): QuerySort<string[]> => ({
-  field: [...defaults.sort.field],
-  direction: defaults.sort.direction,
-});
+>(
+  capabilities: QueryDefinition<FieldType, Operator>
+): QuerySort<string[]> => {
+  const control = capabilities.source.controls.find(
+    (item) => item.type === "sort"
+  );
+  if (control === undefined) {
+    throw new Error("A sort control is required");
+  }
+  return {
+    field: [...control.defaultItem.field],
+    direction: control.defaultItem.direction,
+  };
+};
 
 export const createStructuredQuery = <
   FieldType extends string,
   Operator extends string,
 >(
-  capabilities: QueryCapabilities<FieldType, Operator>
-): StructuredQuery<string[], Operator, Record<string, unknown>> => {
-  const combinator = capabilities.features.combinators[0] ?? "all";
-  const parameters = Object.fromEntries(
-    capabilities.source.parameters.map(({ key, defaultValue }) => [
+  capabilities: QueryDefinition<FieldType, Operator>
+): Record<string, unknown> => {
+  return Object.fromEntries(
+    capabilities.source.controls.map(({ key, defaultValue }) => [
       key,
       structuredClone(defaultValue),
     ])
   );
-  return {
-    where: combinator === "all" ? { all: [] } : { any: [] },
-    sort: [],
-    limit: capabilities.defaults.limit,
-    offset: capabilities.defaults.offset,
-    ...parameters,
-  };
-};
-
-export const normalizeStructuredQuery = <
-  FieldType extends string,
-  Operator extends string,
-  Query extends StructuredQuery<string[], Operator>,
->(
-  query: Query,
-  capabilities: QueryCapabilities<FieldType, Operator>
-): Omit<Query, "where"> & { where: QueryGroup<string[], Operator> } => {
-  if ("field" in query.where === false) {
-    return { ...query, where: query.where };
-  }
-  const combinator = capabilities.features.combinators[0] ?? "all";
-  return {
-    ...query,
-    where:
-      combinator === "all" ? { all: [query.where] } : { any: [query.where] },
-  };
 };

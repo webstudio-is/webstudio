@@ -1,52 +1,64 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  addConfiguredAssetQueryFields,
-  createAssetQueryCapabilities,
   createStructuredAssetQueryResourceBody,
-  parseAssetQueryCapabilities,
   parseStructuredAssetQueryResourceBody,
-  type AssetQueryCapabilities,
   type Resource,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryResourceConfiguration,
 } from "@webstudio-is/sdk";
-import { assetsQueryCapabilitiesApiUrl } from "@webstudio-is/sdk/runtime";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
+import { assetsOpenApiUrl } from "@webstudio-is/sdk/runtime";
 import type {
   AssetObservedFieldType,
   AssetQueryFilter,
 } from "@webstudio-is/content-engine";
 import {
-  createStructuredQuery,
+  addConfiguredQueryFields,
+  getOpenApiQueryConfiguration,
   getQueryFieldKey,
   getQueryConditions,
-  normalizeStructuredQuery,
+  type QueryDefinition,
 } from "@webstudio-is/query-builder";
-import { Flex, Label, Switch, Text } from "@webstudio-is/design-system";
+import { Text, theme } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
 import { BindableQueryBuilder } from "~/builder/shared/query-builder";
 import { fetch as builderFetch } from "~/shared/fetch.client";
 import { getAssetQueryConfigurationError } from "./asset-query-form-utils";
 
-const fallbackCapabilities = createAssetQueryCapabilities({});
-const defaultConfiguration = createStructuredQuery(
-  fallbackCapabilities
-) as StructuredAssetQueryResourceConfiguration;
+type AssetQueryDefinition = QueryDefinition<
+  AssetObservedFieldType,
+  AssetQueryFilter["operator"]
+>;
+
+const defaultConfiguration: StructuredAssetQueryResourceConfiguration = {
+  where: { all: [] },
+  sort: [],
+  limit: String(assetResourceLimits.defaultResultCount),
+  offset: "0",
+  output: { mode: "all", includeMetadata: true },
+  content: { mode: "none" },
+};
+
+const normalizeConfiguration = (
+  value: StructuredAssetQueryResourceConfiguration
+): StructuredAssetQueryResourceConfiguration => ({
+  ...value,
+  where: "field" in value.where ? { all: [value.where] } : value.where,
+});
 
 export const AssetQueryForm = ({
   resource,
   scope,
   aliases,
-  enabled,
-  enabledId,
-  onEnabledChange,
+  queryDefined,
+  onQueryDefined,
 }: {
   resource?: Resource;
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
-  enabled: boolean;
-  enabledId: string;
-  onEnabledChange: (enabled: boolean) => void;
+  queryDefined: boolean;
+  onQueryDefined: () => void;
 }) => {
   const assets = useStore($assets);
   const initial = useMemo(
@@ -57,10 +69,10 @@ export const AssetQueryForm = ({
   );
   const [configuration, setConfiguration] =
     useState<StructuredAssetQueryResourceConfiguration>(() =>
-      normalizeStructuredQuery(initial, fallbackCapabilities)
+      normalizeConfiguration(initial)
     );
-  const [baseCapabilities, setBaseCapabilities] =
-    useState<AssetQueryCapabilities>(() => fallbackCapabilities);
+  const [baseDefinition, setBaseDefinition] = useState<AssetQueryDefinition>();
+  const [descriptionError, setDescriptionError] = useState<string>();
   const configurationError = getAssetQueryConfigurationError(configuration);
   const configuredPaths = useMemo(
     () =>
@@ -77,15 +89,20 @@ export const AssetQueryForm = ({
       ),
     [configuration]
   );
-  const capabilities = useMemo(() => {
-    return addConfiguredAssetQueryFields({
-      capabilities: baseCapabilities,
-      configuredPaths,
-    });
-  }, [baseCapabilities, configuredPaths]);
+  const definition = useMemo(
+    () =>
+      baseDefinition === undefined
+        ? undefined
+        : addConfiguredQueryFields({
+            definition: baseDefinition,
+            paths: configuredPaths,
+            fallbackType: "string",
+          }),
+    [baseDefinition, configuredPaths]
+  );
 
   useEffect(() => {
-    setConfiguration(normalizeStructuredQuery(initial, fallbackCapabilities));
+    setConfiguration(normalizeConfiguration(initial));
   }, [initial, resource?.id]);
 
   const body =
@@ -94,14 +111,11 @@ export const AssetQueryForm = ({
       : (resource?.body ?? "");
 
   useEffect(() => {
-    if (enabled === false) {
-      return;
-    }
     let ignore = false;
-    builderFetch(assetsQueryCapabilitiesApiUrl)
+    builderFetch(assetsOpenApiUrl)
       .then(async (response) => {
         if (response.ok === false) {
-          throw new Error("Builder asset query capabilities request failed");
+          throw new Error("Builder Assets OpenAPI request failed");
         }
         return await response.json();
       })
@@ -109,29 +123,27 @@ export const AssetQueryForm = ({
         if (ignore) {
           return;
         }
-        setBaseCapabilities(parseAssetQueryCapabilities(response));
+        setBaseDefinition(
+          getOpenApiQueryConfiguration({
+            document: response,
+            operationId: "queryAssets",
+          }).definition as AssetQueryDefinition
+        );
+        setDescriptionError(undefined);
       })
       .catch(() => {
         if (ignore === false) {
-          setBaseCapabilities(createAssetQueryCapabilities({}));
+          setDescriptionError("Unable to load the Assets API description.");
         }
       });
     return () => {
       ignore = true;
     };
-  }, [assets, enabled]);
+  }, [assets]);
 
   return (
     <>
-      <Flex align="center" gap={2}>
-        <Switch
-          id={enabledId}
-          checked={enabled}
-          onCheckedChange={onEnabledChange}
-        />
-        <Label htmlFor={enabledId}>Configure query</Label>
-      </Flex>
-      {enabled && (
+      {queryDefined && (
         <>
           <input
             type="hidden"
@@ -141,22 +153,31 @@ export const AssetQueryForm = ({
           <input type="hidden" name="header-name" value="Content-Type" />
           <input type="hidden" name="header-value" value='"application/json"' />
           <input type="hidden" name="body" value={body} />
-          <BindableQueryBuilder<
-            AssetObservedFieldType,
-            AssetQueryFilter["operator"],
-            StructuredAssetQueryResourceConfiguration
-          >
-            key={resource?.id}
-            value={configuration}
-            capabilities={capabilities}
-            scope={scope}
-            aliases={aliases}
-            onChange={setConfiguration}
-          />
-          {configurationError !== undefined && (
-            <Text color="destructive">{configurationError}</Text>
-          )}
         </>
+      )}
+      {definition !== undefined && (
+        <BindableQueryBuilder<
+          AssetObservedFieldType,
+          AssetQueryFilter["operator"],
+          StructuredAssetQueryResourceConfiguration
+        >
+          key={resource?.id}
+          value={configuration}
+          capabilities={definition}
+          scope={scope}
+          aliases={aliases}
+          sectionPaddingInline={theme.panel.paddingInline}
+          onChange={(value) => {
+            setConfiguration(value);
+            onQueryDefined();
+          }}
+        />
+      )}
+      {descriptionError !== undefined && (
+        <Text color="destructive">{descriptionError}</Text>
+      )}
+      {configurationError !== undefined && (
+        <Text color="destructive">{configurationError}</Text>
       )}
     </>
   );

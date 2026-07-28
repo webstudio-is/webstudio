@@ -423,7 +423,7 @@ describe("getResourceCacheKey", () => {
         sort: [{ field: ["createdAt"], direction: "desc" }],
         limit: 1,
         offset: 0,
-        output: { mode: "all" },
+        output: { mode: "all", includeMetadata: true },
         content: { mode: "none" },
       },
       indexRevision: "index-1",

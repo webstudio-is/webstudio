@@ -159,7 +159,7 @@ describe("shared asset index", () => {
             sort: [],
             limit: 100,
             offset: 0,
-            output: { mode: "all" },
+            output: { mode: "all", includeMetadata: true },
             content: { mode: "none" },
           },
         }),

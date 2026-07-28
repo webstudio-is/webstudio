@@ -371,7 +371,7 @@ const createQueryResource = (content: "none" | "full" = "none"): Resource => ({
     sort: [],
     limit: "100",
     offset: "0",
-    output: { mode: "all" },
+    output: { mode: "all", includeMetadata: true },
     content: { mode: content },
   }),
 });
@@ -1282,7 +1282,7 @@ describe("prebuild", () => {
             sort: [],
             limit: "1",
             offset: "0",
-            output: { mode: "all" },
+            output: { mode: "all", includeMetadata: true },
             content: { mode: "none" },
           }),
         },
@@ -1354,7 +1354,7 @@ describe("prebuild", () => {
       sort: [],
       limit: "1",
       offset: "0",
-      output: { mode: "all" },
+      output: { mode: "all", includeMetadata: true },
       content: { mode: "none" },
     });
 
@@ -1410,7 +1410,7 @@ describe("prebuild", () => {
       sort: [],
       limit: "1",
       offset: "0",
-      output: { mode: "all" },
+      output: { mode: "all", includeMetadata: true },
       content: { mode: "none" },
     });
 
@@ -1442,7 +1442,7 @@ describe("prebuild", () => {
       sort: [],
       limit: "1",
       offset: "0",
-      output: { mode: "all" },
+      output: { mode: "all", includeMetadata: true },
       content: { mode: "none" },
     });
 
@@ -1479,7 +1479,7 @@ describe("prebuild", () => {
       sort: [],
       limit: "1",
       offset: "0",
-      output: { mode: "all" },
+      output: { mode: "all", includeMetadata: true },
       content: { mode: "none" },
     });
 
@@ -1518,7 +1518,7 @@ describe("prebuild", () => {
             sort: [],
             limit: "10",
             offset: "0",
-            output: { mode: "all" },
+            output: { mode: "all", includeMetadata: true },
             content: { mode: "none" },
           }),
         },

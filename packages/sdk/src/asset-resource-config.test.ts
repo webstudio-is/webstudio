@@ -31,7 +31,7 @@ describe("asset query resource configuration", () => {
       sort: [],
       limit: "10",
       offset: "0",
-      output: { mode: "base" },
+      output: { mode: "base", includeMetadata: true },
       content: { mode: "none" },
     });
     expect(
@@ -164,13 +164,13 @@ describe("asset query resource configuration", () => {
       ],
       limit: "20",
       offset: "$ws$dataSource$offset",
-      output: { mode: "all" as const },
+      output: { mode: "all" as const, includeMetadata: true },
       content: { mode: "none" as const },
     };
     const body = createStructuredAssetQueryResourceBody(configuration);
 
     expect(parseStructuredAssetQueryResourceBody(body)).toEqual(configuration);
-    expect(body).toContain('"value": $ws$dataSource$routeSlug');
+    expect(body).toContain("value: $ws$dataSource$routeSlug");
   });
 
   test("rejects malformed structured resource bodies", () => {
@@ -182,7 +182,7 @@ describe("asset query resource configuration", () => {
       sort: [],
       limit: "20",
       offset: "0",
-      output: { mode: "all" },
+      output: { mode: "all", includeMetadata: true },
       content: { mode: "none" },
     });
     const query = parseExpressionObject(validBody).get("query");
@@ -197,5 +197,44 @@ describe("asset query resource configuration", () => {
         )
       )
     ).toBeUndefined();
+    expect(
+      parseStructuredAssetQueryResourceBody(`{
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 20,
+          offset: 0,
+          output: { mode: "base", includeMetadata: false },
+          content: { mode: "none" },
+        },
+      }`)
+    ).toBeUndefined();
+    expect(() =>
+      createStructuredAssetQueryResourceBody({
+        where: { all: [] },
+        sort: [],
+        limit: "20",
+        offset: "0",
+        output: { mode: "base", includeMetadata: false },
+        content: { mode: "none" },
+      })
+    ).toThrow("Select at least one asset query output");
+  });
+
+  test("defaults metadata output for existing query expressions", () => {
+    expect(
+      parseStructuredAssetQueryResourceBody(`{
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 20,
+          offset: 0,
+          output: { mode: "base" },
+          content: { mode: "none" },
+        },
+      }`)
+    ).toMatchObject({
+      output: { mode: "base", includeMetadata: true },
+    });
   });
 });

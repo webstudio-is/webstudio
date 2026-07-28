@@ -6,7 +6,6 @@ import {
   getQueryConditions,
   getQueryWhereMetrics,
   mapQueryWhere,
-  normalizeStructuredQuery,
 } from "./query-utils";
 import { genericQueryCapabilities } from "./test-fixtures";
 
@@ -73,23 +72,7 @@ describe("structured query traversal", () => {
       sort: [],
       limit: "10",
       offset: "0",
-      selection: { mode: "summary" },
-    });
-  });
-
-  test("normalizes a root condition with the declarative combinator default", () => {
-    expect(
-      normalizeStructuredQuery(
-        {
-          where: { field: ["title"], operator: "eq", value: '"Post"' },
-          sort: [],
-          limit: "10",
-          offset: "0",
-        },
-        genericQueryCapabilities
-      ).where
-    ).toEqual({
-      all: [{ field: ["title"], operator: "eq", value: '"Post"' }],
+      selection: { mode: "summary", includeMetadata: true },
     });
   });
 });

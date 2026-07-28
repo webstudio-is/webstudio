@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { queryCapabilities } from "@webstudio-is/query-builder";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { asset, assetType } from "@webstudio-is/sdk/schema";
 import {
@@ -9,9 +8,14 @@ import {
 } from "@webstudio-is/sdk/schema";
 import {
   assetQueryRequest,
+  assetQueryStandardFields,
+  assetQueryStandardFieldTypes,
   assetQueryResult,
   assetResourceQueryFailure,
   builderAssetFieldCatalog,
+  getAssetQueryOperatorsForFieldTypes,
+  type AssetObservedFieldType,
+  type AssetQueryOperator,
 } from "@webstudio-is/content-engine";
 import {
   assetsFieldCatalogApiUrl,
@@ -21,9 +25,8 @@ import {
   assetsIndexRefreshApiUrl,
   assetsUploadsApiUrl,
   assetsQueryApiUrl,
-  assetsQueryCapabilitiesApiUrl,
 } from "@webstudio-is/sdk/runtime";
-import type { AssetQueryCapabilities } from "@webstudio-is/sdk";
+import type { BuilderAssetFieldCatalog } from "@webstudio-is/content-engine";
 
 const assetItemApiPath = `${assetsApiUrl}/{assetId}`;
 const assetContentApiPath = `${assetItemApiPath}/content`;
@@ -90,11 +93,6 @@ export const assetResourceApiOperations = {
     "getAssetFieldCatalog",
     "get",
     assetsFieldCatalogApiUrl
-  ),
-  getAssetQueryCapabilities: operation(
-    "getAssetQueryCapabilities",
-    "get",
-    assetsQueryCapabilitiesApiUrl
   ),
   getAssetResourceOpenApi: operation(
     "getAssetResourceOpenApi",
@@ -272,7 +270,6 @@ const outputComponentSchemas = {
   AssetQueryResult: assetQueryResult,
   AssetResourceQueryFailure: assetResourceQueryFailure,
   BuilderAssetFieldCatalog: builderAssetFieldCatalog,
-  QueryCapabilities: queryCapabilities,
   AssetUploadTicket: assetUploadTicket,
   AssetUploadResult: assetUploadResult,
   AssetListResult: assetListResult,
@@ -295,6 +292,218 @@ const createComponentSchemas = () =>
       toComponentSchema(name, schema, "output"),
     ]),
   ]);
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && Array.isArray(value) === false;
+
+const fieldLabels: Record<(typeof assetQueryStandardFields)[number], string> = {
+  id: "ID",
+  name: "Name",
+  path: "Path",
+  key: "Key",
+  folderId: "Folder ID",
+  extension: "Extension",
+  mimeType: "MIME type",
+  size: "Size",
+  createdAt: "Created at",
+  revision: "Revision",
+  excerpt: "Excerpt",
+};
+
+const operatorLabels: Record<AssetQueryOperator, string> = {
+  eq: "Equals",
+  ne: "Does not equal",
+  in: "Is one of",
+  contains: "Contains",
+  startsWith: "Starts with",
+  endsWith: "Ends with",
+  gt: "Greater than",
+  gte: "Greater than or equal",
+  lt: "Less than",
+  lte: "Less than or equal",
+  exists: "Exists",
+  isEmpty: "Is empty",
+};
+
+const queryPropertyLabels: Record<string, string> = {
+  where: "Filters",
+  sort: "Sort",
+  limit: "Limit",
+  offset: "Offset",
+  output: "Output fields",
+  content: "File content",
+  includeMetadata: "File metadata",
+  maxBytes: "Maximum content bytes",
+  length: "Content byte length",
+};
+
+const queryModeLabels: Record<string, string> = {
+  "output:all": "All indexed fields",
+  "output:base": "File metadata only",
+  "output:fields": "Selected fields",
+  "content:none": "Metadata only",
+  "content:markdown-body": "Markdown body",
+  "content:full": "Full file",
+  "content:range": "Byte range",
+};
+
+type AssetOpenApiField = {
+  path: string[];
+  label: string;
+  types: readonly AssetObservedFieldType[];
+};
+
+const createAssetOpenApiFields = (
+  catalog?: BuilderAssetFieldCatalog
+): AssetOpenApiField[] => [
+  ...assetQueryStandardFields.map((field) => ({
+    path: [field],
+    label: fieldLabels[field],
+    types: assetQueryStandardFieldTypes[field],
+  })),
+  ...Object.values(catalog?.fields ?? {}).flatMap((field) =>
+    field.queryPath?.[0] === "properties"
+      ? [
+          {
+            path: field.queryPath,
+            label: field.queryPath.join(" / "),
+            types: field.types,
+          },
+        ]
+      : []
+  ),
+];
+
+const decorateAssetQuerySchema = ({
+  schema,
+  fields,
+}: {
+  schema: JsonSchema;
+  fields: readonly AssetOpenApiField[];
+}): JsonSchema => {
+  const fieldChoices = fields.map((field) => ({
+    const: field.path,
+    title: field.label,
+  }));
+
+  const visit = (value: unknown, property?: string): unknown => {
+    if (Array.isArray(value)) {
+      return value.map((item) => visit(item, property));
+    }
+    if (isObject(value) === false) {
+      return value;
+    }
+    const next = Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        key === "default" || key === "const" || key === "examples"
+          ? item
+          : key === "properties" && isObject(item)
+            ? Object.fromEntries(
+                Object.entries(item).map(([name, child]) => [
+                  name,
+                  visit(child, name),
+                ])
+              )
+            : visit(item, property),
+      ])
+    );
+    if (property !== undefined && queryPropertyLabels[property] !== undefined) {
+      next.title = queryPropertyLabels[property];
+    }
+    if (
+      (property === "field" || property === "fields") &&
+      next.type === "array" &&
+      next.minItems === 1 &&
+      isObject(next.items) &&
+      next.items.type === "string"
+    ) {
+      next.oneOf = fieldChoices;
+    }
+    if (
+      next.type === "object" &&
+      isObject(next.properties) &&
+      isObject(next.properties.mode) &&
+      typeof next.properties.mode.const === "string" &&
+      property !== undefined
+    ) {
+      next.properties.mode.title =
+        queryModeLabels[`${property}:${next.properties.mode.const}`] ??
+        next.properties.mode.const;
+    }
+    if (property === "output" && Array.isArray(next.oneOf)) {
+      next.oneOf.sort((left, right) => {
+        const getMode = (item: unknown) =>
+          isObject(item) &&
+          isObject(item.properties) &&
+          isObject(item.properties.mode) &&
+          typeof item.properties.mode.const === "string"
+            ? item.properties.mode.const
+            : "";
+        return (
+          Number(getMode(right) === "base") - Number(getMode(left) === "base")
+        );
+      });
+    }
+    if (
+      Array.isArray(next.oneOf) &&
+      next.oneOf.length > 0 &&
+      next.oneOf.every((item) => {
+        if (isObject(item) === false || isObject(item.properties) === false) {
+          return false;
+        }
+        return (
+          "field" in item.properties &&
+          "operator" in item.properties &&
+          "value" in item.properties
+        );
+      })
+    ) {
+      const templates = next.oneOf as Record<string, unknown>[];
+      next.oneOf = fields.flatMap((field) =>
+        templates.flatMap((template) => {
+          if (isObject(template.properties) === false) {
+            return [];
+          }
+          const operatorSchema = template.properties.operator;
+          if (isObject(operatorSchema) === false) {
+            return [];
+          }
+          const values = Array.isArray(operatorSchema.enum)
+            ? operatorSchema.enum
+            : [operatorSchema.const];
+          const compatible = values.filter(
+            (value): value is string =>
+              typeof value === "string" &&
+              getAssetQueryOperatorsForFieldTypes(field.types).includes(
+                value as AssetQueryOperator
+              )
+          );
+          if (compatible.length === 0) {
+            return [];
+          }
+          return [
+            {
+              ...template,
+              properties: {
+                ...template.properties,
+                field: { const: field.path, title: field.label },
+                operator: {
+                  oneOf: compatible.map((value) => ({
+                    const: value,
+                    title: operatorLabels[value as AssetQueryOperator] ?? value,
+                  })),
+                },
+              },
+            },
+          ];
+        })
+      );
+    }
+    return next;
+  };
+  return visit(schema) as JsonSchema;
+};
 
 const schemaResponse = (component: string, description: string) => ({
   description,
@@ -361,40 +570,25 @@ const assetFolderParameters = [
 ];
 const binarySchema = { type: "string", format: "binary" } as const;
 
-const createCapabilitiesExample = (capabilities: AssetQueryCapabilities) => {
-  const encoder = new TextEncoder();
-  const fields: AssetQueryCapabilities["fields"][number][] = [];
-  const base = { ...capabilities, fields };
-  let bytes = encoder.encode(JSON.stringify(base)).byteLength;
-  for (const field of capabilities.fields) {
-    const fieldBytes = encoder.encode(JSON.stringify(field)).byteLength + 1;
-    if (bytes + fieldBytes > assetResourceLimits.apiDescriptionExampleBytes) {
-      break;
-    }
-    fields.push(field);
-    bytes += fieldBytes;
-  }
-  return {
-    value: base,
-    truncated: fields.length !== capabilities.fields.length,
-  };
-};
-
 /**
- * OpenAPI is the external, transport-level description of the Assets API.
- * Query-authoring UI must consume the smaller normalized QueryCapabilities
- * response instead of depending on OpenAPI parsing or Assets storage details.
+ * OpenAPI is both the transport description and the sole query-authoring
+ * contract. The query UI derives its fields and controls from the operation's
+ * standard request schema; no parallel provider-specific UI contract exists.
  */
 export const createAssetResourceOpenApi = ({
-  capabilities,
+  catalog,
   builderSessionCookieName,
 }: {
-  capabilities: AssetQueryCapabilities;
+  catalog?: BuilderAssetFieldCatalog;
   builderSessionCookieName: string;
 }) => {
-  queryCapabilities.parse(capabilities);
+  const queryFields = createAssetOpenApiFields(catalog);
+  const componentSchemas = createComponentSchemas();
+  componentSchemas.AssetQueryRequest = decorateAssetQuerySchema({
+    schema: componentSchemas.AssetQueryRequest,
+    fields: queryFields,
+  });
   const operations = assetResourceApiOperations;
-  const capabilityExample = createCapabilitiesExample(capabilities);
   const mutationSecurity = [
     { projectToken: [] },
     { builderSession: [], csrfToken: [] },
@@ -704,33 +898,6 @@ export const createAssetResourceOpenApi = ({
           },
         },
       },
-      [operations.getAssetQueryCapabilities.path]: {
-        [operations.getAssetQueryCapabilities.method]: {
-          operationId: operations.getAssetQueryCapabilities.operationId,
-          summary: "Get query-authoring capabilities",
-          parameters: [projectIdParameter],
-          responses: {
-            200: {
-              ...schemaResponse(
-                "QueryCapabilities",
-                "Project-specific query capabilities"
-              ),
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/QueryCapabilities" },
-                  example: capabilityExample.value,
-                  "x-webstudio-example-truncated": capabilityExample.truncated,
-                  "x-webstudio-complete-document":
-                    operations.getAssetQueryCapabilities.path,
-                },
-              },
-            },
-            400: errorResponses[400],
-            403: errorResponses[403],
-            500: errorResponses[500],
-          },
-        },
-      },
       [operations.getAssetResourceOpenApi.path]: {
         [operations.getAssetResourceOpenApi.method]: {
           operationId: operations.getAssetResourceOpenApi.operationId,
@@ -774,7 +941,7 @@ export const createAssetResourceOpenApi = ({
       },
     },
     components: {
-      schemas: createComponentSchemas(),
+      schemas: componentSchemas,
       securitySchemes: {
         projectToken: {
           type: "apiKey",

@@ -96,7 +96,10 @@ export const assetQueryResourceConfigurationInput = z.strictObject({
       'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.'
     )
     .default("0"),
-  output: assetResourceOutputSelection.default({ mode: "all" }),
+  output: assetResourceOutputSelection.default({
+    mode: "all",
+    includeMetadata: true,
+  }),
   content: assetResourceContentOptions.default({ mode: "none" }),
 });
 

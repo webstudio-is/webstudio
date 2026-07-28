@@ -167,7 +167,7 @@ test("Generated app renders a Builder-created current-date system resource", asy
     await createSystemResourceVariable({
       page,
       name: resourceName,
-      resource: "Current Date",
+      resource: "Current date",
     });
     await reloadAndSelectContent({
       page,

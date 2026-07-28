@@ -8,6 +8,8 @@ import {
   transpileExpression,
   getExpressionIdentifiers,
   generateObjectExpression,
+  generateJsonExpression,
+  parseJsonExpression,
   parseObjectExpression,
   parseExpressionObject,
   parseArrayExpression,
@@ -906,7 +908,14 @@ describe("object expression transformations", () => {
         ["limit", "pageSize ?? 20"],
       ])
     );
+    expect(parseExpressionObject("({ value: 1 })")).toEqual(
+      new Map([["value", "1"]])
+    );
+    expect(parseExpressionObject("(({ value: 1 }))")).toEqual(
+      new Map([["value", "1"]])
+    );
     expect(parseExpressionObject("{} trailing")).toEqual(new Map());
+    expect(parseExpressionObject("({}) trailing")).toEqual(new Map());
     expect(parseExpressionObject("{ value: 1, ...other }")).toEqual(new Map());
     expect(parseExpressionObject("{ value: 1, value: 2 }")).toEqual(new Map());
   });
@@ -957,13 +966,19 @@ describe("object expression transformations", () => {
           ["a", `0`],
           ["b-c", `""`],
           ["d", `$d`],
+          ["default", `true`],
+          ["$value", `null`],
+          ["invalid key", `false`],
         ])
       )
     ).toMatchInlineSnapshot(`
     "{
-      "a": 0,
+      a: 0,
       "b-c": "",
-      "d": $d,
+      d: $d,
+      default: true,
+      $value: null,
+      "invalid key": false,
     }"
     `);
   });
@@ -973,5 +988,41 @@ describe("object expression transformations", () => {
     "{
     }"
     `);
+  });
+
+  test("format JSON as readable JavaScript expression source", () => {
+    expect(
+      generateJsonExpression({
+        query: {
+          sort: [{ field: ["properties", "date"], direction: "desc" }],
+          "file-content": null,
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      "{
+        query: {
+          sort: [{
+            field: [\"properties\", \"date\"],
+            direction: \"desc\",
+          }],
+          \"file-content\": null,
+        },
+      }"
+    `);
+    expect(() => generateJsonExpression(undefined)).toThrow();
+    expect(() => generateJsonExpression(new Date())).toThrow();
+    const source = generateJsonExpression({
+      enabled: true,
+      count: -2,
+      values: [null, "value"],
+    });
+    expect(parseJsonExpression(source)).toEqual({
+      enabled: true,
+      count: -2,
+      values: [null, "value"],
+    });
+    expect(parseJsonExpression("{ value: dynamic }")).toBeUndefined();
+    expect(parseJsonExpression("{ value: 1, value: 2 }")).toBeUndefined();
+    expect(parseJsonExpression("{ value: -1e999 }")).toBeUndefined();
   });
 });

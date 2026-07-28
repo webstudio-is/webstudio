@@ -199,7 +199,10 @@ const assetResourceConfiguration = looseObject({
   sort: z.array(assetQuerySort),
   limit: z.string(),
   offset: z.string(),
-  output: assetResourceOutputSelection.default({ mode: "all" }),
+  output: assetResourceOutputSelection.default({
+    mode: "all",
+    includeMetadata: true,
+  }),
   content: assetResourceContentOptions,
 });
 const assetResource = looseObject({

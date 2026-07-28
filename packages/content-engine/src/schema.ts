@@ -285,11 +285,20 @@ export const assetQueryFieldPath = z
 
 export type AssetQueryFieldPath = z.infer<typeof assetQueryFieldPath>;
 
+const includeMetadata = z.boolean().default(true);
+
 export const assetResourceOutputSelection = z.discriminatedUnion("mode", [
-  z.strictObject({ mode: z.literal("all") }),
-  z.strictObject({ mode: z.literal("base") }),
+  z.strictObject({
+    mode: z.literal("all"),
+    includeMetadata,
+  }),
+  z.strictObject({
+    mode: z.literal("base"),
+    includeMetadata,
+  }),
   z.strictObject({
     mode: z.literal("fields"),
+    includeMetadata,
     fields: z
       .array(assetQueryFieldPath)
       .max(contentEngineLimits.outputFieldCount)
@@ -410,28 +419,50 @@ export const assetQuerySort = z.strictObject({
 
 export type AssetQuerySort = z.infer<typeof assetQuerySort>;
 
+export const hasAssetQueryOutput = ({
+  output,
+  content,
+}: {
+  output: AssetResourceOutputSelection;
+  content: AssetResourceContentOptions;
+}) =>
+  output.includeMetadata ||
+  output.mode === "all" ||
+  (output.mode === "fields" && output.fields.length > 0) ||
+  content.mode !== "none";
+
 /**
  * Optional typed configuration for the existing Assets system resource.
  * An omitted configuration preserves the legacy fetch-all behavior.
  */
-export const assetQuery = z.strictObject({
-  where: assetQueryWhere.default({ all: [] }),
-  sort: z.array(assetQuerySort).max(contentEngineLimits.sortCount).default([]),
-  limit: z
-    .number()
-    .int()
-    .nonnegative()
-    .max(contentEngineLimits.resultCount)
-    .default(contentEngineLimits.defaultResultCount),
-  offset: z
-    .number()
-    .int()
-    .nonnegative()
-    .max(contentEngineLimits.candidateDocuments)
-    .default(0),
-  output: assetResourceOutputSelection.default({ mode: "all" }),
-  content: assetResourceContentOptions.default({ mode: "none" }),
-});
+export const assetQuery = z
+  .strictObject({
+    where: assetQueryWhere.default({ all: [] }),
+    sort: z
+      .array(assetQuerySort)
+      .max(contentEngineLimits.sortCount)
+      .default([]),
+    limit: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(contentEngineLimits.resultCount)
+      .default(contentEngineLimits.defaultResultCount),
+    offset: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(contentEngineLimits.candidateDocuments)
+      .default(0),
+    output: assetResourceOutputSelection.default({
+      mode: "all",
+      includeMetadata: true,
+    }),
+    content: assetResourceContentOptions.default({ mode: "none" }),
+  })
+  .refine(hasAssetQueryOutput, {
+    error: "Select at least one asset query output",
+  });
 
 export type AssetQuery = z.infer<typeof assetQuery>;
 export type AssetQueryInput = z.input<typeof assetQuery>;
@@ -469,8 +500,9 @@ const assetQueryContent = hydratedAssetContent.omit({
 
 export const assetQueryItem = assetFileDocument
   .omit({ _id: true, _type: true, contentRef: true })
+  .partial()
   .extend({
-    id: z.string().min(1),
+    id: z.string().min(1).optional(),
     content: assetQueryContent.optional(),
   });
 

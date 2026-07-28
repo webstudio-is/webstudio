@@ -304,6 +304,7 @@ export const serverOnlyRouterOperationMetadata = {
             output: {
               default: {
                 mode: "all",
+                includeMetadata: true,
               },
               oneOf: [
                 {
@@ -312,6 +313,10 @@ export const serverOnlyRouterOperationMetadata = {
                     mode: {
                       type: "string",
                       const: "all",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
                     },
                   },
                   required: ["mode"],
@@ -324,6 +329,10 @@ export const serverOnlyRouterOperationMetadata = {
                       type: "string",
                       const: "base",
                     },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
                   },
                   required: ["mode"],
                   additionalProperties: false,
@@ -334,6 +343,10 @@ export const serverOnlyRouterOperationMetadata = {
                     mode: {
                       type: "string",
                       const: "fields",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
                     },
                     fields: {
                       maxItems: 256,
@@ -669,6 +682,7 @@ export const serverOnlyRouterOperationMetadata = {
             output: {
               default: {
                 mode: "all",
+                includeMetadata: true,
               },
               oneOf: [
                 {
@@ -677,6 +691,10 @@ export const serverOnlyRouterOperationMetadata = {
                     mode: {
                       type: "string",
                       const: "all",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
                     },
                   },
                   required: ["mode"],
@@ -689,6 +707,10 @@ export const serverOnlyRouterOperationMetadata = {
                       type: "string",
                       const: "base",
                     },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
                   },
                   required: ["mode"],
                   additionalProperties: false,
@@ -699,6 +721,10 @@ export const serverOnlyRouterOperationMetadata = {
                     mode: {
                       type: "string",
                       const: "fields",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
                     },
                     fields: {
                       maxItems: 256,

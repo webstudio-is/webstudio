@@ -1,27 +1,18 @@
 import {
+  generateJsonExpression,
   generateObjectExpression,
   parseArrayExpression,
   parseExpressionObject,
+  parseJsonExpression,
 } from "@webstudio-is/expression";
 import { z } from "zod";
 import type {
-  QueryCapabilities,
+  QueryFilterControl,
+  QuerySourceDefinition,
   QuerySourceCodec,
   QueryWhere,
-  StructuredQuery,
 } from "./types";
 import { getQueryFieldKey, getQueryWhereMetrics } from "./query-utils";
-
-const parseJsonExpression = (expression: string | undefined) => {
-  if (expression === undefined) {
-    return;
-  }
-  try {
-    return JSON.parse(expression) as unknown;
-  } catch {
-    return;
-  }
-};
 
 const createJsonSchemaParser = (schema: boolean | Record<string, unknown>) => {
   let parser: z.ZodType;
@@ -46,7 +37,7 @@ const isOperatorCompatible = <
 }: {
   field: string[];
   operator: string;
-  capabilities: QueryCapabilities<FieldType, Operator>;
+  capabilities: QuerySourceDefinition<FieldType, Operator>;
 }) => {
   const operatorCapability = capabilities.operators.find(
     ({ value }) => value === operator
@@ -68,15 +59,17 @@ const isOperatorCompatible = <
 const parseWhere = <FieldType extends string, Operator extends string>({
   expression,
   capabilities,
+  control,
   parseFieldPath,
   depth = 0,
 }: {
   expression: string;
-  capabilities: QueryCapabilities<FieldType, Operator>;
+  capabilities: QuerySourceDefinition<FieldType, Operator>;
+  control: QueryFilterControl<Operator>;
   parseFieldPath: ReturnType<typeof createJsonSchemaParser>;
   depth?: number;
 }): QueryWhere<string[], Operator> | undefined => {
-  if (depth > capabilities.limits.depth) {
+  if (depth > control.limits.depth) {
     return;
   }
   const fields = parseExpressionObject(expression);
@@ -88,7 +81,7 @@ const parseWhere = <FieldType extends string, Operator extends string>({
   if (combinator !== undefined) {
     if (
       fields.size !== 1 ||
-      capabilities.features.combinators.includes(combinator) === false
+      control.combinators.includes(combinator) === false
     ) {
       return;
     }
@@ -100,6 +93,7 @@ const parseWhere = <FieldType extends string, Operator extends string>({
       parseWhere({
         expression: item,
         capabilities,
+        control,
         parseFieldPath,
         depth: depth + 1,
       })
@@ -137,26 +131,29 @@ const parseWhere = <FieldType extends string, Operator extends string>({
 const formatWhere = <FieldType extends string, Operator extends string>({
   where,
   capabilities,
+  control,
   parseFieldPath,
   depth = 0,
 }: {
   where: QueryWhere<string[], Operator>;
-  capabilities: QueryCapabilities<FieldType, Operator>;
+  capabilities: QuerySourceDefinition<FieldType, Operator>;
+  control: QueryFilterControl<Operator>;
   parseFieldPath: ReturnType<typeof createJsonSchemaParser>;
   depth?: number;
 }): string => {
-  if (depth > capabilities.limits.depth) {
+  if (depth > control.limits.depth) {
     throw new Error("Query filter nesting limit was exceeded");
   }
   if ("field" in where === false) {
     const combinator = "all" in where ? "all" : "any";
-    if (capabilities.features.combinators.includes(combinator) === false) {
+    if (control.combinators.includes(combinator) === false) {
       throw new Error("Query combinator is unsupported");
     }
     const children = ("all" in where ? where.all : where.any).map((child) =>
       formatWhere({
         where: child,
         capabilities,
+        control,
         parseFieldPath,
         depth: depth + 1,
       })
@@ -188,164 +185,155 @@ const formatWhere = <FieldType extends string, Operator extends string>({
 export const createQuerySourceCodec = <
   FieldType extends string,
   Operator extends string,
-  Query extends StructuredQuery<string[], Operator, Record<string, unknown>>,
+  Query extends Record<string, unknown>,
 >(
-  capabilities: QueryCapabilities<FieldType, Operator>
+  capabilities: QuerySourceDefinition<FieldType, Operator>
 ): QuerySourceCodec<Query> => {
   const parseFieldPath = createJsonSchemaParser(
     capabilities.source.fieldPathSchema
   );
-  const parameterParsers = new Map(
-    capabilities.source.parameters.map((parameter) => [
-      parameter.key,
-      createJsonSchemaParser(parameter.schema),
-    ])
+  const variantParsers = new Map(
+    capabilities.source.controls.flatMap((control) =>
+      control.type === "variant"
+        ? [[control.key, createJsonSchemaParser(control.schema)] as const]
+        : []
+    )
   );
+  const parseSort = (value: unknown, max: number) => {
+    if (Array.isArray(value) === false || value.length > max) {
+      return;
+    }
+    const items = value.map((item) => {
+      if (
+        typeof item !== "object" ||
+        item === null ||
+        Object.keys(item).length !== 2 ||
+        !("field" in item) ||
+        !("direction" in item) ||
+        parseFieldPath(item.field).success === false ||
+        (item.direction !== "asc" && item.direction !== "desc")
+      ) {
+        return;
+      }
+      return { field: item.field as string[], direction: item.direction };
+    });
+    return items.some((item) => item === undefined) ? undefined : items;
+  };
   return {
     parse: (source) => {
-      const root = parseExpressionObject(source);
-      const queryExpression = root.get(capabilities.source.rootKey);
-      if (root.size !== 1 || queryExpression === undefined) {
-        return { success: false, message: "Enter a valid query expression." };
-      }
-      const query = parseExpressionObject(queryExpression);
-      const coreKeys = ["where", "sort", "limit", "offset"];
-      const expectedKeys = [
-        ...coreKeys,
-        ...capabilities.source.parameters.map(({ key }) => key),
-      ];
+      const expressions = parseExpressionObject(source);
+      const controls = capabilities.source.controls;
       if (
-        coreKeys.some((key) => query.has(key) === false) ||
-        [...query.keys()].some((key) => expectedKeys.includes(key) === false)
+        [...expressions.keys()].some(
+          (key) => controls.some((control) => control.key === key) === false
+        )
       ) {
         return { success: false, message: "Complete every query field." };
       }
-      const whereExpression = query.get("where");
-      const sort = parseJsonExpression(query.get("sort"));
-      const limit = query.get("limit");
-      const offset = query.get("offset");
-      const where =
-        whereExpression === undefined
-          ? undefined
-          : parseWhere({
-              expression: whereExpression,
-              capabilities,
-              parseFieldPath,
-            });
-      const metrics =
-        where === undefined ? undefined : getQueryWhereMetrics(where);
-      if (
-        where === undefined ||
-        metrics === undefined ||
-        metrics.conditions > capabilities.limits.conditions ||
-        metrics.depth > capabilities.limits.depth ||
-        Array.isArray(sort) === false ||
-        sort.length > capabilities.limits.sortFields ||
-        (capabilities.features.sort === false && sort.length > 0) ||
-        limit === undefined ||
-        offset === undefined ||
-        isQueryExpression(limit) === false ||
-        isQueryExpression(offset) === false ||
-        (capabilities.features.limit === false &&
-          limit !== capabilities.defaults.limit) ||
-        (capabilities.features.offset === false &&
-          offset !== capabilities.defaults.offset)
-      ) {
-        return { success: false, message: "Enter a valid query expression." };
-      }
-      const parsedSort = sort.map((item) => {
-        if (
-          typeof item !== "object" ||
-          item === null ||
-          Object.keys(item).length !== 2 ||
-          !("field" in item) ||
-          !("direction" in item) ||
-          parseFieldPath(item.field).success === false ||
-          (item.direction !== "asc" && item.direction !== "desc")
-        ) {
-          return;
+      const value: Record<string, unknown> = {};
+      for (const control of controls) {
+        const expression =
+          expressions.get(control.key) ??
+          (control.type === "expression"
+            ? control.defaultValue
+            : generateJsonExpression(control.defaultValue));
+        if (control.type === "expression") {
+          if (isQueryExpression(expression) === false) {
+            return {
+              success: false,
+              message: `Enter a valid ${control.label.toLowerCase()}.`,
+            };
+          }
+          value[control.key] = expression;
+          continue;
         }
-        return { field: item.field as string[], direction: item.direction };
-      });
-      if (parsedSort.some((item) => item === undefined)) {
-        return { success: false, message: "Enter a valid query sort." };
-      }
-      const parameters: Record<string, unknown> = {};
-      for (const parameter of capabilities.source.parameters) {
-        const source = query.get(parameter.key);
-        const value =
-          source === undefined
-            ? structuredClone(parameter.defaultValue)
-            : parseJsonExpression(source);
-        const parsed = parameterParsers.get(parameter.key)?.(value);
-        if (parsed === undefined) {
-          return { success: false, message: "Query capabilities are invalid." };
+        if (control.type === "filter") {
+          const where = parseWhere({
+            expression,
+            capabilities,
+            control,
+            parseFieldPath,
+          });
+          const metrics =
+            where === undefined ? undefined : getQueryWhereMetrics(where);
+          if (
+            where === undefined ||
+            metrics === undefined ||
+            metrics.conditions > control.limits.conditions ||
+            metrics.depth > control.limits.depth
+          ) {
+            return {
+              success: false,
+              message: `Enter valid ${control.label.toLowerCase()}.`,
+            };
+          }
+          value[control.key] = where;
+          continue;
         }
-        if (parsed.success === false) {
+        const parsedJson = parseJsonExpression(expression);
+        if (control.type === "sort") {
+          const sort = parseSort(parsedJson, control.max);
+          if (sort === undefined) {
+            return {
+              success: false,
+              message: `Enter valid ${control.label.toLowerCase()}.`,
+            };
+          }
+          value[control.key] = sort;
+          continue;
+        }
+        const parsed = variantParsers.get(control.key)?.(parsedJson);
+        if (parsed?.success !== true) {
           return {
             success: false,
-            message: `Enter a valid ${parameter.label.toLowerCase()}.`,
+            message: `Enter a valid ${control.label.toLowerCase()}.`,
           };
         }
-        parameters[parameter.key] = parsed.data;
+        value[control.key] = parsed.data;
       }
-      const value = {
-        where,
-        sort: parsedSort,
-        limit,
-        offset,
-        ...parameters,
-      } as Query;
-      return { success: true, value };
+      return { success: true, value: value as Query };
     },
     format: (query) => {
-      const metrics = getQueryWhereMetrics(query.where);
-      if (
-        metrics.conditions > capabilities.limits.conditions ||
-        metrics.depth > capabilities.limits.depth ||
-        query.sort.length > capabilities.limits.sortFields ||
-        (capabilities.features.sort === false && query.sort.length > 0) ||
-        isQueryExpression(query.limit) === false ||
-        isQueryExpression(query.offset) === false ||
-        (capabilities.features.limit === false &&
-          query.limit !== capabilities.defaults.limit) ||
-        (capabilities.features.offset === false &&
-          query.offset !== capabilities.defaults.offset)
-      ) {
-        throw new Error("Query limits were exceeded");
-      }
-      for (const order of query.sort) {
-        if (
-          parseFieldPath(order.field).success === false ||
-          (order.direction !== "asc" && order.direction !== "desc")
-        ) {
-          throw new Error("Query sort is invalid");
+      const fields = new Map<string, string>();
+      for (const control of capabilities.source.controls) {
+        const value =
+          query[control.key] ?? structuredClone(control.defaultValue);
+        if (control.type === "expression") {
+          if (typeof value !== "string" || isQueryExpression(value) === false) {
+            throw new Error(`Query ${control.key} is invalid`);
+          }
+          fields.set(control.key, value);
+          continue;
         }
-      }
-      const fields = new Map<string, string>([
-        [
-          "where",
-          formatWhere({ where: query.where, capabilities, parseFieldPath }),
-        ],
-        ["sort", JSON.stringify(query.sort)],
-        ["limit", query.limit],
-        ["offset", query.offset],
-      ]);
-      for (const parameter of capabilities.source.parameters) {
-        const value = query[parameter.key] ?? parameter.defaultValue;
-        const parsed = parameterParsers.get(parameter.key)?.(value);
-        if (parsed === undefined) {
-          throw new Error("Query capabilities are invalid");
+        if (control.type === "filter") {
+          const where = value as QueryWhere<string[], Operator>;
+          const metrics = getQueryWhereMetrics(where);
+          if (
+            metrics.conditions > control.limits.conditions ||
+            metrics.depth > control.limits.depth
+          ) {
+            throw new Error("Query filter limits were exceeded");
+          }
+          fields.set(
+            control.key,
+            formatWhere({ where, capabilities, control, parseFieldPath })
+          );
+          continue;
         }
-        if (parsed.success === false) {
-          throw new Error(`Query ${parameter.key} is invalid`);
+        if (control.type === "sort") {
+          if (parseSort(value, control.max) === undefined) {
+            throw new Error(`Query ${control.key} is invalid`);
+          }
+          fields.set(control.key, generateJsonExpression(value));
+          continue;
         }
-        fields.set(parameter.key, JSON.stringify(parsed.data));
+        const parsed = variantParsers.get(control.key)?.(value);
+        if (parsed?.success !== true) {
+          throw new Error(`Query ${control.key} is invalid`);
+        }
+        fields.set(control.key, generateJsonExpression(parsed.data));
       }
-      const expression = generateObjectExpression(fields);
-      return generateObjectExpression(
-        new Map([[capabilities.source.rootKey, expression]])
-      );
+      return `(${generateObjectExpression(fields)})`;
     },
   };
 };

@@ -1816,7 +1816,7 @@ describe("builder runtime read families", () => {
           sort: [],
           limit: "1",
           offset: "0",
-          output: { mode: "all" },
+          output: { mode: "all", includeMetadata: true },
           content: { mode: "markdown-body", maxBytes: 65_536 },
         },
       }),
@@ -1853,7 +1853,7 @@ describe("builder runtime read families", () => {
     expect(updatedPayload).toContain("properties");
     expect(updatedPayload).toContain("system.params.slug");
     expect(updatedPayload).toContain("markdown-body");
-    expect(updatedPayload).toContain('\\"limit\\": 2');
+    expect(updatedPayload).toContain("limit: 2");
 
     const disabled = executeBuilderRuntimeOperation({
       id: "assetsResources.update",
