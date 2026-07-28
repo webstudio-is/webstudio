@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TRPCError } from "@trpc/server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { defaultAssetResourceOutputSelection } from "@webstudio-is/content-engine";
 import { getOpenApiQueryConfiguration } from "@webstudio-is/query-builder";
 import { loader as openApiLoader } from "../../routes/rest.assets.openapi[.]json";
 import { builderSessionCookieName } from "~/services/builder-session.server";
@@ -76,7 +77,7 @@ describe("asset API descriptions", () => {
       expect.objectContaining({
         type: "variant",
         key: "output",
-        defaultValue: { mode: "base", includeMetadata: true },
+        defaultValue: defaultAssetResourceOutputSelection,
         config: expect.objectContaining({
           selection: {
             label: "Output",

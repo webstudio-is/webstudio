@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getOpenApiQueryConfiguration } from "./openapi";
+import { createQuerySourceCodec } from "./source";
 
 describe("OpenAPI query configuration", () => {
   test("derives differently named parameters without vendor metadata", () => {
@@ -114,5 +115,89 @@ describe("OpenAPI query configuration", () => {
         min: 1,
       },
     ]);
+  });
+
+  test("supports array-valued field choices in variant defaults", () => {
+    const defaultValue = {
+      mode: "fields",
+      fields: [["url"], ["width"]],
+    };
+    const configuration = getOpenApiQueryConfiguration({
+      document: {
+        paths: {
+          "/assets": {
+            post: {
+              operationId: "queryAssets",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        query: {
+                          type: "object",
+                          properties: {
+                            output: {
+                              default: defaultValue,
+                              oneOf: [
+                                {
+                                  type: "object",
+                                  properties: {
+                                    mode: { const: "base" },
+                                  },
+                                  required: ["mode"],
+                                  additionalProperties: false,
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    mode: { const: "fields" },
+                                    fields: {
+                                      type: "array",
+                                      items: {
+                                        type: "array",
+                                        minItems: 1,
+                                        items: { type: "string" },
+                                        oneOf: [
+                                          { const: ["url"], title: "URL" },
+                                          {
+                                            const: ["width"],
+                                            title: "Width",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  },
+                                  required: ["mode", "fields"],
+                                  additionalProperties: false,
+                                },
+                              ],
+                            },
+                          },
+                          required: ["output"],
+                        },
+                      },
+                      required: ["query"],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      operationId: "queryAssets",
+    });
+
+    const codec = createQuerySourceCodec(configuration.definition);
+    const source = codec.format({ output: defaultValue });
+    expect(codec.parse(source)).toEqual({
+      success: true,
+      value: { output: defaultValue },
+    });
+    expect(
+      codec.parse(`({ output: { mode: "fields", fields: [["height"]] } })`)
+        .success
+    ).toBe(false);
   });
 });

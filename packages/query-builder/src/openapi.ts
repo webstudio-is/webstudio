@@ -128,6 +128,49 @@ const defaultFromSchema = (schema: JsonObject): unknown => {
   return "";
 };
 
+const createVariantValidationSchema = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(createVariantValidationSchema);
+  }
+  if (isObject(value) === false) {
+    return value;
+  }
+  const schema = Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      createVariantValidationSchema(item),
+    ])
+  );
+  if (
+    schema.type === "array" &&
+    Array.isArray(schema.oneOf) &&
+    schema.oneOf.every(
+      (choice) =>
+        isObject(choice) &&
+        Array.isArray(choice.const) &&
+        choice.const.every((segment) => typeof segment === "string")
+    )
+  ) {
+    // Zod's JSON Schema converter treats an array-valued const as a list of
+    // scalar choices. Express each exact array as an equivalent tuple schema
+    // so source validation preserves the choices declared by OpenAPI.
+    return {
+      ...schema,
+      oneOf: schema.oneOf.map((choice) => {
+        const segments = (choice as { const: string[] }).const;
+        return {
+          type: "array",
+          prefixItems: segments.map((segment) => ({ const: segment })),
+          items: false,
+          minItems: segments.length,
+          maxItems: segments.length,
+        };
+      }),
+    };
+  }
+  return schema;
+};
+
 const createVariantControl = ({
   document,
   key,
@@ -219,7 +262,7 @@ const createVariantControl = ({
     key,
     label: String(schema.title ?? labelFromKey(key)),
     defaultValue: currentDefault ?? options[0]?.defaultValue ?? {},
-    schema,
+    schema: createVariantValidationSchema(schema) as JsonObject,
     config: {
       discriminator,
       selection: {
