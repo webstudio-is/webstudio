@@ -47,6 +47,7 @@ BEGIN
   WHERE asset."projectId" = p_project_id
     AND asset."id" = p_asset_id
     AND asset."filename" IS NOT DISTINCT FROM p_source->>'filename'
+    AND asset."description" IS NOT DISTINCT FROM p_source->>'description'
     AND asset."folderId" IS NOT DISTINCT FROM p_source->>'folderId'
     AND file."name" = p_source->>'storageName'
     AND file."updatedAt" = (p_source->>'fileUpdatedAt')::TIMESTAMPTZ

@@ -95,12 +95,16 @@ describe("Assets OpenAPI description", () => {
   test("describes stable fields and schemaless properties without a UI extension", () => {
     const document = createDocument();
     const resultSchema = document.components.schemas.AssetQueryResult;
+    const previewSchema = document.components.schemas.AssetQueryPreviewResult;
     const serialized = JSON.stringify(resultSchema);
     const requestSchema = document.components.schemas.AssetQueryRequest;
 
     expect(serialized).toContain('"name"');
+    expect(serialized).toContain('"description"');
     expect(serialized).toContain('"properties"');
     expect(serialized).toContain('"additionalProperties"');
+    expect(serialized).not.toContain("__diagnostics__");
+    expect(JSON.stringify(previewSchema)).toContain("__diagnostics__");
     expect(JSON.stringify(requestSchema)).toContain('"properties","slug"');
     expect(JSON.stringify(document)).not.toContain("x-webstudio-query");
   });

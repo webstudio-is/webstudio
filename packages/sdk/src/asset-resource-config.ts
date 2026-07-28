@@ -19,6 +19,7 @@ import {
   assetResourceContentOptions,
   assetResourceOutputSelection,
   createContentCompilationPlan,
+  defaultAssetResourceOutputSelection,
   getAssetQueryOperatorsForFieldTypes,
   hasAssetQueryOutput,
   type AssetQueryRequestInput,
@@ -53,7 +54,7 @@ export const createAssetResourceRequest = (
 
 export const isAssetsResource = (resource: Resource) =>
   resource.control === "system" &&
-  (resource.method === "get" || resource.method === "post") &&
+  resource.method === "post" &&
   parseStringLiteralExpression(resource.url) === assetsResourceUrl;
 
 export type StructuredAssetQueryFilterBinding = {
@@ -124,11 +125,6 @@ const createAssetContentCompilationQuery = ({
   content: configuration.content,
 });
 
-export const isConfiguredAssetsResource = (resource: Resource) =>
-  resource.control === "system" &&
-  resource.method === "post" &&
-  parseStringLiteralExpression(resource.url) === assetsResourceUrl;
-
 export const createReachableAssetContentCompilationPlan = ({
   props,
   dataSources,
@@ -153,7 +149,7 @@ export const createReachableAssetContentCompilationPlan = ({
   for (const resource of resources) {
     if (
       reachableResourceIds.has(resource.id) === false ||
-      isConfiguredAssetsResource(resource) === false
+      isAssetsResource(resource) === false
     ) {
       continue;
     }
@@ -210,7 +206,7 @@ const assetQuerySourceDefinition = {
         type: "variant" as const,
         key: "output",
         label: "output",
-        defaultValue: { mode: "all", includeMetadata: true },
+        defaultValue: defaultAssetResourceOutputSelection,
         schema: z.toJSONSchema(assetResourceOutputSelection, {
           target: "draft-2020-12",
           io: "input",
@@ -298,7 +294,7 @@ export const createStructuredAssetQueryResourceBody = ({
   sort,
   limit,
   offset,
-  output = { mode: "all", includeMetadata: true },
+  output = defaultAssetResourceOutputSelection,
   content,
 }: StructuredAssetQueryResourceConfiguration) => {
   if (hasAssetQueryOutput({ output, content }) === false) {

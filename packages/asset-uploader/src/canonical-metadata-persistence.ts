@@ -28,6 +28,7 @@ export type CanonicalAssetMetadataSource = {
   fileUpdatedAt: string;
   fileSize: number;
   filename?: string;
+  description?: string;
   folderId?: string;
 };
 
@@ -79,6 +80,7 @@ export const replaceCanonicalAssetFileEntry = async ({
       fileUpdatedAt: source.fileUpdatedAt,
       fileSize: source.fileSize,
       filename: source.filename ?? null,
+      description: source.description ?? null,
       folderId: source.folderId ?? null,
     },
   });

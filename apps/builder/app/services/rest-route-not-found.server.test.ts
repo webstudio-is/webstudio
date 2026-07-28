@@ -7,7 +7,7 @@ import { action } from "../routes/rest.$";
 
 const requestUnknownRoute = async (client: "browser" | "cli") => {
   const response = await action({
-    request: new Request("https://webstudio.is/rest/assets/legacy-name.png", {
+    request: new Request("https://webstudio.is/rest/assets/unknown.png", {
       method: "POST",
       headers: { [apiClientHeader]: client },
     }),

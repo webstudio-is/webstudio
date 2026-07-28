@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/sdk/schema";
 import {
   assetQueryRequest,
+  assetQueryPreviewResult,
   assetQueryStandardFields,
   assetQueryStandardFieldTypes,
   assetQueryResult,
@@ -268,6 +269,7 @@ const inputComponentSchemas = {
 
 const outputComponentSchemas = {
   AssetQueryResult: assetQueryResult,
+  AssetQueryPreviewResult: assetQueryPreviewResult,
   AssetResourceQueryFailure: assetResourceQueryFailure,
   BuilderAssetFieldCatalog: builderAssetFieldCatalog,
   AssetUploadTicket: assetUploadTicket,
@@ -298,7 +300,11 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
 
 const fieldLabels: Record<(typeof assetQueryStandardFields)[number], string> = {
   id: "ID",
+  url: "URL",
+  width: "Width",
+  height: "Height",
   name: "Name",
+  description: "Description",
   path: "Path",
   key: "Key",
   folderId: "Folder ID",
@@ -338,7 +344,7 @@ const queryPropertyLabels: Record<string, string> = {
 };
 
 const queryModeLabels: Record<string, string> = {
-  "output:all": "All indexed fields",
+  "output:all": "All content fields",
   "output:base": "File metadata only",
   "output:fields": "Selected fields",
   "content:none": "Metadata only",
@@ -877,7 +883,7 @@ export const createAssetResourceOpenApi = ({
             },
           },
           responses: {
-            200: schemaResponse("AssetQueryResult", "Query result"),
+            200: schemaResponse("AssetQueryPreviewResult", "Query preview"),
             ...errorResponses,
           },
         },

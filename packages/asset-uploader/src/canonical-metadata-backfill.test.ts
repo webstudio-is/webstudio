@@ -301,6 +301,7 @@ describe("canonical asset metadata synchronization", () => {
             id: "image",
             projectId: "project-1",
             filename: null,
+            description: "Image description",
             folderId: null,
             file: {
               name: "image.png",
@@ -388,11 +389,21 @@ describe("canonical asset metadata synchronization", () => {
           assetId: "image",
           document: expect.objectContaining({
             path: "image.png",
+            description: "Image description",
             properties: {},
           }),
         }),
       ])
     );
+    const image = persisted.find(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "assetId" in entry &&
+        entry.assetId === "image"
+    );
+    expect(image).toBeDefined();
+    expect(image).not.toHaveProperty("document.excerpt");
   });
 
   test("does not exceed shared read concurrency", async () => {

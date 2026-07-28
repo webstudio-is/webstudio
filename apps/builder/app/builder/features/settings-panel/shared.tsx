@@ -243,6 +243,26 @@ export const Row = ({
   </Flex>
 );
 
+export const CenteredPanelMessage = ({
+  children,
+  color = "subtle",
+}: {
+  children: ReactNode;
+  color?: ComponentProps<typeof Text>["color"];
+}) => (
+  <Row
+    css={{
+      alignItems: "center",
+      justifyContent: "center",
+      flexGrow: 1,
+      minHeight: 100,
+      textAlign: "center",
+    }}
+  >
+    <Text color={color}>{children}</Text>
+  </Row>
+);
+
 export const $selectedInstanceScope = computed(
   [
     $selectedInstanceKeyWithRoot,

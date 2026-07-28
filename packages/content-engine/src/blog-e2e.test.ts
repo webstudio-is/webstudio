@@ -61,6 +61,7 @@ describe("published Markdown blog end-to-end", () => {
       },
       sort: [{ field: ["properties", "publishedAt"], direction: "desc" }],
       limit: 20,
+      output: { mode: "all", includeMetadata: true },
     });
     expect(await listing?.json()).toMatchObject({
       items: [
@@ -82,6 +83,7 @@ describe("published Markdown blog end-to-end", () => {
         ],
       },
       limit: 1,
+      output: { mode: "all", includeMetadata: true },
       content: { mode: "full" },
     });
     expect(await detail?.json()).toMatchObject({

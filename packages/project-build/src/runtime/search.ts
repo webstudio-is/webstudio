@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isLiteralExpression } from "@webstudio-is/expression";
-import { isConfiguredAssetsResource, type StyleDecl } from "@webstudio-is/sdk";
+import { isAssetsResource, type StyleDecl } from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
 import { ariaAttributes, ariaRoles } from "@webstudio-is/html-data";
@@ -1218,7 +1218,7 @@ export const analyzeProject = (
       if (
         resource === undefined ||
         resource.method === "get" ||
-        isConfiguredAssetsResource(resource)
+        isAssetsResource(resource)
       ) {
         continue;
       }

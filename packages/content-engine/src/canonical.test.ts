@@ -12,6 +12,7 @@ import {
 const asset = {
   id: "asset-1",
   name: "Hello.World.MD",
+  description: "Introduction",
   folderId: "folder-blog",
   folderNames: ["content", "blog"],
   mimeType: "text/markdown",
@@ -81,6 +82,7 @@ describe("normalizeAssetFileDocument", () => {
       _id: "asset-1",
       _type: "asset.file",
       name: "Hello.World.MD",
+      description: "Introduction",
       path: "content/blog/Hello.World.MD",
       key: "Hello.World",
       folderId: "folder-blog",

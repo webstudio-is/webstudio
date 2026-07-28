@@ -34,6 +34,7 @@ export const assetFileDocument = z.strictObject({
   _id: z.string().min(1),
   _type: z.literal("asset.file"),
   name: z.string().min(1),
+  description: z.string().optional(),
   path: relativeAssetPath,
   key: z.string(),
   folderId: z.string().min(1).optional(),
@@ -54,6 +55,13 @@ export const assetFileDocument = z.strictObject({
 });
 
 export type AssetFileDocument = z.infer<typeof assetFileDocument>;
+
+/** Query-specific document stored in a compiled content database. */
+export const contentDatabaseDocument = assetFileDocument
+  .partial()
+  .required({ _id: true });
+
+export type ContentDatabaseDocument = z.infer<typeof contentDatabaseDocument>;
 
 export const assetObservedFieldType = z.enum([
   "null",
@@ -127,13 +135,13 @@ export type BuilderAssetFieldCatalog = z.infer<typeof builderAssetFieldCatalog>;
 
 const sha256Revision = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 
-/** One query-independent metadata index shared by every Assets resource. */
+/** One compiled runtime database shared by all reachable Assets queries. */
 export const contentArtifactV1 = z
   .strictObject({
     format: z.literal("webstudio-content-database"),
     version: z.literal(1),
     assetRevision: sha256Revision,
-    documents: z.array(assetFileDocument),
+    documents: z.array(contentDatabaseDocument),
     contents: z.record(z.string().min(1), z.string()).optional(),
     fieldCatalog: builderAssetFieldCatalog,
     database: z
@@ -188,7 +196,9 @@ export const contentArtifactV1 = z
       previousId = document._id;
     }
     const contentRefs = new Set(
-      index.documents.map(({ contentRef }) => contentRef)
+      index.documents.flatMap(({ contentRef }) =>
+        contentRef === undefined ? [] : [contentRef]
+      )
     );
     for (const contentRef of Object.keys(index.contents ?? {})) {
       if (contentRefs.has(contentRef) === false) {
@@ -240,7 +250,11 @@ export type AssetResourceContentOptions = z.infer<
 
 export const assetQueryStandardFieldTypes = {
   id: ["string"],
+  url: ["string"],
+  width: ["number"],
+  height: ["number"],
   name: ["string"],
+  description: ["string"],
   path: ["string"],
   key: ["string"],
   folderId: ["string"],
@@ -313,6 +327,12 @@ export const assetResourceOutputSelection = z.discriminatedUnion("mode", [
 export type AssetResourceOutputSelection = z.infer<
   typeof assetResourceOutputSelection
 >;
+
+export const defaultAssetResourceOutputSelection = {
+  mode: "fields",
+  includeMetadata: false,
+  fields: [["url"], ["width"], ["height"]],
+} as const satisfies AssetResourceOutputSelection;
 
 export const assetQueryValueOperators = [
   "eq",
@@ -431,10 +451,7 @@ export const hasAssetQueryOutput = ({
   (output.mode === "fields" && output.fields.length > 0) ||
   content.mode !== "none";
 
-/**
- * Optional typed configuration for the existing Assets system resource.
- * An omitted configuration preserves the legacy fetch-all behavior.
- */
+/** Typed configuration for the query mode of the Assets system resource. */
 export const assetQuery = z
   .strictObject({
     where: assetQueryWhere.default({ all: [] }),
@@ -454,10 +471,9 @@ export const assetQuery = z
       .nonnegative()
       .max(contentEngineLimits.candidateDocuments)
       .default(0),
-    output: assetResourceOutputSelection.default({
-      mode: "all",
-      includeMetadata: true,
-    }),
+    output: assetResourceOutputSelection.default(
+      defaultAssetResourceOutputSelection
+    ),
     content: assetResourceContentOptions.default({ mode: "none" }),
   })
   .refine(hasAssetQueryOutput, {
@@ -502,9 +518,18 @@ export const assetQueryItem = assetFileDocument
   .omit({ _id: true, _type: true, contentRef: true })
   .partial()
   .extend({
-    id: z.string().min(1).optional(),
+    // Identity is part of the Assets resource structure, independently of the
+    // fields selected for each value.
+    id: z.string().min(1),
+    url: z.string().min(1).optional(),
+    width: z.number().positive().optional(),
+    height: z.number().positive().optional(),
     content: assetQueryContent.optional(),
-  });
+  })
+  .refine(
+    (item) => (item.width === undefined) === (item.height === undefined),
+    { error: "Asset dimensions must include both width and height" }
+  );
 
 export type AssetQueryItem = z.infer<typeof assetQueryItem>;
 
@@ -522,14 +547,35 @@ export const contentDatabaseStats = z.strictObject({
 
 export type ContentDatabaseStats = z.infer<typeof contentDatabaseStats>;
 
+export const assetQueryPreviewDiagnostics = contentDatabaseStats
+  .pick({
+    usedBytes: true,
+    maxBytes: true,
+    unboundedBytes: true,
+    includedDocumentCount: true,
+    omittedDocumentCount: true,
+    truncated: true,
+  })
+  .extend({ scope: z.literal("query-preview") });
+
+export type AssetQueryPreviewDiagnostics = z.infer<
+  typeof assetQueryPreviewDiagnostics
+>;
+
 export const assetQueryResult = z.strictObject({
   items: z.array(assetQueryItem),
   totalCount: z.number().int().nonnegative(),
   hasMore: z.boolean(),
-  database: contentDatabaseStats.optional(),
 });
 
 export type AssetQueryResult = z.infer<typeof assetQueryResult>;
+
+export const assetQueryPreviewResult = z.strictObject({
+  data: assetQueryResult,
+  __diagnostics__: assetQueryPreviewDiagnostics,
+});
+
+export type AssetQueryPreviewResult = z.infer<typeof assetQueryPreviewResult>;
 
 export const assetResourceErrorCode = z.enum([
   "INVALID_REQUEST",

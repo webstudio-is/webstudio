@@ -461,12 +461,20 @@ const ChangeProjectDomain = ({
 };
 
 const $restrictedFeatures = computed(
-  [$pages, $projectSettings, $dataSources, $instances, $permissions],
-  (pages, projectSettings, dataSources, instances, permissions) =>
+  [
+    $pages,
+    $projectSettings,
+    $dataSources,
+    $resources,
+    $instances,
+    $permissions,
+  ],
+  (pages, projectSettings, dataSources, resources, instances, permissions) =>
     getRestrictedFeatures({
       pages,
       projectSettings,
       dataSources,
+      resources,
       instances,
       permissions,
     })

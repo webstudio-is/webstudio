@@ -1690,8 +1690,8 @@ describe("builder runtime read families", () => {
     });
   });
 
-  test("preserves fetch-all Assets behavior and enables query configuration explicitly", () => {
-    const fetchAll = executeBuilderRuntimeOperation({
+  test("creates a default Assets query and supports explicit configuration", () => {
+    const defaultQuery = executeBuilderRuntimeOperation({
       id: "assetsResources.create",
       state,
       input: {
@@ -1711,17 +1711,25 @@ describe("builder runtime read families", () => {
         patches: Array<{ op: string; value?: unknown }>;
       }>;
     };
-    expect(
-      fetchAll.payload
-        .find(({ namespace }) => namespace === "resources")
-        ?.patches.find(({ op }) => op === "add")?.value
-    ).toMatchObject({
+    const defaultResource = defaultQuery.payload
+      .find(({ namespace }) => namespace === "resources")
+      ?.patches.find(({ op }) => op === "add")?.value;
+    expect(defaultResource).toMatchObject({
       id: "all-assets-resource",
       control: "system",
-      method: "get",
+      method: "post",
       url: '"/$resources/assets"',
-      headers: [],
+      headers: [
+        {
+          name: "Content-Type",
+          value: '"application/json"',
+        },
+      ],
     });
+    expect(defaultResource).toHaveProperty(
+      "body",
+      expect.stringContaining('"url"')
+    );
 
     const created = executeBuilderRuntimeOperation({
       id: "assetsResources.create",
@@ -1816,7 +1824,11 @@ describe("builder runtime read families", () => {
           sort: [],
           limit: "1",
           offset: "0",
-          output: { mode: "all", includeMetadata: true },
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["url"], ["width"], ["height"]],
+          },
           content: { mode: "markdown-body", maxBytes: 65_536 },
         },
       }),
@@ -1855,7 +1867,7 @@ describe("builder runtime read families", () => {
     expect(updatedPayload).toContain("markdown-body");
     expect(updatedPayload).toContain("limit: 2");
 
-    const disabled = executeBuilderRuntimeOperation({
+    const reset = executeBuilderRuntimeOperation({
       id: "assetsResources.update",
       state: queryState,
       input: {
@@ -1864,12 +1876,16 @@ describe("builder runtime read families", () => {
       },
       context,
     });
-    expect(
-      JSON.stringify((disabled as { payload: unknown }).payload)
-    ).toContain('\\"/$resources/assets\\"');
-    expect(
-      JSON.stringify((disabled as { payload: unknown }).payload)
-    ).not.toContain('\"method\":\"post\"');
+    expect(JSON.stringify((reset as { payload: unknown }).payload)).toContain(
+      '\\"/$resources/assets\\"'
+    );
+    const resetPayload = JSON.stringify(
+      (reset as { payload: unknown }).payload
+    );
+    expect(resetPayload).toContain('\"method\":\"post\"');
+    expect(resetPayload).toContain(
+      'fields: [[\\"url\\"], [\\"width\\"], [\\"height\\"]]'
+    );
 
     const storedQueryResource = queryState.resources?.get("asset-resource");
     if (storedQueryResource === undefined) {

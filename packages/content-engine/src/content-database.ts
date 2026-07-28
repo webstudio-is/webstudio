@@ -6,14 +6,19 @@ import type {
   ContentDatabaseStats,
 } from "./schema";
 import { serializeContentArtifact } from "./content-artifact";
-import { AssetIndexRevisionError, executeAssetQuery } from "./structured-query";
+import {
+  AssetIndexRevisionError,
+  executeAssetQuery,
+  type AssetRuntimeData,
+} from "./structured-query";
 import { encodeUtf8, getUtf8ByteLength } from "./byte-stream";
 import type { AssetResourceContentReader } from "./hydration";
 
 export type ContentDatabase = {
   query(
     request: AssetQueryRequestInput,
-    readContent?: AssetResourceContentReader
+    readContent?: AssetResourceContentReader,
+    runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>
   ): Promise<AssetQueryResult>;
   getFieldCatalog(): BuilderAssetFieldCatalog;
   getStats(): ContentDatabaseStats;
@@ -43,7 +48,7 @@ export const createContentDatabase = ({
     truncated: omittedDocumentCount > 0,
   };
   return {
-    query: async (request, queryContentReader) => {
+    query: async (request, queryContentReader, runtimeAssets) => {
       if (
         request.indexRevision !== undefined &&
         request.indexRevision !== artifact.integrity.checksum
@@ -79,8 +84,9 @@ export const createContentDatabase = ({
         catalog: artifact.fieldCatalog,
         documents: artifact.documents,
         read: readEmbeddedContent,
+        runtimeAssets,
       });
-      return { ...result, database: stats };
+      return result;
     },
     getFieldCatalog: () => artifact.fieldCatalog,
     getStats: () => stats,

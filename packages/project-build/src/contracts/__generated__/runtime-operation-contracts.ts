@@ -66954,7 +66954,7 @@ export const runtimeOperationContractData = [
               },
               mode: {
                 type: "string",
-                enum: ["all", "query", "invalid"],
+                enum: ["query", "invalid"],
               },
               query: {
                 type: "object",
@@ -66993,8 +66993,9 @@ export const runtimeOperationContractData = [
                   },
                   output: {
                     default: {
-                      mode: "all",
-                      includeMetadata: true,
+                      mode: "fields",
+                      includeMetadata: false,
+                      fields: [["url"], ["width"], ["height"]],
                     },
                     oneOf: [
                       {
@@ -67337,7 +67338,7 @@ export const runtimeOperationContractData = [
             },
             mode: {
               type: "string",
-              enum: ["all", "query", "invalid"],
+              enum: ["query", "invalid"],
             },
             query: {
               type: "object",
@@ -67376,8 +67377,9 @@ export const runtimeOperationContractData = [
                 },
                 output: {
                   default: {
-                    mode: "all",
-                    includeMetadata: true,
+                    mode: "fields",
+                    includeMetadata: false,
+                    fields: [["url"], ["width"], ["height"]],
                   },
                   oneOf: [
                     {
@@ -67780,7 +67782,7 @@ export const runtimeOperationContractData = [
               },
             },
             limit: {
-              default: "100",
+              default: "20",
               anyOf: [
                 {
                   type: "string",
@@ -67833,8 +67835,9 @@ export const runtimeOperationContractData = [
             },
             output: {
               default: {
-                mode: "all",
-                includeMetadata: true,
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["url"], ["width"], ["height"]],
               },
               oneOf: [
                 {

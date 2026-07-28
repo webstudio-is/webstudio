@@ -3,13 +3,12 @@ import {
   assetQuery,
   assetQueryStandardFieldTypes,
   getAssetQueryOperatorsForFieldTypes,
-  type AssetFileDocument,
+  type ContentDatabaseDocument,
   type AssetQuery,
   type AssetObservedFieldType,
   type AssetQueryInput,
   type AssetQueryFieldPath,
   type AssetQueryFilter,
-  type AssetQueryItem,
   type AssetQueryResult,
   type AssetQueryWhere,
   type AssetResourceOutputSelection,
@@ -27,6 +26,12 @@ import {
 import { appendAssetFieldPath } from "./canonical";
 import { selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
+
+export type AssetRuntimeData = {
+  url: string;
+  width?: number;
+  height?: number;
+};
 
 export class AssetQueryExecutionError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -135,7 +140,7 @@ export const validateAssetQueryAgainstCatalog = ({
 };
 
 export const getAssetQueryFieldValue = (
-  document: AssetFileDocument,
+  document: ContentDatabaseDocument,
   path: AssetQueryFieldPath
 ) => {
   let value: unknown =
@@ -186,7 +191,7 @@ const compareFilterValues = (left: unknown, right: unknown) => {
 };
 
 export const matchesAssetQueryFilter = (
-  document: AssetFileDocument,
+  document: ContentDatabaseDocument,
   filter: AssetQueryFilter
 ) => {
   const value = getAssetQueryFieldValue(document, filter.field);
@@ -245,7 +250,7 @@ export const matchesAssetQueryFilter = (
 };
 
 const matchesAssetQueryWhere = (
-  document: AssetFileDocument,
+  document: ContentDatabaseDocument,
   where: AssetQueryWhere
 ): boolean => {
   if ("field" in where) {
@@ -279,8 +284,8 @@ const compareAssetQuerySortValues = (left: unknown, right: unknown) => {
 };
 
 export const compareAssetQueryDocuments = (
-  left: AssetFileDocument,
-  right: AssetFileDocument,
+  left: ContentDatabaseDocument,
+  right: ContentDatabaseDocument,
   sort: AssetQuery["sort"]
 ) => {
   for (const order of sort) {
@@ -296,11 +301,16 @@ export const compareAssetQueryDocuments = (
 };
 
 const selectProperties = (
-  document: AssetFileDocument,
+  document: ContentDatabaseDocument,
   output: AssetResourceOutputSelection
 ) => {
+  if (document.properties === undefined) {
+    return;
+  }
   if (output.mode === "all") {
-    return document.properties;
+    return Object.keys(document.properties).length === 0
+      ? undefined
+      : document.properties;
   }
   if (
     output.mode !== "fields" ||
@@ -308,10 +318,11 @@ const selectProperties = (
   ) {
     return;
   }
-  return selectAssetProperties({
+  const properties = selectAssetProperties({
     properties: document.properties,
     fields: output.fields,
   });
+  return Object.keys(properties).length === 0 ? undefined : properties;
 };
 
 const includesOutputField = (
@@ -330,13 +341,29 @@ const includesExcerpt = (output: AssetResourceOutputSelection) =>
     ));
 
 const toQueryItem = (
-  document: AssetFileDocument,
-  output: AssetResourceOutputSelection
-): AssetQueryItem => {
+  document: ContentDatabaseDocument,
+  output: AssetResourceOutputSelection,
+  runtimeAsset?: AssetRuntimeData
+) => {
   const properties = selectProperties(document, output);
+  const hasDimensions =
+    runtimeAsset?.width !== undefined && runtimeAsset.height !== undefined;
   return {
     ...(includesOutputField(output, "id") ? { id: document._id } : {}),
+    ...(runtimeAsset !== undefined && includesOutputField(output, "url")
+      ? { url: runtimeAsset.url }
+      : {}),
+    ...(hasDimensions && includesOutputField(output, "width")
+      ? { width: runtimeAsset.width }
+      : {}),
+    ...(hasDimensions && includesOutputField(output, "height")
+      ? { height: runtimeAsset.height }
+      : {}),
     ...(includesOutputField(output, "name") ? { name: document.name } : {}),
+    ...(document.description === undefined ||
+    includesOutputField(output, "description") === false
+      ? {}
+      : { description: document.description }),
     ...(includesOutputField(output, "path") ? { path: document.path } : {}),
     ...(includesOutputField(output, "key") ? { key: document.key } : {}),
     ...(document.folderId === undefined ||
@@ -367,6 +394,16 @@ const toQueryItem = (
   };
 };
 
+const getFallbackRuntimeAsset = (
+  document: ContentDatabaseDocument
+): AssetRuntimeData | undefined => {
+  if (document.contentRef === undefined) {
+    return;
+  }
+  const route = document.mimeType?.startsWith("image/") ? "image" : "asset";
+  return { url: `/cgi/${route}/${document.contentRef}?format=raw` };
+};
+
 const assertResultSize = (result: AssetQueryResult) => {
   if (
     getUtf8ByteLength(serializeJsonDeterministically(result)) >
@@ -383,11 +420,13 @@ export const executeAssetQuery = async ({
   catalog,
   documents,
   read,
+  runtimeAssets,
 }: {
   query: AssetQueryInput;
   catalog: BuilderAssetFieldCatalog;
-  documents: readonly AssetFileDocument[];
+  documents: readonly ContentDatabaseDocument[];
   read?: AssetResourceContentReader;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
 }): Promise<AssetQueryResult> => {
   const { query } = validateAssetQueryAgainstCatalog({ query: input, catalog });
   if (documents.length > contentEngineLimits.candidateDocuments) {
@@ -395,26 +434,38 @@ export const executeAssetQuery = async ({
       "Asset query document limit was exceeded"
     );
   }
-  const matched = documents.filter((document) =>
-    matchesAssetQueryWhere(document, query.where)
-  );
+  const matched = documents.flatMap((document) => {
+    if (matchesAssetQueryWhere(document, query.where) === false) {
+      return [];
+    }
+    const item = toQueryItem(
+      document,
+      query.output,
+      runtimeAssets?.[document._id] ?? getFallbackRuntimeAsset(document)
+    );
+    if (query.content.mode === "none" && Object.keys(item).length === 0) {
+      return [];
+    }
+    return [{ document, item: { id: document._id, ...item } }];
+  });
   const sorted = [...matched].sort((left, right) =>
-    compareAssetQueryDocuments(left, right, query.sort)
+    compareAssetQueryDocuments(left.document, right.document, query.sort)
   );
   const selected = sorted.slice(query.offset, query.offset + query.limit);
-  let items = selected.map((document) => toQueryItem(document, query.output));
+  const selectedDocuments = selected.map(({ document }) => document);
+  let items = selected.map(({ item }) => item);
   if (query.content.mode !== "none") {
     const contentOptions = query.content;
     if (read === undefined) {
       throw new AssetQueryExecutionError("Asset content reader is unavailable");
     }
     const hydrated = await hydrateAssetResourceResult({
-      result: selected,
-      documents: selected,
+      result: selectedDocuments,
+      documents: selectedDocuments,
       options: contentOptions,
       read,
     });
-    items = selected.map((document, index) => {
+    items = selectedDocuments.map((document, index) => {
       const content = hydrated.content[document._id];
       if (content === undefined) {
         throw new AssetQueryExecutionError(

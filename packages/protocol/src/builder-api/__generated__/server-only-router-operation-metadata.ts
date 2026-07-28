@@ -290,7 +290,7 @@ export const serverOnlyRouterOperationMetadata = {
               },
             },
             limit: {
-              default: 100,
+              default: 20,
               type: "integer",
               minimum: 0,
               maximum: 1000,
@@ -303,8 +303,9 @@ export const serverOnlyRouterOperationMetadata = {
             },
             output: {
               default: {
-                mode: "all",
-                includeMetadata: true,
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["url"], ["width"], ["height"]],
               },
               oneOf: [
                 {
@@ -668,7 +669,7 @@ export const serverOnlyRouterOperationMetadata = {
               },
             },
             limit: {
-              default: 100,
+              default: 20,
               type: "integer",
               minimum: 0,
               maximum: 1000,
@@ -681,8 +682,9 @@ export const serverOnlyRouterOperationMetadata = {
             },
             output: {
               default: {
-                mode: "all",
-                includeMetadata: true,
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["url"], ["width"], ["height"]],
               },
               oneOf: [
                 {

@@ -53,6 +53,45 @@ export type ResourceLoadOptions = {
   timeoutMs?: number;
 };
 
+const isAssetsResourceRequest = (request: ResourceRequest) =>
+  request.method === "post" && isLocalResource(request.url, "assets");
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && Array.isArray(value) === false;
+
+// Assets expose one ID-keyed resource contract. Query execution uses an array
+// internally for ordering and pagination.
+const formatAssetsResourceResult = (value: unknown) => {
+  const preview =
+    isRecord(value) && isRecord(value.data) ? value.data : undefined;
+  const collection = preview ?? value;
+  if (
+    isRecord(collection) === false ||
+    Array.isArray(collection.items) === false ||
+    typeof collection.totalCount !== "number" ||
+    typeof collection.hasMore !== "boolean"
+  ) {
+    return;
+  }
+  const entries: Array<[string, Record<string, unknown>]> = [];
+  for (const item of collection.items) {
+    if (isRecord(item) === false || typeof item.id !== "string") {
+      return;
+    }
+    entries.push([item.id, item]);
+  }
+  return {
+    data: Object.fromEntries(entries),
+    meta: {
+      totalCount: collection.totalCount,
+      hasMore: collection.hasMore,
+    },
+    ...(preview === undefined || isRecord(value) === false
+      ? {}
+      : { __diagnostics__: value.__diagnostics__ }),
+  };
+};
+
 const transportFailure = ({
   code,
   message,
@@ -146,12 +185,19 @@ export const loadResource = async (
       console.error(`Failed to load resource request: ${response.status}`);
     }
 
-    return {
+    const result = {
       ok: response.ok,
       status: response.status,
       statusText: response.statusText,
       data,
     };
+    if (response.ok && isAssetsResourceRequest(resourceRequest)) {
+      const formatted = formatAssetsResourceResult(data);
+      if (formatted !== undefined) {
+        return { ...result, ...formatted };
+      }
+    }
+    return result;
   } catch (error) {
     if (didTimeout) {
       return transportFailure({

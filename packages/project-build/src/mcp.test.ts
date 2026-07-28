@@ -1172,7 +1172,8 @@ describe("project session mcp adapter", () => {
     for (const tool of assetsResourceTools) {
       expect(tool.description).toContain("structured tool input");
       expect(tool.description).toContain("Webstudio JavaScript expression");
-      expect(tool.description).toContain("<dataSourceName>.data.items");
+      expect(tool.description).toContain("<dataSourceName>.data");
+      expect(tool.description).toContain("<dataSourceName>.meta");
       expect(tool.description).toContain(".properties");
       expect(tool.description).toContain(".excerpt");
       expect(tool.description).toContain(".content.text");

@@ -589,8 +589,7 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "list-assets-resources",
-    description:
-      "List Assets system resources, including legacy fetch-all mode and optional decoded query configuration.",
+    description: "List Assets system resources and their query configuration.",
     examples: [
       "webstudio list-assets-resources --json",
       "webstudio list-assets-resources --scope-instance body-id --json",
@@ -599,14 +598,14 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "get-assets-resource",
     description:
-      "Inspect one Assets system resource and whether it fetches all assets or uses optional query configuration.",
+      "Inspect one Assets system resource and its query configuration.",
     requiredOptions: ["resource", "json"],
     examples: ["webstudio get-assets-resource --resource resource-id --json"],
   },
   {
     command: "create-assets-resource",
     description:
-      "Create a scoped Assets resource. Omit query to preserve legacy fetch-all behavior, or provide query configuration explicitly.",
+      "Create a scoped Assets resource. Omit query to use the default query, or provide query configuration explicitly.",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -615,7 +614,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      "Update an Assets resource. Set query to null to restore legacy fetch-all behavior.",
+      "Update an Assets resource. Set query to null to restore the default query.",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",
@@ -632,7 +631,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "preview-asset-query",
     description:
-      "Run an authenticated structured Assets query against indexed metadata, optionally loading bounded file content.",
+      "Run an authenticated structured Assets query against indexed metadata, optionally loading bounded file content. Returns renderable results in data and non-bindable preview statistics in __diagnostics__.",
     examples: [
       "webstudio preview-asset-query --input asset-query-preview.json --json",
     ],

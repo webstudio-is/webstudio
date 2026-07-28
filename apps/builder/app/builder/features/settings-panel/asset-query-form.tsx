@@ -13,6 +13,7 @@ import type {
   AssetObservedFieldType,
   AssetQueryFilter,
 } from "@webstudio-is/content-engine";
+import { defaultAssetResourceOutputSelection } from "@webstudio-is/content-engine";
 import {
   addConfiguredQueryFields,
   getOpenApiQueryConfiguration,
@@ -25,6 +26,7 @@ import { $assets } from "~/shared/sync/data-stores";
 import { BindableQueryBuilder } from "~/builder/shared/query-builder";
 import { fetch as builderFetch } from "~/shared/fetch.client";
 import { getAssetQueryConfigurationError } from "./asset-query-form-utils";
+import { CenteredPanelMessage, Row } from "./shared";
 
 type AssetQueryDefinition = QueryDefinition<
   AssetObservedFieldType,
@@ -36,7 +38,7 @@ const defaultConfiguration: StructuredAssetQueryResourceConfiguration = {
   sort: [],
   limit: String(assetResourceLimits.defaultResultCount),
   offset: "0",
-  output: { mode: "all", includeMetadata: true },
+  output: defaultAssetResourceOutputSelection,
   content: { mode: "none" },
 };
 
@@ -51,14 +53,10 @@ export const AssetQueryForm = ({
   resource,
   scope,
   aliases,
-  queryDefined,
-  onQueryDefined,
 }: {
   resource?: Resource;
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
-  queryDefined: boolean;
-  onQueryDefined: () => void;
 }) => {
   const assets = useStore($assets);
   const initial = useMemo(
@@ -143,19 +141,19 @@ export const AssetQueryForm = ({
 
   return (
     <>
-      {queryDefined && (
-        <>
-          <input
-            type="hidden"
-            name="asset-query-valid"
-            value={configurationError === undefined ? "true" : "false"}
-          />
-          <input type="hidden" name="header-name" value="Content-Type" />
-          <input type="hidden" name="header-value" value='"application/json"' />
-          <input type="hidden" name="body" value={body} />
-        </>
-      )}
-      {definition !== undefined && (
+      <input
+        type="hidden"
+        name="asset-query-valid"
+        value={configurationError === undefined ? "true" : "false"}
+      />
+      <input type="hidden" name="header-name" value="Content-Type" />
+      <input type="hidden" name="header-value" value='"application/json"' />
+      <input type="hidden" name="body" value={body} />
+      {descriptionError !== undefined ? (
+        <CenteredPanelMessage color="destructive">
+          {descriptionError}
+        </CenteredPanelMessage>
+      ) : definition !== undefined ? (
         <BindableQueryBuilder<
           AssetObservedFieldType,
           AssetQueryFilter["operator"],
@@ -169,15 +167,13 @@ export const AssetQueryForm = ({
           sectionPaddingInline={theme.panel.paddingInline}
           onChange={(value) => {
             setConfiguration(value);
-            onQueryDefined();
           }}
         />
-      )}
-      {descriptionError !== undefined && (
-        <Text color="destructive">{descriptionError}</Text>
-      )}
-      {configurationError !== undefined && (
-        <Text color="destructive">{configurationError}</Text>
+      ) : null}
+      {descriptionError === undefined && configurationError !== undefined && (
+        <Row>
+          <Text color="destructive">{configurationError}</Text>
+        </Row>
       )}
     </>
   );

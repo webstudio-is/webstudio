@@ -10,6 +10,7 @@ import { getStructuredDataByteLength } from "./structured-data";
 export type AssetFileMetadataInput = {
   id: string;
   name: string;
+  description?: string;
   extension?: string;
   folderId?: string;
   folderNames?: readonly string[];
@@ -271,7 +272,7 @@ const getStructuralFieldContributions = (
   );
 };
 
-const formatLegacyFieldPath = (path: AssetFieldPathSegment[]) => {
+const formatFieldContributionPath = (path: AssetFieldPathSegment[]) => {
   let formatted = "properties";
   for (const segment of path) {
     formatted =
@@ -286,7 +287,10 @@ export const getFieldContributions = (
   properties: AssetFileDocument["properties"]
 ): FieldContribution[] =>
   getStructuralFieldContributions(properties)
-    .map(({ path, type }) => ({ path: formatLegacyFieldPath(path), type }))
+    .map(({ path, type }) => ({
+      path: formatFieldContributionPath(path),
+      type,
+    }))
     .sort(
       (left, right) =>
         compareStrings(left.path, right.path) ||
@@ -371,6 +375,9 @@ export const normalizeAssetFileDocument = ({
     _id: asset.id,
     _type: "asset.file",
     name: asset.name,
+    ...(asset.description === undefined
+      ? {}
+      : { description: asset.description }),
     path,
     key,
     ...(asset.folderId === undefined ? {} : { folderId: asset.folderId }),

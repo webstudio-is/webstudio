@@ -15,6 +15,8 @@ import {
 import { contentEngineLimits } from "./limits";
 import {
   getContentDocumentCandidateQueryIds,
+  isContentCompilationFieldRequired,
+  projectContentDatabaseDocument,
   type ContentCompilationPlan,
 } from "./compilation-plan";
 import { getUtf8ByteLength } from "./byte-stream";
@@ -35,28 +37,40 @@ export type ContentCompilerDiagnostics = {
   affectedQueryIds: string[];
 };
 
-const getDocumentBytes = (entry: CanonicalAssetFileEntry) =>
-  getUtf8ByteLength(serializeJsonDeterministically(entry.document));
+const getDocumentBytes = (
+  entry: CanonicalAssetFileEntry,
+  plan?: ContentCompilationPlan
+) =>
+  getUtf8ByteLength(
+    serializeJsonDeterministically(
+      projectContentDatabaseDocument({ document: entry.document, plan })
+    )
+  );
 
 export type ContentCompilerInput = CanonicalAssetFileEntry & {
   content?: string;
 };
 
-const getEntryBytes = (entry: ContentCompilerInput) =>
-  getDocumentBytes(entry) +
+const getEntryBytes = (
+  entry: ContentCompilerInput,
+  plan?: ContentCompilationPlan
+) =>
+  getDocumentBytes(entry, plan) +
   (entry.content === undefined ? 0 : getUtf8ByteLength(entry.content));
 
 const getMinimumAdditionalBytes = ({
   entries,
   selectedContentRefs,
+  plan,
 }: {
   entries: readonly ContentCompilerInput[];
   selectedContentRefs: ReadonlySet<string>;
+  plan?: ContentCompilationPlan;
 }) => {
   const contentRefs = new Set(selectedContentRefs);
   let bytes = 0;
   for (const entry of entries) {
-    bytes += getDocumentBytes(entry);
+    bytes += getDocumentBytes(entry, plan);
     if (
       entry.content !== undefined &&
       contentRefs.has(entry.document.contentRef) === false
@@ -140,16 +154,18 @@ const buildAssetIndex = async ({
   sourceDocumentCount,
   maxBytes,
   unboundedBytes,
+  plan,
   finalize = true,
 }: {
   entries: readonly ContentCompilerInput[];
   sourceDocumentCount: number;
   maxBytes: number;
   unboundedBytes: number;
+  plan?: ContentCompilationPlan;
   finalize?: boolean;
 }) => {
   const documents = entries
-    .map(({ document }) => document)
+    .map(({ document }) => projectContentDatabaseDocument({ document, plan }))
     .sort((left, right) => compareStrings(left._id, right._id));
   const contents = Object.fromEntries(
     entries
@@ -164,7 +180,19 @@ const buildAssetIndex = async ({
   );
   const catalog = await createAssetFieldCatalog(entries);
   const assetRevision = catalog.canonicalRevision;
-  const fieldCatalog = toBuilderAssetFieldCatalog(catalog);
+  const completeFieldCatalog = toBuilderAssetFieldCatalog(catalog);
+  const fieldCatalog = {
+    ...completeFieldCatalog,
+    fields: Object.fromEntries(
+      Object.entries(completeFieldCatalog.fields).filter(([, field]) => {
+        const queryPath = field.queryPath;
+        return (
+          queryPath !== undefined &&
+          isContentCompilationFieldRequired({ plan, field: queryPath })
+        );
+      })
+    ),
+  };
   const index = contentArtifactV1.parse({
     format: "webstudio-content-database",
     version: 1,
@@ -217,6 +245,7 @@ export const compileContentArtifact = async ({
       sourceDocumentCount,
       maxBytes,
       unboundedBytes,
+      plan,
       finalize: false,
     });
     const measured = getUtf8ByteLength(serializeContentArtifact(unbounded));
@@ -240,6 +269,7 @@ export const compileContentArtifact = async ({
       sourceDocumentCount,
       maxBytes,
       unboundedBytes,
+      plan,
       finalize: false,
     });
     let selectedBytes = getUtf8ByteLength(
@@ -258,6 +288,7 @@ export const compileContentArtifact = async ({
       const minimumAdditionalBytes = getMinimumAdditionalBytes({
         entries: candidates,
         selectedContentRefs,
+        plan,
       });
       if (minimumAdditionalBytes <= maxBytes - selectedBytes) {
         const trial = await buildAssetIndex({
@@ -265,6 +296,7 @@ export const compileContentArtifact = async ({
           sourceDocumentCount,
           maxBytes,
           unboundedBytes,
+          plan,
           finalize: false,
         });
         const trialBytes = getUtf8ByteLength(serializeContentArtifact(trial));
@@ -295,6 +327,7 @@ export const compileContentArtifact = async ({
     sourceDocumentCount,
     maxBytes,
     unboundedBytes,
+    plan,
   });
   const boundedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
   if (boundedBytes > maxBytes) {
@@ -303,7 +336,7 @@ export const compileContentArtifact = async ({
   const describe = (entry: ContentCompilerInput) => ({
     id: entry.assetId,
     path: entry.document.path,
-    bytes: getEntryBytes(entry),
+    bytes: getEntryBytes(entry, plan),
   });
   const omittedDocuments = omitted.map((entry) => ({
     ...describe(entry),
@@ -326,7 +359,10 @@ export const compileContentArtifact = async ({
       omittedDocumentCount: omitted.length,
       omittedDocuments,
       largestDocuments: [...entries]
-        .sort((left, right) => getEntryBytes(right) - getEntryBytes(left))
+        .sort(
+          (left, right) =>
+            getEntryBytes(right, plan) - getEntryBytes(left, plan)
+        )
         .slice(0, 10)
         .map(describe),
       affectedQueryIds: [

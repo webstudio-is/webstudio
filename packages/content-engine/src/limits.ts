@@ -6,7 +6,7 @@ export const contentEngineLimits = {
   sortCount: 8,
   outputFieldCount: 256,
   fieldPathDepth: 9,
-  defaultResultCount: 100,
+  defaultResultCount: 20,
   resultCount: 1000,
   resultBytes: 16 * 1024 * 1024,
   candidateDocuments: 1000,

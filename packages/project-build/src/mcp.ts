@@ -824,7 +824,7 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
 });
 
 const assetsResourceResultDescription =
-  "Pass query as structured tool input rather than a JSON-stringified expression or manually authored resource body. Dynamic query values use readable Webstudio JavaScript expression syntax. Queried results are exposed as <dataSourceName>.data.items; each item has indexed file fields at the top level, frontmatter or JSON fields in .properties, a derived .excerpt at the top level, and requested file content in .content.text.";
+  "Pass query as structured tool input rather than a JSON-stringified expression or manually authored resource body. Dynamic query values use readable Webstudio JavaScript expression syntax. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta. Each value has selected file fields at the top level, frontmatter or JSON fields in .properties, a derived .excerpt at the top level, and requested file content in .content.text.";
 
 const mcpOperationOverrides = new Map<
   string,

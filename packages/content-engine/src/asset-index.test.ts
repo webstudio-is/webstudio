@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { contentEngineLimits, parseContentDatabaseMaxBytes } from "./limits";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { createContentDatabase } from "./content-database";
-import { assetQueryResult } from "./schema";
+import { assetQueryResult, type AssetResourceOutputSelection } from "./schema";
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
@@ -39,7 +39,52 @@ const entry = ({
   });
 
 describe("shared asset index", () => {
-  test("creates one deterministic query-independent index and field catalog", async () => {
+  test("stores only fields required by an ID-only query", async () => {
+    const sourceEntries = [entry({ id: "alpha" })];
+    const compile = (output: AssetResourceOutputSelection) =>
+      compileContentArtifact({
+        projectId: "project",
+        entries: sourceEntries,
+        plan: createContentCompilationPlan([
+          createLiteralContentCompilationQuery({
+            id: "posts",
+            query: {
+              where: { all: [] },
+              sort: [],
+              limit: 20,
+              offset: 0,
+              output,
+              content: { mode: "none" },
+            },
+          }),
+        ]),
+      });
+
+    const metadata = await compile({ mode: "base", includeMetadata: true });
+    const idOnly = await compile({
+      mode: "fields",
+      includeMetadata: false,
+      fields: [["id"]],
+    });
+
+    expect(idOnly.artifact.documents).toEqual([{ _id: "alpha" }]);
+    expect(idOnly.diagnostics.boundedBytes).toBeLessThan(
+      metadata.diagnostics.boundedBytes
+    );
+    await expect(
+      createContentDatabase({ artifact: idOnly.artifact }).query({
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+        },
+      })
+    ).resolves.toMatchObject({ items: [{ id: "alpha" }] });
+  });
+
+  test("creates one deterministic complete index and field catalog", async () => {
     const index = await createAssetIndex({
       projectId: "project",
       entries: [entry({ id: "beta" }), entry({ id: "alpha" })],
@@ -282,6 +327,8 @@ describe("shared asset index", () => {
     expect(result).toMatchObject({
       items: [{ content: { text: content } }],
     });
+    expect(result).not.toHaveProperty("database");
+    expect(result).not.toHaveProperty("__diagnostics__");
     expect(assetQueryResult.safeParse(result).success).toBe(true);
     await expect(
       database.query({ query: { content: { mode: "full" } } })

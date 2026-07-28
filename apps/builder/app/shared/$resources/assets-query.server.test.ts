@@ -30,9 +30,20 @@ describe("configured Assets system resource", () => {
 
   test("uses the outer authentication context and typed inner request", async () => {
     const responseBody = {
-      items: [{ id: "post-1" }],
-      totalCount: 1,
-      hasMore: false,
+      data: {
+        items: [{ id: "post-1" }],
+        totalCount: 1,
+        hasMore: false,
+      },
+      __diagnostics__: {
+        scope: "query-preview",
+        usedBytes: 100,
+        maxBytes: 512_000,
+        unboundedBytes: 100,
+        includedDocumentCount: 1,
+        omittedDocumentCount: 0,
+        truncated: false,
+      },
     };
     dependencies.previewAssetResourceQuery.mockResolvedValue(responseBody);
     const query = {
@@ -78,9 +89,16 @@ describe("configured Assets system resource", () => {
 
   test("supports the public REST URL with an explicit project", async () => {
     dependencies.previewAssetResourceQuery.mockResolvedValue({
-      items: [],
-      totalCount: 0,
-      hasMore: false,
+      data: { items: [], totalCount: 0, hasMore: false },
+      __diagnostics__: {
+        scope: "query-preview",
+        usedBytes: 100,
+        maxBytes: 512_000,
+        unboundedBytes: 100,
+        includedDocumentCount: 0,
+        omittedDocumentCount: 0,
+        truncated: false,
+      },
     });
     const request = new Request(
       `https://api.example/rest/assets/query?projectId=${projectId}`,

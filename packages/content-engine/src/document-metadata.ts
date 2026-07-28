@@ -63,7 +63,7 @@ export const prepareCanonicalContentMetadata = async ({
       ? { structuredProperties: false, excerpt: false }
       : getCanonicalAssetMetadataRequirements(cached);
   let properties: Record<string, unknown> = cached?.document.properties ?? {};
-  let excerpt = cached?.document.excerpt;
+  let excerpt = isMarkdown(base) ? cached?.document.excerpt : undefined;
   let metadataError = cached?.document.metadataError;
   const needsProperties =
     requirements.structuredProperties &&

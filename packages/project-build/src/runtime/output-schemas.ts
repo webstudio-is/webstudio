@@ -16,6 +16,7 @@ import {
   assetQuerySort,
   assetResourceContentOptions,
   assetResourceOutputSelection,
+  defaultAssetResourceOutputSelection,
 } from "@webstudio-is/content-engine";
 import { paginatedOutputMetadataSchema } from "./output";
 import { builderNamespaces } from "../contracts/namespaces";
@@ -199,10 +200,9 @@ const assetResourceConfiguration = looseObject({
   sort: z.array(assetQuerySort),
   limit: z.string(),
   offset: z.string(),
-  output: assetResourceOutputSelection.default({
-    mode: "all",
-    includeMetadata: true,
-  }),
+  output: assetResourceOutputSelection.default(
+    defaultAssetResourceOutputSelection
+  ),
   content: assetResourceContentOptions,
 });
 const assetResource = looseObject({
@@ -211,7 +211,7 @@ const assetResource = looseObject({
   scopeInstanceId: id.optional(),
   dataSourceId: id.optional(),
   dataSourceName: z.string().optional(),
-  mode: z.enum(["all", "query", "invalid"]),
+  mode: z.enum(["query", "invalid"]),
   query: assetResourceConfiguration.optional(),
   configurationError: z.string().optional(),
 });

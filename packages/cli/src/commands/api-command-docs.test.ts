@@ -176,12 +176,13 @@ test("documents MCP use cases with JSON inputs instead of CLI flags", () => {
   }
 });
 
-test("documents the queried Assets result shape", () => {
+test("documents the Assets result shape", () => {
   for (const document of ["api-use-cases", "manual-llm"] as const) {
     const contents = readCliDoc(document);
-    expect(contents).toContain("<dataSourceName>.data.items");
-    expect(contents).toContain("posts.data.items");
-    expect(contents).toContain("post.data.items[0]");
+    expect(contents).toContain("<dataSourceName>.data");
+    expect(contents).toContain("<dataSourceName>.meta");
+    expect(contents).toContain("posts.data");
+    expect(contents).toContain("post.data");
     expect(contents).toContain("content.text");
   }
 });

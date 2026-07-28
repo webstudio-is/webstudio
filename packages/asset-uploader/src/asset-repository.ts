@@ -9,7 +9,7 @@ import {
   requiresHydratedContent,
   requiresStructuredProperties,
   type AssetQueryRequestInput,
-  type AssetQueryResult,
+  type AssetQueryPreviewResult,
   type BuilderAssetFieldCatalog,
   type ContentCompilationPlan,
 } from "@webstudio-is/content-engine";
@@ -24,7 +24,11 @@ import {
   readBoundedBytes,
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
-import type { Asset, AssetFolder } from "@webstudio-is/sdk";
+import {
+  toRuntimeAsset,
+  type Asset,
+  type AssetFolder,
+} from "@webstudio-is/sdk";
 import type {
   AssetFolderUpdate,
   AssetMetadataUpdate,
@@ -166,7 +170,7 @@ export interface AssetRepository {
     requirements?: ContentCompilationPlan
   ): ReturnType<typeof createAssetIndex>;
   readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
-  query(request: AssetQueryRequestInput): Promise<AssetQueryResult>;
+  query(request: AssetQueryRequestInput): Promise<AssetQueryPreviewResult>;
 }
 
 /**
@@ -711,12 +715,51 @@ export class PostgresAssetRepository implements AssetRepository {
     });
   }
 
-  async query(request: AssetQueryRequestInput) {
+  async query(
+    request: AssetQueryRequestInput
+  ): Promise<AssetQueryPreviewResult> {
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
     ]);
-    const database = getContentDatabaseForArtifact(await this.readIndex(plan));
-    return await database.query(request, this.assetStore.readFile);
+    const [index, assets] = await Promise.all([
+      this.readIndex(plan),
+      this.dependencies.loadAssetsByProjectWithClient(
+        this.projectId,
+        this.context.postgrest.client
+      ),
+    ]);
+    const database = getContentDatabaseForArtifact(index);
+    const runtimeAssets = Object.fromEntries(
+      assets.map((asset) => [
+        asset.id,
+        toRuntimeAsset(asset, "https://webstudio.local"),
+      ])
+    );
+    const data = await database.query(
+      request,
+      this.assetStore.readFile,
+      runtimeAssets
+    );
+    const {
+      usedBytes,
+      maxBytes,
+      unboundedBytes,
+      includedDocumentCount,
+      omittedDocumentCount,
+      truncated,
+    } = database.getStats();
+    return {
+      data,
+      __diagnostics__: {
+        scope: "query-preview",
+        usedBytes,
+        maxBytes,
+        unboundedBytes,
+        includedDocumentCount,
+        omittedDocumentCount,
+        truncated,
+      },
+    };
   }
 }

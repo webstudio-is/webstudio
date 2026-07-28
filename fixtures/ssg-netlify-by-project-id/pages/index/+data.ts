@@ -17,6 +17,7 @@ const fetchAssetResource =
     : createSsgAssetResourceFetch({
         deploymentId: assetQueryDeploymentId,
         artifact: assetQueryDatabase,
+        runtimeAssets: assets,
       });
 
 const customFetch: typeof fetch = async (input, init) => {
@@ -42,12 +43,6 @@ const customFetch: typeof fetch = async (input, init) => {
       timestamp: startOfDay.getTime(),
     };
     const response = new Response(JSON.stringify(data));
-    response.headers.set("content-type", "application/json; charset=utf-8");
-    return response;
-  }
-
-  if (isLocalResource(input, "assets")) {
-    const response = new Response(JSON.stringify(assets));
     response.headers.set("content-type", "application/json; charset=utf-8");
     return response;
   }

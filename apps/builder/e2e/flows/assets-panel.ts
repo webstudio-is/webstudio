@@ -47,7 +47,7 @@ export const createAssetFolder = async ({
   await openAddAssetMenu(page);
   await page.getByRole("menuitem", { name: "Create folder" }).click();
   const dialog = page.getByRole("dialog", { name: "New folder" });
-  await dialog.getByLabel("Folder", { exact: true }).fill(name);
+  await dialog.getByLabel("Name", { exact: true }).fill(name);
   await Promise.all([
     waitForChangeToBeSaved({ page }),
     dialog.getByRole("button", { name: "Create folder" }).click(),

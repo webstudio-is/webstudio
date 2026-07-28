@@ -35,6 +35,7 @@ import {
   ProChip,
   ScrollArea,
   Select,
+  SplitView,
   Switch,
   Text,
   TextArea,
@@ -86,13 +87,20 @@ import {
 import { generateCurl } from "./curl";
 import {
   $hasPendingResources,
+  $resourceDiagnosticsCache,
   $resourcesCache,
   computeResourceRequest,
   getResourceKey,
   invalidateResource,
 } from "~/shared/resources";
-import { getContentDatabasePreviewWarning } from "./content-database-warning";
 import { Row } from "./shared";
+import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
+import { RequestInspector } from "./request-inspector";
+import { ContentDatabaseDiagnostics } from "./content-database-diagnostics";
+import {
+  getRequestErrorDiagnostics,
+  RequestErrorDiagnostics,
+} from "./request-error-diagnostics";
 
 const NameField = ({
   variable,
@@ -665,8 +673,10 @@ const VariablePreview = ({
   const resources = useStore($resources);
   const variableValues = useStore($instanceVariableValues);
   const resourcesCache = useStore($resourcesCache);
+  const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
   const resourceScope = useResourceScope({ variable });
   let computedValue: unknown;
+  let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
   if (variableType === "string" || variableType === "boolean") {
     computedValue = variableValue;
   } else if (variableType === "json") {
@@ -691,14 +701,15 @@ const VariablePreview = ({
       }
     }
     if (parsedResourceRequest) {
-      computedValue = resourcesCache.get(getResourceKey(parsedResourceRequest));
+      const resourceKey = getResourceKey(parsedResourceRequest);
+      computedValue = resourcesCache.get(resourceKey);
+      resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
     }
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
-  const contentDatabaseWarning =
-    getContentDatabasePreviewWarning(computedValue);
   const editorProps = {
     readOnly: true,
+    chromeless: true,
     extensions,
     // compute value as json lazily only when dialog is open
     // by spliting into separate component which is invoked
@@ -707,7 +718,7 @@ const VariablePreview = ({
     onChange: () => {},
     onChangeComplete: () => {},
   };
-  return (
+  const preview = (
     <Grid
       align="stretch"
       css={{
@@ -715,17 +726,9 @@ const VariablePreview = ({
         overflow: "hidden",
         boxSizing: "content-box",
         position: "relative",
-        gridTemplateRows:
-          contentDatabaseWarning === undefined
-            ? "minmax(0, 1fr)"
-            : "auto minmax(0, 1fr)",
+        gridTemplateRows: "minmax(0, 1fr)",
       }}
     >
-      {contentDatabaseWarning !== undefined && (
-        <PanelBanner variant="warning">
-          <Text>{contentDatabaseWarning}</Text>
-        </PanelBanner>
-      )}
       <EditorContent {...editorProps} />
       {isResource && !computedValue && (
         <Flex
@@ -744,6 +747,22 @@ const VariablePreview = ({
         </Flex>
       )}
     </Grid>
+  );
+  if (isResource === false) {
+    return preview;
+  }
+  const requestErrorDiagnostics = getRequestErrorDiagnostics(computedValue);
+  return (
+    <RequestInspector
+      preview={preview}
+      diagnostics={
+        requestErrorDiagnostics !== undefined ? (
+          <RequestErrorDiagnostics value={requestErrorDiagnostics} />
+        ) : resourceDiagnostics !== undefined ? (
+          <ContentDatabaseDiagnostics value={resourceDiagnostics} />
+        ) : undefined
+      }
+    />
   );
 };
 
@@ -844,69 +863,72 @@ const VariablePopoverContent = ({
 
   return (
     <>
-      <Grid
-        css={{
-          height: "100%",
-          gridTemplateColumns: "320px 1fr",
-        }}
-      >
-        <ScrollArea
-          // flex fixes content overflowing artificial scroll area
-          css={{ display: "flex", flexDirection: "column" }}
-        >
-          <form
-            ref={formRef}
-            noValidate={true}
-            // exclude from the flow
-            style={{ display: "contents" }}
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (isSystemVariable) {
-                return;
-              }
-              const nameElement =
-                event.currentTarget.elements.namedItem("name");
-              // make sure only name is valid and allow to save everything else
-              // to avoid loosing complex configuration when closed accidentally
-              if (
-                nameElement instanceof HTMLInputElement &&
-                nameElement.checkValidity()
-              ) {
-                const formData = new FormData(event.currentTarget);
-                const saved = panelRef.current?.save(formData);
-                // close popover whenever new variable is created
-                // to prevent creating duplicated variable
-                if (variable === undefined && saved !== false) {
-                  onClose();
-                }
-              }
-            }}
+      <SplitView
+        defaultSize={{ value: 320, unit: "px" }}
+        minimumStartSize={240}
+        minimumEndSize={240}
+        separatorLabel="Resize variable configuration"
+        start={
+          <ScrollArea
+            // flex fixes content overflowing artificial scroll area
+            css={{ display: "flex", flexDirection: "column" }}
           >
-            {/* submit is not triggered when press enter on input without submit button */}
-            <button hidden></button>
-            <fieldset
+            <form
+              ref={formRef}
+              noValidate={true}
+              // exclude from the flow
               style={{ display: "contents" }}
-              // forbid editing system variable
-              disabled={isSystemVariable}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (isSystemVariable) {
+                  return;
+                }
+                const nameElement =
+                  event.currentTarget.elements.namedItem("name");
+                // make sure only name is valid and allow to save everything else
+                // to avoid loosing complex configuration when closed accidentally
+                if (
+                  nameElement instanceof HTMLInputElement &&
+                  nameElement.checkValidity()
+                ) {
+                  const formData = new FormData(event.currentTarget);
+                  const saved = panelRef.current?.save(formData);
+                  // close popover whenever new variable is created
+                  // to prevent creating duplicated variable
+                  if (variable === undefined && saved !== false) {
+                    onClose();
+                  }
+                }
+              }}
             >
-              <VariablePanelForm
-                ref={panelRef}
-                variable={variable}
-                variableType={variableType}
-                onVariableTypeChange={updateVariableType}
-                value={value}
-                onValueChange={setValue}
-              />
-            </fieldset>
-          </form>
-        </ScrollArea>
-        <VariablePreview
-          variable={variable}
-          variableType={variableType}
-          variableValue={value}
-          onLoadData={reloadData}
-        />
-      </Grid>
+              {/* submit is not triggered when press enter on input without submit button */}
+              <button hidden></button>
+              <fieldset
+                style={{ display: "contents" }}
+                // forbid editing system variable
+                disabled={isSystemVariable}
+              >
+                <VariablePanelForm
+                  ref={panelRef}
+                  variable={variable}
+                  variableType={variableType}
+                  onVariableTypeChange={updateVariableType}
+                  value={value}
+                  onValueChange={setValue}
+                />
+              </fieldset>
+            </form>
+          </ScrollArea>
+        }
+        end={
+          <VariablePreview
+            variable={variable}
+            variableType={variableType}
+            variableValue={value}
+            onLoadData={reloadData}
+          />
+        }
+      />
 
       <DialogTitle
         maximizable
@@ -985,6 +1007,7 @@ export const VariablePopoverTrigger = ({
   return (
     <FloatingPanel
       maximizable
+      resize="both"
       placement="center"
       width={740}
       height={480}

@@ -76,13 +76,19 @@ describe("asset API descriptions", () => {
       expect.objectContaining({
         type: "variant",
         key: "output",
-        defaultValue: { mode: "all", includeMetadata: true },
+        defaultValue: { mode: "base", includeMetadata: true },
         config: expect.objectContaining({
           selection: {
             label: "Output",
             emptyOption: "base",
             baseline: { key: "includeMetadata", label: "File metadata" },
           },
+          options: expect.arrayContaining([
+            expect.objectContaining({
+              value: "all",
+              label: "All content fields",
+            }),
+          ]),
         }),
       })
     );

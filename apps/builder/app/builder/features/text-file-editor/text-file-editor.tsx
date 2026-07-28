@@ -517,7 +517,7 @@ export const TextFileEditor = ({
         languageExtensions={getTextFileEditorExtensions(asset)}
         size="full"
         expandable={false}
-        showBorder={false}
+        chromeless
         readOnly={canEdit === false}
         onChange={(content) => {
           setState({ status: "loaded", content });

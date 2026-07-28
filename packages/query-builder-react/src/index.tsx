@@ -18,6 +18,7 @@ import {
   CssValueListItem,
   Flex,
   Grid,
+  IconButton,
   InputField,
   Label,
   Popover,
@@ -323,7 +324,11 @@ const Group = <FieldType extends string, Operator extends string>({
       gap={2}
       css={{
         ...(root
-          ? { paddingInline: shared.sectionPaddingInline }
+          ? {
+              paddingInline: shared.sectionPaddingInline,
+              borderTop: `1px solid ${theme.colors.borderMain}`,
+              paddingTop: theme.spacing[7],
+            }
           : {
               paddingLeft: theme.spacing[3],
               borderLeft: `1px solid ${theme.colors.borderMain}`,
@@ -346,11 +351,12 @@ const Group = <FieldType extends string, Operator extends string>({
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <SmallIconButton
+              <IconButton
                 aria-label="Add query condition or group"
-                icon={<PlusIcon />}
                 disabled={canAddCondition === false && canAddGroup === false}
-              />
+              >
+                <PlusIcon />
+              </IconButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={4}>
               <DropdownMenuItem
@@ -445,12 +451,13 @@ const Sorting = <FieldType extends string, Operator extends string>({
   <Grid gap={2} css={{ paddingInline: sectionPaddingInline }}>
     <Flex justify="between" align="center">
       <Label>Sort</Label>
-      <SmallIconButton
+      <IconButton
         aria-label="Add query sort"
-        icon={<PlusIcon />}
         disabled={sort.length >= control.max}
         onClick={() => onChange([...sort, createQuerySort(capabilities)])}
-      />
+      >
+        <PlusIcon />
+      </IconButton>
     </Flex>
     {sort.map((order, index) => {
       if (capabilities.fields.length === 0) {
@@ -463,7 +470,7 @@ const Sorting = <FieldType extends string, Operator extends string>({
           key={index}
           gap={1}
           align="center"
-          css={{ gridTemplateColumns: "1fr 110px min-content" }}
+          css={{ gridTemplateColumns: "1fr 1fr min-content" }}
         >
           <Select<(typeof capabilities.fields)[number]>
             aria-label="Query sort field"
@@ -639,16 +646,17 @@ const QueryParameters = ({
             })}
             {available.length > 0 &&
               (control.max === undefined || paths.length < control.max) && (
-                <SmallIconButton
+                <IconButton
                   aria-label={`Add ${control.label.toLowerCase()}`}
-                  icon={<PlusIcon />}
                   onClick={() =>
                     onChange(parameter.key, {
                       ...current,
                       [control.key]: [...paths, available[0].path],
                     })
                   }
-                />
+                >
+                  <PlusIcon />
+                </IconButton>
               )}
           </Grid>
         );
@@ -809,10 +817,9 @@ const QueryParameters = ({
             <Label>{selectionLabel}</Label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SmallIconButton
-                  aria-label={`Add ${selectionLabel.toLowerCase()}`}
-                  icon={<PlusIcon />}
-                />
+                <IconButton aria-label={`Add ${selectionLabel.toLowerCase()}`}>
+                  <PlusIcon />
+                </IconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={4}>
                 {selectionParameters.map((parameter, index) => (

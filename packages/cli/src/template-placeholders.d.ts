@@ -19,6 +19,10 @@ declare module "__ASSET_RESOURCE_FETCH__" {
   export const createSsgAssetResourceFetch: (options: {
     deploymentId: string;
     artifact: ContentArtifactV1;
+    runtimeAssets: Record<
+      string,
+      { url: string; width?: number; height?: number }
+    >;
   }) => (
     input: RequestInfo | URL,
     init?: RequestInit

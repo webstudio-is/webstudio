@@ -52,8 +52,22 @@ describe("content compilation plan", () => {
   test("keeps base-only queries free of parser and hydration work", () => {
     const plan = createContentCompilationPlan([compilationQuery("base")]);
     expect(plan).toEqual({
+      standardFields: [
+        ["createdAt"],
+        ["description"],
+        ["extension"],
+        ["folderId"],
+        ["id"],
+        ["key"],
+        ["mimeType"],
+        ["name"],
+        ["path"],
+        ["revision"],
+        ["size"],
+      ],
       structuredPropertyPaths: [],
       excerpt: false,
+      metadataError: true,
       queries: [compilationQuery("base")],
     });
     expect(requiresStructuredProperties(plan!)).toBe(false);
@@ -104,16 +118,30 @@ describe("content compilation plan", () => {
         }),
       ])
     ).toEqual({
+      standardFields: [
+        ["createdAt"],
+        ["description"],
+        ["extension"],
+        ["folderId"],
+        ["id"],
+        ["key"],
+        ["mimeType"],
+        ["name"],
+        ["path"],
+        ["revision"],
+        ["size"],
+      ],
       structuredPropertyPaths: [
         ["properties", "slug"],
         ["properties", "title"],
       ],
       excerpt: true,
+      metadataError: true,
       queries: expect.any(Array),
     });
   });
 
-  test("preserves legacy all-fields output as the broadest requirement", () => {
+  test("treats all-fields output as the broadest requirement", () => {
     expect(
       createContentCompilationPlan([
         compilationQuery("base"),

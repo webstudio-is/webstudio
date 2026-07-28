@@ -8,6 +8,7 @@ import {
   assetQueryFieldPath,
   assetQueryOperators,
   assetQuerySort,
+  defaultAssetResourceOutputSelection,
   assetResourceContentOptions,
   assetResourceOutputSelection,
   type AssetQueryFieldPath,
@@ -96,10 +97,9 @@ export const assetQueryResourceConfigurationInput = z.strictObject({
       'A Webstudio expression, or { type: "literal", value: number } for a fixed result offset.'
     )
     .default("0"),
-  output: assetResourceOutputSelection.default({
-    mode: "all",
-    includeMetadata: true,
-  }),
+  output: assetResourceOutputSelection.default(
+    defaultAssetResourceOutputSelection
+  ),
   content: assetResourceContentOptions.default({ mode: "none" }),
 });
 

@@ -1,6 +1,6 @@
 import type {
-  AssetFileDocument,
   AssetResourceContentOptions,
+  ContentDatabaseDocument,
   HydratedAssetContent,
 } from "./schema";
 import { contentEngineLimits } from "./limits";
@@ -95,11 +95,12 @@ const getSelectedIdentities = (result: unknown): SelectedIdentity[] => {
   return Array.from(identities.values());
 };
 
-const isTextDocument = (document: AssetFileDocument) =>
-  document.mimeType.startsWith("text/") ||
-  ["application/json", "application/javascript", "application/xml"].includes(
-    document.mimeType
-  );
+const isTextDocument = (document: ContentDatabaseDocument) =>
+  typeof document.mimeType === "string" &&
+  (document.mimeType.startsWith("text/") ||
+    ["application/json", "application/javascript", "application/xml"].includes(
+      document.mimeType
+    ));
 
 const readBytes = async ({
   read,
@@ -141,7 +142,7 @@ const decodeText = (bytes: Uint8Array) => {
 };
 
 const getAssetResourceHydrationReadLength = (
-  document: AssetFileDocument,
+  document: ContentDatabaseDocument & { size: number },
   options: Exclude<AssetResourceContentOptions, { mode: "none" }>
 ) => {
   if (options.mode === "range") {
@@ -173,7 +174,7 @@ export const hydrateAssetResourceResult = async ({
   read,
 }: {
   result: unknown;
-  documents: readonly AssetFileDocument[];
+  documents: readonly ContentDatabaseDocument[];
   options: AssetResourceContentOptions;
   read: AssetResourceContentReader;
 }) => {
@@ -199,7 +200,9 @@ export const hydrateAssetResourceResult = async ({
     if (
       document === undefined ||
       document.revision !== identity.revision ||
-      document.contentRef !== identity.contentRef
+      document.contentRef !== identity.contentRef ||
+      typeof document.size !== "number" ||
+      typeof document.mimeType !== "string"
     ) {
       throw new AssetResourceHydrationError({
         code: "CONTENT_IDENTITY_REQUIRED",
@@ -207,17 +210,28 @@ export const hydrateAssetResourceResult = async ({
         details: { assetId: identity._id },
       });
     }
-    if (isTextDocument(document) === false) {
+    const hydratableDocument = {
+      ...document,
+      size: document.size,
+      mimeType: document.mimeType,
+    };
+    if (isTextDocument(hydratableDocument) === false) {
       throw new AssetResourceHydrationError({
         code: "CONTENT_NOT_TEXT",
         message: "Selected binary asset cannot be embedded as text",
-        details: { assetId: identity._id, mimeType: document.mimeType },
+        details: {
+          assetId: identity._id,
+          mimeType: hydratableDocument.mimeType,
+        },
       });
     }
     return {
       identity,
-      document,
-      readLength: getAssetResourceHydrationReadLength(document, options),
+      document: hydratableDocument,
+      readLength: getAssetResourceHydrationReadLength(
+        hydratableDocument,
+        options
+      ),
     };
   });
   const totalReadBytes = selected.reduce(

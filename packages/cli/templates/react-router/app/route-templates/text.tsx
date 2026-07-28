@@ -4,7 +4,6 @@ import { authenticateRequest } from "@webstudio-is/wsauth";
 import { projectDomain } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
 import { sitemap } from "__SITEMAP__";
-import { assets } from "__ASSETS__";
 import { authRoutes } from "__AUTH__";
 import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
 
@@ -50,12 +49,6 @@ const customFetch: typeof fetch = (input, init) => {
       timestamp: startOfDay.getTime(),
     };
     const response = new Response(JSON.stringify(data));
-    response.headers.set("content-type", "application/json; charset=utf-8");
-    return Promise.resolve(response);
-  }
-
-  if (isLocalResource(input, "assets")) {
-    const response = new Response(JSON.stringify(assets));
     response.headers.set("content-type", "application/json; charset=utf-8");
     return Promise.resolve(response);
   }

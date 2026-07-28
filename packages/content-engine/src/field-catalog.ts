@@ -71,7 +71,12 @@ const getStandardFieldContributions = (
   { path: "_id", type: "string" },
   { path: "_type", type: "string" },
   ...assetQueryStandardFields.flatMap((field): FieldContribution[] => {
-    if (field === "id") {
+    if (
+      field === "id" ||
+      field === "url" ||
+      field === "width" ||
+      field === "height"
+    ) {
       return [];
     }
     const value = document[field];

@@ -90,6 +90,47 @@ describe("content metadata cache", () => {
     expect(set).toHaveBeenCalledOnce();
   });
 
+  test("removes stale excerpts from non-Markdown cache entries", async () => {
+    const markdown = createEntry({
+      excerpt: "Stale description",
+      prepared: true,
+    });
+    const binaryDocument = {
+      ...markdown.document,
+      name: "image.png",
+      path: "image.png",
+      extension: "png",
+      mimeType: "image/png",
+    };
+    const cached = createCanonicalAssetFileEntry({
+      projectId: markdown.projectId,
+      metadataRequirements: {
+        structuredProperties: true,
+        excerpt: true,
+      },
+      document: binaryDocument,
+    });
+    const { excerpt: _excerpt, ...baseDocument } = binaryDocument;
+    const readBytes = vi.fn();
+
+    const prepared = await prepareCanonicalContentMetadata({
+      base: createCanonicalAssetFileEntry({
+        projectId: markdown.projectId,
+        metadataRequirements: {
+          structuredProperties: false,
+          excerpt: false,
+        },
+        document: baseDocument,
+      }),
+      requirements: { structuredProperties: true, excerpt: true },
+      cache: { get: async () => cached, set: vi.fn() },
+      readBytes,
+    });
+
+    expect(prepared.document).not.toHaveProperty("excerpt");
+    expect(readBytes).not.toHaveBeenCalled();
+  });
+
   test("works without a persistence cache", async () => {
     const readBytes = vi.fn(async () =>
       new TextEncoder().encode("---\ntitle: Local\n---\nBody")

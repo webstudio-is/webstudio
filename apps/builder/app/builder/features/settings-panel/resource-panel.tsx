@@ -14,7 +14,7 @@ import {
 import { useStore } from "@nanostores/react";
 import {
   encodeDataVariableId,
-  isConfiguredAssetsResource,
+  isAssetsResource as isAssetsResourceRecord,
   SYSTEM_VARIABLE_ID,
   systemParameter,
   type DataSources,
@@ -41,6 +41,7 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
+  ProChip,
   Select,
   SmallIconButton,
   Text,
@@ -51,6 +52,7 @@ import {
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import {
+  $permissions,
   $selectedInstance,
   $selectedInstancePathWithRoot,
   $selectedPage,
@@ -78,7 +80,7 @@ import {
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";
-import { Row } from "./shared";
+import { CenteredPanelMessage, Row } from "./shared";
 const AssetQueryForm = lazy(() =>
   import("./asset-query-form").then(({ AssetQueryForm }) => ({
     default: AssetQueryForm,
@@ -934,13 +936,14 @@ export const SystemResourceForm = forwardRef<
 >(({ variable }, ref) => {
   const { scope, aliases } = useResourceScope({ variable });
   const resources = useStore($resources);
+  const { allowDynamicData } = useStore($permissions);
 
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
   const isStoredAssetQuery =
-    resource !== undefined && isConfiguredAssetsResource(resource);
+    resource !== undefined && isAssetsResourceRecord(resource);
 
   const assetsLocalResource = {
     label: "Assets",
@@ -975,9 +978,6 @@ export const SystemResourceForm = forwardRef<
   });
   const isAssetsResource =
     localResource.value === JSON.stringify(assetsResourceUrl);
-  const [isAssetQueryDefined, setIsAssetQueryDefined] =
-    useState(isStoredAssetQuery);
-  const isAssetQuery = isAssetsResource && isAssetQueryDefined;
   useImperativeHandle(ref, () => ({
     save: (formData) => {
       if (formData.get("asset-query-valid") === "false") {
@@ -1013,7 +1013,7 @@ export const SystemResourceForm = forwardRef<
       <input
         type="hidden"
         name="method"
-        value={isAssetQuery ? "post" : "get"}
+        value={isAssetsResource ? "post" : "get"}
       />
       <input type="hidden" name="url" value={localResource.value} />
       <Row>
@@ -1021,7 +1021,13 @@ export const SystemResourceForm = forwardRef<
           <Label htmlFor={resourceId}>Resource</Label>
           <Select
             options={localResources}
-            getLabel={(option) => option.label}
+            getLabel={(option) => (
+              <Flex direction="row" gap="2" align="center">
+                {option.label}
+                {option.value === assetsLocalResource.value &&
+                  allowDynamicData === false && <ProChip>Pro</ProChip>}
+              </Flex>
+            )}
             getValue={(option) => option.value}
             getDescription={(option) => {
               return (
@@ -1038,18 +1044,10 @@ export const SystemResourceForm = forwardRef<
       {isAssetsResource && (
         <Suspense
           fallback={
-            <Row>
-              <Text color="subtle">Loading query editor…</Text>
-            </Row>
+            <CenteredPanelMessage>Loading query editor…</CenteredPanelMessage>
           }
         >
-          <AssetQueryForm
-            resource={resource}
-            scope={scope}
-            aliases={aliases}
-            queryDefined={isAssetQuery}
-            onQueryDefined={() => setIsAssetQueryDefined(true)}
-          />
+          <AssetQueryForm resource={resource} scope={scope} aliases={aliases} />
         </Suspense>
       )}
     </>

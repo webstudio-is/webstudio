@@ -81,7 +81,9 @@ const createDependencies = () => ({
   loadCanonicalAssetFileEntries: vi.fn<typeof loadCanonicalAssetFileEntries>(),
   createAssetIndex: vi.fn<typeof createAssetIndex>(),
   updateAssetMetadataWithClient: vi.fn<typeof updateAssetMetadataWithClient>(),
-  loadAssetsByProjectWithClient: vi.fn<typeof loadAssetsByProjectWithClient>(),
+  loadAssetsByProjectWithClient: vi
+    .fn<typeof loadAssetsByProjectWithClient>()
+    .mockResolvedValue([]),
   loadAssetFoldersByProjectWithClient:
     vi.fn<typeof loadAssetFoldersByProjectWithClient>(),
   upsertAssetFolderWithClient: vi.fn<typeof upsertAssetFolderWithClient>(),
@@ -1165,6 +1167,9 @@ describe("PostgresAssetRepository", () => {
       meta: {},
     };
     dependencies.uploadFile.mockResolvedValue(uploadedAsset);
+    dependencies.loadAssetsByProjectWithClient.mockResolvedValue([
+      uploadedAsset,
+    ]);
     const entry = {
       projectId: "project-1",
       assetId: "asset-1",
@@ -1211,6 +1216,7 @@ describe("PostgresAssetRepository", () => {
             },
           ],
         },
+        output: { mode: "base", includeMetadata: true },
       },
     });
 
@@ -1219,14 +1225,40 @@ describe("PostgresAssetRepository", () => {
       assetClient,
       projectId: "project-1",
       assetIds: ["asset-1"],
-      requirements: { structuredProperties: true, excerpt: true },
+      requirements: { structuredProperties: true, excerpt: false },
     });
-    expect(result.items).toEqual([
+    expect(result.data.items).toEqual([
       expect.objectContaining({
         id: "asset-1",
-        properties: { title: "New post" },
       }),
     ]);
+    expect(result.__diagnostics__).toMatchObject({
+      scope: "query-preview",
+      includedDocumentCount: 1,
+      omittedDocumentCount: 0,
+      truncated: false,
+    });
+    const idOnlyResult = await repository.query({
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "title"],
+              operator: "eq",
+              value: "New post",
+            },
+          ],
+        },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"]],
+        },
+      },
+    });
+    expect(idOnlyResult.__diagnostics__.usedBytes).toBeLessThan(
+      result.__diagnostics__.usedBytes
+    );
 
     vi.mocked(assetClient.readFile).mockResolvedValue({
       data: new Blob(["# New post"]).stream(),

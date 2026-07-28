@@ -25,7 +25,7 @@ import {
   createScope,
   findTreeInstanceIds,
   getAllPages,
-  isConfiguredAssetsResource,
+  isAssetsResource,
   getPagePath,
   getPublishablePages,
   generateResources,
@@ -57,8 +57,8 @@ import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
 import {
   assetQueryFilter,
-  type AssetFileDocument,
   type AssetQueryFilter,
+  type ContentDatabaseDocument,
   getAssetQueryFieldValue,
   matchesAssetQueryFilter,
 } from "@webstudio-is/content-engine";
@@ -139,7 +139,7 @@ const evaluatePrerenderWhere = ({
   where,
   routeValues,
 }: {
-  document: AssetFileDocument;
+  document: ContentDatabaseDocument;
   where: StructuredAssetQueryWhereBinding;
   routeValues: ReadonlyMap<string, string>;
 }): boolean | undefined => {
@@ -186,7 +186,7 @@ const getRouteCandidates = ({
   where,
   routeParameterNames,
 }: {
-  document: AssetFileDocument;
+  document: ContentDatabaseDocument;
   where: StructuredAssetQueryWhereBinding;
   routeParameterNames: ReadonlySet<string>;
 }) => {
@@ -250,7 +250,7 @@ export const getAssetResourcePrerenderPaths = ({
   }
   const paths = new Set<string>();
   for (const [, resource] of resources) {
-    if (isConfiguredAssetsResource(resource) === false) {
+    if (isAssetsResource(resource) === false) {
       continue;
     }
     const configuration = parseStructuredAssetQueryResourceBody(resource.body);
@@ -438,14 +438,17 @@ import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
 export const createSsgAssetResourceFetch = ({
   deploymentId,
   artifact,
+  runtimeAssets,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
+  runtimeAssets: Record<string, { url: string; width?: number; height?: number }>;
 }) =>
   createPublishedAssetResourceFetch({
     baseUrl: "https://webstudio.local",
     deploymentId,
     artifact,
+    runtimeAssets,
   });
 `
       : `export const createSsgAssetResourceFetch = (_options: unknown) =>
@@ -471,11 +474,12 @@ const generateAssetQueryRuntimeModule = ({
   }
   return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/content-engine/runtime";
 import { assetQueryDatabase } from "./$resources.asset-query-manifest";
+import { assets } from "./$resources.assets";
 
 const deploymentId = ${JSON.stringify(deploymentId)};
 
 export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${inputType}) =>
-  createRuntimeFetch({ request, deploymentId, artifact: assetQueryDatabase, fallback });
+  createRuntimeFetch({ request, deploymentId, artifact: assetQueryDatabase, runtimeAssets: assets, fallback });
 `;
 };
 

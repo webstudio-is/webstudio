@@ -8,6 +8,7 @@ import {
   assetQueryFilter,
   type AssetQuery,
   type AssetFileDocument,
+  type ContentDatabaseDocument,
   type AssetQueryFieldPath,
   type AssetQueryOperator,
   type AssetResourceOutputSelection,
@@ -41,8 +42,10 @@ export type ContentCompilationQuery = {
 };
 
 export type ContentCompilationPlan = {
+  standardFields: "all" | AssetQueryFieldPath[];
   structuredPropertyPaths: "all" | AssetQueryFieldPath[];
   excerpt: boolean;
+  metadataError: boolean;
   queries: ContentCompilationQuery[];
 };
 
@@ -262,7 +265,42 @@ const getStructuredPropertyPaths = (query: ContentCompilationQuery) => {
   return sortFields(fields.values());
 };
 
+const metadataOutputFields = [
+  "id",
+  "name",
+  "description",
+  "path",
+  "key",
+  "folderId",
+  "extension",
+  "mimeType",
+  "size",
+  "createdAt",
+  "revision",
+] as const satisfies readonly AssetQueryFieldPath[number][];
+
+const getStandardFieldPaths = (query: ContentCompilationQuery) => {
+  const fields = new Map<string, AssetQueryFieldPath>();
+  visitQueryFields(query, (field) => {
+    if (field[0] !== "properties" && field[0] !== "excerpt") {
+      addField(fields, field);
+    }
+  });
+  if (query.output.includeMetadata) {
+    for (const field of metadataOutputFields) {
+      addField(fields, [field]);
+    }
+  }
+  if (query.content.mode !== "none") {
+    for (const field of ["mimeType", "size", "revision"] as const) {
+      addField(fields, [field]);
+    }
+  }
+  return sortFields(fields.values());
+};
+
 const getQueryRequirements = (query: ContentCompilationQuery) => ({
+  standardFields: getStandardFieldPaths(query),
   structuredPropertyPaths: getStructuredPropertyPaths(query),
   excerpt:
     query.output.mode === "all" ||
@@ -270,6 +308,7 @@ const getQueryRequirements = (query: ContentCompilationQuery) => ({
       query,
       (field) => field.length === 1 && field[0] === "excerpt"
     ),
+  metadataError: query.output.includeMetadata,
 });
 
 const toLiteralWhere = (where: AssetQuery["where"]): ContentCompilationWhere =>
@@ -302,7 +341,13 @@ export const createContentCompilationPlan = (
     return;
   }
   const requirements = queries.map(getQueryRequirements);
+  const standardFields = new Map<string, AssetQueryFieldPath>();
   const structuredPropertyPaths = new Map<string, AssetQueryFieldPath>();
+  for (const requirement of requirements) {
+    for (const field of requirement.standardFields) {
+      addField(standardFields, field);
+    }
+  }
   for (const requirement of requirements) {
     if (requirement.structuredPropertyPaths === "all") {
       structuredPropertyPaths.clear();
@@ -313,13 +358,102 @@ export const createContentCompilationPlan = (
     }
   }
   return {
+    standardFields: sortFields(standardFields.values()),
     structuredPropertyPaths: requirements.some(
       ({ structuredPropertyPaths }) => structuredPropertyPaths === "all"
     )
       ? "all"
       : sortFields(structuredPropertyPaths.values()),
     excerpt: requirements.some(({ excerpt }) => excerpt),
+    metadataError: requirements.some(({ metadataError }) => metadataError),
     queries: [...queries],
+  };
+};
+
+const hasField = (fields: "all" | AssetQueryFieldPath[], field: string) =>
+  fields === "all" ||
+  fields.some((path) => path.length === 1 && path[0] === field);
+
+export const isContentCompilationFieldRequired = ({
+  plan,
+  field,
+}: {
+  plan?: ContentCompilationPlan;
+  field: AssetQueryFieldPath;
+}) => {
+  if (plan === undefined) {
+    return true;
+  }
+  if (field[0] === "properties") {
+    return (
+      plan.structuredPropertyPaths === "all" ||
+      plan.structuredPropertyPaths.some(
+        (required) => getQueryFieldKey(required) === getQueryFieldKey(field)
+      )
+    );
+  }
+  if (field[0] === "excerpt") {
+    return plan.excerpt;
+  }
+  return hasField(plan.standardFields, field[0]);
+};
+
+export const projectContentDatabaseDocument = ({
+  document,
+  plan,
+}: {
+  document: AssetFileDocument;
+  plan?: ContentCompilationPlan;
+}): ContentDatabaseDocument => {
+  if (plan === undefined) {
+    return document;
+  }
+  const includeContentIdentity = requiresHydratedContent(plan);
+  const properties =
+    plan.structuredPropertyPaths === "all"
+      ? document.properties
+      : selectAssetProperties({
+          properties: document.properties,
+          fields: plan.structuredPropertyPaths,
+        });
+  return {
+    _id: document._id,
+    ...(hasField(plan.standardFields, "name") ? { name: document.name } : {}),
+    ...(document.description !== undefined &&
+    hasField(plan.standardFields, "description")
+      ? { description: document.description }
+      : {}),
+    ...(hasField(plan.standardFields, "path") ? { path: document.path } : {}),
+    ...(hasField(plan.standardFields, "key") ? { key: document.key } : {}),
+    ...(document.folderId !== undefined &&
+    hasField(plan.standardFields, "folderId")
+      ? { folderId: document.folderId }
+      : {}),
+    ...(hasField(plan.standardFields, "extension")
+      ? { extension: document.extension }
+      : {}),
+    ...(hasField(plan.standardFields, "mimeType")
+      ? { mimeType: document.mimeType }
+      : {}),
+    ...(hasField(plan.standardFields, "size") ? { size: document.size } : {}),
+    ...(document.createdAt !== undefined &&
+    hasField(plan.standardFields, "createdAt")
+      ? { createdAt: document.createdAt }
+      : {}),
+    ...(hasField(plan.standardFields, "revision")
+      ? { revision: document.revision }
+      : {}),
+    ...(includeContentIdentity ? { contentRef: document.contentRef } : {}),
+    ...(plan.structuredPropertyPaths === "all" ||
+    Object.keys(properties).length > 0
+      ? { properties }
+      : {}),
+    ...(plan.excerpt && document.excerpt !== undefined
+      ? { excerpt: document.excerpt }
+      : {}),
+    ...(plan.metadataError && document.metadataError !== undefined
+      ? { metadataError: document.metadataError }
+      : {}),
   };
 };
 
@@ -331,8 +465,10 @@ export const createContentCompilationPlan = (
 export const createContentFieldCatalogCompilationPlan = (
   id = "field-catalog"
 ): ContentCompilationPlan => ({
+  standardFields: "all",
   structuredPropertyPaths: "all",
   excerpt: false,
+  metadataError: false,
   queries: [
     {
       id,

@@ -61,6 +61,7 @@ const queryRequest = (content = false) =>
           ],
         },
         limit: 1,
+        output: { mode: "all", includeMetadata: true },
         content: content ? { mode: "full" } : { mode: "none" },
       },
     }),
@@ -112,9 +113,12 @@ describe("published asset resource runtime", () => {
     const detail = await generatedFetch(queryRequest(true));
 
     expect(overview.status).toBe(200);
-    await expect(overview.json()).resolves.toMatchObject({
+    const overviewData = await overview.json();
+    expect(overviewData).toMatchObject({
       items: [{ id: "post-1" }],
     });
+    expect(overviewData).not.toHaveProperty("database");
+    expect(overviewData).not.toHaveProperty("__diagnostics__");
     await expect(detail.json()).resolves.toMatchObject({
       items: [{ id: "post-1", content: { text: "Post" } }],
     });

@@ -18,7 +18,6 @@ import {
 } from "../__generated__/[sitemap.xml]._index.server";
 import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
-import { assets } from "../__generated__/$resources.assets";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
 import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";
 
@@ -66,12 +65,6 @@ const customFetch: typeof fetch = (input, init) => {
       timestamp: startOfDay.getTime(),
     };
     const response = new Response(JSON.stringify(data));
-    response.headers.set("content-type", "application/json; charset=utf-8");
-    return Promise.resolve(response);
-  }
-
-  if (isLocalResource(input, "assets")) {
-    const response = new Response(JSON.stringify(assets));
     response.headers.set("content-type", "application/json; charset=utf-8");
     return Promise.resolve(response);
   }

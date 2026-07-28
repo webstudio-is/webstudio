@@ -80,6 +80,7 @@ describe("canonical asset metadata persistence", () => {
             fileUpdatedAt: "2026-07-18T00:00:00.000Z",
             fileSize: 100,
             filename: "post.md",
+            description: "Summary",
             folderId: "blog",
           },
         });
@@ -95,6 +96,7 @@ describe("canonical asset metadata persistence", () => {
           fileUpdatedAt: "2026-07-18T00:00:00.000Z",
           fileSize: 100,
           filename: "post.md",
+          description: "Summary",
           folderId: "blog",
         },
       })

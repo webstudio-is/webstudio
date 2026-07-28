@@ -9,17 +9,20 @@ import {
 const document = ({
   id,
   properties,
+  description,
   excerpt,
   createdAt,
 }: {
   id: string;
   properties: AssetFileDocument["properties"];
+  description?: string;
   excerpt?: string;
   createdAt?: string;
 }): AssetFileDocument => ({
   _id: id,
   _type: "asset.file",
   name: `${id}.md`,
+  description,
   path: `blog/${id}.md`,
   key: `key-${id}`,
   extension: "md",
@@ -35,6 +38,7 @@ const document = ({
 const documents = [
   document({
     id: "alpha",
+    description: "Alpha description",
     createdAt: "2026-07-27T00:00:00.000Z",
     excerpt: "Alpha excerpt",
     properties: {
@@ -110,10 +114,21 @@ describe("structured asset query", () => {
           ],
         },
       },
+      runtimeAssets: {
+        alpha: { url: "/assets/alpha.png", width: 1200, height: 800 },
+        gamma: { url: "/assets/gamma.md" },
+      },
     });
 
-    expect(result.items.map(({ id }) => id)).toEqual(["alpha", "gamma"]);
-    expect(result.items[0]?.createdAt).toBe("2026-07-27T00:00:00.000Z");
+    expect(result.items).toEqual([
+      {
+        id: "alpha",
+        url: "/assets/alpha.png",
+        width: 1200,
+        height: 800,
+      },
+      { id: "gamma", url: "/assets/gamma.md" },
+    ]);
   });
 
   test("reads only own JSON properties from dynamic field paths", () => {
@@ -245,6 +260,7 @@ describe("structured asset query", () => {
         ],
         limit: 1,
         offset: 0,
+        output: { mode: "all", includeMetadata: true },
         content: { mode: "none" },
       },
     });
@@ -315,6 +331,7 @@ describe("structured asset query", () => {
     expect(selected.items[0]).toMatchObject({
       id: "alpha",
       name: "alpha.md",
+      description: "Alpha description",
       properties: { title: "Alpha" },
       excerpt: "Alpha excerpt",
     });
@@ -356,8 +373,67 @@ describe("structured asset query", () => {
       },
     });
     expect(withoutMetadata.items[0]).toEqual({
+      id: "alpha",
       name: "alpha.md",
       properties: { title: "Alpha" },
+    });
+  });
+
+  test("omits empty properties from query results", async () => {
+    const empty = document({ id: "empty", properties: {} });
+    const withExcerpt = document({
+      id: "excerpt",
+      properties: {},
+      excerpt: "Excerpt",
+    });
+    const result = await executeAssetQuery({
+      catalog,
+      documents: [empty, withExcerpt],
+      query: {
+        where: { all: [] },
+        sort: [],
+        limit: 1,
+        offset: 0,
+        output: { mode: "all", includeMetadata: false },
+        content: { mode: "none" },
+      },
+    });
+
+    expect(result).toMatchObject({
+      items: [{ id: "excerpt", excerpt: "Excerpt" }],
+      totalCount: 1,
+      hasMore: false,
+    });
+  });
+
+  test("retains files when file content is the only available output", async () => {
+    const bytes = new TextEncoder().encode("Body");
+    const result = await executeAssetQuery({
+      catalog,
+      documents: [
+        { ...document({ id: "content", properties: {} }), size: bytes.length },
+      ],
+      query: {
+        where: { all: [] },
+        sort: [],
+        limit: 1,
+        offset: 0,
+        output: { mode: "all", includeMetadata: false },
+        content: { mode: "markdown-body" },
+      },
+      read: async () => ({
+        data: {
+          async *[Symbol.asyncIterator]() {
+            yield bytes;
+          },
+        },
+        contentLength: bytes.length,
+      }),
+    });
+
+    expect(result).toMatchObject({
+      items: [{ id: "content", content: { encoding: "utf-8", text: "Body" } }],
+      totalCount: 1,
     });
   });
 

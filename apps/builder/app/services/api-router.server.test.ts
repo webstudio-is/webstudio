@@ -79,9 +79,20 @@ describe("api router build operation adapters", () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
     vi.spyOn(assetUploader, "previewAssetResourceQuery").mockResolvedValue({
-      items: [{ id: "post" }],
-      totalCount: 1,
-      hasMore: false,
+      data: {
+        items: [{ id: "post" }],
+        totalCount: 1,
+        hasMore: false,
+      },
+      __diagnostics__: {
+        scope: "query-preview",
+        usedBytes: 100,
+        maxBytes: 512_000,
+        unboundedBytes: 100,
+        includedDocumentCount: 1,
+        omittedDocumentCount: 0,
+        truncated: false,
+      },
     } as never);
     vi.spyOn(assetUploader, "loadBuilderAssetFieldCatalog").mockResolvedValue({
       format: "webstudio-builder-asset-field-catalog",
@@ -144,8 +155,11 @@ describe("api router build operation adapters", () => {
         query: { limit: 10 },
       })
     ).resolves.toMatchObject({
-      items: [{ id: "post" }],
-      totalCount: 1,
+      data: {
+        items: [{ id: "post" }],
+        totalCount: 1,
+      },
+      __diagnostics__: { scope: "query-preview", truncated: false },
     });
     vi.mocked(assetUploader.previewAssetResourceQuery).mockRejectedValueOnce(
       new AssetIndexRevisionError()

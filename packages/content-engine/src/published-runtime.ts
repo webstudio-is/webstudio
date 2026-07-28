@@ -8,6 +8,7 @@ import { AssetQueryExecutionError } from "./structured-query";
 import { createContentDatabase } from "./content-database";
 import { AssetResourceHydrationError } from "./hydration";
 import { readAssetQueryRequest } from "./request";
+import type { AssetRuntimeData } from "./structured-query";
 
 const assetsResourceUrl = "/$resources/assets";
 
@@ -71,11 +72,13 @@ const getCacheKey = async ({
 export const createPublishedAssetResourceFetch = ({
   deploymentId,
   artifact,
+  runtimeAssets,
   cache,
   baseUrl,
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
 }) => {
@@ -132,7 +135,9 @@ export const createPublishedAssetResourceFetch = ({
           status: 499,
         });
       }
-      const response = jsonResponse(await database.query(parsedRequest));
+      const response = jsonResponse(
+        await database.query(parsedRequest, undefined, runtimeAssets)
+      );
       if (
         cacheKey !== undefined &&
         cache !== undefined &&
@@ -184,11 +189,13 @@ export const createGeneratedAssetResourceFetch = async ({
   request,
   deploymentId,
   artifact,
+  runtimeAssets,
   fallback,
 }: {
   request: Request;
   deploymentId: string;
   artifact: ContentArtifactV1;
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
   fallback: typeof fetch;
 }): Promise<typeof fetch> => {
   const cacheStorage = globalThis.caches;
@@ -208,6 +215,7 @@ export const createGeneratedAssetResourceFetch = async ({
   const fetchResource = createPublishedAssetResourceFetch({
     deploymentId,
     artifact,
+    runtimeAssets,
     cache,
     baseUrl: request.url,
   });

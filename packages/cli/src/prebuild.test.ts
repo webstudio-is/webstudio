@@ -419,6 +419,7 @@ test("executes and hydrates an asset query from an embedded SSG database", async
   const runtimeFetch = createSsgAssetResourceFetch({
     deploymentId: "build-1",
     artifact: index,
+    runtimeAssets: { "post-1": { url: "/assets/post.md" } },
   });
 
   const response = await runtimeFetch("/$resources/assets", {
@@ -435,6 +436,7 @@ test("executes and hydrates an asset query from an embedded SSG database", async
           ],
         },
         limit: 1,
+        output: { mode: "all", includeMetadata: true },
         content: { mode: "full" },
       },
     }),
@@ -471,6 +473,7 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
   const runtimeFetch = createSsgAssetResourceFetch({
     deploymentId: "build-encoded",
     artifact: index,
+    runtimeAssets: { "post-1": { url: `/assets/${contentRef}` } },
   });
 
   const response = await runtimeFetch("/$resources/assets", {
@@ -770,15 +773,15 @@ describe("prebuild", () => {
       ])
     );
 
-    const legacyAssetsModule = await readFile(
+    const assetsModule = await readFile(
       "app/__generated__/$resources.assets.ts",
       "utf8"
     );
-    expect(legacyAssetsModule).toContain("export const assets");
-    expect(legacyAssetsModule).toContain('"asset-image"');
-    expect(legacyAssetsModule).toContain("image.png");
-    expect(legacyAssetsModule).not.toContain("assets/query");
-    expect(legacyAssetsModule).not.toContain("properties");
+    expect(assetsModule).toContain("export const assets");
+    expect(assetsModule).toContain('"asset-image"');
+    expect(assetsModule).toContain("image.png");
+    expect(assetsModule).not.toContain("assets/query");
+    expect(assetsModule).not.toContain("properties");
     await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.toContain('"path": "/"');
@@ -1564,8 +1567,12 @@ describe("prebuild", () => {
         ok: true,
         status: 200,
         data: {
-          items: [{ properties: { title: "Prerendered post" } }],
+          "post-1": {
+            id: "post-1",
+            properties: { title: "Prerendered post" },
+          },
         },
+        meta: { totalCount: 1, hasMore: false },
       },
     });
     await runGeneratedCommand("vite", ["build"]);

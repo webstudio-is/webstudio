@@ -13,6 +13,17 @@ const validRequest = JSON.stringify({
 });
 
 describe("asset query request", () => {
+  test("limits omitted queries to 20 results", async () => {
+    await expect(
+      readAssetQueryRequest(
+        new Request("https://example.com", {
+          method: "POST",
+          body: JSON.stringify({ query: {} }),
+        })
+      )
+    ).resolves.toMatchObject({ query: { limit: 20 } });
+  });
+
   test("parses a bounded request", async () => {
     await expect(
       readAssetQueryRequest(
@@ -21,7 +32,16 @@ describe("asset query request", () => {
           body: validRequest,
         })
       )
-    ).resolves.toMatchObject({ query: { limit: 1 } });
+    ).resolves.toMatchObject({
+      query: {
+        limit: 1,
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["url"], ["width"], ["height"]],
+        },
+      },
+    });
   });
 
   test("rejects declared and streamed bodies over the limit", async () => {

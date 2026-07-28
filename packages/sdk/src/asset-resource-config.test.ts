@@ -8,7 +8,6 @@ import {
   createReachableAssetContentCompilationPlan,
   createStructuredAssetQueryResourceBody,
   isAssetsResource,
-  isConfiguredAssetsResource,
   parseStructuredAssetQueryResourceBody,
 } from "./asset-resource-config";
 import { loadResource } from "./resource-loader";
@@ -116,10 +115,9 @@ describe("asset query resource configuration", () => {
       isAssetsResource(
         createResource({ method: "get", url: '"/$resources/assets"' })
       )
-    ).toBe(true);
+    ).toBe(false);
     const configured = createResource({ url: '"/$resources/assets"' });
     expect(isAssetsResource(configured)).toBe(true);
-    expect(isConfiguredAssetsResource(configured)).toBe(true);
     expect(isAssetsResource(createResource({ control: undefined }))).toBe(
       false
     );
@@ -221,7 +219,7 @@ describe("asset query resource configuration", () => {
     ).toThrow("Select at least one asset query output");
   });
 
-  test("defaults metadata output for existing query expressions", () => {
+  test("preserves explicit output and defaults to URL and optional image dimensions", () => {
     expect(
       parseStructuredAssetQueryResourceBody(`{
         query: {
@@ -235,6 +233,23 @@ describe("asset query resource configuration", () => {
       }`)
     ).toMatchObject({
       output: { mode: "base", includeMetadata: true },
+    });
+    expect(
+      parseStructuredAssetQueryResourceBody(`{
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 20,
+          offset: 0,
+          content: { mode: "none" },
+        },
+      }`)
+    ).toMatchObject({
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["url"], ["width"], ["height"]],
+      },
     });
   });
 });

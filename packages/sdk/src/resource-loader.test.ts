@@ -111,6 +111,70 @@ describe("loadResource", () => {
     });
   });
 
+  test("exposes Assets query results as an ID-keyed resource value", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            items: [
+              { id: "second", name: "Second" },
+              { id: "first", name: "First" },
+            ],
+            totalCount: 5,
+            hasMore: true,
+          },
+          __diagnostics__: { scope: "query-preview" },
+        })
+      )
+    );
+
+    const result = await loadResource(mockFetch, {
+      name: "assets",
+      url: "/$resources/assets",
+      searchParams: [],
+      method: "post",
+      headers: [],
+      body: {},
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      status: 200,
+      statusText: "",
+      data: {
+        second: { id: "second", name: "Second" },
+        first: { id: "first", name: "First" },
+      },
+      meta: { totalCount: 5, hasMore: true },
+      __diagnostics__: { scope: "query-preview" },
+    });
+    expect(Object.keys(result.data)).toEqual(["second", "first"]);
+  });
+
+  test("does not reshape arbitrary POST resources", async () => {
+    const collection = {
+      items: [{ id: "item" }],
+      totalCount: 1,
+      hasMore: false,
+    };
+    mockFetch.mockResolvedValue(new Response(JSON.stringify(collection)));
+
+    await expect(
+      loadResource(
+        mockFetch,
+        {
+          name: "posts",
+          url: "/api/posts",
+          searchParams: [],
+          method: "post",
+          headers: [],
+          body: {},
+        },
+        "https://example.com"
+      )
+    ).resolves.toMatchObject({ data: collection });
+  });
+
   test("should fetch resource with search params", async () => {
     const mockResponse = new Response(JSON.stringify({ key: "value" }), {
       status: 200,

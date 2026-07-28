@@ -57,6 +57,7 @@ type UploadedAssetRow = {
   id: string;
   projectId: string;
   filename: string | null;
+  description: string | null;
   folderId: string | null;
   file: {
     name: string;
@@ -74,7 +75,7 @@ const loadUploadedAssets = async (
   let query = client
     .from("Asset")
     .select(
-      "id, projectId, filename, folderId, file:File!inner(name, size, createdAt, updatedAt, status)"
+      "id, projectId, filename, description, folderId, file:File!inner(name, size, createdAt, updatedAt, status)"
     )
     .eq("projectId", projectId)
     .eq("file.status", "UPLOADED");
@@ -96,6 +97,7 @@ const getCanonicalMetadataSource = (asset: UploadedAssetRow) => ({
   fileUpdatedAt: asset.file.updatedAt,
   fileSize: asset.file.size,
   ...(asset.filename === null ? {} : { filename: asset.filename }),
+  ...(asset.description === null ? {} : { description: asset.description }),
   ...(asset.folderId === null ? {} : { folderId: asset.folderId }),
 });
 
@@ -125,6 +127,7 @@ const createCanonicalDocument = ({
     asset: {
       id: asset.id,
       name,
+      ...(asset.description === null ? {} : { description: asset.description }),
       ...(extension === "" ? {} : { extension }),
       ...(folderId === undefined ? {} : { folderId, folderNames }),
       mimeType: getMimeTypeByFilename(asset.file.name),
@@ -198,6 +201,7 @@ const hasMatchingStandardMetadata = (
   expected: AssetFileDocument
 ) =>
   document.name === expected.name &&
+  document.description === expected.description &&
   document.path === expected.path &&
   document.key === expected.key &&
   document.folderId === expected.folderId &&
@@ -393,7 +397,10 @@ export const synchronizeCanonicalAssets = async ({
       hierarchy,
       revision,
       properties: current.document.properties,
-      excerpt: current.document.excerpt,
+      excerpt:
+        current.document.extension === "md"
+          ? current.document.excerpt
+          : undefined,
       metadataError: current.document.metadataError,
     });
     if (
