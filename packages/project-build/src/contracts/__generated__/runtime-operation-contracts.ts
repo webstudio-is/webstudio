@@ -2236,22 +2236,6 @@ export const runtimeOperationContractData = [
                     properties: {
                       type: {
                         type: "string",
-                        const: "string[]",
-                      },
-                      value: {
-                        type: "array",
-                        items: {
-                          type: "string",
-                        },
-                      },
-                    },
-                    required: ["type", "value"],
-                  },
-                  {
-                    type: "object",
-                    properties: {
-                      type: {
-                        type: "string",
                         const: "json",
                       },
                       value: {},
@@ -3995,22 +3979,6 @@ export const runtimeOperationContractData = [
                                       },
                                       value: {
                                         type: "boolean",
-                                      },
-                                    },
-                                    required: ["type", "value"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      type: {
-                                        type: "string",
-                                        const: "string[]",
-                                      },
-                                      value: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
                                       },
                                     },
                                     required: ["type", "value"],
@@ -7141,22 +7109,6 @@ export const runtimeOperationContractData = [
                                       },
                                       value: {
                                         type: "boolean",
-                                      },
-                                    },
-                                    required: ["type", "value"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      type: {
-                                        type: "string",
-                                        const: "string[]",
-                                      },
-                                      value: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
                                       },
                                     },
                                     required: ["type", "value"],
@@ -10307,22 +10259,6 @@ export const runtimeOperationContractData = [
                                     properties: {
                                       type: {
                                         type: "string",
-                                        const: "string[]",
-                                      },
-                                      value: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
-                                      },
-                                    },
-                                    required: ["type", "value"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      type: {
-                                        type: "string",
                                         const: "json",
                                       },
                                       value: {},
@@ -13444,22 +13380,6 @@ export const runtimeOperationContractData = [
                                       },
                                       value: {
                                         type: "boolean",
-                                      },
-                                    },
-                                    required: ["type", "value"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      type: {
-                                        type: "string",
-                                        const: "string[]",
-                                      },
-                                      value: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
                                       },
                                     },
                                     required: ["type", "value"],
@@ -19301,22 +19221,6 @@ export const runtimeOperationContractData = [
                                           properties: {
                                             type: {
                                               type: "string",
-                                              const: "string[]",
-                                            },
-                                            value: {
-                                              type: "array",
-                                              items: {
-                                                type: "string",
-                                              },
-                                            },
-                                          },
-                                          required: ["type", "value"],
-                                        },
-                                        {
-                                          type: "object",
-                                          properties: {
-                                            type: {
-                                              type: "string",
                                               const: "json",
                                             },
                                             value: {},
@@ -22641,22 +22545,6 @@ export const runtimeOperationContractData = [
                                             },
                                             value: {
                                               type: "boolean",
-                                            },
-                                          },
-                                          required: ["type", "value"],
-                                        },
-                                        {
-                                          type: "object",
-                                          properties: {
-                                            type: {
-                                              type: "string",
-                                              const: "string[]",
-                                            },
-                                            value: {
-                                              type: "array",
-                                              items: {
-                                                type: "string",
-                                              },
                                             },
                                           },
                                           required: ["type", "value"],
@@ -36410,22 +36298,6 @@ export const runtimeOperationContractData = [
                     properties: {
                       type: {
                         type: "string",
-                        const: "string[]",
-                      },
-                      value: {
-                        type: "array",
-                        items: {
-                          type: "string",
-                        },
-                      },
-                    },
-                    required: ["type", "value"],
-                  },
-                  {
-                    type: "object",
-                    properties: {
-                      type: {
-                        type: "string",
                         const: "json",
                       },
                       value: {},
@@ -37051,22 +36923,6 @@ export const runtimeOperationContractData = [
                                       },
                                       value: {
                                         type: "boolean",
-                                      },
-                                    },
-                                    required: ["type", "value"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      type: {
-                                        type: "string",
-                                        const: "string[]",
-                                      },
-                                      value: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
                                       },
                                     },
                                     required: ["type", "value"],
@@ -40272,22 +40128,6 @@ export const runtimeOperationContractData = [
                                       },
                                       value: {
                                         type: "boolean",
-                                      },
-                                    },
-                                    required: ["type", "value"],
-                                  },
-                                  {
-                                    type: "object",
-                                    properties: {
-                                      type: {
-                                        type: "string",
-                                        const: "string[]",
-                                      },
-                                      value: {
-                                        type: "array",
-                                        items: {
-                                          type: "string",
-                                        },
                                       },
                                     },
                                     required: ["type", "value"],
@@ -46613,22 +46453,6 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
-                                const: "string[]",
-                              },
-                              value: {
-                                type: "array",
-                                items: {
-                                  type: "string",
-                                },
-                              },
-                            },
-                            required: ["type", "value"],
-                          },
-                          {
-                            type: "object",
-                            properties: {
-                              type: {
-                                type: "string",
                                 const: "json",
                               },
                               value: {},
@@ -52439,22 +52263,6 @@ export const runtimeOperationContractData = [
                               },
                               value: {
                                 type: "boolean",
-                              },
-                            },
-                            required: ["type", "value"],
-                          },
-                          {
-                            type: "object",
-                            properties: {
-                              type: {
-                                type: "string",
-                                const: "string[]",
-                              },
-                              value: {
-                                type: "array",
-                                items: {
-                                  type: "string",
-                                },
                               },
                             },
                             required: ["type", "value"],
@@ -66631,22 +66439,6 @@ export const runtimeOperationContractData = [
                     properties: {
                       type: {
                         type: "string",
-                        const: "string[]",
-                      },
-                      value: {
-                        type: "array",
-                        items: {
-                          type: "string",
-                        },
-                      },
-                    },
-                    required: ["type", "value"],
-                  },
-                  {
-                    type: "object",
-                    properties: {
-                      type: {
-                        type: "string",
                         const: "json",
                       },
                       value: {},
@@ -66767,22 +66559,6 @@ export const runtimeOperationContractData = [
               properties: {
                 type: {
                   type: "string",
-                  const: "string[]",
-                },
-                value: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                  },
-                },
-              },
-              required: ["type", "value"],
-            },
-            {
-              type: "object",
-              properties: {
-                type: {
-                  type: "string",
                   const: "json",
                 },
                 value: {},
@@ -66879,22 +66655,6 @@ export const runtimeOperationContractData = [
                     },
                     value: {
                       type: "boolean",
-                    },
-                  },
-                  required: ["type", "value"],
-                },
-                {
-                  type: "object",
-                  properties: {
-                    type: {
-                      type: "string",
-                      const: "string[]",
-                    },
-                    value: {
-                      type: "array",
-                      items: {
-                        type: "string",
-                      },
                     },
                   },
                   required: ["type", "value"],

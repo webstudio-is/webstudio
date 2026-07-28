@@ -1989,7 +1989,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       scopeInstanceId: "body-id",
       name: "tags",
-      value: { type: "string[]", value: ["news", "product"] },
+      value: { type: "json", value: ["news", "product"] },
     },
     {
       scopeInstanceId: "body-id",
@@ -2000,7 +2000,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "update-variable": [
     {
       dataSourceId: "variable-id",
-      values: { value: { type: "string[]", value: ["news", "product"] } },
+      values: { value: { type: "json", value: ["news", "product"] } },
     },
   ],
   "create-resource": [

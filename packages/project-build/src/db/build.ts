@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import {
+  dataSource,
   type Deployment,
   type Resource,
   type StyleSource,
@@ -93,7 +94,9 @@ const parseCompactBuild = async (
       build.styleSourceSelections
     ),
     props: parseCompactData<Prop>(build.props),
-    dataSources: parseCompactData<DataSource>(build.dataSources),
+    dataSources: parseCompactData<unknown>(build.dataSources).map((value) =>
+      dataSource.parse(value)
+    ),
     resources: parseCompactData<Resource>(build.resources),
     instances: parseCompactInstanceData(build.instances),
     deployment: parseDeployment(build.deployment),

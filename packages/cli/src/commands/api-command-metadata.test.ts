@@ -158,6 +158,23 @@ test("parses redirect status as a string option", () => {
   );
 });
 
+test("uses JSON as the only variable array type", () => {
+  const yargs = { option: vi.fn().mockReturnThis() };
+  const metadata = apiCommandMetadata.find(
+    (item) => item.command === "create-variable"
+  );
+
+  expect(metadata).toBeDefined();
+  getApiCommandOptions(metadata!)(yargs as never);
+
+  expect(yargs.option).toHaveBeenCalledWith(
+    "value-type",
+    expect.objectContaining({
+      choices: ["string", "number", "boolean", "json"],
+    })
+  );
+});
+
 test("describes list-folders pagination and detail options", () => {
   const yargs = { option: vi.fn().mockReturnThis() };
   const metadata = apiCommandMetadata.find(

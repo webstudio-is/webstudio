@@ -9,7 +9,7 @@ import { getAssetRestProjectId } from "~/services/asset-rest.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createAssetClient } from "../asset-client";
 
-export type AssetDescriptionDependencies = {
+type AssetDescriptionDependencies = {
   authorizeApiProject: typeof authorizeApiProject;
   createAssetClient: () => Pick<
     ReturnType<typeof createAssetClient>,

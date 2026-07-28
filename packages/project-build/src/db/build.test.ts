@@ -115,6 +115,37 @@ describe("loadBuildById (msw)", () => {
     expect(result.marketplaceProduct).toBeUndefined();
   });
 
+  test("normalizes legacy string-array variables to json", async () => {
+    server.use(
+      db.get("Build", () =>
+        json([
+          {
+            ...buildRow,
+            dataSources: JSON.stringify([
+              {
+                id: "tags-variable",
+                type: "variable",
+                name: "tags",
+                value: { type: "string[]", value: ["news", "product"] },
+              },
+            ]),
+          },
+        ])
+      )
+    );
+
+    const result = await loadBuildById(createContext(), "build-1");
+
+    expect(result.dataSources).toEqual([
+      {
+        id: "tags-variable",
+        type: "variable",
+        name: "tags",
+        value: { type: "json", value: ["news", "product"] },
+      },
+    ]);
+  });
+
   test("migrates project settings from legacy pages", async () => {
     server.use(
       db.get("Build", () =>

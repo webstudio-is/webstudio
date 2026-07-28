@@ -1797,7 +1797,6 @@ type VariableValueInput =
   | { type: "number"; value: number }
   | { type: "string"; value: string }
   | { type: "boolean"; value: boolean }
-  | { type: "string[]"; value: string[] }
   | { type: "json"; value: unknown };
 
 export const listVariables = projectQueryInput<

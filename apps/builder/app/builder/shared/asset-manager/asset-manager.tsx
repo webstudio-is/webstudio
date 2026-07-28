@@ -32,6 +32,7 @@ import {
   acceptToMimePatterns,
   createAssetFolderHierarchy,
   doesAssetMatchMimePatterns,
+  formatAssetName,
   type Asset,
   type AllowedFileExtension,
 } from "@webstudio-is/sdk";
@@ -422,11 +423,6 @@ export const AssetManager = ({
   const handleFocusChange = (item: AssetManagerSelection, focused: boolean) => {
     if (focused) {
       setSelection(item);
-    } else if (
-      forcedSelection === undefined &&
-      isSameAssetManagerSelection(selection, item)
-    ) {
-      setSelection(undefined);
     }
   };
 
@@ -558,6 +554,32 @@ export const AssetManager = ({
       ),
     [assetContainers]
   );
+
+  const selectedBreadcrumbItem = useMemo(() => {
+    if (selection === undefined || forcedSelection !== undefined) {
+      return;
+    }
+    if (selection.type === "folder") {
+      return folders.has(selection.id) ? selection : undefined;
+    }
+    const asset = compatibleContainers.find(
+      ({ asset }) => asset.id === selection.id
+    )?.asset;
+    if (asset === undefined) {
+      return;
+    }
+    return {
+      type: "asset" as const,
+      folderId: folderHierarchy.resolveFolderId(asset.folderId),
+      name: formatAssetName(asset),
+    };
+  }, [
+    compatibleContainers,
+    folderHierarchy,
+    folders,
+    forcedSelection,
+    selection,
+  ]);
 
   const normalizeItems = useCallback(
     (items: readonly AssetManagerSelection[]) =>
@@ -953,6 +975,7 @@ export const AssetManager = ({
           <AssetFolderBreadcrumbs
             hierarchy={folderHierarchy}
             folderId={currentFolderId}
+            selectedItem={selectedBreadcrumbItem}
             onChange={setCurrentFolderId}
             canPaste={
               canManageFolders ? canPasteAssetManagerClipboard : undefined

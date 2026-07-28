@@ -29,97 +29,83 @@ const assetItemApiPath = `${assetsApiUrl}/{assetId}`;
 const assetContentApiPath = `${assetItemApiPath}/content`;
 const assetFolderItemApiPath = `${assetsFoldersApiUrl}/{folderId}`;
 
+const operation = <
+  OperationId extends string,
+  Method extends string,
+  Path extends string,
+>(
+  operationId: OperationId,
+  method: Method,
+  path: Path
+) => ({
+  operationId,
+  method,
+  path,
+});
+
 export const assetResourceApiOperations = {
-  listAssets: {
-    operationId: "listAssets",
-    method: "get",
-    path: assetsApiUrl,
-  },
-  reserveAssetUpload: {
-    operationId: "reserveAssetUpload",
-    method: "post",
-    path: assetsUploadsApiUrl,
-  },
-  uploadAssetContent: {
-    operationId: "uploadAssetContent",
-    method: "post",
-    path: `${assetsUploadsApiUrl}/{name}`,
-  },
-  updateAsset: {
-    operationId: "updateAsset",
-    method: "patch",
-    path: assetItemApiPath,
-  },
-  getAsset: {
-    operationId: "getAsset",
-    method: "get",
-    path: assetItemApiPath,
-  },
-  deleteAsset: {
-    operationId: "deleteAsset",
-    method: "delete",
-    path: assetItemApiPath,
-  },
-  replaceAssetContent: {
-    operationId: "replaceAssetContent",
-    method: "put",
-    path: assetContentApiPath,
-  },
-  downloadAssetContent: {
-    operationId: "downloadAssetContent",
-    method: "get",
-    path: assetContentApiPath,
-  },
-  listAssetFolders: {
-    operationId: "listAssetFolders",
-    method: "get",
-    path: assetsFoldersApiUrl,
-  },
-  createAssetFolder: {
-    operationId: "createAssetFolder",
-    method: "post",
-    path: assetsFoldersApiUrl,
-  },
-  updateAssetFolder: {
-    operationId: "updateAssetFolder",
-    method: "patch",
-    path: assetFolderItemApiPath,
-  },
-  getAssetFolder: {
-    operationId: "getAssetFolder",
-    method: "get",
-    path: assetFolderItemApiPath,
-  },
-  deleteAssetFolder: {
-    operationId: "deleteAssetFolder",
-    method: "delete",
-    path: assetFolderItemApiPath,
-  },
-  queryAssets: {
-    operationId: "queryAssets",
-    method: "post",
-    path: assetsQueryApiUrl,
-  },
-  getAssetFieldCatalog: {
-    operationId: "getAssetFieldCatalog",
-    method: "get",
-    path: assetsFieldCatalogApiUrl,
-  },
-  getAssetQueryCapabilities: {
-    operationId: "getAssetQueryCapabilities",
-    method: "get",
-    path: assetsQueryCapabilitiesApiUrl,
-  },
-  getAssetResourceOpenApi: {
-    operationId: "getAssetResourceOpenApi",
-    method: "get",
-    path: assetsOpenApiUrl,
-  },
-  refreshAssetIndex: {
-    operationId: "refreshAssetIndex",
-    method: "post",
-    path: assetsIndexRefreshApiUrl,
-  },
+  listAssets: operation("listAssets", "get", assetsApiUrl),
+  reserveAssetUpload: operation(
+    "reserveAssetUpload",
+    "post",
+    assetsUploadsApiUrl
+  ),
+  uploadAssetContent: operation(
+    "uploadAssetContent",
+    "post",
+    `${assetsUploadsApiUrl}/{name}`
+  ),
+  updateAsset: operation("updateAsset", "patch", assetItemApiPath),
+  getAsset: operation("getAsset", "get", assetItemApiPath),
+  deleteAsset: operation("deleteAsset", "delete", assetItemApiPath),
+  replaceAssetContent: operation(
+    "replaceAssetContent",
+    "put",
+    assetContentApiPath
+  ),
+  downloadAssetContent: operation(
+    "downloadAssetContent",
+    "get",
+    assetContentApiPath
+  ),
+  listAssetFolders: operation("listAssetFolders", "get", assetsFoldersApiUrl),
+  createAssetFolder: operation(
+    "createAssetFolder",
+    "post",
+    assetsFoldersApiUrl
+  ),
+  updateAssetFolder: operation(
+    "updateAssetFolder",
+    "patch",
+    assetFolderItemApiPath
+  ),
+  getAssetFolder: operation("getAssetFolder", "get", assetFolderItemApiPath),
+  deleteAssetFolder: operation(
+    "deleteAssetFolder",
+    "delete",
+    assetFolderItemApiPath
+  ),
+  queryAssets: operation("queryAssets", "post", assetsQueryApiUrl),
+  getAssetFieldCatalog: operation(
+    "getAssetFieldCatalog",
+    "get",
+    assetsFieldCatalogApiUrl
+  ),
+  getAssetQueryCapabilities: operation(
+    "getAssetQueryCapabilities",
+    "get",
+    assetsQueryCapabilitiesApiUrl
+  ),
+  getAssetResourceOpenApi: operation(
+    "getAssetResourceOpenApi",
+    "get",
+    assetsOpenApiUrl
+  ),
+  refreshAssetIndex: operation(
+    "refreshAssetIndex",
+    "post",
+    assetsIndexRefreshApiUrl
+  ),
 } as const;
 
 export const assetUploadReservationRequest = z.strictObject({
@@ -365,6 +351,15 @@ const queryParameter = (
 });
 
 const projectIdParameter = queryParameter("projectId", "Owning project", true);
+const assetParameters = [
+  pathParameter("assetId", "Asset ID"),
+  projectIdParameter,
+];
+const assetFolderParameters = [
+  pathParameter("folderId", "Asset folder ID"),
+  projectIdParameter,
+];
+const binarySchema = { type: "string", format: "binary" } as const;
 
 const createCapabilitiesExample = (capabilities: AssetQueryCapabilities) => {
   const encoder = new TextEncoder();
@@ -471,7 +466,7 @@ export const createAssetResourceOpenApi = ({
             required: true,
             content: {
               "application/octet-stream": {
-                schema: { type: "string", format: "binary" },
+                schema: binarySchema,
               },
             },
           },
@@ -485,10 +480,7 @@ export const createAssetResourceOpenApi = ({
         [operations.getAsset.method]: {
           operationId: operations.getAsset.operationId,
           summary: "Get an asset",
-          parameters: [
-            pathParameter("assetId", "Asset ID"),
-            projectIdParameter,
-          ],
+          parameters: assetParameters,
           responses: {
             200: schemaResponse("AssetItemResult", "Asset record"),
             ...mutationErrorResponses,
@@ -498,10 +490,7 @@ export const createAssetResourceOpenApi = ({
           operationId: operations.updateAsset.operationId,
           summary: "Update asset metadata or folder",
           security: mutationSecurity,
-          parameters: [
-            pathParameter("assetId", "Asset ID"),
-            projectIdParameter,
-          ],
+          parameters: assetParameters,
           requestBody: {
             required: true,
             content: {
@@ -519,10 +508,7 @@ export const createAssetResourceOpenApi = ({
           operationId: operations.deleteAsset.operationId,
           summary: "Delete an asset",
           security: mutationSecurity,
-          parameters: [
-            pathParameter("assetId", "Asset ID"),
-            projectIdParameter,
-          ],
+          parameters: assetParameters,
           responses: {
             204: { description: "Asset deleted" },
             ...mutationErrorResponses,
@@ -551,7 +537,7 @@ export const createAssetResourceOpenApi = ({
               description: "Complete asset content",
               content: {
                 "application/octet-stream": {
-                  schema: { type: "string", format: "binary" },
+                  schema: binarySchema,
                 },
               },
             },
@@ -562,7 +548,7 @@ export const createAssetResourceOpenApi = ({
               },
               content: {
                 "application/octet-stream": {
-                  schema: { type: "string", format: "binary" },
+                  schema: binarySchema,
                 },
               },
             },
@@ -588,7 +574,7 @@ export const createAssetResourceOpenApi = ({
             required: true,
             content: {
               "application/octet-stream": {
-                schema: { type: "string", format: "binary" },
+                schema: binarySchema,
               },
               "text/markdown": { schema: { type: "string" } },
               "application/json": { schema: {} },
@@ -641,10 +627,7 @@ export const createAssetResourceOpenApi = ({
         [operations.getAssetFolder.method]: {
           operationId: operations.getAssetFolder.operationId,
           summary: "Get an asset folder",
-          parameters: [
-            pathParameter("folderId", "Asset folder ID"),
-            projectIdParameter,
-          ],
+          parameters: assetFolderParameters,
           responses: {
             200: schemaResponse("AssetFolderMutationResult", "Asset folder"),
             ...mutationErrorResponses,
@@ -654,10 +637,7 @@ export const createAssetResourceOpenApi = ({
           operationId: operations.updateAssetFolder.operationId,
           summary: "Update an asset folder",
           security: mutationSecurity,
-          parameters: [
-            pathParameter("folderId", "Asset folder ID"),
-            projectIdParameter,
-          ],
+          parameters: assetFolderParameters,
           requestBody: {
             required: true,
             content: {
@@ -682,10 +662,7 @@ export const createAssetResourceOpenApi = ({
           security: mutationSecurity,
           description:
             "Returns a conflict when the folder contains nested folders or assets.",
-          parameters: [
-            pathParameter("folderId", "Asset folder ID"),
-            projectIdParameter,
-          ],
+          parameters: assetFolderParameters,
           responses: {
             204: { description: "Asset folder deleted" },
             ...mutationErrorResponses,

@@ -124,7 +124,3 @@ export const assetQueryResourceConfigurationPatchInput = z.strictObject({
 export type AssetQueryResourceConfigurationInput = z.input<
   typeof assetQueryResourceConfigurationInput
 >;
-
-export type AssetQueryResourceConfiguration = z.output<
-  typeof assetQueryResourceConfigurationInput
->;

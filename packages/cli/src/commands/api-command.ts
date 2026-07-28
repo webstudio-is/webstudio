@@ -972,14 +972,13 @@ export const createVariableCommandOptions = (yargs: CommonYargsArgv) =>
       demandOption: true,
     })
     .option("value-type", {
-      choices: ["string", "number", "boolean", "string[]", "json"] as const,
+      choices: ["string", "number", "boolean", "json"] as const,
       describe: "Required variable value type",
       demandOption: true,
     })
     .option("value", {
       type: "string",
-      describe:
-        "Required variable value; use JSON for json and string[] value types",
+      describe: "Required variable value; use JSON for arrays and objects",
       demandOption: true,
     });
 
@@ -999,12 +998,12 @@ export const updateVariableCommandOptions = (yargs: CommonYargsArgv) =>
       describe: "Update variable name used in expressions",
     })
     .option("value-type", {
-      choices: ["string", "number", "boolean", "string[]", "json"] as const,
+      choices: ["string", "number", "boolean", "json"] as const,
       describe: "Variable value type when updating --value",
     })
     .option("value", {
       type: "string",
-      describe: "Updated variable value; use JSON for json and string[] types",
+      describe: "Updated variable value; use JSON for arrays and objects",
     });
 
 export const deleteVariableCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1381,7 +1380,7 @@ export type ApiCommandOptions = {
   text?: string;
   childDepth?: number;
   mode?: "text" | "expression" | "all" | "append" | "prepend" | "replace";
-  valueType?: "string" | "number" | "boolean" | "string[]" | "json";
+  valueType?: "string" | "number" | "boolean" | "json";
   value?: string;
   method?: "get" | "post" | "put" | "delete";
   url?: string;
@@ -1696,15 +1695,6 @@ const parseVariableValue = (
     return { type: valueType, value: rawValue === "true" };
   }
   const parsed = JSON.parse(rawValue) as unknown;
-  if (valueType === "string[]") {
-    if (
-      Array.isArray(parsed) === false ||
-      parsed.every((item) => typeof item === "string") === false
-    ) {
-      throw new Error("--value must be a JSON array of strings.");
-    }
-    return { type: valueType, value: parsed };
-  }
   return { type: "json", value: parsed };
 };
 

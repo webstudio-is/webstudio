@@ -28,9 +28,6 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
 export const currentDateResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/current-date`;
 export const assetsResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets`;
-export const assetsFieldCatalogResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/field-catalog`;
-export const assetsQueryCapabilitiesResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/query-capabilities`;
-export const assetsOpenApiResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets/openapi.json`;
 
 // Direct HTTP endpoints described by the Assets OpenAPI document. These are
 // separate from the virtual System resource URLs above, which are resolved

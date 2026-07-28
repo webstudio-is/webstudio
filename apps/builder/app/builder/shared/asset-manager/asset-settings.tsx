@@ -479,6 +479,16 @@ const AssetSettingsContent = ({
       </Grid>
 
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <AssetFolderSelector
+          value={asset.folderId}
+          onChange={moveToFolder}
+          rootLabel="Folder"
+          disabled={authPermit === "view"}
+          deferChangesUntilBlur
+        />
+      </Grid>
+
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
         <Label
           htmlFor="asset-manager-description"
           css={{ display: "flex", alignItems: "center", gap: 4 }}
@@ -500,16 +510,6 @@ const AssetSettingsContent = ({
           autoGrow
           value={description}
           onChange={setDescription}
-        />
-      </Grid>
-
-      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
-        <AssetFolderSelector
-          value={asset.folderId}
-          onChange={moveToFolder}
-          rootLabel="Folder"
-          disabled={authPermit === "view"}
-          deferChangesUntilBlur
         />
       </Grid>
 

@@ -244,7 +244,7 @@ export const matchesAssetQueryFilter = (
   return compared <= 0;
 };
 
-export const matchesAssetQueryWhere = (
+const matchesAssetQueryWhere = (
   document: AssetFileDocument,
   where: AssetQueryWhere
 ): boolean => {

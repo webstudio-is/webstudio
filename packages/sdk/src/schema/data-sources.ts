@@ -2,31 +2,49 @@ import { z } from "zod";
 
 const dataSourceId = z.string();
 
+const numberDataSourceVariableValue = z.object({
+  type: z.literal("number"),
+  // initial value of variable store
+  value: z.number(),
+});
+
+const stringDataSourceVariableValue = z.object({
+  type: z.literal("string"),
+  value: z.string(),
+});
+
+const booleanDataSourceVariableValue = z.object({
+  type: z.literal("boolean"),
+  value: z.boolean(),
+});
+
+const jsonDataSourceVariableValue = z
+  .object({
+    type: z.literal("json"),
+    value: z.unknown().optional(),
+  })
+  .transform((value) => ({ ...value, value: value.value ?? null }));
+
 export const dataSourceVariableValue = z.union([
-  z.object({
-    type: z.literal("number"),
-    // initial value of variable store
-    value: z.number(),
-  }),
-  z.object({
-    type: z.literal("string"),
-    value: z.string(),
-  }),
-  z.object({
-    type: z.literal("boolean"),
-    value: z.boolean(),
-  }),
-  z.object({
-    type: z.literal("string[]"),
-    value: z.array(z.string()),
-  }),
-  z
-    .object({
-      type: z.literal("json"),
-      value: z.unknown().optional(),
-    })
-    .transform((value) => ({ ...value, value: value.value ?? null })),
+  numberDataSourceVariableValue,
+  stringDataSourceVariableValue,
+  booleanDataSourceVariableValue,
+  jsonDataSourceVariableValue,
 ]);
+
+const legacyStringArrayDataSourceVariableValue = z.object({
+  type: z.literal("string[]"),
+  value: z.array(z.string()),
+});
+
+const persistedDataSourceVariableValue = z.preprocess((value) => {
+  // Older builds used a dedicated string-array variable type. Normalize it
+  // while parsing so all arrays use the general JSON representation.
+  const legacyValue = legacyStringArrayDataSourceVariableValue.safeParse(value);
+  return legacyValue.success
+    ? { type: "json", value: legacyValue.data.value }
+    : value;
+}, dataSourceVariableValue);
 
 export const dataSource = z.union([
   z.object({
@@ -39,7 +57,7 @@ export const dataSource = z.union([
     // if we make it required
     scopeInstanceId: z.string().optional(),
     name: z.string(),
-    value: dataSourceVariableValue,
+    value: persistedDataSourceVariableValue,
   }),
   z.object({
     type: z.literal("parameter"),

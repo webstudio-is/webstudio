@@ -267,7 +267,7 @@ terms, agents can:
 - List, create, update, attach, detach, extract, duplicate, rename, lock, unlock, reorder, clear, and delete design tokens and style sources.
 - List, define, rename, delete, and rewrite CSS variables.
 - List, create, update, and delete static data variables.
-- Create string, number, boolean, string list, and JSON variables.
+- Create string, number, boolean, and JSON variables. Arrays use JSON.
 - Delete unused data variables.
 - List, create, update, upsert, bind, and delete resources.
 - Create HTTP resources.

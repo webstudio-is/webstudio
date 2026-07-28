@@ -75,7 +75,6 @@ import {
   parseDataVariableJsonExpression,
   validateDataVariableJsonValue,
   validateDataVariableNumberValue,
-  validateDataVariableStringArrayValue,
 } from "@webstudio-is/project-build/runtime";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
@@ -180,7 +179,6 @@ type VariableType =
   | "string"
   | "number"
   | "boolean"
-  | "string[]"
   | "json"
   | "resource"
   | "graphql-resource"
@@ -214,11 +212,6 @@ const TypeField = ({
       value: "boolean",
       label: "Boolean",
       description: "A boolean is a true/false switch.",
-    },
-    {
-      value: "string[]",
-      label: "String Array",
-      description: "A list of text values.",
     },
     {
       value: "json",
@@ -313,7 +306,7 @@ ParameterForm.displayName = "ParameterForm";
 
 type ValueVariableType = Extract<
   VariableType,
-  "string" | "number" | "boolean" | "string[]" | "json"
+  "string" | "number" | "boolean" | "json"
 >;
 
 const saveVariable = (
@@ -529,51 +522,6 @@ const JsonForm = forwardRef<
 });
 JsonForm.displayName = "JsonForm";
 
-const StringArrayForm = forwardRef<
-  undefined | PanelApi,
-  {
-    variable?: DataSource;
-    value: unknown;
-    onChange: (value: unknown) => void;
-  }
->(({ variable, value: unknownValue, onChange }, ref) => {
-  const value = typeof unknownValue === "string" ? unknownValue : "[]";
-  const [valueError, setValueError] = useState("");
-  const valueRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    valueRef.current?.setCustomValidity(
-      validateDataVariableStringArrayValue(value)
-    );
-    setValueError("");
-  }, [value]);
-  useValuePanelRef({ ref, variable, type: "string[]" });
-  return (
-    <>
-      <input
-        ref={valueRef}
-        style={{ display: "none" }}
-        name="value"
-        data-color={valueError ? "error" : undefined}
-        value={value}
-        onChange={() => {}}
-        onInvalid={(event) =>
-          setValueError(event.currentTarget.validationMessage)
-        }
-      />
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label>Value</Label>
-        <ExpressionEditor
-          color={valueError ? "error" : undefined}
-          value={value}
-          onChange={onChange}
-          onChangeComplete={() => valueRef.current?.checkValidity()}
-        />
-      </Flex>
-    </>
-  );
-});
-StringArrayForm.displayName = "StringArrayForm";
-
 const VariablePanelForm = forwardRef<
   undefined | PanelApi,
   {
@@ -653,14 +601,6 @@ const VariablePanelForm = forwardRef<
           )}
           {variableType === "json" && (
             <JsonForm
-              ref={ref}
-              variable={variable}
-              value={value}
-              onChange={onValueChange}
-            />
-          )}
-          {variableType === "string[]" && (
-            <StringArrayForm
               ref={ref}
               variable={variable}
               value={value}
@@ -805,10 +745,7 @@ const VariablePopoverContent = ({
   const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
   const [value, setValue] = useState<unknown>(() => {
     if (variable?.type === "variable") {
-      if (
-        variable.value.type === "json" ||
-        variable.value.type === "string[]"
-      ) {
+      if (variable.value.type === "json") {
         return formatValue(variable.value.value);
       }
       return variable.value.value;
@@ -832,12 +769,7 @@ const VariablePopoverContent = ({
     }
     if (variable?.type === "variable") {
       const type = variable.value.type;
-      if (
-        type === "string" ||
-        type === "number" ||
-        type === "boolean" ||
-        type === "string[]"
-      ) {
+      if (type === "string" || type === "number" || type === "boolean") {
         return type;
       }
       return "json";
@@ -860,9 +792,6 @@ const VariablePopoverContent = ({
       if (variableType === "json") {
         // empty string gives an error
         return prev || "{}";
-      }
-      if (variableType === "string[]") {
-        return "[]";
       }
       return prev;
     });

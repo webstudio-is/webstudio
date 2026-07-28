@@ -19,12 +19,12 @@ import {
   type ObservedFieldType,
 } from "./canonical";
 
-export type AggregatedFieldType = {
+type AggregatedFieldType = {
   type: ObservedFieldType;
   occurrences: number;
 };
 
-export type AggregatedAssetField = {
+type AggregatedAssetField = {
   path: string;
   occurrences: number;
   types: AggregatedFieldType[];
@@ -32,13 +32,13 @@ export type AggregatedAssetField = {
   mixed: boolean;
 };
 
-export type AggregatedAssetFieldCatalog = {
+type AggregatedAssetFieldCatalog = {
   projectId?: string;
   documentCount: number;
   fields: AggregatedAssetField[];
 };
 
-export type AssetFieldCatalog = AggregatedAssetFieldCatalog & {
+type AssetFieldCatalog = AggregatedAssetFieldCatalog & {
   format: "webstudio-asset-field-catalog";
   version: 1;
   canonicalRevision: string;
@@ -124,129 +124,70 @@ const normalizeCatalogEntry = (entry: CanonicalAssetFileEntry) => {
   return normalized;
 };
 
-export class AssetFieldCatalogAccumulator {
-  private projectId: string | undefined;
-  private readonly entries = new Map<
-    string,
-    {
-      projectId: string;
-      fields: EntryFields;
-      entry: CanonicalAssetFileEntry;
-    }
-  >();
-  private readonly fields = new Map<string, MutableField>();
-
-  private apply(fields: EntryFields, direction: 1 | -1) {
-    for (const [path, types] of fields) {
-      const field = this.fields.get(path) ?? {
-        occurrences: 0,
-        typeOccurrences: new Map(),
-      };
-      field.occurrences += direction;
-      for (const type of types) {
-        const occurrences = (field.typeOccurrences.get(type) ?? 0) + direction;
-        if (occurrences === 0) {
-          field.typeOccurrences.delete(type);
-        } else {
-          field.typeOccurrences.set(type, occurrences);
-        }
-      }
-      if (field.occurrences === 0) {
-        this.fields.delete(path);
-      } else {
-        this.fields.set(path, field);
-      }
-    }
-  }
-
-  upsert(entry: CanonicalAssetFileEntry) {
+const aggregateCatalogEntries = (
+  entries: readonly CanonicalAssetFileEntry[]
+) => {
+  const normalizedEntries: CanonicalAssetFileEntry[] = [];
+  const assetIds = new Set<string>();
+  const fields = new Map<string, MutableField>();
+  let projectId: string | undefined;
+  for (const entry of entries) {
     const normalized = normalizeCatalogEntry(entry);
-    if (
-      this.projectId !== undefined &&
-      this.projectId !== normalized.projectId
-    ) {
+    if (assetIds.has(normalized.assetId)) {
+      throw new Error("Asset field catalog contains duplicate asset entries");
+    }
+    if (projectId !== undefined && projectId !== normalized.projectId) {
       throw new Error("Asset field catalog cannot combine multiple projects");
     }
-    this.projectId = normalized.projectId;
-
-    const fields = getEntryFields(normalized);
-    const previous = this.entries.get(normalized.assetId);
-    if (previous !== undefined) {
-      this.apply(previous.fields, -1);
+    projectId = normalized.projectId;
+    assetIds.add(normalized.assetId);
+    normalizedEntries.push(normalized);
+    for (const [path, types] of getEntryFields(normalized)) {
+      const field = fields.get(path) ?? {
+        occurrences: 0,
+        typeOccurrences: new Map<ObservedFieldType, number>(),
+      };
+      field.occurrences += 1;
+      for (const type of types) {
+        field.typeOccurrences.set(
+          type,
+          (field.typeOccurrences.get(type) ?? 0) + 1
+        );
+      }
+      fields.set(path, field);
     }
-    this.apply(fields, 1);
-    this.entries.set(normalized.assetId, {
-      projectId: normalized.projectId,
-      fields,
-      entry: normalized,
-    });
   }
-
-  remove(assetId: string) {
-    const previous = this.entries.get(assetId);
-    if (previous === undefined) {
-      return false;
-    }
-    this.apply(previous.fields, -1);
-    this.entries.delete(assetId);
-    if (this.entries.size === 0) {
-      this.projectId = undefined;
-    }
-    return true;
-  }
-
-  snapshot(): AggregatedAssetFieldCatalog {
-    return {
-      ...(this.projectId === undefined ? {} : { projectId: this.projectId }),
-      documentCount: this.entries.size,
-      fields: Array.from(this.fields, ([path, field]) => ({
+  const documentCount = normalizedEntries.length;
+  return {
+    entries: normalizedEntries,
+    catalog: {
+      ...(projectId === undefined ? {} : { projectId }),
+      documentCount,
+      fields: Array.from(fields, ([path, field]) => ({
         path,
         occurrences: field.occurrences,
-        optional: field.occurrences < this.entries.size,
+        optional: field.occurrences < documentCount,
         types: Array.from(field.typeOccurrences, ([type, occurrences]) => ({
           type,
           occurrences,
         })).sort((left, right) => compareStrings(left.type, right.type)),
         mixed: field.typeOccurrences.size > 1,
       })).sort((left, right) => compareStrings(left.path, right.path)),
-    };
-  }
-
-  async versionedSnapshot(): Promise<AssetFieldCatalog> {
-    return {
-      format: "webstudio-asset-field-catalog",
-      version: 1,
-      canonicalRevision: await computeCanonicalAssetRevision(
-        Array.from(this.entries.values(), ({ entry }) => entry)
-      ),
-      ...this.snapshot(),
-    };
-  }
-}
-
-const createCatalogAccumulator = (
-  entries: readonly CanonicalAssetFileEntry[]
-) => {
-  const accumulator = new AssetFieldCatalogAccumulator();
-  const assetIds = new Set<string>();
-  for (const entry of entries) {
-    if (assetIds.has(entry.assetId)) {
-      throw new Error("Asset field catalog contains duplicate asset entries");
-    }
-    assetIds.add(entry.assetId);
-    accumulator.upsert(entry);
-  }
-  return accumulator;
+    } satisfies AggregatedAssetFieldCatalog,
+  };
 };
-
-export const aggregateAssetFields = (
-  entries: readonly CanonicalAssetFileEntry[]
-): AggregatedAssetFieldCatalog => createCatalogAccumulator(entries).snapshot();
 
 export const createAssetFieldCatalog = async (
   entries: readonly CanonicalAssetFileEntry[]
-): Promise<AssetFieldCatalog> =>
-  await createCatalogAccumulator(entries).versionedSnapshot();
+): Promise<AssetFieldCatalog> => {
+  const aggregated = aggregateCatalogEntries(entries);
+  return {
+    format: "webstudio-asset-field-catalog",
+    version: 1,
+    canonicalRevision: await computeCanonicalAssetRevision(aggregated.entries),
+    ...aggregated.catalog,
+  };
+};
 
 const queryableStandardFields = new Set<string>(
   assetQueryStandardFields.filter((field) => field !== "id")

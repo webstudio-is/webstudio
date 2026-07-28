@@ -11,6 +11,7 @@ import {
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryResourceConfiguration,
 } from "@webstudio-is/sdk";
+import { assetsQueryCapabilitiesApiUrl } from "@webstudio-is/sdk/runtime";
 import type {
   AssetObservedFieldType,
   AssetQueryFilter,
@@ -24,7 +25,7 @@ import {
 import { Flex, Label, Switch, Text } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
 import { BindableQueryBuilder } from "~/builder/shared/query-builder";
-import { loadBuilderAssetQueryCapabilities } from "~/shared/asset-resource-api.client";
+import { fetch as builderFetch } from "~/shared/fetch.client";
 import { getAssetQueryConfigurationError } from "./asset-query-form-utils";
 
 const fallbackCapabilities = createAssetQueryCapabilities({});
@@ -97,12 +98,18 @@ export const AssetQueryForm = ({
       return;
     }
     let ignore = false;
-    loadBuilderAssetQueryCapabilities()
+    builderFetch(assetsQueryCapabilitiesApiUrl)
+      .then(async (response) => {
+        if (response.ok === false) {
+          throw new Error("Builder asset query capabilities request failed");
+        }
+        return await response.json();
+      })
       .then((response) => {
         if (ignore) {
           return;
         }
-        setBaseCapabilities(parseAssetQueryCapabilities(response.data));
+        setBaseCapabilities(parseAssetQueryCapabilities(response));
       })
       .catch(() => {
         if (ignore === false) {

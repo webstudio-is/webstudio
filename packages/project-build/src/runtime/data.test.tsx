@@ -313,28 +313,19 @@ test("creates data variable values from form input values", () => {
   ).toEqual({ type: "json", value: null });
   expect(
     createDataVariableValueFromInput({
-      type: "string[]",
+      type: "json",
       value: '["Draft", "Connected", "Published"]',
     })
   ).toEqual({
-    type: "string[]",
+    type: "json",
     value: ["Draft", "Connected", "Published"],
   });
-  expect(() =>
+  expect(
     createDataVariableValueFromInput({
-      type: "string[]",
+      type: "json",
       value: '["Draft", 1]',
     })
-  ).toThrow();
-  expect(() =>
-    createDataVariableValueFromInput({
-      type: "string[]",
-      value: "",
-    })
-  ).toThrow();
-  expect(
-    createDataVariableValueFromInput({ type: "string[]", value: null })
-  ).toEqual({ type: "string[]", value: [] });
+  ).toEqual({ type: "json", value: ["Draft", 1] });
 });
 
 test("validates data variable number values", () => {
@@ -518,13 +509,13 @@ test("update data variable payload validates renamed variables", () => {
   });
 });
 
-test("update data variable payload preserves string array values", () => {
+test("update data variable payload preserves json array values", () => {
   const variable: DataSource = {
     id: "variable-1",
     scopeInstanceId: "instance-1",
     name: "stages",
     type: "variable",
-    value: { type: "string[]", value: ["Draft"] },
+    value: { type: "json", value: ["Draft"] },
   };
 
   expect(
@@ -532,7 +523,7 @@ test("update data variable payload preserves string array values", () => {
       variable,
       values: {
         value: {
-          type: "string[]",
+          type: "json",
           value: ["Draft", "Connected", "Published"],
         },
       },
@@ -547,7 +538,7 @@ test("update data variable payload preserves string array values", () => {
             op: "replace",
             path: ["variable-1", "value"],
             value: {
-              type: "string[]",
+              type: "json",
               value: ["Draft", "Connected", "Published"],
             },
           },

@@ -454,7 +454,7 @@ export const createSsgAssetResourceFetch = ({
   }
 };
 
-export const generateAssetQueryRuntimeModule = ({
+const generateAssetQueryRuntimeModule = ({
   deploymentId,
   index,
 }: {

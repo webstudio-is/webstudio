@@ -1581,14 +1581,14 @@ test("creates variable with parsed value", async () => {
       command: "create-variable",
       scopeInstance: "body-id",
       name: "items",
-      valueType: "string[]",
+      valueType: "json",
       value: '["a","b"]',
     },
     call: apiCalls.createVariable,
     connection: {
       scopeInstanceId: "body-id",
       name: "items",
-      value: { type: "string[]", value: ["a", "b"] },
+      value: { type: "json", value: ["a", "b"] },
     },
   });
 });

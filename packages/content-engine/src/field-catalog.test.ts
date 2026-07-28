@@ -5,8 +5,6 @@ import {
 } from "./canonical";
 import { extractMarkdownFrontmatter } from "./markdown";
 import {
-  aggregateAssetFields,
-  AssetFieldCatalogAccumulator,
   computeCanonicalAssetRevision,
   createAssetFieldCatalog,
   toBuilderAssetFieldCatalog,
@@ -45,9 +43,9 @@ const createEntry = ({
     },
   });
 
-describe("aggregateAssetFields", () => {
-  test("aggregates standard and dynamic fields by document and type", () => {
-    const catalog = aggregateAssetFields([
+describe("asset field aggregation", () => {
+  test("aggregates standard and dynamic fields by document and type", async () => {
+    const catalog = await createAssetFieldCatalog([
       createEntry({
         id: "one",
         folderId: "blog",
@@ -125,102 +123,24 @@ describe("aggregateAssetFields", () => {
     );
   });
 
-  test("returns an empty catalog without inventing a project", () => {
-    expect(aggregateAssetFields([])).toEqual({
+  test("returns an empty catalog without inventing a project", async () => {
+    await expect(createAssetFieldCatalog([])).resolves.toMatchObject({
       documentCount: 0,
       fields: [],
     });
   });
 
-  test("rejects duplicate assets and mixed projects", () => {
+  test("rejects duplicate assets and mixed projects", async () => {
     const entry = createEntry({ id: "one", properties: {} });
-    expect(() => aggregateAssetFields([entry, entry])).toThrow(
+    await expect(createAssetFieldCatalog([entry, entry])).rejects.toThrow(
       "duplicate asset"
     );
-    expect(() =>
-      aggregateAssetFields([
+    await expect(
+      createAssetFieldCatalog([
         entry,
         { ...createEntry({ id: "two", properties: {} }), projectId: "other" },
       ])
-    ).toThrow("multiple projects");
-  });
-});
-
-describe("AssetFieldCatalogAccumulator", () => {
-  test("decrements old contributions when an asset changes or is deleted", () => {
-    const accumulator = new AssetFieldCatalogAccumulator();
-    accumulator.upsert(
-      createEntry({
-        id: "one",
-        folderId: "blog",
-        excerpt: "One",
-        properties: { category: "news", draft: false },
-      })
-    );
-    accumulator.upsert(
-      createEntry({
-        id: "two",
-        properties: { category: "guide", featured: true },
-      })
-    );
-
-    accumulator.upsert(
-      createEntry({
-        id: "one",
-        properties: { category: 1, title: "Updated" },
-      })
-    );
-    const updated = accumulator.snapshot();
-    expect(updated.documentCount).toBe(2);
-    const updatedPaths = new Set(updated.fields.map((field) => field.path));
-    expect(updatedPaths.has("properties.draft")).toBe(false);
-    expect(updatedPaths.has("folderId")).toBe(false);
-    expect(updatedPaths.has("excerpt")).toBe(false);
-    expect(updated.fields).toEqual(
-      expect.arrayContaining([
-        {
-          path: "properties.category",
-          occurrences: 2,
-          types: [
-            { type: "number", occurrences: 1 },
-            { type: "string", occurrences: 1 },
-          ],
-          optional: false,
-          mixed: true,
-        },
-      ])
-    );
-
-    expect(accumulator.remove("two")).toBe(true);
-    expect(accumulator.remove("missing")).toBe(false);
-    const afterDelete = accumulator.snapshot();
-    expect(afterDelete.documentCount).toBe(1);
-    expect(
-      afterDelete.fields.some((field) => field.path === "properties.featured")
-    ).toBe(false);
-    expect(afterDelete.fields).toEqual(
-      expect.arrayContaining([
-        {
-          path: "properties.category",
-          occurrences: 1,
-          types: [{ type: "number", occurrences: 1 }],
-          optional: false,
-          mixed: false,
-        },
-      ])
-    );
-
-    expect(accumulator.remove("one")).toBe(true);
-    expect(accumulator.snapshot()).toEqual({
-      documentCount: 0,
-      fields: [],
-    });
-    expect(() =>
-      accumulator.upsert({
-        ...createEntry({ id: "other", properties: {} }),
-        projectId: "project-2",
-      })
-    ).not.toThrow();
+    ).rejects.toThrow("multiple projects");
   });
 });
 
@@ -321,18 +241,6 @@ Body`);
       documentCount: 1,
     });
     expect(catalog.canonicalRevision).toMatch(/^sha256:[a-f0-9]{64}$/);
-  });
-
-  test("does not retain mutable caller-owned entries", async () => {
-    const entry = createEntry({ id: "one", properties: { title: "One" } });
-    const accumulator = new AssetFieldCatalogAccumulator();
-    accumulator.upsert(entry);
-    const before = await accumulator.versionedSnapshot();
-
-    entry.document.name = "mutated.md";
-    entry.document.properties.title = "Mutated";
-
-    await expect(accumulator.versionedSnapshot()).resolves.toEqual(before);
   });
 
   test("creates a compact Builder-only transport representation", async () => {
