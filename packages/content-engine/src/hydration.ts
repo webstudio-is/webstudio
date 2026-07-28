@@ -5,7 +5,13 @@ import type {
 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import { extractMarkdownBody } from "./markdown-body";
-import { decodeUtf8 } from "./byte-stream";
+import {
+  ByteLimitExceededError,
+  decodeUtf8,
+  getUtf8ByteLength,
+  readBoundedBytes,
+} from "./byte-stream";
+import { mapBounded } from "./async-utils";
 
 export class AssetResourceHydrationError extends Error {
   readonly code:
@@ -110,25 +116,17 @@ const readBytes = async ({
     return new Uint8Array();
   }
   const response = await read(contentRef, range);
-  const chunks: Uint8Array[] = [];
-  let length = 0;
-  for await (const chunk of response.data) {
-    if (length + chunk.byteLength > maximumBytes) {
+  try {
+    return await readBoundedBytes(response.data, maximumBytes);
+  } catch (error) {
+    if (error instanceof ByteLimitExceededError) {
       throw new AssetResourceHydrationError({
         code: "CONTENT_LIMIT_EXCEEDED",
         message: "Asset storage returned more content than requested",
       });
     }
-    chunks.push(chunk);
-    length += chunk.byteLength;
+    throw error;
   }
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
 };
 
 const decodeText = (bytes: Uint8Array) => {
@@ -237,13 +235,10 @@ export const hydrateAssetResourceResult = async ({
     });
   }
 
-  const content: Record<string, HydratedAssetContent> = {};
-  let cursor = 0;
-  let hydratedBytes = 0;
-  const worker = async () => {
-    while (cursor < selected.length) {
-      const item = selected[cursor];
-      cursor += 1;
+  const hydrated = await mapBounded(
+    selected,
+    contentEngineLimits.concurrentContentReads,
+    async (item) => {
       const range =
         options.mode === "range"
           ? { offset: options.offset, length: item.readLength }
@@ -277,45 +272,35 @@ export const hydrateAssetResourceResult = async ({
       } else {
         text = decodeText(bytes);
       }
-      const returnedBytes = new TextEncoder().encode(text).byteLength;
-      hydratedBytes += returnedBytes;
-      content[item.identity._id] = {
-        ...item.identity,
-        encoding: "utf-8",
-        text,
-        ...(options.mode === "range"
-          ? {
-              range: {
-                offset: options.offset,
-                length: bytes.byteLength,
-                total: item.document.size,
-              },
-            }
-          : {}),
+      const returnedBytes = getUtf8ByteLength(text);
+      return {
+        id: item.identity._id,
+        returnedBytes,
+        content: {
+          ...item.identity,
+          encoding: "utf-8" as const,
+          text,
+          ...(options.mode === "range"
+            ? {
+                range: {
+                  offset: options.offset,
+                  length: bytes.byteLength,
+                  total: item.document.size,
+                },
+              }
+            : {}),
+        },
       };
     }
-  };
-  const settlements = await Promise.allSettled(
-    Array.from(
-      {
-        length: Math.min(
-          selected.length,
-          contentEngineLimits.concurrentContentReads
-        ),
-      },
-      worker
-    )
   );
-  const failure = settlements.find(
-    (settlement): settlement is PromiseRejectedResult =>
-      settlement.status === "rejected"
-  );
-  if (failure !== undefined) {
-    throw failure.reason;
-  }
   return {
-    content,
+    content: Object.fromEntries(
+      hydrated.map(({ id, content }) => [id, content])
+    ) as Record<string, HydratedAssetContent>,
     hydratedFileCount: selected.length,
-    hydratedBytes,
+    hydratedBytes: hydrated.reduce(
+      (total, { returnedBytes }) => total + returnedBytes,
+      0
+    ),
   };
 };

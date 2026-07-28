@@ -1,9 +1,10 @@
 import {
   createCanonicalAssetFileEntry,
   fullCanonicalAssetMetadataRequirements,
+  getCanonicalAssetMetadataRequirements,
+  getCanonicalAssetMetadataRequirementsForTier,
   getCanonicalAssetMetadataTier,
   type CanonicalAssetFileEntry,
-  type CanonicalAssetMetadataRequirements,
 } from "@webstudio-is/content-engine/compiler";
 import type { Client, Database } from "@webstudio-is/postgrest/index.server";
 import { assertPostgrestSuccess } from "./patch-utils";
@@ -12,52 +13,15 @@ type MetadataRow = Database["public"]["Tables"]["AssetFileMetadata"]["Row"];
 
 const requirementsKey = "$webstudioMetadataRequirements";
 
-// AssetFileMetadata predates tiered indexing and has one JSON document column.
-// Keep the cache-completeness marker in a private storage envelope so expanding
-// requirements can reuse a matching revision without a migration. The marker
-// is stripped before schema validation and never reaches query indexes/results.
+// Keep cache completeness in the stored document envelope so expanding
+// requirements can reuse a matching revision. The marker is stripped before
+// schema validation and never reaches query indexes or results.
 const serializeMetadataDocument = (entry: CanonicalAssetFileEntry) => ({
   ...entry.document,
   [requirementsKey]: getCanonicalAssetMetadataTier(
-    entry.metadataRequirements ?? fullCanonicalAssetMetadataRequirements
+    getCanonicalAssetMetadataRequirements(entry)
   ),
 });
-
-const parseMetadataRequirements = (
-  value: unknown
-): CanonicalAssetMetadataRequirements => {
-  if (value === undefined) {
-    return fullCanonicalAssetMetadataRequirements;
-  }
-  if (value === "base") {
-    return { structuredProperties: false, excerpt: false };
-  }
-  if (value === "properties") {
-    return { structuredProperties: true, excerpt: false };
-  }
-  if (value === "excerpt") {
-    return { structuredProperties: false, excerpt: true };
-  }
-  if (value === "properties+excerpt") {
-    return fullCanonicalAssetMetadataRequirements;
-  }
-  // Accept rows written by the unreleased boolean-envelope implementation so
-  // a rolling staging deployment does not invalidate its derived cache.
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error("Canonical asset metadata requirements are invalid");
-  }
-  const requirements = value as Record<string, unknown>;
-  if (
-    typeof requirements.structuredProperties !== "boolean" ||
-    typeof requirements.excerpt !== "boolean"
-  ) {
-    throw new Error("Canonical asset metadata requirements are invalid");
-  }
-  return {
-    structuredProperties: requirements.structuredProperties,
-    excerpt: requirements.excerpt,
-  };
-};
 
 export type CanonicalAssetMetadataSource = {
   storageName: string;
@@ -79,7 +43,10 @@ const parseMetadataRow = (row: MetadataRow): CanonicalAssetFileEntry => {
   const entry = createCanonicalAssetFileEntry({
     projectId: row.projectId,
     document,
-    metadataRequirements: parseMetadataRequirements(requirements),
+    metadataRequirements:
+      requirements === undefined
+        ? fullCanonicalAssetMetadataRequirements
+        : getCanonicalAssetMetadataRequirementsForTier(requirements),
   });
   if (entry.assetId !== row.assetId || entry.revision !== row.revision) {
     throw new Error("Canonical asset metadata identity is inconsistent");

@@ -1,13 +1,21 @@
-import type {
-  AssetQuery,
-  AssetFileDocument,
-  AssetQueryFieldPath,
-  AssetQueryOperator,
-  AssetResourceOutputSelection,
+import {
+  getQueryConditions,
+  getQueryFieldKey,
+  mapQueryWhere,
+  type QueryWhereTree,
+} from "@webstudio-is/query-builder";
+import {
+  assetQueryFilter,
+  type AssetQuery,
+  type AssetFileDocument,
+  type AssetQueryFieldPath,
+  type AssetQueryOperator,
+  type AssetResourceOutputSelection,
 } from "./schema";
-import { assetQueryFilter } from "./schema";
-import { matchesAssetQueryFilter } from "./structured-query";
-import { compareAssetQueryDocuments } from "./structured-query";
+import {
+  compareAssetQueryDocuments,
+  matchesAssetQueryFilter,
+} from "./structured-query";
 import { contentEngineLimits } from "./limits";
 import { selectAssetProperties } from "./projection";
 import type { CanonicalAssetFileEntry } from "./canonical";
@@ -16,14 +24,11 @@ export type ContentCompilationValue =
   | { type: "literal"; value: unknown }
   | { type: "dynamic" };
 
-export type ContentCompilationWhere =
-  | {
-      field: AssetQueryFieldPath;
-      operator: AssetQueryOperator;
-      value: ContentCompilationValue;
-    }
-  | { all: ContentCompilationWhere[] }
-  | { any: ContentCompilationWhere[] };
+export type ContentCompilationWhere = QueryWhereTree<{
+  field: AssetQueryFieldPath;
+  operator: AssetQueryOperator;
+  value: ContentCompilationValue;
+}>;
 
 export type ContentCompilationQuery = {
   id: string;
@@ -36,14 +41,17 @@ export type ContentCompilationQuery = {
 };
 
 export type ContentCompilationPlan = {
-  baseMetadata: true;
-  structuredProperties: boolean;
   structuredPropertyPaths: "all" | AssetQueryFieldPath[];
   excerpt: boolean;
-  hydratedContent: boolean;
-  output: AssetResourceOutputSelection;
   queries: ContentCompilationQuery[];
 };
+
+export const requiresStructuredProperties = (plan: ContentCompilationPlan) =>
+  plan.structuredPropertyPaths === "all" ||
+  plan.structuredPropertyPaths.length > 0;
+
+export const requiresHydratedContent = (plan: ContentCompilationPlan) =>
+  plan.queries.some(({ content }) => content.mode !== "none");
 
 const evaluateWhere = ({
   document,
@@ -110,12 +118,8 @@ export const isContentDocumentCandidate = (input: {
   available: "base" | "all";
 }) => getContentDocumentCandidateQueryIds(input).length > 0;
 
-const hasDynamicWhere = (where: ContentCompilationWhere): boolean => {
-  if ("field" in where) {
-    return where.value.type === "dynamic";
-  }
-  return ("all" in where ? where.all : where.any).some(hasDynamicWhere);
-};
+const hasDynamicWhere = (where: ContentCompilationWhere) =>
+  getQueryConditions(where).some(({ value }) => value.type === "dynamic");
 
 export const selectContentHydrationCandidates = ({
   documents,
@@ -206,35 +210,43 @@ export const prepareContentCompilerEntries = async ({
   );
 };
 
-const visitWhere = (
-  where: ContentCompilationWhere,
+const getOutputFields = (output: AssetResourceOutputSelection) =>
+  output.mode === "fields" ? output.fields : [];
+
+const visitQueryFields = (
+  query: ContentCompilationQuery,
   visit: (field: AssetQueryFieldPath) => void
 ) => {
-  if ("field" in where) {
-    visit(where.field);
-    return;
+  for (const { field } of getQueryConditions(query.where)) {
+    visit(field);
   }
-  for (const child of "all" in where ? where.all : where.any) {
-    visitWhere(child, visit);
+  for (const { field } of query.sort) {
+    visit(field);
+  }
+  for (const field of getOutputFields(query.output)) {
+    visit(field);
   }
 };
 
-const getOutputFields = (output: AssetResourceOutputSelection) =>
-  output.mode === "fields" ? output.fields : [];
+const addField = (
+  fields: Map<string, AssetQueryFieldPath>,
+  field: AssetQueryFieldPath
+) => fields.set(getQueryFieldKey(field), field);
+
+const sortFields = (fields: Iterable<AssetQueryFieldPath>) =>
+  [...fields].sort((left, right) =>
+    getQueryFieldKey(left).localeCompare(getQueryFieldKey(right))
+  );
 
 const includesField = (
   query: ContentCompilationQuery,
   predicate: (field: AssetQueryFieldPath) => boolean
 ) => {
   let included = false;
-  visitWhere(query.where, (field) => {
+  visitQueryFields(query, (field) => {
     included ||= predicate(field);
   });
-  return (
-    included ||
-    query.sort.some(({ field }) => predicate(field)) ||
-    getOutputFields(query.output).some(predicate)
-  );
+  return included;
 };
 
 const getStructuredPropertyPaths = (query: ContentCompilationQuery) => {
@@ -242,28 +254,15 @@ const getStructuredPropertyPaths = (query: ContentCompilationQuery) => {
     return "all" as const;
   }
   const fields = new Map<string, AssetQueryFieldPath>();
-  const add = (field: AssetQueryFieldPath) => {
+  visitQueryFields(query, (field) => {
     if (field[0] === "properties") {
-      fields.set(JSON.stringify(field), field);
+      addField(fields, field);
     }
-  };
-  visitWhere(query.where, add);
-  for (const { field } of query.sort) {
-    add(field);
-  }
-  for (const field of getOutputFields(query.output)) {
-    add(field);
-  }
-  return [...fields.values()].sort((left, right) =>
-    JSON.stringify(left).localeCompare(JSON.stringify(right))
-  );
+  });
+  return sortFields(fields.values());
 };
 
 const getQueryRequirements = (query: ContentCompilationQuery) => ({
-  baseMetadata: true,
-  structuredProperties:
-    query.output.mode === "all" ||
-    includesField(query, (field) => field[0] === "properties"),
   structuredPropertyPaths: getStructuredPropertyPaths(query),
   excerpt:
     query.output.mode === "all" ||
@@ -271,25 +270,14 @@ const getQueryRequirements = (query: ContentCompilationQuery) => ({
       query,
       (field) => field.length === 1 && field[0] === "excerpt"
     ),
-  hydratedContent: query.content.mode !== "none",
-  output: query.output,
 });
 
-const toLiteralWhere = (
-  where: AssetQuery["where"]
-): ContentCompilationWhere => {
-  if ("field" in where) {
-    return {
-      field: where.field,
-      operator: where.operator,
-      value: { type: "literal", value: where.value },
-    };
-  }
-  if ("all" in where) {
-    return { all: where.all.map(toLiteralWhere) };
-  }
-  return { any: where.any.map(toLiteralWhere) };
-};
+const toLiteralWhere = (where: AssetQuery["where"]): ContentCompilationWhere =>
+  mapQueryWhere(where, (condition) => ({
+    field: condition.field,
+    operator: condition.operator,
+    value: { type: "literal" as const, value: condition.value },
+  }));
 
 export const createLiteralContentCompilationQuery = ({
   id,
@@ -307,29 +295,6 @@ export const createLiteralContentCompilationQuery = ({
   content: query.content,
 });
 
-const mergeOutput = (
-  outputs: readonly AssetResourceOutputSelection[]
-): AssetResourceOutputSelection => {
-  if (outputs.some(({ mode }) => mode === "all")) {
-    return { mode: "all" };
-  }
-  const fields = new Map<string, AssetQueryFieldPath>();
-  for (const output of outputs) {
-    for (const field of getOutputFields(output)) {
-      fields.set(JSON.stringify(field), field);
-    }
-  }
-  if (fields.size === 0) {
-    return { mode: "base" };
-  }
-  return {
-    mode: "fields",
-    fields: [...fields.values()].sort((left, right) =>
-      JSON.stringify(left).localeCompare(JSON.stringify(right))
-    ),
-  };
-};
-
 export const createContentCompilationPlan = (
   queries: readonly ContentCompilationQuery[]
 ): ContentCompilationPlan | undefined => {
@@ -344,26 +309,16 @@ export const createContentCompilationPlan = (
       break;
     }
     for (const field of requirement.structuredPropertyPaths) {
-      structuredPropertyPaths.set(JSON.stringify(field), field);
+      addField(structuredPropertyPaths, field);
     }
   }
   return {
-    baseMetadata: true,
-    structuredProperties: requirements.some(
-      ({ structuredProperties }) => structuredProperties
-    ),
     structuredPropertyPaths: requirements.some(
       ({ structuredPropertyPaths }) => structuredPropertyPaths === "all"
     )
       ? "all"
-      : [...structuredPropertyPaths.values()].sort((left, right) =>
-          JSON.stringify(left).localeCompare(JSON.stringify(right))
-        ),
+      : sortFields(structuredPropertyPaths.values()),
     excerpt: requirements.some(({ excerpt }) => excerpt),
-    hydratedContent: requirements.some(
-      ({ hydratedContent }) => hydratedContent
-    ),
-    output: mergeOutput(requirements.map(({ output }) => output)),
     queries: [...queries],
   };
 };
@@ -376,12 +331,8 @@ export const createContentCompilationPlan = (
 export const createContentFieldCatalogCompilationPlan = (
   id = "field-catalog"
 ): ContentCompilationPlan => ({
-  baseMetadata: true,
-  structuredProperties: true,
   structuredPropertyPaths: "all",
   excerpt: false,
-  hydratedContent: false,
-  output: { mode: "fields", fields: [["properties"]] },
   queries: [
     {
       id,

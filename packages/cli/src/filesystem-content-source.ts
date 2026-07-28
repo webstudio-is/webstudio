@@ -2,6 +2,7 @@ import { open, stat, type FileHandle } from "node:fs/promises";
 import {
   computeCanonicalAssetRevision,
   createCanonicalAssetFileEntry,
+  createContentSourceFile,
   decodeUtf8,
   normalizeAssetFileDocument,
   prepareCanonicalContentMetadata,
@@ -10,6 +11,7 @@ import {
 import {
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
+  requiresStructuredProperties,
   type ContentCompilationPlan,
 } from "@webstudio-is/content-engine";
 import {
@@ -173,15 +175,7 @@ export const createFileSystemContentSource = ({
 
     return {
       revision,
-      files: captured.map(({ entry: { document } }) => ({
-        id: document._id,
-        path: document.path,
-        contentType: document.mimeType,
-        contentRef: document.contentRef,
-        revision: document.revision,
-        size: document.size,
-        createdAt: document.createdAt,
-      })),
+      files: captured.map(({ entry }) => createContentSourceFile(entry)),
       loadEntries: async (plan?: ContentCompilationPlan) => {
         const candidates =
           plan === undefined
@@ -196,12 +190,13 @@ export const createFileSystemContentSource = ({
         const prepared = await Promise.all(
           candidates.map(async ({ entry, filePath, identity }) =>
             plan === undefined ||
-            (plan.structuredProperties === false && plan.excerpt === false)
+            (requiresStructuredProperties(plan) === false &&
+              plan.excerpt === false)
               ? entry
               : await prepareCanonicalContentMetadata({
                   base: entry,
                   requirements: {
-                    structuredProperties: plan.structuredProperties,
+                    structuredProperties: requiresStructuredProperties(plan),
                     excerpt: plan.excerpt,
                   },
                   readBytes: (maximumBytes) =>

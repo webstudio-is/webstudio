@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  formatExpressionObject,
+  generateObjectExpression,
   parseExpressionObject,
-} from "@webstudio-is/query-builder";
+} from "@webstudio-is/expression";
 import {
   createAssetResourceRequest,
   createReachableAssetContentCompilationPlan,
@@ -189,7 +189,7 @@ describe("asset query resource configuration", () => {
     expect(query).toBeDefined();
     expect(
       parseStructuredAssetQueryResourceBody(
-        formatExpressionObject(
+        generateObjectExpression(
           new Map([
             ["query", query ?? ""],
             ["other", "true"],

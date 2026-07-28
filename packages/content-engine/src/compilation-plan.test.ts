@@ -4,16 +4,16 @@ import {
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
   isContentDocumentCandidate,
+  requiresHydratedContent,
+  requiresStructuredProperties,
   selectContentHydrationCandidates,
 } from "./compilation-plan";
 import { assetQuery, type AssetFileDocument, type AssetQuery } from "./schema";
 
 test("field catalog plan requests properties without excerpts or bodies", () => {
   expect(createContentFieldCatalogCompilationPlan()).toMatchObject({
-    structuredProperties: true,
     structuredPropertyPaths: "all",
     excerpt: false,
-    hydratedContent: false,
     queries: [
       {
         where: { all: [] },
@@ -50,40 +50,36 @@ const document: AssetFileDocument = {
 
 describe("content compilation plan", () => {
   test("keeps base-only queries free of parser and hydration work", () => {
-    expect(createContentCompilationPlan([compilationQuery("base")])).toEqual({
-      baseMetadata: true,
-      structuredProperties: false,
+    const plan = createContentCompilationPlan([compilationQuery("base")]);
+    expect(plan).toEqual({
       structuredPropertyPaths: [],
       excerpt: false,
-      hydratedContent: false,
-      output: { mode: "base" },
       queries: [compilationQuery("base")],
     });
+    expect(requiresStructuredProperties(plan!)).toBe(false);
+    expect(requiresHydratedContent(plan!)).toBe(false);
   });
 
   test("derives structured, excerpt, and content requirements independently", () => {
-    expect(
-      createContentCompilationPlan([
-        compilationQuery("detail", {
-          ...query,
-          where: {
-            any: [
-              {
-                field: ["properties", "slug"],
-                operator: "eq" as const,
-                value: "post",
-              },
-            ],
-          },
-          sort: [{ field: ["excerpt"], direction: "asc" as const }],
-          content: { mode: "markdown-body" as const },
-        }),
-      ])
-    ).toMatchObject({
-      structuredProperties: true,
-      excerpt: true,
-      hydratedContent: true,
-    });
+    const plan = createContentCompilationPlan([
+      compilationQuery("detail", {
+        ...query,
+        where: {
+          any: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq" as const,
+              value: "post",
+            },
+          ],
+        },
+        sort: [{ field: ["excerpt"], direction: "asc" as const }],
+        content: { mode: "markdown-body" as const },
+      }),
+    ]);
+    expect(plan).toMatchObject({ excerpt: true });
+    expect(requiresStructuredProperties(plan!)).toBe(true);
+    expect(requiresHydratedContent(plan!)).toBe(true);
   });
 
   test("unions selected fields deterministically and returns no requirements for no queries", () => {
@@ -106,18 +102,11 @@ describe("content compilation plan", () => {
         }),
       ])
     ).toEqual({
-      baseMetadata: true,
-      structuredProperties: true,
       structuredPropertyPaths: [
         ["properties", "slug"],
         ["properties", "title"],
       ],
       excerpt: true,
-      hydratedContent: false,
-      output: {
-        mode: "fields",
-        fields: [["excerpt"], ["properties", "slug"], ["properties", "title"]],
-      },
       queries: expect.any(Array),
     });
   });
@@ -129,10 +118,8 @@ describe("content compilation plan", () => {
         compilationQuery("all", { ...query, output: { mode: "all" } }),
       ])
     ).toMatchObject({
-      structuredProperties: true,
       structuredPropertyPaths: "all",
       excerpt: true,
-      output: { mode: "all" },
     });
   });
 

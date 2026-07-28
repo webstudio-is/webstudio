@@ -3,6 +3,7 @@ import { createCanonicalAssetFileEntry } from "./canonical";
 import {
   compileContentSource,
   ContentSourceChangedError,
+  createContentSourceFile,
   type ContentSource,
   type ContentSourceFile,
 } from "./content-source";
@@ -82,6 +83,11 @@ const createMutableSource = ({
 };
 
 describe("content source snapshots", () => {
+  test("describes a compiler entry with the snapshot contract", () => {
+    const file = createFile({ id: "post" });
+    expect(createContentSourceFile(createEntry(file))).toEqual(file);
+  });
+
   test.each([
     {
       name: "content replacement",

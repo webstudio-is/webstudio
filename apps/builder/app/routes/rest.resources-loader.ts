@@ -14,7 +14,6 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getResourceKey } from "~/shared/resources";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { createLocalResourceRequest } from "../shared/$resources/create-local-resource-request";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -35,7 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     if (isLocalResource(input, "assets")) {
-      const resourceRequest = createLocalResourceRequest(request, input, init);
+      const resourceRequest = new Request(new URL(input, request.url), init);
       if (resourceRequest.method === "POST") {
         return assetsQueryLoader({ request, resourceRequest });
       }

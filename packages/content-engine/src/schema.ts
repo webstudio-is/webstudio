@@ -1,7 +1,9 @@
 import { z } from "zod";
 import {
   createQueryWhereSchema,
+  getQueryFieldKey,
   getQueryWhereMetrics,
+  type QueryWhereTree,
 } from "@webstudio-is/query-builder";
 import { contentEngineLimits } from "./limits";
 
@@ -293,8 +295,7 @@ export const assetResourceOutputSelection = z.discriminatedUnion("mode", [
       .max(contentEngineLimits.outputFieldCount)
       .refine(
         (fields) =>
-          new Set(fields.map((field) => JSON.stringify(field))).size ===
-          fields.length,
+          new Set(fields.map(getQueryFieldKey)).size === fields.length,
         { error: "Selected output fields must be unique" }
       ),
   }),
@@ -349,10 +350,7 @@ export const assetQueryFilter = z.discriminatedUnion("operator", [
 
 export type AssetQueryFilter = z.infer<typeof assetQueryFilter>;
 
-export type AssetQueryWhere =
-  | AssetQueryFilter
-  | { all: AssetQueryWhere[] }
-  | { any: AssetQueryWhere[] };
+export type AssetQueryWhere = QueryWhereTree<AssetQueryFilter>;
 
 const assetQueryWhereNode: z.ZodType<AssetQueryWhere, AssetQueryWhere> =
   createQueryWhereSchema(assetQueryFilter);
@@ -536,3 +534,14 @@ export const assetResourceQueryFailure = z.object({
 export type AssetResourceQueryFailure = z.infer<
   typeof assetResourceQueryFailure
 >;
+
+export const createAssetResourceQueryFailure = ({
+  code,
+  message,
+  retryable = false,
+  details,
+}: AssetResourceQueryFailure["error"]) =>
+  assetResourceQueryFailure.parse({
+    ok: false,
+    error: { code, message, retryable, details },
+  });

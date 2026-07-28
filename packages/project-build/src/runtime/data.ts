@@ -1694,8 +1694,8 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
     );
   });
 
-const normalizeResourceExpressionInput = (
-  value: z.infer<typeof resourceExpressionInput>
+export const normalizeResourceExpressionInput = (
+  value: string | { type: "literal"; value: unknown }
 ) => (typeof value === "string" ? value : JSON.stringify(value.value));
 
 type ResourceFields = Omit<Resource, "id">;

@@ -5,7 +5,7 @@ import {
   readAssetQueryRequest,
   parseContentDatabaseMaxBytes,
   AssetResourceHydrationError,
-  assetResourceQueryFailure,
+  createAssetResourceQueryFailure,
   type AssetResourceErrorCode,
 } from "@webstudio-is/content-engine";
 import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/server";
@@ -48,13 +48,10 @@ const failure = ({
   retryable?: boolean;
   details?: Record<string, string | number>;
 }) =>
-  json(
-    assetResourceQueryFailure.parse({
-      ok: false,
-      error: { code, message, retryable, details },
-    }),
-    { status, headers: privateNoStoreResponseHeaders }
-  );
+  json(createAssetResourceQueryFailure({ code, message, retryable, details }), {
+    status,
+    headers: privateNoStoreResponseHeaders,
+  });
 
 export const loader = async (
   {

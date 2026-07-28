@@ -4,11 +4,14 @@ import { createCanonicalAssetFileEntry } from "./canonical";
 import { createContentDatabase } from "./content-database";
 import { assetQueryResult } from "./schema";
 import {
-  compileContentArtifact,
-  createAssetIndex,
+  createContentCompilationPlan,
+  createLiteralContentCompilationQuery,
+} from "./compilation-plan";
+import { compileContentArtifact, createAssetIndex } from "./asset-index";
+import {
   serializeContentArtifact,
   verifyContentArtifact,
-} from "./asset-index";
+} from "./content-artifact";
 
 const entry = ({
   projectId = "project",
@@ -148,6 +151,19 @@ describe("shared asset index", () => {
       projectId: "project",
       entries,
       maxBytes: 5_000,
+      plan: createContentCompilationPlan([
+        createLiteralContentCompilationQuery({
+          id: "blog",
+          query: {
+            where: { all: [] },
+            sort: [],
+            limit: 100,
+            offset: 0,
+            output: { mode: "all" },
+            content: { mode: "none" },
+          },
+        }),
+      ]),
     });
 
     expect(artifact.documents.map(({ _id }) => _id)).toEqual([
@@ -158,8 +174,10 @@ describe("shared asset index", () => {
       maxBytes: 5_000,
       includedDocumentCount: 2,
       omittedDocumentCount: 1,
-      omittedDocuments: [{ id: "middle-too-large" }],
+      omittedDocuments: [{ id: "middle-too-large", queryIds: ["blog"] }],
+      affectedQueryIds: ["blog"],
     });
+    expect(diagnostics.largestDocuments[0]).not.toHaveProperty("queryIds");
     expect(diagnostics.unboundedBytes).toBeGreaterThan(5_000);
     expect(diagnostics.boundedBytes).toBeLessThanOrEqual(5_000);
     expect(

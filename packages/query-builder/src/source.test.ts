@@ -1,37 +1,8 @@
 import { describe, expect, test } from "vitest";
-import {
-  createQuerySourceCodec,
-  formatExpressionObject,
-  parseExpressionObject,
-} from "./source";
+import { createQuerySourceCodec } from "./source";
 import { genericQueryCapabilities, type GenericQuery } from "./test-fixtures";
 
 describe("structured query source", () => {
-  test("preserves expressions in object fields", () => {
-    expect(
-      parseExpressionObject(
-        "{ value: system.params.slug, limit: pageSize ?? 20 }"
-      )
-    ).toEqual(
-      new Map([
-        ["value", "system.params.slug"],
-        ["limit", "pageSize ?? 20"],
-      ])
-    );
-  });
-
-  test("rejects invalid object source", () => {
-    expect(parseExpressionObject("{} trailing")).toEqual(new Map());
-    expect(parseExpressionObject("{ value: 1, ...other }")).toEqual(new Map());
-    expect(parseExpressionObject("{ value: 1, value: 2 }")).toEqual(new Map());
-  });
-
-  test("formats an expression object", () => {
-    expect(
-      formatExpressionObject(new Map([["value", "system.params.slug"]]))
-    ).toBe('{\n  "value": system.params.slug,\n}');
-  });
-
   test("round-trips a provider-neutral query solely from capabilities", () => {
     const codec = createQuerySourceCodec<
       "string" | "date",

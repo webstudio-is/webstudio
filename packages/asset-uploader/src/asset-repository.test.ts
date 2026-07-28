@@ -24,10 +24,10 @@ import {
   PostgresAssetRepository,
 } from "./asset-repository";
 import { createContentCompilationCache } from "./content-compilation-cache";
-import { updateAssetMetadataWithClient } from "./asset-patch-core";
 import {
   deleteAssetsWithClient,
   loadAssetsByProjectWithClient,
+  updateAssetMetadataWithClient,
 } from "./asset-patch-core";
 import { updateAssetContent } from "./revision";
 import {
@@ -176,7 +176,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -208,7 +208,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -250,7 +250,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -280,7 +280,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -313,7 +313,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -329,7 +329,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -397,7 +397,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -420,7 +420,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context: serviceContext,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -464,7 +464,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -552,7 +552,7 @@ describe("PostgresAssetRepository", () => {
       const repository = new PostgresAssetRepository({
         projectId: "project-1",
         context,
-        assetClient,
+        assetStore: assetClient,
         dependencies,
       });
 
@@ -693,7 +693,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
       compilationCache: createContentCompilationCache(),
     });
@@ -850,7 +850,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -1011,7 +1011,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -1047,7 +1047,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -1073,7 +1073,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -1119,7 +1119,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -1137,7 +1137,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 
@@ -1191,7 +1191,7 @@ describe("PostgresAssetRepository", () => {
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
-      assetClient,
+      assetStore: assetClient,
       dependencies,
     });
 

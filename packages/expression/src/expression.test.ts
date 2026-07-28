@@ -7,11 +7,12 @@ import {
   lintExpression,
   transpileExpression,
   getExpressionIdentifiers,
+  generateObjectExpression,
   parseObjectExpression,
+  parseExpressionObject,
   parseArrayExpression,
   parseStaticMemberPath,
   parseStringLiteralExpression,
-  generateObjectExpression,
   allowedArrayMethods,
   allowedStringMethods,
 } from "./index";
@@ -894,6 +895,22 @@ describe("transpile expression", () => {
 });
 
 describe("object expression transformations", () => {
+  test("parse complete object expression", () => {
+    expect(
+      parseExpressionObject(
+        "{ value: system.params.slug, limit: pageSize ?? 20 }"
+      )
+    ).toEqual(
+      new Map([
+        ["value", "system.params.slug"],
+        ["limit", "pageSize ?? 20"],
+      ])
+    );
+    expect(parseExpressionObject("{} trailing")).toEqual(new Map());
+    expect(parseExpressionObject("{ value: 1, ...other }")).toEqual(new Map());
+    expect(parseExpressionObject("{ value: 1, value: 2 }")).toEqual(new Map());
+  });
+
   test("parse array expression", () => {
     expect(parseArrayExpression(`[0, "", $c + 1]`)).toEqual([
       "0",
@@ -933,7 +950,7 @@ describe("object expression transformations", () => {
     );
   });
 
-  test("generate object expression", () => {
+  test("format object expression", () => {
     expect(
       generateObjectExpression(
         new Map([
@@ -951,7 +968,7 @@ describe("object expression transformations", () => {
     `);
   });
 
-  test("generate empty object expression", () => {
+  test("format empty object expression", () => {
     expect(generateObjectExpression(new Map())).toMatchInlineSnapshot(`
     "{
     }"

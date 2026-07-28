@@ -1,5 +1,8 @@
-import { parseArrayExpression } from "@webstudio-is/expression";
-import { parseExpressionAt } from "acorn";
+import {
+  generateObjectExpression,
+  parseArrayExpression,
+  parseExpressionObject,
+} from "@webstudio-is/expression";
 import { z } from "zod";
 import type {
   QueryCapabilities,
@@ -7,48 +10,7 @@ import type {
   QueryWhere,
   StructuredQuery,
 } from "./types";
-import { getQueryWhereMetrics } from "./query-utils";
-
-export const parseExpressionObject = (source: string) => {
-  const fields = new Map<string, string>();
-  let root;
-  try {
-    root = parseExpressionAt(source, 0, { ecmaVersion: "latest" });
-  } catch {
-    return fields;
-  }
-  if (
-    root.type !== "ObjectExpression" ||
-    source.slice(root.end).trim() !== ""
-  ) {
-    return fields;
-  }
-  for (const property of root.properties) {
-    if (property.type === "SpreadElement" || property.computed) {
-      return new Map<string, string>();
-    }
-    const key =
-      property.key.type === "Identifier"
-        ? property.key.name
-        : property.key.type === "Literal" &&
-            typeof property.key.value === "string"
-          ? property.key.value
-          : undefined;
-    if (key === undefined || fields.has(key)) {
-      return new Map<string, string>();
-    }
-    fields.set(key, source.slice(property.value.start, property.value.end));
-  }
-  return fields;
-};
-
-export const formatExpressionObject = (fields: ReadonlyMap<string, string>) => {
-  let source = "{\n";
-  for (const [key, value] of fields) {
-    source += `  ${JSON.stringify(key)}: ${value},\n`;
-  }
-  return `${source}}`;
-};
+import { getQueryFieldKey, getQueryWhereMetrics } from "./query-utils";
 
 const parseJsonExpression = (expression: string | undefined) => {
   if (expression === undefined) {
@@ -93,7 +55,7 @@ const isOperatorCompatible = <
     return false;
   }
   const fieldCapability = capabilities.fields.find(
-    ({ path }) => JSON.stringify(path) === JSON.stringify(field)
+    ({ path }) => getQueryFieldKey(path) === getQueryFieldKey(field)
   );
   return (
     fieldCapability === undefined ||
@@ -199,7 +161,7 @@ const formatWhere = <FieldType extends string, Operator extends string>({
         depth: depth + 1,
       })
     );
-    return formatExpressionObject(
+    return generateObjectExpression(
       new Map([[combinator, `[${children.join(",")}]`]])
     );
   }
@@ -214,7 +176,7 @@ const formatWhere = <FieldType extends string, Operator extends string>({
   ) {
     throw new Error("Query condition is invalid");
   }
-  return formatExpressionObject(
+  return generateObjectExpression(
     new Map([
       ["field", JSON.stringify(where.field)],
       ["operator", JSON.stringify(where.operator)],
@@ -380,8 +342,8 @@ export const createQuerySourceCodec = <
         }
         fields.set(parameter.key, JSON.stringify(parsed.data));
       }
-      const expression = formatExpressionObject(fields);
-      return formatExpressionObject(
+      const expression = generateObjectExpression(fields);
+      return generateObjectExpression(
         new Map([[capabilities.source.rootKey, expression]])
       );
     },

@@ -18,20 +18,19 @@ import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   createQueryCondition,
   createQuerySort,
+  createQuerySourceCodec,
   getCompatibleQueryOperators,
   getQueryFieldKey,
   getQueryWhereMetrics,
-} from "@webstudio-is/query-builder";
-import { createQuerySourceCodec } from "@webstudio-is/query-builder";
-import type {
-  QueryCondition,
-  QueryField,
-  QueryGroup,
-  QuerySort,
-  QueryCapabilities,
-  QueryParameter,
-  QueryWhere,
-  StructuredQuery,
+  normalizeStructuredQuery,
+  type QueryCondition,
+  type QueryField,
+  type QueryGroup,
+  type QuerySort,
+  type QueryCapabilities,
+  type QueryParameter,
+  type QueryWhere,
+  type StructuredQuery,
 } from "@webstudio-is/query-builder";
 
 export type QueryValueEditorProps = {
@@ -69,22 +68,29 @@ type SharedProps<FieldType extends string, Operator extends string> = {
   renderExpressionEditor: QueryBuilderEditors["expression"];
 };
 
+const getField = <FieldType extends string>(
+  fields: readonly QueryField<FieldType>[],
+  path: string[]
+) => {
+  const key = getQueryFieldKey(path);
+  return (
+    fields.find((field) => getQueryFieldKey(field.path) === key) ?? {
+      path,
+      label: path.join("."),
+      types: [],
+    }
+  );
+};
+
 const getFieldSelection = <FieldType extends string>(
   fields: readonly QueryField<FieldType>[],
   path: string[]
 ) => {
-  const selected = fields.find(
-    (field) => getQueryFieldKey(field.path) === getQueryFieldKey(path)
-  );
-  if (selected !== undefined) {
-    return { selected, options: fields };
-  }
-  const unknown: QueryField<FieldType> = {
-    path,
-    label: path.join("."),
-    types: [],
+  const selected = getField(fields, path);
+  return {
+    selected,
+    options: fields.includes(selected) ? fields : [selected, ...fields],
   };
-  return { selected: unknown, options: [unknown, ...fields] };
 };
 
 const Condition = <FieldType extends string, Operator extends string>({
@@ -511,15 +517,7 @@ const QueryParameters = ({
                 return (
                   <Grid key={field.key} gap={1}>
                     {paths.map((path, index) => {
-                      const selectedField = fields.find(
-                        (candidate) =>
-                          getQueryFieldKey(candidate.path) ===
-                          getQueryFieldKey(path)
-                      ) ?? {
-                        path,
-                        label: path.join("."),
-                        types: [],
-                      };
+                      const selectedField = getField(fields, path);
                       return (
                         <Grid
                           key={`${getQueryFieldKey(path)}:${index}`}
@@ -663,13 +661,7 @@ export const StructuredQueryBuilder = <
       sourceInvalidRef.current = true;
     }
   };
-  const defaultCombinator = capabilities.features.combinators[0] ?? "all";
-  const where =
-    "field" in value.where
-      ? defaultCombinator === "all"
-        ? { all: [value.where] }
-        : { any: [value.where] }
-      : value.where;
+  const where = normalizeStructuredQuery(value, capabilities).where;
   const metrics = getQueryWhereMetrics(where);
   const renderExpressionEditor = editors?.expression ?? defaultExpressionEditor;
   const renderSourceEditor = editors?.source ?? defaultSourceEditor;

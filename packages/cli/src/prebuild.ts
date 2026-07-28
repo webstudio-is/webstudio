@@ -21,17 +21,6 @@ import {
   generateRemixRoute,
   generateRemixParams,
 } from "@webstudio-is/react-sdk";
-import type {
-  Instance,
-  Prop,
-  Page,
-  DataSource,
-  Deployment,
-  Asset,
-  Resource,
-  WsComponentMeta,
-  Pages,
-} from "@webstudio-is/sdk";
 import {
   createScope,
   findTreeInstanceIds,
@@ -54,6 +43,15 @@ import {
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
+  type Instance,
+  type Prop,
+  type Page,
+  type DataSource,
+  type Deployment,
+  type Asset,
+  type Resource,
+  type WsComponentMeta,
+  type Pages,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
@@ -67,6 +65,7 @@ import {
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { serializeContentArtifact } from "@webstudio-is/content-engine/compiler";
 import { parseStaticMemberPath } from "@webstudio-is/expression";
+import { getQueryConditions } from "@webstudio-is/query-builder";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -135,19 +134,6 @@ const getStaticAssetQueryFilter = (
   }
 };
 
-const visitStructuredWhere = (
-  where: StructuredAssetQueryWhereBinding,
-  visit: (filter: StructuredAssetQueryFilterBinding) => void
-) => {
-  if ("field" in where) {
-    visit(where);
-    return;
-  }
-  for (const child of "all" in where ? where.all : where.any) {
-    visitStructuredWhere(child, visit);
-  }
-};
-
 const evaluatePrerenderWhere = ({
   document,
   where,
@@ -205,13 +191,13 @@ const getRouteCandidates = ({
   routeParameterNames: ReadonlySet<string>;
 }) => {
   const candidates = new Map<string, Set<string>>();
-  visitStructuredWhere(where, (filter) => {
+  for (const filter of getQueryConditions(where)) {
     const routeParameter = getBoundSystemRouteParameter(filter.value);
     if (
       routeParameter === undefined ||
       routeParameterNames.has(routeParameter) === false
     ) {
-      return;
+      continue;
     }
     const value = getAssetQueryFieldValue(document, filter.field);
     const values =
@@ -221,7 +207,7 @@ const getRouteCandidates = ({
           ? value.filter((item): item is string => typeof item === "string")
           : [];
     if (values.length === 0) {
-      return;
+      continue;
     }
     let parameterCandidates = candidates.get(routeParameter);
     if (parameterCandidates === undefined) {
@@ -233,7 +219,7 @@ const getRouteCandidates = ({
         parameterCandidates.add(candidate);
       }
     }
-  });
+  }
   return candidates;
 };
 

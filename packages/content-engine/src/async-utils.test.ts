@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { mapBounded, runBounded } from "./async-utils";
+import { mapBounded } from "./async-utils";
 
 describe("bounded async work", () => {
   test("limits concurrency and preserves result order", async () => {
@@ -25,7 +25,7 @@ describe("bounded async work", () => {
   });
 
   test("rejects invalid concurrency instead of silently skipping work", async () => {
-    await expect(runBounded([1], 0, async () => {})).rejects.toThrow(
+    await expect(mapBounded([1], 0, async () => {})).rejects.toThrow(
       "Concurrency must be a positive safe integer"
     );
   });

@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@webstudio-is/expression": "workspace:*",
-    "acorn": "^8.14.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

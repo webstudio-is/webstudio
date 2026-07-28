@@ -28,6 +28,11 @@ export const createBuilderAssetRepository = ({
 }) =>
   (
     dependencies.createRepository ??
-    ((input) =>
-      new PostgresAssetRepository({ ...input, contentDatabaseMaxBytes }))
+    (({ projectId, context, assetClient }) =>
+      new PostgresAssetRepository({
+        projectId,
+        context,
+        assetStore: assetClient,
+        contentDatabaseMaxBytes,
+      }))
   )({ projectId, context, assetClient });

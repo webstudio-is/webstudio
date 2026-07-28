@@ -29,6 +29,20 @@ export interface ContentSource {
   openSnapshot(): Promise<ContentSourceSnapshot>;
 }
 
+export const createContentSourceFile = ({
+  assetId,
+  revision,
+  document,
+}: ContentCompilerInput): ContentSourceFile => ({
+  id: assetId,
+  path: document.path,
+  contentType: document.mimeType,
+  contentRef: document.contentRef,
+  revision,
+  size: document.size,
+  createdAt: document.createdAt,
+});
+
 export class ContentSourceChangedError extends Error {
   constructor() {
     super("Content source changed while the database was being compiled");

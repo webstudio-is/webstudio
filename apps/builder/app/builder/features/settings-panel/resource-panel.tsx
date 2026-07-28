@@ -13,17 +13,15 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  encodeDataVariableId,
+  isConfiguredAssetsResource,
+  SYSTEM_VARIABLE_ID,
+  systemParameter,
   type DataSources,
   type Resource,
   type DataSource,
   type Page,
   type PageTemplate,
-} from "@webstudio-is/sdk";
-import {
-  encodeDataVariableId,
-  isConfiguredAssetsResource,
-  SYSTEM_VARIABLE_ID,
-  systemParameter,
 } from "@webstudio-is/sdk";
 import {
   generateObjectExpression,
@@ -52,9 +50,14 @@ import {
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
-import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
-import { $resources } from "~/shared/sync/data-stores";
+import {
+  $selectedInstance,
+  $selectedInstancePathWithRoot,
+  $selectedPage,
+  $variableValuesByInstanceSelector,
+  getInstanceKey,
+} from "~/shared/nano-states";
+import { $dataSources, $resources } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
@@ -66,18 +69,12 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/shared/code-editor-base";
-import {
-  $selectedInstance,
-  $selectedInstancePathWithRoot,
-  $selectedPage,
-  getInstanceKey,
-} from "~/shared/nano-states";
-import type { InstancePath } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   createResourceFieldsFromFormData,
   validateResourceBodyExpression,
   validateResourceUrlExpression,
+  type InstancePath,
   type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime";
 import { parseCurl, type CurlRequest } from "./curl";

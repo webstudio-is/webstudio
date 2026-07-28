@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { isQueryExpression } from "./source";
+import { getQueryFieldKey } from "./query-utils";
+import type { QueryWhereTree } from "./types";
 
 const queryFieldPath = z.array(z.string().min(1)).min(1);
 
@@ -9,16 +11,11 @@ const queryCondition = z.strictObject({
   value: z.string().min(1),
 });
 
-type QueryWhereValue<Condition> =
-  | Condition
-  | { all: QueryWhereValue<Condition>[] }
-  | { any: QueryWhereValue<Condition>[] };
-
 export const createQueryWhereSchema = <ConditionSchema extends z.ZodType>(
   condition: ConditionSchema
 ) => {
-  type Input = QueryWhereValue<z.input<ConditionSchema>>;
-  type Output = QueryWhereValue<z.output<ConditionSchema>>;
+  type Input = QueryWhereTree<z.input<ConditionSchema>>;
+  type Output = QueryWhereTree<z.output<ConditionSchema>>;
   const node: z.ZodType<Output, Input> = z.lazy(() =>
     z.union([
       condition,
@@ -139,7 +136,7 @@ export const queryCapabilities = z
     ({ fields, operators, features, limits, defaults, source }, context) => {
       const fieldPaths = new Set<string>();
       for (const [index, field] of fields.entries()) {
-        const key = JSON.stringify(field.path);
+        const key = getQueryFieldKey(field.path);
         if (fieldPaths.has(key)) {
           context.addIssue({
             code: "custom",
@@ -195,8 +192,8 @@ export const queryCapabilities = z
       }
       const defaultConditionField = fields.find(
         (field) =>
-          JSON.stringify(field.path) ===
-          JSON.stringify(defaults.condition.field)
+          getQueryFieldKey(field.path) ===
+          getQueryFieldKey(defaults.condition.field)
       );
       if (defaultConditionField === undefined) {
         context.addIssue({
@@ -229,7 +226,8 @@ export const queryCapabilities = z
       if (
         fields.some(
           (field) =>
-            JSON.stringify(field.path) === JSON.stringify(defaults.sort.field)
+            getQueryFieldKey(field.path) ===
+            getQueryFieldKey(defaults.sort.field)
         ) === false
       ) {
         context.addIssue({

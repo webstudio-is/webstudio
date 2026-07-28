@@ -1,4 +1,5 @@
 import canonicalize from "canonicalize";
+import { encodeUtf8 } from "./byte-stream";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
@@ -129,8 +130,7 @@ export const compareStrings = (left: string, right: string) => {
 };
 
 export const sha256Hex = async (value: HashSource) => {
-  const source =
-    typeof value === "string" ? new TextEncoder().encode(value) : value;
+  const source = typeof value === "string" ? encodeUtf8(value) : value;
   const digest = await globalThis.crypto.subtle.digest("SHA-256", source);
   return Array.from(new Uint8Array(digest), (byte) =>
     byte.toString(16).padStart(2, "0")

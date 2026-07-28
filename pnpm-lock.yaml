@@ -1319,6 +1319,9 @@ importers:
       '@webstudio-is/project-build':
         specifier: workspace:*
         version: link:../project-build
+      '@webstudio-is/query-builder':
+        specifier: workspace:*
+        version: link:../query-builder
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
@@ -2090,6 +2093,9 @@ importers:
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
+      '@webstudio-is/query-builder':
+        specifier: workspace:*
+        version: link:../query-builder
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
@@ -2243,9 +2249,6 @@ importers:
       '@webstudio-is/expression':
         specifier: workspace:*
         version: link:../expression
-      acorn:
-        specifier: ^8.14.1
-        version: 8.17.0
       zod:
         specifier: ^4.4.3
         version: 4.4.3

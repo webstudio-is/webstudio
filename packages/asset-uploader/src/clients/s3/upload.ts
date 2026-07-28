@@ -10,6 +10,7 @@ import { createSizeLimiter } from "../../utils/size-limiter";
 import { getMimeTypeByFilename } from "@webstudio-is/sdk";
 import { createS3ObjectUrl } from "./object-url";
 import { createS3FetchHeaders, signS3Request } from "./request-headers";
+import type { AssetInfoFallback } from "../../client";
 
 export const uploadToS3 = async ({
   signer,
@@ -31,9 +32,7 @@ export const uploadToS3 = async ({
   endpoint: string;
   bucket: string;
   acl?: string;
-  assetInfoFallback:
-    | { width: number; height: number; format: string }
-    | undefined;
+  assetInfoFallback: AssetInfoFallback | undefined;
   assetDataOverride?: AssetDataOverride;
 }): Promise<AssetData> => {
   const limitSize = createSizeLimiter(maxSize, name);

@@ -1,7 +1,7 @@
 import { contentEngineLimits } from "./limits";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
-import type { ByteSource } from "./byte-stream";
+import { getUtf8ByteLength, type ByteSource } from "./byte-stream";
 import { MarkdownMetadataError } from "./markdown-errors";
 import { extractMarkdownBody } from "./markdown-body";
 
@@ -15,7 +15,6 @@ export {
   type MarkdownFrontmatter,
 } from "./frontmatter";
 
-const encoder = new TextEncoder();
 type MarkdownNode = {
   type: string;
   value?: unknown;
@@ -56,7 +55,7 @@ const truncateUtf8 = (value: string, maximumBytes: number) => {
   let bytes = 0;
   let result = "";
   for (const character of value) {
-    const characterBytes = encoder.encode(character).byteLength;
+    const characterBytes = getUtf8ByteLength(character);
     if (bytes + characterBytes > maximumBytes) {
       break;
     }

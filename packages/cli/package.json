@@ -84,6 +84,7 @@
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
+    "@webstudio-is/query-builder": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/sdk-components-animation": "workspace:*",

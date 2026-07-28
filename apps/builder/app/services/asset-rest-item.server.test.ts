@@ -21,20 +21,18 @@ const asset: Asset = {
 const createDependencies = () => {
   const updateMetadata = vi.fn().mockResolvedValue(asset);
   const deleteAsset = vi.fn().mockResolvedValue(undefined);
+  const createRepository = vi.fn(async () => ({
+    updateMetadata,
+    delete: deleteAsset,
+  }));
   return {
     updateMetadata,
     deleteAsset,
+    createRepository,
     dependencies: {
       preventCrossOriginCookie: vi.fn(),
       checkCsrf: vi.fn(),
-      authorizeApiProject: vi.fn(async () => ({
-        context: true,
-      })) as never,
-      createAssetClient: vi.fn(() => ({ storage: true })) as never,
-      createRepository: vi.fn(() => ({
-        updateMetadata,
-        delete: deleteAsset,
-      })),
+      createRepository: createRepository as never,
     } satisfies Parameters<typeof createAssetAction>[0],
   };
 };
@@ -45,6 +43,22 @@ const callAction = (
 ) => action({ request, params: { assetId: "asset-1" } } as never);
 
 describe("mutable Assets REST route", () => {
+  test("rejects unsupported methods before authorization", async () => {
+    const { dependencies, createRepository } = createDependencies();
+    const response = await callAction(
+      createAssetAction(dependencies),
+      new Request(
+        "https://webstudio.is/rest/assets/asset-1?projectId=project-1",
+        { method: "POST" }
+      )
+    );
+
+    expect(response.status).toBe(405);
+    expect(response.headers.get("allow")).toBe("PATCH, DELETE");
+    expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(createRepository).not.toHaveBeenCalled();
+  });
+
   test("updates metadata through the repository with browser CSRF protection", async () => {
     const { dependencies, updateMetadata } = createDependencies();
     const action = createAssetAction(dependencies);
@@ -70,7 +84,8 @@ describe("mutable Assets REST route", () => {
   });
 
   test("returns the same metadata contract for project-token authentication", async () => {
-    const { dependencies, updateMetadata } = createDependencies();
+    const { dependencies, createRepository, updateMetadata } =
+      createDependencies();
     const response = await callAction(
       createAssetAction(dependencies),
       new Request(
@@ -89,11 +104,7 @@ describe("mutable Assets REST route", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ asset });
     expect(dependencies.checkCsrf).not.toHaveBeenCalled();
-    expect(dependencies.authorizeApiProject).toHaveBeenCalledWith(
-      expect.any(Request),
-      "project-1",
-      "edit"
-    );
+    expect(createRepository).toHaveBeenCalledWith(expect.any(Request), "edit");
     expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
       filename: "Post",
       folderId: null,
@@ -120,9 +131,9 @@ describe("mutable Assets REST route", () => {
   });
 
   test("returns a forbidden response for repository authorization failures", async () => {
-    const { dependencies, updateMetadata } = createDependencies();
-    updateMetadata.mockRejectedValue(
-      new AuthorizationError("You don't have access")
+    const { dependencies, createRepository } = createDependencies();
+    createRepository.mockRejectedValue(
+      new AuthorizationError("You don't have access") as never
     );
     const report = vi.spyOn(console, "error").mockImplementation(() => {});
     const response = await callAction(

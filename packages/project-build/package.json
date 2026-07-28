@@ -77,6 +77,7 @@
     "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/project-migrations": "workspace:*",
+    "@webstudio-is/query-builder": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/sdk-components-registry": "workspace:*",

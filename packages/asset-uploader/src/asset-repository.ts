@@ -6,6 +6,8 @@ import {
   createLiteralContentCompilationQuery,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
+  requiresHydratedContent,
+  requiresStructuredProperties,
   type AssetQueryRequestInput,
   type AssetQueryResult,
   type BuilderAssetFieldCatalog,
@@ -13,6 +15,7 @@ import {
 } from "@webstudio-is/content-engine";
 import {
   createAssetIndex,
+  createContentSourceFile,
   computeCanonicalAssetRevision,
   decodeUtf8,
   materializeContentSource,
@@ -34,6 +37,7 @@ import {
 import type { AssetDataOverride } from "./utils/get-asset-data";
 import type {
   AssetReadRange,
+  AssetInfoFallback,
   AssetObjectReader,
   AssetObjectStore,
   AssetObjectWriter,
@@ -133,9 +137,7 @@ export interface AssetRepository {
   completeUpload(input: {
     name: string;
     data: ReadableStream<Uint8Array>;
-    assetInfoFallback:
-      | { width: number; height: number; format: string }
-      | undefined;
+    assetInfoFallback: AssetInfoFallback | undefined;
     assetDataOverride?: AssetDataOverride;
     assetId?: Asset["id"];
   }): Promise<Asset>;
@@ -167,7 +169,6 @@ export interface AssetRepository {
   query(request: AssetQueryRequestInput): Promise<AssetQueryResult>;
 }
 
-/** Trusted repair/publication operations. Every method still verifies permits. */
 /**
  * Hosted Assets repository. PostgreSQL owns logical records and canonical
  * metadata; the injected object store owns file bytes. Published runtimes use
@@ -188,23 +189,18 @@ export class PostgresAssetRepository implements AssetRepository {
   constructor({
     projectId,
     context,
-    assetClient,
-    assetStore = assetClient,
+    assetStore,
     dependencies,
     contentDatabaseMaxBytes = contentEngineLimits.databaseBytes,
     compilationCache,
   }: {
     projectId: string;
     context: AppContext;
-    assetClient?: RepositoryObjectStore;
-    assetStore?: RepositoryObjectStore;
+    assetStore: RepositoryObjectStore;
     dependencies?: Partial<AssetRepositoryDependencies>;
     contentDatabaseMaxBytes?: number;
     compilationCache?: ContentCompilationCache;
   }) {
-    if (assetStore === undefined) {
-      throw new Error("Asset object storage is required");
-    }
     this.projectId = projectId;
     this.context = context;
     this.assetStore = assetStore;
@@ -241,28 +237,25 @@ export class PostgresAssetRepository implements AssetRepository {
     });
   }
 
-  private async assertCanEdit() {
-    const canEdit = await this.dependencies.hasProjectPermit(
-      { projectId: this.projectId, permit: "edit" },
+  private async assertPermit(
+    permit: "view" | "edit" | "build",
+    action: string
+  ) {
+    const permitted = await this.dependencies.hasProjectPermit(
+      { projectId: this.projectId, permit },
       this.context
     );
-    if (canEdit === false) {
-      throw new AuthorizationError(
-        "You don't have access to edit this project assets"
-      );
+    if (permitted === false) {
+      throw new AuthorizationError(`You don't have access to ${action}`);
     }
   }
 
+  private async assertCanEdit() {
+    await this.assertPermit("edit", "edit this project assets");
+  }
+
   private async assertCanView() {
-    const canView = await this.dependencies.hasProjectPermit(
-      { projectId: this.projectId, permit: "view" },
-      this.context
-    );
-    if (canView === false) {
-      throw new AuthorizationError(
-        "You don't have access to view this project assets"
-      );
-    }
+    await this.assertPermit("view", "view this project assets");
   }
 
   private async assertCanBuild() {
@@ -273,15 +266,7 @@ export class PostgresAssetRepository implements AssetRepository {
     if (this.context.authorization?.type === "service") {
       return;
     }
-    const canBuild = await this.dependencies.hasProjectPermit(
-      { projectId: this.projectId, permit: "build" },
-      this.context
-    );
-    if (canBuild === false) {
-      throw new AuthorizationError(
-        "You don't have access to build this project assets index"
-      );
-    }
+    await this.assertPermit("build", "build this project assets index");
   }
 
   private getWritableStore(): AssetObjectStore {
@@ -537,7 +522,7 @@ export class PostgresAssetRepository implements AssetRepository {
         ? {}
         : {
             requirements: {
-              structuredProperties: requirements.structuredProperties,
+              structuredProperties: requiresStructuredProperties(requirements),
               excerpt: requirements.excerpt,
             },
           }),
@@ -608,15 +593,7 @@ export class PostgresAssetRepository implements AssetRepository {
         const revision = await computeCanonicalAssetRevision(baseEntries);
         return {
           revision,
-          files: baseEntries.map(({ document }) => ({
-            id: document._id,
-            path: document.path,
-            contentType: document.mimeType,
-            contentRef: document.contentRef,
-            revision: document.revision,
-            size: document.size,
-            createdAt: document.createdAt,
-          })),
+          files: baseEntries.map(createContentSourceFile),
           loadEntries: (plan) =>
             this.loadCompilerEntries({
               baseEntries,
@@ -656,9 +633,9 @@ export class PostgresAssetRepository implements AssetRepository {
         : candidateBaseEntries.map(({ assetId }) => assetId);
     if (
       requirements === undefined ||
-      requirements.structuredProperties ||
+      requiresStructuredProperties(requirements) ||
       requirements.excerpt ||
-      requirements.hydratedContent
+      requiresHydratedContent(requirements)
     ) {
       const result = await this.synchronizeTrusted(
         requirements,

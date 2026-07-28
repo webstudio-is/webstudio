@@ -2,6 +2,12 @@ import type { AssetData, AssetDataOverride } from "./utils/get-asset-data";
 
 export type AssetReadRange = { offset: number; length: number };
 
+export type AssetInfoFallback = {
+  width: number;
+  height: number;
+  format: string;
+};
+
 export const validateAssetReadRange = (range: AssetReadRange) => {
   const end = range.offset + range.length;
   if (
@@ -20,9 +26,7 @@ export type AssetObjectWriter = {
     name: string,
     type: string,
     data: AsyncIterable<Uint8Array>,
-    assetInfoFallback:
-      | { width: number; height: number; format: string }
-      | undefined,
+    assetInfoFallback: AssetInfoFallback | undefined,
     assetDataOverride?: AssetDataOverride
   ) => Promise<AssetData>;
 };

@@ -61,22 +61,20 @@ export const AssetQueryForm = ({
   const [baseCapabilities, setBaseCapabilities] =
     useState<AssetQueryCapabilities>(() => fallbackCapabilities);
   const configurationError = getAssetQueryConfigurationError(configuration);
-  const configuredPathsSource = JSON.stringify(
-    [
-      ...getQueryConditions<StructuredAssetQueryFilterBinding>(
-        configuration.where
-      ).map(({ field }) => field),
-      ...configuration.sort.map(({ field }) => field),
-      ...(configuration.output.mode === "fields"
-        ? configuration.output.fields
-        : []),
-    ].sort((left, right) =>
-      getQueryFieldKey(left).localeCompare(getQueryFieldKey(right))
-    )
-  );
   const configuredPaths = useMemo(
-    () => JSON.parse(configuredPathsSource) as string[][],
-    [configuredPathsSource]
+    () =>
+      [
+        ...getQueryConditions<StructuredAssetQueryFilterBinding>(
+          configuration.where
+        ).map(({ field }) => field),
+        ...configuration.sort.map(({ field }) => field),
+        ...(configuration.output.mode === "fields"
+          ? configuration.output.fields
+          : []),
+      ].sort((left, right) =>
+        getQueryFieldKey(left).localeCompare(getQueryFieldKey(right))
+      ),
+    [configuration]
   );
   const capabilities = useMemo(() => {
     return addConfiguredAssetQueryFields({

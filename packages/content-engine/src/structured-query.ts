@@ -1,3 +1,4 @@
+import { getQueryConditions } from "@webstudio-is/query-builder";
 import {
   assetQuery,
   assetQueryStandardFieldTypes,
@@ -25,6 +26,7 @@ import {
 } from "./hydration";
 import { appendAssetFieldPath } from "./canonical";
 import { selectAssetProperties } from "./projection";
+import { getUtf8ByteLength } from "./byte-stream";
 
 export class AssetQueryExecutionError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -72,14 +74,7 @@ export const validateAssetQueryAgainstCatalog = ({
   const query = assetQuery.parse(input);
   const referencedFieldPaths = new Map<string, AssetQueryFieldPath>();
   const warnings: string[] = [];
-  const visitWhere = (where: AssetQueryWhere) => {
-    if ("field" in where === false) {
-      for (const child of "all" in where ? where.all : where.any) {
-        visitWhere(child);
-      }
-      return;
-    }
-    const filter = where;
+  for (const filter of getQueryConditions(query.where)) {
     const catalogPath = getCatalogPath(filter.field);
     referencedFieldPaths.set(catalogPath, filter.field);
     if (filter.field[0] === "properties") {
@@ -112,8 +107,7 @@ export const validateAssetQueryAgainstCatalog = ({
         );
       }
     }
-  };
-  visitWhere(query.where);
+  }
   for (const order of query.sort) {
     const catalogPath = getCatalogPath(order.field);
     referencedFieldPaths.set(catalogPath, order.field);
@@ -350,8 +344,8 @@ const toQueryItem = (
 
 const assertResultSize = (result: AssetQueryResult) => {
   if (
-    new TextEncoder().encode(serializeJsonDeterministically(result))
-      .byteLength > contentEngineLimits.resultBytes
+    getUtf8ByteLength(serializeJsonDeterministically(result)) >
+    contentEngineLimits.resultBytes
   ) {
     throw new AssetQueryExecutionError(
       "Asset query result exceeds the byte limit"

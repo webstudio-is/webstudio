@@ -3,6 +3,7 @@ import { contentEngineLimits } from "./limits";
 import {
   createCanonicalAssetFileEntry,
   getCanonicalAssetMetadataTier,
+  getCanonicalAssetMetadataRequirementsForTier,
   getFieldContributions,
   normalizeAssetFileDocument,
   satisfiesCanonicalAssetMetadataRequirements,
@@ -44,6 +45,16 @@ test("identifies and compares metadata cache tiers deterministically", () => {
       excerpt: true,
     })
   ).toBe("properties+excerpt");
+  expect(getCanonicalAssetMetadataRequirementsForTier("base")).toEqual({
+    structuredProperties: false,
+    excerpt: false,
+  });
+  expect(
+    getCanonicalAssetMetadataRequirementsForTier("properties+excerpt")
+  ).toEqual({ structuredProperties: true, excerpt: true });
+  expect(() => getCanonicalAssetMetadataRequirementsForTier("unknown")).toThrow(
+    "Canonical asset metadata tier is invalid"
+  );
   expect(
     satisfiesCanonicalAssetMetadataRequirements({
       cached: { structuredProperties: true, excerpt: false },

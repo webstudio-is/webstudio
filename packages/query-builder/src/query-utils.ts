@@ -1,17 +1,14 @@
 import type {
   QueryCapabilities,
   QueryCondition,
+  QueryGroup,
   QuerySort,
   StructuredQuery,
+  QueryWhereTree,
 } from "./types";
 
-type WhereShape<Condition extends { field: unknown }> =
-  | Condition
-  | { all: WhereShape<Condition>[] }
-  | { any: WhereShape<Condition>[] };
-
 const collectQueryConditions = (
-  where: WhereShape<{ field: unknown }>
+  where: QueryWhereTree<{ field: unknown }>
 ): { field: unknown }[] => {
   if ("field" in where) {
     return [where];
@@ -22,16 +19,32 @@ const collectQueryConditions = (
 };
 
 export const getQueryConditions = <Condition extends { field: unknown }>(
-  where: WhereShape<Condition>
+  where: QueryWhereTree<Condition>
 ) => collectQueryConditions(where) as Condition[];
 
-type AnyWhereShape = WhereShape<{ field: unknown }>;
+export const mapQueryWhere = <
+  Input extends { field: unknown },
+  Output extends { field: unknown },
+>(
+  where: QueryWhereTree<Input>,
+  mapCondition: (condition: Input) => Output
+): QueryWhereTree<Output> => {
+  if ("field" in where) {
+    return mapCondition(where);
+  }
+  if ("all" in where) {
+    return {
+      all: where.all.map((child) => mapQueryWhere(child, mapCondition)),
+    };
+  }
+  return { any: where.any.map((child) => mapQueryWhere(child, mapCondition)) };
+};
 
 export const getQueryFieldKey = (field: readonly string[]) =>
   JSON.stringify(field);
 
 export const getQueryWhereMetrics = (
-  where: AnyWhereShape
+  where: QueryWhereTree<{ field: unknown }>
 ): { conditions: number; depth: number } => {
   if ("field" in where) {
     return { conditions: 1, depth: 0 };
@@ -120,9 +133,9 @@ export const normalizeStructuredQuery = <
 >(
   query: Query,
   capabilities: QueryCapabilities<FieldType, Operator>
-): Query => {
+): Omit<Query, "where"> & { where: QueryGroup<string[], Operator> } => {
   if ("field" in query.where === false) {
-    return query;
+    return { ...query, where: query.where };
   }
   const combinator = capabilities.features.combinators[0] ?? "all";
   return {

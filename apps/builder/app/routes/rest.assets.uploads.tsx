@@ -62,7 +62,7 @@ export const action = async (props: ActionFunctionArgs) => {
       const ticket = await new PostgresAssetRepository({
         projectId: input.projectId,
         context,
-        assetClient: createAssetClient(),
+        assetStore: createAssetClient(),
       }).createUploadTicket({
         type: input.type,
         filename: input.filename,

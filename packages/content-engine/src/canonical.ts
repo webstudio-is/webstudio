@@ -43,6 +43,10 @@ export const fullCanonicalAssetMetadataRequirements = {
   excerpt: true,
 } as const satisfies CanonicalAssetMetadataRequirements;
 
+export const getCanonicalAssetMetadataRequirements = (
+  entry: CanonicalAssetFileEntry
+) => entry.metadataRequirements ?? fullCanonicalAssetMetadataRequirements;
+
 export type CanonicalAssetMetadataTier =
   | "base"
   | "properties"
@@ -64,6 +68,24 @@ export const getCanonicalAssetMetadataTier = ({
     return "excerpt";
   }
   return "base";
+};
+
+export const getCanonicalAssetMetadataRequirementsForTier = (
+  tier: unknown
+): CanonicalAssetMetadataRequirements => {
+  if (tier === "base") {
+    return { structuredProperties: false, excerpt: false };
+  }
+  if (tier === "properties") {
+    return { structuredProperties: true, excerpt: false };
+  }
+  if (tier === "excerpt") {
+    return { structuredProperties: false, excerpt: true };
+  }
+  if (tier === "properties+excerpt") {
+    return fullCanonicalAssetMetadataRequirements;
+  }
+  throw new Error("Canonical asset metadata tier is invalid");
 };
 
 export const satisfiesCanonicalAssetMetadataRequirements = ({
@@ -164,7 +186,7 @@ export const parseAssetFieldPath = (
   return segments;
 };
 
-const getObservedType = (value: unknown): ObservedFieldType => {
+export const getObservedFieldType = (value: unknown): ObservedFieldType => {
   if (value === null) {
     return "null";
   }
@@ -219,7 +241,7 @@ const getStructuralFieldContributions = (
     { path: AssetFieldPathSegment[]; type: ObservedFieldType }
   >();
   const add = (path: AssetFieldPathSegment[], value: unknown) => {
-    const contribution = { path, type: getObservedType(value) };
+    const contribution = { path, type: getObservedFieldType(value) };
     contributions.set(
       `${serializeJsonDeterministically(path)}\u0000${contribution.type}`,
       contribution

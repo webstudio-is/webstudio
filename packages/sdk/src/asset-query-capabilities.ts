@@ -116,10 +116,11 @@ export const addConfiguredAssetQueryFields = ({
     capabilities.fields.map((field) => [getQueryFieldKey(field.path), field])
   );
   for (const path of configuredPaths) {
-    if (fields.has(getQueryFieldKey(path))) {
+    const key = getQueryFieldKey(path);
+    if (fields.has(key)) {
       continue;
     }
-    fields.set(getQueryFieldKey(path), {
+    fields.set(key, {
       path,
       label: path.join(" / "),
       // The observed catalog is advisory. Preserve configured schemaless

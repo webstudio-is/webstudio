@@ -17,11 +17,13 @@ const createEntry = ({
   properties,
   folderId,
   excerpt,
+  createdAt,
 }: {
   id: string;
   properties: Record<string, unknown>;
   folderId?: string;
   excerpt?: string;
+  createdAt?: string;
 }) =>
   createCanonicalAssetFileEntry({
     projectId: "project-1",
@@ -35,6 +37,7 @@ const createEntry = ({
       extension: "md",
       mimeType: "text/markdown",
       size: 100,
+      ...(createdAt === undefined ? {} : { createdAt }),
       revision: `revision-${id}`,
       contentRef: `${id}.md`,
       properties,
@@ -336,6 +339,7 @@ Body`);
     const internal = await createAssetFieldCatalog([
       createEntry({
         id: "one",
+        createdAt: "2026-07-28T00:00:00.000Z",
         properties: { title: "One", category: "news" },
       }),
       createEntry({ id: "two", properties: { title: 2 } }),
@@ -349,6 +353,12 @@ Body`);
       documentCount: 2,
       fields: {
         name: { types: ["string"], occurrences: 2 },
+        createdAt: {
+          types: ["string"],
+          occurrences: 1,
+          optional: true,
+          queryPath: ["createdAt"],
+        },
         "properties.category": {
           types: ["string"],
           occurrences: 1,

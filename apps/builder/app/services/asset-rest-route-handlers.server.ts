@@ -5,18 +5,13 @@ import {
 } from "@remix-run/server-runtime";
 import { Readable } from "node:stream";
 import parseRange from "range-parser";
-import {
-  type AssetRepository,
-  PostgresAssetRepository,
-} from "@webstudio-is/asset-uploader/server";
 import { getAssetMime } from "@webstudio-is/sdk";
 import {
   assetMetadataUpdate,
   assetResourceApiOperations,
 } from "@webstudio-is/protocol/asset-resource-api";
-import { createAssetClient } from "~/shared/asset-client";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
-import { authorizeApiProject, requiresApiCsrf } from "./api-auth.server";
+import { requiresApiCsrf } from "./api-auth.server";
 import {
   AssetRestRangeError,
   assetRestErrorResponse,
@@ -100,66 +95,46 @@ export const createAssetContentLoader =
 type AssetActionDependencies = {
   preventCrossOriginCookie: typeof preventCrossOriginCookie;
   checkCsrf: typeof checkCsrf;
-  authorizeApiProject: typeof authorizeApiProject;
-  createAssetClient: typeof createAssetClient;
-  createRepository: (
-    input: ConstructorParameters<typeof PostgresAssetRepository>[0]
-  ) => Pick<AssetRepository, "updateMetadata" | "delete">;
+  createRepository: typeof createAssetRestRepository;
 };
 
 const defaultAssetActionDependencies: AssetActionDependencies = {
   preventCrossOriginCookie,
   checkCsrf,
-  authorizeApiProject,
-  createAssetClient,
-  createRepository: (input) => new PostgresAssetRepository(input),
+  createRepository: createAssetRestRepository,
 };
 
 export const createAssetAction =
   (dependencies: AssetActionDependencies = defaultAssetActionDependencies) =>
   async ({ request, params }: ActionFunctionArgs) => {
     dependencies.preventCrossOriginCookie(request);
+    const method = request.method.toLowerCase();
+    if (
+      method !== assetResourceApiOperations.updateAsset.method &&
+      method !== assetResourceApiOperations.deleteAsset.method
+    ) {
+      return assetRestMethodNotAllowed(["PATCH", "DELETE"]);
+    }
     if (requiresApiCsrf(request)) {
       await dependencies.checkCsrf(request);
     }
 
     try {
       const assetId = parseAssetRestIdentifier(params.assetId);
-      const projectId = parseAssetRestIdentifier(
-        new URL(request.url).searchParams.get("projectId")
-      );
-      const context = await dependencies.authorizeApiProject(
-        request,
-        projectId,
-        "edit"
-      );
-      const repository = dependencies.createRepository({
-        projectId,
-        context,
-        assetStore: dependencies.createAssetClient(),
-      });
+      const repository = await dependencies.createRepository(request, "edit");
 
-      if (
-        request.method.toLowerCase() ===
-        assetResourceApiOperations.updateAsset.method
-      ) {
+      if (method === assetResourceApiOperations.updateAsset.method) {
         const asset = await repository.updateMetadata(
           assetId,
           assetMetadataUpdate.parse(await readAssetRestJson(request))
         );
         return json({ asset }, { headers: privateNoStoreResponseHeaders });
       }
-      if (
-        request.method.toLowerCase() ===
-        assetResourceApiOperations.deleteAsset.method
-      ) {
-        await repository.delete([assetId]);
-        return new Response(null, {
-          status: 204,
-          headers: privateNoStoreResponseHeaders,
-        });
-      }
-      return assetRestMethodNotAllowed(["PATCH", "DELETE"]);
+      await repository.delete([assetId]);
+      return new Response(null, {
+        status: 204,
+        headers: privateNoStoreResponseHeaders,
+      });
     } catch (error) {
       return assetRestErrorResponse(error);
     }
@@ -175,14 +150,14 @@ export const createAssetIndexRefreshAction =
   (dependencies = defaultAssetIndexRefreshDependencies) =>
   async ({ request }: ActionFunctionArgs) => {
     dependencies.preventCrossOriginCookie(request);
-    if (requiresApiCsrf(request)) {
-      await dependencies.checkCsrf(request);
-    }
     if (
       request.method.toLowerCase() !==
       assetResourceApiOperations.refreshAssetIndex.method
     ) {
       return assetRestMethodNotAllowed(["POST"]);
+    }
+    if (requiresApiCsrf(request)) {
+      await dependencies.checkCsrf(request);
     }
     try {
       const result = await (

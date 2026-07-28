@@ -1,6 +1,6 @@
 import {
   createCanonicalAssetFileEntry,
-  fullCanonicalAssetMetadataRequirements,
+  getCanonicalAssetMetadataRequirements,
   type CanonicalAssetFileEntry,
   type CanonicalAssetMetadataRequirements,
 } from "./canonical";
@@ -11,9 +11,6 @@ import {
   extractMarkdownFrontmatter,
   MarkdownMetadataError,
 } from "./markdown";
-
-const getEntryRequirements = (entry: CanonicalAssetFileEntry) =>
-  entry.metadataRequirements ?? fullCanonicalAssetMetadataRequirements;
 
 const isMarkdown = (entry: CanonicalAssetFileEntry) =>
   entry.document.extension.toLowerCase() === "md";
@@ -64,7 +61,7 @@ export const prepareCanonicalContentMetadata = async ({
   const cachedRequirements =
     cached === undefined
       ? { structuredProperties: false, excerpt: false }
-      : getEntryRequirements(cached);
+      : getCanonicalAssetMetadataRequirements(cached);
   let properties: Record<string, unknown> = cached?.document.properties ?? {};
   let excerpt = cached?.document.excerpt;
   let metadataError = cached?.document.metadataError;

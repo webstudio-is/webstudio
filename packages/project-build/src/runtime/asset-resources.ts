@@ -2,27 +2,27 @@ import {
   assetQueryResourceConfigurationInput,
   assetQueryResourceConfigurationPatchInput,
   createStructuredAssetQueryResourceBody,
-  decodeDataSourceVariable,
   isAssetsResource,
   isConfiguredAssetsResource,
   parseStructuredAssetQueryResourceBody,
   SYSTEM_VARIABLE_ID,
-  type AssetQueryResourceConfiguration,
   type AssetQueryWhereExpression,
   type Resource,
   type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
-import { transpileExpression } from "@webstudio-is/expression";
+import { mapQueryWhere } from "@webstudio-is/query-builder";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
-import { createResource, updateResource } from "./data";
+import {
+  createResource,
+  normalizeResourceExpressionInput,
+  unsetExpressionVariables,
+  updateResource,
+} from "./data";
 import { throwBuilderRuntimeError } from "./errors";
 import { paginateOutput, paginatedOutputInputSchema } from "./output";
-
-export const assetsQueryConfigurationInput =
-  assetQueryResourceConfigurationInput;
 
 export const assetsResourceListInput = z.object({
   scopeInstanceId: z.string().optional(),
@@ -33,7 +33,7 @@ export const assetsResourceGetInput = z.object({ resourceId: z.string() });
 
 export const assetsResourceCreateInput = z.object({
   name: z.string().min(1),
-  query: assetsQueryConfigurationInput.optional(),
+  query: assetQueryResourceConfigurationInput.optional(),
   scopeInstanceId: z.string(),
   dataSourceName: z.string().optional(),
 });
@@ -52,38 +52,27 @@ export const assetsResourceUpdateInput = z.object({
   dataSourceName: z.string().optional(),
 });
 
-const normalizeExpression = (
-  value:
-    | AssetQueryResourceConfiguration["limit"]
-    | AssetQueryResourceConfiguration["offset"]
-    | Extract<AssetQueryWhereExpression, { field: unknown }>["value"]
-) => (typeof value === "string" ? value : JSON.stringify(value.value));
-
 const normalizeWhere = (
   where: AssetQueryWhereExpression
-): StructuredAssetQueryWhereBinding => {
-  if ("field" in where) {
-    return { ...where, value: normalizeExpression(where.value) };
-  }
-  if ("all" in where) {
-    return { all: where.all.map(normalizeWhere) };
-  }
-  return { any: where.any.map(normalizeWhere) };
-};
+): StructuredAssetQueryWhereBinding =>
+  mapQueryWhere(where, (condition) => ({
+    ...condition,
+    value: normalizeResourceExpressionInput(condition.value),
+  }));
 
-export const createAssetResourceBody = (
-  configuration: z.output<typeof assetsQueryConfigurationInput>
+const createAssetResourceBody = (
+  configuration: z.output<typeof assetQueryResourceConfigurationInput>
 ) =>
   createStructuredAssetQueryResourceBody({
     where: normalizeWhere(configuration.where),
     sort: configuration.sort,
-    limit: normalizeExpression(configuration.limit),
-    offset: normalizeExpression(configuration.offset),
+    limit: normalizeResourceExpressionInput(configuration.limit),
+    offset: normalizeResourceExpressionInput(configuration.offset),
     output: configuration.output,
     content: configuration.content,
   });
 
-export const parseAssetResourceConfiguration = (
+const parseAssetResourceConfiguration = (
   resource: Resource
 ): ReturnType<typeof parseStructuredAssetQueryResourceBody> => {
   if (isConfiguredAssetsResource(resource) === false) {
@@ -92,48 +81,17 @@ export const parseAssetResourceConfiguration = (
   return parseStructuredAssetQueryResourceBody(resource.body);
 };
 
-const toPublicExpression = ({
-  expression,
-  dataSources,
-}: {
-  expression: string;
-  dataSources: BuilderState["dataSources"] | undefined;
-}) => {
-  try {
-    return transpileExpression({
-      expression,
-      replaceVariable: (identifier) => {
-        const dataSourceId = decodeDataSourceVariable(identifier);
-        if (dataSourceId === SYSTEM_VARIABLE_ID) {
-          return "system";
-        }
-        return dataSourceId === undefined
-          ? identifier
-          : (dataSources?.get(dataSourceId)?.name ?? identifier);
-      },
-    });
-  } catch {
-    return expression;
-  }
-};
-
 const serializeWhere = (
   where: StructuredAssetQueryWhereBinding,
-  dataSources: BuilderState["dataSources"] | undefined
-): AssetQueryWhereExpression => {
-  if ("field" in where) {
-    return {
-      ...where,
-      value: toPublicExpression({ expression: where.value, dataSources }),
-    };
-  }
-  if ("all" in where) {
-    return {
-      all: where.all.map((child) => serializeWhere(child, dataSources)),
-    };
-  }
-  return { any: where.any.map((child) => serializeWhere(child, dataSources)) };
-};
+  unsetNameById: Map<string, string>
+): AssetQueryWhereExpression =>
+  mapQueryWhere(where, (condition) => ({
+    ...condition,
+    value: unsetExpressionVariables({
+      expression: condition.value,
+      unsetNameById,
+    }),
+  }));
 
 const serializeAssetResource = ({
   resource,
@@ -144,7 +102,10 @@ const serializeAssetResource = ({
 }) => {
   const configuration = parseAssetResourceConfiguration(resource);
   const isStoredQuery = isConfiguredAssetsResource(resource);
-  const dataSource = Array.from(state.dataSources?.values() ?? []).find(
+  const dataSources = Array.from(state.dataSources?.values() ?? []);
+  const unsetNameById = new Map(dataSources.map(({ id, name }) => [id, name]));
+  unsetNameById.set(SYSTEM_VARIABLE_ID, "system");
+  const dataSource = dataSources.find(
     (item) => item.type === "resource" && item.resourceId === resource.id
   );
   return {
@@ -167,15 +128,15 @@ const serializeAssetResource = ({
         ? {}
         : {
             query: {
-              where: serializeWhere(configuration.where, state.dataSources),
+              where: serializeWhere(configuration.where, unsetNameById),
               sort: configuration.sort,
-              limit: toPublicExpression({
+              limit: unsetExpressionVariables({
                 expression: configuration.limit,
-                dataSources: state.dataSources,
+                unsetNameById,
               }),
-              offset: toPublicExpression({
+              offset: unsetExpressionVariables({
                 expression: configuration.offset,
-                dataSources: state.dataSources,
+                unsetNameById,
               }),
               output: configuration.output,
               content: configuration.content,
@@ -222,7 +183,7 @@ const createStoredAssetsResource = ({
   query,
 }: {
   name: string;
-  query?: z.output<typeof assetsQueryConfigurationInput>;
+  query?: z.output<typeof assetQueryResourceConfigurationInput>;
 }) => {
   if (query === undefined) {
     return {
@@ -305,7 +266,7 @@ export const updateAssetsResource = (
       ? currentQuery
       : queryUpdate === null
         ? undefined
-        : assetsQueryConfigurationInput.parse({
+        : assetQueryResourceConfigurationInput.parse({
             ...currentQuery,
             ...queryUpdate,
           });

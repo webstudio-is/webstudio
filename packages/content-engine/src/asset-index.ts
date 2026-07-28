@@ -5,22 +5,19 @@ import {
 import { contentArtifactV1, type ContentArtifactV1 } from "./schema";
 import type { CanonicalAssetFileEntry } from "./canonical";
 import {
-  computeCanonicalAssetRevision,
   createAssetFieldCatalog,
   toBuilderAssetFieldCatalog,
 } from "./field-catalog";
 import {
   checksumContentArtifact,
   serializeContentArtifact,
-  verifyContentArtifact,
 } from "./content-artifact";
 import { contentEngineLimits } from "./limits";
 import {
   getContentDocumentCandidateQueryIds,
   type ContentCompilationPlan,
 } from "./compilation-plan";
-
-export * from "./content-artifact";
+import { getUtf8ByteLength } from "./byte-stream";
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -38,11 +35,8 @@ export type ContentCompilerDiagnostics = {
   affectedQueryIds: string[];
 };
 
-const getByteLength = (value: string) =>
-  new TextEncoder().encode(value).byteLength;
-
 const getDocumentBytes = (entry: CanonicalAssetFileEntry) =>
-  getByteLength(serializeJsonDeterministically(entry.document));
+  getUtf8ByteLength(serializeJsonDeterministically(entry.document));
 
 export type ContentCompilerInput = CanonicalAssetFileEntry & {
   content?: string;
@@ -50,7 +44,7 @@ export type ContentCompilerInput = CanonicalAssetFileEntry & {
 
 const getEntryBytes = (entry: ContentCompilerInput) =>
   getDocumentBytes(entry) +
-  (entry.content === undefined ? 0 : getByteLength(entry.content));
+  (entry.content === undefined ? 0 : getUtf8ByteLength(entry.content));
 
 const getMinimumAdditionalBytes = ({
   entries,
@@ -68,7 +62,7 @@ const getMinimumAdditionalBytes = ({
       contentRefs.has(entry.document.contentRef) === false
     ) {
       contentRefs.add(entry.document.contentRef);
-      bytes += getByteLength(entry.content);
+      bytes += getUtf8ByteLength(entry.content);
     }
   }
   return bytes;
@@ -168,10 +162,9 @@ const buildAssetIndex = async ({
       )
       .map((entry) => [entry.document.contentRef, entry.content])
   );
-  const assetRevision = await computeCanonicalAssetRevision(entries);
-  const fieldCatalog = toBuilderAssetFieldCatalog(
-    await createAssetFieldCatalog(entries)
-  );
+  const catalog = await createAssetFieldCatalog(entries);
+  const assetRevision = catalog.canonicalRevision;
+  const fieldCatalog = toBuilderAssetFieldCatalog(catalog);
   const index = contentArtifactV1.parse({
     format: "webstudio-content-database",
     version: 1,
@@ -226,7 +219,7 @@ export const compileContentArtifact = async ({
       unboundedBytes,
       finalize: false,
     });
-    const measured = getByteLength(serializeContentArtifact(unbounded));
+    const measured = getUtf8ByteLength(serializeContentArtifact(unbounded));
     if (measured === unboundedBytes) {
       break;
     }
@@ -249,7 +242,9 @@ export const compileContentArtifact = async ({
       unboundedBytes,
       finalize: false,
     });
-    let selectedBytes = getByteLength(serializeContentArtifact(emptyArtifact));
+    let selectedBytes = getUtf8ByteLength(
+      serializeContentArtifact(emptyArtifact)
+    );
     if (selectedBytes > maxBytes) {
       throw new Error("Content database byte limit is too small");
     }
@@ -272,7 +267,7 @@ export const compileContentArtifact = async ({
           unboundedBytes,
           finalize: false,
         });
-        const trialBytes = getByteLength(serializeContentArtifact(trial));
+        const trialBytes = getUtf8ByteLength(serializeContentArtifact(trial));
         if (trialBytes <= maxBytes) {
           selected.push(...candidates);
           selectedBytes = trialBytes;
@@ -295,15 +290,13 @@ export const compileContentArtifact = async ({
 
     await selectCandidates(prioritized);
   }
-  const artifact = await verifyContentArtifact(
-    await buildAssetIndex({
-      entries: selected,
-      sourceDocumentCount,
-      maxBytes,
-      unboundedBytes,
-    })
-  );
-  const boundedBytes = getByteLength(serializeContentArtifact(artifact));
+  const artifact = await buildAssetIndex({
+    entries: selected,
+    sourceDocumentCount,
+    maxBytes,
+    unboundedBytes,
+  });
+  const boundedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
   if (boundedBytes > maxBytes) {
     throw new Error("Content database selection exceeds the byte limit");
   }
@@ -311,15 +304,6 @@ export const compileContentArtifact = async ({
     id: entry.assetId,
     path: entry.document.path,
     bytes: getEntryBytes(entry),
-    ...(plan === undefined
-      ? {}
-      : {
-          queryIds: getContentDocumentCandidateQueryIds({
-            document: entry.document,
-            plan,
-            available: "all",
-          }),
-        }),
   });
   const omittedDocuments = omitted.map((entry) => ({
     ...describe(entry),

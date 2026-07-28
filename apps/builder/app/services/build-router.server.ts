@@ -24,6 +24,7 @@ import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/server";
 import { createContentDatabase } from "@webstudio-is/content-engine";
+import { getQueryConditions } from "@webstudio-is/query-builder";
 import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
 import {
   checkProjectBuildPermissionInput,
@@ -70,14 +71,10 @@ const hasDynamicCompilationWhere = (
   where: NonNullable<
     ReturnType<typeof createReachableAssetContentCompilationPlan>
   >["queries"][number]["where"]
-): boolean => {
-  if ("field" in where) {
-    return hasDynamicCompilationValue(where.value);
-  }
-  return ("all" in where ? where.all : where.any).some(
-    hasDynamicCompilationWhere
+) =>
+  getQueryConditions(where).some(({ value }) =>
+    hasDynamicCompilationValue(value)
   );
-};
 
 const getContentDatabasePublishDiagnostics = (
   bundle: z.infer<typeof publishedProjectBundle>

@@ -1,6 +1,7 @@
 import { contentArtifactV1, type ContentArtifactV1 } from "./schema";
 import { contentEngineLimits } from "./limits";
 import { serializeJsonDeterministically, sha256 } from "./canonical-json";
+import { getUtf8ByteLength } from "./byte-stream";
 
 export const checksumContentArtifact = async (index: ContentArtifactV1) => {
   const { integrity: _integrity, ...payload } = index;
@@ -13,10 +14,7 @@ export const serializeContentArtifact = (value: unknown) =>
 const assertContentArtifactSize = (index: ContentArtifactV1) => {
   const maximumBytes =
     index.database?.maxBytes ?? contentEngineLimits.databaseBytes;
-  if (
-    new TextEncoder().encode(serializeContentArtifact(index)).byteLength >
-    maximumBytes
-  ) {
+  if (getUtf8ByteLength(serializeContentArtifact(index)) > maximumBytes) {
     throw new Error("Asset index exceeds the byte limit");
   }
 };

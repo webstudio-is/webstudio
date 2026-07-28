@@ -40,7 +40,7 @@ const storedDocument = {
 };
 const row = {
   ...entry,
-  document,
+  document: storedDocument,
   createdAt: "2026-07-18T00:00:00.000Z",
   updatedAt: "2026-07-18T00:00:00.000Z",
 };

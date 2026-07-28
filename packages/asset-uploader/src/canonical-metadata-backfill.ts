@@ -1,7 +1,10 @@
 import {
   createCanonicalAssetFileEntry,
   fullCanonicalAssetMetadataRequirements,
+  getCanonicalAssetMetadataRequirements,
   prepareCanonicalContentMetadata,
+  readBytePrefix,
+  mapBounded,
   satisfiesCanonicalAssetMetadataRequirements,
   normalizeAssetFileDocument,
   type CanonicalAssetFileEntry,
@@ -26,13 +29,9 @@ import {
   loadCanonicalAssetFileEntriesForRecovery,
   replaceCanonicalAssetFileEntry,
 } from "./canonical-metadata-persistence";
-import { runBounded } from "./async-utils";
 
 type CanonicalAssetClient = Pick<AssetObjectStore, "readFile"> &
   Partial<Omit<AssetObjectStore, "readFile">>;
-
-const getEntryRequirements = (entry: CanonicalAssetFileEntry) =>
-  entry.metadataRequirements ?? fullCanonicalAssetMetadataRequirements;
 
 export type CanonicalAssetSynchronizationIssue = {
   assetId: string;
@@ -53,33 +52,6 @@ const createAssetContentRevision = ({
   updatedAt: string;
   size: number;
 }) => `file:${encodeURIComponent(storageName)}:${updatedAt}:${size}`;
-
-const readPrefix = async (
-  data: AsyncIterable<Uint8Array>,
-  maximumBytes: number
-) => {
-  const chunks: Uint8Array[] = [];
-  let length = 0;
-  for await (const chunk of data) {
-    const remaining = maximumBytes - length;
-    if (remaining <= 0) {
-      break;
-    }
-    const retained = chunk.subarray(0, remaining);
-    chunks.push(retained);
-    length += retained.byteLength;
-    if (length === maximumBytes) {
-      break;
-    }
-  }
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
-};
 
 type UploadedAssetRow = {
   id: string;
@@ -167,6 +139,36 @@ const createCanonicalDocument = ({
   });
 };
 
+const createCanonicalBaseEntry = ({
+  projectId,
+  asset,
+  hierarchy,
+  revision = createAssetContentRevision({
+    storageName: asset.file.name,
+    updatedAt: asset.file.updatedAt,
+    size: asset.file.size,
+  }),
+}: {
+  projectId: string;
+  asset: UploadedAssetRow;
+  hierarchy: AssetFolderHierarchy;
+  revision?: string;
+}) => {
+  return createCanonicalAssetFileEntry({
+    projectId,
+    metadataRequirements: {
+      structuredProperties: false,
+      excerpt: false,
+    },
+    document: createCanonicalDocument({
+      asset,
+      hierarchy,
+      revision,
+      properties: {},
+    }),
+  });
+};
+
 /** Builds the base index tier entirely from logical asset records. */
 export const loadCanonicalAssetBaseEntries = async ({
   projectId,
@@ -182,26 +184,13 @@ export const loadCanonicalAssetBaseEntries = async ({
   const hierarchy = createAssetFolderHierarchy(
     new Map(folders.map((folder) => [folder.id, folder]))
   );
-  return assets.map((asset) => {
-    const revision = createAssetContentRevision({
-      storageName: asset.file.name,
-      updatedAt: asset.file.updatedAt,
-      size: asset.file.size,
-    });
-    return createCanonicalAssetFileEntry({
+  return assets.map((asset) =>
+    createCanonicalBaseEntry({
       projectId,
-      metadataRequirements: {
-        structuredProperties: false,
-        excerpt: false,
-      },
-      document: createCanonicalDocument({
-        asset,
-        hierarchy,
-        revision,
-        properties: {},
-      }),
-    });
-  });
+      asset,
+      hierarchy,
+    })
+  );
 };
 
 const hasMatchingStandardMetadata = (
@@ -219,37 +208,20 @@ const hasMatchingStandardMetadata = (
   document.contentRef === expected.contentRef;
 
 const indexCanonicalAsset = async ({
-  projectId,
   asset,
-  hierarchy,
   client,
   assetClient,
   requirements,
+  base,
   current,
 }: {
-  projectId: string;
   asset: UploadedAssetRow;
-  hierarchy: AssetFolderHierarchy;
   client: Client;
   assetClient: CanonicalAssetClient;
   requirements: CanonicalAssetMetadataRequirements;
+  base: CanonicalAssetFileEntry;
   current?: CanonicalAssetFileEntry;
 }) => {
-  const revision = createAssetContentRevision({
-    storageName: asset.file.name,
-    updatedAt: asset.file.updatedAt,
-    size: asset.file.size,
-  });
-  const base = createCanonicalAssetFileEntry({
-    projectId,
-    metadataRequirements: { structuredProperties: false, excerpt: false },
-    document: createCanonicalDocument({
-      asset,
-      hierarchy,
-      revision,
-      properties: {},
-    }),
-  });
   await prepareCanonicalContentMetadata({
     base,
     requirements,
@@ -271,9 +243,8 @@ const indexCanonicalAsset = async ({
               offset: 0,
               length: maximumBytes,
             })
-            .then((stored) => readPrefix(stored.data, maximumBytes)),
+            .then((stored) => readBytePrefix(stored.data, maximumBytes)),
   });
-  return revision;
 };
 
 const deleteObsoleteCanonicalAssetMetadata = async ({
@@ -360,7 +331,7 @@ export const synchronizeCanonicalAssets = async ({
   let metadataUpdated = 0;
   let unchanged = 0;
   const issues: CanonicalAssetSynchronizationIssue[] = [];
-  await runBounded(assets, concurrency, async (asset) => {
+  await mapBounded(assets, concurrency, async (asset) => {
     const revision = createAssetContentRevision({
       storageName: asset.file.name,
       updatedAt: asset.file.updatedAt,
@@ -371,7 +342,7 @@ export const synchronizeCanonicalAssets = async ({
     const requirementsSatisfied =
       current !== undefined &&
       satisfiesCanonicalAssetMetadataRequirements({
-        cached: getEntryRequirements(current),
+        cached: getCanonicalAssetMetadataRequirements(current),
         required: requirements,
       });
     if (
@@ -381,12 +352,16 @@ export const synchronizeCanonicalAssets = async ({
     ) {
       try {
         await indexCanonicalAsset({
-          projectId,
           asset,
-          hierarchy,
           client,
           assetClient,
           requirements,
+          base: createCanonicalBaseEntry({
+            projectId,
+            asset,
+            hierarchy,
+            revision,
+          }),
           current,
         });
         indexed += 1;
@@ -433,7 +408,7 @@ export const synchronizeCanonicalAssets = async ({
       entry: createCanonicalAssetFileEntry({
         projectId,
         document: expected,
-        metadataRequirements: getEntryRequirements(current),
+        metadataRequirements: getCanonicalAssetMetadataRequirements(current),
       }),
       source: getCanonicalMetadataSource(asset),
     });

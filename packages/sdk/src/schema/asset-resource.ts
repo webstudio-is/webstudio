@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   createQueryWhereSchema,
   getQueryWhereMetrics,
+  type QueryWhereTree,
 } from "@webstudio-is/query-builder";
 import {
   assetQueryFieldPath,
@@ -26,14 +27,11 @@ export type AssetQueryFilterValueExpression = z.infer<
   typeof assetQueryFilterValueExpression
 >;
 
-export type AssetQueryWhereExpression =
-  | {
-      field: AssetQueryFieldPath;
-      operator: AssetQueryFilter["operator"];
-      value: AssetQueryFilterValueExpression;
-    }
-  | { all: AssetQueryWhereExpression[] }
-  | { any: AssetQueryWhereExpression[] };
+export type AssetQueryWhereExpression = QueryWhereTree<{
+  field: AssetQueryFieldPath;
+  operator: AssetQueryFilter["operator"];
+  value: AssetQueryFilterValueExpression;
+}>;
 
 const assetQueryWhereExpressionNode: z.ZodType<
   AssetQueryWhereExpression,
@@ -74,20 +72,12 @@ export const assetQueryLimitExpression = z.union([
   ),
 ]);
 
-export type AssetQueryLimitExpression = z.infer<
-  typeof assetQueryLimitExpression
->;
-
 export const assetQueryOffsetExpression = z.union([
   z.string(),
   assetQueryLiteral(
     z.number().int().nonnegative().max(assetResourceLimits.candidateDocuments)
   ),
 ]);
-
-export type AssetQueryOffsetExpression = z.infer<
-  typeof assetQueryOffsetExpression
->;
 
 export const assetQueryResourceConfigurationInput = z.strictObject({
   where: assetQueryWhereExpression

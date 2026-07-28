@@ -12,7 +12,7 @@ import {
   type Asset,
 } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-import type { AssetObjectWriter } from "./client";
+import type { AssetInfoFallback, AssetObjectWriter } from "./client";
 import type { AssetDataOverride } from "./utils/get-asset-data";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
@@ -384,9 +384,7 @@ export const uploadFileData = async (
   data: ReadableStream<Uint8Array>,
   client: AssetObjectWriter,
   context: AppContext,
-  assetInfoFallback:
-    | { width: number; height: number; format: string }
-    | undefined,
+  assetInfoFallback: AssetInfoFallback | undefined,
   assetDataOverride?: AssetDataOverride,
   onUploadError?: UploadErrorCleanup
 ): Promise<Database["public"]["Tables"]["File"]["Row"]> => {
@@ -494,9 +492,7 @@ export const uploadFile = async (
   data: ReadableStream<Uint8Array>,
   client: AssetObjectWriter,
   context: AppContext,
-  assetInfoFallback:
-    | { width: number; height: number; format: string }
-    | undefined,
+  assetInfoFallback: AssetInfoFallback | undefined,
   assetDataOverride?: AssetDataOverride,
   onUploadError?: UploadErrorCleanup
 ): Promise<Asset> => {

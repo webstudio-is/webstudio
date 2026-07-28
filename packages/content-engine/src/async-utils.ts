@@ -20,22 +20,12 @@ export const mapBounded = async <Value, Result>(
     worker
   );
   const settlements = await Promise.allSettled(workers);
-  const failures = settlements.flatMap((settlement) =>
-    settlement.status === "rejected" ? [settlement.reason] : []
+  const failure = settlements.find(
+    (settlement): settlement is PromiseRejectedResult =>
+      settlement.status === "rejected"
   );
-  if (failures.length === 1) {
-    throw failures[0];
-  }
-  if (failures.length > 1) {
-    throw new AggregateError(failures, "Multiple bounded workers failed");
+  if (failure !== undefined) {
+    throw failure.reason;
   }
   return results;
-};
-
-export const runBounded = async <Value>(
-  values: readonly Value[],
-  concurrency: number,
-  run: (value: Value) => Promise<void>
-) => {
-  await mapBounded(values, concurrency, run);
 };

@@ -2,6 +2,7 @@ import { contentEngineLimits } from "./limits";
 import {
   ByteLimitExceededError,
   decodeUtf8,
+  getUtf8ByteLength,
   readBoundedBytes,
   type ByteSource,
 } from "./byte-stream";
@@ -64,7 +65,7 @@ export const extractMarkdownBody = async (
   }
   return {
     body,
-    bodyBytes: new TextEncoder().encode(body).byteLength,
+    bodyBytes: getUtf8ByteLength(body),
     sourceBytes: bytes.byteLength,
   };
 };

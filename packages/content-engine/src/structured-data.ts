@@ -1,3 +1,5 @@
+import { getUtf8ByteLength } from "./byte-stream";
+
 export type StructuredDataLimits = {
   depth: number;
   fields: number;
@@ -22,10 +24,8 @@ export class StructuredDataError extends Error {
   }
 }
 
-const encoder = new TextEncoder();
-
 export const getStructuredDataByteLength = (value: unknown) =>
-  encoder.encode(JSON.stringify(value)).byteLength;
+  getUtf8ByteLength(JSON.stringify(value));
 
 const isPlainObject = (
   value: unknown
@@ -51,7 +51,7 @@ export const normalizeStructuredDataObject = (
       throw new StructuredDataError("DEPTH_EXCEEDED");
     }
     if (typeof input === "string") {
-      if (encoder.encode(input).byteLength > limits.stringBytes) {
+      if (getUtf8ByteLength(input) > limits.stringBytes) {
         throw new StructuredDataError("STRING_BYTES_EXCEEDED");
       }
       return input;

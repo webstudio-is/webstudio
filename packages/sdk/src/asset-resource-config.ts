@@ -1,16 +1,13 @@
-import { createQuerySourceCodec } from "@webstudio-is/query-builder";
-import { parseStringLiteralExpression } from "@webstudio-is/expression";
 import {
-  createContentCompilationPlan,
-  type ContentCompilationPlan,
-  type ContentCompilationQuery,
-  type ContentCompilationWhere,
-} from "@webstudio-is/content-engine";
-import { createAssetQueryCapabilities } from "./asset-query-capabilities";
-import { assetsResourceUrl } from "./resource-loader";
+  createQuerySourceCodec,
+  mapQueryWhere,
+  type QueryWhereTree,
+} from "@webstudio-is/query-builder";
+import { parseStringLiteralExpression } from "@webstudio-is/expression";
 import {
   assetQueryRequest,
   assetResourceContentOptions,
+  createContentCompilationPlan,
   type AssetQueryRequestInput,
   type AssetObservedFieldType,
   type AssetQueryFieldPath,
@@ -18,7 +15,12 @@ import {
   type AssetQuerySort,
   type AssetResourceContentOptions,
   type AssetResourceOutputSelection,
+  type ContentCompilationPlan,
+  type ContentCompilationQuery,
+  type ContentCompilationWhere,
 } from "@webstudio-is/content-engine";
+import { createAssetQueryCapabilities } from "./asset-query-capabilities";
+import { assetsResourceUrl } from "./resource-loader";
 import type { Resource, ResourceRequest } from "./schema/resources";
 import type { Prop } from "./schema/props";
 import type { DataSource } from "./schema/data-sources";
@@ -47,9 +49,7 @@ export type StructuredAssetQueryFilterBinding = {
 };
 
 export type StructuredAssetQueryWhereBinding =
-  | StructuredAssetQueryFilterBinding
-  | { all: StructuredAssetQueryWhereBinding[] }
-  | { any: StructuredAssetQueryWhereBinding[] };
+  QueryWhereTree<StructuredAssetQueryFilterBinding>;
 
 export type StructuredAssetQueryResourceConfiguration = {
   where: StructuredAssetQueryWhereBinding;
@@ -62,27 +62,25 @@ export type StructuredAssetQueryResourceConfiguration = {
 
 const toContentCompilationWhere = (
   where: StructuredAssetQueryWhereBinding
-): ContentCompilationWhere => {
-  if ("field" in where) {
+): ContentCompilationWhere =>
+  mapQueryWhere(where, (condition) => {
     try {
       return {
-        field: where.field,
-        operator: where.operator,
-        value: { type: "literal", value: JSON.parse(where.value) as unknown },
+        field: condition.field,
+        operator: condition.operator,
+        value: {
+          type: "literal" as const,
+          value: JSON.parse(condition.value) as unknown,
+        },
       };
     } catch {
       return {
-        field: where.field,
-        operator: where.operator,
-        value: { type: "dynamic" },
+        field: condition.field,
+        operator: condition.operator,
+        value: { type: "dynamic" as const },
       };
     }
-  }
-  if ("all" in where) {
-    return { all: where.all.map(toContentCompilationWhere) };
-  }
-  return { any: where.any.map(toContentCompilationWhere) };
-};
+  });
 
 const toContentCompilationInteger = (expression: string) => {
   try {

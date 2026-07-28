@@ -1,5 +1,5 @@
 import {
-  assetResourceQueryFailure,
+  createAssetResourceQueryFailure,
   type ContentArtifactV1,
   type AssetResourceQueryFailure,
 } from "./schema";
@@ -31,10 +31,7 @@ const failure = ({
   details?: Record<string, string | number>;
 }) =>
   jsonResponse(
-    assetResourceQueryFailure.parse({
-      ok: false,
-      error: { code, message, retryable, details },
-    }),
+    createAssetResourceQueryFailure({ code, message, retryable, details }),
     status
   );
 

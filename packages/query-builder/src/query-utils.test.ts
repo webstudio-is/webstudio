@@ -5,6 +5,7 @@ import {
   createStructuredQuery,
   getQueryConditions,
   getQueryWhereMetrics,
+  mapQueryWhere,
   normalizeStructuredQuery,
 } from "./query-utils";
 import { genericQueryCapabilities } from "./test-fixtures";
@@ -24,6 +25,33 @@ const where = {
 describe("structured query traversal", () => {
   test("collects nested conditions", () => {
     expect(getQueryConditions(where)).toHaveLength(3);
+  });
+
+  test("maps conditions while preserving groups", () => {
+    expect(
+      mapQueryWhere(where, (condition) => ({
+        ...condition,
+        value: condition.value.toUpperCase(),
+      }))
+    ).toEqual({
+      all: [
+        { field: ["extension"], operator: "eq", value: '"MD"' },
+        {
+          any: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "SLUG",
+            },
+            {
+              field: ["properties", "id"],
+              operator: "eq",
+              value: "SLUG",
+            },
+          ],
+        },
+      ],
+    });
   });
 
   test("measures condition count and group depth", () => {

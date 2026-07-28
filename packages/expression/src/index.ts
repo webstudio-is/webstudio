@@ -689,16 +689,47 @@ export const parseArrayExpression = (expression: string) => {
   return items;
 };
 
-/**
- * generate key value map into object expression
- * after updating individual value expressions
- */
-export const generateObjectExpression = (map: Map<string, string>) => {
-  let generated = "{\n";
-  for (const [key, valueExpression] of map) {
-    const keyExpression = JSON.stringify(key);
-    generated += `  ${keyExpression}: ${valueExpression},\n`;
+/** Parse a complete object expression into its property expressions. */
+export const parseExpressionObject = (expression: string) => {
+  const fields = new Map<string, string>();
+  let root;
+  try {
+    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+  } catch {
+    return fields;
   }
-  generated += `}`;
-  return generated;
+  if (
+    root.type !== "ObjectExpression" ||
+    expression.slice(root.end).trim() !== ""
+  ) {
+    return fields;
+  }
+  for (const property of root.properties) {
+    if (property.type === "SpreadElement" || property.computed) {
+      return new Map<string, string>();
+    }
+    const key =
+      property.key.type === "Identifier"
+        ? property.key.name
+        : property.key.type === "Literal" &&
+            typeof property.key.value === "string"
+          ? property.key.value
+          : undefined;
+    if (key === undefined || fields.has(key)) {
+      return new Map<string, string>();
+    }
+    fields.set(key, expression.slice(property.value.start, property.value.end));
+  }
+  return fields;
+};
+
+/** Generate property expressions as an object expression. */
+export const generateObjectExpression = (
+  fields: ReadonlyMap<string, string>
+) => {
+  let expression = "{\n";
+  for (const [key, value] of fields) {
+    expression += `  ${JSON.stringify(key)}: ${value},\n`;
+  }
+  return `${expression}}`;
 };

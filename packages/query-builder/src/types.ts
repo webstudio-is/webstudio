@@ -4,10 +4,14 @@ export type QueryCondition<Field = string[], Operator = string> = {
   value: string;
 };
 
-export type QueryWhere<Field = string[], Operator = string> =
-  | QueryCondition<Field, Operator>
-  | { all: QueryWhere<Field, Operator>[] }
-  | { any: QueryWhere<Field, Operator>[] };
+export type QueryWhereTree<Condition> =
+  | Condition
+  | { all: QueryWhereTree<Condition>[] }
+  | { any: QueryWhereTree<Condition>[] };
+
+export type QueryWhere<Field = string[], Operator = string> = QueryWhereTree<
+  QueryCondition<Field, Operator>
+>;
 
 export type QueryGroup<Field = string[], Operator = string> =
   | { all: QueryWhere<Field, Operator>[] }

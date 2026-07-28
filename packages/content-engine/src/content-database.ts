@@ -7,19 +7,13 @@ import type {
 } from "./schema";
 import { serializeContentArtifact } from "./content-artifact";
 import { AssetIndexRevisionError, executeAssetQuery } from "./structured-query";
-
-export type AssetContentReader = (
-  contentRef: string,
-  range?: { offset: number; length: number }
-) => Promise<{
-  data: AsyncIterable<Uint8Array>;
-  contentLength?: number;
-}>;
+import { encodeUtf8, getUtf8ByteLength } from "./byte-stream";
+import type { AssetResourceContentReader } from "./hydration";
 
 export type ContentDatabase = {
   query(
     request: AssetQueryRequestInput,
-    readContent?: AssetContentReader
+    readContent?: AssetResourceContentReader
   ): Promise<AssetQueryResult>;
   getFieldCatalog(): BuilderAssetFieldCatalog;
   getStats(): ContentDatabaseStats;
@@ -30,15 +24,13 @@ export const createContentDatabase = ({
   readContent,
 }: {
   artifact: ContentArtifactV1;
-  readContent?: AssetContentReader;
+  readContent?: AssetResourceContentReader;
 }): ContentDatabase => {
   const includedDocumentCount = artifact.documents.length;
   const sourceDocumentCount =
     artifact.database?.sourceDocumentCount ?? includedDocumentCount;
   const omittedDocumentCount = sourceDocumentCount - includedDocumentCount;
-  const usedBytes = new TextEncoder().encode(
-    serializeContentArtifact(artifact)
-  ).byteLength;
+  const usedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
   const stats: ContentDatabaseStats = {
     format: artifact.format,
     version: artifact.version,
@@ -58,7 +50,7 @@ export const createContentDatabase = ({
       ) {
         throw new AssetIndexRevisionError();
       }
-      const readEmbeddedContent: AssetContentReader = async (
+      const readEmbeddedContent: AssetResourceContentReader = async (
         contentRef,
         range
       ) => {
@@ -70,7 +62,7 @@ export const createContentDatabase = ({
           }
           return await externalReader(contentRef, range);
         }
-        const bytes = new TextEncoder().encode(content);
+        const bytes = encodeUtf8(content);
         const selected =
           range === undefined
             ? bytes

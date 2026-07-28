@@ -1,4 +1,5 @@
 import {
+  assetQueryStandardFields,
   builderAssetFieldCatalog,
   type AssetFileDocument,
   type BuilderAssetFieldCatalog,
@@ -11,6 +12,7 @@ import {
 import {
   createCanonicalAssetFileEntry,
   getFieldContributions,
+  getObservedFieldType,
   parseAssetFieldPath,
   type CanonicalAssetFileEntry,
   type FieldContribution,
@@ -68,21 +70,17 @@ const getStandardFieldContributions = (
 ): FieldContribution[] => [
   { path: "_id", type: "string" },
   { path: "_type", type: "string" },
-  { path: "name", type: "string" },
-  { path: "path", type: "string" },
-  { path: "key", type: "string" },
-  ...(document.folderId === undefined
-    ? []
-    : [{ path: "folderId", type: "string" } as const]),
-  { path: "extension", type: "string" },
-  { path: "mimeType", type: "string" },
-  { path: "size", type: "number" },
-  { path: "revision", type: "string" },
+  ...assetQueryStandardFields.flatMap((field): FieldContribution[] => {
+    if (field === "id") {
+      return [];
+    }
+    const value = document[field];
+    return value === undefined
+      ? []
+      : [{ path: field, type: getObservedFieldType(value) }];
+  }),
   { path: "contentRef", type: "string" },
   { path: "properties", type: "object" },
-  ...(document.excerpt === undefined
-    ? []
-    : [{ path: "excerpt", type: "string" } as const]),
   ...(document.metadataError === undefined
     ? []
     : [
@@ -250,17 +248,9 @@ export const createAssetFieldCatalog = async (
 ): Promise<AssetFieldCatalog> =>
   await createCatalogAccumulator(entries).versionedSnapshot();
 
-const queryableStandardFields = new Set([
-  "name",
-  "path",
-  "key",
-  "folderId",
-  "extension",
-  "mimeType",
-  "size",
-  "revision",
-  "excerpt",
-]);
+const queryableStandardFields = new Set<string>(
+  assetQueryStandardFields.filter((field) => field !== "id")
+);
 
 const getBuilderQueryPath = (path: string) => {
   if (path === "_id") {
