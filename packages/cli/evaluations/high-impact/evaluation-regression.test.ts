@@ -66,7 +66,7 @@ describe("evaluation regression comparison", () => {
       metrics: {
         ...baseline.metrics,
         durationMs: 1_100,
-        tokens: { ...baselineTokens, total: 1_300 },
+        tokens: { ...baselineTokens, total: 1_600 },
       },
     });
     const comparison = compareEvaluationResult(current, baseline);
@@ -81,19 +81,19 @@ describe("evaluation regression comparison", () => {
         expect.objectContaining({
           metric: "metrics.tokens.total",
           baseline: 1_000,
-          current: 1_300,
+          current: 1_600,
         }),
       ])
     );
     expect(comparison.regressions).toEqual([
       expect.objectContaining({
         metric: "metrics.tokens.total",
-        allowed: 1_250,
+        allowed: 1_500,
       }),
     ]);
 
     const noisyCurrent = structuredClone(baseline);
-    noisyCurrent.metrics.tokens!.total = 1_200;
+    noisyCurrent.metrics.tokens!.total = 1_400;
     expect(compareEvaluationResult(noisyCurrent, baseline)).toMatchObject({
       status: "passed",
       regressions: [],

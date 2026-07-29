@@ -4217,6 +4217,10 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Do not run discovery or inspect-instance after visual verification starts"
           ),
+          expect.stringContaining(
+            'run a static audit with {"pagePath":"/account"}'
+          ),
+          expect.stringContaining("do not set rendered:true"),
           expect.stringContaining("A successful final audit is terminal"),
         ]),
         tools: expect.arrayContaining([
@@ -6601,11 +6605,6 @@ describe("project session mcp adapter", () => {
               readOnlyHint: true,
               destructiveHint: false,
             }),
-            _meta: {
-              webstudio: expect.objectContaining({
-                operationId: "pages.list",
-              }),
-            },
           }),
           expect.objectContaining({
             name: "publish",
@@ -6655,6 +6654,15 @@ describe("project session mcp adapter", () => {
       expect(
         listedTools.tools.find(({ name }) => name === "list-pages")
       ).not.toHaveProperty("outputSchema");
+      expect(
+        listedTools.tools.find(({ name }) => name === "list-pages")
+      ).not.toHaveProperty("_meta");
+      expect(
+        JSON.stringify(
+          listedTools.tools.find(({ name }) => name === "list-pages")
+            ?.inputSchema
+        )
+      ).not.toContain('"description"');
       await expect(client.listResources()).resolves.toEqual({
         resources: expect.arrayContaining([
           expect.objectContaining({ uri: "webstudio://project/status" }),

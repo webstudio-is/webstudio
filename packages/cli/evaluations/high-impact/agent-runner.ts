@@ -68,7 +68,7 @@ export const createMinimalAgentTask = (
     mcp: getCliInvocation(target),
     constraints: [
       "Use the configured Webstudio project and local CLI.",
-      "Begin with meta.guide for the objective and follow its workflow.",
+      "Call meta.guide exactly once at the beginning for the objective, follow its workflow, and do not call it again.",
       "Choose focused reads and semantic edits yourself.",
       "Never use broad project reads: snapshot, components.list, or components.coverage-plan.",
       "Do not persist or report credentials or private session data.",
@@ -77,20 +77,26 @@ export const createMinimalAgentTask = (
       "Finish all visual polish before evidence capture. After the first successful screenshot, do not mutate, rediscover, verify, or restart preview; capture only the remaining requested viewports, then make audit the next and final tool call.",
       ...(fixture.id === "authenticated-page-v1"
         ? [
-            "For this fixture, meta.guide already returns the required auth discovery and authoring tool schemas. Do not call list-breakpoints because responsive styling is not required, and do not call meta.get_more_tools or any other tool discovery operation. Create exactly one scoped non-secret fixture variable, keep the required state gallery expression-free, and do not call list-variables again after creating it.",
+            "For this fixture, meta.guide already returns the required auth discovery and authoring tool schemas. Do not call list-breakpoints because responsive styling is not required, and do not call meta.get_more_tools or any other tool discovery operation. Create exactly one scoped non-secret fixture variable, keep the required state gallery expression-free, and do not call list-variables again after creating it. After the two required screenshots, run a static audit with pagePath /account; do not set rendered:true.",
+            "After meta.guide, call get-project-settings, list-pages, list-resources, and list-variables together in one parallel read batch.",
+            "After the reads, call create-page exactly once, then create-variable exactly once, then create-resource exactly once with the returned variable id. Do not parallelize these mutations. Insert the fragment only after all three succeed, using their returned ids.",
           ]
         : []),
       ...(fixture.id === "design-input-v1"
         ? [
             "For this fixture, do not call list-instances because the project has no representative existing page pattern. Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas.",
-            "For this fixture, make exactly three attach-design-token calls: attach only the returned Brand / Coral, Text / Ink, and Type / Heading token ids once each to compatible inserted element instance ids. Omit the optional position field and do not attempt any other token attachment.",
+            "Call list-pages, list-breakpoints, list-design-tokens, list-assets, and list-variables exactly once each and together in one parallel tool-call batch before mutation. Do not call get-page-by-path or repeat any discovery tool. Call create-page once, insert-fragment once, then call verify-bindings immediately after insert-fragment and before token or style mutations.",
+            "For this fixture, make exactly three attach-design-token calls: attach only the returned Brand / Coral, Text / Ink, and Type / Heading token ids once each to compatible inserted element instance ids. Attach all three tokens in one parallel tool-call batch. Omit the optional position field and do not attempt any other token attachment.",
             "After the early binding checkpoint, make exactly one batched update-styles call containing all remaining fixed styles. Include at least one declaration on an inserted element using the returned mobile breakpoint id so responsive behavior is persisted before preview.",
             'Use this exact fragment verbatim in the single insert-fragment call; do not add props, styles, expressions, or alternate components until after it commits: <ws.element ws:tag="header"><ws.element ws:tag="nav"><ws.element ws:tag="a">Northstar</ws.element><ws.element ws:tag="button">Menu</ws.element></ws.element></ws.element><ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h1">Find your latitude</ws.element><ws.element ws:tag="p">Plan a memorable summer escape.</ws.element><ws.element ws:tag="a">Explore trips</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Featured trips</ws.element><ws.element ws:tag="article"><ws.element ws:tag="h3">Coastal escape</ws.element><ws.element ws:tag="p">A restorative journey by the sea.</ws.element></ws.element></ws.element></ws.element><ws.element ws:tag="footer"><ws.element ws:tag="p">Northstar travel</ws.element></ws.element>',
+            "The exact fragment already contains all required content. Do not call clone-instance, update-text, set-text-content, or any other content or structure mutation after insertion; only attach the three tokens and apply the one batched style update.",
           ]
         : []),
       ...(fixture.id === "font-assets-v1"
         ? [
-            "For this fixture, do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas. Upload both supplied fonts together with exactly one upload-assets call; do not use upload-asset.",
+            "Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas. Upload both supplied fonts together with exactly one upload-assets call; do not use upload-asset.",
+            "After upload, update both font assets together in one parallel tool-call batch.",
+            "After refresh, get both font assets together in one parallel verification batch, then audit.",
           ]
         : []),
     ],

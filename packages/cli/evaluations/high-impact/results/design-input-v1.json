@@ -6,18 +6,18 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "0ad75f205bdec0b57286ea80126b24476ab8929b28d2de426ef161158a41c6a9",
+  "commandSha256": "7ac2c9eddeef83fb898debf1d4f9470d76f80a63c6207d415bd3fcc03a6bbb41",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 139834,
+    "durationMs": 119112,
     "tokens": {
-      "input": 901717,
-      "cachedInput": 838656,
+      "input": 495094,
+      "cachedInput": 458496,
       "cacheWriteInput": 0,
-      "output": 6234,
-      "reasoningOutput": 1970,
-      "total": 907951,
-      "cachedInputRate": 0.9301
+      "output": 5524,
+      "reasoningOutput": 1260,
+      "total": 500618,
+      "cachedInputRate": 0.9261
     },
     "toolCalls": {
       "total": 17,
@@ -29,81 +29,81 @@
       "durationsByTool": {
         "attach-design-token": {
           "count": 3,
-          "totalMs": 50,
-          "p95Ms": 31,
-          "maxMs": 31
+          "totalMs": 29,
+          "p95Ms": 11,
+          "maxMs": 11
         },
         "audit": {
           "count": 1,
-          "totalMs": 15,
-          "p95Ms": 15,
-          "maxMs": 15
+          "totalMs": 17,
+          "p95Ms": 17,
+          "maxMs": 17
         },
         "create-page": {
           "count": 1,
-          "totalMs": 50,
-          "p95Ms": 50,
-          "maxMs": 50
+          "totalMs": 21,
+          "p95Ms": 21,
+          "maxMs": 21
         },
         "insert-fragment": {
           "count": 1,
-          "totalMs": 60,
-          "p95Ms": 60,
-          "maxMs": 60
+          "totalMs": 72,
+          "p95Ms": 72,
+          "maxMs": 72
         },
         "list-assets": {
           "count": 1,
-          "totalMs": 4,
-          "p95Ms": 4,
-          "maxMs": 4
+          "totalMs": 26,
+          "p95Ms": 26,
+          "maxMs": 26
         },
         "list-breakpoints": {
           "count": 1,
-          "totalMs": 12,
-          "p95Ms": 12,
-          "maxMs": 12
+          "totalMs": 25,
+          "p95Ms": 25,
+          "maxMs": 25
         },
         "list-design-tokens": {
           "count": 1,
-          "totalMs": 6,
-          "p95Ms": 6,
-          "maxMs": 6
+          "totalMs": 23,
+          "p95Ms": 23,
+          "maxMs": 23
         },
         "list-pages": {
           "count": 1,
-          "totalMs": 5,
-          "p95Ms": 5,
-          "maxMs": 5
+          "totalMs": 23,
+          "p95Ms": 23,
+          "maxMs": 23
         },
         "list-variables": {
           "count": 1,
-          "totalMs": 2,
-          "p95Ms": 2,
-          "maxMs": 2
+          "totalMs": 26,
+          "p95Ms": 26,
+          "maxMs": 26
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 12,
-          "p95Ms": 12,
-          "maxMs": 12
+          "totalMs": 10,
+          "p95Ms": 10,
+          "maxMs": 10
         },
         "preview.start": {
           "count": 1,
-          "totalMs": 1699,
-          "p95Ms": 1699,
-          "maxMs": 1699
+          "totalMs": 3319,
+          "p95Ms": 3319,
+          "maxMs": 3319
         },
         "screenshot": {
           "count": 2,
-          "totalMs": 20154,
-          "p95Ms": 10950,
-          "maxMs": 10950
+          "totalMs": 9393,
+          "p95Ms": 8165,
+          "maxMs": 8165
         },
         "update-styles": {
           "count": 1,
-          "totalMs": 59,
-          "p95Ms": 59,
-          "maxMs": 59
+          "totalMs": 57,
+          "p95Ms": 57,
+          "maxMs": 57
         },
         "verify-bindings": {
           "count": 1,
@@ -119,18 +119,18 @@
       "plannedMutations": 0,
       "committedMutations": 6,
       "verifications": 4,
-      "totalDurationMs": 22131,
-      "p50DurationMs": 12,
-      "p95DurationMs": 10950,
-      "timeToFirstMutationMs": 36166,
-      "timeToFirstVerificationMs": 44290
+      "totalDurationMs": 13044,
+      "p50DurationMs": 23,
+      "p95DurationMs": 8165,
+      "timeToFirstMutationMs": 26655,
+      "timeToFirstVerificationMs": 33148
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-breakpoints",
     "list-design-tokens",
     "list-pages",
+    "list-breakpoints",
     "list-assets",
     "list-variables",
     "create-page",

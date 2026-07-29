@@ -24,9 +24,9 @@ describe("high-impact agent runner", () => {
     });
     expect(task).not.toHaveProperty("project");
     expect(task).toMatchObject({
-      constraints: [
+      constraints: expect.arrayContaining([
         expect.any(String),
-        expect.stringContaining("meta.guide"),
+        expect.stringContaining("exactly once at the beginning"),
         expect.any(String),
         expect.stringContaining("Never use broad project reads"),
         expect.any(String),
@@ -36,17 +36,21 @@ describe("high-impact agent runner", () => {
           "After the first successful screenshot, do not mutate"
         ),
         expect.stringContaining("Do not call list-breakpoints"),
-      ],
+      ]),
     });
-    expect(task.constraints).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining("Do not call list-breakpoints"),
-        expect.stringContaining("do not call meta.get_more_tools"),
-        expect.stringContaining(
-          "Create exactly one scoped non-secret fixture variable"
-        ),
-        expect.stringContaining("do not call list-variables again"),
-      ])
+    const authConstraints = task.constraints.join("\n");
+    expect(authConstraints).toContain("Do not call list-breakpoints");
+    expect(authConstraints).toContain("do not call meta.get_more_tools");
+    expect(authConstraints).toContain(
+      "Create exactly one scoped non-secret fixture variable"
+    );
+    expect(authConstraints).toContain("do not call list-variables again");
+    expect(authConstraints).toContain("static audit");
+    expect(authConstraints).toContain("do not set rendered:true");
+    expect(authConstraints).toContain("Call meta.guide exactly once");
+    expect(authConstraints).toContain("one parallel read batch");
+    expect(authConstraints).toContain(
+      "call create-page exactly once, then create-variable"
     );
     expect(
       createMinimalAgentTask(designInputFixture, {
@@ -65,6 +69,15 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("returned mobile breakpoint id"),
         expect.stringContaining("Use this exact fragment verbatim"),
         expect.stringContaining('ws:tag="footer"'),
+        expect.stringContaining("Do not call clone-instance"),
+        expect.stringContaining("set-text-content"),
+        expect.stringContaining("Call list-pages, list-breakpoints"),
+        expect.stringContaining("one parallel tool-call batch"),
+        expect.stringContaining("Attach all three tokens in one parallel"),
+        expect.stringContaining("Do not call get-page-by-path"),
+        expect.stringContaining(
+          "verify-bindings immediately after insert-fragment"
+        ),
         expect.stringContaining("do not call list-instances"),
         expect.stringContaining("Do not call meta.index"),
       ]),
@@ -76,8 +89,11 @@ describe("high-impact agent runner", () => {
       }).constraints
     ).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("do not call meta.index, meta.get_more_tools"),
+        expect.stringContaining("Do not call meta.index, meta.get_more_tools"),
+        expect.stringContaining("Call meta.guide exactly once"),
         expect.stringContaining("exactly one upload-assets call"),
+        expect.stringContaining("parallel tool-call batch"),
+        expect.stringContaining("parallel verification batch"),
       ])
     );
   });

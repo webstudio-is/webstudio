@@ -2864,9 +2864,6 @@ type SdkTool = {
     destructiveHint: boolean;
     openWorldHint: boolean;
   };
-  _meta: {
-    webstudio: ProjectSessionMcpTool["annotations"];
-  };
 };
 
 export const hiddenMcpOperationCommands = new Set<string>([
@@ -5065,7 +5062,7 @@ const metaGoalGuides = [
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       "After all authentication expressions are created or changed, call verify-bindings once for the account page and resolve every validity, scope, and reference finding before previewing. Updating only a fixture variable's literal state does not require another binding verification.",
-      "Call preview.start once, then capture the required desktop and mobile path screenshots back-to-back: path screenshots refresh the current session automatically. Do not run discovery or inspect-instance after visual verification starts. Do not restart preview or re-run verify-bindings between non-secret fixture-state updates. After the requested screenshots succeed, audit the route immediately. A successful final audit is terminal: do not mutate, verify, restart preview, or capture more screenshots afterward. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.",
+      'Call preview.start once, then capture the required desktop and mobile path screenshots back-to-back: path screenshots refresh the current session automatically. Do not run discovery or inspect-instance after visual verification starts. Do not restart preview or re-run verify-bindings between non-secret fixture-state updates. The screenshots are the rendered evidence. After they succeed, run a static audit with {"pagePath":"/account"}; do not set rendered:true and duplicate the same captures. A successful final audit is terminal: do not mutate, verify, restart preview, or capture more screenshots afterward. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
   },
   {
@@ -5497,19 +5494,33 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   );
 };
 
-// Keep output contracts for local validation and generated documentation, but do
-// not resend hundreds of kilobytes of optional schemas in every MCP handshake.
+const omitSchemaDescriptions = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(omitSchemaDescriptions);
+  }
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => key !== "description")
+      .map(([key, child]) => [key, omitSchemaDescriptions(child)])
+  );
+};
+
+// Keep output contracts, complete input guidance, and Webstudio operation
+// metadata for local validation, generated documentation, and focused
+// discovery. Do not resend those optional details in every MCP handshake.
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
   description: tool.description,
-  inputSchema: tool.inputSchema,
+  inputSchema: omitSchemaDescriptions(
+    tool.inputSchema
+  ) as ProjectSessionMcpInputSchema,
   annotations: {
     readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),
     destructiveHint: tool.annotations.requiresConfirm,
     openWorldHint: tool.annotations.serverOnly,
-  },
-  _meta: {
-    webstudio: tool.annotations,
   },
 });
 

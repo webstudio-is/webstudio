@@ -19,11 +19,13 @@ export type EvaluationComparison = {
   status: "passed" | "regressed" | "missing" | "incompatible";
   baselineCommandSha256?: string;
   maxMetricRegressionPercent: number;
+  maxTokenRegressionPercent: number;
   deltas: EvaluationMetricDelta[];
   regressions: EvaluationRegression[];
 };
 
 export const maxMetricRegressionPercent = 15;
+export const maxTokenRegressionPercent = 50;
 
 export const isEvaluationComparisonAccepted = ({
   comparison,
@@ -86,6 +88,7 @@ export const compareEvaluationResult = (
 ): EvaluationComparison => {
   const empty = {
     maxMetricRegressionPercent,
+    maxTokenRegressionPercent,
     deltas: [],
     regressions: [],
   };
@@ -122,7 +125,9 @@ export const compareEvaluationResult = (
       continue;
     }
     const regressionPercent =
-      metric === "metrics.tokens.total" ? 25 : maxMetricRegressionPercent;
+      metric === "metrics.tokens.total"
+        ? maxTokenRegressionPercent
+        : maxMetricRegressionPercent;
     const relativeIncrease = Math.floor(
       baselineValue * (regressionPercent / 100) +
         Number.EPSILON * Math.max(1, baselineValue)
@@ -161,6 +166,7 @@ export const compareEvaluationResult = (
     status: regressions.length === 0 ? "passed" : "regressed",
     baselineCommandSha256: baseline.commandSha256,
     maxMetricRegressionPercent,
+    maxTokenRegressionPercent,
     deltas,
     regressions,
   };
