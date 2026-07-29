@@ -501,6 +501,80 @@ describe("createPropUpsertPayload", () => {
 });
 
 describe("updateProps", () => {
+  test("parses CSS strings in animation action keyframes", () => {
+    const input = propUpdatesInput.parse({
+      updates: [
+        {
+          instanceId: "animation-id",
+          name: "action",
+          type: "animationAction",
+          value: {
+            type: "scroll",
+            axis: "y",
+            source: "closest",
+            animations: [
+              {
+                keyframes: [
+                  { offset: 0, styles: { transform: "translateX(0%)" } },
+                  { offset: 1, styles: { transform: "translateX(-75%)" } },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(input.updates[0].value).toEqual({
+      type: "scroll",
+      axis: "y",
+      source: "closest",
+      animations: [
+        {
+          timing: {},
+          keyframes: [
+            {
+              offset: 0,
+              styles: {
+                transform: {
+                  type: "tuple",
+                  value: [
+                    {
+                      type: "function",
+                      name: "translateX",
+                      args: {
+                        type: "layers",
+                        value: [{ type: "unit", unit: "%", value: 0 }],
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              offset: 1,
+              styles: {
+                transform: {
+                  type: "tuple",
+                  value: [
+                    {
+                      type: "function",
+                      name: "translateX",
+                      args: {
+                        type: "layers",
+                        value: [{ type: "unit", unit: "%", value: -75 }],
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   test("rejects invalid HtmlEmbed code updates", () => {
     const htmlEmbed: Instance = {
       type: "instance",

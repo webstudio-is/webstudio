@@ -3912,7 +3912,7 @@ const animationComponentGuidanceByComponent = new Map<string, string>([
       'Set the action prop to an animationAction. Use type:"view" for visibility-driven entry/exit animations and type:"scroll" for scroll-progress animations.',
       "For view actions, common settings are axis, subject, insetStart, insetEnd, isPinned, debug, and animations. Use subject only when another element should drive progress.",
       "For scroll actions, common settings are axis, source (nearest, root, or closest), isPinned, debug, and animations.",
-      "Each animation needs timing and keyframes. Timing can use rangeStart/rangeEnd, fill, easing, duration, delay, and iterations. Duration makes Range End unnecessary because duration defines when the animation ends.",
+      'Each animation needs keyframes; timing is optional and defaults to {}. In keyframes[].styles, use CSS property names with raw CSS strings such as transform:"translateX(-75%)"; update-props parses them into Webstudio style data. Timing can use rangeStart/rangeEnd, fill, easing, duration, delay, and iterations. Duration makes Range End unnecessary because duration defines when the animation ends.',
       'Use fill:"backwards" for in animations from animation styles to canvas styles, and fill:"forwards" for out animations from canvas styles to animation styles.',
       "Direct child animations expose --index and --total to support staggered formulas such as calc(var(--index) * 20%).",
       "For polished pages, design the element's normal canvas styles as the final state, then set the Animation Group keyframes to the starting or ending animated state.",
