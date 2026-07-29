@@ -1,4 +1,9 @@
-import { styleValue } from "@webstudio-is/css-engine";
+import {
+  hyphenateProperty,
+  styleValue,
+  type CssProperty,
+  type StyleValue,
+} from "@webstudio-is/css-engine";
 import { z } from "zod";
 
 // Helper for creating union of string literals from array
@@ -219,6 +224,74 @@ export const animationAction = z.discriminatedUnion("type", [
   scrollAction,
   viewAction,
 ]);
+
+const animationStyleInput = z.union([
+  z
+    .string()
+    .describe(
+      'CSS value such as "translateX(-75%)". The value is parsed into Webstudio style data before it is stored.'
+    ),
+  z
+    .object({ type: z.string() })
+    .passthrough()
+    .superRefine((value, context) => {
+      const result = styleValue.safeParse(value);
+      if (result.success === false) {
+        for (const issue of result.error.issues) {
+          context.addIssue({
+            code: "custom",
+            path: issue.path,
+            message: issue.message,
+          });
+        }
+      }
+    }),
+]);
+
+const animationKeyframeInput = animationKeyframe.extend({
+  styles: z.record(z.string(), animationStyleInput),
+});
+
+const scrollAnimationInput = scrollAnimation.extend({
+  timing: scrollAnimation.shape.timing.optional().default({}),
+  keyframes: z.array(animationKeyframeInput),
+});
+
+const viewAnimationInput = viewAnimation.extend({
+  timing: viewAnimation.shape.timing.optional().default({}),
+  keyframes: z.array(animationKeyframeInput),
+});
+
+export const createAnimationActionInput = ({
+  parseCssValue,
+}: {
+  parseCssValue: (property: CssProperty, value: string) => StyleValue;
+}) =>
+  z
+    .discriminatedUnion("type", [
+      scrollAction.extend({ animations: z.array(scrollAnimationInput) }),
+      viewAction.extend({ animations: z.array(viewAnimationInput) }),
+    ])
+    .transform(
+      (action): AnimationAction =>
+        ({
+          ...action,
+          animations: action.animations.map((animation) => ({
+            ...animation,
+            keyframes: animation.keyframes.map((keyframe) => ({
+              ...keyframe,
+              styles: Object.fromEntries(
+                Object.entries(keyframe.styles).map(([property, value]) => [
+                  property,
+                  typeof value === "string"
+                    ? parseCssValue(hyphenateProperty(property), value)
+                    : value,
+                ])
+              ),
+            })),
+          })),
+        }) as AnimationAction
+    );
 
 // Helper function to check if a value is a valid range unit
 export const isRangeUnit = (

@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { parseCssValue } from "@webstudio-is/css-data";
 import {
+  createAnimationActionInput,
   prop as propSchema,
   type Instance,
   type Prop,
@@ -170,6 +172,8 @@ const propValueBaseInput = {
   required: z.boolean().optional(),
 };
 
+const animationActionInput = createAnimationActionInput({ parseCssValue });
+
 const propValueInputVariants = [
   z.object({
     ...propValueBaseInput,
@@ -245,9 +249,9 @@ const propValueInputVariants = [
   z.object({
     ...propValueBaseInput,
     type: z.literal("animationAction"),
-    value: z
-      .unknown()
-      .describe("Animation action payload. Prefer existing animation tools."),
+    value: animationActionInput.describe(
+      "Animation action payload. Keyframe styles accept CSS strings or Webstudio style data; omitted timing defaults to an empty options object."
+    ),
   }),
 ] as const;
 

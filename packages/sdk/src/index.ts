@@ -62,6 +62,7 @@ export type {
 
 export {
   animationAction,
+  createAnimationActionInput,
   scrollAnimation,
   viewAnimation,
   rangeUnitValue,
