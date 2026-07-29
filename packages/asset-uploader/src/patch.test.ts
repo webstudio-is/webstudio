@@ -288,6 +288,62 @@ describe("patchAssets (msw)", () => {
     expect(updatedDescription).toBe("New description");
   });
 
+  test("persists asset metadata via patch", async () => {
+    const projectId = uid();
+    let localAssetRow = {
+      ...assetRow,
+      projectId,
+      file: {
+        ...assetRow.file,
+        name: "font.woff2",
+        format: "woff2",
+        meta: JSON.stringify({
+          family: "Rajdhani",
+          style: "normal",
+          weight: 400,
+        }),
+      },
+    };
+    let updatedMeta: unknown;
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("File", async ({ request }) => {
+        updatedMeta = ((await request.json()) as { meta: unknown }).meta;
+        localAssetRow = {
+          ...localAssetRow,
+          file: { ...localAssetRow.file, meta: String(updatedMeta) },
+        };
+        return json({ meta: updatedMeta });
+      })
+    );
+
+    await patchAssets(
+      { projectId },
+      [
+        {
+          op: "replace",
+          path: ["asset-1", "meta"],
+          value: { family: "Rajdhani", style: "normal", weight: 600 },
+        },
+      ],
+      createContext()
+    );
+
+    expect(updatedMeta).toBe(
+      JSON.stringify({ family: "Rajdhani", style: "normal", weight: 600 })
+    );
+    await expect(
+      loadAssetsByProjectWithClient(projectId, testContext.postgrest.client)
+    ).resolves.toEqual([
+      expect.objectContaining({
+        id: "asset-1",
+        meta: { family: "Rajdhani", style: "normal", weight: 600 },
+      }),
+    ]);
+  });
+
   test("updates asset filename via patch", async () => {
     const projectId = uid();
     let localAssetRow = { ...assetRow, projectId };

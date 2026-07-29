@@ -9,6 +9,8 @@ import {
 } from "./patch-utils";
 import { swapAssetFileWithClient } from "./revision";
 
+const serializeAssetMeta = (meta: Asset["meta"]) => JSON.stringify(meta);
+
 export const createAssetRows = (assets: Iterable<Asset>, projectId: string) =>
   Array.from(assets, (asset) => ({
     id: asset.id,
@@ -154,7 +156,8 @@ export const patchAssetsWithClient = async (
       previous.name === asset.name &&
       previous.filename === asset.filename &&
       previous.description === asset.description &&
-      previous.folderId === asset.folderId
+      previous.folderId === asset.folderId &&
+      serializeAssetMeta(previous.meta) === serializeAssetMeta(asset.meta)
   );
   if (deletedAssetIds.length !== 0) {
     await deleteAssetsWithClient({ projectId, ids: deletedAssetIds }, client);
@@ -176,27 +179,46 @@ export const patchAssetsWithClient = async (
         client
       );
     }
-    const { filename, description, folderId } = asset;
-    const updatedAsset = await client
-      .from("Asset")
-      .update({
-        filename: filename ?? null,
-        description: description ?? null,
-        folderId: folderId ?? null,
-      })
-      .eq("id", asset.id)
-      .eq("projectId", asset.projectId)
-      .select("filename, description, folderId")
-      .single();
-    assertPostgrestSuccess(updatedAsset);
     if (
-      updatedAsset.data?.filename !== (filename ?? null) ||
-      updatedAsset.data?.description !== (description ?? null) ||
-      (updatedAsset.data?.folderId ?? null) !== (folderId ?? null)
+      previous.filename !== asset.filename ||
+      previous.description !== asset.description ||
+      previous.folderId !== asset.folderId
     ) {
-      throw new Error(
-        `Asset metadata update was not persisted for ${asset.id}`
-      );
+      const { filename, description, folderId } = asset;
+      const updatedAsset = await client
+        .from("Asset")
+        .update({
+          filename: filename ?? null,
+          description: description ?? null,
+          folderId: folderId ?? null,
+        })
+        .eq("id", asset.id)
+        .eq("projectId", asset.projectId)
+        .select("filename, description, folderId")
+        .single();
+      assertPostgrestSuccess(updatedAsset);
+      if (
+        updatedAsset.data?.filename !== (filename ?? null) ||
+        updatedAsset.data?.description !== (description ?? null) ||
+        (updatedAsset.data?.folderId ?? null) !== (folderId ?? null)
+      ) {
+        throw new Error(`Asset update was not persisted for ${asset.id}`);
+      }
+    }
+    if (serializeAssetMeta(previous.meta) !== serializeAssetMeta(asset.meta)) {
+      const meta = serializeAssetMeta(asset.meta);
+      const updatedFile = await client
+        .from("File")
+        .update({ meta })
+        .eq("name", asset.name)
+        .select("meta")
+        .single();
+      assertPostgrestSuccess(updatedFile);
+      if (updatedFile.data?.meta !== meta) {
+        throw new Error(
+          `Asset metadata update was not persisted for ${asset.id}`
+        );
+      }
     }
   }
 
