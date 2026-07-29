@@ -340,6 +340,17 @@ export const formatValidationIssues = (
     })
     .join("\n");
 
+export const formatValidationErrorMessage = (
+  message: string,
+  issues: readonly SemanticValidationIssue[]
+) => {
+  const formattedIssues = formatValidationIssues(issues);
+  if (formattedIssues.length === 0 || message.includes(formattedIssues)) {
+    return message;
+  }
+  return `${message}\n${formattedIssues}`;
+};
+
 export const formatValidationIssueMessages = (
   issues: readonly SemanticValidationIssue[]
 ) =>

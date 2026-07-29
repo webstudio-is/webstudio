@@ -13,10 +13,19 @@ export type BoundedMcpCall = {
     confirmDestructive?: true;
     hasConfirmationToken?: true;
   };
+  startedAtMs: number;
+  durationMs?: number;
+  mutation?: true;
+  planned?: true;
+  committed?: true;
   isError?: true;
 };
 
-export const getMcpTraceRequest = (value: unknown) => {
+export const getMcpTraceRequest = (
+  value: unknown,
+  startedAtMs = 0,
+  mutationToolNames: ReadonlySet<string> = new Set()
+) => {
   if (isPlainRecord(value) === false || value.method !== "tools/call") {
     return;
   }
@@ -29,7 +38,11 @@ export const getMcpTraceRequest = (value: unknown) => {
   ) {
     return;
   }
-  const call: BoundedMcpCall = { name: params.name };
+  const call: BoundedMcpCall = {
+    name: params.name,
+    startedAtMs: Math.round(startedAtMs),
+    ...(mutationToolNames.has(params.name) ? { mutation: true as const } : {}),
+  };
   if (isPlainRecord(params.arguments)) {
     const args: NonNullable<BoundedMcpCall["arguments"]> = {};
     const viewport = params.arguments.viewport;
@@ -59,7 +72,8 @@ export const getMcpTraceRequest = (value: unknown) => {
 
 export const getMcpTraceResponse = (
   value: unknown,
-  pending: Map<JsonRpcId, BoundedMcpCall>
+  pending: Map<JsonRpcId, BoundedMcpCall>,
+  completedAtMs = 0
 ) => {
   if (isPlainRecord(value) === false) {
     return;
@@ -74,10 +88,70 @@ export const getMcpTraceResponse = (
   }
   pending.delete(id);
   const result = value.result;
-  return value.error !== undefined ||
+  const isError =
+    value.error !== undefined ||
     (isPlainRecord(result) && result.isError === true)
-    ? { ...call, isError: true as const }
-    : call;
+      ? (true as const)
+      : undefined;
+  const structuredContent =
+    isPlainRecord(result) && isPlainRecord(result.structuredContent)
+      ? result.structuredContent
+      : undefined;
+  const meta =
+    structuredContent !== undefined && isPlainRecord(structuredContent.meta)
+      ? structuredContent.meta
+      : undefined;
+  const session =
+    meta !== undefined && isPlainRecord(meta.session)
+      ? meta.session
+      : undefined;
+  const committed =
+    call.mutation === true && session?.committed === true
+      ? (true as const)
+      : undefined;
+  const planned =
+    call.mutation === true &&
+    session?.source === "dry-run" &&
+    session.transaction !== undefined
+      ? (true as const)
+      : undefined;
+  return {
+    ...call,
+    durationMs: Math.max(0, Math.round(completedAtMs - call.startedAtMs)),
+    ...(planned === undefined ? {} : { planned }),
+    ...(committed === undefined ? {} : { committed }),
+    ...(isError === undefined ? {} : { isError }),
+  };
+};
+
+export const getMcpToolsListRequestId = (value: unknown) => {
+  if (isPlainRecord(value) === false || value.method !== "tools/list") {
+    return;
+  }
+  return typeof value.id === "string" || typeof value.id === "number"
+    ? value.id
+    : undefined;
+};
+
+export const getMcpMutationToolNames = (value: unknown) => {
+  if (
+    isPlainRecord(value) === false ||
+    isPlainRecord(value.result) === false ||
+    Array.isArray(value.result.tools) === false
+  ) {
+    return;
+  }
+  return value.result.tools.flatMap((tool) => {
+    if (
+      isPlainRecord(tool) &&
+      typeof tool.name === "string" &&
+      isPlainRecord(tool.annotations) &&
+      tool.annotations.readOnlyHint === false
+    ) {
+      return [tool.name];
+    }
+    return [];
+  });
 };
 
 const observeJsonLines = (
@@ -103,18 +177,42 @@ const run = () => {
     throw new Error("Expected target CLI and trace file paths.");
   }
   const pending = new Map<JsonRpcId, BoundedMcpCall>();
+  const pendingToolsLists = new Set<JsonRpcId>();
+  const mutationToolNames = new Set<string>();
+  const startedAt = performance.now();
   const child = spawn(process.execPath, [target, "mcp"], {
     env: process.env,
     stdio: ["pipe", "pipe", "inherit"],
   });
   observeJsonLines(process.stdin, (value) => {
-    const request = getMcpTraceRequest(value);
+    const toolsListId = getMcpToolsListRequestId(value);
+    if (toolsListId !== undefined) {
+      pendingToolsLists.add(toolsListId);
+    }
+    const request = getMcpTraceRequest(
+      value,
+      performance.now() - startedAt,
+      mutationToolNames
+    );
     if (request !== undefined) {
       pending.set(request.id, request.call);
     }
   });
   observeJsonLines(child.stdout, (value) => {
-    const call = getMcpTraceResponse(value, pending);
+    if (
+      isPlainRecord(value) &&
+      (typeof value.id === "string" || typeof value.id === "number") &&
+      pendingToolsLists.delete(value.id)
+    ) {
+      for (const name of getMcpMutationToolNames(value) ?? []) {
+        mutationToolNames.add(name);
+      }
+    }
+    const call = getMcpTraceResponse(
+      value,
+      pending,
+      performance.now() - startedAt
+    );
     if (call !== undefined) {
       appendFileSync(tracePath, `${JSON.stringify(call)}\n`, "utf8");
     }

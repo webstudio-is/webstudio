@@ -23,7 +23,6 @@ import { resolveApiConnection } from "../api-connection";
 import {
   getCliErrorIssues,
   getCliErrorMessage,
-  getCliErrorSummary,
   getStableErrorCode,
   isMissingApiAccessError,
 } from "../error-codes";
@@ -683,14 +682,14 @@ const getMcpRunError = (error: unknown) => {
       code: isMissingApiAccessError(error)
         ? "UNAUTHORIZED"
         : (error.code ?? "MCP_TOOL_FAILED"),
-      message: getCliErrorSummary(error),
+      message: getCliErrorMessage(error),
       ...(issues === undefined ? {} : { issues }),
     };
   }
   const code = isMissingApiAccessError(error)
     ? "UNAUTHORIZED"
     : (getStableErrorCode(error) ?? "MCP_TOOL_FAILED");
-  const message = getCliErrorSummary(error);
+  const message = getCliErrorMessage(error);
   return { code, message, ...(issues === undefined ? {} : { issues }) };
 };
 

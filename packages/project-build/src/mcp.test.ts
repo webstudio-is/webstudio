@@ -7265,7 +7265,9 @@ describe("project session mcp adapter", () => {
           structuredContent: {
             ok: false,
             error: {
-              message: "Tool input is invalid.",
+              message: expect.stringContaining(
+                'email: Invalid email address (format:email). Example: "user@example.com".'
+              ),
               code: "INVALID_INPUT",
               issues: expect.arrayContaining([
                 expect.objectContaining({
@@ -7322,7 +7324,8 @@ describe("project session mcp adapter", () => {
         ok: false,
         error: {
           code: "INVALID_INPUT",
-          message: "Page input is invalid.",
+          message:
+            'Page input is invalid.\nvalues.title: Invalid Webstudio expression (valid_webstudio_expression). Example: "pageTitle ?? \\"Pricing\\"". Detail: Unexpected token at 1:4',
           issues: [issue],
         },
         meta: {},

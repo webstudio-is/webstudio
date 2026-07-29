@@ -79,6 +79,7 @@ import {
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { webstudioJsxFragmentInputDescription } from "./runtime/jsx/bindings";
 import {
+  formatValidationErrorMessage,
   getValidationIssues,
   getZodValidationIssues,
   semanticValidationIssuesJsonSchema,
@@ -6849,7 +6850,7 @@ const toToolErrorResult = (
     error instanceof z.ZodError
       ? getZodValidationIssues(error, inputSchema)
       : getValidationIssues(error);
-  const message =
+  const baseMessage =
     code === "PROJECT_SESSION_BUSY"
       ? projectSessionBusyMessage
       : error instanceof z.ZodError
@@ -6857,6 +6858,10 @@ const toToolErrorResult = (
         : error instanceof Error
           ? error.message
           : String(error);
+  const message =
+    validationIssues === undefined || validationIssues.length === 0
+      ? baseMessage
+      : formatValidationErrorMessage(baseMessage, validationIssues);
   const structuredContent = {
     ok: false as const,
     error: {

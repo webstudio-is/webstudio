@@ -27,6 +27,7 @@ describe("high-impact agent runner", () => {
         expect.any(String),
         expect.stringContaining("meta.guide"),
         expect.any(String),
+        expect.stringContaining("Never use broad project reads"),
         expect.any(String),
         expect.stringContaining("meta.next"),
       ],
@@ -49,32 +50,62 @@ describe("high-impact agent runner", () => {
     try {
       const resultPath = join(directory, "result.json");
       const taskPath = join(directory, "task.json");
+      const usageEvent = JSON.stringify({
+        type: "turn.completed",
+        usage: {
+          input_tokens: 1_000,
+          cached_input_tokens: 400,
+          cache_write_input_tokens: 50,
+          output_tokens: 200,
+          reasoning_output_tokens: 75,
+        },
+      });
       const result = await runHighImpactAgentEvaluation({
         fixture: authenticatedPageFixture,
         target: { kind: "packaged", executable: "/tmp/webstudio" },
-        agentCommand: "node -e 'process.exit(0)'",
+        agentCommand: `${JSON.stringify(process.execPath)} -e ${JSON.stringify(
+          `console.log(${JSON.stringify(usageEvent)})`
+        )}`,
         cwd: directory,
         taskPath,
         resultPath,
         provider: "test-provider",
         model: "test-model",
-        getCallSequence: () => ["meta.guide", "audit"],
+        getToolCalls: () => [
+          { name: "meta.guide", startedAtMs: 100, durationMs: 25 },
+          { name: "audit", startedAtMs: 500, durationMs: 75 },
+        ],
         evaluate: async () => ({
           passed: true,
           checks: { privacy: "passed", audit: "passed" },
           failures: [],
-          metrics: { toolCallCount: 6, focusedReadCount: 2 },
         }),
       });
       expect(result).toMatchObject({
+        schemaVersion: 2,
         outcome: "passed",
         cli: "packaged",
-        toolCallCount: 6,
-        focusedReadCount: 2,
+        metrics: {
+          durationMs: expect.any(Number),
+          tokens: {
+            input: 1_000,
+            cachedInput: 400,
+            output: 200,
+            total: 1_200,
+          },
+          toolCalls: {
+            total: 2,
+            failed: 0,
+            verifications: 1,
+            timeToFirstVerificationMs: 500,
+          },
+        },
         callSequence: ["meta.guide", "audit"],
+        checks: { usageCaptured: "passed" },
       });
       const source = await readFile(resultPath, "utf8");
       expect(source).not.toMatch(/transcript|stdout|stderr|credential/i);
+      expect(source).not.toContain(usageEvent);
       expect(JSON.parse(await readFile(taskPath, "utf8"))).toMatchObject({
         fixtureId: "authenticated-page-v1",
         mcp: { args: ["mcp"] },

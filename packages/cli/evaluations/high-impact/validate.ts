@@ -14,10 +14,15 @@ import {
   fontAssetFixtureMeta,
   fontAssetFixtureSource,
 } from "./font-assets-fixture";
+import { isBroadRead } from "./evaluation-metrics";
 
 export type EvaluationToolCall = {
   name: string;
   arguments?: Record<string, unknown>;
+  startedAtMs?: number;
+  durationMs?: number;
+  planned?: true;
+  committed?: true;
   isError?: boolean;
 };
 
@@ -39,7 +44,6 @@ export type HighImpactEvaluationResult = {
   passed: boolean;
   checks: Record<string, "passed" | "failed">;
   failures: string[];
-  metrics: { toolCallCount: number; focusedReadCount: number };
 };
 
 const secretPatterns = [
@@ -47,12 +51,6 @@ const secretPatterns = [
   /authorization\s*:\s*bearer\s+\S+/i,
   /\b(?:eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}|sk-[A-Za-z0-9_-]{20,})\b/,
 ];
-
-const broadReadNames = new Set([
-  "snapshot",
-  "components.list",
-  "components.coverage-plan",
-]);
 
 const allowedComponents = new Set([
   "body",
@@ -233,11 +231,8 @@ const validateCommon = (
     checks,
     failures,
     "boundedReads",
-    input.toolCalls.every((call) => broadReadNames.has(call.name) === false) &&
-      input.toolCalls.filter((call) =>
-        /^(?:list-|get-|inspect-)/.test(call.name)
-      ).length <= 8,
-    "Evaluation used a broad project dump or more than eight focused project reads."
+    input.toolCalls.every((call) => isBroadRead(call.name) === false),
+    "Evaluation used a broad project dump instead of focused project reads."
   );
 };
 
@@ -534,11 +529,5 @@ export const evaluateHighImpactOutcome = (
     passed: failures.length === 0,
     checks,
     failures,
-    metrics: {
-      toolCallCount: input.toolCalls.length,
-      focusedReadCount: input.toolCalls.filter((call) =>
-        /^(?:list-|get-|inspect-)/.test(call.name)
-      ).length,
-    },
   };
 };

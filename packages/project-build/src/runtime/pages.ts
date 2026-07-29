@@ -24,6 +24,7 @@ import {
   isPageDraft,
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
+import { tokenizer } from "acorn";
 import * as bcp47 from "bcp-47";
 import slugify from "slugify";
 import { z } from "zod";
@@ -859,10 +860,56 @@ const jsExpressionStartPattern =
   /^\s*(?:["'`[{(]|(?:await|new|typeof|void)\b|(?:undefined|null|true|false)\s*$)/;
 const jsExpressionOperatorPattern =
   /(?:\?\?|&&|\|\||=>|\?\s*.+\s*:|\.\s*[A-Za-z_$]|\[[^\]]*\]|\s(?:[=!<>]=?|[+\-*/%])\s)/;
-const urlStringPattern = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//;
+
+const pageTextSentenceSegmenter = new Intl.Segmenter(undefined, {
+  granularity: "sentence",
+});
+
+const hasMultipleSentences = (value: string) => {
+  let count = 0;
+  for (const { segment } of pageTextSentenceSegmenter.segment(value)) {
+    if (segment.trim().length > 0) {
+      count += 1;
+    }
+    if (count > 1) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const hasWhitespaceAfterDot = (value: string) => {
+  try {
+    const tokens = tokenizer(value, { ecmaVersion: "latest" });
+    let token = tokens.getToken();
+    while (token.type.label !== "eof") {
+      const nextToken = tokens.getToken();
+      if (
+        token.type.label === "." &&
+        nextToken.type.label === "name" &&
+        token.end < nextToken.start
+      ) {
+        return true;
+      }
+      token = nextToken;
+    }
+  } catch {
+    return hasMultipleSentences(value);
+  }
+  return false;
+};
+
+const isAbsoluteUrl = (value: string) => {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 const normalizePageExpressionInput = (value: string) => {
-  if (urlStringPattern.test(value)) {
+  if (isAbsoluteUrl(value) || hasWhitespaceAfterDot(value)) {
     return JSON.stringify(value);
   }
   if (

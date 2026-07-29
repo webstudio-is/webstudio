@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -14,10 +14,18 @@ import {
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
 import { evaluateHighImpactOutcome } from "./validate";
-import { runHighImpactAgentEvaluation } from "./agent-runner";
+import {
+  runHighImpactAgentEvaluation,
+  type AgentEvaluationResult,
+} from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
 import type { EvaluationToolCall } from "./validate";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
+import {
+  compareEvaluationResult,
+  isEvaluationComparisonAccepted,
+  type EvaluationComparison,
+} from "./evaluation-regression";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -25,6 +33,10 @@ const require = createRequire(import.meta.url);
 const fixtureById = new Map<string, HighImpactFixture>(
   highImpactFixtures.map((fixture) => [fixture.id, fixture])
 );
+
+type AgentEvaluationReport = AgentEvaluationResult & {
+  comparison: EvaluationComparison;
+};
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
 
@@ -89,6 +101,7 @@ const runFixture = async ({
       "--dangerously-bypass-approvals-and-sandbox",
       "--skip-git-repo-check",
       "--ignore-rules",
+      "--json",
       "--model",
       shellQuote(model),
       "--cd",
@@ -114,7 +127,7 @@ const runFixture = async ({
       provider: "openai",
       model,
       env,
-      getCallSequence: () => toolCalls.map(({ name }) => name),
+      getToolCalls: () => toolCalls,
       evaluate: async () => {
         toolCalls = await readToolCalls();
         return evaluateHighImpactOutcome({
@@ -147,10 +160,30 @@ const run = async () => {
       choices: fixtureIds,
       description: "Run one evaluation fixture instead of the complete suite",
     })
+    .option("baseline-directory", {
+      type: "string",
+      description: "Directory containing accepted per-fixture result baselines",
+    })
+    .option("require-baseline", {
+      type: "boolean",
+      default: true,
+      description: "Fail when a compatible accepted baseline is unavailable",
+    })
+    .option("update-baselines", {
+      type: "boolean",
+      default: false,
+      description:
+        "Replace accepted baselines after every fixture passes; requires the complete suite",
+    })
     .strict()
     .help()
     .parse();
   const fixtures = selectFixtures(options.fixture);
+  if (options.updateBaselines && options.fixture !== undefined) {
+    throw new Error(
+      "Accepted baselines can only be updated by the complete suite."
+    );
+  }
   if (
     fixtures.length > 1 &&
     process.env.WEBSTUDIO_HIGH_IMPACT_RESULT !== undefined
@@ -164,19 +197,74 @@ const run = async () => {
     process.env.WEBSTUDIO_HIGH_IMPACT_RESULTS_DIR ??
       join(repositoryRoot, ".temp/evaluations/high-impact")
   );
-  const results = [];
+  const baselineDirectory = resolve(
+    options.baselineDirectory ??
+      process.env.WEBSTUDIO_HIGH_IMPACT_BASELINE_DIR ??
+      join(import.meta.dirname, "results")
+  );
+  const results: AgentEvaluationReport[] = [];
+  const rawResults: AgentEvaluationResult[] = [];
   for (const fixture of fixtures) {
     const resultPath = resolve(
       process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
         join(resultsDirectory, `${fixture.id}.json`)
     );
-    results.push(await runFixture({ fixture, repositoryRoot, resultPath }));
+    const result = await runFixture({ fixture, repositoryRoot, resultPath });
+    rawResults.push(result);
+    const baseline = await readFile(
+      join(baselineDirectory, `${fixture.id}.json`),
+      "utf8"
+    )
+      .then((source) => JSON.parse(source) as AgentEvaluationResult)
+      .catch(() => undefined);
+    const report = {
+      ...result,
+      comparison: compareEvaluationResult(result, baseline),
+    };
+    await writeFile(
+      resultPath,
+      `${JSON.stringify(report, undefined, 2)}\n`,
+      "utf8"
+    );
+    results.push(report);
   }
-  const outcome = results.every((result) => result.outcome === "passed")
-    ? "passed"
-    : "failed";
+  const evaluationsPassed = rawResults.every(
+    (result) => result.outcome === "passed"
+  );
+  if (options.updateBaselines && evaluationsPassed) {
+    await mkdir(baselineDirectory, { recursive: true });
+    await Promise.all(
+      rawResults.map((result) =>
+        writeFile(
+          join(baselineDirectory, `${result.fixtureId}.json`),
+          `${JSON.stringify(result, undefined, 2)}\n`,
+          "utf8"
+        )
+      )
+    );
+  }
+  const comparisonsPassed = results.every(({ comparison }) =>
+    isEvaluationComparisonAccepted({
+      comparison,
+      requireBaseline: options.requireBaseline,
+      updateBaselines: options.updateBaselines,
+    })
+  );
+  const outcome = evaluationsPassed && comparisonsPassed ? "passed" : "failed";
   process.stdout.write(
-    `${JSON.stringify({ outcome, results }, undefined, 2)}\n`
+    `${JSON.stringify(
+      {
+        outcome,
+        baselines: options.updateBaselines
+          ? evaluationsPassed
+            ? "updated"
+            : "not-updated"
+          : "compared",
+        results,
+      },
+      undefined,
+      2
+    )}\n`
   );
   if (outcome === "failed") {
     process.exitCode = 1;

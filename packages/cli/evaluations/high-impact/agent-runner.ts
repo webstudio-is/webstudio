@@ -2,7 +2,17 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { HighImpactFixture } from "./fixtures";
-import type { HighImpactEvaluationResult } from "./validate";
+import type {
+  EvaluationToolCall,
+  HighImpactEvaluationResult,
+} from "./validate";
+import {
+  addAgentUsage,
+  getAgentUsageEvent,
+  getMcpEvaluationMetrics,
+  type AgentUsage,
+  type McpEvaluationMetrics,
+} from "./evaluation-metrics";
 import { runAgentCommand } from "../../scripts/run-agent-command";
 import { boundedIdentifierPattern } from "../../src/type-utils";
 
@@ -11,7 +21,7 @@ export type AgentCliTarget =
   | { kind: "packaged"; executable: string };
 
 export type AgentEvaluationResult = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   kind: "high-impact-minimal-context-agent-evaluation-result";
   fixtureId: HighImpactFixture["id"];
   outcome: "passed" | "failed";
@@ -19,16 +29,19 @@ export type AgentEvaluationResult = {
   provider: string;
   model: string;
   commandSha256: string;
-  durationMs: number;
   exitCode: number;
-  toolCallCount: number;
-  focusedReadCount: number;
+  metrics: {
+    durationMs: number;
+    tokens?: AgentUsage;
+    toolCalls: McpEvaluationMetrics;
+  };
   callSequence: string[];
   checks: Record<string, "passed" | "failed">;
 };
 
 const forbiddenResultKeys =
-  /(?:prompt|transcript|stdout|stderr|token|secret|credential|payload)/i;
+  /(?:prompt|transcript|stdout|stderr|secret|credential|payload)/i;
+const forbiddenTokenKey = /token/i;
 
 export const getCliInvocation = (target: AgentCliTarget) =>
   target.kind === "source"
@@ -57,6 +70,7 @@ export const createMinimalAgentTask = (
       "Use the configured Webstudio project and local CLI.",
       "Begin with meta.guide for the objective and follow its workflow.",
       "Choose focused reads and semantic edits yourself.",
+      "Never use broad project reads: snapshot, components.list, or components.coverage-plan.",
       "Do not persist or report credentials or private session data.",
       "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
     ],
@@ -70,15 +84,20 @@ const assertBoundedResult = (result: AgentEvaluationResult) => {
   ) {
     throw new Error("Agent provider and model must be bounded identifiers.");
   }
-  const visit = (value: unknown): void => {
+  const visit = (value: unknown, path: string[] = []): void => {
     if (typeof value !== "object" || value === null) {
       return;
     }
     for (const [key, child] of Object.entries(value)) {
-      if (forbiddenResultKeys.test(key)) {
+      const isAggregateUsage =
+        path.length === 1 && path[0] === "metrics" && key === "tokens";
+      if (
+        forbiddenResultKeys.test(key) ||
+        (forbiddenTokenKey.test(key) && isAggregateUsage === false)
+      ) {
         throw new Error(`Agent result contains forbidden field ${key}.`);
       }
-      visit(child);
+      visit(child, [...path, key]);
     }
   };
   visit(result);
@@ -96,7 +115,7 @@ export const runHighImpactAgentEvaluation = async ({
   resultPath,
   provider,
   model,
-  getCallSequence,
+  getToolCalls,
   evaluate,
   env = process.env,
   timeoutMs = 10 * 60_000,
@@ -109,7 +128,7 @@ export const runHighImpactAgentEvaluation = async ({
   resultPath: string;
   provider: string;
   model: string;
-  getCallSequence: () => string[];
+  getToolCalls: () => EvaluationToolCall[];
   evaluate: () => Promise<HighImpactEvaluationResult>;
   env?: NodeJS.ProcessEnv;
   timeoutMs?: number;
@@ -120,29 +139,52 @@ export const runHighImpactAgentEvaluation = async ({
     JSON.stringify(createMinimalAgentTask(fixture, target), undefined, 2),
     "utf8"
   );
+  let usage: AgentUsage | undefined;
   const execution = await runAgentCommand({
     command: agentCommand,
     cwd,
     env: { ...env, WEBSTUDIO_HIGH_IMPACT_AGENT_TASK: taskPath },
     timeoutMs,
+    onStdoutLine: (line) => {
+      let value: unknown;
+      try {
+        value = JSON.parse(line);
+      } catch {
+        return;
+      }
+      const eventUsage = getAgentUsageEvent(value);
+      if (eventUsage !== undefined) {
+        usage = addAgentUsage(usage, eventUsage);
+      }
+    },
   });
   const evaluation = await evaluate();
+  const toolCalls = getToolCalls();
+  const checks = {
+    ...evaluation.checks,
+    usageCaptured:
+      usage === undefined ? ("failed" as const) : ("passed" as const),
+  };
   const result: AgentEvaluationResult = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     kind: "high-impact-minimal-context-agent-evaluation-result",
     fixtureId: fixture.id,
     outcome:
-      execution.exitCode === 0 && evaluation.passed ? "passed" : "failed",
+      execution.exitCode === 0 && evaluation.passed && usage !== undefined
+        ? "passed"
+        : "failed",
     cli: target.kind,
     provider,
     model,
     commandSha256: createHash("sha256").update(agentCommand).digest("hex"),
-    durationMs: execution.durationMs,
     exitCode: execution.exitCode,
-    toolCallCount: evaluation.metrics.toolCallCount,
-    focusedReadCount: evaluation.metrics.focusedReadCount,
-    callSequence: getCallSequence(),
-    checks: evaluation.checks,
+    metrics: {
+      durationMs: execution.durationMs,
+      ...(usage === undefined ? {} : { tokens: usage }),
+      toolCalls: getMcpEvaluationMetrics(toolCalls),
+    },
+    callSequence: toolCalls.map(({ name }) => name),
+    checks,
   };
   assertBoundedResult(result);
   await mkdir(dirname(resultPath), { recursive: true });

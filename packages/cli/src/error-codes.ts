@@ -3,7 +3,7 @@ import {
   getApiErrorCode,
 } from "@webstudio-is/http-client";
 import {
-  formatValidationIssues,
+  formatValidationErrorMessage,
   getValidationIssues,
 } from "@webstudio-is/project-build/runtime";
 
@@ -58,7 +58,7 @@ export const getCliErrorMessage = (error: unknown, command = "mcp") => {
   const issues = getValidationIssues(error);
   return issues === undefined || issues.length === 0
     ? message
-    : `${message}\n${formatValidationIssues(issues)}`;
+    : formatValidationErrorMessage(message, issues);
 };
 
 export const getCliErrorIssues = getValidationIssues;
