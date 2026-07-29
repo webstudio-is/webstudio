@@ -701,6 +701,40 @@ test("captures path screenshots through an existing base URL without preview", a
   ]);
 });
 
+test.each([
+  ["absolute URL", { url: "http://127.0.0.1:5177/design-system" }],
+  ["base URL", { baseUrl: "http://127.0.0.1:5177", path: "/design-system" }],
+] as const)(
+  "closes the browser after capturing an external %s",
+  async (_, target) => {
+    const captureScreenshot = createCaptureScreenshotMock([]);
+    const createCaptureSession = vi.fn();
+    const handlers = createMcpPreviewHandlers({
+      preview: {
+        status: vi.fn(),
+        startAndWait: vi.fn(),
+        resolveUrl: vi.fn(),
+      },
+      captureScreenshot,
+      createCaptureSession,
+    });
+
+    await handlers.captureScreenshot({
+      ...target,
+      timeout: 45_000,
+      viewport: { width: 1440, height: 900 },
+    });
+
+    expect(captureScreenshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "http://127.0.0.1:5177/design-system",
+        timeout: 45_000,
+      })
+    );
+    expect(createCaptureSession).not.toHaveBeenCalled();
+  }
+);
+
 test("rejects authenticated Builder URLs as generated preview targets", async () => {
   const preview = {
     status: vi.fn(),

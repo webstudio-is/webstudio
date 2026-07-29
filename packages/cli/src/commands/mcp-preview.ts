@@ -104,6 +104,11 @@ const defaultPreviewSource = "session" satisfies PreviewSource;
 const getPreviewSource = (source: PreviewSource | undefined): PreviewSource =>
   source ?? defaultPreviewSource;
 
+const isManagedSessionPreviewCapture = (input: McpScreenshotInput) =>
+  input.url === undefined &&
+  input.baseUrl === undefined &&
+  getPreviewSource(input.source) !== "local";
+
 const getPreviewTarget = (input: McpPreviewInput) => ({
   source: getPreviewSource(input.source),
   mode: input.mode ?? "iterative",
@@ -399,7 +404,7 @@ export const createMcpPreviewHandlers = ({
         const captureOptions = getCaptureOptions(input, url);
         let result: Awaited<ReturnType<typeof captureScreenshot>>;
         if (
-          getPreviewSource(input.source) !== "local" &&
+          isManagedSessionPreviewCapture(input) &&
           createCaptureSession !== undefined
         ) {
           result = await (
