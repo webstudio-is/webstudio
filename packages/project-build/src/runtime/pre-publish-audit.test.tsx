@@ -141,6 +141,18 @@ test("allows valid Video children", () => {
   expect(runAudit({ instances, props })).toEqual([]);
 });
 
+test("allows custom elements", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <ws.element ws:tag="custom-element">
+        <$.Paragraph>Custom element content</$.Paragraph>
+      </ws.element>
+    </$.Body>
+  );
+
+  expect(runAudit({ instances, props })).toEqual([]);
+});
+
 test("blocks publishing when required audit input is unavailable", () => {
   const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
 
