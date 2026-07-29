@@ -1,15 +1,11 @@
 import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
-  animationAction,
-  animationKeyframe,
+  createAnimationActionInput,
   prop as propSchema,
-  scrollAnimation,
   type Instance,
   type Prop,
   type PropMeta,
-  viewAnimation,
 } from "@webstudio-is/sdk";
 import { validateJsonLd } from "@webstudio-is/sdk/runtime";
 import type { BuilderState } from "../state/builder-state";
@@ -176,53 +172,7 @@ const propValueBaseInput = {
   required: z.boolean().optional(),
 };
 
-const animationStyleInput = z.union([
-  z
-    .string()
-    .describe(
-      'CSS value such as "translateX(-75%)". The value is parsed into Webstudio style data before it is stored.'
-    ),
-  z.object({ type: z.string() }).passthrough(),
-]);
-
-const animationKeyframeInput = animationKeyframe.extend({
-  styles: z.record(z.string(), animationStyleInput),
-});
-
-const scrollAnimationInput = scrollAnimation.extend({
-  timing: scrollAnimation.shape.timing.optional().default({}),
-  keyframes: z.array(animationKeyframeInput),
-});
-
-const viewAnimationInput = viewAnimation.extend({
-  timing: viewAnimation.shape.timing.optional().default({}),
-  keyframes: z.array(animationKeyframeInput),
-});
-
-const [scrollActionSchema, viewActionSchema] = animationAction.options;
-
-const animationActionInput = z
-  .discriminatedUnion("type", [
-    scrollActionSchema.extend({ animations: z.array(scrollAnimationInput) }),
-    viewActionSchema.extend({ animations: z.array(viewAnimationInput) }),
-  ])
-  .transform((action) => ({
-    ...action,
-    animations: action.animations.map((animation) => ({
-      ...animation,
-      keyframes: animation.keyframes.map((keyframe) => ({
-        ...keyframe,
-        styles: Object.fromEntries(
-          Object.entries(keyframe.styles).map(([property, value]) => [
-            property,
-            typeof value === "string"
-              ? parseCssValue(hyphenateProperty(property), value)
-              : value,
-          ])
-        ),
-      })),
-    })),
-  }));
+const animationActionInput = createAnimationActionInput({ parseCssValue });
 
 const propValueInputVariants = [
   z.object({
