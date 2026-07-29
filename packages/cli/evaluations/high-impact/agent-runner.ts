@@ -75,9 +75,22 @@ export const createMinimalAgentTask = (
       "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
       "Treat the successful final audit and requested visual evidence as terminal; do not mutate, verify, restart preview, or capture more evidence afterward.",
       "Finish all visual polish before evidence capture. After the first successful screenshot, do not mutate, rediscover, verify, or restart preview; capture only the remaining requested viewports, then make audit the next and final tool call.",
+      ...(fixture.id === "authenticated-page-v1"
+        ? [
+            "For this fixture, meta.guide already returns the required auth discovery and authoring tool schemas. Do not call list-breakpoints because responsive styling is not required, and do not call meta.get_more_tools or any other tool discovery operation. Create exactly one scoped non-secret fixture variable, keep the required state gallery expression-free, and do not call list-variables again after creating it.",
+          ]
+        : []),
       ...(fixture.id === "design-input-v1"
         ? [
+            "For this fixture, do not call list-instances because the project has no representative existing page pattern. Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas.",
             "For this fixture, make exactly three attach-design-token calls: attach only the returned Brand / Coral, Text / Ink, and Type / Heading token ids once each to compatible inserted element instance ids. Omit the optional position field and do not attempt any other token attachment.",
+            "After the early binding checkpoint, make exactly one batched update-styles call containing all remaining fixed styles. Include at least one declaration on an inserted element using the returned mobile breakpoint id so responsive behavior is persisted before preview.",
+            'Use this exact fragment verbatim in the single insert-fragment call; do not add props, styles, expressions, or alternate components until after it commits: <ws.element ws:tag="header"><ws.element ws:tag="nav"><ws.element ws:tag="a">Northstar</ws.element><ws.element ws:tag="button">Menu</ws.element></ws.element></ws.element><ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h1">Find your latitude</ws.element><ws.element ws:tag="p">Plan a memorable summer escape.</ws.element><ws.element ws:tag="a">Explore trips</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Featured trips</ws.element><ws.element ws:tag="article"><ws.element ws:tag="h3">Coastal escape</ws.element><ws.element ws:tag="p">A restorative journey by the sea.</ws.element></ws.element></ws.element></ws.element><ws.element ws:tag="footer"><ws.element ws:tag="p">Northstar travel</ws.element></ws.element>',
+          ]
+        : []),
+      ...(fixture.id === "font-assets-v1"
+        ? [
+            "For this fixture, do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas. Upload both supplied fonts together with exactly one upload-assets call; do not use upload-asset.",
           ]
         : []),
     ],
@@ -102,7 +115,12 @@ const assertBoundedResult = (result: AgentEvaluationResult) => {
         path.length === 3 &&
         path[0] === "metrics" &&
         path[1] === "toolCalls" &&
-        ["failuresByTool", "failuresByCode", "issuesByCode"].includes(path[2]);
+        [
+          "failuresByTool",
+          "failuresByCode",
+          "issuesByCode",
+          "durationsByTool",
+        ].includes(path[2]);
       if (
         isMetricIdentifier === false &&
         (forbiddenResultKeys.test(key) ||

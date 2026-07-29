@@ -79,6 +79,13 @@ describe("evaluation metrics", () => {
       failuresByTool: { "create-page": 1 },
       failuresByCode: { INVALID_INPUT: 1 },
       issuesByCode: { invalid_resource_url: 1 },
+      durationsByTool: {
+        audit: { count: 1, totalMs: 100, p95Ms: 100, maxMs: 100 },
+        "create-page": { count: 2, totalMs: 70, p95Ms: 40, maxMs: 40 },
+        "meta.guide": { count: 1, totalMs: 10, p95Ms: 10, maxMs: 10 },
+        snapshot: { count: 1, totalMs: 20, p95Ms: 20, maxMs: 20 },
+        "update-page": { count: 1, totalMs: 50, p95Ms: 50, maxMs: 50 },
+      },
       retries: 1,
       focusedReads: 0,
       broadReads: 1,

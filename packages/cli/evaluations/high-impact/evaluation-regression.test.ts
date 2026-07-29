@@ -35,6 +35,7 @@ const createResult = (
       failuresByTool: {},
       failuresByCode: {},
       issuesByCode: {},
+      durationsByTool: {},
       retries: 0,
       focusedReads: 2,
       broadReads: 0,

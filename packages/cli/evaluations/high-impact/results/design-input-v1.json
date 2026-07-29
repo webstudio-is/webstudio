@@ -6,58 +6,140 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "262645caa61793f981e82161979fe4cecb93ed2453fb57a09c9a685952b88865",
+  "commandSha256": "0ad75f205bdec0b57286ea80126b24476ab8929b28d2de426ef161158a41c6a9",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 210338,
+    "durationMs": 139834,
     "tokens": {
-      "input": 953173,
-      "cachedInput": 888576,
+      "input": 901717,
+      "cachedInput": 838656,
       "cacheWriteInput": 0,
-      "output": 10177,
-      "reasoningOutput": 2782,
-      "total": 963350,
-      "cachedInputRate": 0.9322
+      "output": 6234,
+      "reasoningOutput": 1970,
+      "total": 907951,
+      "cachedInputRate": 0.9301
     },
     "toolCalls": {
-      "total": 21,
-      "succeeded": 21,
+      "total": 17,
+      "succeeded": 17,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
       "issuesByCode": {},
+      "durationsByTool": {
+        "attach-design-token": {
+          "count": 3,
+          "totalMs": 50,
+          "p95Ms": 31,
+          "maxMs": 31
+        },
+        "audit": {
+          "count": 1,
+          "totalMs": 15,
+          "p95Ms": 15,
+          "maxMs": 15
+        },
+        "create-page": {
+          "count": 1,
+          "totalMs": 50,
+          "p95Ms": 50,
+          "maxMs": 50
+        },
+        "insert-fragment": {
+          "count": 1,
+          "totalMs": 60,
+          "p95Ms": 60,
+          "maxMs": 60
+        },
+        "list-assets": {
+          "count": 1,
+          "totalMs": 4,
+          "p95Ms": 4,
+          "maxMs": 4
+        },
+        "list-breakpoints": {
+          "count": 1,
+          "totalMs": 12,
+          "p95Ms": 12,
+          "maxMs": 12
+        },
+        "list-design-tokens": {
+          "count": 1,
+          "totalMs": 6,
+          "p95Ms": 6,
+          "maxMs": 6
+        },
+        "list-pages": {
+          "count": 1,
+          "totalMs": 5,
+          "p95Ms": 5,
+          "maxMs": 5
+        },
+        "list-variables": {
+          "count": 1,
+          "totalMs": 2,
+          "p95Ms": 2,
+          "maxMs": 2
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalMs": 12,
+          "p95Ms": 12,
+          "maxMs": 12
+        },
+        "preview.start": {
+          "count": 1,
+          "totalMs": 1699,
+          "p95Ms": 1699,
+          "maxMs": 1699
+        },
+        "screenshot": {
+          "count": 2,
+          "totalMs": 20154,
+          "p95Ms": 10950,
+          "maxMs": 10950
+        },
+        "update-styles": {
+          "count": 1,
+          "totalMs": 59,
+          "p95Ms": 59,
+          "maxMs": 59
+        },
+        "verify-bindings": {
+          "count": 1,
+          "totalMs": 3,
+          "p95Ms": 3,
+          "maxMs": 3
+        }
+      },
       "retries": 0,
-      "focusedReads": 6,
+      "focusedReads": 5,
       "broadReads": 0,
-      "dryRuns": 1,
-      "plannedMutations": 1,
-      "committedMutations": 7,
+      "dryRuns": 0,
+      "plannedMutations": 0,
+      "committedMutations": 6,
       "verifications": 4,
-      "totalDurationMs": 28534,
-      "p50DurationMs": 16,
-      "p95DurationMs": 8884,
-      "timeToFirstMutationMs": 34384,
-      "timeToFirstVerificationMs": 154327
+      "totalDurationMs": 22131,
+      "p50DurationMs": 12,
+      "p95DurationMs": 10950,
+      "timeToFirstMutationMs": 36166,
+      "timeToFirstVerificationMs": 44290
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-pages",
     "list-breakpoints",
     "list-design-tokens",
+    "list-pages",
     "list-assets",
     "list-variables",
-    "list-instances",
     "create-page",
-    "meta.get_more_tools",
     "insert-fragment",
-    "update-styles",
-    "update-styles",
-    "attach-design-token",
-    "attach-design-token",
-    "attach-design-token",
-    "update-page",
     "verify-bindings",
+    "attach-design-token",
+    "attach-design-token",
+    "attach-design-token",
+    "update-styles",
     "preview.start",
     "screenshot",
     "screenshot",

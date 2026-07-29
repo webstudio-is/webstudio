@@ -5059,7 +5059,7 @@ const metaGoalGuides = [
       "Never place credentials, service-role keys, refresh tokens, private session values, or authenticated response bodies in project data, command output, screenshots, agent instructions, or error reports. Ask the user to configure secrets in the provider/server environment.",
       "Model explicit signed-out, loading, signed-in, and failed-auth UI states with ordinary components and bindings. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
       "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
-      "When fixture/session data must feed a resource, create the page and create scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it, then call list-variables once and use the returned encoded names in resource expressions. Do not guess or reference variables before they exist.",
+      "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
       'Create resources only after their scope and referenced variables exist. When reusing an existing server-mediated auth convention, copy its fixed request URL exactly into resource.url; resource.url is the HTTP request target, not a provider call or session-state expression. For the discovered /api/auth/session convention, use create-resource with resource:{name:"Account session via server",method:"get",url:"/api/auth/session",headers:[],searchParams:[]}, the new page root as scopeInstanceId, and a descriptive dataSourceName. Use literal wrappers only for fixed header, search-parameter, and body text.',
       "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
@@ -5081,6 +5081,7 @@ const metaGoalGuides = [
       "get-asset",
     ],
     workflow: [
+      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
       "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
       "Use update-asset to correct font metadata without re-uploading the binary.",
       'After font mutations, call refresh with {"namespaces":["assets"]}, then use get-asset for each changed id to verify the persisted metadata.',
@@ -5108,13 +5109,14 @@ const metaGoalGuides = [
       "audit",
     ],
     workflow: [
+      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
       "Interpret the supplied design before mutating: identify page sections, responsive behavior, reusable patterns, assets, typography, color, spacing, and interaction states. Ask for missing source assets rather than inventing brand-critical content.",
       "Before the first mutation, call list-breakpoints and list-design-tokens once as part of one bounded discovery pass. Also call list-pages, list-assets, and list-variables once; use one list-instances call only when needed to inspect a representative existing page pattern. Call each discovery tool at most once. Do not call get-styles: the focused token and instance results provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
       "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
       "Create semantic editable structure with insert-fragment using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
-      'Finish all mutations, then call verify-bindings exactly once with {"pagePath":"/summer"} before visual verification; do not guess a page id or alternate input shape. Start preview once. Capture the desktop and mobile screenshots back-to-back. Capture exactly the two supplied viewports, 1440x900 and 390x844; do not add exploratory or intermediate screenshots. Do not mutate, rediscover, or repeat binding verification after screenshots begin. Run rendered audit immediately after the required screenshots. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
+      'Immediately after insert-fragment, call verify-bindings exactly once with {"pagePath":"/summer"}; do not guess a page id or alternate input shape. Treat this as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. Those later fixed-value mutations do not require another binding verification. Finish them before visual verification, then start preview once. Capture the desktop and mobile screenshots back-to-back. Capture exactly the two supplied viewports, 1440x900 and 390x844; do not add exploratory or intermediate screenshots. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
   {
@@ -5180,7 +5182,7 @@ const getMetaGuide = (
       requiredInputFields: tool.annotations.requiredInputFields,
       mcpExamples: tool.mcpExamples ?? [],
     })),
-    more: "Call meta.get_more_tools with the same brief for params, examples, namespaces, and server/local behavior.",
+    more: "MCP input schemas already provide each tool's arguments. Only call meta.get_more_tools when an MCP input schema explicitly says a complex field was compacted, or when you need server/local behavior that the guide does not cover.",
   };
 };
 
@@ -5495,13 +5497,12 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   );
 };
 
+// Keep output contracts for local validation and generated documentation, but do
+// not resend hundreds of kilobytes of optional schemas in every MCP handshake.
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
   description: tool.description,
   inputSchema: tool.inputSchema,
-  ...(tool.outputSchema === undefined
-    ? {}
-    : { outputSchema: tool.outputSchema }),
   annotations: {
     readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),
     destructiveHint: tool.annotations.requiresConfirm,

@@ -87,6 +87,10 @@ export type McpEvaluationMetrics = {
   failuresByTool: Record<string, number>;
   failuresByCode: Record<string, number>;
   issuesByCode: Record<string, number>;
+  durationsByTool: Record<
+    string,
+    { count: number; totalMs: number; p95Ms: number; maxMs: number }
+  >;
   retries: number;
   focusedReads: number;
   broadReads: number;
@@ -126,6 +130,31 @@ const percentile = (values: number[], proportion: number) => {
   const sorted = values.toSorted((left, right) => left - right);
   const index = Math.max(0, Math.ceil(sorted.length * proportion) - 1);
   return sorted[index] ?? 0;
+};
+
+const getDurationsByTool = (calls: readonly EvaluationToolCall[]) => {
+  const durations = new Map<string, number[]>();
+  for (const call of calls) {
+    if (call.durationMs === undefined) {
+      continue;
+    }
+    const values = durations.get(call.name) ?? [];
+    values.push(call.durationMs);
+    durations.set(call.name, values);
+  }
+  return Object.fromEntries(
+    [...durations.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, values]) => [
+        name,
+        {
+          count: values.length,
+          totalMs: values.reduce((total, value) => total + value, 0),
+          p95Ms: percentile(values, 0.95),
+          maxMs: Math.max(...values),
+        },
+      ])
+  );
 };
 
 const countRetries = (calls: readonly EvaluationToolCall[]) => {
@@ -180,6 +209,7 @@ export const getMcpEvaluationMetrics = (
         (call.errorIssues ?? []).map((issue) => issue.code)
       )
     ),
+    durationsByTool: getDurationsByTool(calls),
     retries: countRetries(calls),
     focusedReads: calls.filter((call) => isFocusedRead(call.name)).length,
     broadReads: calls.filter((call) => isBroadRead(call.name)).length,

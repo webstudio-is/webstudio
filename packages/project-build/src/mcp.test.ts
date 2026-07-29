@@ -4141,6 +4141,9 @@ describe("project session mcp adapter", () => {
     }
     expect(jsonLdGuide.structuredContent.data).toEqual(
       expect.objectContaining({
+        more: expect.stringContaining(
+          "Only call meta.get_more_tools when an MCP input schema"
+        ),
         workflow: expect.arrayContaining([
           expect.stringContaining("do not use update-page custom metadata"),
           expect.stringContaining("Insert JsonLd under HeadSlot"),
@@ -4192,6 +4195,9 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Use create-page's returned rootInstanceId directly"
           ),
+          expect.stringContaining(
+            "Do not repeat list-variables when the fixture variable is not referenced"
+          ),
           expect.stringContaining("copy its fixed request URL exactly"),
           expect.stringContaining(
             'url:"/api/auth/session",headers:[],searchParams:[]'
@@ -4241,6 +4247,7 @@ describe("project session mcp adapter", () => {
             "Before the first mutation, call list-breakpoints and list-design-tokens"
           ),
           expect.stringContaining("Call each discovery tool at most once"),
+          expect.stringContaining("Do not call meta.index"),
           expect.stringContaining("Call create-page exactly once"),
           expect.stringContaining(
             "Do not call list-instances after the first mutation"
@@ -4252,12 +4259,16 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             'call verify-bindings exactly once with {"pagePath":"/summer"}'
           ),
+          expect.stringContaining("Immediately after insert-fragment"),
           expect.stringContaining("Capture exactly the two supplied viewports"),
           expect.stringContaining("A successful final audit is terminal"),
           expect.stringContaining("parallel design system"),
           expect.stringContaining("semantic editable structure"),
           expect.stringContaining("actual breakpoint ranges"),
-          expect.stringContaining("Run rendered audit"),
+          expect.stringContaining(
+            'Run a static audit with {"pagePath":"/summer"}'
+          ),
+          expect.stringContaining("do not set rendered:true"),
         ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "list-breakpoints" }),
@@ -6581,7 +6592,8 @@ describe("project session mcp adapter", () => {
         name: "webstudio",
         version: "0.0.0",
       });
-      await expect(client.listTools()).resolves.toEqual({
+      const listedTools = await client.listTools();
+      expect(listedTools).toEqual({
         tools: expect.arrayContaining([
           expect.objectContaining({
             name: "list-pages",
@@ -6640,6 +6652,9 @@ describe("project session mcp adapter", () => {
           }),
         ]),
       });
+      expect(
+        listedTools.tools.find(({ name }) => name === "list-pages")
+      ).not.toHaveProperty("outputSchema");
       await expect(client.listResources()).resolves.toEqual({
         resources: expect.arrayContaining([
           expect.objectContaining({ uri: "webstudio://project/status" }),

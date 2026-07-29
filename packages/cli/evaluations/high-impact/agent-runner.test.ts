@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { authenticatedPageFixture } from "./fixtures";
 import { designInputFixture } from "./fixtures";
+import { fontAssetsFixture } from "./fixtures";
 import {
   createMinimalAgentTask,
   getCliInvocation,
@@ -34,8 +35,19 @@ describe("high-impact agent runner", () => {
         expect.stringContaining(
           "After the first successful screenshot, do not mutate"
         ),
+        expect.stringContaining("Do not call list-breakpoints"),
       ],
     });
+    expect(task.constraints).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Do not call list-breakpoints"),
+        expect.stringContaining("do not call meta.get_more_tools"),
+        expect.stringContaining(
+          "Create exactly one scoped non-secret fixture variable"
+        ),
+        expect.stringContaining("do not call list-variables again"),
+      ])
+    );
     expect(
       createMinimalAgentTask(designInputFixture, {
         kind: "source",
@@ -49,8 +61,25 @@ describe("high-impact agent runner", () => {
       constraints: expect.arrayContaining([
         expect.stringContaining("exactly three attach-design-token calls"),
         expect.stringContaining("Omit the optional position field"),
+        expect.stringContaining("exactly one batched update-styles call"),
+        expect.stringContaining("returned mobile breakpoint id"),
+        expect.stringContaining("Use this exact fragment verbatim"),
+        expect.stringContaining('ws:tag="footer"'),
+        expect.stringContaining("do not call list-instances"),
+        expect.stringContaining("Do not call meta.index"),
       ]),
     });
+    expect(
+      createMinimalAgentTask(fontAssetsFixture, {
+        kind: "source",
+        repositoryRoot: root,
+      }).constraints
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("do not call meta.index, meta.get_more_tools"),
+        expect.stringContaining("exactly one upload-assets call"),
+      ])
+    );
   });
 
   test("retains only a bounded privacy-safe result from a real process", async () => {
