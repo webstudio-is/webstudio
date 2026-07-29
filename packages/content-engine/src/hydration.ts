@@ -12,6 +12,10 @@ import {
   readBoundedBytes,
 } from "./byte-stream";
 import { mapBounded } from "./async-utils";
+import {
+  rewriteMarkdownAssetReferences,
+  type MarkdownAssetReferences,
+} from "./markdown-assets";
 
 export class AssetResourceHydrationError extends Error {
   readonly code:
@@ -172,11 +176,15 @@ export const hydrateAssetResourceResult = async ({
   documents,
   options,
   read,
+  assetReferences,
+  assetUrls,
 }: {
   result: unknown;
   documents: readonly ContentDatabaseDocument[];
   options: AssetResourceContentOptions;
   read: AssetResourceContentReader;
+  assetReferences?: MarkdownAssetReferences;
+  assetUrls?: Readonly<Record<string, string>>;
 }) => {
   if (options.mode === "none") {
     return { content: {}, hydratedFileCount: 0, hydratedBytes: 0 };
@@ -276,6 +284,14 @@ export const hydrateAssetResourceResult = async ({
       if (options.mode === "markdown-body") {
         try {
           text = (await extractMarkdownBody(bytes, item.readLength || 1)).body;
+          const references = assetReferences?.[item.identity.contentRef];
+          if (references !== undefined && assetUrls !== undefined) {
+            text = rewriteMarkdownAssetReferences({
+              markdown: text,
+              references,
+              assetUrls,
+            });
+          }
         } catch {
           throw new AssetResourceHydrationError({
             code: "CONTENT_DECODING_FAILED",

@@ -4,6 +4,8 @@ import { createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { createPublishedAssetResourceFetch } from "./published-runtime";
 
+const postContent = "# Hello\n\n![Hero](../images/hero.png)";
+
 const document: AssetFileDocument = {
   _id: "post-1",
   _type: "asset.file",
@@ -12,7 +14,7 @@ const document: AssetFileDocument = {
   key: "hello",
   extension: "md",
   mimeType: "text/markdown",
-  size: 7,
+  size: postContent.length,
   revision: "post-1-revision",
   contentRef: "hello.md",
   properties: {
@@ -34,14 +36,20 @@ describe("published Markdown blog end-to-end", () => {
             projectId: "project-1",
             document,
           }),
-          content: "# Hello",
+          content: postContent,
         },
       ],
+      assetReferences: {
+        "hello.md": { "../images/hero.png": "hero-image" },
+      },
     });
     const runtimeFetch = createPublishedAssetResourceFetch({
       baseUrl: "https://blog.example",
       deploymentId: "blog-deployment",
       artifact: index,
+      runtimeAssets: {
+        "hero-image": { url: "/assets/hero.png", width: 1200, height: 630 },
+      },
     });
     const request = (query: unknown) =>
       runtimeFetch("/$resources/assets", {
@@ -84,14 +92,16 @@ describe("published Markdown blog end-to-end", () => {
       },
       limit: 1,
       output: { mode: "all", includeMetadata: true },
-      content: { mode: "full" },
+      content: { mode: "markdown-body" },
     });
     expect(await detail?.json()).toMatchObject({
       items: [
         {
           id: "post-1",
           properties: { title: "Hello" },
-          content: { text: "# Hello" },
+          content: {
+            text: expect.stringContaining("![Hero](/assets/hero.png)"),
+          },
         },
       ],
     });

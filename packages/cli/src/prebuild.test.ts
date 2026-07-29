@@ -1312,6 +1312,12 @@ describe("prebuild", () => {
     await expect(
       readFile("pages/blog/@slug/+onBeforePrerenderStart.ts", "utf8")
     ).resolves.not.toContain("/blog/draft-post");
+    await expect(
+      readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
+    ).resolves.toContain('"path": "/blog/hello-world"');
+    await expect(
+      readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
+    ).resolves.not.toContain('"path": "/blog/draft-post"');
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
     await runGeneratedCommand("vite", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);

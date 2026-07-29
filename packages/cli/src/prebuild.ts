@@ -31,6 +31,7 @@ import {
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
+  isPageEligibleForSitemap,
   replaceFormActionsWithResources,
   isCoreComponent,
   coreMetas,
@@ -814,6 +815,8 @@ export const prebuild = async (options: {
   const generatedPages = options.includeDraftPages
     ? getAllPages(pages)
     : publishablePages;
+  const publishablePageIds = new Set(publishablePages.map((page) => page.id));
+  const assetSitemapPaths = new Set<string>();
   await writeWsAuthResources(
     generatedDir,
     pages,
@@ -1209,6 +1212,11 @@ export const prebuild = async (options: {
       resources: pageData.build.resources,
       index: siteData.assetIndex,
     });
+    if (publishablePageIds.has(page.id) && isPageEligibleForSitemap(page)) {
+      for (const path of prerenderPaths) {
+        assetSitemapPaths.add(path);
+      }
+    }
     for (const { file, template } of getTemplates({
       pagePath,
       prerenderPaths,
@@ -1267,14 +1275,22 @@ export const prebuild = async (options: {
     await writeGeneratedFile(file, content);
   }
 
+  const sitemap = getStaticSiteMapXml(pages, siteData.build.updatedAt);
+  const sitemapPaths = new Set(sitemap.map(({ path }) => path));
+  for (const path of [...assetSitemapPaths].sort()) {
+    if (sitemapPaths.has(path)) {
+      continue;
+    }
+    sitemapPaths.add(path);
+    sitemap.push({
+      path,
+      lastModified: siteData.build.updatedAt.split("T")[0],
+    });
+  }
   await writeGeneratedFile(
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
-      export const sitemap = ${JSON.stringify(
-        getStaticSiteMapXml(pages, siteData.build.updatedAt),
-        null,
-        2
-      )};
+      export const sitemap = ${JSON.stringify(sitemap, null, 2)};
     `
   );
 

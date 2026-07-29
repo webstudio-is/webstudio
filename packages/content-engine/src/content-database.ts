@@ -85,6 +85,7 @@ export const createContentDatabase = ({
         documents: artifact.documents,
         read: readEmbeddedContent,
         runtimeAssets,
+        assetReferences: artifact.assetReferences,
       });
       return result;
     },

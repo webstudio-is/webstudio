@@ -26,6 +26,7 @@ import {
 import { appendAssetFieldPath } from "./canonical";
 import { selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
+import type { MarkdownAssetReferences } from "./markdown-assets";
 
 export type AssetRuntimeData = {
   url: string;
@@ -421,12 +422,14 @@ export const executeAssetQuery = async ({
   documents,
   read,
   runtimeAssets,
+  assetReferences,
 }: {
   query: AssetQueryInput;
   catalog: BuilderAssetFieldCatalog;
   documents: readonly ContentDatabaseDocument[];
   read?: AssetResourceContentReader;
   runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  assetReferences?: MarkdownAssetReferences;
 }): Promise<AssetQueryResult> => {
   const { query } = validateAssetQueryAgainstCatalog({ query: input, catalog });
   if (documents.length > contentEngineLimits.candidateDocuments) {
@@ -464,6 +467,16 @@ export const executeAssetQuery = async ({
       documents: selectedDocuments,
       options: contentOptions,
       read,
+      assetReferences,
+      assetUrls:
+        assetReferences === undefined
+          ? undefined
+          : Object.fromEntries(
+              Object.entries(runtimeAssets ?? {}).map(([id, asset]) => [
+                id,
+                asset.url,
+              ])
+            ),
     });
     items = selectedDocuments.map((document, index) => {
       const content = hydrated.content[document._id];

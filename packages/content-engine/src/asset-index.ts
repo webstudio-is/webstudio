@@ -20,6 +20,7 @@ import {
   type ContentCompilationPlan,
 } from "./compilation-plan";
 import { getUtf8ByteLength } from "./byte-stream";
+import type { MarkdownAssetReferences } from "./markdown-assets";
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -154,6 +155,7 @@ const buildAssetIndex = async ({
   sourceDocumentCount,
   maxBytes,
   unboundedBytes,
+  assetReferences,
   plan,
   finalize = true,
 }: {
@@ -161,6 +163,7 @@ const buildAssetIndex = async ({
   sourceDocumentCount: number;
   maxBytes: number;
   unboundedBytes: number;
+  assetReferences?: MarkdownAssetReferences;
   plan?: ContentCompilationPlan;
   finalize?: boolean;
 }) => {
@@ -177,6 +180,14 @@ const buildAssetIndex = async ({
         compareStrings(left.document.contentRef, right.document.contentRef)
       )
       .map((entry) => [entry.document.contentRef, entry.content])
+  );
+  const includedContentRefs = new Set(
+    entries.map(({ document }) => document.contentRef)
+  );
+  const includedAssetReferences = Object.fromEntries(
+    Object.entries(assetReferences ?? {}).filter(([contentRef]) =>
+      includedContentRefs.has(contentRef)
+    )
   );
   const catalog = await createAssetFieldCatalog(entries);
   const assetRevision = catalog.canonicalRevision;
@@ -199,6 +210,9 @@ const buildAssetIndex = async ({
     assetRevision,
     documents,
     ...(Object.keys(contents).length === 0 ? {} : { contents }),
+    ...(Object.keys(includedAssetReferences).length === 0
+      ? {}
+      : { assetReferences: includedAssetReferences }),
     fieldCatalog,
     database: { maxBytes, unboundedBytes, sourceDocumentCount },
     integrity: {
@@ -222,11 +236,13 @@ export const compileContentArtifact = async ({
   projectId,
   entries,
   maxBytes = contentEngineLimits.databaseBytes,
+  assetReferences,
   plan,
 }: {
   projectId: string;
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
+  assetReferences?: MarkdownAssetReferences;
   plan?: ContentCompilationPlan;
 }): Promise<{
   artifact: ContentArtifactV1;
@@ -245,6 +261,7 @@ export const compileContentArtifact = async ({
       sourceDocumentCount,
       maxBytes,
       unboundedBytes,
+      assetReferences,
       plan,
       finalize: false,
     });
@@ -269,6 +286,7 @@ export const compileContentArtifact = async ({
       sourceDocumentCount,
       maxBytes,
       unboundedBytes,
+      assetReferences,
       plan,
       finalize: false,
     });
@@ -296,6 +314,7 @@ export const compileContentArtifact = async ({
           sourceDocumentCount,
           maxBytes,
           unboundedBytes,
+          assetReferences,
           plan,
           finalize: false,
         });
@@ -327,6 +346,7 @@ export const compileContentArtifact = async ({
     sourceDocumentCount,
     maxBytes,
     unboundedBytes,
+    assetReferences,
     plan,
   });
   const boundedBytes = getUtf8ByteLength(serializeContentArtifact(artifact));
@@ -376,6 +396,7 @@ export const createAssetIndex = async (input: {
   projectId: string;
   entries: readonly ContentCompilerInput[];
   maxBytes?: number;
+  assetReferences?: MarkdownAssetReferences;
   plan?: ContentCompilationPlan;
 }): Promise<ContentArtifactV1> =>
   (await compileContentArtifact(input)).artifact;

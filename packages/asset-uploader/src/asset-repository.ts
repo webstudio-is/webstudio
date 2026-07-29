@@ -544,20 +544,22 @@ export class PostgresAssetRepository implements AssetRepository {
   ) {
     const source = this.createContentSource(strict);
     const compile = async (
-      entries: Parameters<typeof createAssetIndex>[0]["entries"]
+      entries: Parameters<typeof createAssetIndex>[0]["entries"],
+      assetReferences: Parameters<typeof createAssetIndex>[0]["assetReferences"]
     ) =>
       await this.dependencies.createAssetIndex({
         projectId: this.projectId,
         entries,
+        assetReferences,
         maxBytes: this.contentDatabaseMaxBytes,
         ...(requirements === undefined ? {} : { plan: requirements }),
       });
     if (this.compilationCache === undefined) {
-      const { entries } = await materializeContentSource({
+      const { entries, assetReferences } = await materializeContentSource({
         source,
         plan: requirements,
       });
-      return await compile(entries);
+      return await compile(entries, assetReferences);
     }
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const snapshot = await source.openSnapshot();
@@ -570,11 +572,13 @@ export class PostgresAssetRepository implements AssetRepository {
       });
       try {
         return await this.compilationCache.getOrCreate(key, async () => {
-          const { entries } = await materializeContentSnapshot({
-            snapshot,
-            plan: requirements,
-          });
-          return await compile(entries);
+          const { entries, assetReferences } = await materializeContentSnapshot(
+            {
+              snapshot,
+              plan: requirements,
+            }
+          );
+          return await compile(entries, assetReferences);
         });
       } catch (error) {
         if (error instanceof ContentSourceChangedError === false) {

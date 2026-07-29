@@ -143,6 +143,9 @@ export const contentArtifactV1 = z
     assetRevision: sha256Revision,
     documents: z.array(contentDatabaseDocument),
     contents: z.record(z.string().min(1), z.string()).optional(),
+    assetReferences: z
+      .record(z.string().min(1), z.record(z.string().min(1), z.string().min(1)))
+      .optional(),
     fieldCatalog: builderAssetFieldCatalog,
     database: z
       .strictObject({
@@ -206,6 +209,15 @@ export const contentArtifactV1 = z
           code: "custom",
           path: ["contents", contentRef],
           message: "Embedded content must belong to an indexed document",
+        });
+      }
+    }
+    for (const contentRef of Object.keys(index.assetReferences ?? {})) {
+      if (contentRefs.has(contentRef) === false) {
+        context.addIssue({
+          code: "custom",
+          path: ["assetReferences", contentRef],
+          message: "Asset references must belong to an indexed document",
         });
       }
     }

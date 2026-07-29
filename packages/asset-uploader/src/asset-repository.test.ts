@@ -487,6 +487,7 @@ describe("PostgresAssetRepository", () => {
     expect(dependencies.createAssetIndex).toHaveBeenCalledWith({
       projectId: "project-1",
       entries,
+      assetReferences: {},
       maxBytes: 500 * 1024,
     });
   });

@@ -88,6 +88,123 @@ describe("content source snapshots", () => {
     expect(createContentSourceFile(createEntry(file))).toEqual(file);
   });
 
+  test("discovers relative asset dependencies from selected Markdown", async () => {
+    const post = createFile({ id: "post", path: "blog/posts/post.md" });
+    const image = createFile({
+      id: "hero",
+      path: "blog/images/hero.png",
+      contentType: "image/png",
+      contentRef: "revisions/hero.png",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, image],
+          async loadEntries() {
+            return [
+              {
+                ...createEntry(post),
+                content: "![Hero](../images/hero.png)",
+              },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.assetReferences).toEqual({
+      "revisions/post.md": { "../images/hero.png": "hero" },
+    });
+  });
+
+  test("resolves the same relative URL independently for each Markdown folder", async () => {
+    const firstPost = createFile({
+      id: "first-post",
+      path: "blog/first/post.md",
+    });
+    const secondPost = createFile({
+      id: "second-post",
+      path: "blog/second/post.md",
+    });
+    const firstImage = createFile({
+      id: "first-image",
+      path: "blog/first/hero.png",
+      contentType: "image/png",
+    });
+    const secondImage = createFile({
+      id: "second-image",
+      path: "blog/second/hero.png",
+      contentType: "image/png",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [firstPost, secondPost, firstImage, secondImage],
+          async loadEntries() {
+            return [firstPost, secondPost].map((file) => ({
+              ...createEntry(file),
+              content: "![Hero](./hero.png)",
+            }));
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.assetReferences).toEqual({
+      "revisions/first-post.md": { "./hero.png": "first-image" },
+      "revisions/second-post.md": { "./hero.png": "second-image" },
+    });
+  });
+
+  test("does not resolve an ambiguous Asset path", async () => {
+    const post = createFile({ id: "post", path: "blog/post.md" });
+    const firstImage = createFile({
+      id: "first-image",
+      path: "blog/hero.png",
+      contentType: "image/png",
+    });
+    const secondImage = createFile({
+      id: "second-image",
+      path: "blog/hero.png",
+      contentType: "image/png",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, firstImage, secondImage],
+          async loadEntries() {
+            return [
+              {
+                ...createEntry(post),
+                content: "![Hero](./hero.png)",
+              },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(result.artifact.assetReferences).toBeUndefined();
+  });
+
   test.each([
     {
       name: "content replacement",

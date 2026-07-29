@@ -152,20 +152,20 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
   return paths.reverse().join("/").replace(/\/+/g, "/");
 };
 
+/** Checks page-level sitemap settings independently of its concrete path. */
+export const isPageEligibleForSitemap = (page: Page) =>
+  (page.meta.documentType ?? "html") === "html" &&
+  // A dynamic expression cannot be evaluated without its resource data, so it
+  // remains eligible just as it did for static sitemap generation.
+  executeExpression(page.meta.excludePageFromSearch) !== true;
+
 export const getStaticSiteMapXml = (pages: Pages, updatedAt: string) => {
   const allPages = getPublishablePages(pages);
-  return (
-    allPages
-      .filter((page) => (page.meta.documentType ?? "html") === "html")
-      // ignore pages with excludePageFromSearch bound to variables
-      // because there is no data from cms available at build time
-      .filter(
-        (page) => executeExpression(page.meta.excludePageFromSearch) !== true
-      )
-      .filter((page) => false === isPathnamePattern(page.path))
-      .map((page) => ({
-        path: getPagePath(page.id, pages),
-        lastModified: updatedAt.split("T")[0],
-      }))
-  );
+  return allPages
+    .filter(isPageEligibleForSitemap)
+    .filter((page) => false === isPathnamePattern(page.path))
+    .map((page) => ({
+      path: getPagePath(page.id, pages),
+      lastModified: updatedAt.split("T")[0],
+    }));
 };
