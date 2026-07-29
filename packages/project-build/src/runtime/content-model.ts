@@ -60,9 +60,11 @@ const isTagInteractive = (tag: string) => {
 
 const isTagSatisfyingContentModel = ({
   tag,
+  component,
   allowedCategories,
 }: {
   tag: undefined | string;
+  component: Instance["component"];
   allowedCategories: undefined | string[];
 }) => {
   // slot or collection does not have tag and should pass through allowed categories
@@ -84,9 +86,10 @@ const isTagSatisfyingContentModel = ({
     return true;
   }
   const elementContentModel = getElementContentModel(tag);
-  // Custom and legacy elements missing from our HTML data cannot be validated.
+  // Preserve legacy components whose rendered tags are missing from HTML data.
+  // Explicit tags on the generic Element must still be known and valid.
   if (elementContentModel === undefined) {
-    return true;
+    return component !== elementComponent;
   }
   // interactive exception, label > input or label > button are considered
   // valid way to nest interactive elements
@@ -356,6 +359,7 @@ export const isTreeSatisfyingContentModel = ({
   const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
   const isTagSatisfying = isTagSatisfyingContentModel({
     tag,
+    component: instance.component,
     allowedCategories,
   });
   if (isTagSatisfying === false) {
