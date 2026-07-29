@@ -130,6 +130,11 @@ export default defineConfig(({ mode }) => {
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),
     },
+    build: {
+      commonjsOptions: {
+        esmExternals: true,
+      },
+    },
     server: {
       // Service-to-service OAuth token call requires a specified host for the wstd.dev domain
       host: "wstd.dev",
