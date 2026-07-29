@@ -141,6 +141,46 @@ test("allows valid Video children", () => {
   expect(runAudit({ instances, props })).toEqual([]);
 });
 
+test("warns about unknown element tags without throwing", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <ws.element ws:id="custom" ws:tag="custom-element">
+        <$.Paragraph>Custom element content</$.Paragraph>
+      </ws.element>
+    </$.Body>
+  );
+
+  expect(runAudit({ instances, props })).toEqual([
+    {
+      ruleId: "html-content-model",
+      severity: "warning",
+      message:
+        "Placing <custom-element> element inside a <body> violates HTML spec.",
+      location: {
+        pageId: "marketedge",
+        pageName: "MarketEdge",
+        pagePath: "/marketedge",
+        instanceId: "custom",
+      },
+    },
+  ]);
+});
+
+test("allows legacy components with unknown tags", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <ws.element ws:id="legacy" ws:tag="legacy-element" />
+    </$.Body>
+  );
+  const legacyInstance = instances.get("legacy");
+  if (legacyInstance === undefined) {
+    throw new Error("Expected legacy instance");
+  }
+  legacyInstance.component = "LegacyComponent";
+
+  expect(runAudit({ instances, props })).toEqual([]);
+});
+
 test("blocks publishing when required audit input is unavailable", () => {
   const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
 

@@ -39,20 +39,32 @@ const isIntersected = (arrayA: string[], arrayB: string[]) => {
   return arrayA.some((item) => arrayB.includes(item));
 };
 
+const getElementContentModel = (tag: undefined | string) => {
+  if (tag === undefined) {
+    return;
+  }
+  return elementsByTag[tag] as (typeof elementsByTag)[string] | undefined;
+};
+
 /**
  * checks if tag has interactive category
  * though img is an exception and historically its interactivity ignored
  * so img can be put into links and buttons
  */
 const isTagInteractive = (tag: string) => {
-  return tag !== "img" && elementsByTag[tag].categories.includes("interactive");
+  return (
+    tag !== "img" &&
+    getElementContentModel(tag)?.categories.includes("interactive") === true
+  );
 };
 
 const isTagSatisfyingContentModel = ({
   tag,
+  component,
   allowedCategories,
 }: {
   tag: undefined | string;
+  component: Instance["component"];
   allowedCategories: undefined | string[];
 }) => {
   // slot or collection does not have tag and should pass through allowed categories
@@ -73,11 +85,17 @@ const isTagSatisfyingContentModel = ({
   if (allowedCategories.includes("phrasing") && tag === "div") {
     return true;
   }
+  const elementContentModel = getElementContentModel(tag);
+  // Preserve legacy components whose rendered tags are missing from HTML data.
+  // Explicit tags on the generic Element must still be known and valid.
+  if (elementContentModel === undefined) {
+    return component !== elementComponent;
+  }
   // interactive exception, label > input or label > button are considered
   // valid way to nest interactive elements
   if (
     allowedCategories.includes("labelable") &&
-    elementsByTag[tag].categories.includes("labelable")
+    elementContentModel.categories.includes("labelable")
   ) {
     return true;
   }
@@ -92,7 +110,7 @@ const isTagSatisfyingContentModel = ({
     return false;
   }
   // instance matches parent constraints
-  return isIntersected(allowedCategories, elementsByTag[tag].categories);
+  return isIntersected(allowedCategories, elementContentModel.categories);
 };
 
 /**
@@ -108,8 +126,9 @@ const getElementChildren = (
   }
   // components without tag behave like transparent category
   // and pass through parent constraints
-  let elementChildren: string[] =
-    tag === undefined ? ["transparent"] : elementsByTag[tag].children;
+  let elementChildren = getElementContentModel(tag)?.children ?? [
+    "transparent",
+  ];
   if (elementChildren.includes("transparent") && allowedCategories) {
     // merge categories from parent and current element when transparent occured
     elementChildren = elementChildren.flatMap((category) =>
@@ -130,7 +149,10 @@ const getElementChildren = (
   if (tag === "label" || allowedCategories?.includes("labelable")) {
     // stop passing through labelable to control children
     // to prevent label > button > input
-    if (tag && elementsByTag[tag].categories.includes("labelable") === false) {
+    if (
+      tag &&
+      getElementContentModel(tag)?.categories.includes("labelable") === false
+    ) {
       elementChildren = [...elementChildren, "labelable"];
     }
   }
@@ -337,6 +359,7 @@ export const isTreeSatisfyingContentModel = ({
   const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
   const isTagSatisfying = isTagSatisfyingContentModel({
     tag,
+    component: instance.component,
     allowedCategories,
   });
   if (isTagSatisfying === false) {
@@ -546,7 +569,7 @@ export const isRichTextTree = ({
     return false;
   }
   const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
-  const elementContentModel = tag ? elementsByTag[tag] : undefined;
+  const elementContentModel = getElementContentModel(tag);
   const componentContentModel = getComponentContentModel(
     metas.get(instance.component)
   );
@@ -693,7 +716,7 @@ export const findClosestContainer = ({
     }
     const tag = getTag({ instance, props, metas, htmlTagsByInstanceId });
     const meta = metas.get(instance.component);
-    const elementChildren = tag ? elementsByTag[tag].children : undefined;
+    const elementChildren = getElementContentModel(tag)?.children;
     const componentChildren = getComponentContentModel(meta).children;
     if (
       componentChildren.length === 0 ||
@@ -732,7 +755,7 @@ export const findClosestNonTextualContainer = ({
     }
     const tag = getTag({ instance, props, metas, htmlTagsByInstanceId });
     const meta = metas.get(instance.component);
-    const elementChildren = tag ? elementsByTag[tag].children : undefined;
+    const elementChildren = getElementContentModel(tag)?.children;
     const componentChildren = getComponentContentModel(meta).children;
     if (
       componentChildren.length === 0 ||
