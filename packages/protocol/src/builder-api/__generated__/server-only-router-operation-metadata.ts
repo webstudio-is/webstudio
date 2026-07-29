@@ -597,6 +597,7 @@ export const serverOnlyRouterOperationMetadata = {
               type: "object",
               properties: {
                 all: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema2",
@@ -610,6 +611,7 @@ export const serverOnlyRouterOperationMetadata = {
               type: "object",
               properties: {
                 any: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema2",
@@ -981,6 +983,7 @@ export const serverOnlyRouterOperationMetadata = {
               type: "object",
               properties: {
                 all: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema2",
@@ -994,6 +997,7 @@ export const serverOnlyRouterOperationMetadata = {
               type: "object",
               properties: {
                 any: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema2",

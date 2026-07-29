@@ -39,6 +39,13 @@ export type CanonicalAssetMetadataRequirements = {
   excerpt: boolean;
 };
 
+/**
+ * Generation of the Markdown/JSON extraction behavior used by persistent
+ * metadata caches. Increment only when unchanged source files must be parsed
+ * again because extraction semantics changed.
+ */
+export const canonicalAssetMetadataExtractorGeneration = 1;
+
 export const fullCanonicalAssetMetadataRequirements = {
   structuredProperties: true,
   excerpt: true,

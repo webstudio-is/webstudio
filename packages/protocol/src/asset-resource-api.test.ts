@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
 import SwaggerParser from "@apidevtools/swagger-parser";
+import {
+  assetObservedFieldType,
+  assetQueryStandardFields,
+  contentEngineLimits,
+} from "@webstudio-is/content-engine";
+import { getOpenApiQueryConfiguration } from "@webstudio-is/query-builder";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   assetFolderCreateRequest,
@@ -107,6 +113,17 @@ describe("Assets OpenAPI description", () => {
     expect(JSON.stringify(previewSchema)).toContain("__diagnostics__");
     expect(JSON.stringify(requestSchema)).toContain('"properties","slug"');
     expect(JSON.stringify(document)).not.toContain("x-webstudio-query");
+
+    const filter = getOpenApiQueryConfiguration({
+      document,
+      operationId: "queryAssets",
+    }).definition.source.controls.find((control) => control.type === "filter");
+    expect(filter).toMatchObject({
+      limits: {
+        conditions: contentEngineLimits.filterCount,
+        depth: contentEngineLimits.filterDepth,
+      },
+    });
   });
 
   test("describes callable REST paths and stable share-token authentication", () => {
@@ -148,6 +165,28 @@ describe("Assets OpenAPI description", () => {
       mutationRequestBytes: assetResourceLimits.restMutationRequestBytes,
       filenameCharacters: assetResourceLimits.assetFilenameCharacters,
     });
+
+    for (const operation of Object.values(assetResourceApiOperations)) {
+      const definition = (
+        document.paths as unknown as Record<
+          string,
+          Record<string, { responses: Record<number, unknown> }>
+        >
+      )[operation.path][operation.method];
+      expect(definition.responses[401], operation.operationId).toBeDefined();
+    }
+
+    const mutationForbidden =
+      document.paths[assetResourceApiOperations.updateAsset.path].patch
+        .responses[403];
+    expect(Object.keys(mutationForbidden.content)).toEqual([
+      "application/json",
+      "text/plain",
+    ]);
+    expect(
+      document.paths[assetResourceApiOperations.queryAssets.path].post
+        .responses[403].content
+    ).not.toHaveProperty("text/plain");
   });
 
   test("describes project scope and cookie mutation CSRF requirements", () => {
@@ -228,6 +267,10 @@ describe("Assets OpenAPI description", () => {
         .responses[206]
     ).toBeDefined();
     expect(
+      document.paths[assetResourceApiOperations.downloadAssetContent.path].get
+        .responses[200].content
+    ).toHaveProperty("*/*");
+    expect(
       document.paths[assetResourceApiOperations.createAssetFolder.path].post
         .responses[201]
     ).toBeDefined();
@@ -238,6 +281,60 @@ describe("Assets OpenAPI description", () => {
       JSON.stringify(createDocument())
     ).byteLength;
     expect(bytes).toBeLessThanOrEqual(assetResourceLimits.apiDescriptionBytes);
+  });
+
+  test("supports a maximum-legal field catalog", () => {
+    const observedTypes = assetObservedFieldType.options;
+    const fields = Object.fromEntries(
+      Array.from(
+        { length: contentEngineLimits.frontmatterFields },
+        (_, index) => {
+          const typeMask = (index % (2 ** observedTypes.length - 1)) + 1;
+          const types = observedTypes.filter(
+            (_type, position) => (typeMask & (1 << position)) !== 0
+          );
+          const name = `field-${index}-${"x".repeat(128)}`;
+          return [
+            name,
+            {
+              queryPath: ["properties", name],
+              types: [...types].sort(),
+              occurrences: types.length,
+              ...(types.length < observedTypes.length
+                ? { optional: true as const }
+                : {}),
+              ...(types.length > 1 ? { mixed: true as const } : {}),
+            },
+          ];
+        }
+      )
+    );
+    const document = createAssetResourceOpenApi({
+      builderSessionCookieName: "__Host-_session_test",
+      catalog: {
+        format: "webstudio-builder-asset-field-catalog",
+        version: 1,
+        canonicalRevision: `sha256:${"a".repeat(64)}`,
+        documentCount: observedTypes.length,
+        fields,
+      },
+    });
+
+    expect(
+      new TextEncoder().encode(JSON.stringify(document)).byteLength
+    ).toBeLessThanOrEqual(assetResourceLimits.apiDescriptionBytes);
+    const configuration = getOpenApiQueryConfiguration({
+      document,
+      operationId: "queryAssets",
+    });
+    expect(configuration.definition.fields).toHaveLength(
+      contentEngineLimits.frontmatterFields + assetQueryStandardFields.length
+    );
+    expect(configuration.definition.fields).toContainEqual(
+      expect.objectContaining({
+        path: ["properties", `field-255-${"x".repeat(128)}`],
+      })
+    );
   });
 
   test("rejects an OpenAPI document larger than the description limit", () => {

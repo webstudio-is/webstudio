@@ -89,6 +89,112 @@ const getChoices = (document: JsonObject, schema: JsonObject) => {
     : [];
 };
 
+const getFieldChoices = (
+  document: JsonObject,
+  schema: JsonObject
+): Array<{ path: string[]; label: string }> => {
+  const resolved = resolveSchema(document, schema);
+  if (
+    Array.isArray(resolved.const) &&
+    resolved.const.every((segment) => typeof segment === "string")
+  ) {
+    return [
+      {
+        path: resolved.const,
+        label:
+          typeof resolved.title === "string"
+            ? resolved.title
+            : resolved.const.join(" / "),
+      },
+    ];
+  }
+  return Array.isArray(resolved.oneOf)
+    ? resolved.oneOf.flatMap((choice) =>
+        isObject(choice) ? getFieldChoices(document, choice) : []
+      )
+    : [];
+};
+
+const getSchemaChoices = (document: JsonObject, schema: JsonObject) => {
+  const resolved = resolveSchema(document, schema);
+  const choices = Array.isArray(resolved.oneOf)
+    ? resolved.oneOf
+    : Array.isArray(resolved.anyOf)
+      ? resolved.anyOf
+      : [];
+  return choices.flatMap((choice) =>
+    isObject(choice) ? [resolveSchema(document, choice)] : []
+  );
+};
+
+const isFilterCondition = (schema: JsonObject) => {
+  if (isObject(schema.properties) === false) {
+    return false;
+  }
+  return (
+    "field" in schema.properties &&
+    "operator" in schema.properties &&
+    "value" in schema.properties
+  );
+};
+
+const getFilterSchema = (document: JsonObject, schema: JsonObject) => {
+  const choices = getSchemaChoices(document, schema);
+  const conditionUnion = choices.find((choice) => {
+    const conditions = getSchemaChoices(document, choice);
+    return conditions.length > 0 && conditions.every(isFilterCondition);
+  });
+  if (conditionUnion === undefined) {
+    return;
+  }
+  const groups = choices.flatMap((choice) => {
+    if (isObject(choice.properties) === false) {
+      return [];
+    }
+    const names = Object.keys(choice.properties);
+    if (names.length !== 1 || (names[0] !== "all" && names[0] !== "any")) {
+      return [];
+    }
+    const children = choice.properties[names[0]];
+    return isObject(children) && isObject(children.items)
+      ? [{ combinator: names[0] as "all" | "any", children }]
+      : [];
+  });
+  return { conditionUnion, groups };
+};
+
+const getFilterDepth = (
+  document: JsonObject,
+  input: JsonObject,
+  references = new Set<string>()
+): number | undefined => {
+  let schema = input;
+  let nextReferences = references;
+  if (typeof schema.$ref === "string") {
+    if (references.has(schema.$ref)) {
+      return;
+    }
+    const resolved = resolvePointer(document, schema.$ref);
+    if (isObject(resolved) === false) {
+      return;
+    }
+    const { $ref, ...siblings } = schema;
+    schema = { ...resolved, ...siblings };
+    nextReferences = new Set([...references, $ref]);
+  }
+  const filter = getFilterSchema(document, schema);
+  if (filter === undefined || filter.groups.length === 0) {
+    return 0;
+  }
+  const childDepths = filter.groups.map(({ children }) =>
+    getFilterDepth(document, children.items as JsonObject, nextReferences)
+  );
+  if (childDepths.some((depth) => depth === undefined)) {
+    return;
+  }
+  return 1 + Math.max(...(childDepths as number[]));
+};
+
 const defaultFromSchema = (schema: JsonObject): unknown => {
   if (schema.default !== undefined) {
     return structuredClone(schema.default);
@@ -128,17 +234,40 @@ const defaultFromSchema = (schema: JsonObject): unknown => {
   return "";
 };
 
-const createVariantValidationSchema = (value: unknown): unknown => {
+const createVariantValidationSchema = (
+  document: JsonObject,
+  value: unknown,
+  references = new Set<string>()
+): unknown => {
   if (Array.isArray(value)) {
-    return value.map(createVariantValidationSchema);
+    return value.map((item) =>
+      createVariantValidationSchema(document, item, references)
+    );
   }
   if (isObject(value) === false) {
     return value;
   }
+  if (typeof value.$ref === "string") {
+    if (references.has(value.$ref)) {
+      throw new Error(
+        "Circular OpenAPI query schema references are unsupported"
+      );
+    }
+    const resolved = resolvePointer(document, value.$ref);
+    if (isObject(resolved) === false) {
+      throw new Error(`OpenAPI reference ${value.$ref} is not a schema`);
+    }
+    const { $ref, ...siblings } = value;
+    return createVariantValidationSchema(
+      document,
+      { ...resolved, ...siblings },
+      new Set([...references, $ref])
+    );
+  }
   const schema = Object.fromEntries(
     Object.entries(value).map(([key, item]) => [
       key,
-      createVariantValidationSchema(item),
+      createVariantValidationSchema(document, item, references),
     ])
   );
   if (
@@ -203,10 +332,13 @@ const createVariantControl = ({
       if (name === discriminator || isObject(child) === false) {
         continue;
       }
+      const items = isObject(child.items)
+        ? resolveSchema(document, child.items)
+        : undefined;
       if (
         child.type === "array" &&
-        isObject(child.items) &&
-        Array.isArray(child.items.oneOf)
+        items !== undefined &&
+        Array.isArray(items.oneOf)
       ) {
         fields.push({
           key: name,
@@ -262,7 +394,7 @@ const createVariantControl = ({
     key,
     label: String(schema.title ?? labelFromKey(key)),
     defaultValue: currentDefault ?? options[0]?.defaultValue ?? {},
-    schema: createVariantValidationSchema(schema) as JsonObject,
+    schema: createVariantValidationSchema(document, schema) as JsonObject,
     config: {
       discriminator,
       selection: {
@@ -298,35 +430,40 @@ const createDefinition = ({
     const property = resolveSchema(document, unresolved);
     const label = String(property.title ?? labelFromKey(key));
     const resolved = resolveSchema(document, property);
-    const anyOf = Array.isArray(resolved.anyOf) ? resolved.anyOf : [];
-    const conditionUnion = anyOf
-      .map((item) => resolveSchema(document, item))
-      .find((item) => Array.isArray(item.oneOf));
-    if (conditionUnion !== undefined && Array.isArray(conditionUnion.oneOf)) {
-      for (const item of conditionUnion.oneOf) {
-        const condition = resolveSchema(document, item);
+    const filterSchema = getFilterSchema(document, resolved);
+    if (filterSchema !== undefined) {
+      const conditions = getSchemaChoices(
+        document,
+        filterSchema.conditionUnion
+      );
+      for (const condition of conditions) {
         const properties = getProperties(condition);
         const field = isObject(properties.field) ? properties.field : {};
         const operator = isObject(properties.operator)
           ? properties.operator
           : {};
-        if (Array.isArray(field.const) === false) {
+        const fieldChoices = isObject(field)
+          ? getFieldChoices(document, field)
+          : [];
+        if (fieldChoices.length === 0) {
           continue;
         }
-        const fieldKey = JSON.stringify(field.const);
         const supported = getChoices(document, operator);
-        const existing = fields.get(fieldKey);
-        fields.set(fieldKey, {
-          path: field.const as string[],
-          label: String(field.title ?? (field.const as string[]).join(" / ")),
-          types: ["string"],
-          operators: [
-            ...new Set([
-              ...(existing?.operators ?? []),
-              ...supported.map(({ value }) => value),
-            ]),
-          ],
-        });
+        for (const choice of fieldChoices) {
+          const fieldKey = JSON.stringify(choice.path);
+          const existing = fields.get(fieldKey);
+          fields.set(fieldKey, {
+            path: choice.path,
+            label: choice.label,
+            types: ["string"],
+            operators: [
+              ...new Set([
+                ...(existing?.operators ?? []),
+                ...supported.map(({ value }) => value),
+              ]),
+            ],
+          });
+        }
         const valueSchema = isObject(properties.value) ? properties.value : {};
         for (const choice of supported) {
           operators.set(choice.value, {
@@ -340,16 +477,17 @@ const createDefinition = ({
           });
         }
       }
-      const combinators: ("all" | "any")[] = anyOf.flatMap((item) => {
-        const candidate = resolveSchema(document, item);
-        if (isObject(candidate.properties) === false) {
-          return [];
-        }
-        const names = Object.keys(candidate.properties);
-        return names.length === 1 && (names[0] === "all" || names[0] === "any")
-          ? [names[0] as "all" | "any"]
-          : [];
-      });
+      const combinators = filterSchema.groups.map(
+        ({ combinator }) => combinator
+      );
+      const maximumConditions = Math.min(
+        ...filterSchema.groups.map(({ children }) =>
+          typeof children.maxItems === "number"
+            ? children.maxItems
+            : Number.MAX_SAFE_INTEGER
+        )
+      );
+      const maximumDepth = getFilterDepth(document, property);
       const firstField = fields.values().next().value;
       const firstOperator = firstField?.operators?.[0];
       if (firstField !== undefined && firstOperator !== undefined) {
@@ -361,7 +499,10 @@ const createDefinition = ({
             [combinators[0] ?? "all"]: [],
           }) as QueryFilterControl["defaultValue"],
           combinators: combinators.length > 0 ? combinators : ["all"],
-          limits: { conditions: 100, depth: 20 },
+          limits: {
+            conditions: maximumConditions,
+            depth: maximumDepth ?? Number.MAX_SAFE_INTEGER,
+          },
           defaultCondition: { field: firstField.path, operator: firstOperator },
         });
       }
@@ -377,16 +518,8 @@ const createDefinition = ({
             resolveSchema(document, itemProperties.direction)
           )
         : [];
-      const fieldChoices = Array.isArray(field.oneOf)
-        ? field.oneOf.flatMap((choice) => {
-            if (
-              isObject(choice) === false ||
-              Array.isArray(choice.const) === false
-            ) {
-              return [];
-            }
-            return [choice.const as string[]];
-          })
+      const fieldChoices = isObject(field)
+        ? getFieldChoices(document, field).map(({ path }) => path)
         : [];
       if (fieldChoices.length > 0 && directions.length > 0) {
         controls.push({

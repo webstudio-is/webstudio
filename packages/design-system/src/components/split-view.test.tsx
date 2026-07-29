@@ -1,6 +1,6 @@
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test } from "vitest";
 import { SplitView } from "./split-view";
 
 (
@@ -8,10 +8,36 @@ import { SplitView } from "./split-view";
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 let root: Root | undefined;
+const originalResizeObserver = globalThis.ResizeObserver;
+const resizeObservers = new Set<TestResizeObserver>();
+
+class TestResizeObserver implements ResizeObserver {
+  private callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    resizeObservers.add(this);
+  }
+
+  observe() {}
+  unobserve() {}
+  disconnect() {
+    resizeObservers.delete(this);
+  }
+  notify() {
+    this.callback([], this);
+  }
+}
+
+beforeEach(() => {
+  globalThis.ResizeObserver = TestResizeObserver;
+});
 
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
+  resizeObservers.clear();
+  globalThis.ResizeObserver = originalResizeObserver;
   document.body.innerHTML = "";
 });
 
@@ -41,18 +67,27 @@ const renderSplitView = ({
   if (splitView === null) {
     throw new Error("Expected split view container");
   }
+  let width = 1000;
   splitView.getBoundingClientRect = () => ({
     x: 0,
     y: 0,
-    width: 1000,
+    width,
     height: 500,
     top: 0,
-    right: 1000,
+    right: width,
     bottom: 500,
     left: 0,
     toJSON: () => ({}),
   });
-  return { separator, splitView };
+  const resize = (nextWidth: number) => {
+    width = nextWidth;
+    act(() => {
+      for (const observer of resizeObservers) {
+        observer.notify();
+      }
+    });
+  };
+  return { separator, splitView, resize };
 };
 
 test("resizes panels with the keyboard", () => {
@@ -108,4 +143,36 @@ test("preserves a fixed start pane when the container resizes", () => {
 
   expect(separator.getAttribute("aria-valuenow")).toBe("370");
   expect(splitView.style.gridTemplateColumns).toContain("369.95px");
+});
+
+test("clamps a fixed split on container resize and restores its desired size", () => {
+  const { splitView, resize } = renderSplitView({
+    defaultSize: { value: 320, unit: "px" },
+  });
+
+  resize(400);
+  expect(splitView.style.gridTemplateColumns).toBe(
+    "minmax(0, 239px) 1px minmax(0, 1fr)"
+  );
+
+  resize(1000);
+  expect(splitView.style.gridTemplateColumns).toBe(
+    "minmax(0, 320px) 1px minmax(0, 1fr)"
+  );
+});
+
+test("clamps a percentage split on container resize and restores its ratio", () => {
+  const { splitView, resize } = renderSplitView({
+    defaultSize: { value: 40, unit: "%" },
+  });
+
+  resize(400);
+  expect(splitView.style.gridTemplateColumns).toBe(
+    "minmax(0, 160px) 1px minmax(0, 1fr)"
+  );
+
+  resize(1000);
+  expect(splitView.style.gridTemplateColumns).toBe(
+    "minmax(0, 399.6px) 1px minmax(0, 1fr)"
+  );
 });

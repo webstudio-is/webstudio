@@ -17,6 +17,7 @@ import {
 import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 import {
   deleteAssetFoldersWithClient,
+  loadAssetFoldersByProjectWithClient,
   patchAssetFoldersWithClient,
   upsertAssetFolderWithClient,
 } from "./folder-persistence";
@@ -92,7 +93,13 @@ describe("asset folder persistence", () => {
   test("serializes concurrent folder updates before validating cycles", async () => {
     const projectId = uid();
     const createdAt = "2026-01-01T00:00:00.000Z";
-    let folders = [
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
       { id: "a", projectId, name: "A", parentId: null, createdAt },
       { id: "b", projectId, name: "B", parentId: null, createdAt },
     ];
@@ -159,8 +166,93 @@ describe("asset folder persistence", () => {
 
     await expect(moveA).resolves.toMatchObject({ id: "a", parentId: "b" });
     await expect(moveB).rejects.toThrow("Folders can't contain cycles");
-    expect(readCount).toBe(2);
+    expect(readCount).toBe(3);
     expect(writeCount).toBe(1);
+  });
+
+  test("repairs persisted cycles when folders are loaded", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    server.use(
+      db.get("AssetFolder", () =>
+        json([
+          { id: "a", projectId, name: "A", parentId: "b", createdAt },
+          { id: "b", projectId, name: "B", parentId: "a", createdAt },
+        ])
+      )
+    );
+
+    await expect(
+      loadAssetFoldersByProjectWithClient(
+        projectId,
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual([
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", createdAt },
+    ]);
+  });
+
+  test("reverts a move when a concurrent server creates a cycle", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
+      { id: "a", projectId, name: "A", parentId: null, createdAt },
+      { id: "b", projectId, name: "B", parentId: null, createdAt },
+    ];
+    let rollbackCount = 0;
+    server.use(
+      db.get("AssetFolder", () => json(folders)),
+      db.post("AssetFolder", async ({ request }) => {
+        const [folder] = (await request.json()) as typeof folders;
+        folders = folders.map((current) =>
+          current.id === folder.id ? folder : current
+        );
+        folders = folders.map((current) =>
+          current.id === "b" ? { ...current, parentId: "a" } : current
+        );
+        return json(folder);
+      }),
+      db.patch("AssetFolder", async ({ request }) => {
+        rollbackCount += 1;
+        const values = (await request.json()) as {
+          name: string;
+          parentId: string | null;
+        };
+        expect(values).toEqual({ name: "A", parentId: null });
+        folders = folders.map((folder) =>
+          folder.id === "a" ? { ...folder, ...values } : folder
+        );
+        return json([{ id: "a" }]);
+      })
+    );
+
+    await expect(
+      upsertAssetFolderWithClient(
+        {
+          projectId,
+          folder: {
+            id: "a",
+            projectId,
+            name: "A",
+            parentId: "b",
+            createdAt,
+          },
+        },
+        testContext.postgrest.client
+      )
+    ).rejects.toThrow("conflicted with another move and was reverted");
+    expect(rollbackCount).toBe(1);
+    expect(folders).toEqual([
+      { id: "a", projectId, name: "A", parentId: null, createdAt },
+      { id: "b", projectId, name: "B", parentId: "a", createdAt },
+    ]);
   });
 
   test("inserts parents before children", async () => {

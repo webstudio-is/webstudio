@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { createCanonicalAssetFileEntry } from "@webstudio-is/content-engine/compiler";
+import {
+  canonicalAssetMetadataExtractorGeneration,
+  createCanonicalAssetFileEntry,
+} from "@webstudio-is/content-engine/compiler";
 import {
   createTestServer,
   db,
@@ -37,6 +40,7 @@ const entry = createCanonicalAssetFileEntry({
 const storedDocument = {
   ...document,
   $webstudioMetadataRequirements: "properties+excerpt",
+  $webstudioExtractorGeneration: canonicalAssetMetadataExtractorGeneration,
 };
 const row = {
   ...entry,
@@ -156,6 +160,8 @@ describe("canonical asset metadata persistence", () => {
             ...document,
             properties: {},
             $webstudioMetadataRequirements: "excerpt",
+            $webstudioExtractorGeneration:
+              canonicalAssetMetadataExtractorGeneration,
           },
         })
       )
@@ -175,6 +181,61 @@ describe("canonical asset metadata persistence", () => {
     expect(loaded?.document).not.toHaveProperty(
       "$webstudioMetadataRequirements"
     );
+    expect(loaded?.document).not.toHaveProperty(
+      "$webstudioExtractorGeneration"
+    );
+  });
+
+  test("treats metadata from an older extractor generation as unprepared", async () => {
+    server.use(
+      db.get("AssetFileMetadata", () =>
+        json({
+          ...row,
+          document: {
+            ...storedDocument,
+            $webstudioExtractorGeneration:
+              canonicalAssetMetadataExtractorGeneration - 1,
+          },
+        })
+      )
+    );
+
+    const loaded = await loadCanonicalAssetFileEntry({
+      client: testContext.postgrest.client,
+      projectId: "project-1",
+      assetId: "asset-1",
+      revision: "sha256:one",
+    });
+
+    expect(loaded?.metadataRequirements).toEqual({
+      structuredProperties: false,
+      excerpt: false,
+    });
+    expect(loaded?.document.properties).toEqual({ title: "Post" });
+  });
+
+  test("treats metadata without an extractor generation as unprepared", async () => {
+    const {
+      $webstudioExtractorGeneration: _extractorGeneration,
+      ...legacyDocument
+    } = storedDocument;
+    server.use(
+      db.get("AssetFileMetadata", () =>
+        json({ ...row, document: legacyDocument })
+      )
+    );
+
+    const loaded = await loadCanonicalAssetFileEntry({
+      client: testContext.postgrest.client,
+      projectId: "project-1",
+      assetId: "asset-1",
+      revision: "sha256:one",
+    });
+
+    expect(loaded?.metadataRequirements).toEqual({
+      structuredProperties: false,
+      excerpt: false,
+    });
   });
 
   test("rejects rows whose database and document identities disagree", async () => {

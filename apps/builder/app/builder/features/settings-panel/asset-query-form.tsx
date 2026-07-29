@@ -19,13 +19,13 @@ import {
   getOpenApiQueryConfiguration,
   getQueryFieldKey,
   getQueryConditions,
+  createQuerySourceCodec,
   type QueryDefinition,
 } from "@webstudio-is/query-builder";
 import { Text, theme } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
 import { BindableQueryBuilder } from "~/builder/shared/query-builder";
 import { fetch as builderFetch } from "~/shared/fetch.client";
-import { getAssetQueryConfigurationError } from "./asset-query-form-utils";
 import { CenteredPanelMessage, Row } from "./shared";
 
 type AssetQueryDefinition = QueryDefinition<
@@ -53,10 +53,12 @@ export const AssetQueryForm = ({
   resource,
   scope,
   aliases,
+  fetchDescription = builderFetch,
 }: {
   resource?: Resource;
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
+  fetchDescription?: typeof globalThis.fetch;
 }) => {
   const assets = useStore($assets);
   const initial = useMemo(
@@ -71,7 +73,6 @@ export const AssetQueryForm = ({
     );
   const [baseDefinition, setBaseDefinition] = useState<AssetQueryDefinition>();
   const [descriptionError, setDescriptionError] = useState<string>();
-  const configurationError = getAssetQueryConfigurationError(configuration);
   const configuredPaths = useMemo(
     () =>
       [
@@ -98,6 +99,20 @@ export const AssetQueryForm = ({
           }),
     [baseDefinition, configuredPaths]
   );
+  const configurationError = useMemo(() => {
+    if (definition === undefined) {
+      return;
+    }
+    try {
+      createQuerySourceCodec<
+        AssetObservedFieldType,
+        AssetQueryFilter["operator"],
+        StructuredAssetQueryResourceConfiguration
+      >(definition).format(configuration);
+    } catch {
+      return "Complete every Assets query field.";
+    }
+  }, [configuration, definition]);
 
   useEffect(() => {
     setConfiguration(normalizeConfiguration(initial));
@@ -110,7 +125,7 @@ export const AssetQueryForm = ({
 
   useEffect(() => {
     let ignore = false;
-    builderFetch(assetsOpenApiUrl)
+    fetchDescription(assetsOpenApiUrl)
       .then(async (response) => {
         if (response.ok === false) {
           throw new Error("Builder Assets OpenAPI request failed");
@@ -137,7 +152,7 @@ export const AssetQueryForm = ({
     return () => {
       ignore = true;
     };
-  }, [assets]);
+  }, [assets, fetchDescription]);
 
   return (
     <>
@@ -169,7 +184,9 @@ export const AssetQueryForm = ({
             setConfiguration(value);
           }}
         />
-      ) : null}
+      ) : (
+        <CenteredPanelMessage>Loading query editor…</CenteredPanelMessage>
+      )}
       {descriptionError === undefined && configurationError !== undefined && (
         <Row>
           <Text color="destructive">{configurationError}</Text>

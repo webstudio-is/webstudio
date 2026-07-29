@@ -103,6 +103,7 @@ export const SplitView = ({
       : Math.max(0, defaultSize.value);
   const sizeRef = useRef(initialSize);
   const [size, setSize] = useState(initialSize);
+  const [containerSize, setContainerSize] = useState(0);
   const resizable = end !== undefined;
 
   const getStartSize = useCallback((containerSize: number) => {
@@ -144,6 +145,20 @@ export const SplitView = ({
   );
 
   useEffect(() => {
+    const container = containerRef.current;
+    if (container === null || resizable === false) {
+      return;
+    }
+    const updateContainerSize = () => {
+      setContainerSize(container.getBoundingClientRect().width);
+    };
+    updateContainerSize();
+    const observer = new ResizeObserver(updateContainerSize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [resizable]);
+
+  useEffect(() => {
     const separator = separatorRef.current;
     if (separator === null) {
       return;
@@ -163,6 +178,22 @@ export const SplitView = ({
     return <Box className={paneStyle()}>{start}</Box>;
   }
 
+  const renderedStartSize =
+    containerSize === 0
+      ? undefined
+      : clampPanelSize({
+          size: getStartSize(containerSize),
+          containerSize,
+          minimumStartSize,
+          minimumEndSize,
+          minimumRatio: normalizedMinimumRatio,
+          maximumRatio: normalizedMaximumRatio,
+        });
+  const renderedPercentage =
+    renderedStartSize === undefined
+      ? size
+      : (renderedStartSize / Math.max(1, containerSize - separatorWidth)) * 100;
+
   return (
     <Box
       ref={containerRef}
@@ -174,9 +205,11 @@ export const SplitView = ({
       }}
       style={{
         gridTemplateColumns:
-          sizeUnitRef.current === "px"
-            ? `minmax(0, ${size}px) ${separatorWidth}px minmax(0, 1fr)`
-            : `minmax(0, ${size / 100}fr) ${separatorWidth}px minmax(0, ${1 - size / 100}fr)`,
+          renderedStartSize !== undefined
+            ? `minmax(0, ${renderedStartSize}px) ${separatorWidth}px minmax(0, 1fr)`
+            : sizeUnitRef.current === "px"
+              ? `minmax(0, ${size}px) ${separatorWidth}px minmax(0, 1fr)`
+              : `minmax(0, ${size / 100}fr) ${separatorWidth}px minmax(0, ${1 - size / 100}fr)`,
       }}
     >
       <Box className={paneStyle()}>{start}</Box>
@@ -196,7 +229,11 @@ export const SplitView = ({
             ? undefined
             : Math.round(normalizedMaximumRatio * 100)
         }
-        aria-valuenow={Math.round(size)}
+        aria-valuenow={Math.round(
+          sizeUnitRef.current === "px"
+            ? (renderedStartSize ?? size)
+            : renderedPercentage
+        )}
         tabIndex={0}
         onKeyDown={(event) => {
           const width =

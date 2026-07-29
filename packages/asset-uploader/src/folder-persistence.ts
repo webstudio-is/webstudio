@@ -10,8 +10,49 @@ import {
   diffMaps,
   type Patch,
 } from "./patch-utils";
+import { AssetRepositoryConflictError } from "./asset-repository-errors";
 
 const pendingProjectMutations = new Map<string, Promise<void>>();
+
+const repairAssetFolderCycles = (folders: readonly AssetFolder[]) => {
+  const repaired = new Map(folders.map((folder) => [folder.id, folder]));
+  const repairedIds: string[] = [];
+
+  while (true) {
+    let cycle: string[] | undefined;
+    for (const startId of [...repaired.keys()].sort()) {
+      const positions = new Map<string, number>();
+      const path: string[] = [];
+      let folderId: string | undefined = startId;
+      while (folderId !== undefined) {
+        const position = positions.get(folderId);
+        if (position !== undefined) {
+          cycle = path.slice(position);
+          break;
+        }
+        positions.set(folderId, path.length);
+        path.push(folderId);
+        folderId = repaired.get(folderId)?.parentId;
+      }
+      if (cycle !== undefined) {
+        break;
+      }
+    }
+    if (cycle === undefined) {
+      break;
+    }
+
+    // Concurrent moves do not provide enough information to infer which move
+    // the user preferred. Detach the same edge on every process so a persisted
+    // cycle cannot make folder reads, asset paths, or publication unavailable.
+    const folderId = [...cycle].sort().at(-1) as string;
+    const folder = repaired.get(folderId) as AssetFolder;
+    repaired.set(folderId, { ...folder, parentId: undefined });
+    repairedIds.push(folderId);
+  }
+
+  return { folders: [...repaired.values()], repairedIds };
+};
 
 /**
  * Serializes folder mutations handled by this process so each validation reads
@@ -57,7 +98,7 @@ export const createAssetFolderRows = (
   }));
 };
 
-export const loadAssetFoldersByProjectWithClient = async (
+const loadAssetFoldersByProjectRaw = async (
   projectId: string,
   client: Client,
   folderIds?: string[]
@@ -82,6 +123,81 @@ export const loadAssetFoldersByProjectWithClient = async (
     parentId: folder.parentId ?? undefined,
     createdAt: folder.createdAt,
   }));
+};
+
+export const loadAssetFoldersByProjectWithClient = async (
+  projectId: string,
+  client: Client,
+  folderIds?: string[]
+): Promise<AssetFolder[]> => {
+  const folders = await loadAssetFoldersByProjectRaw(
+    projectId,
+    client,
+    folderIds
+  );
+  return repairAssetFolderCycles(folders).folders;
+};
+
+const getPersistedFolderCycles = async (projectId: string, client: Client) =>
+  repairAssetFolderCycles(await loadAssetFoldersByProjectRaw(projectId, client))
+    .repairedIds;
+
+const restoreAssetFolder = async ({
+  projectId,
+  previous,
+  persisted,
+  client,
+}: {
+  projectId: string;
+  previous: AssetFolder | undefined;
+  persisted: AssetFolder;
+  client: Client;
+}) => {
+  const table = client.from("AssetFolder");
+  let match = (
+    previous === undefined
+      ? table.delete()
+      : table.update({
+          name: previous.name,
+          parentId: previous.parentId ?? null,
+        })
+  )
+    .eq("id", persisted.id)
+    .eq("projectId", projectId)
+    .eq("name", persisted.name);
+  match =
+    persisted.parentId === undefined
+      ? match.is("parentId", null)
+      : match.eq("parentId", persisted.parentId);
+  const result = await match.select("id");
+  assertPostgrestSuccess(result);
+};
+
+const verifyAndRollbackFolderMutation = async ({
+  projectId,
+  previousById,
+  persisted,
+  client,
+}: {
+  projectId: string;
+  previousById: ReadonlyMap<string, AssetFolder>;
+  persisted: readonly AssetFolder[];
+  client: Client;
+}) => {
+  if ((await getPersistedFolderCycles(projectId, client)).length === 0) {
+    return;
+  }
+  for (const folder of [...persisted].reverse()) {
+    await restoreAssetFolder({
+      projectId,
+      previous: previousById.get(folder.id),
+      persisted: folder,
+      client,
+    });
+  }
+  throw new AssetRepositoryConflictError(
+    "Folder update conflicted with another move and was reverted"
+  );
 };
 
 export const upsertAssetFolderWithClient = async (
@@ -118,13 +234,20 @@ export const upsertAssetFolderWithClient = async (
     if (result.data?.id !== value.id) {
       throw new Error("Asset folder was not persisted");
     }
-    return {
+    const persisted = {
       id: result.data.id,
       projectId: result.data.projectId,
       name: result.data.name,
       parentId: result.data.parentId ?? undefined,
       createdAt: result.data.createdAt,
     };
+    await verifyAndRollbackFolderMutation({
+      projectId,
+      previousById: current,
+      persisted: [persisted],
+      client,
+    });
+    return persisted;
   });
 
 export const patchAssetFoldersWithClient = async (
@@ -176,6 +299,12 @@ export const patchAssetFoldersWithClient = async (
           );
         }
       }
+      await verifyAndRollbackFolderMutation({
+        projectId,
+        previousById: current,
+        persisted: changed,
+        client,
+      });
     }
 
     if (deletedKeys.length > 0 && deferDeletes === false) {

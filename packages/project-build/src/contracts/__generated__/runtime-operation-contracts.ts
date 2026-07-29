@@ -67270,6 +67270,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 all: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",
@@ -67283,6 +67284,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 any: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",
@@ -67616,6 +67618,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 all: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",
@@ -67629,6 +67632,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 any: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",
@@ -67731,6 +67735,7 @@ export const runtimeOperationContractData = [
                   type: "object",
                   properties: {
                     all: {
+                      maxItems: 32,
                       type: "array",
                       items: {
                         $ref: "#/$defs/__schema1",
@@ -67744,6 +67749,7 @@ export const runtimeOperationContractData = [
                   type: "object",
                   properties: {
                     any: {
+                      maxItems: 32,
                       type: "array",
                       items: {
                         $ref: "#/$defs/__schema1",
@@ -68075,6 +68081,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 all: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",
@@ -68088,6 +68095,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 any: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",
@@ -68295,6 +68303,7 @@ export const runtimeOperationContractData = [
                           type: "object",
                           properties: {
                             all: {
+                              maxItems: 32,
                               type: "array",
                               items: {
                                 $ref: "#/$defs/__schema1",
@@ -68308,6 +68317,7 @@ export const runtimeOperationContractData = [
                           type: "object",
                           properties: {
                             any: {
+                              maxItems: 32,
                               type: "array",
                               items: {
                                 $ref: "#/$defs/__schema1",
@@ -68636,6 +68646,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 all: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",
@@ -68649,6 +68660,7 @@ export const runtimeOperationContractData = [
               type: "object",
               properties: {
                 any: {
+                  maxItems: 32,
                   type: "array",
                   items: {
                     $ref: "#/$defs/__schema1",

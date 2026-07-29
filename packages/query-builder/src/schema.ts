@@ -11,17 +11,24 @@ const condition = z.strictObject({
 });
 
 export const createQueryWhereSchema = <ConditionSchema extends z.ZodType>(
-  conditionSchema: ConditionSchema
+  conditionSchema: ConditionSchema,
+  options: { maximumChildren?: number } = {}
 ) => {
   type Input = QueryWhereTree<z.input<ConditionSchema>>;
   type Output = QueryWhereTree<z.output<ConditionSchema>>;
-  const node: z.ZodType<Output, Input> = z.lazy(() =>
-    z.union([
+  const createNode = (child: z.ZodType<Output, Input>) => {
+    const children = z.array(child);
+    const boundedChildren =
+      options.maximumChildren === undefined
+        ? children
+        : children.max(options.maximumChildren);
+    return z.union([
       conditionSchema,
-      z.strictObject({ all: z.array(node) }),
-      z.strictObject({ any: z.array(node) }),
-    ])
-  );
+      z.strictObject({ all: boundedChildren }),
+      z.strictObject({ any: boundedChildren }),
+    ]);
+  };
+  const node: z.ZodType<Output, Input> = z.lazy(() => createNode(node));
   return node;
 };
 

@@ -355,7 +355,7 @@ const queryModeLabels: Record<string, string> = {
 
 type AssetOpenApiField = {
   path: string[];
-  label: string;
+  label?: string;
   types: readonly AssetObservedFieldType[];
 };
 
@@ -372,13 +372,61 @@ const createAssetOpenApiFields = (
       ? [
           {
             path: field.queryPath,
-            label: field.queryPath.join(" / "),
             types: field.types,
           },
         ]
       : []
   ),
 ];
+
+const getSchemaChoices = (value: JsonSchema) =>
+  Array.isArray(value.oneOf)
+    ? value.oneOf
+    : Array.isArray(value.anyOf)
+      ? value.anyOf
+      : undefined;
+
+const isFilterConditionUnion = (value: unknown): value is JsonSchema => {
+  if (isObject(value) === false) {
+    return false;
+  }
+  const choices = getSchemaChoices(value);
+  return (
+    choices !== undefined &&
+    choices.length > 0 &&
+    choices.every(
+      (item) =>
+        isObject(item) &&
+        isObject(item.properties) &&
+        "field" in item.properties &&
+        "operator" in item.properties &&
+        "value" in item.properties
+    )
+  );
+};
+
+const findFilterConditionUnion = (value: unknown): JsonSchema | undefined => {
+  if (isFilterConditionUnion(value)) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFilterConditionUnion(item);
+      if (found !== undefined) {
+        return found;
+      }
+    }
+    return;
+  }
+  if (isObject(value)) {
+    for (const item of Object.values(value)) {
+      const found = findFilterConditionUnion(item);
+      if (found !== undefined) {
+        return found;
+      }
+    }
+  }
+};
 
 const decorateAssetQuerySchema = ({
   schema,
@@ -387,10 +435,52 @@ const decorateAssetQuerySchema = ({
   schema: JsonSchema;
   fields: readonly AssetOpenApiField[];
 }): JsonSchema => {
-  const fieldChoices = fields.map((field) => ({
-    const: field.path,
-    title: field.label,
-  }));
+  const fieldGroups = new Map<
+    string,
+    {
+      operators: AssetQueryOperator[];
+      fields: AssetOpenApiField[];
+      reference: string;
+    }
+  >();
+  for (const field of fields) {
+    const operators = getAssetQueryOperatorsForFieldTypes(field.types);
+    const key = operators.join(",");
+    const group = fieldGroups.get(key) ?? {
+      operators,
+      fields: [],
+      reference: `#/components/schemas/AssetQueryRequest/$defs/AssetQueryField${fieldGroups.size}`,
+    };
+    group.fields.push(field);
+    fieldGroups.set(key, group);
+  }
+  const allFieldsReference =
+    "#/components/schemas/AssetQueryRequest/$defs/AssetQueryField";
+  const boundedWhereReference = `#/components/schemas/AssetQueryRequest/$defs/AssetQueryWhere${assetResourceLimits.filterDepth}`;
+  let conditionSchema: JsonSchema | undefined;
+  const fieldDefinitions = Object.fromEntries([
+    [
+      "AssetQueryField",
+      {
+        oneOf: [...fieldGroups.values()].map(({ reference }) => ({
+          $ref: reference,
+        })),
+      },
+    ],
+    ...[...fieldGroups.values()].map(({ fields: groupFields }, index) => [
+      `AssetQueryField${index}`,
+      {
+        type: "array",
+        minItems: 1,
+        maxItems: assetResourceLimits.fieldPathDepth,
+        items: { type: "string", minLength: 1 },
+        oneOf: groupFields.map((field) => ({
+          const: field.path,
+          ...(field.label === undefined ? {} : { title: field.label }),
+        })),
+      },
+    ]),
+  ]);
 
   const visit = (value: unknown, property?: string): unknown => {
     if (Array.isArray(value)) {
@@ -398,6 +488,18 @@ const decorateAssetQuerySchema = ({
     }
     if (isObject(value) === false) {
       return value;
+    }
+    if (property === "where") {
+      const next = visit(value) as JsonSchema;
+      conditionSchema = findFilterConditionUnion(next);
+      return {
+        $ref: boundedWhereReference,
+        ...(next.default === undefined ? {} : { default: next.default }),
+        title: queryPropertyLabels.where,
+        ...(typeof next.description === "string"
+          ? { description: next.description }
+          : {}),
+      };
     }
     const next = Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
@@ -424,7 +526,10 @@ const decorateAssetQuerySchema = ({
       isObject(next.items) &&
       next.items.type === "string"
     ) {
-      next.oneOf = fieldChoices;
+      return {
+        $ref: allFieldsReference,
+        ...(typeof next.title === "string" ? { title: next.title } : {}),
+      };
     }
     if (
       next.type === "object" &&
@@ -451,22 +556,9 @@ const decorateAssetQuerySchema = ({
         );
       });
     }
-    if (
-      Array.isArray(next.oneOf) &&
-      next.oneOf.length > 0 &&
-      next.oneOf.every((item) => {
-        if (isObject(item) === false || isObject(item.properties) === false) {
-          return false;
-        }
-        return (
-          "field" in item.properties &&
-          "operator" in item.properties &&
-          "value" in item.properties
-        );
-      })
-    ) {
-      const templates = next.oneOf as Record<string, unknown>[];
-      next.oneOf = fields.flatMap((field) =>
+    if (isFilterConditionUnion(next)) {
+      const templates = getSchemaChoices(next) as Record<string, unknown>[];
+      const choices = [...fieldGroups.values()].flatMap((group) =>
         templates.flatMap((template) => {
           if (isObject(template.properties) === false) {
             return [];
@@ -481,9 +573,7 @@ const decorateAssetQuerySchema = ({
           const compatible = values.filter(
             (value): value is string =>
               typeof value === "string" &&
-              getAssetQueryOperatorsForFieldTypes(field.types).includes(
-                value as AssetQueryOperator
-              )
+              group.operators.includes(value as AssetQueryOperator)
           );
           if (compatible.length === 0) {
             return [];
@@ -493,7 +583,7 @@ const decorateAssetQuerySchema = ({
               ...template,
               properties: {
                 ...template.properties,
-                field: { const: field.path, title: field.label },
+                field: { $ref: group.reference },
                 operator: {
                   oneOf: compatible.map((value) => ({
                     const: value,
@@ -505,10 +595,53 @@ const decorateAssetQuerySchema = ({
           ];
         })
       );
+      if (Array.isArray(next.oneOf)) {
+        next.oneOf = choices;
+      } else {
+        next.anyOf = choices;
+      }
     }
     return next;
   };
-  return visit(schema) as JsonSchema;
+  const decorated = visit(schema) as JsonSchema;
+  conditionSchema ??= findFilterConditionUnion(decorated);
+  if (conditionSchema === undefined) {
+    throw new Error("Asset query filter schema is missing");
+  }
+  const conditionReference =
+    "#/components/schemas/AssetQueryRequest/$defs/AssetQueryCondition";
+  const whereDefinitions: Record<string, JsonSchema> = {
+    AssetQueryCondition: conditionSchema,
+  };
+  for (let depth = 0; depth <= assetResourceLimits.filterDepth; depth += 1) {
+    const choices: JsonSchema[] = [{ $ref: conditionReference }];
+    if (depth > 0) {
+      const childReference = `#/components/schemas/AssetQueryRequest/$defs/AssetQueryWhere${depth - 1}`;
+      for (const combinator of ["all", "any"]) {
+        choices.push({
+          type: "object",
+          properties: {
+            [combinator]: {
+              type: "array",
+              maxItems: assetResourceLimits.filterCount,
+              items: { $ref: childReference },
+            },
+          },
+          required: [combinator],
+          additionalProperties: false,
+        });
+      }
+    }
+    whereDefinitions[`AssetQueryWhere${depth}`] = { oneOf: choices };
+  }
+  return {
+    ...decorated,
+    $defs: {
+      ...(isObject(decorated.$defs) ? decorated.$defs : {}),
+      ...fieldDefinitions,
+      ...whereDefinitions,
+    },
+  };
 };
 
 const schemaResponse = (component: string, description: string) => ({
@@ -520,8 +653,19 @@ const schemaResponse = (component: string, description: string) => ({
   },
 });
 
+const mutationForbiddenResponse = {
+  description: "Access denied or invalid CSRF token",
+  content: {
+    "application/json": {
+      schema: { $ref: "#/components/schemas/AssetMutationFailure" },
+    },
+    "text/plain": { schema: { type: "string" } },
+  },
+};
+
 const errorResponses = {
   400: schemaResponse("AssetResourceQueryFailure", "Invalid request"),
+  401: schemaResponse("AssetResourceQueryFailure", "Authentication required"),
   403: schemaResponse("AssetResourceQueryFailure", "Access denied"),
   409: schemaResponse("AssetResourceQueryFailure", "Stale asset index"),
   500: schemaResponse("AssetResourceQueryFailure", "Internal error"),
@@ -529,7 +673,8 @@ const errorResponses = {
 
 const mutationErrorResponses = {
   400: schemaResponse("AssetMutationFailure", "Invalid mutation"),
-  403: schemaResponse("AssetMutationFailure", "Access denied"),
+  401: schemaResponse("AssetMutationFailure", "Authentication required"),
+  403: mutationForbiddenResponse,
   404: schemaResponse("AssetMutationFailure", "Asset or folder not found"),
   409: schemaResponse("AssetMutationFailure", "Asset revision conflict"),
   413: schemaResponse("AssetMutationFailure", "Request body too large"),
@@ -736,7 +881,7 @@ export const createAssetResourceOpenApi = ({
             200: {
               description: "Complete asset content",
               content: {
-                "application/octet-stream": {
+                "*/*": {
                   schema: binarySchema,
                 },
               },
@@ -747,7 +892,7 @@ export const createAssetResourceOpenApi = ({
                 "Content-Range": { schema: { type: "string" } },
               },
               content: {
-                "application/octet-stream": {
+                "*/*": {
                   schema: binarySchema,
                 },
               },
@@ -899,6 +1044,7 @@ export const createAssetResourceOpenApi = ({
               "Observed project fields"
             ),
             400: errorResponses[400],
+            401: errorResponses[401],
             403: errorResponses[403],
             500: errorResponses[500],
           },
@@ -919,6 +1065,7 @@ export const createAssetResourceOpenApi = ({
               },
             },
             400: errorResponses[400],
+            401: errorResponses[401],
             403: errorResponses[403],
             500: errorResponses[500],
           },

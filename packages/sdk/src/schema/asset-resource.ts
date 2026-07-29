@@ -46,7 +46,10 @@ const assetQueryWhereExpressionNode: z.ZodType<
     value: assetQueryFilterValueExpression.describe(
       'A Webstudio expression, or { type: "literal", value: <JSON value> } for fixed data.'
     ),
-  })
+  }),
+  {
+    maximumChildren: assetResourceLimits.filterCount,
+  }
 );
 
 export const assetQueryWhereExpression =

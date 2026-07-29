@@ -1,4 +1,5 @@
 import {
+  canonicalAssetMetadataExtractorGeneration,
   createCanonicalAssetFileEntry,
   fullCanonicalAssetMetadataRequirements,
   getCanonicalAssetMetadataRequirements,
@@ -12,6 +13,7 @@ import { assertPostgrestSuccess } from "./patch-utils";
 type MetadataRow = Database["public"]["Tables"]["AssetFileMetadata"]["Row"];
 
 const requirementsKey = "$webstudioMetadataRequirements";
+const extractorGenerationKey = "$webstudioExtractorGeneration";
 
 // Keep cache completeness in the stored document envelope so expanding
 // requirements can reuse a matching revision. The marker is stripped before
@@ -21,6 +23,7 @@ const serializeMetadataDocument = (entry: CanonicalAssetFileEntry) => ({
   [requirementsKey]: getCanonicalAssetMetadataTier(
     getCanonicalAssetMetadataRequirements(entry)
   ),
+  [extractorGenerationKey]: canonicalAssetMetadataExtractorGeneration,
 });
 
 export type CanonicalAssetMetadataSource = {
@@ -40,14 +43,20 @@ const parseMetadataRow = (row: MetadataRow): CanonicalAssetFileEntry => {
   ) {
     throw new Error("Canonical asset metadata document is invalid");
   }
-  const { [requirementsKey]: requirements, ...document } = row.document;
+  const {
+    [requirementsKey]: requirements,
+    [extractorGenerationKey]: extractorGeneration,
+    ...document
+  } = row.document;
   const entry = createCanonicalAssetFileEntry({
     projectId: row.projectId,
     document,
     metadataRequirements:
-      requirements === undefined
-        ? fullCanonicalAssetMetadataRequirements
-        : getCanonicalAssetMetadataRequirementsForTier(requirements),
+      extractorGeneration === canonicalAssetMetadataExtractorGeneration
+        ? requirements === undefined
+          ? fullCanonicalAssetMetadataRequirements
+          : getCanonicalAssetMetadataRequirementsForTier(requirements)
+        : { structuredProperties: false, excerpt: false },
   });
   if (entry.assetId !== row.assetId || entry.revision !== row.revision) {
     throw new Error("Canonical asset metadata identity is inconsistent");

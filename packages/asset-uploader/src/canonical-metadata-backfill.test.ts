@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import {
+  canonicalAssetMetadataExtractorGeneration,
   createCanonicalAssetFileEntry,
   getCanonicalAssetMetadataTier,
 } from "@webstudio-is/content-engine/compiler";
@@ -146,6 +147,7 @@ describe("canonical asset metadata synchronization", () => {
       $webstudioMetadataRequirements: getCanonicalAssetMetadataTier(
         scenario.requirements
       ),
+      $webstudioExtractorGeneration: canonicalAssetMetadataExtractorGeneration,
     });
     if (scenario.expectedExcerpt === undefined) {
       expect(storedDocument).not.toHaveProperty("excerpt");
@@ -215,6 +217,8 @@ describe("canonical asset metadata synchronization", () => {
             document: {
               ...cached.document,
               $webstudioMetadataRequirements: "properties",
+              $webstudioExtractorGeneration:
+                canonicalAssetMetadataExtractorGeneration,
             },
             createdAt: updatedAt,
             updatedAt,
@@ -241,6 +245,7 @@ describe("canonical asset metadata synchronization", () => {
       properties: { title: "Post" },
       excerpt: "Post body",
       $webstudioMetadataRequirements: "properties+excerpt",
+      $webstudioExtractorGeneration: canonicalAssetMetadataExtractorGeneration,
     });
   });
 
@@ -550,6 +555,12 @@ describe("canonical asset metadata synchronization", () => {
         json(
           entries.map((entry) => ({
             ...entry,
+            document: {
+              ...entry.document,
+              $webstudioMetadataRequirements: "properties+excerpt",
+              $webstudioExtractorGeneration:
+                canonicalAssetMetadataExtractorGeneration,
+            },
             createdAt: "2026-07-18T00:00:00.000Z",
             updatedAt: "2026-07-18T00:00:00.000Z",
           }))

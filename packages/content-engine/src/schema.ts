@@ -382,7 +382,9 @@ export type AssetQueryFilter = z.infer<typeof assetQueryFilter>;
 export type AssetQueryWhere = QueryWhereTree<AssetQueryFilter>;
 
 const assetQueryWhereNode: z.ZodType<AssetQueryWhere, AssetQueryWhere> =
-  createQueryWhereSchema(assetQueryFilter);
+  createQueryWhereSchema(assetQueryFilter, {
+    maximumChildren: contentEngineLimits.filterCount,
+  });
 
 export const getAssetQueryWhereMetrics = (where: AssetQueryWhere) => {
   const { conditions, depth } = getQueryWhereMetrics(where);
