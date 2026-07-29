@@ -94,12 +94,43 @@ describe("bounded MCP tracing", () => {
       committed: true,
     });
     expect(
-      getMcpTraceResponse({ id: 2, result: { isError: true } }, pending, 260)
+      getMcpTraceResponse(
+        {
+          id: 2,
+          result: {
+            isError: true,
+            structuredContent: {
+              error: {
+                code: "INVALID_INPUT",
+                message: "private diagnostic message",
+                details: { token: "private-token" },
+                issues: [
+                  {
+                    code: "invalid_type",
+                    path: ["resource", "headers", 0, "value"],
+                    message: "private issue message",
+                    example: "private example",
+                  },
+                ],
+              },
+            },
+          },
+        },
+        pending,
+        260
+      )
     ).toEqual({
       name: "verify-bindings",
       startedAtMs: 200,
       durationMs: 60,
       isError: true,
+      errorCode: "INVALID_INPUT",
+      errorIssues: [
+        {
+          code: "invalid_type",
+          path: "resource.headers.0.value",
+        },
+      ],
     });
     expect(pending.size).toBe(0);
   });

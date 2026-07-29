@@ -32,7 +32,6 @@ import { z } from "zod";
 import { produceWithPatches } from "immer";
 import {
   createJsonStringifyProxy,
-  isLocalResource,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
@@ -2013,23 +2012,33 @@ const getResourceLiteralUrlValidationIssues = (
       },
     ];
   }
-  if (isLocalResource(value)) {
-    return [];
-  }
   try {
     new URL(value);
+    return [];
   } catch {
-    return [
-      {
-        code: "invalid_resource_url",
-        path: ["url"],
-        message: "URL is invalid",
-        constraint: "absolute_or_root_relative_url",
-        example: "https://api.example.com/posts",
-      },
-    ];
+    try {
+      const baseUrl = new URL("https://resource.webstudio.invalid");
+      const parsedUrl = new URL(value, baseUrl);
+      if (
+        value.startsWith("/") &&
+        value.startsWith("//") === false &&
+        parsedUrl.origin === baseUrl.origin
+      ) {
+        return [];
+      }
+    } catch {
+      // Report the shared URL validation issue below.
+    }
   }
-  return [];
+  return [
+    {
+      code: "invalid_resource_url",
+      path: ["url"],
+      message: "URL is invalid",
+      constraint: "absolute_or_root_relative_url",
+      example: "https://api.example.com/posts",
+    },
+  ];
 };
 
 const validateResourceFields = (

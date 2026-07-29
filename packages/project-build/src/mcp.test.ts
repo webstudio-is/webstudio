@@ -4179,10 +4179,39 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         workflow: expect.arrayContaining([
           expect.stringContaining("existing auth resources"),
+          expect.stringContaining(
+            "Call get-project-settings, list-pages, list-resources, and list-variables once each"
+          ),
+          expect.stringContaining(
+            "Do not call get-page-by-path to confirm that /account is absent"
+          ),
+          expect.stringContaining("Do not call meta.index after this guide"),
           expect.stringContaining("Never place credentials"),
           expect.stringContaining("signed-out, loading, signed-in"),
           expect.stringContaining("not an authorization boundary"),
+          expect.stringContaining(
+            "Use create-page's returned rootInstanceId directly"
+          ),
+          expect.stringContaining("copy its fixed request URL exactly"),
+          expect.stringContaining(
+            'url:"/api/auth/session",headers:[],searchParams:[]'
+          ),
+          expect.stringContaining(
+            "Do not call selector-based structural tools"
+          ),
+          expect.stringContaining("one expression-free semantic fragment"),
+          expect.stringContaining("Use that exact fragment verbatim"),
+          expect.stringContaining(
+            "Do not bind that server-only resource into local preview rendering"
+          ),
           expect.stringContaining("call verify-bindings"),
+          expect.stringContaining(
+            "Do not restart preview or re-run verify-bindings"
+          ),
+          expect.stringContaining(
+            "Do not run discovery or inspect-instance after visual verification starts"
+          ),
+          expect.stringContaining("A successful final audit is terminal"),
         ]),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: "list-instances" }),
@@ -4211,6 +4240,20 @@ describe("project session mcp adapter", () => {
           expect.stringContaining(
             "Before the first mutation, call list-breakpoints and list-design-tokens"
           ),
+          expect.stringContaining("Call each discovery tool at most once"),
+          expect.stringContaining("Call create-page exactly once"),
+          expect.stringContaining(
+            "Do not call list-instances after the first mutation"
+          ),
+          expect.stringContaining("Do not call get-styles"),
+          expect.stringContaining(
+            "Capture the desktop and mobile screenshots back-to-back"
+          ),
+          expect.stringContaining(
+            'call verify-bindings exactly once with {"pagePath":"/summer"}'
+          ),
+          expect.stringContaining("Capture exactly the two supplied viewports"),
+          expect.stringContaining("A successful final audit is terminal"),
           expect.stringContaining("parallel design system"),
           expect.stringContaining("semantic editable structure"),
           expect.stringContaining("actual breakpoint ranges"),
@@ -6037,6 +6080,10 @@ describe("project session mcp adapter", () => {
         "preview.stop",
       ])
     );
+    expect(
+      adapter.listTools().find((tool) => tool.name === "preview.start")
+        ?.mcpExamples
+    ).toEqual([{ source: "session" }]);
 
     const started = await adapter.callTool({
       name: "preview.start",

@@ -24,6 +24,8 @@ export type EvaluationToolCall = {
   planned?: true;
   committed?: true;
   isError?: boolean;
+  errorCode?: string;
+  errorIssues?: Array<{ code: string; path: string }>;
 };
 
 export type EvaluationArtifact = {
@@ -133,7 +135,10 @@ const getEditablePageState = (project: EvaluationProject) => ({
 
 const isValidExpression = (value: string) => {
   try {
-    const expression = parseExpressionAt(value, 0, { ecmaVersion: "latest" });
+    const expression = parseExpressionAt(value, 0, {
+      ecmaVersion: "latest",
+      preserveParens: true,
+    });
     return value.slice(expression.end).trim() === "";
   } catch {
     return false;

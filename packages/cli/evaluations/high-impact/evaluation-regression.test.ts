@@ -32,6 +32,9 @@ const createResult = (
       total: 10,
       succeeded: 10,
       failed: 0,
+      failuresByTool: {},
+      failuresByCode: {},
+      issuesByCode: {},
       retries: 0,
       focusedReads: 2,
       broadReads: 0,
@@ -62,7 +65,7 @@ describe("evaluation regression comparison", () => {
       metrics: {
         ...baseline.metrics,
         durationMs: 1_100,
-        tokens: { ...baselineTokens, total: 1_200 },
+        tokens: { ...baselineTokens, total: 1_300 },
       },
     });
     const comparison = compareEvaluationResult(current, baseline);
@@ -77,16 +80,23 @@ describe("evaluation regression comparison", () => {
         expect.objectContaining({
           metric: "metrics.tokens.total",
           baseline: 1_000,
-          current: 1_200,
+          current: 1_300,
         }),
       ])
     );
     expect(comparison.regressions).toEqual([
       expect.objectContaining({
         metric: "metrics.tokens.total",
-        allowed: 1_150,
+        allowed: 1_250,
       }),
     ]);
+
+    const noisyCurrent = structuredClone(baseline);
+    noisyCurrent.metrics.tokens!.total = 1_200;
+    expect(compareEvaluationResult(noisyCurrent, baseline)).toMatchObject({
+      status: "passed",
+      regressions: [],
+    });
   });
 
   test("blocks correctness regressions and skips incompatible baselines", () => {
@@ -140,6 +150,27 @@ describe("evaluation regression comparison", () => {
       status: "passed",
       regressions: [],
     });
+  });
+
+  test("reports environment-sensitive tool latency without blocking", () => {
+    const baseline = createResult();
+    const current = structuredClone(baseline);
+    current.metrics.toolCalls.totalDurationMs = 20_000;
+    current.metrics.toolCalls.p95DurationMs = 10_000;
+    const comparison = compareEvaluationResult(current, baseline);
+    expect(comparison).toMatchObject({ status: "passed", regressions: [] });
+    expect(comparison.deltas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metric: "metrics.toolCalls.totalDurationMs",
+          current: 20_000,
+        }),
+        expect.objectContaining({
+          metric: "metrics.toolCalls.p95DurationMs",
+          current: 10_000,
+        }),
+      ])
+    );
   });
 
   test("reports stochastic milestone timing without blocking one run", () => {

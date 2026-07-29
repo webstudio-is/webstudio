@@ -2109,6 +2109,18 @@ describe("createResourceValue", () => {
     });
   });
 
+  test("accepts root-relative resource urls", () => {
+    expect(
+      resourceFieldsInput.parse({
+        name: "Session",
+        method: "get",
+        url: "/api/auth/session",
+        searchParams: [],
+        headers: [],
+      })
+    ).toMatchObject({ url: '"/api/auth/session"' });
+  });
+
   test("creates resource values through the sdk schema", () => {
     expect(
       createResourceValue({

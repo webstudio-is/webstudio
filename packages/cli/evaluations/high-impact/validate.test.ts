@@ -301,6 +301,25 @@ describe("design-input evaluation", () => {
     expect(result.checks.expressions).toBe("failed");
   });
 
+  test("accepts a parenthesized object expression", () => {
+    const project = addDesignPage();
+    project.props.push({
+      id: "style-expression",
+      instanceId: "summer-heading",
+      name: "style",
+      type: "expression",
+      value: '({ display: state === "ready" ? "block" : "none" })',
+    });
+
+    const result = evaluateHighImpactOutcome({
+      fixture: designInputFixture,
+      project,
+      toolCalls: designCalls,
+    });
+
+    expect(result.checks.expressions).toBe("passed");
+  });
+
   test("rejects broad or unnecessarily verbose reads", () => {
     const result = evaluateHighImpactOutcome({
       fixture: designInputFixture,

@@ -84,6 +84,9 @@ export type McpEvaluationMetrics = {
   total: number;
   succeeded: number;
   failed: number;
+  failuresByTool: Record<string, number>;
+  failuresByCode: Record<string, number>;
+  issuesByCode: Record<string, number>;
   retries: number;
   focusedReads: number;
   broadReads: number;
@@ -141,6 +144,16 @@ const countRetries = (calls: readonly EvaluationToolCall[]) => {
   return retries;
 };
 
+const countValues = (values: readonly string[]) =>
+  Object.fromEntries(
+    [...new Set(values)]
+      .sort((left, right) => left.localeCompare(right))
+      .map((value) => [
+        value,
+        values.filter((candidate) => candidate === value).length,
+      ])
+  );
+
 export const getMcpEvaluationMetrics = (
   calls: readonly EvaluationToolCall[]
 ): McpEvaluationMetrics => {
@@ -153,10 +166,20 @@ export const getMcpEvaluationMetrics = (
   const firstVerification = calls.find(
     (call) => verificationNames.has(call.name) && call.isError !== true
   );
+  const failedCalls = calls.filter((call) => call.isError === true);
   return {
     total: calls.length,
     succeeded: calls.filter((call) => call.isError !== true).length,
-    failed: calls.filter((call) => call.isError === true).length,
+    failed: failedCalls.length,
+    failuresByTool: countValues(failedCalls.map((call) => call.name)),
+    failuresByCode: countValues(
+      failedCalls.map((call) => call.errorCode ?? "UNKNOWN")
+    ),
+    issuesByCode: countValues(
+      failedCalls.flatMap((call) =>
+        (call.errorIssues ?? []).map((issue) => issue.code)
+      )
+    ),
     retries: countRetries(calls),
     focusedReads: calls.filter((call) => isFocusedRead(call.name)).length,
     broadReads: calls.filter((call) => isBroadRead(call.name)).length,

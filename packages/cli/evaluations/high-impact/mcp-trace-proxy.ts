@@ -1,7 +1,7 @@
 import { appendFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
-import { isPlainRecord } from "../../src/type-utils";
+import { boundedIdentifierPattern, isPlainRecord } from "../../src/type-utils";
 
 type JsonRpcId = string | number;
 
@@ -19,6 +19,66 @@ export type BoundedMcpCall = {
   planned?: true;
   committed?: true;
   isError?: true;
+  errorCode?: string;
+  errorIssues?: Array<{ code: string; path: string }>;
+};
+
+const getStructuredError = (result: unknown) => {
+  const structuredContent =
+    isPlainRecord(result) && isPlainRecord(result.structuredContent)
+      ? result.structuredContent
+      : undefined;
+  return structuredContent !== undefined &&
+    isPlainRecord(structuredContent.error)
+    ? structuredContent.error
+    : undefined;
+};
+
+const getBoundedErrorCode = (value: unknown, result: unknown) => {
+  const error = getStructuredError(result);
+  if (
+    typeof error?.code === "string" &&
+    boundedIdentifierPattern.test(error.code)
+  ) {
+    return error.code;
+  }
+  if (isPlainRecord(value) && isPlainRecord(value.error)) {
+    const code = value.error.code;
+    if (typeof code === "number" && Number.isSafeInteger(code)) {
+      return `JSON_RPC_${code}`;
+    }
+    if (typeof code === "string" && boundedIdentifierPattern.test(code)) {
+      return code;
+    }
+  }
+};
+
+const getBoundedErrorIssues = (result: unknown) => {
+  const issues = getStructuredError(result)?.issues;
+  if (Array.isArray(issues) === false) {
+    return;
+  }
+  const boundedIssues = issues.slice(0, 8).flatMap((issue) => {
+    if (
+      isPlainRecord(issue) === false ||
+      typeof issue.code !== "string" ||
+      boundedIdentifierPattern.test(issue.code) === false ||
+      Array.isArray(issue.path) === false ||
+      issue.path.length > 8
+    ) {
+      return [];
+    }
+    const segments = issue.path.map(String);
+    if (
+      segments.some(
+        (segment) => boundedIdentifierPattern.test(segment) === false
+      )
+    ) {
+      return [];
+    }
+    return [{ code: issue.code, path: segments.join(".") }];
+  });
+  return boundedIssues.length === 0 ? undefined : boundedIssues;
 };
 
 export const getMcpTraceRequest = (
@@ -93,6 +153,10 @@ export const getMcpTraceResponse = (
     (isPlainRecord(result) && result.isError === true)
       ? (true as const)
       : undefined;
+  const errorCode =
+    isError === true ? getBoundedErrorCode(value, result) : undefined;
+  const errorIssues =
+    isError === true ? getBoundedErrorIssues(result) : undefined;
   const structuredContent =
     isPlainRecord(result) && isPlainRecord(result.structuredContent)
       ? result.structuredContent
@@ -121,6 +185,8 @@ export const getMcpTraceResponse = (
     ...(planned === undefined ? {} : { planned }),
     ...(committed === undefined ? {} : { committed }),
     ...(isError === undefined ? {} : { isError }),
+    ...(errorCode === undefined ? {} : { errorCode }),
+    ...(errorIssues === undefined ? {} : { errorIssues }),
   };
 };
 

@@ -101,6 +101,8 @@ const isSameCaptureSessionConfig = (
 ) => left.browser === right.browser && left.browserPath === right.browserPath;
 
 const defaultPreviewSource = "session" satisfies PreviewSource;
+const defaultSleep = (durationMs: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, durationMs));
 const getPreviewSource = (source: PreviewSource | undefined): PreviewSource =>
   source ?? defaultPreviewSource;
 
@@ -160,6 +162,7 @@ export const createMcpPreviewHandlers = ({
   prepareSessionDataFile,
   captureScreenshot = captureScreenshotWithBrowserInstall,
   createCaptureSession,
+  sleep = defaultSleep,
 }: {
   preview: McpPreviewController;
   isStale?: () => boolean;
@@ -169,6 +172,7 @@ export const createMcpPreviewHandlers = ({
   prepareSessionDataFile?: () => Promise<void>;
   captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
   createCaptureSession?: typeof createScreenshotCaptureSession;
+  sleep?: (durationMs: number) => Promise<void>;
 }) => {
   let captureSession:
     | ReturnType<typeof createScreenshotCaptureSession>
@@ -407,9 +411,19 @@ export const createMcpPreviewHandlers = ({
           isManagedSessionPreviewCapture(input) &&
           createCaptureSession !== undefined
         ) {
-          result = await (
-            await getCaptureSession(input)
-          ).capture(captureOptions);
+          const captureSession = await getCaptureSession(input);
+          result = await captureSession.capture(captureOptions);
+          for (
+            let retry = 0;
+            retry < 2 && result.navigation?.generatedSiteRootPresent === false;
+            retry += 1
+          ) {
+            progress?.report(
+              "tool screenshot waiting for refreshed generated route"
+            );
+            await sleep(1000);
+            result = await captureSession.capture(captureOptions);
+          }
         } else {
           result = await captureScreenshot({
             ...captureOptions,

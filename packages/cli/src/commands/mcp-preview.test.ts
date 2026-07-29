@@ -1003,6 +1003,63 @@ test("rejects a generated route that rendered Builder chrome", async () => {
   ).rejects.toMatchObject({ code: "SCREENSHOT_NOT_GENERATED_SITE" });
 });
 
+test("retries a managed generated route while the refreshed preview settles", async () => {
+  const createResult = (generatedSiteRootPresent: boolean) => ({
+    output: "account.png",
+    browser: {
+      browser: "chromium" as const,
+      path: "/browser",
+      source: "path" as const,
+    },
+    viewport: { width: 1280, height: 720 },
+    fullPage: false,
+    elapsedMs: 1,
+    warnings: [],
+    navigation: {
+      requestedUrl: "http://127.0.0.1:5173/account",
+      finalUrl: "http://127.0.0.1:5173/account",
+      redirects: [],
+      documentReadyState: "complete",
+      generatedSiteRootPresent,
+      layoutStable: true,
+    },
+  });
+  const capture = vi
+    .fn()
+    .mockResolvedValueOnce(createResult(false))
+    .mockResolvedValueOnce(createResult(true));
+  const sleep = vi.fn(async () => undefined);
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/account"),
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture,
+      capturePage: vi.fn(),
+      close: vi.fn(),
+    })) as never,
+    sleep,
+  });
+
+  await expect(
+    handlers.captureScreenshot({
+      path: "/account",
+      viewport: { width: 1280, height: 720 },
+    })
+  ).resolves.toMatchObject({
+    navigation: { generatedSiteRootPresent: true },
+  });
+  expect(capture).toHaveBeenCalledTimes(2);
+  expect(sleep).toHaveBeenCalledWith(1000);
+});
+
 test("rejects resized generated routes that rendered Builder chrome", async () => {
   const capturePage = vi.fn(async () => [
     {

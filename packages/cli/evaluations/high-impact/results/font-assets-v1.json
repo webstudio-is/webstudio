@@ -6,23 +6,26 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "53276281bd1eb5d56e4fe9fe63e44fc5c62ccade4a6f789aafc05367a8f9045d",
+  "commandSha256": "b5a3063f6e1e4b12b35a43edd4336107c84f9e61ad96119b1c1ea5ed91e533be",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 48517,
+    "durationMs": 42461,
     "tokens": {
-      "input": 465604,
-      "cachedInput": 418304,
+      "input": 417961,
+      "cachedInput": 369664,
       "cacheWriteInput": 0,
-      "output": 1590,
-      "reasoningOutput": 324,
-      "total": 467194,
-      "cachedInputRate": 0.8984
+      "output": 1651,
+      "reasoningOutput": 341,
+      "total": 419612,
+      "cachedInputRate": 0.8844
     },
     "toolCalls": {
       "total": 8,
       "succeeded": 8,
       "failed": 0,
+      "failuresByTool": {},
+      "failuresByCode": {},
+      "issuesByCode": {},
       "retries": 0,
       "focusedReads": 2,
       "broadReads": 0,
@@ -30,11 +33,11 @@
       "plannedMutations": 0,
       "committedMutations": 3,
       "verifications": 1,
-      "totalDurationMs": 73,
-      "p50DurationMs": 10,
-      "p95DurationMs": 21,
-      "timeToFirstMutationMs": 27832,
-      "timeToFirstVerificationMs": 43500
+      "totalDurationMs": 67,
+      "p50DurationMs": 8,
+      "p95DurationMs": 18,
+      "timeToFirstMutationMs": 24947,
+      "timeToFirstVerificationMs": 38261
     }
   },
   "callSequence": [

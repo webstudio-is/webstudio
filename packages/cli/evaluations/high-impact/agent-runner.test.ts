@@ -30,6 +30,10 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("Never use broad project reads"),
         expect.any(String),
         expect.stringContaining("meta.next"),
+        expect.stringContaining("successful final audit"),
+        expect.stringContaining(
+          "After the first successful screenshot, do not mutate"
+        ),
       ],
     });
     expect(
@@ -42,6 +46,10 @@ describe("high-impact agent runner", () => {
         desktop: { viewport: { width: 1440, height: 900 } },
         mobile: { viewport: { width: 390, height: 844 } },
       },
+      constraints: expect.arrayContaining([
+        expect.stringContaining("exactly three attach-design-token calls"),
+        expect.stringContaining("Omit the optional position field"),
+      ]),
     });
   });
 
@@ -73,6 +81,13 @@ describe("high-impact agent runner", () => {
         model: "test-model",
         getToolCalls: () => [
           { name: "meta.guide", startedAtMs: 100, durationMs: 25 },
+          {
+            name: "attach-design-token",
+            startedAtMs: 300,
+            durationMs: 10,
+            isError: true,
+            errorCode: "INVALID_INPUT",
+          },
           { name: "audit", startedAtMs: 500, durationMs: 75 },
         ],
         evaluate: async () => ({
@@ -94,13 +109,14 @@ describe("high-impact agent runner", () => {
             total: 1_200,
           },
           toolCalls: {
-            total: 2,
-            failed: 0,
+            total: 3,
+            failed: 1,
+            failuresByTool: { "attach-design-token": 1 },
             verifications: 1,
             timeToFirstVerificationMs: 500,
           },
         },
-        callSequence: ["meta.guide", "audit"],
+        callSequence: ["meta.guide", "attach-design-token", "audit"],
         checks: { usageCaptured: "passed" },
       });
       const source = await readFile(resultPath, "utf8");
@@ -109,6 +125,12 @@ describe("high-impact agent runner", () => {
       expect(JSON.parse(await readFile(taskPath, "utf8"))).toMatchObject({
         fixtureId: "authenticated-page-v1",
         mcp: { args: ["mcp"] },
+        constraints: expect.arrayContaining([
+          expect.stringContaining("successful final audit"),
+          expect.stringContaining(
+            "After the first successful screenshot, do not mutate"
+          ),
+        ]),
       });
     } finally {
       await rm(directory, { recursive: true, force: true });

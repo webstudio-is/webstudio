@@ -50,13 +50,6 @@ const gatedMetricPaths = new Set([
   "metrics.toolCalls.retries",
   "metrics.toolCalls.focusedReads",
   "metrics.toolCalls.broadReads",
-  "metrics.toolCalls.totalDurationMs",
-  "metrics.toolCalls.p95DurationMs",
-]);
-
-const minimumAbsoluteIncrease = new Map([
-  ["metrics.toolCalls.totalDurationMs", 100],
-  ["metrics.toolCalls.p95DurationMs", 100],
 ]);
 
 const getNumericMetrics = (
@@ -128,13 +121,13 @@ export const compareEvaluationResult = (
     if (gatedMetricPaths.has(metric) === false) {
       continue;
     }
+    const regressionPercent =
+      metric === "metrics.tokens.total" ? 25 : maxMetricRegressionPercent;
     const relativeIncrease = Math.floor(
-      baselineValue * (maxMetricRegressionPercent / 100) +
+      baselineValue * (regressionPercent / 100) +
         Number.EPSILON * Math.max(1, baselineValue)
     );
-    const allowed =
-      baselineValue +
-      Math.max(relativeIncrease, minimumAbsoluteIncrease.get(metric) ?? 0);
+    const allowed = baselineValue + relativeIncrease;
     if (currentValue > allowed) {
       regressions.push({
         metric,

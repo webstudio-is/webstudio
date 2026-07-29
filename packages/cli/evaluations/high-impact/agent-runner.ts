@@ -73,6 +73,13 @@ export const createMinimalAgentTask = (
       "Never use broad project reads: snapshot, components.list, or components.coverage-plan.",
       "Do not persist or report credentials or private session data.",
       "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
+      "Treat the successful final audit and requested visual evidence as terminal; do not mutate, verify, restart preview, or capture more evidence afterward.",
+      "Finish all visual polish before evidence capture. After the first successful screenshot, do not mutate, rediscover, verify, or restart preview; capture only the remaining requested viewports, then make audit the next and final tool call.",
+      ...(fixture.id === "design-input-v1"
+        ? [
+            "For this fixture, make exactly three attach-design-token calls: attach only the returned Brand / Coral, Text / Ink, and Type / Heading token ids once each to compatible inserted element instance ids. Omit the optional position field and do not attempt any other token attachment.",
+          ]
+        : []),
     ],
   };
 };
@@ -91,9 +98,15 @@ const assertBoundedResult = (result: AgentEvaluationResult) => {
     for (const [key, child] of Object.entries(value)) {
       const isAggregateUsage =
         path.length === 1 && path[0] === "metrics" && key === "tokens";
+      const isMetricIdentifier =
+        path.length === 3 &&
+        path[0] === "metrics" &&
+        path[1] === "toolCalls" &&
+        ["failuresByTool", "failuresByCode", "issuesByCode"].includes(path[2]);
       if (
-        forbiddenResultKeys.test(key) ||
-        (forbiddenTokenKey.test(key) && isAggregateUsage === false)
+        isMetricIdentifier === false &&
+        (forbiddenResultKeys.test(key) ||
+          (forbiddenTokenKey.test(key) && isAggregateUsage === false))
       ) {
         throw new Error(`Agent result contains forbidden field ${key}.`);
       }

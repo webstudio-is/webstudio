@@ -54,6 +54,8 @@ describe("evaluation metrics", () => {
           startedAtMs: 50,
           durationMs: 30,
           isError: true,
+          errorCode: "INVALID_INPUT",
+          errorIssues: [{ code: "invalid_resource_url", path: "resource.url" }],
         },
         {
           name: "create-page",
@@ -74,6 +76,9 @@ describe("evaluation metrics", () => {
       total: 6,
       succeeded: 5,
       failed: 1,
+      failuresByTool: { "create-page": 1 },
+      failuresByCode: { INVALID_INPUT: 1 },
+      issuesByCode: { invalid_resource_url: 1 },
       retries: 1,
       focusedReads: 0,
       broadReads: 1,
