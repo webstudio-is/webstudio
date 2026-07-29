@@ -384,6 +384,8 @@ test("preserves structured input issues in MCP shell errors", () => {
     ok: false,
     error: {
       code: "INVALID_INPUT",
+      message:
+        "Audit input is invalid.\npagePath: pageId and pagePath are mutually exclusive (use_page_id_or_page_path).",
       issues: [
         {
           code: "mutually_exclusive_fields",

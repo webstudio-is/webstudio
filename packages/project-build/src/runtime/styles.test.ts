@@ -59,6 +59,7 @@ import {
   createSelectedStyleDeclarationUpdatePayload,
   styleDeleteInput,
   styleReplaceInput,
+  styleUpdateDeclarationsInput,
   styleUpdateInput,
   defineCssVariables,
   deleteDesignTokenStyles,
@@ -79,6 +80,8 @@ import {
   updateVarReferencesInProps,
 } from "./styles";
 import { createLocalStyleSourceClonePlan } from "./style-utils";
+import { getInputSchemaMetadata } from "../contracts/input-schema";
+import { getZodValidationIssues } from "./errors";
 import {
   addStyleSourceToInstanceMutable,
   createLocalStyleSourcePatchPlan,
@@ -2023,6 +2026,64 @@ describe("style declaration helpers", () => {
           value: { type: "unit", value: 16, unit: "px" },
         },
       ],
+    });
+
+    const invalidStyleUpdate = styleUpdateDeclarationsInput.safeParse({
+      updates: [
+        {
+          instanceId: "box",
+          property: "color",
+          value: "red",
+        },
+      ],
+    });
+    expect(invalidStyleUpdate.success).toBe(false);
+    if (invalidStyleUpdate.success) {
+      throw new Error("Expected the primitive style value to be rejected");
+    }
+    expect(
+      getZodValidationIssues(
+        invalidStyleUpdate.error,
+        getInputSchemaMetadata(styleUpdateDeclarationsInput).inputJsonSchema
+      )
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid_type",
+        path: ["updates", "0", "value"],
+        message: "Invalid input: expected object, received string",
+        example: { type: "keyword", value: "red" },
+      }),
+    ]);
+    expect(
+      styleUpdateInput.safeParse({
+        instanceId: "box",
+        property: "color",
+        value: "red",
+      }).success
+    ).toBe(false);
+    expect(
+      designTokenCreateInput.safeParse({
+        name: "Primary",
+        styles: { color: "red" },
+      }).success
+    ).toBe(true);
+    expect(
+      designTokenCreateInput.safeParse({
+        name: "Primary",
+        styles: { color: { type: "unsupported", value: "red" } },
+      }).success
+    ).toBe(false);
+
+    expect(
+      getInputSchemaMetadata(styleUpdateInput).inputJsonSchema.properties?.value
+    ).toMatchObject({
+      description: "Typed CSS StyleValue object.",
+      examples: [{ type: "keyword", value: "red" }],
+      type: "object",
+      properties: {
+        type: { type: "string" },
+      },
+      required: ["type"],
     });
   });
 

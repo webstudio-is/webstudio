@@ -60113,7 +60113,23 @@ export const runtimeOperationContractData = [
               property: {
                 type: "string",
               },
-              value: {},
+              value: {
+                description: "Typed CSS StyleValue object.",
+                type: "object",
+                properties: {
+                  type: {
+                    type: "string",
+                  },
+                },
+                required: ["type"],
+                additionalProperties: {},
+                examples: [
+                  {
+                    type: "keyword",
+                    value: "red",
+                  },
+                ],
+              },
               breakpoint: {
                 type: "string",
               },
@@ -60127,7 +60143,7 @@ export const runtimeOperationContractData = [
                 type: "boolean",
               },
             },
-            required: ["instanceId", "property"],
+            required: ["instanceId", "property", "value"],
           },
         },
       },
@@ -60235,7 +60251,23 @@ export const runtimeOperationContractData = [
               property: {
                 type: "string",
               },
-              value: {},
+              value: {
+                description: "Typed CSS StyleValue object.",
+                type: "object",
+                properties: {
+                  type: {
+                    type: "string",
+                  },
+                },
+                required: ["type"],
+                additionalProperties: {},
+                examples: [
+                  {
+                    type: "keyword",
+                    value: "red",
+                  },
+                ],
+              },
               breakpoint: {
                 type: "string",
               },
@@ -60249,7 +60281,7 @@ export const runtimeOperationContractData = [
                 type: "string",
               },
             },
-            required: ["instanceId", "property", "styleSourceId"],
+            required: ["instanceId", "property", "value", "styleSourceId"],
           },
         },
       },
@@ -60546,6 +60578,7 @@ export const runtimeOperationContractData = [
                       type: "string",
                     },
                     {
+                      description: "Typed CSS StyleValue object.",
                       type: "object",
                       properties: {
                         type: {
@@ -60554,6 +60587,12 @@ export const runtimeOperationContractData = [
                       },
                       required: ["type"],
                       additionalProperties: {},
+                      examples: [
+                        {
+                          type: "keyword",
+                          value: "red",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -60572,6 +60611,7 @@ export const runtimeOperationContractData = [
                           type: "string",
                         },
                         {
+                          description: "Typed CSS StyleValue object.",
                           type: "object",
                           properties: {
                             type: {
@@ -60580,6 +60620,12 @@ export const runtimeOperationContractData = [
                           },
                           required: ["type"],
                           additionalProperties: {},
+                          examples: [
+                            {
+                              type: "keyword",
+                              value: "red",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -60903,6 +60949,7 @@ export const runtimeOperationContractData = [
                       type: "string",
                     },
                     {
+                      description: "Typed CSS StyleValue object.",
                       type: "object",
                       properties: {
                         type: {
@@ -60911,6 +60958,12 @@ export const runtimeOperationContractData = [
                       },
                       required: ["type"],
                       additionalProperties: {},
+                      examples: [
+                        {
+                          type: "keyword",
+                          value: "red",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -60929,6 +60982,7 @@ export const runtimeOperationContractData = [
                           type: "string",
                         },
                         {
+                          description: "Typed CSS StyleValue object.",
                           type: "object",
                           properties: {
                             type: {
@@ -60937,6 +60991,12 @@ export const runtimeOperationContractData = [
                           },
                           required: ["type"],
                           additionalProperties: {},
+                          examples: [
+                            {
+                              type: "keyword",
+                              value: "red",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -61018,6 +61078,7 @@ export const runtimeOperationContractData = [
                     type: "string",
                   },
                   {
+                    description: "Typed CSS StyleValue object.",
                     type: "object",
                     properties: {
                       type: {
@@ -61026,6 +61087,12 @@ export const runtimeOperationContractData = [
                     },
                     required: ["type"],
                     additionalProperties: {},
+                    examples: [
+                      {
+                        type: "keyword",
+                        value: "red",
+                      },
+                    ],
                   },
                 ],
               },

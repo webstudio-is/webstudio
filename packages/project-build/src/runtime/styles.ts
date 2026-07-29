@@ -38,7 +38,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { getInstanceDepths } from "./instances";
-import { throwBuilderRuntimeError } from "./errors";
+import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 import { serializeStyleDeclarations } from "./style-utils";
@@ -301,10 +301,32 @@ const styleStateInput = z.string().superRefine((state, context) => {
   }
 });
 
+const styleValueExample = { type: "keyword", value: "red" } as const;
+const typedStyleValueInput = z
+  .object({ type: z.string() })
+  .passthrough()
+  .meta({
+    description: "Typed CSS StyleValue object.",
+    examples: [styleValueExample],
+  })
+  .superRefine((value, context) => {
+    if (styleValue.safeParse(value).success === false) {
+      addZodValidationIssue(context, {
+        code: "invalid_style_value",
+        path: [],
+        message: "Expected a typed CSS StyleValue object",
+        constraint: "typed_css_style_value",
+        example: styleValueExample,
+      });
+    }
+  })
+  .transform((value) => value as StyleValue)
+  .describe("Typed CSS StyleValue object.");
+
 export const styleUpdateInput = z.object({
   instanceId: z.string(),
   property: z.string(),
-  value: z.unknown(),
+  value: typedStyleValueInput,
   breakpoint: z.string().optional(),
   state: styleStateInput.optional(),
   listed: z.boolean().optional(),
@@ -1161,10 +1183,7 @@ export const serializeCssVariables = ({
   };
 };
 
-const designTokenStyleValueInput = z.union([
-  z.string(),
-  z.object({ type: z.string() }).passthrough(),
-]);
+const designTokenStyleValueInput = z.union([z.string(), typedStyleValueInput]);
 
 export const designTokenStyleInput = z.object({
   property: z.string(),
