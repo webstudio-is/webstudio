@@ -29,20 +29,19 @@ import {
   type Page,
 } from "@webstudio-is/sdk";
 import { $instances, $pages, $props } from "~/shared/sync/data-stores";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import {
+  BindableExpressionControl,
+  updateExpressionValue,
+  useBindingState,
+} from "~/builder/shared/bindable-expression";
 import { getPageDisplayName } from "~/builder/features/pages/page-utils";
 import {
   type ControlProps,
   VerticalLayout,
   Label,
-  updateExpressionValue,
   $selectedInstanceScope,
-  useBindingState,
   humanizeAttribute,
   type PropValue,
 } from "../shared";
@@ -483,14 +482,14 @@ export const UrlInput = ({
   value,
   readOnly = false,
   onChange,
-  suffix,
+  renderControl,
 }: {
   instanceId: string;
   prop: UrlInputProp;
   value: string;
   readOnly?: boolean;
   onChange: (value: UrlInputValue) => void;
-  suffix?: ReactNode;
+  renderControl?: (control: ReactNode) => ReactNode;
 }) => {
   const { value: mode, set: setMode } = useDraftValue<Mode>(
     propToMode(prop, value),
@@ -537,14 +536,7 @@ export const UrlInput = ({
           ))}
         </ToggleGroup>
       </Flex>
-      {suffix === undefined ? (
-        control
-      ) : (
-        <BindingControl>
-          {control}
-          {suffix}
-        </BindingControl>
-      )}
+      {renderControl?.(control) ?? control}
     </>
   );
 };
@@ -562,7 +554,7 @@ export const UrlControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable, variant } = useBindingState(
+  const { overwritable } = useBindingState(
     prop?.type === "expression" ? prop.value : undefined
   );
 
@@ -581,21 +573,24 @@ export const UrlControl = ({
         value={value}
         readOnly={overwritable === false}
         onChange={onChange}
-        suffix={
-          <BindingPopover
+        renderControl={(control) => (
+          <BindableExpressionControl
+            expression={expression}
+            value={value}
+            bound={prop?.type === "expression"}
             scope={scope}
             aliases={aliases}
             validate={(value) => validatePrimitiveValue(value, label)}
-            variant={variant}
-            value={expression}
-            onChange={(newExpression) =>
-              onChange({ type: "expression", value: newExpression })
+            onChangeValue={(value) => onChange({ type: "string", value })}
+            onChangeExpression={(value) =>
+              onChange({ type: "expression", value })
             }
-            onRemove={(evaluatedValue) =>
-              onChange({ type: "string", value: String(evaluatedValue) })
+            onRemove={(value) =>
+              onChange({ type: "string", value: String(value) })
             }
+            renderControl={() => control}
           />
-        }
+        )}
       />
     </VerticalLayout>
   );

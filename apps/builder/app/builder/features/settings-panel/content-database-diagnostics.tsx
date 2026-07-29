@@ -16,6 +16,14 @@ const formatBytes = (bytes: number) => {
   return `${(bytes / 1024 / 1024).toFixed(2)} MiB`;
 };
 
+const databaseSizeWarningRatio = 0.9;
+
+export const isDatabaseSizeNearLimit = ({
+  usedBytes,
+  maxBytes,
+}: Pick<AssetQueryPreviewDiagnostics, "usedBytes" | "maxBytes">) =>
+  usedBytes >= maxBytes * databaseSizeWarningRatio;
+
 export const ContentDatabaseDiagnostics = ({
   value,
 }: {
@@ -25,6 +33,7 @@ export const ContentDatabaseDiagnostics = ({
     value.includedDocumentCount + value.omittedDocumentCount;
   const candidateFilesLabel = `${totalDocumentCount} candidate ${totalDocumentCount === 1 ? "file" : "files"}`;
   const omittedFilesLabel = `${value.omittedDocumentCount} ${value.omittedDocumentCount === 1 ? "file" : "files"}`;
+  const isNearLimit = isDatabaseSizeNearLimit(value);
   return (
     <RequestDiagnosticsContent>
       <PanelBanner variant={value.truncated ? "warning" : "success"}>
@@ -43,6 +52,8 @@ export const ContentDatabaseDiagnostics = ({
         <RequestDiagnosticsRow
           label="Database size"
           value={formatBytes(value.usedBytes)}
+          valueColor={isNearLimit ? "destructive" : undefined}
+          description="To reduce the database size, select only the output fields your pages use, narrow filters to fewer files, and avoid full file content when a byte range is enough."
         />
         <RequestDiagnosticsRow
           label="Database limit"

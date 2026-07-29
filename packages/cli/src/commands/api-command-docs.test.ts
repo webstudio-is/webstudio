@@ -187,6 +187,17 @@ test("documents the Assets result shape", () => {
   }
 });
 
+test("documents storage-efficient Assets queries for agents", () => {
+  for (const document of ["api-use-cases", "manual-llm"] as const) {
+    const contents = readCliDoc(document);
+    expect(contents).toContain('output.mode:"fields"');
+    expect(contents).toContain("only fields");
+    expect(contents).toContain("includeMetadata:false");
+    expect(contents).toContain("__diagnostics__.usedBytes");
+    expect(contents).toContain("truncated");
+  }
+});
+
 test("documents MCP examples with current tool input fields", () => {
   const adapter = createMetadataOnlyMcpAdapter();
   const toolInputFields = new Map(

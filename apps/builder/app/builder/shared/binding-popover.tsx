@@ -356,6 +356,7 @@ export const BindingPopover = ({
   return (
     <FloatingPanel
       placement="left-start"
+      anchor="trigger"
       open={isOpen}
       onOpenChange={(newOpen) => {
         // handle special case for popover close

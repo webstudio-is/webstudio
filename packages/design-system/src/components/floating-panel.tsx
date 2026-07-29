@@ -25,11 +25,14 @@ const computeFloatingPosition = (
   floating: HTMLElement,
   container: HTMLElement,
   placement: "left-start" | "right-start" | "bottom-within",
+  anchor: "container" | "trigger",
   offsetOptions: OffsetOptions
 ): { x: number; y: number } => {
   const triggerRect = trigger.getBoundingClientRect();
   const floatingRect = floating.getBoundingClientRect();
   const containerRect = container.getBoundingClientRect();
+  const horizontalAnchorRect =
+    anchor === "trigger" ? triggerRect : containerRect;
 
   const mainAxis =
     typeof offsetOptions === "number"
@@ -46,15 +49,13 @@ const computeFloatingPosition = (
   let y = 0;
 
   if (placement === "left-start") {
-    // Position to the left of the container, aligned with the top of trigger
-    x = containerRect.left - floatingRect.width + mainAxis;
+    x = horizontalAnchorRect.left - floatingRect.width + mainAxis;
     // Align panel top with trigger top
     y = triggerRect.top + (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves vertically)
     y += crossAxis;
   } else if (placement === "right-start") {
-    // Position to the right of the container, aligned with the top of trigger
-    x = containerRect.right + mainAxis;
+    x = horizontalAnchorRect.right + mainAxis;
     // Align panel top with trigger top, using trigger's relative position within container
     y = triggerRect.top + (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves vertically)
@@ -117,9 +118,11 @@ type FloatingPanelProps = {
   width?: number;
   height?: number;
   // - bottom-within - below the trigger button, within container bounds
-  // - left-start - on the left side relative to the container, aligned with the top of the trigger button
+  // - left-start - on the left side of the horizontal anchor, aligned with the top of the trigger button
   // - center - center of the screen
   placement?: "left-start" | "right-start" | "center" | "bottom-within";
+  /** Horizontal reference for left/right placement. Vertical placement always follows the trigger. */
+  anchor?: "container" | "trigger";
   offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
@@ -144,6 +147,7 @@ export const FloatingPanel = ({
   width,
   height,
   placement = "left-start",
+  anchor = "container",
   offset: offsetProp = defaultOffset,
   open: openProp,
   onOpenChange,
@@ -229,6 +233,7 @@ export const FloatingPanel = ({
           contentElement,
           containerRef.current,
           placement,
+          anchor,
           offsetProp
         );
         currentPositionRef.current = { x, y };
@@ -259,6 +264,7 @@ export const FloatingPanel = ({
         contentElement,
         containerRef.current,
         placement,
+        anchor,
         offsetProp
       );
       currentPositionRef.current = { x, y };
@@ -285,7 +291,15 @@ export const FloatingPanel = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [contentElement, containerRef, placement, offsetProp, open, height]);
+  }, [
+    contentElement,
+    containerRef,
+    placement,
+    anchor,
+    offsetProp,
+    open,
+    height,
+  ]);
 
   return (
     <Dialog

@@ -5,8 +5,9 @@ import {
   type QueryValueEditorProps,
 } from "@webstudio-is/query-builder-react";
 import type { QueryDefinition } from "@webstudio-is/query-builder";
-import { BindingControl, BindingPopover } from "./binding-popover";
-import { ExpressionEditor } from "./expression-editor";
+import { evaluateExpressionWithinScope } from "./binding-popover";
+import { BindableExpressionControl } from "./bindable-expression";
+import { ExpressionEditor, formatValue } from "./expression-editor";
 
 const BoundExpression = ({
   "aria-label": label,
@@ -20,37 +21,79 @@ const BoundExpression = ({
 }: QueryValueEditorProps & {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
-}) =>
-  input === "expression" ? (
-    <BindingControl>
-      <div>
-        <ExpressionEditor
-          aria-label={label}
-          value={value}
-          onChange={onChange}
-          onChangeComplete={onChange}
-        />
-      </div>
-      <BindingPopover
+}) => {
+  const bound = isLiteralExpression(value) === false;
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+
+  if (input === "number") {
+    const number = Number(evaluatedValue);
+    const displayedValue = Number.isNaN(number) ? "" : String(number);
+    return (
+      <BindableExpressionControl
+        expression={value}
+        value={displayedValue}
+        bound={bound}
         scope={scope}
         aliases={aliases}
-        variant={isLiteralExpression(value) ? "default" : "bound"}
-        onChange={onChange}
-        value={value}
-        onRemove={(literal) => onChange(JSON.stringify(literal))}
+        validate={(value) =>
+          value !== undefined && typeof value !== "number"
+            ? `${label} expects a number value`
+            : undefined
+        }
+        parseValue={Number}
+        onChangeValue={onChange}
+        onChangeExpression={onChange}
+        onRemove={(value) => onChange(String(Number(value) || 0))}
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputField
+            aria-label={label}
+            type="number"
+            min={min}
+            max={max}
+            step={1}
+            disabled={readOnly}
+            value={value}
+            onChange={(event) => onChangeValue(event.target.value)}
+          />
+        )}
       />
-    </BindingControl>
-  ) : (
-    <InputField
-      aria-label={label}
-      type="number"
-      min={min}
-      max={max}
-      step={1}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
+    );
+  }
+
+  const displayedValue = bound ? formatValue(evaluatedValue) : value;
+  return (
+    <BindableExpressionControl
+      expression={value}
+      value={displayedValue}
+      bound={bound}
+      scope={scope}
+      aliases={aliases}
+      parseValue={(value) => evaluateExpressionWithinScope(value, {})}
+      onChangeValue={onChange}
+      onChangeExpression={onChange}
+      onRemove={(value) => onChange(JSON.stringify(value) ?? "undefined")}
+      renderControl={({ value, readOnly, onChangeValue }) => {
+        const updateValue = (nextValue: string) => {
+          if (bound && isLiteralExpression(nextValue) === false) {
+            return;
+          }
+          onChangeValue(nextValue);
+        };
+        return (
+          <div>
+            <ExpressionEditor
+              aria-label={label}
+              readOnly={readOnly}
+              value={value}
+              onChange={updateValue}
+              onChangeComplete={updateValue}
+            />
+          </div>
+        );
+      }}
     />
   );
+};
 
 export const BindableQueryBuilder = <
   FieldType extends string,

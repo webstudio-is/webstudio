@@ -3,20 +3,19 @@ import { useStore } from "@nanostores/react";
 import { isLiteralExpression } from "@webstudio-is/expression";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
+  BindableExpressionControl,
+  updateExpressionValue,
+  useBindingState,
+} from "~/builder/shared/bindable-expression";
+import {
   type ControlProps,
   VerticalLayout,
-  updateExpressionValue,
   $selectedInstanceScope,
-  useBindingState,
 } from "../shared";
 import {
   ExpressionEditor,
   formatValue,
 } from "~/builder/shared/expression-editor";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
 import { PropertyLabel } from "../property-label";
 
 export const JsonControl = ({
@@ -49,7 +48,7 @@ export const JsonControl = ({
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression = prop?.type === "expression" ? prop.value : valueString;
-  const { overwritable, variant } = useBindingState(
+  const { overwritable } = useBindingState(
     prop?.type === "expression" ? prop.value : undefined
   );
 
@@ -59,27 +58,25 @@ export const JsonControl = ({
         <PropertyLabel name={propName} readOnly={overwritable === false} />
       }
     >
-      <BindingControl>
-        <ExpressionEditor
-          color={error ? "error" : undefined}
-          readOnly={overwritable === false}
-          value={localValue.value}
-          onChange={localValue.set}
-          onChangeComplete={localValue.save}
-        />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={variant}
-          value={expression}
-          onChange={(newExpression) =>
-            onChange({ type: "expression", value: newExpression })
-          }
-          onRemove={(evaluatedValue) =>
-            onChange({ type: "json", value: evaluatedValue })
-          }
-        />
-      </BindingControl>
+      <BindableExpressionControl
+        expression={expression}
+        value={computedValue}
+        bound={prop?.type === "expression"}
+        scope={scope}
+        aliases={aliases}
+        onChangeValue={(value) => onChange({ type: "json", value })}
+        onChangeExpression={(value) => onChange({ type: "expression", value })}
+        onRemove={(value) => onChange({ type: "json", value })}
+        renderControl={({ readOnly }) => (
+          <ExpressionEditor
+            color={error ? "error" : undefined}
+            readOnly={readOnly}
+            value={localValue.value}
+            onChange={localValue.set}
+            onChangeComplete={localValue.save}
+          />
+        )}
+      />
     </VerticalLayout>
   );
 };

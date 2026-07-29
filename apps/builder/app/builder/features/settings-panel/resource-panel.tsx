@@ -60,11 +60,8 @@ import {
   getInstanceKey,
 } from "~/shared/nano-states";
 import { $dataSources, $resources } from "~/shared/sync/data-stores";
-import {
-  BindingControl,
-  BindingPopover,
-  evaluateExpressionWithinScope,
-} from "~/builder/shared/binding-popover";
+import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
 import {
   EditorDialog,
@@ -128,59 +125,59 @@ export const UrlField = ({
         </Tooltip>
       </Label>
       <input type="hidden" readOnly={true} name="url" value={value} />
-      <BindingControl>
-        <InputErrorsTooltip errors={error ? [error] : undefined}>
-          <TextArea
-            ref={ref}
-            name="url-validator"
-            id={urlId}
-            rows={1}
-            grow={true}
-            // expressions with variables cannot be edited
-            disabled={isLiteralExpression(value) === false}
-            color={error ? "error" : undefined}
-            value={String(evaluateExpressionWithinScope(value, scope))}
-            onChange={(value) => {
-              const curl = parseCurl(value);
-              if (curl) {
-                onCurlPaste(curl);
-                return;
-              }
-              try {
-                const url = new URL(value);
-                if (url.searchParams.size > 0) {
-                  const searchParams: Resource["searchParams"] = [];
-                  for (const [name, value] of url.searchParams) {
-                    searchParams.push({ name, value: JSON.stringify(value) });
-                  }
-                  // remove all search params from url
-                  url.search = "";
-                  // update text value as string literal
-                  onChange(JSON.stringify(url.href), searchParams);
+      <BindableExpressionControl
+        expression={value}
+        value={String(evaluateExpressionWithinScope(value, scope))}
+        bound={isLiteralExpression(value) === false}
+        allowBindingOverwrite={false}
+        scope={scope}
+        aliases={aliases}
+        onChangeValue={(value) => onChange(JSON.stringify(value))}
+        onChangeExpression={onChange}
+        onRemove={(value) => onChange(JSON.stringify(value))}
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputErrorsTooltip errors={error ? [error] : undefined}>
+            <TextArea
+              ref={ref}
+              name="url-validator"
+              id={urlId}
+              rows={1}
+              grow={true}
+              disabled={readOnly}
+              color={error ? "error" : undefined}
+              value={value}
+              onChange={(value) => {
+                const curl = parseCurl(value);
+                if (curl) {
+                  onCurlPaste(curl);
                   return;
                 }
-              } catch {
-                // serialize without changes when url is invalid
+                try {
+                  const url = new URL(value);
+                  if (url.searchParams.size > 0) {
+                    const searchParams: Resource["searchParams"] = [];
+                    for (const [name, value] of url.searchParams) {
+                      searchParams.push({ name, value: JSON.stringify(value) });
+                    }
+                    // remove all search params from url
+                    url.search = "";
+                    // update text value as string literal
+                    onChange(JSON.stringify(url.href), searchParams);
+                    return;
+                  }
+                } catch {
+                  // serialize without changes when url is invalid
+                }
+                onChangeValue(value);
+              }}
+              onBlur={(event) => event.currentTarget.checkValidity()}
+              onInvalid={(event) =>
+                setError(event.currentTarget.validationMessage)
               }
-              onChange(JSON.stringify(value));
-            }}
-            onBlur={(event) => event.currentTarget.checkValidity()}
-            onInvalid={(event) =>
-              setError(event.currentTarget.validationMessage)
-            }
-          />
-        </InputErrorsTooltip>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={onChange}
-          onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(evaluatedValue))
-          }
-        />
-      </BindingControl>
+            />
+          </InputErrorsTooltip>
+        )}
+      />
     </Grid>
   );
 };
@@ -222,9 +219,7 @@ const SearchParamPair = ({
   onDelete: () => void;
 }) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  // expressions with variables or objects cannot be edited from input
-  const isValueUnboundString =
-    isLiteralExpression(value) && typeof evaluatedValue === "string";
+  const isValueString = typeof evaluatedValue === "string";
   return (
     <Grid
       gap={2}
@@ -240,28 +235,26 @@ const SearchParamPair = ({
         onChange={(event) => onChange(event.target.value, value)}
       />
       <input type="hidden" name="search-param-value" value={value} />
-      <BindingControl>
-        <InputField
-          placeholder="Value"
-          name="search-param-value-literal"
-          disabled={!isValueUnboundString}
-          value={serializeValue(evaluatedValue)}
-          // update text value as string literal
-          onChange={(event) =>
-            onChange(name, JSON.stringify(event.target.value))
-          }
-        />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={(newValue) => onChange(name, newValue)}
-          onRemove={(evaluatedValue) =>
-            onChange(name, JSON.stringify(evaluatedValue))
-          }
-        />
-      </BindingControl>
+      <BindableExpressionControl
+        expression={value}
+        value={serializeValue(evaluatedValue)}
+        bound={isLiteralExpression(value) === false}
+        allowBindingOverwrite={false}
+        scope={scope}
+        aliases={aliases}
+        onChangeValue={(value) => onChange(name, JSON.stringify(value))}
+        onChangeExpression={(value) => onChange(name, value)}
+        onRemove={(value) => onChange(name, JSON.stringify(value))}
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputField
+            placeholder="Value"
+            name="search-param-value-literal"
+            disabled={readOnly || !isValueString}
+            value={value}
+            onChange={(event) => onChangeValue(event.target.value)}
+          />
+        )}
+      />
       <SmallIconButton
         aria-label="Delete search param"
         variant="destructive"
@@ -346,9 +339,7 @@ const HeaderPair = ({
   onDelete: () => void;
 }) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  // expressions with variables or objects cannot be edited from input
-  const isValueUnboundString =
-    isLiteralExpression(value) && typeof evaluatedValue === "string";
+  const isValueString = typeof evaluatedValue === "string";
   return (
     <Grid
       gap={2}
@@ -364,28 +355,26 @@ const HeaderPair = ({
         onChange={(event) => onChange(event.target.value, value)}
       />
       <input type="hidden" readOnly={true} name="header-value" value={value} />
-      <BindingControl>
-        <InputField
-          placeholder="Value"
-          name="header-value-validator"
-          disabled={!isValueUnboundString}
-          value={serializeValue(evaluatedValue)}
-          // update text value as string literal
-          onChange={(event) =>
-            onChange(name, JSON.stringify(event.target.value))
-          }
-        />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={(newValue) => onChange(name, newValue)}
-          onRemove={(evaluatedValue) =>
-            onChange(name, JSON.stringify(evaluatedValue))
-          }
-        />
-      </BindingControl>
+      <BindableExpressionControl
+        expression={value}
+        value={serializeValue(evaluatedValue)}
+        bound={isLiteralExpression(value) === false}
+        allowBindingOverwrite={false}
+        scope={scope}
+        aliases={aliases}
+        onChangeValue={(value) => onChange(name, JSON.stringify(value))}
+        onChangeExpression={(value) => onChange(name, value)}
+        onRemove={(value) => onChange(name, JSON.stringify(value))}
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputField
+            placeholder="Value"
+            name="header-value-validator"
+            disabled={readOnly || !isValueString}
+            value={value}
+            onChange={(event) => onChangeValue(event.target.value)}
+          />
+        )}
+      />
       <SmallIconButton
         aria-label="Delete header"
         variant="destructive"
@@ -653,6 +642,16 @@ const BodyField = ({
       typeof evaluatedValue === "object" && evaluatedValue !== null;
     onChange(newBody, isBodyObject ? "json" : bodyType);
   };
+  const displayedValue =
+    bodyType === "json"
+      ? isBodyLiteral
+        ? value
+        : (JSON.stringify(
+            evaluateExpressionWithinScope(value, scope),
+            null,
+            2
+          ) ?? "")
+      : String(evaluateExpressionWithinScope(value, scope) ?? "");
 
   return (
     <Grid gap={1}>
@@ -688,57 +687,54 @@ const BodyField = ({
           setBodyError(event.currentTarget.validationMessage)
         }
       />
-      <BindingControl>
-        <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
-          {bodyType === "json" ? (
-            // wrap with div to position error tooltip
-            <div>
-              <ExpressionEditor
+      <BindableExpressionControl
+        expression={value}
+        value={displayedValue}
+        bound={isBodyLiteral === false}
+        allowBindingOverwrite={false}
+        scope={scope}
+        aliases={aliases}
+        parseValue={(value) =>
+          bodyType === "json" ? evaluateExpressionWithinScope(value, {}) : value
+        }
+        onChangeValue={(value) =>
+          updateBody(bodyType === "json" ? value : JSON.stringify(value))
+        }
+        onChangeExpression={(value) => {
+          updateBody(value);
+          setIsBodyLiteral(isLiteralExpression(value));
+        }}
+        onRemove={(value) => {
+          updateBody(JSON.stringify(value));
+          setIsBodyLiteral(true);
+        }}
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
+            {bodyType === "json" ? (
+              // wrap with div to position error tooltip
+              <div>
+                <ExpressionEditor
+                  color={bodyError ? "error" : undefined}
+                  readOnly={readOnly}
+                  value={value}
+                  onChange={onChangeValue}
+                  onChangeComplete={() => bodyRef.current?.checkValidity()}
+                />
+              </div>
+            ) : (
+              <TextArea
+                autoGrow={true}
+                maxRows={10}
+                disabled={readOnly}
                 color={bodyError ? "error" : undefined}
-                // expressions with variables cannot be edited
-                readOnly={isBodyLiteral === false}
-                value={
-                  isBodyLiteral
-                    ? value
-                    : (JSON.stringify(
-                        evaluateExpressionWithinScope(value, scope),
-                        null,
-                        2
-                      ) ?? "")
-                }
-                onChange={updateBody}
-                onChangeComplete={() => bodyRef.current?.checkValidity()}
+                value={value}
+                onChange={onChangeValue}
+                onBlur={() => bodyRef.current?.checkValidity()}
               />
-            </div>
-          ) : (
-            <TextArea
-              autoGrow={true}
-              maxRows={10}
-              // expressions with variables cannot be edited
-              disabled={isBodyLiteral === false}
-              color={bodyError ? "error" : undefined}
-              value={String(evaluateExpressionWithinScope(value, scope) ?? "")}
-              // update text value as string literal
-              onChange={(newValue) => updateBody(JSON.stringify(newValue))}
-              onBlur={() => bodyRef.current?.checkValidity()}
-            />
-          )}
-        </InputErrorsTooltip>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isBodyLiteral ? "default" : "bound"}
-          value={value}
-          onChange={(value) => {
-            updateBody(value);
-            setIsBodyLiteral(isLiteralExpression(value));
-          }}
-          onRemove={(evaluatedValue) => {
-            updateBody(JSON.stringify(evaluatedValue));
-            setIsBodyLiteral(true);
-          }}
-        />
-      </BindingControl>
+            )}
+          </InputErrorsTooltip>
+        )}
+      />
     </Grid>
   );
 };
@@ -1221,44 +1217,50 @@ export const GraphqlResourceForm = forwardRef<
               setVariablesError(event.currentTarget.validationMessage)
             }
           />
-          <BindingControl>
-            <InputErrorsTooltip
-              errors={variablesError ? [variablesError] : undefined}
-            >
-              {/* wrap with div to position error tooltip */}
-              <div>
-                <ExpressionEditor
-                  color={variablesError ? "error" : undefined}
-                  readOnly={isVariablesLiteral === false}
-                  value={
-                    isVariablesLiteral
-                      ? variables
-                      : (JSON.stringify(
-                          evaluateExpressionWithinScope(variables, scope),
-                          null,
-                          2
-                        ) ?? "")
-                  }
-                  onChange={setVariables}
-                  onChangeComplete={() => variablesRef.current?.checkValidity()}
-                />
-              </div>
-            </InputErrorsTooltip>
-            <BindingPopover
-              scope={scope}
-              aliases={aliases}
-              variant={isVariablesLiteral ? "default" : "bound"}
-              value={variables}
-              onChange={(value) => {
-                setVariables(value);
-                setIsVariablesLiteral(isLiteralExpression(value));
-              }}
-              onRemove={(evaluatedValue) => {
-                setVariables(JSON.stringify(evaluatedValue));
-                setIsVariablesLiteral(true);
-              }}
-            />
-          </BindingControl>
+          <BindableExpressionControl
+            expression={variables}
+            value={
+              isVariablesLiteral
+                ? variables
+                : (JSON.stringify(
+                    evaluateExpressionWithinScope(variables, scope),
+                    null,
+                    2
+                  ) ?? "")
+            }
+            bound={isVariablesLiteral === false}
+            allowBindingOverwrite={false}
+            scope={scope}
+            aliases={aliases}
+            parseValue={(value) => evaluateExpressionWithinScope(value, {})}
+            onChangeValue={setVariables}
+            onChangeExpression={(value) => {
+              setVariables(value);
+              setIsVariablesLiteral(isLiteralExpression(value));
+            }}
+            onRemove={(value) => {
+              setVariables(JSON.stringify(value));
+              setIsVariablesLiteral(true);
+            }}
+            renderControl={({ value, readOnly, onChangeValue }) => (
+              <InputErrorsTooltip
+                errors={variablesError ? [variablesError] : undefined}
+              >
+                {/* wrap with div to position error tooltip */}
+                <div>
+                  <ExpressionEditor
+                    color={variablesError ? "error" : undefined}
+                    readOnly={readOnly}
+                    value={value}
+                    onChange={onChangeValue}
+                    onChangeComplete={() =>
+                      variablesRef.current?.checkValidity()
+                    }
+                  />
+                </div>
+              </InputErrorsTooltip>
+            )}
+          />
         </Grid>
       </Row>
 

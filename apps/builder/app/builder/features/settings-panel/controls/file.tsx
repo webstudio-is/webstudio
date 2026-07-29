@@ -2,17 +2,15 @@ import { useStore } from "@nanostores/react";
 import { useId } from "react";
 import { Flex, InputField, theme } from "@webstudio-is/design-system";
 import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
+  BindableExpressionControl,
+  updateExpressionValue,
+} from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
   VerticalLayout,
-  updateExpressionValue,
   $selectedInstanceScope,
-  useBindingState,
   humanizeAttribute,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
@@ -73,33 +71,33 @@ export const FileControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable, variant } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
-
   return (
     <VerticalLayout label={<PropertyLabel name={propName} />}>
       <Flex css={{ gap: theme.spacing[3] }} direction="column" justify="center">
-        <BindingControl>
-          <UrlInput
-            id={id}
-            readOnly={overwritable === false}
-            localValue={localStringValue}
-          />
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            validate={(value) => validatePrimitiveValue(value, label)}
-            variant={variant}
-            value={expression}
-            onChange={(newExpression) =>
-              onChange({ type: "expression", value: newExpression })
-            }
-            onRemove={(evaluatedValue) =>
-              onChange({ type: "string", value: String(evaluatedValue) })
-            }
-          />
-        </BindingControl>
+        <BindableExpressionControl
+          expression={expression}
+          value={localStringValue.value}
+          bound={prop?.type === "expression"}
+          scope={scope}
+          aliases={aliases}
+          validate={(value) => validatePrimitiveValue(value, label)}
+          onChangeValue={(value) =>
+            onChange({ type: "string", value: value ?? "" })
+          }
+          onChangeExpression={(value) =>
+            onChange({ type: "expression", value })
+          }
+          onRemove={(value) =>
+            onChange({ type: "string", value: String(value) })
+          }
+          renderControl={({ readOnly }) => (
+            <UrlInput
+              id={id}
+              readOnly={readOnly}
+              localValue={localStringValue}
+            />
+          )}
+        />
         <SelectAsset
           prop={prop?.type === "asset" ? prop : undefined}
           accept={meta.accept}

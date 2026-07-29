@@ -13,20 +13,19 @@ import {
 import type { Instance } from "@webstudio-is/sdk";
 import { AlertIcon } from "@webstudio-is/icons";
 import { $instances } from "~/shared/sync/data-stores";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import {
+  BindableExpressionControl,
+  updateExpressionValue,
+  useBindingState,
+} from "~/builder/shared/bindable-expression";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
   VerticalLayout,
   $selectedInstanceScope,
-  updateExpressionValue,
-  useBindingState,
 } from "../shared";
 import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 
@@ -78,7 +77,7 @@ export const TextContent = ({
     expression = child.value;
   }
 
-  const { overwritable, variant } = useBindingState(
+  const { overwritable } = useBindingState(
     child.type === "expression" ? child.value : undefined
   );
   const isBindingResetForbidden = useIsBindingResetForbidden();
@@ -123,43 +122,42 @@ export const TextContent = ({
         </FieldLabel>
       }
     >
-      <BindingControl>
-        <CodeEditor
-          title={
-            <DialogTitle
-              maximizable
-              suffix={
-                <DialogTitleActions>
-                  <DialogMaximize />
-                  <DialogClose />
-                </DialogTitleActions>
-              }
-            >
-              <Text variant="labels">Text content</Text>
-            </DialogTitle>
-          }
-          size="small"
-          readOnly={overwritable === false}
-          value={localValue.value}
-          onChange={localValue.set}
-          onChangeComplete={localValue.save}
-        />
-        {expression !== undefined && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            validate={(value) => validatePrimitiveValue(value, "Text Content")}
-            variant={variant}
-            value={expression}
-            onChange={(newExpression) => {
-              updateChildren(instanceId, "expression", newExpression);
-            }}
-            onRemove={(evaluatedValue) =>
-              updateChildren(instanceId, "text", String(evaluatedValue))
+      <BindableExpressionControl
+        expression={expression ?? ""}
+        value={localValue.value}
+        bound={child.type === "expression"}
+        showBinding={expression !== undefined}
+        scope={scope}
+        aliases={aliases}
+        validate={(value) => validatePrimitiveValue(value, "Text Content")}
+        onChangeValue={(value) => updateChildren(instanceId, "text", value)}
+        onChangeExpression={(value) =>
+          updateChildren(instanceId, "expression", value)
+        }
+        onRemove={(value) => updateChildren(instanceId, "text", String(value))}
+        renderControl={({ readOnly }) => (
+          <CodeEditor
+            title={
+              <DialogTitle
+                maximizable
+                suffix={
+                  <DialogTitleActions>
+                    <DialogMaximize />
+                    <DialogClose />
+                  </DialogTitleActions>
+                }
+              >
+                <Text variant="labels">Text content</Text>
+              </DialogTitle>
             }
+            size="small"
+            readOnly={readOnly}
+            value={localValue.value}
+            onChange={localValue.set}
+            onChangeComplete={localValue.save}
           />
         )}
-      </BindingControl>
+      />
     </VerticalLayout>
   );
 };

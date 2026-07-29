@@ -227,7 +227,7 @@ describe("structured query builder", () => {
     fireEvent.change(limit, { target: { value: "20" } });
     expect((limit as HTMLInputElement).value).toBe("20");
 
-    const source = screen.getByLabelText("Query");
+    const source = screen.getByLabelText("Query expression");
     expect((source as HTMLTextAreaElement).value).toContain("limit: 20");
   });
 
@@ -236,7 +236,7 @@ describe("structured query builder", () => {
 
     fireEvent.click(screen.getByLabelText("Add fields"));
     expect(
-      (screen.getByLabelText("Query") as HTMLTextAreaElement).value
+      (screen.getByLabelText("Query expression") as HTMLTextAreaElement).value
     ).toContain('fields: [["title"]]');
   });
 
@@ -245,7 +245,7 @@ describe("structured query builder", () => {
 
     expect(screen.getByText("legacy.field")).toBeTruthy();
     expect(
-      (screen.getByLabelText("Query") as HTMLTextAreaElement).value
+      (screen.getByLabelText("Query expression") as HTMLTextAreaElement).value
     ).toContain('fields: [["legacy", "field"]]');
   });
 
@@ -254,8 +254,9 @@ describe("structured query builder", () => {
 
     expect(screen.getByText("legacy.filter")).toBeTruthy();
     expect(screen.getByText("legacy.sort")).toBeTruthy();
-    const source = (screen.getByLabelText("Query") as HTMLTextAreaElement)
-      .value;
+    const source = (
+      screen.getByLabelText("Query expression") as HTMLTextAreaElement
+    ).value;
     expect(source).toContain('["legacy","filter"]');
     expect(source).toContain('["legacy", "sort"]');
   });
@@ -268,11 +269,11 @@ describe("structured query builder", () => {
     expect(screen.getByLabelText("Add output")).toBeTruthy();
     expect(screen.getByText("Title")).toBeTruthy();
     expect(
-      (screen.getByLabelText("Query") as HTMLTextAreaElement).value
+      (screen.getByLabelText("Query expression") as HTMLTextAreaElement).value
     ).toContain('fields: [["title"]]');
     fireEvent.click(screen.getByLabelText("Delete file metadata"));
     expect(
-      (screen.getByLabelText("Query") as HTMLTextAreaElement).value
+      (screen.getByLabelText("Query expression") as HTMLTextAreaElement).value
     ).toContain("includeMetadata: false");
     expect(
       (screen.getByLabelText("Delete title") as HTMLButtonElement).disabled
@@ -288,7 +289,7 @@ describe("structured query builder", () => {
       target: { value: "128" },
     });
     expect(
-      (screen.getByLabelText("Query") as HTMLTextAreaElement).value
+      (screen.getByLabelText("Query expression") as HTMLTextAreaElement).value
     ).toContain("maxBytes: 128");
   });
 

@@ -605,7 +605,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "create-assets-resource",
     description:
-      "Create a scoped Assets resource. Omit query to use the default query, or provide query configuration explicitly.",
+      "Create a scoped Assets resource. Omit query to use the minimal default query. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false unless required, and using content mode none unless file content is rendered. Preview concrete queries and inspect size diagnostics before saving.",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio create-assets-resource --input assets-resource.json --json",
@@ -614,7 +614,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-assets-resource",
     description:
-      "Update an Assets resource. Set query to null to restore the default query.",
+      "Update an Assets resource. Set query to null to restore the minimal default query. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false unless required, and loading only the necessary file content after narrow filtering.",
     requiredOptions: ["input", "json"],
     examples: [
       "webstudio update-assets-resource --input assets-resource-update.json --json",
@@ -631,7 +631,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "preview-asset-query",
     description:
-      "Run an authenticated structured Assets query against indexed metadata, optionally loading bounded file content. Returns renderable results in data and non-bindable preview statistics in __diagnostics__.",
+      "Run an authenticated structured Assets query against indexed metadata, optionally loading bounded file content. Returns renderable results in data and non-bindable preview statistics in __diagnostics__. Before saving a query, inspect usedBytes, maxBytes, unboundedBytes, and truncated; reduce selected fields, candidate files, or embedded content when usage approaches the limit.",
     examples: [
       "webstudio preview-asset-query --input asset-query-preview.json --json",
     ],

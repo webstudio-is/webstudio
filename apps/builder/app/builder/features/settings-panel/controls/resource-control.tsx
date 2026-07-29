@@ -19,11 +19,7 @@ import {
 } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
 import type { Resource } from "@webstudio-is/sdk";
-import {
-  BindingControl,
-  BindingPopover,
-  type BindingVariant,
-} from "~/builder/shared/binding-popover";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
@@ -279,56 +275,54 @@ export const ResourceControl = ({
   };
 
   const id = useId();
-  let variant: BindingVariant = "bound";
-  let readOnly = true;
-  if (isLiteralExpression(urlExpression)) {
-    variant = "default";
-    readOnly = false;
-  }
+  const bound = isLiteralExpression(urlExpression) === false;
   const localValue = useDraftValue(
     String(computeExpression(resource.url, variableValues) ?? ""),
     (value) => updateResource({ ...resource, url: JSON.stringify(value) })
   );
 
   return (
-    <VerticalLayout
-      label={<PropertyLabel name={propName} readOnly={readOnly} />}
-    >
-      <BindingControl>
-        <InputField
-          id={id}
-          disabled={readOnly}
-          value={localValue.value}
-          onChange={(event) => localValue.set(event.target.value)}
-          onBlur={localValue.save}
-          onSubmit={localValue.save}
-          suffix={
-            isFeatureEnabled("resourceProp") && (
-              <ResourceControlPanel
-                resource={resource}
-                propName={propName}
-                onChange={updateResource}
-              />
-            )
-          }
-        />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          validate={(value) => validatePrimitiveValue(value, "URL")}
-          variant={variant}
-          value={urlExpression}
-          onChange={(newExpression) =>
-            updateResource({ ...resource, url: newExpression })
-          }
-          onRemove={(evaluatedValue) =>
-            updateResource({
-              ...resource,
-              url: JSON.stringify(String(evaluatedValue)),
-            })
-          }
-        />
-      </BindingControl>
+    <VerticalLayout label={<PropertyLabel name={propName} readOnly={bound} />}>
+      <BindableExpressionControl
+        expression={urlExpression}
+        value={localValue.value}
+        bound={bound}
+        allowBindingOverwrite={false}
+        scope={scope}
+        aliases={aliases}
+        validate={(value) => validatePrimitiveValue(value, "URL")}
+        onChangeValue={(value) =>
+          updateResource({ ...resource, url: JSON.stringify(value) })
+        }
+        onChangeExpression={(value) =>
+          updateResource({ ...resource, url: value })
+        }
+        onRemove={(value) =>
+          updateResource({
+            ...resource,
+            url: JSON.stringify(String(value)),
+          })
+        }
+        renderControl={({ readOnly }) => (
+          <InputField
+            id={id}
+            disabled={readOnly}
+            value={localValue.value}
+            onChange={(event) => localValue.set(event.target.value)}
+            onBlur={localValue.save}
+            onSubmit={localValue.save}
+            suffix={
+              isFeatureEnabled("resourceProp") && (
+                <ResourceControlPanel
+                  resource={resource}
+                  propName={propName}
+                  onChange={updateResource}
+                />
+              )
+            }
+          />
+        )}
+      />
     </VerticalLayout>
   );
 };

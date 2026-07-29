@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import {
   Flex,
   Grid,
@@ -8,8 +8,10 @@ import {
   PanelTabsTrigger,
   ScrollAreaNative,
   Text,
+  Tooltip,
   theme,
 } from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 
 export const RequestDiagnosticsContent = ({
   children,
@@ -42,9 +44,13 @@ export const RequestDiagnosticsTable = ({
 export const RequestDiagnosticsRow = ({
   label,
   value,
+  description,
+  valueColor,
 }: {
   label: string;
   value: ReactNode;
+  description?: ReactNode;
+  valueColor?: ComponentProps<typeof Text>["color"];
 }) => (
   <Grid
     columns={2}
@@ -55,8 +61,19 @@ export const RequestDiagnosticsRow = ({
       "&:last-child": { borderBottom: 0 },
     }}
   >
-    <Text color="moreSubtle">{label}</Text>
-    <Text userSelect="text" css={{ fontVariantNumeric: "tabular-nums" }}>
+    <Flex align="center" gap={1}>
+      <Text color="moreSubtle">{label}</Text>
+      {description !== undefined && (
+        <Tooltip variant="wrapped" content={description}>
+          <InfoCircleIcon tabIndex={0} />
+        </Tooltip>
+      )}
+    </Flex>
+    <Text
+      color={valueColor}
+      userSelect="text"
+      css={{ fontVariantNumeric: "tabular-nums" }}
+    >
       {value}
     </Text>
   </Grid>

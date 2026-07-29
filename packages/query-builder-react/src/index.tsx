@@ -18,7 +18,6 @@ import {
   CssValueListItem,
   Flex,
   Grid,
-  IconButton,
   InputField,
   Label,
   Popover,
@@ -336,7 +335,7 @@ const Group = <FieldType extends string, Operator extends string>({
       }}
     >
       <Flex justify="between" align="center" gap={1}>
-        {root ? <Label>Filters</Label> : <Text>Filter group</Text>}
+        {root ? <Label text="title">Filters</Label> : <Text>Filter group</Text>}
         <Flex gap={1} align="center">
           <Select<"all" | "any">
             aria-label={root ? "Query logic" : "Query group logic"}
@@ -351,12 +350,11 @@ const Group = <FieldType extends string, Operator extends string>({
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <IconButton
+              <SmallIconButton
                 aria-label="Add query condition or group"
                 disabled={canAddCondition === false && canAddGroup === false}
-              >
-                <PlusIcon />
-              </IconButton>
+                icon={<PlusIcon />}
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={4}>
               <DropdownMenuItem
@@ -450,14 +448,13 @@ const Sorting = <FieldType extends string, Operator extends string>({
 }) => (
   <Grid gap={2} css={{ paddingInline: sectionPaddingInline }}>
     <Flex justify="between" align="center">
-      <Label>Sort</Label>
-      <IconButton
+      <Label text="title">Sort</Label>
+      <SmallIconButton
         aria-label="Add query sort"
         disabled={sort.length >= control.max}
+        icon={<PlusIcon />}
         onClick={() => onChange([...sort, createQuerySort(capabilities)])}
-      >
-        <PlusIcon />
-      </IconButton>
+      />
     </Flex>
     {sort.map((order, index) => {
       if (capabilities.fields.length === 0) {
@@ -646,17 +643,16 @@ const QueryParameters = ({
             })}
             {available.length > 0 &&
               (control.max === undefined || paths.length < control.max) && (
-                <IconButton
+                <SmallIconButton
                   aria-label={`Add ${control.label.toLowerCase()}`}
+                  icon={<PlusIcon />}
                   onClick={() =>
                     onChange(parameter.key, {
                       ...current,
                       [control.key]: [...paths, available[0].path],
                     })
                   }
-                >
-                  <PlusIcon />
-                </IconButton>
+                />
               )}
           </Grid>
         );
@@ -814,12 +810,13 @@ const QueryParameters = ({
             align="center"
             css={{ paddingInline: sectionPaddingInline }}
           >
-            <Label>{selectionLabel}</Label>
+            <Label text="title">{selectionLabel}</Label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <IconButton aria-label={`Add ${selectionLabel.toLowerCase()}`}>
-                  <PlusIcon />
-                </IconButton>
+                <SmallIconButton
+                  aria-label={`Add ${selectionLabel.toLowerCase()}`}
+                  icon={<PlusIcon />}
+                />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={4}>
                 {selectionParameters.map((parameter, index) => (
@@ -1172,9 +1169,9 @@ export const StructuredQueryBuilder = <
         );
       })}
       <Grid gap={1} css={{ paddingInline: sectionPaddingInline }}>
-        <Label>Query</Label>
+        <Label>Query expression</Label>
         {renderSourceEditor({
-          "aria-label": "Query",
+          "aria-label": "Query expression",
           value: source,
           onChange: setSource,
           onChangeComplete: commitSource,
