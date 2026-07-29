@@ -1874,6 +1874,50 @@ describe("createPage", () => {
     ]);
   });
 
+  test("accepts multi-sentence fixed page text", () => {
+    const mutation = createPage(
+      { pages: createPages() },
+      {
+        name: "Marques",
+        path: "/marques",
+        title: "Marques. Toutes nos marques",
+        meta: {
+          description:
+            "Toutes nos marques moto. Concessionnaire multimarque en Gironde.",
+        },
+      },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({
+          title: `"Marques. Toutes nos marques"`,
+          meta: expect.objectContaining({
+            description: `"Toutes nos marques moto. Concessionnaire multimarque en Gironde."`,
+          }),
+        }),
+      })
+    );
+
+    const computedMutation = createPage(
+      { pages: createPages() },
+      {
+        name: "Computed marques",
+        path: "/computed-marques",
+        title: `pageTitle ?? "Marques. Toutes nos marques"`,
+      },
+      { createId: createIdFactory() }
+    );
+    expect(computedMutation.payload[0]?.patches[0]).toEqual(
+      expect.objectContaining({
+        value: expect.objectContaining({
+          title: `pageTitle ?? "Marques. Toutes nos marques"`,
+        }),
+      })
+    );
+  });
+
   test("still rejects invalid JavaScript-looking page metadata expressions", () => {
     const pages = createPages();
 
@@ -1985,6 +2029,35 @@ describe("updatePage", () => {
             value: `"https://assets.example.com/pricing-og.png"`,
           },
         ],
+      },
+    ]);
+  });
+
+  test("accepts multi-sentence fixed page text", () => {
+    const mutation = updatePage(
+      { pages: createPages() },
+      {
+        pageId: "page",
+        values: {
+          title: "Marques. Toutes nos marques",
+          meta: {
+            description:
+              "L'atelier présente toutes nos marques moto. Concessionnaire multimarque en Gironde.",
+          },
+        },
+      }
+    );
+
+    expect(mutation.payload[0]?.patches).toEqual([
+      {
+        op: "replace",
+        path: ["pages", "page", "title"],
+        value: `"Marques. Toutes nos marques"`,
+      },
+      {
+        op: "add",
+        path: ["pages", "page", "meta", "description"],
+        value: `"L'atelier présente toutes nos marques moto. Concessionnaire multimarque en Gironde."`,
       },
     ]);
   });
