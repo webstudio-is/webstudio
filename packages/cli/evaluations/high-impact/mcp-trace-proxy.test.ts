@@ -86,6 +86,7 @@ describe("bounded MCP tracing", () => {
     ).toMatchObject({
       call: {
         arguments: {
+          path: "/account",
           viewports: [
             { width: 1440, height: 900 },
             { width: 390, height: 844 },
@@ -93,6 +94,19 @@ describe("bounded MCP tracing", () => {
         },
       },
     });
+    expect(
+      getMcpTraceRequest({
+        id: 10,
+        method: "tools/call",
+        params: {
+          name: "verify-page-responsive",
+          arguments: {
+            path: "/account?authToken=private",
+            viewports: [{ width: 390, height: 844 }],
+          },
+        },
+      })
+    ).not.toMatchObject({ call: { arguments: { path: expect.any(String) } } });
   });
 
   test("records confirmation flow without retaining its token", () => {

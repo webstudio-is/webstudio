@@ -6,7 +6,11 @@ import { promisify } from "node:util";
 import { describe, expect, test } from "vitest";
 import { getFontFaces } from "@webstudio-is/fonts";
 import type { FontAsset } from "@webstudio-is/sdk";
-import { authenticatedPageFixture, fontAssetsFixture } from "./fixtures";
+import {
+  authenticatedPageFixture,
+  fontAssetsFixture,
+  markdownBlogFixture,
+} from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
 import {
   fontAssetFixtureFiles,
@@ -15,6 +19,10 @@ import {
   fontAssetFixtureUploadMeta,
   writeFontAssetFixtureFiles,
 } from "./font-assets-fixture";
+import {
+  markdownBlogFixtureArticles,
+  writeMarkdownBlogFixtureFiles,
+} from "./markdown-blog-fixture";
 
 const execFileAsync = promisify(execFile);
 
@@ -133,6 +141,64 @@ describe("high-impact fixture API", () => {
           src: fontAssetFixtureSource,
         },
       ]);
+    } finally {
+      await fixtureApi.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  test("creates a folder and uploads the Markdown blog files through the local CLI", async () => {
+    const fixtureApi = await startHighImpactFixtureApi(markdownBlogFixture);
+    const directory = await mkdtemp(
+      join(tmpdir(), "markdown-blog-fixture-api-")
+    );
+    const configDirectory = join(directory, "config");
+    const projectDirectory = join(directory, "project");
+    const cli = resolve(import.meta.dirname, "../../local.js");
+    await writeMarkdownBlogFixtureFiles(projectDirectory);
+    const env = { ...process.env, WEBSTUDIO_CONFIG_DIR: configDirectory };
+    const run = async (command: string, input: Record<string, unknown>) => {
+      const result = await execFileAsync(
+        process.execPath,
+        [cli, command, JSON.stringify(input)],
+        { cwd: projectDirectory, env }
+      );
+      return JSON.parse(result.stdout) as {
+        ok: boolean;
+        data: Record<string, unknown>;
+      };
+    };
+    try {
+      await execFileAsync(
+        process.execPath,
+        [cli, "init", "--link", fixtureApi.shareLink, "--json"],
+        { cwd: projectDirectory, env }
+      );
+      const folder = await run("create-asset-folder", { name: "Blog" });
+      expect(folder.ok).toBe(true);
+      const folderId = String(folder.data.folderId);
+      const upload = await run("upload-assets", {
+        assets: markdownBlogFixtureArticles.map(({ name }) => ({
+          name,
+          type: "file",
+          format: "md",
+          folderId,
+          meta: {},
+        })),
+        assetsDir: ".webstudio/assets",
+      });
+      expect(upload.ok).toBe(true);
+      expect(fixtureApi.getProject()).toMatchObject({
+        assetFolders: [expect.objectContaining({ id: folderId, name: "Blog" })],
+        assets: markdownBlogFixtureArticles.map(({ name }) =>
+          expect.objectContaining({
+            name,
+            type: "file",
+            format: "md",
+            folderId,
+          })
+        ),
+      });
     } finally {
       await fixtureApi.close();
       await rm(directory, { recursive: true, force: true });

@@ -4,9 +4,10 @@ import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { authenticatedPageFixture } from "./fixtures";
 import { designInputFixture } from "./fixtures";
-import { fontAssetsFixture } from "./fixtures";
+import { fontAssetsFixture, markdownBlogFixture } from "./fixtures";
 import {
   createMinimalAgentTask,
+  getFixtureToolNames,
   getCliInvocation,
   runHighImpactAgentEvaluation,
 } from "./agent-runner";
@@ -26,6 +27,8 @@ describe("high-impact agent runner", () => {
     expect(task).toMatchObject({
       constraints: expect.arrayContaining([
         expect.any(String),
+        expect.stringContaining("only through the configured webstudio MCP"),
+        expect.stringContaining("Never use a shell"),
         expect.stringContaining("exactly once at the beginning"),
         expect.any(String),
         expect.stringContaining("Never use broad project reads"),
@@ -51,8 +54,9 @@ describe("high-impact agent runner", () => {
     expect(authConstraints).not.toContain(
       "call get-project-settings, list-pages, list-resources, and list-variables"
     );
+    expect(authConstraints).toContain("call create-page exactly once");
     expect(authConstraints).toContain(
-      "call create-page exactly once, then create-variable"
+      '"value":{"type":"string","value":"signed-out"}'
     );
     expect(authConstraints).toContain(
       "Call insert-fragment-verified only after all three succeed"
@@ -80,7 +84,8 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("exactly three attach-design-token calls"),
         expect.stringContaining("Omit the optional position field"),
         expect.stringContaining("exactly one batched update-styles call"),
-        expect.stringContaining("returned mobile breakpoint id"),
+        expect.stringContaining('"breakpoint":"<returned-mobile'),
+        expect.stringContaining("never breakpointId"),
         expect.stringContaining("Use this exact fragment verbatim"),
         expect.stringContaining('ws:tag="footer"'),
         expect.stringContaining("Do not call clone-instance"),
@@ -109,6 +114,45 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("verify-font-assets exactly once"),
         expect.stringContaining("Do not call refresh or get-asset separately"),
       ])
+    );
+    const blogConstraints = createMinimalAgentTask(markdownBlogFixture, {
+      kind: "source",
+      repositoryRoot: root,
+    }).constraints.join("\n");
+    expect(blogConstraints).toContain("one asset folder named Blog");
+    expect(blogConstraints).toContain("one upload-assets call");
+    expect(blogConstraints).toContain("aurora-trails.md");
+    expect(blogConstraints).toContain("city-walks.md");
+    expect(blogConstraints).toContain("/blog/:slug");
+    expect(blogConstraints).toContain(
+      '"field":["properties","draft"],"operator":"ne"'
+    );
+    expect(blogConstraints).toContain('"value":"true"');
+    expect(blogConstraints).toContain("Never call update-assets-resource");
+    expect(blogConstraints).toContain(
+      '"fields":[["properties","title"],["properties","slug"]'
+    );
+    expect(blogConstraints).toContain('"mode":"markdown-body"');
+    expect(blogConstraints).toContain("$.MarkdownEmbed");
+    expect(blogConstraints).toContain(
+      "call verify-page-responsive exactly twice"
+    );
+    expect(blogConstraints).toContain('"path":"/blog/aurora-trails"');
+    expect(blogConstraints).not.toContain(
+      "Use one verify-page-responsive call for all requested viewports"
+    );
+    expect(getFixtureToolNames(markdownBlogFixture)).toEqual([
+      "meta.guide",
+      "meta.get_more_tools",
+      "create-asset-folder",
+      "upload-assets",
+      "create-page",
+      "create-assets-resource",
+      "insert-collection",
+      "verify-page-responsive",
+    ]);
+    expect(getFixtureToolNames(markdownBlogFixture)).not.toContain(
+      "update-assets-resource"
     );
   });
 

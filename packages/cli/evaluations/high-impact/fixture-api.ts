@@ -45,6 +45,7 @@ const createPersistedPages = (project: EvaluationProject) => ({
 
 const stateToProject = (state: BuilderState): EvaluationProject => ({
   assets: Array.from(state.assets?.values() ?? []),
+  assetFolders: Array.from(state.assetFolders?.values() ?? []),
   pages: Array.from(state.pages?.pages.values() ?? []).map((page) => ({
     id: page.id,
     name: page.name,
@@ -116,6 +117,7 @@ export const startHighImpactFixtureApi = async (
     styleSourceSelections: fixture.project.styleSourceSelections,
     styles: fixture.project.styles,
     assets: fixture.project.assets,
+    assetFolders: fixture.project.assetFolders,
     projectSettings: { meta: {}, compiler: {} },
   };
   let state = createBuilderStateFromBuildData(build as never);
@@ -135,31 +137,52 @@ export const startHighImpactFixtureApi = async (
           pathname.slice(`${assetsUploadsApiUrl}/`.length)
         );
         const body = await readRuntimeFixtureRequestBody(request);
+        const type = url.searchParams.get("type");
+        const formatValue = url.searchParams.get("format");
         if (
           url.searchParams.get("projectId") !== projectId ||
-          url.searchParams.get("type") !== "font" ||
+          (type !== "font" && type !== "file") ||
+          formatValue === null ||
+          formatValue.length === 0 ||
           body.byteLength === 0
         ) {
-          throw new Error("Invalid font asset upload request.");
+          throw new Error("Invalid asset upload request.");
         }
-        const format = fontFormat.parse(url.searchParams.get("format"));
-        const meta = fontMeta.parse(
-          JSON.parse(String(request.headers["x-webstudio-asset-meta"] ?? "{}"))
-        );
         const description = request.headers["x-webstudio-asset-description"];
-        const asset: Asset = {
+        const folderId = url.searchParams.get("folderId") ?? undefined;
+        const assetBase = {
           id: `evaluation-asset-${generatedId++}`,
           projectId,
           name,
           filename: name,
           description: typeof description === "string" ? description : null,
           size: body.byteLength,
-          type: "font",
-          format,
-          meta,
+          ...(folderId === undefined ? {} : { folderId }),
           createdAt: "2026-01-01T00:00:00.000Z",
         };
-        calls.push({ name: "upload-asset", arguments: { name, format, meta } });
+        const asset: Asset =
+          type === "font"
+            ? {
+                ...assetBase,
+                type,
+                format: fontFormat.parse(formatValue),
+                meta: fontMeta.parse(
+                  JSON.parse(
+                    String(request.headers["x-webstudio-asset-meta"] ?? "{}")
+                  )
+                ),
+              }
+            : { ...assetBase, type, format: formatValue, meta: {} };
+        calls.push({
+          name: "upload-asset",
+          arguments: {
+            name,
+            type,
+            format: asset.format,
+            meta: asset.meta,
+            folderId,
+          },
+        });
         state = {
           ...state,
           assets: new Map(state.assets).set(asset.id, asset),

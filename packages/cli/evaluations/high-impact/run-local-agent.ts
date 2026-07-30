@@ -10,18 +10,21 @@ import { hideBin } from "yargs/helpers";
 import {
   fontAssetsFixture,
   highImpactFixtures,
+  markdownBlogFixture,
   type HighImpactFixture,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
 import { evaluateHighImpactOutcome } from "./validate";
 import {
   runHighImpactAgentEvaluation,
+  getFixtureToolNames,
   type AgentEvaluationResult,
 } from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
 import type { EvaluationToolCall } from "./validate";
 import type { McpCatalogObservation } from "./evaluation-metrics";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
+import { writeMarkdownBlogFixtureFiles } from "./markdown-blog-fixture";
 import {
   compareEvaluationResult,
   isAggregateTokenBaselineNonRegressed,
@@ -75,7 +78,7 @@ const runFixture = async ({
 }) => {
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
-  const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.6-sol";
+  const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.4-mini";
   const directory = await mkdtemp(
     join(tmpdir(), "webstudio-high-impact-agent-")
   );
@@ -88,6 +91,8 @@ const runFixture = async ({
   await mkdir(projectDirectory, { recursive: true });
   if (fixture.id === fontAssetsFixture.id) {
     await writeFontAssetFixtureFiles(projectDirectory);
+  } else if (fixture.id === markdownBlogFixture.id) {
+    await writeMarkdownBlogFixtureFiles(projectDirectory);
   }
   const env = { ...process.env, WEBSTUDIO_CONFIG_DIR: configDirectory };
   try {
@@ -106,6 +111,7 @@ const runFixture = async ({
       ])}`,
       `mcp_servers.webstudio.cwd=${JSON.stringify(projectDirectory)}`,
       `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(configDirectory)} }`,
+      `mcp_servers.webstudio.enabled_tools=${JSON.stringify(getFixtureToolNames(fixture))}`,
     ];
     const agentCommand = [
       shellQuote(codex),

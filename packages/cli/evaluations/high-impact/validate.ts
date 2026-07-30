@@ -1,10 +1,16 @@
 import { parseExpressionAt } from "acorn";
 import { getFontFaces } from "@webstudio-is/fonts";
-import type { FontAsset } from "@webstudio-is/sdk";
+import {
+  isAssetsResource,
+  parseStructuredAssetQueryResourceBody,
+  type FontAsset,
+  type Resource,
+} from "@webstudio-is/sdk";
 import {
   authenticatedPageFixture,
   designInputFixture,
   fontAssetsFixture,
+  markdownBlogFixture,
   type EvaluationInstance,
   type EvaluationProject,
   type HighImpactFixture,
@@ -14,6 +20,7 @@ import {
   fontAssetFixtureMeta,
   fontAssetFixtureSource,
 } from "./font-assets-fixture";
+import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
 import { isBroadRead } from "./evaluation-metrics";
 
 export type EvaluationToolCall = {
@@ -539,6 +546,214 @@ const validateFontAssets = (
   );
 };
 
+const getAssetResourceConfigurations = (project: EvaluationProject) =>
+  project.resources.flatMap((candidate) => {
+    const resource = candidate as Resource;
+    if (isAssetsResource(resource) === false) {
+      return [];
+    }
+    const configuration = parseStructuredAssetQueryResourceBody(resource.body);
+    return configuration === undefined ? [] : [{ resource, configuration }];
+  });
+
+const hasQueryFragment = (value: unknown, fragments: string[]) => {
+  const source = JSON.stringify(value);
+  return fragments.every((fragment) => source.includes(fragment));
+};
+
+const validateMarkdownBlog = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const expectedNames = new Set<string>(
+    markdownBlogFixtureArticles.map((article) => article.name)
+  );
+  const markdownAssets = input.project.assets.filter(
+    (asset) => asset.type === "file" && asset.format === "md"
+  );
+  const folderIds = new Set(markdownAssets.map((asset) => asset.folderId));
+  const blogFolder = input.project.assetFolders.find(
+    (folder) => folder.name === "Blog"
+  );
+  recordCheck(
+    checks,
+    failures,
+    "markdownUploads",
+    markdownAssets.length === expectedNames.size &&
+      markdownAssets.every((asset) => expectedNames.has(asset.name)),
+    "The five supplied Markdown articles were not uploaded as distinct file assets."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "blogAssetFolder",
+    blogFolder !== undefined &&
+      folderIds.size === 1 &&
+      folderIds.has(blogFolder.id),
+    "The Markdown articles are not all stored in one Blog asset folder."
+  );
+
+  const overview = getPageEvaluationContext(input.project, "/blog");
+  const detail = getPageEvaluationContext(input.project, "/blog/:slug");
+  recordCheck(
+    checks,
+    failures,
+    "blogRoutes",
+    overview.page !== undefined && detail.page !== undefined,
+    "The /blog overview and /blog/:slug detail pages are required."
+  );
+
+  const configurations = getAssetResourceConfigurations(input.project);
+  const findConfigurationByDataSourceName = (name: string) => {
+    const resourceId = input.project.dataSources.find(
+      (dataSource) => dataSource.type === "resource" && dataSource.name === name
+    )?.resourceId;
+    return configurations.find(({ resource }) => resource.id === resourceId);
+  };
+  const listingEntry = findConfigurationByDataSourceName("posts");
+  const articleEntry = findConfigurationByDataSourceName("post");
+  const listing = listingEntry?.configuration;
+  const article = articleEntry?.configuration;
+  const overviewInstanceIds = new Set(
+    overview.instances.map((instance) => instance.id)
+  );
+  const detailInstanceIds = new Set(
+    detail.instances.map((instance) => instance.id)
+  );
+  const isResourceScopedTo = (
+    resourceId: string | undefined,
+    instanceIds: Set<string>
+  ) =>
+    resourceId !== undefined &&
+    input.project.dataSources.some(
+      (dataSource) =>
+        dataSource.type === "resource" &&
+        dataSource.resourceId === resourceId &&
+        instanceIds.has(String(dataSource.scopeInstanceId ?? ""))
+    );
+  recordCheck(
+    checks,
+    failures,
+    "scopedBlogResources",
+    isResourceScopedTo(listingEntry?.resource.id, overviewInstanceIds) &&
+      isResourceScopedTo(articleEntry?.resource.id, detailInstanceIds),
+    "Each Assets resource must be scoped to its corresponding blog page."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "listingQuery",
+    listing !== undefined &&
+      hasQueryFragment(listing.where, [
+        "extension",
+        "md",
+        "draft",
+        "ne",
+        "true",
+      ]) &&
+      hasQueryFragment(listing.sort, ["publishedAt", "desc", "id", "asc"]) &&
+      hasQueryFragment(listing.limit, ["20"]) &&
+      hasQueryFragment(listing.output, [
+        "fields",
+        "title",
+        "slug",
+        "publishedAt",
+        "excerpt",
+      ]) &&
+      listing.output.includeMetadata === false,
+    "The overview Assets resource is not a bounded metadata-only published-post query."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "detailQuery",
+    article !== undefined &&
+      article.content.mode === "markdown-body" &&
+      hasQueryFragment(article.where, [
+        "extension",
+        "md",
+        "slug",
+        "system.params.slug",
+      ]) &&
+      hasQueryFragment(article.limit, ["1"]) &&
+      article.output.includeMetadata === false &&
+      article.content.maxBytes === 1_048_576,
+    "The detail Assets resource does not select one Markdown body by the dynamic slug parameter."
+  );
+
+  const overviewSource = JSON.stringify({
+    instances: overview.instances,
+    props: input.project.props.filter((prop) =>
+      overview.instances.some((instance) => instance.id === prop.instanceId)
+    ),
+  });
+  const detailSource = JSON.stringify({
+    instances: detail.instances,
+    props: input.project.props.filter((prop) =>
+      detail.instances.some((instance) => instance.id === prop.instanceId)
+    ),
+  });
+  recordCheck(
+    checks,
+    failures,
+    "editableBlogBindings",
+    /Collection/i.test(overviewSource) &&
+      ["title", "excerpt", "publishedAt", "slug"].every((field) =>
+        overviewSource.includes(field)
+      ) &&
+      /Collection/i.test(detailSource) &&
+      /MarkdownEmbed/i.test(detailSource) &&
+      hasQueryFragment(detailSource, ["content", "text"]),
+    "The blog is not rendered through editable Collections and a Markdown Embed with the required bindings."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "bindingVerification",
+    hasSuccessfulCall(input.toolCalls, "insert-fragment-verified") ||
+      hasSuccessfulCall(input.toolCalls, "verify-bindings") ||
+      hasSuccessfulCall(input.toolCalls, "insert-collection"),
+    "The persisted blog bindings were not verified."
+  );
+
+  const verificationCalls = input.toolCalls.filter(
+    (call) => call.name === "verify-page-responsive" && call.isError !== true
+  );
+  const verifiedPaths = new Set(
+    verificationCalls.map((call) => String(call.arguments?.path ?? ""))
+  );
+  const hasBothViewports = verificationCalls.every((call) => {
+    const viewports = Array.isArray(call.arguments?.viewports)
+      ? call.arguments.viewports
+      : [];
+    return (
+      viewports.some(
+        (viewport) =>
+          typeof viewport === "object" &&
+          viewport !== null &&
+          Number((viewport as { width?: unknown }).width) >= 1200
+      ) &&
+      viewports.some(
+        (viewport) =>
+          typeof viewport === "object" &&
+          viewport !== null &&
+          Number((viewport as { width?: unknown }).width) <= 479
+      )
+    );
+  });
+  recordCheck(
+    checks,
+    failures,
+    "blogRouteEvidence",
+    verificationCalls.length === 2 &&
+      verifiedPaths.has("/blog") &&
+      verifiedPaths.has("/blog/aurora-trails") &&
+      hasBothViewports,
+    "Both blog routes require successful desktop and mobile rendered verification."
+  );
+};
+
 export const evaluateHighImpactOutcome = (
   input: HighImpactEvaluationInput
 ): HighImpactEvaluationResult => {
@@ -549,6 +764,8 @@ export const evaluateHighImpactOutcome = (
     validateAuth(input, checks, failures);
   } else if (input.fixture.id === fontAssetsFixture.id) {
     validateFontAssets(input, checks, failures);
+  } else if (input.fixture.id === markdownBlogFixture.id) {
+    validateMarkdownBlog(input, checks, failures);
   } else {
     validateDesign(input, checks, failures);
   }

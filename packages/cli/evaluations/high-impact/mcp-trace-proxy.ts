@@ -9,6 +9,7 @@ type JsonRpcId = string | number;
 export type BoundedMcpCall = {
   name: string;
   arguments?: {
+    path?: string;
     viewport?: { width: number; height: number };
     viewports?: Array<{ width: number; height: number }>;
     dryRun?: true;
@@ -24,6 +25,20 @@ export type BoundedMcpCall = {
   isError?: true;
   errorCode?: string;
   errorIssues?: Array<{ code: string; path: string }>;
+};
+
+const getBoundedRoutePath = (value: unknown) => {
+  if (typeof value !== "string" || value.length > 256) {
+    return;
+  }
+  try {
+    const url = new URL(value, "https://evaluation.invalid");
+    if (url.origin === "https://evaluation.invalid" && value === url.pathname) {
+      return url.pathname;
+    }
+  } catch {
+    return;
+  }
 };
 
 const getStructuredError = (result: unknown) => {
@@ -108,6 +123,12 @@ export const getMcpTraceRequest = (
   };
   if (isPlainRecord(params.arguments)) {
     const args: NonNullable<BoundedMcpCall["arguments"]> = {};
+    if (params.name === "verify-page-responsive") {
+      const path = getBoundedRoutePath(params.arguments.path);
+      if (path !== undefined) {
+        args.path = path;
+      }
+    }
     const viewport = params.arguments.viewport;
     if (
       params.name === "screenshot" &&

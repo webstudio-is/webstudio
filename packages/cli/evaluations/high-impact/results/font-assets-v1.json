@@ -5,29 +5,29 @@
   "outcome": "passed",
   "cli": "source",
   "provider": "openai",
-  "model": "gpt-5.6-sol",
-  "commandSha256": "5c89af64bb3444ce679f82090c667ece40deb159b6b9ce7cd413e19c466d1ae3",
+  "model": "gpt-5.4-mini",
+  "commandSha256": "894c6e39ef40250b37452fea3c1c8255932b086cae057392775f60e33eee8e81",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 50677,
+    "durationMs": 42054,
     "tokens": {
-      "input": 261344,
-      "cachedInput": 240640,
-      "uncachedInput": 20704,
+      "input": 154475,
+      "cachedInput": 134528,
+      "uncachedInput": 19947,
       "cacheWriteInput": 0,
-      "output": 1440,
-      "reasoningOutput": 198,
-      "total": 262784,
-      "cachedInputRate": 0.9208
+      "output": 1936,
+      "reasoningOutput": 715,
+      "total": 156411,
+      "cachedInputRate": 0.8709
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 51362,
-      "maxResponseBytes": 51362,
-      "latestToolCount": 176,
-      "latestResponseBytes": 51362,
-      "latestInputSchemaBytes": 28964,
-      "latestDescriptionBytes": 4556
+      "totalResponseBytes": 53114,
+      "maxResponseBytes": 53114,
+      "latestToolCount": 184,
+      "latestResponseBytes": 53114,
+      "latestInputSchemaBytes": 29971,
+      "latestDescriptionBytes": 4529
     },
     "toolCalls": {
       "total": 6,
@@ -40,41 +40,41 @@
       "durationsByTool": {
         "audit": {
           "count": 1,
-          "totalMs": 17,
-          "p95Ms": 17,
-          "maxMs": 17
+          "totalMs": 18,
+          "p95Ms": 18,
+          "maxMs": 18
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 11,
-          "p95Ms": 11,
-          "maxMs": 11
+          "totalMs": 16,
+          "p95Ms": 16,
+          "maxMs": 16
         },
         "update-asset": {
           "count": 2,
-          "totalMs": 27,
-          "p95Ms": 14,
-          "maxMs": 14
+          "totalMs": 41,
+          "p95Ms": 29,
+          "maxMs": 29
         },
         "upload-assets": {
           "count": 1,
-          "totalMs": 25,
-          "p95Ms": 25,
-          "maxMs": 25
+          "totalMs": 51,
+          "p95Ms": 51,
+          "maxMs": 51
         },
         "verify-font-assets": {
           "count": 1,
-          "totalMs": 8,
-          "p95Ms": 8,
-          "maxMs": 8
+          "totalMs": 7,
+          "p95Ms": 7,
+          "maxMs": 7
         }
       },
       "responseBytesByTool": {
         "audit": {
           "count": 1,
-          "totalBytes": 5300,
-          "p95Bytes": 5300,
-          "maxBytes": 5300
+          "totalBytes": 4638,
+          "p95Bytes": 4638,
+          "maxBytes": 4638
         },
         "meta.guide": {
           "count": 1,
@@ -108,15 +108,15 @@
       "plannedMutations": 0,
       "committedMutations": 3,
       "verifications": 1,
-      "totalDurationMs": 88,
-      "p50DurationMs": 13,
-      "p95DurationMs": 25,
-      "totalResponseBytes": 18042,
+      "totalDurationMs": 133,
+      "p50DurationMs": 16,
+      "p95DurationMs": 51,
+      "totalResponseBytes": 17380,
       "p50ResponseBytes": 2196,
       "p95ResponseBytes": 6566,
       "maxResponseBytes": 6566,
-      "timeToFirstMutationMs": 37609,
-      "timeToFirstVerificationMs": 47073
+      "timeToFirstMutationMs": 28505,
+      "timeToFirstVerificationMs": 37196
     }
   },
   "callSequence": [
