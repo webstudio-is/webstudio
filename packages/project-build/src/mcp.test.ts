@@ -4297,9 +4297,7 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         workflow: expect.arrayContaining([
           expect.stringContaining("existing auth resources"),
-          expect.stringContaining(
-            "Call get-project-settings, list-pages, list-resources, and list-variables once each"
-          ),
+          expect.stringContaining("Call inspect-auth-context exactly once"),
           expect.stringContaining(
             "Do not call get-page-by-path to confirm that /account is absent"
           ),
@@ -6398,6 +6396,62 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+  });
+
+  test("bundles bounded authentication discovery into one focused call", async () => {
+    const commands = [
+      "get-project-settings",
+      "list-pages",
+      "list-resources",
+      "list-variables",
+    ] as const;
+    const operations = [
+      ...publicMcpOperations.filter(
+        (operation) => commands.includes(operation.command as never) === false
+      ),
+      ...commands.map((command) =>
+        publicOperation({
+          command,
+          id: `test.${command}`,
+          description: command,
+        })
+      ),
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, input }) =>
+        createEnvelope({
+          operationId: `test.${command}`,
+          result: { command, input },
+        })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    expect(adapter.listTools().map(({ name }) => name)).toContain(
+      "inspect-auth-context"
+    );
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Create an authenticated page" },
+    });
+    const guideToolNames = (
+      guide.structuredContent.data as { tools: Array<{ name: string }> }
+    ).tools.map(({ name }) => name);
+    expect(guideToolNames).toContain("inspect-auth-context");
+    expect(guideToolNames).not.toEqual(expect.arrayContaining([...commands]));
+
+    const result = await adapter.callTool({ name: "inspect-auth-context" });
+
+    expect(result.structuredContent.data).toEqual({
+      projectSettings: { command: "get-project-settings", input: {} },
+      pages: { command: "list-pages", input: { limit: 50 } },
+      resources: { command: "list-resources", input: { limit: 50 } },
+      variables: { command: "list-variables", input: { limit: 50 } },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(4);
   });
 
   test("rejects unknown tools before calling the operation executor", async () => {

@@ -1634,6 +1634,7 @@ const createProjectSessionMcpTool = (
 
 export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
+  "inspect-auth-context": [{}],
   "workflow.next": [
     { goal: "design-system-page" },
     { goal: "design-system-page", phase: "dry-run-section" },
@@ -2705,6 +2706,33 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   }),
 ];
 
+const authContextOperationCommands = [
+  "get-project-settings",
+  "list-pages",
+  "list-resources",
+  "list-variables",
+] as const;
+
+const inspectAuthContextTool = createProjectSessionMcpTool({
+  name: "inspect-auth-context",
+  description:
+    "Return one bounded authentication discovery bundle with project settings, pages, resources, and variables. Use once before authentication mutations instead of calling the four underlying reads separately.",
+  inputSchema: emptyInputSchema,
+  mcpExamples: getMcpExamples("inspect-auth-context"),
+  annotations: {
+    command: "inspect-auth-context",
+    operationId: "workflow.auth-context",
+    method: "session",
+    permit: "view",
+    localCapable: true,
+    serverOnly: false,
+    readNamespaces: ["projectSettings", "pages", "resources", "dataSources"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
 const screenshotTool = createProjectSessionMcpTool({
   name: "screenshot",
   description:
@@ -3013,6 +3041,11 @@ export const listProjectSessionMcpTools = (
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
   })),
+  ...(authContextOperationCommands.every((command) =>
+    operations.some((operation) => operation.command === command)
+  )
+    ? [inspectAuthContextTool]
+    : []),
   ...(options.includeRestorePoints ? restorePointTools : []),
   ...(options.includeImport ? [importTool] : []),
   ...(options.includeDownloadAsset ? [downloadAssetTool] : []),
@@ -3085,6 +3118,7 @@ const capabilityAreas = [
       "meta.guide",
       "meta.get_more_tools",
       "workflow.next",
+      "inspect-auth-context",
       "components.summary",
       "components.coverage-plan",
       "components.coverage-status",
@@ -5111,10 +5145,7 @@ const metaGoalGuides = [
     pattern:
       /authenticated?\s+(?:page|route|screen)|(?:supabase|firebase)\s+auth|sign(?:ed)?[- ]?(?:in|out)|login\s+(?:page|flow)|user\s+session/i,
     tools: [
-      "get-project-settings",
-      "list-pages",
-      "list-resources",
-      "list-variables",
+      "inspect-auth-context",
       "list-instances",
       "create-page",
       "create-resource",
@@ -5127,7 +5158,7 @@ const metaGoalGuides = [
       "audit",
     ],
     workflow: [
-      "Inspect the project's existing auth resources, variables, page settings, and agent instructions before choosing a provider workflow. Call get-project-settings, list-pages, list-resources, and list-variables once each; use at most one focused search-project call only when those results do not identify the auth convention. Treat list-pages as authoritative for route existence. Do not call get-page-by-path to confirm that /account is absent. Reuse that convention; do not add a second auth system implicitly.",
+      "Inspect the project's existing auth resources, variables, page settings, and agent instructions before choosing a provider workflow. Call inspect-auth-context exactly once instead of calling get-project-settings, list-pages, list-resources, or list-variables separately; use at most one focused search-project call only when that bundle does not identify the auth convention. Treat its pages section as authoritative for route existence. Do not call get-page-by-path to confirm that /account is absent. Reuse that convention; do not add a second auth system implicitly.",
       "Do not call meta.index after this guide. If an exact mutation schema is still needed, make at most one meta.get_more_tools call listing all immediately required authoring tools rather than rediscovering them one at a time.",
       "Never place credentials, service-role keys, refresh tokens, private session values, or authenticated response bodies in project data, command output, screenshots, agent instructions, or error reports. Ask the user to configure secrets in the provider/server environment.",
       "Model explicit signed-out, loading, signed-in, and failed-auth UI states with ordinary components and bindings. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
@@ -6633,6 +6664,72 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toMetaResult(
           getMetaGuide(getBrief(input, "meta.guide"), listTools(), guidance)
         );
+      }
+      if (name === "inspect-auth-context") {
+        if (isPlainRecord(input) === false || Object.keys(input).length > 0) {
+          throw new Error("inspect-auth-context does not accept input.");
+        }
+        const inputs: Record<
+          (typeof authContextOperationCommands)[number],
+          Record<string, unknown>
+        > = {
+          "get-project-settings": {},
+          "list-pages": { limit: 50 },
+          "list-resources": { limit: 50 },
+          "list-variables": { limit: 50 },
+        };
+        const envelopes: Array<{
+          command: (typeof authContextOperationCommands)[number];
+          envelope: ProjectSessionEnvelope;
+        }> = [];
+        for (const command of authContextOperationCommands) {
+          if (operationByCommand.has(command as Command) === false) {
+            throw new Error(
+              `inspect-auth-context requires the ${command} operation.`
+            );
+          }
+          envelopes.push({
+            command,
+            envelope: await executeOperation({
+              command: command as Command,
+              input: inputs[command],
+              dryRun: false,
+            }),
+          });
+        }
+        const lastEnvelope = envelopes.at(-1)?.envelope;
+        if (lastEnvelope === undefined) {
+          throw new Error("inspect-auth-context produced no results.");
+        }
+        const resultByCommand = new Map(
+          envelopes.map(({ command, envelope }) => [command, envelope.result])
+        );
+        const mergeNamespaces = (
+          key: keyof ProjectSessionEnvelope["namespaces"]
+        ) => [
+          ...new Set(
+            envelopes.flatMap(({ envelope }) => envelope.namespaces[key])
+          ),
+        ];
+        return toCallResult({
+          ...lastEnvelope,
+          operationId: "workflow.auth-context",
+          result: {
+            projectSettings: resultByCommand.get("get-project-settings"),
+            pages: resultByCommand.get("list-pages"),
+            resources: resultByCommand.get("list-resources"),
+            variables: resultByCommand.get("list-variables"),
+          },
+          namespaces: {
+            read: mergeNamespaces("read"),
+            write: mergeNamespaces("write"),
+            invalidated: mergeNamespaces("invalidated"),
+            missing: mergeNamespaces("missing"),
+          },
+          diagnostics: envelopes.flatMap(
+            ({ envelope }) => envelope.diagnostics
+          ),
+        });
       }
       if (name === "workflow.next") {
         return toCheckpointedMetaResult(name, getWorkflowNext(input));

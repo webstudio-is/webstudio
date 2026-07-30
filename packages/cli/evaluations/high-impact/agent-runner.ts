@@ -82,8 +82,8 @@ export const createMinimalAgentTask = (
       ...(fixture.id === "authenticated-page-v1"
         ? [
             "For this fixture, meta.guide already returns the required auth discovery and authoring tool schemas. Do not call list-breakpoints because responsive styling is not required, and do not call meta.get_more_tools or any other tool discovery operation. Create exactly one scoped non-secret fixture variable, keep the required state gallery expression-free, and do not call list-variables again after creating it. After the two required screenshots, run a static audit with pagePath /account; do not set rendered:true.",
-            "After meta.guide, call get-project-settings, list-pages, list-resources, and list-variables together in one parallel read batch.",
-            "After the reads, call create-page exactly once, then create-variable exactly once, then create-resource exactly once with the returned variable id. Do not parallelize these mutations. Insert the fragment only after all three succeed, using their returned ids.",
+            "After meta.guide, call inspect-auth-context exactly once. Do not call get-project-settings, list-pages, list-resources, or list-variables separately.",
+            "After the context read, call create-page exactly once, then create-variable exactly once, then create-resource exactly once with the returned variable id. Do not parallelize these mutations. Insert the fragment only after all three succeed, using their returned ids.",
           ]
         : []),
       ...(fixture.id === "design-input-v1"
