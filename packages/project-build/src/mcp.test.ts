@@ -7320,6 +7320,39 @@ describe("project session mcp adapter", () => {
     }
   });
 
+  test("exposes underscore-only tool names and maps calls to canonical names", async () => {
+    const executeOperation = createExecuteOperation();
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      toolNameFormat: "underscores",
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const listedTools = await client.listTools();
+      expect(listedTools.tools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "meta_index" }),
+          expect.objectContaining({ name: "components_coverage_plan" }),
+          expect.objectContaining({ name: "list_pages" }),
+        ])
+      );
+      expect(
+        listedTools.tools.every(({ name }) => /^[a-zA-Z0-9_]+$/.test(name))
+      ).toBe(true);
+
+      await client.callTool({ name: "list_pages", arguments: {} });
+
+      expect(executeOperation).toHaveBeenCalledWith(
+        expect.objectContaining({ command: "list-pages" })
+      );
+    } finally {
+      await close();
+    }
+  });
+
   test("exposes dry-run and destructive confirmation through stdio MCP", async () => {
     const transaction = {
       id: "stdio-delete-plan",

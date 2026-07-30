@@ -174,6 +174,13 @@ test("documents MCP stdio startup and discovery tools", () => {
     "project",
     expect.objectContaining({ type: "string" })
   );
+  expect(yargs.option).toHaveBeenCalledWith(
+    "tool-name-format",
+    expect.objectContaining({
+      choices: ["canonical", "underscores"],
+      default: "canonical",
+    })
+  );
 
   expect(yargs.example).toHaveBeenCalledWith(
     "$0 mcp",

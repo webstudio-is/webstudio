@@ -344,6 +344,13 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
       describe:
         "Saved project id to use without changing this directory's linked project",
     })
+    .option("tool-name-format", {
+      type: "string",
+      choices: ["canonical", "underscores"] as const,
+      default: "canonical" as const,
+      describe:
+        "Format exposed MCP tool names for clients with stricter naming rules",
+    })
     .command(
       ["list-tools"],
       "Print the concise MCP tool catalog as JSON",
@@ -1638,7 +1645,12 @@ export const mcpReadResource = async (options: McpReadResourceOptions) => {
   }
 };
 
-export const mcp = async (options: { project?: string } = {}) => {
+export const mcp = async (
+  options: {
+    project?: string;
+    toolNameFormat?: "canonical" | "underscores";
+  } = {}
+) => {
   const status = createMcpStatusReporter();
   let didReportClose = false;
   const reportClose = () => {
@@ -1659,6 +1671,7 @@ export const mcp = async (options: { project?: string } = {}) => {
   status.ready(toolCount);
   const server = await connectProjectSessionMcpServer({
     ...host,
+    toolNameFormat: options.toolNameFormat,
     getErrorCode: getStableErrorCode,
     reportLog: (_level, message) => {
       reportLog(message);

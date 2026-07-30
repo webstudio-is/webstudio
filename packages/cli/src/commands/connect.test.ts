@@ -166,7 +166,24 @@ test("writes the cursor config into .cursor/mcp.json", async () => {
 
   expect(dependencies.writeFileAtomic).toHaveBeenCalledWith(
     join(cwd(), ".cursor", "mcp.json"),
-    expect.stringContaining('"mcpServers"')
+    `${JSON.stringify(
+      {
+        mcpServers: {
+          webstudio: {
+            command: "npx",
+            args: [
+              "-y",
+              "webstudio@latest",
+              "mcp",
+              "--tool-name-format",
+              "underscores",
+            ],
+          },
+        },
+      },
+      null,
+      2
+    )}\n`
   );
 });
 
