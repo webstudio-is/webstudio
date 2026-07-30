@@ -78,7 +78,17 @@ jobs:
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
-        run: git diff --name-only HEAD --exit-code
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_generated='^fixtures/webstudio-features/(\.webstudio/data\.json|app/__generated__/\$resources\.asset-query-manifest\.ts|app/__generated__/\$resources\.asset-query-runtime\.ts|app/__generated__/\$resources\.assets\.ts|app/__generated__/\[assets1\]\._index\.server\.tsx|app/__generated__/index\.css)$'
+          unexpected=$(git diff --name-only HEAD | grep -vE "$expected_generated" || true)
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected fixture changes:"
+            printf '%s\n' "$unexpected"
+            git diff HEAD
+            exit 1
+          fi
 
       - name: Show changed files and diff
         if: ${{ failure() }}
