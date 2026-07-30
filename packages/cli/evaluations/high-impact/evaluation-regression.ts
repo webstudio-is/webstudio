@@ -45,6 +45,16 @@ export const isEvaluationComparisonAccepted = ({
   return updateBaselines || requireBaseline === false;
 };
 
+export const shouldUpdateEvaluationBaselines = ({
+  updateBaselines,
+  evaluationsPassed,
+  comparisonsPassed,
+}: {
+  updateBaselines: boolean;
+  evaluationsPassed: boolean;
+  comparisonsPassed: boolean;
+}) => updateBaselines && evaluationsPassed && comparisonsPassed;
+
 const gatedMetricPaths = new Set([
   "metrics.tokens.total",
   "metrics.mcpCatalog.latestResponseBytes",
@@ -54,6 +64,7 @@ const gatedMetricPaths = new Set([
   "metrics.toolCalls.retries",
   "metrics.toolCalls.focusedReads",
   "metrics.toolCalls.broadReads",
+  "metrics.toolCalls.totalResponseBytes",
 ]);
 
 const getNumericMetrics = (

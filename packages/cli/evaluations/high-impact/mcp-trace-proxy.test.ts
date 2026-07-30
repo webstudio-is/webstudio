@@ -105,56 +105,48 @@ describe("bounded MCP tracing", () => {
       [2, { name: "verify-bindings", startedAtMs: 200 }],
     ]);
 
-    expect(
-      getMcpTraceResponse(
-        {
-          id: 1,
-          result: {
-            structuredContent: {
-              meta: { session: { committed: true } },
-            },
-          },
+    const committedResponse = {
+      id: 1,
+      result: {
+        structuredContent: {
+          meta: { session: { committed: true } },
         },
-        pending,
-        175
-      )
-    ).toEqual({
+      },
+    };
+    expect(getMcpTraceResponse(committedResponse, pending, 175)).toEqual({
       name: "create-page",
       startedAtMs: 100,
       mutation: true,
       durationMs: 75,
+      responseBytes: Buffer.byteLength(JSON.stringify(committedResponse)),
       committed: true,
     });
-    expect(
-      getMcpTraceResponse(
-        {
-          id: 2,
-          result: {
-            isError: true,
-            structuredContent: {
-              error: {
-                code: "INVALID_INPUT",
-                message: "private diagnostic message",
-                details: { token: "private-token" },
-                issues: [
-                  {
-                    code: "invalid_type",
-                    path: ["resource", "headers", 0, "value"],
-                    message: "private issue message",
-                    example: "private example",
-                  },
-                ],
+    const failedResponse = {
+      id: 2,
+      result: {
+        isError: true,
+        structuredContent: {
+          error: {
+            code: "INVALID_INPUT",
+            message: "private diagnostic message",
+            details: { token: "private-token" },
+            issues: [
+              {
+                code: "invalid_type",
+                path: ["resource", "headers", 0, "value"],
+                message: "private issue message",
+                example: "private example",
               },
-            },
+            ],
           },
         },
-        pending,
-        260
-      )
-    ).toEqual({
+      },
+    };
+    expect(getMcpTraceResponse(failedResponse, pending, 260)).toEqual({
       name: "verify-bindings",
       startedAtMs: 200,
       durationMs: 60,
+      responseBytes: Buffer.byteLength(JSON.stringify(failedResponse)),
       isError: true,
       errorCode: "INVALID_INPUT",
       errorIssues: [

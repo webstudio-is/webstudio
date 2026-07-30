@@ -129,7 +129,9 @@ const assertBoundedResult = (result: AgentEvaluationResult) => {
           "failuresByTool",
           "failuresByCode",
           "issuesByCode",
+          "issuesByPath",
           "durationsByTool",
+          "responseBytesByTool",
         ].includes(path[2]);
       if (
         isMetricIdentifier === false &&
@@ -209,12 +211,17 @@ export const runHighImpactAgentEvaluation = async ({
     usageCaptured:
       usage === undefined ? ("failed" as const) : ("passed" as const),
   };
+  const toolCallMetrics = getMcpEvaluationMetrics(toolCalls);
   const result: AgentEvaluationResult = {
     schemaVersion: 2,
     kind: "high-impact-minimal-context-agent-evaluation-result",
     fixtureId: fixture.id,
     outcome:
-      execution.exitCode === 0 && evaluation.passed && usage !== undefined
+      execution.exitCode === 0 &&
+      evaluation.passed &&
+      usage !== undefined &&
+      toolCallMetrics.failed === 0 &&
+      toolCallMetrics.retries === 0
         ? "passed"
         : "failed",
     cli: target.kind,
@@ -226,7 +233,7 @@ export const runHighImpactAgentEvaluation = async ({
       durationMs: execution.durationMs,
       ...(usage === undefined ? {} : { tokens: usage }),
       ...(mcpCatalog === undefined ? {} : { mcpCatalog }),
-      toolCalls: getMcpEvaluationMetrics(toolCalls),
+      toolCalls: toolCallMetrics,
     },
     callSequence: toolCalls.map(({ name }) => name),
     checks,

@@ -1080,31 +1080,45 @@ const normalizeOperationInputValues = (command: string, input: unknown) => {
   ) {
     return input;
   }
+  const normalizeStyleValue = (value: unknown) => {
+    if (
+      isPlainRecord(value) &&
+      typeof value.value === "string" &&
+      ["unit", "length", "color"].includes(String(value.type)) &&
+      (value.type !== "color" || "colorSpace" in value === false)
+    ) {
+      return { type: "keyword", value: value.value };
+    }
+    return typeof value === "string" ? { type: "keyword", value } : value;
+  };
   return {
     ...input,
-    updates: input.updates.map((update) => {
+    updates: input.updates.flatMap((update) => {
       if (isPlainRecord(update) === false) {
-        return update;
+        return [update];
       }
-      const value = update.value;
-      if (
-        isPlainRecord(value) &&
-        typeof value.value === "string" &&
-        ["unit", "length", "color"].includes(String(value.type)) &&
-        (value.type !== "color" || "colorSpace" in value === false)
-      ) {
-        return {
-          ...update,
-          value: { type: "keyword", value: value.value },
-        };
+      if (typeof update.property === "string" && "value" in update) {
+        return [
+          {
+            ...update,
+            value: normalizeStyleValue(update.value),
+          },
+        ];
       }
-      if (typeof value !== "string") {
-        return update;
+      const grouped = isPlainRecord(update.styles)
+        ? update.styles
+        : isPlainRecord(update.declarations)
+          ? update.declarations
+          : undefined;
+      if (grouped === undefined) {
+        return [update];
       }
-      return {
-        ...update,
-        value: { type: "keyword", value },
-      };
+      const { styles: _styles, declarations: _declarations, ...rest } = update;
+      return Object.entries(grouped).map(([property, value]) => ({
+        ...rest,
+        property,
+        value: normalizeStyleValue(value),
+      }));
     }),
   };
 };
@@ -5157,6 +5171,7 @@ const metaGoalGuides = [
       "Create semantic editable structure with insert-fragment using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
+      "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
       'Immediately after insert-fragment, call verify-bindings exactly once with {"pagePath":"/summer"}; do not guess a page id or alternate input shape. Treat this as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. Those later fixed-value mutations do not require another binding verification. Finish them before visual verification, then start preview once. Capture the desktop and mobile screenshots back-to-back. Capture exactly the two supplied viewports, 1440x900 and 390x844; do not add exploratory or intermediate screenshots. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
@@ -5180,6 +5195,26 @@ const metaGoalGuides = [
 ] as const;
 
 const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
+
+const serializeMetaGuideTool = (
+  tool: ProjectSessionMcpTool,
+  includeHandshakeFields: boolean
+) => ({
+  name: tool.name,
+  use: tool.description,
+  ...(includeHandshakeFields
+    ? {
+        method: tool.annotations.method,
+        permit: tool.annotations.permit,
+        inputFields: tool.annotations.inputFields,
+        requiredInputFields: tool.annotations.requiredInputFields,
+      }
+    : {}),
+  mcpExamples: tool.mcpExamples ?? [],
+  ...(metaGuideDetailedInputSchemaTools.has(tool.name)
+    ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
+    : {}),
+});
 
 const getMetaGuide = (
   brief: string,
@@ -5216,19 +5251,10 @@ const getMetaGuide = (
         ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
         : undefined,
     ].filter(Boolean),
-    tools: matches.map((tool) => ({
-      name: tool.name,
-      use: tool.description,
-      method: tool.annotations.method,
-      permit: tool.annotations.permit,
-      inputFields: tool.annotations.inputFields,
-      requiredInputFields: tool.annotations.requiredInputFields,
-      mcpExamples: tool.mcpExamples ?? [],
-      ...(metaGuideDetailedInputSchemaTools.has(tool.name)
-        ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
-        : {}),
-    })),
-    more: "The MCP handshake provides top-level argument contracts, and this guide includes required fields and exact examples, plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover.",
+    tools: matches.map((tool) =>
+      serializeMetaGuideTool(tool, goalGuide === undefined)
+    ),
+    more: "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover.",
   };
 };
 

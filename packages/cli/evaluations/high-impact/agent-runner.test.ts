@@ -125,15 +125,26 @@ describe("high-impact agent runner", () => {
         provider: "test-provider",
         model: "test-model",
         getToolCalls: () => [
-          { name: "meta.guide", startedAtMs: 100, durationMs: 25 },
+          {
+            name: "meta.guide",
+            startedAtMs: 100,
+            durationMs: 25,
+            responseBytes: 1_000,
+          },
           {
             name: "attach-design-token",
             startedAtMs: 300,
             durationMs: 10,
+            responseBytes: 500,
             isError: true,
             errorCode: "INVALID_INPUT",
           },
-          { name: "audit", startedAtMs: 500, durationMs: 75 },
+          {
+            name: "audit",
+            startedAtMs: 500,
+            durationMs: 75,
+            responseBytes: 750,
+          },
         ],
         getCatalogObservations: () => [
           {
@@ -152,7 +163,7 @@ describe("high-impact agent runner", () => {
       });
       expect(result).toMatchObject({
         schemaVersion: 2,
-        outcome: "passed",
+        outcome: "failed",
         cli: "packaged",
         metrics: {
           durationMs: expect.any(Number),
@@ -173,6 +184,15 @@ describe("high-impact agent runner", () => {
             total: 3,
             failed: 1,
             failuresByTool: { "attach-design-token": 1 },
+            responseBytesByTool: {
+              "attach-design-token": {
+                count: 1,
+                totalBytes: 500,
+                p95Bytes: 500,
+                maxBytes: 500,
+              },
+            },
+            totalResponseBytes: 2_250,
             verifications: 1,
             timeToFirstVerificationMs: 500,
           },

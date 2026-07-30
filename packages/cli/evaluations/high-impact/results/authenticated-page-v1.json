@@ -6,19 +6,19 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "33130fcf6fcdff78a8027c7b5a513e016c41fdf4f03aef2847b658e0b6dbfc58",
+  "commandSha256": "2f2e2510b7bac8234f94e6d58c96061445aa295d311f13492ff20d93a59f82b2",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 130698,
+    "durationMs": 89229,
     "tokens": {
-      "input": 518997,
-      "cachedInput": 456704,
-      "uncachedInput": 62293,
+      "input": 536123,
+      "cachedInput": 479232,
+      "uncachedInput": 56891,
       "cacheWriteInput": 0,
-      "output": 1507,
-      "reasoningOutput": 95,
-      "total": 520504,
-      "cachedInputRate": 0.88
+      "output": 2072,
+      "reasoningOutput": 534,
+      "total": 538195,
+      "cachedInputRate": 0.8939
     },
     "mcpCatalog": {
       "responses": 1,
@@ -36,18 +36,19 @@
       "failuresByTool": {},
       "failuresByCode": {},
       "issuesByCode": {},
+      "issuesByPath": {},
       "durationsByTool": {
         "audit": {
           "count": 1,
-          "totalMs": 18,
-          "p95Ms": 18,
-          "maxMs": 18
+          "totalMs": 17,
+          "p95Ms": 17,
+          "maxMs": 17
         },
         "create-page": {
           "count": 1,
-          "totalMs": 36,
-          "p95Ms": 36,
-          "maxMs": 36
+          "totalMs": 30,
+          "p95Ms": 30,
+          "maxMs": 30
         },
         "create-resource": {
           "count": 1,
@@ -57,63 +58,143 @@
         },
         "create-variable": {
           "count": 1,
-          "totalMs": 19,
-          "p95Ms": 19,
-          "maxMs": 19
+          "totalMs": 22,
+          "p95Ms": 22,
+          "maxMs": 22
         },
         "get-project-settings": {
           "count": 1,
-          "totalMs": 29,
-          "p95Ms": 29,
-          "maxMs": 29
+          "totalMs": 22,
+          "p95Ms": 22,
+          "maxMs": 22
         },
         "insert-fragment": {
           "count": 1,
-          "totalMs": 52,
-          "p95Ms": 52,
-          "maxMs": 52
+          "totalMs": 85,
+          "p95Ms": 85,
+          "maxMs": 85
         },
         "list-pages": {
-          "count": 1,
-          "totalMs": 28,
-          "p95Ms": 28,
-          "maxMs": 28
-        },
-        "list-resources": {
-          "count": 1,
-          "totalMs": 32,
-          "p95Ms": 32,
-          "maxMs": 32
-        },
-        "list-variables": {
           "count": 1,
           "totalMs": 26,
           "p95Ms": 26,
           "maxMs": 26
         },
+        "list-resources": {
+          "count": 1,
+          "totalMs": 29,
+          "p95Ms": 29,
+          "maxMs": 29
+        },
+        "list-variables": {
+          "count": 1,
+          "totalMs": 24,
+          "p95Ms": 24,
+          "maxMs": 24
+        },
         "meta.guide": {
           "count": 1,
-          "totalMs": 14,
-          "p95Ms": 14,
-          "maxMs": 14
+          "totalMs": 10,
+          "p95Ms": 10,
+          "maxMs": 10
         },
         "preview.start": {
           "count": 1,
-          "totalMs": 2215,
-          "p95Ms": 2215,
-          "maxMs": 2215
+          "totalMs": 3202,
+          "p95Ms": 3202,
+          "maxMs": 3202
         },
         "screenshot": {
           "count": 2,
-          "totalMs": 9380,
-          "p95Ms": 7969,
-          "maxMs": 7969
+          "totalMs": 9310,
+          "p95Ms": 8083,
+          "maxMs": 8083
         },
         "verify-bindings": {
           "count": 1,
-          "totalMs": 3,
-          "p95Ms": 3,
-          "maxMs": 3
+          "totalMs": 4,
+          "p95Ms": 4,
+          "maxMs": 4
+        }
+      },
+      "responseBytesByTool": {
+        "audit": {
+          "count": 1,
+          "totalBytes": 4763,
+          "p95Bytes": 4763,
+          "maxBytes": 4763
+        },
+        "create-page": {
+          "count": 1,
+          "totalBytes": 1342,
+          "p95Bytes": 1342,
+          "maxBytes": 1342
+        },
+        "create-resource": {
+          "count": 1,
+          "totalBytes": 1644,
+          "p95Bytes": 1644,
+          "maxBytes": 1644
+        },
+        "create-variable": {
+          "count": 1,
+          "totalBytes": 1554,
+          "p95Bytes": 1554,
+          "maxBytes": 1554
+        },
+        "get-project-settings": {
+          "count": 1,
+          "totalBytes": 880,
+          "p95Bytes": 880,
+          "maxBytes": 880
+        },
+        "insert-fragment": {
+          "count": 1,
+          "totalBytes": 2039,
+          "p95Bytes": 2039,
+          "maxBytes": 2039
+        },
+        "list-pages": {
+          "count": 1,
+          "totalBytes": 1314,
+          "p95Bytes": 1314,
+          "maxBytes": 1314
+        },
+        "list-resources": {
+          "count": 1,
+          "totalBytes": 1454,
+          "p95Bytes": 1454,
+          "maxBytes": 1454
+        },
+        "list-variables": {
+          "count": 1,
+          "totalBytes": 1246,
+          "p95Bytes": 1246,
+          "maxBytes": 1246
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalBytes": 27298,
+          "p95Bytes": 27298,
+          "maxBytes": 27298
+        },
+        "preview.start": {
+          "count": 1,
+          "totalBytes": 329,
+          "p95Bytes": 329,
+          "maxBytes": 329
+        },
+        "screenshot": {
+          "count": 2,
+          "totalBytes": 7674,
+          "p95Bytes": 3843,
+          "maxBytes": 3843
+        },
+        "verify-bindings": {
+          "count": 1,
+          "totalBytes": 1507,
+          "p95Bytes": 1507,
+          "maxBytes": 1507
         }
       },
       "retries": 0,
@@ -123,18 +204,22 @@
       "plannedMutations": 0,
       "committedMutations": 4,
       "verifications": 4,
-      "totalDurationMs": 11873,
-      "p50DurationMs": 28,
-      "p95DurationMs": 7969,
-      "timeToFirstMutationMs": 75131,
-      "timeToFirstVerificationMs": 96873
+      "totalDurationMs": 12802,
+      "p50DurationMs": 24,
+      "p95DurationMs": 8083,
+      "totalResponseBytes": 53044,
+      "p50ResponseBytes": 1507,
+      "p95ResponseBytes": 27298,
+      "maxResponseBytes": 27298,
+      "timeToFirstMutationMs": 29534,
+      "timeToFirstVerificationMs": 52151
     }
   },
   "callSequence": [
     "meta.guide",
+    "get-project-settings",
     "list-variables",
     "list-pages",
-    "get-project-settings",
     "list-resources",
     "create-page",
     "create-variable",

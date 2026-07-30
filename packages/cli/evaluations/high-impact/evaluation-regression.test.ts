@@ -3,6 +3,7 @@ import type { AgentEvaluationResult } from "./agent-runner";
 import {
   compareEvaluationResult,
   isEvaluationComparisonAccepted,
+  shouldUpdateEvaluationBaselines,
 } from "./evaluation-regression";
 
 const createResult = (
@@ -36,7 +37,9 @@ const createResult = (
       failuresByTool: {},
       failuresByCode: {},
       issuesByCode: {},
+      issuesByPath: {},
       durationsByTool: {},
+      responseBytesByTool: {},
       retries: 0,
       focusedReads: 2,
       broadReads: 0,
@@ -47,6 +50,10 @@ const createResult = (
       totalDurationMs: 500,
       p50DurationMs: 30,
       p95DurationMs: 100,
+      totalResponseBytes: 10_000,
+      p50ResponseBytes: 800,
+      p95ResponseBytes: 2_000,
+      maxResponseBytes: 3_000,
       timeToFirstMutationMs: 400,
       timeToFirstVerificationMs: 800,
     },
@@ -238,6 +245,30 @@ describe("evaluation regression comparison", () => {
     );
   });
 
+  test("blocks aggregate MCP response growth and reports tail changes", () => {
+    const baseline = createResult();
+    const current = structuredClone(baseline);
+    current.metrics.toolCalls.totalResponseBytes = 12_000;
+    current.metrics.toolCalls.p95ResponseBytes = 2_400;
+    expect(compareEvaluationResult(current, baseline).regressions).toEqual([
+      {
+        metric: "metrics.toolCalls.totalResponseBytes",
+        baseline: 10_000,
+        current: 12_000,
+        allowed: 11_500,
+      },
+    ]);
+    expect(compareEvaluationResult(current, baseline).deltas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metric: "metrics.toolCalls.p95ResponseBytes",
+          baseline: 2_000,
+          current: 2_400,
+        }),
+      ])
+    );
+  });
+
   test("requires accepted baselines and never accepts metric regressions", () => {
     const passed = compareEvaluationResult(createResult(), createResult());
     const missing = compareEvaluationResult(createResult(), undefined);
@@ -276,6 +307,30 @@ describe("evaluation regression comparison", () => {
         comparison: regressed,
         requireBaseline: false,
         updateBaselines: true,
+      })
+    ).toBe(false);
+  });
+
+  test("updates baselines only after outcomes and comparisons pass", () => {
+    expect(
+      shouldUpdateEvaluationBaselines({
+        updateBaselines: true,
+        evaluationsPassed: true,
+        comparisonsPassed: true,
+      })
+    ).toBe(true);
+    expect(
+      shouldUpdateEvaluationBaselines({
+        updateBaselines: true,
+        evaluationsPassed: true,
+        comparisonsPassed: false,
+      })
+    ).toBe(false);
+    expect(
+      shouldUpdateEvaluationBaselines({
+        updateBaselines: true,
+        evaluationsPassed: false,
+        comparisonsPassed: true,
       })
     ).toBe(false);
   });

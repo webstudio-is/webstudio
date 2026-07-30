@@ -25,6 +25,7 @@ import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 import {
   compareEvaluationResult,
   isEvaluationComparisonAccepted,
+  shouldUpdateEvaluationBaselines,
   type EvaluationComparison,
 } from "./evaluation-regression";
 
@@ -247,7 +248,19 @@ const run = async () => {
   const evaluationsPassed = rawResults.every(
     (result) => result.outcome === "passed"
   );
-  if (options.updateBaselines && evaluationsPassed) {
+  const comparisonsPassed = results.every(({ comparison }) =>
+    isEvaluationComparisonAccepted({
+      comparison,
+      requireBaseline: options.requireBaseline,
+      updateBaselines: options.updateBaselines,
+    })
+  );
+  const baselinesUpdated = shouldUpdateEvaluationBaselines({
+    updateBaselines: options.updateBaselines,
+    evaluationsPassed,
+    comparisonsPassed,
+  });
+  if (baselinesUpdated) {
     await mkdir(baselineDirectory, { recursive: true });
     await Promise.all(
       rawResults.map((result) =>
@@ -259,20 +272,13 @@ const run = async () => {
       )
     );
   }
-  const comparisonsPassed = results.every(({ comparison }) =>
-    isEvaluationComparisonAccepted({
-      comparison,
-      requireBaseline: options.requireBaseline,
-      updateBaselines: options.updateBaselines,
-    })
-  );
   const outcome = evaluationsPassed && comparisonsPassed ? "passed" : "failed";
   process.stdout.write(
     `${JSON.stringify(
       {
         outcome,
         baselines: options.updateBaselines
-          ? evaluationsPassed
+          ? baselinesUpdated
             ? "updated"
             : "not-updated"
           : "compared",

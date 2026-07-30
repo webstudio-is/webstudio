@@ -21,6 +21,7 @@ export type EvaluationToolCall = {
   arguments?: Record<string, unknown>;
   startedAtMs?: number;
   durationMs?: number;
+  responseBytes?: number;
   planned?: true;
   committed?: true;
   isError?: boolean;

@@ -16,6 +16,7 @@ export type BoundedMcpCall = {
   };
   startedAtMs: number;
   durationMs?: number;
+  responseBytes?: number;
   mutation?: true;
   planned?: true;
   committed?: true;
@@ -183,6 +184,7 @@ export const getMcpTraceResponse = (
   return {
     ...call,
     durationMs: Math.max(0, Math.round(completedAtMs - call.startedAtMs)),
+    responseBytes: getJsonBytes(value),
     ...(planned === undefined ? {} : { planned }),
     ...(committed === undefined ? {} : { committed }),
     ...(isError === undefined ? {} : { isError }),

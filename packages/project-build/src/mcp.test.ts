@@ -2893,6 +2893,59 @@ describe("project session mcp adapter", () => {
     });
   });
 
+  test("flattens grouped style declarations before validation", async () => {
+    const { adapter, executeOperation } = createTestMcpCore({
+      operationId: "styles.updateDeclarations",
+      result: { styleKeys: [] },
+    });
+
+    await adapter.callTool({
+      name: "update-styles",
+      input: {
+        updates: [
+          {
+            instanceId: "hero-instance",
+            breakpoint: "mobile-breakpoint",
+            styles: {
+              display: "grid",
+              gap: { type: "unit", value: "24px" },
+            },
+          },
+          {
+            instanceId: "title-instance",
+            declarations: { color: "#123456" },
+          },
+        ],
+      },
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith({
+      command: "update-styles",
+      input: {
+        updates: [
+          {
+            instanceId: "hero-instance",
+            breakpoint: "mobile-breakpoint",
+            property: "display",
+            value: { type: "keyword", value: "grid" },
+          },
+          {
+            instanceId: "hero-instance",
+            breakpoint: "mobile-breakpoint",
+            property: "gap",
+            value: { type: "keyword", value: "24px" },
+          },
+          {
+            instanceId: "title-instance",
+            property: "color",
+            value: { type: "keyword", value: "#123456" },
+          },
+        ],
+      },
+      dryRun: false,
+    });
+  });
+
   test("resolves discriminated input branches before parsing JSON-looking strings", async () => {
     const operation = publicOperation({
       command: "update-discriminated-value",
@@ -4204,7 +4257,7 @@ describe("project session mcp adapter", () => {
     expect(jsonLdGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         more: expect.stringContaining(
-          "guide includes required fields and exact examples"
+          "handshake provides top-level argument contracts and required fields"
         ),
         workflow: expect.arrayContaining([
           expect.stringContaining("do not use update-page custom metadata"),
@@ -4305,6 +4358,18 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    for (const tool of (
+      fontAssetGuide.structuredContent.data as {
+        tools: Array<Record<string, unknown>>;
+      }
+    ).tools) {
+      expect(tool.use).toEqual(expect.any(String));
+      expect(tool).not.toHaveProperty("method");
+      expect(tool).not.toHaveProperty("permit");
+      expect(tool).not.toHaveProperty("inputFields");
+      expect(tool).not.toHaveProperty("requiredInputFields");
+      expect(tool).toHaveProperty("mcpExamples");
+    }
     expect(designInputGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         workflow: expect.arrayContaining([
