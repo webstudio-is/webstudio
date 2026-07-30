@@ -143,10 +143,11 @@ jobs:
   fixtures-test:
     needs:
       - deployment
+      - deployment-host
     uses: ./.github/workflows/fixtures-test.yml
     with:
-      builder-host: assets.staging.webstudio.is
-      environment: staging
+      builder-host: ${{ needs.deployment-host.outputs.development-builder-host }}
+      environment: development
     secrets:
       # We are not passing the secret here (as it does not exist in the current environment).
       # Instead, this serves as a signal to the calling workflow that it has permission to extract it from the environment.

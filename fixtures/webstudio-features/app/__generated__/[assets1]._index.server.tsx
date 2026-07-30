@@ -9,8 +9,26 @@ export const getResources = (_props: { system: System }) => {
     control: "system",
     url: "/$resources/assets",
     searchParams: [],
-    method: "get",
-    headers: [],
+    method: "post",
+    headers: [{ name: "Content-Type", value: "application/json" }],
+    body: {
+      query: {
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["url"], ["width"], ["height"]],
+        },
+        content: {
+          mode: "none",
+        },
+        where: {
+          all: [],
+        },
+        sort: [],
+        limit: 1000,
+        offset: 0,
+      },
+    },
   };
   const _data = new Map<string, ResourceRequest>([["assets_1", assets_1]]);
   const _action = new Map<string, ResourceRequest>([]);

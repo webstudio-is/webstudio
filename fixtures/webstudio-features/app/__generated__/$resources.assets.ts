@@ -2,6 +2,12 @@ export const assets = {
   "2b151fc7b4b0324e6ab78c40f72c7f59273f81fb1be3d08b3f9976428601b95e": {
     url: "/assets/e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
   },
+  "42e55b0464790758b9352d675cf28fadfcf8a3259fc1e890100617d3e731be88": {
+    url: "/assets/cabinsketch-bold_TLCbytfxf8ENHwZ6ze3Jj.ttf",
+    family: "CabinSketch",
+    style: "normal",
+    weight: 700,
+  },
   "4afe692f78ec0530e355a551a3860302c4478037db7b25a3bdae82c32c78634d": {
     url: "/assets/webm-example_2r_6VmRBjhAy3ldaqz0gk.webm",
   },

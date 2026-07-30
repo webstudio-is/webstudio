@@ -1,3 +1,11 @@
+@font-face {
+  font-family: CabinSketch;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/cabinsketch-bold_TLCbytfxf8ENHwZ6ze3Jj.ttf")
+    format("truetype");
+}
 @layer presets {
   :root {
     display: grid;
