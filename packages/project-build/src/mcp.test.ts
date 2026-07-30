@@ -2580,7 +2580,7 @@ describe("project session mcp adapter", () => {
       name: "create-page",
       input: {
         name: "Harbor Ops Design System",
-        path: "/design-system",
+        path: "design-system",
         title: "Harbor Ops Design System",
         description:
           "A realistic component coverage page for the Harbor Ops logistics product design system.",

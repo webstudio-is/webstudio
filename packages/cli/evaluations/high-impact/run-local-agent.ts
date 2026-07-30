@@ -24,6 +24,7 @@ import type { McpCatalogObservation } from "./evaluation-metrics";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 import {
   compareEvaluationResult,
+  isAggregateTokenBaselineNonRegressed,
   isEvaluationComparisonAccepted,
   shouldUpdateEvaluationBaselines,
   type EvaluationComparison,
@@ -221,6 +222,7 @@ const run = async () => {
   );
   const results: AgentEvaluationReport[] = [];
   const rawResults: AgentEvaluationResult[] = [];
+  const baselines: AgentEvaluationResult[] = [];
   for (const fixture of fixtures) {
     const resultPath = resolve(
       process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
@@ -238,6 +240,9 @@ const run = async () => {
       ...result,
       comparison: compareEvaluationResult(result, baseline),
     };
+    if (baseline !== undefined) {
+      baselines.push(baseline);
+    }
     await writeFile(
       resultPath,
       `${JSON.stringify(report, undefined, 2)}\n`,
@@ -259,6 +264,10 @@ const run = async () => {
     updateBaselines: options.updateBaselines,
     evaluationsPassed,
     comparisonsPassed,
+    aggregateTokensPassed: isAggregateTokenBaselineNonRegressed(
+      rawResults,
+      baselines
+    ),
   });
   if (baselinesUpdated) {
     await mkdir(baselineDirectory, { recursive: true });
@@ -272,7 +281,12 @@ const run = async () => {
       )
     );
   }
-  const outcome = evaluationsPassed && comparisonsPassed ? "passed" : "failed";
+  const outcome =
+    evaluationsPassed &&
+    comparisonsPassed &&
+    (options.updateBaselines === false || baselinesUpdated)
+      ? "passed"
+      : "failed";
   process.stdout.write(
     `${JSON.stringify(
       {

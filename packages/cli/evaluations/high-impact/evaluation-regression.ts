@@ -49,11 +49,44 @@ export const shouldUpdateEvaluationBaselines = ({
   updateBaselines,
   evaluationsPassed,
   comparisonsPassed,
+  aggregateTokensPassed,
 }: {
   updateBaselines: boolean;
   evaluationsPassed: boolean;
   comparisonsPassed: boolean;
-}) => updateBaselines && evaluationsPassed && comparisonsPassed;
+  aggregateTokensPassed: boolean;
+}) =>
+  updateBaselines &&
+  evaluationsPassed &&
+  comparisonsPassed &&
+  aggregateTokensPassed;
+
+export const isAggregateTokenBaselineNonRegressed = (
+  current: readonly AgentEvaluationResult[],
+  baselines: readonly AgentEvaluationResult[]
+) => {
+  const baselineByFixture = new Map(
+    baselines.map((baseline) => [baseline.fixtureId, baseline])
+  );
+  let currentTotal = 0;
+  let baselineTotal = 0;
+  let compared = 0;
+  for (const result of current) {
+    const baseline = baselineByFixture.get(result.fixtureId);
+    if (baseline === undefined) {
+      continue;
+    }
+    const currentTokens = result.metrics.tokens?.total;
+    const baselineTokens = baseline.metrics.tokens?.total;
+    if (currentTokens === undefined || baselineTokens === undefined) {
+      return false;
+    }
+    currentTotal += currentTokens;
+    baselineTotal += baselineTokens;
+    compared += 1;
+  }
+  return compared === 0 || currentTotal <= baselineTotal;
+};
 
 const gatedMetricPaths = new Set([
   "metrics.tokens.total",

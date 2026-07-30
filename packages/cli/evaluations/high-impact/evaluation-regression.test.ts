@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { AgentEvaluationResult } from "./agent-runner";
 import {
+  isAggregateTokenBaselineNonRegressed,
   compareEvaluationResult,
   isEvaluationComparisonAccepted,
   shouldUpdateEvaluationBaselines,
@@ -317,6 +318,7 @@ describe("evaluation regression comparison", () => {
         updateBaselines: true,
         evaluationsPassed: true,
         comparisonsPassed: true,
+        aggregateTokensPassed: true,
       })
     ).toBe(true);
     expect(
@@ -324,6 +326,7 @@ describe("evaluation regression comparison", () => {
         updateBaselines: true,
         evaluationsPassed: true,
         comparisonsPassed: false,
+        aggregateTokensPassed: true,
       })
     ).toBe(false);
     expect(
@@ -331,7 +334,61 @@ describe("evaluation regression comparison", () => {
         updateBaselines: true,
         evaluationsPassed: false,
         comparisonsPassed: true,
+        aggregateTokensPassed: true,
       })
     ).toBe(false);
+    expect(
+      shouldUpdateEvaluationBaselines({
+        updateBaselines: true,
+        evaluationsPassed: true,
+        comparisonsPassed: true,
+        aggregateTokensPassed: false,
+      })
+    ).toBe(false);
+  });
+
+  test("does not ratchet an existing aggregate token baseline upward", () => {
+    const withTokens = (
+      fixtureId: AgentEvaluationResult["fixtureId"],
+      total: number
+    ) => {
+      const result = createResult({ fixtureId });
+      return {
+        ...result,
+        metrics: {
+          ...result.metrics,
+          tokens: { ...result.metrics.tokens!, total },
+        },
+      };
+    };
+    const baselines = [
+      withTokens("authenticated-page-v1", 1_000),
+      withTokens("design-input-v1", 1_000),
+    ];
+
+    expect(
+      isAggregateTokenBaselineNonRegressed(
+        [
+          withTokens("authenticated-page-v1", 900),
+          withTokens("design-input-v1", 1_000),
+        ],
+        baselines
+      )
+    ).toBe(true);
+    expect(
+      isAggregateTokenBaselineNonRegressed(
+        [
+          withTokens("authenticated-page-v1", 1_001),
+          withTokens("design-input-v1", 1_000),
+        ],
+        baselines
+      )
+    ).toBe(false);
+    expect(
+      isAggregateTokenBaselineNonRegressed(
+        [withTokens("authenticated-page-v1", 1_000)],
+        []
+      )
+    ).toBe(true);
   });
 });

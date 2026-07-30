@@ -1046,19 +1046,40 @@ const normalizeOperationInputAliases = ({
   command: string;
   input: unknown;
 }) => {
-  if (
-    command === "create-page" &&
-    isPlainRecord(input) &&
-    "description" in input
-  ) {
-    const { description, meta, ...rest } = input;
-    return {
-      ...rest,
-      meta: {
-        ...(isPlainRecord(meta) ? meta : {}),
-        description,
-      },
-    };
+  if (command === "create-page" && isPlainRecord(input)) {
+    const normalizedInput: Record<string, unknown> =
+      "description" in input
+        ? (() => {
+            const { description, meta, ...rest } = input;
+            return {
+              ...rest,
+              meta: {
+                ...(isPlainRecord(meta) ? meta : {}),
+                description,
+              },
+            };
+          })()
+        : input;
+    if (
+      typeof normalizedInput.path !== "string" ||
+      normalizedInput.path === ""
+    ) {
+      return normalizedInput;
+    }
+    try {
+      const base = new URL("https://webstudio.invalid/");
+      const parsed = new URL(normalizedInput.path, base);
+      if (
+        parsed.origin === base.origin &&
+        parsed.search === "" &&
+        parsed.hash === ""
+      ) {
+        return { ...normalizedInput, path: parsed.pathname };
+      }
+    } catch {
+      return normalizedInput;
+    }
+    return normalizedInput;
   }
   if (
     command === "insert-component" &&
