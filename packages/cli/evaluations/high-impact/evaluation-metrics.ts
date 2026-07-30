@@ -4,6 +4,7 @@ import type { EvaluationToolCall } from "./validate";
 export type AgentUsage = {
   input: number;
   cachedInput: number;
+  uncachedInput: number;
   cacheWriteInput: number;
   output: number;
   reasoningOutput: number;
@@ -22,9 +23,13 @@ const createAgentUsage = ({
   cacheWriteInput,
   output,
   reasoningOutput,
-}: Omit<AgentUsage, "total" | "cachedInputRate">): AgentUsage => ({
+}: Omit<
+  AgentUsage,
+  "total" | "cachedInputRate" | "uncachedInput"
+>): AgentUsage => ({
   input,
   cachedInput,
+  uncachedInput: Math.max(0, input - cachedInput),
   cacheWriteInput,
   output,
   reasoningOutput,
@@ -32,6 +37,47 @@ const createAgentUsage = ({
   cachedInputRate:
     input === 0 ? 0 : Math.round((cachedInput / input) * 10_000) / 10_000,
 });
+
+export type McpCatalogObservation = {
+  kind: "tools-list";
+  toolCount: number;
+  responseBytes: number;
+  inputSchemaBytes: number;
+  descriptionBytes: number;
+};
+
+export type McpCatalogMetrics = {
+  responses: number;
+  totalResponseBytes: number;
+  maxResponseBytes: number;
+  latestToolCount: number;
+  latestResponseBytes: number;
+  latestInputSchemaBytes: number;
+  latestDescriptionBytes: number;
+};
+
+export const getMcpCatalogMetrics = (
+  observations: readonly McpCatalogObservation[]
+): McpCatalogMetrics | undefined => {
+  const latest = observations.at(-1);
+  if (latest === undefined) {
+    return;
+  }
+  return {
+    responses: observations.length,
+    totalResponseBytes: observations.reduce(
+      (total, observation) => total + observation.responseBytes,
+      0
+    ),
+    maxResponseBytes: Math.max(
+      ...observations.map((observation) => observation.responseBytes)
+    ),
+    latestToolCount: latest.toolCount,
+    latestResponseBytes: latest.responseBytes,
+    latestInputSchemaBytes: latest.inputSchemaBytes,
+    latestDescriptionBytes: latest.descriptionBytes,
+  };
+};
 
 export const getAgentUsageEvent = (value: unknown): AgentUsage | undefined => {
   if (

@@ -2,10 +2,40 @@ import { describe, expect, test } from "vitest";
 import {
   addAgentUsage,
   getAgentUsageEvent,
+  getMcpCatalogMetrics,
   getMcpEvaluationMetrics,
 } from "./evaluation-metrics";
 
 describe("evaluation metrics", () => {
+  test("aggregates MCP catalog observations", () => {
+    expect(
+      getMcpCatalogMetrics([
+        {
+          kind: "tools-list",
+          toolCount: 160,
+          responseBytes: 100_000,
+          inputSchemaBytes: 50_000,
+          descriptionBytes: 10_000,
+        },
+        {
+          kind: "tools-list",
+          toolCount: 12,
+          responseBytes: 20_000,
+          inputSchemaBytes: 8_000,
+          descriptionBytes: 2_000,
+        },
+      ])
+    ).toEqual({
+      responses: 2,
+      totalResponseBytes: 120_000,
+      maxResponseBytes: 100_000,
+      latestToolCount: 12,
+      latestResponseBytes: 20_000,
+      latestInputSchemaBytes: 8_000,
+      latestDescriptionBytes: 2_000,
+    });
+  });
+
   test("retains only aggregate usage from Codex completion events", () => {
     const usage = getAgentUsageEvent({
       type: "turn.completed",
@@ -21,6 +51,7 @@ describe("evaluation metrics", () => {
     expect(usage).toEqual({
       input: 1_000,
       cachedInput: 400,
+      uncachedInput: 600,
       cacheWriteInput: 50,
       output: 200,
       reasoningOutput: 75,
@@ -33,6 +64,7 @@ describe("evaluation metrics", () => {
     expect(addAgentUsage(usage, usage)).toEqual({
       input: 2_000,
       cachedInput: 800,
+      uncachedInput: 1_200,
       cacheWriteInput: 100,
       output: 400,
       reasoningOutput: 150,

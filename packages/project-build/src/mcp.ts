@@ -1072,6 +1072,28 @@ const normalizeOperationInputAliases = ({
   return input;
 };
 
+const normalizeOperationInputValues = (command: string, input: unknown) => {
+  if (
+    command !== "update-styles" ||
+    isPlainRecord(input) === false ||
+    Array.isArray(input.updates) === false
+  ) {
+    return input;
+  }
+  return {
+    ...input,
+    updates: input.updates.map((update) => {
+      if (isPlainRecord(update) === false || typeof update.value !== "string") {
+        return update;
+      }
+      return {
+        ...update,
+        value: { type: "keyword", value: update.value },
+      };
+    }),
+  };
+};
+
 const getNormalizedOperationInput = (
   operation: PublicMcpOperation,
   input: unknown
@@ -1091,7 +1113,10 @@ const getNormalizedOperationInput = (
     command: operation.command,
     input: wrappedInput,
   });
-  const normalizedInput = parseStringifiedJsonInputFields(aliasedInput, schema);
+  const normalizedInput = normalizeOperationInputValues(
+    operation.command,
+    parseStringifiedJsonInputFields(aliasedInput, schema)
+  );
   assertKnownInputFields({
     command: operation.command,
     input: normalizedInput,
@@ -5113,6 +5138,7 @@ const metaGoalGuides = [
       "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
       "Create semantic editable structure with insert-fragment using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
+      'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       'Immediately after insert-fragment, call verify-bindings exactly once with {"pagePath":"/summer"}; do not guess a page id or alternate input shape. Treat this as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. Those later fixed-value mutations do not require another binding verification. Finish them before visual verification, then start preview once. Capture the desktop and mobile screenshots back-to-back. Capture exactly the two supplied viewports, 1440x900 and 390x844; do not add exploratory or intermediate screenshots. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
@@ -5134,6 +5160,8 @@ const metaGoalGuides = [
     ],
   },
 ] as const;
+
+const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
 
 const getMetaGuide = (
   brief: string,
@@ -5178,8 +5206,11 @@ const getMetaGuide = (
       inputFields: tool.annotations.inputFields,
       requiredInputFields: tool.annotations.requiredInputFields,
       mcpExamples: tool.mcpExamples ?? [],
+      ...(metaGuideDetailedInputSchemaTools.has(tool.name)
+        ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
+        : {}),
     })),
-    more: "MCP input schemas already provide each tool's arguments. Only call meta.get_more_tools when an MCP input schema explicitly says a complex field was compacted, or when you need server/local behavior that the guide does not cover.",
+    more: "The MCP handshake provides top-level argument contracts, and this guide includes required fields and exact examples, plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover.",
   };
 };
 
@@ -5494,19 +5525,62 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   );
 };
 
-const omitSchemaDescriptions = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map(omitSchemaDescriptions);
-  }
-  if (typeof value !== "object" || value === null) {
+const sdkScalarSchemaKeys = new Set([
+  "type",
+  "enum",
+  "const",
+  "format",
+  "default",
+  "minimum",
+  "maximum",
+  "exclusiveMinimum",
+  "exclusiveMaximum",
+  "multipleOf",
+  "minLength",
+  "maxLength",
+  "pattern",
+  "minItems",
+  "maxItems",
+  "uniqueItems",
+]);
+
+const getSdkSchemaProperty = (
+  value: InputJsonSchemaValue
+): InputJsonSchemaValue => {
+  if (typeof value === "boolean") {
     return value;
   }
-  return Object.fromEntries(
-    Object.entries(value)
-      .filter(([key]) => key !== "description")
-      .map(([key, child]) => [key, omitSchemaDescriptions(child)])
+  const result: InputJsonSchema = Object.fromEntries(
+    Object.entries(value).filter(([key]) => sdkScalarSchemaKeys.has(key))
   );
+  if (value.items !== undefined) {
+    result.items = getSdkSchemaProperty(value.items);
+  }
+  for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
+    const branches = value[key];
+    if (Array.isArray(branches)) {
+      result[key] = branches.map(getSdkSchemaProperty);
+    }
+  }
+  return result;
 };
+
+const getSdkInputSchema = (
+  schema: ProjectSessionMcpInputSchema
+): ProjectSessionMcpInputSchema => ({
+  type: "object",
+  additionalProperties:
+    schema.additionalProperties === undefined
+      ? false
+      : getSdkSchemaProperty(schema.additionalProperties),
+  properties: Object.fromEntries(
+    Object.entries(schema.properties ?? {}).map(([name, value]) => [
+      name,
+      getSdkSchemaProperty(value),
+    ])
+  ),
+  required: schema.required ?? [],
+});
 
 // Keep output contracts, complete input guidance, and Webstudio operation
 // metadata for local validation, generated documentation, and focused
@@ -5514,9 +5588,7 @@ const omitSchemaDescriptions = (value: unknown): unknown => {
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
   description: tool.description,
-  inputSchema: omitSchemaDescriptions(
-    tool.inputSchema
-  ) as ProjectSessionMcpInputSchema,
+  inputSchema: getSdkInputSchema(tool.inputSchema),
   annotations: {
     readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),
     destructiveHint: tool.annotations.requiresConfirm,

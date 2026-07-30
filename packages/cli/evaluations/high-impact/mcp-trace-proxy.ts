@@ -2,6 +2,7 @@ import { appendFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { boundedIdentifierPattern, isPlainRecord } from "../../src/type-utils";
+import type { McpCatalogObservation } from "./evaluation-metrics";
 
 type JsonRpcId = string | number;
 
@@ -220,6 +221,43 @@ export const getMcpMutationToolNames = (value: unknown) => {
   });
 };
 
+const getJsonBytes = (value: unknown) =>
+  Buffer.byteLength(JSON.stringify(value), "utf8");
+
+export const getMcpCatalogObservation = (
+  value: unknown
+): McpCatalogObservation | undefined => {
+  if (
+    isPlainRecord(value) === false ||
+    isPlainRecord(value.result) === false ||
+    Array.isArray(value.result.tools) === false
+  ) {
+    return;
+  }
+  const tools = value.result.tools;
+  return {
+    kind: "tools-list",
+    toolCount: tools.length,
+    responseBytes: getJsonBytes(value.result),
+    inputSchemaBytes: tools.reduce(
+      (total, tool) =>
+        total +
+        (isPlainRecord(tool) && tool.inputSchema !== undefined
+          ? getJsonBytes(tool.inputSchema)
+          : 0),
+      0
+    ),
+    descriptionBytes: tools.reduce(
+      (total, tool) =>
+        total +
+        (isPlainRecord(tool) && typeof tool.description === "string"
+          ? Buffer.byteLength(tool.description, "utf8")
+          : 0),
+      0
+    ),
+  };
+};
+
 const observeJsonLines = (
   stream: NodeJS.ReadableStream,
   visit: (value: unknown) => void
@@ -270,6 +308,10 @@ const run = () => {
       (typeof value.id === "string" || typeof value.id === "number") &&
       pendingToolsLists.delete(value.id)
     ) {
+      const catalog = getMcpCatalogObservation(value);
+      if (catalog !== undefined) {
+        appendFileSync(tracePath, `${JSON.stringify(catalog)}\n`, "utf8");
+      }
       for (const name of getMcpMutationToolNames(value) ?? []) {
         mutationToolNames.add(name);
       }

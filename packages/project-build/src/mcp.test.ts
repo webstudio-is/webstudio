@@ -2806,7 +2806,7 @@ describe("project session mcp adapter", () => {
     });
   });
 
-  test("keeps primitive strings in unconstrained schema fields unchanged", async () => {
+  test("normalizes primitive CSS values to typed keyword values", async () => {
     const updates = [
       {
         instanceId: "instance-id",
@@ -2826,7 +2826,15 @@ describe("project session mcp adapter", () => {
 
     expect(executeOperation).toHaveBeenCalledWith({
       command: "update-styles",
-      input: { updates },
+      input: {
+        updates: [
+          {
+            instanceId: "instance-id",
+            property: "font-family",
+            value: { type: "keyword", value: "TokenFont" },
+          },
+        ],
+      },
       dryRun: false,
     });
   });
@@ -4142,7 +4150,7 @@ describe("project session mcp adapter", () => {
     expect(jsonLdGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         more: expect.stringContaining(
-          "Only call meta.get_more_tools when an MCP input schema"
+          "guide includes required fields and exact examples"
         ),
         workflow: expect.arrayContaining([
           expect.stringContaining("do not use update-page custom metadata"),
@@ -4270,6 +4278,9 @@ describe("project session mcp adapter", () => {
           expect.stringContaining("semantic editable structure"),
           expect.stringContaining("actual breakpoint ranges"),
           expect.stringContaining(
+            'Represent literal CSS values as {"type":"keyword","value":"..."}'
+          ),
+          expect.stringContaining(
             'Run a static audit with {"pagePath":"/summer"}'
           ),
           expect.stringContaining("do not set rendered:true"),
@@ -4279,7 +4290,14 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({ name: "components.search" }),
           expect.objectContaining({ name: "insert-fragment" }),
           expect.objectContaining({ name: "attach-design-token" }),
-          expect.objectContaining({ name: "update-styles" }),
+          expect.objectContaining({
+            name: "update-styles",
+            inputSchema: expect.objectContaining({
+              properties: expect.objectContaining({
+                updates: expect.objectContaining({ type: "array" }),
+              }),
+            }),
+          }),
         ]),
       })
     );
@@ -6663,6 +6681,12 @@ describe("project session mcp adapter", () => {
             ?.inputSchema
         )
       ).not.toContain('"description"');
+      const updatePageInputSchema = listedTools.tools.find(
+        ({ name }) => name === "update-page"
+      )?.inputSchema;
+      expect(getSchemaProperties(updatePageInputSchema).values).toEqual({
+        type: "object",
+      });
       await expect(client.listResources()).resolves.toEqual({
         resources: expect.arrayContaining([
           expect.objectContaining({ uri: "webstudio://project/status" }),

@@ -20,6 +20,7 @@ import {
 } from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
 import type { EvaluationToolCall } from "./validate";
+import type { McpCatalogObservation } from "./evaluation-metrics";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 import {
   compareEvaluationResult,
@@ -37,6 +38,13 @@ const fixtureById = new Map<string, HighImpactFixture>(
 type AgentEvaluationReport = AgentEvaluationResult & {
   comparison: EvaluationComparison;
 };
+
+type EvaluationTraceEvent = EvaluationToolCall | McpCatalogObservation;
+
+const isCatalogObservation = (
+  event: EvaluationTraceEvent
+): event is McpCatalogObservation =>
+  "kind" in event && event.kind === "tools-list";
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
 
@@ -98,6 +106,7 @@ const runFixture = async ({
       shellQuote(codex),
       "exec",
       "--ephemeral",
+      "--ignore-user-config",
       "--dangerously-bypass-approvals-and-sandbox",
       "--skip-git-repo-check",
       "--ignore-rules",
@@ -112,11 +121,12 @@ const runFixture = async ({
       ),
     ].join(" ");
     let toolCalls: EvaluationToolCall[] = [];
-    const readToolCalls = async () =>
+    let catalogObservations: McpCatalogObservation[] = [];
+    const readTraceEvents = async () =>
       (await readFile(tracePath, "utf8").catch(() => ""))
         .split("\n")
         .filter(Boolean)
-        .map((line) => JSON.parse(line) as EvaluationToolCall);
+        .map((line) => JSON.parse(line) as EvaluationTraceEvent);
     return await runHighImpactAgentEvaluation({
       fixture,
       target: { kind: "source", repositoryRoot },
@@ -128,8 +138,14 @@ const runFixture = async ({
       model,
       env,
       getToolCalls: () => toolCalls,
+      getCatalogObservations: () => catalogObservations,
       evaluate: async () => {
-        toolCalls = await readToolCalls();
+        const traceEvents = await readTraceEvents();
+        catalogObservations = traceEvents.filter(isCatalogObservation);
+        toolCalls = traceEvents.filter(
+          (event): event is EvaluationToolCall =>
+            isCatalogObservation(event) === false
+        );
         return evaluateHighImpactOutcome({
           fixture,
           project: fixtureApi.getProject(),

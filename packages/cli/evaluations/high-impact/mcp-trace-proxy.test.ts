@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  getMcpCatalogObservation,
   getMcpMutationToolNames,
   getMcpToolsListRequestId,
   getMcpTraceRequest,
@@ -7,6 +8,37 @@ import {
 } from "./mcp-trace-proxy";
 
 describe("bounded MCP tracing", () => {
+  test("measures the bounded tools catalog payload", () => {
+    expect(
+      getMcpCatalogObservation({
+        id: 1,
+        result: {
+          tools: [
+            {
+              name: "list-pages",
+              description: "List pages",
+              inputSchema: { type: "object", properties: {} },
+            },
+            {
+              name: "create-page",
+              description: "Create page",
+              inputSchema: {
+                type: "object",
+                properties: { path: { type: "string" } },
+              },
+            },
+          ],
+        },
+      })
+    ).toEqual({
+      kind: "tools-list",
+      toolCount: 2,
+      responseBytes: 231,
+      inputSchemaBytes: 90,
+      descriptionBytes: 21,
+    });
+  });
+
   test("retains only bounded verification fields", () => {
     expect(
       getMcpTraceRequest(

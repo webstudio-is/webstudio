@@ -6,18 +6,28 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "9c3559b61ac3af95a16bbc16573e6274d74999b2352733c7bb728bdec053cb85",
+  "commandSha256": "71076dc8db2dcadf98aaacea189155d44883505ba5111f6e455710fe9cd46d8b",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 89588,
+    "durationMs": 95169,
     "tokens": {
-      "input": 480129,
-      "cachedInput": 450304,
+      "input": 410084,
+      "cachedInput": 362752,
+      "uncachedInput": 47332,
       "cacheWriteInput": 0,
-      "output": 2630,
-      "reasoningOutput": 903,
-      "total": 482759,
-      "cachedInputRate": 0.9379
+      "output": 2259,
+      "reasoningOutput": 622,
+      "total": 412343,
+      "cachedInputRate": 0.8846
+    },
+    "mcpCatalog": {
+      "responses": 1,
+      "totalResponseBytes": 78189,
+      "maxResponseBytes": 78189,
+      "latestToolCount": 171,
+      "latestResponseBytes": 78189,
+      "latestInputSchemaBytes": 41046,
+      "latestDescriptionBytes": 12708
     },
     "toolCalls": {
       "total": 14,
@@ -29,75 +39,75 @@
       "durationsByTool": {
         "audit": {
           "count": 1,
-          "totalMs": 10,
-          "p95Ms": 10,
-          "maxMs": 10
+          "totalMs": 11,
+          "p95Ms": 11,
+          "maxMs": 11
         },
         "create-page": {
           "count": 1,
-          "totalMs": 25,
-          "p95Ms": 25,
-          "maxMs": 25
+          "totalMs": 28,
+          "p95Ms": 28,
+          "maxMs": 28
         },
         "create-resource": {
           "count": 1,
-          "totalMs": 22,
-          "p95Ms": 22,
-          "maxMs": 22
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
         },
         "create-variable": {
           "count": 1,
-          "totalMs": 16,
-          "p95Ms": 16,
-          "maxMs": 16
+          "totalMs": 18,
+          "p95Ms": 18,
+          "maxMs": 18
         },
         "get-project-settings": {
+          "count": 1,
+          "totalMs": 28,
+          "p95Ms": 28,
+          "maxMs": 28
+        },
+        "insert-fragment": {
+          "count": 1,
+          "totalMs": 79,
+          "p95Ms": 79,
+          "maxMs": 79
+        },
+        "list-pages": {
+          "count": 1,
+          "totalMs": 26,
+          "p95Ms": 26,
+          "maxMs": 26
+        },
+        "list-resources": {
           "count": 1,
           "totalMs": 24,
           "p95Ms": 24,
           "maxMs": 24
         },
-        "insert-fragment": {
-          "count": 1,
-          "totalMs": 82,
-          "p95Ms": 82,
-          "maxMs": 82
-        },
-        "list-pages": {
-          "count": 1,
-          "totalMs": 21,
-          "p95Ms": 21,
-          "maxMs": 21
-        },
-        "list-resources": {
-          "count": 1,
-          "totalMs": 19,
-          "p95Ms": 19,
-          "maxMs": 19
-        },
         "list-variables": {
           "count": 1,
-          "totalMs": 22,
-          "p95Ms": 22,
-          "maxMs": 22
+          "totalMs": 23,
+          "p95Ms": 23,
+          "maxMs": 23
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 10,
-          "p95Ms": 10,
-          "maxMs": 10
+          "totalMs": 15,
+          "p95Ms": 15,
+          "maxMs": 15
         },
         "preview.start": {
           "count": 1,
-          "totalMs": 1715,
-          "p95Ms": 1715,
-          "maxMs": 1715
+          "totalMs": 2663,
+          "p95Ms": 2663,
+          "maxMs": 2663
         },
         "screenshot": {
           "count": 2,
-          "totalMs": 9363,
-          "p95Ms": 7944,
-          "maxMs": 7944
+          "totalMs": 10526,
+          "p95Ms": 9242,
+          "maxMs": 9242
         },
         "verify-bindings": {
           "count": 1,
@@ -113,18 +123,18 @@
       "plannedMutations": 0,
       "committedMutations": 4,
       "verifications": 4,
-      "totalDurationMs": 11332,
-      "p50DurationMs": 22,
-      "p95DurationMs": 7944,
-      "timeToFirstMutationMs": 31820,
-      "timeToFirstVerificationMs": 58613
+      "totalDurationMs": 13464,
+      "p50DurationMs": 24,
+      "p95DurationMs": 9242,
+      "timeToFirstMutationMs": 36661,
+      "timeToFirstVerificationMs": 60520
     }
   },
   "callSequence": [
     "meta.guide",
+    "list-variables",
     "list-resources",
     "list-pages",
-    "list-variables",
     "get-project-settings",
     "create-page",
     "create-variable",

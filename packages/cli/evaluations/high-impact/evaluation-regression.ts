@@ -47,6 +47,8 @@ export const isEvaluationComparisonAccepted = ({
 
 const gatedMetricPaths = new Set([
   "metrics.tokens.total",
+  "metrics.mcpCatalog.latestResponseBytes",
+  "metrics.mcpCatalog.latestInputSchemaBytes",
   "metrics.toolCalls.total",
   "metrics.toolCalls.failed",
   "metrics.toolCalls.retries",

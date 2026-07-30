@@ -135,6 +135,15 @@ describe("high-impact agent runner", () => {
           },
           { name: "audit", startedAtMs: 500, durationMs: 75 },
         ],
+        getCatalogObservations: () => [
+          {
+            kind: "tools-list",
+            toolCount: 160,
+            responseBytes: 100_000,
+            inputSchemaBytes: 50_000,
+            descriptionBytes: 10_000,
+          },
+        ],
         evaluate: async () => ({
           passed: true,
           checks: { privacy: "passed", audit: "passed" },
@@ -150,8 +159,15 @@ describe("high-impact agent runner", () => {
           tokens: {
             input: 1_000,
             cachedInput: 400,
+            uncachedInput: 600,
             output: 200,
             total: 1_200,
+          },
+          mcpCatalog: {
+            responses: 1,
+            totalResponseBytes: 100_000,
+            latestToolCount: 160,
+            latestInputSchemaBytes: 50_000,
           },
           toolCalls: {
             total: 3,

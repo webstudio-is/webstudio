@@ -22,6 +22,7 @@ const createResult = (
     tokens: {
       input: 800,
       cachedInput: 400,
+      uncachedInput: 400,
       cacheWriteInput: 0,
       output: 200,
       reasoningOutput: 50,
@@ -192,6 +193,47 @@ describe("evaluation regression comparison", () => {
           metric: "metrics.toolCalls.timeToFirstVerificationMs",
           current: 30_000,
         }),
+      ])
+    );
+  });
+
+  test("blocks MCP catalog size regressions without gating client refreshes", () => {
+    const baseline = createResult();
+    baseline.metrics.mcpCatalog = {
+      responses: 1,
+      totalResponseBytes: 78_000,
+      maxResponseBytes: 78_000,
+      latestToolCount: 171,
+      latestResponseBytes: 78_000,
+      latestInputSchemaBytes: 41_000,
+      latestDescriptionBytes: 13_000,
+    };
+    const current = structuredClone(baseline);
+    current.metrics.mcpCatalog = {
+      ...baseline.metrics.mcpCatalog,
+      responses: 2,
+      latestResponseBytes: 90_000,
+      latestInputSchemaBytes: 48_000,
+    };
+    const comparison = compareEvaluationResult(current, baseline);
+    expect(comparison.regressions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metric: "metrics.mcpCatalog.latestResponseBytes",
+        }),
+        expect.objectContaining({
+          metric: "metrics.mcpCatalog.latestInputSchemaBytes",
+        }),
+      ])
+    );
+    expect(comparison.regressions).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ metric: "metrics.mcpCatalog.responses" }),
+      ])
+    );
+    expect(comparison.deltas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ metric: "metrics.mcpCatalog.responses" }),
       ])
     );
   });

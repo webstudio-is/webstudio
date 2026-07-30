@@ -9,8 +9,11 @@ import type {
 import {
   addAgentUsage,
   getAgentUsageEvent,
+  getMcpCatalogMetrics,
   getMcpEvaluationMetrics,
   type AgentUsage,
+  type McpCatalogMetrics,
+  type McpCatalogObservation,
   type McpEvaluationMetrics,
 } from "./evaluation-metrics";
 import { runAgentCommand } from "../../scripts/run-agent-command";
@@ -33,6 +36,7 @@ export type AgentEvaluationResult = {
   metrics: {
     durationMs: number;
     tokens?: AgentUsage;
+    mcpCatalog?: McpCatalogMetrics;
     toolCalls: McpEvaluationMetrics;
   };
   callSequence: string[];
@@ -153,6 +157,7 @@ export const runHighImpactAgentEvaluation = async ({
   provider,
   model,
   getToolCalls,
+  getCatalogObservations,
   evaluate,
   env = process.env,
   timeoutMs = 10 * 60_000,
@@ -166,6 +171,7 @@ export const runHighImpactAgentEvaluation = async ({
   provider: string;
   model: string;
   getToolCalls: () => EvaluationToolCall[];
+  getCatalogObservations: () => McpCatalogObservation[];
   evaluate: () => Promise<HighImpactEvaluationResult>;
   env?: NodeJS.ProcessEnv;
   timeoutMs?: number;
@@ -197,6 +203,7 @@ export const runHighImpactAgentEvaluation = async ({
   });
   const evaluation = await evaluate();
   const toolCalls = getToolCalls();
+  const mcpCatalog = getMcpCatalogMetrics(getCatalogObservations());
   const checks = {
     ...evaluation.checks,
     usageCaptured:
@@ -218,6 +225,7 @@ export const runHighImpactAgentEvaluation = async ({
     metrics: {
       durationMs: execution.durationMs,
       ...(usage === undefined ? {} : { tokens: usage }),
+      ...(mcpCatalog === undefined ? {} : { mcpCatalog }),
       toolCalls: getMcpEvaluationMetrics(toolCalls),
     },
     callSequence: toolCalls.map(({ name }) => name),

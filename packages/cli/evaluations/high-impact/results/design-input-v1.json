@@ -6,18 +6,28 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "7ac2c9eddeef83fb898debf1d4f9470d76f80a63c6207d415bd3fcc03a6bbb41",
+  "commandSha256": "931f06b71b766865cc405926bcf62413e51510fc42fc1045337f314a8afa5c92",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 119112,
+    "durationMs": 135214,
     "tokens": {
-      "input": 495094,
-      "cachedInput": 458496,
+      "input": 625046,
+      "cachedInput": 561664,
+      "uncachedInput": 63382,
       "cacheWriteInput": 0,
-      "output": 5524,
-      "reasoningOutput": 1260,
-      "total": 500618,
-      "cachedInputRate": 0.9261
+      "output": 4159,
+      "reasoningOutput": 467,
+      "total": 629205,
+      "cachedInputRate": 0.8986
+    },
+    "mcpCatalog": {
+      "responses": 2,
+      "totalResponseBytes": 156378,
+      "maxResponseBytes": 78189,
+      "latestToolCount": 171,
+      "latestResponseBytes": 78189,
+      "latestInputSchemaBytes": 41046,
+      "latestDescriptionBytes": 12708
     },
     "toolCalls": {
       "total": 17,
@@ -29,57 +39,57 @@
       "durationsByTool": {
         "attach-design-token": {
           "count": 3,
-          "totalMs": 29,
-          "p95Ms": 11,
-          "maxMs": 11
+          "totalMs": 32,
+          "p95Ms": 16,
+          "maxMs": 16
         },
         "audit": {
           "count": 1,
-          "totalMs": 17,
-          "p95Ms": 17,
-          "maxMs": 17
+          "totalMs": 42,
+          "p95Ms": 42,
+          "maxMs": 42
         },
         "create-page": {
           "count": 1,
-          "totalMs": 21,
-          "p95Ms": 21,
-          "maxMs": 21
+          "totalMs": 26,
+          "p95Ms": 26,
+          "maxMs": 26
         },
         "insert-fragment": {
           "count": 1,
-          "totalMs": 72,
-          "p95Ms": 72,
-          "maxMs": 72
+          "totalMs": 67,
+          "p95Ms": 67,
+          "maxMs": 67
         },
         "list-assets": {
           "count": 1,
-          "totalMs": 26,
-          "p95Ms": 26,
-          "maxMs": 26
+          "totalMs": 29,
+          "p95Ms": 29,
+          "maxMs": 29
         },
         "list-breakpoints": {
           "count": 1,
-          "totalMs": 25,
-          "p95Ms": 25,
-          "maxMs": 25
-        },
-        "list-design-tokens": {
-          "count": 1,
-          "totalMs": 23,
-          "p95Ms": 23,
-          "maxMs": 23
-        },
-        "list-pages": {
-          "count": 1,
-          "totalMs": 23,
-          "p95Ms": 23,
-          "maxMs": 23
-        },
-        "list-variables": {
-          "count": 1,
           "totalMs": 26,
           "p95Ms": 26,
           "maxMs": 26
+        },
+        "list-design-tokens": {
+          "count": 1,
+          "totalMs": 32,
+          "p95Ms": 32,
+          "maxMs": 32
+        },
+        "list-pages": {
+          "count": 1,
+          "totalMs": 27,
+          "p95Ms": 27,
+          "maxMs": 27
+        },
+        "list-variables": {
+          "count": 1,
+          "totalMs": 30,
+          "p95Ms": 30,
+          "maxMs": 30
         },
         "meta.guide": {
           "count": 1,
@@ -89,27 +99,27 @@
         },
         "preview.start": {
           "count": 1,
-          "totalMs": 3319,
-          "p95Ms": 3319,
-          "maxMs": 3319
+          "totalMs": 3230,
+          "p95Ms": 3230,
+          "maxMs": 3230
         },
         "screenshot": {
           "count": 2,
-          "totalMs": 9393,
-          "p95Ms": 8165,
-          "maxMs": 8165
+          "totalMs": 13607,
+          "p95Ms": 12386,
+          "maxMs": 12386
         },
         "update-styles": {
           "count": 1,
-          "totalMs": 57,
-          "p95Ms": 57,
-          "maxMs": 57
+          "totalMs": 76,
+          "p95Ms": 76,
+          "maxMs": 76
         },
         "verify-bindings": {
           "count": 1,
-          "totalMs": 3,
-          "p95Ms": 3,
-          "maxMs": 3
+          "totalMs": 4,
+          "p95Ms": 4,
+          "maxMs": 4
         }
       },
       "retries": 0,
@@ -119,20 +129,20 @@
       "plannedMutations": 0,
       "committedMutations": 6,
       "verifications": 4,
-      "totalDurationMs": 13044,
-      "p50DurationMs": 23,
-      "p95DurationMs": 8165,
-      "timeToFirstMutationMs": 26655,
-      "timeToFirstVerificationMs": 33148
+      "totalDurationMs": 17238,
+      "p50DurationMs": 29,
+      "p95DurationMs": 12386,
+      "timeToFirstMutationMs": 38456,
+      "timeToFirstVerificationMs": 50270
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-design-tokens",
-    "list-pages",
     "list-breakpoints",
+    "list-pages",
     "list-assets",
     "list-variables",
+    "list-design-tokens",
     "create-page",
     "insert-fragment",
     "verify-bindings",
