@@ -174,6 +174,8 @@ const hasPassedEvidence = (
   kind: EvaluationArtifact["kind"]
 ) =>
   hasSuccessfulCall(input.toolCalls, kind) ||
+  (kind === "screenshot" &&
+    hasSuccessfulCall(input.toolCalls, "screenshot.responsive")) ||
   (input.artifacts ?? []).some(
     (artifact) => artifact.kind === kind && artifact.passed
   );
@@ -188,6 +190,19 @@ const getScreenshots = (input: HighImpactEvaluationInput) => [
         | undefined,
       passed: true,
     })),
+  ...input.toolCalls
+    .filter(
+      (call) => call.name === "screenshot.responsive" && call.isError !== true
+    )
+    .flatMap((call) =>
+      Array.isArray(call.arguments?.viewports)
+        ? call.arguments.viewports.map((viewport) => ({
+            kind: "screenshot" as const,
+            viewport: viewport as { width: number; height: number },
+            passed: true,
+          }))
+        : []
+    ),
   ...(input.artifacts ?? []).filter(
     (artifact) => artifact.kind === "screenshot" && artifact.passed
   ),

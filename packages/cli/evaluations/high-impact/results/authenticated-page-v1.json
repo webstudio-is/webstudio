@@ -6,32 +6,32 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "8248803c69d02229689d1a1c0d7d48f2d49607afba0df49c067ec8bd808a7a49",
+  "commandSha256": "6fc6f6f2102108ea425ddb2e7995a27cf84d8cd5e4c41bc14045ab5a9438581b",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 86820,
+    "durationMs": 91611,
     "tokens": {
-      "input": 390939,
-      "cachedInput": 360704,
-      "uncachedInput": 30235,
+      "input": 336263,
+      "cachedInput": 292352,
+      "uncachedInput": 43911,
       "cacheWriteInput": 0,
-      "output": 2279,
-      "reasoningOutput": 586,
-      "total": 393218,
-      "cachedInputRate": 0.9227
+      "output": 1902,
+      "reasoningOutput": 550,
+      "total": 338165,
+      "cachedInputRate": 0.8694
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 50864,
-      "maxResponseBytes": 50864,
-      "latestToolCount": 171,
-      "latestResponseBytes": 50864,
-      "latestInputSchemaBytes": 28737,
-      "latestDescriptionBytes": 4762
+      "totalResponseBytes": 51007,
+      "maxResponseBytes": 51007,
+      "latestToolCount": 174,
+      "latestResponseBytes": 51007,
+      "latestInputSchemaBytes": 28834,
+      "latestDescriptionBytes": 4532
     },
     "toolCalls": {
-      "total": 14,
-      "succeeded": 14,
+      "total": 8,
+      "succeeded": 8,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
@@ -40,21 +40,21 @@
       "durationsByTool": {
         "audit": {
           "count": 1,
-          "totalMs": 18,
-          "p95Ms": 18,
-          "maxMs": 18
+          "totalMs": 10,
+          "p95Ms": 10,
+          "maxMs": 10
         },
         "create-page": {
           "count": 1,
-          "totalMs": 34,
-          "p95Ms": 34,
-          "maxMs": 34
+          "totalMs": 29,
+          "p95Ms": 29,
+          "maxMs": 29
         },
         "create-resource": {
           "count": 1,
-          "totalMs": 40,
-          "p95Ms": 40,
-          "maxMs": 40
+          "totalMs": 24,
+          "p95Ms": 24,
+          "maxMs": 24
         },
         "create-variable": {
           "count": 1,
@@ -62,67 +62,37 @@
           "p95Ms": 18,
           "maxMs": 18
         },
-        "get-project-settings": {
+        "insert-fragment-verified": {
+          "count": 1,
+          "totalMs": 72,
+          "p95Ms": 72,
+          "maxMs": 72
+        },
+        "inspect-auth-context": {
           "count": 1,
           "totalMs": 23,
           "p95Ms": 23,
           "maxMs": 23
         },
-        "insert-fragment": {
-          "count": 1,
-          "totalMs": 58,
-          "p95Ms": 58,
-          "maxMs": 58
-        },
-        "list-pages": {
-          "count": 1,
-          "totalMs": 21,
-          "p95Ms": 21,
-          "maxMs": 21
-        },
-        "list-resources": {
-          "count": 1,
-          "totalMs": 18,
-          "p95Ms": 18,
-          "maxMs": 18
-        },
-        "list-variables": {
-          "count": 1,
-          "totalMs": 25,
-          "p95Ms": 25,
-          "maxMs": 25
-        },
         "meta.guide": {
           "count": 1,
-          "totalMs": 14,
-          "p95Ms": 14,
-          "maxMs": 14
+          "totalMs": 12,
+          "p95Ms": 12,
+          "maxMs": 12
         },
-        "preview.start": {
+        "screenshot.responsive": {
           "count": 1,
-          "totalMs": 1251,
-          "p95Ms": 1251,
-          "maxMs": 1251
-        },
-        "screenshot": {
-          "count": 2,
-          "totalMs": 9027,
-          "p95Ms": 7793,
-          "maxMs": 7793
-        },
-        "verify-bindings": {
-          "count": 1,
-          "totalMs": 3,
-          "p95Ms": 3,
-          "maxMs": 3
+          "totalMs": 12220,
+          "p95Ms": 12220,
+          "maxMs": 12220
         }
       },
       "responseBytesByTool": {
         "audit": {
           "count": 1,
-          "totalBytes": 4763,
-          "p95Bytes": 4763,
-          "maxBytes": 4763
+          "totalBytes": 4762,
+          "p95Bytes": 4762,
+          "maxBytes": 4762
         },
         "create-page": {
           "count": 1,
@@ -142,93 +112,57 @@
           "p95Bytes": 1554,
           "maxBytes": 1554
         },
-        "get-project-settings": {
+        "insert-fragment-verified": {
           "count": 1,
-          "totalBytes": 880,
-          "p95Bytes": 880,
-          "maxBytes": 880
+          "totalBytes": 2662,
+          "p95Bytes": 2662,
+          "maxBytes": 2662
         },
-        "insert-fragment": {
+        "inspect-auth-context": {
           "count": 1,
-          "totalBytes": 2039,
-          "p95Bytes": 2039,
-          "maxBytes": 2039
-        },
-        "list-pages": {
-          "count": 1,
-          "totalBytes": 1314,
-          "p95Bytes": 1314,
-          "maxBytes": 1314
-        },
-        "list-resources": {
-          "count": 1,
-          "totalBytes": 1454,
-          "p95Bytes": 1454,
-          "maxBytes": 1454
-        },
-        "list-variables": {
-          "count": 1,
-          "totalBytes": 1246,
-          "p95Bytes": 1246,
-          "maxBytes": 1246
+          "totalBytes": 2576,
+          "p95Bytes": 2576,
+          "maxBytes": 2576
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 26782,
-          "p95Bytes": 26782,
-          "maxBytes": 26782
+          "totalBytes": 15932,
+          "p95Bytes": 15932,
+          "maxBytes": 15932
         },
-        "preview.start": {
+        "screenshot.responsive": {
           "count": 1,
-          "totalBytes": 325,
-          "p95Bytes": 325,
-          "maxBytes": 325
-        },
-        "screenshot": {
-          "count": 2,
-          "totalBytes": 7674,
-          "p95Bytes": 3843,
-          "maxBytes": 3843
-        },
-        "verify-bindings": {
-          "count": 1,
-          "totalBytes": 1507,
-          "p95Bytes": 1507,
-          "maxBytes": 1507
+          "totalBytes": 7064,
+          "p95Bytes": 7064,
+          "maxBytes": 7064
         }
       },
       "retries": 0,
-      "focusedReads": 4,
+      "focusedReads": 1,
       "broadReads": 0,
       "dryRuns": 0,
       "plannedMutations": 0,
       "committedMutations": 4,
-      "verifications": 4,
-      "totalDurationMs": 10550,
+      "verifications": 3,
+      "totalDurationMs": 12408,
       "p50DurationMs": 23,
-      "p95DurationMs": 7793,
-      "totalResponseBytes": 52524,
-      "p50ResponseBytes": 1507,
-      "p95ResponseBytes": 26782,
-      "maxResponseBytes": 26782,
-      "timeToFirstMutationMs": 31497,
-      "timeToFirstVerificationMs": 54809
+      "p95DurationMs": 12220,
+      "totalResponseBytes": 37536,
+      "p50ResponseBytes": 2576,
+      "p95ResponseBytes": 15932,
+      "maxResponseBytes": 15932,
+      "timeToFirstMutationMs": 36986,
+      "timeToFirstVerificationMs": 57619
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-resources",
-    "list-pages",
-    "get-project-settings",
-    "list-variables",
+    "inspect-auth-context",
     "create-page",
     "create-variable",
     "create-resource",
-    "insert-fragment",
-    "verify-bindings",
-    "preview.start",
-    "screenshot",
-    "screenshot",
+    "insert-fragment-verified",
+    "screenshot.responsive",
     "audit"
   ],
   "checks": {

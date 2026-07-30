@@ -1312,6 +1312,40 @@ const screenshotInputSchema = {
   required: ["viewport"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const responsiveScreenshotInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Capture one generated-site route at multiple viewport sizes in one shared preview/browser session. This starts or refreshes the session preview automatically.",
+  properties: {
+    path: screenshotInputSchema.properties.path,
+    viewports: {
+      type: "array",
+      minItems: 1,
+      maxItems: 8,
+      description: "Viewport dimensions to capture in the provided order.",
+      items: {
+        type: "object",
+        properties: {
+          width: { type: "number" },
+          height: { type: "number" },
+        },
+        required: ["width", "height"],
+        additionalProperties: false,
+      },
+    },
+    fullPage: screenshotInputSchema.properties.fullPage,
+    source: screenshotInputSchema.properties.source,
+    mode: screenshotInputSchema.properties.mode,
+    imageDomains: screenshotInputSchema.properties.imageDomains,
+    browser: screenshotInputSchema.properties.browser,
+    waitUntil: screenshotInputSchema.properties.waitUntil,
+    waitForSelector: screenshotInputSchema.properties.waitForSelector,
+    waitForTimeout: screenshotInputSchema.properties.waitForTimeout,
+    timeout: screenshotInputSchema.properties.timeout,
+  },
+  required: ["path", "viewports"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
 const statusInputSchema = {
   ...emptyInputSchema,
   properties: {
@@ -2114,6 +2148,16 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       browser: "auto",
     },
   ],
+  "screenshot.responsive": [
+    {
+      path: "/pricing",
+      viewports: [
+        { width: 1440, height: 900 },
+        { width: 390, height: 844 },
+      ],
+      source: "session",
+    },
+  ],
   "screenshot.diff": [
     {
       baselinePath: "baseline.png",
@@ -2819,6 +2863,26 @@ const screenshotTool = createProjectSessionMcpTool({
   },
 });
 
+const responsiveScreenshotTool = createProjectSessionMcpTool({
+  name: "screenshot.responsive",
+  description:
+    "Capture one generated route at multiple viewport sizes in one call. Starts or refreshes the session preview automatically and reuses one browser session.",
+  inputSchema: responsiveScreenshotInputSchema,
+  mcpExamples: getMcpExamples("screenshot.responsive"),
+  annotations: {
+    command: "screenshot.responsive",
+    operationId: "screenshot.responsive",
+    method: "session",
+    permit: "api",
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
 const screenshotDiffTool = createProjectSessionMcpTool({
   name: "screenshot.diff",
   description:
@@ -3056,6 +3120,7 @@ export const listProjectSessionMcpTools = (
     includeImport?: boolean;
     includeDownloadAsset?: boolean;
     includeScreenshot?: boolean;
+    includeResponsiveScreenshot?: boolean;
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
     includePreview?: boolean;
@@ -3121,6 +3186,7 @@ export const listProjectSessionMcpTools = (
   ...(options.includeImport ? [importTool] : []),
   ...(options.includeDownloadAsset ? [downloadAssetTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
+  ...(options.includeResponsiveScreenshot ? [responsiveScreenshotTool] : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
   ...(options.includePreview ? previewTools : []),
@@ -5224,8 +5290,7 @@ const metaGoalGuides = [
       "create-variable",
       "insert-fragment-verified",
       "update-page",
-      "preview.start",
-      "screenshot",
+      "screenshot.responsive",
       "audit",
     ],
     workflow: [
@@ -5240,7 +5305,7 @@ const metaGoalGuides = [
       'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
       "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
       'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
-      'Call preview.start once, then capture the required desktop and mobile path screenshots back-to-back: path screenshots refresh the current session automatically. Do not run discovery or inspect-instance after visual verification starts. Do not restart preview or re-run binding verification between non-secret fixture-state updates. The screenshots are the rendered evidence. After they succeed, run a static audit with {"pagePath":"/account"}; do not set rendered:true and duplicate the same captures. A successful final audit is terminal: do not mutate, verify, restart preview, or capture more screenshots afterward. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
+      'Call screenshot.responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview and captures both viewports in one browser session. Do not call preview.start or screenshot separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after visual verification starts. The screenshots are the rendered evidence. After they succeed, run a static audit with {"pagePath":"/account"}; do not set rendered:true and duplicate the same captures. A successful final audit is terminal: do not mutate, verify, restart preview, or capture more screenshots afterward. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
   },
   {
@@ -5279,8 +5344,7 @@ const metaGoalGuides = [
       "insert-fragment-verified",
       "update-styles",
       "upload-asset",
-      "preview.start",
-      "screenshot",
+      "screenshot.responsive",
       "screenshot.diff",
       "audit",
     ],
@@ -5294,7 +5358,7 @@ const metaGoalGuides = [
       "Implement responsive behavior inside the project's actual breakpoint ranges.",
       'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
       "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
-      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before visual verification, then start preview once. Capture the desktop and mobile screenshots back-to-back. Capture exactly the two supplied viewports, 1440x900 and 390x844; do not add exploratory or intermediate screenshots. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
+      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before visual verification, then call screenshot.responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically; do not call preview.start or screenshot separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after screenshots begin. The screenshots are the rendered evidence. Run a static audit with {"pagePath":"/summer"} immediately afterward; do not set rendered:true and duplicate the same captures. A successful final audit is terminal. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
   {
@@ -6254,6 +6318,39 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
   };
 };
 
+const getResponsiveScreenshotInputs = (
+  input: unknown
+): ProjectSessionScreenshotInput[] => {
+  if (isRecord(input) === false) {
+    throw new Error("screenshot.responsive input must be an object.");
+  }
+  if (
+    Array.isArray(input.viewports) === false ||
+    input.viewports.length === 0 ||
+    input.viewports.length > 8
+  ) {
+    throw new Error(
+      "screenshot.responsive input.viewports must contain between 1 and 8 viewport objects."
+    );
+  }
+  return input.viewports.map((viewport, index) => {
+    if (
+      isRecord(viewport) === false ||
+      typeof viewport.width !== "number" ||
+      Number.isInteger(viewport.width) === false ||
+      viewport.width <= 0 ||
+      typeof viewport.height !== "number" ||
+      Number.isInteger(viewport.height) === false ||
+      viewport.height <= 0
+    ) {
+      throw new Error(
+        `screenshot.responsive input.viewports.${index} must contain positive integer width and height.`
+      );
+    }
+    return getScreenshotInput({ ...input, viewport });
+  });
+};
+
 const isValidScreenshotDiffVisualExpectation = (
   value: unknown
 ): value is ScreenshotVisualExpectation => {
@@ -6555,6 +6652,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       includeImport: importProject !== undefined,
       includeDownloadAsset: downloadAsset !== undefined,
       includeScreenshot: captureScreenshot !== undefined,
+      includeResponsiveScreenshot: capturePageScreenshots !== undefined,
       includeScreenshotDiff: diffScreenshots !== undefined,
       includeInstallOcr: installOcr !== undefined,
       includePreview:
@@ -6963,6 +7061,21 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             },
           })
         );
+      }
+      if (
+        name === "screenshot.responsive" &&
+        capturePageScreenshots !== undefined
+      ) {
+        return toMetaResult({
+          screenshots: await capturePageScreenshots(
+            getResponsiveScreenshotInputs(input),
+            {
+              report: (message) => {
+                reportToolProgress?.(message);
+              },
+            }
+          ),
+        });
       }
       if (name === "screenshot.diff" && diffScreenshots !== undefined) {
         return toMetaResult(

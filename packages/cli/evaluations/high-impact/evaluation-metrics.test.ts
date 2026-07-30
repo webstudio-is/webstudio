@@ -76,6 +76,22 @@ describe("evaluation metrics", () => {
     );
   });
 
+  test("counts responsive screenshot batches as early verification", () => {
+    expect(
+      getMcpEvaluationMetrics([
+        {
+          name: "screenshot.responsive",
+          startedAtMs: 25,
+          durationMs: 100,
+          responseBytes: 2_000,
+        },
+      ])
+    ).toMatchObject({
+      verifications: 1,
+      timeToFirstVerificationMs: 25,
+    });
+  });
+
   test("measures MCP errors, retries, mutations, verification, and latency", () => {
     expect(
       getMcpEvaluationMetrics([

@@ -8,6 +8,7 @@ import {
   getProjectSessionMcpCheckpoint,
   isReadOnlyProjectSessionMcpToolCall,
   type ProjectSessionPreviewInput,
+  type ProjectSessionScreenshotInput,
   type ProjectSessionMcpTool,
 } from "@webstudio-is/project-build/mcp";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
@@ -839,6 +840,32 @@ const resolveMcpPreviewInput = async (
   };
 };
 
+const resolveMcpScreenshotInput = async (
+  input: ProjectSessionScreenshotInput,
+  previewStatus: { running: boolean; url: string },
+  getAvailablePort: (host?: string) => Promise<number> = findAvailablePort
+) => {
+  if (
+    input.url !== undefined ||
+    input.baseUrl !== undefined ||
+    input.source === "local" ||
+    (input.port !== undefined && input.port !== 0)
+  ) {
+    return input;
+  }
+  const host = input.host ?? "127.0.0.1";
+  if (previewStatus.running) {
+    const previewUrl = new URL(previewStatus.url);
+    if (input.host === undefined || previewUrl.hostname === input.host) {
+      const previewPort = Number(previewUrl.port);
+      if (Number.isInteger(previewPort) && previewPort > 0) {
+        return { ...input, port: previewPort };
+      }
+    }
+  }
+  return { ...input, port: await getAvailablePort(host) };
+};
+
 const startMcpPreview = async <Result>({
   input,
   startPreview,
@@ -1051,11 +1078,28 @@ const createCliMcpHost = async ({
     },
     stopPreview: previewHandlers.stopPreview,
     async captureScreenshot(input) {
-      const result = await previewHandlers.captureScreenshot(input);
+      const resolvedInput = await resolveMcpScreenshotInput(
+        input,
+        preview.status()
+      );
+      const result = await previewHandlers.captureScreenshot(resolvedInput);
       return toProjectSessionScreenshotResult(result);
     },
     async capturePageScreenshots(inputs) {
-      const results = await previewHandlers.capturePageScreenshots(inputs);
+      const firstInput = inputs[0];
+      if (firstInput === undefined) {
+        return [];
+      }
+      const resolvedFirstInput = await resolveMcpScreenshotInput(
+        firstInput,
+        preview.status()
+      );
+      const resolvedInputs = inputs.map((input) => ({
+        ...input,
+        port: resolvedFirstInput.port,
+      }));
+      const results =
+        await previewHandlers.capturePageScreenshots(resolvedInputs);
       return results.map(toProjectSessionScreenshotResult);
     },
     async diffScreenshots(input) {
@@ -1187,6 +1231,7 @@ export const __testing__ = {
   updatePersistedMcpCheckpoint,
   executeMcpRunCall,
   resolveMcpPreviewInput,
+  resolveMcpScreenshotInput,
   startMcpPreview,
 };
 

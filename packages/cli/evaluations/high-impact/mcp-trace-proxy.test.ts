@@ -67,6 +67,34 @@ describe("bounded MCP tracing", () => {
     });
   });
 
+  test("retains responsive screenshot viewports as bounded evidence", () => {
+    expect(
+      getMcpTraceRequest({
+        id: 9,
+        method: "tools/call",
+        params: {
+          name: "screenshot.responsive",
+          arguments: {
+            path: "/account",
+            viewports: [
+              { width: 1440, height: 900 },
+              { width: 390, height: 844 },
+            ],
+          },
+        },
+      })
+    ).toMatchObject({
+      call: {
+        arguments: {
+          viewports: [
+            { width: 1440, height: 900 },
+            { width: 390, height: 844 },
+          ],
+        },
+      },
+    });
+  });
+
   test("records confirmation flow without retaining its token", () => {
     expect(
       getMcpTraceRequest(

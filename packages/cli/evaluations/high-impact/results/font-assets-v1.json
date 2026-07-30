@@ -6,28 +6,28 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "222ed91bb6ccbc22e9f006c0a6f1c1eb0f6ac805afb6389c0717c18b8ebf9d02",
+  "commandSha256": "c70eb6fd8adedd200926aefab0b7a3aada0902a3361f5c127b7aa7f62604ee11",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 41881,
+    "durationMs": 72224,
     "tokens": {
-      "input": 249962,
-      "cachedInput": 212224,
-      "uncachedInput": 37738,
+      "input": 292032,
+      "cachedInput": 245760,
+      "uncachedInput": 46272,
       "cacheWriteInput": 0,
-      "output": 1273,
-      "reasoningOutput": 196,
-      "total": 251235,
-      "cachedInputRate": 0.849
+      "output": 1404,
+      "reasoningOutput": 177,
+      "total": 293436,
+      "cachedInputRate": 0.8416
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 50864,
-      "maxResponseBytes": 50864,
-      "latestToolCount": 171,
-      "latestResponseBytes": 50864,
-      "latestInputSchemaBytes": 28737,
-      "latestDescriptionBytes": 4762
+      "totalResponseBytes": 51007,
+      "maxResponseBytes": 51007,
+      "latestToolCount": 174,
+      "latestResponseBytes": 51007,
+      "latestInputSchemaBytes": 28834,
+      "latestDescriptionBytes": 4532
     },
     "toolCalls": {
       "total": 8,
@@ -40,15 +40,15 @@
       "durationsByTool": {
         "audit": {
           "count": 1,
-          "totalMs": 13,
-          "p95Ms": 13,
-          "maxMs": 13
+          "totalMs": 15,
+          "p95Ms": 15,
+          "maxMs": 15
         },
         "get-asset": {
           "count": 2,
-          "totalMs": 6,
-          "p95Ms": 3,
-          "maxMs": 3
+          "totalMs": 4,
+          "p95Ms": 2,
+          "maxMs": 2
         },
         "meta.guide": {
           "count": 1,
@@ -64,23 +64,23 @@
         },
         "update-asset": {
           "count": 2,
-          "totalMs": 26,
+          "totalMs": 25,
           "p95Ms": 16,
           "maxMs": 16
         },
         "upload-assets": {
           "count": 1,
-          "totalMs": 21,
-          "p95Ms": 21,
-          "maxMs": 21
+          "totalMs": 29,
+          "p95Ms": 29,
+          "maxMs": 29
         }
       },
       "responseBytesByTool": {
         "audit": {
           "count": 1,
-          "totalBytes": 5300,
-          "p95Bytes": 5300,
-          "maxBytes": 5300
+          "totalBytes": 3218,
+          "p95Bytes": 3218,
+          "maxBytes": 3218
         },
         "get-asset": {
           "count": 2,
@@ -90,9 +90,9 @@
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 10742,
-          "p95Bytes": 10742,
-          "maxBytes": 10742
+          "totalBytes": 6518,
+          "p95Bytes": 6518,
+          "maxBytes": 6518
         },
         "refresh": {
           "count": 1,
@@ -120,15 +120,15 @@
       "plannedMutations": 0,
       "committedMutations": 3,
       "verifications": 1,
-      "totalDurationMs": 82,
-      "p50DurationMs": 10,
-      "p95DurationMs": 21,
-      "totalResponseBytes": 23870,
+      "totalDurationMs": 89,
+      "p50DurationMs": 9,
+      "p95DurationMs": 29,
+      "totalResponseBytes": 17564,
       "p50ResponseBytes": 1460,
-      "p95ResponseBytes": 10742,
-      "maxResponseBytes": 10742,
-      "timeToFirstMutationMs": 23996,
-      "timeToFirstVerificationMs": 38241
+      "p95ResponseBytes": 6518,
+      "maxResponseBytes": 6518,
+      "timeToFirstMutationMs": 47170,
+      "timeToFirstVerificationMs": 68354
     }
   },
   "callSequence": [

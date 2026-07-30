@@ -271,6 +271,26 @@ describe("design-input evaluation", () => {
     expect(result).toMatchObject({ passed: true, failures: [] });
   });
 
+  test("accepts one responsive screenshot call as both viewport evidence", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: designInputFixture,
+      project: addDesignPage(),
+      toolCalls: [
+        ...designCalls.filter((call) => call.name !== "screenshot"),
+        {
+          name: "screenshot.responsive",
+          arguments: {
+            viewports: [
+              { width: 1440, height: 900 },
+              { width: 390, height: 844 },
+            ],
+          },
+        },
+      ],
+    });
+    expect(result).toMatchObject({ passed: true, failures: [] });
+  });
+
   test("rejects unsupported components", () => {
     const project = addDesignPage();
     project.instances.find(

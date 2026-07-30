@@ -78,12 +78,13 @@ export const createMinimalAgentTask = (
       "Do not persist or report credentials or private session data.",
       "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
       "Treat the successful final audit and requested visual evidence as terminal; do not mutate, verify, restart preview, or capture more evidence afterward.",
-      "Finish all visual polish before evidence capture. After the first successful screenshot, do not mutate, rediscover, verify, or restart preview; capture only the remaining requested viewports, then make audit the next and final tool call.",
+      "Finish all visual polish before evidence capture. Use one screenshot.responsive call for all requested viewports. After it succeeds, do not mutate, rediscover, verify, restart preview, or capture more evidence; make audit the next and final tool call.",
       ...(fixture.id === "authenticated-page-v1"
         ? [
             "For this fixture, meta.guide already returns the required auth discovery and authoring tool schemas. Do not call list-breakpoints because responsive styling is not required, and do not call meta.get_more_tools or any other tool discovery operation. Create exactly one scoped non-secret fixture variable, keep the required state gallery expression-free, and do not call list-variables again after creating it. After the two required screenshots, run a static audit with pagePath /account; do not set rendered:true.",
             "After meta.guide, call inspect-auth-context exactly once. Do not call get-project-settings, list-pages, list-resources, or list-variables separately.",
             "After the context read, call create-page exactly once, then create-variable exactly once, then create-resource exactly once with the returned variable id. Do not parallelize these mutations. Call insert-fragment-verified only after all three succeed, using their returned ids and pagePath /account. Do not call insert-fragment or verify-bindings separately.",
+            'Then call screenshot.responsive exactly once with {"path":"/account","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. Do not call preview.start or screenshot separately.',
           ]
         : []),
       ...(fixture.id === "design-input-v1"
@@ -94,6 +95,7 @@ export const createMinimalAgentTask = (
             "After the early binding checkpoint, make exactly one batched update-styles call containing all remaining fixed styles. Include at least one declaration on an inserted element using the returned mobile breakpoint id so responsive behavior is persisted before preview.",
             'Use this exact fragment verbatim in the single insert-fragment-verified call; do not add props, styles, expressions, or alternate components until after it commits: <ws.element ws:tag="header"><ws.element ws:tag="nav"><ws.element ws:tag="a">Northstar</ws.element><ws.element ws:tag="button">Menu</ws.element></ws.element></ws.element><ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h1">Find your latitude</ws.element><ws.element ws:tag="p">Plan a memorable summer escape.</ws.element><ws.element ws:tag="a">Explore trips</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Featured trips</ws.element><ws.element ws:tag="article"><ws.element ws:tag="h3">Coastal escape</ws.element><ws.element ws:tag="p">A restorative journey by the sea.</ws.element></ws.element></ws.element></ws.element><ws.element ws:tag="footer"><ws.element ws:tag="p">Northstar travel</ws.element></ws.element>',
             "The exact fragment already contains all required content. Do not call clone-instance, update-text, set-text-content, or any other content or structure mutation after insertion; only attach the three tokens and apply the one batched style update.",
+            'After the style update, call screenshot.responsive exactly once with {"path":"/summer","viewports":[{"width":1440,"height":900},{"width":390,"height":844}],"source":"session"}. Do not call preview.start or screenshot separately.',
           ]
         : []),
       ...(fixture.id === "font-assets-v1"

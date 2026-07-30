@@ -169,6 +169,7 @@ const broadReadNames = new Set([
 const verificationNames = new Set([
   "audit",
   "screenshot",
+  "screenshot.responsive",
   "screenshot.diff",
   "verify-bindings",
   "insert-fragment-verified",

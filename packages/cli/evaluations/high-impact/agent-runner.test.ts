@@ -32,9 +32,7 @@ describe("high-impact agent runner", () => {
         expect.any(String),
         expect.stringContaining("meta.next"),
         expect.stringContaining("successful final audit"),
-        expect.stringContaining(
-          "After the first successful screenshot, do not mutate"
-        ),
+        expect.stringContaining("Use one screenshot.responsive call"),
         expect.stringContaining("Do not call list-breakpoints"),
       ]),
     });
@@ -62,6 +60,12 @@ describe("high-impact agent runner", () => {
     );
     expect(authConstraints).toContain(
       "Do not call insert-fragment or verify-bindings separately"
+    );
+    expect(authConstraints).toContain(
+      "call screenshot.responsive exactly once"
+    );
+    expect(authConstraints).toContain(
+      "Do not call preview.start or screenshot separately"
     );
     expect(
       createMinimalAgentTask(designInputFixture, {
@@ -218,9 +222,7 @@ describe("high-impact agent runner", () => {
         mcp: { args: ["mcp"] },
         constraints: expect.arrayContaining([
           expect.stringContaining("successful final audit"),
-          expect.stringContaining(
-            "After the first successful screenshot, do not mutate"
-          ),
+          expect.stringContaining("Use one screenshot.responsive call"),
         ]),
       });
     } finally {

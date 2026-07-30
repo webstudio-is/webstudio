@@ -10,6 +10,7 @@ export type BoundedMcpCall = {
   name: string;
   arguments?: {
     viewport?: { width: number; height: number };
+    viewports?: Array<{ width: number; height: number }>;
     dryRun?: true;
     confirmDestructive?: true;
     hasConfirmationToken?: true;
@@ -115,6 +116,24 @@ export const getMcpTraceRequest = (
       typeof viewport.height === "number"
     ) {
       args.viewport = { width: viewport.width, height: viewport.height };
+    }
+    const viewports = params.arguments.viewports;
+    if (
+      params.name === "screenshot.responsive" &&
+      Array.isArray(viewports) &&
+      viewports.length > 0 &&
+      viewports.length <= 8 &&
+      viewports.every(
+        (item) =>
+          isPlainRecord(item) &&
+          typeof item.width === "number" &&
+          typeof item.height === "number"
+      )
+    ) {
+      args.viewports = viewports.map((item) => ({
+        width: item.width as number,
+        height: item.height as number,
+      }));
     }
     if (params.arguments.dryRun === true) {
       args.dryRun = true;

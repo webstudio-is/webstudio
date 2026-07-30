@@ -23,6 +23,7 @@ import {
   listProjectSessionMcpTools,
   type PublicMcpOperation,
   type ProjectSessionMcpGuidance,
+  type ProjectSessionScreenshotInput,
 } from "./mcp";
 import { getComponentTemplates } from "./runtime/component-templates";
 import { createEmptyWebstudioFragment } from "./runtime/component-template";
@@ -1201,7 +1202,6 @@ describe("project session mcp adapter", () => {
         path: "/workspace/.webstudio/assets/hero.png",
       },
     });
-
   });
 
   test("exposes page expression input descriptions to MCP clients", async () => {
@@ -4489,11 +4489,9 @@ describe("project session mcp adapter", () => {
             "Do not bind that server-only resource into local preview rendering"
           ),
           expect.stringContaining("insert-fragment-verified"),
+          expect.stringContaining("Call screenshot.responsive once"),
           expect.stringContaining(
-            "Do not restart preview or re-run binding verification"
-          ),
-          expect.stringContaining(
-            "Do not run discovery or inspect-instance after visual verification starts"
+            "Do not call preview.start or screenshot separately"
           ),
           expect.stringContaining(
             'run a static audit with {"pagePath":"/account"}'
@@ -4544,12 +4542,10 @@ describe("project session mcp adapter", () => {
             "Do not call list-instances after the first mutation"
           ),
           expect.stringContaining("Do not call get-styles"),
-          expect.stringContaining(
-            "Capture the desktop and mobile screenshots back-to-back"
-          ),
+          expect.stringContaining("call screenshot.responsive once"),
           expect.stringContaining("Call insert-fragment-verified exactly once"),
           expect.stringContaining('{"pagePath":"/summer"}'),
-          expect.stringContaining("Capture exactly the two supplied viewports"),
+          expect.stringContaining("exactly the two supplied viewports"),
           expect.stringContaining("A successful final audit is terminal"),
           expect.stringContaining("parallel design system"),
           expect.stringContaining("semantic editable structure"),
@@ -5822,6 +5818,18 @@ describe("project session mcp adapter", () => {
       elapsedMs: 12,
       warnings: [],
     }));
+    const capturePageScreenshots = vi.fn(
+      async (inputs: readonly ProjectSessionScreenshotInput[]) =>
+        inputs.map((input) => ({
+          output: `/tmp/${input.viewport.width}.png`,
+          browserPath: "/usr/bin/chromium",
+          browser: "chromium" as const,
+          viewport: input.viewport,
+          fullPage: input.fullPage ?? false,
+          elapsedMs: 12,
+          warnings: [],
+        }))
+    );
     const adapterWithoutScreenshot = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(session),
@@ -5832,6 +5840,12 @@ describe("project session mcp adapter", () => {
       createProjectSession: createSessionFactory(session),
       executeOperation: createExecuteOperation(),
       captureScreenshot,
+    });
+    const adapterWithResponsiveScreenshot = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation: createExecuteOperation(),
+      capturePageScreenshots,
     });
     const adapterWithScreenshotDiff = createProjectSessionMcpCore({
       operations: publicMcpOperations,
@@ -5847,6 +5861,9 @@ describe("project session mcp adapter", () => {
       adapterWithoutScreenshot.listTools().map((tool) => tool.name)
     ).not.toContain("screenshot.diff");
     expect(
+      adapterWithoutScreenshot.listTools().map((tool) => tool.name)
+    ).not.toContain("screenshot.responsive");
+    expect(
       adapterWithScreenshot.listTools().map((tool) => tool.name)
     ).toContain("screenshot");
     expect(
@@ -5855,6 +5872,9 @@ describe("project session mcp adapter", () => {
     expect(
       adapterWithScreenshotDiff.listTools().map((tool) => tool.name)
     ).toContain("screenshot.diff");
+    expect(
+      adapterWithResponsiveScreenshot.listTools().map((tool) => tool.name)
+    ).toContain("screenshot.responsive");
 
     const result = await adapterWithScreenshot.callTool({
       name: "screenshot",
@@ -5908,6 +5928,43 @@ describe("project session mcp adapter", () => {
         warnings: [],
       },
       meta: {},
+    });
+
+    const responsiveResult = await adapterWithResponsiveScreenshot.callTool({
+      name: "screenshot.responsive",
+      input: {
+        path: "/pricing",
+        viewports: [
+          { width: 1440, height: 900 },
+          { width: 390, height: 844 },
+        ],
+        fullPage: true,
+        source: "session",
+      },
+    });
+
+    expect(capturePageScreenshots).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          path: "/pricing",
+          viewport: { width: 1440, height: 900 },
+          fullPage: true,
+          source: "session",
+        }),
+        expect.objectContaining({
+          path: "/pricing",
+          viewport: { width: 390, height: 844 },
+          fullPage: true,
+          source: "session",
+        }),
+      ],
+      expect.objectContaining({ report: expect.any(Function) })
+    );
+    expect(responsiveResult.structuredContent.data).toEqual({
+      screenshots: [
+        expect.objectContaining({ viewport: { width: 1440, height: 900 } }),
+        expect.objectContaining({ viewport: { width: 390, height: 844 } }),
+      ],
     });
   });
 
