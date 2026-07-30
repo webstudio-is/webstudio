@@ -113,18 +113,12 @@ const preloadResource = (resource: ResourceRequest) => {
 
 export const preloadResources = (resources: readonly ResourceRequest[]) => {
   const currentKeys = new Set(resources.map(getResourceKey));
-  let cacheChanged = false;
   let pendingChanged = false;
   for (const key of knownRequests.keys()) {
     if (currentKeys.has(key) === false) {
       knownRequests.delete(key);
       pendingChanged = queue.delete(key) || pendingChanged;
-      cacheChanged = cache.delete(key) || cacheChanged;
-      cacheChanged = diagnosticsCache.delete(key) || cacheChanged;
     }
-  }
-  if (cacheChanged) {
-    updateCache();
   }
   if (pendingChanged) {
     updatePending();

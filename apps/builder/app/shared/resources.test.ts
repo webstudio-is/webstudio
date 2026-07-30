@@ -15,7 +15,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-test("removes obsolete queued requests and cached results", () => {
+test("removes obsolete queued requests but keeps cached results", () => {
   vi.useFakeTimers();
   const request: ResourceRequest = {
     name: "Posts",
@@ -32,7 +32,7 @@ test("removes obsolete queued requests and cached results", () => {
 
   preloadResources([]);
 
-  expect($resourcesCache.get().has(key)).toBe(false);
+  expect($resourcesCache.get().has(key)).toBe(true);
   expect($hasPendingResources.get()).toBe(false);
 });
 
