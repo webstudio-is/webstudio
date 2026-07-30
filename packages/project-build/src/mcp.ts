@@ -5544,6 +5544,12 @@ const sdkScalarSchemaKeys = new Set([
   "uniqueItems",
 ]);
 
+const sdkDetailedOptionalSchemaProperties = new Set([
+  "dryRun",
+  "confirmDestructive",
+  "confirmationToken",
+]);
+
 const getSdkSchemaProperty = (
   value: InputJsonSchemaValue
 ): InputJsonSchemaValue => {
@@ -5567,20 +5573,26 @@ const getSdkSchemaProperty = (
 
 const getSdkInputSchema = (
   schema: ProjectSessionMcpInputSchema
-): ProjectSessionMcpInputSchema => ({
-  type: "object",
-  additionalProperties:
-    schema.additionalProperties === undefined
-      ? false
-      : getSdkSchemaProperty(schema.additionalProperties),
-  properties: Object.fromEntries(
+): ProjectSessionMcpInputSchema => {
+  const required = new Set(schema.required ?? []);
+  const properties = Object.fromEntries(
     Object.entries(schema.properties ?? {}).map(([name, value]) => [
       name,
-      getSdkSchemaProperty(value),
+      required.has(name) || sdkDetailedOptionalSchemaProperties.has(name)
+        ? getSdkSchemaProperty(value)
+        : {},
     ])
-  ),
-  required: schema.required ?? [],
-});
+  );
+  return {
+    type: "object",
+    additionalProperties:
+      schema.additionalProperties === undefined
+        ? false
+        : getSdkSchemaProperty(schema.additionalProperties),
+    ...(Object.keys(properties).length === 0 ? {} : { properties }),
+    ...(required.size === 0 ? {} : { required: [...required] }),
+  };
+};
 
 // Keep output contracts, complete input guidance, and Webstudio operation
 // metadata for local validation, generated documentation, and focused

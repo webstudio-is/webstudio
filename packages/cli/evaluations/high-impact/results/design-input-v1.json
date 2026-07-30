@@ -6,27 +6,27 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "931f06b71b766865cc405926bcf62413e51510fc42fc1045337f314a8afa5c92",
+  "commandSha256": "fcd8857186d09684aa8fc72434483301fee59d73bb23610bb86a9eadbda2b8ca",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 135214,
+    "durationMs": 116901,
     "tokens": {
-      "input": 625046,
-      "cachedInput": 561664,
-      "uncachedInput": 63382,
+      "input": 506035,
+      "cachedInput": 438272,
+      "uncachedInput": 67763,
       "cacheWriteInput": 0,
-      "output": 4159,
-      "reasoningOutput": 467,
-      "total": 629205,
-      "cachedInputRate": 0.8986
+      "output": 3577,
+      "reasoningOutput": 751,
+      "total": 509612,
+      "cachedInputRate": 0.8661
     },
     "mcpCatalog": {
-      "responses": 2,
-      "totalResponseBytes": 156378,
-      "maxResponseBytes": 78189,
+      "responses": 1,
+      "totalResponseBytes": 68333,
+      "maxResponseBytes": 68333,
       "latestToolCount": 171,
-      "latestResponseBytes": 78189,
-      "latestInputSchemaBytes": 41046,
+      "latestResponseBytes": 68333,
+      "latestInputSchemaBytes": 31190,
       "latestDescriptionBytes": 12708
     },
     "toolCalls": {
@@ -39,87 +39,87 @@
       "durationsByTool": {
         "attach-design-token": {
           "count": 3,
-          "totalMs": 32,
-          "p95Ms": 16,
-          "maxMs": 16
-        },
-        "audit": {
-          "count": 1,
-          "totalMs": 42,
-          "p95Ms": 42,
-          "maxMs": 42
-        },
-        "create-page": {
-          "count": 1,
-          "totalMs": 26,
-          "p95Ms": 26,
-          "maxMs": 26
-        },
-        "insert-fragment": {
-          "count": 1,
-          "totalMs": 67,
-          "p95Ms": 67,
-          "maxMs": 67
-        },
-        "list-assets": {
-          "count": 1,
-          "totalMs": 29,
-          "p95Ms": 29,
-          "maxMs": 29
-        },
-        "list-breakpoints": {
-          "count": 1,
-          "totalMs": 26,
-          "p95Ms": 26,
-          "maxMs": 26
-        },
-        "list-design-tokens": {
-          "count": 1,
-          "totalMs": 32,
-          "p95Ms": 32,
-          "maxMs": 32
-        },
-        "list-pages": {
-          "count": 1,
-          "totalMs": 27,
-          "p95Ms": 27,
-          "maxMs": 27
-        },
-        "list-variables": {
-          "count": 1,
-          "totalMs": 30,
-          "p95Ms": 30,
-          "maxMs": 30
-        },
-        "meta.guide": {
-          "count": 1,
-          "totalMs": 10,
+          "totalMs": 23,
           "p95Ms": 10,
           "maxMs": 10
         },
+        "audit": {
+          "count": 1,
+          "totalMs": 22,
+          "p95Ms": 22,
+          "maxMs": 22
+        },
+        "create-page": {
+          "count": 1,
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
+        },
+        "insert-fragment": {
+          "count": 1,
+          "totalMs": 57,
+          "p95Ms": 57,
+          "maxMs": 57
+        },
+        "list-assets": {
+          "count": 1,
+          "totalMs": 19,
+          "p95Ms": 19,
+          "maxMs": 19
+        },
+        "list-breakpoints": {
+          "count": 1,
+          "totalMs": 24,
+          "p95Ms": 24,
+          "maxMs": 24
+        },
+        "list-design-tokens": {
+          "count": 1,
+          "totalMs": 22,
+          "p95Ms": 22,
+          "maxMs": 22
+        },
+        "list-pages": {
+          "count": 1,
+          "totalMs": 26,
+          "p95Ms": 26,
+          "maxMs": 26
+        },
+        "list-variables": {
+          "count": 1,
+          "totalMs": 26,
+          "p95Ms": 26,
+          "maxMs": 26
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalMs": 13,
+          "p95Ms": 13,
+          "maxMs": 13
+        },
         "preview.start": {
           "count": 1,
-          "totalMs": 3230,
-          "p95Ms": 3230,
-          "maxMs": 3230
+          "totalMs": 1504,
+          "p95Ms": 1504,
+          "maxMs": 1504
         },
         "screenshot": {
           "count": 2,
-          "totalMs": 13607,
-          "p95Ms": 12386,
-          "maxMs": 12386
+          "totalMs": 9076,
+          "p95Ms": 7868,
+          "maxMs": 7868
         },
         "update-styles": {
           "count": 1,
-          "totalMs": 76,
-          "p95Ms": 76,
-          "maxMs": 76
+          "totalMs": 52,
+          "p95Ms": 52,
+          "maxMs": 52
         },
         "verify-bindings": {
           "count": 1,
-          "totalMs": 4,
-          "p95Ms": 4,
-          "maxMs": 4
+          "totalMs": 3,
+          "p95Ms": 3,
+          "maxMs": 3
         }
       },
       "retries": 0,
@@ -129,20 +129,20 @@
       "plannedMutations": 0,
       "committedMutations": 6,
       "verifications": 4,
-      "totalDurationMs": 17238,
-      "p50DurationMs": 29,
-      "p95DurationMs": 12386,
-      "timeToFirstMutationMs": 38456,
-      "timeToFirstVerificationMs": 50270
+      "totalDurationMs": 10887,
+      "p50DurationMs": 22,
+      "p95DurationMs": 7868,
+      "timeToFirstMutationMs": 39328,
+      "timeToFirstVerificationMs": 49999
     }
   },
   "callSequence": [
     "meta.guide",
+    "list-assets",
+    "list-design-tokens",
     "list-breakpoints",
     "list-pages",
-    "list-assets",
     "list-variables",
-    "list-design-tokens",
     "create-page",
     "insert-fragment",
     "verify-bindings",

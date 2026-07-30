@@ -6681,6 +6681,12 @@ describe("project session mcp adapter", () => {
             ?.inputSchema
         )
       ).not.toContain('"description"');
+      expect(
+        getSchemaProperties(
+          listedTools.tools.find(({ name }) => name === "list-pages")
+            ?.inputSchema
+        ).includeFolders
+      ).toEqual({});
       const updatePageInputSchema = listedTools.tools.find(
         ({ name }) => name === "update-page"
       )?.inputSchema;
