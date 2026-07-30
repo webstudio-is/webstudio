@@ -20,10 +20,13 @@ import {
 } from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
 import type { EvaluationToolCall } from "./validate";
+import type { McpCatalogObservation } from "./evaluation-metrics";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 import {
   compareEvaluationResult,
+  isAggregateTokenBaselineNonRegressed,
   isEvaluationComparisonAccepted,
+  shouldUpdateEvaluationBaselines,
   type EvaluationComparison,
 } from "./evaluation-regression";
 
@@ -37,6 +40,13 @@ const fixtureById = new Map<string, HighImpactFixture>(
 type AgentEvaluationReport = AgentEvaluationResult & {
   comparison: EvaluationComparison;
 };
+
+type EvaluationTraceEvent = EvaluationToolCall | McpCatalogObservation;
+
+const isCatalogObservation = (
+  event: EvaluationTraceEvent
+): event is McpCatalogObservation =>
+  "kind" in event && event.kind === "tools-list";
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
 
@@ -98,6 +108,7 @@ const runFixture = async ({
       shellQuote(codex),
       "exec",
       "--ephemeral",
+      "--ignore-user-config",
       "--dangerously-bypass-approvals-and-sandbox",
       "--skip-git-repo-check",
       "--ignore-rules",
@@ -112,11 +123,12 @@ const runFixture = async ({
       ),
     ].join(" ");
     let toolCalls: EvaluationToolCall[] = [];
-    const readToolCalls = async () =>
+    let catalogObservations: McpCatalogObservation[] = [];
+    const readTraceEvents = async () =>
       (await readFile(tracePath, "utf8").catch(() => ""))
         .split("\n")
         .filter(Boolean)
-        .map((line) => JSON.parse(line) as EvaluationToolCall);
+        .map((line) => JSON.parse(line) as EvaluationTraceEvent);
     return await runHighImpactAgentEvaluation({
       fixture,
       target: { kind: "source", repositoryRoot },
@@ -128,8 +140,14 @@ const runFixture = async ({
       model,
       env,
       getToolCalls: () => toolCalls,
+      getCatalogObservations: () => catalogObservations,
       evaluate: async () => {
-        toolCalls = await readToolCalls();
+        const traceEvents = await readTraceEvents();
+        catalogObservations = traceEvents.filter(isCatalogObservation);
+        toolCalls = traceEvents.filter(
+          (event): event is EvaluationToolCall =>
+            isCatalogObservation(event) === false
+        );
         return evaluateHighImpactOutcome({
           fixture,
           project: fixtureApi.getProject(),
@@ -204,6 +222,7 @@ const run = async () => {
   );
   const results: AgentEvaluationReport[] = [];
   const rawResults: AgentEvaluationResult[] = [];
+  const baselines: AgentEvaluationResult[] = [];
   for (const fixture of fixtures) {
     const resultPath = resolve(
       process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
@@ -221,6 +240,9 @@ const run = async () => {
       ...result,
       comparison: compareEvaluationResult(result, baseline),
     };
+    if (baseline !== undefined) {
+      baselines.push(baseline);
+    }
     await writeFile(
       resultPath,
       `${JSON.stringify(report, undefined, 2)}\n`,
@@ -231,7 +253,23 @@ const run = async () => {
   const evaluationsPassed = rawResults.every(
     (result) => result.outcome === "passed"
   );
-  if (options.updateBaselines && evaluationsPassed) {
+  const comparisonsPassed = results.every(({ comparison }) =>
+    isEvaluationComparisonAccepted({
+      comparison,
+      requireBaseline: options.requireBaseline,
+      updateBaselines: options.updateBaselines,
+    })
+  );
+  const baselinesUpdated = shouldUpdateEvaluationBaselines({
+    updateBaselines: options.updateBaselines,
+    evaluationsPassed,
+    comparisonsPassed,
+    aggregateTokensPassed: isAggregateTokenBaselineNonRegressed(
+      rawResults,
+      baselines
+    ),
+  });
+  if (baselinesUpdated) {
     await mkdir(baselineDirectory, { recursive: true });
     await Promise.all(
       rawResults.map((result) =>
@@ -243,20 +281,18 @@ const run = async () => {
       )
     );
   }
-  const comparisonsPassed = results.every(({ comparison }) =>
-    isEvaluationComparisonAccepted({
-      comparison,
-      requireBaseline: options.requireBaseline,
-      updateBaselines: options.updateBaselines,
-    })
-  );
-  const outcome = evaluationsPassed && comparisonsPassed ? "passed" : "failed";
+  const outcome =
+    evaluationsPassed &&
+    comparisonsPassed &&
+    (options.updateBaselines === false || baselinesUpdated)
+      ? "passed"
+      : "failed";
   process.stdout.write(
     `${JSON.stringify(
       {
         outcome,
         baselines: options.updateBaselines
-          ? evaluationsPassed
+          ? baselinesUpdated
             ? "updated"
             : "not-updated"
           : "compared",

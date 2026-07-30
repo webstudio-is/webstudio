@@ -21,9 +21,12 @@ export type EvaluationToolCall = {
   arguments?: Record<string, unknown>;
   startedAtMs?: number;
   durationMs?: number;
+  responseBytes?: number;
   planned?: true;
   committed?: true;
   isError?: boolean;
+  errorCode?: string;
+  errorIssues?: Array<{ code: string; path: string }>;
 };
 
 export type EvaluationArtifact = {
@@ -133,7 +136,10 @@ const getEditablePageState = (project: EvaluationProject) => ({
 
 const isValidExpression = (value: string) => {
   try {
-    const expression = parseExpressionAt(value, 0, { ecmaVersion: "latest" });
+    const expression = parseExpressionAt(value, 0, {
+      ecmaVersion: "latest",
+      preserveParens: true,
+    });
     return value.slice(expression.end).trim() === "";
   } catch {
     return false;
@@ -168,6 +174,11 @@ const hasPassedEvidence = (
   kind: EvaluationArtifact["kind"]
 ) =>
   hasSuccessfulCall(input.toolCalls, kind) ||
+  (kind === "screenshot" &&
+    (hasSuccessfulCall(input.toolCalls, "screenshot.responsive") ||
+      hasSuccessfulCall(input.toolCalls, "verify-page-responsive"))) ||
+  (kind === "audit" &&
+    hasSuccessfulCall(input.toolCalls, "verify-page-responsive")) ||
   (input.artifacts ?? []).some(
     (artifact) => artifact.kind === kind && artifact.passed
   );
@@ -182,6 +193,22 @@ const getScreenshots = (input: HighImpactEvaluationInput) => [
         | undefined,
       passed: true,
     })),
+  ...input.toolCalls
+    .filter(
+      (call) =>
+        (call.name === "screenshot.responsive" ||
+          call.name === "verify-page-responsive") &&
+        call.isError !== true
+    )
+    .flatMap((call) =>
+      Array.isArray(call.arguments?.viewports)
+        ? call.arguments.viewports.map((viewport) => ({
+            kind: "screenshot" as const,
+            viewport: viewport as { width: number; height: number },
+            passed: true,
+          }))
+        : []
+    ),
   ...(input.artifacts ?? []).filter(
     (artifact) => artifact.kind === "screenshot" && artifact.passed
   ),
@@ -245,7 +272,8 @@ const validateAuth = (
     checks,
     failures,
     "bindingVerification",
-    hasSuccessfulCall(input.toolCalls, "verify-bindings"),
+    hasSuccessfulCall(input.toolCalls, "verify-bindings") ||
+      hasSuccessfulCall(input.toolCalls, "insert-fragment-verified"),
     "The agent did not verify the persisted authentication bindings."
   );
   recordCheck(
@@ -478,21 +506,20 @@ const validateFontAssets = (
       ? [{ ...call, index }]
       : []
   );
-  const refreshIndex = input.toolCalls.findLastIndex(
-    (call) => call.name === "refresh" && call.isError !== true
-  );
-  const verificationReads = input.toolCalls.filter(
-    (call, index) =>
-      call.name === "get-asset" && call.isError !== true && index > refreshIndex
+  const verificationCalls = input.toolCalls.flatMap((call, index) =>
+    call.name === "verify-font-assets" && call.isError !== true
+      ? [{ ...call, index }]
+      : []
   );
   recordCheck(
     checks,
     failures,
     "metadataWorkflow",
     updateCalls.length >= expectedNames.size &&
-      refreshIndex > (updateCalls.at(-1)?.index ?? Number.POSITIVE_INFINITY) &&
-      verificationReads.length >= expectedNames.size,
-    "The agent did not update both font assets, refresh, and read both persisted assets afterward."
+      verificationCalls.length === 1 &&
+      verificationCalls[0]!.index >
+        (updateCalls.at(-1)?.index ?? Number.POSITIVE_INFINITY),
+    "The agent did not update both font assets and verify both persisted assets in one bounded call afterward."
   );
   const fontFaces = getFontFaces(fontAssets, { assetBaseUrl: "/assets/" });
   recordCheck(

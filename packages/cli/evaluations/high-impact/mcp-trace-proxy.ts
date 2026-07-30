@@ -1,7 +1,8 @@
 import { appendFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
-import { isPlainRecord } from "../../src/type-utils";
+import { boundedIdentifierPattern, isPlainRecord } from "../../src/type-utils";
+import type { McpCatalogObservation } from "./evaluation-metrics";
 
 type JsonRpcId = string | number;
 
@@ -9,16 +10,78 @@ export type BoundedMcpCall = {
   name: string;
   arguments?: {
     viewport?: { width: number; height: number };
+    viewports?: Array<{ width: number; height: number }>;
     dryRun?: true;
     confirmDestructive?: true;
     hasConfirmationToken?: true;
   };
   startedAtMs: number;
   durationMs?: number;
+  responseBytes?: number;
   mutation?: true;
   planned?: true;
   committed?: true;
   isError?: true;
+  errorCode?: string;
+  errorIssues?: Array<{ code: string; path: string }>;
+};
+
+const getStructuredError = (result: unknown) => {
+  const structuredContent =
+    isPlainRecord(result) && isPlainRecord(result.structuredContent)
+      ? result.structuredContent
+      : undefined;
+  return structuredContent !== undefined &&
+    isPlainRecord(structuredContent.error)
+    ? structuredContent.error
+    : undefined;
+};
+
+const getBoundedErrorCode = (value: unknown, result: unknown) => {
+  const error = getStructuredError(result);
+  if (
+    typeof error?.code === "string" &&
+    boundedIdentifierPattern.test(error.code)
+  ) {
+    return error.code;
+  }
+  if (isPlainRecord(value) && isPlainRecord(value.error)) {
+    const code = value.error.code;
+    if (typeof code === "number" && Number.isSafeInteger(code)) {
+      return `JSON_RPC_${code}`;
+    }
+    if (typeof code === "string" && boundedIdentifierPattern.test(code)) {
+      return code;
+    }
+  }
+};
+
+const getBoundedErrorIssues = (result: unknown) => {
+  const issues = getStructuredError(result)?.issues;
+  if (Array.isArray(issues) === false) {
+    return;
+  }
+  const boundedIssues = issues.slice(0, 8).flatMap((issue) => {
+    if (
+      isPlainRecord(issue) === false ||
+      typeof issue.code !== "string" ||
+      boundedIdentifierPattern.test(issue.code) === false ||
+      Array.isArray(issue.path) === false ||
+      issue.path.length > 8
+    ) {
+      return [];
+    }
+    const segments = issue.path.map(String);
+    if (
+      segments.some(
+        (segment) => boundedIdentifierPattern.test(segment) === false
+      )
+    ) {
+      return [];
+    }
+    return [{ code: issue.code, path: segments.join(".") }];
+  });
+  return boundedIssues.length === 0 ? undefined : boundedIssues;
 };
 
 export const getMcpTraceRequest = (
@@ -53,6 +116,25 @@ export const getMcpTraceRequest = (
       typeof viewport.height === "number"
     ) {
       args.viewport = { width: viewport.width, height: viewport.height };
+    }
+    const viewports = params.arguments.viewports;
+    if (
+      (params.name === "screenshot.responsive" ||
+        params.name === "verify-page-responsive") &&
+      Array.isArray(viewports) &&
+      viewports.length > 0 &&
+      viewports.length <= 8 &&
+      viewports.every(
+        (item) =>
+          isPlainRecord(item) &&
+          typeof item.width === "number" &&
+          typeof item.height === "number"
+      )
+    ) {
+      args.viewports = viewports.map((item) => ({
+        width: item.width as number,
+        height: item.height as number,
+      }));
     }
     if (params.arguments.dryRun === true) {
       args.dryRun = true;
@@ -93,6 +175,10 @@ export const getMcpTraceResponse = (
     (isPlainRecord(result) && result.isError === true)
       ? (true as const)
       : undefined;
+  const errorCode =
+    isError === true ? getBoundedErrorCode(value, result) : undefined;
+  const errorIssues =
+    isError === true ? getBoundedErrorIssues(result) : undefined;
   const structuredContent =
     isPlainRecord(result) && isPlainRecord(result.structuredContent)
       ? result.structuredContent
@@ -118,9 +204,12 @@ export const getMcpTraceResponse = (
   return {
     ...call,
     durationMs: Math.max(0, Math.round(completedAtMs - call.startedAtMs)),
+    responseBytes: getJsonBytes(value),
     ...(planned === undefined ? {} : { planned }),
     ...(committed === undefined ? {} : { committed }),
     ...(isError === undefined ? {} : { isError }),
+    ...(errorCode === undefined ? {} : { errorCode }),
+    ...(errorIssues === undefined ? {} : { errorIssues }),
   };
 };
 
@@ -145,13 +234,50 @@ export const getMcpMutationToolNames = (value: unknown) => {
     if (
       isPlainRecord(tool) &&
       typeof tool.name === "string" &&
-      isPlainRecord(tool.annotations) &&
-      tool.annotations.readOnlyHint === false
+      (isPlainRecord(tool.annotations) === false ||
+        tool.annotations.readOnlyHint !== true)
     ) {
       return [tool.name];
     }
     return [];
   });
+};
+
+const getJsonBytes = (value: unknown) =>
+  Buffer.byteLength(JSON.stringify(value), "utf8");
+
+export const getMcpCatalogObservation = (
+  value: unknown
+): McpCatalogObservation | undefined => {
+  if (
+    isPlainRecord(value) === false ||
+    isPlainRecord(value.result) === false ||
+    Array.isArray(value.result.tools) === false
+  ) {
+    return;
+  }
+  const tools = value.result.tools;
+  return {
+    kind: "tools-list",
+    toolCount: tools.length,
+    responseBytes: getJsonBytes(value.result),
+    inputSchemaBytes: tools.reduce(
+      (total, tool) =>
+        total +
+        (isPlainRecord(tool) && tool.inputSchema !== undefined
+          ? getJsonBytes(tool.inputSchema)
+          : 0),
+      0
+    ),
+    descriptionBytes: tools.reduce(
+      (total, tool) =>
+        total +
+        (isPlainRecord(tool) && typeof tool.description === "string"
+          ? Buffer.byteLength(tool.description, "utf8")
+          : 0),
+      0
+    ),
+  };
 };
 
 const observeJsonLines = (
@@ -204,6 +330,10 @@ const run = () => {
       (typeof value.id === "string" || typeof value.id === "number") &&
       pendingToolsLists.delete(value.id)
     ) {
+      const catalog = getMcpCatalogObservation(value);
+      if (catalog !== undefined) {
+        appendFileSync(tracePath, `${JSON.stringify(catalog)}\n`, "utf8");
+      }
       for (const name of getMcpMutationToolNames(value) ?? []) {
         mutationToolNames.add(name);
       }

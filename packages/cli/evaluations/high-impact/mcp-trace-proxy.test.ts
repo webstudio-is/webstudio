@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  getMcpCatalogObservation,
   getMcpMutationToolNames,
   getMcpToolsListRequestId,
   getMcpTraceRequest,
@@ -7,6 +8,37 @@ import {
 } from "./mcp-trace-proxy";
 
 describe("bounded MCP tracing", () => {
+  test("measures the bounded tools catalog payload", () => {
+    expect(
+      getMcpCatalogObservation({
+        id: 1,
+        result: {
+          tools: [
+            {
+              name: "list-pages",
+              description: "List pages",
+              inputSchema: { type: "object", properties: {} },
+            },
+            {
+              name: "create-page",
+              description: "Create page",
+              inputSchema: {
+                type: "object",
+                properties: { path: { type: "string" } },
+              },
+            },
+          ],
+        },
+      })
+    ).toEqual({
+      kind: "tools-list",
+      toolCount: 2,
+      responseBytes: 231,
+      inputSchemaBytes: 90,
+      descriptionBytes: 21,
+    });
+  });
+
   test("retains only bounded verification fields", () => {
     expect(
       getMcpTraceRequest(
@@ -31,6 +63,34 @@ describe("bounded MCP tracing", () => {
         name: "screenshot",
         arguments: { viewport: { width: 390, height: 844 } },
         startedAtMs: 125,
+      },
+    });
+  });
+
+  test("retains responsive verification viewports as bounded evidence", () => {
+    expect(
+      getMcpTraceRequest({
+        id: 9,
+        method: "tools/call",
+        params: {
+          name: "verify-page-responsive",
+          arguments: {
+            path: "/account",
+            viewports: [
+              { width: 1440, height: 900 },
+              { width: 390, height: 844 },
+            ],
+          },
+        },
+      })
+    ).toMatchObject({
+      call: {
+        arguments: {
+          viewports: [
+            { width: 1440, height: 900 },
+            { width: 390, height: 844 },
+          ],
+        },
       },
     });
   });
@@ -73,33 +133,56 @@ describe("bounded MCP tracing", () => {
       [2, { name: "verify-bindings", startedAtMs: 200 }],
     ]);
 
-    expect(
-      getMcpTraceResponse(
-        {
-          id: 1,
-          result: {
-            structuredContent: {
-              meta: { session: { committed: true } },
-            },
-          },
+    const committedResponse = {
+      id: 1,
+      result: {
+        structuredContent: {
+          meta: { session: { committed: true } },
         },
-        pending,
-        175
-      )
-    ).toEqual({
+      },
+    };
+    expect(getMcpTraceResponse(committedResponse, pending, 175)).toEqual({
       name: "create-page",
       startedAtMs: 100,
       mutation: true,
       durationMs: 75,
+      responseBytes: Buffer.byteLength(JSON.stringify(committedResponse)),
       committed: true,
     });
-    expect(
-      getMcpTraceResponse({ id: 2, result: { isError: true } }, pending, 260)
-    ).toEqual({
+    const failedResponse = {
+      id: 2,
+      result: {
+        isError: true,
+        structuredContent: {
+          error: {
+            code: "INVALID_INPUT",
+            message: "private diagnostic message",
+            details: { token: "private-token" },
+            issues: [
+              {
+                code: "invalid_type",
+                path: ["resource", "headers", 0, "value"],
+                message: "private issue message",
+                example: "private example",
+              },
+            ],
+          },
+        },
+      },
+    };
+    expect(getMcpTraceResponse(failedResponse, pending, 260)).toEqual({
       name: "verify-bindings",
       startedAtMs: 200,
       durationMs: 60,
+      responseBytes: Buffer.byteLength(JSON.stringify(failedResponse)),
       isError: true,
+      errorCode: "INVALID_INPUT",
+      errorIssues: [
+        {
+          code: "invalid_type",
+          path: "resource.headers.0.value",
+        },
+      ],
     });
     expect(pending.size).toBe(0);
   });
@@ -117,13 +200,22 @@ describe("bounded MCP tracing", () => {
             },
             {
               name: "create-page",
-              annotations: { readOnlyHint: false, private: "discard" },
+              annotations: {
+                destructiveHint: false,
+                openWorldHint: false,
+                private: "discard",
+              },
+            },
+            {
+              name: "delete-external-resource",
             },
           ],
         },
       })
     );
-    expect(mutationToolNames).toEqual(new Set(["create-page"]));
+    expect(mutationToolNames).toEqual(
+      new Set(["create-page", "delete-external-resource"])
+    );
     expect(
       getMcpTraceRequest(
         {

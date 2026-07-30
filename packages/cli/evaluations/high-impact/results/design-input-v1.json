@@ -6,60 +6,165 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "b67b2dd38d840a331cf71a72ff8d6417b26cec0d48f1ec48bded91a00d7322e3",
+  "commandSha256": "665472955db94c5d88c26b9c858eca2ec7621f04efa461fdb4cff3ae79dc5c5b",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 257624,
+    "durationMs": 97892,
     "tokens": {
-      "input": 1912580,
-      "cachedInput": 1814272,
+      "input": 327593,
+      "cachedInput": 273152,
+      "uncachedInput": 54441,
       "cacheWriteInput": 0,
-      "output": 12382,
-      "reasoningOutput": 1435,
-      "total": 1924962,
-      "cachedInputRate": 0.9486
+      "output": 2987,
+      "reasoningOutput": 698,
+      "total": 330580,
+      "cachedInputRate": 0.8338
+    },
+    "mcpCatalog": {
+      "responses": 1,
+      "totalResponseBytes": 51362,
+      "maxResponseBytes": 51362,
+      "latestToolCount": 176,
+      "latestResponseBytes": 51362,
+      "latestInputSchemaBytes": 28964,
+      "latestDescriptionBytes": 4556
     },
     "toolCalls": {
-      "total": 23,
-      "succeeded": 21,
-      "failed": 2,
-      "retries": 2,
-      "focusedReads": 7,
+      "total": 10,
+      "succeeded": 10,
+      "failed": 0,
+      "failuresByTool": {},
+      "failuresByCode": {},
+      "issuesByCode": {},
+      "issuesByPath": {},
+      "durationsByTool": {
+        "attach-design-token": {
+          "count": 3,
+          "totalMs": 24,
+          "p95Ms": 9,
+          "maxMs": 9
+        },
+        "audit": {
+          "count": 1,
+          "totalMs": 12,
+          "p95Ms": 12,
+          "maxMs": 12
+        },
+        "create-page": {
+          "count": 1,
+          "totalMs": 91,
+          "p95Ms": 91,
+          "maxMs": 91
+        },
+        "insert-fragment-verified": {
+          "count": 1,
+          "totalMs": 55,
+          "p95Ms": 55,
+          "maxMs": 55
+        },
+        "inspect-design-context": {
+          "count": 1,
+          "totalMs": 30,
+          "p95Ms": 30,
+          "maxMs": 30
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalMs": 11,
+          "p95Ms": 11,
+          "maxMs": 11
+        },
+        "screenshot.responsive": {
+          "count": 1,
+          "totalMs": 10751,
+          "p95Ms": 10751,
+          "maxMs": 10751
+        },
+        "update-styles": {
+          "count": 1,
+          "totalMs": 64,
+          "p95Ms": 64,
+          "maxMs": 64
+        }
+      },
+      "responseBytesByTool": {
+        "attach-design-token": {
+          "count": 3,
+          "totalBytes": 3900,
+          "p95Bytes": 1304,
+          "maxBytes": 1304
+        },
+        "audit": {
+          "count": 1,
+          "totalBytes": 3711,
+          "p95Bytes": 3711,
+          "maxBytes": 3711
+        },
+        "create-page": {
+          "count": 1,
+          "totalBytes": 1342,
+          "p95Bytes": 1342,
+          "maxBytes": 1342
+        },
+        "insert-fragment-verified": {
+          "count": 1,
+          "totalBytes": 2954,
+          "p95Bytes": 2954,
+          "maxBytes": 2954
+        },
+        "inspect-design-context": {
+          "count": 1,
+          "totalBytes": 3082,
+          "p95Bytes": 3082,
+          "maxBytes": 3082
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalBytes": 15190,
+          "p95Bytes": 15190,
+          "maxBytes": 15190
+        },
+        "screenshot.responsive": {
+          "count": 1,
+          "totalBytes": 7053,
+          "p95Bytes": 7053,
+          "maxBytes": 7053
+        },
+        "update-styles": {
+          "count": 1,
+          "totalBytes": 2804,
+          "p95Bytes": 2804,
+          "maxBytes": 2804
+        }
+      },
+      "retries": 0,
+      "focusedReads": 1,
       "broadReads": 0,
-      "dryRuns": 2,
-      "plannedMutations": 2,
-      "committedMutations": 5,
-      "verifications": 4,
-      "totalDurationMs": 37835,
-      "p50DurationMs": 27,
-      "p95DurationMs": 10457,
-      "timeToFirstMutationMs": 53985,
-      "timeToFirstVerificationMs": 187306
+      "dryRuns": 0,
+      "plannedMutations": 0,
+      "committedMutations": 6,
+      "verifications": 3,
+      "totalDurationMs": 11038,
+      "p50DurationMs": 12,
+      "p95DurationMs": 10751,
+      "totalResponseBytes": 40036,
+      "p50ResponseBytes": 2804,
+      "p95ResponseBytes": 15190,
+      "maxResponseBytes": 15190,
+      "timeToFirstMutationMs": 30419,
+      "timeToFirstVerificationMs": 36551
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-breakpoints",
-    "list-design-tokens",
-    "list-pages",
-    "list-assets",
-    "meta.get_more_tools",
-    "list-instances",
-    "list-design-tokens",
+    "inspect-design-context",
     "create-page",
-    "create-page",
-    "insert-fragment",
-    "insert-fragment",
-    "list-instances",
+    "insert-fragment-verified",
     "attach-design-token",
     "attach-design-token",
     "attach-design-token",
-    "verify-bindings",
-    "preview.start",
-    "preview.start",
-    "preview.start",
-    "screenshot",
-    "screenshot",
+    "update-styles",
+    "screenshot.responsive",
     "audit"
   ],
   "checks": {

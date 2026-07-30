@@ -169,18 +169,17 @@ describe("font-assets evaluation", () => {
             values: { meta: fontAssetFixtureMeta },
           },
         })),
-        { name: "refresh" },
-        ...project.assets.map((asset) => ({
-          name: "get-asset",
-          arguments: { assetId: asset.id },
-        })),
+        {
+          name: "verify-font-assets",
+          arguments: { assetIds: project.assets.map((asset) => asset.id) },
+        },
       ],
     });
 
     expect(result).toMatchObject({ passed: true, failures: [] });
   });
 
-  test("rejects a refresh before the final metadata update", () => {
+  test("rejects verification before the final metadata update", () => {
     const project = clone(fontAssetsFixture.project);
     const result = evaluateHighImpactOutcome({
       fixture: fontAssetsFixture,
@@ -188,7 +187,10 @@ describe("font-assets evaluation", () => {
       toolCalls: [
         { name: "meta.guide" },
         { name: "update-asset" },
-        { name: "refresh" },
+        {
+          name: "verify-font-assets",
+          arguments: { assetIds: ["asset-1", "asset-2"] },
+        },
         { name: "update-asset" },
       ],
     });
@@ -271,6 +273,28 @@ describe("design-input evaluation", () => {
     expect(result).toMatchObject({ passed: true, failures: [] });
   });
 
+  test("accepts one responsive page verification as audit and viewport evidence", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: designInputFixture,
+      project: addDesignPage(),
+      toolCalls: [
+        ...designCalls.filter(
+          (call) => call.name !== "screenshot" && call.name !== "audit"
+        ),
+        {
+          name: "verify-page-responsive",
+          arguments: {
+            viewports: [
+              { width: 1440, height: 900 },
+              { width: 390, height: 844 },
+            ],
+          },
+        },
+      ],
+    });
+    expect(result).toMatchObject({ passed: true, failures: [] });
+  });
+
   test("rejects unsupported components", () => {
     const project = addDesignPage();
     project.instances.find(
@@ -299,6 +323,25 @@ describe("design-input evaluation", () => {
       toolCalls: designCalls,
     });
     expect(result.checks.expressions).toBe("failed");
+  });
+
+  test("accepts a parenthesized object expression", () => {
+    const project = addDesignPage();
+    project.props.push({
+      id: "style-expression",
+      instanceId: "summer-heading",
+      name: "style",
+      type: "expression",
+      value: '({ display: state === "ready" ? "block" : "none" })',
+    });
+
+    const result = evaluateHighImpactOutcome({
+      fixture: designInputFixture,
+      project,
+      toolCalls: designCalls,
+    });
+
+    expect(result.checks.expressions).toBe("passed");
   });
 
   test("rejects broad or unnecessarily verbose reads", () => {

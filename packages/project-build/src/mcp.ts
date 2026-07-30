@@ -577,6 +577,21 @@ const insertFragmentMcpInputSchema = {
   required: ["parentInstanceId", "fragment"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const insertFragmentVerifiedMcpInputSchema = {
+  ...insertFragmentMcpInputSchema,
+  description:
+    "Insert a Webstudio fragment and immediately verify its persisted bindings in one call.",
+  properties: {
+    ...insertFragmentMcpInputSchema.properties,
+    pagePath: {
+      type: "string",
+      description:
+        "Concrete page path used for post-commit binding verification, for example /account.",
+    },
+  },
+  required: ["parentInstanceId", "fragment", "pagePath"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
 const insertCollectionMcpInput = insertCollectionInput
   .omit({ itemFragment: true })
   .extend({
@@ -1046,19 +1061,40 @@ const normalizeOperationInputAliases = ({
   command: string;
   input: unknown;
 }) => {
-  if (
-    command === "create-page" &&
-    isPlainRecord(input) &&
-    "description" in input
-  ) {
-    const { description, meta, ...rest } = input;
-    return {
-      ...rest,
-      meta: {
-        ...(isPlainRecord(meta) ? meta : {}),
-        description,
-      },
-    };
+  if (command === "create-page" && isPlainRecord(input)) {
+    const normalizedInput: Record<string, unknown> =
+      "description" in input
+        ? (() => {
+            const { description, meta, ...rest } = input;
+            return {
+              ...rest,
+              meta: {
+                ...(isPlainRecord(meta) ? meta : {}),
+                description,
+              },
+            };
+          })()
+        : input;
+    if (
+      typeof normalizedInput.path !== "string" ||
+      normalizedInput.path === ""
+    ) {
+      return normalizedInput;
+    }
+    try {
+      const base = new URL("https://webstudio.invalid/");
+      const parsed = new URL(normalizedInput.path, base);
+      if (
+        parsed.origin === base.origin &&
+        parsed.search === "" &&
+        parsed.hash === ""
+      ) {
+        return { ...normalizedInput, path: parsed.pathname };
+      }
+    } catch {
+      return normalizedInput;
+    }
+    return normalizedInput;
   }
   if (
     command === "insert-component" &&
@@ -1070,6 +1106,57 @@ const normalizeOperationInputAliases = ({
     return { ...rest, mode: position };
   }
   return input;
+};
+
+const normalizeOperationInputValues = (command: string, input: unknown) => {
+  if (
+    command !== "update-styles" ||
+    isPlainRecord(input) === false ||
+    Array.isArray(input.updates) === false
+  ) {
+    return input;
+  }
+  const normalizeStyleValue = (value: unknown) => {
+    if (
+      isPlainRecord(value) &&
+      typeof value.value === "string" &&
+      ["unit", "length", "color"].includes(String(value.type)) &&
+      (value.type !== "color" || "colorSpace" in value === false)
+    ) {
+      return { type: "keyword", value: value.value };
+    }
+    return typeof value === "string" ? { type: "keyword", value } : value;
+  };
+  return {
+    ...input,
+    updates: input.updates.flatMap((update) => {
+      if (isPlainRecord(update) === false) {
+        return [update];
+      }
+      if (typeof update.property === "string" && "value" in update) {
+        return [
+          {
+            ...update,
+            value: normalizeStyleValue(update.value),
+          },
+        ];
+      }
+      const grouped = isPlainRecord(update.styles)
+        ? update.styles
+        : isPlainRecord(update.declarations)
+          ? update.declarations
+          : undefined;
+      if (grouped === undefined) {
+        return [update];
+      }
+      const { styles: _styles, declarations: _declarations, ...rest } = update;
+      return Object.entries(grouped).map(([property, value]) => ({
+        ...rest,
+        property,
+        value: normalizeStyleValue(value),
+      }));
+    }),
+  };
 };
 
 const getNormalizedOperationInput = (
@@ -1091,7 +1178,10 @@ const getNormalizedOperationInput = (
     command: operation.command,
     input: wrappedInput,
   });
-  const normalizedInput = parseStringifiedJsonInputFields(aliasedInput, schema);
+  const normalizedInput = normalizeOperationInputValues(
+    operation.command,
+    parseStringifiedJsonInputFields(aliasedInput, schema)
+  );
   assertKnownInputFields({
     command: operation.command,
     input: normalizedInput,
@@ -1220,6 +1310,40 @@ const screenshotInputSchema = {
     },
   },
   required: ["viewport"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const responsiveScreenshotInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Capture one generated-site route at multiple viewport sizes in one shared preview/browser session. This starts or refreshes the session preview automatically.",
+  properties: {
+    path: screenshotInputSchema.properties.path,
+    viewports: {
+      type: "array",
+      minItems: 1,
+      maxItems: 8,
+      description: "Viewport dimensions to capture in the provided order.",
+      items: {
+        type: "object",
+        properties: {
+          width: { type: "number" },
+          height: { type: "number" },
+        },
+        required: ["width", "height"],
+        additionalProperties: false,
+      },
+    },
+    fullPage: screenshotInputSchema.properties.fullPage,
+    source: screenshotInputSchema.properties.source,
+    mode: screenshotInputSchema.properties.mode,
+    imageDomains: screenshotInputSchema.properties.imageDomains,
+    browser: screenshotInputSchema.properties.browser,
+    waitUntil: screenshotInputSchema.properties.waitUntil,
+    waitForSelector: screenshotInputSchema.properties.waitForSelector,
+    waitForTimeout: screenshotInputSchema.properties.waitForTimeout,
+    timeout: screenshotInputSchema.properties.timeout,
+  },
+  required: ["path", "viewports"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
 const statusInputSchema = {
@@ -1440,7 +1564,8 @@ const previewInputSchema = {
     },
     port: {
       type: "number",
-      default: 5173,
+      description:
+        "Optional fixed port. Omit it to allocate an available local port automatically.",
     },
     source: {
       type: "string",
@@ -1558,6 +1683,9 @@ const createProjectSessionMcpTool = (
 
 export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
+  "inspect-auth-context": [{}],
+  "inspect-design-context": [{}],
+  "verify-font-assets": [{ assetIds: ["asset-regular", "asset-bold"] }],
   "workflow.next": [
     { goal: "design-system-page" },
     { goal: "design-system-page", phase: "dry-run-section" },
@@ -1664,7 +1792,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     { assetId: "asset-id" },
     { assetId: "asset-id", folderId: "target-folder-id" },
   ],
-  "preview.start": [{ host: "127.0.0.1", port: 5173, source: "session" }],
+  "preview.start": [{ source: "session" }],
   "preview.status": [{}],
   "preview.stop": [{}],
   status: [{}, { verbose: true }],
@@ -1740,6 +1868,14 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       parentInstanceId: "parent-id",
       fragment:
         '<ws.element ws:tag="section"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>',
+    },
+  ],
+  "insert-fragment-verified": [
+    {
+      parentInstanceId: "parent-id",
+      pagePath: "/pricing",
+      fragment:
+        '<ws.element ws:tag="section"><ws.element ws:tag="h2">Pricing</ws.element></ws.element>',
     },
   ],
   "update-text": [
@@ -2012,6 +2148,26 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       output: "current.png",
       viewport: { width: 1440, height: 900 },
       browser: "auto",
+    },
+  ],
+  "screenshot.responsive": [
+    {
+      path: "/pricing",
+      viewports: [
+        { width: 1440, height: 900 },
+        { width: 390, height: 844 },
+      ],
+      source: "session",
+    },
+  ],
+  "verify-page-responsive": [
+    {
+      path: "/pricing",
+      viewports: [
+        { width: 1440, height: 900 },
+        { width: 390, height: 844 },
+      ],
+      source: "session",
     },
   ],
   "screenshot.diff": [
@@ -2629,6 +2785,138 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
   }),
 ];
 
+const authContextOperationCommands = [
+  "get-project-settings",
+  "list-pages",
+  "list-resources",
+  "list-variables",
+] as const;
+
+const inspectAuthContextTool = createProjectSessionMcpTool({
+  name: "inspect-auth-context",
+  description:
+    "Return one bounded authentication discovery bundle with project settings, pages, resources, and variables. Use once before authentication mutations instead of calling the four underlying reads separately.",
+  inputSchema: emptyInputSchema,
+  mcpExamples: getMcpExamples("inspect-auth-context"),
+  annotations: {
+    command: "inspect-auth-context",
+    operationId: "workflow.auth-context",
+    method: "session",
+    permit: "view",
+    localCapable: true,
+    serverOnly: false,
+    readNamespaces: ["projectSettings", "pages", "resources", "dataSources"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
+const designContextOperationCommands = [
+  "list-pages",
+  "list-breakpoints",
+  "list-design-tokens",
+  "list-assets",
+  "list-variables",
+] as const;
+
+const inspectDesignContextTool = createProjectSessionMcpTool({
+  name: "inspect-design-context",
+  description:
+    "Return one bounded design discovery bundle with pages, breakpoints, design tokens, assets, and variables. Use once before design-driven page mutations instead of calling the five underlying reads separately.",
+  inputSchema: emptyInputSchema,
+  mcpExamples: getMcpExamples("inspect-design-context"),
+  annotations: {
+    command: "inspect-design-context",
+    operationId: "workflow.design-context",
+    method: "session",
+    permit: "view",
+    localCapable: true,
+    serverOnly: false,
+    readNamespaces: ["pages", "breakpoints", "styles", "assets", "dataSources"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
+const verifyFontAssetsInputSchema = {
+  ...emptyInputSchema,
+  properties: {
+    assetIds: {
+      type: "array",
+      description: "Font asset ids returned by upload-assets.",
+      items: { type: "string" },
+      minItems: 1,
+      maxItems: 50,
+    },
+  },
+  required: ["assetIds"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const verifyFontAssetsTool = createProjectSessionMcpTool({
+  name: "verify-font-assets",
+  description:
+    "Refresh the asset namespace and return several persisted font assets in one verification call.",
+  inputSchema: verifyFontAssetsInputSchema,
+  mcpExamples: getMcpExamples("verify-font-assets"),
+  annotations: {
+    command: "verify-font-assets",
+    operationId: "workflow.verify-font-assets",
+    method: "session",
+    permit: "api",
+    localCapable: true,
+    serverOnly: false,
+    readNamespaces: ["assets"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
+const insertFragmentVerifiedOperationCommands = [
+  "insert-fragment",
+  "verify-bindings",
+] as const;
+
+const createInsertFragmentVerifiedTool = (
+  operations: readonly PublicMcpOperation[]
+) => {
+  const insertion = operations.find(
+    (operation) => operation.command === "insert-fragment"
+  );
+  const verification = operations.find(
+    (operation) => operation.command === "verify-bindings"
+  );
+  if (insertion === undefined || verification === undefined) {
+    throw new Error(
+      "insert-fragment-verified requires insert-fragment and verify-bindings operations."
+    );
+  }
+  const mergeNamespaces = (
+    key: "readNamespaces" | "writeNamespaces" | "invalidatesNamespaces"
+  ) => [...new Set([...insertion[key], ...verification[key]])];
+  return createProjectSessionMcpTool({
+    name: "insert-fragment-verified",
+    description:
+      "Insert an authored Webstudio JSX fragment and immediately verify persisted bindings on its page. Prefer this when binding verification is required directly after insertion.",
+    inputSchema: insertFragmentVerifiedMcpInputSchema,
+    mcpExamples: getMcpExamples("insert-fragment-verified"),
+    annotations: {
+      command: "insert-fragment-verified",
+      operationId: "workflow.insert-fragment-verified",
+      method: "mutation",
+      permit: insertion.permit,
+      localCapable: insertion.localCapable && verification.localCapable,
+      serverOnly: insertion.serverOnly || verification.serverOnly,
+      readNamespaces: mergeNamespaces("readNamespaces"),
+      writeNamespaces: mergeNamespaces("writeNamespaces"),
+      invalidatesNamespaces: mergeNamespaces("invalidatesNamespaces"),
+      retryOnConflict: insertion.retryOnConflict,
+    },
+  });
+};
+
 const screenshotTool = createProjectSessionMcpTool({
   name: "screenshot",
   description:
@@ -2648,6 +2936,54 @@ const screenshotTool = createProjectSessionMcpTool({
     retryOnConflict: false,
   },
 });
+
+const responsiveScreenshotTool = createProjectSessionMcpTool({
+  name: "screenshot.responsive",
+  description:
+    "Capture one generated route at multiple viewport sizes in one call. Starts or refreshes the session preview automatically and reuses one browser session.",
+  inputSchema: responsiveScreenshotInputSchema,
+  mcpExamples: getMcpExamples("screenshot.responsive"),
+  annotations: {
+    command: "screenshot.responsive",
+    operationId: "screenshot.responsive",
+    method: "session",
+    permit: "api",
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
+const createResponsivePageVerificationTool = (
+  operations: readonly PublicMcpOperation[]
+) => {
+  const audit = operations.find((operation) => operation.command === "audit");
+  if (audit === undefined) {
+    throw new Error("verify-page-responsive requires the audit operation.");
+  }
+  return createProjectSessionMcpTool({
+    name: "verify-page-responsive",
+    description:
+      "Capture one generated route at multiple viewport sizes and immediately run its static audit in one terminal verification call.",
+    inputSchema: responsiveScreenshotInputSchema,
+    mcpExamples: getMcpExamples("verify-page-responsive"),
+    annotations: {
+      command: "verify-page-responsive",
+      operationId: "workflow.verify-page-responsive",
+      method: "session",
+      permit: audit.permit,
+      localCapable: false,
+      serverOnly: true,
+      readNamespaces: audit.readNamespaces,
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  });
+};
 
 const screenshotDiffTool = createProjectSessionMcpTool({
   name: "screenshot.diff",
@@ -2856,15 +3192,12 @@ export type ProjectSessionMcpResource = {
 
 type SdkTool = {
   name: string;
-  description: string;
+  description?: string;
   inputSchema: ProjectSessionMcpInputSchema;
-  annotations: {
-    readOnlyHint: boolean;
-    destructiveHint: boolean;
-    openWorldHint: boolean;
-  };
-  _meta: {
-    webstudio: ProjectSessionMcpTool["annotations"];
+  annotations?: {
+    readOnlyHint?: true;
+    destructiveHint?: false;
+    openWorldHint?: false;
   };
 };
 
@@ -2889,6 +3222,7 @@ export const listProjectSessionMcpTools = (
     includeImport?: boolean;
     includeDownloadAsset?: boolean;
     includeScreenshot?: boolean;
+    includeResponsiveScreenshot?: boolean;
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
     includePreview?: boolean;
@@ -2940,10 +3274,33 @@ export const listProjectSessionMcpTools = (
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
   })),
+  ...(authContextOperationCommands.every((command) =>
+    operations.some((operation) => operation.command === command)
+  )
+    ? [inspectAuthContextTool]
+    : []),
+  ...(designContextOperationCommands.every((command) =>
+    operations.some((operation) => operation.command === command)
+  )
+    ? [inspectDesignContextTool]
+    : []),
+  ...(operations.some((operation) => operation.command === "get-asset")
+    ? [verifyFontAssetsTool]
+    : []),
+  ...(insertFragmentVerifiedOperationCommands.every((command) =>
+    operations.some((operation) => operation.command === command)
+  )
+    ? [createInsertFragmentVerifiedTool(operations)]
+    : []),
   ...(options.includeRestorePoints ? restorePointTools : []),
   ...(options.includeImport ? [importTool] : []),
   ...(options.includeDownloadAsset ? [downloadAssetTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
+  ...(options.includeResponsiveScreenshot ? [responsiveScreenshotTool] : []),
+  ...(options.includeResponsiveScreenshot &&
+  operations.some((operation) => operation.command === "audit")
+    ? [createResponsivePageVerificationTool(operations)]
+    : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
   ...(options.includePreview ? previewTools : []),
@@ -3000,6 +3357,7 @@ const capabilityAreas = [
       "preview.status",
       "preview.stop",
       "screenshot",
+      "verify-page-responsive",
       "screenshot.diff",
       "vision.install-ocr",
     ],
@@ -3012,6 +3370,9 @@ const capabilityAreas = [
       "meta.guide",
       "meta.get_more_tools",
       "workflow.next",
+      "inspect-auth-context",
+      "inspect-design-context",
+      "verify-font-assets",
       "components.summary",
       "components.coverage-plan",
       "components.coverage-status",
@@ -3066,6 +3427,7 @@ const capabilityAreas = [
       "list-instances",
       "inspect-instance",
       "insert-fragment",
+      "insert-fragment-verified",
       "insert-component",
       "move-instance",
       "clone-instance",
@@ -5038,28 +5400,28 @@ const metaGoalGuides = [
     pattern:
       /authenticated?\s+(?:page|route|screen)|(?:supabase|firebase)\s+auth|sign(?:ed)?[- ]?(?:in|out)|login\s+(?:page|flow)|user\s+session/i,
     tools: [
-      "get-project-settings",
-      "list-resources",
-      "list-variables",
+      "inspect-auth-context",
       "list-instances",
       "create-page",
       "create-resource",
       "create-variable",
-      "insert-fragment",
-      "bind-props",
-      "verify-bindings",
+      "insert-fragment-verified",
       "update-page",
-      "preview.start",
-      "screenshot",
-      "audit",
+      "verify-page-responsive",
     ],
     workflow: [
-      "Inspect the project's existing auth resources, variables, embeds, page settings, and agent instructions before choosing a provider workflow. Reuse that convention; do not add a second auth system implicitly.",
+      "Inspect the project's existing auth resources, variables, page settings, and agent instructions before choosing a provider workflow. Call inspect-auth-context exactly once instead of calling get-project-settings, list-pages, list-resources, or list-variables separately; use at most one focused search-project call only when that bundle does not identify the auth convention. Treat its pages section as authoritative for route existence. Do not call get-page-by-path to confirm that /account is absent. Reuse that convention; do not add a second auth system implicitly.",
+      "Do not call meta.index after this guide. If an exact mutation schema is still needed, make at most one meta.get_more_tools call listing all immediately required authoring tools rather than rediscovering them one at a time.",
       "Never place credentials, service-role keys, refresh tokens, private session values, or authenticated response bodies in project data, command output, screenshots, agent instructions, or error reports. Ask the user to configure secrets in the provider/server environment.",
       "Model explicit signed-out, loading, signed-in, and failed-auth UI states with ordinary components and bindings. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
       "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
-      "After creating or changing authentication expressions, call verify-bindings for the account page and resolve every validity, scope, and reference finding before previewing.",
-      "Preview and verify every auth state with non-secret fixture data, then audit the route. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.",
+      "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
+      'Create resources only after their scope and referenced variables exist. When reusing an existing server-mediated auth convention, copy its fixed request URL exactly into resource.url; resource.url is the HTTP request target, not a provider call or session-state expression. For the discovered /api/auth/session convention, use create-resource with resource:{name:"Account session via server",method:"get",url:"/api/auth/session",headers:[],searchParams:[]}, the new page root as scopeInstanceId, and a descriptive dataSourceName. Use literal wrappers only for fixed header, search-parameter, and body text.',
+      "Keep the server-mediated session resource as provider-convention evidence, but use only non-secret scoped fixture variables to drive local auth-state visibility. Do not bind that server-only resource into local preview rendering: its endpoint is intentionally absent locally and can recurse through the generated route.",
+      'Insert signed-out, loading, signed-in, and failed-auth panels together as one expression-free semantic fragment that acts as a state gallery. Keep all four panels visible together for local visual verification; do not add conditional visibility bindings or mutate fixture state solely to capture more screenshots. Use that exact fragment verbatim without adding styles, props, expressions, components, or changing its nesting: <ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-out</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Loading</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Signed-in</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Failed-auth</ws.element></ws.element></ws.element>.',
+      "Do not call selector-based structural tools such as wrap-instance unless a focused list-instances result supplied the complete non-empty selector from the target through its page root. Prefer direct style, prop, or binding corrections when the structure is already sound.",
+      'Insert the complete account fragment with insert-fragment-verified and {"pagePath":"/account"} so persisted bindings are checked in the same call. Resolve every returned validity, scope, and reference finding before previewing. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /account. Updating only a fixture variable\'s literal state does not require another binding verification.',
+      'Call verify-page-responsive once with path "/account" and the required desktop and mobile viewports; it starts or refreshes the session preview, captures both viewports in one browser session, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately. Do not run discovery, inspect-instance, mutate, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Do not claim the real provider flow works until redirects, session refresh, failure handling, and protected data access are exercised in its configured environment.',
     ],
   },
   {
@@ -5071,44 +5433,42 @@ const metaGoalGuides = [
       "upload-asset",
       "upload-assets",
       "update-asset",
-      "refresh",
-      "get-asset",
+      "verify-font-assets",
+      "audit",
     ],
     workflow: [
+      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
       "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
       "Use update-asset to correct font metadata without re-uploading the binary.",
-      'After font mutations, call refresh with {"namespaces":["assets"]}, then use get-asset for each changed id to verify the persisted metadata.',
+      "After font mutations, call verify-font-assets exactly once with every changed asset id. It refreshes the asset namespace and returns the persisted metadata in one bounded verification call; do not call refresh or get-asset separately.",
     ],
   },
   {
     pattern:
       /(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception)/i,
     tools: [
-      "list-pages",
-      "list-breakpoints",
-      "list-variables",
-      "list-design-tokens",
+      "inspect-design-context",
       "list-style-sources",
       "attach-design-token",
-      "list-assets",
       "components.search",
       "create-page",
-      "insert-fragment",
+      "insert-fragment-verified",
       "update-styles",
       "upload-asset",
-      "preview.start",
-      "screenshot",
+      "verify-page-responsive",
       "screenshot.diff",
-      "audit",
     ],
     workflow: [
+      "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
       "Interpret the supplied design before mutating: identify page sections, responsive behavior, reusable patterns, assets, typography, color, spacing, and interaction states. Ask for missing source assets rather than inventing brand-critical content.",
-      "Before the first mutation, call list-breakpoints and list-design-tokens. Reuse the returned breakpoint ids and attach relevant token ids to the new instances; do not continue with disconnected local copies when matching tokens exist.",
-      "Inspect the target project's pages, variables, design tokens, style sources, components, and assets. Reuse exact existing values and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
+      "Before the first mutation, call inspect-design-context exactly once instead of calling list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Use one list-instances call only when needed to inspect a representative existing page pattern. Do not call get-styles: the bounded design context and optional focused instance result provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
+      "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
       "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
-      "Create semantic editable structure with insert-fragment and known components. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
-      "Implement responsive behavior inside the project's actual breakpoint ranges. Capture one familiar desktop and mobile viewport, plus one representative viewport for any distinct intermediate breakpoint behavior.",
-      "Run rendered audit and inspect screenshots after each bounded page section. Iterate on hierarchy, overflow, wrapping, image choice, spacing, and states; visual similarity is evidence, not permission to discard accessibility or project conventions.",
+      "Create semantic editable structure with insert-fragment-verified using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
+      "Implement responsive behavior inside the project's actual breakpoint ranges.",
+      'Represent literal CSS values as {"type":"keyword","value":"..."}, including lengths such as "48px" and colors such as "#fff". Do not invent value types such as "length"; use {"type":"unit","value":48,"unit":"px"} only when numeric structure is specifically needed.',
+      "Each update-styles updates item is flat: include instanceId, property, value, and optional breakpoint directly on every item. Do not group properties under styles or declarations.",
+      'Call insert-fragment-verified exactly once with {"pagePath":"/summer"} so insertion and persisted binding verification share one bounded call; do not guess a page id or alternate input shape. Treat its verification result as the structural and binding checkpoint before attaching tokens or applying fixed style/page updates. If post-commit verification reports an infrastructure failure, do not repeat the insertion; call verify-bindings separately for /summer. Later fixed-value mutations do not require another binding verification. Finish them before visual verification, then call verify-page-responsive once with path "/summer" and exactly the two supplied viewports, 1440x900 and 390x844. It starts or refreshes preview automatically, captures both viewports, and immediately runs the static page audit. Do not call preview.start, screenshot, screenshot.responsive, or audit separately, and do not add exploratory or intermediate captures. Do not mutate, rediscover, or repeat binding verification after this terminal verification begins. The screenshots are the rendered evidence and the bundled audit is the static evidence. Visual similarity is evidence, not permission to discard accessibility or project conventions.',
     ],
   },
   {
@@ -5130,6 +5490,36 @@ const metaGoalGuides = [
   },
 ] as const;
 
+const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
+const metaGuideExampleTools = new Set(["upload-assets"]);
+
+const serializeMetaGuideTool = (
+  tool: ProjectSessionMcpTool,
+  includeHandshakeFields: boolean
+) =>
+  includeHandshakeFields
+    ? {
+        name: tool.name,
+        use: tool.description,
+        method: tool.annotations.method,
+        permit: tool.annotations.permit,
+        inputFields: tool.annotations.inputFields,
+        requiredInputFields: tool.annotations.requiredInputFields,
+        mcpExamples: tool.mcpExamples ?? [],
+        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
+          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
+          : {}),
+      }
+    : {
+        name: tool.name,
+        ...(metaGuideExampleTools.has(tool.name)
+          ? { mcpExamples: tool.mcpExamples ?? [] }
+          : {}),
+        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
+          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
+          : {}),
+      };
+
 const getMetaGuide = (
   brief: string,
   tools: readonly ProjectSessionMcpTool[],
@@ -5147,14 +5537,14 @@ const getMetaGuide = (
     (tool) => tool.name === "screenshot.diff"
   );
   return {
-    brief,
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: [
       ...(goalGuide?.workflow ?? []),
       "Use the fewest discovery calls needed for the immediate action.",
       "Call permissions or status only when the task depends on capabilities or local session freshness.",
-      matches.some((tool) => tool.annotations.localCapable)
+      matches.some((tool) => tool.annotations.localCapable) &&
+      matches.some((tool) => tool.name === "verify-font-assets") === false
         ? "Call refresh if cached namespaces may be stale."
         : undefined,
       "Use focused read tools to collect ids and current values.",
@@ -5165,16 +5555,13 @@ const getMetaGuide = (
         ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
         : undefined,
     ].filter(Boolean),
-    tools: matches.map((tool) => ({
-      name: tool.name,
-      use: tool.description,
-      method: tool.annotations.method,
-      permit: tool.annotations.permit,
-      inputFields: tool.annotations.inputFields,
-      requiredInputFields: tool.annotations.requiredInputFields,
-      mcpExamples: tool.mcpExamples ?? [],
-    })),
-    more: "Call meta.get_more_tools with the same brief for params, examples, namespaces, and server/local behavior.",
+    tools: matches.map((tool) =>
+      serializeMetaGuideTool(tool, goalGuide === undefined)
+    ),
+    more:
+      goalGuide === undefined
+        ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
+        : "The MCP client loads each named tool's exact argument contract before calling it. This guide includes a complete schema only for selected complex inputs. Call meta.get_more_tools once with all needed tool names only when the client does not expose a nested input shape or when you need server/local behavior that the guide does not cover.",
   };
 };
 
@@ -5489,22 +5876,124 @@ export const isReadOnlyProjectSessionMcpToolCall = (
   );
 };
 
-const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
-  name: tool.name,
-  description: tool.description,
-  inputSchema: tool.inputSchema,
-  ...(tool.outputSchema === undefined
-    ? {}
-    : { outputSchema: tool.outputSchema }),
-  annotations: {
-    readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),
-    destructiveHint: tool.annotations.requiresConfirm,
-    openWorldHint: tool.annotations.serverOnly,
-  },
-  _meta: {
-    webstudio: tool.annotations,
-  },
-});
+const sdkScalarSchemaKeys = new Set([
+  "type",
+  "enum",
+  "const",
+  "format",
+  "default",
+  "minimum",
+  "maximum",
+  "exclusiveMinimum",
+  "exclusiveMaximum",
+  "multipleOf",
+  "minLength",
+  "maxLength",
+  "pattern",
+  "minItems",
+  "maxItems",
+  "uniqueItems",
+]);
+
+const sdkDetailedOptionalSchemaProperties = new Set([
+  "dryRun",
+  "confirmDestructive",
+  "confirmationToken",
+]);
+
+const getSdkSchemaProperty = (
+  value: InputJsonSchemaValue
+): InputJsonSchemaValue => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  const result: InputJsonSchema = Object.fromEntries(
+    Object.entries(value).filter(([key]) => sdkScalarSchemaKeys.has(key))
+  );
+  if (value.items !== undefined) {
+    result.items = getSdkSchemaProperty(value.items);
+  }
+  for (const key of ["allOf", "anyOf", "oneOf", "prefixItems"] as const) {
+    const branches = value[key];
+    if (Array.isArray(branches)) {
+      result[key] = branches.map(getSdkSchemaProperty);
+    }
+  }
+  return result;
+};
+
+const getSdkInputSchema = (
+  schema: ProjectSessionMcpInputSchema,
+  includeOptionalProperties: boolean
+): ProjectSessionMcpInputSchema => {
+  const required = new Set(schema.required ?? []);
+  const properties = Object.fromEntries(
+    Object.entries(schema.properties ?? {}).flatMap(([name, value]) =>
+      required.has(name) ||
+      includeOptionalProperties ||
+      sdkDetailedOptionalSchemaProperties.has(name)
+        ? [
+            [
+              name,
+              required.has(name) ||
+              sdkDetailedOptionalSchemaProperties.has(name)
+                ? getSdkSchemaProperty(value)
+                : {},
+            ],
+          ]
+        : []
+    )
+  );
+  return {
+    type: "object",
+    additionalProperties:
+      schema.additionalProperties === undefined
+        ? false
+        : getSdkSchemaProperty(schema.additionalProperties),
+    ...(Object.keys(properties).length === 0 ? {} : { properties }),
+    ...(required.size === 0 ? {} : { required: [...required] }),
+  };
+};
+
+const sdkDescribedToolNames = new Set([
+  "meta.index",
+  "meta.guide",
+  "meta.get_more_tools",
+  "workflow.next",
+  ...metaGoalGuides.flatMap(({ tools }) => tools),
+]);
+
+const getSdkToolAnnotations = (tool: ProjectSessionMcpTool) => {
+  const readOnly = isReadOnlyProjectSessionMcpTool(tool);
+  const annotations: NonNullable<SdkTool["annotations"]> = {
+    ...(readOnly ? { readOnlyHint: true } : {}),
+    ...(readOnly === false && tool.annotations.requiresConfirm === false
+      ? { destructiveHint: false }
+      : {}),
+    ...(tool.annotations.serverOnly ? {} : { openWorldHint: false }),
+  };
+  return Object.keys(annotations).length === 0 ? undefined : annotations;
+};
+
+// Keep output contracts, complete input guidance, and Webstudio operation
+// metadata for local validation, generated documentation, and focused
+// discovery. The startup instructions and described discovery tools route
+// models to meta.guide, which returns descriptions for the relevant operation
+// set. Do not resend descriptions for every operation in every MCP handshake.
+const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
+  const annotations = getSdkToolAnnotations(tool);
+  return {
+    name: tool.name,
+    ...(sdkDescribedToolNames.has(tool.name)
+      ? { description: tool.description }
+      : {}),
+    inputSchema: getSdkInputSchema(
+      tool.inputSchema,
+      sdkDescribedToolNames.has(tool.name)
+    ),
+    ...(annotations === undefined ? {} : { annotations }),
+  };
+};
 
 export const listProjectSessionMcpResources =
   (): ProjectSessionMcpResource[] => [
@@ -5585,6 +6074,27 @@ const getDestructivePlanSummary = (
   };
 };
 
+const maxMcpStyleKeyResults = 20;
+
+const compactMcpOperationResult = (result: unknown) => {
+  if (isPlainRecord(result) === false) {
+    return result;
+  }
+  const styleKeys = result.styleKeys;
+  if (
+    Array.isArray(styleKeys) === false ||
+    styleKeys.length <= maxMcpStyleKeyResults
+  ) {
+    return result;
+  }
+  return {
+    ...result,
+    styleKeys: styleKeys.slice(0, maxMcpStyleKeyResults),
+    styleKeyCount: styleKeys.length,
+    styleKeysTruncated: true,
+  };
+};
+
 const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
@@ -5607,12 +6117,12 @@ const toCallResult = (
     options.error === undefined
       ? {
           ok: true,
-          data: envelope.result,
+          data: compactMcpOperationResult(envelope.result),
           meta,
         }
       : {
           ok: false,
-          data: envelope.result,
+          data: compactMcpOperationResult(envelope.result),
           error: options.error,
           meta,
         };
@@ -5919,6 +6429,39 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
   };
 };
 
+const getResponsiveScreenshotInputs = (
+  input: unknown
+): ProjectSessionScreenshotInput[] => {
+  if (isRecord(input) === false) {
+    throw new Error("screenshot.responsive input must be an object.");
+  }
+  if (
+    Array.isArray(input.viewports) === false ||
+    input.viewports.length === 0 ||
+    input.viewports.length > 8
+  ) {
+    throw new Error(
+      "screenshot.responsive input.viewports must contain between 1 and 8 viewport objects."
+    );
+  }
+  return input.viewports.map((viewport, index) => {
+    if (
+      isRecord(viewport) === false ||
+      typeof viewport.width !== "number" ||
+      Number.isInteger(viewport.width) === false ||
+      viewport.width <= 0 ||
+      typeof viewport.height !== "number" ||
+      Number.isInteger(viewport.height) === false ||
+      viewport.height <= 0
+    ) {
+      throw new Error(
+        `screenshot.responsive input.viewports.${index} must contain positive integer width and height.`
+      );
+    }
+    return getScreenshotInput({ ...input, viewport });
+  });
+};
+
 const isValidScreenshotDiffVisualExpectation = (
   value: unknown
 ): value is ScreenshotVisualExpectation => {
@@ -6220,6 +6763,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       includeImport: importProject !== undefined,
       includeDownloadAsset: downloadAsset !== undefined,
       includeScreenshot: captureScreenshot !== undefined,
+      includeResponsiveScreenshot: capturePageScreenshots !== undefined,
       includeScreenshotDiff: diffScreenshots !== undefined,
       includeInstallOcr: installOcr !== undefined,
       includePreview:
@@ -6238,6 +6782,63 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       command: command as Command,
       input,
       dryRun: false,
+    });
+  };
+  const callContextBundle = async ({
+    toolName,
+    operationId,
+    calls,
+    getResult,
+  }: {
+    toolName: string;
+    operationId: string;
+    calls: readonly {
+      command: string;
+      input: Record<string, unknown>;
+      resultKey?: string;
+    }[];
+    getResult: (results: ReadonlyMap<string, unknown>) => unknown;
+  }) => {
+    const envelopes: Array<{
+      command: string;
+      envelope: ProjectSessionEnvelope;
+    }> = [];
+    for (const { command, input, resultKey } of calls) {
+      if (operationByCommand.has(command as Command) === false) {
+        throw new Error(`${toolName} requires the ${command} operation.`);
+      }
+      envelopes.push({
+        command: resultKey ?? command,
+        envelope: await executeOperation({
+          command: command as Command,
+          input,
+          dryRun: false,
+        }),
+      });
+    }
+    const lastEnvelope = envelopes.at(-1)?.envelope;
+    if (lastEnvelope === undefined) {
+      throw new Error(`${toolName} produced no results.`);
+    }
+    const resultByCommand = new Map(
+      envelopes.map(({ command, envelope }) => [command, envelope.result])
+    );
+    const mergeNamespaces = (
+      key: keyof ProjectSessionEnvelope["namespaces"]
+    ) => [
+      ...new Set(envelopes.flatMap(({ envelope }) => envelope.namespaces[key])),
+    ];
+    return toCallResult({
+      ...lastEnvelope,
+      operationId,
+      result: getResult(resultByCommand),
+      namespaces: {
+        read: mergeNamespaces("read"),
+        write: mergeNamespaces("write"),
+        invalidated: mergeNamespaces("invalidated"),
+        missing: mergeNamespaces("missing"),
+      },
+      diagnostics: envelopes.flatMap(({ envelope }) => envelope.diagnostics),
     });
   };
   return {
@@ -6432,6 +7033,82 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           getMetaGuide(getBrief(input, "meta.guide"), listTools(), guidance)
         );
       }
+      if (name === "inspect-auth-context") {
+        if (isPlainRecord(input) === false || Object.keys(input).length > 0) {
+          throw new Error("inspect-auth-context does not accept input.");
+        }
+        return await callContextBundle({
+          toolName: name,
+          operationId: "workflow.auth-context",
+          calls: [
+            { command: "get-project-settings", input: {} },
+            { command: "list-pages", input: { limit: 50 } },
+            { command: "list-resources", input: { limit: 50 } },
+            { command: "list-variables", input: { limit: 50 } },
+          ],
+          getResult: (resultByCommand) => ({
+            projectSettings: resultByCommand.get("get-project-settings"),
+            pages: resultByCommand.get("list-pages"),
+            resources: resultByCommand.get("list-resources"),
+            variables: resultByCommand.get("list-variables"),
+          }),
+        });
+      }
+      if (name === "inspect-design-context") {
+        if (isPlainRecord(input) === false || Object.keys(input).length > 0) {
+          throw new Error("inspect-design-context does not accept input.");
+        }
+        return await callContextBundle({
+          toolName: name,
+          operationId: "workflow.design-context",
+          calls: [
+            { command: "list-pages", input: { limit: 50 } },
+            { command: "list-breakpoints", input: {} },
+            { command: "list-design-tokens", input: { limit: 50 } },
+            { command: "list-assets", input: { limit: 50 } },
+            { command: "list-variables", input: { limit: 50 } },
+          ],
+          getResult: (resultByCommand) => ({
+            pages: resultByCommand.get("list-pages"),
+            breakpoints: resultByCommand.get("list-breakpoints"),
+            designTokens: resultByCommand.get("list-design-tokens"),
+            assets: resultByCommand.get("list-assets"),
+            variables: resultByCommand.get("list-variables"),
+          }),
+        });
+      }
+      if (name === "verify-font-assets") {
+        if (
+          isPlainRecord(input) === false ||
+          Array.isArray(input.assetIds) === false ||
+          input.assetIds.length === 0 ||
+          input.assetIds.length > 50 ||
+          input.assetIds.some(
+            (assetId) => typeof assetId !== "string" || assetId.length === 0
+          )
+        ) {
+          throw new Error(
+            "verify-font-assets requires assetIds with 1 to 50 non-empty strings."
+          );
+        }
+        const assetIds = [...new Set(input.assetIds as string[])];
+        const projectSession = getSession();
+        await projectSession.initialize();
+        await projectSession.refresh(["assets"]);
+        onProjectSessionChange?.();
+        return await callContextBundle({
+          toolName: name,
+          operationId: "workflow.verify-font-assets",
+          calls: assetIds.map((assetId) => ({
+            command: "get-asset",
+            resultKey: assetId,
+            input: { assetId },
+          })),
+          getResult: (resultByAssetId) => ({
+            assets: assetIds.map((assetId) => resultByAssetId.get(assetId)),
+          }),
+        });
+      }
       if (name === "workflow.next") {
         return toCheckpointedMetaResult(name, getWorkflowNext(input));
       }
@@ -6563,6 +7240,54 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           })
         );
       }
+      if (
+        name === "verify-page-responsive" &&
+        capturePageScreenshots !== undefined
+      ) {
+        const auditOperation = operationByCommand.get("audit" as Command);
+        if (auditOperation === undefined) {
+          throw new Error(
+            "verify-page-responsive requires the audit operation."
+          );
+        }
+        const screenshotInputs = getResponsiveScreenshotInputs(input);
+        const pagePath = screenshotInputs[0]?.path;
+        if (typeof pagePath !== "string" || pagePath.length === 0) {
+          throw new Error(
+            "verify-page-responsive requires a generated route path."
+          );
+        }
+        const screenshots = await capturePageScreenshots(screenshotInputs, {
+          report: (message) => {
+            reportToolProgress?.(message);
+          },
+        });
+        const auditEnvelope = await executeOperation({
+          command: "audit" as Command,
+          input: getNormalizedOperationInput(auditOperation, { pagePath }),
+          dryRun: false,
+        });
+        return toCallResult({
+          ...auditEnvelope,
+          operationId: "workflow.verify-page-responsive",
+          result: { screenshots, audit: auditEnvelope.result },
+        });
+      }
+      if (
+        name === "screenshot.responsive" &&
+        capturePageScreenshots !== undefined
+      ) {
+        return toMetaResult({
+          screenshots: await capturePageScreenshots(
+            getResponsiveScreenshotInputs(input),
+            {
+              report: (message) => {
+                reportToolProgress?.(message);
+              },
+            }
+          ),
+        });
+      }
       if (name === "screenshot.diff" && diffScreenshots !== undefined) {
         return toMetaResult(
           await diffScreenshots(getScreenshotDiffInput(input))
@@ -6586,6 +7311,137 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (name === "preview.stop" && stopPreview !== undefined) {
         return toMetaResult(await stopPreview());
+      }
+      if (name === "insert-fragment-verified") {
+        const insertionOperation = operationByCommand.get(
+          "insert-fragment" as Command
+        );
+        const verificationOperation = operationByCommand.get(
+          "verify-bindings" as Command
+        );
+        if (
+          insertionOperation === undefined ||
+          verificationOperation === undefined
+        ) {
+          throw new Error(
+            "insert-fragment-verified requires insert-fragment and verify-bindings operations."
+          );
+        }
+        const transportInput = getToolCallInput(input);
+        if (
+          isPlainRecord(transportInput.input) === false ||
+          typeof transportInput.input.pagePath !== "string"
+        ) {
+          throw new Error(
+            "insert-fragment-verified requires a pagePath for persisted binding verification."
+          );
+        }
+        const insertionInput = getNormalizedOperationInput(
+          insertionOperation,
+          await getInsertFragmentInput(transportInput.input)
+        );
+        const verificationInput = getNormalizedOperationInput(
+          verificationOperation,
+          { pagePath: transportInput.input.pagePath, limit: 200 }
+        );
+        const compositeDryRun = dryRun || transportInput.dryRun;
+        const insertionEnvelope = await executeOperation({
+          command: "insert-fragment" as Command,
+          input: insertionInput,
+          dryRun: compositeDryRun,
+        });
+        if (compositeDryRun) {
+          return toCallResult(
+            {
+              ...insertionEnvelope,
+              operationId: "workflow.insert-fragment-verified",
+              result: {
+                insertion: insertionEnvelope.result,
+                verification: {
+                  status: "skipped",
+                  reason: "Verification runs only after a committed insertion.",
+                },
+              },
+            },
+            {
+              next: [
+                "Review the planned insertion. Commit it with the same input and dryRun omitted before relying on binding verification.",
+              ],
+            }
+          );
+        }
+        let verificationEnvelope: ProjectSessionEnvelope;
+        try {
+          verificationEnvelope = await executeOperation({
+            command: "verify-bindings" as Command,
+            input: verificationInput,
+            dryRun: false,
+          });
+        } catch {
+          return toCallResult(
+            {
+              ...insertionEnvelope,
+              operationId: "workflow.insert-fragment-verified",
+              result: {
+                insertion: insertionEnvelope.result,
+                verification: { status: "failed-after-commit" },
+              },
+            },
+            {
+              error: {
+                code: "POST_COMMIT_VERIFICATION_FAILED",
+                message:
+                  "The fragment was committed, but binding verification could not run. Do not retry the insertion; call verify-bindings separately for the same pagePath.",
+              },
+              next: [
+                "Do not retry insert-fragment-verified. Call verify-bindings separately for the same pagePath and resolve every finding.",
+              ],
+            }
+          );
+        }
+        const mergeNamespaces = (
+          key: keyof ProjectSessionEnvelope["namespaces"]
+        ) => [
+          ...new Set([
+            ...insertionEnvelope.namespaces[key],
+            ...verificationEnvelope.namespaces[key],
+          ]),
+        ];
+        return toCallResult(
+          {
+            ...verificationEnvelope,
+            operationId: "workflow.insert-fragment-verified",
+            result: {
+              insertion: insertionEnvelope.result,
+              verification: verificationEnvelope.result,
+            },
+            state: {
+              ...verificationEnvelope.state,
+              committed: insertionEnvelope.state.committed,
+            },
+            namespaces: {
+              read: mergeNamespaces("read"),
+              write: mergeNamespaces("write"),
+              invalidated: mergeNamespaces("invalidated"),
+              missing: mergeNamespaces("missing"),
+            },
+            diagnostics: [
+              ...insertionEnvelope.diagnostics,
+              ...verificationEnvelope.diagnostics,
+            ],
+          },
+          {
+            next: [
+              "Resolve every binding verification finding before previewing.",
+              "Before reporting completion, run audit for the changed page or project.",
+              ...(startPreview !== undefined && captureScreenshot !== undefined
+                ? [
+                    "For visual changes, start a session preview and capture desktop and mobile screenshots before reporting completion.",
+                  ]
+                : []),
+            ],
+          }
+        );
       }
       const operation = operationByCommand.get(name as Command);
       if (operation === undefined) {

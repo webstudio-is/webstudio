@@ -6,100 +6,164 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "79baa45fea9cee997dfac56c6d33eaf4400efe5e5155db9934c4c82c9df41c83",
+  "commandSha256": "f3973839321d489a88526e5e1751d54aa9391af61107e56165cd35520c60a96a",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 529970,
+    "durationMs": 94027,
     "tokens": {
-      "input": 6976750,
-      "cachedInput": 6771712,
+      "input": 319553,
+      "cachedInput": 275200,
+      "uncachedInput": 44353,
       "cacheWriteInput": 0,
-      "output": 17054,
-      "reasoningOutput": 4582,
-      "total": 6993804,
-      "cachedInputRate": 0.9706
+      "output": 1843,
+      "reasoningOutput": 505,
+      "total": 321396,
+      "cachedInputRate": 0.8612
+    },
+    "mcpCatalog": {
+      "responses": 1,
+      "totalResponseBytes": 51362,
+      "maxResponseBytes": 51362,
+      "latestToolCount": 176,
+      "latestResponseBytes": 51362,
+      "latestInputSchemaBytes": 28964,
+      "latestDescriptionBytes": 4556
     },
     "toolCalls": {
-      "total": 62,
-      "succeeded": 51,
-      "failed": 11,
-      "retries": 10,
-      "focusedReads": 8,
+      "total": 8,
+      "succeeded": 8,
+      "failed": 0,
+      "failuresByTool": {},
+      "failuresByCode": {},
+      "issuesByCode": {},
+      "issuesByPath": {},
+      "durationsByTool": {
+        "audit": {
+          "count": 1,
+          "totalMs": 10,
+          "p95Ms": 10,
+          "maxMs": 10
+        },
+        "create-page": {
+          "count": 1,
+          "totalMs": 29,
+          "p95Ms": 29,
+          "maxMs": 29
+        },
+        "create-resource": {
+          "count": 1,
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
+        },
+        "create-variable": {
+          "count": 1,
+          "totalMs": 24,
+          "p95Ms": 24,
+          "maxMs": 24
+        },
+        "insert-fragment-verified": {
+          "count": 1,
+          "totalMs": 68,
+          "p95Ms": 68,
+          "maxMs": 68
+        },
+        "inspect-auth-context": {
+          "count": 1,
+          "totalMs": 22,
+          "p95Ms": 22,
+          "maxMs": 22
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalMs": 10,
+          "p95Ms": 10,
+          "maxMs": 10
+        },
+        "screenshot.responsive": {
+          "count": 1,
+          "totalMs": 9439,
+          "p95Ms": 9439,
+          "maxMs": 9439
+        }
+      },
+      "responseBytesByTool": {
+        "audit": {
+          "count": 1,
+          "totalBytes": 4762,
+          "p95Bytes": 4762,
+          "maxBytes": 4762
+        },
+        "create-page": {
+          "count": 1,
+          "totalBytes": 1342,
+          "p95Bytes": 1342,
+          "maxBytes": 1342
+        },
+        "create-resource": {
+          "count": 1,
+          "totalBytes": 1644,
+          "p95Bytes": 1644,
+          "maxBytes": 1644
+        },
+        "create-variable": {
+          "count": 1,
+          "totalBytes": 1554,
+          "p95Bytes": 1554,
+          "maxBytes": 1554
+        },
+        "insert-fragment-verified": {
+          "count": 1,
+          "totalBytes": 2662,
+          "p95Bytes": 2662,
+          "maxBytes": 2662
+        },
+        "inspect-auth-context": {
+          "count": 1,
+          "totalBytes": 2576,
+          "p95Bytes": 2576,
+          "maxBytes": 2576
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalBytes": 15932,
+          "p95Bytes": 15932,
+          "maxBytes": 15932
+        },
+        "screenshot.responsive": {
+          "count": 1,
+          "totalBytes": 7064,
+          "p95Bytes": 7064,
+          "maxBytes": 7064
+        }
+      },
+      "retries": 0,
+      "focusedReads": 1,
       "broadReads": 0,
-      "dryRuns": 12,
-      "plannedMutations": 7,
-      "committedMutations": 17,
-      "verifications": 10,
-      "totalDurationMs": 165266,
-      "p50DurationMs": 20,
-      "p95DurationMs": 27606,
-      "timeToFirstMutationMs": 69436,
-      "timeToFirstVerificationMs": 177942
+      "dryRuns": 0,
+      "plannedMutations": 0,
+      "committedMutations": 4,
+      "verifications": 3,
+      "totalDurationMs": 9622,
+      "p50DurationMs": 22,
+      "p95DurationMs": 9439,
+      "totalResponseBytes": 37536,
+      "p50ResponseBytes": 2576,
+      "p95ResponseBytes": 15932,
+      "maxResponseBytes": 15932,
+      "timeToFirstMutationMs": 39076,
+      "timeToFirstVerificationMs": 67660
     }
   },
   "callSequence": [
     "meta.guide",
-    "meta.index",
-    "list-pages",
-    "list-resources",
-    "list-variables",
-    "list-instances",
-    "get-project-settings",
-    "meta.get_more_tools",
-    "search-project",
-    "meta.get_more_tools",
+    "inspect-auth-context",
     "create-page",
-    "create-page",
+    "create-variable",
     "create-resource",
-    "create-resource",
-    "create-variable",
-    "create-variable",
-    "create-variable",
-    "insert-fragment",
-    "insert-fragment",
-    "verify-bindings",
-    "list-breakpoints",
-    "update-styles",
-    "update-styles",
-    "preview.start",
-    "preview.start",
-    "screenshot",
-    "wrap-instance",
-    "wrap-instance",
-    "wrap-instance",
-    "wrap-instance",
-    "wrap-instance",
-    "wrap-instance",
-    "wrap-instance",
-    "wrap-instance",
-    "list-instances",
-    "wrap-instance",
-    "bind-props",
-    "bind-props",
-    "verify-bindings",
-    "screenshot",
-    "update-resource",
-    "update-resource",
-    "preview.start",
-    "screenshot",
-    "screenshot",
-    "update-variable",
-    "screenshot",
-    "update-resource",
-    "update-resource",
-    "update-resource",
-    "preview.start",
-    "preview.stop",
-    "preview.start",
-    "screenshot",
-    "update-variable",
-    "screenshot",
-    "update-variable",
-    "screenshot",
-    "update-variable",
-    "verify-bindings",
-    "audit",
-    "preview.stop"
+    "insert-fragment-verified",
+    "screenshot.responsive",
+    "audit"
   ],
   "checks": {
     "guidance": "passed",

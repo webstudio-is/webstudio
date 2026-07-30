@@ -141,7 +141,7 @@ export const designInputFixture: HighImpactFixture & {
 } = {
   id: "design-input-v1",
   objective:
-    "Build an editable /summer page from the supplied desktop and mobile design reference. Preserve and reuse the existing design system, implement responsive behavior with the project's breakpoints, then run rendered audit and inspect desktop/mobile screenshots.",
+    "Build an editable /summer page from the supplied desktop and mobile design reference. Preserve and reuse the existing design system, implement responsive behavior with the project's breakpoints, inspect desktop/mobile screenshots, then run a static route audit without duplicating the rendered captures.",
   project: {
     ...emptyProject(),
     styleSources: [

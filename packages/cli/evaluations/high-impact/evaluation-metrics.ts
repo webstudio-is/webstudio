@@ -4,6 +4,7 @@ import type { EvaluationToolCall } from "./validate";
 export type AgentUsage = {
   input: number;
   cachedInput: number;
+  uncachedInput: number;
   cacheWriteInput: number;
   output: number;
   reasoningOutput: number;
@@ -22,9 +23,13 @@ const createAgentUsage = ({
   cacheWriteInput,
   output,
   reasoningOutput,
-}: Omit<AgentUsage, "total" | "cachedInputRate">): AgentUsage => ({
+}: Omit<
+  AgentUsage,
+  "total" | "cachedInputRate" | "uncachedInput"
+>): AgentUsage => ({
   input,
   cachedInput,
+  uncachedInput: Math.max(0, input - cachedInput),
   cacheWriteInput,
   output,
   reasoningOutput,
@@ -32,6 +37,47 @@ const createAgentUsage = ({
   cachedInputRate:
     input === 0 ? 0 : Math.round((cachedInput / input) * 10_000) / 10_000,
 });
+
+export type McpCatalogObservation = {
+  kind: "tools-list";
+  toolCount: number;
+  responseBytes: number;
+  inputSchemaBytes: number;
+  descriptionBytes: number;
+};
+
+export type McpCatalogMetrics = {
+  responses: number;
+  totalResponseBytes: number;
+  maxResponseBytes: number;
+  latestToolCount: number;
+  latestResponseBytes: number;
+  latestInputSchemaBytes: number;
+  latestDescriptionBytes: number;
+};
+
+export const getMcpCatalogMetrics = (
+  observations: readonly McpCatalogObservation[]
+): McpCatalogMetrics | undefined => {
+  const latest = observations.at(-1);
+  if (latest === undefined) {
+    return;
+  }
+  return {
+    responses: observations.length,
+    totalResponseBytes: observations.reduce(
+      (total, observation) => total + observation.responseBytes,
+      0
+    ),
+    maxResponseBytes: Math.max(
+      ...observations.map((observation) => observation.responseBytes)
+    ),
+    latestToolCount: latest.toolCount,
+    latestResponseBytes: latest.responseBytes,
+    latestInputSchemaBytes: latest.inputSchemaBytes,
+    latestDescriptionBytes: latest.descriptionBytes,
+  };
+};
 
 export const getAgentUsageEvent = (value: unknown): AgentUsage | undefined => {
   if (
@@ -84,6 +130,18 @@ export type McpEvaluationMetrics = {
   total: number;
   succeeded: number;
   failed: number;
+  failuresByTool: Record<string, number>;
+  failuresByCode: Record<string, number>;
+  issuesByCode: Record<string, number>;
+  issuesByPath: Record<string, number>;
+  durationsByTool: Record<
+    string,
+    { count: number; totalMs: number; p95Ms: number; maxMs: number }
+  >;
+  responseBytesByTool: Record<
+    string,
+    { count: number; totalBytes: number; p95Bytes: number; maxBytes: number }
+  >;
   retries: number;
   focusedReads: number;
   broadReads: number;
@@ -94,6 +152,10 @@ export type McpEvaluationMetrics = {
   totalDurationMs: number;
   p50DurationMs: number;
   p95DurationMs: number;
+  totalResponseBytes: number;
+  p50ResponseBytes: number;
+  p95ResponseBytes: number;
+  maxResponseBytes: number;
   timeToFirstMutationMs?: number;
   timeToFirstVerificationMs?: number;
 };
@@ -107,8 +169,11 @@ const broadReadNames = new Set([
 const verificationNames = new Set([
   "audit",
   "screenshot",
+  "screenshot.responsive",
+  "verify-page-responsive",
   "screenshot.diff",
   "verify-bindings",
+  "insert-fragment-verified",
 ]);
 
 export const isFocusedRead = (name: string) =>
@@ -123,6 +188,56 @@ const percentile = (values: number[], proportion: number) => {
   const sorted = values.toSorted((left, right) => left - right);
   const index = Math.max(0, Math.ceil(sorted.length * proportion) - 1);
   return sorted[index] ?? 0;
+};
+
+const getDurationsByTool = (calls: readonly EvaluationToolCall[]) => {
+  const durations = new Map<string, number[]>();
+  for (const call of calls) {
+    if (call.durationMs === undefined) {
+      continue;
+    }
+    const values = durations.get(call.name) ?? [];
+    values.push(call.durationMs);
+    durations.set(call.name, values);
+  }
+  return Object.fromEntries(
+    [...durations.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, values]) => [
+        name,
+        {
+          count: values.length,
+          totalMs: values.reduce((total, value) => total + value, 0),
+          p95Ms: percentile(values, 0.95),
+          maxMs: Math.max(...values),
+        },
+      ])
+  );
+};
+
+const getResponseBytesByTool = (calls: readonly EvaluationToolCall[]) => {
+  const responseBytes = new Map<string, number[]>();
+  for (const call of calls) {
+    if (call.responseBytes === undefined) {
+      continue;
+    }
+    const values = responseBytes.get(call.name) ?? [];
+    values.push(call.responseBytes);
+    responseBytes.set(call.name, values);
+  }
+  return Object.fromEntries(
+    [...responseBytes.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, values]) => [
+        name,
+        {
+          count: values.length,
+          totalBytes: values.reduce((total, value) => total + value, 0),
+          p95Bytes: percentile(values, 0.95),
+          maxBytes: Math.max(...values),
+        },
+      ])
+  );
 };
 
 const countRetries = (calls: readonly EvaluationToolCall[]) => {
@@ -141,11 +256,24 @@ const countRetries = (calls: readonly EvaluationToolCall[]) => {
   return retries;
 };
 
+const countValues = (values: readonly string[]) =>
+  Object.fromEntries(
+    [...new Set(values)]
+      .sort((left, right) => left.localeCompare(right))
+      .map((value) => [
+        value,
+        values.filter((candidate) => candidate === value).length,
+      ])
+  );
+
 export const getMcpEvaluationMetrics = (
   calls: readonly EvaluationToolCall[]
 ): McpEvaluationMetrics => {
   const durations = calls.flatMap(({ durationMs }) =>
     durationMs === undefined ? [] : [durationMs]
+  );
+  const responseBytes = calls.flatMap(({ responseBytes }) =>
+    responseBytes === undefined ? [] : [responseBytes]
   );
   const firstMutation = calls.find(
     (call) => call.committed === true && call.isError !== true
@@ -153,10 +281,27 @@ export const getMcpEvaluationMetrics = (
   const firstVerification = calls.find(
     (call) => verificationNames.has(call.name) && call.isError !== true
   );
+  const failedCalls = calls.filter((call) => call.isError === true);
   return {
     total: calls.length,
     succeeded: calls.filter((call) => call.isError !== true).length,
-    failed: calls.filter((call) => call.isError === true).length,
+    failed: failedCalls.length,
+    failuresByTool: countValues(failedCalls.map((call) => call.name)),
+    failuresByCode: countValues(
+      failedCalls.map((call) => call.errorCode ?? "UNKNOWN")
+    ),
+    issuesByCode: countValues(
+      failedCalls.flatMap((call) =>
+        (call.errorIssues ?? []).map((issue) => issue.code)
+      )
+    ),
+    issuesByPath: countValues(
+      failedCalls.flatMap((call) =>
+        (call.errorIssues ?? []).map((issue) => issue.path)
+      )
+    ),
+    durationsByTool: getDurationsByTool(calls),
+    responseBytesByTool: getResponseBytesByTool(calls),
     retries: countRetries(calls),
     focusedReads: calls.filter((call) => isFocusedRead(call.name)).length,
     broadReads: calls.filter((call) => isBroadRead(call.name)).length,
@@ -173,6 +318,14 @@ export const getMcpEvaluationMetrics = (
     totalDurationMs: durations.reduce((total, value) => total + value, 0),
     p50DurationMs: percentile(durations, 0.5),
     p95DurationMs: percentile(durations, 0.95),
+    totalResponseBytes: responseBytes.reduce(
+      (total, value) => total + value,
+      0
+    ),
+    p50ResponseBytes: percentile(responseBytes, 0.5),
+    p95ResponseBytes: percentile(responseBytes, 0.95),
+    maxResponseBytes:
+      responseBytes.length === 0 ? 0 : Math.max(...responseBytes),
     ...(firstMutation?.startedAtMs === undefined
       ? {}
       : { timeToFirstMutationMs: firstMutation.startedAtMs }),

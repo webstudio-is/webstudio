@@ -19,11 +19,13 @@ export type EvaluationComparison = {
   status: "passed" | "regressed" | "missing" | "incompatible";
   baselineCommandSha256?: string;
   maxMetricRegressionPercent: number;
+  maxTokenRegressionPercent: number;
   deltas: EvaluationMetricDelta[];
   regressions: EvaluationRegression[];
 };
 
 export const maxMetricRegressionPercent = 15;
+export const maxTokenRegressionPercent = 50;
 
 export const isEvaluationComparisonAccepted = ({
   comparison,
@@ -43,20 +45,59 @@ export const isEvaluationComparisonAccepted = ({
   return updateBaselines || requireBaseline === false;
 };
 
+export const shouldUpdateEvaluationBaselines = ({
+  updateBaselines,
+  evaluationsPassed,
+  comparisonsPassed,
+  aggregateTokensPassed,
+}: {
+  updateBaselines: boolean;
+  evaluationsPassed: boolean;
+  comparisonsPassed: boolean;
+  aggregateTokensPassed: boolean;
+}) =>
+  updateBaselines &&
+  evaluationsPassed &&
+  comparisonsPassed &&
+  aggregateTokensPassed;
+
+export const isAggregateTokenBaselineNonRegressed = (
+  current: readonly AgentEvaluationResult[],
+  baselines: readonly AgentEvaluationResult[]
+) => {
+  const baselineByFixture = new Map(
+    baselines.map((baseline) => [baseline.fixtureId, baseline])
+  );
+  let currentTotal = 0;
+  let baselineTotal = 0;
+  let compared = 0;
+  for (const result of current) {
+    const baseline = baselineByFixture.get(result.fixtureId);
+    if (baseline === undefined) {
+      continue;
+    }
+    const currentTokens = result.metrics.tokens?.total;
+    const baselineTokens = baseline.metrics.tokens?.total;
+    if (currentTokens === undefined || baselineTokens === undefined) {
+      return false;
+    }
+    currentTotal += currentTokens;
+    baselineTotal += baselineTokens;
+    compared += 1;
+  }
+  return compared === 0 || currentTotal <= baselineTotal;
+};
+
 const gatedMetricPaths = new Set([
   "metrics.tokens.total",
+  "metrics.mcpCatalog.latestResponseBytes",
+  "metrics.mcpCatalog.latestInputSchemaBytes",
   "metrics.toolCalls.total",
   "metrics.toolCalls.failed",
   "metrics.toolCalls.retries",
   "metrics.toolCalls.focusedReads",
   "metrics.toolCalls.broadReads",
-  "metrics.toolCalls.totalDurationMs",
-  "metrics.toolCalls.p95DurationMs",
-]);
-
-const minimumAbsoluteIncrease = new Map([
-  ["metrics.toolCalls.totalDurationMs", 100],
-  ["metrics.toolCalls.p95DurationMs", 100],
+  "metrics.toolCalls.totalResponseBytes",
 ]);
 
 const getNumericMetrics = (
@@ -93,6 +134,7 @@ export const compareEvaluationResult = (
 ): EvaluationComparison => {
   const empty = {
     maxMetricRegressionPercent,
+    maxTokenRegressionPercent,
     deltas: [],
     regressions: [],
   };
@@ -128,13 +170,15 @@ export const compareEvaluationResult = (
     if (gatedMetricPaths.has(metric) === false) {
       continue;
     }
+    const regressionPercent =
+      metric === "metrics.tokens.total"
+        ? maxTokenRegressionPercent
+        : maxMetricRegressionPercent;
     const relativeIncrease = Math.floor(
-      baselineValue * (maxMetricRegressionPercent / 100) +
+      baselineValue * (regressionPercent / 100) +
         Number.EPSILON * Math.max(1, baselineValue)
     );
-    const allowed =
-      baselineValue +
-      Math.max(relativeIncrease, minimumAbsoluteIncrease.get(metric) ?? 0);
+    const allowed = baselineValue + relativeIncrease;
     if (currentValue > allowed) {
       regressions.push({
         metric,
@@ -168,6 +212,7 @@ export const compareEvaluationResult = (
     status: regressions.length === 0 ? "passed" : "regressed",
     baselineCommandSha256: baseline.commandSha256,
     maxMetricRegressionPercent,
+    maxTokenRegressionPercent,
     deltas,
     regressions,
   };

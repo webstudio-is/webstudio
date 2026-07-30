@@ -6,35 +6,117 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "53276281bd1eb5d56e4fe9fe63e44fc5c62ccade4a6f789aafc05367a8f9045d",
+  "commandSha256": "5c89af64bb3444ce679f82090c667ece40deb159b6b9ce7cd413e19c466d1ae3",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 48517,
+    "durationMs": 50677,
     "tokens": {
-      "input": 465604,
-      "cachedInput": 418304,
+      "input": 261344,
+      "cachedInput": 240640,
+      "uncachedInput": 20704,
       "cacheWriteInput": 0,
-      "output": 1590,
-      "reasoningOutput": 324,
-      "total": 467194,
-      "cachedInputRate": 0.8984
+      "output": 1440,
+      "reasoningOutput": 198,
+      "total": 262784,
+      "cachedInputRate": 0.9208
+    },
+    "mcpCatalog": {
+      "responses": 1,
+      "totalResponseBytes": 51362,
+      "maxResponseBytes": 51362,
+      "latestToolCount": 176,
+      "latestResponseBytes": 51362,
+      "latestInputSchemaBytes": 28964,
+      "latestDescriptionBytes": 4556
     },
     "toolCalls": {
-      "total": 8,
-      "succeeded": 8,
+      "total": 6,
+      "succeeded": 6,
       "failed": 0,
+      "failuresByTool": {},
+      "failuresByCode": {},
+      "issuesByCode": {},
+      "issuesByPath": {},
+      "durationsByTool": {
+        "audit": {
+          "count": 1,
+          "totalMs": 17,
+          "p95Ms": 17,
+          "maxMs": 17
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalMs": 11,
+          "p95Ms": 11,
+          "maxMs": 11
+        },
+        "update-asset": {
+          "count": 2,
+          "totalMs": 27,
+          "p95Ms": 14,
+          "maxMs": 14
+        },
+        "upload-assets": {
+          "count": 1,
+          "totalMs": 25,
+          "p95Ms": 25,
+          "maxMs": 25
+        },
+        "verify-font-assets": {
+          "count": 1,
+          "totalMs": 8,
+          "p95Ms": 8,
+          "maxMs": 8
+        }
+      },
+      "responseBytesByTool": {
+        "audit": {
+          "count": 1,
+          "totalBytes": 5300,
+          "p95Bytes": 5300,
+          "maxBytes": 5300
+        },
+        "meta.guide": {
+          "count": 1,
+          "totalBytes": 6566,
+          "p95Bytes": 6566,
+          "maxBytes": 6566
+        },
+        "update-asset": {
+          "count": 2,
+          "totalBytes": 1760,
+          "p95Bytes": 880,
+          "maxBytes": 880
+        },
+        "upload-assets": {
+          "count": 1,
+          "totalBytes": 2196,
+          "p95Bytes": 2196,
+          "maxBytes": 2196
+        },
+        "verify-font-assets": {
+          "count": 1,
+          "totalBytes": 2220,
+          "p95Bytes": 2220,
+          "maxBytes": 2220
+        }
+      },
       "retries": 0,
-      "focusedReads": 2,
+      "focusedReads": 0,
       "broadReads": 0,
       "dryRuns": 0,
       "plannedMutations": 0,
       "committedMutations": 3,
       "verifications": 1,
-      "totalDurationMs": 73,
-      "p50DurationMs": 10,
-      "p95DurationMs": 21,
-      "timeToFirstMutationMs": 27832,
-      "timeToFirstVerificationMs": 43500
+      "totalDurationMs": 88,
+      "p50DurationMs": 13,
+      "p95DurationMs": 25,
+      "totalResponseBytes": 18042,
+      "p50ResponseBytes": 2196,
+      "p95ResponseBytes": 6566,
+      "maxResponseBytes": 6566,
+      "timeToFirstMutationMs": 37609,
+      "timeToFirstVerificationMs": 47073
     }
   },
   "callSequence": [
@@ -42,9 +124,7 @@
     "upload-assets",
     "update-asset",
     "update-asset",
-    "refresh",
-    "get-asset",
-    "get-asset",
+    "verify-font-assets",
     "audit"
   ],
   "checks": {
