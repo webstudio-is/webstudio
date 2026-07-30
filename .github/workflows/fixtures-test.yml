@@ -65,6 +65,9 @@ jobs:
             exit "$sync_status"
           fi
 
+      - name: Build CLI content runtime
+        run: mkdir -p packages/cli/lib && pnpm --filter webstudio build:content-runtime
+
       - name: Testing cli build command
         run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
 
