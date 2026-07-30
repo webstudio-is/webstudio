@@ -7,6 +7,7 @@ import {
   findAvailablePort,
   getPreviewBuildArgs,
   getPreviewCommand,
+  getNpmInvocation,
   getPreviewStartArgs,
   getPreviewUrl,
   materializePreviewAssets,
@@ -34,6 +35,8 @@ const createDependencies = (
   readFile: vi.fn(async () => "") as never,
   writeFile: vi.fn(async () => undefined) as never,
   sleep: vi.fn(async () => undefined),
+  nodeExecPath: "/usr/bin/node",
+  npmExecPath: undefined,
   platform: "linux",
   ...overrides,
 });
@@ -107,6 +110,24 @@ test("uses the platform npm executable for preview commands", () => {
   expect(getPreviewCommand("linux")).toBe("npm");
   expect(getPreviewCommand("darwin")).toBe("npm");
   expect(getPreviewCommand("win32")).toBe("npm.cmd");
+});
+
+test("reuses the npm cli that launched webstudio for preview commands", () => {
+  expect(
+    getNpmInvocation(["run", "build"], {
+      nodeExecPath: "C:\\Program Files\\nodejs\\node.exe",
+      npmExecPath:
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      platform: "win32",
+    })
+  ).toEqual({
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "build",
+    ],
+  });
 });
 
 test("runs generated project production build", async () => {
