@@ -5818,6 +5818,27 @@ const getDestructivePlanSummary = (
   };
 };
 
+const maxMcpStyleKeyResults = 20;
+
+const compactMcpOperationResult = (result: unknown) => {
+  if (isPlainRecord(result) === false) {
+    return result;
+  }
+  const styleKeys = result.styleKeys;
+  if (
+    Array.isArray(styleKeys) === false ||
+    styleKeys.length <= maxMcpStyleKeyResults
+  ) {
+    return result;
+  }
+  return {
+    ...result,
+    styleKeys: styleKeys.slice(0, maxMcpStyleKeyResults),
+    styleKeyCount: styleKeys.length,
+    styleKeysTruncated: true,
+  };
+};
+
 const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
@@ -5840,12 +5861,12 @@ const toCallResult = (
     options.error === undefined
       ? {
           ok: true,
-          data: envelope.result,
+          data: compactMcpOperationResult(envelope.result),
           meta,
         }
       : {
           ok: false,
-          data: envelope.result,
+          data: compactMcpOperationResult(envelope.result),
           error: options.error,
           meta,
         };

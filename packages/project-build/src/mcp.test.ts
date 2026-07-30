@@ -2660,6 +2660,29 @@ describe("project session mcp adapter", () => {
     });
   });
 
+  test("bounds large style mutation results at the MCP boundary", async () => {
+    const styleKeys = Array.from(
+      { length: 100 },
+      (_, index) => `instance:base:property-${index}:`
+    );
+    const { adapter } = createTestMcpCore({
+      operationId: "styles.updateDeclarations",
+      result: { styleKeys },
+    });
+
+    const result = await adapter.callTool({
+      name: "update-styles",
+      input: { updates: [] },
+    });
+
+    expect(result.structuredContent.data).toEqual({
+      styleKeys: styleKeys.slice(0, 20),
+      styleKeyCount: 100,
+      styleKeysTruncated: true,
+    });
+    expect(JSON.stringify(result.structuredContent).length).toBeLessThan(1500);
+  });
+
   test("parses stringified structured fields using the MCP input schema", async () => {
     const { adapter, executeOperation } = createTestMcpCore({
       operationId: "pages.update",
