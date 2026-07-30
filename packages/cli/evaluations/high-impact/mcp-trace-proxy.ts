@@ -212,8 +212,8 @@ export const getMcpMutationToolNames = (value: unknown) => {
     if (
       isPlainRecord(tool) &&
       typeof tool.name === "string" &&
-      isPlainRecord(tool.annotations) &&
-      tool.annotations.readOnlyHint === false
+      (isPlainRecord(tool.annotations) === false ||
+        tool.annotations.readOnlyHint !== true)
     ) {
       return [tool.name];
     }

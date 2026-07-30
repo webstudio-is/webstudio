@@ -180,13 +180,22 @@ describe("bounded MCP tracing", () => {
             },
             {
               name: "create-page",
-              annotations: { readOnlyHint: false, private: "discard" },
+              annotations: {
+                destructiveHint: false,
+                openWorldHint: false,
+                private: "discard",
+              },
+            },
+            {
+              name: "delete-external-resource",
             },
           ],
         },
       })
     );
-    expect(mutationToolNames).toEqual(new Set(["create-page"]));
+    expect(mutationToolNames).toEqual(
+      new Set(["create-page", "delete-external-resource"])
+    );
     expect(
       getMcpTraceRequest(
         {

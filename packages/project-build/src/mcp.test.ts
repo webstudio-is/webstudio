@@ -6673,53 +6673,31 @@ describe("project session mcp adapter", () => {
         tools: expect.arrayContaining([
           expect.objectContaining({
             name: "list-pages",
-            annotations: expect.objectContaining({
-              readOnlyHint: true,
-              destructiveHint: false,
-            }),
+            annotations: { readOnlyHint: true, openWorldHint: false },
           }),
           expect.objectContaining({
             name: "publish",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-              openWorldHint: true,
-            }),
+            annotations: { destructiveHint: false },
           }),
           expect.objectContaining({
             name: "meta.index",
-            annotations: expect.objectContaining({
-              readOnlyHint: true,
-              destructiveHint: false,
-            }),
+            annotations: { readOnlyHint: true, openWorldHint: false },
           }),
           expect.objectContaining({
             name: "components.coverage-status",
-            annotations: expect.objectContaining({
-              readOnlyHint: true,
-              destructiveHint: false,
-            }),
+            annotations: { readOnlyHint: true, openWorldHint: false },
           }),
           expect.objectContaining({
             name: "refresh",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-            }),
+            annotations: { destructiveHint: false, openWorldHint: false },
           }),
           expect.objectContaining({
             name: "reset-session",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-            }),
+            annotations: { destructiveHint: false, openWorldHint: false },
           }),
           expect.objectContaining({
             name: "delete-instance",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: true,
-            }),
+            annotations: { openWorldHint: false },
           }),
         ]),
       });
@@ -6815,7 +6793,7 @@ describe("project session mcp adapter", () => {
             confirmationToken: expect.objectContaining({ type: "string" }),
           }),
         },
-        annotations: expect.objectContaining({ destructiveHint: true }),
+        annotations: { openWorldHint: false },
       });
       expect(
         tools.tools.find(({ name }) => name === "move-instance")
@@ -6825,7 +6803,7 @@ describe("project session mcp adapter", () => {
             dryRun: expect.objectContaining({ type: "boolean" }),
           }),
         },
-        annotations: expect.objectContaining({ destructiveHint: false }),
+        annotations: { destructiveHint: false, openWorldHint: false },
       });
       expect(
         tools.tools.find(({ name }) => name === "publish")?.inputSchema
@@ -7205,51 +7183,29 @@ describe("project session mcp adapter", () => {
         tools: expect.arrayContaining([
           expect.objectContaining({
             name: "preview.start",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-              openWorldHint: true,
-            }),
+            annotations: { destructiveHint: false },
           }),
           expect.objectContaining({
             name: "preview.status",
-            annotations: expect.objectContaining({
+            annotations: {
               readOnlyHint: true,
-              destructiveHint: false,
-              openWorldHint: true,
-            }),
+            },
           }),
           expect.objectContaining({
             name: "preview.stop",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-              openWorldHint: true,
-            }),
+            annotations: { destructiveHint: false },
           }),
           expect.objectContaining({
             name: "screenshot",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-              openWorldHint: true,
-            }),
+            annotations: { destructiveHint: false },
           }),
           expect.objectContaining({
             name: "screenshot.diff",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-              openWorldHint: true,
-            }),
+            annotations: { destructiveHint: false },
           }),
           expect.objectContaining({
             name: "vision.install-ocr",
-            annotations: expect.objectContaining({
-              readOnlyHint: false,
-              destructiveHint: false,
-              openWorldHint: true,
-            }),
+            annotations: { destructiveHint: false },
           }),
         ]),
       });

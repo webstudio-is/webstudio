@@ -2899,10 +2899,10 @@ type SdkTool = {
   name: string;
   description?: string;
   inputSchema: ProjectSessionMcpInputSchema;
-  annotations: {
-    readOnlyHint: boolean;
-    destructiveHint: boolean;
-    openWorldHint: boolean;
+  annotations?: {
+    readOnlyHint?: true;
+    destructiveHint?: false;
+    openWorldHint?: false;
   };
 };
 
@@ -5620,23 +5620,34 @@ const sdkDescribedToolNames = new Set([
   ...metaGoalGuides.flatMap(({ tools }) => tools),
 ]);
 
+const getSdkToolAnnotations = (tool: ProjectSessionMcpTool) => {
+  const readOnly = isReadOnlyProjectSessionMcpTool(tool);
+  const annotations: NonNullable<SdkTool["annotations"]> = {
+    ...(readOnly ? { readOnlyHint: true } : {}),
+    ...(readOnly === false && tool.annotations.requiresConfirm === false
+      ? { destructiveHint: false }
+      : {}),
+    ...(tool.annotations.serverOnly ? {} : { openWorldHint: false }),
+  };
+  return Object.keys(annotations).length === 0 ? undefined : annotations;
+};
+
 // Keep output contracts, complete input guidance, and Webstudio operation
 // metadata for local validation, generated documentation, and focused
 // discovery. The startup instructions and described discovery tools route
 // models to meta.guide, which returns descriptions for the relevant operation
 // set. Do not resend descriptions for every operation in every MCP handshake.
-const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
-  name: tool.name,
-  ...(sdkDescribedToolNames.has(tool.name)
-    ? { description: tool.description }
-    : {}),
-  inputSchema: getSdkInputSchema(tool.inputSchema),
-  annotations: {
-    readOnlyHint: isReadOnlyProjectSessionMcpTool(tool),
-    destructiveHint: tool.annotations.requiresConfirm,
-    openWorldHint: tool.annotations.serverOnly,
-  },
-});
+const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
+  const annotations = getSdkToolAnnotations(tool);
+  return {
+    name: tool.name,
+    ...(sdkDescribedToolNames.has(tool.name)
+      ? { description: tool.description }
+      : {}),
+    inputSchema: getSdkInputSchema(tool.inputSchema),
+    ...(annotations === undefined ? {} : { annotations }),
+  };
+};
 
 export const listProjectSessionMcpResources =
   (): ProjectSessionMcpResource[] => [
