@@ -68,6 +68,19 @@ const createServerEntry = (
   serverFields?: Record<string, unknown>
 ) => ({ ...serverFields, ...serverCommand });
 
+const addClientServerArgs = (
+  client: ConnectClient,
+  serverCommand: ServerCommand
+): ServerCommand => {
+  if (client !== "cursor") {
+    return serverCommand;
+  }
+  return {
+    ...serverCommand,
+    args: [...serverCommand.args, "--tool-name-format", "underscores"],
+  };
+};
+
 const getCodexRegistrationArgs = ({ command, args }: ServerCommand) => [
   "mcp",
   "add",
@@ -266,7 +279,10 @@ export const connect = async (
     return;
   }
 
-  const parsedServerCommand = parseServerCommand(serverCommand);
+  const parsedServerCommand = addClientServerArgs(
+    client,
+    parseServerCommand(serverCommand)
+  );
 
   if (client === "codex") {
     if (options.print === true) {

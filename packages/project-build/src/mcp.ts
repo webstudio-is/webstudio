@@ -7907,11 +7907,13 @@ export const createProjectSessionMcpServer = async <
   restorePoints,
   onProjectSessionChange,
   onInitialized,
+  toolNameFormat = "canonical",
   toolHeartbeatIntervalMs = 10_000,
 }: Omit<ProjectSessionMcpCoreOptions<Command>, "reportToolProgress"> & {
   getErrorCode?: McpErrorCodeResolver;
   reportLog?: (level: McpLogLevel, message: string) => void;
   onInitialized?: (clientName: string | undefined) => void;
+  toolNameFormat?: "canonical" | "underscores";
   toolHeartbeatIntervalMs?: number;
 }) => {
   const server = new Server(
@@ -7953,6 +7955,27 @@ export const createProjectSessionMcpServer = async <
       sendLog("info", message);
     },
   });
+  const exposedTools = core.listTools().map((tool) => ({
+    ...tool,
+    name:
+      toolNameFormat === "underscores"
+        ? tool.name.replace(/[^a-zA-Z0-9_]/g, "_")
+        : tool.name,
+  }));
+  const canonicalToolNameByExposedName = new Map<string, string>();
+  for (const [index, tool] of core.listTools().entries()) {
+    const exposedName = exposedTools[index]?.name;
+    if (exposedName === undefined) {
+      continue;
+    }
+    const existingName = canonicalToolNameByExposedName.get(exposedName);
+    if (existingName !== undefined && existingName !== tool.name) {
+      throw new Error(
+        `MCP tool names ${existingName} and ${tool.name} both map to ${exposedName}.`
+      );
+    }
+    canonicalToolNameByExposedName.set(exposedName, tool.name);
+  }
 
   server.oninitialized = () => {
     onInitialized?.(server.getClientVersion()?.name);
@@ -7963,7 +7986,7 @@ export const createProjectSessionMcpServer = async <
   };
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: core.listTools().map(toSdkTool),
+    tools: exposedTools.map(toSdkTool),
   }));
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
@@ -8006,7 +8029,8 @@ export const createProjectSessionMcpServer = async <
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const params = getRequestParams(request);
-    const name = typeof params.name === "string" ? params.name : "";
+    const exposedName = typeof params.name === "string" ? params.name : "";
+    const name = canonicalToolNameByExposedName.get(exposedName) ?? exposedName;
     const { input, dryRun } = getToolCallInput(params.arguments ?? {});
     const startedAt = Date.now();
     sendLog("info", `tool ${name} started${dryRun ? " (dry run)" : ""}`);
