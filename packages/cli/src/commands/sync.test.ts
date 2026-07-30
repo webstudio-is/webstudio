@@ -82,7 +82,7 @@ test("writes current data version after synchronizing from the API", async () =>
     bundleVersion,
   });
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle synchronized successfully (AGENTS.md: unchanged). Next: webstudio connect"
+    "Project bundle synchronized successfully (AGENTS.md: unchanged). Next: webstudio build"
   );
 });
 
@@ -111,7 +111,7 @@ test("materializes project agent instructions during sync", async () => {
     "Use existing design tokens."
   );
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle synchronized successfully (AGENTS.md: created). Next: webstudio connect"
+    "Project bundle synchronized successfully (AGENTS.md: created). Next: webstudio build"
   );
 });
 
@@ -247,7 +247,8 @@ test("explains unpublished project bundle errors when synchronizing linked proje
     [
       "Unable to synchronize project bundle because the project is not published.",
       "`webstudio sync` downloads the published project bundle.",
-      "For visual verification of current MCP/API edits, use `preview.start` or `webstudio preview --source session` instead.",
+      "Publishing is not required for MCP editing. Do not ask the user to publish; use MCP tools against the latest editable build.",
+      "For visual verification, use `preview.start` or `webstudio preview --source session` instead.",
     ].join("\n"),
     2
   );
@@ -275,7 +276,8 @@ test("explains unpublished project bundle errors when synchronizing by build id"
     [
       "Unable to synchronize project bundle because the project is not published.",
       "`webstudio sync` downloads the published project bundle.",
-      "For visual verification of current MCP/API edits, use `preview.start` or `webstudio preview --source session` instead.",
+      "Publishing is not required for MCP editing. Do not ask the user to publish; use MCP tools against the latest editable build.",
+      "For visual verification, use `preview.start` or `webstudio preview --source session` instead.",
     ].join("\n"),
     2
   );

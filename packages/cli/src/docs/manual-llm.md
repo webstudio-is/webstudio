@@ -11,23 +11,32 @@ resolve an older binary.
 
 For delegated design-system or “use every component” tasks, skip the generic warm-up sequence and start with exactly one MCP command: `webstudio workflow.next '{"goal":"design-system-page"}'`. Report that returned checkpoint to the parent/user and stop until continued.
 
-## Connect an MCP client
+## Use MCP locally or optionally connect a client
 
-When the user asks to connect the current folder to Webstudio, run the command
-for the agent client you are currently using:
+Do not install, register, or connect an MCP server merely because the user asks
+you to edit a Webstudio project. If Webstudio MCP tools are already available,
+use them. If you have shell access, use the local CLI shortcuts such as
+`webstudio meta.index` and `webstudio list-pages`; they expose the same project
+operations without changing client configuration or restarting the app.
+
+Only when the user explicitly asks for persistent native MCP integration, run
+the command for their client:
 
 - Claude Code: `webstudio connect claude`
 - Codex: `webstudio connect codex`
 - Cursor: `webstudio connect cursor`
 - VS Code or GitHub Copilot: `webstudio connect vscode`
 
-Run the command from the linked project root. If the folder is not linked, ask
-for an editable Builder share link and run
-`webstudio init --link <share-link> --json`, followed by `webstudio sync`, then
-retry `webstudio connect <client>`. Treat the share link as a credential and do
-not include it in committed files, logs, screenshots, or issue reports.
+Run project operations from the linked project root. If the folder is not
+linked, ask for an editable Builder share link and run
+`webstudio init --link <share-link> --json`. You can then use local CLI
+shortcuts immediately. Do not run `webstudio sync`, `webstudio connect`, or
+restart the app unless the user specifically wants native MCP registration:
+MCP reads and edits the latest editable Builder build directly, including for
+projects that have never been published. Treat the share link as a credential
+and do not include it in committed files, logs, screenshots, or issue reports.
 
-`connect` verifies project access before changing client configuration. For
+The optional `connect` command verifies project access before changing client configuration. For
 Claude Code, Cursor, and VS Code it safely merges the `webstudio` server into
 the client's project configuration. For Codex it runs both `codex mcp add` and
 `codex mcp get webstudio`; do not repeat those commands separately. Follow the

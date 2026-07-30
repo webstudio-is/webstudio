@@ -241,7 +241,7 @@ export const connectOptions = (yargs: CommonYargsArgv) =>
         "Project access is verified before client configuration is written.",
         "Existing config files are merged: only the webstudio server entry is created or replaced.",
         "Codex uses global configuration, so connect registers and verifies the server with the codex CLI.",
-        "Run webstudio init --link and webstudio sync first so the MCP server can operate the project.",
+        "Run webstudio init --link first if the folder is not linked. MCP operates on the latest editable build; publishing and webstudio sync are not required.",
       ].join("\n")
     );
 
@@ -304,7 +304,7 @@ export const connect = async (
       throw new HandledCliError();
     }
     log.success(
-      "Registered and verified the webstudio MCP server in Codex. Restart Codex, then ask it to use Webstudio MCP and list the project pages."
+      "Registered and verified the webstudio MCP server in Codex. The linked project can be edited before it is published. Restart Codex, then ask it to use Webstudio MCP and list the project pages."
     );
     return;
   }
@@ -314,7 +314,7 @@ export const connect = async (
     parsedServerCommand,
     "serverFields" in target ? target.serverFields : undefined
   );
-  const completionHint = `${target.hint} Ask your agent to use Webstudio MCP and list the project pages.`;
+  const completionHint = `The linked project can be edited before it is published. ${target.hint} Ask your agent to use Webstudio MCP and list the project pages.`;
 
   const path = join(cwd(), target.path);
   const current = (await dependencies.isFileExists(path))
