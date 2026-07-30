@@ -3,7 +3,10 @@ import type { DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import { type Scope, createScope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
-import { parseExpressionAt } from "acorn";
+import {
+  isValidExpression,
+  parseStaticMemberPath,
+} from "@webstudio-is/expression";
 
 export type PageMeta = {
   title: string;
@@ -20,22 +23,15 @@ export type PageMeta = {
 
 const normalizeStringExpression = (expression: string) => {
   const trimmedExpression = expression.trim();
-  try {
-    const parsedExpression = parseExpressionAt(trimmedExpression, 0, {
-      ecmaVersion: "latest",
-    });
-    if (parsedExpression.end === trimmedExpression.length) {
-      if (
-        parsedExpression.type === "Identifier" &&
-        trimmedExpression !== "undefined" &&
-        trimmedExpression.includes("$ws$") === false
-      ) {
-        return JSON.stringify(expression);
-      }
-      return expression;
+  if (isValidExpression(trimmedExpression)) {
+    if (
+      parseStaticMemberPath(trimmedExpression)?.length === 1 &&
+      trimmedExpression !== "undefined" &&
+      trimmedExpression.includes("$ws$") === false
+    ) {
+      return JSON.stringify(expression);
     }
-  } catch {
-    // Plain text from older synced bundles is not a valid expression.
+    return expression;
   }
   if (trimmedExpression.includes("$ws$")) {
     return expression;

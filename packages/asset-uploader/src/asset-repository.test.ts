@@ -403,9 +403,17 @@ describe("PostgresAssetRepository", () => {
       dependencies,
     });
 
-    await expect(repository.readIndex()).rejects.toThrow("access to view");
+    await expect(
+      repository.query({
+        query: {
+          where: { all: [] },
+          output: { mode: "base", includeMetadata: true },
+        },
+      })
+    ).rejects.toThrow("access to view");
     await expect(repository.synchronize()).rejects.toThrow("access to edit");
     await expect(repository.prepareIndex()).rejects.toThrow("access to build");
+    expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
     expect(dependencies.loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
     expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
   });
@@ -655,6 +663,7 @@ describe("PostgresAssetRepository", () => {
       context,
       assetStore,
       dependencies,
+      contentDatabaseMaxBytes: 1,
     });
 
     await expect(repository.readFieldCatalog()).resolves.toMatchObject({
@@ -667,6 +676,7 @@ describe("PostgresAssetRepository", () => {
       assetIds: ["asset-1"],
       requirements: { structuredProperties: true, excerpt: false },
     });
+    expect(dependencies.createAssetIndex).not.toHaveBeenCalled();
     expect(readFile).not.toHaveBeenCalled();
   });
 
@@ -702,10 +712,10 @@ describe("PostgresAssetRepository", () => {
     });
 
     const [first, second] = await Promise.all([
-      repository.readIndex(),
-      repository.readIndex(),
+      repository.prepareIndex(),
+      repository.prepareIndex(),
     ]);
-    const third = await repository.readIndex();
+    const third = await repository.prepareIndex();
 
     expect(first).toBe(second);
     expect(second).toBe(third);
@@ -729,7 +739,7 @@ describe("PostgresAssetRepository", () => {
       updatedEntry,
     ]);
 
-    const updated = await repository.readIndex();
+    const updated = await repository.prepareIndex();
 
     expect(updated).not.toBe(first);
     expect(dependencies.createAssetIndex).toHaveBeenCalledTimes(2);
@@ -934,6 +944,8 @@ describe("PostgresAssetRepository", () => {
     expect(index.documents.map(({ _id }) => _id)).toEqual(["alpha", "beta"]);
     expect(index.contents).toEqual({ "alpha.md": "Post" });
     expect(readFile).toHaveBeenCalledOnce();
+    expect(dependencies.synchronizeCanonicalAssets).not.toHaveBeenCalled();
+    expect(dependencies.loadCanonicalAssetFileEntries).not.toHaveBeenCalled();
   });
 
   test("fails publication when selected text content cannot be embedded", async () => {
@@ -1044,9 +1056,9 @@ describe("PostgresAssetRepository", () => {
         },
       ],
     });
-    const index = { integrity: { checksum: `sha256:${"b".repeat(64)}` } };
+    dependencies.loadCanonicalAssetBaseEntries.mockResolvedValue([]);
     dependencies.loadCanonicalAssetFileEntries.mockResolvedValue([]);
-    dependencies.createAssetIndex.mockResolvedValue(index as never);
+    dependencies.createAssetIndex.mockImplementation(createAssetIndex);
     const repository = new PostgresAssetRepository({
       projectId: "project-1",
       context,
@@ -1054,7 +1066,14 @@ describe("PostgresAssetRepository", () => {
       dependencies,
     });
 
-    await expect(repository.readIndex()).resolves.toBe(index);
+    await expect(
+      repository.query({
+        query: {
+          where: { all: [] },
+          output: { mode: "base", includeMetadata: true },
+        },
+      })
+    ).resolves.toMatchObject({ data: { items: [] } });
   });
 
   test("updates metadata without eagerly maintaining query fields", async () => {
@@ -1239,6 +1258,28 @@ describe("PostgresAssetRepository", () => {
       omittedDocumentCount: 0,
       truncated: false,
     });
+    expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
+
+    const urlResult = await repository.query({
+      query: {
+        where: { all: [] },
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["url"]],
+        },
+      },
+    });
+    expect(urlResult.data.items).toEqual([
+      { id: "asset-1", url: "/cgi/asset/post.md?format=raw" },
+    ]);
+    expect(dependencies.loadAssetsByProjectWithClient).toHaveBeenCalledWith(
+      "project-1",
+      context.postgrest.client,
+      ["asset-1"]
+    );
+    dependencies.loadAssetsByProjectWithClient.mockClear();
+
     const idOnlyResult = await repository.query({
       query: {
         where: {
@@ -1260,6 +1301,7 @@ describe("PostgresAssetRepository", () => {
     expect(idOnlyResult.__diagnostics__.usedBytes).toBeLessThan(
       result.__diagnostics__.usedBytes
     );
+    expect(dependencies.loadAssetsByProjectWithClient).not.toHaveBeenCalled();
 
     vi.mocked(assetClient.readFile).mockResolvedValue({
       data: new Blob(["# New post"]).stream(),
@@ -1283,6 +1325,7 @@ describe("PostgresAssetRepository", () => {
       baseUrl: "https://blog.example",
       deploymentId: "deployment-1",
       artifact: publishedIndex,
+      runtimeAssets: { "asset-1": { url: "/assets/post.md" } },
     });
     const publishedResponse = await publishedFetch("/$resources/assets", {
       method: "POST",

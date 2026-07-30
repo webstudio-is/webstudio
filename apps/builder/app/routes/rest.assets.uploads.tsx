@@ -1,80 +1,70 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
-import { PostgresAssetRepository } from "@webstudio-is/asset-uploader/server";
 import isValidFilename from "valid-filename";
 import {
   assetResourceApiOperations,
   assetUploadReservationRequest,
 } from "@webstudio-is/protocol/asset-resource-api";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
-import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import {
-  authorizeApiProject,
-  requiresApiCsrf,
-} from "~/services/api-auth.server";
+import { ensureApiCsrf } from "~/services/api-auth.server";
 import {
   AssetRestRequestError,
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
+  createAssetRestRepositoryForProject,
   readAssetRestFormData,
   readAssetRestJson,
 } from "~/services/asset-rest.server";
-import { createAssetClient } from "~/shared/asset-client";
 
 // Keep upload commands under an explicit collection so read-only Assets API
 // operations can use stable names without colliding with uploaded filenames.
 
 export const loader = async () => {
-  return assetRestMethodNotAllowed(["POST"]);
+  return assetRestMethodNotAllowed([
+    assetResourceApiOperations.reserveAssetUpload,
+  ]);
 };
 
 export const action = async (props: ActionFunctionArgs) => {
+  const { request } = props;
+  preventCrossOriginCookie(request);
+  if (
+    request.method.toLowerCase() !==
+    assetResourceApiOperations.reserveAssetUpload.method
+  ) {
+    return assetRestMethodNotAllowed([
+      assetResourceApiOperations.reserveAssetUpload,
+    ]);
+  }
+  await ensureApiCsrf(request);
   try {
-    preventCrossOriginCookie(props.request);
-    if (requiresApiCsrf(props.request)) {
-      await checkCsrf(props.request);
-    }
-
-    const { request } = props;
-
+    const contentType = request.headers.get("content-type") ?? "";
+    const rawInput = contentType.includes("application/json")
+      ? await readAssetRestJson(request)
+      : Object.fromEntries(await readAssetRestFormData(request));
+    const input = assetUploadReservationRequest.parse(rawInput);
     if (
-      request.method.toLowerCase() ===
-      assetResourceApiOperations.reserveAssetUpload.method
+      input.displayFilename !== undefined &&
+      isValidFilename(input.displayFilename) === false
     ) {
-      const contentType = request.headers.get("content-type") ?? "";
-      const rawInput = contentType.includes("application/json")
-        ? await readAssetRestJson(request)
-        : Object.fromEntries(await readAssetRestFormData(request));
-      const input = assetUploadReservationRequest.parse(rawInput);
-      const context = await authorizeApiProject(
-        request,
-        input.projectId,
-        "edit"
+      throw new AssetRestRequestError(
+        "Project id, type or filename are invalid"
       );
-      if (
-        input.displayFilename !== undefined &&
-        isValidFilename(input.displayFilename) === false
-      ) {
-        throw new AssetRestRequestError(
-          "Project id, type or filename are invalid"
-        );
-      }
-      const ticket = await new PostgresAssetRepository({
-        projectId: input.projectId,
-        context,
-        assetStore: createAssetClient(),
-      }).createUploadTicket({
-        type: input.type,
-        filename: input.filename,
-        displayFilename: input.displayFilename,
-        description: input.description,
-        folderId: input.folderId,
-        contentHash: input.contentHash,
-      });
-      return json(ticket, { headers: privateNoStoreResponseHeaders });
     }
-
-    return assetRestMethodNotAllowed(["POST"]);
+    const repository = await createAssetRestRepositoryForProject(
+      request,
+      input.projectId,
+      "edit"
+    );
+    const ticket = await repository.createUploadTicket({
+      type: input.type,
+      filename: input.filename,
+      displayFilename: input.displayFilename,
+      description: input.description,
+      folderId: input.folderId,
+      contentHash: input.contentHash,
+    });
+    return json(ticket, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
     return assetRestErrorResponse(error);
   }

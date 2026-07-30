@@ -30,6 +30,7 @@ export type CanonicalAssetMetadataSource = {
   storageName: string;
   fileUpdatedAt: string;
   fileSize: number;
+  contentHash?: string;
   filename?: string;
   description?: string;
   folderId?: string;
@@ -48,15 +49,26 @@ const parseMetadataRow = (row: MetadataRow): CanonicalAssetFileEntry => {
     [extractorGenerationKey]: extractorGeneration,
     ...document
   } = row.document;
+  const extractorIsCurrent =
+    extractorGeneration === canonicalAssetMetadataExtractorGeneration;
+  let documentForEntry = document;
+  if (extractorIsCurrent === false) {
+    const {
+      properties: _properties,
+      excerpt: _excerpt,
+      metadataError: _metadataError,
+      ...baseDocument
+    } = document;
+    documentForEntry = { ...baseDocument, properties: {} };
+  }
   const entry = createCanonicalAssetFileEntry({
     projectId: row.projectId,
-    document,
-    metadataRequirements:
-      extractorGeneration === canonicalAssetMetadataExtractorGeneration
-        ? requirements === undefined
-          ? fullCanonicalAssetMetadataRequirements
-          : getCanonicalAssetMetadataRequirementsForTier(requirements)
-        : { structuredProperties: false, excerpt: false },
+    document: documentForEntry,
+    metadataRequirements: extractorIsCurrent
+      ? requirements === undefined
+        ? fullCanonicalAssetMetadataRequirements
+        : getCanonicalAssetMetadataRequirementsForTier(requirements)
+      : { structuredProperties: false, excerpt: false },
   });
   if (entry.assetId !== row.assetId || entry.revision !== row.revision) {
     throw new Error("Canonical asset metadata identity is inconsistent");
@@ -88,6 +100,7 @@ export const replaceCanonicalAssetFileEntry = async ({
       storageName: source.storageName,
       fileUpdatedAt: source.fileUpdatedAt,
       fileSize: source.fileSize,
+      contentHash: source.contentHash ?? null,
       filename: source.filename ?? null,
       description: source.description ?? null,
       folderId: source.folderId ?? null,
@@ -120,44 +133,34 @@ export const deleteStaleCanonicalAssetFileEntries = async ({
   return result.data ?? 0;
 };
 
+export const deleteInvalidCanonicalAssetFileEntryIfMatches = async ({
+  client,
+  row,
+}: {
+  client: Client;
+  row: Pick<MetadataRow, "projectId" | "assetId" | "revision" | "document">;
+}) => {
+  const result = await client.rpc("delete_asset_file_metadata_if_matches", {
+    p_project_id: row.projectId,
+    p_asset_id: row.assetId,
+    p_revision: row.revision,
+    p_document: row.document,
+  });
+  assertPostgrestSuccess(result);
+  return result.data ?? 0;
+};
+
 export const deleteCanonicalAssetFileEntryIfMatches = async ({
   client,
   entry,
 }: {
   client: Client;
   entry: CanonicalAssetFileEntry;
-}) => {
-  const result = await client.rpc("delete_asset_file_metadata_if_matches", {
-    p_project_id: entry.projectId,
-    p_asset_id: entry.assetId,
-    p_revision: entry.revision,
-    p_document: serializeMetadataDocument(entry),
+}) =>
+  await deleteInvalidCanonicalAssetFileEntryIfMatches({
+    client,
+    row: { ...entry, document: serializeMetadataDocument(entry) },
   });
-  assertPostgrestSuccess(result);
-  return result.data ?? 0;
-};
-
-export const loadCanonicalAssetFileEntry = async ({
-  client,
-  projectId,
-  assetId,
-  revision,
-}: {
-  client: Client;
-  projectId: string;
-  assetId: string;
-  revision: string;
-}): Promise<CanonicalAssetFileEntry | undefined> => {
-  const result = await client
-    .from("AssetFileMetadata")
-    .select()
-    .eq("projectId", projectId)
-    .eq("assetId", assetId)
-    .eq("revision", revision)
-    .maybeSingle();
-  assertPostgrestSuccess(result);
-  return result.data === null ? undefined : parseMetadataRow(result.data);
-};
 
 const loadCanonicalAssetFileMetadataRows = async ({
   client,
@@ -215,16 +218,18 @@ export const loadCanonicalAssetFileEntriesForRecovery = async ({
     assetIds,
   });
   const entries: CanonicalAssetFileEntry[] = [];
-  const inconsistentAssetIds = new Set<string>();
+  const inconsistentRows: Array<
+    Pick<MetadataRow, "projectId" | "assetId" | "revision" | "document">
+  > = [];
   for (const row of rows) {
     try {
       entries.push(parseMetadataRow(row));
     } catch {
-      inconsistentAssetIds.add(row.assetId);
+      inconsistentRows.push(row);
     }
   }
   return {
     entries,
-    inconsistentAssetIds: Array.from(inconsistentAssetIds).sort(),
+    inconsistentRows,
   };
 };

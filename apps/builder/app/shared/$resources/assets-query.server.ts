@@ -1,12 +1,7 @@
 import { json } from "@remix-run/server-runtime";
 import {
-  AssetIndexRevisionError,
-  AssetQueryExecutionError,
+  getAssetResourceQueryError,
   readAssetQueryRequest,
-  parseContentDatabaseMaxBytes,
-  AssetResourceHydrationError,
-  createAssetResourceQueryFailure,
-  type AssetResourceErrorCode,
 } from "@webstudio-is/content-engine";
 import { previewAssetResourceQuery } from "@webstudio-is/asset-uploader/server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
@@ -16,7 +11,9 @@ import {
 } from "~/services/api-auth.server";
 import { getAssetRestProjectId } from "~/services/asset-rest.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { getContentDatabaseMaxBytes } from "~/services/content-database.server";
 import { createAssetClient } from "../asset-client";
+import { createAssetResourceFailureResponse } from "./assets-response.server";
 
 type Dependencies = {
   authorizeApiProject: typeof authorizeApiProject;
@@ -35,25 +32,7 @@ const defaultDependencies: Dependencies = {
   preventCrossOriginCookie,
 };
 
-const failure = ({
-  code,
-  message,
-  status,
-  retryable = false,
-  details,
-}: {
-  code: AssetResourceErrorCode;
-  message: string;
-  status: number;
-  retryable?: boolean;
-  details?: Record<string, string | number>;
-}) =>
-  json(createAssetResourceQueryFailure({ code, message, retryable, details }), {
-    status,
-    headers: privateNoStoreResponseHeaders,
-  });
-
-export const loader = async (
+export const executeAssetQuery = async (
   {
     request,
     resourceRequest,
@@ -68,7 +47,7 @@ export const loader = async (
   try {
     projectId = getAssetRestProjectId(request);
   } catch {
-    return failure({
+    return createAssetResourceFailureResponse({
       code: "INVALID_REQUEST",
       message: "Project ID is required to preview an asset query",
       status: 400,
@@ -79,7 +58,7 @@ export const loader = async (
   try {
     parsed = await readAssetQueryRequest(resourceRequest);
   } catch {
-    return failure({
+    return createAssetResourceFailureResponse({
       code: "INVALID_REQUEST",
       message: "Asset query preview requires a JSON request body",
       status: 400,
@@ -96,39 +75,19 @@ export const loader = async (
       request: parsed,
       context,
       assetClient: dependencies.createAssetClient(),
-      contentDatabaseMaxBytes: parseContentDatabaseMaxBytes(
-        process.env.CONTENT_DATABASE_MAX_BYTES
-      ),
+      contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
     });
     return json(result, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
     const authorizationFailure = getApiAuthorizationFailure(error);
     if (authorizationFailure !== undefined) {
-      return failure(authorizationFailure);
+      return createAssetResourceFailureResponse(authorizationFailure);
     }
-    if (error instanceof AssetIndexRevisionError) {
-      return failure({
-        code: "STALE_INDEX",
-        message: error.message,
-        status: 409,
-      });
+    const queryError = getAssetResourceQueryError(error);
+    if (queryError !== undefined) {
+      return createAssetResourceFailureResponse(queryError);
     }
-    if (error instanceof AssetQueryExecutionError) {
-      return failure({
-        code: "INVALID_REQUEST",
-        message: error.message,
-        status: 400,
-      });
-    }
-    if (error instanceof AssetResourceHydrationError) {
-      return failure({
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        status: 400,
-      });
-    }
-    return failure({
+    return createAssetResourceFailureResponse({
       code: "INTERNAL_ERROR",
       message: "Asset query preview failed",
       status: 500,

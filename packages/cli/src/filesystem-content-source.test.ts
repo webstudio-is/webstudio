@@ -1,10 +1,10 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   createContentCompilationPlan,
   createLiteralContentCompilationQuery,
-} from "@webstudio-is/content-engine/compiler";
+} from "@webstudio-is/content-engine";
 import type { Asset, AssetFolders } from "@webstudio-is/sdk";
 import { afterEach, describe, expect, test } from "vitest";
 import { createFileSystemContentSource } from "./filesystem-content-source";
@@ -32,7 +32,7 @@ const createAsset = (name: string): Asset => ({
   name,
   filename: "hello",
   size: 0,
-  description: null,
+  description: "Post description",
   folderId: "blog",
   createdAt: "2026-07-27T00:00:00.000Z",
   format: "md",
@@ -90,9 +90,18 @@ describe("filesystem content source", () => {
       {
         document: {
           path: "Blog/hello.md",
+          description: "Post description",
           properties: { title: "Hello", slug: "hello" },
         },
         content,
+      },
+    ]);
+    await expect(snapshot.loadEntries()).resolves.toMatchObject([
+      {
+        document: {
+          properties: { title: "Hello", slug: "hello" },
+          excerpt: "Hello Body",
+        },
       },
     ]);
     await expect(snapshot.isCurrent()).resolves.toBe(true);
@@ -162,5 +171,70 @@ describe("filesystem content source", () => {
     await expect(snapshot.loadEntries(fullContentPlan)).rejects.toThrow(
       "Selected content source file is not valid UTF-8"
     );
+  });
+
+  test("rejects symlinks outside the assets directory", async () => {
+    const parent = await createTemporaryDirectory();
+    const directory = join(parent, "assets");
+    const outside = join(parent, "outside.md");
+    const name = "outside_hash.md";
+    await mkdir(directory);
+    await writeFile(outside, "private");
+    await symlink(outside, join(directory, name));
+
+    await expect(
+      createFileSystemContentSource({
+        projectId: "project",
+        assets: [createAsset(name)],
+        folders,
+        assetsDirectory: directory,
+      }).openSnapshot()
+    ).rejects.toThrow("outside the assets directory");
+  });
+
+  test("invalidates a snapshot when the assets directory symlink changes", async () => {
+    const parent = await createTemporaryDirectory();
+    const firstDirectory = join(parent, "first");
+    const secondDirectory = join(parent, "second");
+    const linkedDirectory = join(parent, "assets");
+    const name = "hello_hash.md";
+    await mkdir(firstDirectory);
+    await mkdir(secondDirectory);
+    await writeFile(join(firstDirectory, name), "first");
+    await writeFile(join(secondDirectory, name), "second");
+    await symlink(firstDirectory, linkedDirectory);
+    const snapshot = await createFileSystemContentSource({
+      projectId: "project",
+      assets: [createAsset(name)],
+      folders,
+      assetsDirectory: linkedDirectory,
+    }).openSnapshot();
+
+    await rm(linkedDirectory);
+    await symlink(secondDirectory, linkedDirectory);
+
+    await expect(snapshot.isCurrent()).resolves.toBe(false);
+  });
+
+  test("invalidates a snapshot when an asset symlink changes", async () => {
+    const directory = await createTemporaryDirectory();
+    const first = join(directory, "first.md");
+    const second = join(directory, "second.md");
+    const name = "hello_hash.md";
+    const linkedFile = join(directory, name);
+    await writeFile(first, "first");
+    await writeFile(second, "second");
+    await symlink(first, linkedFile);
+    const snapshot = await createFileSystemContentSource({
+      projectId: "project",
+      assets: [createAsset(name)],
+      folders,
+      assetsDirectory: directory,
+    }).openSnapshot();
+
+    await rm(linkedFile);
+    await symlink(second, linkedFile);
+
+    await expect(snapshot.isCurrent()).resolves.toBe(false);
   });
 });

@@ -1,4 +1,3 @@
-import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
 import {
   bundleVersion,
   type PublishedProjectBundle,
@@ -26,6 +25,7 @@ import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById } from "./user.server";
 import { createAssetClient } from "../asset-client";
+import { getContentDatabaseMaxBytes } from "~/services/content-database.server";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
   item.id,
@@ -173,9 +173,7 @@ const addProjectMetadata = async (
       projectId: project.id,
       context,
       assetStore: assetClient,
-      contentDatabaseMaxBytes: parseContentDatabaseMaxBytes(
-        process.env.CONTENT_DATABASE_MAX_BYTES
-      ),
+      contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
     });
     const retainedFontIds = new Set(
       data.assets

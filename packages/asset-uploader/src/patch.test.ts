@@ -173,13 +173,72 @@ describe("asset folder persistence", () => {
   test("repairs persisted cycles when folders are loaded", async () => {
     const projectId = uid();
     const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", parentId: "a", createdAt },
+    ];
     server.use(
-      db.get("AssetFolder", () =>
-        json([
-          { id: "a", projectId, name: "A", parentId: "b", createdAt },
-          { id: "b", projectId, name: "B", parentId: "a", createdAt },
-        ])
+      db.get("AssetFolder", () => json(folders)),
+      db.patch("AssetFolder", async ({ request }) => {
+        expect(await request.json()).toEqual({ parentId: null });
+        folders = folders.map((folder) =>
+          folder.id === "b" ? { ...folder, parentId: null } : folder
+        );
+        return json([{ id: "b" }]);
+      })
+    );
+
+    await expect(
+      loadAssetFoldersByProjectWithClient(
+        projectId,
+        testContext.postgrest.client,
+        ["a"]
       )
+    ).resolves.toEqual([
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+    ]);
+    await expect(
+      loadAssetFoldersByProjectWithClient(
+        projectId,
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual([
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", createdAt },
+    ]);
+  });
+
+  test("reloads a cycle repair that loses a concurrent update", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", parentId: "a", createdAt },
+    ];
+    let readCount = 0;
+    server.use(
+      db.get("AssetFolder", () => {
+        readCount += 1;
+        return json(folders);
+      }),
+      db.patch("AssetFolder", () => {
+        folders = folders.map((folder) =>
+          folder.id === "b" ? { ...folder, parentId: null } : folder
+        );
+        return json([]);
+      })
     );
 
     await expect(
@@ -191,6 +250,7 @@ describe("asset folder persistence", () => {
       { id: "a", projectId, name: "A", parentId: "b", createdAt },
       { id: "b", projectId, name: "B", createdAt },
     ]);
+    expect(readCount).toBe(2);
   });
 
   test("reverts a move when a concurrent server creates a cycle", async () => {
@@ -478,6 +538,24 @@ describe("asset patch persistence", () => {
     expect(requestCount).toBe(0);
   });
 
+  test("rejects assets that are patched into another project", async () => {
+    const projectId = uid();
+    server.use(db.get("Asset", () => json([{ ...assetRow, projectId }])));
+
+    await expect(
+      patchAssetsWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [
+          {
+            op: "replace",
+            path: ["asset-1", "projectId"],
+            value: "another-project",
+          },
+        ]
+      )
+    ).rejects.toThrow("belongs to another project");
+  });
+
   test("updates only supplied metadata and reloads only that asset", async () => {
     const projectId = uid();
     let update: unknown;
@@ -580,6 +658,7 @@ describe("patchAssets (msw)", () => {
           description: body.description ?? localAssetRow.description,
         };
         return json({
+          id: localAssetRow.assetId,
           filename: localAssetRow.filename,
           description: localAssetRow.description,
         });
@@ -671,6 +750,7 @@ describe("patchAssets (msw)", () => {
           filename: body.filename ?? localAssetRow.filename,
         };
         return json({
+          id: localAssetRow.assetId,
           filename: localAssetRow.filename,
           description: localAssetRow.description,
         });
@@ -769,6 +849,7 @@ describe("patchAssets (msw)", () => {
           .folderId;
         localAssetRow = { ...localAssetRow, folderId: null };
         return json({
+          id: localAssetRow.assetId,
           filename: localAssetRow.filename,
           description: localAssetRow.description,
           folderId: null,
@@ -893,6 +974,49 @@ describe("patchAssets (msw)", () => {
 
     await patchAssets({ projectId }, patches, createContext());
     expect(insertedAssets).toBeDefined();
+  });
+
+  test("rejects an added asset whose file is unavailable", async () => {
+    const projectId = uid();
+    let restored = false;
+    let inserted = false;
+    server.use(
+      db.get("Asset", () => json([])),
+      db.get("File", () => json([])),
+      db.patch("File", () => {
+        restored = true;
+        return empty({ status: 204 });
+      }),
+      db.post("Asset", () => {
+        inserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    await expect(
+      patchAssetsWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [
+          {
+            op: "add",
+            path: ["missing"],
+            value: {
+              id: "missing",
+              name: "missing.jpg",
+              type: "image",
+              projectId,
+              format: "jpg",
+              size: 1,
+              description: null,
+              createdAt: "2024-01-01T00:00:00.000Z",
+              meta: { width: 1, height: 1 },
+            },
+          },
+        ]
+      )
+    ).rejects.toThrow("Asset file not found for missing");
+    expect(restored).toBe(false);
+    expect(inserted).toBe(false);
   });
 
   test("core helper deletes assets and marks unused files as deleted", async () => {

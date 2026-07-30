@@ -1,4 +1,3 @@
-import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import {
   Button,
@@ -17,8 +16,7 @@ import { InfoCircleIcon } from "@webstudio-is/icons";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   BindableExpressionControl,
-  updateExpressionValue,
-  useBindingState,
+  updateBindableValue,
 } from "~/builder/shared/bindable-expression";
 import {
   validateHtmlEmbedCode,
@@ -29,10 +27,10 @@ import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
   VerticalLayout,
-  $selectedInstanceScope,
   humanizeAttribute,
 } from "../shared";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 export type CodeIssue = HtmlEmbedCodeError & {
   severity?: "error" | "warning";
 };
@@ -140,21 +138,19 @@ export const CodeControl = ({
         }
       }
 
-      if (prop?.type === "expression") {
-        updateExpressionValue(prop.value, storedValue);
-      } else {
-        onChange({ type: "string", value: storedValue });
-      }
+      updateBindableValue({
+        expression: prop?.type === "expression" ? prop.value : undefined,
+        value: storedValue,
+        onChangeValue: (value) => onChange({ type: "string", value }),
+      });
     },
     { autoSave: behavior?.autoSave ?? true }
   );
 
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   const errorInfo = (
     <ErrorInfo
@@ -172,17 +168,17 @@ export const CodeControl = ({
     <VerticalLayout
       label={
         <Flex gap="1" align="center">
-          <PropertyLabel name={propName} readOnly={overwritable === false} />
+          <PropertyLabel
+            name={propName}
+            readOnly={binding.bindingState.overwritable === false}
+          />
           {errorInfo}
         </Flex>
       }
     >
       <BindableExpressionControl
-        expression={expression}
+        {...binding}
         value={localValue.value}
-        bound={prop?.type === "expression"}
-        scope={scope}
-        aliases={aliases}
         validate={(value) =>
           behavior
             ? behavior.validateBinding(value, label)

@@ -37,7 +37,7 @@ import {
   $resourcesCache,
   computeResourceRequest,
   getResourceKey,
-  preloadResource,
+  preloadResources,
 } from "../resources";
 
 export const assetBaseUrl = "/cgi/asset/";
@@ -621,8 +621,6 @@ const $computedResourceRequests = computed(
  */
 export const subscribeResources = () => {
   return $computedResourceRequests.subscribe((computedResourceRequests) => {
-    for (const resourceRequest of computedResourceRequests) {
-      preloadResource(resourceRequest);
-    }
+    preloadResources(computedResourceRequests);
   });
 };

@@ -18,6 +18,9 @@ const BoundExpression = ({
   input,
   min,
   max,
+  exclusiveMin,
+  exclusiveMax,
+  integer,
 }: QueryValueEditorProps & {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
@@ -35,11 +38,29 @@ const BoundExpression = ({
         bound={bound}
         scope={scope}
         aliases={aliases}
-        validate={(value) =>
-          value !== undefined && typeof value !== "number"
-            ? `${label} expects a number value`
-            : undefined
-        }
+        validate={(value) => {
+          if (value !== undefined && typeof value !== "number") {
+            return `${label} expects a number value`;
+          }
+          if (typeof value !== "number") {
+            return;
+          }
+          if (integer && Number.isInteger(value) === false) {
+            return `${label} expects an integer value`;
+          }
+          if (
+            min !== undefined &&
+            (exclusiveMin ? value <= min : value < min)
+          ) {
+            return `${label} expects a value ${exclusiveMin ? "greater than" : "greater than or equal to"} ${min}`;
+          }
+          if (
+            max !== undefined &&
+            (exclusiveMax ? value >= max : value > max)
+          ) {
+            return `${label} expects a value ${exclusiveMax ? "less than" : "less than or equal to"} ${max}`;
+          }
+        }}
         parseValue={Number}
         onChangeValue={onChange}
         onChangeExpression={onChange}
@@ -50,7 +71,7 @@ const BoundExpression = ({
             type="number"
             min={min}
             max={max}
-            step={1}
+            step={integer === true ? 1 : "any"}
             disabled={readOnly}
             value={value}
             onChange={(event) => onChangeValue(event.target.value)}

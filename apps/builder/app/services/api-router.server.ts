@@ -28,9 +28,7 @@ import {
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
 import {
-  AssetIndexRevisionError,
-  AssetQueryExecutionError,
-  AssetResourceHydrationError,
+  getAssetResourceQueryError,
   assetQueryRequest,
   getAssetQueryWhereMetrics,
   validateAssetQueryAgainstCatalog,
@@ -83,6 +81,7 @@ import {
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
 import { createAssetClient } from "../shared/asset-client";
+import { getContentDatabaseMaxBytes } from "./content-database.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -119,20 +118,15 @@ const assetQueryValidationInput = projectIdInput.extend({
   query: assetQueryRequest.shape.query,
 });
 const throwAssetQueryApiError = (error: unknown): never => {
-  if (error instanceof AssetIndexRevisionError) {
-    return throwApiError("CONFLICT", error.message, {
-      webstudioCode: "STALE_INDEX",
-    });
-  }
-  if (error instanceof AssetQueryExecutionError) {
-    return throwApiError("BAD_REQUEST", error.message, {
-      webstudioCode: "INVALID_REQUEST",
-    });
-  }
-  if (error instanceof AssetResourceHydrationError) {
-    return throwApiError("BAD_REQUEST", error.message, {
-      webstudioCode: error.code,
-    });
+  const queryError = getAssetResourceQueryError(error);
+  if (queryError !== undefined) {
+    return throwApiError(
+      queryError.status === 409 ? "CONFLICT" : "BAD_REQUEST",
+      queryError.message,
+      {
+        webstudioCode: queryError.code,
+      }
+    );
   }
   throw error;
 };
@@ -771,6 +765,7 @@ export const apiRouter = router({
             request,
             context: ctx,
             assetClient: createAssetClient(),
+            contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
           });
         } catch (error) {
           return throwAssetQueryApiError(error);

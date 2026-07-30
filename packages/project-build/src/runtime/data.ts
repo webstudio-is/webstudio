@@ -10,6 +10,7 @@ import {
   findTreeInstanceIdsExcludingSlotDescendants,
   getAllPages,
   getStyleDeclKey,
+  isAssetsResource,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -28,13 +29,13 @@ import {
 import {
   getExpressionIdentifiers,
   isLiteralExpression,
+  parseJsonExpression,
   parseStringLiteralExpression,
   transpileExpression,
 } from "@webstudio-is/expression";
 import { z } from "zod";
 import { produceWithPatches } from "immer";
 import {
-  assetsResourceUrl,
   createJsonStringifyProxy,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
@@ -301,18 +302,6 @@ export const validateDataVariableJsonValue = (expression: string) => {
     : "";
 };
 
-export const parseDataVariableJsonExpression = (expression: string) => {
-  try {
-    const executableExpression = transpileExpression({
-      expression,
-      executable: true,
-    });
-    return eval(`(${executableExpression})`);
-  } catch {
-    return undefined;
-  }
-};
-
 export const createDataVariableValueFromInput = ({
   type,
   value,
@@ -329,7 +318,7 @@ export const createDataVariableValueFromInput = ({
   if (type === "boolean") {
     return { type: "boolean", value: value !== null };
   }
-  const parsedValue = value ? parseDataVariableJsonExpression(value) : null;
+  const parsedValue = value ? parseJsonExpression(value) : null;
   return {
     type: "json",
     value: parsedValue ?? null,
@@ -468,19 +457,25 @@ export const replaceDataSourcesInExpression = (
   expression: string,
   replacements: Map<DataSource["id"], DataSource["id"]>
 ) => {
-  return transpileExpression({
-    expression,
-    executable: true,
-    replaceVariable: (identifier) => {
-      const dataSourceId = decodeDataSourceVariable(identifier);
-      if (dataSourceId === undefined) {
-        return;
-      }
-      return encodeDataSourceVariable(
-        replacements.get(dataSourceId) ?? dataSourceId
-      );
-    },
-  });
+  try {
+    return transpileExpression({
+      expression,
+      executable: true,
+      replaceVariable: (identifier) => {
+        const dataSourceId = decodeDataSourceVariable(identifier);
+        if (dataSourceId === undefined) {
+          return;
+        }
+        return encodeDataSourceVariable(
+          replacements.get(dataSourceId) ?? dataSourceId
+        );
+      },
+    });
+  } catch {
+    // Resource fields historically also store plain strings such as URLs.
+    // Copy those values unchanged instead of treating them as expressions.
+    return expression;
+  }
 };
 
 export const computeExpression = (
@@ -2009,11 +2004,7 @@ const getResourceWarnings = ({
         resourceId,
       })
   );
-  const isRenderTimeRead =
-    fields.method === "get" ||
-    (fields.control === "system" &&
-      fields.method === "post" &&
-      parseStringLiteralExpression(fields.url) === assetsResourceUrl);
+  const isRenderTimeRead = fields.method === "get" || isAssetsResource(fields);
   if (exposeAsDataSource && isRenderTimeRead === false) {
     warnings.push({
       severity: "warning",

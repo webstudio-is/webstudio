@@ -84,6 +84,10 @@ const catalog: BuilderAssetFieldCatalog = {
   },
 };
 
+const runtimeAssets = Object.fromEntries(
+  documents.map(({ _id }) => [_id, { url: `/assets/${_id}` }])
+);
+
 describe("structured asset query", () => {
   test("combines nested all and any filter groups", async () => {
     const result = await executeAssetQuery({
@@ -128,6 +132,35 @@ describe("structured asset query", () => {
         height: 800,
       },
       { id: "gamma", url: "/assets/gamma.md" },
+    ]);
+  });
+
+  test("filters and sorts by target-specific runtime fields", async () => {
+    const result = await executeAssetQuery({
+      catalog,
+      documents,
+      runtimeAssets: {
+        alpha: { url: "/assets/alpha", width: 1200, height: 800 },
+        beta: { url: "/assets/beta", width: 640, height: 480 },
+        gamma: { url: "/assets/gamma" },
+      },
+      query: {
+        where: {
+          all: [{ field: ["width"], operator: "gte", value: 600 }],
+        },
+        sort: [{ field: ["width"], direction: "asc" }],
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["id"], ["width"]],
+        },
+        content: { mode: "none" },
+      },
+    });
+
+    expect(result.items).toEqual([
+      { id: "beta", width: 640 },
+      { id: "alpha", width: 1200 },
     ]);
   });
 
@@ -219,6 +252,10 @@ describe("structured asset query", () => {
         },
       },
       documents: mixedDocuments,
+      runtimeAssets: {
+        ...runtimeAssets,
+        delta: { url: "/assets/delta" },
+      },
       query: {
         sort: [{ field: ["properties", "publishedAt"], direction: "asc" }],
         content: { mode: "none" },
@@ -237,6 +274,7 @@ describe("structured asset query", () => {
     const result = await executeAssetQuery({
       catalog,
       documents,
+      runtimeAssets,
       query: {
         where: {
           all: [
@@ -287,6 +325,7 @@ describe("structured asset query", () => {
     const result = await executeAssetQuery({
       catalog,
       documents: [{ ...documents[0], size: bytes.byteLength }],
+      runtimeAssets,
       query: {
         where: { all: [{ field: ["id"], operator: "eq", value: "alpha" }] },
         sort: [],
@@ -315,6 +354,7 @@ describe("structured asset query", () => {
     const selected = await executeAssetQuery({
       catalog,
       documents,
+      runtimeAssets,
       query: {
         where: { all: [] },
         sort: [],
@@ -335,11 +375,15 @@ describe("structured asset query", () => {
       properties: { title: "Alpha" },
       excerpt: "Alpha excerpt",
     });
+    expect(selected.items[0]).not.toHaveProperty("url");
+    expect(selected.items[0]).not.toHaveProperty("width");
+    expect(selected.items[0]).not.toHaveProperty("height");
     expect(selected.items[0].properties).not.toHaveProperty("draft");
 
     const base = await executeAssetQuery({
       catalog,
       documents,
+      runtimeAssets,
       query: {
         where: { all: [] },
         sort: [],
@@ -389,6 +433,10 @@ describe("structured asset query", () => {
     const result = await executeAssetQuery({
       catalog,
       documents: [empty, withExcerpt],
+      runtimeAssets: {
+        empty: { url: "/assets/empty" },
+        excerpt: { url: "/assets/excerpt" },
+      },
       query: {
         where: { all: [] },
         sort: [],
@@ -413,6 +461,7 @@ describe("structured asset query", () => {
       documents: [
         { ...document({ id: "content", properties: {} }), size: bytes.length },
       ],
+      runtimeAssets: { content: { url: "/assets/content" } },
       query: {
         where: { all: [] },
         sort: [],
@@ -458,6 +507,7 @@ describe("structured asset query", () => {
     const result = await executeAssetQuery({
       catalog,
       documents,
+      runtimeAssets,
       query: {
         where: {
           all: [
@@ -481,5 +531,15 @@ describe("structured asset query", () => {
     });
 
     expect(result.items.map(({ id }) => id)).toEqual(["gamma"]);
+  });
+
+  test("requires target-specific URL data when URL is selected", async () => {
+    await expect(
+      executeAssetQuery({
+        catalog,
+        documents: [documents[0]],
+        query: { content: { mode: "none" } },
+      })
+    ).rejects.toThrow("Asset URL is unavailable for alpha");
   });
 });

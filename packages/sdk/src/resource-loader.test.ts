@@ -142,13 +142,44 @@ describe("loadResource", () => {
       status: 200,
       statusText: "",
       data: {
-        second: { id: "second", name: "Second" },
-        first: { id: "first", name: "First" },
+        second: { name: "Second" },
+        first: { name: "First" },
       },
       meta: { totalCount: 5, hasMore: true },
       __diagnostics__: { scope: "query-preview" },
     });
     expect(Object.keys(result.data)).toEqual(["second", "first"]);
+  });
+
+  test("retains ID in Assets values only when selected", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          items: [{ id: "asset", name: "Asset" }],
+          totalCount: 1,
+          hasMore: false,
+        })
+      )
+    );
+
+    const result = await loadResource(mockFetch, {
+      name: "assets",
+      url: "/$resources/assets",
+      searchParams: [],
+      method: "post",
+      headers: [],
+      body: {
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+        },
+      },
+    });
+
+    expect(result.data).toEqual({ asset: { id: "asset", name: "Asset" } });
   });
 
   test("does not reshape arbitrary POST resources", async () => {

@@ -78,6 +78,37 @@ describe("Assets resource mutation input", () => {
     ).toBe(true);
   });
 
+  test.each(["", "system.params["])(
+    "rejects invalid query expression %j at the input boundary",
+    (expression) => {
+      expect(
+        assetsResourceCreateInput.safeParse({
+          name: "Posts",
+          scopeInstanceId: "root",
+          query: { limit: expression },
+        }).success
+      ).toBe(false);
+      expect(
+        assetsResourceUpdateInput.safeParse({
+          resourceId: "posts",
+          values: {
+            query: {
+              where: {
+                all: [
+                  {
+                    field: ["properties", "slug"],
+                    operator: "eq",
+                    value: expression,
+                  },
+                ],
+              },
+            },
+          },
+        }).success
+      ).toBe(false);
+    }
+  );
+
   test("keeps omitted query update fields absent for patch merging", () => {
     expect(
       assetsResourceUpdateInput.parse({

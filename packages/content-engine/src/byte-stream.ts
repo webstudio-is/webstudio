@@ -14,13 +14,6 @@ export class ByteLimitExceededError extends Error {
   }
 }
 
-export const appendBytes = (previous: Uint8Array, next: Uint8Array) => {
-  const result = new Uint8Array(previous.byteLength + next.byteLength);
-  result.set(previous);
-  result.set(next, previous.byteLength);
-  return result;
-};
-
 const concatenateChunks = (chunks: readonly Uint8Array[], length: number) => {
   const bytes = new Uint8Array(length);
   let offset = 0;
@@ -83,3 +76,6 @@ export const readBoundedBytes = async (
 
 export const decodeUtf8 = (bytes: Uint8Array) =>
   new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+
+export const stripUtf8ByteOrderMark = (value: string) =>
+  value.charCodeAt(0) === 0xfeff ? value.slice(1) : value;

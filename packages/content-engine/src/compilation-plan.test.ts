@@ -1,14 +1,18 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   createContentCompilationPlan,
+  hasDynamicContentCompilationValues,
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
   isContentDocumentCandidate,
+  prepareContentCompilerEntries,
   requiresHydratedContent,
+  requiresRuntimeDocumentData,
   requiresStructuredProperties,
   selectContentHydrationCandidates,
 } from "./compilation-plan";
 import { assetQuery, type AssetFileDocument, type AssetQuery } from "./schema";
+import { createCanonicalAssetFileEntry } from "./canonical";
 
 test("field catalog plan requests properties without excerpts or bodies", () => {
   expect(createContentFieldCatalogCompilationPlan()).toMatchObject({
@@ -72,6 +76,7 @@ describe("content compilation plan", () => {
     });
     expect(requiresStructuredProperties(plan!)).toBe(false);
     expect(requiresHydratedContent(plan!)).toBe(false);
+    expect(requiresRuntimeDocumentData(plan!)).toBe(false);
   });
 
   test("derives structured, excerpt, and content requirements independently", () => {
@@ -94,6 +99,27 @@ describe("content compilation plan", () => {
     expect(plan).toMatchObject({ excerpt: true });
     expect(requiresStructuredProperties(plan!)).toBe(true);
     expect(requiresHydratedContent(plan!)).toBe(true);
+  });
+
+  test("detects runtime asset fields in filters, sorting, and output", () => {
+    const runtimeQueries = [
+      { where: { all: [{ field: ["width"], operator: "gte", value: 600 }] } },
+      { sort: [{ field: ["height"], direction: "desc" }] },
+      {
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["url"]],
+        },
+      },
+    ].map((value) => assetQuery.parse({ ...query, ...value }));
+    for (const value of runtimeQueries) {
+      const plan = createContentCompilationPlan([
+        compilationQuery("runtime", value),
+      ]);
+      expect(plan).toBeDefined();
+      expect(requiresRuntimeDocumentData(plan!)).toBe(true);
+    }
   });
 
   test("unions selected fields deterministically and returns no requirements for no queries", () => {
@@ -253,5 +279,127 @@ describe("content compilation plan", () => {
     expect(
       selectContentHydrationCandidates({ documents, plan: dynamicPlan })
     ).toEqual(new Set(["alpha", "beta", "gamma"]));
+
+    const runtimePlan = createContentCompilationPlan([
+      compilationQuery("runtime-window", {
+        ...query,
+        where: {
+          all: [{ field: ["width"], operator: "gte", value: 600 }],
+        },
+        sort: [{ field: ["width"], direction: "desc" }],
+        limit: 1,
+        content: { mode: "full" },
+      }),
+    ]);
+    expect(runtimePlan).toBeDefined();
+    if (runtimePlan !== undefined) {
+      expect(
+        isContentDocumentCandidate({
+          document,
+          plan: runtimePlan,
+          available: "all",
+        })
+      ).toBe(true);
+      expect(
+        selectContentHydrationCandidates({ documents, plan: runtimePlan })
+      ).toEqual(new Set(["alpha", "beta", "gamma"]));
+    }
+  });
+
+  test("reports dynamic filter and window values", () => {
+    const plan = createContentCompilationPlan([
+      {
+        ...compilationQuery("dynamic"),
+        where: {
+          field: ["properties", "slug"],
+          operator: "eq",
+          value: { type: "dynamic" },
+        },
+      },
+    ]);
+    expect(plan).toBeDefined();
+    if (plan === undefined) {
+      return;
+    }
+    expect(hasDynamicContentCompilationValues(plan)).toBe(true);
+    expect(
+      hasDynamicContentCompilationValues({
+        ...plan,
+        queries: plan.queries.map((item) => ({
+          ...item,
+          where: { all: [] },
+        })),
+      })
+    ).toBe(false);
+    expect(
+      hasDynamicContentCompilationValues({
+        ...plan,
+        queries: plan.queries.map((item) => ({
+          ...item,
+          where: { all: [] },
+          offset: { type: "dynamic" },
+        })),
+      })
+    ).toBe(true);
+  });
+
+  test("bounds content reads and marks unavailable required content", async () => {
+    const plan = createContentCompilationPlan([
+      compilationQuery("content", {
+        ...query,
+        content: { mode: "full" },
+      }),
+    ]);
+    expect(plan).toBeDefined();
+    if (plan === undefined) {
+      return;
+    }
+    const entries = [
+      { id: "newest", createdAt: "2026-07-30T00:00:00.000Z", ref: "shared" },
+      { id: "shared", createdAt: "2026-07-29T00:00:00.000Z", ref: "shared" },
+      { id: "omitted", createdAt: "2026-07-28T00:00:00.000Z", ref: "other" },
+    ].map(({ id, createdAt, ref }) =>
+      createCanonicalAssetFileEntry({
+        projectId: "project",
+        document: {
+          ...document,
+          _id: id,
+          name: `${id}.md`,
+          path: `blog/${id}.md`,
+          key: id,
+          size: 6,
+          createdAt,
+          revision: `revision-${id}`,
+          contentRef: ref,
+        },
+      })
+    );
+    const loadContent = vi.fn(async () => "shared");
+
+    const prepared = await prepareContentCompilerEntries({
+      entries,
+      plan,
+      maximumContentBytes: 6,
+      loadContent,
+    });
+
+    expect(loadContent).toHaveBeenCalledOnce();
+    expect(prepared).toEqual([
+      expect.objectContaining({
+        assetId: "newest",
+        content: "shared",
+        contentRequired: true,
+      }),
+      expect.objectContaining({
+        assetId: "shared",
+        content: "shared",
+        contentRequired: true,
+      }),
+      expect.objectContaining({
+        assetId: "omitted",
+        contentRequired: true,
+      }),
+    ]);
+    expect(prepared[2]).not.toHaveProperty("content");
   });
 });

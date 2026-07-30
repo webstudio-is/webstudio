@@ -5,7 +5,7 @@ import {
   AssetQueryExecutionError,
 } from "@webstudio-is/content-engine";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
-import { loader } from "./assets-query.server";
+import { executeAssetQuery } from "./assets-query.server";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const dependencies = {
@@ -59,7 +59,7 @@ describe("configured Assets system resource", () => {
       limit: 20,
     };
 
-    const response = await loader(
+    const response = await executeAssetQuery(
       { request: outerRequest(), resourceRequest: innerRequest({ query }) },
       dependencies
     );
@@ -105,7 +105,7 @@ describe("configured Assets system resource", () => {
       { method: "POST", body: JSON.stringify({ query: {} }) }
     );
 
-    const response = await loader(
+    const response = await executeAssetQuery(
       { request, resourceRequest: request.clone() },
       dependencies
     );
@@ -119,7 +119,7 @@ describe("configured Assets system resource", () => {
   });
 
   test("returns structured invalid-request and forbidden failures", async () => {
-    const invalid = await loader(
+    const invalid = await executeAssetQuery(
       {
         request: outerRequest(),
         resourceRequest: innerRequest({ query: { limit: -1 } }),
@@ -135,7 +135,7 @@ describe("configured Assets system resource", () => {
     dependencies.previewAssetResourceQuery.mockRejectedValue(
       new AuthorizationError("denied")
     );
-    const forbidden = await loader(
+    const forbidden = await executeAssetQuery(
       { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
       dependencies
     );
@@ -150,7 +150,7 @@ describe("configured Assets system resource", () => {
     dependencies.authorizeApiProject.mockRejectedValueOnce(
       new TRPCError({ code: "UNAUTHORIZED", message: "token required" })
     );
-    const unauthorized = await loader(
+    const unauthorized = await executeAssetQuery(
       { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
       dependencies
     );
@@ -163,7 +163,7 @@ describe("configured Assets system resource", () => {
     dependencies.authorizeApiProject.mockRejectedValueOnce(
       new Response("CSRF failed", { status: 403 })
     );
-    const csrf = await loader(
+    const csrf = await executeAssetQuery(
       { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
       dependencies
     );
@@ -175,7 +175,7 @@ describe("configured Assets system resource", () => {
   });
 
   test("rejects malformed JSON and maps execution errors", async () => {
-    const malformed = await loader(
+    const malformed = await executeAssetQuery(
       {
         request: outerRequest(),
         resourceRequest: new Request(
@@ -190,7 +190,7 @@ describe("configured Assets system resource", () => {
     dependencies.previewAssetResourceQuery.mockRejectedValueOnce(
       new AssetQueryExecutionError("Invalid pagination")
     );
-    const invalid = await loader(
+    const invalid = await executeAssetQuery(
       { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
       dependencies
     );
@@ -205,7 +205,7 @@ describe("configured Assets system resource", () => {
       new AssetIndexRevisionError()
     );
 
-    const response = await loader(
+    const response = await executeAssetQuery(
       { request: outerRequest(), resourceRequest: innerRequest({ query: {} }) },
       dependencies
     );

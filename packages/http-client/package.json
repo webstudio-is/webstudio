@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@trpc/client": "^10.45.2",
-    "@webstudio-is/content-engine": "workspace:*",
     "@webstudio-is/protocol": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",

@@ -326,6 +326,18 @@ test("creates data variable values from form input values", () => {
       value: '["Draft", 1]',
     })
   ).toEqual({ type: "json", value: ["Draft", 1] });
+  expect(
+    createDataVariableValueFromInput({
+      type: "json",
+      value: "{ enabled: true }",
+    })
+  ).toEqual({ type: "json", value: { enabled: true } });
+  expect(
+    createDataVariableValueFromInput({
+      type: "json",
+      value: 'globalThis["not-json"]',
+    })
+  ).toEqual({ type: "json", value: null });
 });
 
 test("validates data variable number values", () => {
@@ -845,6 +857,12 @@ test("replace data source ids in expression", () => {
       new Map([["oldId", "newId"]])
     )
   ).toEqual("$ws$dataSource$newId = state");
+  expect(
+    replaceDataSourcesInExpression(
+      "https://example.com/cards.json",
+      new Map([["oldId", "newId"]])
+    )
+  ).toEqual("https://example.com/cards.json");
 });
 
 test("compute expression with decoded ids", () => {

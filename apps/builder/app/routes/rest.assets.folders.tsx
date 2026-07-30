@@ -7,7 +7,7 @@ import {
   assetFolderCreateRequest,
   assetResourceApiOperations,
 } from "@webstudio-is/protocol/asset-resource-api";
-import { requiresApiCsrf } from "~/services/api-auth.server";
+import { ensureApiCsrf } from "~/services/api-auth.server";
 import {
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
@@ -15,7 +15,6 @@ import {
   readAssetRestJson,
 } from "~/services/asset-rest.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { checkCsrf } from "~/services/csrf-session.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -24,7 +23,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     request.method.toLowerCase() !==
     assetResourceApiOperations.listAssetFolders.method
   ) {
-    return assetRestMethodNotAllowed(["GET"]);
+    return assetRestMethodNotAllowed([
+      assetResourceApiOperations.listAssetFolders,
+    ]);
   }
   try {
     const folders = await (
@@ -38,15 +39,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
-  if (requiresApiCsrf(request)) {
-    await checkCsrf(request);
-  }
   if (
     request.method.toLowerCase() !==
     assetResourceApiOperations.createAssetFolder.method
   ) {
-    return assetRestMethodNotAllowed(["POST"]);
+    return assetRestMethodNotAllowed([
+      assetResourceApiOperations.createAssetFolder,
+    ]);
   }
+  await ensureApiCsrf(request);
   try {
     const folder = await (
       await createAssetRestRepository(request, "edit")

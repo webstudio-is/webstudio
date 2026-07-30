@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isQueryExpression } from "./source";
-import { getQueryFieldKey } from "./query-utils";
-import type { QueryWhereTree } from "./types";
+import { createQueryWhereSchema, getQueryFieldKey } from "./runtime";
+import { getCompatibleQueryOperators } from "./query-utils";
 
 const fieldPath = z.array(z.string().min(1)).min(1);
 const condition = z.strictObject({
@@ -10,31 +10,13 @@ const condition = z.strictObject({
   value: z.string().min(1),
 });
 
-export const createQueryWhereSchema = <ConditionSchema extends z.ZodType>(
-  conditionSchema: ConditionSchema,
-  options: { maximumChildren?: number } = {}
-) => {
-  type Input = QueryWhereTree<z.input<ConditionSchema>>;
-  type Output = QueryWhereTree<z.output<ConditionSchema>>;
-  const createNode = (child: z.ZodType<Output, Input>) => {
-    const children = z.array(child);
-    const boundedChildren =
-      options.maximumChildren === undefined
-        ? children
-        : children.max(options.maximumChildren);
-    return z.union([
-      conditionSchema,
-      z.strictObject({ all: boundedChildren }),
-      z.strictObject({ any: boundedChildren }),
-    ]);
-  };
-  const node: z.ZodType<Output, Input> = z.lazy(() => createNode(node));
-  return node;
-};
-
 const sortItem = z.strictObject({
   field: fieldPath,
-  direction: z.enum(["asc", "desc"]),
+  direction: z.string().min(1),
+});
+const choice = z.strictObject({
+  value: z.string().min(1),
+  label: z.string().min(1),
 });
 const jsonSchema = z.union([z.boolean(), z.record(z.string(), z.json())]);
 const parameterField = z.discriminatedUnion("type", [
@@ -44,6 +26,9 @@ const parameterField = z.discriminatedUnion("type", [
     type: z.literal("number"),
     min: z.number().optional(),
     max: z.number().optional(),
+    exclusiveMin: z.boolean().optional(),
+    exclusiveMax: z.boolean().optional(),
+    integer: z.boolean().optional(),
     optional: z.boolean().optional(),
   }),
   z.strictObject({
@@ -104,7 +89,8 @@ const control = z.discriminatedUnion("type", [
     label: z.string().min(1),
     defaultValue: z.array(sortItem),
     defaultItem: sortItem,
-    max: z.number().int().nonnegative(),
+    directions: z.array(choice).min(1),
+    max: z.number().int().nonnegative().optional(),
   }),
   z.strictObject({
     type: z.literal("expression"),
@@ -114,6 +100,9 @@ const control = z.discriminatedUnion("type", [
     input: z.enum(["number", "expression"]),
     min: z.number().optional(),
     max: z.number().optional(),
+    exclusiveMin: z.boolean().optional(),
+    exclusiveMax: z.boolean().optional(),
+    integer: z.boolean().optional(),
   }),
   z.strictObject({
     type: z.literal("variant"),
@@ -128,6 +117,7 @@ const control = z.discriminatedUnion("type", [
 export const queryDefinition = z
   .strictObject({
     version: z.literal(1),
+    description: z.string().min(1).optional(),
     fields: z.array(
       z.strictObject({
         path: fieldPath,
@@ -167,6 +157,19 @@ export const queryDefinition = z
           code: "custom",
           message: "Operator defaults must be expressions",
           path: ["operators", index, "input", "defaultValue"],
+        });
+      }
+    }
+    for (const [index, field] of fields.entries()) {
+      if (
+        field.operators?.some(
+          (operator) => operatorValues.includes(operator) === false
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Field operators must be available",
+          path: ["fields", index, "operators"],
         });
       }
     }
@@ -210,15 +213,61 @@ export const queryDefinition = z
             message: "Default filter operator is unavailable",
           });
         }
+        const defaultField = fields.find(
+          ({ path }) =>
+            getQueryFieldKey(path) ===
+            getQueryFieldKey(item.defaultCondition.field)
+        );
+        if (
+          defaultField !== undefined &&
+          getCompatibleQueryOperators(
+            defaultField.types,
+            operators,
+            defaultField.operators
+          ).some(({ value }) => value === item.defaultCondition.operator) ===
+            false
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "Default filter operator is incompatible with its field",
+          });
+        }
       }
-      if (
-        item.type === "sort" &&
-        fieldKeys.includes(getQueryFieldKey(item.defaultItem.field)) === false
-      ) {
-        context.addIssue({
-          code: "custom",
-          message: "Default sort field is unavailable",
-        });
+      if (item.type === "sort") {
+        const directions = item.directions.map(({ value }) => value);
+        if (new Set(directions).size !== directions.length) {
+          context.addIssue({
+            code: "custom",
+            message: "Sort directions must be unique",
+          });
+        }
+        if (
+          fieldKeys.includes(getQueryFieldKey(item.defaultItem.field)) === false
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "Default sort field is unavailable",
+          });
+        }
+        if (directions.includes(item.defaultItem.direction) === false) {
+          context.addIssue({
+            code: "custom",
+            message: "Default sort direction is unavailable",
+          });
+        }
+        if (
+          item.defaultValue.some(
+            ({ field, direction }) =>
+              fieldKeys.includes(getQueryFieldKey(field)) === false ||
+              directions.includes(direction) === false
+          ) ||
+          (item.max !== undefined && item.defaultValue.length > item.max)
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "Default sort value is invalid",
+          });
+        }
       }
       if (item.type === "variant") {
         let parser: z.ZodType | undefined;

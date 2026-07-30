@@ -13,9 +13,9 @@ import {
 } from "./byte-stream";
 import { mapBounded } from "./async-utils";
 import {
-  rewriteMarkdownAssetReferences,
+  rewriteMarkdownAssetReferenceRanges,
   type MarkdownAssetReferences,
-} from "./markdown-assets";
+} from "./markdown-references";
 
 export class AssetResourceHydrationError extends Error {
   readonly code:
@@ -102,9 +102,12 @@ const getSelectedIdentities = (result: unknown): SelectedIdentity[] => {
 const isTextDocument = (document: ContentDatabaseDocument) =>
   typeof document.mimeType === "string" &&
   (document.mimeType.startsWith("text/") ||
-    ["application/json", "application/javascript", "application/xml"].includes(
-      document.mimeType
-    ));
+    [
+      "application/json",
+      "application/javascript",
+      "application/xml",
+      "image/svg+xml",
+    ].includes(document.mimeType));
 
 const readBytes = async ({
   read,
@@ -286,7 +289,7 @@ export const hydrateAssetResourceResult = async ({
           text = (await extractMarkdownBody(bytes, item.readLength || 1)).body;
           const references = assetReferences?.[item.identity.contentRef];
           if (references !== undefined && assetUrls !== undefined) {
-            text = rewriteMarkdownAssetReferences({
+            text = rewriteMarkdownAssetReferenceRanges({
               markdown: text,
               references,
               assetUrls,

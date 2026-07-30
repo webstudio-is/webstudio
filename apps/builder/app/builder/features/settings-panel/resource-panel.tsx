@@ -26,7 +26,7 @@ import {
 import {
   generateObjectExpression,
   isLiteralExpression,
-  parseObjectExpression,
+  parseExpressionObject,
 } from "@webstudio-is/expression";
 import {
   serializeValue,
@@ -203,9 +203,12 @@ export const MethodField = ({
   );
 };
 
-const SearchParamPair = ({
+type ExpressionPair = Resource["headers"][number];
+
+const ExpressionNameValuePair = ({
   aliases,
   scope,
+  kind,
   name,
   value,
   onChange,
@@ -213,6 +216,7 @@ const SearchParamPair = ({
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
+  kind: "header" | "search param";
   name: string;
   value: string;
   onChange: (name: string, value: string) => void;
@@ -230,11 +234,16 @@ const SearchParamPair = ({
         // autofocus only new fields
         autoFocus={name === ""}
         placeholder="Name"
-        name="search-param-name"
+        name={kind === "header" ? "header-name" : "search-param-name"}
         value={name}
         onChange={(event) => onChange(event.target.value, value)}
       />
-      <input type="hidden" name="search-param-value" value={value} />
+      <input
+        type="hidden"
+        readOnly={true}
+        name={kind === "header" ? "header-value" : "search-param-value"}
+        value={value}
+      />
       <BindableExpressionControl
         expression={value}
         value={serializeValue(evaluatedValue)}
@@ -248,7 +257,11 @@ const SearchParamPair = ({
         renderControl={({ value, readOnly, onChangeValue }) => (
           <InputField
             placeholder="Value"
-            name="search-param-value-literal"
+            name={
+              kind === "header"
+                ? "header-value-validator"
+                : "search-param-value-literal"
+            }
             disabled={readOnly || !isValueString}
             value={value}
             onChange={(event) => onChangeValue(event.target.value)}
@@ -256,189 +269,88 @@ const SearchParamPair = ({
         )}
       />
       <SmallIconButton
-        aria-label="Delete search param"
+        aria-label={`Delete ${kind}`}
         variant="destructive"
         icon={<TrashIcon />}
         onClick={onDelete}
       />
+    </Grid>
+  );
+};
+
+const ExpressionPairs = ({
+  scope,
+  aliases,
+  kind,
+  values,
+  onChange,
+}: {
+  scope: Record<string, unknown>;
+  aliases: Map<string, string>;
+  kind: "header" | "search param";
+  values: ExpressionPair[];
+  onChange: (values: ExpressionPair[]) => void;
+}) => {
+  const label = kind === "header" ? "Headers" : "Search params";
+  return (
+    <Grid gap={1}>
+      <Flex justify="between" align="center">
+        <Label>{label}</Label>
+        <SmallIconButton
+          aria-label={`Add another ${kind}`}
+          icon={<PlusIcon />}
+          // Use an empty string expression as the default value.
+          onClick={() => onChange([...values, { name: "", value: `""` }])}
+        />
+      </Flex>
+      <Grid gap={2}>
+        {values.map((item, index) => (
+          <ExpressionNameValuePair
+            key={index}
+            scope={scope}
+            aliases={aliases}
+            kind={kind}
+            name={item.name}
+            value={item.value}
+            onChange={(name, value) => {
+              const next = [...values];
+              next[index] = { name, value };
+              onChange(next);
+            }}
+            onDelete={() =>
+              onChange(values.filter((_, position) => position !== index))
+            }
+          />
+        ))}
+        {values.length === 0 && (
+          <Text color="subtle" align="center">
+            No {label.toLowerCase()}
+          </Text>
+        )}
+      </Grid>
     </Grid>
   );
 };
 
 export const SearchParams = ({
-  scope,
-  aliases,
   searchParams,
-  onChange,
+  ...props
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
   searchParams: NonNullable<Resource["searchParams"]>;
   onChange: (searchParams: NonNullable<Resource["searchParams"]>) => void;
-}) => {
-  return (
-    <Grid gap={1}>
-      <Flex justify="between" align="center">
-        <Label>Search params</Label>
-        <SmallIconButton
-          aria-label="Add another search param"
-          icon={<PlusIcon />}
-          onClick={() => {
-            // use empty string expression as default
-            const newSearchParams = [
-              ...searchParams,
-              { name: "", value: `""` },
-            ];
-            onChange(newSearchParams);
-          }}
-        />
-      </Flex>
-      <Grid gap={2}>
-        {searchParams.map((searchParam, index) => (
-          <SearchParamPair
-            key={index}
-            scope={scope}
-            aliases={aliases}
-            name={searchParam.name}
-            value={searchParam.value}
-            onChange={(name, value) => {
-              const newSearchParams = [...searchParams];
-              newSearchParams[index] = { name, value };
-              onChange(newSearchParams);
-            }}
-            onDelete={() => {
-              const newSearchParams = [...searchParams];
-              newSearchParams.splice(index, 1);
-              onChange(newSearchParams);
-            }}
-          />
-        ))}
-        {searchParams.length === 0 && (
-          <Text color="subtle" align="center">
-            No search params
-          </Text>
-        )}
-      </Grid>
-    </Grid>
-  );
-};
-
-const HeaderPair = ({
-  aliases,
-  scope,
-  name,
-  value,
-  onChange,
-  onDelete,
-}: {
-  aliases: Map<string, string>;
-  scope: Record<string, unknown>;
-  name: string;
-  value: string;
-  onChange: (name: string, value: string) => void;
-  onDelete: () => void;
-}) => {
-  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  const isValueString = typeof evaluatedValue === "string";
-  return (
-    <Grid
-      gap={2}
-      align="center"
-      css={{ gridTemplateColumns: `120px 1fr min-content` }}
-    >
-      <InputField
-        // autofocus only new fields
-        autoFocus={name === ""}
-        placeholder="Name"
-        name="header-name"
-        value={name}
-        onChange={(event) => onChange(event.target.value, value)}
-      />
-      <input type="hidden" readOnly={true} name="header-value" value={value} />
-      <BindableExpressionControl
-        expression={value}
-        value={serializeValue(evaluatedValue)}
-        bound={isLiteralExpression(value) === false}
-        allowBindingOverwrite={false}
-        scope={scope}
-        aliases={aliases}
-        onChangeValue={(value) => onChange(name, JSON.stringify(value))}
-        onChangeExpression={(value) => onChange(name, value)}
-        onRemove={(value) => onChange(name, JSON.stringify(value))}
-        renderControl={({ value, readOnly, onChangeValue }) => (
-          <InputField
-            placeholder="Value"
-            name="header-value-validator"
-            disabled={readOnly || !isValueString}
-            value={value}
-            onChange={(event) => onChangeValue(event.target.value)}
-          />
-        )}
-      />
-      <SmallIconButton
-        aria-label="Delete header"
-        variant="destructive"
-        icon={<TrashIcon />}
-        onClick={onDelete}
-      />
-    </Grid>
-  );
-};
+}) => <ExpressionPairs {...props} kind="search param" values={searchParams} />;
 
 export const Headers = ({
-  scope,
-  aliases,
   headers,
-  onChange,
+  ...props
 }: {
-  scope: Record<string, unknown>;
   aliases: Map<string, string>;
+  scope: Record<string, unknown>;
   headers: Resource["headers"];
   onChange: (headers: Resource["headers"]) => void;
-}) => {
-  return (
-    <Grid gap={1}>
-      <Flex justify="between" align="center">
-        <Label>Headers</Label>
-        <SmallIconButton
-          aria-label="Add another search param"
-          icon={<PlusIcon />}
-          onClick={() => {
-            // use empty string expression as default
-            const newHeaders = [...headers, { name: "", value: `""` }];
-            onChange(newHeaders);
-          }}
-        />
-      </Flex>
-      <Grid gap={2}>
-        {headers.map((header, index) => (
-          <HeaderPair
-            key={index}
-            scope={scope}
-            aliases={aliases}
-            name={header.name}
-            value={header.value}
-            onChange={(name, value) => {
-              const newHeaders = [...headers];
-              newHeaders[index] = { name, value };
-              onChange(newHeaders);
-            }}
-            onDelete={() => {
-              const newHeaders = [...headers];
-              newHeaders.splice(index, 1);
-              onChange(newHeaders);
-            }}
-          />
-        ))}
-        {headers.length === 0 && (
-          <Text color="subtle" align="center">
-            No headers
-          </Text>
-        )}
-      </Grid>
-    </Grid>
-  );
-};
+}) => <ExpressionPairs {...props} kind="header" values={headers} />;
 
 const CacheMaxAge = ({
   value,
@@ -1073,8 +985,8 @@ export const GraphqlResourceForm = forwardRef<
   const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
   const [headers, setHeaders] = useState(parsedHeaders.headers);
 
-  const [bodyExpressions] = useState(() =>
-    parseObjectExpression(resource?.body ?? "")
+  const [bodyExpressions] = useState(
+    () => parseExpressionObject(resource?.body ?? "") ?? new Map()
   );
   const queryId = useId();
   const [query, setQuery] = useState(

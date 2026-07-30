@@ -1,5 +1,6 @@
 import { assetQueryRequest, type AssetQueryRequestInput } from "./schema";
 import { contentEngineLimits } from "./limits";
+import { decodeUtf8 } from "./byte-stream";
 
 export class AssetQueryRequestError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -70,7 +71,7 @@ export const readAssetQueryRequest = async (
     throw error;
   }
   try {
-    return assetQueryRequest.parse(JSON.parse(new TextDecoder().decode(bytes)));
+    return assetQueryRequest.parse(JSON.parse(decodeUtf8(bytes)));
   } catch (error) {
     throw new AssetQueryRequestError("Asset query request is invalid", {
       cause: error,

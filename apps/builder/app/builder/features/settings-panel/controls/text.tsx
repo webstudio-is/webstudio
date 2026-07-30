@@ -1,20 +1,18 @@
 import { useId } from "react";
-import { useStore } from "@nanostores/react";
 import { TextArea } from "@webstudio-is/design-system";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   BindableExpressionControl,
-  updateExpressionValue,
-  useBindingState,
+  updateBindableValue,
 } from "~/builder/shared/bindable-expression";
 import {
   type ControlProps,
   ResponsiveLayout,
-  $selectedInstanceScope,
   humanizeAttribute,
 } from "../shared";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 
 export const TextControl = ({
   meta,
@@ -24,28 +22,23 @@ export const TextControl = ({
   onChange,
 }: ControlProps<"text">) => {
   const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
-    if (prop?.type === "expression") {
-      updateExpressionValue(prop.value, value);
-    } else {
-      onChange({ type: "string", value });
-    }
+    updateBindableValue({
+      expression: prop?.type === "expression" ? prop.value : undefined,
+      value,
+      onChangeValue: (value) => onChange({ type: "string", value }),
+    });
   });
   const id = useId();
   const label = humanizeAttribute(meta.label || propName);
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   const input = (
     <BindableExpressionControl
-      expression={expression}
+      {...binding}
       value={localValue.value}
-      bound={prop?.type === "expression"}
-      scope={scope}
-      aliases={aliases}
       validate={(value) => validatePrimitiveValue(value, label)}
       onChangeValue={(value) => onChange({ type: "string", value })}
       onChangeExpression={(value) => onChange({ type: "expression", value })}
@@ -70,7 +63,10 @@ export const TextControl = ({
   return (
     <ResponsiveLayout
       label={
-        <PropertyLabel name={propName} readOnly={overwritable === false} />
+        <PropertyLabel
+          name={propName}
+          readOnly={binding.bindingState.overwritable === false}
+        />
       }
     >
       {input}

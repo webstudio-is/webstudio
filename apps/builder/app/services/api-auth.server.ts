@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
   AuthorizationError,
+  authorizeProject,
   type ProjectPermit,
 } from "@webstudio-is/trpc-interface/index.server";
 import { apiClientHeader } from "@webstudio-is/trpc-interface/api-compatibility";
@@ -20,7 +21,8 @@ export const authorizeApiProject = async (
   dependencies = {
     createContext,
     assertApiProjectPermit,
-    checkCsrf,
+    hasProjectPermit: authorizeProject.hasProjectPermit,
+    ensureApiCsrf,
   }
 ) => {
   const context = await dependencies.createContext(request);
@@ -28,7 +30,13 @@ export const authorizeApiProject = async (
     context.authorization.type === "token" &&
     request.headers.get(apiClientHeader) === "browser"
   ) {
-    await dependencies.checkCsrf(request);
+    await dependencies.ensureApiCsrf(request);
+    if (
+      (await dependencies.hasProjectPermit({ projectId, permit }, context)) ===
+      false
+    ) {
+      throw new AuthorizationError("You don't have access to this project");
+    }
     return context;
   }
   if (
@@ -48,6 +56,23 @@ export const authorizeApiProject = async (
 export const requiresApiCsrf = (request: Request) =>
   request.headers.get(apiClientHeader) === "browser" ||
   request.headers.has("x-auth-token") === false;
+
+const csrfValidatedRequests = new WeakSet<Request>();
+
+/** Validate one request at most once across its transport and authorization. */
+export const ensureApiCsrf = async (
+  request: Request,
+  validate: typeof checkCsrf = checkCsrf
+) => {
+  if (
+    requiresApiCsrf(request) === false ||
+    csrfValidatedRequests.has(request)
+  ) {
+    return;
+  }
+  await validate(request);
+  csrfValidatedRequests.add(request);
+};
 
 export const getApiAuthorizationFailure = (error: unknown) => {
   if (

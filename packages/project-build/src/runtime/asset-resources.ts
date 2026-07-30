@@ -1,6 +1,7 @@
 import {
   assetQueryResourceConfigurationInput,
   assetQueryResourceConfigurationPatchInput,
+  createDefaultStructuredAssetQueryResourceConfiguration,
   createStructuredAssetQueryResourceBody,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
@@ -9,7 +10,7 @@ import {
   type Resource,
   type StructuredAssetQueryWhereBinding,
 } from "@webstudio-is/sdk";
-import { mapQueryWhere } from "@webstudio-is/query-builder";
+import { mapQueryWhere } from "@webstudio-is/query-builder/runtime";
 import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
@@ -71,15 +72,6 @@ const createAssetResourceBody = (
     content: configuration.content,
   });
 
-const parseAssetResourceConfiguration = (
-  resource: Resource
-): ReturnType<typeof parseStructuredAssetQueryResourceBody> => {
-  if (isAssetsResource(resource) === false) {
-    return;
-  }
-  return parseStructuredAssetQueryResourceBody(resource.body);
-};
-
 const serializeWhere = (
   where: StructuredAssetQueryWhereBinding,
   unsetNameById: Map<string, string>
@@ -99,7 +91,7 @@ const serializeAssetResource = ({
   resource: Resource;
   state: Pick<BuilderState, "dataSources">;
 }) => {
-  const configuration = parseAssetResourceConfiguration(resource);
+  const configuration = parseStructuredAssetQueryResourceBody(resource.body);
   const dataSources = Array.from(state.dataSources?.values() ?? []);
   const unsetNameById = new Map(dataSources.map(({ id, name }) => [id, name]));
   unsetNameById.set(SYSTEM_VARIABLE_ID, "system");
@@ -224,29 +216,21 @@ export const updateAssetsResource = (
     return throwBuilderRuntimeError("NOT_FOUND", "Assets resource not found");
   }
   const { name, query: queryUpdate } = input.values;
-  const storedConfiguration = parseAssetResourceConfiguration(resource);
+  const storedConfiguration = parseStructuredAssetQueryResourceBody(
+    resource.body
+  );
   if (storedConfiguration === undefined && queryUpdate === undefined) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Stored Assets query configuration could not be decoded; replace or remove the query to repair it"
     );
   }
-  const currentQuery =
-    storedConfiguration === undefined
-      ? undefined
-      : {
-          where: storedConfiguration.where,
-          sort: storedConfiguration.sort,
-          limit: storedConfiguration.limit,
-          offset: storedConfiguration.offset,
-          output: storedConfiguration.output,
-          content: storedConfiguration.content,
-        };
+  const currentQuery = storedConfiguration;
   const query =
     queryUpdate === undefined
       ? currentQuery
       : queryUpdate === null
-        ? assetQueryResourceConfigurationInput.parse({})
+        ? createDefaultStructuredAssetQueryResourceConfiguration()
         : assetQueryResourceConfigurationInput.parse({
             ...currentQuery,
             ...queryUpdate,

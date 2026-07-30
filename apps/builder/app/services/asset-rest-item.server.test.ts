@@ -31,7 +31,7 @@ const createDependencies = () => {
     createRepository,
     dependencies: {
       preventCrossOriginCookie: vi.fn(),
-      checkCsrf: vi.fn(),
+      ensureApiCsrf: vi.fn(),
       createRepository: createRepository as never,
     } satisfies Parameters<typeof createAssetAction>[0],
   };
@@ -55,7 +55,7 @@ describe("mutable Assets REST route", () => {
 
     expect(response.status).toBe(405);
     expect(response.headers.get("allow")).toBe("PATCH, DELETE");
-    expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(dependencies.ensureApiCsrf).not.toHaveBeenCalled();
     expect(createRepository).not.toHaveBeenCalled();
   });
 
@@ -76,7 +76,7 @@ describe("mutable Assets REST route", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ asset });
-    expect(dependencies.checkCsrf).toHaveBeenCalledOnce();
+    expect(dependencies.ensureApiCsrf).toHaveBeenCalledOnce();
     expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
       filename: "Post",
       folderId: null,
@@ -103,7 +103,7 @@ describe("mutable Assets REST route", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ asset });
-    expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(dependencies.ensureApiCsrf).toHaveBeenCalledOnce();
     expect(createRepository).toHaveBeenCalledWith(expect.any(Request), "edit");
     expect(updateMetadata).toHaveBeenCalledWith("asset-1", {
       filename: "Post",
@@ -126,7 +126,7 @@ describe("mutable Assets REST route", () => {
     );
 
     expect(response.status).toBe(204);
-    expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(dependencies.ensureApiCsrf).toHaveBeenCalledOnce();
     expect(deleteAsset).toHaveBeenCalledWith(["asset-1"]);
   });
 

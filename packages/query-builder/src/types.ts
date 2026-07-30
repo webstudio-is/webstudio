@@ -19,7 +19,7 @@ export type QueryGroup<Field = string[], Operator = string> =
 
 export type QuerySort<Field = string[]> = {
   field: Field;
-  direction: "asc" | "desc";
+  direction: string;
 };
 
 export type QueryField<FieldType extends string = string> = {
@@ -48,6 +48,9 @@ export type QueryNumberControl = {
   type: "number";
   min?: number;
   max?: number;
+  exclusiveMin?: boolean;
+  exclusiveMax?: boolean;
+  integer?: boolean;
   optional?: boolean;
 };
 
@@ -104,7 +107,8 @@ export type QuerySortControl = {
   label: string;
   defaultValue: QuerySort<string[]>[];
   defaultItem: QuerySort<string[]>;
-  max: number;
+  directions: readonly { value: string; label: string }[];
+  max?: number;
 };
 
 export type QueryExpressionControl = {
@@ -115,6 +119,9 @@ export type QueryExpressionControl = {
   input: "number" | "expression";
   min?: number;
   max?: number;
+  exclusiveMin?: boolean;
+  exclusiveMax?: boolean;
+  integer?: boolean;
 };
 
 export type QueryControl<Operator extends string = string> =
@@ -128,6 +135,7 @@ export type QueryDefinition<
   Operator extends string = string,
 > = {
   version: 1;
+  description?: string;
   fields: readonly QueryField<FieldType>[];
   operators: readonly QueryOperator<FieldType, Operator>[];
   source: {

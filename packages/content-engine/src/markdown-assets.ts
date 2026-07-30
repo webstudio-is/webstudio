@@ -1,47 +1,49 @@
-import { unified } from "unified";
-import remarkGfm from "remark-gfm";
-import remarkParse from "remark-parse";
-import remarkStringify from "remark-stringify";
+import { parse, postprocess, preprocess } from "micromark";
+import { decodeString } from "micromark-util-decode-string";
+import { createCanonicalAssetPath, encodeAssetPathSegment } from "./asset-path";
+import type { MarkdownAssetReference } from "./markdown-references";
 
-export type MarkdownAssetReferences = Readonly<
-  Record<string, Readonly<Record<string, string>>>
->;
-
-type MarkdownNode = {
-  type?: unknown;
-  url?: unknown;
-  children?: unknown;
+export const createUniqueAssetIdsByPath = (
+  assets: Iterable<{ id: string; path: string }>
+) => {
+  const ambiguousPaths = new Set<string>();
+  const assetIdsByPath = new Map<string, string>();
+  for (const { id, path } of assets) {
+    if (assetIdsByPath.has(path)) {
+      ambiguousPaths.add(path);
+      assetIdsByPath.delete(path);
+      continue;
+    }
+    if (ambiguousPaths.has(path) === false) {
+      assetIdsByPath.set(path, id);
+    }
+  }
+  return assetIdsByPath;
 };
 
-const markdownProcessor = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
-  .use(remarkStringify);
-
-const transformMarkdownUrls = (
-  markdown: string,
-  transform: (url: string) => string
-) => {
-  const tree = markdownProcessor.parse(markdown);
-  const visit = (node: MarkdownNode) => {
+const getMarkdownUrlTokens = (markdown: string) => {
+  const events = postprocess(
+    parse()
+      .document()
+      .write(preprocess()(markdown, undefined, true))
+  );
+  const tokens: Array<{ start: number; end: number; url: string }> = [];
+  for (const [phase, token] of events) {
     if (
-      (node.type === "image" ||
-        node.type === "link" ||
-        node.type === "definition") &&
-      typeof node.url === "string"
+      phase !== "enter" ||
+      (token.type !== "resourceDestinationString" &&
+        token.type !== "definitionDestinationString")
     ) {
-      node.url = transform(node.url);
+      continue;
     }
-    if (Array.isArray(node.children)) {
-      for (const child of node.children) {
-        if (typeof child === "object" && child !== null) {
-          visit(child);
-        }
-      }
-    }
-  };
-  visit(tree);
-  return { tree, stringify: () => markdownProcessor.stringify(tree) };
+    const source = markdown.slice(token.start.offset, token.end.offset);
+    tokens.push({
+      start: token.start.offset,
+      end: token.end.offset,
+      url: decodeString(source),
+    });
+  }
+  return tokens;
 };
 
 const getRelativeAssetPath = ({
@@ -51,17 +53,30 @@ const getRelativeAssetPath = ({
   sourcePath: string;
   url: string;
 }) => {
-  if (url.length === 0 || url.startsWith("#") || url.startsWith("/")) {
+  if (
+    url.length === 0 ||
+    url.startsWith("#") ||
+    url.startsWith("?") ||
+    url.startsWith("/")
+  ) {
     return;
   }
   const origin = "https://content.webstudio.invalid";
+  let tokenPrefix = "__webstudio_asset_source_";
+  while (sourcePath.includes(tokenPrefix) || url.includes(tokenPrefix)) {
+    tokenPrefix = `_${tokenPrefix}`;
+  }
+  const sourceSegments = sourcePath.split("/");
+  const sourceSegmentByToken = new Map(
+    sourceSegments.map((segment, index) => [
+      `${tokenPrefix}${index}__`,
+      segment,
+    ])
+  );
+  const sourceUrl = Array.from(sourceSegmentByToken.keys()).join("/");
   let parsed: URL;
   try {
-    const encodedSourcePath = sourcePath
-      .split("/")
-      .map((segment) => encodeURIComponent(segment))
-      .join("/");
-    parsed = new URL(url, new URL(encodedSourcePath, `${origin}/`));
+    parsed = new URL(url, new URL(sourceUrl, `${origin}/`));
   } catch {
     return;
   }
@@ -79,15 +94,34 @@ const getRelativeAssetPath = ({
     if (segment === "") {
       continue;
     }
+    const sourceSegment = sourceSegmentByToken.get(segment);
+    if (sourceSegment !== undefined) {
+      segments.push(sourceSegment);
+      continue;
+    }
     if (segment.includes("/")) {
       return;
     }
-    segments.push(segment);
+    segments.push(encodeAssetPathSegment(segment));
   }
   return segments.join("/");
 };
 
-export const discoverMarkdownAssetReferences = ({
+const createAssetIdResolver = (
+  assetIdsByPath: ReadonlyMap<string, string>,
+  sourcePath: string
+) => {
+  const assetIds = new Set(assetIdsByPath.values());
+  return (url: string) => {
+    const path = getRelativeAssetPath({ sourcePath, url });
+    return (
+      (path === undefined ? undefined : assetIdsByPath.get(path)) ??
+      (assetIds.has(url) ? url : undefined)
+    );
+  };
+};
+
+export const discoverMarkdownAssetReferenceRanges = ({
   markdown,
   sourcePath,
   assetIdsByPath,
@@ -95,38 +129,39 @@ export const discoverMarkdownAssetReferences = ({
   markdown: string;
   sourcePath: string;
   assetIdsByPath: ReadonlyMap<string, string>;
-}) => {
-  const references: Record<string, string> = {};
-  transformMarkdownUrls(markdown, (url) => {
-    const path = getRelativeAssetPath({ sourcePath, url });
-    const assetId = path === undefined ? undefined : assetIdsByPath.get(path);
-    if (assetId !== undefined) {
-      references[url] = assetId;
+}): MarkdownAssetReference[] => {
+  const resolveAssetId = createAssetIdResolver(assetIdsByPath, sourcePath);
+  return getMarkdownUrlTokens(markdown).flatMap(({ start, end, url }) => {
+    const assetId = resolveAssetId(url);
+    if (assetId === undefined) {
+      return [];
     }
-    return url;
+    const parsed = new URL(url, "https://content.webstudio.invalid/");
+    const suffix = `${parsed.search}${parsed.hash}`;
+    return [{ start, end, assetId, ...(suffix === "" ? {} : { suffix }) }];
   });
-  return references;
 };
 
-export const rewriteMarkdownAssetReferences = ({
+export const discoverNamedMarkdownAssetReferenceRanges = ({
   markdown,
-  references,
-  assetUrls,
+  source,
+  assets,
 }: {
   markdown: string;
-  references: Readonly<Record<string, string>>;
-  assetUrls: Readonly<Record<string, string>>;
-}) => {
-  let changed = false;
-  const transformed = transformMarkdownUrls(markdown, (url) => {
-    const assetId = references[url];
-    const assetUrl = assetId === undefined ? undefined : assetUrls[assetId];
-    if (assetUrl === undefined) {
-      return url;
-    }
-    changed = true;
-    const parsed = new URL(url, "https://content.webstudio.invalid/");
-    return `${assetUrl}${parsed.search}${parsed.hash}`;
+  source: { name: string; folderNames: readonly string[] };
+  assets: Iterable<{
+    id: string;
+    name: string;
+    folderNames: readonly string[];
+  }>;
+}) =>
+  discoverMarkdownAssetReferenceRanges({
+    markdown,
+    sourcePath: createCanonicalAssetPath(source),
+    assetIdsByPath: createUniqueAssetIdsByPath(
+      Array.from(assets, (asset) => ({
+        id: asset.id,
+        path: createCanonicalAssetPath(asset),
+      }))
+    ),
   });
-  return changed ? transformed.stringify() : markdown;
-};

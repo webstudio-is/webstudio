@@ -17,11 +17,12 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { bundleVersion } from "@webstudio-is/protocol";
 import type { Asset } from "@webstudio-is/sdk";
+import type { AssetFileDocument } from "@webstudio-is/content-engine";
 import {
   createAssetIndex,
   createCanonicalAssetFileEntry,
-  type AssetFileDocument,
 } from "@webstudio-is/content-engine/compiler";
+import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
 import {
   createStructuredAssetQueryResourceBody,
   type Resource,
@@ -32,7 +33,18 @@ import {
   materializeAssetIndex,
   prebuild,
 } from "./prebuild";
-import { createSsgAssetResourceFetch } from "../templates/ssg/app/asset-resource-fetch";
+
+const createSsgAssetResourceFetch = (options: {
+  deploymentId: string;
+  artifact: Parameters<typeof createPublishedAssetResourceFetch>[0]["artifact"];
+  runtimeAssets: Parameters<
+    typeof createPublishedAssetResourceFetch
+  >[0]["runtimeAssets"];
+}) =>
+  createPublishedAssetResourceFetch({
+    ...options,
+    baseUrl: "https://webstudio.local",
+  });
 
 const originalCwd = process.cwd();
 const execFileAsync = promisify(execFile);
@@ -342,6 +354,17 @@ const indexedDocument: AssetFileDocument = {
   properties: { slug: "post", title: "Prerendered post" },
 };
 
+const createAssetForIndexedDocument = (document: AssetFileDocument): Asset => ({
+  id: document._id,
+  projectId: "project-1",
+  name: document.contentRef,
+  type: "file",
+  format: document.extension,
+  size: document.size,
+  meta: {},
+  createdAt: "2026-01-01T00:00:00.000Z",
+});
+
 const createTestAssetIndex = (
   documents: AssetFileDocument | AssetFileDocument[] = indexedDocument,
   contents: Record<string, string> = {}
@@ -383,6 +406,8 @@ test("embeds one shared content database in a server module", async () => {
 
   await materializeAssetIndex({
     index,
+    runtimeAssets: { "post-1": { url: "/assets/post.md" } },
+    includeDocumentRuntimeAssets: false,
     generatedDirectory: "app/__generated__",
     deploymentId: "build-1",
   });
@@ -401,10 +426,117 @@ test("embeds one shared content database in a server module", async () => {
     "app/__generated__/$resources.asset-query-runtime.ts",
     "utf8"
   );
-  expect(runtimeModule).toContain(
-    'from "@webstudio-is/content-engine/runtime"'
-  );
+  expect(runtimeModule).toContain('from "./$resources.asset-query-vendor.js"');
   expect(runtimeModule).toContain("assetQueryDatabase");
+  await expect(
+    stat("app/__generated__/$resources.asset-query-vendor.js")
+  ).resolves.toBeDefined();
+});
+
+test("rejects a corrupted content database before generating runtime files", async () => {
+  const index = await createTestAssetIndex();
+  const corrupted = {
+    ...index,
+    documents: index.documents.map((document) => ({
+      ...document,
+      name: `${document.name}-corrupted`,
+    })),
+  };
+  await mkdir("app/__generated__", { recursive: true });
+
+  await expect(
+    materializeAssetIndex({
+      index: corrupted,
+      runtimeAssets: { "post-1": { url: "/assets/post.md" } },
+      includeDocumentRuntimeAssets: false,
+      generatedDirectory: "app/__generated__",
+      deploymentId: "build-1",
+    })
+  ).rejects.toThrow("Content artifact checksum is invalid");
+  await expect(
+    stat("app/__generated__/$resources.asset-query-vendor.js")
+  ).rejects.toMatchObject({ code: "ENOENT" });
+});
+
+test("does not require URLs for documents that do not use runtime asset fields", async () => {
+  const index = await createTestAssetIndex();
+  await mkdir("app/__generated__", { recursive: true });
+
+  await materializeAssetIndex({
+    index,
+    runtimeAssets: {},
+    includeDocumentRuntimeAssets: false,
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-1",
+  });
+  const runtimeModule = await readFile(
+    "app/__generated__/$resources.asset-query-runtime.ts",
+    "utf8"
+  );
+  expect(runtimeModule).toContain("const runtimeAssets = {};");
+});
+
+test("embeds document runtime data when a query uses runtime fields", async () => {
+  const index = await createTestAssetIndex();
+  await mkdir("app/__generated__", { recursive: true });
+
+  await materializeAssetIndex({
+    index,
+    runtimeAssets: { "post-1": { url: "/assets/post.md" } },
+    includeDocumentRuntimeAssets: true,
+    generatedDirectory: "app/__generated__",
+    deploymentId: "build-1",
+  });
+
+  await expect(
+    readFile("app/__generated__/$resources.asset-query-runtime.ts", "utf8")
+  ).resolves.toContain('"post-1"');
+});
+
+test("rejects missing document runtime data when a query uses runtime fields", async () => {
+  const index = await createTestAssetIndex();
+  await mkdir("app/__generated__", { recursive: true });
+
+  await expect(
+    materializeAssetIndex({
+      index,
+      runtimeAssets: {},
+      includeDocumentRuntimeAssets: true,
+      generatedDirectory: "app/__generated__",
+      deploymentId: "build-1",
+    })
+  ).rejects.toThrow("Published asset runtime data is unavailable for post-1");
+});
+
+test("rejects a content database without a referenced published asset", async () => {
+  const index = await createAssetIndex({
+    projectId: "project-1",
+    entries: [
+      {
+        ...createCanonicalAssetFileEntry({
+          projectId: "project-1",
+          document: indexedDocument,
+        }),
+        content: "# Post",
+      },
+    ],
+    assetReferences: {
+      "post.md": [{ start: 0, end: 1, assetId: "image-1" }],
+    },
+  });
+  await mkdir("app/__generated__", { recursive: true });
+
+  await expect(
+    materializeAssetIndex({
+      index,
+      runtimeAssets: { "post-1": { url: "/assets/post.md" } },
+      includeDocumentRuntimeAssets: false,
+      generatedDirectory: "app/__generated__",
+      deploymentId: "build-1",
+    })
+  ).rejects.toThrow(
+    "Published referenced asset URL is unavailable for image-1"
+  );
 });
 
 test("executes and hydrates an asset query from an embedded SSG database", async () => {
@@ -1024,7 +1156,19 @@ describe("prebuild", () => {
   test("embeds the deployment database when asset downloads are disabled", async () => {
     const index = await createTestAssetIndex();
     const siteData = {
-      ...createSiteData(),
+      ...createSiteData({
+        assets: [
+          createAssetForIndexedDocument(indexedDocument),
+          createAssetForIndexedDocument({
+            ...indexedDocument,
+            _id: "unrelated-asset",
+            name: "unrelated.md",
+            path: "unrelated.md",
+            key: "unrelated",
+            contentRef: "unrelated.md",
+          }),
+        ],
+      }),
       assetIndex: index,
     };
     siteData.build.resources = [["posts", createQueryResource()]] as never;
@@ -1053,11 +1197,20 @@ describe("prebuild", () => {
     await expect(
       readFile("app/__generated__/$resources.asset-query-manifest.ts", "utf8")
     ).resolves.toContain(index.integrity.checksum);
-    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
-    expect(packageJson.dependencies).toHaveProperty(
-      "@webstudio-is/content-engine",
-      "0.0.0-webstudio-version"
+    const runtimeModule = await readFile(
+      "app/__generated__/$resources.asset-query-runtime.ts",
+      "utf8"
     );
+    expect(runtimeModule).not.toContain('"post-1"');
+    expect(runtimeModule).not.toContain("unrelated-asset");
+    expect(runtimeModule).not.toContain('$resources.assets"');
+    const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+    expect(packageJson.dependencies).not.toHaveProperty(
+      "@webstudio-is/content-engine"
+    );
+    await expect(
+      stat("app/__generated__/$resources.asset-query-vendor.js")
+    ).resolves.toBeDefined();
 
     await writeSiteData();
     await prebuild({
@@ -1070,7 +1223,7 @@ describe("prebuild", () => {
       "@webstudio-is/content-engine"
     );
     await expect(
-      readFile(".webstudio/content-runtime.json", "utf8")
+      stat("app/__generated__/$resources.asset-query-vendor.js")
     ).rejects.toThrow("ENOENT");
   });
 
@@ -1100,7 +1253,7 @@ describe("prebuild", () => {
     expect(packageJson.dependencies).not.toHaveProperty("ipx");
   });
 
-  test("preserves a content-engine dependency not injected by generation", async () => {
+  test("does not modify a project-owned content-engine dependency", async () => {
     await prebuild({
       assets: false,
       template: ["react-router"],
@@ -1211,7 +1364,7 @@ describe("prebuild", () => {
   });
 
   test("prerenders dynamic SSG paths from parameterized Assets resources", async () => {
-    const index = await createTestAssetIndex([
+    const documents = [
       {
         ...indexedDocument,
         path: "blog/post.md",
@@ -1229,9 +1382,11 @@ describe("prebuild", () => {
         contentRef: "draft.md",
         properties: { slug: "draft-post", title: "Draft", draft: true },
       },
-    ]);
+    ];
+    const index = await createTestAssetIndex(documents);
     const siteData = {
       ...createSiteData({
+        assets: documents.map(createAssetForIndexedDocument),
         pages: [
           {
             id: "home",
@@ -1376,6 +1531,43 @@ describe("prebuild", () => {
     ).toEqual([]);
   });
 
+  test("uses JavaScript literals when filtering prerender candidates", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world", status: "draft" },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "status"],
+            operator: "eq",
+            value: "'published'",
+          },
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "system.params.slug",
+          },
+        ],
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["post", resource]],
+        index,
+      })
+    ).toEqual([]);
+  });
+
   test("prerenders canonical and alternative asset routes from any groups", async () => {
     const index = await createTestAssetIndex({
       ...indexedDocument,
@@ -1428,8 +1620,96 @@ describe("prebuild", () => {
         pagePath: "/blog/:identifier",
         resources: [["post", resource]],
         index,
+        requireCompleteEnumeration: true,
       })
     ).toEqual(["/blog/hello-world", "/blog/original-title", "/blog/post-123"]);
+  });
+
+  test("prerenders multi-parameter routes from one Assets query", async () => {
+    const index = await createTestAssetIndex([
+      {
+        ...indexedDocument,
+        properties: { category: "news", slug: "hello-world" },
+      },
+      {
+        ...indexedDocument,
+        _id: "other-post",
+        revision: "other-revision",
+        properties: { category: "guides", slug: "getting-started" },
+      },
+    ]);
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "category"],
+            operator: "eq",
+            value: "system.params.category",
+          },
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "system.params.slug",
+          },
+        ],
+      },
+      sort: [],
+      limit: "1",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:category/:slug",
+        resources: [["post", resource]],
+        index,
+        requireCompleteEnumeration: true,
+      })
+    ).toEqual(["/blog/guides/getting-started", "/blog/news/hello-world"]);
+  });
+
+  test("rejects multi-parameter SSG routes split across Assets queries", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { category: "news", slug: "hello-world" },
+    });
+    const createParameterResource = (parameter: "category" | "slug") => {
+      const resource = createQueryResource();
+      resource.body = createStructuredAssetQueryResourceBody({
+        where: {
+          all: [
+            {
+              field: ["properties", parameter],
+              operator: "eq",
+              value: `system.params.${parameter}`,
+            },
+          ],
+        },
+        sort: [],
+        limit: "1",
+        offset: "0",
+        output: { mode: "all", includeMetadata: true },
+        content: { mode: "none" },
+      });
+      return resource;
+    };
+
+    expect(() =>
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:category/:slug",
+        resources: [
+          ["category", createParameterResource("category")],
+          ["slug", createParameterResource("slug")],
+        ],
+        index,
+        requireCompleteEnumeration: true,
+      })
+    ).toThrow(
+      "Dynamic SSG route parameters must be completely enumerated by one Assets query"
+    );
   });
 
   test("prerenders asset routes bound with optional member expressions", async () => {
@@ -1464,7 +1744,7 @@ describe("prebuild", () => {
     ).toEqual(["/blog/hello-world"]);
   });
 
-  test("rejects ambiguous dynamic asset routes", async () => {
+  test("deduplicates collection routes matched by multiple assets", async () => {
     const index = await createTestAssetIndex([
       { ...indexedDocument, properties: { slug: "shared" } },
       {
@@ -1492,24 +1772,98 @@ describe("prebuild", () => {
       content: { mode: "none" },
     });
 
-    expect(() =>
+    expect(
       getAssetResourcePrerenderPaths({
         pagePath: "/blog/:slug",
         resources: [["post", resource]],
         index,
       })
-    ).toThrow("/blog/shared");
+    ).toEqual(["/blog/shared"]);
+  });
+
+  test("rejects SSG filters whose route values cannot be completely enumerated", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world" },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "slug"],
+            operator: "startsWith",
+            value: "system.params.slug",
+          },
+        ],
+      },
+      sort: [],
+      limit: "20",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(() =>
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["posts", resource]],
+        index,
+        requireCompleteEnumeration: true,
+      })
+    ).toThrow('route parameter "slug" cannot be completely enumerated');
+  });
+
+  test("rejects SSG route parameters unconstrained by an alternative query branch", async () => {
+    const index = await createTestAssetIndex({
+      ...indexedDocument,
+      properties: { slug: "hello-world", draft: false },
+    });
+    const resource = createQueryResource();
+    resource.body = createStructuredAssetQueryResourceBody({
+      where: {
+        any: [
+          {
+            field: ["properties", "slug"],
+            operator: "eq",
+            value: "system.params.slug",
+          },
+          {
+            field: ["properties", "draft"],
+            operator: "eq",
+            value: "false",
+          },
+        ],
+      },
+      sort: [],
+      limit: "20",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    });
+
+    expect(() =>
+      getAssetResourcePrerenderPaths({
+        pagePath: "/blog/:slug",
+        resources: [["posts", resource]],
+        index,
+        requireCompleteEnumeration: true,
+      })
+    ).toThrow('route parameter "slug" cannot be completely enumerated');
   });
 
   test("prerenders SSG pages with asset query data", async () => {
-    const index = await createTestAssetIndex({
+    const document = {
       ...indexedDocument,
       path: "blog/post.md",
       size: 1,
       properties: { title: "Prerendered post" },
-    });
+    };
+    const index = await createTestAssetIndex(document);
     const siteData = {
-      ...createSiteData(),
+      ...createSiteData({
+        assets: [createAssetForIndexedDocument(document)],
+      }),
       assetIndex: index,
     };
     siteData.build.resources = [

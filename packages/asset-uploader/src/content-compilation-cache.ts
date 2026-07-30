@@ -1,10 +1,11 @@
 import {
   createContentDatabase,
   type ContentArtifactV1,
+  type ContentCompilationPlan,
 } from "@webstudio-is/content-engine";
 import {
+  canonicalAssetMetadataExtractorGeneration,
   serializeJsonDeterministically,
-  type ContentCompilationPlan,
 } from "@webstudio-is/content-engine/compiler";
 
 export type ContentCompilationCache = ReturnType<
@@ -27,6 +28,7 @@ export const createContentCompilationCacheKey = ({
   serializeJsonDeterministically({
     projectId,
     sourceRevision,
+    metadataExtractorGeneration: canonicalAssetMetadataExtractorGeneration,
     plan: plan ?? null,
     strict,
     maxBytes,
@@ -36,7 +38,20 @@ export const createContentCompilationCache = (maximumEntries = 32) => {
   if (Number.isSafeInteger(maximumEntries) === false || maximumEntries <= 0) {
     throw new Error("Content compilation cache size must be positive");
   }
-  const entries = new Map<string, Promise<ContentArtifactV1>>();
+  type CacheEntry = {
+    promise: Promise<ContentArtifactV1>;
+    settled: boolean;
+  };
+  const entries = new Map<string, CacheEntry>();
+  const trim = () => {
+    while (entries.size > maximumEntries) {
+      const completed = [...entries].find(([, entry]) => entry.settled);
+      if (completed === undefined) {
+        return;
+      }
+      entries.delete(completed[0]);
+    }
+  };
   return {
     getOrCreate: (
       key: string,
@@ -46,23 +61,26 @@ export const createContentCompilationCache = (maximumEntries = 32) => {
       if (existing !== undefined) {
         entries.delete(key);
         entries.set(key, existing);
-        return existing;
+        return existing.promise;
       }
-      const pending = create().catch((error) => {
-        if (entries.get(key) === pending) {
-          entries.delete(key);
+      let entry: CacheEntry;
+      const promise = create().then(
+        (value) => {
+          entry.settled = true;
+          trim();
+          return value;
+        },
+        (error) => {
+          if (entries.get(key) === entry) {
+            entries.delete(key);
+          }
+          throw error;
         }
-        throw error;
-      });
-      entries.set(key, pending);
-      while (entries.size > maximumEntries) {
-        const oldestKey = entries.keys().next().value;
-        if (oldestKey === undefined) {
-          break;
-        }
-        entries.delete(oldestKey);
-      }
-      return pending;
+      );
+      entry = { promise, settled: false };
+      entries.set(key, entry);
+      trim();
+      return entry.promise;
     },
     clear: () => entries.clear(),
     get size() {

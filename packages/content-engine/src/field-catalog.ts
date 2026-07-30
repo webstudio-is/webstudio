@@ -1,6 +1,7 @@
 import {
   assetQueryStandardFields,
   builderAssetFieldCatalog,
+  isAssetQueryRuntimeField,
   type AssetFileDocument,
   type BuilderAssetFieldCatalog,
 } from "./schema";
@@ -13,11 +14,11 @@ import {
   createCanonicalAssetFileEntry,
   getFieldContributions,
   getObservedFieldType,
-  parseAssetFieldPath,
   type CanonicalAssetFileEntry,
   type FieldContribution,
   type ObservedFieldType,
 } from "./canonical";
+import { parseStaticMemberPath } from "@webstudio-is/expression";
 
 type AggregatedFieldType = {
   type: ObservedFieldType;
@@ -71,12 +72,7 @@ const getStandardFieldContributions = (
   { path: "_id", type: "string" },
   { path: "_type", type: "string" },
   ...assetQueryStandardFields.flatMap((field): FieldContribution[] => {
-    if (
-      field === "id" ||
-      field === "url" ||
-      field === "width" ||
-      field === "height"
-    ) {
+    if (field === "id" || isAssetQueryRuntimeField(field)) {
       return [];
     }
     const value = document[field];
@@ -205,20 +201,15 @@ const getBuilderQueryPath = (path: string) => {
   if (queryableStandardFields.has(path)) {
     return [path];
   }
-  const segments = parseAssetFieldPath(path);
+  const segments = parseStaticMemberPath(path);
   if (
     segments === undefined ||
-    segments.length === 0 ||
-    segments.some((segment) => segment.type === "element")
+    segments.length < 2 ||
+    segments[0] !== "properties"
   ) {
     return;
   }
-  return [
-    "properties",
-    ...segments.map((segment) =>
-      segment.type === "field" ? segment.name : ""
-    ),
-  ];
+  return segments;
 };
 
 export const toBuilderAssetFieldCatalog = (

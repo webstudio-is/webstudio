@@ -15,12 +15,13 @@ import {
 import { contentEngineLimits } from "./limits";
 import {
   getContentDocumentCandidateQueryIds,
+  compareContentEntryPriority,
   isContentCompilationFieldRequired,
   projectContentDatabaseDocument,
   type ContentCompilationPlan,
 } from "./compilation-plan";
 import { getUtf8ByteLength } from "./byte-stream";
-import type { MarkdownAssetReferences } from "./markdown-assets";
+import type { MarkdownAssetReferences } from "./markdown-references";
 
 export type ContentCompilerDiagnostics = {
   maxBytes: number;
@@ -50,6 +51,7 @@ const getDocumentBytes = (
 
 export type ContentCompilerInput = CanonicalAssetFileEntry & {
   content?: string;
+  contentRequired?: true;
 };
 
 const getEntryBytes = (
@@ -57,7 +59,11 @@ const getEntryBytes = (
   plan?: ContentCompilationPlan
 ) =>
   getDocumentBytes(entry, plan) +
-  (entry.content === undefined ? 0 : getUtf8ByteLength(entry.content));
+  (entry.content === undefined
+    ? entry.contentRequired === true
+      ? entry.document.size
+      : 0
+    : getUtf8ByteLength(entry.content));
 
 const getMinimumAdditionalBytes = ({
   entries,
@@ -81,37 +87,6 @@ const getMinimumAdditionalBytes = ({
     }
   }
   return bytes;
-};
-
-const compareEntryPriority = (
-  left: CanonicalAssetFileEntry,
-  right: CanonicalAssetFileEntry
-) => {
-  const leftCreatedAt =
-    left.document.createdAt === undefined
-      ? undefined
-      : Date.parse(left.document.createdAt);
-  const rightCreatedAt =
-    right.document.createdAt === undefined
-      ? undefined
-      : Date.parse(right.document.createdAt);
-  if (leftCreatedAt !== undefined && rightCreatedAt === undefined) {
-    return -1;
-  }
-  if (leftCreatedAt === undefined && rightCreatedAt !== undefined) {
-    return 1;
-  }
-  if (
-    leftCreatedAt !== undefined &&
-    rightCreatedAt !== undefined &&
-    leftCreatedAt !== rightCreatedAt
-  ) {
-    return rightCreatedAt - leftCreatedAt;
-  }
-  return (
-    compareStrings(left.document.path, right.document.path) ||
-    compareStrings(left.assetId, right.assetId)
-  );
 };
 
 const validateEntries = ({
@@ -253,11 +228,21 @@ export const compileContentArtifact = async ({
   }
   validateEntries({ projectId, entries });
   const sourceDocumentCount = entries.length;
+  const unavailable = entries.filter(
+    (entry) => entry.contentRequired === true && entry.content === undefined
+  );
+  const available = entries.filter(
+    (entry) => entry.contentRequired !== true || entry.content !== undefined
+  );
+  const unavailableBytes = unavailable.reduce(
+    (total, entry) => total + getEntryBytes(entry, plan),
+    0
+  );
   let unboundedBytes = 0;
   let unbounded: ContentArtifactV1;
   for (let attempt = 0; ; attempt += 1) {
     unbounded = await buildAssetIndex({
-      entries,
+      entries: available,
       sourceDocumentCount,
       maxBytes,
       unboundedBytes,
@@ -265,7 +250,8 @@ export const compileContentArtifact = async ({
       plan,
       finalize: false,
     });
-    const measured = getUtf8ByteLength(serializeContentArtifact(unbounded));
+    const measured =
+      getUtf8ByteLength(serializeContentArtifact(unbounded)) + unavailableBytes;
     if (measured === unboundedBytes) {
       break;
     }
@@ -275,11 +261,11 @@ export const compileContentArtifact = async ({
     unboundedBytes = measured;
   }
   const selected: ContentCompilerInput[] = [];
-  const omitted: ContentCompilerInput[] = [];
+  const omitted: ContentCompilerInput[] = [...unavailable];
   if (unboundedBytes <= maxBytes) {
-    selected.push(...entries);
+    selected.push(...available);
   } else {
-    const prioritized = [...entries].sort(compareEntryPriority);
+    const prioritized = [...available].sort(compareContentEntryPriority);
     let selectedContentRefs = new Set<string>();
     const emptyArtifact = await buildAssetIndex({
       entries: selected,

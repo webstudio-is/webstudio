@@ -3,6 +3,7 @@ import {
   ByteLimitExceededError,
   decodeUtf8,
   readBoundedBytes,
+  stripUtf8ByteOrderMark,
   type ByteSource,
 } from "./byte-stream";
 import {
@@ -91,10 +92,7 @@ export const extractJsonProperties = async (
 
   let value: unknown;
   try {
-    const sourceText = decodeUtf8(bytes);
-    value = JSON.parse(
-      sourceText.charCodeAt(0) === 0xfeff ? sourceText.slice(1) : sourceText
-    );
+    value = JSON.parse(stripUtf8ByteOrderMark(decodeUtf8(bytes)));
   } catch (error) {
     if (error instanceof TypeError) {
       throw new JsonMetadataError(

@@ -1,8 +1,16 @@
 import { useMemo, type ReactNode } from "react";
 import { css, SplitView, theme } from "@webstudio-is/design-system";
+import { renderMarkdownHtml } from "@webstudio-is/sdk-components-react/markdown";
+import { discoverNamedMarkdownAssetReferenceRanges } from "@webstudio-is/content-engine/markdown-assets";
+import { rewriteMarkdownAssetReferenceRanges } from "@webstudio-is/content-engine/markdown-references";
+import {
+  createAssetFolderHierarchy,
+  formatAssetName,
+  getAssetUrl,
+  type Asset,
+  type AssetFolders,
+} from "@webstudio-is/sdk";
 import type { AssetContainer } from "~/builder/shared/assets";
-import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
-import { renderMarkdown } from "./text-file-utils";
 
 const previewStyle = css({
   minWidth: 0,
@@ -61,21 +69,31 @@ const previewStyle = css({
   "& a": { color: theme.colors.foregroundPrimary },
 });
 
-const resolveAssetReferences = ({
-  html,
+const renderMarkdownPreview = ({
+  markdown,
+  sourceAsset,
+  folders,
   assetContainers,
   origin,
 }: {
-  html: string;
+  markdown: string;
+  sourceAsset: Asset;
+  folders: AssetFolders;
   assetContainers: AssetContainer[];
   origin: string;
 }) => {
-  if (typeof DOMParser === "undefined") {
-    return html;
-  }
-
-  const document = new DOMParser().parseFromString(html, "text/html");
-  const urls = new Map(
+  const hierarchy = createAssetFolderHierarchy(folders);
+  const getNamedAsset = (asset: AssetContainer["asset"]) => ({
+    id: asset.id,
+    name: formatAssetName(asset),
+    folderNames: hierarchy.getPath(asset.folderId).map(({ name }) => name),
+  });
+  const references = discoverNamedMarkdownAssetReferenceRanges({
+    markdown,
+    source: getNamedAsset(sourceAsset),
+    assets: assetContainers.map(({ asset }) => getNamedAsset(asset)),
+  });
+  const assetUrls = Object.fromEntries(
     assetContainers.map((container) => [
       container.asset.id,
       container.status === "uploading"
@@ -83,31 +101,26 @@ const resolveAssetReferences = ({
         : getAssetUrl(container.asset, origin).href,
     ])
   );
-  for (const image of document.querySelectorAll("img[src]")) {
-    const url = urls.get(image.getAttribute("src") ?? "");
-    if (url !== undefined) {
-      image.setAttribute("src", url);
-    }
-  }
-  for (const link of document.querySelectorAll("a[href]")) {
-    const url = urls.get(link.getAttribute("href") ?? "");
-    if (url !== undefined) {
-      link.setAttribute("href", url);
-    }
-  }
-  return document.body.innerHTML;
+  return renderMarkdownHtml(
+    rewriteMarkdownAssetReferenceRanges({ markdown, references, assetUrls }),
+    { allowBlobImages: true }
+  );
 };
 
-export const __testing__ = { resolveAssetReferences };
+export const __testing__ = { renderMarkdownPreview };
 
 export const MarkdownSplitView = ({
   open,
   source,
+  sourceAsset,
+  folders,
   assetContainers,
   children,
 }: {
   open: boolean;
   source: string;
+  sourceAsset: Asset;
+  folders: AssetFolders;
   assetContainers: AssetContainer[];
   children: ReactNode;
 }) => {
@@ -115,12 +128,14 @@ export const MarkdownSplitView = ({
     if (open === false) {
       return "";
     }
-    return resolveAssetReferences({
-      html: renderMarkdown(source),
+    return renderMarkdownPreview({
+      markdown: source,
+      sourceAsset,
+      folders,
       assetContainers,
       origin: window.location.origin,
     });
-  }, [assetContainers, open, source]);
+  }, [assetContainers, folders, open, source, sourceAsset]);
 
   return (
     <SplitView

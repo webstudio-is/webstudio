@@ -1116,7 +1116,7 @@ test("summarizes build patch transactions", () => {
 
 test("uploads assets as binary requests", async () => {
   const fetch = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify({ ok: true }), {
+    new Response(JSON.stringify({ uploadedAssets: [], deduplicated: false }), {
       headers: {
         "content-type": "application/json",
       },
@@ -1162,6 +1162,27 @@ test("uploads assets as binary requests", async () => {
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
   );
+});
+
+test("rejects malformed successful asset upload responses", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+  );
+
+  await expect(
+    uploadAsset({
+      ...apiParams,
+      upload: {
+        asset: createImageAssetFixture(),
+        data: new Uint8Array([1, 2, 3]),
+      },
+    })
+  ).rejects.toThrow("Assets API returned an invalid upload response");
 });
 
 test("requests a forced asset upload and exposes deduplication", async () => {
@@ -1266,6 +1287,42 @@ test("reports asset upload errors", async () => {
   ).rejects.toThrow("Upload failed");
 });
 
+test("rejects unsuccessful asset uploads without a structured error", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      })
+    )
+  );
+
+  await expect(
+    uploadAsset({
+      authToken: "token",
+      origin: "https://apps.webstudio.is",
+      projectId: "project-id",
+      upload: {
+        asset: {
+          id: "asset-id",
+          projectId: "project-id",
+          type: "file",
+          name: "document.pdf",
+          format: "pdf",
+          size: 3,
+          meta: {},
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+        data: new Uint8Array([1, 2, 3]),
+      },
+    })
+  ).rejects.toMatchObject({
+    message: "Assets API request failed",
+    status: 500,
+  });
+});
+
 test("uploads assets with one retry and aggregated failures", async () => {
   const asset = createImageAssetFixture({ name: "image.png" });
   const otherAsset = createImageAssetFixture({
@@ -1279,9 +1336,12 @@ test("uploads assets with one retry and aggregated failures", async () => {
     const attempt = (attempts.get(assetName) ?? 0) + 1;
     attempts.set(assetName, attempt);
     if (assetName === "image.png" && attempt === 2) {
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { "content-type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ uploadedAssets: [asset], deduplicated: false }),
+        {
+          headers: { "content-type": "application/json" },
+        }
+      );
     }
     return new Response(
       JSON.stringify({
@@ -1318,6 +1378,7 @@ test("keeps uploaded assets in input order", async () => {
     return new Response(
       JSON.stringify({
         uploadedAssets: [name === "first.png" ? first : second],
+        deduplicated: false,
       }),
       {
         headers: { "content-type": "application/json" },
@@ -1351,6 +1412,7 @@ test("serializes uploads with identical content", async () => {
     return new Response(
       JSON.stringify({
         uploadedAssets: [name === "first.png" ? first : second],
+        deduplicated: false,
       }),
       { headers: { "content-type": "application/json" } }
     );
@@ -1375,9 +1437,10 @@ test("retries local asset reads before reporting an upload failure", async () =>
     "fetch",
     vi.fn(
       async () =>
-        new Response(JSON.stringify({ uploadedAssets: [asset] }), {
-          headers: { "content-type": "application/json" },
-        })
+        new Response(
+          JSON.stringify({ uploadedAssets: [asset], deduplicated: false }),
+          { headers: { "content-type": "application/json" } }
+        )
     )
   );
 
@@ -1402,9 +1465,13 @@ test("uploads project asset descriptors with local data readers", async () => {
   const uploadedAsset = createImageAssetFixture({ name: "image.png" });
   const fetch = vi.fn(
     async () =>
-      new Response(JSON.stringify({ uploadedAssets: [uploadedAsset] }), {
-        headers: { "content-type": "application/json" },
-      })
+      new Response(
+        JSON.stringify({
+          uploadedAssets: [uploadedAsset],
+          deduplicated: false,
+        }),
+        { headers: { "content-type": "application/json" } }
+      )
   );
   vi.stubGlobal("fetch", fetch);
 
@@ -1867,6 +1934,7 @@ test("imports project bundle with assets and retries missing asset uploads", asy
               name: "image_destination.png",
             }),
           ],
+          deduplicated: false,
         })
       );
       return;

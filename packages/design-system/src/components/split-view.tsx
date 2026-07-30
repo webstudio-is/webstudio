@@ -40,15 +40,13 @@ const paneStyle = css({
   overflow: "hidden",
 });
 
-const clampPanelSize = ({
-  size,
+const getPanelSizeBounds = ({
   containerSize,
   minimumStartSize,
   minimumEndSize,
   minimumRatio,
   maximumRatio,
 }: {
-  size: number;
   containerSize: number;
   minimumStartSize: number;
   minimumEndSize: number;
@@ -64,7 +62,15 @@ const clampPanelSize = ({
     availableSize * (1 - maximumRatio),
     Math.min(Math.max(0, minimumEndSize), availableSize / 2)
   );
-  return Math.min(availableSize - endMinimum, Math.max(startMinimum, size));
+  return { minimum: startMinimum, maximum: availableSize - endMinimum };
+};
+
+const clampPanelSize = ({
+  size,
+  ...options
+}: Parameters<typeof getPanelSizeBounds>[0] & { size: number }) => {
+  const { minimum, maximum } = getPanelSizeBounds(options);
+  return Math.min(maximum, Math.max(minimum, size));
 };
 
 export const SplitView = ({
@@ -193,6 +199,20 @@ export const SplitView = ({
     renderedStartSize === undefined
       ? size
       : (renderedStartSize / Math.max(1, containerSize - separatorWidth)) * 100;
+  const renderedBounds =
+    containerSize === 0
+      ? undefined
+      : getPanelSizeBounds({
+          containerSize,
+          minimumStartSize,
+          minimumEndSize,
+          minimumRatio: normalizedMinimumRatio,
+          maximumRatio: normalizedMaximumRatio,
+        });
+  const toRenderedValue = (value: number) =>
+    sizeUnitRef.current === "px"
+      ? value
+      : (value / Math.max(1, containerSize - separatorWidth)) * 100;
 
   return (
     <Box
@@ -220,14 +240,18 @@ export const SplitView = ({
         aria-label={separatorLabel}
         aria-orientation="vertical"
         aria-valuemin={
-          sizeUnitRef.current === "px"
-            ? minimumStartSize
-            : Math.round(normalizedMinimumRatio * 100)
+          renderedBounds === undefined
+            ? sizeUnitRef.current === "px"
+              ? minimumStartSize
+              : Math.round(normalizedMinimumRatio * 100)
+            : Math.round(toRenderedValue(renderedBounds.minimum))
         }
         aria-valuemax={
-          sizeUnitRef.current === "px"
-            ? undefined
-            : Math.round(normalizedMaximumRatio * 100)
+          renderedBounds === undefined
+            ? sizeUnitRef.current === "px"
+              ? undefined
+              : Math.round(normalizedMaximumRatio * 100)
+            : Math.round(toRenderedValue(renderedBounds.maximum))
         }
         aria-valuenow={Math.round(
           sizeUnitRef.current === "px"

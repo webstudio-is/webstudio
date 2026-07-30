@@ -2,13 +2,13 @@ import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
 import { getFileNameParts, type Asset } from "@webstudio-is/sdk";
 import { assetsUploadsApiUrl } from "@webstudio-is/sdk/runtime";
+import type { AssetUploadResult } from "@webstudio-is/protocol/asset-resource-api";
 import type { AssetType, UploadTicket } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { Image, wsImageLoader } from "@webstudio-is/image";
 import { restAssetsUploadPath } from "~/shared/router-utils";
 import { fetch } from "~/shared/fetch.client";
-import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
   $authToken,
   $uploadingFilesDataStore,
@@ -27,6 +27,8 @@ import {
   getSha256Hash,
   getSha256HashOfFile,
 } from "./asset-utils";
+
+type AssetActionResponse = AssetUploadResult | { errors: string };
 
 const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
   const currentProjectId = $project.get()?.id;
@@ -236,7 +238,7 @@ const submitAssetUpload = async ({
   authToken: undefined | string;
   uploadName: string;
   fileOrUrl: File | URL;
-  onCompleted: (data: AssetActionResponse) => void;
+  onCompleted: (data: AssetUploadResult) => void;
   onError: (error: string) => void;
   request?: typeof fetch;
 }) => {
@@ -339,16 +341,16 @@ const createUploadTicket = async ({
 
 const handleAfterSubmit = (
   assetId: string,
-  data: AssetActionResponse,
+  data: AssetUploadResult,
   projectId: string,
   folderId?: string
 ) => {
   warnOnce(
-    data.uploadedAssets?.length !== 1,
+    data.uploadedAssets.length !== 1,
     "Expected exactly 1 uploaded asset"
   );
 
-  const uploadedAsset = data.uploadedAssets?.[0];
+  const uploadedAsset = data.uploadedAssets[0];
 
   if (uploadedAsset === undefined) {
     warnOnce(true, "An uploaded asset is undefined");

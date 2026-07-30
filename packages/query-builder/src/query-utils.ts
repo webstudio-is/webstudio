@@ -1,45 +1,5 @@
-import type {
-  QueryCondition,
-  QueryDefinition,
-  QuerySort,
-  QueryWhereTree,
-} from "./types";
-
-const collectQueryConditions = (
-  where: QueryWhereTree<{ field: unknown }>
-): { field: unknown }[] => {
-  if ("field" in where) {
-    return [where];
-  }
-  return ("all" in where ? where.all : where.any).flatMap(
-    collectQueryConditions
-  );
-};
-
-export const getQueryConditions = <Condition extends { field: unknown }>(
-  where: QueryWhereTree<Condition>
-) => collectQueryConditions(where) as Condition[];
-
-export const mapQueryWhere = <
-  Input extends { field: unknown },
-  Output extends { field: unknown },
->(
-  where: QueryWhereTree<Input>,
-  mapCondition: (condition: Input) => Output
-): QueryWhereTree<Output> => {
-  if ("field" in where) {
-    return mapCondition(where);
-  }
-  if ("all" in where) {
-    return {
-      all: where.all.map((child) => mapQueryWhere(child, mapCondition)),
-    };
-  }
-  return { any: where.any.map((child) => mapQueryWhere(child, mapCondition)) };
-};
-
-export const getQueryFieldKey = (field: readonly string[]) =>
-  JSON.stringify(field);
+import type { QueryCondition, QueryDefinition, QuerySort } from "./types";
+import { getQueryFieldKey } from "./runtime";
 
 export const addConfiguredQueryFields = <
   FieldType extends string,
@@ -69,23 +29,6 @@ export const addConfiguredQueryFields = <
     });
   }
   return { ...definition, fields: [...fields.values()] };
-};
-
-export const getQueryWhereMetrics = (
-  where: QueryWhereTree<{ field: unknown }>
-): { conditions: number; depth: number } => {
-  if ("field" in where) {
-    return { conditions: 1, depth: 0 };
-  }
-  const children = "all" in where ? where.all : where.any;
-  let conditions = 0;
-  let depth = 1;
-  for (const child of children) {
-    const metrics = getQueryWhereMetrics(child);
-    conditions += metrics.conditions;
-    depth = Math.max(depth, metrics.depth + 1);
-  }
-  return { conditions, depth };
 };
 
 export const getCompatibleQueryOperators = <
@@ -151,15 +94,16 @@ export const createQuerySort = <
 };
 
 export const createStructuredQuery = <
-  FieldType extends string,
-  Operator extends string,
->(
-  capabilities: QueryDefinition<FieldType, Operator>
-): Record<string, unknown> => {
+  Query extends Record<string, unknown> = Record<string, unknown>,
+>(capabilities: {
+  source: {
+    controls: readonly { key: string; defaultValue: unknown }[];
+  };
+}): Query => {
   return Object.fromEntries(
     capabilities.source.controls.map(({ key, defaultValue }) => [
       key,
       structuredClone(defaultValue),
     ])
-  );
+  ) as Query;
 };

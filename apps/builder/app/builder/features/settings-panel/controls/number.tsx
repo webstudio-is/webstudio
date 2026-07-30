@@ -1,19 +1,17 @@
 import { useId, useState } from "react";
-import { useStore } from "@nanostores/react";
 import { InputField } from "@webstudio-is/design-system";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   BindableExpressionControl,
-  updateExpressionValue,
-  useBindingState,
+  updateBindableValue,
 } from "~/builder/shared/bindable-expression";
 import {
   type ControlProps,
   ResponsiveLayout,
-  $selectedInstanceScope,
   humanizeAttribute,
 } from "../shared";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 
 export const NumberControl = ({
   meta,
@@ -30,11 +28,11 @@ export const NumberControl = ({
     Number.isNaN(number) ? "" : number,
     (value) => {
       if (typeof value === "number") {
-        if (prop?.type === "expression") {
-          updateExpressionValue(prop.value, value);
-        } else {
-          onChange({ type: "number", value });
-        }
+        updateBindableValue({
+          expression: prop?.type === "expression" ? prop.value : undefined,
+          value,
+          onChangeValue: (value) => onChange({ type: "number", value }),
+        });
       }
       if (value === "") {
         setIsInvalid(true);
@@ -43,25 +41,23 @@ export const NumberControl = ({
   );
 
   const label = humanizeAttribute(meta.label || propName);
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   return (
     <ResponsiveLayout
       label={
-        <PropertyLabel name={propName} readOnly={overwritable === false} />
+        <PropertyLabel
+          name={propName}
+          readOnly={binding.bindingState.overwritable === false}
+        />
       }
     >
       <BindableExpressionControl
-        expression={expression}
+        {...binding}
         value={localValue.value}
-        bound={prop?.type === "expression"}
-        scope={scope}
-        aliases={aliases}
         validate={(value) => {
           if (value !== undefined && typeof value !== "number") {
             return `${label} expects a number value`;

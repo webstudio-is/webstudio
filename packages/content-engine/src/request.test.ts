@@ -66,4 +66,21 @@ describe("asset query request", () => {
       )
     ).rejects.toThrow("exceeds the byte limit");
   });
+
+  test("rejects malformed UTF-8 instead of replacing invalid bytes", async () => {
+    const prefix = new TextEncoder().encode(
+      '{"query":{"where":{"all":[]},"sort":[],"limit":1,"offset":0,"content":{"mode":"none"}},"indexRevision":"'
+    );
+    const suffix = new TextEncoder().encode('"}');
+    const body = new Uint8Array(prefix.byteLength + 1 + suffix.byteLength);
+    body.set(prefix);
+    body[prefix.byteLength] = 0xff;
+    body.set(suffix, prefix.byteLength + 1);
+
+    await expect(
+      readAssetQueryRequest(
+        new Request("https://example.com", { method: "POST", body })
+      )
+    ).rejects.toThrow("Asset query request is invalid");
+  });
 });

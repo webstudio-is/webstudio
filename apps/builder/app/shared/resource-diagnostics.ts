@@ -1,9 +1,19 @@
 import { assetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
+import type { ResourceRequest } from "@webstudio-is/sdk";
+import { isAssetsResourceRequest } from "@webstudio-is/sdk/runtime";
 
-// Diagnostics may be shown by Builder, but must never enter the resource value
-// exposed to expressions and rendered bindings.
-export const stripResourceDiagnostics = (result: unknown) => {
+// Assets diagnostics may be shown by Builder, but must never enter the value
+// exposed to expressions. Ordinary APIs may legitimately use the same field.
+export const separateResourceDiagnostics = ({
+  request,
+  result,
+}: {
+  request?: ResourceRequest;
+  result: unknown;
+}) => {
   if (
+    request === undefined ||
+    isAssetsResourceRequest(request) === false ||
     typeof result !== "object" ||
     result === null ||
     "__diagnostics__" in result === false

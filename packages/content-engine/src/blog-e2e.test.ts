@@ -3,6 +3,7 @@ import type { AssetFileDocument } from "./schema";
 import { createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import { createPublishedAssetResourceFetch } from "./published-runtime";
+import { discoverMarkdownAssetReferenceRanges } from "./markdown-assets";
 
 const postContent = "# Hello\n\n![Hero](../images/hero.png)";
 
@@ -40,7 +41,11 @@ describe("published Markdown blog end-to-end", () => {
         },
       ],
       assetReferences: {
-        "hello.md": { "../images/hero.png": "hero-image" },
+        "hello.md": discoverMarkdownAssetReferenceRanges({
+          markdown: postContent,
+          sourcePath: document.path,
+          assetIdsByPath: new Map([["images/hero.png", "hero-image"]]),
+        }),
       },
     });
     const runtimeFetch = createPublishedAssetResourceFetch({
@@ -48,6 +53,7 @@ describe("published Markdown blog end-to-end", () => {
       deploymentId: "blog-deployment",
       artifact: index,
       runtimeAssets: {
+        "post-1": { url: "/assets/hello.md" },
         "hero-image": { url: "/assets/hero.png", width: 1200, height: 630 },
       },
     });

@@ -1,5 +1,10 @@
 export const markdownByteOrderMark = new Uint8Array([0xef, 0xbb, 0xbf]);
 
+// Maximum envelope around the YAML payload: an optional UTF-8 BOM plus the
+// opening and closing delimiters with CRLF line endings.
+export const markdownFrontmatterEnvelopeBytes =
+  markdownByteOrderMark.byteLength + 10;
+
 const startsWith = (bytes: Uint8Array, expected: Uint8Array, offset = 0) => {
   if (bytes.byteLength - offset < expected.byteLength) {
     return false;

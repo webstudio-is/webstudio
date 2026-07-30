@@ -1,4 +1,26 @@
-import type { AssetFileDocument, AssetQueryFieldPath } from "./schema";
+import {
+  assetQueryDocumentFields,
+  type AssetFileDocument,
+  type AssetQueryFieldPath,
+  type ContentDatabaseDocument,
+} from "./schema";
+
+export const selectAssetDocumentFields = ({
+  document,
+  includes,
+}: {
+  document: AssetFileDocument | ContentDatabaseDocument;
+  includes: (field: (typeof assetQueryDocumentFields)[number]) => boolean;
+}) => {
+  const selected: Record<string, unknown> = {};
+  for (const field of assetQueryDocumentFields) {
+    const value = document[field];
+    if (value !== undefined && includes(field)) {
+      selected[field] = value;
+    }
+  }
+  return selected;
+};
 
 const selectPropertyPath = ({
   source,

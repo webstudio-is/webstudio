@@ -4,9 +4,10 @@ import {
   createContentCompilationPlan,
   createContentFieldCatalogCompilationPlan,
   createLiteralContentCompilationQuery,
+  getContentArtifactRuntimeAssetIds,
   isContentDocumentCandidate,
   prepareContentCompilerEntries,
-  requiresHydratedContent,
+  requiresRuntimeDocumentData,
   requiresStructuredProperties,
   type AssetQueryRequestInput,
   type AssetQueryPreviewResult,
@@ -15,6 +16,7 @@ import {
 } from "@webstudio-is/content-engine";
 import {
   createAssetIndex,
+  createAssetFieldCatalog,
   createContentSourceFile,
   computeCanonicalAssetRevision,
   decodeUtf8,
@@ -22,6 +24,7 @@ import {
   materializeContentSnapshot,
   ContentSourceChangedError,
   readBoundedBytes,
+  toBuilderAssetFieldCatalog,
   type ContentSource,
 } from "@webstudio-is/content-engine/compiler";
 import {
@@ -166,9 +169,6 @@ export interface AssetRepository {
     values: AssetFolderUpdate
   ): Promise<AssetFolder>;
   deleteFolder(folderId: string): Promise<void>;
-  readIndex(
-    requirements?: ContentCompilationPlan
-  ): ReturnType<typeof createAssetIndex>;
   readFieldCatalog(): Promise<BuilderAssetFieldCatalog>;
   query(request: AssetQueryRequestInput): Promise<AssetQueryPreviewResult>;
 }
@@ -558,6 +558,7 @@ export class PostgresAssetRepository implements AssetRepository {
       const { entries, assetReferences } = await materializeContentSource({
         source,
         plan: requirements,
+        maximumContentBytes: this.contentDatabaseMaxBytes,
       });
       return await compile(entries, assetReferences);
     }
@@ -576,6 +577,7 @@ export class PostgresAssetRepository implements AssetRepository {
             {
               snapshot,
               plan: requirements,
+              maximumContentBytes: this.contentDatabaseMaxBytes,
             }
           );
           return await compile(entries, assetReferences);
@@ -602,11 +604,12 @@ export class PostgresAssetRepository implements AssetRepository {
         return {
           revision,
           files: baseEntries.map(createContentSourceFile),
-          loadEntries: (plan) =>
+          loadEntries: (plan, options) =>
             this.loadCompilerEntries({
               baseEntries,
               requirements: plan,
               strict,
+              maximumContentBytes: options?.maximumContentBytes,
             }),
           isCurrent: async () =>
             (await computeCanonicalAssetRevision(await loadBaseEntries())) ===
@@ -620,10 +623,12 @@ export class PostgresAssetRepository implements AssetRepository {
     baseEntries,
     requirements,
     strict,
+    maximumContentBytes,
   }: {
     baseEntries: Awaited<ReturnType<typeof loadCanonicalAssetBaseEntries>>;
     requirements?: ContentCompilationPlan;
     strict: boolean;
+    maximumContentBytes?: number;
   }) {
     const candidateBaseEntries =
       requirements === undefined
@@ -639,11 +644,11 @@ export class PostgresAssetRepository implements AssetRepository {
       requirements === undefined
         ? undefined
         : candidateBaseEntries.map(({ assetId }) => assetId);
+    let entries = candidateBaseEntries;
     if (
       requirements === undefined ||
       requiresStructuredProperties(requirements) ||
-      requirements.excerpt ||
-      requiresHydratedContent(requirements)
+      requirements.excerpt
     ) {
       const result = await this.synchronizeTrusted(
         requirements,
@@ -652,37 +657,12 @@ export class PostgresAssetRepository implements AssetRepository {
       if (strict && result.issues.length > 0) {
         throw new AssetIndexPreparationError(result.issues);
       }
-      return await this.loadCanonicalCompilerEntries(
-        requirements,
-        candidateAssetIds,
-        strict
-      );
+      entries = await this.dependencies.loadCanonicalAssetFileEntries({
+        client: this.context.postgrest.client,
+        projectId: this.projectId,
+        assetIds: candidateAssetIds,
+      });
     }
-    return candidateBaseEntries;
-  }
-
-  async readIndex(requirements?: ContentCompilationPlan) {
-    await this.assertCanView();
-    return await this.prepareIndexAfterAuthorization(requirements, false);
-  }
-
-  async readFieldCatalog() {
-    const database = getContentDatabaseForArtifact(
-      await this.readIndex(createContentFieldCatalogCompilationPlan())
-    );
-    return database.getFieldCatalog();
-  }
-
-  private async loadCanonicalCompilerEntries(
-    requirements?: ContentCompilationPlan,
-    assetIds?: string[],
-    strict = false
-  ) {
-    const entries = await this.dependencies.loadCanonicalAssetFileEntries({
-      client: this.context.postgrest.client,
-      projectId: this.projectId,
-      assetIds,
-    });
     return await prepareContentCompilerEntries({
       entries,
       plan: requirements,
@@ -716,30 +696,48 @@ export class PostgresAssetRepository implements AssetRepository {
         }
         return content;
       },
+      maximumContentBytes,
     });
+  }
+
+  async readFieldCatalog() {
+    await this.assertCanView();
+    const { entries } = await materializeContentSource({
+      source: this.createContentSource(false),
+      plan: createContentFieldCatalogCompilationPlan(),
+    });
+    return toBuilderAssetFieldCatalog(await createAssetFieldCatalog(entries));
   }
 
   async query(
     request: AssetQueryRequestInput
   ): Promise<AssetQueryPreviewResult> {
+    await this.assertCanView();
     const query = assetQuery.parse(request.query);
     const plan = createContentCompilationPlan([
       createLiteralContentCompilationQuery({ id: "preview", query }),
     ]);
-    const [index, assets] = await Promise.all([
-      this.readIndex(plan),
-      this.dependencies.loadAssetsByProjectWithClient(
-        this.projectId,
-        this.context.postgrest.client
-      ),
-    ]);
+    const index = await this.prepareIndexAfterAuthorization(plan, false);
     const database = getContentDatabaseForArtifact(index);
-    const runtimeAssets = Object.fromEntries(
-      assets.map((asset) => [
-        asset.id,
-        toRuntimeAsset(asset, "https://webstudio.local"),
-      ])
-    );
+    const runtimeAssetIds = getContentArtifactRuntimeAssetIds({
+      artifact: index,
+      includeDocuments: plan !== undefined && requiresRuntimeDocumentData(plan),
+    });
+    const runtimeAssets =
+      runtimeAssetIds.length > 0
+        ? Object.fromEntries(
+            (
+              await this.dependencies.loadAssetsByProjectWithClient(
+                this.projectId,
+                this.context.postgrest.client,
+                runtimeAssetIds
+              )
+            ).map((asset) => [
+              asset.id,
+              toRuntimeAsset(asset, "https://webstudio.local"),
+            ])
+          )
+        : undefined;
     const data = await database.query(
       request,
       this.assetStore.readFile,

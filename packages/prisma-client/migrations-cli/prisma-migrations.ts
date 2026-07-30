@@ -11,9 +11,6 @@ import { UserError } from "./errors";
 import { PrismaClient } from "../src/__generated__";
 import { migrationsDir, prismaDir } from "./prisma-paths";
 
-export { cliDiff, cliExecute } from "./prisma-command";
-export { migrationsDir, prismaDir, schemaFilePath } from "./prisma-paths";
-
 let prisma_: PrismaClient | undefined;
 
 const context = {

@@ -1,27 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
+  createDefaultStructuredAssetQueryResourceConfiguration,
   createStructuredAssetQueryResourceBody,
   parseStructuredAssetQueryResourceBody,
   type Resource,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryResourceConfiguration,
 } from "@webstudio-is/sdk";
-import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { assetsOpenApiUrl } from "@webstudio-is/sdk/runtime";
-import type {
-  AssetObservedFieldType,
-  AssetQueryFilter,
-} from "@webstudio-is/content-engine";
-import { defaultAssetResourceOutputSelection } from "@webstudio-is/content-engine";
 import {
   addConfiguredQueryFields,
-  getOpenApiQueryConfiguration,
-  getQueryFieldKey,
-  getQueryConditions,
   createQuerySourceCodec,
+  loadOpenApiQueryDefinition,
   type QueryDefinition,
 } from "@webstudio-is/query-builder";
+import {
+  getQueryConditions,
+  getQueryFieldKey,
+} from "@webstudio-is/query-builder/runtime";
 import { Text, theme } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/sync/data-stores";
 import { BindableQueryBuilder } from "~/builder/shared/query-builder";
@@ -29,18 +26,12 @@ import { fetch as builderFetch } from "~/shared/fetch.client";
 import { CenteredPanelMessage, Row } from "./shared";
 
 type AssetQueryDefinition = QueryDefinition<
-  AssetObservedFieldType,
-  AssetQueryFilter["operator"]
+  string,
+  StructuredAssetQueryFilterBinding["operator"]
 >;
 
-const defaultConfiguration: StructuredAssetQueryResourceConfiguration = {
-  where: { all: [] },
-  sort: [],
-  limit: String(assetResourceLimits.defaultResultCount),
-  offset: "0",
-  output: defaultAssetResourceOutputSelection,
-  content: { mode: "none" },
-};
+const defaultConfiguration: StructuredAssetQueryResourceConfiguration =
+  createDefaultStructuredAssetQueryResourceConfiguration();
 
 const normalizeConfiguration = (
   value: StructuredAssetQueryResourceConfiguration
@@ -48,6 +39,34 @@ const normalizeConfiguration = (
   ...value,
   where: "field" in value.where ? { all: [value.where] } : value.where,
 });
+
+const loadAssetQueryDefinition = async (
+  fetchDescription: typeof globalThis.fetch
+) => {
+  const response = await fetchDescription(assetsOpenApiUrl);
+  if (response.ok === false) {
+    throw new Error("Builder Assets OpenAPI request failed");
+  }
+  const descriptionUrl =
+    response.url || new URL(assetsOpenApiUrl, window.location.href).href;
+  const descriptionOrigin = new URL(descriptionUrl).origin;
+  const definition = await loadOpenApiQueryDefinition({
+    document: await response.json(),
+    documentUrl: descriptionUrl,
+    operationId: "queryAssets",
+    loadReference: async (url) => {
+      if (new URL(url).origin !== descriptionOrigin) {
+        throw new Error("Cross-origin OpenAPI references are unsupported");
+      }
+      const reference = await fetchDescription(url);
+      if (reference.ok === false) {
+        throw new Error("Builder Assets query schema request failed");
+      }
+      return await reference.json();
+    },
+  });
+  return definition as AssetQueryDefinition;
+};
 
 export const AssetQueryForm = ({
   resource,
@@ -105,8 +124,8 @@ export const AssetQueryForm = ({
     }
     try {
       createQuerySourceCodec<
-        AssetObservedFieldType,
-        AssetQueryFilter["operator"],
+        string,
+        StructuredAssetQueryFilterBinding["operator"],
         StructuredAssetQueryResourceConfiguration
       >(definition).format(configuration);
     } catch {
@@ -125,23 +144,12 @@ export const AssetQueryForm = ({
 
   useEffect(() => {
     let ignore = false;
-    fetchDescription(assetsOpenApiUrl)
-      .then(async (response) => {
-        if (response.ok === false) {
-          throw new Error("Builder Assets OpenAPI request failed");
-        }
-        return await response.json();
-      })
-      .then((response) => {
+    loadAssetQueryDefinition(fetchDescription)
+      .then((definition) => {
         if (ignore) {
           return;
         }
-        setBaseDefinition(
-          getOpenApiQueryConfiguration({
-            document: response,
-            operationId: "queryAssets",
-          }).definition as AssetQueryDefinition
-        );
+        setBaseDefinition(definition);
         setDescriptionError(undefined);
       })
       .catch(() => {
@@ -170,8 +178,8 @@ export const AssetQueryForm = ({
         </CenteredPanelMessage>
       ) : definition !== undefined ? (
         <BindableQueryBuilder<
-          AssetObservedFieldType,
-          AssetQueryFilter["operator"],
+          string,
+          StructuredAssetQueryFilterBinding["operator"],
           StructuredAssetQueryResourceConfiguration
         >
           key={resource?.id}
@@ -195,3 +203,5 @@ export const AssetQueryForm = ({
     </>
   );
 };
+
+export const __testing__ = { loadAssetQueryDefinition };

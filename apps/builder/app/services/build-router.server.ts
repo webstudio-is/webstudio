@@ -23,8 +23,10 @@ import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/server";
-import { createContentDatabase } from "@webstudio-is/content-engine";
-import { getQueryConditions } from "@webstudio-is/query-builder";
+import {
+  createContentDatabase,
+  hasDynamicContentCompilationValues,
+} from "@webstudio-is/content-engine";
 import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
 import {
   checkProjectBuildPermissionInput,
@@ -64,18 +66,6 @@ const buildBundleInput = z.object({
   bundleVersion: z.union([z.string(), z.number()]).optional(),
 });
 
-const hasDynamicCompilationValue = (value: { type: string }) =>
-  value.type === "dynamic";
-
-const hasDynamicCompilationWhere = (
-  where: NonNullable<
-    ReturnType<typeof createReachableAssetContentCompilationPlan>
-  >["queries"][number]["where"]
-) =>
-  getQueryConditions(where).some(({ value }) =>
-    hasDynamicCompilationValue(value)
-  );
-
 const getContentDatabasePublishDiagnostics = (
   bundle: z.infer<typeof publishedProjectBundle>
 ) => {
@@ -102,12 +92,7 @@ const getContentDatabasePublishDiagnostics = (
       id,
       name: resourceNameById.get(id) ?? id,
     })),
-    hasDynamicValues: plan.queries.some(
-      ({ where, limit, offset }) =>
-        hasDynamicCompilationWhere(where) ||
-        hasDynamicCompilationValue(limit) ||
-        hasDynamicCompilationValue(offset)
-    ),
+    hasDynamicValues: hasDynamicContentCompilationValues(plan),
   };
 };
 
@@ -338,15 +323,7 @@ export const buildRouter = router({
   contentDatabasePublishDiagnostics: procedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const canBuild = await authorizeProject.hasProjectPermit(
-        { projectId: input.projectId, permit: "edit" },
-        ctx
-      );
-      if (canBuild === false) {
-        throw new AuthorizationError(
-          "You don't have access to build this project"
-        );
-      }
+      await assertProjectBuildPermit({ ctx, projectId: input.projectId });
       return getContentDatabasePublishDiagnostics(
         await loadProjectBundleByProjectId(input.projectId, ctx)
       );

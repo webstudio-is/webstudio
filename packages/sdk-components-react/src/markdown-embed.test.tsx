@@ -42,6 +42,8 @@ Hello, world!
 <img src="javascript:alert('unsafe')" onerror="alert('unsafe')">
 <a href="javascript:alert('unsafe')">Unsafe link</a>
 <iframe src="data:text/html,unsafe" srcdoc="<script>alert('unsafe')</script>"></iframe>
+<img src="blob:https://example.com/unsafe">
+<input type="text" value="unsafe">
 
 ![Safe image](https://example.com/image.png)
         `}
@@ -61,5 +63,29 @@ Hello, world!
     expect(html).not.toContain("onerror");
     expect(html).not.toContain("srcdoc");
     expect(html).not.toContain("data:text/html");
+    expect(html).not.toContain("blob:");
+    expect(html).not.toContain('type="text"');
+  });
+
+  test("renders the complete GFM dialect", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownEmbed
+        code={`~~done~~\n\n- [x] Published\n\nhttps://example.com\n\n| A | B |\n| - | - |\n| 1 | 2 |`}
+      />
+    );
+
+    expect(html).toContain("<del>done</del>");
+    expect(html).toContain('type="checkbox"');
+    expect(html).toContain('<a href="https://example.com">');
+    expect(html).toContain("<table>");
+  });
+
+  test("does not render YAML frontmatter or treat it as a heading", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownEmbed code={`---\ntitle: Hidden\n---\n# Visible`} />
+    );
+
+    expect(html).toContain('<h1 id="visible">Visible</h1>');
+    expect(html).not.toContain("title: Hidden");
   });
 });

@@ -1,11 +1,14 @@
 import {
   getQueryConditions,
   getQueryFieldKey,
+  evaluateQueryWhere,
   mapQueryWhere,
   type QueryWhereTree,
-} from "@webstudio-is/query-builder";
+} from "@webstudio-is/query-builder/runtime";
 import {
   assetQueryFilter,
+  assetQueryMetadataFields,
+  isAssetQueryRuntimeField,
   type AssetQuery,
   type AssetFileDocument,
   type ContentDatabaseDocument,
@@ -18,8 +21,40 @@ import {
   matchesAssetQueryFilter,
 } from "./structured-query";
 import { contentEngineLimits } from "./limits";
-import { selectAssetProperties } from "./projection";
+import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import type { CanonicalAssetFileEntry } from "./canonical";
+import { compareStrings } from "./canonical-json";
+
+export const compareContentEntryPriority = (
+  left: CanonicalAssetFileEntry,
+  right: CanonicalAssetFileEntry
+) => {
+  const leftCreatedAt =
+    left.document.createdAt === undefined
+      ? undefined
+      : Date.parse(left.document.createdAt);
+  const rightCreatedAt =
+    right.document.createdAt === undefined
+      ? undefined
+      : Date.parse(right.document.createdAt);
+  if (leftCreatedAt !== undefined && rightCreatedAt === undefined) {
+    return -1;
+  }
+  if (leftCreatedAt === undefined && rightCreatedAt !== undefined) {
+    return 1;
+  }
+  if (
+    leftCreatedAt !== undefined &&
+    rightCreatedAt !== undefined &&
+    leftCreatedAt !== rightCreatedAt
+  ) {
+    return rightCreatedAt - leftCreatedAt;
+  }
+  return (
+    compareStrings(left.document.path, right.document.path) ||
+    compareStrings(left.assetId, right.assetId)
+  );
+};
 
 export type ContentCompilationValue =
   | { type: "literal"; value: unknown }
@@ -65,39 +100,25 @@ const evaluateWhere = ({
   where: ContentCompilationWhere;
   available: "base" | "all";
 }): boolean | undefined => {
-  if ("field" in where) {
+  return evaluateQueryWhere(where, (condition) => {
     if (
-      where.value.type === "dynamic" ||
+      condition.value.type === "dynamic" ||
+      isAssetQueryRuntimeField(condition.field[0]) ||
       (available === "base" &&
-        (where.field[0] === "properties" || where.field[0] === "excerpt"))
+        (condition.field[0] === "properties" ||
+          condition.field[0] === "excerpt"))
     ) {
       return;
     }
     const filter = assetQueryFilter.safeParse({
-      field: where.field,
-      operator: where.operator,
-      value: where.value.value,
+      field: condition.field,
+      operator: condition.operator,
+      value: condition.value.value,
     });
     return filter.success
       ? matchesAssetQueryFilter(document, filter.data)
       : undefined;
-  }
-  const children = "all" in where ? where.all : where.any;
-  const results = children.map((child) =>
-    evaluateWhere({ document, where: child, available })
-  );
-  if ("all" in where) {
-    return results.includes(false)
-      ? false
-      : results.every((result) => result === true)
-        ? true
-        : undefined;
-  }
-  return results.includes(true)
-    ? true
-    : results.every((result) => result === false)
-      ? false
-      : undefined;
+  });
 };
 
 export const getContentDocumentCandidateQueryIds = ({
@@ -124,6 +145,21 @@ export const isContentDocumentCandidate = (input: {
 const hasDynamicWhere = (where: ContentCompilationWhere) =>
   getQueryConditions(where).some(({ value }) => value.type === "dynamic");
 
+export const hasDynamicContentCompilationValues = (
+  plan: ContentCompilationPlan
+) =>
+  plan.queries.some(
+    ({ where, limit, offset }) =>
+      hasDynamicWhere(where) ||
+      limit.type === "dynamic" ||
+      offset.type === "dynamic"
+  );
+
+const usesRuntimeWhere = (where: ContentCompilationWhere) =>
+  getQueryConditions(where).some(({ field }) =>
+    isAssetQueryRuntimeField(field[0])
+  );
+
 export const selectContentHydrationCandidates = ({
   documents,
   plan,
@@ -143,6 +179,8 @@ export const selectContentHydrationCandidates = ({
     );
     if (
       hasDynamicWhere(query.where) ||
+      usesRuntimeWhere(query.where) ||
+      query.sort.some(({ field }) => isAssetQueryRuntimeField(field[0])) ||
       query.limit.type === "dynamic" ||
       query.offset.type === "dynamic"
     ) {
@@ -167,11 +205,19 @@ export const prepareContentCompilerEntries = async ({
   entries,
   plan,
   loadContent,
+  maximumContentBytes = contentEngineLimits.databaseBytes,
 }: {
   entries: readonly CanonicalAssetFileEntry[];
   plan?: ContentCompilationPlan;
   loadContent: (entry: CanonicalAssetFileEntry) => Promise<string | undefined>;
+  maximumContentBytes?: number;
 }) => {
+  if (
+    Number.isSafeInteger(maximumContentBytes) === false ||
+    maximumContentBytes <= 0
+  ) {
+    throw new Error("Content hydration budget must be a positive integer");
+  }
   if (plan === undefined) {
     return entries;
   }
@@ -199,16 +245,46 @@ export const prepareContentCompilerEntries = async ({
   const candidates = projected.filter(({ document }) =>
     isContentDocumentCandidate({ document, plan, available: "all" })
   );
+  let remainingContentBytes = maximumContentBytes;
+  const selectedContentRefs = new Set<string>();
+  const selectedHydrationIds = new Set<string>();
+  for (const entry of [...candidates].sort(compareContentEntryPriority)) {
+    if (hydrationIds.has(entry.assetId) === false) {
+      continue;
+    }
+    if (selectedContentRefs.has(entry.document.contentRef)) {
+      selectedHydrationIds.add(entry.assetId);
+      continue;
+    }
+    if (entry.document.size > remainingContentBytes) {
+      continue;
+    }
+    selectedContentRefs.add(entry.document.contentRef);
+    selectedHydrationIds.add(entry.assetId);
+    remainingContentBytes -= entry.document.size;
+  }
+  const contentByRef = new Map<string, Promise<string | undefined>>();
   return await Promise.all(
     candidates.map(async (entry) => {
-      if (
-        hydrationIds.has(entry.assetId) === false ||
-        entry.document.size > contentEngineLimits.hydratedFileBytes
-      ) {
+      const contentRequired = hydrationIds.has(entry.assetId);
+      if (contentRequired === false) {
         return entry;
       }
-      const content = await loadContent(entry);
-      return content === undefined ? entry : { ...entry, content };
+      if (
+        selectedHydrationIds.has(entry.assetId) === false ||
+        entry.document.size > contentEngineLimits.hydratedFileBytes
+      ) {
+        return { ...entry, contentRequired: true as const };
+      }
+      let pendingContent = contentByRef.get(entry.document.contentRef);
+      if (pendingContent === undefined) {
+        pendingContent = loadContent(entry);
+        contentByRef.set(entry.document.contentRef, pendingContent);
+      }
+      const content = await pendingContent;
+      return content === undefined
+        ? { ...entry, contentRequired: true as const }
+        : { ...entry, content, contentRequired: true as const };
     })
   );
 };
@@ -238,7 +314,7 @@ const addField = (
 
 const sortFields = (fields: Iterable<AssetQueryFieldPath>) =>
   [...fields].sort((left, right) =>
-    getQueryFieldKey(left).localeCompare(getQueryFieldKey(right))
+    compareStrings(getQueryFieldKey(left), getQueryFieldKey(right))
   );
 
 const includesField = (
@@ -251,6 +327,14 @@ const includesField = (
   });
   return included;
 };
+
+export const requiresRuntimeDocumentData = (plan: ContentCompilationPlan) =>
+  plan.queries.some((query) =>
+    includesField(
+      query,
+      (field) => field.length === 1 && isAssetQueryRuntimeField(field[0])
+    )
+  );
 
 const getStructuredPropertyPaths = (query: ContentCompilationQuery) => {
   if (query.output.mode === "all") {
@@ -265,29 +349,19 @@ const getStructuredPropertyPaths = (query: ContentCompilationQuery) => {
   return sortFields(fields.values());
 };
 
-const metadataOutputFields = [
-  "id",
-  "name",
-  "description",
-  "path",
-  "key",
-  "folderId",
-  "extension",
-  "mimeType",
-  "size",
-  "createdAt",
-  "revision",
-] as const satisfies readonly AssetQueryFieldPath[number][];
-
 const getStandardFieldPaths = (query: ContentCompilationQuery) => {
   const fields = new Map<string, AssetQueryFieldPath>();
   visitQueryFields(query, (field) => {
-    if (field[0] !== "properties" && field[0] !== "excerpt") {
+    if (
+      field[0] !== "properties" &&
+      field[0] !== "excerpt" &&
+      isAssetQueryRuntimeField(field[0]) === false
+    ) {
       addField(fields, field);
     }
   });
   if (query.output.includeMetadata) {
-    for (const field of metadataOutputFields) {
+    for (const field of assetQueryMetadataFields) {
       addField(fields, [field]);
     }
   }
@@ -418,31 +492,10 @@ export const projectContentDatabaseDocument = ({
         });
   return {
     _id: document._id,
-    ...(hasField(plan.standardFields, "name") ? { name: document.name } : {}),
-    ...(document.description !== undefined &&
-    hasField(plan.standardFields, "description")
-      ? { description: document.description }
-      : {}),
-    ...(hasField(plan.standardFields, "path") ? { path: document.path } : {}),
-    ...(hasField(plan.standardFields, "key") ? { key: document.key } : {}),
-    ...(document.folderId !== undefined &&
-    hasField(plan.standardFields, "folderId")
-      ? { folderId: document.folderId }
-      : {}),
-    ...(hasField(plan.standardFields, "extension")
-      ? { extension: document.extension }
-      : {}),
-    ...(hasField(plan.standardFields, "mimeType")
-      ? { mimeType: document.mimeType }
-      : {}),
-    ...(hasField(plan.standardFields, "size") ? { size: document.size } : {}),
-    ...(document.createdAt !== undefined &&
-    hasField(plan.standardFields, "createdAt")
-      ? { createdAt: document.createdAt }
-      : {}),
-    ...(hasField(plan.standardFields, "revision")
-      ? { revision: document.revision }
-      : {}),
+    ...selectAssetDocumentFields({
+      document,
+      includes: (field) => hasField(plan.standardFields, field),
+    }),
     ...(includeContentIdentity ? { contentRef: document.contentRef } : {}),
     ...(plan.structuredPropertyPaths === "all" ||
     Object.keys(properties).length > 0

@@ -2,7 +2,6 @@ import { contentEngineLimits } from "./limits";
 import { parseDocument } from "yaml";
 import {
   decodeUtf8 as decodeUtf8Bytes,
-  appendBytes,
   toByteChunks,
   type ByteSource,
 } from "./byte-stream";
@@ -13,7 +12,7 @@ import {
 import { MarkdownMetadataError } from "./markdown-errors";
 import {
   findMarkdownFrontmatter,
-  markdownByteOrderMark,
+  markdownFrontmatterEnvelopeBytes,
 } from "./markdown-scanner";
 
 export type MarkdownFrontmatter = {
@@ -125,17 +124,18 @@ export const extractMarkdownFrontmatter = async (
   overrides: Partial<FrontmatterLimits> = {}
 ): Promise<MarkdownFrontmatter> => {
   const limits = { ...defaultFrontmatterLimits, ...overrides };
-  const maximumReadBytes = limits.bytes + markdownByteOrderMark.byteLength + 10;
-  let bytes = new Uint8Array();
+  const maximumReadBytes = limits.bytes + markdownFrontmatterEnvelopeBytes;
+  const buffer = new Uint8Array(maximumReadBytes);
+  let byteLength = 0;
 
   for await (const chunk of toByteChunks(source)) {
     let offset = 0;
     while (offset < chunk.byteLength) {
-      const available = maximumReadBytes - bytes.byteLength;
+      const available = maximumReadBytes - byteLength;
       if (available <= 0) {
         break;
       }
-      const initialRead = Math.max(0, 6 - bytes.byteLength);
+      const initialRead = Math.max(0, 6 - byteLength);
       let length = Math.min(chunk.byteLength - offset, initialRead);
       if (initialRead === 0) {
         const remaining = chunk.subarray(
@@ -145,9 +145,11 @@ export const extractMarkdownFrontmatter = async (
         const newline = remaining.indexOf(0x0a);
         length = newline === -1 ? remaining.byteLength : newline + 1;
       }
-      bytes = appendBytes(bytes, chunk.subarray(offset, offset + length));
+      buffer.set(chunk.subarray(offset, offset + length), byteLength);
+      byteLength += length;
       offset += length;
 
+      const bytes = buffer.subarray(0, byteLength);
       const located = findMarkdownFrontmatter(bytes, false);
       if (located === null) {
         return {
@@ -174,11 +176,12 @@ export const extractMarkdownFrontmatter = async (
         };
       }
     }
-    if (bytes.byteLength >= maximumReadBytes) {
+    if (byteLength >= maximumReadBytes) {
       break;
     }
   }
 
+  const bytes = buffer.subarray(0, byteLength);
   const located = findMarkdownFrontmatter(bytes, true);
   if (located === null) {
     return { properties: {}, frontmatterBytes: 0, consumedBytes: bytes.length };

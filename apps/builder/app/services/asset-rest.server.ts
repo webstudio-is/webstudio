@@ -3,6 +3,7 @@ import {
   readBoundedRequestBytes,
   RequestByteLimitError,
 } from "@webstudio-is/content-engine";
+import { decodeUtf8 } from "@webstudio-is/content-engine/compiler";
 import {
   AssetRepositoryConflictError,
   AssetRepositoryNotFoundError,
@@ -27,6 +28,13 @@ export class AssetRestRequestError extends Error {}
 export class AssetRestRangeError extends Error {}
 export class AssetRestPayloadTooLargeError extends Error {}
 
+export const requireAssetRestBody = (request: Request) => {
+  if (request.body === null) {
+    throw new AssetRestRequestError("Asset content is required");
+  }
+  return request.body;
+};
+
 const readAssetRestBody = async (request: Request) => {
   try {
     return await readBoundedRequestBytes(
@@ -47,7 +55,7 @@ const readAssetRestBody = async (request: Request) => {
 export const readAssetRestJson = async (request: Request) => {
   const bytes = await readAssetRestBody(request);
   try {
-    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+    return JSON.parse(decodeUtf8(bytes)) as unknown;
   } catch (error) {
     throw new AssetRestRequestError("Assets API request JSON is invalid", {
       cause: error,
@@ -145,17 +153,26 @@ export const getAssetRestProjectId = (request: Request) => {
   return parseAssetRestIdentifier(projectId);
 };
 
-export const createAssetRestRepository = async (
+export const createAssetRestRepositoryForProject = async (
   request: Request,
+  projectId: string,
   permit: ProjectPermit = "view"
-) => {
-  const projectId = getAssetRestProjectId(request);
-  return new PostgresAssetRepository({
+) =>
+  new PostgresAssetRepository({
     projectId,
     context: await authorizeApiProject(request, projectId, permit),
     assetStore: createAssetClient(),
   });
-};
+
+export const createAssetRestRepository = async (
+  request: Request,
+  permit: ProjectPermit = "view"
+) =>
+  createAssetRestRepositoryForProject(
+    request,
+    getAssetRestProjectId(request),
+    permit
+  );
 
 const getAssetRestErrorStatus = (error: unknown) => {
   const authorizationFailure = getApiAuthorizationFailure(error);
@@ -213,14 +230,16 @@ export const assetRestErrorResponse = (error: unknown) => {
   );
 };
 
-export const assetRestMethodNotAllowed = (allowed: readonly string[]) =>
+export const assetRestMethodNotAllowed = (
+  allowed: readonly { method: string }[]
+) =>
   json(
     { errors: "Method not allowed" },
     {
       status: 405,
       headers: {
         ...privateNoStoreResponseHeaders,
-        Allow: allowed.join(", "),
+        Allow: allowed.map(({ method }) => method.toUpperCase()).join(", "),
       },
     }
   );

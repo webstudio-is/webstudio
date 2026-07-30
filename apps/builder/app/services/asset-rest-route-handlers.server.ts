@@ -11,7 +11,7 @@ import {
   assetResourceApiOperations,
 } from "@webstudio-is/protocol/asset-resource-api";
 import { privateNoStoreResponseHeaders } from "./cache-control.server";
-import { requiresApiCsrf } from "./api-auth.server";
+import { ensureApiCsrf } from "./api-auth.server";
 import {
   AssetRestRangeError,
   assetRestErrorResponse,
@@ -20,7 +20,6 @@ import {
   parseAssetRestIdentifier,
   readAssetRestJson,
 } from "./asset-rest.server";
-import { checkCsrf } from "./csrf-session.server";
 import { preventCrossOriginCookie } from "./no-cross-origin-cookie";
 
 export const parseRequestRange = (value: string | null, size: number) => {
@@ -59,7 +58,9 @@ export const createAssetContentLoader =
       request.method.toLowerCase() !==
       assetResourceApiOperations.downloadAssetContent.method
     ) {
-      return assetRestMethodNotAllowed(["GET"]);
+      return assetRestMethodNotAllowed([
+        assetResourceApiOperations.downloadAssetContent,
+      ]);
     }
     try {
       const assetId = parseAssetRestIdentifier(params.assetId);
@@ -94,13 +95,13 @@ export const createAssetContentLoader =
 
 type AssetActionDependencies = {
   preventCrossOriginCookie: typeof preventCrossOriginCookie;
-  checkCsrf: typeof checkCsrf;
+  ensureApiCsrf: typeof ensureApiCsrf;
   createRepository: typeof createAssetRestRepository;
 };
 
 const defaultAssetActionDependencies: AssetActionDependencies = {
   preventCrossOriginCookie,
-  checkCsrf,
+  ensureApiCsrf,
   createRepository: createAssetRestRepository,
 };
 
@@ -113,11 +114,12 @@ export const createAssetAction =
       method !== assetResourceApiOperations.updateAsset.method &&
       method !== assetResourceApiOperations.deleteAsset.method
     ) {
-      return assetRestMethodNotAllowed(["PATCH", "DELETE"]);
+      return assetRestMethodNotAllowed([
+        assetResourceApiOperations.updateAsset,
+        assetResourceApiOperations.deleteAsset,
+      ]);
     }
-    if (requiresApiCsrf(request)) {
-      await dependencies.checkCsrf(request);
-    }
+    await dependencies.ensureApiCsrf(request);
 
     try {
       const assetId = parseAssetRestIdentifier(params.assetId);
@@ -142,7 +144,7 @@ export const createAssetAction =
 
 const defaultAssetIndexRefreshDependencies = {
   preventCrossOriginCookie,
-  checkCsrf,
+  ensureApiCsrf,
   createRepository: createAssetRestRepository,
 };
 
@@ -154,14 +156,14 @@ export const createAssetIndexRefreshAction =
       request.method.toLowerCase() !==
       assetResourceApiOperations.refreshAssetIndex.method
     ) {
-      return assetRestMethodNotAllowed(["POST"]);
+      return assetRestMethodNotAllowed([
+        assetResourceApiOperations.refreshAssetIndex,
+      ]);
     }
-    if (requiresApiCsrf(request)) {
-      await dependencies.checkCsrf(request);
-    }
+    await dependencies.ensureApiCsrf(request);
     try {
       const result = await (
-        await dependencies.createRepository(request, "build")
+        await dependencies.createRepository(request, "edit")
       ).synchronize();
       return json(result, {
         status: result.issues.length === 0 ? 200 : 503,

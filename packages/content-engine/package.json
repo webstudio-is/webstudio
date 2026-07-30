@@ -10,17 +10,18 @@
   "scripts": {
     "benchmark:index": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-index.mjs",
     "benchmark:scale": "NODE_OPTIONS=--conditions=webstudio pnpm tsx scripts/benchmark-scale.mjs",
-    "build": "rm -rf lib && esbuild src/index.ts src/compiler.ts src/published-runtime.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/compiler.ts src/limits.ts src/markdown-assets.ts src/markdown-references.ts src/published-runtime.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@webstudio-is/expression": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
     "canonicalize": "3.0.0",
-    "remark-gfm": "3.0.1",
+    "micromark": "4.0.2",
+    "micromark-util-decode-string": "2.0.1",
     "remark-parse": "10.0.2",
-    "remark-stringify": "10.0.3",
     "unified": "10.1.2",
     "yaml": "2.9.0",
     "zod": "^4.4.3"
@@ -48,6 +49,24 @@
       "types": "./lib/types/published-runtime.d.ts",
       "import": "./lib/published-runtime.js",
       "default": "./src/published-runtime.ts"
+    },
+    "./limits": {
+      "webstudio": "./src/limits.ts",
+      "types": "./lib/types/limits.d.ts",
+      "import": "./lib/limits.js",
+      "default": "./src/limits.ts"
+    },
+    "./markdown-assets": {
+      "webstudio": "./src/markdown-assets.ts",
+      "types": "./lib/types/markdown-assets.d.ts",
+      "import": "./lib/markdown-assets.js",
+      "default": "./src/markdown-assets.ts"
+    },
+    "./markdown-references": {
+      "webstudio": "./src/markdown-references.ts",
+      "types": "./lib/types/markdown-references.d.ts",
+      "import": "./lib/markdown-references.js",
+      "default": "./src/markdown-references.ts"
     }
   },
   "files": [

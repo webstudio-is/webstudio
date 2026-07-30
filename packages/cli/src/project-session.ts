@@ -1,10 +1,8 @@
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
-import {
-  compileContentSource,
-  parseContentDatabaseMaxBytes,
-} from "@webstudio-is/content-engine/compiler";
+import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
+import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import {
   migratePages,
   serializePages,

@@ -1,6 +1,11 @@
-import { getQueryConditions } from "@webstudio-is/query-builder";
+import {
+  evaluateQueryWhere,
+  getQueryConditions,
+} from "@webstudio-is/query-builder/runtime";
 import {
   assetQuery,
+  isAssetQueryMetadataField,
+  isAssetQueryRuntimeField,
   assetQueryStandardFieldTypes,
   getAssetQueryOperatorsForFieldTypes,
   type ContentDatabaseDocument,
@@ -24,9 +29,9 @@ import {
   type AssetResourceContentReader,
 } from "./hydration";
 import { appendAssetFieldPath } from "./canonical";
-import { selectAssetProperties } from "./projection";
+import { selectAssetDocumentFields, selectAssetProperties } from "./projection";
 import { getUtf8ByteLength } from "./byte-stream";
-import type { MarkdownAssetReferences } from "./markdown-assets";
+import type { MarkdownAssetReferences } from "./markdown-references";
 
 export type AssetRuntimeData = {
   url: string;
@@ -142,12 +147,15 @@ export const validateAssetQueryAgainstCatalog = ({
 
 export const getAssetQueryFieldValue = (
   document: ContentDatabaseDocument,
-  path: AssetQueryFieldPath
+  path: AssetQueryFieldPath,
+  runtimeAsset?: AssetRuntimeData
 ) => {
   let value: unknown =
     path[0] === "id"
       ? document._id
-      : (document as Readonly<Record<string, unknown>>)[path[0]];
+      : isAssetQueryRuntimeField(path[0])
+        ? runtimeAsset?.[path[0]]
+        : (document as Readonly<Record<string, unknown>>)[path[0]];
   for (const segment of path.slice(1)) {
     if (
       typeof value !== "object" ||
@@ -193,9 +201,10 @@ const compareFilterValues = (left: unknown, right: unknown) => {
 
 export const matchesAssetQueryFilter = (
   document: ContentDatabaseDocument,
-  filter: AssetQueryFilter
+  filter: AssetQueryFilter,
+  runtimeAsset?: AssetRuntimeData
 ) => {
-  const value = getAssetQueryFieldValue(document, filter.field);
+  const value = getAssetQueryFieldValue(document, filter.field, runtimeAsset);
   if (filter.operator === "exists") {
     return (value !== undefined && value !== null) === filter.value;
   }
@@ -252,16 +261,12 @@ export const matchesAssetQueryFilter = (
 
 const matchesAssetQueryWhere = (
   document: ContentDatabaseDocument,
-  where: AssetQueryWhere
-): boolean => {
-  if ("field" in where) {
-    return matchesAssetQueryFilter(document, where);
-  }
-  if ("all" in where) {
-    return where.all.every((child) => matchesAssetQueryWhere(document, child));
-  }
-  return where.any.some((child) => matchesAssetQueryWhere(document, child));
-};
+  where: AssetQueryWhere,
+  runtimeAsset?: AssetRuntimeData
+): boolean =>
+  evaluateQueryWhere(where, (filter) =>
+    matchesAssetQueryFilter(document, filter, runtimeAsset)
+  ) === true;
 
 const compareAssetQuerySortValues = (left: unknown, right: unknown) => {
   const leftMissing = left === undefined || left === null;
@@ -284,15 +289,21 @@ const compareAssetQuerySortValues = (left: unknown, right: unknown) => {
   );
 };
 
-export const compareAssetQueryDocuments = (
-  left: ContentDatabaseDocument,
-  right: ContentDatabaseDocument,
-  sort: AssetQuery["sort"]
-) => {
+const compareAssetQueryDocumentsWithRuntime = ({
+  left,
+  right,
+  sort,
+  runtimeAssets,
+}: {
+  left: ContentDatabaseDocument;
+  right: ContentDatabaseDocument;
+  sort: AssetQuery["sort"];
+  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+}) => {
   for (const order of sort) {
     const compared = compareAssetQuerySortValues(
-      getAssetQueryFieldValue(left, order.field),
-      getAssetQueryFieldValue(right, order.field)
+      getAssetQueryFieldValue(left, order.field, runtimeAssets?.[left._id]),
+      getAssetQueryFieldValue(right, order.field, runtimeAssets?.[right._id])
     );
     if (compared !== 0) {
       return order.direction === "asc" ? compared : -compared;
@@ -300,6 +311,12 @@ export const compareAssetQueryDocuments = (
   }
   return compareStrings(left._id, right._id);
 };
+
+export const compareAssetQueryDocuments = (
+  left: ContentDatabaseDocument,
+  right: ContentDatabaseDocument,
+  sort: AssetQuery["sort"]
+) => compareAssetQueryDocumentsWithRuntime({ left, right, sort });
 
 const selectProperties = (
   document: ContentDatabaseDocument,
@@ -330,7 +347,7 @@ const includesOutputField = (
   output: AssetResourceOutputSelection,
   field: string
 ) =>
-  output.includeMetadata ||
+  (output.includeMetadata && isAssetQueryMetadataField(field)) ||
   (output.mode === "fields" &&
     output.fields.some((path) => path.length === 1 && path[0] === field));
 
@@ -346,11 +363,13 @@ const toQueryItem = (
   output: AssetResourceOutputSelection,
   runtimeAsset?: AssetRuntimeData
 ) => {
+  if (includesOutputField(output, "url") && runtimeAsset === undefined) {
+    throw new Error(`Asset URL is unavailable for ${document._id}`);
+  }
   const properties = selectProperties(document, output);
   const hasDimensions =
     runtimeAsset?.width !== undefined && runtimeAsset.height !== undefined;
   return {
-    ...(includesOutputField(output, "id") ? { id: document._id } : {}),
     ...(runtimeAsset !== undefined && includesOutputField(output, "url")
       ? { url: runtimeAsset.url }
       : {}),
@@ -360,31 +379,10 @@ const toQueryItem = (
     ...(hasDimensions && includesOutputField(output, "height")
       ? { height: runtimeAsset.height }
       : {}),
-    ...(includesOutputField(output, "name") ? { name: document.name } : {}),
-    ...(document.description === undefined ||
-    includesOutputField(output, "description") === false
-      ? {}
-      : { description: document.description }),
-    ...(includesOutputField(output, "path") ? { path: document.path } : {}),
-    ...(includesOutputField(output, "key") ? { key: document.key } : {}),
-    ...(document.folderId === undefined ||
-    includesOutputField(output, "folderId") === false
-      ? {}
-      : { folderId: document.folderId }),
-    ...(includesOutputField(output, "extension")
-      ? { extension: document.extension }
-      : {}),
-    ...(includesOutputField(output, "mimeType")
-      ? { mimeType: document.mimeType }
-      : {}),
-    ...(includesOutputField(output, "size") ? { size: document.size } : {}),
-    ...(document.createdAt === undefined ||
-    includesOutputField(output, "createdAt") === false
-      ? {}
-      : { createdAt: document.createdAt }),
-    ...(includesOutputField(output, "revision")
-      ? { revision: document.revision }
-      : {}),
+    ...selectAssetDocumentFields({
+      document,
+      includes: (field) => includesOutputField(output, field),
+    }),
     ...(properties === undefined ? {} : { properties }),
     ...(document.excerpt === undefined || includesExcerpt(output) === false
       ? {}
@@ -393,16 +391,6 @@ const toQueryItem = (
       ? {}
       : { metadataError: document.metadataError }),
   };
-};
-
-const getFallbackRuntimeAsset = (
-  document: ContentDatabaseDocument
-): AssetRuntimeData | undefined => {
-  if (document.contentRef === undefined) {
-    return;
-  }
-  const route = document.mimeType?.startsWith("image/") ? "image" : "asset";
-  return { url: `/cgi/${route}/${document.contentRef}?format=raw` };
 };
 
 const assertResultSize = (result: AssetQueryResult) => {
@@ -438,21 +426,27 @@ export const executeAssetQuery = async ({
     );
   }
   const matched = documents.flatMap((document) => {
-    if (matchesAssetQueryWhere(document, query.where) === false) {
+    const runtimeAsset = runtimeAssets?.[document._id];
+    if (matchesAssetQueryWhere(document, query.where, runtimeAsset) === false) {
       return [];
     }
-    const item = toQueryItem(
-      document,
-      query.output,
-      runtimeAssets?.[document._id] ?? getFallbackRuntimeAsset(document)
-    );
-    if (query.content.mode === "none" && Object.keys(item).length === 0) {
+    const item = toQueryItem(document, query.output, runtimeAsset);
+    if (
+      query.content.mode === "none" &&
+      Object.keys(item).length === 0 &&
+      includesOutputField(query.output, "id") === false
+    ) {
       return [];
     }
     return [{ document, item: { id: document._id, ...item } }];
   });
   const sorted = [...matched].sort((left, right) =>
-    compareAssetQueryDocuments(left.document, right.document, query.sort)
+    compareAssetQueryDocumentsWithRuntime({
+      left: left.document,
+      right: right.document,
+      sort: query.sort,
+      runtimeAssets,
+    })
   );
   const selected = sorted.slice(query.offset, query.offset + query.limit);
   const selectedDocuments = selected.map(({ document }) => document);

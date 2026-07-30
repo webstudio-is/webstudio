@@ -36,8 +36,6 @@ import {
   createQuerySort,
   createQuerySourceCodec,
   getCompatibleQueryOperators,
-  getQueryFieldKey,
-  getQueryWhereMetrics,
   type QueryCondition,
   type QueryField,
   type QueryGroup,
@@ -49,6 +47,10 @@ import {
   type QueryVariantControl,
   type QueryWhere,
 } from "@webstudio-is/query-builder";
+import {
+  getQueryFieldKey,
+  getQueryWhereMetrics,
+} from "@webstudio-is/query-builder/runtime";
 
 export type QueryValueEditorProps = {
   "aria-label": string;
@@ -58,6 +60,9 @@ export type QueryValueEditorProps = {
   input: "expression" | "number";
   min?: number;
   max?: number;
+  exclusiveMin?: boolean;
+  exclusiveMax?: boolean;
+  integer?: boolean;
 };
 
 export type QuerySourceEditorProps = {
@@ -167,6 +172,15 @@ const getFieldSelection = <FieldType extends string>(
     options: fields.includes(selected) ? fields : [selected, ...fields],
   };
 };
+
+const getFieldPaths = (value: unknown) =>
+  Array.isArray(value)
+    ? value.filter(
+        (path): path is string[] =>
+          Array.isArray(path) &&
+          path.every((segment) => typeof segment === "string")
+      )
+    : [];
 
 const Condition = <FieldType extends string, Operator extends string>({
   capabilities,
@@ -335,7 +349,11 @@ const Group = <FieldType extends string, Operator extends string>({
       }}
     >
       <Flex justify="between" align="center" gap={1}>
-        {root ? <Label text="title">Filters</Label> : <Text>Filter group</Text>}
+        {root ? (
+          <Label text="title">{shared.filter.label}</Label>
+        ) : (
+          <Text>Filter group</Text>
+        )}
         <Flex gap={1} align="center">
           <Select<"all" | "any">
             aria-label={root ? "Query logic" : "Query group logic"}
@@ -448,10 +466,10 @@ const Sorting = <FieldType extends string, Operator extends string>({
 }) => (
   <Grid gap={2} css={{ paddingInline: sectionPaddingInline }}>
     <Flex justify="between" align="center">
-      <Label text="title">Sort</Label>
+      <Label text="title">{control.label}</Label>
       <SmallIconButton
         aria-label="Add query sort"
-        disabled={sort.length >= control.max}
+        disabled={control.max !== undefined && sort.length >= control.max}
         icon={<PlusIcon />}
         onClick={() => onChange([...sort, createQuerySort(capabilities)])}
       />
@@ -481,16 +499,19 @@ const Sorting = <FieldType extends string, Operator extends string>({
               onChange(next);
             }}
           />
-          <Select<"asc" | "desc">
+          <Select<(typeof control.directions)[number]>
             aria-label="Query sort direction"
-            options={["asc", "desc"]}
-            getLabel={(direction: "asc" | "desc") =>
-              direction === "asc" ? "Ascending" : "Descending"
+            options={control.directions}
+            getLabel={(direction) => direction.label}
+            getValue={(direction) => direction.value}
+            value={
+              control.directions.find(
+                ({ value }) => value === order.direction
+              ) ?? control.directions[0]
             }
-            value={order.direction}
-            onChange={(direction: "asc" | "desc") => {
+            onChange={(direction) => {
               const next = [...sort];
-              next[index] = { ...order, direction };
+              next[index] = { ...order, direction: direction.value };
               onChange(next);
             }}
           />
@@ -559,6 +580,7 @@ const QueryParameters = ({
             type="number"
             min={field.min}
             max={field.max}
+            step={field.integer === true ? 1 : "any"}
             value={
               current[field.key] === undefined ? "" : String(current[field.key])
             }
@@ -589,13 +611,7 @@ const QueryParameters = ({
             fields: [control],
           });
         }
-        const paths = Array.isArray(current[control.key])
-          ? (current[control.key] as unknown[]).filter(
-              (path): path is string[] =>
-                Array.isArray(path) &&
-                path.every((segment) => typeof segment === "string")
-            )
-          : [];
+        const paths = getFieldPaths(current[control.key]);
         const selectedKeys = new Set(paths.map(getQueryFieldKey));
         const available = fields.filter(
           ({ path }) => selectedKeys.has(getQueryFieldKey(path)) === false
@@ -670,9 +686,7 @@ const QueryParameters = ({
     return {
       fieldList,
       paths:
-        fieldList !== undefined && Array.isArray(current[fieldList.key])
-          ? (current[fieldList.key] as string[][])
-          : [],
+        fieldList === undefined ? [] : getFieldPaths(current[fieldList.key]),
     };
   };
 
@@ -763,9 +777,8 @@ const QueryParameters = ({
         continue;
       }
       const paths =
-        selected?.value === option.value &&
-        Array.isArray(current[fieldList.key])
-          ? (current[fieldList.key] as string[][])
+        selected?.value === option.value
+          ? getFieldPaths(current[fieldList.key])
           : [];
       const selectedKeys = new Set(paths.map(getQueryFieldKey));
       for (const field of fields) {
@@ -964,13 +977,14 @@ const defaultExpressionEditor = ({
   input,
   min,
   max,
+  integer,
 }: QueryValueEditorProps) => (
   <InputField
     aria-label={ariaLabel}
     type={input === "number" ? "number" : "text"}
     min={input === "number" ? min : undefined}
     max={input === "number" ? max : undefined}
-    step={input === "number" ? 1 : undefined}
+    step={input === "number" ? (integer === true ? 1 : "any") : undefined}
     value={value}
     onChange={(event) => onChange(event.target.value)}
   />
@@ -1051,6 +1065,11 @@ export const StructuredQueryBuilder = <
   const renderSourceEditor = editors?.source ?? defaultSourceEditor;
   return (
     <Grid css={{ gap: theme.spacing[7] }}>
+      {capabilities.description === undefined ? null : (
+        <Text color="subtle" css={{ paddingInline: sectionPaddingInline }}>
+          {capabilities.description}
+        </Text>
+      )}
       {capabilities.source.controls.map((control) => {
         if (control.type === "variant") {
           const selectionLabel = control.config.selection?.label;
@@ -1160,6 +1179,9 @@ export const StructuredQueryBuilder = <
                   input: item.input,
                   min: item.min,
                   max: item.max,
+                  exclusiveMin: item.exclusiveMin,
+                  exclusiveMax: item.exclusiveMax,
+                  integer: item.integer,
                   onChange: (next) =>
                     commit({ ...value, [item.key]: next } as Query),
                 })}

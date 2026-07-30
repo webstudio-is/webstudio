@@ -1,4 +1,3 @@
-import { json } from "@remix-run/server-runtime";
 import { loadBuilderAssetFieldCatalog } from "@webstudio-is/asset-uploader/server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import {
@@ -8,6 +7,7 @@ import {
 import { getAssetRestProjectId } from "~/services/asset-rest.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createAssetClient } from "../asset-client";
+import { createAssetResourceFailureResponse } from "./assets-response.server";
 
 type AssetDescriptionDependencies = {
   authorizeApiProject: typeof authorizeApiProject;
@@ -26,30 +26,17 @@ const defaultDependencies: AssetDescriptionDependencies = {
   preventCrossOriginCookie,
 };
 
-const failure = ({
-  code,
-  message,
-  status,
-  retryable = false,
-}: {
-  code: "INVALID_REQUEST" | "UNAUTHORIZED" | "FORBIDDEN" | "INTERNAL_ERROR";
-  message: string;
-  status: number;
-  retryable?: boolean;
-}) =>
-  json(
-    { ok: false, error: { code, message, retryable } },
-    { status, headers: privateNoStoreResponseHeaders }
-  );
+type AssetDescriptionContext = {
+  projectId: string;
+  loadFieldCatalog: () => ReturnType<typeof loadBuilderAssetFieldCatalog>;
+};
 
-export const createAssetDescriptionLoader =
+const createAssetDescriptionLoaderCore =
   <Value>({
     createValue,
     contentType,
   }: {
-    createValue: (
-      catalog: Awaited<ReturnType<typeof loadBuilderAssetFieldCatalog>>
-    ) => Value;
+    createValue: (context: AssetDescriptionContext) => Value | Promise<Value>;
     contentType?: string;
   }) =>
   async (
@@ -61,7 +48,7 @@ export const createAssetDescriptionLoader =
     try {
       projectId = getAssetRestProjectId(request);
     } catch {
-      return failure({
+      return createAssetResourceFailureResponse({
         code: "INVALID_REQUEST",
         message: "Project ID is required to describe project assets",
         status: 400,
@@ -69,17 +56,21 @@ export const createAssetDescriptionLoader =
     }
 
     try {
-      const context = await dependencies.authorizeApiProject(
+      const authorization = await dependencies.authorizeApiProject(
         request,
         projectId,
         "view"
       );
-      const catalog = await dependencies.loadBuilderAssetFieldCatalog({
+      const value = await createValue({
         projectId,
-        context,
-        assetClient: dependencies.createAssetClient(),
+        loadFieldCatalog: () =>
+          dependencies.loadBuilderAssetFieldCatalog({
+            projectId,
+            context: authorization,
+            assetClient: dependencies.createAssetClient(),
+          }),
       });
-      return new Response(JSON.stringify(createValue(catalog)), {
+      return new Response(JSON.stringify(value), {
         headers: {
           ...privateNoStoreResponseHeaders,
           "content-type": contentType ?? "application/json; charset=utf-8",
@@ -88,9 +79,9 @@ export const createAssetDescriptionLoader =
     } catch (error) {
       const authorizationFailure = getApiAuthorizationFailure(error);
       if (authorizationFailure !== undefined) {
-        return failure(authorizationFailure);
+        return createAssetResourceFailureResponse(authorizationFailure);
       }
-      return failure({
+      return createAssetResourceFailureResponse({
         code: "INTERNAL_ERROR",
         message: "Project asset API description failed",
         status: 500,
@@ -98,3 +89,31 @@ export const createAssetDescriptionLoader =
       });
     }
   };
+
+export const createAssetDescriptionLoader = <Value>({
+  createValue,
+  contentType,
+}: {
+  createValue: (
+    catalog: Awaited<ReturnType<typeof loadBuilderAssetFieldCatalog>>,
+    context: { projectId: string }
+  ) => Value;
+  contentType?: string;
+}) =>
+  createAssetDescriptionLoaderCore({
+    contentType,
+    createValue: async ({ projectId, loadFieldCatalog }) =>
+      createValue(await loadFieldCatalog(), { projectId }),
+  });
+
+export const createStaticAssetDescriptionLoader = <Value>({
+  createValue,
+  contentType,
+}: {
+  createValue: (context: { projectId: string }) => Value;
+  contentType?: string;
+}) =>
+  createAssetDescriptionLoaderCore({
+    contentType,
+    createValue: ({ projectId }) => createValue({ projectId }),
+  });

@@ -32,20 +32,6 @@ export const dataSourceVariableValue = z.union([
   jsonDataSourceVariableValue,
 ]);
 
-const legacyStringArrayDataSourceVariableValue = z.object({
-  type: z.literal("string[]"),
-  value: z.array(z.string()),
-});
-
-const persistedDataSourceVariableValue = z.preprocess((value) => {
-  // Older builds used a dedicated string-array variable type. Normalize it
-  // while parsing so all arrays use the general JSON representation.
-  const legacyValue = legacyStringArrayDataSourceVariableValue.safeParse(value);
-  return legacyValue.success
-    ? { type: "json", value: legacyValue.data.value }
-    : value;
-}, dataSourceVariableValue);
-
 export const dataSource = z.union([
   z.object({
     type: z.literal("variable"),
@@ -57,7 +43,7 @@ export const dataSource = z.union([
     // if we make it required
     scopeInstanceId: z.string().optional(),
     name: z.string(),
-    value: persistedDataSourceVariableValue,
+    value: dataSourceVariableValue,
   }),
   z.object({
     type: z.literal("parameter"),

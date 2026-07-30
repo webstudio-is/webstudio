@@ -1,7 +1,6 @@
-import {
-  createPublishedAssetResourceFetch,
-} from "@webstudio-is/content-engine/runtime";
-import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
+// Generated only for projects whose SSG build uses an Assets query.
+// @ts-expect-error The CLI template is typechecked before the generated module exists.
+import { createPublishedAssetResourceFetch } from "./__generated__/$resources.asset-query-vendor.js";
 
 export const createSsgAssetResourceFetch = ({
   deploymentId,
@@ -9,7 +8,7 @@ export const createSsgAssetResourceFetch = ({
   runtimeAssets,
 }: {
   deploymentId: string;
-  artifact: ContentArtifactV1;
+  artifact: unknown;
   runtimeAssets: Record<string, { url: string; width?: number; height?: number }>;
 }) =>
   createPublishedAssetResourceFetch({

@@ -1,29 +1,26 @@
 import {
   createQuerySourceCodec,
-  mapQueryWhere,
-  type QuerySourceDefinition,
-  type QueryWhereTree,
+  createStructuredQuery,
 } from "@webstudio-is/query-builder";
+import {
+  mapQueryWhere,
+  type QueryWhereTree,
+} from "@webstudio-is/query-builder/runtime";
 import {
   generateObjectExpression,
   parseExpressionObject,
+  parseJsonExpression,
   parseStringLiteralExpression,
 } from "@webstudio-is/expression";
 import {
-  assetObservedFieldType,
-  assetQueryFieldPath,
-  assetQueryOperators,
   assetQueryRequest,
-  assetQueryStandardFields,
-  assetQueryStandardFieldTypes,
+  assetQuerySourceDefinition,
   assetResourceContentOptions,
-  assetResourceOutputSelection,
   createContentCompilationPlan,
   defaultAssetResourceOutputSelection,
-  getAssetQueryOperatorsForFieldTypes,
   hasAssetQueryOutput,
-  type AssetQueryRequestInput,
   type AssetObservedFieldType,
+  type AssetQueryRequestInput,
   type AssetQueryFieldPath,
   type AssetQueryFilter,
   type AssetQuerySort,
@@ -33,8 +30,6 @@ import {
   type ContentCompilationQuery,
   type ContentCompilationWhere,
 } from "@webstudio-is/content-engine";
-import { z } from "zod";
-import { assetResourceLimits } from "./asset-resource-limits";
 import { assetsResourceUrl } from "./resource-loader";
 import type { Resource, ResourceRequest } from "./schema/resources";
 import type { Prop } from "./schema/props";
@@ -52,10 +47,15 @@ export const createAssetResourceRequest = (
   body: assetQueryRequest.parse(request),
 });
 
-export const isAssetsResource = (resource: Resource) =>
+export const hasAssetsResourceUrl = (
+  resource: Pick<Resource, "control" | "url">
+) =>
   resource.control === "system" &&
-  resource.method === "post" &&
   parseStringLiteralExpression(resource.url) === assetsResourceUrl;
+
+export const isAssetsResource = (
+  resource: Pick<Resource, "control" | "method" | "url">
+) => resource.method === "post" && hasAssetsResourceUrl(resource);
 
 export type StructuredAssetQueryFilterBinding = {
   field: AssetQueryFieldPath;
@@ -79,32 +79,28 @@ const toContentCompilationWhere = (
   where: StructuredAssetQueryWhereBinding
 ): ContentCompilationWhere =>
   mapQueryWhere(where, (condition) => {
-    try {
+    const value = parseJsonExpression(condition.value);
+    if (value !== undefined) {
       return {
         field: condition.field,
         operator: condition.operator,
         value: {
           type: "literal" as const,
-          value: JSON.parse(condition.value) as unknown,
+          value,
         },
       };
-    } catch {
-      return {
-        field: condition.field,
-        operator: condition.operator,
-        value: { type: "dynamic" as const },
-      };
     }
+    return {
+      field: condition.field,
+      operator: condition.operator,
+      value: { type: "dynamic" as const },
+    };
   });
 
 const toContentCompilationInteger = (expression: string) => {
-  try {
-    const value = JSON.parse(expression) as unknown;
-    if (Number.isSafeInteger(value) && Number(value) >= 0) {
-      return { type: "literal", value } as const;
-    }
-  } catch {
-    // Dynamic expressions are evaluated by the generated page at runtime.
+  const value = parseJsonExpression(expression);
+  if (Number.isSafeInteger(value) && Number(value) >= 0) {
+    return { type: "literal", value } as const;
   }
   return { type: "dynamic" } as const;
 };
@@ -169,115 +165,24 @@ export const createReachableAssetContentCompilationPlan = ({
   return createContentCompilationPlan(queries);
 };
 
-const getDefaultFilterValue = (operator: AssetQueryFilter["operator"]) =>
-  operator === "in"
-    ? "[]"
-    : operator === "exists" || operator === "isEmpty"
-      ? "true"
-      : '""';
-
-const assetQuerySourceDefinition = {
-  fields: assetQueryStandardFields.map((field) => ({
-    path: [field],
-    label: field,
-    types: assetQueryStandardFieldTypes[field],
-  })),
-  operators: assetQueryOperators.map((operator) => ({
-    value: operator,
-    label: operator,
-    types: assetObservedFieldType.options.filter((type) =>
-      getAssetQueryOperatorsForFieldTypes([type]).includes(operator)
-    ),
-    input: {
-      control:
-        operator === "exists" || operator === "isEmpty"
-          ? ("none" as const)
-          : ("expression" as const),
-      defaultValue: getDefaultFilterValue(operator),
-    },
-  })),
-  source: {
-    fieldPathSchema: z.toJSONSchema(assetQueryFieldPath, {
-      target: "draft-2020-12",
-      io: "input",
-    }),
-    controls: [
-      {
-        type: "variant" as const,
-        key: "output",
-        label: "output",
-        defaultValue: defaultAssetResourceOutputSelection,
-        schema: z.toJSONSchema(assetResourceOutputSelection, {
-          target: "draft-2020-12",
-          io: "input",
-        }),
-      },
-      {
-        type: "variant" as const,
-        key: "content",
-        label: "content",
-        defaultValue: { mode: "none" },
-        schema: z.toJSONSchema(assetResourceContentOptions, {
-          target: "draft-2020-12",
-          io: "input",
-        }),
-      },
-      {
-        type: "filter" as const,
-        key: "where",
-        label: "filters",
-        defaultValue: { all: [] },
-        combinators: ["all", "any"] as const,
-        limits: {
-          conditions: assetResourceLimits.filterCount,
-          depth: assetResourceLimits.filterDepth,
-        },
-        defaultCondition: {
-          field: ["path"],
-          operator: "startsWith" as const,
-        },
-      },
-      {
-        type: "sort" as const,
-        key: "sort",
-        label: "sort",
-        defaultValue: [],
-        defaultItem: { field: ["name"], direction: "asc" as const },
-        max: assetResourceLimits.sortCount,
-      },
-      {
-        type: "expression" as const,
-        key: "limit",
-        label: "limit",
-        defaultValue: String(assetResourceLimits.defaultResultCount),
-        input: "number" as const,
-        min: 0,
-      },
-      {
-        type: "expression" as const,
-        key: "offset",
-        label: "offset",
-        defaultValue: "0",
-        input: "number" as const,
-        min: 0,
-      },
-    ],
-  },
-} satisfies QuerySourceDefinition<
-  AssetObservedFieldType,
-  AssetQueryFilter["operator"]
->;
-
 const assetQuerySourceCodec = createQuerySourceCodec<
   AssetObservedFieldType,
   AssetQueryFilter["operator"],
   StructuredAssetQueryResourceConfiguration
 >(assetQuerySourceDefinition);
 
+export const createDefaultStructuredAssetQueryResourceConfiguration = () =>
+  createStructuredQuery<StructuredAssetQueryResourceConfiguration>(
+    assetQuerySourceDefinition
+  );
+
 export const parseStructuredAssetQueryResourceBody = (
   body: string | undefined
 ): StructuredAssetQueryResourceConfiguration | undefined => {
   const request = parseExpressionObject(body ?? "");
+  if (request === undefined) {
+    return;
+  }
   const query = request.get("query");
   if (request.size !== 1 || query === undefined) {
     return;

@@ -5,12 +5,13 @@ import {
   prepareCanonicalContentMetadata,
   readBytePrefix,
   mapBounded,
+  serializeJsonDeterministically,
   satisfiesCanonicalAssetMetadataRequirements,
   normalizeAssetFileDocument,
   type CanonicalAssetFileEntry,
   type CanonicalAssetMetadataRequirements,
-  type AssetFileDocument,
 } from "@webstudio-is/content-engine/compiler";
+import type { AssetFileDocument } from "@webstudio-is/content-engine";
 import {
   createAssetFolderHierarchy,
   formatAssetName,
@@ -22,8 +23,10 @@ import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { AssetObjectStore } from "./client";
 import { loadAssetFoldersByProjectWithClient } from "./folder-persistence";
 import { assertPostgrestSuccess } from "./patch-utils";
+import { isContentHash } from "./content-hash";
 import {
   deleteCanonicalAssetFileEntryIfMatches,
+  deleteInvalidCanonicalAssetFileEntryIfMatches,
   deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntriesForRecovery,
@@ -47,11 +50,16 @@ const createAssetContentRevision = ({
   storageName,
   updatedAt,
   size,
+  contentHash,
 }: {
   storageName: string;
   updatedAt: string;
   size: number;
-}) => `file:${encodeURIComponent(storageName)}:${updatedAt}:${size}`;
+  contentHash?: string | null;
+}) =>
+  isContentHash(contentHash)
+    ? `sha256:${contentHash}`
+    : `file:${encodeURIComponent(storageName)}:${updatedAt}:${size}`;
 
 type UploadedAssetRow = {
   id: string;
@@ -64,6 +72,7 @@ type UploadedAssetRow = {
     size: number;
     createdAt?: string;
     updatedAt: string;
+    contentHash?: string | null;
   };
 };
 
@@ -75,7 +84,7 @@ const loadUploadedAssets = async (
   let query = client
     .from("Asset")
     .select(
-      "id, projectId, filename, description, folderId, file:File!inner(name, size, createdAt, updatedAt, status)"
+      "id, projectId, filename, description, folderId, file:File!inner(name, size, createdAt, updatedAt, contentHash, status)"
     )
     .eq("projectId", projectId)
     .eq("file.status", "UPLOADED");
@@ -96,6 +105,9 @@ const getCanonicalMetadataSource = (asset: UploadedAssetRow) => ({
   storageName: asset.file.name,
   fileUpdatedAt: asset.file.updatedAt,
   fileSize: asset.file.size,
+  ...(asset.file.contentHash === null || asset.file.contentHash === undefined
+    ? {}
+    : { contentHash: asset.file.contentHash }),
   ...(asset.filename === null ? {} : { filename: asset.filename }),
   ...(asset.description === null ? {} : { description: asset.description }),
   ...(asset.folderId === null ? {} : { folderId: asset.folderId }),
@@ -150,6 +162,7 @@ const createCanonicalBaseEntry = ({
     storageName: asset.file.name,
     updatedAt: asset.file.updatedAt,
     size: asset.file.size,
+    contentHash: asset.file.contentHash,
   }),
 }: {
   projectId: string;
@@ -196,20 +209,15 @@ export const loadCanonicalAssetBaseEntries = async ({
   );
 };
 
-const hasMatchingStandardMetadata = (
+const hasMatchingCanonicalDocument = (
   document: AssetFileDocument,
   expected: AssetFileDocument
-) =>
-  document.name === expected.name &&
-  document.description === expected.description &&
-  document.path === expected.path &&
-  document.key === expected.key &&
-  document.folderId === expected.folderId &&
-  document.extension === expected.extension &&
-  document.mimeType === expected.mimeType &&
-  document.size === expected.size &&
-  document.createdAt === expected.createdAt &&
-  document.contentRef === expected.contentRef;
+) => {
+  return (
+    serializeJsonDeterministically(document) ===
+    serializeJsonDeterministically(expected)
+  );
+};
 
 const indexCanonicalAsset = async ({
   asset,
@@ -277,11 +285,11 @@ const deleteObsoleteCanonicalAssetMetadata = async ({
     storageName: asset.file.name,
     updatedAt: asset.file.updatedAt,
     size: asset.file.size,
+    contentHash: asset.file.contentHash,
   });
-  for (const entry of entries) {
-    if (entry.revision !== currentRevision) {
-      await deleteCanonicalAssetFileEntryIfMatches({ client, entry });
-    }
+  const entry = entries[0];
+  if (entry !== undefined && entry.revision !== currentRevision) {
+    await deleteCanonicalAssetFileEntryIfMatches({ client, entry });
   }
 };
 
@@ -318,18 +326,18 @@ export const synchronizeCanonicalAssets = async ({
       assetIds,
     }),
   ]);
-  const { entries, inconsistentAssetIds } = recoveryState;
-  const inconsistentAssetIdSet = new Set(inconsistentAssetIds);
+  const { entries, inconsistentRows } = recoveryState;
+  const inconsistentAssetIds = inconsistentRows.map(({ assetId }) => assetId);
+  const inconsistentRowByAssetId = new Map(
+    inconsistentRows.map((row) => [row.assetId, row])
+  );
   const hierarchy = createAssetFolderHierarchy(
     new Map(folders.map((folder) => [folder.id, folder]))
   );
   const uploadedAssetIds = new Set(assets.map((asset) => asset.id));
-  const entriesByAssetId = new Map<string, typeof entries>();
-  for (const entry of entries) {
-    const assetEntries = entriesByAssetId.get(entry.assetId) ?? [];
-    assetEntries.push(entry);
-    entriesByAssetId.set(entry.assetId, assetEntries);
-  }
+  const entriesByAssetId = new Map(
+    entries.map((entry) => [entry.assetId, entry])
+  );
 
   let indexed = 0;
   let metadataUpdated = 0;
@@ -340,20 +348,17 @@ export const synchronizeCanonicalAssets = async ({
       storageName: asset.file.name,
       updatedAt: asset.file.updatedAt,
       size: asset.file.size,
+      contentHash: asset.file.contentHash,
     });
-    const assetEntries = entriesByAssetId.get(asset.id) ?? [];
-    const current = assetEntries.find((entry) => entry.revision === revision);
+    const stored = entriesByAssetId.get(asset.id);
+    const current = stored?.revision === revision ? stored : undefined;
     const requirementsSatisfied =
       current !== undefined &&
       satisfiesCanonicalAssetMetadataRequirements({
         cached: getCanonicalAssetMetadataRequirements(current),
         required: requirements,
       });
-    if (
-      current === undefined ||
-      requirementsSatisfied === false ||
-      inconsistentAssetIdSet.has(asset.id)
-    ) {
+    if (current === undefined || requirementsSatisfied === false) {
       try {
         await indexCanonicalAsset({
           asset,
@@ -379,11 +384,19 @@ export const synchronizeCanonicalAssets = async ({
         try {
           // Never leave a previous revision visible as if it represented the
           // current object after re-indexing failed.
-          await deleteObsoleteCanonicalAssetMetadata({
-            client,
-            projectId,
-            assetId: asset.id,
-          });
+          const inconsistentRow = inconsistentRowByAssetId.get(asset.id);
+          if (inconsistentRow === undefined) {
+            await deleteObsoleteCanonicalAssetMetadata({
+              client,
+              projectId,
+              assetId: asset.id,
+            });
+          } else {
+            await deleteInvalidCanonicalAssetFileEntryIfMatches({
+              client,
+              row: inconsistentRow,
+            });
+          }
         } catch (cleanupError) {
           issue.message += `; stale metadata cleanup failed: ${getErrorMessage(cleanupError)}`;
         }
@@ -403,10 +416,7 @@ export const synchronizeCanonicalAssets = async ({
           : undefined,
       metadataError: current.document.metadataError,
     });
-    if (
-      assetEntries.length === 1 &&
-      hasMatchingStandardMetadata(current.document, expected)
-    ) {
+    if (hasMatchingCanonicalDocument(current.document, expected)) {
       unchanged += 1;
       return;
     }

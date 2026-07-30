@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TRPCError } from "@trpc/server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import { defaultAssetResourceOutputSelection } from "@webstudio-is/content-engine";
-import { getOpenApiQueryConfiguration } from "@webstudio-is/query-builder";
+import { loadOpenApiQueryDefinition } from "@webstudio-is/query-builder";
 import { loader as openApiLoader } from "../../routes/rest.assets.openapi[.]json";
+import { loader as querySchemaLoader } from "../../routes/rest.assets.query-schema[.]json";
 import { builderSessionCookieName } from "~/services/builder-session.server";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
@@ -39,8 +40,9 @@ describe("asset API descriptions", () => {
   });
 
   test("serves project-specific OpenAPI without storage configuration", async () => {
+    const openApiRequest = request("/$resources/assets/openapi.json");
     const response = await openApiLoader(
-      { request: request("/$resources/assets/openapi.json") },
+      { request: openApiRequest },
       dependencies
     );
 
@@ -62,10 +64,19 @@ describe("asset API descriptions", () => {
         },
       },
     });
-    const definition = getOpenApiQueryConfiguration({
+    const definition = await loadOpenApiQueryDefinition({
       document,
+      documentUrl: openApiRequest.url,
       operationId: "queryAssets",
-    }).definition;
+      loadReference: async (url) => {
+        const schemaResponse = await querySchemaLoader(
+          { request: new Request(url) },
+          dependencies
+        );
+        expect(schemaResponse.status).toBe(200);
+        return await schemaResponse.json();
+      },
+    });
     expect(definition.fields).toContainEqual(
       expect.objectContaining({
         path: ["properties", "slug"],
@@ -98,7 +109,8 @@ describe("asset API descriptions", () => {
       projectId,
       "view"
     );
-    expect(dependencies.loadBuilderAssetFieldCatalog).toHaveBeenCalledWith({
+    expect(dependencies.loadBuilderAssetFieldCatalog).toHaveBeenCalledTimes(1);
+    expect(dependencies.loadBuilderAssetFieldCatalog).toHaveBeenLastCalledWith({
       projectId,
       context: expect.anything(),
       assetClient,
@@ -136,7 +148,7 @@ describe("asset API descriptions", () => {
   });
 
   test("does not expose descriptions without project authorization", async () => {
-    dependencies.loadBuilderAssetFieldCatalog.mockRejectedValue(
+    dependencies.authorizeApiProject.mockRejectedValue(
       new AuthorizationError("denied")
     );
 

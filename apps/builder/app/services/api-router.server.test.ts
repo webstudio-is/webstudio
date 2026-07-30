@@ -161,6 +161,9 @@ describe("api router build operation adapters", () => {
       },
       __diagnostics__: { scope: "query-preview", truncated: false },
     });
+    expect(assetUploader.previewAssetResourceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ contentDatabaseMaxBytes: 512_000 })
+    );
     vi.mocked(assetUploader.previewAssetResourceQuery).mockRejectedValueOnce(
       new AssetIndexRevisionError()
     );

@@ -1,14 +1,28 @@
-import { z } from "zod";
+import {
+  array,
+  boolean,
+  discriminatedUnion,
+  enum as zEnum,
+  json,
+  literal,
+  number,
+  object,
+  record,
+  strictObject,
+  string,
+  type ZodType,
+  type infer as Infer,
+  type input as Input,
+} from "zod";
 import {
   createQueryWhereSchema,
   getQueryFieldKey,
   getQueryWhereMetrics,
   type QueryWhereTree,
-} from "@webstudio-is/query-builder";
+} from "@webstudio-is/query-builder/runtime";
 import { contentEngineLimits } from "./limits";
 
-const relativeAssetPath = z
-  .string()
+const relativeAssetPath = string()
   .min(1)
   .refine((path) => path.startsWith("/") === false, {
     error: "Asset path must be relative",
@@ -30,40 +44,38 @@ const relativeAssetPath = z
  * Complete file content is deliberately represented by contentRef and is not
  * part of this query document.
  */
-export const assetFileDocument = z.strictObject({
-  _id: z.string().min(1),
-  _type: z.literal("asset.file"),
-  name: z.string().min(1),
-  description: z.string().optional(),
+export const assetFileDocument = strictObject({
+  _id: string().min(1),
+  _type: literal("asset.file"),
+  name: string().min(1),
+  description: string().optional(),
   path: relativeAssetPath,
-  key: z.string(),
-  folderId: z.string().min(1).optional(),
-  extension: z.string().regex(/^[a-z0-9]*$/),
-  mimeType: z.string().min(1),
-  size: z.number().int().nonnegative(),
-  createdAt: z.string().datetime().optional(),
-  revision: z.string().min(1),
-  contentRef: z.string().min(1),
-  properties: z.record(z.string(), z.json()),
-  excerpt: z.string().optional(),
-  metadataError: z
-    .strictObject({
-      code: z.string().min(1),
-      message: z.string().min(1),
-    })
-    .optional(),
+  key: string(),
+  folderId: string().min(1).optional(),
+  extension: string().regex(/^[a-z0-9]*$/),
+  mimeType: string().min(1),
+  size: number().int().nonnegative(),
+  createdAt: string().datetime().optional(),
+  revision: string().min(1),
+  contentRef: string().min(1),
+  properties: record(string(), json()),
+  excerpt: string().optional(),
+  metadataError: strictObject({
+    code: string().min(1),
+    message: string().min(1),
+  }).optional(),
 });
 
-export type AssetFileDocument = z.infer<typeof assetFileDocument>;
+export type AssetFileDocument = Infer<typeof assetFileDocument>;
 
 /** Query-specific document stored in a compiled content database. */
 export const contentDatabaseDocument = assetFileDocument
   .partial()
   .required({ _id: true });
 
-export type ContentDatabaseDocument = z.infer<typeof contentDatabaseDocument>;
+export type ContentDatabaseDocument = Infer<typeof contentDatabaseDocument>;
 
-export const assetObservedFieldType = z.enum([
+export const assetObservedFieldType = zEnum([
   "null",
   "boolean",
   "number",
@@ -72,183 +84,183 @@ export const assetObservedFieldType = z.enum([
   "array",
 ]);
 
-export type AssetObservedFieldType = z.infer<typeof assetObservedFieldType>;
+export type AssetObservedFieldType = Infer<typeof assetObservedFieldType>;
 
-export const builderAssetFieldCatalog = z
-  .object({
-    format: z.literal("webstudio-builder-asset-field-catalog"),
-    version: z.literal(1),
-    canonicalRevision: z.string().regex(/^sha256:[a-f0-9]{64}$/),
-    documentCount: z.number().int().nonnegative(),
-    fields: z.record(
-      z.string().min(1),
-      z.object({
-        queryPath: z
-          .array(z.string().min(1))
-          .min(1)
-          .max(contentEngineLimits.fieldPathDepth)
-          .optional(),
-        types: z.array(assetObservedFieldType).min(1),
-        occurrences: z.number().int().positive(),
-        optional: z.literal(true).optional(),
-        mixed: z.literal(true).optional(),
-      })
-    ),
-  })
-  .superRefine((catalog, context) => {
-    for (const [path, field] of Object.entries(catalog.fields)) {
-      const sortedTypes = [...new Set(field.types)].sort();
-      if (JSON.stringify(field.types) !== JSON.stringify(sortedTypes)) {
-        context.addIssue({
-          code: "custom",
-          path: ["fields", path, "types"],
-          message: "Observed field types must be unique and sorted",
-        });
-      }
-      if (field.occurrences > catalog.documentCount) {
-        context.addIssue({
-          code: "custom",
-          path: ["fields", path, "occurrences"],
-          message: "Field occurrences cannot exceed the document count",
-        });
-      }
-      const optional = field.occurrences < catalog.documentCount;
-      if ((field.optional === true) !== optional) {
-        context.addIssue({
-          code: "custom",
-          path: ["fields", path, "optional"],
-          message: "Field optionality must match its occurrence count",
-        });
-      }
-      const mixed = sortedTypes.length > 1;
-      if ((field.mixed === true) !== mixed) {
-        context.addIssue({
-          code: "custom",
-          path: ["fields", path, "mixed"],
-          message: "Mixed status must match the observed types",
-        });
-      }
+export const builderAssetFieldCatalog = object({
+  format: literal("webstudio-builder-asset-field-catalog"),
+  version: literal(1),
+  canonicalRevision: string().regex(/^sha256:[a-f0-9]{64}$/),
+  documentCount: number().int().nonnegative(),
+  fields: record(
+    string().min(1),
+    object({
+      queryPath: array(string().min(1))
+        .min(1)
+        .max(contentEngineLimits.fieldPathDepth)
+        .optional(),
+      types: array(assetObservedFieldType).min(1),
+      occurrences: number().int().positive(),
+      optional: literal(true).optional(),
+      mixed: literal(true).optional(),
+    })
+  ),
+}).superRefine((catalog, context) => {
+  for (const [path, field] of Object.entries(catalog.fields)) {
+    const sortedTypes = [...new Set(field.types)].sort();
+    if (JSON.stringify(field.types) !== JSON.stringify(sortedTypes)) {
+      context.addIssue({
+        code: "custom",
+        path: ["fields", path, "types"],
+        message: "Observed field types must be unique and sorted",
+      });
     }
-  });
+    if (field.occurrences > catalog.documentCount) {
+      context.addIssue({
+        code: "custom",
+        path: ["fields", path, "occurrences"],
+        message: "Field occurrences cannot exceed the document count",
+      });
+    }
+    const optional = field.occurrences < catalog.documentCount;
+    if ((field.optional === true) !== optional) {
+      context.addIssue({
+        code: "custom",
+        path: ["fields", path, "optional"],
+        message: "Field optionality must match its occurrence count",
+      });
+    }
+    const mixed = sortedTypes.length > 1;
+    if ((field.mixed === true) !== mixed) {
+      context.addIssue({
+        code: "custom",
+        path: ["fields", path, "mixed"],
+        message: "Mixed status must match the observed types",
+      });
+    }
+  }
+});
 
-export type BuilderAssetFieldCatalog = z.infer<typeof builderAssetFieldCatalog>;
+export type BuilderAssetFieldCatalog = Infer<typeof builderAssetFieldCatalog>;
 
-const sha256Revision = z.string().regex(/^sha256:[a-f0-9]{64}$/);
+const sha256Revision = string().regex(/^sha256:[a-f0-9]{64}$/);
 
 /** One compiled runtime database shared by all reachable Assets queries. */
-export const contentArtifactV1 = z
-  .strictObject({
-    format: z.literal("webstudio-content-database"),
-    version: z.literal(1),
-    assetRevision: sha256Revision,
-    documents: z.array(contentDatabaseDocument),
-    contents: z.record(z.string().min(1), z.string()).optional(),
-    assetReferences: z
-      .record(z.string().min(1), z.record(z.string().min(1), z.string().min(1)))
-      .optional(),
-    fieldCatalog: builderAssetFieldCatalog,
-    database: z
-      .strictObject({
-        maxBytes: z.number().int().positive(),
-        unboundedBytes: z.number().int().nonnegative(),
-        sourceDocumentCount: z.number().int().nonnegative(),
+export const contentArtifactV1 = strictObject({
+  format: literal("webstudio-content-database"),
+  version: literal(1),
+  assetRevision: sha256Revision,
+  documents: array(contentDatabaseDocument),
+  contents: record(string().min(1), string()).optional(),
+  assetReferences: record(
+    string().min(1),
+    array(
+      strictObject({
+        start: number().int().nonnegative(),
+        end: number().int().positive(),
+        assetId: string().min(1),
+        suffix: string().min(1).optional(),
+      }).refine(({ start, end }) => end > start, {
+        message: "Markdown asset reference range must not be empty",
       })
-      .optional(),
-    integrity: z.strictObject({
-      algorithm: z.literal("sha256"),
-      checksum: sha256Revision,
-    }),
-  })
-  .superRefine((index, context) => {
-    if (index.documents.length > contentEngineLimits.candidateDocuments) {
+    )
+  ).optional(),
+  fieldCatalog: builderAssetFieldCatalog,
+  database: strictObject({
+    maxBytes: number().int().positive(),
+    unboundedBytes: number().int().nonnegative(),
+    sourceDocumentCount: number().int().nonnegative(),
+  }).optional(),
+  integrity: strictObject({
+    algorithm: literal("sha256"),
+    checksum: sha256Revision,
+  }),
+}).superRefine((index, context) => {
+  if (index.documents.length > contentEngineLimits.candidateDocuments) {
+    context.addIssue({
+      code: "custom",
+      path: ["documents"],
+      message: "Asset index exceeds the document limit",
+    });
+  }
+  if (
+    index.fieldCatalog.canonicalRevision !== index.assetRevision ||
+    index.fieldCatalog.documentCount !== index.documents.length
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["fieldCatalog"],
+      message: "Asset index field catalog does not match its documents",
+    });
+  }
+  if (
+    index.database !== undefined &&
+    index.database.sourceDocumentCount < index.documents.length
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["database", "sourceDocumentCount"],
+      message: "Source document count cannot be smaller than the database",
+    });
+  }
+  let previousId: string | undefined;
+  for (const [position, document] of index.documents.entries()) {
+    if (previousId !== undefined && document._id <= previousId) {
       context.addIssue({
         code: "custom",
-        path: ["documents"],
-        message: "Asset index exceeds the document limit",
+        path: ["documents", position, "_id"],
+        message: "Asset index documents must have unique sorted IDs",
       });
     }
-    if (
-      index.fieldCatalog.canonicalRevision !== index.assetRevision ||
-      index.fieldCatalog.documentCount !== index.documents.length
-    ) {
+    previousId = document._id;
+  }
+  const contentRefs = new Set(
+    index.documents.flatMap(({ contentRef }) =>
+      contentRef === undefined ? [] : [contentRef]
+    )
+  );
+  for (const contentRef of Object.keys(index.contents ?? {})) {
+    if (contentRefs.has(contentRef) === false) {
       context.addIssue({
         code: "custom",
-        path: ["fieldCatalog"],
-        message: "Asset index field catalog does not match its documents",
+        path: ["contents", contentRef],
+        message: "Embedded content must belong to an indexed document",
       });
     }
-    if (
-      index.database !== undefined &&
-      index.database.sourceDocumentCount < index.documents.length
-    ) {
+  }
+  for (const contentRef of Object.keys(index.assetReferences ?? {})) {
+    if (contentRefs.has(contentRef) === false) {
       context.addIssue({
         code: "custom",
-        path: ["database", "sourceDocumentCount"],
-        message: "Source document count cannot be smaller than the database",
+        path: ["assetReferences", contentRef],
+        message: "Asset references must belong to an indexed document",
       });
     }
-    let previousId: string | undefined;
-    for (const [position, document] of index.documents.entries()) {
-      if (previousId !== undefined && document._id <= previousId) {
-        context.addIssue({
-          code: "custom",
-          path: ["documents", position, "_id"],
-          message: "Asset index documents must have unique sorted IDs",
-        });
-      }
-      previousId = document._id;
-    }
-    const contentRefs = new Set(
-      index.documents.flatMap(({ contentRef }) =>
-        contentRef === undefined ? [] : [contentRef]
-      )
-    );
-    for (const contentRef of Object.keys(index.contents ?? {})) {
-      if (contentRefs.has(contentRef) === false) {
-        context.addIssue({
-          code: "custom",
-          path: ["contents", contentRef],
-          message: "Embedded content must belong to an indexed document",
-        });
-      }
-    }
-    for (const contentRef of Object.keys(index.assetReferences ?? {})) {
-      if (contentRefs.has(contentRef) === false) {
-        context.addIssue({
-          code: "custom",
-          path: ["assetReferences", contentRef],
-          message: "Asset references must belong to an indexed document",
-        });
-      }
-    }
-  });
+  }
+});
 
-export type ContentArtifactV1 = z.infer<typeof contentArtifactV1>;
+export type ContentArtifactV1 = Infer<typeof contentArtifactV1>;
 
-export const assetResourceContentOptions = z.discriminatedUnion("mode", [
-  z.object({ mode: z.literal("none") }),
-  z.object({
-    mode: z.literal("full"),
-    maxBytes: z
-      .number()
+export const assetResourceContentOptions = discriminatedUnion("mode", [
+  object({ mode: literal("none") }),
+  object({
+    mode: literal("full"),
+    maxBytes: number()
       .int()
       .positive()
       .max(contentEngineLimits.hydratedFileBytes)
       .optional(),
   }),
-  z.object({
-    mode: z.literal("range"),
-    offset: z.number().int().nonnegative(),
-    length: z
-      .number()
+  object({
+    mode: literal("range"),
+    offset: number().int().nonnegative(),
+    length: number()
       .int()
       .positive()
       .max(contentEngineLimits.hydratedRangeBytes),
   }),
-  z.object({
-    mode: z.literal("markdown-body"),
-    maxBytes: z
-      .number()
+  object({
+    mode: literal("markdown-body"),
+    maxBytes: number()
       .int()
       .positive()
       .max(contentEngineLimits.hydratedFileBytes)
@@ -256,7 +268,7 @@ export const assetResourceContentOptions = z.discriminatedUnion("mode", [
   }),
 ]);
 
-export type AssetResourceContentOptions = z.infer<
+export type AssetResourceContentOptions = Infer<
   typeof assetResourceContentOptions
 >;
 
@@ -282,10 +294,24 @@ export const assetQueryStandardFields = Object.keys(
   assetQueryStandardFieldTypes
 ) as [keyof typeof assetQueryStandardFieldTypes];
 
-const assetQueryStandardField = z.enum(assetQueryStandardFields);
+export const assetQueryRuntimeFields = ["url", "width", "height"] as const;
+export const isAssetQueryRuntimeField = (
+  field: string
+): field is (typeof assetQueryRuntimeFields)[number] =>
+  (assetQueryRuntimeFields as readonly string[]).includes(field);
 
-export const assetQueryFieldPath = z
-  .array(z.string().min(1))
+export const assetQueryMetadataFields = assetQueryStandardFields.filter(
+  (field) => isAssetQueryRuntimeField(field) === false && field !== "excerpt"
+);
+export const assetQueryDocumentFields = assetQueryMetadataFields.filter(
+  (field) => field !== "id"
+);
+export const isAssetQueryMetadataField = (field: string) =>
+  (assetQueryMetadataFields as readonly string[]).includes(field);
+
+const assetQueryStandardField = zEnum(assetQueryStandardFields);
+
+export const assetQueryFieldPath = array(string().min(1))
   .min(1)
   .max(contentEngineLimits.fieldPathDepth)
   .superRefine((path, context) => {
@@ -309,24 +335,23 @@ export const assetQueryFieldPath = z
     }
   });
 
-export type AssetQueryFieldPath = z.infer<typeof assetQueryFieldPath>;
+export type AssetQueryFieldPath = Infer<typeof assetQueryFieldPath>;
 
-const includeMetadata = z.boolean().default(true);
+const includeMetadata = boolean().default(true);
 
-export const assetResourceOutputSelection = z.discriminatedUnion("mode", [
-  z.strictObject({
-    mode: z.literal("all"),
+export const assetResourceOutputSelection = discriminatedUnion("mode", [
+  strictObject({
+    mode: literal("all"),
     includeMetadata,
   }),
-  z.strictObject({
-    mode: z.literal("base"),
+  strictObject({
+    mode: literal("base"),
     includeMetadata,
   }),
-  z.strictObject({
-    mode: z.literal("fields"),
+  strictObject({
+    mode: literal("fields"),
     includeMetadata,
-    fields: z
-      .array(assetQueryFieldPath)
+    fields: array(assetQueryFieldPath)
       .max(contentEngineLimits.outputFieldCount)
       .refine(
         (fields) =>
@@ -336,14 +361,14 @@ export const assetResourceOutputSelection = z.discriminatedUnion("mode", [
   }),
 ]);
 
-export type AssetResourceOutputSelection = z.infer<
+export type AssetResourceOutputSelection = Infer<
   typeof assetResourceOutputSelection
 >;
 
 export const defaultAssetResourceOutputSelection = {
   mode: "fields",
   includeMetadata: false,
-  fields: [["url"], ["width"], ["height"]],
+  fields: assetQueryRuntimeFields.map((field) => [field]),
 } as const satisfies AssetResourceOutputSelection;
 
 export const assetQueryValueOperators = [
@@ -365,37 +390,41 @@ export const assetQueryOperators = [
 ] as const;
 export type AssetQueryOperator = (typeof assetQueryOperators)[number];
 
-const assetQueryValueFilter = z.strictObject({
+const assetQueryValueFilter = strictObject({
   field: assetQueryFieldPath,
-  operator: z.enum(assetQueryValueOperators),
-  value: z.json(),
+  operator: zEnum(assetQueryValueOperators),
+  value: json(),
 });
 
-const assetQueryInFilter = z.strictObject({
+const assetQueryInFilter = strictObject({
   field: assetQueryFieldPath,
-  operator: z.literal("in"),
-  value: z.array(z.json()).max(contentEngineLimits.resultCount),
+  operator: literal("in"),
+  value: array(json()).max(contentEngineLimits.resultCount),
 });
 
-const assetQueryBooleanFilter = z.strictObject({
+const assetQueryBooleanFilter = strictObject({
   field: assetQueryFieldPath,
-  operator: z.enum(["exists", "isEmpty"]),
-  value: z.boolean(),
+  operator: zEnum(["exists", "isEmpty"]),
+  value: boolean(),
 });
 
-export const assetQueryFilter = z.discriminatedUnion("operator", [
+export const assetQueryFilter = discriminatedUnion("operator", [
   assetQueryValueFilter,
   assetQueryInFilter,
   assetQueryBooleanFilter,
 ]);
 
-export type AssetQueryFilter = z.infer<typeof assetQueryFilter>;
+export type AssetQueryFilter = Infer<typeof assetQueryFilter>;
 
 export type AssetQueryWhere = QueryWhereTree<AssetQueryFilter>;
 
-const assetQueryWhereNode: z.ZodType<AssetQueryWhere, AssetQueryWhere> =
+const assetQueryWhereNode: ZodType<AssetQueryWhere, AssetQueryWhere> =
   createQueryWhereSchema(assetQueryFilter, {
     maximumChildren: contentEngineLimits.filterCount,
+    maximumConditions: contentEngineLimits.filterCount,
+    maximumDepth: contentEngineLimits.filterDepth,
+    maximumConditionsMessage: "Asset query exceeds the filter limit",
+    maximumDepthMessage: "Asset query exceeds the filter nesting limit",
   });
 
 export const getAssetQueryWhereMetrics = (where: AssetQueryWhere) => {
@@ -403,21 +432,7 @@ export const getAssetQueryWhereMetrics = (where: AssetQueryWhere) => {
   return { filters: conditions, depth };
 };
 
-const assetQueryWhere = assetQueryWhereNode.superRefine((where, context) => {
-  const { filters, depth } = getAssetQueryWhereMetrics(where);
-  if (filters > contentEngineLimits.filterCount) {
-    context.addIssue({
-      code: "custom",
-      message: "Asset query exceeds the filter limit",
-    });
-  }
-  if (depth > contentEngineLimits.filterDepth) {
-    context.addIssue({
-      code: "custom",
-      message: "Asset query exceeds the filter nesting limit",
-    });
-  }
-});
+const assetQueryWhere = assetQueryWhereNode;
 
 export const getAssetQueryOperatorsForFieldTypes = (
   fieldTypes: readonly AssetObservedFieldType[]
@@ -446,12 +461,12 @@ export const getAssetQueryOperatorsForFieldTypes = (
   return [...operators];
 };
 
-export const assetQuerySort = z.strictObject({
+export const assetQuerySort = strictObject({
   field: assetQueryFieldPath,
-  direction: z.enum(["asc", "desc"]),
+  direction: zEnum(["asc", "desc"]),
 });
 
-export type AssetQuerySort = z.infer<typeof assetQuerySort>;
+export type AssetQuerySort = Infer<typeof assetQuerySort>;
 
 export const hasAssetQueryOutput = ({
   output,
@@ -466,61 +481,52 @@ export const hasAssetQueryOutput = ({
   content.mode !== "none";
 
 /** Typed configuration for the query mode of the Assets system resource. */
-export const assetQuery = z
-  .strictObject({
-    where: assetQueryWhere.default({ all: [] }),
-    sort: z
-      .array(assetQuerySort)
-      .max(contentEngineLimits.sortCount)
-      .default([]),
-    limit: z
-      .number()
-      .int()
-      .nonnegative()
-      .max(contentEngineLimits.resultCount)
-      .default(contentEngineLimits.defaultResultCount),
-    offset: z
-      .number()
-      .int()
-      .nonnegative()
-      .max(contentEngineLimits.candidateDocuments)
-      .default(0),
-    output: assetResourceOutputSelection.default(
-      defaultAssetResourceOutputSelection
-    ),
-    content: assetResourceContentOptions.default({ mode: "none" }),
-  })
-  .refine(hasAssetQueryOutput, {
-    error: "Select at least one asset query output",
-  });
+export const assetQuery = strictObject({
+  where: assetQueryWhere.default({ all: [] }),
+  sort: array(assetQuerySort).max(contentEngineLimits.sortCount).default([]),
+  limit: number()
+    .int()
+    .nonnegative()
+    .max(contentEngineLimits.resultCount)
+    .default(contentEngineLimits.defaultResultCount),
+  offset: number()
+    .int()
+    .nonnegative()
+    .max(contentEngineLimits.candidateDocuments)
+    .default(0),
+  output: assetResourceOutputSelection.default(
+    defaultAssetResourceOutputSelection
+  ),
+  content: assetResourceContentOptions.default({ mode: "none" }),
+}).refine(hasAssetQueryOutput, {
+  error: "Select at least one asset query output",
+});
 
-export type AssetQuery = z.infer<typeof assetQuery>;
-export type AssetQueryInput = z.input<typeof assetQuery>;
+export type AssetQuery = Infer<typeof assetQuery>;
+export type AssetQueryInput = Input<typeof assetQuery>;
 
-export const assetQueryRequest = z.strictObject({
+export const assetQueryRequest = strictObject({
   query: assetQuery,
-  indexRevision: z.string().min(1).max(255).optional(),
+  indexRevision: string().min(1).max(255).optional(),
 });
 
-export type AssetQueryRequest = z.infer<typeof assetQueryRequest>;
-export type AssetQueryRequestInput = z.input<typeof assetQueryRequest>;
+export type AssetQueryRequest = Infer<typeof assetQueryRequest>;
+export type AssetQueryRequestInput = Input<typeof assetQueryRequest>;
 
-export const hydratedAssetContent = z.object({
-  _id: z.string().min(1),
-  revision: z.string().min(1),
-  contentRef: z.string().min(1),
-  encoding: z.literal("utf-8"),
-  text: z.string(),
-  range: z
-    .object({
-      offset: z.number().int().nonnegative(),
-      length: z.number().int().nonnegative(),
-      total: z.number().int().nonnegative(),
-    })
-    .optional(),
+export const hydratedAssetContent = object({
+  _id: string().min(1),
+  revision: string().min(1),
+  contentRef: string().min(1),
+  encoding: literal("utf-8"),
+  text: string(),
+  range: object({
+    offset: number().int().nonnegative(),
+    length: number().int().nonnegative(),
+    total: number().int().nonnegative(),
+  }).optional(),
 });
 
-export type HydratedAssetContent = z.infer<typeof hydratedAssetContent>;
+export type HydratedAssetContent = Infer<typeof hydratedAssetContent>;
 
 const assetQueryContent = hydratedAssetContent.omit({
   _id: true,
@@ -534,10 +540,10 @@ export const assetQueryItem = assetFileDocument
   .extend({
     // Identity is part of the Assets resource structure, independently of the
     // fields selected for each value.
-    id: z.string().min(1),
-    url: z.string().min(1).optional(),
-    width: z.number().positive().optional(),
-    height: z.number().positive().optional(),
+    id: string().min(1),
+    url: string().min(1).optional(),
+    width: number().positive().optional(),
+    height: number().positive().optional(),
     content: assetQueryContent.optional(),
   })
   .refine(
@@ -545,21 +551,21 @@ export const assetQueryItem = assetFileDocument
     { error: "Asset dimensions must include both width and height" }
   );
 
-export type AssetQueryItem = z.infer<typeof assetQueryItem>;
+export type AssetQueryItem = Infer<typeof assetQueryItem>;
 
-export const contentDatabaseStats = z.strictObject({
-  format: z.literal("webstudio-content-database"),
-  version: z.literal(1),
+export const contentDatabaseStats = strictObject({
+  format: literal("webstudio-content-database"),
+  version: literal(1),
   revision: sha256Revision,
-  usedBytes: z.number().int().nonnegative(),
-  maxBytes: z.number().int().positive(),
-  unboundedBytes: z.number().int().nonnegative(),
-  includedDocumentCount: z.number().int().nonnegative(),
-  omittedDocumentCount: z.number().int().nonnegative(),
-  truncated: z.boolean(),
+  usedBytes: number().int().nonnegative(),
+  maxBytes: number().int().positive(),
+  unboundedBytes: number().int().nonnegative(),
+  includedDocumentCount: number().int().nonnegative(),
+  omittedDocumentCount: number().int().nonnegative(),
+  truncated: boolean(),
 });
 
-export type ContentDatabaseStats = z.infer<typeof contentDatabaseStats>;
+export type ContentDatabaseStats = Infer<typeof contentDatabaseStats>;
 
 export const assetQueryPreviewDiagnostics = contentDatabaseStats
   .pick({
@@ -570,28 +576,28 @@ export const assetQueryPreviewDiagnostics = contentDatabaseStats
     omittedDocumentCount: true,
     truncated: true,
   })
-  .extend({ scope: z.literal("query-preview") });
+  .extend({ scope: literal("query-preview") });
 
-export type AssetQueryPreviewDiagnostics = z.infer<
+export type AssetQueryPreviewDiagnostics = Infer<
   typeof assetQueryPreviewDiagnostics
 >;
 
-export const assetQueryResult = z.strictObject({
-  items: z.array(assetQueryItem),
-  totalCount: z.number().int().nonnegative(),
-  hasMore: z.boolean(),
+export const assetQueryResult = strictObject({
+  items: array(assetQueryItem),
+  totalCount: number().int().nonnegative(),
+  hasMore: boolean(),
 });
 
-export type AssetQueryResult = z.infer<typeof assetQueryResult>;
+export type AssetQueryResult = Infer<typeof assetQueryResult>;
 
-export const assetQueryPreviewResult = z.strictObject({
+export const assetQueryPreviewResult = strictObject({
   data: assetQueryResult,
   __diagnostics__: assetQueryPreviewDiagnostics,
 });
 
-export type AssetQueryPreviewResult = z.infer<typeof assetQueryPreviewResult>;
+export type AssetQueryPreviewResult = Infer<typeof assetQueryPreviewResult>;
 
-export const assetResourceErrorCode = z.enum([
+export const assetResourceErrorCode = zEnum([
   "INVALID_REQUEST",
   "REQUEST_CANCELLED",
   "UNAUTHORIZED",
@@ -604,28 +610,24 @@ export const assetResourceErrorCode = z.enum([
   "INTERNAL_ERROR",
 ]);
 
-export type AssetResourceErrorCode = z.infer<typeof assetResourceErrorCode>;
+export type AssetResourceErrorCode = Infer<typeof assetResourceErrorCode>;
 
-export const assetResourceQueryFailure = z.object({
-  ok: z.literal(false),
-  error: z.object({
+export const assetResourceQueryFailure = object({
+  ok: literal(false),
+  error: object({
     code: assetResourceErrorCode,
-    message: z.string().min(1),
-    retryable: z.boolean(),
-    details: z.record(z.string(), z.json()).optional(),
+    message: string().min(1),
+    retryable: boolean(),
+    details: record(string(), json()).optional(),
   }),
-  meta: z
-    .object({
-      queryHash: z.string().min(1).optional(),
-      indexRevision: z.string().min(1).optional(),
-      assetRevision: z.string().min(1).optional(),
-    })
-    .optional(),
+  meta: object({
+    queryHash: string().min(1).optional(),
+    indexRevision: string().min(1).optional(),
+    assetRevision: string().min(1).optional(),
+  }).optional(),
 });
 
-export type AssetResourceQueryFailure = z.infer<
-  typeof assetResourceQueryFailure
->;
+export type AssetResourceQueryFailure = Infer<typeof assetResourceQueryFailure>;
 
 export const createAssetResourceQueryFailure = ({
   code,

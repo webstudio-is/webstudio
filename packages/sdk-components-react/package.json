@@ -33,6 +33,11 @@
       "types": "./lib/types/hooks.d.ts",
       "import": "./lib/hooks.js"
     },
+    "./markdown": {
+      "webstudio": "./src/markdown.ts",
+      "types": "./lib/types/markdown.d.ts",
+      "import": "./lib/markdown.js"
+    },
     "./templates": {
       "webstudio": "./src/templates.ts",
       "types": "./lib/types/templates.d.ts",
@@ -61,9 +66,11 @@
     "colord": "^2.9.3",
     "github-slugger": "2.0.0",
     "mdast-util-from-markdown": "2.0.3",
+    "mdast-util-frontmatter": "2.0.1",
     "mdast-util-to-string": "4.0.0",
     "micromark": "^4.0.2",
-    "micromark-extension-gfm-table": "^2.1.1",
+    "micromark-extension-frontmatter": "2.0.0",
+    "micromark-extension-gfm": "^3.0.0",
     "sanitize-html": "2.17.6"
   },
   "devDependencies": {

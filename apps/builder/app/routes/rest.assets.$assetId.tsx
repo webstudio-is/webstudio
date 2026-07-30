@@ -17,7 +17,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (
     request.method.toLowerCase() !== assetResourceApiOperations.getAsset.method
   ) {
-    return assetRestMethodNotAllowed(["GET"]);
+    return assetRestMethodNotAllowed([assetResourceApiOperations.getAsset]);
   }
   try {
     const assetId = parseAssetRestIdentifier(params.assetId);

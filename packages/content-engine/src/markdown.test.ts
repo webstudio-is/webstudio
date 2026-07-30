@@ -187,6 +187,14 @@ describe("Markdown body and excerpt extraction", () => {
     ).resolves.toMatchObject({ body: "Introduction\n\n---\n\nMore" });
   });
 
+  test("removes a UTF-8 byte order mark without frontmatter", async () => {
+    await expect(extractMarkdownBody("\ufeff# Heading")).resolves.toMatchObject(
+      {
+        body: "# Heading",
+      }
+    );
+  });
+
   test("enforces the complete-file byte limit before decoding", async () => {
     await expect(extractMarkdownBody("123456", 5)).rejects.toMatchObject({
       code: "MARKDOWN_BODY_BYTES_EXCEEDED",

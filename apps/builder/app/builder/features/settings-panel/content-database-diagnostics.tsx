@@ -1,20 +1,11 @@
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import { PanelBanner, Text } from "@webstudio-is/design-system";
+import prettyBytes from "pretty-bytes";
 import {
   RequestDiagnosticsContent,
   RequestDiagnosticsRow,
   RequestDiagnosticsTable,
 } from "./request-inspector";
-
-const formatBytes = (bytes: number) => {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KiB`;
-  }
-  return `${(bytes / 1024 / 1024).toFixed(2)} MiB`;
-};
 
 const databaseSizeWarningRatio = 0.9;
 
@@ -40,7 +31,9 @@ export const ContentDatabaseDiagnostics = ({
         <Text>
           {value.truncated
             ? `${value.includedDocumentCount} of ${candidateFilesLabel} fit in the content database. ${omittedFilesLabel} may be omitted from published query results.`
-            : `All ${candidateFilesLabel} fit in the content database.`}
+            : totalDocumentCount === 1
+              ? "The candidate file fits in the content database."
+              : `All ${candidateFilesLabel} fit in the content database.`}
         </Text>
       </PanelBanner>
       <RequestDiagnosticsTable>
@@ -51,17 +44,17 @@ export const ContentDatabaseDiagnostics = ({
         />
         <RequestDiagnosticsRow
           label="Database size"
-          value={formatBytes(value.usedBytes)}
+          value={prettyBytes(value.usedBytes)}
           valueColor={isNearLimit ? "destructive" : undefined}
           description="To reduce the database size, select only the output fields your pages use, narrow filters to fewer files, and avoid full file content when a byte range is enough."
         />
         <RequestDiagnosticsRow
           label="Database limit"
-          value={formatBytes(value.maxBytes)}
+          value={prettyBytes(value.maxBytes)}
         />
         <RequestDiagnosticsRow
           label="Estimated full size"
-          value={formatBytes(value.unboundedBytes)}
+          value={prettyBytes(value.unboundedBytes)}
         />
         <RequestDiagnosticsRow
           label="Included files"

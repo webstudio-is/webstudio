@@ -1,9 +1,9 @@
 import { z } from "zod";
 import {
   createQueryWhereSchema,
-  getQueryWhereMetrics,
   type QueryWhereTree,
-} from "@webstudio-is/query-builder";
+} from "@webstudio-is/query-builder/runtime";
+import { isQueryExpression } from "@webstudio-is/query-builder";
 import {
   assetQueryFieldPath,
   assetQueryOperators,
@@ -19,8 +19,12 @@ import { assetResourceLimits } from "../asset-resource-limits";
 const assetQueryLiteral = <Schema extends z.ZodType>(value: Schema) =>
   z.strictObject({ type: z.literal("literal"), value });
 
+const assetQueryExpression = z
+  .string()
+  .refine(isQueryExpression, "Asset query expression is invalid");
+
 export const assetQueryFilterValueExpression = z.union([
-  z.string(),
+  assetQueryExpression,
   assetQueryLiteral(z.json()),
 ]);
 
@@ -34,7 +38,7 @@ export type AssetQueryWhereExpression = QueryWhereTree<{
   value: AssetQueryFilterValueExpression;
 }>;
 
-const assetQueryWhereExpressionNode: z.ZodType<
+export const assetQueryWhereExpression: z.ZodType<
   AssetQueryWhereExpression,
   AssetQueryWhereExpression
 > = createQueryWhereSchema(
@@ -49,35 +53,22 @@ const assetQueryWhereExpressionNode: z.ZodType<
   }),
   {
     maximumChildren: assetResourceLimits.filterCount,
+    maximumConditions: assetResourceLimits.filterCount,
+    maximumDepth: assetResourceLimits.filterDepth,
+    maximumConditionsMessage: "Asset query exceeds the filter limit",
+    maximumDepthMessage: "Asset query exceeds the filter nesting limit",
   }
 );
 
-export const assetQueryWhereExpression =
-  assetQueryWhereExpressionNode.superRefine((where, context) => {
-    const { conditions: filters, depth } = getQueryWhereMetrics(where);
-    if (filters > assetResourceLimits.filterCount) {
-      context.addIssue({
-        code: "custom",
-        message: "Asset query exceeds the filter limit",
-      });
-    }
-    if (depth > assetResourceLimits.filterDepth) {
-      context.addIssue({
-        code: "custom",
-        message: "Asset query exceeds the filter nesting limit",
-      });
-    }
-  });
-
 export const assetQueryLimitExpression = z.union([
-  z.string(),
+  assetQueryExpression,
   assetQueryLiteral(
     z.number().int().nonnegative().max(assetResourceLimits.resultCount)
   ),
 ]);
 
 export const assetQueryOffsetExpression = z.union([
-  z.string(),
+  assetQueryExpression,
   assetQueryLiteral(
     z.number().int().nonnegative().max(assetResourceLimits.candidateDocuments)
   ),

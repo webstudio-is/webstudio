@@ -42,6 +42,10 @@ export const genericQueryCapabilities = {
         label: "Sort",
         defaultValue: [],
         defaultItem: { field: ["publishedAt"], direction: "desc" },
+        directions: [
+          { value: "asc", label: "Ascending" },
+          { value: "desc", label: "Descending" },
+        ],
         max: 2,
       },
       {

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
-import { asset, assetType } from "@webstudio-is/sdk/schema";
 import {
+  asset,
+  assetType,
   assetFolder,
   assetFolderId,
   assetFolderName,
@@ -9,8 +10,7 @@ import {
 import {
   assetQueryRequest,
   assetQueryPreviewResult,
-  assetQueryStandardFields,
-  assetQueryStandardFieldTypes,
+  assetQuerySourceDefinition,
   assetQueryResult,
   assetResourceQueryFailure,
   builderAssetFieldCatalog,
@@ -26,6 +26,7 @@ import {
   assetsIndexRefreshApiUrl,
   assetsUploadsApiUrl,
   assetsQueryApiUrl,
+  assetsQuerySchemaApiUrl,
 } from "@webstudio-is/sdk/runtime";
 import type { BuilderAssetFieldCatalog } from "@webstudio-is/content-engine";
 
@@ -100,6 +101,11 @@ export const assetResourceApiOperations = {
     "get",
     assetsOpenApiUrl
   ),
+  getAssetQuerySchema: operation(
+    "getAssetQuerySchema",
+    "get",
+    assetsQuerySchemaApiUrl
+  ),
   refreshAssetIndex: operation(
     "refreshAssetIndex",
     "post",
@@ -134,6 +140,9 @@ export const assetUploadReservationRequest = z.strictObject({
     .optional(),
 });
 
+/** Concrete query payload accepted by the Assets REST API. */
+export type AssetQueryRequestInput = z.input<typeof assetQueryRequest>;
+
 const assetUploadTicket = z.discriminatedUnion("deduplicated", [
   z.strictObject({
     assetId: z.string().min(1),
@@ -152,6 +161,7 @@ const assetUploadResult = z.strictObject({
   uploadedAssets: z.array(asset),
   deduplicated: z.boolean(),
 });
+export type AssetUploadResult = z.infer<typeof assetUploadResult>;
 
 const assetListResult = z.strictObject({ assets: z.array(asset) });
 
@@ -205,7 +215,7 @@ const assetFolderMutationResult = z.strictObject({
   folder: assetFolder,
 });
 
-const assetMutationFailure = z.strictObject({
+const assetRestFailure = z.strictObject({
   errors: z.string().min(1),
 });
 
@@ -259,6 +269,18 @@ const toComponentSchema = (
   return rewriteLocalReferences(jsonSchema, component) as JsonSchema;
 };
 
+const toStandaloneSchema = (
+  schema: z.ZodType,
+  io: "input" | "output"
+): JsonSchema => {
+  const { $schema: _schema, ...jsonSchema } = z.toJSONSchema(schema, {
+    target: "draft-2020-12",
+    io,
+    unrepresentable: "any",
+  });
+  return jsonSchema;
+};
+
 const inputComponentSchemas = {
   AssetQueryRequest: assetQueryRequest,
   AssetUploadReservationRequest: assetUploadReservationRequest,
@@ -277,7 +299,7 @@ const outputComponentSchemas = {
   AssetListResult: assetListResult,
   AssetItemResult: assetItemResult,
   AssetMutationResult: assetItemResult,
-  AssetMutationFailure: assetMutationFailure,
+  AssetRestFailure: assetRestFailure,
   AssetIndexRefreshResult: assetIndexRefreshResult,
   AssetFolderListResult: assetFolderListResult,
   AssetFolderMutationResult: assetFolderMutationResult,
@@ -298,46 +320,17 @@ const createComponentSchemas = () =>
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && Array.isArray(value) === false;
 
-const fieldLabels: Record<(typeof assetQueryStandardFields)[number], string> = {
-  id: "ID",
-  url: "URL",
-  width: "Width",
-  height: "Height",
-  name: "Name",
-  description: "Description",
-  path: "Path",
-  key: "Key",
-  folderId: "Folder ID",
-  extension: "Extension",
-  mimeType: "MIME type",
-  size: "Size",
-  createdAt: "Created at",
-  revision: "Revision",
-  excerpt: "Excerpt",
-};
-
-const operatorLabels: Record<AssetQueryOperator, string> = {
-  eq: "Equals",
-  ne: "Does not equal",
-  in: "Is one of",
-  contains: "Contains",
-  startsWith: "Starts with",
-  endsWith: "Ends with",
-  gt: "Greater than",
-  gte: "Greater than or equal",
-  lt: "Less than",
-  lte: "Less than or equal",
-  exists: "Exists",
-  isEmpty: "Is empty",
-};
+const operatorLabels = new Map(
+  assetQuerySourceDefinition.operators.map(({ value, label }) => [value, label])
+);
 
 const queryPropertyLabels: Record<string, string> = {
   where: "Filters",
   sort: "Sort",
   limit: "Limit",
   offset: "Offset",
-  output: "Output fields",
-  content: "File content",
+  output: "Output",
+  content: "Output",
   includeMetadata: "File metadata",
   maxBytes: "Maximum content bytes",
   length: "Content byte length",
@@ -362,11 +355,7 @@ type AssetOpenApiField = {
 const createAssetOpenApiFields = (
   catalog?: BuilderAssetFieldCatalog
 ): AssetOpenApiField[] => [
-  ...assetQueryStandardFields.map((field) => ({
-    path: [field],
-    label: fieldLabels[field],
-    types: assetQueryStandardFieldTypes[field],
-  })),
+  ...assetQuerySourceDefinition.fields,
   ...Object.values(catalog?.fields ?? {}).flatMap((field) =>
     field.queryPath?.[0] === "properties"
       ? [
@@ -431,10 +420,14 @@ const findFilterConditionUnion = (value: unknown): JsonSchema | undefined => {
 const decorateAssetQuerySchema = ({
   schema,
   fields,
+  referenceRoot = "#/components/schemas/AssetQueryRequest",
 }: {
   schema: JsonSchema;
   fields: readonly AssetOpenApiField[];
+  referenceRoot?: string;
 }): JsonSchema => {
+  const definitionReference = (name: string) =>
+    `${referenceRoot}/$defs/${name}`;
   const fieldGroups = new Map<
     string,
     {
@@ -449,22 +442,32 @@ const decorateAssetQuerySchema = ({
     const group = fieldGroups.get(key) ?? {
       operators,
       fields: [],
-      reference: `#/components/schemas/AssetQueryRequest/$defs/AssetQueryField${fieldGroups.size}`,
+      reference: definitionReference(`AssetQueryField${fieldGroups.size}`),
     };
     group.fields.push(field);
     fieldGroups.set(key, group);
   }
-  const allFieldsReference =
-    "#/components/schemas/AssetQueryRequest/$defs/AssetQueryField";
-  const boundedWhereReference = `#/components/schemas/AssetQueryRequest/$defs/AssetQueryWhere${assetResourceLimits.filterDepth}`;
+  const allFieldsReference = definitionReference("AssetQueryField");
+  const boundedWhereReference = definitionReference(
+    `AssetQueryWhere${assetResourceLimits.filterDepth}`
+  );
   let conditionSchema: JsonSchema | undefined;
   const fieldDefinitions = Object.fromEntries([
     [
       "AssetQueryField",
       {
-        oneOf: [...fieldGroups.values()].map(({ reference }) => ({
-          $ref: reference,
-        })),
+        anyOf: [
+          ...[...fieldGroups.values()].map(({ reference }) => ({
+            $ref: reference,
+          })),
+          {
+            type: "array",
+            prefixItems: [{ const: "properties" }],
+            items: { type: "string", minLength: 1 },
+            minItems: 2,
+            maxItems: assetResourceLimits.fieldPathDepth,
+          },
+        ],
       },
     ],
     ...[...fieldGroups.values()].map(({ fields: groupFields }, index) => [
@@ -474,10 +477,19 @@ const decorateAssetQuerySchema = ({
         minItems: 1,
         maxItems: assetResourceLimits.fieldPathDepth,
         items: { type: "string", minLength: 1 },
-        oneOf: groupFields.map((field) => ({
-          const: field.path,
-          ...(field.label === undefined ? {} : { title: field.label }),
-        })),
+        oneOf: [
+          ...groupFields.flatMap((field) =>
+            field.label === undefined
+              ? []
+              : [{ const: field.path, title: field.label }]
+          ),
+          ...(() => {
+            const paths = groupFields.flatMap((field) =>
+              field.label === undefined ? [field.path] : []
+            );
+            return paths.length === 0 ? [] : [{ enum: paths }];
+          })(),
+        ],
       },
     ]),
   ]);
@@ -587,7 +599,8 @@ const decorateAssetQuerySchema = ({
                 operator: {
                   oneOf: compatible.map((value) => ({
                     const: value,
-                    title: operatorLabels[value as AssetQueryOperator] ?? value,
+                    title:
+                      operatorLabels.get(value as AssetQueryOperator) ?? value,
                   })),
                 },
               },
@@ -608,15 +621,14 @@ const decorateAssetQuerySchema = ({
   if (conditionSchema === undefined) {
     throw new Error("Asset query filter schema is missing");
   }
-  const conditionReference =
-    "#/components/schemas/AssetQueryRequest/$defs/AssetQueryCondition";
+  const conditionReference = definitionReference("AssetQueryCondition");
   const whereDefinitions: Record<string, JsonSchema> = {
     AssetQueryCondition: conditionSchema,
   };
   for (let depth = 0; depth <= assetResourceLimits.filterDepth; depth += 1) {
     const choices: JsonSchema[] = [{ $ref: conditionReference }];
     if (depth > 0) {
-      const childReference = `#/components/schemas/AssetQueryRequest/$defs/AssetQueryWhere${depth - 1}`;
+      const childReference = definitionReference(`AssetQueryWhere${depth - 1}`);
       for (const combinator of ["all", "any"]) {
         choices.push({
           type: "object",
@@ -644,6 +656,104 @@ const decorateAssetQuerySchema = ({
   };
 };
 
+const getSerializedBytes = (value: unknown) =>
+  new TextEncoder().encode(JSON.stringify(value)).byteLength;
+
+const findAssetQueryObjectSchema = (value: unknown): JsonSchema | undefined => {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findAssetQueryObjectSchema(item);
+      if (found !== undefined) {
+        return found;
+      }
+    }
+    return;
+  }
+  if (isObject(value) === false) {
+    return;
+  }
+  if (
+    isObject(value.properties) &&
+    ["where", "sort", "limit", "offset", "output", "content"].every((key) =>
+      Object.hasOwn(value.properties as object, key)
+    )
+  ) {
+    return value;
+  }
+  for (const child of Object.values(value)) {
+    const found = findAssetQueryObjectSchema(child);
+    if (found !== undefined) {
+      return found;
+    }
+  }
+};
+
+const createAssetQuerySchemaForFields = (fields: AssetOpenApiField[]) => ({
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  ...decorateAssetQuerySchema({
+    schema: toStandaloneSchema(assetQueryRequest, "input"),
+    fields,
+    referenceRoot: "#",
+  }),
+});
+
+export const createAssetQueryJsonSchema = ({
+  catalog,
+}: {
+  catalog?: BuilderAssetFieldCatalog;
+}) => {
+  const fields = createAssetOpenApiFields(catalog);
+  const standardFieldCount = assetQuerySourceDefinition.fields.length;
+  const standardFields = fields.slice(0, standardFieldCount);
+  const dynamicFields = fields
+    .slice(standardFieldCount)
+    .map((field) => ({ field, key: JSON.stringify(field.path) }))
+    .sort((left, right) => left.key.localeCompare(right.key))
+    .map(({ field }) => field);
+  const createBoundedSchema = (dynamicFieldCount: number) => {
+    const schema = createAssetQuerySchemaForFields([
+      ...standardFields,
+      ...dynamicFields.slice(0, dynamicFieldCount),
+    ]);
+    if (dynamicFieldCount < dynamicFields.length) {
+      const querySchema = findAssetQueryObjectSchema(schema);
+      if (querySchema === undefined) {
+        throw new Error("Asset query schema is missing");
+      }
+      querySchema.description = `Autocomplete includes ${dynamicFieldCount} of ${dynamicFields.length} observed content fields because the field catalog exceeds the API description limit. Other content fields remain valid.`;
+    }
+    return schema;
+  };
+
+  const completeSchema = createBoundedSchema(dynamicFields.length);
+  if (
+    getSerializedBytes(completeSchema) <=
+    assetResourceLimits.apiDescriptionBytes
+  ) {
+    return completeSchema;
+  }
+
+  let minimum = 0;
+  let maximum = dynamicFields.length - 1;
+  let result = createBoundedSchema(0);
+  if (getSerializedBytes(result) > assetResourceLimits.apiDescriptionBytes) {
+    throw new Error(
+      "Base asset query schema exceeds the API description limit"
+    );
+  }
+  while (minimum <= maximum) {
+    const count = Math.floor((minimum + maximum) / 2);
+    const schema = createBoundedSchema(count);
+    if (getSerializedBytes(schema) <= assetResourceLimits.apiDescriptionBytes) {
+      result = schema;
+      minimum = count + 1;
+    } else {
+      maximum = count - 1;
+    }
+  }
+  return result;
+};
+
 const schemaResponse = (component: string, description: string) => ({
   description,
   content: {
@@ -657,7 +767,7 @@ const mutationForbiddenResponse = {
   description: "Access denied or invalid CSRF token",
   content: {
     "application/json": {
-      schema: { $ref: "#/components/schemas/AssetMutationFailure" },
+      schema: { $ref: "#/components/schemas/AssetRestFailure" },
     },
     "text/plain": { schema: { type: "string" } },
   },
@@ -671,17 +781,31 @@ const errorResponses = {
   500: schemaResponse("AssetResourceQueryFailure", "Internal error"),
 };
 
-const mutationErrorResponses = {
-  400: schemaResponse("AssetMutationFailure", "Invalid mutation"),
-  401: schemaResponse("AssetMutationFailure", "Authentication required"),
-  403: mutationForbiddenResponse,
-  404: schemaResponse("AssetMutationFailure", "Asset or folder not found"),
-  409: schemaResponse("AssetMutationFailure", "Asset revision conflict"),
-  413: schemaResponse("AssetMutationFailure", "Request body too large"),
-  500: schemaResponse("AssetMutationFailure", "Internal error"),
+const restErrorResponses = {
+  400: schemaResponse("AssetRestFailure", "Invalid request"),
+  401: schemaResponse("AssetRestFailure", "Authentication required"),
+  403: schemaResponse("AssetRestFailure", "Access denied"),
+  500: schemaResponse("AssetRestFailure", "Internal error"),
 };
 
-const pathParameter = (name: string, description: string) => ({
+const restNotFoundResponse = schemaResponse(
+  "AssetRestFailure",
+  "Asset or folder not found"
+);
+
+const mutationErrorResponses = {
+  ...restErrorResponses,
+  403: mutationForbiddenResponse,
+  404: restNotFoundResponse,
+  409: schemaResponse("AssetRestFailure", "Asset revision conflict"),
+  413: schemaResponse("AssetRestFailure", "Request body too large"),
+};
+
+const pathParameter = (
+  name: string,
+  description: string,
+  maxLength: number = assetResourceLimits.assetIdentifierCharacters
+) => ({
   name,
   in: "path",
   required: true,
@@ -689,7 +813,7 @@ const pathParameter = (name: string, description: string) => ({
   schema: {
     type: "string",
     minLength: 1,
-    maxLength: assetResourceLimits.assetIdentifierCharacters,
+    maxLength,
   },
 });
 
@@ -727,18 +851,14 @@ const binarySchema = { type: "string", format: "binary" } as const;
  * standard request schema; no parallel provider-specific UI contract exists.
  */
 export const createAssetResourceOpenApi = ({
-  catalog,
   builderSessionCookieName,
+  querySchemaReference,
 }: {
-  catalog?: BuilderAssetFieldCatalog;
   builderSessionCookieName: string;
+  querySchemaReference: string;
 }) => {
-  const queryFields = createAssetOpenApiFields(catalog);
-  const componentSchemas = createComponentSchemas();
-  componentSchemas.AssetQueryRequest = decorateAssetQuerySchema({
-    schema: componentSchemas.AssetQueryRequest,
-    fields: queryFields,
-  });
+  const { AssetQueryRequest: _assetQueryRequest, ...componentSchemas } =
+    createComponentSchemas();
   const operations = assetResourceApiOperations;
   const mutationSecurity = [
     { projectToken: [] },
@@ -767,7 +887,7 @@ export const createAssetResourceOpenApi = ({
           parameters: [projectIdParameter],
           responses: {
             200: schemaResponse("AssetListResult", "Project assets"),
-            ...mutationErrorResponses,
+            ...restErrorResponses,
           },
         },
       },
@@ -804,8 +924,71 @@ export const createAssetResourceOpenApi = ({
           operationId: operations.uploadAssetContent.operationId,
           summary: "Upload asset content",
           security: mutationSecurity,
+          description:
+            "Upload a previously reserved storage name, or perform a direct API upload by supplying projectId and type. Direct uploads may also provide the optional metadata parameters.",
           parameters: [
-            pathParameter("name", "Storage name returned by the reservation"),
+            pathParameter(
+              "name",
+              "Reserved storage name or direct-upload filename",
+              assetResourceLimits.assetFilenameCharacters
+            ),
+            queryParameter(
+              "projectId",
+              "Owning project; required for a direct API upload"
+            ),
+            {
+              name: "type",
+              in: "query",
+              required: false,
+              description: "Asset type; required for a direct API upload",
+              schema: { type: "string", enum: assetType.options },
+            },
+            queryParameter("folderId", "Destination asset folder"),
+            queryParameter(
+              "format",
+              "Detected file format override",
+              false,
+              assetResourceLimits.assetFilenameCharacters
+            ),
+            {
+              name: "width",
+              in: "query",
+              required: false,
+              description: "Image width in pixels",
+              schema: { type: "number", exclusiveMinimum: 0 },
+            },
+            {
+              name: "height",
+              in: "query",
+              required: false,
+              description: "Image height in pixels",
+              schema: { type: "number", exclusiveMinimum: 0 },
+            },
+            {
+              name: "force",
+              in: "query",
+              required: false,
+              description:
+                "Create a new asset instead of deduplicating content",
+              schema: { type: "boolean", default: false },
+            },
+            {
+              name: "x-webstudio-asset-description",
+              in: "header",
+              required: false,
+              description: "Asset description",
+              schema: {
+                type: "string",
+                maxLength: assetResourceLimits.assetDescriptionCharacters,
+              },
+            },
+            {
+              name: "x-webstudio-asset-meta",
+              in: "header",
+              required: false,
+              description: "JSON-encoded asset metadata override",
+              schema: { type: "string" },
+            },
           ],
           requestBody: {
             required: true,
@@ -828,7 +1011,8 @@ export const createAssetResourceOpenApi = ({
           parameters: assetParameters,
           responses: {
             200: schemaResponse("AssetItemResult", "Asset record"),
-            ...mutationErrorResponses,
+            ...restErrorResponses,
+            404: restNotFoundResponse,
           },
         },
         [operations.updateAsset.method]: {
@@ -897,8 +1081,9 @@ export const createAssetResourceOpenApi = ({
                 },
               },
             },
-            416: schemaResponse("AssetMutationFailure", "Invalid byte range"),
-            ...mutationErrorResponses,
+            416: schemaResponse("AssetRestFailure", "Invalid byte range"),
+            ...restErrorResponses,
+            404: restNotFoundResponse,
           },
         },
         [operations.replaceAssetContent.method]: {
@@ -941,7 +1126,7 @@ export const createAssetResourceOpenApi = ({
               "AssetFolderListResult",
               "Project asset folders"
             ),
-            ...mutationErrorResponses,
+            ...restErrorResponses,
           },
         },
         [operations.createAssetFolder.method]: {
@@ -975,7 +1160,8 @@ export const createAssetResourceOpenApi = ({
           parameters: assetFolderParameters,
           responses: {
             200: schemaResponse("AssetFolderMutationResult", "Asset folder"),
-            ...mutationErrorResponses,
+            ...restErrorResponses,
+            404: restNotFoundResponse,
           },
         },
         [operations.updateAssetFolder.method]: {
@@ -1023,7 +1209,7 @@ export const createAssetResourceOpenApi = ({
             required: true,
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/AssetQueryRequest" },
+                schema: { $ref: querySchemaReference },
               },
             },
           },
@@ -1060,6 +1246,27 @@ export const createAssetResourceOpenApi = ({
               description: "OpenAPI description",
               content: {
                 "application/vnd.oai.openapi+json;version=3.1": {
+                  schema: { type: "object", additionalProperties: true },
+                },
+              },
+            },
+            400: errorResponses[400],
+            401: errorResponses[401],
+            403: errorResponses[403],
+            500: errorResponses[500],
+          },
+        },
+      },
+      [operations.getAssetQuerySchema.path]: {
+        [operations.getAssetQuerySchema.method]: {
+          operationId: operations.getAssetQuerySchema.operationId,
+          summary: "Get the project Assets query schema",
+          parameters: [projectIdParameter],
+          responses: {
+            200: {
+              description: "Project-specific Assets query JSON Schema",
+              content: {
+                "application/schema+json": {
                   schema: { type: "object", additionalProperties: true },
                 },
               },
@@ -1122,7 +1329,7 @@ export const createAssetResourceOpenApi = ({
     security: [{ projectToken: [] }, { builderSession: [] }],
   } as const;
 
-  const bytes = new TextEncoder().encode(JSON.stringify(document)).byteLength;
+  const bytes = getSerializedBytes(document);
   if (bytes > assetResourceLimits.apiDescriptionBytes) {
     throw new Error(
       "Asset resource OpenAPI description exceeds the byte limit"

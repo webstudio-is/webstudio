@@ -115,7 +115,7 @@ describe("loadBuildById (msw)", () => {
     expect(result.marketplaceProduct).toBeUndefined();
   });
 
-  test("normalizes legacy string-array variables to json", async () => {
+  test("rejects invalid persisted data sources", async () => {
     server.use(
       db.get("Build", () =>
         json([
@@ -126,7 +126,32 @@ describe("loadBuildById (msw)", () => {
                 id: "tags-variable",
                 type: "variable",
                 name: "tags",
-                value: { type: "string[]", value: ["news", "product"] },
+                value: { type: "string[]", value: ["news"] },
+              },
+            ]),
+          },
+        ])
+      )
+    );
+
+    await expect(loadBuildById(createContext(), "build-1")).rejects.toThrow();
+  });
+
+  test("normalizes persisted Assets resources before publishing or syncing", async () => {
+    server.use(
+      db.get("Build", () =>
+        json([
+          {
+            ...buildRow,
+            resources: JSON.stringify([
+              {
+                id: "assets",
+                name: "Assets",
+                control: "system",
+                method: "get",
+                url: '"/$resources/assets"',
+                searchParams: [],
+                headers: [],
               },
             ]),
           },
@@ -136,14 +161,19 @@ describe("loadBuildById (msw)", () => {
 
     const result = await loadBuildById(createContext(), "build-1");
 
-    expect(result.dataSources).toEqual([
+    expect(result.resources).toMatchObject([
       {
-        id: "tags-variable",
-        type: "variable",
-        name: "tags",
-        value: { type: "json", value: ["news", "product"] },
+        id: "assets",
+        method: "post",
+        headers: [
+          {
+            name: "Content-Type",
+            value: '"application/json"',
+          },
+        ],
       },
     ]);
+    expect(result.resources[0].body).toContain("limit: 1000");
   });
 
   test("migrates project settings from legacy pages", async () => {

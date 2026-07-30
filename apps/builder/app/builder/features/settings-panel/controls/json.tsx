@@ -1,22 +1,17 @@
 import { useState } from "react";
-import { useStore } from "@nanostores/react";
 import { isLiteralExpression } from "@webstudio-is/expression";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   BindableExpressionControl,
-  updateExpressionValue,
-  useBindingState,
+  updateBindableValue,
 } from "~/builder/shared/bindable-expression";
-import {
-  type ControlProps,
-  VerticalLayout,
-  $selectedInstanceScope,
-} from "../shared";
+import { type ControlProps, VerticalLayout } from "../shared";
 import {
   ExpressionEditor,
   formatValue,
 } from "~/builder/shared/expression-editor";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 
 export const JsonControl = ({
   prop,
@@ -36,34 +31,33 @@ export const JsonControl = ({
     try {
       // wrap into parens to treat object expression as value instead of block
       const parsedValue = eval(`(${value})`);
-      if (prop?.type === "expression") {
-        updateExpressionValue(prop.value, parsedValue);
-      } else {
-        onChange({ type: "json", value: parsedValue });
-      }
+      updateBindableValue({
+        expression: prop?.type === "expression" ? prop.value : undefined,
+        value: parsedValue,
+        onChangeValue: (value) => onChange({ type: "json", value }),
+      });
     } catch {
       // empty block
     }
   });
 
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression = prop?.type === "expression" ? prop.value : valueString;
-  const { overwritable } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: valueString,
+  });
 
   return (
     <VerticalLayout
       label={
-        <PropertyLabel name={propName} readOnly={overwritable === false} />
+        <PropertyLabel
+          name={propName}
+          readOnly={binding.bindingState.overwritable === false}
+        />
       }
     >
       <BindableExpressionControl
-        expression={expression}
+        {...binding}
         value={computedValue}
-        bound={prop?.type === "expression"}
-        scope={scope}
-        aliases={aliases}
         onChangeValue={(value) => onChange({ type: "json", value })}
         onChangeExpression={(value) => onChange({ type: "expression", value })}
         onRemove={(value) => onChange({ type: "json", value })}

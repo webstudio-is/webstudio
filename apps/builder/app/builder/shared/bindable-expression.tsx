@@ -10,12 +10,12 @@ import {
   type BindingVariant,
 } from "./binding-popover";
 
-type BindingState = {
+export type BindingState = {
   overwritable: boolean;
   variant: BindingVariant;
 };
 
-export const updateExpressionValue = (expression: string, value: unknown) => {
+const updateExpressionValue = (expression: string, value: unknown) => {
   const potentialVariableId = decodeDataSourceVariable(expression);
   if (
     potentialVariableId === undefined ||
@@ -26,6 +26,24 @@ export const updateExpressionValue = (expression: string, value: unknown) => {
   const dataSourceVariables = new Map($dataSourceVariables.get());
   dataSourceVariables.set(potentialVariableId, value);
   $dataSourceVariables.set(dataSourceVariables);
+};
+
+export const updateBindableValue = <Value,>({
+  expression,
+  value,
+  expressionValue = value,
+  onChangeValue,
+}: {
+  expression: string | undefined;
+  value: Value;
+  expressionValue?: unknown;
+  onChangeValue: (value: Value) => void;
+}) => {
+  if (expression !== undefined) {
+    updateExpressionValue(expression, expressionValue);
+    return;
+  }
+  onChangeValue(value);
 };
 
 export const useBindingState = (expression: string | undefined) => {
@@ -71,6 +89,7 @@ export const BindableExpressionControl = <Value,>({
   onChangeValue,
   onChangeExpression,
   onRemove,
+  bindingState,
 }: {
   expression: string;
   value: Value;
@@ -89,10 +108,29 @@ export const BindableExpressionControl = <Value,>({
   onChangeValue: (value: Value) => void;
   onChangeExpression: (expression: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
+  bindingState?: BindingState;
 }) => {
-  const { overwritable, variant } = useBindingState(
-    bound ? expression : undefined
-  );
+  if (bindingState === undefined) {
+    return (
+      <BindableExpressionControlWithState
+        expression={expression}
+        value={value}
+        bound={bound}
+        scope={scope}
+        aliases={aliases}
+        validate={validate}
+        showBinding={showBinding}
+        allowBindingOverwrite={allowBindingOverwrite}
+        renderControl={renderControl}
+        parseValue={parseValue}
+        onChangeValue={onChangeValue}
+        onChangeExpression={onChangeExpression}
+        onRemove={onRemove}
+      />
+    );
+  }
+
+  const { overwritable, variant } = bindingState;
   const readOnly =
     overwritable === false || (bound && allowBindingOverwrite === false);
   return (
@@ -101,11 +139,12 @@ export const BindableExpressionControl = <Value,>({
         value,
         readOnly,
         onChangeValue: (nextValue) => {
-          if (bound) {
-            updateExpressionValue(expression, parseValue(nextValue));
-          } else {
-            onChangeValue(nextValue);
-          }
+          updateBindableValue({
+            expression: bound ? expression : undefined,
+            value: nextValue,
+            expressionValue: bound ? parseValue(nextValue) : nextValue,
+            onChangeValue,
+          });
         },
       })}
       {showBinding && (
@@ -121,4 +160,16 @@ export const BindableExpressionControl = <Value,>({
       )}
     </BindingControl>
   );
+};
+
+const BindableExpressionControlWithState = <Value,>(
+  props: Omit<
+    Parameters<typeof BindableExpressionControl<Value>>[0],
+    "bindingState"
+  >
+) => {
+  const bindingState = useBindingState(
+    props.bound ? props.expression : undefined
+  );
+  return <BindableExpressionControl {...props} bindingState={bindingState} />;
 };

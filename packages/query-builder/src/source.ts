@@ -7,12 +7,15 @@ import {
 } from "@webstudio-is/expression";
 import { z } from "zod";
 import type {
+  QueryExpressionControl,
   QueryFilterControl,
+  QuerySortControl,
   QuerySourceDefinition,
   QuerySourceCodec,
   QueryWhere,
 } from "./types";
-import { getQueryFieldKey, getQueryWhereMetrics } from "./query-utils";
+import { getQueryFieldKey, getQueryWhereMetrics } from "./runtime";
+import { getCompatibleQueryOperators } from "./query-utils";
 
 const createJsonSchemaParser = (schema: boolean | Record<string, unknown>) => {
   let parser: z.ZodType;
@@ -26,6 +29,41 @@ const createJsonSchemaParser = (schema: boolean | Record<string, unknown>) => {
 
 export const isQueryExpression = (value: string) =>
   value.trim() !== "" && parseArrayExpression(`[${value}]`)?.length === 1;
+
+const isFieldPath = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((segment) => typeof segment === "string");
+
+const isControlExpressionValid = (
+  expression: string,
+  control: QueryExpressionControl
+) => {
+  if (isQueryExpression(expression) === false) {
+    return false;
+  }
+  if (control.input !== "number") {
+    return true;
+  }
+  const value = parseJsonExpression(expression);
+  if (value === undefined) {
+    return true;
+  }
+  return (
+    typeof value === "number" &&
+    (control.integer !== true || Number.isInteger(value)) &&
+    (control.min === undefined ||
+      (control.exclusiveMin ? value > control.min : value >= control.min)) &&
+    (control.max === undefined ||
+      (control.exclusiveMax ? value < control.max : value <= control.max))
+  );
+};
+
+const getFieldCapability = <FieldType extends string>(
+  field: readonly string[],
+  capabilities: Pick<QuerySourceDefinition<FieldType>, "fields">
+) =>
+  capabilities.fields.find(
+    ({ path }) => getQueryFieldKey(path) === getQueryFieldKey(field)
+  );
 
 const isOperatorCompatible = <
   FieldType extends string,
@@ -45,15 +83,15 @@ const isOperatorCompatible = <
   if (operatorCapability === undefined) {
     return false;
   }
-  const fieldCapability = capabilities.fields.find(
-    ({ path }) => getQueryFieldKey(path) === getQueryFieldKey(field)
-  );
-  return (
-    fieldCapability === undefined ||
-    operatorCapability.types.some((type) =>
-      fieldCapability.types.includes(type)
-    )
-  );
+  const fieldCapability = getFieldCapability(field, capabilities);
+  if (fieldCapability === undefined) {
+    return true;
+  }
+  return getCompatibleQueryOperators(
+    fieldCapability.types,
+    capabilities.operators,
+    fieldCapability.operators
+  ).includes(operatorCapability);
 };
 
 const parseWhere = <FieldType extends string, Operator extends string>({
@@ -73,6 +111,9 @@ const parseWhere = <FieldType extends string, Operator extends string>({
     return;
   }
   const fields = parseExpressionObject(expression);
+  if (fields === undefined) {
+    return;
+  }
   const combinator = fields.has("all")
     ? "all"
     : fields.has("any")
@@ -112,8 +153,7 @@ const parseWhere = <FieldType extends string, Operator extends string>({
   if (
     fields.size !== 3 ||
     parseFieldPath(field).success === false ||
-    Array.isArray(field) === false ||
-    field.some((segment) => typeof segment !== "string") ||
+    isFieldPath(field) === false ||
     typeof operator !== "string" ||
     isOperatorCompatible({
       field,
@@ -199,10 +239,14 @@ export const createQuerySourceCodec = <
         : []
     )
   );
-  const parseSort = (value: unknown, max: number) => {
-    if (Array.isArray(value) === false || value.length > max) {
+  const parseSort = (value: unknown, control: QuerySortControl) => {
+    if (
+      Array.isArray(value) === false ||
+      (control.max !== undefined && value.length > control.max)
+    ) {
       return;
     }
+    const directions = new Set(control.directions.map(({ value }) => value));
     const items = value.map((item) => {
       if (
         typeof item !== "object" ||
@@ -211,11 +255,13 @@ export const createQuerySourceCodec = <
         !("field" in item) ||
         !("direction" in item) ||
         parseFieldPath(item.field).success === false ||
-        (item.direction !== "asc" && item.direction !== "desc")
+        isFieldPath(item.field) === false ||
+        typeof item.direction !== "string" ||
+        directions.has(item.direction) === false
       ) {
         return;
       }
-      return { field: item.field as string[], direction: item.direction };
+      return { field: item.field, direction: item.direction };
     });
     return items.some((item) => item === undefined) ? undefined : items;
   };
@@ -224,6 +270,7 @@ export const createQuerySourceCodec = <
       const expressions = parseExpressionObject(source);
       const controls = capabilities.source.controls;
       if (
+        expressions === undefined ||
         [...expressions.keys()].some(
           (key) => controls.some((control) => control.key === key) === false
         )
@@ -238,7 +285,7 @@ export const createQuerySourceCodec = <
             ? control.defaultValue
             : generateJsonExpression(control.defaultValue));
         if (control.type === "expression") {
-          if (isQueryExpression(expression) === false) {
+          if (isControlExpressionValid(expression, control) === false) {
             return {
               success: false,
               message: `Enter a valid ${control.label.toLowerCase()}.`,
@@ -272,7 +319,7 @@ export const createQuerySourceCodec = <
         }
         const parsedJson = parseJsonExpression(expression);
         if (control.type === "sort") {
-          const sort = parseSort(parsedJson, control.max);
+          const sort = parseSort(parsedJson, control);
           if (sort === undefined) {
             return {
               success: false,
@@ -299,7 +346,10 @@ export const createQuerySourceCodec = <
         const value =
           query[control.key] ?? structuredClone(control.defaultValue);
         if (control.type === "expression") {
-          if (typeof value !== "string" || isQueryExpression(value) === false) {
+          if (
+            typeof value !== "string" ||
+            isControlExpressionValid(value, control) === false
+          ) {
             throw new Error(`Query ${control.key} is invalid`);
           }
           fields.set(control.key, value);
@@ -321,7 +371,7 @@ export const createQuerySourceCodec = <
           continue;
         }
         if (control.type === "sort") {
-          if (parseSort(value, control.max) === undefined) {
+          if (parseSort(value, control) === undefined) {
             throw new Error(`Query ${control.key} is invalid`);
           }
           fields.set(control.key, generateJsonExpression(value));

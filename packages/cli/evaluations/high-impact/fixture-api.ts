@@ -166,7 +166,9 @@ export const startHighImpactFixtureApi = async (
         };
         version += 1;
         response.writeHead(200, { "content-type": "application/json" });
-        response.end(JSON.stringify({ uploadedAssets: [asset] }));
+        response.end(
+          JSON.stringify({ uploadedAssets: [asset], deduplicated: false })
+        );
         return;
       }
       if (operationPath === "build.loadProjectBundleByProjectId") {

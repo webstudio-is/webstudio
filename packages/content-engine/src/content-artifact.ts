@@ -11,6 +11,35 @@ export const checksumContentArtifact = async (index: ContentArtifactV1) => {
 export const serializeContentArtifact = (value: unknown) =>
   serializeJsonDeterministically(contentArtifactV1.parse(value));
 
+export const getContentArtifactReferencedAssetIds = (
+  artifact: Pick<ContentArtifactV1, "assetReferences">
+) =>
+  [
+    ...new Set(
+      Object.values(artifact.assetReferences ?? {})
+        .flat()
+        .map(({ assetId }) => assetId)
+    ),
+  ].sort();
+
+export const getContentArtifactRuntimeAssetIds = ({
+  artifact,
+  includeDocuments,
+}: {
+  artifact: Pick<ContentArtifactV1, "assetReferences"> & {
+    documents: readonly { _id: string }[];
+  };
+  includeDocuments: boolean;
+}) => {
+  const ids = new Set(getContentArtifactReferencedAssetIds(artifact));
+  if (includeDocuments) {
+    for (const { _id } of artifact.documents) {
+      ids.add(_id);
+    }
+  }
+  return [...ids].sort();
+};
+
 const assertContentArtifactSize = (index: ContentArtifactV1) => {
   const maximumBytes =
     index.database?.maxBytes ?? contentEngineLimits.databaseBytes;

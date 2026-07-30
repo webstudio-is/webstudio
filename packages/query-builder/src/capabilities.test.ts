@@ -47,6 +47,10 @@ const capabilities = {
         label: "Sort",
         defaultValue: [],
         defaultItem: { field: ["title"], direction: "asc" },
+        directions: [
+          { value: "asc", label: "Ascending" },
+          { value: "desc", label: "Descending" },
+        ],
         max: 3,
       },
       {
@@ -97,6 +101,36 @@ describe("query capabilities", () => {
     ).toBe(true);
   });
 
+  test("rejects inconsistent sort direction capabilities", () => {
+    const withSort = (change: Record<string, unknown>) => ({
+      ...capabilities,
+      source: {
+        ...capabilities.source,
+        controls: capabilities.source.controls.map((control) =>
+          control.type === "sort" ? { ...control, ...change } : control
+        ),
+      },
+    });
+
+    expect(
+      queryDefinition.safeParse(
+        withSort({
+          directions: [capabilities.source.controls[1].directions[1]],
+        })
+      ).success
+    ).toBe(false);
+    expect(
+      queryDefinition.safeParse(
+        withSort({
+          directions: [
+            capabilities.source.controls[1].directions[0],
+            capabilities.source.controls[1].directions[0],
+          ],
+        })
+      ).success
+    ).toBe(false);
+  });
+
   test("rejects defaults that the declared fields and operators cannot use", () => {
     expect(
       queryDefinition.safeParse({
@@ -115,6 +149,24 @@ describe("query capabilities", () => {
               : control
           ),
         },
+      }).success
+    ).toBe(false);
+  });
+
+  test("rejects field-specific operators that are unavailable", () => {
+    expect(
+      queryDefinition.safeParse({
+        ...capabilities,
+        fields: [{ ...capabilities.fields[0], operators: ["missing"] }],
+      }).success
+    ).toBe(false);
+  });
+
+  test("rejects a default filter operator unsupported by its field", () => {
+    expect(
+      queryDefinition.safeParse({
+        ...capabilities,
+        fields: [{ ...capabilities.fields[0], operators: ["contains"] }],
       }).success
     ).toBe(false);
   });

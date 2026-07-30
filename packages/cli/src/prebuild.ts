@@ -41,6 +41,7 @@ import {
   elementComponent,
   toRuntimeAsset,
   matchPathnameParams,
+  createReachableAssetContentCompilationPlan,
   parseStructuredAssetQueryResourceBody,
   type StructuredAssetQueryFilterBinding,
   type StructuredAssetQueryWhereBinding,
@@ -61,12 +62,22 @@ import {
   type AssetQueryFilter,
   type ContentDatabaseDocument,
   getAssetQueryFieldValue,
+  getContentArtifactReferencedAssetIds,
+  getContentArtifactRuntimeAssetIds,
   matchesAssetQueryFilter,
+  requiresRuntimeDocumentData,
+  serializeContentArtifact,
+  verifyContentArtifact,
 } from "@webstudio-is/content-engine";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
-import { serializeContentArtifact } from "@webstudio-is/content-engine/compiler";
-import { parseStaticMemberPath } from "@webstudio-is/expression";
-import { getQueryConditions } from "@webstudio-is/query-builder";
+import {
+  parseJsonExpression,
+  parseStaticMemberPath,
+} from "@webstudio-is/expression";
+import {
+  evaluateQueryWhere,
+  getQueryConditions,
+} from "@webstudio-is/query-builder/runtime";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -91,7 +102,15 @@ export const generatedFilesManifest = join(
   ".webstudio",
   "generated-files.json"
 );
-const contentRuntimeStatePath = join(".webstudio", "content-runtime.json");
+const contentRuntimeBundleUrl = new URL(
+  /* @vite-ignore */ "../lib/content-runtime.js",
+  import.meta.url
+);
+const contentRuntimeFile = "$resources.asset-query-vendor.js";
+const ssgAssetResourceFetchTemplateUrl = new URL(
+  "../templates/ssg/app/asset-resource-fetch.ts",
+  import.meta.url
+);
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
 const routesDir = join(appRoot, "routes");
@@ -123,16 +142,16 @@ const getBoundSystemRouteParameter = (expression: string) => {
 const getStaticAssetQueryFilter = (
   filter: StructuredAssetQueryFilterBinding
 ): AssetQueryFilter | undefined => {
-  try {
-    const parsed = assetQueryFilter.safeParse({
-      field: filter.field,
-      operator: filter.operator,
-      value: JSON.parse(filter.value) as unknown,
-    });
-    return parsed.success ? parsed.data : undefined;
-  } catch {
+  const value = parseJsonExpression(filter.value);
+  if (value === undefined) {
     return;
   }
+  const parsed = assetQueryFilter.safeParse({
+    field: filter.field,
+    operator: filter.operator,
+    value,
+  });
+  return parsed.success ? parsed.data : undefined;
 };
 
 const evaluatePrerenderWhere = ({
@@ -144,42 +163,25 @@ const evaluatePrerenderWhere = ({
   where: StructuredAssetQueryWhereBinding;
   routeValues: ReadonlyMap<string, string>;
 }): boolean | undefined => {
-  if ("field" in where) {
-    const routeParameter = getBoundSystemRouteParameter(where.value);
+  return evaluateQueryWhere(where, (condition) => {
+    const routeParameter = getBoundSystemRouteParameter(condition.value);
     const routeValue =
       routeParameter === undefined
         ? undefined
         : routeValues.get(routeParameter);
-    const filter =
-      routeValue === undefined
-        ? getStaticAssetQueryFilter(where)
-        : assetQueryFilter.safeParse({ ...where, value: routeValue });
+    let filter = getStaticAssetQueryFilter(condition);
+    if (routeValue !== undefined) {
+      const parsed = assetQueryFilter.safeParse({
+        ...condition,
+        value: routeValue,
+      });
+      filter = parsed.success ? parsed.data : undefined;
+    }
     if (filter === undefined) {
       return;
     }
-    if ("success" in filter) {
-      return filter.success
-        ? matchesAssetQueryFilter(document, filter.data)
-        : false;
-    }
     return matchesAssetQueryFilter(document, filter);
-  }
-  const children = "all" in where ? where.all : where.any;
-  const results = children.map((child) =>
-    evaluatePrerenderWhere({ document, where: child, routeValues })
-  );
-  if ("all" in where) {
-    return results.includes(false)
-      ? false
-      : results.every((result) => result === true)
-        ? true
-        : undefined;
-  }
-  return results.includes(true)
-    ? true
-    : results.every((result) => result === false)
-      ? false
-      : undefined;
+  });
 };
 
 const getRouteCandidates = ({
@@ -224,14 +226,70 @@ const getRouteCandidates = ({
   return candidates;
 };
 
+const canEnumerateRouteCondition = ({
+  condition,
+  routeParameter,
+  index,
+}: {
+  condition: StructuredAssetQueryFilterBinding;
+  routeParameter: string;
+  index: NonNullable<PublishedProjectBundle["assetIndex"]>;
+}) => {
+  if (getBoundSystemRouteParameter(condition.value) !== routeParameter) {
+    return false;
+  }
+  if (condition.operator === "eq") {
+    return true;
+  }
+  return (
+    condition.operator === "contains" &&
+    index.documents.every(
+      (document) =>
+        typeof getAssetQueryFieldValue(document, condition.field) !== "string"
+    )
+  );
+};
+
+const isRouteParameterConstrained = ({
+  where,
+  routeParameter,
+  index,
+}: {
+  where: StructuredAssetQueryWhereBinding;
+  routeParameter: string;
+  index: NonNullable<PublishedProjectBundle["assetIndex"]>;
+}): boolean => {
+  if ("field" in where) {
+    return canEnumerateRouteCondition({
+      condition: where,
+      routeParameter,
+      index,
+    });
+  }
+  const children = "all" in where ? where.all : where.any;
+  if ("all" in where) {
+    return children.some((child) =>
+      isRouteParameterConstrained({ where: child, routeParameter, index })
+    );
+  }
+  return (
+    children.length > 0 &&
+    children.every((child) =>
+      isRouteParameterConstrained({ where: child, routeParameter, index })
+    )
+  );
+};
+
 export const getAssetResourcePrerenderPaths = ({
   pagePath,
   resources,
   index,
+  requireCompleteEnumeration = false,
 }: {
   pagePath: string;
   resources: readonly [string, Resource][];
   index: PublishedProjectBundle["assetIndex"];
+  requireCompleteEnumeration?: boolean;
 }) => {
   const pathParameters = [...matchPathnameParams(pagePath)];
   if (
@@ -249,17 +307,67 @@ export const getAssetResourcePrerenderPaths = ({
   if (index === undefined) {
     return [];
   }
-  const paths = new Set<string>();
-  for (const [, resource] of resources) {
+  const configurations = resources.flatMap(([, resource]) => {
     if (isAssetsResource(resource) === false) {
-      continue;
+      return [];
     }
     const configuration = parseStructuredAssetQueryResourceBody(resource.body);
-    if (configuration === undefined) {
-      continue;
+    return configuration === undefined ? [] : [configuration];
+  });
+  let enumerableConfigurations = configurations;
+  if (requireCompleteEnumeration && configurations.length > 0) {
+    const configurationsByParameters = configurations.flatMap(
+      (configuration) => {
+        const boundRouteParameters = new Set(
+          getQueryConditions(configuration.where).flatMap((condition) => {
+            const routeParameter = getBoundSystemRouteParameter(
+              condition.value
+            );
+            return routeParameter !== undefined &&
+              routeParameterNames.has(routeParameter)
+              ? [routeParameter]
+              : [];
+          })
+        );
+        return [...routeParameterNames].every((routeParameter) =>
+          boundRouteParameters.has(routeParameter)
+        )
+          ? [{ configuration, boundRouteParameters }]
+          : [];
+      }
+    );
+    if (configurationsByParameters.length === 0) {
+      throw new Error(
+        "Dynamic SSG route parameters must be completely enumerated by one Assets query"
+      );
     }
+    let firstUnenumerableParameter: string | undefined;
+    enumerableConfigurations = configurationsByParameters.flatMap(
+      ({ configuration, boundRouteParameters }) => {
+        for (const routeParameter of boundRouteParameters) {
+          if (
+            isRouteParameterConstrained({
+              where: configuration.where,
+              routeParameter,
+              index,
+            }) === false
+          ) {
+            firstUnenumerableParameter ??= routeParameter;
+            return [];
+          }
+        }
+        return [configuration];
+      }
+    );
+    if (enumerableConfigurations.length === 0) {
+      throw new Error(
+        `Dynamic SSG route parameter ${JSON.stringify(firstUnenumerableParameter)} cannot be completely enumerated from every Assets query branch`
+      );
+    }
+  }
+  const paths = new Set<string>();
+  for (const configuration of enumerableConfigurations) {
     let evaluatedCandidates = 0;
-    const routeOwners = new Map<string, string>();
     for (const document of index.documents) {
       const candidates = getRouteCandidates({
         document,
@@ -310,13 +418,6 @@ export const getAssetResourcePrerenderPaths = ({
           const value = values.get(name) as string;
           path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
         }
-        const owner = routeOwners.get(path);
-        if (owner !== undefined && owner !== document._id) {
-          throw new Error(
-            `Dynamic Assets route is claimed by multiple files: ${path}`
-          );
-        }
-        routeOwners.set(path, document._id);
         paths.add(path);
         if (paths.size > assetResourceLimits.candidateDocuments) {
           throw new Error("Dynamic SSG path count exceeds the Assets limit");
@@ -383,75 +484,15 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   );
 };
 
-const configureContentRuntime = async ({ enabled }: { enabled: boolean }) => {
-  const packagePath = join(cwd(), "package.json");
-  const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as {
-    dependencies?: Record<string, string>;
-  };
-  const dependencies = packageJson.dependencies ?? {};
-  const previousState = await loadJSONFile<unknown>(contentRuntimeStatePath);
-  const injectedVersion =
-    typeof previousState === "object" &&
-    previousState !== null &&
-    "injectedVersion" in previousState &&
-    typeof previousState.injectedVersion === "string"
-      ? previousState.injectedVersion
-      : undefined;
-  const currentVersion = dependencies["@webstudio-is/content-engine"];
-  let packageChanged = false;
-  let nextInjectedVersion =
-    currentVersion === injectedVersion ? injectedVersion : undefined;
-  if (enabled) {
-    if (currentVersion === undefined) {
-      nextInjectedVersion =
-        dependencies["@webstudio-is/react-sdk"] ?? "0.0.0-webstudio-version";
-      dependencies["@webstudio-is/content-engine"] = nextInjectedVersion;
-      packageJson.dependencies = dependencies;
-      packageChanged = true;
-    }
-  } else if (
-    injectedVersion !== undefined &&
-    currentVersion === injectedVersion
-  ) {
-    delete dependencies["@webstudio-is/content-engine"];
-    nextInjectedVersion = undefined;
-    packageChanged = true;
-  }
-  if (nextInjectedVersion === undefined) {
-    await rm(contentRuntimeStatePath, { force: true });
-  } else {
-    await writeFile(
-      contentRuntimeStatePath,
-      `${JSON.stringify({ injectedVersion: nextInjectedVersion }, null, 2)}\n`,
-      "utf8"
-    );
-  }
-  if (packageChanged) {
-    await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
-  }
-
+const configureSsgAssetResourceFetch = async ({
+  enabled,
+}: {
+  enabled: boolean;
+}) => {
   const ssgFetchPath = join(cwd(), "app", "asset-resource-fetch.ts");
   if (existsSync(ssgFetchPath)) {
     const content = enabled
-      ? `import { createPublishedAssetResourceFetch } from "@webstudio-is/content-engine/runtime";
-import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
-
-export const createSsgAssetResourceFetch = ({
-  deploymentId,
-  artifact,
-  runtimeAssets,
-}: {
-  deploymentId: string;
-  artifact: ContentArtifactV1;
-  runtimeAssets: Record<string, { url: string; width?: number; height?: number }>;
-}) =>
-  createPublishedAssetResourceFetch({
-    baseUrl: "https://webstudio.local",
-    deploymentId,
-    artifact,
-    runtimeAssets,
-  });
-`
+      ? await readFile(ssgAssetResourceFetchTemplateUrl, "utf8")
       : `export const createSsgAssetResourceFetch = (_options: unknown) =>
   async (_input: RequestInfo | URL, _init?: RequestInit) => undefined;\n`;
     await writeFileIfChanged(ssgFetchPath, content);
@@ -461,9 +502,11 @@ export const createSsgAssetResourceFetch = ({
 const generateAssetQueryRuntimeModule = ({
   deploymentId,
   index,
+  runtimeAssets,
 }: {
   deploymentId: string;
   index: PublishedProjectBundle["assetIndex"];
+  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
 }) => {
   const inputType = `{
     request: Request;
@@ -473,36 +516,80 @@ const generateAssetQueryRuntimeModule = ({
   if (index === undefined) {
     return `export const createGeneratedAssetResourceFetch = async ({ fallback }: ${inputType}): Promise<typeof fetch> => fallback;\n`;
   }
-  return `import { createGeneratedAssetResourceFetch as createRuntimeFetch } from "@webstudio-is/content-engine/runtime";
+  return `import { createGeneratedAssetResourceRuntime } from "./${contentRuntimeFile}";
 import { assetQueryDatabase } from "./$resources.asset-query-manifest";
-import { assets } from "./$resources.assets";
 
 const deploymentId = ${JSON.stringify(deploymentId)};
+const runtimeAssets = ${JSON.stringify(runtimeAssets)};
+const createRuntimeFetch = createGeneratedAssetResourceRuntime({
+  deploymentId,
+  artifact: assetQueryDatabase,
+  runtimeAssets,
+});
 
 export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${inputType}) =>
-  createRuntimeFetch({ request, deploymentId, artifact: assetQueryDatabase, runtimeAssets: assets, fallback });
+  createRuntimeFetch({ request, fallback });
 `;
 };
 
 export const materializeAssetIndex = async ({
   index,
+  runtimeAssets,
+  includeDocumentRuntimeAssets,
   generatedDirectory,
   deploymentId,
 }: {
   index: PublishedProjectBundle["assetIndex"];
+  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
+  includeDocumentRuntimeAssets: boolean;
   generatedDirectory: string;
   deploymentId: string;
 }) => {
+  const verifiedIndex =
+    index === undefined ? undefined : await verifyContentArtifact(index);
+  const serializedIndex =
+    verifiedIndex === undefined
+      ? undefined
+      : serializeContentArtifact(verifiedIndex);
+  const runtimeAssetIds =
+    verifiedIndex === undefined
+      ? []
+      : getContentArtifactRuntimeAssetIds({
+          artifact: verifiedIndex,
+          includeDocuments: includeDocumentRuntimeAssets,
+        });
+  const referencedAssetIds = new Set(
+    verifiedIndex === undefined
+      ? []
+      : getContentArtifactReferencedAssetIds(verifiedIndex)
+  );
+  const selectedRuntimeAssets = Object.fromEntries(
+    runtimeAssetIds.map((assetId) => {
+      const asset = runtimeAssets[assetId];
+      if (asset === undefined) {
+        throw new Error(
+          referencedAssetIds.has(assetId)
+            ? `Published referenced asset URL is unavailable for ${assetId}`
+            : `Published asset runtime data is unavailable for ${assetId}`
+        );
+      }
+      return [assetId, asset];
+    })
+  );
+  const runtimePath = join(generatedDirectory, contentRuntimeFile);
+  if (index === undefined) {
+    await rm(runtimePath, { force: true });
+  } else {
+    await cp(contentRuntimeBundleUrl, runtimePath);
+  }
   await writeFile(
     join(generatedDirectory, "$resources.asset-query-manifest.ts"),
-    index === undefined
+    serializedIndex === undefined
       ? `export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
 export const assetQueryDatabase = undefined;
 `
-      : `import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
-
-export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
-export const assetQueryDatabase: ContentArtifactV1 = ${serializeContentArtifact(index)};
+      : `export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
+export const assetQueryDatabase = ${serializedIndex};
 `,
     "utf8"
   );
@@ -510,7 +597,8 @@ export const assetQueryDatabase: ContentArtifactV1 = ${serializeContentArtifact(
     join(generatedDirectory, "$resources.asset-query-runtime.ts"),
     generateAssetQueryRuntimeModule({
       deploymentId,
-      index,
+      index: verifiedIndex,
+      runtimeAssets: selectedRuntimeAssets,
     }),
     "utf8"
   );
@@ -805,7 +893,9 @@ export const prebuild = async (options: {
     );
   }
   const siteData = parsedSiteData.data;
-  await configureContentRuntime({ enabled: siteData.assetIndex !== undefined });
+  await configureSsgAssetResourceFetch({
+    enabled: siteData.assetIndex !== undefined,
+  });
 
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
@@ -1211,6 +1301,7 @@ export const prebuild = async (options: {
       pagePath,
       resources: pageData.build.resources,
       index: siteData.assetIndex,
+      requireCompleteEnumeration: options.template.includes("ssg"),
     });
     if (publishablePageIds.has(page.id) && isPageEligibleForSitemap(page)) {
       for (const path of prerenderPaths) {
@@ -1294,8 +1385,32 @@ export const prebuild = async (options: {
     `
   );
 
+  // Generate assets resource file.
+  // Use a placeholder origin to preserve runtime metadata before overriding the
+  // builder-only URL with the generated project's local asset URL.
+  const assetsById = Object.fromEntries(
+    siteData.assets.map((asset) => [
+      asset.id,
+      {
+        ...toRuntimeAsset(asset, "https://placeholder.local"),
+        // Generated projects serve materialized assets from the template's
+        // asset base; the /cgi routes only exist in the live builder.
+        url: `${assetBaseUrl}${asset.name}`,
+      },
+    ])
+  );
+  const assetCompilationPlan = createReachableAssetContentCompilationPlan({
+    props: siteData.build.props.map(([, prop]) => prop),
+    dataSources: siteData.build.dataSources.map(([, dataSource]) => dataSource),
+    resources: siteData.build.resources.map(([, resource]) => resource),
+  });
+
   await materializeAssetIndex({
     index: siteData.assetIndex,
+    runtimeAssets: assetsById,
+    includeDocumentRuntimeAssets:
+      assetCompilationPlan !== undefined &&
+      requiresRuntimeDocumentData(assetCompilationPlan),
     generatedDirectory: generatedDir,
     deploymentId: siteData.build.id,
   });
@@ -1312,21 +1427,6 @@ export const prebuild = async (options: {
       "utf8"
     );
   }
-
-  // Generate assets resource file.
-  // Use a placeholder origin to preserve runtime metadata before overriding the
-  // builder-only URL with the generated project's local asset URL.
-  const assetsById = Object.fromEntries(
-    siteData.assets.map((asset) => [
-      asset.id,
-      {
-        ...toRuntimeAsset(asset, "https://placeholder.local"),
-        // Generated projects serve materialized assets from the template's
-        // asset base; the /cgi routes only exist in the live builder.
-        url: `${assetBaseUrl}${asset.name}`,
-      },
-    ])
-  );
 
   await writeGeneratedFile(
     join(generatedDir, "$resources.assets.ts"),

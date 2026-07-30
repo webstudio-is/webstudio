@@ -4,13 +4,13 @@ import {
   type Diagnostic,
   getExpressionValueKind,
   isLiteralExpression,
+  isValidExpression,
   lintExpression,
   transpileExpression,
   getExpressionIdentifiers,
   generateObjectExpression,
   generateJsonExpression,
   parseJsonExpression,
-  parseObjectExpression,
   parseExpressionObject,
   parseArrayExpression,
   parseStaticMemberPath,
@@ -18,6 +18,12 @@ import {
   allowedArrayMethods,
   allowedStringMethods,
 } from "./index";
+
+test("validates complete expressions", () => {
+  expect(isValidExpression("post.title ?? 'Untitled'")).toBe(true);
+  expect(isValidExpression("post.title trailing")).toBe(false);
+  expect(isValidExpression("{")).toBe(false);
+});
 
 describe("static member paths", () => {
   test.each([
@@ -509,7 +515,9 @@ describe("expression value kinds", () => {
     ["{}", "object"],
     ['"text"', "string"],
     ["`text`", "string"],
+    ['"text" /* trailing comment */', "string"],
     ["value +", "unknown"],
+    ['"text" trailing', "unknown"],
   ] as const)("classifies %s as %s", (expression, kind) => {
     expect(getExpressionValueKind({ expression })).toBe(kind);
   });
@@ -589,6 +597,7 @@ test("check simple literals", () => {
   expect(isLiteralExpression(`"" + ""`)).toEqual(false);
   expect(isLiteralExpression(`{}.field`)).toEqual(false);
   expect(isLiteralExpression(`variable`)).toEqual(false);
+  expect(isLiteralExpression(`1 trailing`)).toEqual(false);
   expect(isLiteralExpression(``)).toEqual(false);
 });
 
@@ -627,6 +636,7 @@ describe("get expression identifiers", () => {
   test("not fail when invalid syntax", () => {
     expect(getExpressionIdentifiers("")).toEqual(new Set());
     expect(getExpressionIdentifiers("a = a +")).toEqual(new Set());
+    expect(getExpressionIdentifiers("a trailing")).toEqual(new Set());
   });
 });
 
@@ -784,6 +794,12 @@ describe("transpile expression", () => {
     expect(errorString).toEqual(`Unexpected token (1:0) in ""`);
   });
 
+  test("rejects content after the expression", () => {
+    expect(() => transpileExpression({ expression: "value trailing" })).toThrow(
+      'Unexpected content after expression in "value trailing"'
+    );
+  });
+
   test("transpile string methods with optional chaining", () => {
     expect(
       transpileExpression({
@@ -914,10 +930,17 @@ describe("object expression transformations", () => {
     expect(parseExpressionObject("(({ value: 1 }))")).toEqual(
       new Map([["value", "1"]])
     );
-    expect(parseExpressionObject("{} trailing")).toEqual(new Map());
-    expect(parseExpressionObject("({}) trailing")).toEqual(new Map());
-    expect(parseExpressionObject("{ value: 1, ...other }")).toEqual(new Map());
-    expect(parseExpressionObject("{ value: 1, value: 2 }")).toEqual(new Map());
+    expect(parseExpressionObject("{} trailing")).toBeUndefined();
+    expect(parseExpressionObject("({}) trailing")).toBeUndefined();
+    expect(parseExpressionObject("{")).toBeUndefined();
+    expect(parseExpressionObject("0")).toBeUndefined();
+    expect(parseExpressionObject("{ value: 1, ...other }")).toBeUndefined();
+    expect(parseExpressionObject("{ [value]: 1 }")).toBeUndefined();
+    expect(parseExpressionObject('{ "quoted-key": 1 }')).toEqual(
+      new Map([["quoted-key", "1"]])
+    );
+    expect(parseExpressionObject("{ 1: true }")).toBeUndefined();
+    expect(parseExpressionObject("{ value: 1, value: 2 }")).toBeUndefined();
   });
 
   test("parse array expression", () => {
@@ -930,33 +953,6 @@ describe("object expression transformations", () => {
     expect(parseArrayExpression("[...items]")).toBeUndefined();
     expect(parseArrayExpression("[")).toBeUndefined();
     expect(parseArrayExpression("[1] trailing")).toBeUndefined();
-  });
-
-  test("parse object expression", () => {
-    expect(parseObjectExpression(`{ a: 0, b: "", c: $c + 1 }`)).toEqual(
-      new Map([
-        ["a", `0`],
-        ["b", `""`],
-        ["c", `$c + 1`],
-      ])
-    );
-  });
-
-  test("parse unsupported syntax", () => {
-    expect(parseObjectExpression(``)).toEqual(new Map());
-    expect(parseObjectExpression(`0`)).toEqual(new Map());
-    expect(parseObjectExpression(`{ a: 0, ...spread }`)).toEqual(
-      new Map([["a", "0"]])
-    );
-    expect(parseObjectExpression(`{ a: 0, [b]: 0 }`)).toEqual(
-      new Map([["a", "0"]])
-    );
-    expect(parseObjectExpression(`{ "a-b": 0 }`)).toEqual(
-      new Map([["a-b", "0"]])
-    );
-    expect(parseObjectExpression(`{ 1: true, valid: false }`)).toEqual(
-      new Map([["valid", "false"]])
-    );
   });
 
   test("format object expression", () => {
@@ -1024,5 +1020,25 @@ describe("object expression transformations", () => {
     expect(parseJsonExpression("{ value: dynamic }")).toBeUndefined();
     expect(parseJsonExpression("{ value: 1, value: 2 }")).toBeUndefined();
     expect(parseJsonExpression("{ value: -1e999 }")).toBeUndefined();
+    expect(parseJsonExpression('{ "quoted": true }')).toEqual({
+      quoted: true,
+    });
+    expect(parseJsonExpression(undefined)).toBeUndefined();
+    expect(parseJsonExpression("true trailing")).toBeUndefined();
+    expect(parseJsonExpression("{")).toBeUndefined();
+    for (const invalid of [
+      "/pattern/",
+      "1n",
+      "[dynamic]",
+      "[,]",
+      "[...values]",
+      "{ ...value }",
+      "{ [key]: 1 }",
+      "{ method() {} }",
+      "{ value }",
+      "{ 1: true }",
+    ]) {
+      expect(parseJsonExpression(invalid), invalid).toBeUndefined();
+    }
   });
 });

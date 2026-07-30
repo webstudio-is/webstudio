@@ -4,11 +4,11 @@ import {
   type AssetResourceQueryFailure,
 } from "./schema";
 import { sha256Hex } from "./canonical-json";
-import { AssetQueryExecutionError } from "./structured-query";
+import { getContentArtifactReferencedAssetIds } from "./content-artifact";
 import { createContentDatabase } from "./content-database";
-import { AssetResourceHydrationError } from "./hydration";
 import { readAssetQueryRequest } from "./request";
 import type { AssetRuntimeData } from "./structured-query";
+import { getAssetResourceQueryError } from "./query-error";
 
 const assetsResourceUrl = "/$resources/assets";
 
@@ -78,12 +78,54 @@ export const createPublishedAssetResourceFetch = ({
 }: {
   deploymentId: string;
   artifact: ContentArtifactV1;
-  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
   cache?: Pick<Cache, "match" | "put">;
   baseUrl: string | URL;
 }) => {
+  validateRuntimeAssets({ artifact, runtimeAssets });
+  return createPublishedAssetResourceHandler({
+    deploymentId,
+    artifact,
+    runtimeAssets,
+    cache,
+    baseUrl,
+    database: createContentDatabase({ artifact }),
+  });
+};
+
+const validateRuntimeAssets = ({
+  artifact,
+  runtimeAssets,
+}: {
+  artifact: ContentArtifactV1;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+}) => {
+  const missingReferencedAssetId = getContentArtifactReferencedAssetIds(
+    artifact
+  ).find((assetId) => runtimeAssets[assetId] === undefined);
+  if (missingReferencedAssetId !== undefined) {
+    throw new Error(
+      `Published referenced asset URL is unavailable for ${missingReferencedAssetId}`
+    );
+  }
+};
+
+const createPublishedAssetResourceHandler = ({
+  deploymentId,
+  artifact,
+  runtimeAssets,
+  cache,
+  baseUrl,
+  database,
+}: {
+  deploymentId: string;
+  artifact: ContentArtifactV1;
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+  cache?: Pick<Cache, "match" | "put">;
+  baseUrl: string | URL;
+  database: ReturnType<typeof createContentDatabase>;
+}) => {
   const baseOrigin = new URL(baseUrl).origin;
-  const database = createContentDatabase({ artifact });
   return async (
     input: RequestInfo | URL,
     init?: RequestInit
@@ -105,16 +147,6 @@ export const createPublishedAssetResourceFetch = ({
         code: "INVALID_REQUEST",
         message: "Asset resource request is invalid",
         status: 400,
-      });
-    }
-    if (
-      parsedRequest.indexRevision !== undefined &&
-      parsedRequest.indexRevision !== artifact.integrity.checksum
-    ) {
-      return failure({
-        code: "STALE_INDEX",
-        message: "The requested asset index revision is stale",
-        status: 409,
       });
     }
     const cacheKey =
@@ -158,22 +190,9 @@ export const createPublishedAssetResourceFetch = ({
           status: 499,
         });
       }
-      if (
-        error instanceof AssetQueryExecutionError ||
-        error instanceof AssetResourceHydrationError
-      ) {
-        return failure({
-          code:
-            error instanceof AssetResourceHydrationError
-              ? error.code
-              : "INVALID_REQUEST",
-          message: error.message,
-          details:
-            error instanceof AssetResourceHydrationError
-              ? error.details
-              : undefined,
-          status: 400,
-        });
+      const queryError = getAssetResourceQueryError(error);
+      if (queryError !== undefined) {
+        return failure(queryError);
       }
       return failure({
         code: "INTERNAL_ERROR",
@@ -185,19 +204,15 @@ export const createPublishedAssetResourceFetch = ({
   };
 };
 
-export const createGeneratedAssetResourceFetch = async ({
-  request,
+export const createGeneratedAssetResourceRuntime = ({
   deploymentId,
   artifact,
   runtimeAssets,
-  fallback,
 }: {
-  request: Request;
   deploymentId: string;
   artifact: ContentArtifactV1;
-  runtimeAssets?: Readonly<Record<string, AssetRuntimeData>>;
-  fallback: typeof fetch;
-}): Promise<typeof fetch> => {
+  runtimeAssets: Readonly<Record<string, AssetRuntimeData>>;
+}) => {
   const cacheStorage = globalThis.caches;
   let cachePromise: Promise<Cache> | undefined;
   const getCache = () => {
@@ -212,13 +227,25 @@ export const createGeneratedAssetResourceFetch = async ({
           put: async (key: Request, response: Response) =>
             (await getCache()).put(key, response),
         };
-  const fetchResource = createPublishedAssetResourceFetch({
-    deploymentId,
-    artifact,
-    runtimeAssets,
-    cache,
-    baseUrl: request.url,
-  });
-  return async (input, init) =>
-    (await fetchResource(input, init)) ?? fallback(input, init);
+  validateRuntimeAssets({ artifact, runtimeAssets });
+  const database = createContentDatabase({ artifact });
+  return async ({
+    request,
+    fallback,
+  }: {
+    request: Request;
+    fallback: typeof fetch;
+  }): Promise<typeof fetch> => {
+    const origin = new URL(request.url).origin;
+    const fetchResource = createPublishedAssetResourceHandler({
+      deploymentId,
+      artifact,
+      runtimeAssets,
+      cache,
+      baseUrl: origin,
+      database,
+    });
+    return async (input, init) =>
+      (await fetchResource(input, init)) ?? fallback(input, init);
+  };
 };

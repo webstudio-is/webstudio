@@ -6,7 +6,7 @@ import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { loader as currentDateLoader } from "../shared/$resources/current-date.server";
 import { loader as assetsFieldCatalogLoader } from "./rest.assets.field-catalog";
-import { loader as assetsQueryLoader } from "../shared/$resources/assets-query.server";
+import { executeAssetQuery } from "../shared/$resources/assets-query.server";
 import { loader as assetsOpenApiLoader } from "./rest.assets.openapi[.]json";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (isLocalResource(input, "assets")) {
       const resourceRequest = new Request(new URL(input, request.url), init);
-      return assetsQueryLoader({ request, resourceRequest });
+      return executeAssetQuery({ request, resourceRequest });
     }
 
     if (isLocalResource(input, "assets/field-catalog")) {

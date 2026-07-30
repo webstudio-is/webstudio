@@ -146,7 +146,7 @@ test("preserves a fixed start pane when the container resizes", () => {
 });
 
 test("clamps a fixed split on container resize and restores its desired size", () => {
-  const { splitView, resize } = renderSplitView({
+  const { separator, splitView, resize } = renderSplitView({
     defaultSize: { value: 320, unit: "px" },
   });
 
@@ -154,6 +154,8 @@ test("clamps a fixed split on container resize and restores its desired size", (
   expect(splitView.style.gridTemplateColumns).toBe(
     "minmax(0, 239px) 1px minmax(0, 1fr)"
   );
+  expect(separator.getAttribute("aria-valuemin")).toBe("160");
+  expect(separator.getAttribute("aria-valuemax")).toBe("239");
 
   resize(1000);
   expect(splitView.style.gridTemplateColumns).toBe(

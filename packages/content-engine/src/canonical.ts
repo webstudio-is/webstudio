@@ -1,6 +1,7 @@
 import { assetFileDocument, type AssetFileDocument } from "./schema";
 import { contentEngineLimits } from "./limits";
-import { z } from "zod";
+import { createCanonicalAssetPath } from "./asset-path";
+import { string } from "zod";
 import {
   compareStrings,
   serializeJsonDeterministically,
@@ -21,8 +22,7 @@ export type AssetFileMetadataInput = {
   contentRef: string;
 };
 
-const canonicalDateTime = z
-  .string()
+const canonicalDateTime = string()
   .datetime({ offset: true })
   .transform((value) => new Date(value).toISOString());
 
@@ -126,73 +126,6 @@ export const appendAssetFieldPath = (path: string, key: string) =>
 export type AssetFieldPathSegment =
   | { type: "field"; name: string }
   | { type: "element" };
-
-export const parseAssetFieldPath = (
-  path: string
-): AssetFieldPathSegment[] | undefined => {
-  if (path === "properties") {
-    return [];
-  }
-  if (path.startsWith("properties") === false) {
-    return;
-  }
-  const segments: AssetFieldPathSegment[] = [];
-  let position = "properties".length;
-  while (position < path.length) {
-    if (path.startsWith("[]", position)) {
-      segments.push({ type: "element" });
-      position += 2;
-      continue;
-    }
-    if (path[position] === ".") {
-      const start = position + 1;
-      position = start;
-      while (
-        position < path.length &&
-        path[position] !== "." &&
-        path[position] !== "["
-      ) {
-        position += 1;
-      }
-      if (position === start) {
-        return;
-      }
-      segments.push({ type: "field", name: path.slice(start, position) });
-      continue;
-    }
-    if (path.startsWith('["', position)) {
-      const start = position + 1;
-      let escaped = false;
-      let quote = start + 1;
-      for (; quote < path.length; quote += 1) {
-        const character = path[quote];
-        if (escaped) {
-          escaped = false;
-        } else if (character === "\\") {
-          escaped = true;
-        } else if (character === '"') {
-          break;
-        }
-      }
-      if (quote >= path.length || path[quote + 1] !== "]") {
-        return;
-      }
-      try {
-        const name = JSON.parse(path.slice(start, quote + 1));
-        if (typeof name !== "string") {
-          return;
-        }
-        segments.push({ type: "field", name });
-      } catch {
-        return;
-      }
-      position = quote + 2;
-      continue;
-    }
-    return;
-  }
-  return segments;
-};
 
 export const getObservedFieldType = (value: unknown): ObservedFieldType => {
   if (value === null) {
@@ -329,20 +262,6 @@ export const createCanonicalAssetFileEntry = ({
   };
 };
 
-// Asset and folder names are user data, not filesystem paths. Encode each name
-// independently so slashes and dot segments cannot change path structure while
-// preserving the original name in the document for display and exact matching.
-const encodeAssetPathSegment = (segment: string) => {
-  const encoded = encodeURIComponent(segment);
-  if (encoded === ".") {
-    return "%2E";
-  }
-  if (encoded === "..") {
-    return "%2E%2E";
-  }
-  return encoded;
-};
-
 /**
  * Builds the canonical query document without merging user properties into the
  * reserved standard metadata namespace.
@@ -374,9 +293,7 @@ export const normalizeAssetFileDocument = ({
     extensionSeparator <= 0
       ? asset.name
       : asset.name.slice(0, extensionSeparator);
-  const path = [...folderNames, asset.name]
-    .map(encodeAssetPathSegment)
-    .join("/");
+  const path = createCanonicalAssetPath({ folderNames, name: asset.name });
 
   return assetFileDocument.parse({
     _id: asset.id,

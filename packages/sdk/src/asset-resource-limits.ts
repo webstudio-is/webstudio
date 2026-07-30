@@ -1,4 +1,4 @@
-import { contentEngineLimits } from "@webstudio-is/content-engine";
+import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 
 /** Webstudio Assets API limits plus the shared content-engine limits. */
 export const assetResourceLimits = {

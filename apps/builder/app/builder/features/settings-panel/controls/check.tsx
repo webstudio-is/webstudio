@@ -1,18 +1,14 @@
 import { useId } from "react";
-import { useStore } from "@nanostores/react";
 import { Checkbox, CheckboxAndLabel } from "@webstudio-is/design-system";
-import {
-  BindableExpressionControl,
-  useBindingState,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
   type ControlProps,
   VerticalLayout,
   Label,
-  $selectedInstanceScope,
   humanizeAttribute,
 } from "../shared";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 
 const add = (array: string[], item: string) => {
   if (array.includes(item)) {
@@ -44,25 +40,23 @@ export const CheckControl = ({
 
   const id = useId();
   const label = humanizeAttribute(meta.label || propName);
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   return (
     <VerticalLayout
       label={
-        <PropertyLabel name={propName} readOnly={overwritable === false} />
+        <PropertyLabel
+          name={propName}
+          readOnly={binding.bindingState.overwritable === false}
+        />
       }
     >
       <BindableExpressionControl
-        expression={expression}
+        {...binding}
         value={value}
-        bound={prop?.type === "expression"}
-        scope={scope}
-        aliases={aliases}
         onChangeValue={(value) => onChange({ type: "string[]", value })}
         onChangeExpression={(value) => onChange({ type: "expression", value })}
         validate={(value) => {

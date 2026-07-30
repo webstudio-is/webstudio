@@ -40,6 +40,7 @@ export const getRequestErrorDiagnostics = (
     return;
   }
   const code = typeof error?.code === "string" ? error.code : undefined;
+  const details = asRecord(error?.details);
   const errorMessage =
     typeof error?.message === "string" && error.message !== ""
       ? error.message
@@ -58,9 +59,7 @@ export const getRequestErrorDiagnostics = (
     ...(typeof error?.retryable === "boolean"
       ? { retryable: error.retryable }
       : {}),
-    ...(asRecord(error?.details) === undefined
-      ? {}
-      : { details: asRecord(error?.details) }),
+    ...(details === undefined ? {} : { details }),
   };
 };
 

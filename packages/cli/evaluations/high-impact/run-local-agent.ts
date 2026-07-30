@@ -229,6 +229,7 @@ const run = async () => {
   const abort = () => controller.abort();
   process.once("SIGINT", abort);
   process.once("SIGTERM", abort);
+  const baselines: AgentEvaluationResult[] = [];
   const completed = await runConcurrently(fixtures, async (fixture) => {
     const resultPath = resolve(
       process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??

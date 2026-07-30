@@ -5,11 +5,16 @@ import {
   type ContentCompilerInput,
 } from "./asset-index";
 import type { ContentArtifactV1 } from "./schema";
+import { selectContentHydrationCandidates } from "./compilation-plan";
 import {
-  discoverMarkdownAssetReferences,
-  type MarkdownAssetReferences,
+  createUniqueAssetIdsByPath,
+  discoverMarkdownAssetReferenceRanges,
 } from "./markdown-assets";
+import type { MarkdownAssetReferences } from "./markdown-references";
 import { compareStrings } from "./canonical-json";
+import { encodeUtf8 } from "./byte-stream";
+import { extractMarkdownBody } from "./markdown-body";
+import { contentEngineLimits } from "./limits";
 
 export type ContentSourceFile = {
   id: string;
@@ -25,7 +30,8 @@ export interface ContentSourceSnapshot {
   readonly revision: string;
   readonly files: readonly ContentSourceFile[];
   loadEntries(
-    plan?: ContentCompilationPlan
+    plan?: ContentCompilationPlan,
+    options?: { maximumContentBytes: number }
   ): Promise<readonly ContentCompilerInput[]>;
   isCurrent(): Promise<boolean>;
 }
@@ -104,43 +110,51 @@ const validateEntries = ({
   }
 };
 
-const discoverSnapshotAssetReferences = ({
+const discoverSnapshotAssetReferences = async ({
   snapshot,
   entries,
+  plan,
 }: {
   snapshot: ContentSourceSnapshot;
   entries: readonly ContentCompilerInput[];
-}): MarkdownAssetReferences => {
-  const ambiguousPaths = new Set<string>();
-  const assetIdsByPath = new Map<string, string>();
-  for (const file of snapshot.files) {
-    if (assetIdsByPath.has(file.path)) {
-      ambiguousPaths.add(file.path);
-      assetIdsByPath.delete(file.path);
-      continue;
-    }
-    if (ambiguousPaths.has(file.path) === false) {
-      assetIdsByPath.set(file.path, file.id);
-    }
-  }
-  const references: Record<string, Readonly<Record<string, string>>> = {};
+  plan?: ContentCompilationPlan;
+}): Promise<MarkdownAssetReferences> => {
+  const assetIdsByPath = createUniqueAssetIdsByPath(snapshot.files);
+  const selectedAssetIds =
+    plan === undefined
+      ? undefined
+      : selectContentHydrationCandidates({
+          documents: entries.map(({ document }) => document),
+          plan: {
+            ...plan,
+            queries: plan.queries.filter(
+              ({ content }) => content.mode === "markdown-body"
+            ),
+          },
+        });
+  const references: Record<string, MarkdownAssetReferences[string]> = {};
   for (const entry of [...entries].sort((left, right) =>
     compareStrings(left.document.contentRef, right.document.contentRef)
   )) {
-    if (entry.content === undefined || entry.document.extension !== "md") {
+    if (
+      entry.content === undefined ||
+      entry.document.extension !== "md" ||
+      selectedAssetIds?.has(entry.assetId) === false
+    ) {
       continue;
     }
-    const discovered = discoverMarkdownAssetReferences({
-      markdown: entry.content,
+    const bytes = encodeUtf8(entry.content);
+    const markdown =
+      bytes.byteLength === 0
+        ? ""
+        : (await extractMarkdownBody(bytes, bytes.byteLength)).body;
+    const discovered = discoverMarkdownAssetReferenceRanges({
+      markdown,
       sourcePath: entry.document.path,
       assetIdsByPath,
     });
-    if (Object.keys(discovered).length > 0) {
-      references[entry.document.contentRef] = Object.fromEntries(
-        Object.entries(discovered).sort(([left], [right]) =>
-          compareStrings(left, right)
-        )
-      );
+    if (discovered.length > 0) {
+      references[entry.document.contentRef] = discovered;
     }
   }
   return references;
@@ -149,17 +163,20 @@ const discoverSnapshotAssetReferences = ({
 export const materializeContentSnapshot = async ({
   snapshot,
   plan,
+  maximumContentBytes = contentEngineLimits.databaseBytes,
 }: {
   snapshot: ContentSourceSnapshot;
   plan?: ContentCompilationPlan;
+  maximumContentBytes?: number;
 }) => {
   validateSnapshot(snapshot);
   try {
-    const entries = await snapshot.loadEntries(plan);
+    const entries = await snapshot.loadEntries(plan, { maximumContentBytes });
     validateEntries({ snapshot, entries });
-    const assetReferences = discoverSnapshotAssetReferences({
+    const assetReferences = await discoverSnapshotAssetReferences({
       snapshot,
       entries,
+      plan,
     });
     if (await snapshot.isCurrent()) {
       return { sourceRevision: snapshot.revision, entries, assetReferences };
@@ -191,6 +208,7 @@ export const compileContentSource = async ({
     await materializeContentSource({
       source,
       plan,
+      maximumContentBytes: maxBytes,
     });
   const compiled = await compileContentArtifact({
     projectId,
@@ -205,9 +223,11 @@ export const compileContentSource = async ({
 export const materializeContentSource = async ({
   source,
   plan,
+  maximumContentBytes,
 }: {
   source: ContentSource;
   plan?: ContentCompilationPlan;
+  maximumContentBytes?: number;
 }): Promise<{
   sourceRevision: string;
   entries: readonly ContentCompilerInput[];
@@ -216,7 +236,11 @@ export const materializeContentSource = async ({
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const snapshot = await source.openSnapshot();
     try {
-      return await materializeContentSnapshot({ snapshot, plan });
+      return await materializeContentSnapshot({
+        snapshot,
+        plan,
+        maximumContentBytes,
+      });
     } catch (error) {
       if (error instanceof ContentSourceChangedError === false) {
         throw error;

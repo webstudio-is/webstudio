@@ -6,83 +6,52 @@ import {
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
 import { isAssetFileName } from "@webstudio-is/protocol";
-import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
+import {
+  assetResourceApiOperations,
+  type AssetUploadResult,
+} from "@webstudio-is/protocol/asset-resource-api";
 import { getAssetContentHash, type Asset } from "@webstudio-is/sdk";
-import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
   createAssetClient,
   getMaxAssetUploadSize,
 } from "~/shared/asset-client";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
-import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import {
-  authorizeApiProject,
-  requiresApiCsrf,
-} from "~/services/api-auth.server";
+import { ensureApiCsrf } from "~/services/api-auth.server";
 import { createContext } from "~/shared/context.server";
 import {
   AssetRestRequestError,
   assetRestErrorResponse,
   assetRestMethodNotAllowed,
+  createAssetRestRepositoryForProject,
   parseAssetRestDescription,
   parseAssetRestFilename,
   parseAssetRestIdentifier,
   parseAssetRestMetadataHeader,
+  requireAssetRestBody,
 } from "~/services/asset-rest.server";
 import {
   getAssetInfoFallback,
   getBrowserAssetFormat,
   parseAssetType,
-  type AssetInfoFallback,
 } from "@webstudio-is/project-build/runtime";
 import { getBrowserUploadBody } from "~/services/asset-upload.server";
 
 // The explicit uploads segment prevents asset names such as `query` from
 // shadowing the read-only Assets API.
 
-const createAssetUploadResponse = async ({
-  body,
-  name,
-  assetInfoFallback,
-  assetInfoOverride,
-  assetId,
-  repository,
+const assetUploadResponse = ({
+  asset,
+  deduplicated,
 }: {
-  body: ReadableStream<Uint8Array>;
-  name: string;
-  assetInfoFallback: AssetInfoFallback;
-  assetInfoOverride?: {
-    format?: string;
-    meta?: Record<string, unknown>;
-  };
-  assetId?: Asset["id"];
-  repository: PostgresAssetRepository;
+  asset: Asset;
+  deduplicated: boolean;
 }) => {
-  const asset = await repository.completeUpload({
-    name,
-    data: body,
-    assetInfoFallback,
-    assetDataOverride: assetInfoOverride,
-    assetId,
-  });
   return json(
     {
       uploadedAssets: [asset],
-      deduplicated: false,
-    } satisfies AssetActionResponse,
-    {
-      headers: privateNoStoreResponseHeaders,
-    }
-  );
-};
-
-const createDeduplicatedAssetResponse = (asset: Asset) => {
-  return json(
-    {
-      uploadedAssets: [asset],
-      deduplicated: true,
-    } satisfies AssetActionResponse,
+      deduplicated,
+    } satisfies AssetUploadResult,
     {
       headers: privateNoStoreResponseHeaders,
     }
@@ -109,9 +78,13 @@ export const action = async (props: ActionFunctionArgs) => {
   preventCrossOriginCookie(props.request);
 
   const { request, params } = props;
-
-  if (params.name === undefined) {
-    throw new AssetRestRequestError("Asset name is required");
+  if (
+    request.method.toLowerCase() !==
+    assetResourceApiOperations.uploadAssetContent.method
+  ) {
+    return assetRestMethodNotAllowed([
+      assetResourceApiOperations.uploadAssetContent,
+    ]);
   }
 
   const url = new URL(request.url);
@@ -121,18 +94,13 @@ export const action = async (props: ActionFunctionArgs) => {
   const rawAssetType = url.searchParams.get("type");
   const isApiUpload = projectId !== null || rawAssetType !== null;
 
-  if (requiresApiCsrf(request)) {
-    await checkCsrf(request);
-  }
+  await ensureApiCsrf(request);
 
   try {
-    if (
-      request.method.toLowerCase() !==
-        assetResourceApiOperations.uploadAssetContent.method ||
-      request.body === null
-    ) {
-      return assetRestMethodNotAllowed(["POST"]);
+    if (params.name === undefined) {
+      throw new AssetRestRequestError("Asset name is required");
     }
+    const requestBody = requireAssetRestBody(request);
 
     const assetType = parseAssetType(rawAssetType);
 
@@ -164,19 +132,13 @@ export const action = async (props: ActionFunctionArgs) => {
         meta: parseAssetRestMetadataHeader(rawAssetMeta),
       });
 
-      const context = await authorizeApiProject(
+      const repository = await createAssetRestRepositoryForProject(
         request,
         parsedProjectId,
         "edit"
       );
-      const data = await readRequestBody(request.body, params.name);
+      const data = await readRequestBody(requestBody, params.name);
       const force = url.searchParams.get("force") === "true";
-      const assetClient = createAssetClient();
-      const repository = new PostgresAssetRepository({
-        projectId: parsedProjectId,
-        context,
-        assetStore: assetClient,
-      });
       const ticket = await repository.createUploadTicket({
         type: assetType,
         filename,
@@ -185,16 +147,16 @@ export const action = async (props: ActionFunctionArgs) => {
         contentHash: force ? undefined : await getAssetContentHash(data),
       });
       if (ticket.deduplicated) {
-        return createDeduplicatedAssetResponse(ticket.asset);
+        return assetUploadResponse({ asset: ticket.asset, deduplicated: true });
       }
-      return await createAssetUploadResponse({
-        body: createRequestBody(data),
+      const asset = await repository.completeUpload({
         name: ticket.name,
+        data: createRequestBody(data),
         assetInfoFallback,
-        assetInfoOverride,
+        assetDataOverride: assetInfoOverride,
         assetId: ticket.assetId,
-        repository,
       });
+      return assetUploadResponse({ asset, deduplicated: false });
     }
 
     const contentType = request.headers.get("Content-Type");
@@ -212,12 +174,12 @@ export const action = async (props: ActionFunctionArgs) => {
       context,
       assetStore: assetClient,
     });
-    return await createAssetUploadResponse({
-      body,
+    const asset = await repository.completeUpload({
       name: params.name,
+      data: body,
       assetInfoFallback,
-      repository,
     });
+    return assetUploadResponse({ asset, deduplicated: false });
   } catch (error) {
     return assetRestErrorResponse(error);
   }

@@ -15,7 +15,7 @@ const call = (
 
 const createDependencies = (issues: Array<Record<string, string>> = []) => ({
   preventCrossOriginCookie: vi.fn(),
-  checkCsrf: vi.fn(),
+  ensureApiCsrf: vi.fn(),
   createRepository: vi.fn(async () => ({
     synchronize: vi.fn(async () => ({
       scanned: 1,
@@ -36,7 +36,11 @@ describe("Assets index repair", () => {
     const response = await call(createAssetIndexRefreshAction(dependencies));
 
     expect(response.status).toBe(200);
-    expect(dependencies.checkCsrf).toHaveBeenCalledOnce();
+    expect(dependencies.ensureApiCsrf).toHaveBeenCalledOnce();
+    expect(dependencies.createRepository).toHaveBeenCalledWith(
+      expect.any(Request),
+      "edit"
+    );
     expect(await response.json()).toMatchObject({ indexed: 1 });
   });
 
@@ -54,7 +58,7 @@ describe("Assets index repair", () => {
     });
 
     expect(response.status).toBe(503);
-    expect(dependencies.checkCsrf).not.toHaveBeenCalled();
+    expect(dependencies.ensureApiCsrf).toHaveBeenCalledOnce();
     expect(await response.json()).toMatchObject({
       issues: [expect.objectContaining({ assetId: "asset-1" })],
     });

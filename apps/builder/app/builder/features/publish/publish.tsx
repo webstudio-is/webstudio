@@ -232,6 +232,22 @@ const ContentDatabasePublishWarningMessage = ({
   </>
 );
 
+const showContentDatabasePublishWarning = async ({
+  projectId,
+  setWarning,
+}: {
+  projectId: Project["id"];
+  setWarning: (warning: JSX.Element) => void;
+}) => {
+  const warning = await loadContentDatabasePublishWarning(projectId);
+  if (warning === undefined) {
+    return;
+  }
+  const message = <ContentDatabasePublishWarningMessage warning={warning} />;
+  toast.warn(message);
+  setWarning(message);
+};
+
 type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
@@ -703,16 +719,10 @@ const Publish = ({
 
     startTransition(async () => {
       try {
-        const contentWarning = await loadContentDatabasePublishWarning(
-          project.id
-        );
-        if (contentWarning !== undefined) {
-          const message = (
-            <ContentDatabasePublishWarningMessage warning={contentWarning} />
-          );
-          toast.warn(message);
-          setPublishWarning(message);
-        }
+        await showContentDatabasePublishWarning({
+          projectId: project.id,
+          setWarning: setPublishWarning,
+        });
       } catch (error) {
         const message =
           error instanceof Error
@@ -872,17 +882,10 @@ const PublishStatic = ({
               try {
                 setIsPendingOptimistic(true);
 
-                const contentWarning =
-                  await loadContentDatabasePublishWarning(projectId);
-                if (contentWarning !== undefined) {
-                  const message = (
-                    <ContentDatabasePublishWarningMessage
-                      warning={contentWarning}
-                    />
-                  );
-                  toast.warn(message);
-                  setPublishWarning(message);
-                }
+                await showContentDatabasePublishWarning({
+                  projectId,
+                  setWarning: setPublishWarning,
+                });
 
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,

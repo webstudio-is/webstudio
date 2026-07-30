@@ -47,13 +47,14 @@ export const assetsQueryApiUrl = `${assetsApiUrl}/query`;
 export const assetsIndexRefreshApiUrl = `${assetsApiUrl}/index/refresh`;
 export const assetsFieldCatalogApiUrl = `${assetsApiUrl}/field-catalog`;
 export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;
+export const assetsQuerySchemaApiUrl = `${assetsApiUrl}/query-schema.json`;
 
 export type ResourceLoadOptions = {
   signal?: AbortSignal;
   timeoutMs?: number;
 };
 
-const isAssetsResourceRequest = (request: ResourceRequest) =>
+export const isAssetsResourceRequest = (request: ResourceRequest) =>
   request.method === "post" && isLocalResource(request.url, "assets");
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -61,7 +62,27 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 // Assets expose one ID-keyed resource contract. Query execution uses an array
 // internally for ordering and pagination.
-const formatAssetsResourceResult = (value: unknown) => {
+const includesAssetId = (body: unknown) => {
+  if (isRecord(body) === false || isRecord(body.query) === false) {
+    return false;
+  }
+  const { output } = body.query;
+  if (isRecord(output) === false) {
+    return false;
+  }
+  if (output.includeMetadata === true) {
+    return true;
+  }
+  return (
+    output.mode === "fields" &&
+    Array.isArray(output.fields) &&
+    output.fields.some(
+      (field) => Array.isArray(field) && field.length === 1 && field[0] === "id"
+    )
+  );
+};
+
+const formatAssetsResourceResult = (value: unknown, body: unknown) => {
   const preview =
     isRecord(value) && isRecord(value.data) ? value.data : undefined;
   const collection = preview ?? value;
@@ -73,12 +94,15 @@ const formatAssetsResourceResult = (value: unknown) => {
   ) {
     return;
   }
+  const includeId = includesAssetId(body);
+  const diagnostics = isRecord(value) ? value.__diagnostics__ : undefined;
   const entries: Array<[string, Record<string, unknown>]> = [];
   for (const item of collection.items) {
     if (isRecord(item) === false || typeof item.id !== "string") {
       return;
     }
-    entries.push([item.id, item]);
+    const { id, ...fields } = item;
+    entries.push([id, includeId ? item : fields]);
   }
   return {
     data: Object.fromEntries(entries),
@@ -86,9 +110,9 @@ const formatAssetsResourceResult = (value: unknown) => {
       totalCount: collection.totalCount,
       hasMore: collection.hasMore,
     },
-    ...(preview === undefined || isRecord(value) === false
+    ...(preview === undefined || diagnostics === undefined
       ? {}
-      : { __diagnostics__: value.__diagnostics__ }),
+      : { __diagnostics__: diagnostics }),
   };
 };
 
@@ -192,7 +216,7 @@ export const loadResource = async (
       data,
     };
     if (response.ok && isAssetsResourceRequest(resourceRequest)) {
-      const formatted = formatAssetsResourceResult(data);
+      const formatted = formatAssetsResourceResult(data, resourceRequest.body);
       if (formatted !== undefined) {
         return { ...result, ...formatted };
       }

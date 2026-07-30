@@ -44,6 +44,18 @@ const createEntry = (file: ContentSourceFile) =>
 const getRevision = (files: readonly ContentSourceFile[]) =>
   JSON.stringify(files);
 
+const getReferencedAssetIds = (
+  references: Awaited<
+    ReturnType<typeof compileContentSource>
+  >["artifact"]["assetReferences"]
+) =>
+  Object.fromEntries(
+    Object.entries(references ?? {}).map(([contentRef, items]) => [
+      contentRef,
+      items.map(({ assetId }) => assetId),
+    ])
+  );
+
 const createMutableSource = ({
   initial,
   mutate,
@@ -88,11 +100,38 @@ describe("content source snapshots", () => {
     expect(createContentSourceFile(createEntry(file))).toEqual(file);
   });
 
+  test("passes the artifact byte limit to content materialization", async () => {
+    const file = createFile({ id: "post" });
+    let maximumContentBytes: number | undefined;
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [file],
+          async loadEntries(_plan, options) {
+            maximumContentBytes = options?.maximumContentBytes;
+            return [createEntry(file)];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    await compileContentSource({ source, projectId, maxBytes: 2_048 });
+
+    expect(maximumContentBytes).toBe(2_048);
+  });
+
   test("discovers relative asset dependencies from selected Markdown", async () => {
-    const post = createFile({ id: "post", path: "blog/posts/post.md" });
+    const post = createFile({
+      id: "post",
+      path: "blog%20posts/posts/post.md",
+    });
     const image = createFile({
       id: "hero",
-      path: "blog/images/hero.png",
+      path: "blog%20posts/images/hero%20image.png",
       contentType: "image/png",
       contentRef: "revisions/hero.png",
     });
@@ -105,7 +144,7 @@ describe("content source snapshots", () => {
             return [
               {
                 ...createEntry(post),
-                content: "![Hero](../images/hero.png)",
+                content: "![Hero](../images/hero%20image.png)",
               },
             ];
           },
@@ -118,8 +157,8 @@ describe("content source snapshots", () => {
 
     const result = await compileContentSource({ source, projectId });
 
-    expect(result.artifact.assetReferences).toEqual({
-      "revisions/post.md": { "../images/hero.png": "hero" },
+    expect(getReferencedAssetIds(result.artifact.assetReferences)).toEqual({
+      "revisions/post.md": ["hero"],
     });
   });
 
@@ -162,10 +201,95 @@ describe("content source snapshots", () => {
 
     const result = await compileContentSource({ source, projectId });
 
-    expect(result.artifact.assetReferences).toEqual({
-      "revisions/first-post.md": { "./hero.png": "first-image" },
-      "revisions/second-post.md": { "./hero.png": "second-image" },
+    expect(getReferencedAssetIds(result.artifact.assetReferences)).toEqual({
+      "revisions/first-post.md": ["first-image"],
+      "revisions/second-post.md": ["second-image"],
     });
+  });
+
+  test("discovers asset IDs inserted by the Builder", async () => {
+    const post = createFile({ id: "post", path: "blog/post.md" });
+    const image = createFile({
+      id: "hero",
+      path: "images/hero.png",
+      contentType: "image/png",
+      contentRef: "revisions/hero.png",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, image],
+          async loadEntries() {
+            return [{ ...createEntry(post), content: "![Hero](hero)" }];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const result = await compileContentSource({ source, projectId });
+
+    expect(getReferencedAssetIds(result.artifact.assetReferences)).toEqual({
+      "revisions/post.md": ["hero"],
+    });
+  });
+
+  test("stores Markdown references only for parsed Markdown content", async () => {
+    const post = createFile({ id: "post", path: "blog/post.md" });
+    const image = createFile({
+      id: "hero",
+      path: "images/hero.png",
+      contentType: "image/png",
+    });
+    const source: ContentSource = {
+      async openSnapshot() {
+        return {
+          revision: "snapshot",
+          files: [post, image],
+          async loadEntries() {
+            return [
+              { ...createEntry(post), content: "![Hero](../images/hero.png)" },
+            ];
+          },
+          async isCurrent() {
+            return true;
+          },
+        };
+      },
+    };
+
+    const compile = (mode: "full" | "markdown-body") =>
+      compileContentSource({
+        source,
+        projectId,
+        plan: {
+          standardFields: [],
+          structuredPropertyPaths: [],
+          excerpt: false,
+          metadataError: false,
+          queries: [
+            {
+              id: "content",
+              where: { all: [] },
+              sort: [],
+              limit: { type: "literal", value: 1 },
+              offset: { type: "literal", value: 0 },
+              output: { mode: "fields", includeMetadata: false, fields: [] },
+              content: { mode },
+            },
+          ],
+        },
+      });
+
+    expect((await compile("full")).artifact.assetReferences).toBeUndefined();
+    expect(
+      getReferencedAssetIds(
+        (await compile("markdown-body")).artifact.assetReferences
+      )
+    ).toEqual({ "revisions/post.md": ["hero"] });
   });
 
   test("does not resolve an ambiguous Asset path", async () => {

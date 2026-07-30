@@ -11,12 +11,40 @@ import {
   extractMarkdownFrontmatter,
   MarkdownMetadataError,
 } from "./markdown";
+import { markdownFrontmatterEnvelopeBytes } from "./markdown-scanner";
 
 const isMarkdown = (entry: CanonicalAssetFileEntry) =>
   entry.document.extension.toLowerCase() === "md";
 
 const isJson = (entry: CanonicalAssetFileEntry) =>
   entry.document.extension.toLowerCase() === "json";
+
+const trimIncompleteUtf8Suffix = (bytes: Uint8Array) => {
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return bytes;
+  } catch {
+    try {
+      // Streaming decoding accepts only an incomplete trailing code point;
+      // malformed bytes elsewhere still fail and must remain an error.
+      new TextDecoder("utf-8", { fatal: true }).decode(bytes, {
+        stream: true,
+      });
+    } catch {
+      return bytes;
+    }
+  }
+  for (let suffixBytes = 1; suffixBytes <= 3; suffixBytes += 1) {
+    const prefix = bytes.subarray(0, -suffixBytes);
+    try {
+      new TextDecoder("utf-8", { fatal: true }).decode(prefix);
+      return prefix;
+    } catch {
+      // A UTF-8 code point occupies at most four bytes.
+    }
+  }
+  return bytes;
+};
 
 export interface ContentMetadataCache {
   get(input: {
@@ -62,9 +90,18 @@ export const prepareCanonicalContentMetadata = async ({
     cached === undefined
       ? { structuredProperties: false, excerpt: false }
       : getCanonicalAssetMetadataRequirements(cached);
-  let properties: Record<string, unknown> = cached?.document.properties ?? {};
-  let excerpt = isMarkdown(base) ? cached?.document.excerpt : undefined;
-  let metadataError = cached?.document.metadataError;
+  let properties: Record<string, unknown> =
+    cachedRequirements.structuredProperties && cached !== undefined
+      ? cached.document.properties
+      : {};
+  let excerpt =
+    isMarkdown(base) && cachedRequirements.excerpt
+      ? cached?.document.excerpt
+      : undefined;
+  let metadataError =
+    cachedRequirements.structuredProperties || cachedRequirements.excerpt
+      ? cached?.document.metadataError
+      : undefined;
   const needsProperties =
     requirements.structuredProperties &&
     cachedRequirements.structuredProperties === false;
@@ -76,8 +113,11 @@ export const prepareCanonicalContentMetadata = async ({
     // generation still receives the larger Markdown body budget.
     const maximumBytes = needsExcerpt
       ? contentEngineLimits.hydratedFileBytes
-      : contentEngineLimits.frontmatterBytes + 13;
-    const bytes = await readBytes(Math.min(base.document.size, maximumBytes));
+      : contentEngineLimits.frontmatterBytes + markdownFrontmatterEnvelopeBytes;
+    let bytes = await readBytes(Math.min(base.document.size, maximumBytes));
+    if (needsExcerpt && base.document.size > bytes.byteLength) {
+      bytes = trimIncompleteUtf8Suffix(bytes);
+    }
     if (needsProperties) {
       try {
         properties = (await extractMarkdownFrontmatter(bytes)).properties;

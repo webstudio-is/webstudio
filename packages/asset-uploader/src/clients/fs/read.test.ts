@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
@@ -53,6 +53,20 @@ describe("readFromFs", () => {
     expect(empty.contentLength).toBe(0);
     await expect(
       readFromFs({ name: "../outside.md", fileDirectory: directory })
+    ).rejects.toThrow("outside the configured directory");
+  });
+
+  test("rejects symlinks outside the configured directory", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "asset-read-"));
+    directories.push(parent);
+    const directory = join(parent, "assets");
+    const outside = join(parent, "outside.md");
+    await mkdir(directory);
+    await writeFile(outside, "private");
+    await symlink(outside, join(directory, "post.md"));
+
+    await expect(
+      readFromFs({ name: "post.md", fileDirectory: directory })
     ).rejects.toThrow("outside the configured directory");
   });
 });

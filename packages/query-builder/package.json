@@ -8,7 +8,7 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -26,6 +26,11 @@
       "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js"
+    },
+    "./runtime": {
+      "webstudio": "./src/runtime.ts",
+      "types": "./lib/types/runtime.d.ts",
+      "import": "./lib/runtime.js"
     }
   },
   "files": [

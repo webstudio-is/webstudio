@@ -27,11 +27,13 @@ const renderControl = ({
   expression,
   bound,
   allowBindingOverwrite,
+  parseValue,
   onChangeValue,
 }: {
   expression: string;
   bound: boolean;
   allowBindingOverwrite?: boolean;
+  parseValue?: (value: string) => unknown;
   onChangeValue: (value: string) => void;
 }) => {
   const container = document.createElement("div");
@@ -45,6 +47,7 @@ const renderControl = ({
         bound={bound}
         showBinding={false}
         allowBindingOverwrite={allowBindingOverwrite}
+        parseValue={parseValue}
         scope={{}}
         aliases={new Map()}
         onChangeValue={onChangeValue}
@@ -96,6 +99,44 @@ test("passes literal input changes to its consumer", () => {
 
   act(() => button.click());
 
+  expect(onChangeValue).toHaveBeenCalledExactlyOnceWith("changed");
+});
+
+test("parses bound values before updating the variable", () => {
+  const variable: DataSource = {
+    type: "variable",
+    id: "variable-id",
+    name: "Variable",
+    value: { type: "string", value: "initial" },
+  };
+  $dataSources.set(new Map([[variable.id, variable]]));
+  const parseValue = vi.fn((value: string) => ({ value }));
+  const button = renderControl({
+    expression: encodeDataSourceVariable(variable.id),
+    bound: true,
+    parseValue,
+    onChangeValue: () => {},
+  });
+
+  act(() => button.click());
+
+  expect(parseValue).toHaveBeenCalledExactlyOnceWith("changed");
+  expect($dataSourceVariables.get().get(variable.id)).toEqual({
+    value: "changed",
+  });
+});
+
+test("does not parse literal input", () => {
+  const parseValue = vi.fn((value: string) => ({ value }));
+  const onChangeValue = vi.fn();
+  const literalButton = renderControl({
+    expression: '"displayed"',
+    bound: false,
+    parseValue,
+    onChangeValue,
+  });
+  act(() => literalButton.click());
+  expect(parseValue).not.toHaveBeenCalled();
   expect(onChangeValue).toHaveBeenCalledExactlyOnceWith("changed");
 });
 

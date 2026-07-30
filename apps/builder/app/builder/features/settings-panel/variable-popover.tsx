@@ -73,10 +73,10 @@ import {
   createDataVariableValueFromInput,
   createResourceValueFromFormData,
   findUnsetVariableNames,
-  parseDataVariableJsonExpression,
   validateDataVariableJsonValue,
   validateDataVariableNumberValue,
 } from "@webstudio-is/project-build/runtime";
+import { parseJsonExpression } from "@webstudio-is/expression";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
   GraphqlResourceForm,
@@ -680,7 +680,7 @@ const VariablePreview = ({
   if (variableType === "string" || variableType === "boolean") {
     computedValue = variableValue;
   } else if (variableType === "json") {
-    computedValue = parseDataVariableJsonExpression(String(variableValue));
+    computedValue = parseJsonExpression(String(variableValue));
   } else if (variableType === "number") {
     computedValue = Number(variableValue);
     if (Number.isNaN(computedValue)) {

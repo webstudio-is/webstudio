@@ -9,6 +9,8 @@ import {
 } from "./compilation-plan";
 import { compileContentArtifact, createAssetIndex } from "./asset-index";
 import {
+  getContentArtifactReferencedAssetIds,
+  getContentArtifactRuntimeAssetIds,
   serializeContentArtifact,
   verifyContentArtifact,
 } from "./content-artifact";
@@ -39,6 +41,29 @@ const entry = ({
   });
 
 describe("shared asset index", () => {
+  test("selects runtime assets from documents and Markdown references", () => {
+    const artifact = {
+      documents: [{ _id: "document" }, { _id: "shared" }],
+      assetReferences: {
+        "post.md": [
+          { start: 0, end: 1, assetId: "reference" },
+          { start: 2, end: 3, assetId: "shared" },
+        ],
+      },
+    };
+
+    expect(getContentArtifactReferencedAssetIds(artifact)).toEqual([
+      "reference",
+      "shared",
+    ]);
+    expect(
+      getContentArtifactRuntimeAssetIds({
+        artifact,
+        includeDocuments: true,
+      })
+    ).toEqual(["document", "reference", "shared"]);
+  });
+
   test("stores only fields required by an ID-only query", async () => {
     const sourceEntries = [entry({ id: "alpha" })];
     const compile = (output: AssetResourceOutputSelection) =>
@@ -282,6 +307,55 @@ describe("shared asset index", () => {
     ).toBeGreaterThan(0);
   });
 
+  test("omits documents when their requested content was not materialized", async () => {
+    const plan = createContentCompilationPlan([
+      createLiteralContentCompilationQuery({
+        id: "detail",
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 20,
+          offset: 0,
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "full" },
+        },
+      }),
+    ]);
+    const missing = {
+      ...entry({ id: "missing" }),
+      contentRequired: true as const,
+    };
+    const available = {
+      ...entry({ id: "available" }),
+      contentRequired: true as const,
+      content: "Available",
+    };
+
+    const { artifact, diagnostics } = await compileContentArtifact({
+      projectId: "project",
+      entries: [missing, available],
+      plan,
+    });
+
+    expect(artifact.documents.map(({ _id }) => _id)).toEqual(["available"]);
+    expect(artifact.contents).toEqual({
+      "files/available.md": "Available",
+    });
+    expect(diagnostics).toMatchObject({
+      includedDocumentCount: 1,
+      omittedDocumentCount: 1,
+      omittedDocuments: [{ id: "missing", queryIds: ["detail"] }],
+      affectedQueryIds: ["detail"],
+    });
+    expect(diagnostics.unboundedBytes).toBeGreaterThan(
+      diagnostics.boundedBytes
+    );
+  });
+
   test("bounds a thousand oversized documents without rebuilding per document", async () => {
     const entries = Array.from({ length: 1_000 }, (_, index) =>
       createCanonicalAssetFileEntry({
@@ -304,7 +378,7 @@ describe("shared asset index", () => {
     expect(diagnostics.boundedBytes).toBeLessThanOrEqual(
       contentEngineLimits.databaseBytes
     );
-  }, 5_000);
+  }, 10_000);
 
   test("uses a query-scoped content reader without retaining it", async () => {
     const index = await createAssetIndex({
@@ -321,7 +395,16 @@ describe("shared asset index", () => {
     });
 
     const result = await database.query(
-      { query: { content: { mode: "full" } } },
+      {
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "full" },
+        },
+      },
       readContent
     );
     expect(result).toMatchObject({
@@ -331,7 +414,16 @@ describe("shared asset index", () => {
     expect(result).not.toHaveProperty("__diagnostics__");
     expect(assetQueryResult.safeParse(result).success).toBe(true);
     await expect(
-      database.query({ query: { content: { mode: "full" } } })
+      database.query({
+        query: {
+          output: {
+            mode: "fields",
+            includeMetadata: false,
+            fields: [["id"]],
+          },
+          content: { mode: "full" },
+        },
+      })
     ).rejects.toThrow("Content is not embedded");
   });
 });

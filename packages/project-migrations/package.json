@@ -16,6 +16,11 @@
       "webstudio": "./src/pages.ts",
       "types": "./lib/types/pages.d.ts",
       "import": "./lib/pages.js"
+    },
+    "./resources": {
+      "webstudio": "./src/resources.ts",
+      "types": "./lib/types/resources.d.ts",
+      "import": "./lib/resources.js"
     }
   },
   "files": [
@@ -24,7 +29,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf lib && esbuild src/index.ts src/pages.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/pages.ts src/resources.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

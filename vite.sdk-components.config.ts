@@ -20,6 +20,7 @@ export default defineConfig({
         hasPrivateFolders ? "private-src/components.ts" : "src/components.ts",
         "src/metas.ts",
         "src/hooks.ts",
+        "src/markdown.ts",
         "src/templates.ts",
       ].filter((entry) => entry !== undefined),
       formats: ["es"],

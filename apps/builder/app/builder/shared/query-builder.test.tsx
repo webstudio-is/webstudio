@@ -118,6 +118,7 @@ test("shows an evaluated value for a bound number input", () => {
           label: "Limit",
           defaultValue: "20",
           input: "number",
+          integer: true,
         },
       ],
     },
@@ -132,5 +133,6 @@ test("shows an evaluated value for a bound number input", () => {
   );
 
   expect(input?.value).toBe("20");
+  expect(input?.step).toBe("1");
   expect(input?.disabled).toBe(true);
 });

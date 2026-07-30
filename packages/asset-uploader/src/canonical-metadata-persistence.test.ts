@@ -13,7 +13,6 @@ import {
   deleteCanonicalAssetFileEntryIfMatches,
   deleteStaleCanonicalAssetFileEntries,
   loadCanonicalAssetFileEntries,
-  loadCanonicalAssetFileEntry,
   replaceCanonicalAssetFileEntry,
 } from "./canonical-metadata-persistence";
 
@@ -49,28 +48,15 @@ const row = {
   updatedAt: "2026-07-18T00:00:00.000Z",
 };
 
+const loadEntry = async () =>
+  (
+    await loadCanonicalAssetFileEntries({
+      client: testContext.postgrest.client,
+      projectId: "project-1",
+    })
+  )[0];
+
 describe("canonical asset metadata persistence", () => {
-  test("loads one exact revision without falling back to another", async () => {
-    server.use(
-      db.get("AssetFileMetadata", ({ request }) => {
-        const url = new URL(request.url);
-        expect(url.searchParams.get("projectId")).toBe("eq.project-1");
-        expect(url.searchParams.get("assetId")).toBe("eq.asset-1");
-        expect(url.searchParams.get("revision")).toBe("eq.sha256:one");
-        return json(row);
-      })
-    );
-
-    await expect(
-      loadCanonicalAssetFileEntry({
-        client: testContext.postgrest.client,
-        projectId: "project-1",
-        assetId: "asset-1",
-        revision: "sha256:one",
-      })
-    ).resolves.toEqual(entry);
-  });
-
   test("replaces older revisions for one canonical asset", async () => {
     server.use(
       db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
@@ -83,6 +69,7 @@ describe("canonical asset metadata persistence", () => {
             storageName: "stored.md",
             fileUpdatedAt: "2026-07-18T00:00:00.000Z",
             fileSize: 100,
+            contentHash: "a".repeat(64),
             filename: "post.md",
             description: "Summary",
             folderId: "blog",
@@ -99,6 +86,7 @@ describe("canonical asset metadata persistence", () => {
           storageName: "stored.md",
           fileUpdatedAt: "2026-07-18T00:00:00.000Z",
           fileSize: 100,
+          contentHash: "a".repeat(64),
           filename: "post.md",
           description: "Summary",
           folderId: "blog",
@@ -122,18 +110,6 @@ describe("canonical asset metadata persistence", () => {
     ).rejects.toThrow("source changed during update");
   });
 
-  test("returns undefined when an exact revision is absent", async () => {
-    server.use(db.get("AssetFileMetadata", () => json(null)));
-    await expect(
-      loadCanonicalAssetFileEntry({
-        client: testContext.postgrest.client,
-        projectId: "project-1",
-        assetId: "asset-1",
-        revision: "missing",
-      })
-    ).resolves.toBeUndefined();
-  });
-
   test("loads project entries in deterministic key order", async () => {
     server.use(
       db.get("AssetFileMetadata", ({ request }) => {
@@ -154,25 +130,22 @@ describe("canonical asset metadata persistence", () => {
   test("loads cached metadata requirements without exposing the storage marker", async () => {
     server.use(
       db.get("AssetFileMetadata", () =>
-        json({
-          ...row,
-          document: {
-            ...document,
-            properties: {},
-            $webstudioMetadataRequirements: "excerpt",
-            $webstudioExtractorGeneration:
-              canonicalAssetMetadataExtractorGeneration,
+        json([
+          {
+            ...row,
+            document: {
+              ...document,
+              properties: {},
+              $webstudioMetadataRequirements: "excerpt",
+              $webstudioExtractorGeneration:
+                canonicalAssetMetadataExtractorGeneration,
+            },
           },
-        })
+        ])
       )
     );
 
-    const loaded = await loadCanonicalAssetFileEntry({
-      client: testContext.postgrest.client,
-      projectId: "project-1",
-      assetId: "asset-1",
-      revision: "sha256:one",
-    });
+    const loaded = await loadEntry();
 
     expect(loaded?.metadataRequirements).toEqual({
       structuredProperties: false,
@@ -189,29 +162,28 @@ describe("canonical asset metadata persistence", () => {
   test("treats metadata from an older extractor generation as unprepared", async () => {
     server.use(
       db.get("AssetFileMetadata", () =>
-        json({
-          ...row,
-          document: {
-            ...storedDocument,
-            $webstudioExtractorGeneration:
-              canonicalAssetMetadataExtractorGeneration - 1,
+        json([
+          {
+            ...row,
+            document: {
+              ...storedDocument,
+              $webstudioExtractorGeneration:
+                canonicalAssetMetadataExtractorGeneration - 1,
+            },
           },
-        })
+        ])
       )
     );
 
-    const loaded = await loadCanonicalAssetFileEntry({
-      client: testContext.postgrest.client,
-      projectId: "project-1",
-      assetId: "asset-1",
-      revision: "sha256:one",
-    });
+    const loaded = await loadEntry();
 
     expect(loaded?.metadataRequirements).toEqual({
       structuredProperties: false,
       excerpt: false,
     });
-    expect(loaded?.document.properties).toEqual({ title: "Post" });
+    expect(loaded?.document.properties).toEqual({});
+    expect(loaded?.document).not.toHaveProperty("excerpt");
+    expect(loaded?.document).not.toHaveProperty("metadataError");
   });
 
   test("treats metadata without an extractor generation as unprepared", async () => {
@@ -221,16 +193,11 @@ describe("canonical asset metadata persistence", () => {
     } = storedDocument;
     server.use(
       db.get("AssetFileMetadata", () =>
-        json({ ...row, document: legacyDocument })
+        json([{ ...row, document: legacyDocument }])
       )
     );
 
-    const loaded = await loadCanonicalAssetFileEntry({
-      client: testContext.postgrest.client,
-      projectId: "project-1",
-      assetId: "asset-1",
-      revision: "sha256:one",
-    });
+    const loaded = await loadEntry();
 
     expect(loaded?.metadataRequirements).toEqual({
       structuredProperties: false,
@@ -240,16 +207,9 @@ describe("canonical asset metadata persistence", () => {
 
   test("rejects rows whose database and document identities disagree", async () => {
     server.use(
-      db.get("AssetFileMetadata", () => json({ ...row, assetId: "asset-2" }))
+      db.get("AssetFileMetadata", () => json([{ ...row, assetId: "asset-2" }]))
     );
-    await expect(
-      loadCanonicalAssetFileEntry({
-        client: testContext.postgrest.client,
-        projectId: "project-1",
-        assetId: "asset-2",
-        revision: "sha256:one",
-      })
-    ).rejects.toThrow("identity is inconsistent");
+    await expect(loadEntry()).rejects.toThrow("identity is inconsistent");
   });
 
   test("requests stale deletion only for the selected project assets", async () => {

@@ -19,33 +19,23 @@ const repairAssetFolderCycles = (folders: readonly AssetFolder[]) => {
   const repairedIds: string[] = [];
 
   while (true) {
-    let cycle: string[] | undefined;
+    const hierarchy = createAssetFolderHierarchy(repaired);
+    let cycleIds: readonly string[] | undefined;
     for (const startId of [...repaired.keys()].sort()) {
-      const positions = new Map<string, number>();
-      const path: string[] = [];
-      let folderId: string | undefined = startId;
-      while (folderId !== undefined) {
-        const position = positions.get(folderId);
-        if (position !== undefined) {
-          cycle = path.slice(position);
-          break;
-        }
-        positions.set(folderId, path.length);
-        path.push(folderId);
-        folderId = repaired.get(folderId)?.parentId;
-      }
-      if (cycle !== undefined) {
+      const candidate = hierarchy.getCycleIds(startId);
+      if (candidate.length > 0) {
+        cycleIds = candidate;
         break;
       }
     }
-    if (cycle === undefined) {
+    if (cycleIds === undefined) {
       break;
     }
 
     // Concurrent moves do not provide enough information to infer which move
     // the user preferred. Detach the same edge on every process so a persisted
     // cycle cannot make folder reads, asset paths, or publication unavailable.
-    const folderId = [...cycle].sort().at(-1) as string;
+    const folderId = [...cycleIds].sort().at(-1) as string;
     const folder = repaired.get(folderId) as AssetFolder;
     repaired.set(folderId, { ...folder, parentId: undefined });
     repairedIds.push(folderId);
@@ -100,20 +90,13 @@ export const createAssetFolderRows = (
 
 const loadAssetFoldersByProjectRaw = async (
   projectId: string,
-  client: Client,
-  folderIds?: string[]
+  client: Client
 ): Promise<AssetFolder[]> => {
-  let query = client
+  const result = await client
     .from("AssetFolder")
     .select("id, projectId, name, parentId, createdAt")
-    .eq("projectId", projectId);
-  if (folderIds !== undefined) {
-    if (folderIds.length === 0) {
-      return [];
-    }
-    query = query.in("id", folderIds);
-  }
-  const result = await query.order("id");
+    .eq("projectId", projectId)
+    .order("id");
   assertPostgrestSuccess(result);
 
   return (result.data ?? []).map((folder) => ({
@@ -130,12 +113,46 @@ export const loadAssetFoldersByProjectWithClient = async (
   client: Client,
   folderIds?: string[]
 ): Promise<AssetFolder[]> => {
-  const folders = await loadAssetFoldersByProjectRaw(
-    projectId,
-    client,
-    folderIds
+  if (folderIds?.length === 0) {
+    return [];
+  }
+  // Cycle detection needs the complete graph even when the caller only wants
+  // one folder. Repair first, then narrow the returned collection.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const folders = await loadAssetFoldersByProjectRaw(projectId, client);
+    const repaired = repairAssetFolderCycles(folders);
+    const originalById = new Map(folders.map((folder) => [folder.id, folder]));
+    let sourceChanged = false;
+    for (const folderId of repaired.repairedIds) {
+      const original = originalById.get(folderId);
+      if (original?.parentId === undefined) {
+        continue;
+      }
+      const result = await client
+        .from("AssetFolder")
+        .update({ parentId: null })
+        .eq("id", folderId)
+        .eq("projectId", projectId)
+        .eq("parentId", original.parentId)
+        .select("id");
+      assertPostgrestSuccess(result);
+      if (result.data?.some(({ id }) => id === folderId) !== true) {
+        sourceChanged = true;
+        break;
+      }
+    }
+    if (sourceChanged) {
+      continue;
+    }
+    if (folderIds === undefined) {
+      return repaired.folders;
+    }
+    const selectedIds = new Set(folderIds);
+    return repaired.folders.filter(({ id }) => selectedIds.has(id));
+  }
+  throw new AssetRepositoryConflictError(
+    "Asset folders changed repeatedly while repairing a cycle"
   );
-  return repairAssetFolderCycles(folders).folders;
 };
 
 const getPersistedFolderCycles = async (projectId: string, client: Client) =>

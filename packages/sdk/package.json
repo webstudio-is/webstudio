@@ -77,7 +77,6 @@
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/query-builder": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
-    "acorn": "^8.14.1",
     "change-case": "^5.4.4",
     "json-schema-typed": "^8.0.2",
     "reserved-identifiers": "^1.0.0",

@@ -250,6 +250,27 @@ describe("selected asset content hydration", () => {
     });
   });
 
+  test("hydrates SVG assets as supported UTF-8 text", async () => {
+    const source = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+    const document = createDocument("vector", source, {
+      name: "vector.svg",
+      extension: "svg",
+      mimeType: "image/svg+xml",
+    });
+    const read = createReader({ [document.contentRef]: source });
+
+    await expect(
+      hydrateAssetResourceResult({
+        result: identity(document),
+        documents: [document],
+        options: { mode: "full" },
+        read,
+      })
+    ).resolves.toMatchObject({
+      content: { vector: { text: source } },
+    });
+  });
+
   test("waits for every started content read before propagating a failure", async () => {
     const failed = createDocument("failed", "x");
     const slow = createDocument("slow", "y");

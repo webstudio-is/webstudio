@@ -2,6 +2,7 @@ import {
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
+import { migrateResourcesMutable } from "@webstudio-is/project-migrations/resources";
 import {
   type BuilderState,
   type BuilderStateValueByNamespace,
@@ -111,6 +112,12 @@ const normalizeProjectSettings = (state: BuilderState) => {
   removeLegacyProjectSettingsFromPages(state.pages);
 };
 
+const normalizeResources = (state: BuilderState) => {
+  if (state.resources !== undefined) {
+    migrateResourcesMutable(state.resources.values());
+  }
+};
+
 const setClonedBuilderStateValue = <Namespace extends BuilderNamespace>(
   state: BuilderState,
   namespace: Namespace,
@@ -144,6 +151,7 @@ export const createBuilderStateFromStores = (
   }
 
   normalizeProjectSettings(state);
+  normalizeResources(state);
 
   return state;
 };
@@ -165,6 +173,7 @@ export const createBuilderStateFromSnapshot = (
   }
 
   normalizeProjectSettings(state);
+  normalizeResources(state);
 
   return state;
 };

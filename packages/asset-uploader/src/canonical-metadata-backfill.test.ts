@@ -49,6 +49,7 @@ describe("canonical asset metadata synchronization", () => {
               name: "stored-post.md",
               size: 20,
               updatedAt: "2026-07-18T01:00:00.000Z",
+              contentHash: "a".repeat(64),
               status: "UPLOADED",
             },
           },
@@ -79,6 +80,7 @@ describe("canonical asset metadata synchronization", () => {
           name: "Hello.md",
           path: "Blog/Hello.md",
           contentRef: "stored-post.md",
+          revision: `sha256:${"a".repeat(64)}`,
           properties: {},
         }),
       }),
@@ -534,6 +536,27 @@ describe("canonical asset metadata synchronization", () => {
         name: "old-name.md",
         revision: "file:renamed.md:2026-07-18T03:00:00.000Z:20",
       }),
+      createCanonicalAssetFileEntry({
+        projectId: "project-1",
+        metadataRequirements: {
+          structuredProperties: true,
+          excerpt: true,
+        },
+        document: {
+          _id: "image",
+          _type: "asset.file",
+          name: "image.png",
+          path: "image.png",
+          key: "image",
+          extension: "png",
+          mimeType: "image/png",
+          size: 30,
+          revision: "file:image.png:2026-07-18T05:00:00.000Z:30",
+          contentRef: "image.png",
+          properties: {},
+          excerpt: "Stale excerpt",
+        },
+      }),
       createEntry({
         id: "stale",
         name: "stale.md",
@@ -547,7 +570,7 @@ describe("canonical asset metadata synchronization", () => {
         },
       },
     }));
-    const persistedAssetIds: string[] = [];
+    const persisted = new Map<string, Record<string, unknown>>();
     server.use(
       db.get("Asset", () => json(assetRows)),
       db.get("AssetFolder", () => json([])),
@@ -568,7 +591,7 @@ describe("canonical asset metadata synchronization", () => {
       ),
       db.post("rpc/replace_asset_file_metadata", async ({ request }) => {
         const value = (await request.json()) as ReplaceMetadataRpcArgs;
-        persistedAssetIds.push(value.p_asset_id);
+        persisted.set(value.p_asset_id, value.p_document);
         return json(true);
       }),
       db.post("rpc/delete_stale_asset_file_metadata", async ({ request }) => {
@@ -589,8 +612,8 @@ describe("canonical asset metadata synchronization", () => {
       })
     ).resolves.toEqual({
       scanned: 5,
-      indexed: 3,
-      metadataUpdated: 1,
+      indexed: 2,
+      metadataUpdated: 2,
       unchanged: 1,
       removed: 1,
       skipped: 0,
@@ -602,12 +625,13 @@ describe("canonical asset metadata synchronization", () => {
       "changed.md",
       "new.md",
     ]);
-    expect(persistedAssetIds.sort()).toEqual([
+    expect([...persisted.keys()].sort()).toEqual([
       "changed",
       "image",
       "new",
       "renamed",
     ]);
+    expect(persisted.get("image")).not.toHaveProperty("excerpt");
   });
 
   test("recovery rereads an inconsistent derived entry", async () => {
@@ -685,6 +709,73 @@ describe("canonical asset metadata synchronization", () => {
       issues: [],
     });
     expect(readFile).toHaveBeenCalledOnce();
+  });
+
+  test("removes invalid derived metadata when source recovery fails", async () => {
+    const invalidDocument = { _id: "broken", revision: "different" };
+    const deleted: unknown[] = [];
+    server.use(
+      db.get("Asset", () =>
+        json([
+          {
+            id: "broken",
+            projectId: "project-1",
+            filename: null,
+            folderId: null,
+            file: {
+              name: "broken.md",
+              size: 4,
+              updatedAt: "2026-07-18T07:00:00.000Z",
+              status: "UPLOADED",
+            },
+          },
+        ])
+      ),
+      db.get("AssetFolder", () => json([])),
+      db.get("AssetFileMetadata", () =>
+        json([
+          {
+            projectId: "project-1",
+            assetId: "broken",
+            revision: "stale",
+            document: invalidDocument,
+            createdAt: "2026-07-18T00:00:00.000Z",
+            updatedAt: "2026-07-18T00:00:00.000Z",
+          },
+        ])
+      ),
+      db.post(
+        "rpc/delete_asset_file_metadata_if_matches",
+        async ({ request }) => {
+          deleted.push(await request.json());
+          return json(1);
+        }
+      ),
+      db.post("rpc/delete_stale_asset_file_metadata", () => json(0))
+    );
+
+    const result = await synchronizeCanonicalAssets({
+      projectId: "project-1",
+      client: testContext.postgrest.client,
+      assetClient: {
+        uploadFile: vi.fn(),
+        readFile: vi.fn().mockRejectedValue(new Error("Object is missing")),
+      },
+    });
+
+    expect(result).toMatchObject({
+      scanned: 1,
+      skipped: 1,
+      inconsistent: 1,
+    });
+    expect(deleted).toEqual([
+      expect.objectContaining({
+        p_project_id: "project-1",
+        p_asset_id: "broken",
+        p_revision: "stale",
+        p_document: invalidDocument,
+      }),
+    ]);
   });
 
   test("isolates an unreadable asset and removes its stale metadata", async () => {

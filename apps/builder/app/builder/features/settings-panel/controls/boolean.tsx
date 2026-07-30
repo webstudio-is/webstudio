@@ -1,16 +1,9 @@
-import { useStore } from "@nanostores/react";
 import { Grid, Switch, theme } from "@webstudio-is/design-system";
-import {
-  BindableExpressionControl,
-  useBindingState,
-} from "~/builder/shared/bindable-expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
-import {
-  type ControlProps,
-  $selectedInstanceScope,
-  humanizeAttribute,
-} from "../shared";
+import { type ControlProps, humanizeAttribute } from "../shared";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 
 export const BooleanControl = ({
   meta,
@@ -20,12 +13,10 @@ export const BooleanControl = ({
   onChange,
 }: ControlProps<"boolean">) => {
   const label = humanizeAttribute(meta.label || propName);
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   return (
     <Grid
@@ -37,13 +28,13 @@ export const BooleanControl = ({
       align="center"
       gap="2"
     >
-      <PropertyLabel name={propName} readOnly={overwritable === false} />
+      <PropertyLabel
+        name={propName}
+        readOnly={binding.bindingState.overwritable === false}
+      />
       <BindableExpressionControl
-        expression={expression}
+        {...binding}
         value={Boolean(computedValue ?? false)}
-        bound={prop?.type === "expression"}
-        scope={scope}
-        aliases={aliases}
         validate={(value) => validatePrimitiveValue(value, label)}
         onChangeValue={(value) => onChange({ type: "boolean", value })}
         onChangeExpression={(value) => onChange({ type: "expression", value })}

@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/asset-uploader/server";
 import { assetFolders } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
+import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import {
   AssetRestRangeError,
@@ -17,6 +18,7 @@ import {
   parseAssetRestMetadataHeader,
   readAssetRestFormData,
   readAssetRestJson,
+  requireAssetRestBody,
 } from "./asset-rest.server";
 import { AssetUploadSizeLimitError } from "@webstudio-is/asset-uploader/server";
 
@@ -67,7 +69,10 @@ describe("Assets REST responses", () => {
   test("does not swallow CSRF responses and advertises allowed methods", () => {
     const csrf = new Response("Forbidden", { status: 403 });
     expect(assetRestErrorResponse(csrf)).toBe(csrf);
-    const response = assetRestMethodNotAllowed(["GET", "PATCH"]);
+    const response = assetRestMethodNotAllowed([
+      assetResourceApiOperations.getAsset,
+      assetResourceApiOperations.updateAsset,
+    ]);
     expect(response.status).toBe(405);
     expect(response.headers.get("allow")).toBe("GET, PATCH");
   });
@@ -111,6 +116,42 @@ describe("Assets REST responses", () => {
         })
       )
     ).rejects.toBeInstanceOf(AssetRestPayloadTooLargeError);
+  });
+
+  test("rejects malformed UTF-8 in JSON bodies", async () => {
+    const prefix = new TextEncoder().encode('{"description":"');
+    const suffix = new TextEncoder().encode('"}');
+    const body = new Uint8Array(prefix.byteLength + 1 + suffix.byteLength);
+    body.set(prefix);
+    body[prefix.byteLength] = 0xff;
+    body.set(suffix, prefix.byteLength + 1);
+
+    await expect(
+      readAssetRestJson(
+        new Request("https://example.com/rest/assets", {
+          method: "PATCH",
+          body,
+        })
+      )
+    ).rejects.toBeInstanceOf(AssetRestRequestError);
+  });
+
+  test("distinguishes a missing content body from an unsupported method", () => {
+    expect(() =>
+      requireAssetRestBody(
+        new Request("https://example.com/rest/assets/asset/content", {
+          method: "POST",
+        })
+      )
+    ).toThrow(AssetRestRequestError);
+    expect(
+      requireAssetRestBody(
+        new Request("https://example.com/rest/assets/asset/content", {
+          method: "POST",
+          body: "content",
+        })
+      )
+    ).toBeInstanceOf(ReadableStream);
   });
 
   test("bounds upload metadata carried in headers", () => {

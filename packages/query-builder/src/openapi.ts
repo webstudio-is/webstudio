@@ -7,14 +7,9 @@ import type {
   QueryOperator,
   QueryParameterControlField,
 } from "./types";
+import { getQueryFieldKey } from "./runtime";
 
 type JsonObject = Record<string, unknown>;
-
-export type OpenApiQueryConfiguration = {
-  definition: QueryDefinition;
-  valuePath: string[];
-  parameters: { key: string; in: string }[];
-};
 
 const isObject = (value: unknown): value is JsonObject =>
   typeof value === "object" && value !== null && Array.isArray(value) === false;
@@ -26,15 +21,36 @@ const labelFromKey = (key: string) =>
   );
 
 const resolvePointer = (document: JsonObject, pointer: string): unknown => {
-  if (pointer.startsWith("#/") === false) {
+  if (pointer.startsWith("#") === false) {
     throw new Error("Only local OpenAPI references are supported");
   }
+  const fragment = decodeURIComponent(pointer.slice(1));
+  if (fragment === "") {
+    return document;
+  }
+  if (fragment.startsWith("/") === false) {
+    throw new Error("Only local OpenAPI references are supported");
+  }
+  // JSON Pointer packages commonly traverse inherited properties. Decode the
+  // small RFC 6901 grammar here so untrusted schemas can only address own JSON
+  // properties. URI fragment decoding happens before token separation.
   let value: unknown = document;
-  for (const segment of pointer
-    .slice(2)
+  for (const segment of fragment
+    .slice(1)
     .split("/")
     .map((item) => item.replaceAll("~1", "/").replaceAll("~0", "~"))) {
-    if (isObject(value) === false || segment in value === false) {
+    if (Array.isArray(value)) {
+      if (/^(0|[1-9][0-9]*)$/.test(segment) === false) {
+        throw new Error(`OpenAPI reference ${pointer} is missing`);
+      }
+      const index = Number(segment);
+      if (Number.isSafeInteger(index) === false || index >= value.length) {
+        throw new Error(`OpenAPI reference ${pointer} is missing`);
+      }
+      value = value[index];
+      continue;
+    }
+    if (isObject(value) === false || Object.hasOwn(value, segment) === false) {
       throw new Error(`OpenAPI reference ${pointer} is missing`);
     }
     value = value[segment];
@@ -42,19 +58,30 @@ const resolvePointer = (document: JsonObject, pointer: string): unknown => {
   return value;
 };
 
-const resolveSchema = (document: JsonObject, value: unknown): JsonObject => {
+const resolveSchema = (
+  document: JsonObject,
+  value: unknown,
+  references = new Set<string>()
+): JsonObject => {
   if (isObject(value) === false) {
     throw new Error("OpenAPI schema is invalid");
   }
   if (typeof value.$ref !== "string") {
     return value;
   }
+  if (references.has(value.$ref)) {
+    throw new Error("Circular OpenAPI query schema references are unsupported");
+  }
   const resolved = resolvePointer(document, value.$ref);
   if (isObject(resolved) === false) {
     throw new Error(`OpenAPI reference ${value.$ref} is not a schema`);
   }
   const { $ref: _ref, ...siblings } = value;
-  return resolveSchema(document, { ...resolved, ...siblings });
+  return resolveSchema(
+    document,
+    { ...resolved, ...siblings },
+    new Set([...references, value.$ref])
+  );
 };
 
 const getProperties = (schema: JsonObject) => {
@@ -108,11 +135,29 @@ const getFieldChoices = (
       },
     ];
   }
-  return Array.isArray(resolved.oneOf)
-    ? resolved.oneOf.flatMap((choice) =>
+  if (
+    Array.isArray(resolved.enum) &&
+    resolved.enum.every(
+      (value) =>
+        Array.isArray(value) &&
+        value.every((segment) => typeof segment === "string")
+    )
+  ) {
+    return resolved.enum.map((value) => ({
+      path: value as string[],
+      label: (value as string[]).join(" / "),
+    }));
+  }
+  const choices = Array.isArray(resolved.oneOf)
+    ? resolved.oneOf
+    : Array.isArray(resolved.anyOf)
+      ? resolved.anyOf
+      : undefined;
+  return choices === undefined
+    ? []
+    : choices.flatMap((choice) =>
         isObject(choice) ? getFieldChoices(document, choice) : []
-      )
-    : [];
+      );
 };
 
 const getSchemaChoices = (document: JsonObject, schema: JsonObject) => {
@@ -195,7 +240,109 @@ const getFilterDepth = (
   return 1 + Math.max(...(childDepths as number[]));
 };
 
-const defaultFromSchema = (schema: JsonObject): unknown => {
+type NumberControlConstraints = {
+  min?: number;
+  max?: number;
+  exclusiveMin?: boolean;
+  exclusiveMax?: boolean;
+  integer?: boolean;
+};
+
+const getNumberControlConstraints = (
+  schema: JsonObject
+): NumberControlConstraints => {
+  const integer = schema.type === "integer";
+  const minimum =
+    typeof schema.minimum === "number" ? schema.minimum : undefined;
+  const exclusiveMinimum =
+    typeof schema.exclusiveMinimum === "number"
+      ? schema.exclusiveMinimum
+      : schema.exclusiveMinimum === true
+        ? minimum
+        : undefined;
+  const maximum =
+    typeof schema.maximum === "number" ? schema.maximum : undefined;
+  const exclusiveMaximum =
+    typeof schema.exclusiveMaximum === "number"
+      ? schema.exclusiveMaximum
+      : schema.exclusiveMaximum === true
+        ? maximum
+        : undefined;
+  if (integer) {
+    const minimums = [
+      minimum === undefined ? undefined : Math.ceil(minimum),
+      exclusiveMinimum === undefined
+        ? undefined
+        : Math.floor(exclusiveMinimum) + 1,
+    ].filter((value): value is number => value !== undefined);
+    const maximums = [
+      maximum === undefined ? undefined : Math.floor(maximum),
+      exclusiveMaximum === undefined
+        ? undefined
+        : Math.ceil(exclusiveMaximum) - 1,
+    ].filter((value): value is number => value !== undefined);
+    return {
+      min: minimums.length === 0 ? undefined : Math.max(...minimums),
+      max: maximums.length === 0 ? undefined : Math.min(...maximums),
+      integer: true as const,
+    };
+  }
+  const exclusiveMin =
+    exclusiveMinimum !== undefined &&
+    (minimum === undefined || exclusiveMinimum >= minimum);
+  const exclusiveMax =
+    exclusiveMaximum !== undefined &&
+    (maximum === undefined || exclusiveMaximum <= maximum);
+  return {
+    min: exclusiveMin ? exclusiveMinimum : minimum,
+    max: exclusiveMax ? exclusiveMaximum : maximum,
+    ...(exclusiveMin ? { exclusiveMin: true as const } : {}),
+    ...(exclusiveMax ? { exclusiveMax: true as const } : {}),
+  };
+};
+
+const isWithinNumberConstraints = (
+  value: number,
+  constraints: ReturnType<typeof getNumberControlConstraints>
+) =>
+  (constraints.integer !== true || Number.isInteger(value)) &&
+  (constraints.min === undefined ||
+    (constraints.exclusiveMin
+      ? value > constraints.min
+      : value >= constraints.min)) &&
+  (constraints.max === undefined ||
+    (constraints.exclusiveMax
+      ? value < constraints.max
+      : value <= constraints.max));
+
+const getDefaultNumber = (schema: JsonObject) => {
+  const constraints = getNumberControlConstraints(schema);
+  const candidates = [
+    0,
+    constraints.min,
+    constraints.max,
+    constraints.min === undefined
+      ? undefined
+      : constraints.max === undefined
+        ? constraints.min + 1
+        : constraints.min + (constraints.max - constraints.min) / 2,
+    constraints.max === undefined ? undefined : constraints.max - 1,
+  ];
+  return (
+    candidates.find(
+      (value): value is number =>
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        isWithinNumberConstraints(value, constraints)
+    ) ?? 0
+  );
+};
+
+const defaultFromSchema = (
+  document: JsonObject,
+  input: JsonObject
+): unknown => {
+  const schema = resolveSchema(document, input);
   if (schema.default !== undefined) {
     return structuredClone(schema.default);
   }
@@ -209,26 +356,23 @@ const defaultFromSchema = (schema: JsonObject): unknown => {
     return false;
   }
   if (schema.type === "integer" || schema.type === "number") {
-    if (typeof schema.minimum === "number") {
-      return schema.minimum;
-    }
-    if (typeof schema.exclusiveMinimum === "number") {
-      return schema.exclusiveMinimum + 1;
-    }
-    return 0;
+    return getDefaultNumber(schema);
   }
   if (schema.type === "object") {
     const properties = isObject(schema.properties) ? schema.properties : {};
     const required = Array.isArray(schema.required) ? schema.required : [];
     return Object.fromEntries(
-      Object.entries(properties).flatMap(([key, child]) =>
-        isObject(child) &&
-        (required.includes(key) ||
-          child.default !== undefined ||
-          child.const !== undefined)
-          ? [[key, defaultFromSchema(child)]]
-          : []
-      )
+      Object.entries(properties).flatMap(([key, child]) => {
+        if (isObject(child) === false) {
+          return [];
+        }
+        const resolved = resolveSchema(document, child);
+        return required.includes(key) ||
+          resolved.default !== undefined ||
+          resolved.const !== undefined
+          ? [[key, defaultFromSchema(document, resolved)]]
+          : [];
+      })
     );
   }
   return "";
@@ -273,27 +417,34 @@ const createVariantValidationSchema = (
   if (
     schema.type === "array" &&
     Array.isArray(schema.oneOf) &&
-    schema.oneOf.every(
-      (choice) =>
-        isObject(choice) &&
-        Array.isArray(choice.const) &&
-        choice.const.every((segment) => typeof segment === "string")
-    )
+    schema.oneOf.every((choice) => {
+      if (isObject(choice) === false) {
+        return false;
+      }
+      const values = Array.isArray(choice.enum) ? choice.enum : [choice.const];
+      return values.every(
+        (segments) =>
+          Array.isArray(segments) &&
+          segments.every((segment) => typeof segment === "string")
+      );
+    })
   ) {
     // Zod's JSON Schema converter treats an array-valued const as a list of
     // scalar choices. Express each exact array as an equivalent tuple schema
     // so source validation preserves the choices declared by OpenAPI.
     return {
       ...schema,
-      oneOf: schema.oneOf.map((choice) => {
-        const segments = (choice as { const: string[] }).const;
-        return {
+      oneOf: schema.oneOf.flatMap((choice) => {
+        const values = Array.isArray((choice as JsonObject).enum)
+          ? ((choice as JsonObject).enum as string[][])
+          : [(choice as { const: string[] }).const];
+        return values.map((segments) => ({
           type: "array",
           prefixItems: segments.map((segment) => ({ const: segment })),
           items: false,
           minItems: segments.length,
           maxItems: segments.length,
-        };
+        }));
       }),
     };
   }
@@ -316,7 +467,10 @@ const createVariantControl = ({
   const discriminator = Object.keys(getProperties(objects[0])).find((name) =>
     objects.every((item) => {
       const candidate = getProperties(item)[name];
-      return isObject(candidate) && typeof candidate.const === "string";
+      return (
+        isObject(candidate) &&
+        typeof resolveSchema(document, candidate).const === "string"
+      );
     })
   );
   if (discriminator === undefined) {
@@ -324,42 +478,46 @@ const createVariantControl = ({
   }
   const options = objects.map((item) => {
     const properties = getProperties(item);
-    const discriminatorSchema = properties[discriminator] as JsonObject;
+    const discriminatorSchema = resolveSchema(
+      document,
+      properties[discriminator]
+    );
     const value = discriminatorSchema.const as string;
-    const defaultValue = defaultFromSchema(item) as Record<string, unknown>;
+    const defaultValue = defaultFromSchema(document, item) as Record<
+      string,
+      unknown
+    >;
     const fields: QueryParameterControlField[] = [];
     for (const [name, child] of Object.entries(properties)) {
       if (name === discriminator || isObject(child) === false) {
         continue;
       }
-      const items = isObject(child.items)
-        ? resolveSchema(document, child.items)
+      const childSchema = resolveSchema(document, child);
+      const items = isObject(childSchema.items)
+        ? resolveSchema(document, childSchema.items)
         : undefined;
       if (
-        child.type === "array" &&
+        childSchema.type === "array" &&
         items !== undefined &&
-        Array.isArray(items.oneOf)
+        getFieldChoices(document, items).length > 0
       ) {
         fields.push({
           key: name,
-          label: String(child.title ?? labelFromKey(name)),
+          label: String(childSchema.title ?? labelFromKey(name)),
           type: "field-list",
-          max: typeof child.maxItems === "number" ? child.maxItems : undefined,
+          max:
+            typeof childSchema.maxItems === "number"
+              ? childSchema.maxItems
+              : undefined,
         });
         continue;
       }
-      if (child.type === "integer" || child.type === "number") {
+      if (childSchema.type === "integer" || childSchema.type === "number") {
         fields.push({
           key: name,
-          label: String(child.title ?? labelFromKey(name)),
+          label: String(childSchema.title ?? labelFromKey(name)),
           type: "number",
-          min:
-            typeof child.minimum === "number"
-              ? child.minimum
-              : typeof child.exclusiveMinimum === "number"
-                ? child.exclusiveMinimum + 1
-                : undefined,
-          max: typeof child.maximum === "number" ? child.maximum : undefined,
+          ...getNumberControlConstraints(childSchema),
           optional: Array.isArray(item.required)
             ? item.required.includes(name) === false
             : true,
@@ -376,8 +534,7 @@ const createVariantControl = ({
   const currentDefault = isObject(schema.default)
     ? schema.default
     : options[0]?.defaultValue;
-  const emptyOption = options[0]?.value;
-  if (emptyOption === undefined) {
+  if (options.length === 0) {
     return;
   }
   const commonBoolean = Object.keys(getProperties(objects[0])).find(
@@ -386,31 +543,41 @@ const createVariantControl = ({
       objects.every((item) => getProperties(item)[name] !== undefined) &&
       objects.every((item) => {
         const child = getProperties(item)[name];
-        return isObject(child) && child.type === "boolean";
+        return (
+          isObject(child) && resolveSchema(document, child).type === "boolean"
+        );
       })
   );
+  const emptyOption = options.find(({ fields }) => fields.length === 0)?.value;
+  const isAdditiveSelection =
+    emptyOption !== undefined &&
+    options.some(({ fields }) => fields.length > 0);
+  const label = String(schema.title ?? labelFromKey(key));
   return {
     type: "variant",
     key,
-    label: String(schema.title ?? labelFromKey(key)),
+    label,
     defaultValue: currentDefault ?? options[0]?.defaultValue ?? {},
     schema: createVariantValidationSchema(document, schema) as JsonObject,
     config: {
       discriminator,
-      selection: {
-        label: "Output",
-        emptyOption,
-        baseline:
-          commonBoolean === undefined
-            ? undefined
-            : {
-                key: commonBoolean,
-                label: String(
-                  (getProperties(objects[0])[commonBoolean] as JsonObject)
-                    .title ?? labelFromKey(commonBoolean)
-                ),
-              },
-      },
+      selection:
+        isAdditiveSelection === false
+          ? undefined
+          : {
+              label,
+              emptyOption,
+              baseline:
+                commonBoolean === undefined
+                  ? undefined
+                  : {
+                      key: commonBoolean,
+                      label: String(
+                        (getProperties(objects[0])[commonBoolean] as JsonObject)
+                          .title ?? labelFromKey(commonBoolean)
+                      ),
+                    },
+            },
       options,
     },
   };
@@ -429,8 +596,7 @@ const createDefinition = ({
   for (const [key, unresolved] of Object.entries(getProperties(schema))) {
     const property = resolveSchema(document, unresolved);
     const label = String(property.title ?? labelFromKey(key));
-    const resolved = resolveSchema(document, property);
-    const filterSchema = getFilterSchema(document, resolved);
+    const filterSchema = getFilterSchema(document, property);
     if (filterSchema !== undefined) {
       const conditions = getSchemaChoices(
         document,
@@ -450,7 +616,7 @@ const createDefinition = ({
         }
         const supported = getChoices(document, operator);
         for (const choice of fieldChoices) {
-          const fieldKey = JSON.stringify(choice.path);
+          const fieldKey = getQueryFieldKey(choice.path);
           const existing = fields.get(fieldKey);
           fields.set(fieldKey, {
             path: choice.path,
@@ -472,7 +638,9 @@ const createDefinition = ({
             types: ["string"],
             input: {
               control: valueSchema.type === "boolean" ? "none" : "expression",
-              defaultValue: JSON.stringify(defaultFromSchema(valueSchema)),
+              defaultValue: JSON.stringify(
+                defaultFromSchema(document, valueSchema)
+              ),
             },
           });
         }
@@ -519,9 +687,19 @@ const createDefinition = ({
           )
         : [];
       const fieldChoices = isObject(field)
-        ? getFieldChoices(document, field).map(({ path }) => path)
+        ? getFieldChoices(document, field)
         : [];
       if (fieldChoices.length > 0 && directions.length > 0) {
+        for (const choice of fieldChoices) {
+          const fieldKey = getQueryFieldKey(choice.path);
+          if (fields.has(fieldKey) === false) {
+            fields.set(fieldKey, {
+              path: choice.path,
+              label: choice.label,
+              types: ["string"],
+            });
+          }
+        }
         controls.push({
           type: "sort",
           key,
@@ -530,10 +708,14 @@ const createDefinition = ({
             ? (property.default as never[])
             : [],
           defaultItem: {
-            field: fieldChoices[0],
-            direction: directions[0].value === "desc" ? "desc" : "asc",
+            field: fieldChoices[0].path,
+            direction: directions[0].value,
           },
-          max: typeof property.maxItems === "number" ? property.maxItems : 100,
+          directions,
+          max:
+            typeof property.maxItems === "number"
+              ? property.maxItems
+              : undefined,
         });
         continue;
       }
@@ -543,12 +725,9 @@ const createDefinition = ({
         type: "expression",
         key,
         label,
-        defaultValue: JSON.stringify(defaultFromSchema(property)),
+        defaultValue: JSON.stringify(defaultFromSchema(document, property)),
         input: "number",
-        min:
-          typeof property.minimum === "number" ? property.minimum : undefined,
-        max:
-          typeof property.maximum === "number" ? property.maximum : undefined,
+        ...getNumberControlConstraints(property),
       });
       continue;
     }
@@ -559,6 +738,9 @@ const createDefinition = ({
   }
   return queryDefinition.parse({
     version: 1,
+    ...(typeof schema.description === "string"
+      ? { description: schema.description }
+      : {}),
     fields: [...fields.values()],
     operators: [...operators.values()],
     source: { fieldPathSchema: true, controls },
@@ -575,7 +757,7 @@ const findOperation = (document: JsonObject, operationId: string) => {
     }
     for (const candidate of Object.values(pathItem)) {
       if (isObject(candidate) && candidate.operationId === operationId) {
-        return candidate;
+        return { operation: candidate, pathItem };
       }
     }
   }
@@ -583,36 +765,43 @@ const findOperation = (document: JsonObject, operationId: string) => {
 };
 
 /** Derives query authoring solely from one standard OpenAPI operation. */
-export const getOpenApiQueryConfiguration = ({
+export const getOpenApiQueryDefinition = ({
   document: input,
   operationId,
 }: {
   document: unknown;
   operationId: string;
-}): OpenApiQueryConfiguration => {
+}): QueryDefinition => {
   if (isObject(input) === false) {
     throw new Error("OpenAPI document is invalid");
   }
-  const operation = findOperation(input, operationId);
-  const parameters = Array.isArray(operation.parameters)
-    ? operation.parameters.flatMap((item) => {
-        const parameter = resolveSchema(input, item);
-        if (
-          typeof parameter.name !== "string" ||
-          typeof parameter.in !== "string" ||
-          isObject(parameter.schema) === false
-        ) {
-          return [];
-        }
-        return [
-          {
-            key: parameter.name,
-            in: parameter.in,
-            schema: resolveSchema(input, parameter.schema),
-          },
-        ];
-      })
-    : [];
+  const { operation, pathItem } = findOperation(input, operationId);
+  const parametersByIdentity = new Map<
+    string,
+    { key: string; schema: JsonObject }
+  >();
+  const addParameters = (items: unknown) => {
+    if (Array.isArray(items) === false) {
+      return;
+    }
+    for (const item of items) {
+      const parameter = resolveSchema(input, item);
+      if (
+        typeof parameter.name !== "string" ||
+        typeof parameter.in !== "string" ||
+        isObject(parameter.schema) === false
+      ) {
+        continue;
+      }
+      parametersByIdentity.set(`${parameter.in}\0${parameter.name}`, {
+        key: parameter.name,
+        schema: resolveSchema(input, parameter.schema),
+      });
+    }
+  };
+  addParameters(pathItem.parameters);
+  addParameters(operation.parameters);
+  const parameters = [...parametersByIdentity.values()];
   const requestBody = isObject(operation.requestBody)
     ? resolveSchema(input, operation.requestBody)
     : undefined;
@@ -638,43 +827,154 @@ export const getOpenApiQueryConfiguration = ({
         isObject(property) && resolveSchema(input, property).type === "object"
       );
     });
-    const valuePath = objectKeys.length === 1 ? [objectKeys[0]] : [];
+    const valuePath =
+      required.length === 1 && objectKeys.length === 1 ? [objectKeys[0]] : [];
     const valueSchema =
       valuePath.length === 1
         ? resolveSchema(input, properties[valuePath[0]])
         : requestSchema;
-    return {
-      definition: createDefinition({ document: input, schema: valueSchema }),
-      valuePath,
-      parameters: parameters.map(({ key, in: location }) => ({
-        key,
-        in: location,
-      })),
-    };
+    return createDefinition({ document: input, schema: valueSchema });
   }
   const controls: QueryControl[] = parameters.map(({ key, schema }) => ({
     type: "expression",
     key,
     label: String(schema.title ?? labelFromKey(key)),
-    defaultValue: JSON.stringify(defaultFromSchema(schema)),
+    defaultValue: JSON.stringify(defaultFromSchema(input, schema)),
     input:
       schema.type === "integer" || schema.type === "number"
         ? "number"
         : "expression",
-    min: typeof schema.minimum === "number" ? schema.minimum : undefined,
-    max: typeof schema.maximum === "number" ? schema.maximum : undefined,
+    ...getNumberControlConstraints(schema),
   }));
-  return {
-    definition: queryDefinition.parse({
-      version: 1,
-      fields: [],
-      operators: [],
-      source: { fieldPathSchema: true, controls },
-    }),
-    valuePath: [],
-    parameters: parameters.map(({ key, in: location }) => ({
-      key,
-      in: location,
-    })),
+  return queryDefinition.parse({
+    version: 1,
+    fields: [],
+    operators: [],
+    source: { fieldPathSchema: true, controls },
+  });
+};
+
+const getReferenceDocumentUrl = (url: URL) => {
+  const documentUrl = new URL(url);
+  documentUrl.hash = "";
+  return documentUrl.href;
+};
+
+/**
+ * Loads standard external OpenAPI/JSON Schema references and bundles them as
+ * local component schemas before deriving the query UI. Network policy stays
+ * with the caller through loadReference.
+ */
+export const loadOpenApiQueryDefinition = async ({
+  document,
+  documentUrl,
+  operationId,
+  loadReference,
+}: {
+  document: unknown;
+  documentUrl: string;
+  operationId: string;
+  loadReference: (url: string) => Promise<unknown>;
+}): Promise<QueryDefinition> => {
+  if (isObject(document) === false) {
+    throw new Error("OpenAPI document is invalid");
+  }
+  const rootUrl = getReferenceDocumentUrl(new URL(documentUrl));
+  const bundled = structuredClone(document);
+  const components = isObject(bundled.components)
+    ? bundled.components
+    : (bundled.components = {});
+  const schemas = isObject(components.schemas)
+    ? components.schemas
+    : (components.schemas = {});
+  const prefixByDocumentUrl = new Map<string, string>([[rootUrl, "#"]]);
+  const externalSchemaKeys = new Set<string>();
+
+  const createExternalPrefix = () => {
+    let index = prefixByDocumentUrl.size - 1;
+    let key = `ExternalQuerySchema${index}`;
+    while (Object.hasOwn(schemas, key)) {
+      index += 1;
+      key = `ExternalQuerySchema${index}`;
+    }
+    return `#/components/schemas/${key}`;
   };
+
+  const rewriteReferences = async (
+    value: unknown,
+    baseUrl: string,
+    localPrefix: string
+  ): Promise<unknown> => {
+    if (Array.isArray(value)) {
+      return await Promise.all(
+        value.map((item) => rewriteReferences(item, baseUrl, localPrefix))
+      );
+    }
+    if (isObject(value) === false) {
+      return value;
+    }
+    return Object.fromEntries(
+      await Promise.all(
+        Object.entries(value).map(async ([key, item]) => {
+          if (key !== "$ref" || typeof item !== "string") {
+            return [key, await rewriteReferences(item, baseUrl, localPrefix)];
+          }
+          if (item.startsWith("#")) {
+            return [
+              key,
+              localPrefix === "#" ? item : `${localPrefix}${item.slice(1)}`,
+            ];
+          }
+          const referenceUrl = new URL(item, baseUrl);
+          const fragment = referenceUrl.hash;
+          const referenceDocumentUrl = getReferenceDocumentUrl(referenceUrl);
+          let referencePrefix = prefixByDocumentUrl.get(referenceDocumentUrl);
+          if (referencePrefix === undefined) {
+            referencePrefix = createExternalPrefix();
+            prefixByDocumentUrl.set(referenceDocumentUrl, referencePrefix);
+            const key = referencePrefix.slice("#/components/schemas/".length);
+            externalSchemaKeys.add(key);
+            // Reserve the destination before reading nested references so
+            // mutually referencing documents terminate deterministically.
+            schemas[key] = {};
+            const external = await loadReference(referenceDocumentUrl);
+            if (isObject(external) === false) {
+              throw new Error(
+                `OpenAPI reference ${referenceDocumentUrl} is invalid`
+              );
+            }
+            schemas[key] = await rewriteReferences(
+              external,
+              referenceDocumentUrl,
+              referencePrefix
+            );
+          }
+          return [
+            key,
+            fragment.length === 0
+              ? referencePrefix
+              : `${referencePrefix}${fragment.slice(1)}`,
+          ];
+        })
+      )
+    );
+  };
+
+  const resolved = await rewriteReferences(bundled, rootUrl, "#");
+  if (isObject(resolved) === false) {
+    throw new Error("OpenAPI document is invalid");
+  }
+  const resolvedComponents = isObject(resolved.components)
+    ? resolved.components
+    : (resolved.components = {});
+  const resolvedSchemas = isObject(resolvedComponents.schemas)
+    ? resolvedComponents.schemas
+    : (resolvedComponents.schemas = {});
+  for (const key of externalSchemaKeys) {
+    resolvedSchemas[key] = schemas[key];
+  }
+  return getOpenApiQueryDefinition({
+    document: resolved,
+    operationId,
+  });
 };

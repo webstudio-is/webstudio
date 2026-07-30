@@ -90,6 +90,31 @@ describe("content metadata cache", () => {
     expect(set).toHaveBeenCalledOnce();
   });
 
+  test("does not retain derived fields from an invalidated cache tier", async () => {
+    const stale = createEntry({
+      properties: { title: "Stale" },
+      excerpt: "Stale excerpt",
+    });
+    stale.document.metadataError = {
+      code: "STALE_ERROR",
+      message: "Stale error",
+    };
+
+    const prepared = await prepareCanonicalContentMetadata({
+      base: createEntry(),
+      requirements: { structuredProperties: true, excerpt: true },
+      cache: { get: async () => stale, set: vi.fn() },
+      readBytes: async () =>
+        new TextEncoder().encode("---\ntitle: One\ntitle: Two\n---"),
+    });
+
+    expect(prepared.document.properties).toEqual({});
+    expect(prepared.document).not.toHaveProperty("excerpt");
+    expect(prepared.document.metadataError).toMatchObject({
+      code: "FRONTMATTER_INVALID",
+    });
+  });
+
   test("removes stale excerpts from non-Markdown cache entries", async () => {
     const markdown = createEntry({
       excerpt: "Stale description",
@@ -165,5 +190,50 @@ describe("content metadata cache", () => {
     });
 
     expect(readBytes).toHaveBeenCalledWith(1024 * 1024);
+  });
+
+  test("ignores an incomplete UTF-8 code point at the excerpt prefix boundary", async () => {
+    const prefix = new TextEncoder().encode("Body ");
+    const truncated = new Uint8Array(prefix.byteLength + 1);
+    truncated.set(prefix);
+    truncated[prefix.byteLength] = 0xe2;
+
+    await expect(
+      prepareCanonicalContentMetadata({
+        base: createCanonicalAssetFileEntry({
+          ...createEntry(),
+          document: {
+            ...createEntry().document,
+            size: 2 * 1024 * 1024,
+          },
+        }),
+        requirements: { structuredProperties: false, excerpt: true },
+        readBytes: async () => truncated,
+      })
+    ).resolves.toMatchObject({
+      document: { excerpt: "Body" },
+    });
+  });
+
+  test("reports malformed UTF-8 inside an excerpt prefix", async () => {
+    const malformed = Uint8Array.from([0x42, 0xff, 0x64]);
+
+    await expect(
+      prepareCanonicalContentMetadata({
+        base: createCanonicalAssetFileEntry({
+          ...createEntry(),
+          document: {
+            ...createEntry().document,
+            size: 2 * 1024 * 1024,
+          },
+        }),
+        requirements: { structuredProperties: false, excerpt: true },
+        readBytes: async () => malformed,
+      })
+    ).resolves.toMatchObject({
+      document: {
+        metadataError: { code: "MARKDOWN_BODY_DECODING_FAILED" },
+      },
+    });
   });
 });

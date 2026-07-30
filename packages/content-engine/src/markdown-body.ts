@@ -4,6 +4,7 @@ import {
   decodeUtf8,
   getUtf8ByteLength,
   readBoundedBytes,
+  stripUtf8ByteOrderMark,
   type ByteSource,
 } from "./byte-stream";
 import { MarkdownMetadataError } from "./markdown-errors";
@@ -56,7 +57,10 @@ export const extractMarkdownBody = async (
   const bodyStart = located?.blockEnd ?? 0;
   let body: string;
   try {
-    body = bodyStart === 0 ? sourceText : decodeUtf8(bytes.subarray(bodyStart));
+    body =
+      bodyStart === 0
+        ? stripUtf8ByteOrderMark(sourceText)
+        : decodeUtf8(bytes.subarray(bodyStart));
   } catch {
     throw new MarkdownMetadataError(
       "MARKDOWN_BODY_DECODING_FAILED",

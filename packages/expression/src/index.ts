@@ -5,8 +5,26 @@ import {
   type Pattern,
   parse,
   parseExpressionAt,
+  tokenizer,
 } from "acorn";
 import { simple } from "acorn-walk";
+
+const parseCompleteExpression = (
+  expression: string,
+  options: { preserveParens?: boolean } = {}
+) => {
+  const node = parseExpressionAt(expression, 0, {
+    ecmaVersion: "latest",
+    preserveParens: options.preserveParens,
+  });
+  const trailingToken = tokenizer(expression.slice(node.end), {
+    ecmaVersion: "latest",
+  }).getToken();
+  if (trailingToken.type.label !== "eof") {
+    throw new SyntaxError("Unexpected content after expression");
+  }
+  return node;
+};
 
 export type Diagnostic = {
   from: number;
@@ -241,7 +259,7 @@ export const getExpressionValueKind = ({
   variableValues?: VariableValues;
 }): ExpressionValueKind => {
   try {
-    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    const node = parseCompleteExpression(expression);
     return getExpressionNodeValueKind(node, variableValues);
   } catch {
     return "unknown";
@@ -427,10 +445,20 @@ const isLiteralNode = (node: Expression): boolean => {
  */
 export const isLiteralExpression = (expression: string) => {
   try {
-    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    const node = parseCompleteExpression(expression);
     return isLiteralNode(node);
   } catch {
     // treat invalid expression as non-literal
+    return false;
+  }
+};
+
+/** Check whether the complete source is one valid JavaScript expression. */
+export const isValidExpression = (expression: string) => {
+  try {
+    parseCompleteExpression(expression);
+    return true;
+  } catch {
     return false;
   }
 };
@@ -475,10 +503,7 @@ const getStaticMemberPath = (node: Expression): string[] | undefined => {
 /** Parse an identifier/member expression whose complete property path is static. */
 export const parseStaticMemberPath = (expression: string) => {
   try {
-    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
-    if (expression.slice(node.end).trim() !== "") {
-      return;
-    }
+    const node = parseCompleteExpression(expression);
     return getStaticMemberPath(node);
   } catch {
     return;
@@ -488,7 +513,7 @@ export const parseStaticMemberPath = (expression: string) => {
 export const getExpressionIdentifiers = (expression: string) => {
   const identifiers = new Set<string>();
   try {
-    const root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    const root = parseCompleteExpression(expression);
     simple(root, {
       Identifier: (node) => identifiers.add(node.name),
       AssignmentExpression(node) {
@@ -525,7 +550,7 @@ export const transpileExpression = ({
 }) => {
   let root;
   try {
-    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    root = parseCompleteExpression(expression);
   } catch (error) {
     const message = (error as Error).message;
     // throw new error to trace error in our code instead of acorn
@@ -623,61 +648,16 @@ export const transpileExpression = ({
   return expression;
 };
 
-/**
- * parse object expression into key value map
- * where each value is expression
- */
-export const parseObjectExpression = (expression: string) => {
-  const map = new Map<string, string>();
-  let root;
-  try {
-    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
-  } catch (error) {
-    return map;
-  }
-  if (root.type !== "ObjectExpression") {
-    return map;
-  }
-  for (const property of root.properties) {
-    if (property.type === "SpreadElement") {
-      continue;
-    }
-    if (property.computed) {
-      continue;
-    }
-    let key;
-    if (property.key.type === "Identifier") {
-      key = property.key.name;
-    } else if (
-      property.key.type === "Literal" &&
-      typeof property.key.value === "string"
-    ) {
-      key = property.key.value;
-    } else {
-      continue;
-    }
-    const valueExpression = expression.slice(
-      property.value.start,
-      property.value.end
-    );
-    map.set(key, valueExpression);
-  }
-  return map;
-};
-
 /** Parse an array expression into its individual element expressions. */
 export const parseArrayExpression = (expression: string) => {
   const items: string[] = [];
   let root;
   try {
-    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    root = parseCompleteExpression(expression);
   } catch {
     return;
   }
-  if (
-    root.type !== "ArrayExpression" ||
-    expression.slice(root.end).trim() !== ""
-  ) {
+  if (root.type !== "ArrayExpression") {
     return;
   }
   for (const element of root.elements) {
@@ -694,25 +674,19 @@ export const parseExpressionObject = (expression: string) => {
   const fields = new Map<string, string>();
   let root;
   try {
-    root = parseExpressionAt(expression, 0, {
-      ecmaVersion: "latest",
-      preserveParens: true,
-    });
+    root = parseCompleteExpression(expression, { preserveParens: true });
   } catch {
-    return fields;
-  }
-  if (expression.slice(root.end).trim() !== "") {
-    return fields;
+    return;
   }
   while (root.type === "ParenthesizedExpression") {
     root = root.expression;
   }
   if (root.type !== "ObjectExpression") {
-    return fields;
+    return;
   }
   for (const property of root.properties) {
     if (property.type === "SpreadElement" || property.computed) {
-      return new Map<string, string>();
+      return;
     }
     const key =
       property.key.type === "Identifier"
@@ -722,7 +696,7 @@ export const parseExpressionObject = (expression: string) => {
           ? property.key.value
           : undefined;
     if (key === undefined || fields.has(key)) {
-      return new Map<string, string>();
+      return;
     }
     fields.set(key, expression.slice(property.value.start, property.value.end));
   }
@@ -874,10 +848,7 @@ export const parseJsonExpression = (expression: string | undefined) => {
     return;
   }
   try {
-    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
-    if (expression.slice(node.end).trim() !== "") {
-      return;
-    }
+    const node = parseCompleteExpression(expression);
     const parsed = parseJsonNode(node);
     return parsed.success ? parsed.value : undefined;
   } catch {

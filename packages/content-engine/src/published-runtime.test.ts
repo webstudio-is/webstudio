@@ -3,7 +3,7 @@ import type { AssetFileDocument } from "./schema";
 import { createAssetIndex } from "./asset-index";
 import { createCanonicalAssetFileEntry } from "./canonical";
 import {
-  createGeneratedAssetResourceFetch,
+  createGeneratedAssetResourceRuntime,
   createPublishedAssetResourceFetch,
 } from "./published-runtime";
 
@@ -21,6 +21,7 @@ const document: AssetFileDocument = {
   contentRef: "post.md",
   properties: { slug: "post", title: "Post" },
 };
+const runtimeAssets = { "post-1": { url: "/assets/post.md" } };
 
 const createRuntime = async () => {
   const index = await createAssetIndex({
@@ -41,6 +42,7 @@ const createRuntime = async () => {
       baseUrl: "https://site.example",
       deploymentId: "build-1",
       artifact: index,
+      runtimeAssets,
     }),
   };
 };
@@ -75,10 +77,13 @@ describe("published asset resource runtime", () => {
     const open = vi.fn();
     vi.stubGlobal("caches", { open });
     const fallback = vi.fn(async () => new Response("fallback"));
-    const generatedFetch = await createGeneratedAssetResourceFetch({
-      request: new Request("https://site.example/page"),
+    const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "build-1",
       artifact: index,
+      runtimeAssets,
+    });
+    const generatedFetch = await createGeneratedFetch({
+      request: new Request("https://site.example/page"),
       fallback,
     });
 
@@ -102,10 +107,13 @@ describe("published asset resource runtime", () => {
     });
     const networkFetch = vi.fn();
     vi.stubGlobal("fetch", networkFetch);
-    const generatedFetch = await createGeneratedAssetResourceFetch({
-      request: new Request("https://site.example/blog"),
+    const createGeneratedFetch = createGeneratedAssetResourceRuntime({
       deploymentId: "build-same-origin",
       artifact: index,
+      runtimeAssets,
+    });
+    const generatedFetch = await createGeneratedFetch({
+      request: new Request("https://site.example/blog"),
       fallback: vi.fn(async () => new Response("fallback")),
     });
 
@@ -125,6 +133,29 @@ describe("published asset resource runtime", () => {
     expect(networkFetch).not.toHaveBeenCalled();
   });
 
+  test("reuses one initialized runtime across deployment origins", async () => {
+    const { index } = await createRuntime();
+    const createGeneratedFetch = createGeneratedAssetResourceRuntime({
+      deploymentId: "build-reused",
+      artifact: index,
+      runtimeAssets,
+    });
+    const fallback = vi.fn(async () => new Response("fallback"));
+
+    const first = await createGeneratedFetch({
+      request: new Request("https://site.example/first"),
+      fallback,
+    });
+    const second = await createGeneratedFetch({
+      request: new Request("https://another.example/second"),
+      fallback,
+    });
+    await first("/other");
+    await second("/other");
+
+    expect(fallback).toHaveBeenCalledTimes(2);
+  });
+
   test("runs multiple structured requests against one database", async () => {
     const { runtimeFetch } = await createRuntime();
     const first = await runtimeFetch(queryRequest());
@@ -136,6 +167,49 @@ describe("published asset resource runtime", () => {
       hasMore: false,
     });
     expect((await second?.json())?.items).toHaveLength(1);
+  });
+
+  test("requires only target URLs referenced by embedded Markdown", async () => {
+    const { index } = await createRuntime();
+    const runtimeFetch = createPublishedAssetResourceFetch({
+      baseUrl: "https://site.example",
+      deploymentId: "build-without-runtime-fields",
+      artifact: index,
+      runtimeAssets: {},
+    });
+    const response = await runtimeFetch("/$resources/assets", {
+      method: "POST",
+      body: JSON.stringify({
+        query: {
+          where: { all: [] },
+          limit: 1,
+          output: {
+            mode: "fields",
+            fields: [["id"]],
+            includeMetadata: false,
+          },
+          content: { mode: "none" },
+        },
+      }),
+    });
+    await expect(response?.json()).resolves.toMatchObject({
+      items: [{ id: "post-1" }],
+    });
+    expect(() =>
+      createPublishedAssetResourceFetch({
+        baseUrl: "https://site.example",
+        deploymentId: "build-incomplete-reference",
+        artifact: {
+          ...index,
+          assetReferences: {
+            "post.md": [{ start: 0, end: 1, assetId: "missing-reference" }],
+          },
+        },
+        runtimeAssets,
+      })
+    ).toThrow(
+      "Published referenced asset URL is unavailable for missing-reference"
+    );
   });
 
   test("hydrates selected embedded content", async () => {
@@ -211,6 +285,7 @@ describe("published asset resource runtime", () => {
       baseUrl: "https://site.example",
       deploymentId: "build-cache",
       artifact: index,
+      runtimeAssets,
       cache,
     });
     const request = () => {

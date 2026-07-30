@@ -4,7 +4,10 @@
 import { useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
-import { createStructuredQuery } from "@webstudio-is/query-builder";
+import {
+  createStructuredQuery,
+  type QueryDefinition,
+} from "@webstudio-is/query-builder";
 import { StructuredQueryBuilder } from "./index";
 import { genericQueryCapabilities, type GenericQuery } from "./test-fixtures";
 
@@ -146,6 +149,24 @@ const UnknownFieldSelectionFixture = () => {
   );
 };
 
+const MalformedFieldSelectionFixture = () => {
+  const [query, setQuery] = useState<GenericQuery>({
+    ...(createStructuredQuery(genericQueryCapabilities) as GenericQuery),
+    selection: {
+      mode: "fields",
+      includeMetadata: true,
+      fields: [undefined, ["title"], ["invalid", 1]] as never,
+    },
+  });
+  return (
+    <StructuredQueryBuilder
+      value={query}
+      capabilities={genericQueryCapabilities}
+      onChange={setQuery}
+    />
+  );
+};
+
 const UnknownFilterAndSortFixture = () => {
   const [query, setQuery] = useState<GenericQuery>({
     ...(createStructuredQuery(genericQueryCapabilities) as GenericQuery),
@@ -224,11 +245,103 @@ describe("structured query builder", () => {
 
     const limit = screen.getByLabelText("Limit");
     expect((limit as HTMLInputElement).type).toBe("number");
+    expect((limit as HTMLInputElement).step).toBe("any");
     fireEvent.change(limit, { target: { value: "20" } });
     expect((limit as HTMLInputElement).value).toBe("20");
 
     const source = screen.getByLabelText("Query expression");
     expect((source as HTMLTextAreaElement).value).toContain("limit: 20");
+  });
+
+  test("renders section labels from the provider definition", () => {
+    const capabilities: QueryDefinition<"string" | "date", "eq" | "after"> = {
+      ...genericQueryCapabilities,
+      source: {
+        ...genericQueryCapabilities.source,
+        controls: genericQueryCapabilities.source.controls.map((control) =>
+          control.type === "filter"
+            ? { ...control, label: "Conditions" }
+            : control.type === "sort"
+              ? { ...control, label: "Ordering" }
+              : control
+        ),
+      },
+    };
+    const query = createStructuredQuery<GenericQuery>(capabilities);
+
+    render(
+      <StructuredQueryBuilder
+        value={query}
+        capabilities={capabilities}
+        onChange={() => {}}
+      />
+    );
+
+    expect(screen.getByText("Conditions")).toBeTruthy();
+    expect(screen.getByText("Ordering")).toBeTruthy();
+  });
+
+  test("renders provider-defined sort directions", () => {
+    const capabilities = {
+      ...genericQueryCapabilities,
+      source: {
+        ...genericQueryCapabilities.source,
+        controls: genericQueryCapabilities.source.controls.map((control) =>
+          control.type === "sort"
+            ? {
+                ...control,
+                defaultItem: {
+                  ...control.defaultItem,
+                  direction: "newest",
+                },
+                directions: [
+                  { value: "newest", label: "Newest first" },
+                  { value: "oldest", label: "Oldest first" },
+                ],
+              }
+            : control
+        ),
+      },
+    } as const;
+    const Fixture = () => {
+      const [query, setQuery] = useState(
+        createStructuredQuery<GenericQuery>(capabilities)
+      );
+      return (
+        <StructuredQueryBuilder
+          value={query}
+          capabilities={capabilities}
+          onChange={setQuery}
+        />
+      );
+    };
+
+    render(<Fixture />);
+    fireEvent.click(screen.getByLabelText("Add query sort"));
+
+    expect(screen.getByText("Newest first")).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Query expression") as HTMLTextAreaElement).value
+    ).toContain('direction: "newest"');
+  });
+
+  test("renders the provider description", () => {
+    const capabilities = {
+      ...genericQueryCapabilities,
+      description: "Only indexed fields appear in autocomplete.",
+    };
+
+    render(
+      <StructuredQueryBuilder
+        value={createStructuredQuery<GenericQuery>(capabilities)}
+        capabilities={capabilities}
+        onChange={() => {}}
+      />
+    );
+
+    expect(
+      screen.getByText("Only indexed fields appear in autocomplete.")
+    ).toBeTruthy();
   });
 
   test("edits a declarative field-list parameter", () => {
@@ -247,6 +360,13 @@ describe("structured query builder", () => {
     expect(
       (screen.getByLabelText("Query expression") as HTMLTextAreaElement).value
     ).toContain('fields: [["legacy", "field"]]');
+  });
+
+  test("ignores malformed persisted field selections", () => {
+    render(<MalformedFieldSelectionFixture />);
+
+    expect(screen.getByText("Title")).toBeTruthy();
+    expect(screen.queryByText("invalid.1")).toBeNull();
   });
 
   test("shows configured filter and sort fields that are absent from capabilities", () => {

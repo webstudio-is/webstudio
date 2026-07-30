@@ -1,9 +1,11 @@
-import { open, stat, type FileHandle } from "node:fs/promises";
+import { open, realpath, stat, type FileHandle } from "node:fs/promises";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import {
   computeCanonicalAssetRevision,
   createCanonicalAssetFileEntry,
   createContentSourceFile,
   decodeUtf8,
+  fullCanonicalAssetMetadataRequirements,
   normalizeAssetFileDocument,
   prepareCanonicalContentMetadata,
   type ContentSource,
@@ -64,7 +66,31 @@ const serializeFileIdentity = (identity: FileIdentity) =>
   ].join(":");
 
 const isSameFileIdentity = (left: FileIdentity, right: FileIdentity) =>
-  serializeFileIdentity(left) === serializeFileIdentity(right);
+  left.device === right.device &&
+  left.inode === right.inode &&
+  left.size === right.size &&
+  left.modifiedAt === right.modifiedAt &&
+  left.changedAt === right.changedAt;
+
+const resolveContentFilePath = async ({
+  assetsDirectoryPath,
+  filePath,
+}: {
+  assetsDirectoryPath: string;
+  filePath: string;
+}) => {
+  const path = await realpath(filePath);
+  const relativePath = relative(assetsDirectoryPath, path);
+  if (
+    relativePath === "" ||
+    relativePath === ".." ||
+    relativePath.startsWith(`..${sep}`) ||
+    isAbsolute(relativePath)
+  ) {
+    throw new Error("Content source file is outside the assets directory");
+  }
+  return path;
+};
 
 const readFromHandle = async ({
   handle,
@@ -131,9 +157,18 @@ export const createFileSystemContentSource = ({
 }): ContentSource => ({
   openSnapshot: async () => {
     const hierarchy = createAssetFolderHierarchy(folders);
+    const requestedAssetsDirectoryPath = resolve(assetsDirectory);
+    const assetsDirectoryPath =
+      assets.length === 0
+        ? requestedAssetsDirectoryPath
+        : await realpath(requestedAssetsDirectoryPath);
     const captured = await Promise.all(
       assets.map(async (asset) => {
-        const filePath = getLocalAssetPath(asset.name, assetsDirectory);
+        const sourcePath = getLocalAssetPath(asset.name, assetsDirectory);
+        const filePath = await resolveContentFilePath({
+          assetsDirectoryPath,
+          filePath: sourcePath,
+        });
         const identity = await getFileIdentity(filePath);
         const revision = `fs:${serializeFileIdentity(identity)}`;
         const name = formatAssetName(asset);
@@ -152,6 +187,9 @@ export const createFileSystemContentSource = ({
             asset: {
               id: asset.id,
               name,
+              ...(asset.description === null
+                ? {}
+                : { description: asset.description }),
               ...(extension === "" ? {} : { extension }),
               ...(folderId === undefined ? {} : { folderId, folderNames }),
               mimeType: getMimeTypeByFilename(asset.name),
@@ -163,7 +201,7 @@ export const createFileSystemContentSource = ({
             properties: {},
           }),
         });
-        return { entry, filePath, identity };
+        return { entry, sourcePath, filePath, identity };
       })
     );
     const revision = await computeCanonicalAssetRevision(
@@ -176,7 +214,10 @@ export const createFileSystemContentSource = ({
     return {
       revision,
       files: captured.map(({ entry }) => createContentSourceFile(entry)),
-      loadEntries: async (plan?: ContentCompilationPlan) => {
+      loadEntries: async (
+        plan?: ContentCompilationPlan,
+        options?: { maximumContentBytes: number }
+      ) => {
         const candidates =
           plan === undefined
             ? captured
@@ -187,18 +228,21 @@ export const createFileSystemContentSource = ({
                   available: "base",
                 })
               );
+        const requirements =
+          plan === undefined
+            ? fullCanonicalAssetMetadataRequirements
+            : {
+                structuredProperties: requiresStructuredProperties(plan),
+                excerpt: plan.excerpt,
+              };
         const prepared = await Promise.all(
-          candidates.map(async ({ entry, filePath, identity }) =>
-            plan === undefined ||
-            (requiresStructuredProperties(plan) === false &&
-              plan.excerpt === false)
+          candidates.map(({ entry, filePath, identity }) =>
+            requirements.structuredProperties === false &&
+            requirements.excerpt === false
               ? entry
-              : await prepareCanonicalContentMetadata({
+              : prepareCanonicalContentMetadata({
                   base: entry,
-                  requirements: {
-                    structuredProperties: requiresStructuredProperties(plan),
-                    excerpt: plan.excerpt,
-                  },
+                  requirements,
                   readBytes: (maximumBytes) =>
                     readSnapshotFile({
                       path: filePath,
@@ -232,14 +276,24 @@ export const createFileSystemContentSource = ({
               );
             }
           },
+          maximumContentBytes: options?.maximumContentBytes,
         });
       },
       isCurrent: async () => {
         try {
+          if (
+            assets.length > 0 &&
+            (await realpath(requestedAssetsDirectoryPath)) !==
+              assetsDirectoryPath
+          ) {
+            return false;
+          }
           return (
             await Promise.all(
-              captured.map(async ({ filePath, identity }) =>
-                isSameFileIdentity(identity, await getFileIdentity(filePath))
+              captured.map(
+                async ({ sourcePath, filePath, identity }) =>
+                  (await realpath(sourcePath)) === filePath &&
+                  isSameFileIdentity(identity, await getFileIdentity(filePath))
               )
             )
           ).every(Boolean);

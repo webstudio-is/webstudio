@@ -5,7 +5,7 @@ import {
   assetQueryStandardFields,
   contentEngineLimits,
 } from "@webstudio-is/content-engine";
-import { getOpenApiQueryConfiguration } from "@webstudio-is/query-builder";
+import { loadOpenApiQueryDefinition } from "@webstudio-is/query-builder";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import {
   assetFolderCreateRequest,
@@ -13,25 +13,37 @@ import {
   assetMetadataUpdate,
   assetResourceApiOperations,
   assetUploadReservationRequest,
+  createAssetQueryJsonSchema,
   createAssetResourceOpenApi,
 } from "./asset-resource-api";
+
+const defaultCatalog = {
+  format: "webstudio-builder-asset-field-catalog" as const,
+  version: 1 as const,
+  canonicalRevision: `sha256:${"a".repeat(64)}`,
+  documentCount: 1,
+  fields: {
+    slug: {
+      queryPath: ["properties", "slug"],
+      types: ["string" as const],
+      occurrences: 1,
+    },
+  },
+};
 
 const createDocument = () =>
   createAssetResourceOpenApi({
     builderSessionCookieName: "__Host-_session_test",
-    catalog: {
-      format: "webstudio-builder-asset-field-catalog",
-      version: 1,
-      canonicalRevision: `sha256:${"a".repeat(64)}`,
-      documentCount: 1,
-      fields: {
-        slug: {
-          queryPath: ["properties", "slug"],
-          types: ["string"],
-          occurrences: 1,
-        },
-      },
-    },
+    querySchemaReference:
+      "https://api.example.com/rest/assets/query-schema.json?projectId=project",
+  });
+
+const loadConfiguration = (catalog = defaultCatalog) =>
+  loadOpenApiQueryDefinition({
+    document: createDocument(),
+    documentUrl: "https://api.example.com/rest/assets/openapi.json",
+    operationId: "queryAssets",
+    loadReference: async () => createAssetQueryJsonSchema({ catalog }),
   });
 
 const resolvePointer = (document: unknown, pointer: string) => {
@@ -83,13 +95,17 @@ describe("Assets OpenAPI description", () => {
     // JSON value so shared Zod schema internals cannot be retained by it.
     const document = JSON.parse(JSON.stringify(createDocument()));
     await expect(
-      SwaggerParser.validate(document as never)
+      SwaggerParser.validate(document as never, {
+        resolve: { external: false },
+      })
     ).resolves.toMatchObject({ openapi: "3.1.1" });
   });
 
   test("contains resolvable local schema references", () => {
     const document = createDocument();
-    const references = collectLocalReferences(document);
+    const references = collectLocalReferences(document).filter((reference) =>
+      reference.startsWith("#/")
+    );
 
     expect(references.length).toBeGreaterThan(0);
     for (const reference of references) {
@@ -98,12 +114,14 @@ describe("Assets OpenAPI description", () => {
     }
   });
 
-  test("describes stable fields and schemaless properties without a UI extension", () => {
+  test("describes stable fields and schemaless properties without a UI extension", async () => {
     const document = createDocument();
     const resultSchema = document.components.schemas.AssetQueryResult;
     const previewSchema = document.components.schemas.AssetQueryPreviewResult;
     const serialized = JSON.stringify(resultSchema);
-    const requestSchema = document.components.schemas.AssetQueryRequest;
+    const requestSchema = createAssetQueryJsonSchema({
+      catalog: defaultCatalog,
+    });
 
     expect(serialized).toContain('"name"');
     expect(serialized).toContain('"description"');
@@ -114,10 +132,9 @@ describe("Assets OpenAPI description", () => {
     expect(JSON.stringify(requestSchema)).toContain('"properties","slug"');
     expect(JSON.stringify(document)).not.toContain("x-webstudio-query");
 
-    const filter = getOpenApiQueryConfiguration({
-      document,
-      operationId: "queryAssets",
-    }).definition.source.controls.find((control) => control.type === "filter");
+    const filter = (await loadConfiguration()).source.controls.find(
+      (control) => control.type === "filter"
+    );
     expect(filter).toMatchObject({
       limits: {
         conditions: contentEngineLimits.filterCount,
@@ -140,6 +157,7 @@ describe("Assets OpenAPI description", () => {
       "/rest/assets/query",
       "/rest/assets/field-catalog",
       "/rest/assets/openapi.json",
+      "/rest/assets/query-schema.json",
       "/rest/assets/index/refresh",
     ]);
     expect(document.components.securitySchemes.projectToken).toMatchObject({
@@ -184,9 +202,20 @@ describe("Assets OpenAPI description", () => {
       "text/plain",
     ]);
     expect(
+      document.paths[assetResourceApiOperations.listAssets.path].get
+        .responses[403].content
+    ).not.toHaveProperty("text/plain");
+    expect(
       document.paths[assetResourceApiOperations.queryAssets.path].post
         .responses[403].content
     ).not.toHaveProperty("text/plain");
+    expect(
+      document.paths[assetResourceApiOperations.listAssets.path].get.responses
+    ).not.toHaveProperty("413");
+    expect(
+      document.paths[assetResourceApiOperations.reserveAssetUpload.path].post
+        .responses
+    ).toHaveProperty("413");
   });
 
   test("describes project scope and cookie mutation CSRF requirements", () => {
@@ -210,6 +239,18 @@ describe("Assets OpenAPI description", () => {
     expect(
       document.paths[assetResourceApiOperations.updateAsset.path].patch.security
     ).toEqual([{ projectToken: [] }, { builderSession: [], csrfToken: [] }]);
+
+    for (const pathItem of Object.values(document.paths)) {
+      for (const operation of Object.values(pathItem)) {
+        const parameters = (
+          "parameters" in operation ? operation.parameters : []
+        ) as readonly { name: string; in: string }[];
+        const identities = parameters.map(
+          ({ name, in: location }) => `${location}:${name}`
+        );
+        expect(new Set(identities).size).toBe(identities.length);
+      }
+    }
   });
 
   test("describes and validates mutable asset operations", () => {
@@ -250,7 +291,21 @@ describe("Assets OpenAPI description", () => {
     const document = createDocument();
     const uploadContent =
       document.paths[assetResourceApiOperations.uploadAssetContent.path].post;
-    expect(uploadContent.parameters.map(({ name }) => name)).toEqual(["name"]);
+    expect(uploadContent.parameters.map(({ name }) => name)).toEqual([
+      "name",
+      "projectId",
+      "type",
+      "folderId",
+      "format",
+      "width",
+      "height",
+      "force",
+      "x-webstudio-asset-description",
+      "x-webstudio-asset-meta",
+    ]);
+    expect(uploadContent.parameters[0].schema.maxLength).toBe(
+      assetResourceLimits.assetFilenameCharacters
+    );
     expect(Object.keys(uploadContent.requestBody.content)).toEqual([
       "application/octet-stream",
     ]);
@@ -283,82 +338,92 @@ describe("Assets OpenAPI description", () => {
     expect(bytes).toBeLessThanOrEqual(assetResourceLimits.apiDescriptionBytes);
   });
 
-  test("supports a maximum-legal field catalog", () => {
+  test("keeps OpenAPI bounded while a large multi-file catalog remains queryable", async () => {
     const observedTypes = assetObservedFieldType.options;
+    const documentCount = 16;
+    const fieldCount = contentEngineLimits.frontmatterFields * documentCount;
     const fields = Object.fromEntries(
-      Array.from(
-        { length: contentEngineLimits.frontmatterFields },
-        (_, index) => {
-          const typeMask = (index % (2 ** observedTypes.length - 1)) + 1;
-          const types = observedTypes.filter(
-            (_type, position) => (typeMask & (1 << position)) !== 0
-          );
-          const name = `field-${index}-${"x".repeat(128)}`;
-          return [
-            name,
-            {
-              queryPath: ["properties", name],
-              types: [...types].sort(),
-              occurrences: types.length,
-              ...(types.length < observedTypes.length
-                ? { optional: true as const }
-                : {}),
-              ...(types.length > 1 ? { mixed: true as const } : {}),
-            },
-          ];
-        }
-      )
-    );
-    const document = createAssetResourceOpenApi({
-      builderSessionCookieName: "__Host-_session_test",
-      catalog: {
-        format: "webstudio-builder-asset-field-catalog",
-        version: 1,
-        canonicalRevision: `sha256:${"a".repeat(64)}`,
-        documentCount: observedTypes.length,
-        fields,
-      },
-    });
-
-    expect(
-      new TextEncoder().encode(JSON.stringify(document)).byteLength
-    ).toBeLessThanOrEqual(assetResourceLimits.apiDescriptionBytes);
-    const configuration = getOpenApiQueryConfiguration({
-      document,
-      operationId: "queryAssets",
-    });
-    expect(configuration.definition.fields).toHaveLength(
-      contentEngineLimits.frontmatterFields + assetQueryStandardFields.length
-    );
-    expect(configuration.definition.fields).toContainEqual(
-      expect.objectContaining({
-        path: ["properties", `field-255-${"x".repeat(128)}`],
+      Array.from({ length: fieldCount }, (_, index) => {
+        const typeMask = (index % (2 ** observedTypes.length - 1)) + 1;
+        const types = observedTypes.filter(
+          (_type, position) => (typeMask & (1 << position)) !== 0
+        );
+        const name = `field-${index}-${"x".repeat(128)}`;
+        return [
+          name,
+          {
+            queryPath: ["properties", name],
+            types: [...types].sort(),
+            occurrences: types.length,
+            ...(types.length < observedTypes.length
+              ? { optional: true as const }
+              : {}),
+            ...(types.length > 1 ? { mixed: true as const } : {}),
+          },
+        ];
       })
     );
-  });
-
-  test("rejects an OpenAPI document larger than the description limit", () => {
     const catalog = {
       format: "webstudio-builder-asset-field-catalog" as const,
       version: 1 as const,
       canonicalRevision: `sha256:${"a".repeat(64)}`,
-      documentCount: 1,
-      fields: Object.fromEntries(
-        Array.from({ length: 1_000 }, (_, index) => [
-          `field-${index}`,
-          {
-            queryPath: ["properties", `field-${index}-${"x".repeat(1_000)}`],
-            types: ["string" as const],
-            occurrences: 1,
-          },
-        ])
-      ),
+      documentCount,
+      fields,
     };
-    expect(() =>
-      createAssetResourceOpenApi({
-        catalog,
-        builderSessionCookieName: "__Host-_session_test",
-      })
-    ).toThrow("exceeds the byte limit");
+    const document = createDocument();
+    const querySchema = createAssetQueryJsonSchema({ catalog });
+
+    expect(
+      new TextEncoder().encode(JSON.stringify(document)).byteLength
+    ).toBeLessThanOrEqual(assetResourceLimits.apiDescriptionBytes);
+    expect(
+      new TextEncoder().encode(JSON.stringify(querySchema)).byteLength
+    ).toBeLessThanOrEqual(assetResourceLimits.apiDescriptionBytes);
+    const definition = await loadOpenApiQueryDefinition({
+      document,
+      documentUrl: "https://api.example.com/rest/assets/openapi.json",
+      operationId: "queryAssets",
+      loadReference: async () => querySchema,
+    });
+    expect(
+      definition.source.controls.find(({ key }) => key === "output")
+    ).toMatchObject({
+      type: "variant",
+      config: { selection: { label: "Output", emptyOption: "base" } },
+    });
+    expect(
+      definition.source.controls.find(({ key }) => key === "content")
+    ).toMatchObject({
+      type: "variant",
+      config: { selection: { label: "Output", emptyOption: "none" } },
+    });
+    expect(definition.description).toMatch(
+      /^Autocomplete includes \d+ of 4096 observed content fields/
+    );
+    expect(definition.fields.length).toBeGreaterThan(
+      assetQueryStandardFields.length
+    );
+    expect(definition.fields.length).toBeLessThan(
+      fieldCount + assetQueryStandardFields.length
+    );
+    expect(definition.fields).toEqual(
+      expect.arrayContaining(
+        assetQueryStandardFields.map((field) =>
+          expect.objectContaining({ path: [field] })
+        )
+      )
+    );
+    expect(
+      resolvePointer(querySchema, "#/$defs/AssetQueryField")
+    ).toMatchObject({
+      anyOf: expect.arrayContaining([
+        expect.objectContaining({
+          type: "array",
+          prefixItems: [{ const: "properties" }],
+          minItems: 2,
+          maxItems: assetResourceLimits.fieldPathDepth,
+        }),
+      ]),
+    });
   });
 });

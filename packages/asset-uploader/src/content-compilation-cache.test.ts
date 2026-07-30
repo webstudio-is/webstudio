@@ -1,6 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import type { ContentArtifactV1 } from "@webstudio-is/content-engine";
-import { createAssetIndex } from "@webstudio-is/content-engine/compiler";
+import {
+  canonicalAssetMetadataExtractorGeneration,
+  createAssetIndex,
+} from "@webstudio-is/content-engine/compiler";
 import {
   createContentCompilationCache,
   createContentCompilationCacheKey,
@@ -11,6 +14,19 @@ const artifact = (revision: string) =>
   ({ integrity: { checksum: revision } }) as ContentArtifactV1;
 
 describe("content compilation cache", () => {
+  test("keys compiled artifacts by metadata extraction generation", () => {
+    const key = createContentCompilationCacheKey({
+      projectId: "project",
+      sourceRevision: "source",
+      strict: false,
+      maxBytes: 500,
+    });
+
+    expect(JSON.parse(key)).toMatchObject({
+      metadataExtractorGeneration: canonicalAssetMetadataExtractorGeneration,
+    });
+  });
+
   test("coalesces concurrent compilation for the same normalized key", async () => {
     const cache = createContentCompilationCache();
     const key = createContentCompilationCacheKey({
@@ -28,6 +44,33 @@ describe("content compilation cache", () => {
 
     expect(first).toBe(second);
     expect(create).toHaveBeenCalledOnce();
+  });
+
+  test("does not evict in-flight compilation when the cache is full", async () => {
+    const cache = createContentCompilationCache(1);
+    let resolveFirst: (value: ContentArtifactV1) => void = () => {};
+    let resolveSecond: (value: ContentArtifactV1) => void = () => {};
+    const first = new Promise<ContentArtifactV1>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const second = new Promise<ContentArtifactV1>((resolve) => {
+      resolveSecond = resolve;
+    });
+    const recreate = vi.fn(async () => artifact("duplicate"));
+
+    const pendingFirst = cache.getOrCreate("first", () => first);
+    const pendingSecond = cache.getOrCreate("second", () => second);
+
+    expect(cache.size).toBe(2);
+    expect(cache.getOrCreate("first", recreate)).toBe(pendingFirst);
+    expect(recreate).not.toHaveBeenCalled();
+
+    resolveFirst(artifact("first"));
+    await pendingFirst;
+    expect(cache.size).toBe(1);
+
+    resolveSecond(artifact("second"));
+    await pendingSecond;
   });
 
   test("removes rejected work so a later request can retry", async () => {

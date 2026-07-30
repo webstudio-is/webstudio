@@ -5,12 +5,14 @@ import {
 } from "@webstudio-is/expression";
 import {
   createAssetResourceRequest,
+  createDefaultStructuredAssetQueryResourceConfiguration,
   createReachableAssetContentCompilationPlan,
   createStructuredAssetQueryResourceBody,
   isAssetsResource,
   parseStructuredAssetQueryResourceBody,
 } from "./asset-resource-config";
 import { loadResource } from "./resource-loader";
+import { assetResourceLimits } from "./asset-resource-limits";
 import type { Resource } from "./schema/resources";
 
 const createResource = (overrides: Partial<Resource> = {}): Resource => ({
@@ -24,6 +26,34 @@ const createResource = (overrides: Partial<Resource> = {}): Resource => ({
 });
 
 describe("asset query resource configuration", () => {
+  test("creates defaults through the stored query codec", () => {
+    const configuration =
+      createDefaultStructuredAssetQueryResourceConfiguration();
+    expect(
+      parseStructuredAssetQueryResourceBody(
+        createStructuredAssetQueryResourceBody(configuration)
+      )
+    ).toEqual(configuration);
+  });
+
+  test("enforces runtime limits for static query expressions", () => {
+    const configuration =
+      createDefaultStructuredAssetQueryResourceConfiguration();
+
+    expect(() =>
+      createStructuredAssetQueryResourceBody({
+        ...configuration,
+        limit: String(assetResourceLimits.resultCount + 1),
+      })
+    ).toThrow("Query limit is invalid");
+    expect(() =>
+      createStructuredAssetQueryResourceBody({
+        ...configuration,
+        offset: String(assetResourceLimits.candidateDocuments + 1),
+      })
+    ).toThrow("Query offset is invalid");
+  });
+
   test("compiles only Assets queries reachable from bindings", () => {
     const body = createStructuredAssetQueryResourceBody({
       where: { all: [] },
@@ -60,6 +90,53 @@ describe("asset query resource configuration", () => {
     ).toBeUndefined();
   });
 
+  test("compiles static JavaScript literals instead of treating them as dynamic", () => {
+    const body = createStructuredAssetQueryResourceBody({
+      where: {
+        all: [
+          {
+            field: ["properties", "status"],
+            operator: "eq",
+            value: "'published'",
+          },
+          {
+            field: ["properties", "options"],
+            operator: "eq",
+            value: "{ featured: true }",
+          },
+        ],
+      },
+      sort: [],
+      limit: "0x14",
+      offset: "0",
+      output: { mode: "base", includeMetadata: true },
+      content: { mode: "none" },
+    });
+    const plan = createReachableAssetContentCompilationPlan({
+      props: [
+        {
+          id: "prop",
+          instanceId: "instance",
+          name: "posts",
+          type: "resource",
+          value: "posts",
+        },
+      ],
+      dataSources: [],
+      resources: [createResource({ body })],
+    });
+
+    expect(plan?.queries[0]).toMatchObject({
+      where: {
+        all: [
+          { value: { type: "literal", value: "published" } },
+          { value: { type: "literal", value: { featured: true } } },
+        ],
+      },
+      limit: { type: "literal", value: 20 },
+    });
+  });
+
   test("rejects invalid reachable Assets query configuration", () => {
     expect(() =>
       createReachableAssetContentCompilationPlan({
@@ -76,6 +153,21 @@ describe("asset query resource configuration", () => {
         resources: [createResource({ body: "invalid" })],
       })
     ).toThrow('Assets resource "posts" has an invalid query configuration');
+  });
+
+  test("rejects fractional pagination values", () => {
+    expect(
+      parseStructuredAssetQueryResourceBody(`({
+        query: {
+          where: { all: [] },
+          sort: [],
+          limit: 1.5,
+          offset: 0,
+          output: { mode: "base", includeMetadata: true },
+          content: { mode: "none" },
+        },
+      })`)
+    ).toBeUndefined();
   });
 
   test("serializes a typed Assets query through the resource transport", async () => {
@@ -183,7 +275,7 @@ describe("asset query resource configuration", () => {
       output: { mode: "all", includeMetadata: true },
       content: { mode: "none" },
     });
-    const query = parseExpressionObject(validBody).get("query");
+    const query = parseExpressionObject(validBody)?.get("query");
     expect(query).toBeDefined();
     expect(
       parseStructuredAssetQueryResourceBody(
