@@ -86,8 +86,8 @@ describe("high-impact agent runner", () => {
         expect.stringContaining('ws:tag="footer"'),
         expect.stringContaining("Do not call clone-instance"),
         expect.stringContaining("set-text-content"),
-        expect.stringContaining("Call list-pages, list-breakpoints"),
-        expect.stringContaining("one parallel tool-call batch"),
+        expect.stringContaining("call inspect-design-context exactly once"),
+        expect.stringContaining("Do not call list-pages, list-breakpoints"),
         expect.stringContaining("Attach all three tokens in one parallel"),
         expect.stringContaining("Do not call get-page-by-path"),
         expect.stringContaining("call insert-fragment-verified once"),
@@ -107,7 +107,8 @@ describe("high-impact agent runner", () => {
         expect.stringContaining("Call meta.guide exactly once"),
         expect.stringContaining("exactly one upload-assets call"),
         expect.stringContaining("parallel tool-call batch"),
-        expect.stringContaining("parallel verification batch"),
+        expect.stringContaining("verify-font-assets exactly once"),
+        expect.stringContaining("Do not call refresh or get-asset separately"),
       ])
     );
   });

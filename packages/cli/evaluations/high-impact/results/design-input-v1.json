@@ -6,32 +6,32 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "3dad7b3eef1266c8010317d26d5ae2aadf4637aebd86beac03f6b31ec62a1db9",
+  "commandSha256": "665472955db94c5d88c26b9c858eca2ec7621f04efa461fdb4cff3ae79dc5c5b",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 122462,
+    "durationMs": 97892,
     "tokens": {
-      "input": 354998,
-      "cachedInput": 298752,
-      "uncachedInput": 56246,
+      "input": 327593,
+      "cachedInput": 273152,
+      "uncachedInput": 54441,
       "cacheWriteInput": 0,
-      "output": 3591,
-      "reasoningOutput": 518,
-      "total": 358589,
-      "cachedInputRate": 0.8416
+      "output": 2987,
+      "reasoningOutput": 698,
+      "total": 330580,
+      "cachedInputRate": 0.8338
     },
     "mcpCatalog": {
-      "responses": 2,
-      "totalResponseBytes": 102014,
-      "maxResponseBytes": 51007,
-      "latestToolCount": 174,
-      "latestResponseBytes": 51007,
-      "latestInputSchemaBytes": 28834,
-      "latestDescriptionBytes": 4532
+      "responses": 1,
+      "totalResponseBytes": 51362,
+      "maxResponseBytes": 51362,
+      "latestToolCount": 176,
+      "latestResponseBytes": 51362,
+      "latestInputSchemaBytes": 28964,
+      "latestDescriptionBytes": 4556
     },
     "toolCalls": {
-      "total": 14,
-      "succeeded": 14,
+      "total": 10,
+      "succeeded": 10,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
@@ -40,57 +40,33 @@
       "durationsByTool": {
         "attach-design-token": {
           "count": 3,
-          "totalMs": 26,
-          "p95Ms": 12,
-          "maxMs": 12
+          "totalMs": 24,
+          "p95Ms": 9,
+          "maxMs": 9
         },
         "audit": {
           "count": 1,
-          "totalMs": 29,
-          "p95Ms": 29,
-          "maxMs": 29
+          "totalMs": 12,
+          "p95Ms": 12,
+          "maxMs": 12
         },
         "create-page": {
           "count": 1,
-          "totalMs": 21,
-          "p95Ms": 21,
-          "maxMs": 21
+          "totalMs": 91,
+          "p95Ms": 91,
+          "maxMs": 91
         },
         "insert-fragment-verified": {
           "count": 1,
-          "totalMs": 69,
-          "p95Ms": 69,
-          "maxMs": 69
+          "totalMs": 55,
+          "p95Ms": 55,
+          "maxMs": 55
         },
-        "list-assets": {
-          "count": 1,
-          "totalMs": 29,
-          "p95Ms": 29,
-          "maxMs": 29
-        },
-        "list-breakpoints": {
-          "count": 1,
-          "totalMs": 27,
-          "p95Ms": 27,
-          "maxMs": 27
-        },
-        "list-design-tokens": {
+        "inspect-design-context": {
           "count": 1,
           "totalMs": 30,
           "p95Ms": 30,
           "maxMs": 30
-        },
-        "list-pages": {
-          "count": 1,
-          "totalMs": 25,
-          "p95Ms": 25,
-          "maxMs": 25
-        },
-        "list-variables": {
-          "count": 1,
-          "totalMs": 31,
-          "p95Ms": 31,
-          "maxMs": 31
         },
         "meta.guide": {
           "count": 1,
@@ -100,9 +76,9 @@
         },
         "screenshot.responsive": {
           "count": 1,
-          "totalMs": 9790,
-          "p95Ms": 9790,
-          "maxMs": 9790
+          "totalMs": 10751,
+          "p95Ms": 10751,
+          "maxMs": 10751
         },
         "update-styles": {
           "count": 1,
@@ -114,9 +90,9 @@
       "responseBytesByTool": {
         "attach-design-token": {
           "count": 3,
-          "totalBytes": 3903,
-          "p95Bytes": 1305,
-          "maxBytes": 1305
+          "totalBytes": 3900,
+          "p95Bytes": 1304,
+          "maxBytes": 1304
         },
         "audit": {
           "count": 1,
@@ -136,80 +112,52 @@
           "p95Bytes": 2954,
           "maxBytes": 2954
         },
-        "list-assets": {
+        "inspect-design-context": {
           "count": 1,
-          "totalBytes": 1004,
-          "p95Bytes": 1004,
-          "maxBytes": 1004
-        },
-        "list-breakpoints": {
-          "count": 1,
-          "totalBytes": 1320,
-          "p95Bytes": 1320,
-          "maxBytes": 1320
-        },
-        "list-design-tokens": {
-          "count": 1,
-          "totalBytes": 1528,
-          "p95Bytes": 1528,
-          "maxBytes": 1528
-        },
-        "list-pages": {
-          "count": 1,
-          "totalBytes": 1314,
-          "p95Bytes": 1314,
-          "maxBytes": 1314
-        },
-        "list-variables": {
-          "count": 1,
-          "totalBytes": 1018,
-          "p95Bytes": 1018,
-          "maxBytes": 1018
+          "totalBytes": 3082,
+          "p95Bytes": 3082,
+          "maxBytes": 3082
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 15416,
-          "p95Bytes": 15416,
-          "maxBytes": 15416
+          "totalBytes": 15190,
+          "p95Bytes": 15190,
+          "maxBytes": 15190
         },
         "screenshot.responsive": {
           "count": 1,
-          "totalBytes": 7051,
-          "p95Bytes": 7051,
-          "maxBytes": 7051
+          "totalBytes": 7053,
+          "p95Bytes": 7053,
+          "maxBytes": 7053
         },
         "update-styles": {
           "count": 1,
-          "totalBytes": 2809,
-          "p95Bytes": 2809,
-          "maxBytes": 2809
+          "totalBytes": 2804,
+          "p95Bytes": 2804,
+          "maxBytes": 2804
         }
       },
       "retries": 0,
-      "focusedReads": 5,
+      "focusedReads": 1,
       "broadReads": 0,
       "dryRuns": 0,
       "plannedMutations": 0,
       "committedMutations": 6,
       "verifications": 3,
-      "totalDurationMs": 10152,
-      "p50DurationMs": 27,
-      "p95DurationMs": 9790,
-      "totalResponseBytes": 43370,
-      "p50ResponseBytes": 1320,
-      "p95ResponseBytes": 15416,
-      "maxResponseBytes": 15416,
-      "timeToFirstMutationMs": 34232,
-      "timeToFirstVerificationMs": 42746
+      "totalDurationMs": 11038,
+      "p50DurationMs": 12,
+      "p95DurationMs": 10751,
+      "totalResponseBytes": 40036,
+      "p50ResponseBytes": 2804,
+      "p95ResponseBytes": 15190,
+      "maxResponseBytes": 15190,
+      "timeToFirstMutationMs": 30419,
+      "timeToFirstVerificationMs": 36551
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-pages",
-    "list-breakpoints",
-    "list-assets",
-    "list-design-tokens",
-    "list-variables",
+    "inspect-design-context",
     "create-page",
     "insert-fragment-verified",
     "attach-design-token",

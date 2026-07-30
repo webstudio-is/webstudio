@@ -6,28 +6,28 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "6fc6f6f2102108ea425ddb2e7995a27cf84d8cd5e4c41bc14045ab5a9438581b",
+  "commandSha256": "f3973839321d489a88526e5e1751d54aa9391af61107e56165cd35520c60a96a",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 91611,
+    "durationMs": 94027,
     "tokens": {
-      "input": 336263,
-      "cachedInput": 292352,
-      "uncachedInput": 43911,
+      "input": 319553,
+      "cachedInput": 275200,
+      "uncachedInput": 44353,
       "cacheWriteInput": 0,
-      "output": 1902,
-      "reasoningOutput": 550,
-      "total": 338165,
-      "cachedInputRate": 0.8694
+      "output": 1843,
+      "reasoningOutput": 505,
+      "total": 321396,
+      "cachedInputRate": 0.8612
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 51007,
-      "maxResponseBytes": 51007,
-      "latestToolCount": 174,
-      "latestResponseBytes": 51007,
-      "latestInputSchemaBytes": 28834,
-      "latestDescriptionBytes": 4532
+      "totalResponseBytes": 51362,
+      "maxResponseBytes": 51362,
+      "latestToolCount": 176,
+      "latestResponseBytes": 51362,
+      "latestInputSchemaBytes": 28964,
+      "latestDescriptionBytes": 4556
     },
     "toolCalls": {
       "total": 8,
@@ -52,39 +52,39 @@
         },
         "create-resource": {
           "count": 1,
+          "totalMs": 20,
+          "p95Ms": 20,
+          "maxMs": 20
+        },
+        "create-variable": {
+          "count": 1,
           "totalMs": 24,
           "p95Ms": 24,
           "maxMs": 24
         },
-        "create-variable": {
-          "count": 1,
-          "totalMs": 18,
-          "p95Ms": 18,
-          "maxMs": 18
-        },
         "insert-fragment-verified": {
           "count": 1,
-          "totalMs": 72,
-          "p95Ms": 72,
-          "maxMs": 72
+          "totalMs": 68,
+          "p95Ms": 68,
+          "maxMs": 68
         },
         "inspect-auth-context": {
           "count": 1,
-          "totalMs": 23,
-          "p95Ms": 23,
-          "maxMs": 23
+          "totalMs": 22,
+          "p95Ms": 22,
+          "maxMs": 22
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 12,
-          "p95Ms": 12,
-          "maxMs": 12
+          "totalMs": 10,
+          "p95Ms": 10,
+          "maxMs": 10
         },
         "screenshot.responsive": {
           "count": 1,
-          "totalMs": 12220,
-          "p95Ms": 12220,
-          "maxMs": 12220
+          "totalMs": 9439,
+          "p95Ms": 9439,
+          "maxMs": 9439
         }
       },
       "responseBytesByTool": {
@@ -144,15 +144,15 @@
       "plannedMutations": 0,
       "committedMutations": 4,
       "verifications": 3,
-      "totalDurationMs": 12408,
-      "p50DurationMs": 23,
-      "p95DurationMs": 12220,
+      "totalDurationMs": 9622,
+      "p50DurationMs": 22,
+      "p95DurationMs": 9439,
       "totalResponseBytes": 37536,
       "p50ResponseBytes": 2576,
       "p95ResponseBytes": 15932,
       "maxResponseBytes": 15932,
-      "timeToFirstMutationMs": 36986,
-      "timeToFirstVerificationMs": 57619
+      "timeToFirstMutationMs": 39076,
+      "timeToFirstVerificationMs": 67660
     }
   },
   "callSequence": [

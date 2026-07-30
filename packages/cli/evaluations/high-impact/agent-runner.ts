@@ -90,7 +90,7 @@ export const createMinimalAgentTask = (
       ...(fixture.id === "design-input-v1"
         ? [
             "For this fixture, do not call list-instances because the project has no representative existing page pattern. Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas.",
-            "Call list-pages, list-breakpoints, list-design-tokens, list-assets, and list-variables exactly once each and together in one parallel tool-call batch before mutation. Do not call get-page-by-path or repeat any discovery tool. Call create-page once, then call insert-fragment-verified once with pagePath /summer before token or style mutations. Do not call insert-fragment or verify-bindings separately.",
+            "After meta.guide, call inspect-design-context exactly once before mutation. Do not call list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Do not call get-page-by-path or repeat discovery. Call create-page once, then call insert-fragment-verified once with pagePath /summer before token or style mutations. Do not call insert-fragment or verify-bindings separately.",
             "For this fixture, make exactly three attach-design-token calls: attach only the returned Brand / Coral, Text / Ink, and Type / Heading token ids once each to compatible inserted element instance ids. Attach all three tokens in one parallel tool-call batch. Omit the optional position field and do not attempt any other token attachment.",
             "After the early binding checkpoint, make exactly one batched update-styles call containing all remaining fixed styles. Include at least one declaration on an inserted element using the returned mobile breakpoint id so responsive behavior is persisted before preview.",
             'Use this exact fragment verbatim in the single insert-fragment-verified call; do not add props, styles, expressions, or alternate components until after it commits: <ws.element ws:tag="header"><ws.element ws:tag="nav"><ws.element ws:tag="a">Northstar</ws.element><ws.element ws:tag="button">Menu</ws.element></ws.element></ws.element><ws.element ws:tag="main"><ws.element ws:tag="section"><ws.element ws:tag="h1">Find your latitude</ws.element><ws.element ws:tag="p">Plan a memorable summer escape.</ws.element><ws.element ws:tag="a">Explore trips</ws.element></ws.element><ws.element ws:tag="section"><ws.element ws:tag="h2">Featured trips</ws.element><ws.element ws:tag="article"><ws.element ws:tag="h3">Coastal escape</ws.element><ws.element ws:tag="p">A restorative journey by the sea.</ws.element></ws.element></ws.element></ws.element><ws.element ws:tag="footer"><ws.element ws:tag="p">Northstar travel</ws.element></ws.element>',
@@ -102,7 +102,7 @@ export const createMinimalAgentTask = (
         ? [
             "Do not call meta.index, meta.get_more_tools, or any other tool discovery operation because meta.guide and the MCP handshake already provide the required schemas. Upload both supplied fonts together with exactly one upload-assets call; do not use upload-asset.",
             "After upload, update both font assets together in one parallel tool-call batch.",
-            "After refresh, get both font assets together in one parallel verification batch, then audit.",
+            "After both updates, call verify-font-assets exactly once with both returned asset ids, then audit. Do not call refresh or get-asset separately.",
           ]
         : []),
     ],

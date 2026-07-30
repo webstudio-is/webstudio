@@ -3746,8 +3746,23 @@ describe("project session mcp adapter", () => {
       command: "upload-assets" as const,
       description: "Upload multiple assets",
     };
+    const contextOperations = [
+      "list-assets",
+      "list-variables",
+      "get-asset",
+    ].map((command) =>
+      publicOperation({
+        command,
+        id: `test.${command}`,
+        description: command,
+      })
+    );
     const adapter = createProjectSessionMcpCore({
-      operations: [...publicMcpOperations, uploadAssetsOperation],
+      operations: [
+        ...publicMcpOperations,
+        uploadAssetsOperation,
+        ...contextOperations,
+      ],
       createProjectSession: createSessionFactory(session),
       executeOperation: createExecuteOperation(),
     });
@@ -4511,10 +4526,13 @@ describe("project session mcp adapter", () => {
         workflow: expect.arrayContaining([
           expect.stringContaining("returned asset ids directly"),
           expect.stringContaining("without re-uploading"),
-          expect.stringContaining('"namespaces":["assets"]'),
+          expect.stringContaining("verify-font-assets exactly once"),
+          expect.stringContaining(
+            "do not call refresh or get-asset separately"
+          ),
         ]),
         tools: expect.arrayContaining([
-          expect.objectContaining({ name: "refresh" }),
+          expect.objectContaining({ name: "verify-font-assets" }),
         ]),
       })
     );
@@ -4533,9 +4551,11 @@ describe("project session mcp adapter", () => {
         workflow: expect.arrayContaining([
           expect.stringContaining("Interpret the supplied design"),
           expect.stringContaining(
-            "Before the first mutation, call list-breakpoints and list-design-tokens"
+            "Before the first mutation, call inspect-design-context exactly once"
           ),
-          expect.stringContaining("Call each discovery tool at most once"),
+          expect.stringContaining(
+            "instead of calling list-pages, list-breakpoints"
+          ),
           expect.stringContaining("Do not call meta.index"),
           expect.stringContaining("Call create-page exactly once"),
           expect.stringContaining(
@@ -4559,7 +4579,7 @@ describe("project session mcp adapter", () => {
           expect.stringContaining("do not set rendered:true"),
         ]),
         tools: expect.arrayContaining([
-          expect.objectContaining({ name: "list-breakpoints" }),
+          expect.objectContaining({ name: "inspect-design-context" }),
           expect.objectContaining({ name: "components.search" }),
           expect.objectContaining({ name: "insert-fragment-verified" }),
           expect.objectContaining({ name: "attach-design-token" }),
@@ -6670,6 +6690,117 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledTimes(4);
   });
 
+  test("bundles bounded design discovery into one focused call", async () => {
+    const commands = [
+      "list-pages",
+      "list-breakpoints",
+      "list-design-tokens",
+      "list-assets",
+      "list-variables",
+    ] as const;
+    const operations = [
+      ...publicMcpOperations.filter(
+        (operation) => commands.includes(operation.command as never) === false
+      ),
+      ...commands.map((command) =>
+        publicOperation({
+          command,
+          id: `test.${command}`,
+          description: command,
+        })
+      ),
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, input }) =>
+        createEnvelope({
+          operationId: `test.${command}`,
+          result: { command, input },
+        })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    expect(adapter.listTools().map(({ name }) => name)).toContain(
+      "inspect-design-context"
+    );
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Recreate this design as a responsive page" },
+    });
+    const guideToolNames = (
+      guide.structuredContent.data as { tools: Array<{ name: string }> }
+    ).tools.map(({ name }) => name);
+    expect(guideToolNames).toContain("inspect-design-context");
+    expect(guideToolNames).not.toEqual(expect.arrayContaining([...commands]));
+
+    const result = await adapter.callTool({ name: "inspect-design-context" });
+
+    expect(result.structuredContent.data).toEqual({
+      pages: { command: "list-pages", input: { limit: 50 } },
+      breakpoints: { command: "list-breakpoints", input: {} },
+      designTokens: { command: "list-design-tokens", input: { limit: 50 } },
+      assets: { command: "list-assets", input: { limit: 50 } },
+      variables: { command: "list-variables", input: { limit: 50 } },
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(5);
+  });
+
+  test("refreshes and verifies several font assets in one call", async () => {
+    const session = createSession({ refresh: vi.fn() });
+    const operations = [
+      ...publicMcpOperations,
+      publicOperation({
+        command: "get-asset",
+        id: "assets.get",
+        description: "Get asset",
+      }),
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, input }) =>
+        createEnvelope({
+          operationId: `test.${command}`,
+          result: { command, input },
+        })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation,
+    });
+
+    expect(adapter.listTools().map(({ name }) => name)).toContain(
+      "verify-font-assets"
+    );
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "Upload and manage font assets" },
+    });
+    const guideToolNames = (
+      guide.structuredContent.data as { tools: Array<{ name: string }> }
+    ).tools.map(({ name }) => name);
+    expect(guideToolNames).toContain("verify-font-assets");
+    expect(guideToolNames).not.toEqual(
+      expect.arrayContaining(["refresh", "get-asset"])
+    );
+
+    const result = await adapter.callTool({
+      name: "verify-font-assets",
+      input: { assetIds: ["asset-regular", "asset-bold"] },
+    });
+
+    expect(session.refresh).toHaveBeenCalledWith(["assets"]);
+    expect(result.structuredContent.data).toEqual({
+      assets: [
+        { command: "get-asset", input: { assetId: "asset-regular" } },
+        { command: "get-asset", input: { assetId: "asset-bold" } },
+      ],
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(2);
+  });
+
   test("rejects unknown tools before calling the operation executor", async () => {
     const createProjectSession = createSessionFactory();
     const executeOperation = createExecuteOperation();
@@ -7005,6 +7136,15 @@ describe("project session mcp adapter", () => {
         version: "0.0.0",
       });
       const listedTools = await client.listTools();
+      expect(
+        listedTools.tools.find(({ name }) => name === "list-pages")?.annotations
+      ).toEqual({ readOnlyHint: true, openWorldHint: false });
+      expect(
+        listedTools.tools.find(({ name }) => name === "publish")?.annotations
+      ).toEqual({ destructiveHint: false });
+      expect(
+        listedTools.tools.find(({ name }) => name === "list-pages")?.inputSchema
+      ).toHaveProperty("additionalProperties", false);
       expect(listedTools).toEqual({
         tools: expect.arrayContaining([
           expect.objectContaining({
@@ -7134,8 +7274,8 @@ describe("project session mcp adapter", () => {
             confirmationToken: expect.objectContaining({ type: "string" }),
           }),
         },
-        annotations: { openWorldHint: false },
       });
+      expect(deleteTool?.annotations).toEqual({ openWorldHint: false });
       expect(
         tools.tools.find(({ name }) => name === "move-instance")
       ).toMatchObject({
@@ -7144,8 +7284,10 @@ describe("project session mcp adapter", () => {
             dryRun: expect.objectContaining({ type: "boolean" }),
           }),
         },
-        annotations: { destructiveHint: false, openWorldHint: false },
       });
+      expect(
+        tools.tools.find(({ name }) => name === "move-instance")?.annotations
+      ).toEqual({ destructiveHint: false, openWorldHint: false });
       expect(
         getSchemaProperties(
           tools.tools.find(({ name }) => name === "publish")?.inputSchema

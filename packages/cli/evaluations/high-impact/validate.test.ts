@@ -169,18 +169,17 @@ describe("font-assets evaluation", () => {
             values: { meta: fontAssetFixtureMeta },
           },
         })),
-        { name: "refresh" },
-        ...project.assets.map((asset) => ({
-          name: "get-asset",
-          arguments: { assetId: asset.id },
-        })),
+        {
+          name: "verify-font-assets",
+          arguments: { assetIds: project.assets.map((asset) => asset.id) },
+        },
       ],
     });
 
     expect(result).toMatchObject({ passed: true, failures: [] });
   });
 
-  test("rejects a refresh before the final metadata update", () => {
+  test("rejects verification before the final metadata update", () => {
     const project = clone(fontAssetsFixture.project);
     const result = evaluateHighImpactOutcome({
       fixture: fontAssetsFixture,
@@ -188,7 +187,10 @@ describe("font-assets evaluation", () => {
       toolCalls: [
         { name: "meta.guide" },
         { name: "update-asset" },
-        { name: "refresh" },
+        {
+          name: "verify-font-assets",
+          arguments: { assetIds: ["asset-1", "asset-2"] },
+        },
         { name: "update-asset" },
       ],
     });

@@ -1684,6 +1684,8 @@ const createProjectSessionMcpTool = (
 export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
   "inspect-auth-context": [{}],
+  "inspect-design-context": [{}],
+  "verify-font-assets": [{ assetIds: ["asset-regular", "asset-bold"] }],
   "workflow.next": [
     { goal: "design-system-page" },
     { goal: "design-system-page", phase: "dry-run-section" },
@@ -2800,6 +2802,68 @@ const inspectAuthContextTool = createProjectSessionMcpTool({
   },
 });
 
+const designContextOperationCommands = [
+  "list-pages",
+  "list-breakpoints",
+  "list-design-tokens",
+  "list-assets",
+  "list-variables",
+] as const;
+
+const inspectDesignContextTool = createProjectSessionMcpTool({
+  name: "inspect-design-context",
+  description:
+    "Return one bounded design discovery bundle with pages, breakpoints, design tokens, assets, and variables. Use once before design-driven page mutations instead of calling the five underlying reads separately.",
+  inputSchema: emptyInputSchema,
+  mcpExamples: getMcpExamples("inspect-design-context"),
+  annotations: {
+    command: "inspect-design-context",
+    operationId: "workflow.design-context",
+    method: "session",
+    permit: "view",
+    localCapable: true,
+    serverOnly: false,
+    readNamespaces: ["pages", "breakpoints", "styles", "assets", "dataSources"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
+const verifyFontAssetsInputSchema = {
+  ...emptyInputSchema,
+  properties: {
+    assetIds: {
+      type: "array",
+      description: "Font asset ids returned by upload-assets.",
+      items: { type: "string" },
+      minItems: 1,
+      maxItems: 50,
+    },
+  },
+  required: ["assetIds"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const verifyFontAssetsTool = createProjectSessionMcpTool({
+  name: "verify-font-assets",
+  description:
+    "Refresh the asset namespace and return several persisted font assets in one verification call.",
+  inputSchema: verifyFontAssetsInputSchema,
+  mcpExamples: getMcpExamples("verify-font-assets"),
+  annotations: {
+    command: "verify-font-assets",
+    operationId: "workflow.verify-font-assets",
+    method: "session",
+    permit: "api",
+    localCapable: true,
+    serverOnly: false,
+    readNamespaces: ["assets"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
 const insertFragmentVerifiedOperationCommands = [
   "insert-fragment",
   "verify-bindings",
@@ -3177,6 +3241,14 @@ export const listProjectSessionMcpTools = (
   )
     ? [inspectAuthContextTool]
     : []),
+  ...(designContextOperationCommands.every((command) =>
+    operations.some((operation) => operation.command === command)
+  )
+    ? [inspectDesignContextTool]
+    : []),
+  ...(operations.some((operation) => operation.command === "get-asset")
+    ? [verifyFontAssetsTool]
+    : []),
   ...(insertFragmentVerifiedOperationCommands.every((command) =>
     operations.some((operation) => operation.command === command)
   )
@@ -3256,6 +3328,8 @@ const capabilityAreas = [
       "meta.get_more_tools",
       "workflow.next",
       "inspect-auth-context",
+      "inspect-design-context",
+      "verify-font-assets",
       "components.summary",
       "components.coverage-plan",
       "components.coverage-status",
@@ -5317,28 +5391,23 @@ const metaGoalGuides = [
       "upload-asset",
       "upload-assets",
       "update-asset",
-      "refresh",
-      "get-asset",
+      "verify-font-assets",
       "audit",
     ],
     workflow: [
       "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
       "Use upload-asset or upload-assets with the local filename, detected format, and complete family, style, and weight metadata. Use the returned asset ids directly; do not read a project snapshot to rediscover uploaded assets.",
       "Use update-asset to correct font metadata without re-uploading the binary.",
-      'After font mutations, call refresh with {"namespaces":["assets"]}, then use get-asset for each changed id to verify the persisted metadata.',
+      "After font mutations, call verify-font-assets exactly once with every changed asset id. It refreshes the asset namespace and returns the persisted metadata in one bounded verification call; do not call refresh or get-asset separately.",
     ],
   },
   {
     pattern:
       /(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception).*(?:page|site|build|implement|recreate)|(?:build|implement|recreate).*(?:figma|wireframe|screenshot|design\s*(?:guide|input|file)|design\.md|inception)/i,
     tools: [
-      "list-pages",
-      "list-breakpoints",
-      "list-variables",
-      "list-design-tokens",
+      "inspect-design-context",
       "list-style-sources",
       "attach-design-token",
-      "list-assets",
       "components.search",
       "create-page",
       "insert-fragment-verified",
@@ -5351,7 +5420,7 @@ const metaGoalGuides = [
     workflow: [
       "The guide and MCP handshake already provide the required tool schemas. Do not call meta.index or meta.get_more_tools for this workflow.",
       "Interpret the supplied design before mutating: identify page sections, responsive behavior, reusable patterns, assets, typography, color, spacing, and interaction states. Ask for missing source assets rather than inventing brand-critical content.",
-      "Before the first mutation, call list-breakpoints and list-design-tokens once as part of one bounded discovery pass. Also call list-pages, list-assets, and list-variables once; use one list-instances call only when needed to inspect a representative existing page pattern. Call each discovery tool at most once. Do not call get-styles: the focused token and instance results provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
+      "Before the first mutation, call inspect-design-context exactly once instead of calling list-pages, list-breakpoints, list-design-tokens, list-assets, or list-variables separately. Use one list-instances call only when needed to inspect a representative existing page pattern. Do not call get-styles: the bounded design context and optional focused instance result provide the reusable design-system evidence needed here without risking an oversized style dump. Reuse exact existing values, breakpoint ids, and patterns; do not create a parallel design system from approximate screenshot colors or spacing.",
       "Call create-page exactly once and use its returned rootInstanceId as the insertion parent. Insert the complete semantic page in one fragment when practical, and use the insertion result's instanceIds for follow-up token attachments. Do not call list-instances after the first mutation to rediscover ids already returned by mutations.",
       "Attach existing design tokens to the new page's instances when they represent the intended typography, color, or other shared style. Reusing only the token's current raw value creates a disconnected local copy.",
       "Create semantic editable structure with insert-fragment-verified using ws.element and literal text first; apply fixed CSS only through ws:style={css`...`}. Do not improvise component names, expression syntax, or object-valued style expressions in the fragment. Use assets for real imagery and text/controls for real content; do not flatten the design into one image or absolute-position every element.",
@@ -5433,7 +5502,8 @@ const getMetaGuide = (
       ...(goalGuide?.workflow ?? []),
       "Use the fewest discovery calls needed for the immediate action.",
       "Call permissions or status only when the task depends on capabilities or local session freshness.",
-      matches.some((tool) => tool.annotations.localCapable)
+      matches.some((tool) => tool.annotations.localCapable) &&
+      matches.some((tool) => tool.name === "verify-font-assets") === false
         ? "Call refresh if cached namespaces may be stale."
         : undefined,
       "Use focused read tools to collect ids and current values.",
@@ -6673,6 +6743,63 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       dryRun: false,
     });
   };
+  const callContextBundle = async ({
+    toolName,
+    operationId,
+    calls,
+    getResult,
+  }: {
+    toolName: string;
+    operationId: string;
+    calls: readonly {
+      command: string;
+      input: Record<string, unknown>;
+      resultKey?: string;
+    }[];
+    getResult: (results: ReadonlyMap<string, unknown>) => unknown;
+  }) => {
+    const envelopes: Array<{
+      command: string;
+      envelope: ProjectSessionEnvelope;
+    }> = [];
+    for (const { command, input, resultKey } of calls) {
+      if (operationByCommand.has(command as Command) === false) {
+        throw new Error(`${toolName} requires the ${command} operation.`);
+      }
+      envelopes.push({
+        command: resultKey ?? command,
+        envelope: await executeOperation({
+          command: command as Command,
+          input,
+          dryRun: false,
+        }),
+      });
+    }
+    const lastEnvelope = envelopes.at(-1)?.envelope;
+    if (lastEnvelope === undefined) {
+      throw new Error(`${toolName} produced no results.`);
+    }
+    const resultByCommand = new Map(
+      envelopes.map(({ command, envelope }) => [command, envelope.result])
+    );
+    const mergeNamespaces = (
+      key: keyof ProjectSessionEnvelope["namespaces"]
+    ) => [
+      ...new Set(envelopes.flatMap(({ envelope }) => envelope.namespaces[key])),
+    ];
+    return toCallResult({
+      ...lastEnvelope,
+      operationId,
+      result: getResult(resultByCommand),
+      namespaces: {
+        read: mergeNamespaces("read"),
+        write: mergeNamespaces("write"),
+        invalidated: mergeNamespaces("invalidated"),
+        missing: mergeNamespaces("missing"),
+      },
+      diagnostics: envelopes.flatMap(({ envelope }) => envelope.diagnostics),
+    });
+  };
   return {
     listTools,
     listResources: listProjectSessionMcpResources,
@@ -6869,66 +6996,76 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         if (isPlainRecord(input) === false || Object.keys(input).length > 0) {
           throw new Error("inspect-auth-context does not accept input.");
         }
-        const inputs: Record<
-          (typeof authContextOperationCommands)[number],
-          Record<string, unknown>
-        > = {
-          "get-project-settings": {},
-          "list-pages": { limit: 50 },
-          "list-resources": { limit: 50 },
-          "list-variables": { limit: 50 },
-        };
-        const envelopes: Array<{
-          command: (typeof authContextOperationCommands)[number];
-          envelope: ProjectSessionEnvelope;
-        }> = [];
-        for (const command of authContextOperationCommands) {
-          if (operationByCommand.has(command as Command) === false) {
-            throw new Error(
-              `inspect-auth-context requires the ${command} operation.`
-            );
-          }
-          envelopes.push({
-            command,
-            envelope: await executeOperation({
-              command: command as Command,
-              input: inputs[command],
-              dryRun: false,
-            }),
-          });
-        }
-        const lastEnvelope = envelopes.at(-1)?.envelope;
-        if (lastEnvelope === undefined) {
-          throw new Error("inspect-auth-context produced no results.");
-        }
-        const resultByCommand = new Map(
-          envelopes.map(({ command, envelope }) => [command, envelope.result])
-        );
-        const mergeNamespaces = (
-          key: keyof ProjectSessionEnvelope["namespaces"]
-        ) => [
-          ...new Set(
-            envelopes.flatMap(({ envelope }) => envelope.namespaces[key])
-          ),
-        ];
-        return toCallResult({
-          ...lastEnvelope,
+        return await callContextBundle({
+          toolName: name,
           operationId: "workflow.auth-context",
-          result: {
+          calls: [
+            { command: "get-project-settings", input: {} },
+            { command: "list-pages", input: { limit: 50 } },
+            { command: "list-resources", input: { limit: 50 } },
+            { command: "list-variables", input: { limit: 50 } },
+          ],
+          getResult: (resultByCommand) => ({
             projectSettings: resultByCommand.get("get-project-settings"),
             pages: resultByCommand.get("list-pages"),
             resources: resultByCommand.get("list-resources"),
             variables: resultByCommand.get("list-variables"),
-          },
-          namespaces: {
-            read: mergeNamespaces("read"),
-            write: mergeNamespaces("write"),
-            invalidated: mergeNamespaces("invalidated"),
-            missing: mergeNamespaces("missing"),
-          },
-          diagnostics: envelopes.flatMap(
-            ({ envelope }) => envelope.diagnostics
-          ),
+          }),
+        });
+      }
+      if (name === "inspect-design-context") {
+        if (isPlainRecord(input) === false || Object.keys(input).length > 0) {
+          throw new Error("inspect-design-context does not accept input.");
+        }
+        return await callContextBundle({
+          toolName: name,
+          operationId: "workflow.design-context",
+          calls: [
+            { command: "list-pages", input: { limit: 50 } },
+            { command: "list-breakpoints", input: {} },
+            { command: "list-design-tokens", input: { limit: 50 } },
+            { command: "list-assets", input: { limit: 50 } },
+            { command: "list-variables", input: { limit: 50 } },
+          ],
+          getResult: (resultByCommand) => ({
+            pages: resultByCommand.get("list-pages"),
+            breakpoints: resultByCommand.get("list-breakpoints"),
+            designTokens: resultByCommand.get("list-design-tokens"),
+            assets: resultByCommand.get("list-assets"),
+            variables: resultByCommand.get("list-variables"),
+          }),
+        });
+      }
+      if (name === "verify-font-assets") {
+        if (
+          isPlainRecord(input) === false ||
+          Array.isArray(input.assetIds) === false ||
+          input.assetIds.length === 0 ||
+          input.assetIds.length > 50 ||
+          input.assetIds.some(
+            (assetId) => typeof assetId !== "string" || assetId.length === 0
+          )
+        ) {
+          throw new Error(
+            "verify-font-assets requires assetIds with 1 to 50 non-empty strings."
+          );
+        }
+        const assetIds = [...new Set(input.assetIds as string[])];
+        const projectSession = getSession();
+        await projectSession.initialize();
+        await projectSession.refresh(["assets"]);
+        onProjectSessionChange?.();
+        return await callContextBundle({
+          toolName: name,
+          operationId: "workflow.verify-font-assets",
+          calls: assetIds.map((assetId) => ({
+            command: "get-asset",
+            resultKey: assetId,
+            input: { assetId },
+          })),
+          getResult: (resultByAssetId) => ({
+            assets: assetIds.map((assetId) => resultByAssetId.get(assetId)),
+          }),
         });
       }
       if (name === "workflow.next") {

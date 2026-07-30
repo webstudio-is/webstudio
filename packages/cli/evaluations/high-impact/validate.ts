@@ -500,21 +500,20 @@ const validateFontAssets = (
       ? [{ ...call, index }]
       : []
   );
-  const refreshIndex = input.toolCalls.findLastIndex(
-    (call) => call.name === "refresh" && call.isError !== true
-  );
-  const verificationReads = input.toolCalls.filter(
-    (call, index) =>
-      call.name === "get-asset" && call.isError !== true && index > refreshIndex
+  const verificationCalls = input.toolCalls.flatMap((call, index) =>
+    call.name === "verify-font-assets" && call.isError !== true
+      ? [{ ...call, index }]
+      : []
   );
   recordCheck(
     checks,
     failures,
     "metadataWorkflow",
     updateCalls.length >= expectedNames.size &&
-      refreshIndex > (updateCalls.at(-1)?.index ?? Number.POSITIVE_INFINITY) &&
-      verificationReads.length >= expectedNames.size,
-    "The agent did not update both font assets, refresh, and read both persisted assets afterward."
+      verificationCalls.length === 1 &&
+      verificationCalls[0]!.index >
+        (updateCalls.at(-1)?.index ?? Number.POSITIVE_INFINITY),
+    "The agent did not update both font assets and verify both persisted assets in one bounded call afterward."
   );
   const fontFaces = getFontFaces(fontAssets, { assetBaseUrl: "/assets/" });
   recordCheck(
