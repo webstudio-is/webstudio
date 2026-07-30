@@ -21,26 +21,17 @@ import {
   generateRemixRoute,
   generateRemixParams,
 } from "@webstudio-is/react-sdk";
-import type {
-  Instance,
-  Prop,
-  Page,
-  DataSource,
-  Deployment,
-  Asset,
-  Resource,
-  WsComponentMeta,
-  Pages,
-} from "@webstudio-is/sdk";
 import {
   createScope,
   findTreeInstanceIds,
   getAllPages,
+  isAssetsResource,
   getPagePath,
   getPublishablePages,
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
+  isPageEligibleForSitemap,
   replaceFormActionsWithResources,
   isCoreComponent,
   coreMetas,
@@ -49,9 +40,44 @@ import {
   ROOT_INSTANCE_ID,
   elementComponent,
   toRuntimeAsset,
+  matchPathnameParams,
+  createReachableAssetContentCompilationPlan,
+  parseStructuredAssetQueryResourceBody,
+  type StructuredAssetQueryFilterBinding,
+  type StructuredAssetQueryWhereBinding,
+  type Instance,
+  type Prop,
+  type Page,
+  type DataSource,
+  type Deployment,
+  type Asset,
+  type Resource,
+  type WsComponentMeta,
+  type Pages,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime";
+import {
+  assetQueryFilter,
+  type AssetQueryFilter,
+  type ContentDatabaseDocument,
+  getAssetQueryFieldValue,
+  getContentArtifactReferencedAssetIds,
+  getContentArtifactRuntimeAssetIds,
+  matchesAssetQueryFilter,
+  requiresRuntimeDocumentData,
+  serializeContentArtifact,
+  verifyContentArtifact,
+} from "@webstudio-is/content-engine";
+import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
+import {
+  parseJsonExpression,
+  parseStaticMemberPath,
+} from "@webstudio-is/expression";
+import {
+  evaluateQueryWhere,
+  getQueryConditions,
+} from "@webstudio-is/query-builder/runtime";
 import {
   publishedProjectBundle,
   type PublishedProjectBundle,
@@ -76,6 +102,15 @@ export const generatedFilesManifest = join(
   ".webstudio",
   "generated-files.json"
 );
+const contentRuntimeBundleUrl = new URL(
+  /* @vite-ignore */ "../lib/content-runtime.js",
+  import.meta.url
+);
+const contentRuntimeFile = "$resources.asset-query-vendor.js";
+const ssgAssetResourceFetchTemplateUrl = new URL(
+  "../templates/ssg/app/asset-resource-fetch.ts",
+  import.meta.url
+);
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
 const routesDir = join(appRoot, "routes");
@@ -95,6 +130,303 @@ type SiteDataByPage = {
     params?: Params;
     pages: Array<Page>;
   };
+};
+
+const getBoundSystemRouteParameter = (expression: string) => {
+  const path = parseStaticMemberPath(expression);
+  return path?.length === 3 && path[0] === "system" && path[1] === "params"
+    ? path[2]
+    : undefined;
+};
+
+const getStaticAssetQueryFilter = (
+  filter: StructuredAssetQueryFilterBinding
+): AssetQueryFilter | undefined => {
+  const value = parseJsonExpression(filter.value);
+  if (value === undefined) {
+    return;
+  }
+  const parsed = assetQueryFilter.safeParse({
+    field: filter.field,
+    operator: filter.operator,
+    value,
+  });
+  return parsed.success ? parsed.data : undefined;
+};
+
+const evaluatePrerenderWhere = ({
+  document,
+  where,
+  routeValues,
+}: {
+  document: ContentDatabaseDocument;
+  where: StructuredAssetQueryWhereBinding;
+  routeValues: ReadonlyMap<string, string>;
+}): boolean | undefined => {
+  return evaluateQueryWhere(where, (condition) => {
+    const routeParameter = getBoundSystemRouteParameter(condition.value);
+    const routeValue =
+      routeParameter === undefined
+        ? undefined
+        : routeValues.get(routeParameter);
+    let filter = getStaticAssetQueryFilter(condition);
+    if (routeValue !== undefined) {
+      const parsed = assetQueryFilter.safeParse({
+        ...condition,
+        value: routeValue,
+      });
+      filter = parsed.success ? parsed.data : undefined;
+    }
+    if (filter === undefined) {
+      return;
+    }
+    return matchesAssetQueryFilter(document, filter);
+  });
+};
+
+const getRouteCandidates = ({
+  document,
+  where,
+  routeParameterNames,
+}: {
+  document: ContentDatabaseDocument;
+  where: StructuredAssetQueryWhereBinding;
+  routeParameterNames: ReadonlySet<string>;
+}) => {
+  const candidates = new Map<string, Set<string>>();
+  for (const filter of getQueryConditions(where)) {
+    const routeParameter = getBoundSystemRouteParameter(filter.value);
+    if (
+      routeParameter === undefined ||
+      routeParameterNames.has(routeParameter) === false
+    ) {
+      continue;
+    }
+    const value = getAssetQueryFieldValue(document, filter.field);
+    const values =
+      filter.operator === "eq" && typeof value === "string"
+        ? [value]
+        : filter.operator === "contains" && Array.isArray(value)
+          ? value.filter((item): item is string => typeof item === "string")
+          : [];
+    if (values.length === 0) {
+      continue;
+    }
+    let parameterCandidates = candidates.get(routeParameter);
+    if (parameterCandidates === undefined) {
+      parameterCandidates = new Set();
+      candidates.set(routeParameter, parameterCandidates);
+    }
+    for (const candidate of values) {
+      if (candidate.length > 0) {
+        parameterCandidates.add(candidate);
+      }
+    }
+  }
+  return candidates;
+};
+
+const canEnumerateRouteCondition = ({
+  condition,
+  routeParameter,
+  index,
+}: {
+  condition: StructuredAssetQueryFilterBinding;
+  routeParameter: string;
+  index: NonNullable<PublishedProjectBundle["assetIndex"]>;
+}) => {
+  if (getBoundSystemRouteParameter(condition.value) !== routeParameter) {
+    return false;
+  }
+  if (condition.operator === "eq") {
+    return true;
+  }
+  return (
+    condition.operator === "contains" &&
+    index.documents.every(
+      (document) =>
+        typeof getAssetQueryFieldValue(document, condition.field) !== "string"
+    )
+  );
+};
+
+const isRouteParameterConstrained = ({
+  where,
+  routeParameter,
+  index,
+}: {
+  where: StructuredAssetQueryWhereBinding;
+  routeParameter: string;
+  index: NonNullable<PublishedProjectBundle["assetIndex"]>;
+}): boolean => {
+  if ("field" in where) {
+    return canEnumerateRouteCondition({
+      condition: where,
+      routeParameter,
+      index,
+    });
+  }
+  const children = "all" in where ? where.all : where.any;
+  if ("all" in where) {
+    return children.some((child) =>
+      isRouteParameterConstrained({ where: child, routeParameter, index })
+    );
+  }
+  return (
+    children.length > 0 &&
+    children.every((child) =>
+      isRouteParameterConstrained({ where: child, routeParameter, index })
+    )
+  );
+};
+
+export const getAssetResourcePrerenderPaths = ({
+  pagePath,
+  resources,
+  index,
+  requireCompleteEnumeration = false,
+}: {
+  pagePath: string;
+  resources: readonly [string, Resource][];
+  index: PublishedProjectBundle["assetIndex"];
+  requireCompleteEnumeration?: boolean;
+}) => {
+  const pathParameters = [...matchPathnameParams(pagePath)];
+  if (
+    pathParameters.length === 0 ||
+    pathParameters.some(
+      (match) =>
+        match.groups?.name === undefined || (match.groups.modifier ?? "") !== ""
+    )
+  ) {
+    return [];
+  }
+  const routeParameterNames = new Set(
+    pathParameters.map((match) => match.groups?.name as string)
+  );
+  if (index === undefined) {
+    return [];
+  }
+  const configurations = resources.flatMap(([, resource]) => {
+    if (isAssetsResource(resource) === false) {
+      return [];
+    }
+    const configuration = parseStructuredAssetQueryResourceBody(resource.body);
+    return configuration === undefined ? [] : [configuration];
+  });
+  let enumerableConfigurations = configurations;
+  if (requireCompleteEnumeration && configurations.length > 0) {
+    const configurationsByParameters = configurations.flatMap(
+      (configuration) => {
+        const boundRouteParameters = new Set(
+          getQueryConditions(configuration.where).flatMap((condition) => {
+            const routeParameter = getBoundSystemRouteParameter(
+              condition.value
+            );
+            return routeParameter !== undefined &&
+              routeParameterNames.has(routeParameter)
+              ? [routeParameter]
+              : [];
+          })
+        );
+        return [...routeParameterNames].every((routeParameter) =>
+          boundRouteParameters.has(routeParameter)
+        )
+          ? [{ configuration, boundRouteParameters }]
+          : [];
+      }
+    );
+    if (configurationsByParameters.length === 0) {
+      throw new Error(
+        "Dynamic SSG route parameters must be completely enumerated by one Assets query"
+      );
+    }
+    let firstUnenumerableParameter: string | undefined;
+    enumerableConfigurations = configurationsByParameters.flatMap(
+      ({ configuration, boundRouteParameters }) => {
+        for (const routeParameter of boundRouteParameters) {
+          if (
+            isRouteParameterConstrained({
+              where: configuration.where,
+              routeParameter,
+              index,
+            }) === false
+          ) {
+            firstUnenumerableParameter ??= routeParameter;
+            return [];
+          }
+        }
+        return [configuration];
+      }
+    );
+    if (enumerableConfigurations.length === 0) {
+      throw new Error(
+        `Dynamic SSG route parameter ${JSON.stringify(firstUnenumerableParameter)} cannot be completely enumerated from every Assets query branch`
+      );
+    }
+  }
+  const paths = new Set<string>();
+  for (const configuration of enumerableConfigurations) {
+    let evaluatedCandidates = 0;
+    for (const document of index.documents) {
+      const candidates = getRouteCandidates({
+        document,
+        where: configuration.where,
+        routeParameterNames,
+      });
+      if (
+        [...routeParameterNames].some(
+          (name) => (candidates.get(name)?.size ?? 0) === 0
+        )
+      ) {
+        continue;
+      }
+      const parameterNames = [...routeParameterNames];
+      const values = new Map<string, string>();
+      const addPaths = (position: number) => {
+        if (position < parameterNames.length) {
+          const name = parameterNames[position];
+          for (const value of candidates.get(name) ?? []) {
+            values.set(name, value);
+            addPaths(position + 1);
+          }
+          values.delete(name);
+          return;
+        }
+        evaluatedCandidates += 1;
+        if (
+          evaluatedCandidates >
+          assetResourceLimits.candidateDocuments *
+            assetResourceLimits.filterCount
+        ) {
+          throw new Error(
+            "Dynamic SSG route candidates exceed the Assets limit"
+          );
+        }
+        if (
+          evaluatePrerenderWhere({
+            document,
+            where: configuration.where,
+            routeValues: values,
+          }) === false
+        ) {
+          return;
+        }
+        let path = pagePath;
+        for (const match of [...pathParameters].reverse()) {
+          const name = match.groups?.name as string;
+          const value = values.get(name) as string;
+          path = `${path.slice(0, match.index)}${encodeURIComponent(value)}${path.slice((match.index ?? 0) + match[0].length)}`;
+        }
+        paths.add(path);
+        if (paths.size > assetResourceLimits.candidateDocuments) {
+          throw new Error("Dynamic SSG path count exceeds the Assets limit");
+        }
+      };
+      addPaths(0);
+    }
+  }
+  return [...paths].sort();
 };
 
 const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
@@ -149,6 +481,126 @@ const readAssetBaseUrl = async (constantsPath: string) => {
   }
   throw new Error(
     `Cannot read exported string assetBaseUrl from ${constantsPath}`
+  );
+};
+
+const configureSsgAssetResourceFetch = async ({
+  enabled,
+}: {
+  enabled: boolean;
+}) => {
+  const ssgFetchPath = join(cwd(), "app", "asset-resource-fetch.ts");
+  if (existsSync(ssgFetchPath)) {
+    const content = enabled
+      ? await readFile(ssgAssetResourceFetchTemplateUrl, "utf8")
+      : `export const createSsgAssetResourceFetch = (_options: unknown) =>
+  async (_input: RequestInfo | URL, _init?: RequestInit) => undefined;\n`;
+    await writeFileIfChanged(ssgFetchPath, content);
+  }
+};
+
+const generateAssetQueryRuntimeModule = ({
+  deploymentId,
+  index,
+  runtimeAssets,
+}: {
+  deploymentId: string;
+  index: PublishedProjectBundle["assetIndex"];
+  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
+}) => {
+  const inputType = `{
+    request: Request;
+    context: unknown;
+    fallback: typeof fetch;
+  }`;
+  if (index === undefined) {
+    return `export const createGeneratedAssetResourceFetch = async ({ fallback }: ${inputType}): Promise<typeof fetch> => fallback;\n`;
+  }
+  return `import { createGeneratedAssetResourceRuntime } from "./${contentRuntimeFile}";
+import { assetQueryDatabase } from "./$resources.asset-query-manifest";
+
+const deploymentId = ${JSON.stringify(deploymentId)};
+const runtimeAssets = ${JSON.stringify(runtimeAssets)};
+const createRuntimeFetch = createGeneratedAssetResourceRuntime({
+  deploymentId,
+  artifact: assetQueryDatabase,
+  runtimeAssets,
+});
+
+export const createGeneratedAssetResourceFetch = ({ request, fallback }: ${inputType}) =>
+  createRuntimeFetch({ request, fallback });
+`;
+};
+
+export const materializeAssetIndex = async ({
+  index,
+  runtimeAssets,
+  includeDocumentRuntimeAssets,
+  generatedDirectory,
+  deploymentId,
+}: {
+  index: PublishedProjectBundle["assetIndex"];
+  runtimeAssets: Readonly<Record<string, ReturnType<typeof toRuntimeAsset>>>;
+  includeDocumentRuntimeAssets: boolean;
+  generatedDirectory: string;
+  deploymentId: string;
+}) => {
+  const verifiedIndex =
+    index === undefined ? undefined : await verifyContentArtifact(index);
+  const serializedIndex =
+    verifiedIndex === undefined
+      ? undefined
+      : serializeContentArtifact(verifiedIndex);
+  const runtimeAssetIds =
+    verifiedIndex === undefined
+      ? []
+      : getContentArtifactRuntimeAssetIds({
+          artifact: verifiedIndex,
+          includeDocuments: includeDocumentRuntimeAssets,
+        });
+  const referencedAssetIds = new Set(
+    verifiedIndex === undefined
+      ? []
+      : getContentArtifactReferencedAssetIds(verifiedIndex)
+  );
+  const selectedRuntimeAssets = Object.fromEntries(
+    runtimeAssetIds.map((assetId) => {
+      const asset = runtimeAssets[assetId];
+      if (asset === undefined) {
+        throw new Error(
+          referencedAssetIds.has(assetId)
+            ? `Published referenced asset URL is unavailable for ${assetId}`
+            : `Published asset runtime data is unavailable for ${assetId}`
+        );
+      }
+      return [assetId, asset];
+    })
+  );
+  const runtimePath = join(generatedDirectory, contentRuntimeFile);
+  if (index === undefined) {
+    await rm(runtimePath, { force: true });
+  } else {
+    await cp(contentRuntimeBundleUrl, runtimePath);
+  }
+  await writeFile(
+    join(generatedDirectory, "$resources.asset-query-manifest.ts"),
+    serializedIndex === undefined
+      ? `export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
+export const assetQueryDatabase = undefined;
+`
+      : `export const assetQueryDeploymentId = ${JSON.stringify(deploymentId)};
+export const assetQueryDatabase = ${serializedIndex};
+`,
+    "utf8"
+  );
+  await writeFile(
+    join(generatedDirectory, "$resources.asset-query-runtime.ts"),
+    generateAssetQueryRuntimeModule({
+      deploymentId,
+      index: verifiedIndex,
+      runtimeAssets: selectedRuntimeAssets,
+    }),
+    "utf8"
   );
 };
 
@@ -291,7 +743,9 @@ const generateRedirectFallbackRoute = (runtime: "remix" | "react-router") => {
     runtime === "react-router" ? "react-router" : "@remix-run/server-runtime";
 
   return `
-    import { type LoaderFunctionArgs } from ${JSON.stringify(loaderFunctionArgs)};
+    import { type LoaderFunctionArgs } from ${JSON.stringify(
+      loaderFunctionArgs
+    )};
     import { redirectRequest } from "../redirect-url";
     // @todo think about how to make __generated__ typeable
     // @ts-ignore
@@ -325,6 +779,8 @@ export const prebuild = async (options: {
   incremental?: boolean;
   /** Retain route template inputs for a later incremental generation. */
   preserveRouteTemplates?: boolean;
+  /** Emit a public identity marker used only by the local preview controller. */
+  previewIdentity?: boolean;
 }) => {
   const buildRoot = cwd();
   const feedback = options.silent
@@ -430,10 +886,16 @@ export const prebuild = async (options: {
   const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
   if (parsedSiteData.success === false) {
     throw new Error(
-      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(parsedSiteData.error.issues, loadedSiteData)}`
+      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(
+        parsedSiteData.error.issues,
+        loadedSiteData
+      )}`
     );
   }
   const siteData = parsedSiteData.data;
+  await configureSsgAssetResourceFetch({
+    enabled: siteData.assetIndex !== undefined,
+  });
 
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
@@ -443,6 +905,8 @@ export const prebuild = async (options: {
   const generatedPages = options.includeDraftPages
     ? getAllPages(pages)
     : publishablePages;
+  const publishablePageIds = new Set(publishablePages.map((page) => page.id));
+  const assetSitemapPaths = new Set<string>();
   await writeWsAuthResources(
     generatedDir,
     pages,
@@ -744,7 +1208,9 @@ export const prebuild = async (options: {
 
       export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
 
-      export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
+      export const lastPublished = "${new Date(
+        siteData.build.createdAt
+      ).toISOString()}";
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
 
@@ -785,7 +1251,9 @@ export const prebuild = async (options: {
             }
 
             export const CustomCode = () => {
-              return (<>${projectMeta?.code ? htmlToJsx(projectMeta.code) : ""}</>);
+              return (<>${
+                projectMeta?.code ? htmlToJsx(projectMeta.code) : ""
+              }</>);
             }
           `
           : ""
@@ -829,7 +1297,21 @@ export const prebuild = async (options: {
     await writeGeneratedFile(serverFile, serverExports);
 
     const getTemplates = framework[documentType];
-    for (const { file, template } of getTemplates({ pagePath })) {
+    const prerenderPaths = getAssetResourcePrerenderPaths({
+      pagePath,
+      resources: pageData.build.resources,
+      index: siteData.assetIndex,
+      requireCompleteEnumeration: options.template.includes("ssg"),
+    });
+    if (publishablePageIds.has(page.id) && isPageEligibleForSitemap(page)) {
+      for (const path of prerenderPaths) {
+        assetSitemapPaths.add(path);
+      }
+    }
+    for (const { file, template } of getTemplates({
+      pagePath,
+      prerenderPaths,
+    })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
         .replaceAll(
@@ -839,6 +1321,21 @@ export const prebuild = async (options: {
         .replaceAll(
           "__ASSETS__",
           importFrom(`./app/__generated__/$resources.assets`, file)
+        )
+        .replaceAll(
+          "__ASSET_QUERY_MANIFEST__",
+          importFrom(
+            `./app/__generated__/$resources.asset-query-manifest`,
+            file
+          )
+        )
+        .replaceAll(
+          "__ASSET_QUERY_RUNTIME__",
+          importFrom(`./app/__generated__/$resources.asset-query-runtime`, file)
+        )
+        .replaceAll(
+          "__ASSET_RESOURCE_FETCH__",
+          importFrom("./app/asset-resource-fetch", file)
         )
         .replaceAll(
           "__AUTH__",
@@ -869,14 +1366,22 @@ export const prebuild = async (options: {
     await writeGeneratedFile(file, content);
   }
 
+  const sitemap = getStaticSiteMapXml(pages, siteData.build.updatedAt);
+  const sitemapPaths = new Set(sitemap.map(({ path }) => path));
+  for (const path of [...assetSitemapPaths].sort()) {
+    if (sitemapPaths.has(path)) {
+      continue;
+    }
+    sitemapPaths.add(path);
+    sitemap.push({
+      path,
+      lastModified: siteData.build.updatedAt.split("T")[0],
+    });
+  }
   await writeGeneratedFile(
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
-      export const sitemap = ${JSON.stringify(
-        getStaticSiteMapXml(pages, siteData.build.updatedAt),
-        null,
-        2
-      )};
+      export const sitemap = ${JSON.stringify(sitemap, null, 2)};
     `
   );
 
@@ -894,6 +1399,34 @@ export const prebuild = async (options: {
       },
     ])
   );
+  const assetCompilationPlan = createReachableAssetContentCompilationPlan({
+    props: siteData.build.props.map(([, prop]) => prop),
+    dataSources: siteData.build.dataSources.map(([, dataSource]) => dataSource),
+    resources: siteData.build.resources.map(([, resource]) => resource),
+  });
+
+  await materializeAssetIndex({
+    index: siteData.assetIndex,
+    runtimeAssets: assetsById,
+    includeDocumentRuntimeAssets:
+      assetCompilationPlan !== undefined &&
+      requiresRuntimeDocumentData(assetCompilationPlan),
+    generatedDirectory: generatedDir,
+    deploymentId: siteData.build.id,
+  });
+
+  if (options.previewIdentity) {
+    const previewIdentityDirectory = join(buildRoot, "public", "__webstudio");
+    await createFolderIfNotExists(previewIdentityDirectory);
+    await writeFile(
+      join(previewIdentityDirectory, "preview.json"),
+      JSON.stringify({
+        projectId: siteData.build.projectId,
+        version: siteData.build.version,
+      }),
+      "utf8"
+    );
+  }
 
   await writeGeneratedFile(
     join(generatedDir, "$resources.assets.ts"),
@@ -926,7 +1459,7 @@ export const prebuild = async (options: {
 
   if (options.assets === true && siteData.assets.length > 0) {
     const downloading = createProgress();
-    downloading.start("Downloading fonts and images");
+    downloading.start("Downloading assets");
     await materializeAssetFiles({
       assets: siteData.assets,
       continueOnError: true,
@@ -934,7 +1467,7 @@ export const prebuild = async (options: {
       sourceAssetsDirectory: join(buildRoot, LOCAL_ASSETS_DIR),
       targetAssetsDirectory: join(buildRoot, "public", assetBaseUrl),
     });
-    downloading.stop("Downloaded fonts and images");
+    downloading.stop("Downloaded assets");
   }
 
   feedback.step("Build finished");

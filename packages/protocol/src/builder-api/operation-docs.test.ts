@@ -66,6 +66,24 @@ test("documents direct string props for update-props", () => {
   expect(docs?.description).toContain('"type": "string"');
 });
 
+test("guides agents to keep Assets content databases small", () => {
+  const getDescription = (command: string) =>
+    publicApiOperationDocumentation.find((item) => item.command === command)
+      ?.description ?? "";
+
+  expect(getDescription("create-assets-resource")).toContain(
+    "selecting only fields the page renders"
+  );
+  expect(getDescription("create-assets-resource")).toContain(
+    "content mode none"
+  );
+  expect(getDescription("update-assets-resource")).toContain(
+    "only rendered fields"
+  );
+  expect(getDescription("preview-asset-query")).toContain("usedBytes");
+  expect(getDescription("preview-asset-query")).toContain("truncated");
+});
+
 test("documents JSX insertion through the fragment field", () => {
   const docs = publicApiOperationDocumentation.find(
     ({ command }) => command === "insert-fragment"

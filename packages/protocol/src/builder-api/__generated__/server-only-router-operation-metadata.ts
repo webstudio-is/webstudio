@@ -245,6 +245,787 @@ export const serverOnlyRouterOperationMetadata = {
       required: ["baseVersion", "transactions"],
     },
   },
+  "assetQueries.validate": {
+    id: "assetQueries.validate",
+    command: "validate-asset-query",
+    method: "query",
+    path: "api.assetQueries.validate",
+    client: "validateAssetQuery",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "object",
+          properties: {
+            where: {
+              default: {
+                all: [],
+              },
+              $ref: "#/$defs/__schema2",
+            },
+            sort: {
+              default: [],
+              maxItems: 8,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field: {
+                    minItems: 1,
+                    maxItems: 9,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  direction: {
+                    type: "string",
+                    enum: ["asc", "desc"],
+                  },
+                },
+                required: ["field", "direction"],
+                additionalProperties: false,
+              },
+            },
+            limit: {
+              default: 20,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            offset: {
+              default: 0,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            output: {
+              default: {
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["url"], ["width"], ["height"]],
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "all",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "base",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "fields",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
+                    fields: {
+                      maxItems: 256,
+                      type: "array",
+                      items: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                    },
+                  },
+                  required: ["mode", "fields"],
+                  additionalProperties: false,
+                },
+              ],
+            },
+            content: {
+              default: {
+                mode: "none",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "none",
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "full",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "range",
+                    },
+                    offset: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    length: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 262144,
+                    },
+                  },
+                  required: ["mode", "offset", "length"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "markdown-body",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+              ],
+            },
+          },
+          additionalProperties: false,
+          required: [],
+        },
+      },
+      required: ["query"],
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+        __schema1: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema1",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema1",
+              },
+            },
+          ],
+        },
+        __schema2: {
+          anyOf: [
+            {
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: [
+                        "eq",
+                        "ne",
+                        "contains",
+                        "startsWith",
+                        "endsWith",
+                        "gt",
+                        "gte",
+                        "lt",
+                        "lte",
+                      ],
+                    },
+                    value: {
+                      $ref: "#/$defs/__schema0",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      const: "in",
+                    },
+                    value: {
+                      maxItems: 1000,
+                      type: "array",
+                      items: {
+                        $ref: "#/$defs/__schema1",
+                      },
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: ["exists", "isEmpty"],
+                    },
+                    value: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+              ],
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  maxItems: 32,
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  maxItems: 32,
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
+            },
+          ],
+        },
+      },
+    },
+  },
+  "assetQueries.preview": {
+    id: "assetQueries.preview",
+    command: "preview-asset-query",
+    method: "query",
+    path: "api.assetQueries.preview",
+    client: "previewAssetQuery",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "object",
+          properties: {
+            where: {
+              default: {
+                all: [],
+              },
+              $ref: "#/$defs/__schema2",
+            },
+            sort: {
+              default: [],
+              maxItems: 8,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field: {
+                    minItems: 1,
+                    maxItems: 9,
+                    type: "array",
+                    items: {
+                      type: "string",
+                      minLength: 1,
+                    },
+                  },
+                  direction: {
+                    type: "string",
+                    enum: ["asc", "desc"],
+                  },
+                },
+                required: ["field", "direction"],
+                additionalProperties: false,
+              },
+            },
+            limit: {
+              default: 20,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            offset: {
+              default: 0,
+              type: "integer",
+              minimum: 0,
+              maximum: 1000,
+            },
+            output: {
+              default: {
+                mode: "fields",
+                includeMetadata: false,
+                fields: [["url"], ["width"], ["height"]],
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "all",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "base",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
+                  },
+                  required: ["mode"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "fields",
+                    },
+                    includeMetadata: {
+                      default: true,
+                      type: "boolean",
+                    },
+                    fields: {
+                      maxItems: 256,
+                      type: "array",
+                      items: {
+                        minItems: 1,
+                        maxItems: 9,
+                        type: "array",
+                        items: {
+                          type: "string",
+                          minLength: 1,
+                        },
+                      },
+                    },
+                  },
+                  required: ["mode", "fields"],
+                  additionalProperties: false,
+                },
+              ],
+            },
+            content: {
+              default: {
+                mode: "none",
+              },
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "none",
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "full",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "range",
+                    },
+                    offset: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 9007199254740991,
+                    },
+                    length: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 262144,
+                    },
+                  },
+                  required: ["mode", "offset", "length"],
+                },
+                {
+                  type: "object",
+                  properties: {
+                    mode: {
+                      type: "string",
+                      const: "markdown-body",
+                    },
+                    maxBytes: {
+                      type: "integer",
+                      exclusiveMinimum: 0,
+                      maximum: 1048576,
+                    },
+                  },
+                  required: ["mode"],
+                },
+              ],
+            },
+          },
+          additionalProperties: false,
+          required: [],
+        },
+        indexRevision: {
+          type: "string",
+          minLength: 1,
+          maxLength: 255,
+        },
+      },
+      required: ["query"],
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+        __schema1: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema1",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema1",
+              },
+            },
+          ],
+        },
+        __schema2: {
+          anyOf: [
+            {
+              oneOf: [
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: [
+                        "eq",
+                        "ne",
+                        "contains",
+                        "startsWith",
+                        "endsWith",
+                        "gt",
+                        "gte",
+                        "lt",
+                        "lte",
+                      ],
+                    },
+                    value: {
+                      $ref: "#/$defs/__schema0",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      const: "in",
+                    },
+                    value: {
+                      maxItems: 1000,
+                      type: "array",
+                      items: {
+                        $ref: "#/$defs/__schema1",
+                      },
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+                {
+                  type: "object",
+                  properties: {
+                    field: {
+                      minItems: 1,
+                      maxItems: 9,
+                      type: "array",
+                      items: {
+                        type: "string",
+                        minLength: 1,
+                      },
+                    },
+                    operator: {
+                      type: "string",
+                      enum: ["exists", "isEmpty"],
+                    },
+                    value: {
+                      type: "boolean",
+                    },
+                  },
+                  required: ["field", "operator", "value"],
+                  additionalProperties: false,
+                },
+              ],
+            },
+            {
+              type: "object",
+              properties: {
+                all: {
+                  maxItems: 32,
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["all"],
+              additionalProperties: false,
+            },
+            {
+              type: "object",
+              properties: {
+                any: {
+                  maxItems: 32,
+                  type: "array",
+                  items: {
+                    $ref: "#/$defs/__schema2",
+                  },
+                },
+              },
+              required: ["any"],
+              additionalProperties: false,
+            },
+          ],
+        },
+      },
+    },
+  },
+  "assetQueries.fieldCatalog": {
+    id: "assetQueries.fieldCatalog",
+    command: "get-asset-field-catalog",
+    method: "query",
+    path: "api.assetQueries.fieldCatalog",
+    client: "getAssetFieldCatalog",
+    permit: "view",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
+  },
   "publish.list": {
     id: "publish.list",
     command: "list-publishes",

@@ -1,0 +1,40 @@
+{
+  "name": "@webstudio-is/query-builder",
+  "version": "0.0.0-webstudio-version",
+  "description": "Framework-independent structured query authoring core",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@webstudio-is/expression": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "vitest": "^3.1.2"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./runtime": {
+      "webstudio": "./src/runtime.ts",
+      "types": "./lib/types/runtime.d.ts",
+      "import": "./lib/runtime.js"
+    }
+  },
+  "files": [
+    "lib/**/*",
+    "!*.test.*"
+  ]
+}

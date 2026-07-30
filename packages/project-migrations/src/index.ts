@@ -1,5 +1,6 @@
 import type { WebstudioData } from "@webstudio-is/sdk";
 import { migratePages } from "./pages";
+import { migrateResourcesMutable } from "./resources";
 import { migrateStylesMutable } from "./styles";
 
 export { migratePages, serializePages, type SerializedPages } from "./pages";
@@ -12,5 +13,6 @@ export { migratePages, serializePages, type SerializedPages } from "./pages";
  */
 export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   data.pages = migratePages(data.pages);
+  migrateResourcesMutable(data.resources.values());
   migrateStylesMutable(data.styles);
 };

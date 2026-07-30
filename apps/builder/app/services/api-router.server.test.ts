@@ -18,7 +18,8 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { blockComponent } from "@webstudio-is/sdk";
-import * as assetUploader from "@webstudio-is/asset-uploader/index.server";
+import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
+import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import {
   getApiRouterProcedures,
@@ -74,6 +75,115 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("exposes query validation and persisted asset query reads to API clients", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(assetUploader, "previewAssetResourceQuery").mockResolvedValue({
+      data: {
+        items: [{ id: "post" }],
+        totalCount: 1,
+        hasMore: false,
+      },
+      __diagnostics__: {
+        scope: "query-preview",
+        usedBytes: 100,
+        maxBytes: 512_000,
+        unboundedBytes: 100,
+        includedDocumentCount: 1,
+        omittedDocumentCount: 0,
+        truncated: false,
+      },
+    } as never);
+    vi.spyOn(assetUploader, "loadBuilderAssetFieldCatalog").mockResolvedValue({
+      format: "webstudio-builder-asset-field-catalog",
+      version: 1,
+      canonicalRevision: `sha256:${"a".repeat(64)}`,
+      documentCount: 1,
+      fields: {
+        "properties.slug": {
+          types: ["string"],
+          occurrences: 1,
+          queryPath: ["properties", "slug"],
+        },
+      },
+    });
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.assetQueries.validate({
+        projectId: "project-1",
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "slug"],
+                operator: "eq",
+                value: "post",
+              },
+            ],
+          },
+          limit: 1,
+        },
+      })
+    ).resolves.toMatchObject({
+      valid: true,
+      referencedFieldPaths: expect.arrayContaining([["properties", "slug"]]),
+      filterCount: 1,
+    });
+    await expect(
+      caller.assetQueries.validate({
+        projectId: "project-1",
+        query: {
+          where: {
+            all: [
+              {
+                field: ["properties", "missing"],
+                operator: "exists",
+                value: true,
+              },
+            ],
+          },
+        },
+      })
+    ).resolves.toMatchObject({
+      valid: true,
+      warnings: ["Asset field properties.missing is not currently observed"],
+    });
+    await expect(
+      caller.assetQueries.preview({
+        projectId: "project-1",
+        query: { limit: 10 },
+      })
+    ).resolves.toMatchObject({
+      data: {
+        items: [{ id: "post" }],
+        totalCount: 1,
+      },
+      __diagnostics__: { scope: "query-preview", truncated: false },
+    });
+    expect(assetUploader.previewAssetResourceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ contentDatabaseMaxBytes: 512_000 })
+    );
+    vi.mocked(assetUploader.previewAssetResourceQuery).mockRejectedValueOnce(
+      new AssetIndexRevisionError()
+    );
+    await expect(
+      caller.assetQueries.preview({
+        projectId: "project-1",
+        query: { limit: 10 },
+        indexRevision: `sha256:${"0".repeat(64)}`,
+      })
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      cause: { webstudioCode: "STALE_INDEX" },
+    });
+    await expect(
+      caller.assetQueries.fieldCatalog({ projectId: "project-1" })
+    ).resolves.toMatchObject({
+      fields: { "properties.slug": { types: ["string"] } },
+    });
+  });
+
   test("allows CLI clients to refresh pages without project settings", async () => {
     const build = {
       id: "build-1",
@@ -258,7 +368,9 @@ describe("api router permits", () => {
     ).toEqual(["view", "edit", "build", "admin", "api"]);
   });
 
-  test("requires token auth for project-scoped api procedures", async () => {
+  test("accepts cookie auth for project-scoped api procedures", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+
     await expect(
       assertApiProjectPermit(
         createContext(true, {
@@ -270,10 +382,48 @@ describe("api router permits", () => {
         "project-1",
         "view"
       )
-    ).rejects.toMatchObject({
-      code: "FORBIDDEN",
-      message: "Builder API requires an API token",
+    ).resolves.toEqual({
+      type: "user",
+      permits: ["view"],
     });
+  });
+
+  test("rejects cookie auth without the requested project permit", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(false);
+
+    await expect(
+      assertApiProjectPermit(
+        createContext(true, {
+          type: "user",
+          userId: "user-1",
+          sessionCreatedAt: 0,
+          isLoggedInToBuilder: async () => true,
+        }),
+        "project-1",
+        "edit"
+      )
+    ).rejects.toThrow("You don't have access to this project");
+  });
+
+  test("preserves content-only permissions for cookie-authenticated editors", async () => {
+    const hasProjectPermit = vi
+      .spyOn(authorizeProject, "hasProjectPermit")
+      .mockImplementation(async ({ permit }) => permit === "edit");
+    const context = createContext(true, {
+      type: "user",
+      userId: "user-1",
+      sessionCreatedAt: 0,
+      isLoggedInToBuilder: async () => true,
+    });
+
+    await expect(
+      assertApiProjectPermit(context, "project-1", "edit")
+    ).resolves.toEqual({ type: "user", permits: ["edit"] });
+
+    hasProjectPermit.mockResolvedValue(true);
+    await expect(
+      assertApiProjectPermit(context, "project-1", "edit")
+    ).resolves.toEqual({ type: "user", permits: ["edit", "build"] });
   });
 
   test("rejects tokens from another project", async () => {
@@ -436,6 +586,7 @@ describe("api router permits", () => {
     await expect(
       assertApiProjectPermit(createContext(true), "project-1", "edit")
     ).resolves.toEqual({
+      type: "token",
       token,
       permits: ["view", "edit", "api"],
     });
@@ -446,7 +597,16 @@ describe("api router permits", () => {
 
     expect(() =>
       assertApiPublishDomains({
+        auth: { type: "user", permits: ["edit"] },
+        domains: ["custom.example.com"],
+        project,
+      })
+    ).not.toThrow();
+
+    expect(() =>
+      assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "editors", canPublish: false }),
           permits: ["view", "edit", "api"],
         },
@@ -458,6 +618,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "editors", canPublish: true }),
           permits: ["view", "edit", "api"],
         },
@@ -469,6 +630,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "builders", canPublish: false }),
           permits: ["view", "edit", "build", "api"],
         },
@@ -480,6 +642,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({ relation: "builders", canPublish: false }),
           permits: ["view", "edit", "build", "api"],
         },
@@ -491,6 +654,7 @@ describe("api router permits", () => {
     expect(() =>
       assertApiPublishDomains({
         auth: {
+          type: "token",
           token: createToken({
             relation: "administrators",
             canPublish: true,
@@ -536,10 +700,12 @@ describe("api router permits", () => {
       marketplaceProduct: {},
     } as unknown as CompactBuild;
     const editorAuth = {
+      type: "token",
       token: createToken({ relation: "editors" }),
       permits: ["view", "edit", "api"],
     } satisfies Awaited<ReturnType<typeof assertApiProjectPermit>>;
     const builderAuth = {
+      type: "token",
       token: createToken({ relation: "builders" }),
       permits: ["view", "edit", "build", "api"],
     } satisfies Awaited<ReturnType<typeof assertApiProjectPermit>>;
@@ -660,7 +826,9 @@ describe("api router permits", () => {
         projectId: "project-1",
         clientVersion: 3,
       }),
-      expect.anything()
+      expect.objectContaining({
+        authorization: expect.objectContaining({ type: "token" }),
+      })
     );
   });
 

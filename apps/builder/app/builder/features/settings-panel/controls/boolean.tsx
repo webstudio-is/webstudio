@@ -1,18 +1,9 @@
-import { useStore } from "@nanostores/react";
 import { Grid, Switch, theme } from "@webstudio-is/design-system";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
-import {
-  type ControlProps,
-  $selectedInstanceScope,
-  updateExpressionValue,
-  useBindingState,
-  humanizeAttribute,
-} from "../shared";
+import { type ControlProps, humanizeAttribute } from "../shared";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 
 export const BooleanControl = ({
   meta,
@@ -22,12 +13,10 @@ export const BooleanControl = ({
   onChange,
 }: ControlProps<"boolean">) => {
   const label = humanizeAttribute(meta.label || propName);
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable, variant } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   return (
     <Grid
@@ -39,33 +28,27 @@ export const BooleanControl = ({
       align="center"
       gap="2"
     >
-      <PropertyLabel name={propName} readOnly={overwritable === false} />
-      <BindingControl>
-        <Switch
-          disabled={overwritable === false}
-          checked={Boolean(computedValue ?? false)}
-          onCheckedChange={(value) => {
-            if (prop?.type === "expression") {
-              updateExpressionValue(prop.value, value);
-            } else {
-              onChange({ type: "boolean", value });
-            }
-          }}
-        />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          validate={(value) => validatePrimitiveValue(value, label)}
-          variant={variant}
-          value={expression}
-          onChange={(newExpression) =>
-            onChange({ type: "expression", value: newExpression })
-          }
-          onRemove={(evaluatedValue) =>
-            onChange({ type: "boolean", value: Boolean(evaluatedValue) })
-          }
-        />
-      </BindingControl>
+      <PropertyLabel
+        name={propName}
+        readOnly={binding.bindingState.overwritable === false}
+      />
+      <BindableExpressionControl
+        {...binding}
+        value={Boolean(computedValue ?? false)}
+        validate={(value) => validatePrimitiveValue(value, label)}
+        onChangeValue={(value) => onChange({ type: "boolean", value })}
+        onChangeExpression={(value) => onChange({ type: "expression", value })}
+        onRemove={(value) =>
+          onChange({ type: "boolean", value: Boolean(value) })
+        }
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <Switch
+            disabled={readOnly}
+            checked={value}
+            onCheckedChange={onChangeValue}
+          />
+        )}
+      />
     </Grid>
   );
 };

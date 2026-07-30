@@ -123,9 +123,9 @@ applying direct changes.
 
 Variables can be scoped to an instance. Expressions under that instance can use
 the variable by name; nested variables with the same name mask outer variables.
-Variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
-Use `string[]` for lists of strings such as tags or selected categories; use
-`json` for objects, arrays with mixed shapes, or nested API filter state.
+Variable values support `string`, `number`, `boolean`, and `json`. Use `json`
+for all arrays and objects, including tags, selected categories, and nested API
+filter state.
 Parameters are internal scoped runtime values provided by pages, collections,
 or components. They are not a public authoring surface: do not create, update,
 or delete parameter records. Public tools should preserve existing parameter

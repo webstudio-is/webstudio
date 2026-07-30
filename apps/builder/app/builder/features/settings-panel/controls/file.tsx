@@ -1,22 +1,19 @@
-import { useStore } from "@nanostores/react";
 import { useId } from "react";
 import { Flex, InputField, theme } from "@webstudio-is/design-system";
 import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
+  BindableExpressionControl,
+  updateBindableValue,
+} from "~/builder/shared/bindable-expression";
 import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
   VerticalLayout,
-  updateExpressionValue,
-  $selectedInstanceScope,
-  useBindingState,
   humanizeAttribute,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 
 const UrlInput = ({
   id,
@@ -61,45 +58,44 @@ export const FileControl = ({
     (value) => {
       if (value === undefined) {
         return;
-      } else if (prop?.type === "expression") {
-        updateExpressionValue(prop.value, value);
-      } else {
-        onChange({ type: "string", value });
       }
+      updateBindableValue({
+        expression: prop?.type === "expression" ? prop.value : undefined,
+        value,
+        onChangeValue: (value) => onChange({ type: "string", value }),
+      });
     }
   );
 
   const label = humanizeAttribute(meta.label || propName);
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable, variant } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
-
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
   return (
     <VerticalLayout label={<PropertyLabel name={propName} />}>
       <Flex css={{ gap: theme.spacing[3] }} direction="column" justify="center">
-        <BindingControl>
-          <UrlInput
-            id={id}
-            readOnly={overwritable === false}
-            localValue={localStringValue}
-          />
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            validate={(value) => validatePrimitiveValue(value, label)}
-            variant={variant}
-            value={expression}
-            onChange={(newExpression) =>
-              onChange({ type: "expression", value: newExpression })
-            }
-            onRemove={(evaluatedValue) =>
-              onChange({ type: "string", value: String(evaluatedValue) })
-            }
-          />
-        </BindingControl>
+        <BindableExpressionControl
+          {...binding}
+          value={localStringValue.value}
+          validate={(value) => validatePrimitiveValue(value, label)}
+          onChangeValue={(value) =>
+            onChange({ type: "string", value: value ?? "" })
+          }
+          onChangeExpression={(value) =>
+            onChange({ type: "expression", value })
+          }
+          onRemove={(value) =>
+            onChange({ type: "string", value: String(value) })
+          }
+          renderControl={({ readOnly }) => (
+            <UrlInput
+              id={id}
+              readOnly={readOnly}
+              localValue={localStringValue}
+            />
+          )}
+        />
         <SelectAsset
           prop={prop?.type === "asset" ? prop : undefined}
           accept={meta.accept}

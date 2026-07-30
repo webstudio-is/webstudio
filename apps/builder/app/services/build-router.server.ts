@@ -22,7 +22,12 @@ import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
-import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetDataByProject } from "@webstudio-is/asset-uploader/server";
+import {
+  createContentDatabase,
+  hasDynamicContentCompilationValues,
+} from "@webstudio-is/content-engine";
+import { createReachableAssetContentCompilationPlan } from "@webstudio-is/sdk";
 import {
   checkProjectBuildPermissionInput,
   importProjectBundleInput,
@@ -33,6 +38,7 @@ import { removeAgentInstructionsFromProjectSettings } from "@webstudio-is/projec
 import { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
 import {
   loadProjectBundleByBuildId,
+  loadProjectBundleByProjectId,
   loadPublishedProjectBundleByProjectId,
 } from "~/shared/db";
 import {
@@ -59,6 +65,36 @@ const buildBundleInput = z.object({
   buildId: z.string(),
   bundleVersion: z.union([z.string(), z.number()]).optional(),
 });
+
+const getContentDatabasePublishDiagnostics = (
+  bundle: z.infer<typeof publishedProjectBundle>
+) => {
+  if (bundle.assetIndex === undefined) {
+    return;
+  }
+  const plan = createReachableAssetContentCompilationPlan({
+    props: bundle.build.props.map(([, prop]) => prop),
+    dataSources: bundle.build.dataSources.map(([, dataSource]) => dataSource),
+    resources: bundle.build.resources.map(([, resource]) => resource),
+  });
+  if (plan === undefined) {
+    return;
+  }
+  const resourceNameById = new Map(
+    bundle.build.resources.map(([, resource]) => [resource.id, resource.name])
+  );
+  const stats = createContentDatabase({
+    artifact: bundle.assetIndex,
+  }).getStats();
+  return {
+    stats,
+    potentiallyAffectedResources: plan.queries.map(({ id }) => ({
+      id,
+      name: resourceNameById.get(id) ?? id,
+    })),
+    hasDynamicValues: hasDynamicContentCompilationValues(plan),
+  };
+};
 
 const assertCliBundleVersion = (
   ctx: AppContext,
@@ -284,6 +320,15 @@ export const buildRouter = router({
       );
     }),
 
+  contentDatabasePublishDiagnostics: procedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      await assertProjectBuildPermit({ ctx, projectId: input.projectId });
+      return getContentDatabasePublishDiagnostics(
+        await loadProjectBundleByProjectId(input.projectId, ctx)
+      );
+    }),
+
   checkProjectBuildPermission: procedure
     .input(checkProjectBuildPermissionInput)
     .query(async ({ ctx, input }) => {
@@ -412,4 +457,5 @@ export const __testing__ = {
   createImportProjectBundleHandler,
   assertCliBundleVersion,
   prepareProjectBundleForClient,
+  getContentDatabasePublishDiagnostics,
 };

@@ -28,9 +28,17 @@ import {
   paginatedOutputInputSchema,
 } from "@webstudio-is/project-build/runtime";
 import {
+  getAssetResourceQueryError,
+  assetQueryRequest,
+  getAssetQueryWhereMetrics,
+  validateAssetQueryAgainstCatalog,
+} from "@webstudio-is/content-engine";
+import {
+  loadBuilderAssetFieldCatalog,
   loadAssetDataByProject,
   loadAssetFoldersByProject,
-} from "@webstudio-is/asset-uploader/index.server";
+  previewAssetResourceQuery,
+} from "@webstudio-is/asset-uploader/server";
 import { buildPatchTransaction } from "@webstudio-is/protocol/schema";
 import {
   publicApiContractVersion,
@@ -72,6 +80,8 @@ import {
   executeApiRuntimeMutation,
   executeApiRuntimeOperation,
 } from "./api-runtime.server";
+import { createAssetClient } from "../shared/asset-client";
+import { getContentDatabaseMaxBytes } from "./content-database.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -82,6 +92,9 @@ const assertApiPublishDomains = ({
   domains: string[];
   project: { domain: string };
 }) => {
+  if (auth.type === "user") {
+    return;
+  }
   const { token } = auth;
   if (token.canPublish === true) {
     return;
@@ -99,6 +112,24 @@ const assertApiPublishDomains = ({
 };
 
 const projectIdInput = z.object({ projectId: z.string() });
+
+const assetQueryInput = projectIdInput.extend(assetQueryRequest.shape);
+const assetQueryValidationInput = projectIdInput.extend({
+  query: assetQueryRequest.shape.query,
+});
+const throwAssetQueryApiError = (error: unknown): never => {
+  const queryError = getAssetResourceQueryError(error);
+  if (queryError !== undefined) {
+    return throwApiError(
+      queryError.status === 409 ? "CONFLICT" : "BAD_REQUEST",
+      queryError.message,
+      {
+        webstudioCode: queryError.code,
+      }
+    );
+  }
+  throw error;
+};
 
 const paginatedProjectInput = projectIdInput.extend(
   paginatedOutputInputSchema.shape
@@ -690,6 +721,76 @@ export const apiRouter = router({
   }),
 
   ...runtimeOperationRouters,
+
+  assetQueries: router({
+    validate: projectQuery(
+      assetQueryValidationInput,
+      "view",
+      async ({ ctx, input }) => {
+        try {
+          const catalog = await loadBuilderAssetFieldCatalog({
+            projectId: input.projectId,
+            context: ctx,
+            assetClient: createAssetClient(),
+          });
+          const validated = validateAssetQueryAgainstCatalog({
+            query: input.query,
+            catalog,
+          });
+          return {
+            valid: true as const,
+            referencedFieldPaths: validated.referencedFieldPaths,
+            filterCount: getAssetQueryWhereMetrics(validated.query.where)
+              .filters,
+            sortCount: validated.query.sort.length,
+            warnings: validated.warnings,
+          };
+        } catch (error) {
+          return throwAssetQueryApiError(error);
+        }
+      },
+      {
+        command: "validate-asset-query",
+        client: "validateAssetQuery",
+      }
+    ),
+    preview: projectQuery(
+      assetQueryInput,
+      "view",
+      async ({ ctx, input }) => {
+        try {
+          const { projectId, ...request } = input;
+          return await previewAssetResourceQuery({
+            projectId,
+            request,
+            context: ctx,
+            assetClient: createAssetClient(),
+            contentDatabaseMaxBytes: getContentDatabaseMaxBytes(),
+          });
+        } catch (error) {
+          return throwAssetQueryApiError(error);
+        }
+      },
+      {
+        command: "preview-asset-query",
+        client: "previewAssetQuery",
+      }
+    ),
+    fieldCatalog: projectQuery(
+      projectIdInput,
+      "view",
+      async ({ ctx, input }) =>
+        await loadBuilderAssetFieldCatalog({
+          projectId: input.projectId,
+          context: ctx,
+          assetClient: createAssetClient(),
+        }),
+      {
+        command: "get-asset-field-catalog",
+        client: "getAssetFieldCatalog",
+      }
+    ),
+  }),
 
   publish: router({
     list: projectQuery(

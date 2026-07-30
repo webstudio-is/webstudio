@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { assetFolderId } from "./asset-folders";
-import { fontFormat, fontMeta } from "@webstudio-is/fonts";
+import { fontFormat, fontMeta, fontMetaUpdate } from "@webstudio-is/fonts";
 
 const assetId = z.string();
 
@@ -32,6 +32,12 @@ export const imageMeta = z.object({
   height: z.number(),
 });
 export type ImageMeta = z.infer<typeof imageMeta>;
+
+export const assetMetaUpdate = z.union([
+  fontMetaUpdate,
+  imageMeta.partial().strict(),
+  z.object({}).strict(),
+]);
 
 export const imageAsset = z.object({
   ...baseAsset,

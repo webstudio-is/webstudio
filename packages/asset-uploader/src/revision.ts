@@ -9,7 +9,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Client } from "@webstudio-is/postgrest/index.server";
-import type { AssetClient } from "./client";
+import type { AssetObjectStore } from "./client";
 import { uploadFileData } from "./upload";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
@@ -103,7 +103,7 @@ export const updateAssetContent = async (
     expectedName: string;
     data: ReadableStream<Uint8Array>;
   },
-  assetClient: AssetClient,
+  assetClient: AssetObjectStore,
   context: AppContext
 ): Promise<Asset> => {
   const canEdit = await authorizeProject.hasProjectPermit(
@@ -181,6 +181,7 @@ export const updateAssetContent = async (
       context.postgrest.client
     );
   } catch (error) {
+    let swapCommitted = false;
     try {
       const current = await loadAsset({
         assetId,
@@ -188,17 +189,20 @@ export const updateAssetContent = async (
         client: context.postgrest.client,
       });
       if (current.name === revisionName) {
-        return revision;
+        swapCommitted = true;
+      } else {
+        const discardedRevision = await context.postgrest.client
+          .from("File")
+          .update({ isDeleted: true })
+          .eq("name", revisionName);
+        assertPostgrestSuccess(discardedRevision);
       }
-      const discardedRevision = await context.postgrest.client
-        .from("File")
-        .update({ isDeleted: true })
-        .eq("name", revisionName);
-      assertPostgrestSuccess(discardedRevision);
     } catch (cleanupError) {
       console.error("Unable to discard an asset revision", cleanupError);
     }
-    throw error;
+    if (swapCommitted === false) {
+      throw error;
+    }
   }
 
   return revision;

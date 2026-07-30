@@ -13,6 +13,12 @@ function. For example:
 { "binding": { "type": "expression", "value": "post.title ?? \"Untitled\"" } }
 ```
 
+Inside that string, use readable JavaScript syntax rather than serialized JSON.
+For object expressions, leave identifier property names unquoted, for example
+`{ query: queryText, variables: { slug: system.params.slug } }`. Quote a property
+name only when JavaScript requires it, such as `{ "published-at": date }`. Do
+not pass a JSON-stringified object as an expression.
+
 Do not send a fixed prop string as an expression. Use `update-props` with
 `type:"string"`. Page metadata and resource URLs accept plain fixed strings and
 normalize them for storage. Expression-only resource headers, search parameters,

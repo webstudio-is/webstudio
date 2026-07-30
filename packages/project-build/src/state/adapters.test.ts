@@ -102,6 +102,28 @@ test("adapts array build data snapshots into normalized builder state", () => {
   expect(state.props).toEqual(new Map(build.props));
 });
 
+test("normalizes legacy Assets resources at every state boundary", () => {
+  const resource = {
+    id: "assets",
+    name: "Assets",
+    control: "system" as const,
+    method: "get" as const,
+    url: '"/$resources/assets"',
+    searchParams: [],
+    headers: [],
+  };
+
+  const fromSnapshot = createBuilderStateFromSnapshot({
+    resources: [[resource.id, resource]],
+  });
+  const fromBuild = createBuilderStateFromBuildData({ resources: [resource] });
+
+  expect(fromSnapshot.resources?.get(resource.id)?.method).toBe("post");
+  expect(fromSnapshot.resources?.get(resource.id)?.body).toBeDefined();
+  expect(fromBuild.resources?.get(resource.id)?.method).toBe("post");
+  expect(resource.method).toBe("get");
+});
+
 test("adapts compact build snapshots into normalized builder state", () => {
   const state = createBuilderStateFromCompactBuild({
     pages,

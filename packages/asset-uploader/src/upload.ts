@@ -12,7 +12,7 @@ import {
   type Asset,
 } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-import type { AssetClient } from "./client";
+import type { AssetInfoFallback, AssetObjectWriter } from "./client";
 import type { AssetDataOverride } from "./utils/get-asset-data";
 import { createUniqueAssetFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
@@ -20,7 +20,7 @@ import { formatAsset } from "./utils/format-asset";
 import { assertPostgrestSuccess } from "./patch-utils";
 import type { UploadTicket } from "./types";
 
-type UploadData = {
+export type CreateUploadTicketInput = {
   projectId: string;
   type: string;
   filename: string;
@@ -153,7 +153,7 @@ const findContentHashUploadTicket = async ({
   data,
   context,
 }: {
-  data: UploadData & { contentHash: string };
+  data: CreateUploadTicketInput & { contentHash: string };
   context: AppContext;
 }): Promise<UploadTicket | undefined> => {
   const {
@@ -279,7 +279,7 @@ const cleanupUploadError = async (
 };
 
 export const createUploadTicket = async (
-  data: UploadData,
+  data: CreateUploadTicketInput,
   context: AppContext,
   createId: () => Asset["id"] = nanoid
 ): Promise<UploadTicket> => {
@@ -382,11 +382,9 @@ export const createUploadTicket = async (
 export const uploadFileData = async (
   name: string,
   data: ReadableStream<Uint8Array>,
-  client: AssetClient,
+  client: AssetObjectWriter,
   context: AppContext,
-  assetInfoFallback:
-    | { width: number; height: number; format: string }
-    | undefined,
+  assetInfoFallback: AssetInfoFallback | undefined,
   assetDataOverride?: AssetDataOverride,
   onUploadError?: UploadErrorCleanup
 ): Promise<Database["public"]["Tables"]["File"]["Row"]> => {
@@ -492,11 +490,9 @@ export const getUploadedAsset = async ({
 export const uploadFile = async (
   name: string,
   data: ReadableStream<Uint8Array>,
-  client: AssetClient,
+  client: AssetObjectWriter,
   context: AppContext,
-  assetInfoFallback:
-    | { width: number; height: number; format: string }
-    | undefined,
+  assetInfoFallback: AssetInfoFallback | undefined,
   assetDataOverride?: AssetDataOverride,
   onUploadError?: UploadErrorCleanup
 ): Promise<Asset> => {
@@ -514,12 +510,13 @@ export const uploadFile = async (
     if (typeof projectId !== "string") {
       throw Error("File uploader project is missing");
     }
-    return await getUploadedAsset({
+    const asset = await getUploadedAsset({
       name,
       projectId,
       context,
       file,
     });
+    return asset;
   } catch (error) {
     await cleanupUploadError(name, context, onUploadError);
     throw error;

@@ -5,7 +5,7 @@ import {
   getApiCompatibilityPayload,
 } from "@webstudio-is/trpc-interface/api-compatibility";
 import { csrfToken } from "./csrf.client";
-import { $authToken } from "./nano-states";
+import { $authToken } from "./nano-states/misc";
 import { publicStaticEnv } from "~/env/env.static";
 
 /**

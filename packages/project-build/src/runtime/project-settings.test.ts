@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createBasicAuthRoute } from "@webstudio-is/wsauth";
 import type { BuilderState } from "../state/builder-state";
 import {
+  getProjectBasicAuthCredentials,
   parseProjectAuthRoutes,
   validateContactEmail,
   validateProjectAuth,
@@ -257,6 +258,27 @@ describe("project settings runtime", () => {
         password: "secret",
       }),
     ]);
+  });
+
+  test("resolves basic auth credentials for a matching preview route", () => {
+    const auth = JSON.stringify({
+      version: 1,
+      routes: {
+        "/*": {
+          method: "basic",
+          login: "admin",
+          password: "secret",
+        },
+      },
+    });
+
+    expect(getProjectBasicAuthCredentials(auth, "/blog/post")).toEqual({
+      username: "admin",
+      password: "secret",
+    });
+    expect(getProjectBasicAuthCredentials(undefined, "/blog/post")).toBe(
+      undefined
+    );
   });
 
   test("validates project auth route input", () => {

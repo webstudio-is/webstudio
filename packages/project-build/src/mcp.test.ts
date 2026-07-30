@@ -1143,6 +1143,44 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("documents the queried Assets result shape in focused tools", () => {
+    const contracts = runtimeOperationContracts.filter(({ id }) =>
+      ["assetsResources.create", "assetsResources.update"].includes(id)
+    );
+    const tools = listProjectSessionMcpTools(
+      contracts.map((contract) =>
+        publicOperation({
+          command: contract.command,
+          id: contract.id,
+          method: "mutation",
+          permit: "build",
+          description: contract.command,
+          inputSchema: contract.inputSchema,
+          readNamespaces: contract.readNamespaces,
+          writeNamespaces: contract.writeNamespaces,
+          invalidatesNamespaces: contract.invalidatesNamespaces,
+          retryOnConflict: contract.retryOnConflict,
+        })
+      )
+    );
+
+    const assetsResourceTools = tools.filter(({ name }) =>
+      ["create-assets-resource", "update-assets-resource"].includes(name)
+    );
+    expect(assetsResourceTools).toHaveLength(2);
+
+    for (const tool of assetsResourceTools) {
+      expect(tool.description).toContain("structured tool input");
+      expect(tool.description).toContain("Webstudio JavaScript expression");
+      expect(tool.description).toContain("<dataSourceName>.data");
+      expect(tool.description).toContain("<dataSourceName>.meta");
+      expect(tool.description).toContain(".properties");
+      expect(tool.description).toContain(".excerpt");
+      expect(tool.description).toContain(".content.text");
+      expect(getSchemaProperties(tool.inputSchema)).not.toEqual({});
+    }
+  });
+
   test("defers oversized input schemas until focused discovery", async () => {
     const description = "x".repeat(25_000);
     const operation = publicOperation({
@@ -4484,7 +4522,9 @@ describe("project session mcp adapter", () => {
           ),
           expect.stringContaining("Do not call meta.index after this guide"),
           expect.stringContaining("Never place credentials"),
-          expect.stringContaining("signed-out, loading, signed-in"),
+          expect.stringContaining(
+            "exact terms signed-out, loading, signed-in, and failed-auth"
+          ),
           expect.stringContaining("not an authorization boundary"),
           expect.stringContaining(
             "Use create-page's returned rootInstanceId directly"
@@ -6609,7 +6649,29 @@ describe("project session mcp adapter", () => {
         name: "preview.start",
         input: { port: 70000 },
       })
-    ).rejects.toThrow("preview port must be an integer between 1 and 65535.");
+    ).rejects.toThrow("preview port must be an integer between 0 and 65535.");
+  });
+
+  test("allows preview hosts to allocate a port", async () => {
+    const startPreview = vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      running: true,
+      mode: "iterative" as const,
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview,
+      getPreviewStatus: vi.fn(),
+    });
+
+    await adapter.callTool({ name: "preview.start", input: { port: 0 } });
+
+    expect(startPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ port: 0 }),
+      expect.objectContaining({ report: expect.any(Function) })
+    );
   });
 
   test("rejects empty preview host", async () => {
@@ -6992,6 +7054,9 @@ describe("project session mcp adapter", () => {
     expect(expressions.contents[0]?.text).toContain("Supported string methods");
     expect(expressions.contents[0]?.text).toContain("- `toLowerCase`");
     expect(expressions.contents[0]?.text).toContain("- `join`");
+    expect(expressions.contents[0]?.text).toContain(
+      "leave identifier property names unquoted"
+    );
     expect(expressions.contents[0]?.text).not.toContain(
       "{{allowedStringMethods}}"
     );
@@ -7801,6 +7866,37 @@ describe("project session mcp adapter", () => {
             mimeType: "application/json",
           }),
         ],
+      });
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns actionable structured screenshot failures", async () => {
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(async () => {
+        throw new Error("Chromium executable was not found");
+      }),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "screenshot",
+        arguments: { url: "https://example.com" },
+      });
+      expect(result).toMatchObject({
+        isError: true,
+        structuredContent: {
+          ok: false,
+          error: {
+            code: "SCREENSHOT_CAPTURE_FAILED",
+            message: expect.stringContaining("preview.status"),
+          },
+        },
       });
     } finally {
       await close();

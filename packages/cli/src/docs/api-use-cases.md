@@ -659,12 +659,12 @@ Commands:
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"count","value":{"type":"number","value":3}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"featured","value":{"type":"boolean","value":true}}
-- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"json","value":["news","product"]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
 
 Notes:
 
-- Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
+- Data variable values support `string`, `number`, `boolean`, and `json`. Use `json` for all arrays and objects.
 - Parameters are internal scoped runtime values provided by pages, collections, or components. They are not a public authoring surface: do not create, update, or delete parameter records. Use data variables/resources for user-authored data, and reference documented context values such as `system` only where they are already in scope.
 
 ## Update data variable
@@ -713,6 +713,34 @@ Commands:
 
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}
+
+## Query Markdown assets
+
+Commands:
+
+- MCP tool: get-asset-field-catalog {}
+- MCP tool: validate-asset-query {"query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":"md"},{"field":["properties","draft"],"operator":"ne","value":true}]},"limit":20}}
+- MCP tool: create-assets-resource {"name":"All assets","scopeInstanceId":"<instanceId>","dataSourceName":"assets"}
+- MCP tool: create-assets-resource {"name":"Published posts","scopeInstanceId":"<instanceId>","dataSourceName":"posts","query":{"where":{"all":[{"field":["extension"],"operator":"eq","value":{"type":"literal","value":"md"}},{"field":["properties","draft"],"operator":"ne","value":{"type":"literal","value":true}}]},"sort":[{"field":["properties","publishedAt"],"direction":"desc"}],"limit":{"type":"literal","value":20},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","slug"],["properties","publishedAt"],["excerpt"]]},"content":{"mode":"none"}}}
+- MCP tool: create-assets-resource {"name":"Post by slug or ID","scopeInstanceId":"<instanceId>","dataSourceName":"post","query":{"where":{"any":[{"field":["properties","slug"],"operator":"eq","value":"system.params.slug"},{"field":["id"],"operator":"eq","value":"system.params.slug"}]},"limit":{"type":"literal","value":1},"output":{"mode":"fields","includeMetadata":false,"fields":[["properties","title"],["properties","publishedAt"]]},"content":{"mode":"markdown-body","maxBytes":1048576}}}
+- MCP tool: list-assets-resources {}
+- MCP tool: get-assets-resource {"resourceId":"<resourceId>"}
+- MCP tool: update-assets-resource {"resourceId":"<resourceId>","values":{"query":null}}
+- MCP tool: preview-asset-query {"query":{"where":{"all":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}]},"limit":1,"content":{"mode":"markdown-body","maxBytes":1048576}}}
+
+Notes:
+
+- Read the field catalog before authoring unfamiliar queries. It includes dynamic schema-less frontmatter paths such as `properties.author.name`, observed types, optionality, and mixed-type state without downloading Markdown files.
+- Minimize the deployed content database by using `output.mode:"fields"` and selecting only fields the rendered page needs. Keep `includeMetadata:false` unless the rendered value needs file metadata such as name, path, MIME type, or creation date, and avoid `output.mode:"all"` as a convenience default. Query diagnostics are returned separately and do not require metadata output. Filters and sorting may still require their referenced fields in the database.
+- Combine filters with `where.all` (AND) and `where.any` (OR), including nested groups. Filter values, limit, and offset on a saved resource may be Webstudio expressions evaluated at render time. Preview queries use concrete JSON values.
+- Use `content.mode:"none"` for listings. Request `markdown-body`, `full`, or a bounded `range` only after filtering to the intended files, normally with `limit:1` for a slug detail route.
+- In Markdown, reference sibling Assets with conventional relative URLs such as `../images/hero.png`. When `markdown-body` is requested, the content engine resolves matching files against the Markdown file's folder and emits the correct Builder or published Asset URL. Keep external URLs absolute.
+- Markdown Embed renders sanitized authored HTML for figures, captions, audio, video, and iframes. Scripts, inline event handlers, `srcdoc`, and unsafe URL protocols are removed. Executable component composition remains separate future MDX work.
+- Preview each query with concrete values before saving it. Inspect `__diagnostics__.usedBytes`, `maxBytes`, `unboundedBytes`, and `truncated`; when usage approaches the limit, remove unused output fields, narrow candidate files, and reduce embedded content in that order.
+- Read Assets from the ID-keyed map at `<dataSourceName>.data`, with collection information such as `totalCount` and `hasMore` at `<dataSourceName>.meta`. Bind a listing Collection to `posts.data` and a one-result detail Collection to `post.data`. On each value, selected file fields such as `id`, `name`, and `extension` are top-level; Markdown frontmatter and JSON fields are under `properties`; the derived `excerpt` is top-level; and requested Markdown is at `content.text`.
+- Assets has one response shape and always executes a structured query. Omit `query` to use the default query, which selects URL and optional image dimensions. Provide query configuration to control filtering, sorting, pagination, selected fields, or file content. Set `values.query:null` to restore the default query.
+- `create-assets-resource` and `update-assets-resource` are the semantic authoring path. Do not construct the internal query URL, headers, or body expression manually.
+- The shared metadata index is maintained automatically and is emitted only when a configured Assets resource is reachable.
 
 ## Delete resource
 
@@ -1079,7 +1107,7 @@ Notes:
 Commands:
 
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
-- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"json","value":["news","product"]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
 - MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"source","value":{"type":"literal","value":"website"}}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
 - MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":{"type":"literal","value":"application/json"}}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}

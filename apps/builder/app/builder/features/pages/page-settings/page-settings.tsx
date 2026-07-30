@@ -5,8 +5,8 @@ import {
   findPageByIdOrPath,
   getPageDraftabilityError,
   isPageDraft,
-  isLiteralExpression,
 } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import {
   theme,
   Button,

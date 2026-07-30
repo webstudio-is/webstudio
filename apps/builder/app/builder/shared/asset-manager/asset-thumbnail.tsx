@@ -18,6 +18,7 @@ import {
   FILE_EXTENSIONS_BY_CATEGORY,
   IMAGE_MIME_TYPES,
   detectAssetType,
+  getAssetUrl,
   isResizableImageFileName,
 } from "@webstudio-is/sdk";
 import type { MimeCategory } from "@webstudio-is/sdk";
@@ -25,7 +26,6 @@ import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { $authPermit, $permissions } from "~/shared/nano-states";
 import { replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
-import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { createAssetManagerClipboardActions } from "./asset-manager-clipboard";
 import { setAssetManagerDragPreview } from "./asset-manager-drag-preview";
 import { type AssetManagerItemActions } from "./asset-manager-item-menu";

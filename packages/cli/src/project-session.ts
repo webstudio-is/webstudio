@@ -1,6 +1,8 @@
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { cwd } from "node:process";
+import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
+import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import {
   migratePages,
   serializePages,
@@ -14,7 +16,10 @@ import {
   publicApiOperations,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
-import { getHomePage } from "@webstudio-is/sdk";
+import {
+  createReachableAssetContentCompilationPlan,
+  getHomePage,
+} from "@webstudio-is/sdk";
 import {
   createProjectSession,
   createDefaultProjectSessionCompatibility,
@@ -44,6 +49,8 @@ import type { ApiConnection } from "./api-connection";
 import { getStableErrorCode } from "./error-codes";
 import { loadJSONFile, withFileLock, writeFileAtomic } from "./fs-utils";
 import { isPlainRecord } from "./type-utils";
+import { createFileSystemContentSource } from "./filesystem-content-source";
+import { LOCAL_ASSETS_DIR } from "./asset-files";
 
 export type CliServerApiContract = {
   clientVersion: string;
@@ -517,9 +524,44 @@ export type CliProjectSessionSnapshot = {
   freshness: BuilderStateFreshness;
 };
 
+export const loadCliProjectSessionAssetIndex = async (
+  snapshot: ProjectSessionSnapshot,
+  connection: ApiConnection,
+  assetsDirectory = LOCAL_ASSETS_DIR
+) => {
+  if (connection.projectId !== snapshot.projectId) {
+    throw new Error("CLI connection does not match the project session");
+  }
+  const plan = createReachableAssetContentCompilationPlan({
+    props: snapshot.state.props?.values() ?? [],
+    dataSources: snapshot.state.dataSources?.values() ?? [],
+    resources: snapshot.state.resources?.values() ?? [],
+  });
+  if (plan === undefined) {
+    return;
+  }
+  const { artifact } = await compileContentSource({
+    source: createFileSystemContentSource({
+      projectId: snapshot.projectId,
+      assets: Array.from(snapshot.state.assets?.values() ?? []),
+      folders: snapshot.state.assetFolders ?? new Map(),
+      assetsDirectory,
+    }),
+    projectId: snapshot.projectId,
+    plan,
+    maxBytes: parseContentDatabaseMaxBytes(
+      process.env.CONTENT_DATABASE_MAX_BYTES
+    ),
+  });
+  return artifact;
+};
+
 export const createLocalProjectBundleFromSessionSnapshot = (
   snapshot: ProjectSessionSnapshot,
-  options: { origin?: string } = {}
+  options: {
+    origin?: string;
+    assetIndex?: PublishedProjectBundle["assetIndex"];
+  } = {}
 ): PublishedProjectBundle => {
   const pages = snapshot.state.pages;
   if (pages === undefined) {
@@ -545,6 +587,7 @@ export const createLocalProjectBundleFromSessionSnapshot = (
     pages: Array.from(persistedPages.pages.values()),
     assets: Array.from(snapshot.state.assets?.values() ?? []),
     assetFolders: Array.from(snapshot.state.assetFolders?.values() ?? []),
+    assetIndex: options.assetIndex,
     build: {
       id: snapshot.buildId,
       projectId: snapshot.projectId,
@@ -560,7 +603,10 @@ export const createLocalProjectBundleFromSessionSnapshot = (
 export const writeCliProjectSessionDataFile = async (
   snapshot: ProjectSessionSnapshot,
   path = join(cwd(), LOCAL_DATA_FILE),
-  options: { origin?: string } = {}
+  options: {
+    origin?: string;
+    assetIndex?: PublishedProjectBundle["assetIndex"];
+  } = {}
 ) => {
   const data = createLocalProjectBundleFromSessionSnapshot(snapshot, options);
   await writeFileAtomic(path, `${JSON.stringify(data, undefined, 2)}\n`);

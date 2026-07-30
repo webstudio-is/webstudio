@@ -1,5 +1,6 @@
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, AssetFolder } from "@webstudio-is/sdk";
 import { fontAssetFixtureFiles } from "./font-assets-fixture";
+import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
 
 export type EvaluationPage = {
   id: string;
@@ -37,6 +38,7 @@ export type EvaluationStyle = {
 
 export type EvaluationProject = {
   assets: Asset[];
+  assetFolders: AssetFolder[];
   pages: EvaluationPage[];
   instances: EvaluationInstance[];
   props: EvaluationProp[];
@@ -56,7 +58,11 @@ export type EvaluationProject = {
 };
 
 export type HighImpactFixture = {
-  id: "authenticated-page-v1" | "design-input-v1" | "font-assets-v1";
+  id:
+    | "authenticated-page-v1"
+    | "design-input-v1"
+    | "font-assets-v1"
+    | "markdown-blog-v1";
   objective: string;
   project: EvaluationProject;
 };
@@ -70,6 +76,7 @@ const homePage: EvaluationPage = {
 
 const emptyProject = (): EvaluationProject => ({
   assets: [],
+  assetFolders: [],
   pages: [homePage],
   instances: [
     {
@@ -206,7 +213,13 @@ export const designInputFixture: HighImpactFixture & {
 
 export const fontAssetsFixture: HighImpactFixture = {
   id: "font-assets-v1",
-  objective: `Upload ${fontAssetFixtureFiles.map(({ name }) => name).join(" and ")} from .webstudio/assets as font assets, initially using family Imported Rajdhani, style normal, and weight 400. Then use update-asset on each uploaded asset to set family Rajdhani, style normal, and weight 600. Refresh the assets namespace and read both assets back to verify the saved metadata before finishing. Do not change the page.`,
+  objective: `Upload ${fontAssetFixtureFiles.map(({ name }) => name).join(" and ")} from .webstudio/assets as font assets, initially using family Imported Rajdhani, style normal, and weight 400. Then use update-asset exactly once on each uploaded asset to set values.meta to family Rajdhani, style normal, and weight 600. Verify both returned asset ids with verify-font-assets, run the audit, and do not change the page.`,
+  project: emptyProject(),
+};
+
+export const markdownBlogFixture: HighImpactFixture = {
+  id: "markdown-blog-v1",
+  objective: `Upload the ${markdownBlogFixtureArticles.length} provided Markdown articles from .webstudio/assets into one Blog asset folder. Build an editable blog overview at /blog and a dynamic detail page at /blog/:slug using exactly one fully configured scoped Assets resource per page, Collections, and Markdown Embed. Include the complete structured query in each initial resource creation; never create a default or placeholder resource and never repair one by creating another. The overview query must exclude drafts, sort newest first, select the article title, slug, excerpt, and publication date, and avoid loading file content. The detail query must select one article from system.params.slug and load its Markdown body. Verify both /blog and /blog/aurora-trails at desktop and mobile sizes.`,
   project: emptyProject(),
 };
 
@@ -214,6 +227,7 @@ export const highImpactFixtures = [
   authenticatedPageFixture,
   designInputFixture,
   fontAssetsFixture,
+  markdownBlogFixture,
 ] as const;
 
 export const validateHighImpactFixture = (fixture: HighImpactFixture) => {

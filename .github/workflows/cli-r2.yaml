@@ -62,6 +62,10 @@ jobs:
       - name: pnpm deploy
         run: pnpm --filter 'webstudio-cloudflare-template' deploy "${{ github.workspace }}/../cloudflare-template"
 
+      - name: Verify optional Assets build dependency is omitted
+        run: test ! -e node_modules/@webstudio-is/content-engine/package.json
+        working-directory: ${{ github.workspace }}/../cloudflare-template
+
       - name: Make archive
         run: |
           tar --use-compress-program="zstd -19" -cf cloudflare-template.tar.zst cloudflare-template

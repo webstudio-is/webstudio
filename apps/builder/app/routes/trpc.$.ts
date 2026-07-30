@@ -3,27 +3,17 @@ import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { createContext, isServiceAuthorization } from "~/shared/context.server";
 import { appRouter } from "~/services/trcp-router.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
-import { checkCsrf } from "~/services/csrf-session.server";
 import { getTrpcResponseMeta } from "~/services/trpc-response-meta.server";
-import { isCliApiRequest } from "~/services/trpc-request.server";
+import { ensureApiCsrf } from "~/services/api-auth.server";
 
 const isServiceRequest = (request: Request) => {
   return isServiceAuthorization(request.headers.get("Authorization"));
 };
 
-const isAuthTokenRequest = (request: Request) => {
-  return request.headers.has("x-auth-token");
-};
-
 export const action = async ({ request }: ActionFunctionArgs) => {
-  if (
-    isServiceRequest(request) === false &&
-    isCliApiRequest(request) === false
-  ) {
+  if (isServiceRequest(request) === false) {
     preventCrossOriginCookie(request);
-    if (isAuthTokenRequest(request) === false) {
-      await checkCsrf(request);
-    }
+    await ensureApiCsrf(request);
   }
 
   // https://trpc.io/docs/server/adapters/fetch

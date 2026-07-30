@@ -664,6 +664,29 @@ test("accepts the generated preview with the expected project marker", async () 
   ).resolves.toBeUndefined();
 });
 
+test("uses the static identity marker when page authentication blocks readiness", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(new Response("Unauthorized", { status: 401 }))
+    .mockResolvedValueOnce(Response.json({ projectId: "project", version: 5 }));
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/",
+      {
+        timeoutMs: 1000,
+        requiredProject: { projectId: "project", version: 5 },
+      },
+      createDependencies({ fetch })
+    )
+  ).resolves.toBeUndefined();
+  expect(fetch).toHaveBeenNthCalledWith(
+    2,
+    new URL("http://127.0.0.1:5173/__webstudio/preview.json"),
+    expect.objectContaining({ method: "GET" })
+  );
+});
+
 test("waits for the exact generated session version", async () => {
   const fetch = vi
     .fn()

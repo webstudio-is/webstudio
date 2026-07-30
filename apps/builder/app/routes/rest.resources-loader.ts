@@ -2,9 +2,12 @@ import { z } from "zod";
 import { type ActionFunctionArgs, data, json } from "@remix-run/server-runtime";
 import { type ResourceRequest, resourceRequest } from "@webstudio-is/sdk";
 import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { loader as currentDateLoader } from "../shared/$resources/current-date.server";
-import { loader as assetsLoader } from "../shared/$resources/assets.server";
+import { loader as assetsFieldCatalogLoader } from "./rest.assets.field-catalog";
+import { executeAssetQuery } from "../shared/$resources/assets-query.server";
+import { loader as assetsOpenApiLoader } from "./rest.assets.openapi[.]json";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getResourceKey } from "~/shared/resources";
@@ -29,13 +32,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     if (isLocalResource(input, "assets")) {
-      return assetsLoader({ request });
+      const resourceRequest = new Request(new URL(input, request.url), init);
+      return executeAssetQuery({ request, resourceRequest });
+    }
+
+    if (isLocalResource(input, "assets/field-catalog")) {
+      return assetsFieldCatalogLoader({ request });
+    }
+
+    if (isLocalResource(input, "assets/openapi.json")) {
+      return assetsOpenApiLoader({ request });
     }
 
     return fetch(input, init);
   };
 
   const requestJson = await request.json();
+  const { sourceOrigin } = parseBuilderUrl(request.url);
   const requestList = z.array(z.unknown()).safeParse(requestJson);
 
   if (requestList.success === false) {
@@ -62,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
       return [
         getResourceKey(resource.data),
-        await loadResource(customFetch, resource.data),
+        await loadResource(customFetch, resource.data, sourceOrigin),
       ];
     })
   );

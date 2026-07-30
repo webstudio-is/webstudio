@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
     "@smithy/signature-v4": "^5.1.3",
+    "@webstudio-is/content-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -33,8 +34,8 @@
     ".": {
       "webstudio": "./src/index.ts"
     },
-    "./index.server": {
-      "webstudio": "./src/index.server.ts"
+    "./server": {
+      "webstudio": "./src/server.ts"
     },
     "./patch-assets-core.server": {
       "webstudio": "./src/asset-patch-core.ts",

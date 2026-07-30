@@ -46,36 +46,56 @@ export const assertApiTokenPermit = async (ctx: AppContext) => {
   return { token, permits };
 };
 
-export const assertApiProjectPermit = async (
+const assertProjectPermit = async (
   ctx: AppContext,
   projectId: string,
   permit: ProjectApiPermit
 ) => {
-  const { token, permits } = await assertApiTokenPermit(ctx);
-  if (token.projectId !== projectId) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Authorization token is not valid for project",
-    });
-  }
-
-  if (permits.includes(permit) === false) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: `Authorization token does not have ${permit} permission`,
-    });
-  }
-
-  const canUseProject = await authorizeProject.hasProjectPermit(
+  const allowed = await authorizeProject.hasProjectPermit(
     { projectId, permit },
     ctx
   );
-  if (canUseProject === false) {
+  if (allowed === false) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "You don't have access to this project",
     });
   }
+};
 
-  return { token, permits };
+export const assertApiProjectPermit = async (
+  ctx: AppContext,
+  projectId: string,
+  permit: ProjectApiPermit
+) => {
+  if (ctx.authorization.type === "user") {
+    await assertProjectPermit(ctx, projectId, permit);
+    const permits: ProjectApiPermit[] = [permit];
+    if (
+      permit === "edit" &&
+      (await authorizeProject.hasProjectPermit(
+        { projectId, permit: "build" },
+        ctx
+      ))
+    ) {
+      permits.push("build");
+    }
+    return { type: "user" as const, permits };
+  }
+
+  const tokenAuth = await assertApiTokenPermit(ctx);
+  if (tokenAuth.token.projectId !== projectId) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Authorization token is not valid for project",
+    });
+  }
+  if (tokenAuth.permits.includes(permit) === false) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: `Authorization token does not have ${permit} permission`,
+    });
+  }
+  await assertProjectPermit(ctx, projectId, permit);
+  return { type: "token" as const, ...tokenAuth };
 };

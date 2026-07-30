@@ -39,6 +39,7 @@ describe("asset folder utilities", () => {
 
     const cyclicHierarchy = createAssetFolderHierarchy(cyclic);
     expect(cyclicHierarchy.getPath("left")).toHaveLength(2);
+    expect(cyclicHierarchy.getCycleIds("left")).toEqual(["left", "right"]);
     expect(cyclicHierarchy.hasCycle("left")).toBe(true);
     expect(cyclicHierarchy.sortByDepth(cyclic.values())).toHaveLength(2);
   });

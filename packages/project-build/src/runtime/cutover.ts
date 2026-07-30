@@ -252,6 +252,19 @@ export const builderRuntimeCutoverManifests = [
     callers: ["appRouter.api.variables", "appRouter.api.resources"] as const,
   },
   {
+    family: "assets-resource-operations",
+    operationIds: [
+      "assetsResources.list",
+      "assetsResources.get",
+      "assetsResources.create",
+      "assetsResources.update",
+    ] as const,
+    callers: [
+      "appRouter.api.assetsResources",
+      "MCP/CLI Assets resources",
+    ] as const,
+  },
+  {
     family: "resource-mutations",
     operationIds: [
       "resources.create",

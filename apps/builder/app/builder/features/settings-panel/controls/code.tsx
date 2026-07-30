@@ -1,4 +1,3 @@
-import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import {
   Button,
@@ -16,9 +15,9 @@ import {
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { CodeEditor } from "~/shared/code-editor";
 import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
+  BindableExpressionControl,
+  updateBindableValue,
+} from "~/builder/shared/bindable-expression";
 import {
   validateHtmlEmbedCode,
   type HtmlEmbedCodeError,
@@ -28,12 +27,10 @@ import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
   VerticalLayout,
-  updateExpressionValue,
-  $selectedInstanceScope,
-  useBindingState,
   humanizeAttribute,
 } from "../shared";
 import { PropertyLabel } from "../property-label";
+import { useBindableControl } from "./use-bindable-control";
 export type CodeIssue = HtmlEmbedCodeError & {
   severity?: "error" | "warning";
 };
@@ -141,21 +138,19 @@ export const CodeControl = ({
         }
       }
 
-      if (prop?.type === "expression") {
-        updateExpressionValue(prop.value, storedValue);
-      } else {
-        onChange({ type: "string", value: storedValue });
-      }
+      updateBindableValue({
+        expression: prop?.type === "expression" ? prop.value : undefined,
+        value: storedValue,
+        onChangeValue: (value) => onChange({ type: "string", value }),
+      });
     },
     { autoSave: behavior?.autoSave ?? true }
   );
 
-  const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression =
-    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
-  const { overwritable, variant } = useBindingState(
-    prop?.type === "expression" ? prop.value : undefined
-  );
+  const binding = useBindableControl({
+    boundExpression: prop?.type === "expression" ? prop.value : undefined,
+    fallbackExpression: JSON.stringify(computedValue),
+  });
 
   const errorInfo = (
     <ErrorInfo
@@ -173,69 +168,69 @@ export const CodeControl = ({
     <VerticalLayout
       label={
         <Flex gap="1" align="center">
-          <PropertyLabel name={propName} readOnly={overwritable === false} />
+          <PropertyLabel
+            name={propName}
+            readOnly={binding.bindingState.overwritable === false}
+          />
           {errorInfo}
         </Flex>
       }
     >
-      <BindingControl>
-        <CodeEditor
-          lang={lang}
-          title={
-            <DialogTitle
-              maximizable
-              suffix={
-                <DialogTitleActions>
-                  <DialogMaximize />
-                  <DialogClose />
-                </DialogTitleActions>
-              }
-            >
-              <Flex gap="1" align="center">
-                <Text variant="labels">Code editor</Text>
-                {errorInfo}
-              </Flex>
-            </DialogTitle>
-          }
-          readOnly={overwritable === false}
-          invalid={error !== undefined && error.severity !== "warning"}
-          value={localValue.value}
-          onChange={(value) => {
-            setError(undefined);
-            localValue.set(value);
-          }}
-          onChangeComplete={localValue.save}
-        />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          validate={(value) =>
-            behavior
-              ? behavior.validateBinding(value, label)
-              : validatePrimitiveValue(value, label)
-          }
-          variant={variant}
-          value={expression}
-          onChange={(newExpression) =>
-            onChange({ type: "expression", value: newExpression })
-          }
-          onRemove={(evaluatedValue) => {
-            if (behavior) {
-              const fixedValue = behavior.getFixedValue(evaluatedValue, label);
-              if (fixedValue.success === false) {
-                setError({
-                  message: fixedValue.message,
-                  value: String(evaluatedValue),
-                });
-                return;
-              }
-              onChange({ type: "string", value: fixedValue.value });
+      <BindableExpressionControl
+        {...binding}
+        value={localValue.value}
+        validate={(value) =>
+          behavior
+            ? behavior.validateBinding(value, label)
+            : validatePrimitiveValue(value, label)
+        }
+        onChangeValue={(value) => onChange({ type: "string", value })}
+        onChangeExpression={(value) => onChange({ type: "expression", value })}
+        onRemove={(value) => {
+          if (behavior) {
+            const fixedValue = behavior.getFixedValue(value, label);
+            if (fixedValue.success === false) {
+              setError({
+                message: fixedValue.message,
+                value: String(value),
+              });
               return;
             }
-            onChange({ type: "string", value: String(evaluatedValue) });
-          }}
-        />
-      </BindingControl>
+            onChange({ type: "string", value: fixedValue.value });
+            return;
+          }
+          onChange({ type: "string", value: String(value) });
+        }}
+        renderControl={({ readOnly }) => (
+          <CodeEditor
+            lang={lang}
+            title={
+              <DialogTitle
+                maximizable
+                suffix={
+                  <DialogTitleActions>
+                    <DialogMaximize />
+                    <DialogClose />
+                  </DialogTitleActions>
+                }
+              >
+                <Flex gap="1" align="center">
+                  <Text variant="labels">Code editor</Text>
+                  {errorInfo}
+                </Flex>
+              </DialogTitle>
+            }
+            readOnly={readOnly}
+            invalid={error !== undefined && error.severity !== "warning"}
+            value={localValue.value}
+            onChange={(value) => {
+              setError(undefined);
+              localValue.set(value);
+            }}
+            onChangeComplete={localValue.save}
+          />
+        )}
+      />
     </VerticalLayout>
   );
 };

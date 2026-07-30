@@ -411,6 +411,46 @@ test("reuses and closes one browser capture session for session screenshots", as
   expect(preview.stop).toHaveBeenCalledOnce();
 });
 
+test("applies internal page credentials only to owned preview captures", async () => {
+  const preview = {
+    status: vi.fn(() => ({
+      url: "http://127.0.0.1:3000/",
+      running: true,
+      mode: "production" as const,
+    })),
+    startAndWait: vi.fn(),
+    resolveUrl: vi.fn((path: string) => `http://127.0.0.1:3000${path}`),
+  };
+  const capture = createCaptureScreenshotMock([]);
+  const handlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => false,
+    createCaptureSession: () => ({
+      capture,
+      capturePage: vi.fn(async () => []),
+      close: vi.fn(async () => undefined),
+    }),
+    getHttpCredentials: (path) =>
+      path === "/private"
+        ? { username: "editor", password: "secret" }
+        : undefined,
+  });
+
+  await handlers.captureScreenshot({
+    path: "/private",
+    source: "session",
+    mode: "production",
+    viewport: { width: 1440, height: 900 },
+  });
+
+  expect(capture).toHaveBeenCalledWith(
+    expect.objectContaining({
+      url: "http://127.0.0.1:3000/private",
+      httpCredentials: { username: "editor", password: "secret" },
+    })
+  );
+});
+
 test("waits for an active capture before stopping preview resources", async () => {
   let finishCapture: () => void = () => undefined;
   const captureBlocked = new Promise<void>((resolve) => {

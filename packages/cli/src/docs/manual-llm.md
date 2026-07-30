@@ -11,23 +11,32 @@ resolve an older binary.
 
 For delegated design-system or “use every component” tasks, skip the generic warm-up sequence and start with exactly one MCP command: `webstudio workflow.next '{"goal":"design-system-page"}'`. Report that returned checkpoint to the parent/user and stop until continued.
 
-## Connect an MCP client
+## Use MCP locally or optionally connect a client
 
-When the user asks to connect the current folder to Webstudio, run the command
-for the agent client you are currently using:
+Do not install, register, or connect an MCP server merely because the user asks
+you to edit a Webstudio project. If Webstudio MCP tools are already available,
+use them. If you have shell access, use the local CLI shortcuts such as
+`webstudio meta.index` and `webstudio list-pages`; they expose the same project
+operations without changing client configuration or restarting the app.
+
+Only when the user explicitly asks for persistent native MCP integration, run
+the command for their client:
 
 - Claude Code: `webstudio connect claude`
 - Codex: `webstudio connect codex`
 - Cursor: `webstudio connect cursor`
 - VS Code or GitHub Copilot: `webstudio connect vscode`
 
-Run the command from the linked project root. If the folder is not linked, ask
-for an editable Builder share link and run
-`webstudio init --link <share-link> --json`, followed by `webstudio sync`, then
-retry `webstudio connect <client>`. Treat the share link as a credential and do
-not include it in committed files, logs, screenshots, or issue reports.
+Run project operations from the linked project root. If the folder is not
+linked, ask for an editable Builder share link and run
+`webstudio init --link <share-link> --json`. You can then use local CLI
+shortcuts immediately. Do not run `webstudio sync`, `webstudio connect`, or
+restart the app unless the user specifically wants native MCP registration:
+MCP reads and edits the latest editable Builder build directly, including for
+projects that have never been published. Treat the share link as a credential
+and do not include it in committed files, logs, screenshots, or issue reports.
 
-`connect` verifies project access before changing client configuration. For
+The optional `connect` command verifies project access before changing client configuration. For
 Claude Code, Cursor, and VS Code it safely merges the `webstudio` server into
 the client's project configuration. For Codex it runs both `codex mcp add` and
 `codex mcp get webstudio`; do not repeat those commands separately. Follow the
@@ -450,7 +459,14 @@ Before authoring unfamiliar expressions, read `webstudio://project/expressions` 
 - Stage a draft page for a future publish with `{"pageId":"page-id","values":{"isDraft":false}}`. This clears draft state but does not deploy the site. The home page and `/*` catch-all page cannot be drafts.
 - Resource `url` accepts plain fixed URLs and paths. For computed URLs, pass JavaScript expression code such as `"https://api.example.com/items?tag=" + filters.tag`. Resource header values, search parameter values, and text bodies accept expressions for dynamic values; for fixed text, use `{ "type": "literal", "value": "application/json" }`.
 - Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"https://api.example.com/items"}}`.
-- Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`. Use `string[]` only for arrays where every item is a string; use `json` for objects, mixed arrays, filters, and nested data.
+- Assets is one system resource with one response shape and always executes a structured query. `create-assets-resource` without `query` uses the default URL and optional image-dimensions output. Provide query configuration to control filtering, sorting, pagination, selected fields, or file content.
+- For a Markdown-backed blog, read `get-asset-field-catalog`, validate a structured query with `validate-asset-query`, then call `create-assets-resource` or `update-assets-resource`. Set `values.query:null` to restore the default query.
+- Optimize every explicit Assets query for the deployed content-database size. Use `output.mode:"fields"` and select only fields that are actually rendered or otherwise required by the query. Keep `includeMetadata:false` unless the rendered value needs file metadata; diagnostics are returned separately. Do not use `output.mode:"all"` as a convenience default.
+- Use a metadata-only Assets resource with `content.mode:"none"` for listings. Combine filters with `where.all` (AND) and `where.any` (OR). Use a separate Assets resource for the detail route with a slug or alternate-ID filter whose value is `system.params.slug`, `limit:1`, and `content.mode:"markdown-body"`. Request `full` content only when the whole source file is rendered; otherwise prefer `markdown-body` or a bounded byte range.
+- Markdown returned with `content.mode:"markdown-body"` resolves conventional relative links and images such as `../images/hero.png` to matching Assets. Markdown Embed permits sanitized figures, audio, video, and iframes, but removes scripts, inline event handlers, and unsafe URLs.
+- Assets expose an ID-keyed map at `<dataSourceName>.data` and collection information at `<dataSourceName>.meta`. Bind a listing Collection to `posts.data` and a one-result detail Collection to `post.data`; each item value contains selected fields and its item key is the asset ID. Read frontmatter or JSON fields from `item.properties`, the derived excerpt from `item.excerpt`, and requested Markdown from `item.content.text`.
+- Use `preview-asset-query` with concrete values before binding expressions in the saved resource. Inspect `__diagnostics__.usedBytes`, `maxBytes`, `unboundedBytes`, and `truncated`. When usage approaches the limit, first remove unused output fields, then narrow candidate files with filters, and finally reduce or remove embedded content. Inspect saved mode and configuration with `list-assets-resources` or `get-assets-resource`; shared index maintenance is automatic.
+- Data variable values support `string`, `number`, `boolean`, and `json`. Use `json` for all arrays, objects, filters, and nested data.
 - Parameters are internal scoped runtime values from pages, collections, or components. They are not a public authoring surface: do not create, update, or delete parameter records. Public tools should preserve existing parameter records and may reference documented context values such as `system` in expressions where they are already in scope.
 - Use scoped resources for read data. A GET resource created with `scopeInstanceId`/`dataSourceName` defaults to `exposeAsDataSource:true`, becomes a scoped resource data variable, is generated into the page resource `data` map, and may be loaded while rendering the page. Read the loaded resource result from its wrapper, usually `.data`.
 - Use prop-bound resources for actions. A resource created without `scopeInstanceId` and bound to a component prop such as Form `action` with `bind-props` and `binding.type: "resource"` becomes an action resource in the page resource `action` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and anything that should run only from an explicit form/action flow.

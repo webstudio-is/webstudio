@@ -1,12 +1,15 @@
-import type { AssetClient } from "../../client";
+import type { AssetObjectStore } from "../../client";
 import { uploadToFs } from "./upload";
+import { readFromFs } from "./read";
 
 type FsClientOptions = {
   fileDirectory: string;
   maxUploadSize: number;
 };
 
-export const createFsClient = (options: FsClientOptions): AssetClient => {
+export const createFsAssetObjectStore = (
+  options: FsClientOptions
+): AssetObjectStore => {
   return {
     uploadFile: (name, type, data, _assetInfoFallback, assetDataOverride) =>
       uploadToFs({
@@ -17,5 +20,7 @@ export const createFsClient = (options: FsClientOptions): AssetClient => {
         fileDirectory: options.fileDirectory,
         assetDataOverride,
       }),
+    readFile: (name, range) =>
+      readFromFs({ name, range, fileDirectory: options.fileDirectory }),
   };
 };

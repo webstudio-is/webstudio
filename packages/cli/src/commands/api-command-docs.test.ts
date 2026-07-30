@@ -176,6 +176,49 @@ test("documents MCP use cases with JSON inputs instead of CLI flags", () => {
   }
 });
 
+test("does not require publishing or sync before MCP editing", () => {
+  for (const document of ["manual-llm", "manual-mcp"] as const) {
+    const manual = readCliDoc(document);
+    const prose = manual.replaceAll(/\s+/g, " ");
+    expect(prose).toContain("local CLI");
+    expect(prose).toContain("connect");
+    expect(prose).toContain("optional");
+    expect(prose).toContain("restart");
+    expect(prose).not.toContain(
+      "followed by `webstudio sync`, then retry `webstudio connect"
+    );
+  }
+  const llmManual = readCliDoc("manual-llm").replaceAll(/\s+/g, " ");
+  expect(llmManual).toContain(
+    "MCP reads and edits the latest editable Builder build directly"
+  );
+  expect(llmManual).toContain(
+    "including for projects that have never been published"
+  );
+});
+
+test("documents the Assets result shape", () => {
+  for (const document of ["api-use-cases", "manual-llm"] as const) {
+    const contents = readCliDoc(document);
+    expect(contents).toContain("<dataSourceName>.data");
+    expect(contents).toContain("<dataSourceName>.meta");
+    expect(contents).toContain("posts.data");
+    expect(contents).toContain("post.data");
+    expect(contents).toContain("content.text");
+  }
+});
+
+test("documents storage-efficient Assets queries for agents", () => {
+  for (const document of ["api-use-cases", "manual-llm"] as const) {
+    const contents = readCliDoc(document);
+    expect(contents).toContain('output.mode:"fields"');
+    expect(contents).toContain("only fields");
+    expect(contents).toContain("includeMetadata:false");
+    expect(contents).toContain("__diagnostics__.usedBytes");
+    expect(contents).toContain("truncated");
+  }
+});
+
 test("documents MCP examples with current tool input fields", () => {
   const adapter = createMetadataOnlyMcpAdapter();
   const toolInputFields = new Map(

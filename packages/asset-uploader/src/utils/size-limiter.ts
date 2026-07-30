@@ -1,3 +1,10 @@
+export class AssetUploadSizeLimitError extends Error {
+  constructor(name: string, maximumBytes: number) {
+    super(`File "${name}" exceeded upload size of ${maximumBytes} bytes`);
+    this.name = "AssetUploadSizeLimitError";
+  }
+}
+
 export const createSizeLimiter = (maxSize: number, name: string) => {
   return async function* <T extends ArrayBufferView | ArrayBuffer>(
     data: AsyncIterable<T>
@@ -6,7 +13,7 @@ export const createSizeLimiter = (maxSize: number, name: string) => {
     for await (const chunk of data) {
       size += chunk.byteLength;
       if (size > maxSize) {
-        throw Error(`File "${name}" exceeded upload size of ${maxSize} bytes`);
+        throw new AssetUploadSizeLimitError(name, maxSize);
       }
       yield chunk;
     }

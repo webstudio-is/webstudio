@@ -6,6 +6,7 @@ import {
   type Instance,
   type Page,
   type Pages,
+  type Resource,
 } from "@webstudio-is/sdk";
 import {
   getRestrictedFeatures,
@@ -68,18 +69,21 @@ const getFeatures = ({
   projectSettings,
   permissions,
   dataSources = new Map<string, DataSource>(),
+  resources = new Map<string, Resource>(),
   instances = new Map<string, Instance>(),
 }: {
   pages: Pages | undefined;
   projectSettings?: ProjectSettings;
   permissions: Partial<RestrictedFeaturesPermissions>;
   dataSources?: Map<string, DataSource>;
+  resources?: Map<string, Resource>;
   instances?: Map<string, Instance>;
 }) =>
   getRestrictedFeatures({
     pages,
     projectSettings,
     dataSources,
+    resources,
     instances,
     permissions: { ...defaultPermissions, ...permissions },
   });
@@ -218,5 +222,65 @@ describe("getRestrictedFeatures", () => {
       "Redirect",
       "Resource variable",
     ]);
+  });
+
+  test("identifies an Assets resource as a restricted custom-domain feature", () => {
+    const resources = new Map<string, Resource>([
+      [
+        "assets-resource",
+        {
+          id: "assets-resource",
+          name: "Assets",
+          control: "system",
+          method: "post",
+          url: '"/$resources/assets"',
+          searchParams: [],
+          headers: [],
+          body: "({ query: {} })",
+        },
+      ],
+    ]);
+    const dataSources = new Map<string, DataSource>([
+      [
+        "assets-variable",
+        {
+          type: "resource",
+          id: "assets-variable",
+          resourceId: "assets-resource",
+          scopeInstanceId: homePage.rootInstanceId,
+          name: "assets",
+        },
+      ],
+    ]);
+    const instances = new Map<string, Instance>([
+      [
+        homePage.rootInstanceId,
+        {
+          type: "instance",
+          id: homePage.rootInstanceId,
+          component: "ws:element",
+          children: [],
+        },
+      ],
+    ]);
+    const features = getFeatures({
+      pages: createPages(),
+      permissions: { allowDynamicData: false },
+      dataSources,
+      resources,
+      instances,
+    });
+
+    expect([...features.keys()]).toEqual(["Assets resource"]);
+
+    expect(
+      getFeatures({
+        pages: createPages(),
+        permissions: { allowDynamicData: true },
+        dataSources,
+        resources,
+        instances,
+      }).size
+    ).toBe(0);
   });
 });

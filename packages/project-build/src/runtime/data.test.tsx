@@ -41,6 +41,7 @@ import {
   createResourceValue,
   createResourceValueFromFormData,
   decodeDataVariableName,
+  deleteResource,
   deleteVariableMutable,
   deleteUnusedDataVariables,
   encodeDataVariableName,
@@ -312,28 +313,31 @@ test("creates data variable values from form input values", () => {
   ).toEqual({ type: "json", value: null });
   expect(
     createDataVariableValueFromInput({
-      type: "string[]",
+      type: "json",
       value: '["Draft", "Connected", "Published"]',
     })
   ).toEqual({
-    type: "string[]",
+    type: "json",
     value: ["Draft", "Connected", "Published"],
   });
-  expect(() =>
+  expect(
     createDataVariableValueFromInput({
-      type: "string[]",
+      type: "json",
       value: '["Draft", 1]',
     })
-  ).toThrow();
-  expect(() =>
-    createDataVariableValueFromInput({
-      type: "string[]",
-      value: "",
-    })
-  ).toThrow();
+  ).toEqual({ type: "json", value: ["Draft", 1] });
   expect(
-    createDataVariableValueFromInput({ type: "string[]", value: null })
-  ).toEqual({ type: "string[]", value: [] });
+    createDataVariableValueFromInput({
+      type: "json",
+      value: "{ enabled: true }",
+    })
+  ).toEqual({ type: "json", value: { enabled: true } });
+  expect(
+    createDataVariableValueFromInput({
+      type: "json",
+      value: 'globalThis["not-json"]',
+    })
+  ).toEqual({ type: "json", value: null });
 });
 
 test("validates data variable number values", () => {
@@ -517,13 +521,13 @@ test("update data variable payload validates renamed variables", () => {
   });
 });
 
-test("update data variable payload preserves string array values", () => {
+test("update data variable payload preserves json array values", () => {
   const variable: DataSource = {
     id: "variable-1",
     scopeInstanceId: "instance-1",
     name: "stages",
     type: "variable",
-    value: { type: "string[]", value: ["Draft"] },
+    value: { type: "json", value: ["Draft"] },
   };
 
   expect(
@@ -531,7 +535,7 @@ test("update data variable payload preserves string array values", () => {
       variable,
       values: {
         value: {
-          type: "string[]",
+          type: "json",
           value: ["Draft", "Connected", "Published"],
         },
       },
@@ -546,7 +550,7 @@ test("update data variable payload preserves string array values", () => {
             op: "replace",
             path: ["variable-1", "value"],
             value: {
-              type: "string[]",
+              type: "json",
               value: ["Draft", "Connected", "Published"],
             },
           },
@@ -853,6 +857,12 @@ test("replace data source ids in expression", () => {
       new Map([["oldId", "newId"]])
     )
   ).toEqual("$ws$dataSource$newId = state");
+  expect(
+    replaceDataSourcesInExpression(
+      "https://example.com/cards.json",
+      new Map([["oldId", "newId"]])
+    )
+  ).toEqual("https://example.com/cards.json");
 });
 
 test("compute expression with decoded ids", () => {
@@ -3459,6 +3469,35 @@ describe("resource patch helpers", () => {
       propIds: ["prop"],
       isUsed: false,
     });
+  });
+
+  test("rejects deleting resources whose data source is referenced by expressions", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [
+        {
+          type: "expression",
+          value: `${encodeDataVariableId("data-source")}.data`,
+        },
+      ],
+    });
+    state.resources.set(resource.id, resource);
+    state.dataSources.set("data-source", {
+      id: "data-source",
+      scopeInstanceId: "body",
+      name: "Users",
+      type: "resource",
+      resourceId: resource.id,
+    });
+
+    expect(() =>
+      deleteResource(state, { resourceId: resource.id, force: true })
+    ).toThrow(
+      'Resource data is referenced by expressions through "data-source"'
+    );
   });
 });
 

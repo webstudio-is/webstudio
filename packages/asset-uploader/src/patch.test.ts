@@ -9,12 +9,17 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
+  deleteAssetsWithClient,
   loadAssetsByProjectWithClient,
   patchAssetsWithClient,
+  updateAssetMetadataWithClient,
 } from "./asset-patch-core";
+import { AssetRepositoryNotFoundError } from "./asset-repository-errors";
 import {
   deleteAssetFoldersWithClient,
+  loadAssetFoldersByProjectWithClient,
   patchAssetFoldersWithClient,
+  upsertAssetFolderWithClient,
 } from "./folder-persistence";
 import { patchAssets } from "./patch";
 import type { Patch } from "immer";
@@ -40,6 +45,276 @@ const ownershipHandler = db.get("Project", ({ request }) => {
 });
 
 describe("asset folder persistence", () => {
+  test("validates and upserts one REST folder mutation", async () => {
+    const projectId = uid();
+    const folder = {
+      id: "blog",
+      projectId,
+      name: "Blog",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    server.use(
+      db.get("AssetFolder", () => json([])),
+      db.post("AssetFolder", async ({ request }) => {
+        expect(await request.json()).toEqual([{ ...folder, parentId: null }]);
+        return json({ ...folder, parentId: null });
+      })
+    );
+
+    await expect(
+      upsertAssetFolderWithClient(
+        { projectId, folder },
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual(folder);
+  });
+
+  test("rejects a REST folder with a missing parent before persistence", async () => {
+    const projectId = uid();
+    server.use(db.get("AssetFolder", () => json([])));
+
+    await expect(
+      upsertAssetFolderWithClient(
+        {
+          projectId,
+          folder: {
+            id: "blog",
+            projectId,
+            name: "Blog",
+            parentId: "missing",
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        },
+        testContext.postgrest.client
+      )
+    ).rejects.toThrow("Parent folder must exist");
+  });
+
+  test("serializes concurrent folder updates before validating cycles", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
+      { id: "a", projectId, name: "A", parentId: null, createdAt },
+      { id: "b", projectId, name: "B", parentId: null, createdAt },
+    ];
+    let readCount = 0;
+    let writeCount = 0;
+    let startFirstWrite = () => {};
+    const firstWriteStarted = new Promise<void>((resolve) => {
+      startFirstWrite = resolve;
+    });
+    let releaseFirstWrite = () => {};
+    const firstWriteCanFinish = new Promise<void>((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+    server.use(
+      db.get("AssetFolder", () => {
+        readCount += 1;
+        return json(folders);
+      }),
+      db.post("AssetFolder", async ({ request }) => {
+        writeCount += 1;
+        if (writeCount === 1) {
+          startFirstWrite();
+          await firstWriteCanFinish;
+        }
+        const [folder] = (await request.json()) as typeof folders;
+        folders = folders.map((current) =>
+          current.id === folder.id ? folder : current
+        );
+        return json(folder);
+      })
+    );
+
+    const moveA = upsertAssetFolderWithClient(
+      {
+        projectId,
+        folder: {
+          id: "a",
+          projectId,
+          name: "A",
+          parentId: "b",
+          createdAt,
+        },
+      },
+      testContext.postgrest.client
+    );
+    await firstWriteStarted;
+    const moveB = upsertAssetFolderWithClient(
+      {
+        projectId,
+        folder: {
+          id: "b",
+          projectId,
+          name: "B",
+          parentId: "a",
+          createdAt,
+        },
+      },
+      testContext.postgrest.client
+    );
+
+    await Promise.resolve();
+    expect(readCount).toBe(1);
+    releaseFirstWrite();
+
+    await expect(moveA).resolves.toMatchObject({ id: "a", parentId: "b" });
+    await expect(moveB).rejects.toThrow("Folders can't contain cycles");
+    expect(readCount).toBe(3);
+    expect(writeCount).toBe(1);
+  });
+
+  test("repairs persisted cycles when folders are loaded", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", parentId: "a", createdAt },
+    ];
+    server.use(
+      db.get("AssetFolder", () => json(folders)),
+      db.patch("AssetFolder", async ({ request }) => {
+        expect(await request.json()).toEqual({ parentId: null });
+        folders = folders.map((folder) =>
+          folder.id === "b" ? { ...folder, parentId: null } : folder
+        );
+        return json([{ id: "b" }]);
+      })
+    );
+
+    await expect(
+      loadAssetFoldersByProjectWithClient(
+        projectId,
+        testContext.postgrest.client,
+        ["a"]
+      )
+    ).resolves.toEqual([
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+    ]);
+    await expect(
+      loadAssetFoldersByProjectWithClient(
+        projectId,
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual([
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", createdAt },
+    ]);
+  });
+
+  test("reloads a cycle repair that loses a concurrent update", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", parentId: "a", createdAt },
+    ];
+    let readCount = 0;
+    server.use(
+      db.get("AssetFolder", () => {
+        readCount += 1;
+        return json(folders);
+      }),
+      db.patch("AssetFolder", () => {
+        folders = folders.map((folder) =>
+          folder.id === "b" ? { ...folder, parentId: null } : folder
+        );
+        return json([]);
+      })
+    );
+
+    await expect(
+      loadAssetFoldersByProjectWithClient(
+        projectId,
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual([
+      { id: "a", projectId, name: "A", parentId: "b", createdAt },
+      { id: "b", projectId, name: "B", createdAt },
+    ]);
+    expect(readCount).toBe(2);
+  });
+
+  test("reverts a move when a concurrent server creates a cycle", async () => {
+    const projectId = uid();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    let folders: Array<{
+      id: string;
+      projectId: string;
+      name: string;
+      parentId: string | null;
+      createdAt: string;
+    }> = [
+      { id: "a", projectId, name: "A", parentId: null, createdAt },
+      { id: "b", projectId, name: "B", parentId: null, createdAt },
+    ];
+    let rollbackCount = 0;
+    server.use(
+      db.get("AssetFolder", () => json(folders)),
+      db.post("AssetFolder", async ({ request }) => {
+        const [folder] = (await request.json()) as typeof folders;
+        folders = folders.map((current) =>
+          current.id === folder.id ? folder : current
+        );
+        folders = folders.map((current) =>
+          current.id === "b" ? { ...current, parentId: "a" } : current
+        );
+        return json(folder);
+      }),
+      db.patch("AssetFolder", async ({ request }) => {
+        rollbackCount += 1;
+        const values = (await request.json()) as {
+          name: string;
+          parentId: string | null;
+        };
+        expect(values).toEqual({ name: "A", parentId: null });
+        folders = folders.map((folder) =>
+          folder.id === "a" ? { ...folder, ...values } : folder
+        );
+        return json([{ id: "a" }]);
+      })
+    );
+
+    await expect(
+      upsertAssetFolderWithClient(
+        {
+          projectId,
+          folder: {
+            id: "a",
+            projectId,
+            name: "A",
+            parentId: "b",
+            createdAt,
+          },
+        },
+        testContext.postgrest.client
+      )
+    ).rejects.toThrow("conflicted with another move and was reverted");
+    expect(rollbackCount).toBe(1);
+    expect(folders).toEqual([
+      { id: "a", projectId, name: "A", parentId: null, createdAt },
+      { id: "b", projectId, name: "B", parentId: "a", createdAt },
+    ]);
+  });
+
   test("inserts parents before children", async () => {
     const projectId = uid();
     let inserted: Array<{ id: string }> = [];
@@ -228,6 +503,119 @@ const assetRow = {
   },
 };
 
+describe("asset patch persistence", () => {
+  test("loads only requested assets", async () => {
+    const projectId = uid();
+    let idFilter: string | null = null;
+    server.use(
+      db.get("Asset", ({ request }) => {
+        idFilter = new URL(request.url).searchParams.get("id");
+        return json([{ ...assetRow, projectId }]);
+      })
+    );
+
+    await expect(
+      loadAssetsByProjectWithClient(projectId, testContext.postgrest.client, [
+        "asset-1",
+      ])
+    ).resolves.toEqual([expect.objectContaining({ id: "asset-1" })]);
+    expect(idFilter).toBe("in.(asset-1)");
+  });
+
+  test("does not query when no asset ids are requested", async () => {
+    const projectId = uid();
+    let requestCount = 0;
+    server.use(
+      db.get("Asset", () => {
+        requestCount += 1;
+        return json([]);
+      })
+    );
+
+    await expect(
+      loadAssetsByProjectWithClient(projectId, testContext.postgrest.client, [])
+    ).resolves.toEqual([]);
+    expect(requestCount).toBe(0);
+  });
+
+  test("rejects assets that are patched into another project", async () => {
+    const projectId = uid();
+    server.use(db.get("Asset", () => json([{ ...assetRow, projectId }])));
+
+    await expect(
+      patchAssetsWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [
+          {
+            op: "replace",
+            path: ["asset-1", "projectId"],
+            value: "another-project",
+          },
+        ]
+      )
+    ).rejects.toThrow("belongs to another project");
+  });
+
+  test("updates only supplied metadata and reloads only that asset", async () => {
+    const projectId = uid();
+    let update: unknown;
+    let readIdFilter: string | null = null;
+    server.use(
+      db.patch("Asset", async ({ request }) => {
+        update = await request.json();
+        return json({ id: "asset-1" });
+      }),
+      db.get("Asset", ({ request }) => {
+        readIdFilter = new URL(request.url).searchParams.get("id");
+        return json([{ ...assetRow, projectId, description: null }]);
+      })
+    );
+
+    await expect(
+      updateAssetMetadataWithClient(
+        {
+          projectId,
+          assetId: "asset-1",
+          values: { description: null },
+        },
+        testContext.postgrest.client
+      )
+    ).resolves.toEqual(
+      expect.objectContaining({ id: "asset-1", description: undefined })
+    );
+    expect(update).toEqual({ description: null });
+    expect(readIdFilter).toBe("in.(asset-1)");
+  });
+
+  test("reports a missing metadata update as a repository not-found error", async () => {
+    const projectId = uid();
+    server.use(db.patch("Asset", () => json(null)));
+
+    await expect(
+      updateAssetMetadataWithClient(
+        {
+          projectId,
+          assetId: "missing",
+          values: { description: "Missing" },
+        },
+        testContext.postgrest.client
+      )
+    ).rejects.toBeInstanceOf(AssetRepositoryNotFoundError);
+  });
+
+  test("reports a missing deletion as a repository not-found error", async () => {
+    const projectId = uid();
+    server.use(db.get("Asset", () => json([])));
+
+    await expect(
+      deleteAssetsWithClient(
+        { projectId, ids: ["missing"] },
+        testContext.postgrest.client
+      )
+    ).rejects.toBeInstanceOf(AssetRepositoryNotFoundError);
+  });
+});
+
 describe("patchAssets (msw)", () => {
   test("throws when caller lacks edit access", async () => {
     const projectId = uid();
@@ -270,6 +658,7 @@ describe("patchAssets (msw)", () => {
           description: body.description ?? localAssetRow.description,
         };
         return json({
+          id: localAssetRow.assetId,
           filename: localAssetRow.filename,
           description: localAssetRow.description,
         });
@@ -352,6 +741,7 @@ describe("patchAssets (msw)", () => {
     server.use(
       ownershipHandler,
       db.get("Asset", () => json([localAssetRow])),
+      db.get("AssetFileMetadata", () => json([])),
       db.patch("Asset", async ({ request }) => {
         const body = (await request.json()) as { filename?: string };
         updatedFilename = body.filename;
@@ -360,6 +750,7 @@ describe("patchAssets (msw)", () => {
           filename: body.filename ?? localAssetRow.filename,
         };
         return json({
+          id: localAssetRow.assetId,
           filename: localAssetRow.filename,
           description: localAssetRow.description,
         });
@@ -430,15 +821,35 @@ describe("patchAssets (msw)", () => {
 
   test("persists moving an asset to root as null", async () => {
     const projectId = uid();
-    const localAssetRow = { ...assetRow, projectId, folderId: "folder" };
+    let localAssetRow = {
+      ...assetRow,
+      projectId,
+      filename: "post",
+      folderId: "folder" as string | null,
+      file: {
+        ...assetRow.file,
+        name: "stored.md",
+        format: "md",
+        size: 100,
+        meta: "{}",
+      },
+    };
     let updatedFolderId: unknown = "not-updated";
     server.use(
       ownershipHandler,
-      db.get("Asset", () => json([localAssetRow])),
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("id")) {
+          return json([{ ...localAssetRow, id: localAssetRow.assetId }]);
+        }
+        return json([localAssetRow]);
+      }),
       db.patch("Asset", async ({ request }) => {
         updatedFolderId = ((await request.json()) as { folderId: unknown })
           .folderId;
+        localAssetRow = { ...localAssetRow, folderId: null };
         return json({
+          id: localAssetRow.assetId,
           filename: localAssetRow.filename,
           description: localAssetRow.description,
           folderId: null,
@@ -563,6 +974,49 @@ describe("patchAssets (msw)", () => {
 
     await patchAssets({ projectId }, patches, createContext());
     expect(insertedAssets).toBeDefined();
+  });
+
+  test("rejects an added asset whose file is unavailable", async () => {
+    const projectId = uid();
+    let restored = false;
+    let inserted = false;
+    server.use(
+      db.get("Asset", () => json([])),
+      db.get("File", () => json([])),
+      db.patch("File", () => {
+        restored = true;
+        return empty({ status: 204 });
+      }),
+      db.post("Asset", () => {
+        inserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    await expect(
+      patchAssetsWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [
+          {
+            op: "add",
+            path: ["missing"],
+            value: {
+              id: "missing",
+              name: "missing.jpg",
+              type: "image",
+              projectId,
+              format: "jpg",
+              size: 1,
+              description: null,
+              createdAt: "2024-01-01T00:00:00.000Z",
+              meta: { width: 1, height: 1 },
+            },
+          },
+        ]
+      )
+    ).rejects.toThrow("Asset file not found for missing");
+    expect(restored).toBe(false);
+    expect(inserted).toBe(false);
   });
 
   test("core helper deletes assets and marks unused files as deleted", async () => {

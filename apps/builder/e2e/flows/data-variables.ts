@@ -140,11 +140,11 @@ export const createSystemResourceVariable = async ({
 }: {
   page: Page;
   name: string;
-  resource?: "Sitemap" | "Current Date" | "Assets";
+  resource?: "Sitemap" | "Current date" | "Assets";
 }) => {
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "System Resource" });
+  await selectVariableType({ page, next: "System resource" });
   if (resource !== "Sitemap") {
     await getVariableForm(page)
       .getByText("Resource", { exact: true })

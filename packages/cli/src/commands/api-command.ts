@@ -53,6 +53,7 @@ export type ApiCommandName = ProjectSessionApiCommand;
 
 let activeApiCommandDryRun = false;
 let activeApiCommandRefresh = false;
+let activeApiCommandSessionProjectId: string | undefined;
 
 export const apiCommandOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -103,6 +104,19 @@ const requiredInputOption = (yargs: CommonYargsArgv, describe: string) =>
   yargs.option("input", {
     type: "string",
     describe,
+    demandOption: true,
+  });
+
+export const inputCommandOptions = (yargs: CommonYargsArgv) =>
+  requiredInputOption(
+    apiCommandOptions(yargs),
+    "Required JSON file containing the command input."
+  );
+
+export const assetResourceCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("resource", {
+    type: "string",
+    describe: "Required Assets resource id",
     demandOption: true,
   });
 
@@ -958,14 +972,13 @@ export const createVariableCommandOptions = (yargs: CommonYargsArgv) =>
       demandOption: true,
     })
     .option("value-type", {
-      choices: ["string", "number", "boolean", "string[]", "json"] as const,
+      choices: ["string", "number", "boolean", "json"] as const,
       describe: "Required variable value type",
       demandOption: true,
     })
     .option("value", {
       type: "string",
-      describe:
-        "Required variable value; use JSON for json and string[] value types",
+      describe: "Required variable value; use JSON for arrays and objects",
       demandOption: true,
     });
 
@@ -985,12 +998,12 @@ export const updateVariableCommandOptions = (yargs: CommonYargsArgv) =>
       describe: "Update variable name used in expressions",
     })
     .option("value-type", {
-      choices: ["string", "number", "boolean", "string[]", "json"] as const,
+      choices: ["string", "number", "boolean", "json"] as const,
       describe: "Variable value type when updating --value",
     })
     .option("value", {
       type: "string",
-      describe: "Updated variable value; use JSON for json and string[] types",
+      describe: "Updated variable value; use JSON for arrays and objects",
     });
 
 export const deleteVariableCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1367,7 +1380,7 @@ export type ApiCommandOptions = {
   text?: string;
   childDepth?: number;
   mode?: "text" | "expression" | "all" | "append" | "prepend" | "replace";
-  valueType?: "string" | "number" | "boolean" | "string[]" | "json";
+  valueType?: "string" | "number" | "boolean" | "json";
   value?: string;
   method?: "get" | "post" | "put" | "delete";
   url?: string;
@@ -1682,15 +1695,6 @@ const parseVariableValue = (
     return { type: valueType, value: rawValue === "true" };
   }
   const parsed = JSON.parse(rawValue) as unknown;
-  if (valueType === "string[]") {
-    if (
-      Array.isArray(parsed) === false ||
-      parsed.every((item) => typeof item === "string") === false
-    ) {
-      throw new Error("--value must be a JSON array of strings.");
-    }
-    return { type: valueType, value: parsed };
-  }
   return { type: "json", value: parsed };
 };
 
@@ -1827,7 +1831,11 @@ const runProjectSessionCommand = async (
     command,
     input,
     connection,
-    createProjectSession: dependencies.createCliProjectSession,
+    createProjectSession: (options) =>
+      dependencies.createCliProjectSession({
+        ...options,
+        sessionProjectId: activeApiCommandSessionProjectId,
+      }),
     getServerApiContract: dependencies.getServerApiContract,
     dryRun: options.dryRun ?? activeApiCommandDryRun,
     refresh: activeApiCommandRefresh,
@@ -2864,6 +2872,27 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "get-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "get-assets-resource",
+      { resourceId: requireOption(options.resource, "--resource") },
+      connection,
+      dependencies
+    ),
+  "create-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "create-assets-resource",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
+  "update-assets-resource": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "update-assets-resource",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
   "create-resource": async (options, connection, dependencies) => {
     const input = {
       resource: (await getResourceFields(
@@ -3166,12 +3195,15 @@ export const apiCommand = async (
     }
     const previousDryRun = activeApiCommandDryRun;
     const previousRefresh = activeApiCommandRefresh;
+    const previousSessionProjectId = activeApiCommandSessionProjectId;
     activeApiCommandDryRun = options.dryRun === true;
     activeApiCommandRefresh = options.refresh === true;
+    activeApiCommandSessionProjectId = options.project;
     const response = await query(options, apiConnection, dependencies).finally(
       () => {
         activeApiCommandDryRun = previousDryRun;
         activeApiCommandRefresh = previousRefresh;
+        activeApiCommandSessionProjectId = previousSessionProjectId;
       }
     );
     const session = isProjectSessionEnvelope(response)

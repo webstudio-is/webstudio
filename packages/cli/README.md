@@ -68,7 +68,9 @@ Here is the list of independent commands:
 
 ### link
 
-The **`link`** command syncs your local Webstudio project with the project from the cloud. This means that any changes made in the cloud can be synced to the local project, once they are published.
+The **`link`** command stores access to a Webstudio Cloud project. MCP clients use that connection to read and edit the latest Builder build directly; the project does not need to be published or synchronized first.
+
+Shell-capable agents can use local CLI commands such as `webstudio meta.index` immediately after linking. `webstudio connect <client>` is optional persistent native MCP registration and is unnecessary for local CLI usage.
 
 You can link a project from Webstudio Cloud with the following command:
 
@@ -89,6 +91,8 @@ webstudio sync
 ```
 
 Make sure to publish the project in Webstudio Cloud before running the **`sync`** command in your local Webstudio project.
+
+`sync` is only for downloading a published project export. It is not part of the MCP editing workflow.
 
 ### build
 

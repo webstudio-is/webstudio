@@ -11,7 +11,7 @@ import {
 import { BrushCleaningIcon, PlusIcon } from "@webstudio-is/icons";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { isTextFileAsset } from "@webstudio-is/sdk";
+import { getAssetUrl, isTextFileAsset } from "@webstudio-is/sdk";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { AssetUpload, type AssetUploadHandle } from "~/builder/shared/assets";
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
@@ -22,7 +22,6 @@ import type { Publish } from "~/shared/pubsub";
 import { useImageAssetCanvasDrag } from "./use-image-asset-canvas-drag";
 import { TextFileEditor } from "~/builder/features/text-file-editor/text-file-editor";
 import { CreateTextFileDialog } from "~/builder/features/text-file-editor/create-text-file-dialog";
-import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 
 export const AssetsPanel = ({
   publish,

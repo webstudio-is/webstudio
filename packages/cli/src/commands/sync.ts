@@ -67,7 +67,8 @@ type SyncOptions = Partial<StrictYargsOptionsToInterface<typeof syncOptions>>;
 const unpublishedProjectBundleMessage = [
   "Unable to synchronize project bundle because the project is not published.",
   "`webstudio sync` downloads the published project bundle.",
-  "For visual verification of current MCP/API edits, use `preview.start` or `webstudio preview --source session` instead.",
+  "Publishing is not required for MCP editing. Do not ask the user to publish; use MCP tools against the latest editable build.",
+  "For visual verification, use `preview.start` or `webstudio preview --source session` instead.",
 ].join("\n");
 
 const isUnpublishedProjectBundleError = (error: unknown) => {
@@ -201,7 +202,7 @@ export const sync = async (
 
   syncing.stop(
     agents.status === "blocked-by-user-file"
-      ? `Project bundle synchronized; AGENTS.md blocked by user-owned file at ${agents.path}. Next: webstudio connect`
-      : `Project bundle synchronized successfully (AGENTS.md: ${agents.status}). Next: webstudio connect`
+      ? `Project bundle synchronized; AGENTS.md blocked by user-owned file at ${agents.path}. Next: webstudio build`
+      : `Project bundle synchronized successfully (AGENTS.md: ${agents.status}). Next: webstudio build`
   );
 };

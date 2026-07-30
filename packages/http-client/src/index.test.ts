@@ -17,6 +17,7 @@ import {
   bindProps,
   cloneInstance,
   createAssetFolder,
+  createProjectAssetFolder,
   createBreakpoint,
   createPageFromTemplate,
   createDesignTokens,
@@ -32,6 +33,8 @@ import {
   deleteCssVariables,
   deleteAssetFolder,
   deleteAssets,
+  deleteProjectAsset,
+  deleteProjectAssetFolder,
   deleteBreakpoint,
   deleteDomain,
   deletePage,
@@ -56,6 +59,8 @@ import {
   getBuildPatchSummary,
   getMarketplaceProduct,
   getProjectPermissions,
+  getProjectAsset,
+  getProjectAssetFolder,
   getProjectSettings,
   getStyleDeclarations,
   inspectInstance,
@@ -65,6 +70,8 @@ import {
   importProjectBundle,
   importProjectBundleWithAssets,
   listAssets,
+  listProjectAssets,
+  listProjectAssetFolders,
   listAssetFolders,
   listBreakpoints,
   listDesignTokens,
@@ -83,6 +90,7 @@ import {
   loadProjectBundleByProjectId,
   moveInstance,
   publish,
+  readProjectAssetContent,
   parseBuildPatchTransactions,
   parseBuilderUrl,
   toLocalProjectBundle,
@@ -96,6 +104,8 @@ import {
   rewriteCssVariableRefs,
   updateDesignTokenStyles,
   updateAssetFolder,
+  updateProjectAsset,
+  updateProjectAssetFolder,
   updateProjectAssetContent,
   updateDomain,
   updateBreakpoint,
@@ -1106,7 +1116,7 @@ test("summarizes build patch transactions", () => {
 
 test("uploads assets as binary requests", async () => {
   const fetch = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify({ ok: true }), {
+    new Response(JSON.stringify({ uploadedAssets: [], deduplicated: false }), {
       headers: {
         "content-type": "application/json",
       },
@@ -1140,7 +1150,7 @@ test("uploads assets as binary requests", async () => {
   expect(fetch).toHaveBeenCalledOnce();
   const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
   expect(url.href).toBe(
-    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&folderId=campaign&width=10&height=20&format=png"
+    "https://apps.webstudio.is/rest/assets/uploads/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&folderId=campaign&width=10&height=20&format=png"
   );
   expect(init.method).toBe("POST");
   expect(init.body).toBe(file);
@@ -1152,6 +1162,27 @@ test("uploads assets as binary requests", async () => {
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
   );
+});
+
+test("rejects malformed successful asset upload responses", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+  );
+
+  await expect(
+    uploadAsset({
+      ...apiParams,
+      upload: {
+        asset: createImageAssetFixture(),
+        data: new Uint8Array([1, 2, 3]),
+      },
+    })
+  ).rejects.toThrow("Assets API returned an invalid upload response");
 });
 
 test("requests a forced asset upload and exposes deduplication", async () => {
@@ -1256,6 +1287,42 @@ test("reports asset upload errors", async () => {
   ).rejects.toThrow("Upload failed");
 });
 
+test("rejects unsuccessful asset uploads without a structured error", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      })
+    )
+  );
+
+  await expect(
+    uploadAsset({
+      authToken: "token",
+      origin: "https://apps.webstudio.is",
+      projectId: "project-id",
+      upload: {
+        asset: {
+          id: "asset-id",
+          projectId: "project-id",
+          type: "file",
+          name: "document.pdf",
+          format: "pdf",
+          size: 3,
+          meta: {},
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+        data: new Uint8Array([1, 2, 3]),
+      },
+    })
+  ).rejects.toMatchObject({
+    message: "Assets API request failed",
+    status: 500,
+  });
+});
+
 test("uploads assets with one retry and aggregated failures", async () => {
   const asset = createImageAssetFixture({ name: "image.png" });
   const otherAsset = createImageAssetFixture({
@@ -1269,9 +1336,12 @@ test("uploads assets with one retry and aggregated failures", async () => {
     const attempt = (attempts.get(assetName) ?? 0) + 1;
     attempts.set(assetName, attempt);
     if (assetName === "image.png" && attempt === 2) {
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { "content-type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ uploadedAssets: [asset], deduplicated: false }),
+        {
+          headers: { "content-type": "application/json" },
+        }
+      );
     }
     return new Response(
       JSON.stringify({
@@ -1308,6 +1378,7 @@ test("keeps uploaded assets in input order", async () => {
     return new Response(
       JSON.stringify({
         uploadedAssets: [name === "first.png" ? first : second],
+        deduplicated: false,
       }),
       {
         headers: { "content-type": "application/json" },
@@ -1341,6 +1412,7 @@ test("serializes uploads with identical content", async () => {
     return new Response(
       JSON.stringify({
         uploadedAssets: [name === "first.png" ? first : second],
+        deduplicated: false,
       }),
       { headers: { "content-type": "application/json" } }
     );
@@ -1365,9 +1437,10 @@ test("retries local asset reads before reporting an upload failure", async () =>
     "fetch",
     vi.fn(
       async () =>
-        new Response(JSON.stringify({ uploadedAssets: [asset] }), {
-          headers: { "content-type": "application/json" },
-        })
+        new Response(
+          JSON.stringify({ uploadedAssets: [asset], deduplicated: false }),
+          { headers: { "content-type": "application/json" } }
+        )
     )
   );
 
@@ -1392,9 +1465,13 @@ test("uploads project asset descriptors with local data readers", async () => {
   const uploadedAsset = createImageAssetFixture({ name: "image.png" });
   const fetch = vi.fn(
     async () =>
-      new Response(JSON.stringify({ uploadedAssets: [uploadedAsset] }), {
-        headers: { "content-type": "application/json" },
-      })
+      new Response(
+        JSON.stringify({
+          uploadedAssets: [uploadedAsset],
+          deduplicated: false,
+        }),
+        { headers: { "content-type": "application/json" } }
+      )
   );
   vi.stubGlobal("fetch", fetch);
 
@@ -1496,6 +1573,163 @@ test("surfaces asset content revision conflicts", async () => {
   ).rejects.toMatchObject({ message: "File changed", status: 409 });
 });
 
+test("updates asset metadata through the unified Assets endpoint", async () => {
+  const updated = createImageAssetFixture({ id: "asset-id" });
+  const request = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ asset: updated }), {
+        headers: { "content-type": "application/json" },
+      })
+  );
+
+  await expect(
+    updateProjectAsset({
+      ...apiParams,
+      assetId: "asset/id",
+      values: { filename: "Campaign", folderId: null },
+      request,
+    })
+  ).resolves.toEqual({ asset: updated });
+
+  const [url, init] = request.mock.calls[0] as unknown as [URL, RequestInit];
+  expect(url.pathname).toBe("/rest/assets/asset%2Fid");
+  expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
+  expect(init).toMatchObject({
+    method: "PATCH",
+    body: JSON.stringify({ filename: "Campaign", folderId: null }),
+  });
+  expect(new Headers(init.headers).get("x-auth-token")).toBe(
+    apiParams.authToken
+  );
+});
+
+test("deletes an asset through the unified Assets endpoint", async () => {
+  const request = vi.fn(async () => new Response(null, { status: 204 }));
+
+  await expect(
+    deleteProjectAsset({
+      ...apiParams,
+      assetId: "asset/id",
+      request,
+    })
+  ).resolves.toBeUndefined();
+
+  const [url, init] = request.mock.calls[0] as unknown as [URL, RequestInit];
+  expect(url.pathname).toBe("/rest/assets/asset%2Fid");
+  expect(url.searchParams.get("projectId")).toBe(apiParams.projectId);
+  expect(init).toMatchObject({ method: "DELETE" });
+  expect(new Headers(init.headers).get("x-auth-token")).toBe(
+    apiParams.authToken
+  );
+});
+
+test("reads asset records and ranged content through the Assets REST data plane", async () => {
+  const asset = createImageAssetFixture({ id: "asset-id" });
+  const request = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ assets: [asset] }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ asset }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(new Response("data", { status: 206 }));
+
+  await expect(listProjectAssets({ ...apiParams, request })).resolves.toEqual({
+    assets: [asset],
+  });
+  await expect(
+    getProjectAsset({ ...apiParams, assetId: "asset/id", request })
+  ).resolves.toEqual({ asset });
+  await expect(
+    readProjectAssetContent({
+      ...apiParams,
+      assetId: "asset/id",
+      range: { offset: 2, length: 4 },
+      request,
+    })
+  ).resolves.toMatchObject({ status: 206 });
+
+  const [contentUrl, contentInit] = request.mock.calls[2] as [URL, RequestInit];
+  expect(contentUrl.pathname).toBe("/rest/assets/asset%2Fid/content");
+  expect(new Headers(contentInit.headers).get("range")).toBe("bytes=2-5");
+});
+
+test("manages folders through the Assets REST data plane", async () => {
+  const folder = {
+    id: "folder-1",
+    projectId: apiParams.projectId,
+    name: "Blog",
+    createdAt: "2026-07-25T00:00:00.000Z",
+  };
+  const request = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folders: [folder] }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folder }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folder }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ folder: { ...folder, name: "Posts" } }), {
+        headers: { "content-type": "application/json" },
+      })
+    )
+    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+  await expect(
+    listProjectAssetFolders({ ...apiParams, request })
+  ).resolves.toEqual({ folders: [folder] });
+  await expect(
+    getProjectAssetFolder({
+      ...apiParams,
+      folderId: "folder/id",
+      request,
+    })
+  ).resolves.toEqual({ folder });
+  await expect(
+    createProjectAssetFolder({ ...apiParams, name: "Blog", request })
+  ).resolves.toEqual({ folder });
+  await expect(
+    updateProjectAssetFolder({
+      ...apiParams,
+      folderId: "folder/id",
+      values: { name: "Posts" },
+      request,
+    })
+  ).resolves.toEqual({ folder: { ...folder, name: "Posts" } });
+  await expect(
+    deleteProjectAssetFolder({
+      ...apiParams,
+      folderId: "folder/id",
+      request,
+    })
+  ).resolves.toBeUndefined();
+
+  expect((request.mock.calls[0]?.[0] as URL).pathname).toBe(
+    "/rest/assets/folders"
+  );
+  expect((request.mock.calls[3]?.[0] as URL).pathname).toBe(
+    "/rest/assets/folders/folder%2Fid"
+  );
+  expect(request.mock.calls[3]?.[1]).toMatchObject({ method: "PATCH" });
+  expect(request.mock.calls[4]?.[1]).toMatchObject({ method: "DELETE" });
+});
+
 test("keeps browser asset content updates on the requested origin", async () => {
   const revision = {
     ...createImageAssetFixture({ id: "asset-id" }),
@@ -1529,8 +1763,26 @@ test("keeps browser asset content updates on the requested origin", async () => 
 });
 
 test("normalizes synced project bundles for local storage", () => {
+  const index = {
+    format: "webstudio-content-database" as const,
+    version: 1 as const,
+    assetRevision: `sha256:${"b".repeat(64)}`,
+    documents: [],
+    fieldCatalog: {
+      format: "webstudio-builder-asset-field-catalog" as const,
+      version: 1 as const,
+      canonicalRevision: `sha256:${"b".repeat(64)}`,
+      documentCount: 0,
+      fields: {},
+    },
+    integrity: {
+      algorithm: "sha256" as const,
+      checksum: `sha256:${"c".repeat(64)}`,
+    },
+  };
   const bundle = createPublishedProjectBundleFixture({
     bundleVersion: "bundle-old",
+    assetIndex: index,
     assetFolders: [
       {
         id: "folder-1",
@@ -1551,6 +1803,7 @@ test("normalizes synced project bundles for local storage", () => {
     user: bundle.user,
     projectDomain: bundle.projectDomain,
     projectTitle: bundle.projectTitle,
+    assetIndex: bundle.assetIndex,
     origin: bundle.origin,
   });
 });
@@ -1625,6 +1878,7 @@ test("imports project bundle through staged upload", async () => {
         projectId: "project-id",
         data: {
           largeContent: "x".repeat(3 * 1024 * 1024 + 1),
+          assetIndex: { marker: "derived-index-marker" },
         } as unknown as PublishedProjectBundle,
       })
     ).resolves.toEqual({ version: 2 });
@@ -1635,6 +1889,9 @@ test("imports project bundle through staged upload", async () => {
   }
 
   expect(uploadChunks).toHaveLength(2);
+  expect(Buffer.concat(uploadChunks).toString("utf8")).not.toContain(
+    "derived-index-marker"
+  );
   expect(JSON.stringify(trpcBody)).toContain('"uploadId":"upload-id"');
   expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
 });
@@ -1663,7 +1920,7 @@ test("imports project bundle with assets and retries missing asset uploads", asy
 
     if (
       request.method === "POST" &&
-      url.pathname === "/rest/assets/image.png"
+      url.pathname === "/rest/assets/uploads/image.png"
     ) {
       uploadAttempts += 1;
       uploadUrls.push(url.href);
@@ -1677,6 +1934,7 @@ test("imports project bundle with assets and retries missing asset uploads", asy
               name: "image_destination.png",
             }),
           ],
+          deduplicated: false,
         })
       );
       return;

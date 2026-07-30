@@ -39,13 +39,17 @@ import {
   TextStrikethroughIcon,
 } from "@webstudio-is/icons";
 import { formatAssetName } from "@webstudio-is/project-build/runtime";
-import { getPagePath, type Asset } from "@webstudio-is/sdk";
+import { getAssetUrl, getPagePath, type Asset } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { EditorDialog, type EditorApi } from "~/shared/code-editor-base";
-import { $assets, $pages, $props } from "~/shared/sync/data-stores";
+import {
+  $assetFolders,
+  $assets,
+  $pages,
+  $props,
+} from "~/shared/sync/data-stores";
 import { $authPermit } from "~/shared/nano-states";
 import { AssetManager } from "~/builder/shared/asset-manager";
-import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import {
   AssetUpload,
   updateAssetContent,
@@ -423,6 +427,7 @@ export const TextFileEditor = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const assets = useStore($assets);
+  const assetFolders = useStore($assetFolders);
   const asset = assets.get(assetId);
   const { assetContainers } = useAssets();
   const canEdit = useStore($authPermit) !== "view";
@@ -517,7 +522,7 @@ export const TextFileEditor = ({
         languageExtensions={getTextFileEditorExtensions(asset)}
         size="full"
         expandable={false}
-        showBorder={false}
+        chromeless
         readOnly={canEdit === false}
         onChange={(content) => {
           setState({ status: "loaded", content });
@@ -575,6 +580,8 @@ export const TextFileEditor = ({
                 <MarkdownSplitView
                   open={previewOpen}
                   source={state.content}
+                  sourceAsset={asset}
+                  folders={assetFolders}
                   assetContainers={assetContainers}
                 >
                   {editor}

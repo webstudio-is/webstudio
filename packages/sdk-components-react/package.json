@@ -33,6 +33,11 @@
       "types": "./lib/types/hooks.d.ts",
       "import": "./lib/hooks.js"
     },
+    "./markdown": {
+      "webstudio": "./src/markdown.ts",
+      "types": "./lib/types/markdown.d.ts",
+      "import": "./lib/markdown.js"
+    },
     "./templates": {
       "webstudio": "./src/templates.ts",
       "types": "./lib/types/templates.d.ts",
@@ -59,19 +64,27 @@
     "@webstudio-is/sdk": "workspace:*",
     "await-interaction-response": "^0.0.2",
     "colord": "^2.9.3",
+    "github-slugger": "2.0.0",
+    "mdast-util-from-markdown": "2.0.3",
+    "mdast-util-frontmatter": "2.0.1",
+    "mdast-util-to-string": "4.0.0",
     "micromark": "^4.0.2",
-    "micromark-extension-gfm-table": "^2.1.1"
+    "micromark-extension-frontmatter": "2.0.0",
+    "micromark-extension-gfm": "^3.0.0",
+    "sanitize-html": "2.17.6"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
+    "@types/sanitize-html": "2.16.1",
     "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "micromark-util-types": "2.0.2",
     "nanostores": "^0.11.3",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",

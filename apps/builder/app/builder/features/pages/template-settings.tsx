@@ -1,11 +1,7 @@
 import { useState, type JSX } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  type PageTemplate,
-  type Page,
-  type Pages,
-  isLiteralExpression,
-} from "@webstudio-is/sdk";
+import { type PageTemplate, type Page, type Pages } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import {
   Button,
   DialogClose,

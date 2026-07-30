@@ -1,9 +1,10 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state";
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state";
+import { createStructuredAssetQueryResourceBody } from "@webstudio-is/sdk";
 import {
   createLocalProjectBundleFromSessionSnapshot,
   createCliProjectRestorePointStorage,
@@ -13,6 +14,7 @@ import {
   getCliProjectSessionFile,
   getCliProjectRestorePointsFile,
   getSupportedPublicApiOperations,
+  loadCliProjectSessionAssetIndex,
 } from "./project-session";
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -28,6 +30,78 @@ test("scopes project session files for explicitly selected projects", () => {
 });
 
 const temporaryDirectories: string[] = [];
+
+test("loads a preview index only for configured Assets resources", async () => {
+  const connection = {
+    projectId: "project",
+    origin: "https://example.com",
+    authToken: "token",
+  };
+  const snapshot = (resources: Map<string, unknown>) =>
+    ({ projectId: "project", state: { resources } }) as never;
+
+  await expect(
+    loadCliProjectSessionAssetIndex(snapshot(new Map()), connection)
+  ).resolves.toBeUndefined();
+
+  const directory = await createTemporaryDirectory();
+  await writeFile(
+    join(directory, "post_hash.md"),
+    "---\ntitle: Hello\n---\nBody"
+  );
+  const resource = {
+    id: "posts",
+    name: "Posts",
+    control: "system" as const,
+    method: "post" as const,
+    url: '"/$resources/assets"',
+    headers: [],
+    body: createStructuredAssetQueryResourceBody({
+      where: { all: [] },
+      sort: [],
+      limit: "10",
+      offset: "0",
+      output: { mode: "all", includeMetadata: true },
+      content: { mode: "none" },
+    }),
+  };
+
+  await expect(
+    loadCliProjectSessionAssetIndex(
+      {
+        projectId: "project",
+        state: {
+          resources: new Map([[resource.id, resource]]),
+          props: new Map([
+            ["prop", { id: "prop", type: "resource", value: resource.id }],
+          ]),
+          assets: new Map([
+            [
+              "post",
+              {
+                id: "post",
+                projectId: "project",
+                type: "file",
+                name: "post_hash.md",
+                filename: "post",
+                size: 0,
+                description: null,
+                createdAt: "2026-07-27T00:00:00.000Z",
+                format: "md",
+                meta: {},
+              },
+            ],
+          ]),
+          assetFolders: new Map(),
+        },
+      } as never,
+      connection,
+      directory
+    )
+  ).resolves.toMatchObject({
+    documents: [{ _id: "post", properties: { title: "Hello" } }],
+  });
+});
 
 const createTemporaryDirectory = async () => {
   const directory = await mkdtemp(join(tmpdir(), "webstudio-session-"));
@@ -340,6 +414,7 @@ test("creates preview bundle from project session snapshot", () => {
     ],
   });
 
+  const assetIndex = { marker: "derived-index" } as never;
   const bundle = createLocalProjectBundleFromSessionSnapshot(
     {
       projectId: "project",
@@ -354,10 +429,11 @@ test("creates preview bundle from project session snapshot", () => {
         projectSchemaVersion: "test-schema",
       },
     },
-    { origin: "https://assets.example.com" }
+    { origin: "https://assets.example.com", assetIndex }
   );
 
   expect(bundle.origin).toBe("https://assets.example.com");
+  expect(bundle.assetIndex).toBe(assetIndex);
   expect(bundle.projectTitle).toBe("Session Site");
   expect(bundle.page.id).toBe("home");
   expect(bundle.pages.map((page) => page.path)).toEqual(["", "/design-system"]);

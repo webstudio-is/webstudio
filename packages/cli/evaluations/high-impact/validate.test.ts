@@ -1,9 +1,12 @@
 import { describe, expect, test } from "vitest";
+import { createStructuredAssetQueryResourceBody } from "@webstudio-is/sdk";
+import { assetsResourceUrl } from "@webstudio-is/sdk/runtime";
 import {
   authenticatedPageFixture,
   designInputFixture,
   fontAssetsFixture,
   highImpactFixtures,
+  markdownBlogFixture,
   validateHighImpactFixture,
   type EvaluationProject,
 } from "./fixtures";
@@ -11,6 +14,7 @@ import {
   fontAssetFixtureFiles,
   fontAssetFixtureMeta,
 } from "./font-assets-fixture";
+import { markdownBlogFixtureArticles } from "./markdown-blog-fixture";
 import { evaluateHighImpactOutcome, type EvaluationToolCall } from "./validate";
 
 const clone = <Value>(value: Value): Value => structuredClone(value);
@@ -129,6 +133,182 @@ const addFontAssets = (): EvaluationProject => {
   return project;
 };
 
+const addMarkdownBlog = (): EvaluationProject => {
+  const project = clone(markdownBlogFixture.project);
+  project.assetFolders.push({
+    id: "blog-folder",
+    projectId: "project",
+    name: "Blog",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  });
+  project.assets.push(
+    ...markdownBlogFixtureArticles.map(({ name }) => ({
+      id: name,
+      projectId: "project",
+      name,
+      filename: name,
+      description: null,
+      folderId: "blog-folder",
+      size: 100,
+      type: "file" as const,
+      format: "md",
+      meta: {},
+      createdAt: "2026-01-01T00:00:00.000Z",
+    }))
+  );
+  project.pages.push(
+    {
+      id: "blog",
+      name: "Blog",
+      path: "/blog",
+      rootInstanceId: "blog-root",
+    },
+    {
+      id: "blog-detail",
+      name: "Blog post",
+      path: "/blog/:slug",
+      rootInstanceId: "blog-detail-root",
+    }
+  );
+  project.instances.push(
+    {
+      id: "blog-root",
+      component: "Body",
+      children: [{ type: "id", value: "blog-collection" }],
+    },
+    {
+      id: "blog-collection",
+      component: "Collection",
+      children: [{ type: "id", value: "blog-card" }],
+    },
+    {
+      id: "blog-card",
+      component: "Box",
+      children: [
+        { type: "expression", value: "collectionItem.properties.title" },
+        { type: "expression", value: "collectionItem.excerpt" },
+        {
+          type: "expression",
+          value: "collectionItem.properties.publishedAt",
+        },
+        { type: "expression", value: "collectionItem.properties.slug" },
+      ],
+    },
+    {
+      id: "blog-detail-root",
+      component: "Body",
+      children: [{ type: "id", value: "detail-collection" }],
+    },
+    {
+      id: "detail-collection",
+      component: "Collection",
+      children: [{ type: "id", value: "markdown" }],
+    },
+    {
+      id: "markdown",
+      component: "@webstudio-is/sdk-components-react:MarkdownEmbed",
+      children: [],
+    }
+  );
+  project.props.push({
+    id: "markdown-content",
+    instanceId: "markdown",
+    name: "content",
+    type: "expression",
+    value: "collectionItem.content.text",
+  });
+  const resource = (
+    id: string,
+    name: string,
+    body: string
+  ): Record<string, unknown> => ({
+    id,
+    name,
+    control: "system",
+    method: "post",
+    url: JSON.stringify(assetsResourceUrl),
+    headers: [],
+    body,
+  });
+  project.resources.push(
+    resource(
+      "posts-resource",
+      "Posts",
+      createStructuredAssetQueryResourceBody({
+        where: {
+          all: [
+            { field: ["extension"], operator: "eq", value: '"md"' },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: '"true"',
+            },
+          ],
+        },
+        sort: [
+          { field: ["properties", "publishedAt"], direction: "desc" },
+          { field: ["id"], direction: "asc" },
+        ],
+        limit: "20",
+        offset: "0",
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [
+            ["properties", "title"],
+            ["properties", "slug"],
+            ["properties", "publishedAt"],
+            ["excerpt"],
+          ],
+        },
+        content: { mode: "none" },
+      })
+    ),
+    resource(
+      "post-resource",
+      "Post",
+      createStructuredAssetQueryResourceBody({
+        where: {
+          all: [
+            { field: ["extension"], operator: "eq", value: '"md"' },
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "system.params.slug",
+            },
+          ],
+        },
+        sort: [],
+        limit: "1",
+        offset: "0",
+        output: {
+          mode: "fields",
+          includeMetadata: false,
+          fields: [["properties", "title"]],
+        },
+        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+      })
+    )
+  );
+  project.dataSources.push(
+    {
+      id: "posts",
+      type: "resource",
+      name: "posts",
+      scopeInstanceId: "blog-root",
+      resourceId: "posts-resource",
+    },
+    {
+      id: "post",
+      type: "resource",
+      name: "post",
+      scopeInstanceId: "blog-detail-root",
+      resourceId: "post-resource",
+    }
+  );
+  return project;
+};
+
 const designCalls: EvaluationToolCall[] = [
   { name: "meta.guide" },
   { name: "list-breakpoints" },
@@ -143,6 +323,7 @@ const designCalls: EvaluationToolCall[] = [
 describe("high-impact fixture validation", () => {
   test("keeps both fixtures complete and deterministic", () => {
     expect(highImpactFixtures.map(validateHighImpactFixture)).toEqual([
+      { valid: true, failures: [] },
       { valid: true, failures: [] },
       { valid: true, failures: [] },
       { valid: true, failures: [] },
@@ -196,6 +377,51 @@ describe("font-assets evaluation", () => {
     });
 
     expect(result.checks.metadataWorkflow).toBe("failed");
+  });
+});
+
+describe("Markdown blog evaluation", () => {
+  const successfulCalls: EvaluationToolCall[] = [
+    { name: "meta.guide" },
+    { name: "verify-bindings" },
+    {
+      name: "verify-page-responsive",
+      arguments: {
+        path: "/blog",
+        viewports: [{ width: 1440 }, { width: 390 }],
+      },
+    },
+    {
+      name: "verify-page-responsive",
+      arguments: {
+        path: "/blog/aurora-trails",
+        viewports: [{ width: 1440 }, { width: 390 }],
+      },
+    },
+  ];
+
+  test("accepts a bounded two-route Markdown blog", () => {
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: markdownBlogFixture,
+        project: addMarkdownBlog(),
+        toolCalls: successfulCalls,
+      })
+    ).toMatchObject({ passed: true, failures: [] });
+  });
+
+  test("rejects missing detail content and route evidence", () => {
+    const project = addMarkdownBlog();
+    project.resources = project.resources.slice(0, 1);
+    const result = evaluateHighImpactOutcome({
+      fixture: markdownBlogFixture,
+      project,
+      toolCalls: successfulCalls.slice(0, -1),
+    });
+    expect(result.checks).toMatchObject({
+      detailQuery: "failed",
+      blogRouteEvidence: "failed",
+    });
   });
 });
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  assetQueryWhereExpression,
   assetType,
   compilerSettings,
   dataSourceVariableValue,
@@ -11,6 +12,12 @@ import {
   prop,
   instance,
 } from "@webstudio-is/sdk";
+import {
+  assetQuerySort,
+  assetResourceContentOptions,
+  assetResourceOutputSelection,
+  defaultAssetResourceOutputSelection,
+} from "@webstudio-is/content-engine";
 import { paginatedOutputMetadataSchema } from "./output";
 import { builderNamespaces } from "../contracts/namespaces";
 import { builderPatchSchema } from "../contracts/patch";
@@ -187,6 +194,26 @@ const resource = looseObject({
   scopeInstanceId: id.optional(),
   exposedAsDataSource: z.boolean(),
   dataSourceId: id.optional(),
+});
+const assetResourceConfiguration = looseObject({
+  where: assetQueryWhereExpression,
+  sort: z.array(assetQuerySort),
+  limit: z.string(),
+  offset: z.string(),
+  output: assetResourceOutputSelection.default(
+    defaultAssetResourceOutputSelection
+  ),
+  content: assetResourceContentOptions,
+});
+const assetResource = looseObject({
+  resourceId: id,
+  name: z.string(),
+  scopeInstanceId: id.optional(),
+  dataSourceId: id.optional(),
+  dataSourceName: z.string().optional(),
+  mode: z.enum(["query", "invalid"]),
+  query: assetResourceConfiguration.optional(),
+  configurationError: z.string().optional(),
 });
 const asset = looseObject({
   id,
@@ -580,6 +607,13 @@ export const runtimeOutputSchemas = {
     resources: z.array(resource),
     ...outputPage,
   }),
+  "assetsResources.list": looseObject({
+    resources: z.array(assetResource),
+    ...outputPage,
+  }),
+  "assetsResources.get": looseObject({ resource: assetResource }),
+  "assetsResources.create": resourceMutationResult,
+  "assetsResources.update": resourceMutationResult.partial({ warnings: true }),
   "resources.create": resourceMutationResult,
   "resources.update": resourceMutationResult.partial({ warnings: true }),
   "resources.replaceText": looseObject({

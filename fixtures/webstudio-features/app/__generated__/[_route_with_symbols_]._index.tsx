@@ -1,46 +1,46 @@
 /* eslint-disable */
-/* This is a auto generated file for building the project */
+      /* This is a auto generated file for building the project */ 
 
-import { Fragment, useState } from "react";
-import {
-  renderText,
-  useResource,
-  useVariableState,
-} from "@webstudio-is/react-sdk/runtime";
-import { Body as Body } from "@webstudio-is/sdk-components-react-router";
+
+      import { Fragment, useState } from "react";
+      import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+      import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 import { Image as Image } from "@webstudio-is/sdk-components-react/components";
 
-export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const projectDomain = "webstudio-fixture-project-a-0su3o";
+      export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2026-01-15T16:19:55.574Z";
+      
 
-export const siteName = "KittyGuardedZone";
+      export const projectDomain = "webstudio-fixture-project-a-0su3o";
 
-export const breakpoints = [
-  { id: "UoTkWyaFuTYJihS3MFYK5" },
-  { id: "ZMaWCtWpH-ao0e_kgIHqR", minWidth: 372 },
-  { id: "Z8WjyXWkCrr35PXgjHdpY", minWidth: 472 },
-];
+      export const lastPublished = "2026-01-15T16:19:55.574Z";
 
-export const favIconAsset: string | undefined =
-  "cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png";
+      export const siteName = "KittyGuardedZone";
 
-// Font assets on current page (can be preloaded)
-export const pageFontAssets: string[] = [];
+      export const breakpoints = [{"id":"UoTkWyaFuTYJihS3MFYK5"},{"id":"ZMaWCtWpH-ao0e_kgIHqR","minWidth":372},{"id":"Z8WjyXWkCrr35PXgjHdpY","minWidth":472}];
 
-export const pageBackgroundImageAssets: string[] = [];
+      export const favIconAsset: string | undefined =
+        "cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png";
 
-const Page = (_props: { system: any }) => {
-  return (
-    <Body className={`w-body`}>
-      <Image
-        src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
-        className={`w-image c1czoo99`}
-      />
-    </Body>
-  );
-};
+      // Font assets on current page (can be preloaded)
+      export const pageFontAssets: string[] =
+        []
 
-export { Page };
+      export const pageBackgroundImageAssets: string[] =
+        []
+
+      
+
+      const Page = (_props: { system: any; }) => {
+return <Body
+className={`w-body`}>
+<Image
+src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
+className={`w-image c1czoo99`} />
+</Body>
+}
+
+
+      export { Page }
+    

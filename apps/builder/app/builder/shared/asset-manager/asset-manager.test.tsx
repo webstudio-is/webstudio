@@ -217,6 +217,26 @@ const createAsset = (id: string): Asset => ({
 });
 
 describe("Asset Manager multiselect interactions", () => {
+  test("keeps the selected asset in the path while focusing the copy action", () => {
+    const asset = createAsset("asset");
+    act(() => $assets.set(new Map([[asset.id, asset]])));
+    const container = renderManager();
+    const assetButton = getOptions(container).at(-1)!.button;
+    const path = container.querySelector<HTMLElement>(
+      '[aria-label="Asset path"]'
+    )!;
+
+    act(() => assetButton.focus());
+    expect(path.textContent).toContain("Rootasset.png");
+
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Copy path"]')
+        ?.focus()
+    );
+    expect(path.textContent).toContain("Rootasset.png");
+  });
+
   test("marquee-selects every thumbnail intersecting the pointer rectangle", () => {
     const container = renderManager();
     const options = getOptions(container);

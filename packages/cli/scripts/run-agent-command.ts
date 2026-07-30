@@ -6,12 +6,14 @@ export const runAgentCommand = ({
   env,
   timeoutMs,
   onStdoutLine,
+  signal,
 }: {
   command: string;
   cwd: string;
   env: NodeJS.ProcessEnv;
   timeoutMs: number;
   onStdoutLine?: (line: string) => void;
+  signal?: AbortSignal;
 }) =>
   new Promise<{ exitCode: number; durationMs: number }>((resolve, reject) => {
     const startedAt = Date.now();
@@ -37,27 +39,44 @@ export const runAgentCommand = ({
         }
       });
     }
-    const timeout = setTimeout(() => {
+    const terminate = () => {
       if (child.pid !== undefined) {
         try {
           process.kill(process.platform === "win32" ? child.pid : -child.pid);
         } catch {}
       }
+    };
+    const onAbort = () => terminate();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    const cleanup = () => {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", onAbort);
+    };
+    const timeout = setTimeout(() => {
+      terminate();
+      cleanup();
       reject(new Error(`Agent command timed out after ${timeoutMs}ms.`));
     }, timeoutMs);
     child.once("error", (error) => {
-      clearTimeout(timeout);
+      cleanup();
       reject(error);
     });
-    child.once("close", (code, signal) => {
-      clearTimeout(timeout);
+    child.once("close", (code, childSignal) => {
+      cleanup();
       if (onStdoutLine !== undefined && stdoutBuffer.length > 0) {
         onStdoutLine(stdoutBuffer);
       }
-      if (signal !== null) {
-        reject(new Error(`Agent command exited from signal ${signal}.`));
+      if (childSignal !== null) {
+        reject(new Error(`Agent command exited from signal ${childSignal}.`));
+        return;
+      }
+      if (signal?.aborted) {
+        reject(new Error("Agent command was aborted."));
         return;
       }
       resolve({ exitCode: code ?? -1, durationMs: Date.now() - startedAt });
     });
+    if (signal?.aborted) {
+      terminate();
+    }
   });

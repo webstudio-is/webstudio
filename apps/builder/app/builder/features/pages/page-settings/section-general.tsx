@@ -16,16 +16,10 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  documentTypes,
-  isLiteralExpression,
-  type Pages,
-} from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
+import { documentTypes, type Pages } from "@webstudio-is/sdk";
 import { HomeIcon, InfoCircleIcon } from "@webstudio-is/icons";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { $permissions } from "~/shared/nano-states";
 import { $pageRootScope } from "../page-utils";
@@ -123,6 +117,13 @@ const StatusField = ({
 }) => {
   const id = useId();
   const { variableValues, scope, aliases } = useStore($pageRootScope);
+  const parseStatus = (value: string) => {
+    if (value === "") {
+      return;
+    }
+    const number = Number(value);
+    return Number.isNaN(number) || String(number) !== value ? value : number;
+  };
   return (
     <Grid gap={1}>
       <Flex align="center" gap={1}>
@@ -150,42 +151,39 @@ const StatusField = ({
           />
         </Tooltip>
       </Flex>
-      <BindingControl>
-        {showBindingControls && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={onChange}
-            onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue ?? ""))
-            }
-          />
+      <BindableExpressionControl
+        expression={value ?? ""}
+        value={String(computeExpression(value, variableValues) ?? "")}
+        bound={value !== undefined && isLiteralExpression(value) === false}
+        allowBindingOverwrite={false}
+        showBinding={showBindingControls}
+        scope={scope}
+        aliases={aliases}
+        parseValue={parseStatus}
+        onChangeValue={(value) => {
+          const status = parseStatus(value);
+          if (status === undefined) {
+            onChange(undefined);
+            return;
+          }
+          onChange(JSON.stringify(status));
+        }}
+        onChangeExpression={onChange}
+        onRemove={(value) => onChange(JSON.stringify(value ?? ""))}
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputErrorsTooltip errors={errors}>
+            <InputField
+              inputMode="numeric"
+              color={errors && "error"}
+              id={id}
+              placeholder="200"
+              disabled={disabled || readOnly}
+              value={value}
+              onChange={(event) => onChangeValue(event.target.value)}
+            />
+          </InputErrorsTooltip>
         )}
-        <InputErrorsTooltip errors={errors}>
-          <InputField
-            inputMode="numeric"
-            color={errors && "error"}
-            id={id}
-            placeholder="200"
-            disabled={disabled || isLiteralExpression(value) === false}
-            value={String(computeExpression(value, variableValues) ?? "")}
-            onChange={(event) => {
-              if (event.target.value === "") {
-                onChange(undefined);
-              } else {
-                const number = Number(event.target.value);
-                const status =
-                  Number.isNaN(number) || String(number) !== event.target.value
-                    ? event.target.value
-                    : number;
-                onChange(JSON.stringify(status));
-              }
-            }}
-          />
-        </InputErrorsTooltip>
-      </BindingControl>
+      />
     </Grid>
   );
 };
@@ -249,30 +247,30 @@ const RedirectField = ({
         </Tooltip>
       </Flex>
 
-      <BindingControl>
-        {showBindingControls && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={onChange}
-            onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue ?? ""))
-            }
-          />
+      <BindableExpressionControl
+        expression={value ?? ""}
+        value={computePageSettingsText(value, variableValues)}
+        bound={value !== undefined && isLiteralExpression(value) === false}
+        allowBindingOverwrite={false}
+        showBinding={showBindingControls}
+        scope={scope}
+        aliases={aliases}
+        onChangeValue={(value) => onChange(JSON.stringify(value))}
+        onChangeExpression={onChange}
+        onRemove={(value) => onChange(JSON.stringify(value ?? ""))}
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputErrorsTooltip errors={errors}>
+            <InputField
+              color={errors && "error"}
+              id={id}
+              placeholder="/another-path"
+              disabled={disabled || readOnly}
+              value={value}
+              onChange={(event) => onChangeValue(event.target.value)}
+            />
+          </InputErrorsTooltip>
         )}
-        <InputErrorsTooltip errors={errors}>
-          <InputField
-            color={errors && "error"}
-            id={id}
-            placeholder="/another-path"
-            disabled={disabled || isLiteralExpression(value) === false}
-            value={computePageSettingsText(value, variableValues)}
-            onChange={(event) => onChange(JSON.stringify(event.target.value))}
-          />
-        </InputErrorsTooltip>
-      </BindingControl>
+      />
     </Grid>
   );
 };

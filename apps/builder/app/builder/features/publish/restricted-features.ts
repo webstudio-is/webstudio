@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import {
   getPublishablePages,
+  isAssetsResource,
   isPathnamePattern,
   type DataSource,
   type Instance,
   type Pages,
+  type Resources,
 } from "@webstudio-is/sdk";
 import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime";
 import type { ProjectSettings } from "@webstudio-is/project-build";
@@ -27,12 +29,14 @@ export const getRestrictedFeatures = ({
   pages,
   projectSettings,
   dataSources,
+  resources,
   instances,
   permissions,
 }: {
   pages: Pages | undefined;
   projectSettings?: ProjectSettings;
   dataSources: Map<string, DataSource>;
+  resources: Resources;
   instances: Map<string, Instance>;
   permissions: RestrictedFeaturesPermissions;
 }) => {
@@ -89,9 +93,15 @@ export const getRestrictedFeatures = ({
         if (publishablePageIds.has(navigate.pageId) === false) {
           continue;
         }
-        features.set("Resource variable", {
-          navigate,
-        });
+        const resource = resources.get(dataSource.resourceId);
+        features.set(
+          resource !== undefined && isAssetsResource(resource)
+            ? "Assets resource"
+            : "Resource variable",
+          {
+            navigate,
+          }
+        );
       }
     }
   }

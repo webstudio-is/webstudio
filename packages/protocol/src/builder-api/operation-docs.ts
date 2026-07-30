@@ -588,6 +588,61 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "list-assets-resources",
+    description: "List Assets system resources and their query configuration.",
+    examples: [
+      "webstudio list-assets-resources --json",
+      "webstudio list-assets-resources --scope-instance body-id --json",
+    ],
+  },
+  {
+    command: "get-assets-resource",
+    description:
+      "Inspect one Assets system resource and its query configuration.",
+    requiredOptions: ["resource", "json"],
+    examples: ["webstudio get-assets-resource --resource resource-id --json"],
+  },
+  {
+    command: "create-assets-resource",
+    description:
+      "Create a scoped Assets resource. Omit query to use the minimal default query. For an explicit query, minimize the content database by selecting only fields the page renders, keeping includeMetadata false unless required, and using content mode none unless file content is rendered. Preview concrete queries and inspect size diagnostics before saving.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio create-assets-resource --input assets-resource.json --json",
+    ],
+  },
+  {
+    command: "update-assets-resource",
+    description:
+      "Update an Assets resource. Set query to null to restore the minimal default query. Keep explicit queries storage-efficient by selecting only rendered fields, keeping includeMetadata false unless required, and loading only the necessary file content after narrow filtering.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio update-assets-resource --input assets-resource-update.json --json",
+    ],
+  },
+  {
+    command: "validate-asset-query",
+    description:
+      "Validate a structured Assets query and return its referenced dynamic fields and bounded operation counts.",
+    examples: [
+      'webstudio validate-asset-query \'{"query":{"where":{"all":[{"field":["properties","slug"],"operator":"eq","value":"hello-world"}]},"limit":1}}\'',
+    ],
+  },
+  {
+    command: "preview-asset-query",
+    description:
+      "Run an authenticated structured Assets query against indexed metadata, optionally loading bounded file content. Returns renderable results in data and non-bindable preview statistics in __diagnostics__. Before saving a query, inspect usedBytes, maxBytes, unboundedBytes, and truncated; reduce selected fields, candidate files, or embedded content when usage approaches the limit.",
+    examples: [
+      "webstudio preview-asset-query --input asset-query-preview.json --json",
+    ],
+  },
+  {
+    command: "get-asset-field-catalog",
+    description:
+      "Get standard fields plus dynamic Markdown frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",
+    examples: ["webstudio get-asset-field-catalog --json"],
+  },
+  {
     command: "create-resource",
     description:
       "Create a resource. Add --scope-instance and --data-source-name only when the resource should be exposed as read data; for form/action resources, create it unscoped and bind a prop with bind-props.",

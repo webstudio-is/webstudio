@@ -5,95 +5,83 @@
   "outcome": "passed",
   "cli": "source",
   "provider": "openai",
-  "model": "gpt-5.6-sol",
-  "commandSha256": "f3973839321d489a88526e5e1751d54aa9391af61107e56165cd35520c60a96a",
+  "model": "gpt-5.4-mini",
+  "commandSha256": "1f722c6fb110b0de65a89d07326dc21acfee50935b68ff1a5d3e1d483be791fe",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 94027,
+    "durationMs": 60397,
     "tokens": {
-      "input": 319553,
-      "cachedInput": 275200,
-      "uncachedInput": 44353,
+      "input": 176838,
+      "cachedInput": 162048,
+      "uncachedInput": 14790,
       "cacheWriteInput": 0,
-      "output": 1843,
-      "reasoningOutput": 505,
-      "total": 321396,
-      "cachedInputRate": 0.8612
+      "output": 2366,
+      "reasoningOutput": 1293,
+      "total": 179204,
+      "cachedInputRate": 0.9164
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 51362,
-      "maxResponseBytes": 51362,
-      "latestToolCount": 176,
-      "latestResponseBytes": 51362,
-      "latestInputSchemaBytes": 28964,
-      "latestDescriptionBytes": 4556
+      "totalResponseBytes": 53114,
+      "maxResponseBytes": 53114,
+      "latestToolCount": 184,
+      "latestResponseBytes": 53114,
+      "latestInputSchemaBytes": 29971,
+      "latestDescriptionBytes": 4529
     },
     "toolCalls": {
-      "total": 8,
-      "succeeded": 8,
+      "total": 7,
+      "succeeded": 7,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
       "issuesByCode": {},
       "issuesByPath": {},
       "durationsByTool": {
-        "audit": {
-          "count": 1,
-          "totalMs": 10,
-          "p95Ms": 10,
-          "maxMs": 10
-        },
         "create-page": {
           "count": 1,
-          "totalMs": 29,
-          "p95Ms": 29,
-          "maxMs": 29
+          "totalMs": 45,
+          "p95Ms": 45,
+          "maxMs": 45
         },
         "create-resource": {
           "count": 1,
-          "totalMs": 20,
-          "p95Ms": 20,
-          "maxMs": 20
+          "totalMs": 33,
+          "p95Ms": 33,
+          "maxMs": 33
         },
         "create-variable": {
           "count": 1,
-          "totalMs": 24,
-          "p95Ms": 24,
-          "maxMs": 24
+          "totalMs": 37,
+          "p95Ms": 37,
+          "maxMs": 37
         },
         "insert-fragment-verified": {
           "count": 1,
-          "totalMs": 68,
-          "p95Ms": 68,
-          "maxMs": 68
+          "totalMs": 65,
+          "p95Ms": 65,
+          "maxMs": 65
         },
         "inspect-auth-context": {
           "count": 1,
-          "totalMs": 22,
-          "p95Ms": 22,
-          "maxMs": 22
+          "totalMs": 28,
+          "p95Ms": 28,
+          "maxMs": 28
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 10,
-          "p95Ms": 10,
-          "maxMs": 10
+          "totalMs": 13,
+          "p95Ms": 13,
+          "maxMs": 13
         },
-        "screenshot.responsive": {
+        "verify-page-responsive": {
           "count": 1,
-          "totalMs": 9439,
-          "p95Ms": 9439,
-          "maxMs": 9439
+          "totalMs": 10855,
+          "p95Ms": 10855,
+          "maxMs": 10855
         }
       },
       "responseBytesByTool": {
-        "audit": {
-          "count": 1,
-          "totalBytes": 4762,
-          "p95Bytes": 4762,
-          "maxBytes": 4762
-        },
         "create-page": {
           "count": 1,
           "totalBytes": 1342,
@@ -126,15 +114,15 @@
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 15932,
-          "p95Bytes": 15932,
-          "maxBytes": 15932
+          "totalBytes": 15934,
+          "p95Bytes": 15934,
+          "maxBytes": 15934
         },
-        "screenshot.responsive": {
+        "verify-page-responsive": {
           "count": 1,
-          "totalBytes": 7064,
-          "p95Bytes": 7064,
-          "maxBytes": 7064
+          "totalBytes": 11730,
+          "p95Bytes": 11730,
+          "maxBytes": 11730
         }
       },
       "retries": 0,
@@ -143,16 +131,16 @@
       "dryRuns": 0,
       "plannedMutations": 0,
       "committedMutations": 4,
-      "verifications": 3,
-      "totalDurationMs": 9622,
-      "p50DurationMs": 22,
-      "p95DurationMs": 9439,
-      "totalResponseBytes": 37536,
+      "verifications": 2,
+      "totalDurationMs": 11076,
+      "p50DurationMs": 37,
+      "p95DurationMs": 10855,
+      "totalResponseBytes": 37442,
       "p50ResponseBytes": 2576,
-      "p95ResponseBytes": 15932,
-      "maxResponseBytes": 15932,
-      "timeToFirstMutationMs": 39076,
-      "timeToFirstVerificationMs": 67660
+      "p95ResponseBytes": 15934,
+      "maxResponseBytes": 15934,
+      "timeToFirstMutationMs": 25967,
+      "timeToFirstVerificationMs": 39551
     }
   },
   "callSequence": [
@@ -162,8 +150,7 @@
     "create-variable",
     "create-resource",
     "insert-fragment-verified",
-    "screenshot.responsive",
-    "audit"
+    "verify-page-responsive"
   ],
   "checks": {
     "guidance": "passed",

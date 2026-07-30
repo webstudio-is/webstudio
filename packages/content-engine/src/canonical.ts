@@ -1,0 +1,320 @@
+import { assetFileDocument, type AssetFileDocument } from "./schema";
+import { contentEngineLimits } from "./limits";
+import { createCanonicalAssetPath } from "./asset-path";
+import { string } from "zod";
+import {
+  compareStrings,
+  serializeJsonDeterministically,
+} from "./canonical-json";
+import { getStructuredDataByteLength } from "./structured-data";
+
+export type AssetFileMetadataInput = {
+  id: string;
+  name: string;
+  description?: string;
+  extension?: string;
+  folderId?: string;
+  folderNames?: readonly string[];
+  mimeType: string;
+  size: number;
+  createdAt?: string;
+  revision: string;
+  contentRef: string;
+};
+
+const canonicalDateTime = string()
+  .datetime({ offset: true })
+  .transform((value) => new Date(value).toISOString());
+
+export type CanonicalAssetFileEntry = {
+  projectId: string;
+  assetId: string;
+  revision: string;
+  document: AssetFileDocument;
+  metadataRequirements?: CanonicalAssetMetadataRequirements;
+};
+
+export type CanonicalAssetMetadataRequirements = {
+  structuredProperties: boolean;
+  excerpt: boolean;
+};
+
+/**
+ * Generation of the Markdown/JSON extraction behavior used by persistent
+ * metadata caches. Increment only when unchanged source files must be parsed
+ * again because extraction semantics changed.
+ */
+export const canonicalAssetMetadataExtractorGeneration = 1;
+
+export const fullCanonicalAssetMetadataRequirements = {
+  structuredProperties: true,
+  excerpt: true,
+} as const satisfies CanonicalAssetMetadataRequirements;
+
+export const getCanonicalAssetMetadataRequirements = (
+  entry: CanonicalAssetFileEntry
+) => entry.metadataRequirements ?? fullCanonicalAssetMetadataRequirements;
+
+export type CanonicalAssetMetadataTier =
+  | "base"
+  | "properties"
+  | "excerpt"
+  | "properties+excerpt";
+
+/** Stable cache identity for the four supported metadata preparation tiers. */
+export const getCanonicalAssetMetadataTier = ({
+  structuredProperties,
+  excerpt,
+}: CanonicalAssetMetadataRequirements): CanonicalAssetMetadataTier => {
+  if (structuredProperties && excerpt) {
+    return "properties+excerpt";
+  }
+  if (structuredProperties) {
+    return "properties";
+  }
+  if (excerpt) {
+    return "excerpt";
+  }
+  return "base";
+};
+
+export const getCanonicalAssetMetadataRequirementsForTier = (
+  tier: unknown
+): CanonicalAssetMetadataRequirements => {
+  if (tier === "base") {
+    return { structuredProperties: false, excerpt: false };
+  }
+  if (tier === "properties") {
+    return { structuredProperties: true, excerpt: false };
+  }
+  if (tier === "excerpt") {
+    return { structuredProperties: false, excerpt: true };
+  }
+  if (tier === "properties+excerpt") {
+    return fullCanonicalAssetMetadataRequirements;
+  }
+  throw new Error("Canonical asset metadata tier is invalid");
+};
+
+export const satisfiesCanonicalAssetMetadataRequirements = ({
+  cached,
+  required,
+}: {
+  cached: CanonicalAssetMetadataRequirements;
+  required: CanonicalAssetMetadataRequirements;
+}) =>
+  (required.structuredProperties === false || cached.structuredProperties) &&
+  (required.excerpt === false || cached.excerpt);
+
+export type ObservedFieldType =
+  | "null"
+  | "boolean"
+  | "number"
+  | "string"
+  | "object"
+  | "array";
+
+export type FieldContribution = {
+  path: string;
+  type: ObservedFieldType;
+};
+
+const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
+export const appendAssetFieldPath = (path: string, key: string) =>
+  identifier.test(key) ? `${path}.${key}` : `${path}[${JSON.stringify(key)}]`;
+
+export type AssetFieldPathSegment =
+  | { type: "field"; name: string }
+  | { type: "element" };
+
+export const getObservedFieldType = (value: unknown): ObservedFieldType => {
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  const type = typeof value;
+  if (type === "number") {
+    if (Number.isFinite(value) === false) {
+      throw new Error("Asset field contains a non-finite number");
+    }
+    return type;
+  }
+  if (type === "object") {
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new Error("Asset field contains a non-plain object");
+    }
+    return type;
+  }
+  if (type === "boolean" || type === "string") {
+    return type;
+  }
+  throw new Error("Asset field contains a non-JSON value");
+};
+
+const compareFieldPaths = (
+  left: AssetFieldPathSegment[],
+  right: AssetFieldPathSegment[]
+) => {
+  for (let index = 0; index < Math.min(left.length, right.length); index++) {
+    const leftSegment = left[index];
+    const rightSegment = right[index];
+    if (leftSegment.type !== rightSegment.type) {
+      return leftSegment.type === "field" ? -1 : 1;
+    }
+    if (leftSegment.type === "field" && rightSegment.type === "field") {
+      const result = compareStrings(leftSegment.name, rightSegment.name);
+      if (result !== 0) {
+        return result;
+      }
+    }
+  }
+  return left.length - right.length;
+};
+
+const getStructuralFieldContributions = (
+  fields: Readonly<Record<string, unknown>>
+) => {
+  const contributions = new Map<
+    string,
+    { path: AssetFieldPathSegment[]; type: ObservedFieldType }
+  >();
+  const add = (path: AssetFieldPathSegment[], value: unknown) => {
+    const contribution = { path, type: getObservedFieldType(value) };
+    contributions.set(
+      `${serializeJsonDeterministically(path)}\u0000${contribution.type}`,
+      contribution
+    );
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        add([...path, { type: "element" }], item);
+      }
+      return;
+    }
+    if (value !== null && typeof value === "object") {
+      for (const key of Object.keys(value).sort(compareStrings)) {
+        add(
+          [...path, { type: "field", name: key }],
+          (value as Record<string, unknown>)[key]
+        );
+      }
+    }
+  };
+  for (const key of Object.keys(fields).sort(compareStrings)) {
+    add([{ type: "field", name: key }], fields[key]);
+  }
+  return [...contributions.values()].sort(
+    (left, right) =>
+      compareFieldPaths(left.path, right.path) ||
+      compareStrings(left.type, right.type)
+  );
+};
+
+const formatFieldContributionPath = (path: AssetFieldPathSegment[]) => {
+  let formatted = "properties";
+  for (const segment of path) {
+    formatted =
+      segment.type === "element"
+        ? `${formatted}[]`
+        : appendAssetFieldPath(formatted, segment.name);
+  }
+  return formatted;
+};
+
+export const getFieldContributions = (
+  properties: AssetFileDocument["properties"]
+): FieldContribution[] =>
+  getStructuralFieldContributions(properties)
+    .map(({ path, type }) => ({
+      path: formatFieldContributionPath(path),
+      type,
+    }))
+    .sort(
+      (left, right) =>
+        compareStrings(left.path, right.path) ||
+        compareStrings(left.type, right.type)
+    );
+
+export const createCanonicalAssetFileEntry = ({
+  projectId,
+  document,
+  metadataRequirements = fullCanonicalAssetMetadataRequirements,
+}: {
+  projectId: string;
+  document: unknown;
+  metadataRequirements?: CanonicalAssetMetadataRequirements;
+}): CanonicalAssetFileEntry => {
+  const parsedDocument = assetFileDocument.parse(document);
+  if (
+    getStructuredDataByteLength(parsedDocument.properties) >
+    contentEngineLimits.indexedPropertiesBytes
+  ) {
+    throw new Error("Canonical asset properties exceed the indexed byte limit");
+  }
+  return {
+    projectId,
+    assetId: parsedDocument._id,
+    revision: parsedDocument.revision,
+    document: parsedDocument,
+    metadataRequirements,
+  };
+};
+
+/**
+ * Builds the canonical query document without merging user properties into the
+ * reserved standard metadata namespace.
+ */
+export const normalizeAssetFileDocument = ({
+  asset,
+  properties,
+  excerpt,
+  metadataError,
+}: {
+  asset: AssetFileMetadataInput;
+  properties: Record<string, unknown>;
+  excerpt?: string;
+  metadataError?: AssetFileDocument["metadataError"];
+}): AssetFileDocument => {
+  const folderNames = asset.folderNames ?? [];
+  if ((asset.folderId === undefined) !== (folderNames.length === 0)) {
+    throw new Error(
+      "Asset folder ID and complete folder-name path must be provided together"
+    );
+  }
+  const extensionSeparator = asset.name.lastIndexOf(".");
+  const extension =
+    asset.extension ??
+    (extensionSeparator === -1
+      ? ""
+      : asset.name.slice(extensionSeparator + 1).toLowerCase());
+  const key =
+    extensionSeparator <= 0
+      ? asset.name
+      : asset.name.slice(0, extensionSeparator);
+  const path = createCanonicalAssetPath({ folderNames, name: asset.name });
+
+  return assetFileDocument.parse({
+    _id: asset.id,
+    _type: "asset.file",
+    name: asset.name,
+    ...(asset.description === undefined
+      ? {}
+      : { description: asset.description }),
+    path,
+    key,
+    ...(asset.folderId === undefined ? {} : { folderId: asset.folderId }),
+    extension,
+    mimeType: asset.mimeType,
+    size: asset.size,
+    ...(asset.createdAt === undefined
+      ? {}
+      : { createdAt: canonicalDateTime.parse(asset.createdAt) }),
+    revision: asset.revision,
+    contentRef: asset.contentRef,
+    properties,
+    ...(excerpt === undefined ? {} : { excerpt }),
+    ...(metadataError === undefined ? {} : { metadataError }),
+  });
+};

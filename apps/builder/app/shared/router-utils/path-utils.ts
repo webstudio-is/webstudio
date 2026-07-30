@@ -1,4 +1,5 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
+import { getAssetUploadApiUrl } from "@webstudio-is/sdk/runtime";
 import { getAuthorizationServerOrigin } from "./origins";
 import type { BuilderMode } from "../nano-states/misc";
 
@@ -123,10 +124,6 @@ export const authPath = ({
   provider: "google" | "github" | "dev";
 }) => `/auth/${provider}`;
 
-export const restAssetsPath = () => {
-  return `/rest/assets`;
-};
-
 export const restAssetsUploadPath = ({
   name,
   width,
@@ -144,11 +141,12 @@ export const restAssetsUploadPath = ({
     urlSearchParams.set("height", String(height));
   }
 
-  if (urlSearchParams.size > 0) {
-    return `/rest/assets/${name}?${urlSearchParams.toString()}`;
+  const query = urlSearchParams.toString();
+  if (query !== "") {
+    return `${getAssetUploadApiUrl(name)}?${query}`;
   }
 
-  return `/rest/assets/${name}`;
+  return getAssetUploadApiUrl(name);
 };
 
 export const getCanvasUrl = () => {

@@ -4,8 +4,6 @@ import {
   type BuilderNamespace,
 } from "./contracts/namespaces";
 import {
-  allowedArrayMethods,
-  allowedStringMethods,
   getInputJsonSchemaMetadata,
   getInputJsonSchemaProperties,
   inputJsonSchemaAcceptsType,
@@ -14,6 +12,10 @@ import {
   type InputJsonSchema,
   type InputJsonSchemaValue,
 } from "@webstudio-is/sdk";
+import {
+  allowedArrayMethods,
+  allowedStringMethods,
+} from "@webstudio-is/expression";
 import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {
@@ -765,12 +767,13 @@ const getCompactSchemaProperty = (schema: InputJsonSchema): InputJsonSchema => {
 };
 
 const getHandshakeInputSchema = (
-  schema: ProjectSessionMcpInputSchema
+  schema: ProjectSessionMcpInputSchema,
+  maxInlineSize = maxInlineMcpInputSchemaSize
 ): {
   inputSchema: ProjectSessionMcpInputSchema;
   detailedInputSchema?: ProjectSessionMcpInputSchema;
 } => {
-  if (JSON.stringify(schema).length <= maxInlineMcpInputSchemaSize) {
+  if (JSON.stringify(schema).length <= maxInlineSize) {
     return { inputSchema: schema };
   }
   return {
@@ -784,7 +787,7 @@ const getHandshakeInputSchema = (
           return [
             name,
             propertySchema === undefined ||
-            (serializedProperty.length <= maxInlineMcpInputSchemaSize &&
+            (serializedProperty.length <= maxInlineSize &&
               serializedProperty.includes('"$ref"') === false)
               ? property
               : getCompactSchemaProperty(propertySchema),
@@ -820,11 +823,14 @@ const insertCollectionMcpInputSchema = getOperationInputSchema({
   inputSchema: getInputSchemaMetadata(insertCollectionMcpInput).inputJsonSchema,
 });
 
+const assetsResourceResultDescription =
+  "Pass query as structured tool input rather than a JSON-stringified expression or manually authored resource body. Dynamic query values use readable Webstudio JavaScript expression syntax. Assets expose an ID-keyed map at <dataSourceName>.data and collection information at <dataSourceName>.meta. Each value has selected file fields at the top level, frontmatter or JSON fields in .properties, a derived .excerpt at the top level, and requested file content in .content.text.";
+
 const mcpOperationOverrides = new Map<
   string,
   {
     description: string;
-    inputSchema: ProjectSessionMcpInputSchema;
+    inputSchema?: ProjectSessionMcpInputSchema;
   }
 >([
   [
@@ -841,6 +847,18 @@ const mcpOperationOverrides = new Map<
       description:
         "Create a Collection from array/object data and one repeated-item Webstudio JSX fragment. Internal item parameters and bindings are created atomically.",
       inputSchema: insertCollectionMcpInputSchema,
+    },
+  ],
+  [
+    "create-assets-resource",
+    {
+      description: `Create a scoped Assets resource. ${assetsResourceResultDescription}`,
+    },
+  ],
+  [
+    "update-assets-resource",
+    {
+      description: `Update an Assets resource or its query. ${assetsResourceResultDescription}`,
     },
   ],
 ]);
@@ -1564,8 +1582,10 @@ const previewInputSchema = {
     },
     port: {
       type: "number",
-      description:
-        "Optional fixed port. Omit it to allocate an available local port automatically.",
+      default: 0,
+      minimum: 0,
+      maximum: 65535,
+      description: "Use 0 to select an available local port automatically.",
     },
     source: {
       type: "string",
@@ -1969,7 +1989,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       scopeInstanceId: "body-id",
       name: "tags",
-      value: { type: "string[]", value: ["news", "product"] },
+      value: { type: "json", value: ["news", "product"] },
     },
     {
       scopeInstanceId: "body-id",
@@ -1980,7 +2000,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "update-variable": [
     {
       dataSourceId: "variable-id",
-      values: { value: { type: "string[]", value: ["news", "product"] } },
+      values: { value: { type: "json", value: ["news", "product"] } },
     },
   ],
   "create-resource": [
@@ -2048,6 +2068,118 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       exposeAsDataSource: false,
     },
   ],
+  "list-assets-resources": [{}],
+  "get-assets-resource": [{ resourceId: "resource-id" }],
+  "create-assets-resource": [
+    {
+      name: "All assets",
+      scopeInstanceId: "body-id",
+      dataSourceName: "assets",
+    },
+    {
+      name: "Published posts",
+      scopeInstanceId: "body-id",
+      dataSourceName: "posts",
+      query: {
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: { type: "literal", value: "md" },
+            },
+            {
+              field: ["properties", "draft"],
+              operator: "ne",
+              value: "true",
+            },
+          ],
+        },
+        sort: [
+          { field: ["properties", "publishedAt"], direction: "desc" },
+          { field: ["id"], direction: "asc" },
+        ],
+        limit: "20",
+      },
+    },
+    {
+      name: "Post by slug",
+      scopeInstanceId: "body-id",
+      dataSourceName: "post",
+      query: {
+        where: {
+          all: [
+            {
+              field: ["extension"],
+              operator: "eq",
+              value: { type: "literal", value: "md" },
+            },
+            {
+              any: [
+                {
+                  field: ["properties", "slug"],
+                  operator: "eq",
+                  value: "system.params.slug",
+                },
+                {
+                  field: ["properties", "id"],
+                  operator: "eq",
+                  value: "system.params.slug",
+                },
+              ],
+            },
+          ],
+        },
+        limit: "1",
+        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+      },
+    },
+  ],
+  "update-assets-resource": [
+    {
+      resourceId: "resource-id",
+      values: {
+        query: {
+          limit: "50",
+        },
+      },
+    },
+    { resourceId: "resource-id", values: { query: null } },
+  ],
+  "validate-asset-query": [
+    {
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "hello-world",
+            },
+          ],
+        },
+        limit: 1,
+      },
+    },
+  ],
+  "preview-asset-query": [
+    {
+      query: {
+        where: {
+          all: [
+            {
+              field: ["properties", "slug"],
+              operator: "eq",
+              value: "hello-world",
+            },
+          ],
+        },
+        limit: 1,
+        content: { mode: "markdown-body", maxBytes: 1_048_576 },
+      },
+    },
+  ],
+  "get-asset-field-catalog": [{}],
   "update-asset": [
     {
       assetId: "font-asset-id",
@@ -3207,6 +3339,13 @@ export const hiddenMcpOperationCommands = new Set<string>([
   "copy-page",
 ]);
 
+const compactMcpOperationCommands = new Set([
+  "create-assets-resource",
+  "update-assets-resource",
+  "validate-asset-query",
+  "preview-asset-query",
+]);
+
 const detailedMcpInputSchemas = new WeakMap<
   ProjectSessionMcpTool,
   ProjectSessionMcpInputSchema
@@ -3235,13 +3374,14 @@ export const listProjectSessionMcpTools = (
     )
     .map((operation) => {
       const override = mcpOperationOverrides.get(operation.command);
+      const operationInputSchema = getMcpOperationInputSchema(operation, {
+        includeRenderedAudit:
+          options.includeScreenshot === true && options.includePreview === true,
+        schema: override?.inputSchema,
+      });
       const { inputSchema, detailedInputSchema } = getHandshakeInputSchema(
-        getMcpOperationInputSchema(operation, {
-          includeRenderedAudit:
-            options.includeScreenshot === true &&
-            options.includePreview === true,
-          schema: override?.inputSchema,
-        })
+        operationInputSchema,
+        compactMcpOperationCommands.has(operation.command) ? 2_500 : undefined
       );
       const tool = createProjectSessionMcpTool({
         name: operation.command,
@@ -5413,7 +5553,7 @@ const metaGoalGuides = [
       "Inspect the project's existing auth resources, variables, page settings, and agent instructions before choosing a provider workflow. Call inspect-auth-context exactly once instead of calling get-project-settings, list-pages, list-resources, or list-variables separately; use at most one focused search-project call only when that bundle does not identify the auth convention. Treat its pages section as authoritative for route existence. Do not call get-page-by-path to confirm that /account is absent. Reuse that convention; do not add a second auth system implicitly.",
       "Do not call meta.index after this guide. If an exact mutation schema is still needed, make at most one meta.get_more_tools call listing all immediately required authoring tools rather than rediscovering them one at a time.",
       "Never place credentials, service-role keys, refresh tokens, private session values, or authenticated response bodies in project data, command output, screenshots, agent instructions, or error reports. Ask the user to configure secrets in the provider/server environment.",
-      "Model explicit signed-out, loading, signed-in, and failed-auth UI states with ordinary components and bindings. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
+      "Keep all four auth states in the editable component structure even when bindings select only one at runtime. Give each state a visible label using the exact terms signed-out, loading, signed-in, and failed-auth so authors can inspect and verify every state. Use page basic auth only when the user asks for Webstudio's fixed login/password gate; it is not Supabase or Firebase authentication.",
       "Use focused resources and variables for public client configuration and session-shaped data. Keep authorization enforcement and privileged provider calls server-side; a hidden Builder element is not an authorization boundary.",
       "When fixture/session data must feed a resource, create the page and scoped fixture variables there. Use create-page's returned rootInstanceId directly instead of listing instances to rediscover it. Call list-variables after creation only when a resource expression actually needs the returned encoded name. Do not repeat list-variables when the fixture variable is not referenced, as in the expression-free state gallery, and do not guess or reference variables before they exist.",
       'Create resources only after their scope and referenced variables exist. When reusing an existing server-mediated auth convention, copy its fixed request URL exactly into resource.url; resource.url is the HTTP request target, not a provider call or session-state expression. For the discovered /api/auth/session convention, use create-resource with resource:{name:"Account session via server",method:"get",url:"/api/auth/session",headers:[],searchParams:[]}, the new page root as scopeInstanceId, and a descriptive dataSourceName. Use literal wrappers only for fixed header, search-parameter, and body text.',
@@ -6621,9 +6761,9 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   const port = typeof input.port === "number" ? input.port : undefined;
   if (
     port !== undefined &&
-    (Number.isInteger(port) === false || port <= 0 || port > 65535)
+    (Number.isInteger(port) === false || port < 0 || port > 65535)
   ) {
-    throw new Error("preview port must be an integer between 1 and 65535.");
+    throw new Error("preview port must be an integer between 0 and 65535.");
   }
   const source = input.source === undefined ? undefined : input.source;
   if (source !== undefined && isProjectSessionPreviewSource(source) === false) {
@@ -7232,13 +7372,25 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         return toMetaResult(await downloadAsset(getDownloadAssetInput(input)));
       }
       if (name === "screenshot" && captureScreenshot !== undefined) {
-        return toMetaResult(
-          await captureScreenshot(getScreenshotInput(input), {
-            report: (message) => {
-              reportToolProgress?.(message);
-            },
-          })
-        );
+        const screenshotInput = getScreenshotInput(input);
+        try {
+          return toMetaResult(
+            await captureScreenshot(screenshotInput, {
+              report: (message) => {
+                reportToolProgress?.(message);
+              },
+            })
+          );
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          throw Object.assign(
+            new Error(
+              `Screenshot capture failed: ${message}. Check preview.status, verify that the route loads, and retry with an installed browser or explicit browserPath.`
+            ),
+            { code: "SCREENSHOT_CAPTURE_FAILED", cause: error }
+          );
+        }
       }
       if (
         name === "verify-page-responsive" &&

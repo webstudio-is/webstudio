@@ -1,11 +1,8 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { Grid, Label, Text, TextArea } from "@webstudio-is/design-system";
-import { isLiteralExpression } from "@webstudio-is/sdk";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
+import { isLiteralExpression } from "@webstudio-is/expression";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import type {
   PageSettingsErrors,
@@ -31,39 +28,37 @@ export const TextContentSection = ({
       <Text color="subtle">The plain text content served for this page.</Text>
       <Grid gap={1}>
         <Label htmlFor={contentId}>Text</Label>
-        <BindingControl>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(values.content) ? "default" : "bound"}
-            value={values.content}
-            onChange={(value) => {
-              onChange({ field: "content", value });
-            }}
-            onRemove={(evaluatedValue) => {
-              onChange({
-                field: "content",
-                value: JSON.stringify(evaluatedValue ?? ""),
-              });
-            }}
-          />
-          <TextArea
-            id={contentId}
-            color={errors.content ? "error" : undefined}
-            disabled={isLiteralExpression(values.content) === false}
-            value={String(
-              computeExpression(values.content, variableValues) ?? ""
-            )}
-            onChange={(value) => {
-              onChange({
-                field: "content",
-                value: JSON.stringify(value),
-              });
-            }}
-            autoGrow
-            maxRows={20}
-          />
-        </BindingControl>
+        <BindableExpressionControl
+          expression={values.content}
+          value={String(
+            computeExpression(values.content, variableValues) ?? ""
+          )}
+          bound={isLiteralExpression(values.content) === false}
+          allowBindingOverwrite={false}
+          scope={scope}
+          aliases={aliases}
+          onChangeValue={(value) =>
+            onChange({ field: "content", value: JSON.stringify(value) })
+          }
+          onChangeExpression={(value) => onChange({ field: "content", value })}
+          onRemove={(value) =>
+            onChange({
+              field: "content",
+              value: JSON.stringify(value ?? ""),
+            })
+          }
+          renderControl={({ value, readOnly, onChangeValue }) => (
+            <TextArea
+              id={contentId}
+              color={errors.content ? "error" : undefined}
+              disabled={readOnly}
+              value={value}
+              onChange={onChangeValue}
+              autoGrow
+              maxRows={20}
+            />
+          )}
+        />
       </Grid>
     </Grid>
   );

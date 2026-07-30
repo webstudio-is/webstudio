@@ -4,7 +4,7 @@ import { loadApprovedProdBuildByProjectId } from "@webstudio-is/project-build/se
 import { parseConfig } from "@webstudio-is/project-build/persistence";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Project } from "@webstudio-is/project";
-import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
+import { loadAssetsByProject } from "@webstudio-is/asset-uploader/server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 
 export const getBuildProdData = async (

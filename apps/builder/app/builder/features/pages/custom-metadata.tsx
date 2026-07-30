@@ -11,12 +11,9 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
-import { isLiteralExpression } from "@webstudio-is/sdk";
+import { isLiteralExpression } from "@webstudio-is/expression";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
+import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import { $pageRootScope } from "./page-utils";
 
 type Meta = {
@@ -75,45 +72,35 @@ const MetadataItem = (props: {
       <Label htmlFor={contentId} css={{ gridArea: "content" }}>
         Content
       </Label>
-      <BindingControl>
-        {props.showBindingControls && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(props.content) ? "default" : "bound"}
-            value={props.content}
-            onChange={(value) => {
-              props.onChange(props.property, value);
-            }}
-            onRemove={(evaluatedValue) => {
-              props.onChange(
-                props.property,
-                JSON.stringify(evaluatedValue ?? "")
-              );
-            }}
-          />
+      <BindableExpressionControl
+        expression={props.content}
+        value={String(content ?? "")}
+        bound={isLiteralExpression(props.content) === false}
+        allowBindingOverwrite={false}
+        showBinding={props.showBindingControls}
+        scope={scope}
+        aliases={aliases}
+        onChangeValue={(value) =>
+          props.onChange(props.property, JSON.stringify(value))
+        }
+        onChangeExpression={(value) => props.onChange(props.property, value)}
+        onRemove={(value) =>
+          props.onChange(props.property, JSON.stringify(value ?? ""))
+        }
+        renderControl={({ value, readOnly, onChangeValue }) => (
+          <InputErrorsTooltip errors={undefined}>
+            <InputField
+              css={{ gridArea: "content-input" }}
+              disabled={props.disabled || readOnly}
+              color={typeof content !== "string" ? "error" : undefined}
+              id={contentId}
+              property="path"
+              value={value}
+              onChange={(event) => onChangeValue(event.target.value)}
+            />
+          </InputErrorsTooltip>
         )}
-        <InputErrorsTooltip errors={undefined}>
-          <InputField
-            css={{
-              gridArea: "content-input",
-            }}
-            disabled={
-              props.disabled || isLiteralExpression(props.content) === false
-            }
-            color={typeof content !== "string" ? "error" : undefined}
-            id={contentId}
-            property="path"
-            value={content}
-            onChange={(event) => {
-              props.onChange(
-                props.property,
-                JSON.stringify(event.target.value)
-              );
-            }}
-          />
-        </InputErrorsTooltip>
-      </BindingControl>
+      />
       <Grid
         css={{
           gridArea: "button",

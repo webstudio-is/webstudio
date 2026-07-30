@@ -92,6 +92,9 @@ test("uses an auto-growing textarea for the asset description", () => {
   expect(document.body.textContent).toContain("Last modified");
   expect(document.body.textContent).toContain("Jan 15, 2026");
   expect(document.body.textContent).toContain("Feb 15, 2026");
+  expect(
+    Array.from(document.querySelectorAll("label"), (label) => label.textContent)
+  ).toEqual(["Name", "Folder", "Description", "ID"]);
 });
 
 test("closes asset settings before replacing an asset", () => {

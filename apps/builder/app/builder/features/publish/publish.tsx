@@ -75,7 +75,10 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import { type Templates } from "@webstudio-is/sdk";
+import {
+  createReachableAssetContentCompilationPlan,
+  type Templates,
+} from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -102,6 +105,10 @@ import {
   runPrePublishAudit,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
+import {
+  getContentDatabasePublishWarning,
+  type ContentDatabasePublishWarning,
+} from "./content-database-publish-warning";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -181,6 +188,64 @@ const getPrePublishAuditMessages = () => {
     error: getMessage("error"),
     warning: getMessage("warning"),
   };
+};
+
+const loadContentDatabasePublishWarning = async (projectId: string) => {
+  const plan = createReachableAssetContentCompilationPlan({
+    props: [...$props.get().values()],
+    dataSources: [...$dataSources.get().values()],
+    resources: [...$resources.get().values()],
+  });
+  if (plan === undefined) {
+    return;
+  }
+  return getContentDatabasePublishWarning(
+    await nativeClient.build.contentDatabasePublishDiagnostics.query({
+      projectId,
+    })
+  );
+};
+
+const ContentDatabasePublishWarningMessage = ({
+  warning,
+}: {
+  warning: ContentDatabasePublishWarning;
+}) => (
+  <>
+    The published content database will include {warning.includedDocumentCount}{" "}
+    of {warning.totalDocumentCount} files ({warning.usedKiB} of {warning.maxKiB}{" "}
+    KiB). {warning.omittedDocumentCount} files will be omitted.
+    {warning.affectedResourceKind === "dynamic" && (
+      <>
+        {" "}
+        Queries with route or variable values may be incomplete in:{" "}
+        {warning.affectedResourceNames.join(", ")}.
+      </>
+    )}
+    {warning.affectedResourceKind === "static" && (
+      <>
+        {" "}
+        Potentially affected Assets resources:{" "}
+        {warning.affectedResourceNames.join(", ")}.
+      </>
+    )}
+  </>
+);
+
+const showContentDatabasePublishWarning = async ({
+  projectId,
+  setWarning,
+}: {
+  projectId: Project["id"];
+  setWarning: (warning: JSX.Element) => void;
+}) => {
+  const warning = await loadContentDatabasePublishWarning(projectId);
+  if (warning === undefined) {
+    return;
+  }
+  const message = <ContentDatabasePublishWarningMessage warning={warning} />;
+  toast.warn(message);
+  setWarning(message);
 };
 
 type ChangeProjectDomainProps = {
@@ -412,12 +477,20 @@ const ChangeProjectDomain = ({
 };
 
 const $restrictedFeatures = computed(
-  [$pages, $projectSettings, $dataSources, $instances, $permissions],
-  (pages, projectSettings, dataSources, instances, permissions) =>
+  [
+    $pages,
+    $projectSettings,
+    $dataSources,
+    $resources,
+    $instances,
+    $permissions,
+  ],
+  (pages, projectSettings, dataSources, resources, instances, permissions) =>
     getRestrictedFeatures({
       pages,
       projectSettings,
       dataSources,
+      resources,
       instances,
       permissions,
     })
@@ -645,6 +718,20 @@ const Publish = ({
     }
 
     startTransition(async () => {
+      try {
+        await showContentDatabasePublishWarning({
+          projectId: project.id,
+          setWarning: setPublishWarning,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Content database validation failed";
+        toast.error(message);
+        setPublishError(message);
+        return;
+      }
       await publish(domains);
     });
   };
@@ -794,6 +881,11 @@ const PublishStatic = ({
             startTransition(async () => {
               try {
                 setIsPendingOptimistic(true);
+
+                await showContentDatabasePublishWarning({
+                  projectId,
+                  setWarning: setPublishWarning,
+                });
 
                 const result = await nativeClient.domain.publish.mutate({
                   projectId,

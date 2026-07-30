@@ -4,7 +4,7 @@ import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { getMimeTypeByExtension } from "@webstudio-is/sdk";
+import { getAssetUrl, getMimeTypeByExtension } from "@webstudio-is/sdk";
 import type { Asset, Instance } from "@webstudio-is/sdk";
 import {
   Box,
@@ -74,7 +74,6 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { AssetFolderSelector } from "./asset-folder-selector";
 import { moveAssetManagerItems } from "./asset-manager-operations";
-import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import {
@@ -479,6 +478,16 @@ const AssetSettingsContent = ({
       </Grid>
 
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <AssetFolderSelector
+          value={asset.folderId}
+          onChange={moveToFolder}
+          rootLabel="Folder"
+          disabled={authPermit === "view"}
+          deferChangesUntilBlur
+        />
+      </Grid>
+
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
         <Label
           htmlFor="asset-manager-description"
           css={{ display: "flex", alignItems: "center", gap: 4 }}
@@ -500,16 +509,6 @@ const AssetSettingsContent = ({
           autoGrow
           value={description}
           onChange={setDescription}
-        />
-      </Grid>
-
-      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
-        <AssetFolderSelector
-          value={asset.folderId}
-          onChange={moveToFolder}
-          rootLabel="Folder"
-          disabled={authPermit === "view"}
-          deferChangesUntilBlur
         />
       </Grid>
 

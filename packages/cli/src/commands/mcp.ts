@@ -11,13 +11,16 @@ import {
   type ProjectSessionScreenshotInput,
   type ProjectSessionMcpTool,
 } from "@webstudio-is/project-build/mcp";
-import type { BuilderNamespace } from "@webstudio-is/project-build/contracts";
+import {
+  getProjectBasicAuthCredentials,
+  type BuilderNamespace,
+} from "@webstudio-is/project-build/contracts";
 import { diffPngFiles } from "@webstudio-is/project-build/visual";
 import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
 } from "@webstudio-is/protocol";
-import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
+import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
 import type { SemanticValidationIssue } from "@webstudio-is/project-build/runtime";
@@ -37,6 +40,7 @@ import {
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
   getSupportedPublicApiOperations,
+  loadCliProjectSessionAssetIndex,
   type CliServerApiContract,
   writeCliProjectSessionDataFile,
 } from "../project-session";
@@ -52,6 +56,7 @@ import {
   createLocalUpdateAssetContentInput,
   downloadAssetFile,
   getLocalAssetPath,
+  LOCAL_ASSETS_DIR,
 } from "../asset-files";
 import {
   getVisionVerificationLoop,
@@ -938,11 +943,23 @@ const createCliMcpHost = async ({
     isStale: previewFreshness.isStale,
     captureFreshness: previewFreshness.capture,
     markFresh: previewFreshness.markFresh,
+    getHttpCredentials: (pagePath) =>
+      getProjectBasicAuthCredentials(
+        getLoadedProjectSessionSnapshot(session).state.projectSettings?.meta
+          .auth,
+        pagePath
+      ),
     prepareSessionDataFile: async () => {
+      const snapshot = getLoadedProjectSessionSnapshot(session);
+      const assetIndex = await loadCliProjectSessionAssetIndex(
+        snapshot,
+        apiConnection,
+        path.join(projectRoot, LOCAL_ASSETS_DIR)
+      );
       await writeCliProjectSessionDataFile(
-        getLoadedProjectSessionSnapshot(session),
+        snapshot,
         path.join(projectRoot, LOCAL_DATA_FILE),
-        { origin: connection.origin }
+        { origin: connection.origin, assetIndex }
       );
     },
   });
@@ -1030,7 +1047,8 @@ const createCliMcpHost = async ({
             skipAssets: input.skipAssets,
           },
           {
-            importProjectBundleWithAssets,
+            importProjectBundleWithAssets:
+              httpClient.importProjectBundleWithAssets,
             loadJSONFile,
             readFile,
             text: async () => {

@@ -1,0 +1,40 @@
+/** Safety and size limits shared by content compilation and query runtimes. */
+export const contentEngineLimits = {
+  requestBytes: 512 * 1024,
+  filterCount: 32,
+  filterDepth: 8,
+  sortCount: 8,
+  outputFieldCount: 256,
+  fieldPathDepth: 9,
+  defaultResultCount: 20,
+  resultCount: 1000,
+  resultBytes: 16 * 1024 * 1024,
+  candidateDocuments: 1000,
+  databaseBytes: 500 * 1024,
+  frontmatterBytes: 64 * 1024,
+  frontmatterDepth: 8,
+  frontmatterFields: 256,
+  frontmatterStringBytes: 16 * 1024,
+  jsonBytes: 1024 * 1024,
+  jsonDepth: 8,
+  jsonFields: 256,
+  jsonStringBytes: 16 * 1024,
+  indexedPropertiesBytes: 64 * 1024,
+  excerptBytes: 2 * 1024,
+  hydratedFileBytes: 1024 * 1024,
+  hydratedTotalBytes: 2 * 1024 * 1024,
+  hydratedFileCount: 20,
+  hydratedRangeBytes: 256 * 1024,
+  concurrentContentReads: 8,
+} as const;
+
+export const parseContentDatabaseMaxBytes = (value: string | undefined) => {
+  if (value === undefined || value === "") {
+    return contentEngineLimits.databaseBytes;
+  }
+  const maxBytes = Number(value);
+  if (Number.isSafeInteger(maxBytes) === false || maxBytes <= 0) {
+    throw new Error("CONTENT_DATABASE_MAX_BYTES must be a positive integer");
+  }
+  return maxBytes;
+};

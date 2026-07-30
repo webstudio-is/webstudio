@@ -10,18 +10,21 @@ import { hideBin } from "yargs/helpers";
 import {
   fontAssetsFixture,
   highImpactFixtures,
+  markdownBlogFixture,
   type HighImpactFixture,
 } from "./fixtures";
 import { startHighImpactFixtureApi } from "./fixture-api";
 import { evaluateHighImpactOutcome } from "./validate";
 import {
   runHighImpactAgentEvaluation,
+  getFixtureToolNames,
   type AgentEvaluationResult,
 } from "./agent-runner";
 import { collectHighImpactArtifacts } from "./artifacts";
 import type { EvaluationToolCall } from "./validate";
 import type { McpCatalogObservation } from "./evaluation-metrics";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
+import { writeMarkdownBlogFixtureFiles } from "./markdown-blog-fixture";
 import {
   compareEvaluationResult,
   isAggregateTokenBaselineNonRegressed,
@@ -29,6 +32,7 @@ import {
   shouldUpdateEvaluationBaselines,
   type EvaluationComparison,
 } from "./evaluation-regression";
+import { runConcurrently } from "./suite-runner";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -65,14 +69,16 @@ const runFixture = async ({
   fixture,
   repositoryRoot,
   resultPath,
+  signal,
 }: {
   fixture: HighImpactFixture;
   repositoryRoot: string;
   resultPath: string;
+  signal: AbortSignal;
 }) => {
   const localCli = resolve(repositoryRoot, "packages/cli/local.js");
   const codex = process.env.WEBSTUDIO_HIGH_IMPACT_CODEX ?? "codex";
-  const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.6-sol";
+  const model = process.env.WEBSTUDIO_HIGH_IMPACT_MODEL ?? "gpt-5.4-mini";
   const directory = await mkdtemp(
     join(tmpdir(), "webstudio-high-impact-agent-")
   );
@@ -85,6 +91,8 @@ const runFixture = async ({
   await mkdir(projectDirectory, { recursive: true });
   if (fixture.id === fontAssetsFixture.id) {
     await writeFontAssetFixtureFiles(projectDirectory);
+  } else if (fixture.id === markdownBlogFixture.id) {
+    await writeMarkdownBlogFixtureFiles(projectDirectory);
   }
   const env = { ...process.env, WEBSTUDIO_CONFIG_DIR: configDirectory };
   try {
@@ -103,6 +111,7 @@ const runFixture = async ({
       ])}`,
       `mcp_servers.webstudio.cwd=${JSON.stringify(projectDirectory)}`,
       `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(configDirectory)} }`,
+      `mcp_servers.webstudio.enabled_tools=${JSON.stringify(getFixtureToolNames(fixture))}`,
     ];
     const agentCommand = [
       shellQuote(codex),
@@ -139,6 +148,7 @@ const runFixture = async ({
       provider: "openai",
       model,
       env,
+      signal,
       getToolCalls: () => toolCalls,
       getCatalogObservations: () => catalogObservations,
       evaluate: async () => {
@@ -220,16 +230,23 @@ const run = async () => {
       process.env.WEBSTUDIO_HIGH_IMPACT_BASELINE_DIR ??
       join(import.meta.dirname, "results")
   );
-  const results: AgentEvaluationReport[] = [];
-  const rawResults: AgentEvaluationResult[] = [];
+
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  process.once("SIGINT", abort);
+  process.once("SIGTERM", abort);
   const baselines: AgentEvaluationResult[] = [];
-  for (const fixture of fixtures) {
+  const completed = await runConcurrently(fixtures, async (fixture) => {
     const resultPath = resolve(
       process.env.WEBSTUDIO_HIGH_IMPACT_RESULT ??
         join(resultsDirectory, `${fixture.id}.json`)
     );
-    const result = await runFixture({ fixture, repositoryRoot, resultPath });
-    rawResults.push(result);
+    const result = await runFixture({
+      fixture,
+      repositoryRoot,
+      resultPath,
+      signal: controller.signal,
+    });
     const baseline = await readFile(
       join(baselineDirectory, `${fixture.id}.json`),
       "utf8"
@@ -248,8 +265,15 @@ const run = async () => {
       `${JSON.stringify(report, undefined, 2)}\n`,
       "utf8"
     );
-    results.push(report);
-  }
+    return { result, report };
+  }).finally(() => {
+    process.removeListener("SIGINT", abort);
+    process.removeListener("SIGTERM", abort);
+  });
+  const rawResults = completed.map(({ result }) => result);
+  const results: AgentEvaluationReport[] = completed.map(
+    ({ report }) => report
+  );
   const evaluationsPassed = rawResults.every(
     (result) => result.outcome === "passed"
   );

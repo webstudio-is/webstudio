@@ -1,15 +1,20 @@
 import { z } from "zod";
+import { assetResourceLimits } from "../asset-resource-limits";
 import {
   createAssetFolderHierarchy,
   getAssetFolderSiblingKey,
 } from "../asset-folder-hierarchy";
 
-export const assetFolderId = z.string().min(1);
+export const assetFolderId = z
+  .string()
+  .min(1)
+  .max(assetResourceLimits.assetIdentifierCharacters);
 
 export const assetFolderName = z
   .string()
   .trim()
-  .min(1, "Folder name can't be empty");
+  .min(1, "Folder name can't be empty")
+  .max(assetResourceLimits.assetFolderNameCharacters);
 
 export const assetFolderIssue = {
   idMismatch: "Folder id must match its record key",

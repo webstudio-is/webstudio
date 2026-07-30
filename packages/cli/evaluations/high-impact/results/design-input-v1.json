@@ -5,33 +5,33 @@
   "outcome": "passed",
   "cli": "source",
   "provider": "openai",
-  "model": "gpt-5.6-sol",
-  "commandSha256": "665472955db94c5d88c26b9c858eca2ec7621f04efa461fdb4cff3ae79dc5c5b",
+  "model": "gpt-5.4-mini",
+  "commandSha256": "942755cc0025a46d00f539f1720d60cbbb3e26498a6fc835500deda6d7c875c1",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 97892,
+    "durationMs": 150790,
     "tokens": {
-      "input": 327593,
-      "cachedInput": 273152,
-      "uncachedInput": 54441,
+      "input": 217420,
+      "cachedInput": 186496,
+      "uncachedInput": 30924,
       "cacheWriteInput": 0,
-      "output": 2987,
-      "reasoningOutput": 698,
-      "total": 330580,
-      "cachedInputRate": 0.8338
+      "output": 8186,
+      "reasoningOutput": 4893,
+      "total": 225606,
+      "cachedInputRate": 0.8578
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 51362,
-      "maxResponseBytes": 51362,
-      "latestToolCount": 176,
-      "latestResponseBytes": 51362,
-      "latestInputSchemaBytes": 28964,
-      "latestDescriptionBytes": 4556
+      "totalResponseBytes": 53114,
+      "maxResponseBytes": 53114,
+      "latestToolCount": 184,
+      "latestResponseBytes": 53114,
+      "latestInputSchemaBytes": 29971,
+      "latestDescriptionBytes": 4529
     },
     "toolCalls": {
-      "total": 10,
-      "succeeded": 10,
+      "total": 9,
+      "succeeded": 9,
       "failed": 0,
       "failuresByTool": {},
       "failuresByCode": {},
@@ -40,51 +40,45 @@
       "durationsByTool": {
         "attach-design-token": {
           "count": 3,
-          "totalMs": 24,
-          "p95Ms": 9,
-          "maxMs": 9
-        },
-        "audit": {
-          "count": 1,
-          "totalMs": 12,
-          "p95Ms": 12,
-          "maxMs": 12
+          "totalMs": 88,
+          "p95Ms": 42,
+          "maxMs": 42
         },
         "create-page": {
           "count": 1,
-          "totalMs": 91,
-          "p95Ms": 91,
-          "maxMs": 91
+          "totalMs": 31,
+          "p95Ms": 31,
+          "maxMs": 31
         },
         "insert-fragment-verified": {
           "count": 1,
-          "totalMs": 55,
-          "p95Ms": 55,
-          "maxMs": 55
+          "totalMs": 42,
+          "p95Ms": 42,
+          "maxMs": 42
         },
         "inspect-design-context": {
           "count": 1,
-          "totalMs": 30,
-          "p95Ms": 30,
-          "maxMs": 30
+          "totalMs": 40,
+          "p95Ms": 40,
+          "maxMs": 40
         },
         "meta.guide": {
           "count": 1,
-          "totalMs": 11,
-          "p95Ms": 11,
-          "maxMs": 11
-        },
-        "screenshot.responsive": {
-          "count": 1,
-          "totalMs": 10751,
-          "p95Ms": 10751,
-          "maxMs": 10751
+          "totalMs": 75,
+          "p95Ms": 75,
+          "maxMs": 75
         },
         "update-styles": {
           "count": 1,
-          "totalMs": 64,
-          "p95Ms": 64,
-          "maxMs": 64
+          "totalMs": 59,
+          "p95Ms": 59,
+          "maxMs": 59
+        },
+        "verify-page-responsive": {
+          "count": 1,
+          "totalMs": 10165,
+          "p95Ms": 10165,
+          "maxMs": 10165
         }
       },
       "responseBytesByTool": {
@@ -93,12 +87,6 @@
           "totalBytes": 3900,
           "p95Bytes": 1304,
           "maxBytes": 1304
-        },
-        "audit": {
-          "count": 1,
-          "totalBytes": 3711,
-          "p95Bytes": 3711,
-          "maxBytes": 3711
         },
         "create-page": {
           "count": 1,
@@ -120,21 +108,21 @@
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 15190,
-          "p95Bytes": 15190,
-          "maxBytes": 15190
-        },
-        "screenshot.responsive": {
-          "count": 1,
-          "totalBytes": 7053,
-          "p95Bytes": 7053,
-          "maxBytes": 7053
+          "totalBytes": 15130,
+          "p95Bytes": 15130,
+          "maxBytes": 15130
         },
         "update-styles": {
           "count": 1,
-          "totalBytes": 2804,
-          "p95Bytes": 2804,
-          "maxBytes": 2804
+          "totalBytes": 2762,
+          "p95Bytes": 2762,
+          "maxBytes": 2762
+        },
+        "verify-page-responsive": {
+          "count": 1,
+          "totalBytes": 10663,
+          "p95Bytes": 10663,
+          "maxBytes": 10663
         }
       },
       "retries": 0,
@@ -143,16 +131,16 @@
       "dryRuns": 0,
       "plannedMutations": 0,
       "committedMutations": 6,
-      "verifications": 3,
-      "totalDurationMs": 11038,
-      "p50DurationMs": 12,
-      "p95DurationMs": 10751,
-      "totalResponseBytes": 40036,
-      "p50ResponseBytes": 2804,
-      "p95ResponseBytes": 15190,
-      "maxResponseBytes": 15190,
-      "timeToFirstMutationMs": 30419,
-      "timeToFirstVerificationMs": 36551
+      "verifications": 2,
+      "totalDurationMs": 10500,
+      "p50DurationMs": 42,
+      "p95DurationMs": 10165,
+      "totalResponseBytes": 39833,
+      "p50ResponseBytes": 2762,
+      "p95ResponseBytes": 15130,
+      "maxResponseBytes": 15130,
+      "timeToFirstMutationMs": 36333,
+      "timeToFirstVerificationMs": 41878
     }
   },
   "callSequence": [
@@ -164,8 +152,7 @@
     "attach-design-token",
     "attach-design-token",
     "update-styles",
-    "screenshot.responsive",
-    "audit"
+    "verify-page-responsive"
   ],
   "checks": {
     "guidance": "passed",

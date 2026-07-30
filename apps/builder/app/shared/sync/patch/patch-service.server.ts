@@ -40,8 +40,6 @@ const namespaceBuildColumns = {
   breakpoints: ["breakpoints"],
   instances: ["instances"],
   props: ["props"],
-  assets: [],
-  assetFolders: [],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
   styles: ["styles"],
@@ -270,7 +268,6 @@ const applyAuthorizedEntries = async ({
     );
 
     if (batchResult.status === "ok") {
-      currentBuild = batchResult.build;
       return {
         status: "ok" as const,
         version: batchResult.version,
@@ -338,17 +335,18 @@ export const applyPatchRequest = async (
       });
     }
   );
+  const build =
+    authorized.length === 0
+      ? undefined
+      : await loadBuildForPatch({
+          authorized,
+          context,
+          state,
+          buildId: patch.buildId,
+        });
   const applied = await applyAuthorizedEntries({
     authorized,
-    build:
-      authorized.length === 0
-        ? undefined
-        : await loadBuildForPatch({
-            authorized,
-            context,
-            state,
-            buildId: patch.buildId,
-          }),
+    build,
     patch,
     version: authorized.length === 0 ? state.version : patch.clientVersion,
   });

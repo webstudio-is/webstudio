@@ -11,7 +11,10 @@ export COMPOSE_PROJECT_NAME="${E2E_COMPOSE_PROJECT_NAME:-builder-e2e}"
 export PGPORT="${E2E_PGPORT:-55434}"
 export POSTGREST_PORT="${E2E_POSTGREST_PORT:-55435}"
 export POSTGRES_DB="${E2E_POSTGRES_DB:-webstudio}"
-export POSTGRES_USER="${E2E_POSTGRES_USER:-postgres}"
+# The Supabase image owns the schema as this required bootstrap role. Callers
+# can still replace migration connections through E2E_DATABASE_URL and
+# E2E_DIRECT_URL.
+export POSTGRES_USER="supabase_admin"
 export POSTGRES_PASSWORD="${E2E_POSTGRES_PASSWORD:-pass}"
 export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}?pgbouncer=true}"
 export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}}"
@@ -22,6 +25,7 @@ builder_backend_init
 
 export E2E_DB_BOOTSTRAP="${E2E_DB_BOOTSTRAP:-auto}"
 export E2E_GENERATE_PRISMA="${E2E_GENERATE_PRISMA:-auto}"
+export E2E_DOCKER_PULL_TIMEOUT_SECONDS="${E2E_DOCKER_PULL_TIMEOUT_SECONDS:-300}"
 export E2E_DOCKER_TIMEOUT_SECONDS="${E2E_DOCKER_TIMEOUT_SECONDS:-60}"
 export E2E_MIGRATIONS_TIMEOUT_SECONDS="${E2E_MIGRATIONS_TIMEOUT_SECONDS:-300}"
 export E2E_INSTALL_PLAYWRIGHT="${E2E_INSTALL_PLAYWRIGHT:-auto}"
@@ -155,6 +159,9 @@ if [ "$E2E_RUN_TESTS" = "true" ]; then
   run_step "validate e2e test filter" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
     validate_test_filter
 fi
+
+run_step "pull e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
+  builder_backend_pull_db
 
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db
