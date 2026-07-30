@@ -6,27 +6,27 @@
   "cli": "source",
   "provider": "openai",
   "model": "gpt-5.6-sol",
-  "commandSha256": "49c55b1e19073e0818e741ef141ca0d3298a96783d554b542da565b0abd9d2ad",
+  "commandSha256": "5f329ca3e6b1681f75914981dd3e336d50d3448dfc97f93333195d1b493adc02",
   "exitCode": 0,
   "metrics": {
-    "durationMs": 103326,
+    "durationMs": 117691,
     "tokens": {
-      "input": 446312,
-      "cachedInput": 408064,
-      "uncachedInput": 38248,
+      "input": 494839,
+      "cachedInput": 441856,
+      "uncachedInput": 52983,
       "cacheWriteInput": 0,
-      "output": 3432,
-      "reasoningOutput": 434,
-      "total": 449744,
-      "cachedInputRate": 0.9143
+      "output": 3925,
+      "reasoningOutput": 836,
+      "total": 498764,
+      "cachedInputRate": 0.8929
     },
     "mcpCatalog": {
       "responses": 1,
-      "totalResponseBytes": 53317,
-      "maxResponseBytes": 53317,
+      "totalResponseBytes": 50864,
+      "maxResponseBytes": 50864,
       "latestToolCount": 171,
-      "latestResponseBytes": 53317,
-      "latestInputSchemaBytes": 31190,
+      "latestResponseBytes": 50864,
+      "latestInputSchemaBytes": 28737,
       "latestDescriptionBytes": 4762
     },
     "toolCalls": {
@@ -40,81 +40,81 @@
       "durationsByTool": {
         "attach-design-token": {
           "count": 3,
-          "totalMs": 29,
-          "p95Ms": 12,
-          "maxMs": 12
-        },
-        "audit": {
-          "count": 1,
-          "totalMs": 15,
+          "totalMs": 31,
           "p95Ms": 15,
           "maxMs": 15
         },
-        "create-page": {
+        "audit": {
           "count": 1,
           "totalMs": 22,
           "p95Ms": 22,
           "maxMs": 22
         },
-        "insert-fragment": {
-          "count": 1,
-          "totalMs": 62,
-          "p95Ms": 62,
-          "maxMs": 62
-        },
-        "list-assets": {
-          "count": 1,
-          "totalMs": 29,
-          "p95Ms": 29,
-          "maxMs": 29
-        },
-        "list-breakpoints": {
-          "count": 1,
-          "totalMs": 26,
-          "p95Ms": 26,
-          "maxMs": 26
-        },
-        "list-design-tokens": {
-          "count": 1,
-          "totalMs": 24,
-          "p95Ms": 24,
-          "maxMs": 24
-        },
-        "list-pages": {
+        "create-page": {
           "count": 1,
           "totalMs": 25,
           "p95Ms": 25,
           "maxMs": 25
         },
-        "list-variables": {
+        "insert-fragment": {
+          "count": 1,
+          "totalMs": 42,
+          "p95Ms": 42,
+          "maxMs": 42
+        },
+        "list-assets": {
+          "count": 1,
+          "totalMs": 26,
+          "p95Ms": 26,
+          "maxMs": 26
+        },
+        "list-breakpoints": {
+          "count": 1,
+          "totalMs": 27,
+          "p95Ms": 27,
+          "maxMs": 27
+        },
+        "list-design-tokens": {
           "count": 1,
           "totalMs": 28,
           "p95Ms": 28,
           "maxMs": 28
         },
+        "list-pages": {
+          "count": 1,
+          "totalMs": 23,
+          "p95Ms": 23,
+          "maxMs": 23
+        },
+        "list-variables": {
+          "count": 1,
+          "totalMs": 24,
+          "p95Ms": 24,
+          "maxMs": 24
+        },
         "meta.guide": {
           "count": 1,
-          "totalMs": 10,
-          "p95Ms": 10,
-          "maxMs": 10
+          "totalMs": 11,
+          "p95Ms": 11,
+          "maxMs": 11
         },
         "preview.start": {
           "count": 1,
-          "totalMs": 2686,
-          "p95Ms": 2686,
-          "maxMs": 2686
+          "totalMs": 1508,
+          "p95Ms": 1508,
+          "maxMs": 1508
         },
         "screenshot": {
           "count": 2,
-          "totalMs": 9729,
-          "p95Ms": 8331,
-          "maxMs": 8331
+          "totalMs": 9271,
+          "p95Ms": 8071,
+          "maxMs": 8071
         },
         "update-styles": {
           "count": 1,
-          "totalMs": 89,
-          "p95Ms": 89,
-          "maxMs": 89
+          "totalMs": 75,
+          "p95Ms": 75,
+          "maxMs": 75
         },
         "verify-bindings": {
           "count": 1,
@@ -180,27 +180,27 @@
         },
         "meta.guide": {
           "count": 1,
-          "totalBytes": 25486,
-          "p95Bytes": 25486,
-          "maxBytes": 25486
+          "totalBytes": 24854,
+          "p95Bytes": 24854,
+          "maxBytes": 24854
         },
         "preview.start": {
           "count": 1,
-          "totalBytes": 329,
-          "p95Bytes": 329,
-          "maxBytes": 329
+          "totalBytes": 327,
+          "p95Bytes": 327,
+          "maxBytes": 327
         },
         "screenshot": {
           "count": 2,
-          "totalBytes": 7658,
-          "p95Bytes": 3835,
-          "maxBytes": 3835
+          "totalBytes": 7662,
+          "p95Bytes": 3839,
+          "maxBytes": 3839
         },
         "update-styles": {
           "count": 1,
-          "totalBytes": 17241,
-          "p95Bytes": 17241,
-          "maxBytes": 17241
+          "totalBytes": 19121,
+          "p95Bytes": 19121,
+          "maxBytes": 19121
         },
         "verify-bindings": {
           "count": 1,
@@ -216,24 +216,24 @@
       "plannedMutations": 0,
       "committedMutations": 6,
       "verifications": 4,
-      "totalDurationMs": 12777,
+      "totalDurationMs": 11116,
       "p50DurationMs": 25,
-      "p95DurationMs": 8331,
-      "totalResponseBytes": 69691,
+      "p95DurationMs": 8071,
+      "totalResponseBytes": 70941,
       "p50ResponseBytes": 1342,
-      "p95ResponseBytes": 25486,
-      "maxResponseBytes": 25486,
-      "timeToFirstMutationMs": 25748,
-      "timeToFirstVerificationMs": 35746
+      "p95ResponseBytes": 24854,
+      "maxResponseBytes": 24854,
+      "timeToFirstMutationMs": 29266,
+      "timeToFirstVerificationMs": 38658
     }
   },
   "callSequence": [
     "meta.guide",
-    "list-design-tokens",
     "list-pages",
-    "list-breakpoints",
     "list-variables",
     "list-assets",
+    "list-breakpoints",
+    "list-design-tokens",
     "create-page",
     "insert-fragment",
     "verify-bindings",

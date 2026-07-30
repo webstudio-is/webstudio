@@ -72,7 +72,7 @@ export const createMinimalAgentTask = (
     mcp: getCliInvocation(target),
     constraints: [
       "Use the configured Webstudio project and local CLI.",
-      "Call meta.guide exactly once at the beginning for the objective, follow its workflow, and do not call it again.",
+      'Call meta.guide exactly once at the beginning with {"brief":"<objective>"}: copy the objective field verbatim into brief, follow the returned workflow, and do not call meta.guide again.',
       "Choose focused reads and semantic edits yourself.",
       "Never use broad project reads: snapshot, components.list, or components.coverage-plan.",
       "Do not persist or report credentials or private session data.",

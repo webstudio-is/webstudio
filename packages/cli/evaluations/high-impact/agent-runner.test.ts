@@ -47,7 +47,9 @@ describe("high-impact agent runner", () => {
     expect(authConstraints).toContain("do not call list-variables again");
     expect(authConstraints).toContain("static audit");
     expect(authConstraints).toContain("do not set rendered:true");
-    expect(authConstraints).toContain("Call meta.guide exactly once");
+    expect(authConstraints).toContain(
+      "copy the objective field verbatim into brief"
+    );
     expect(authConstraints).toContain("one parallel read batch");
     expect(authConstraints).toContain(
       "call create-page exactly once, then create-variable"

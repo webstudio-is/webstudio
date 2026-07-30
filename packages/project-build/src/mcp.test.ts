@@ -4358,6 +4358,7 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(fontAssetGuide.structuredContent.data).not.toHaveProperty("brief");
     for (const tool of (
       fontAssetGuide.structuredContent.data as {
         tools: Array<Record<string, unknown>>;
@@ -6793,6 +6794,11 @@ describe("project session mcp adapter", () => {
             ?.inputSchema
         ).includeFolders
       ).toEqual({});
+      expect(
+        getSchemaProperties(
+          listedTools.tools.find(({ name }) => name === "publish")?.inputSchema
+        )
+      ).toEqual({});
       const updatePageInputSchema = listedTools.tools.find(
         ({ name }) => name === "update-page"
       )?.inputSchema;
@@ -6871,8 +6877,9 @@ describe("project session mcp adapter", () => {
         annotations: { destructiveHint: false, openWorldHint: false },
       });
       expect(
-        tools.tools.find(({ name }) => name === "publish")?.inputSchema
-          .properties
+        getSchemaProperties(
+          tools.tools.find(({ name }) => name === "publish")?.inputSchema
+        )
       ).not.toHaveProperty("dryRun");
 
       const planned = await client.callTool({

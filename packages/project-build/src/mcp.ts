@@ -5233,7 +5233,6 @@ const getMetaGuide = (
     (tool) => tool.name === "screenshot.diff"
   );
   return {
-    brief,
     delegatedAgentRule:
       "Do not spend the whole phase on discovery. If you are delegated/non-streaming and the parent asks for status within 30 seconds, run exactly one shortcut command such as webstudio meta.index or one explicit webstudio mcp single-op-call command, report its command/result, and wait before the next MCP command.",
     workflow: [
@@ -5616,16 +5615,26 @@ const getSdkSchemaProperty = (
 };
 
 const getSdkInputSchema = (
-  schema: ProjectSessionMcpInputSchema
+  schema: ProjectSessionMcpInputSchema,
+  includeOptionalProperties: boolean
 ): ProjectSessionMcpInputSchema => {
   const required = new Set(schema.required ?? []);
   const properties = Object.fromEntries(
-    Object.entries(schema.properties ?? {}).map(([name, value]) => [
-      name,
-      required.has(name) || sdkDetailedOptionalSchemaProperties.has(name)
-        ? getSdkSchemaProperty(value)
-        : {},
-    ])
+    Object.entries(schema.properties ?? {}).flatMap(([name, value]) =>
+      required.has(name) ||
+      includeOptionalProperties ||
+      sdkDetailedOptionalSchemaProperties.has(name)
+        ? [
+            [
+              name,
+              required.has(name) ||
+              sdkDetailedOptionalSchemaProperties.has(name)
+                ? getSdkSchemaProperty(value)
+                : {},
+            ],
+          ]
+        : []
+    )
   );
   return {
     type: "object",
@@ -5670,7 +5679,10 @@ const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => {
     ...(sdkDescribedToolNames.has(tool.name)
       ? { description: tool.description }
       : {}),
-    inputSchema: getSdkInputSchema(tool.inputSchema),
+    inputSchema: getSdkInputSchema(
+      tool.inputSchema,
+      sdkDescribedToolNames.has(tool.name)
+    ),
     ...(annotations === undefined ? {} : { annotations }),
   };
 };
