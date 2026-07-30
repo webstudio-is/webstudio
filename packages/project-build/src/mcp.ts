@@ -5317,26 +5317,34 @@ const metaGoalGuides = [
 ] as const;
 
 const metaGuideDetailedInputSchemaTools = new Set(["update-styles"]);
+const metaGuideExampleTools = new Set(["upload-assets"]);
 
 const serializeMetaGuideTool = (
   tool: ProjectSessionMcpTool,
   includeHandshakeFields: boolean
-) => ({
-  name: tool.name,
-  use: tool.description,
-  ...(includeHandshakeFields
+) =>
+  includeHandshakeFields
     ? {
+        name: tool.name,
+        use: tool.description,
         method: tool.annotations.method,
         permit: tool.annotations.permit,
         inputFields: tool.annotations.inputFields,
         requiredInputFields: tool.annotations.requiredInputFields,
+        mcpExamples: tool.mcpExamples ?? [],
+        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
+          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
+          : {}),
       }
-    : {}),
-  mcpExamples: tool.mcpExamples ?? [],
-  ...(metaGuideDetailedInputSchemaTools.has(tool.name)
-    ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
-    : {}),
-});
+    : {
+        name: tool.name,
+        ...(metaGuideExampleTools.has(tool.name)
+          ? { mcpExamples: tool.mcpExamples ?? [] }
+          : {}),
+        ...(metaGuideDetailedInputSchemaTools.has(tool.name)
+          ? { inputSchema: getDetailedProjectSessionMcpInputSchema(tool) }
+          : {}),
+      };
 
 const getMetaGuide = (
   brief: string,
@@ -5375,7 +5383,10 @@ const getMetaGuide = (
     tools: matches.map((tool) =>
       serializeMetaGuideTool(tool, goalGuide === undefined)
     ),
-    more: "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover.",
+    more:
+      goalGuide === undefined
+        ? "The MCP handshake provides top-level argument contracts and required fields, while this guide includes exact examples plus complete schemas for selected complex tools. Call meta.get_more_tools once with all needed tool names only when a nested input shape is not covered here or when you need server/local behavior that the guide does not cover."
+        : "The MCP client loads each named tool's exact argument contract before calling it. This guide includes a complete schema only for selected complex inputs. Call meta.get_more_tools once with all needed tool names only when the client does not expose a nested input shape or when you need server/local behavior that the guide does not cover.",
   };
 };
 

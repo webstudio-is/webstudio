@@ -1201,6 +1201,7 @@ describe("project session mcp adapter", () => {
         path: "/workspace/.webstudio/assets/hero.png",
       },
     });
+
   });
 
   test("exposes page expression input descriptions to MCP clients", async () => {
@@ -2125,7 +2126,6 @@ describe("project session mcp adapter", () => {
         },
       },
     });
-
   });
 
   test("plans and confirms destructive mutations without blind retries", async () => {
@@ -3741,8 +3741,13 @@ describe("project session mcp adapter", () => {
       refresh: vi.fn(),
       reset: vi.fn(),
     });
+    const uploadAssetsOperation = {
+      ...publicMcpOperations[0]!,
+      command: "upload-assets" as const,
+      description: "Upload multiple assets",
+    };
     const adapter = createProjectSessionMcpCore({
-      operations: publicMcpOperations,
+      operations: [...publicMcpOperations, uploadAssetsOperation],
       createProjectSession: createSessionFactory(session),
       executeOperation: createExecuteOperation(),
     });
@@ -4370,6 +4375,29 @@ describe("project session mcp adapter", () => {
       name: "meta.guide",
       input: { brief: "Add a section that preserves this Craft project" },
     });
+    const authenticatedPageGuideTools = (
+      authenticatedPageGuide.structuredContent.data as {
+        tools: Array<Record<string, unknown>>;
+      }
+    ).tools;
+    expect(
+      authenticatedPageGuideTools.every(
+        (tool) => Object.keys(tool).join(",") === "name"
+      )
+    ).toBe(true);
+    const designInputGuideTools = (
+      designInputGuide.structuredContent.data as {
+        tools: Array<Record<string, unknown>>;
+      }
+    ).tools;
+    expect(
+      designInputGuideTools.every((tool) => {
+        const keys = Object.keys(tool).join(",");
+        return tool.name === "update-styles"
+          ? keys === "name,inputSchema"
+          : keys === "name";
+      })
+    ).toBe(true);
     const getComponentToolNames = (
       getComponentDetails.structuredContent.data as {
         tools: { name: string }[];
@@ -4394,7 +4422,7 @@ describe("project session mcp adapter", () => {
     expect(jsonLdGuide.structuredContent.data).toEqual(
       expect.objectContaining({
         more: expect.stringContaining(
-          "handshake provides top-level argument contracts and required fields"
+          "client loads each named tool's exact argument contract"
         ),
         workflow: expect.arrayContaining([
           expect.stringContaining("do not use update-page custom metadata"),
@@ -4498,12 +4526,9 @@ describe("project session mcp adapter", () => {
         tools: Array<Record<string, unknown>>;
       }
     ).tools) {
-      expect(tool.use).toEqual(expect.any(String));
-      expect(tool).not.toHaveProperty("method");
-      expect(tool).not.toHaveProperty("permit");
-      expect(tool).not.toHaveProperty("inputFields");
-      expect(tool).not.toHaveProperty("requiredInputFields");
-      expect(tool).toHaveProperty("mcpExamples");
+      expect(Object.keys(tool)).toEqual(
+        tool.name === "upload-assets" ? ["name", "mcpExamples"] : ["name"]
+      );
     }
     expect(designInputGuide.structuredContent.data).toEqual(
       expect.objectContaining({
